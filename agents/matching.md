@@ -5,7 +5,7 @@ The matching system compares two `Plan` records and produces a
 per-component `MatchBreakdown`. The algorithm lives entirely in the
 matcher crate; the service embeds it unchanged. Canonical detail:
 matcher [spec §5–§18](../project-portfolio-management-matcher-rust-crate/spec/index.md) and
-[AGENTS/matching-algorithm.md](../project-portfolio-management-matcher-rust-crate/AGENTS/matching-algorithm.md).
+[agents/matching-algorithm.md](../project-portfolio-management-matcher-rust-crate/agents/matching-algorithm.md).
 
 Matching is over the **plan identity** — the plan header. The optional
 `kind` label (Portfolio / Project / Product / Program / Practice /

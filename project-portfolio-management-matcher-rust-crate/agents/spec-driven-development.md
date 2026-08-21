@@ -90,11 +90,11 @@ bigger, split it (`T-12a`, `T-12b`).
 |---|---|
 | §1 Purpose / §2 Scope | repo-level positioning (also `AGENTS.md`) |
 | §3 Glossary | `src/plan.rs` types, `src/scoring.rs` enums |
-| §4 Research basis | `AGENTS/matching-algorithm.md` |
+| §4 Research basis | `agents/matching-algorithm.md` |
 | §5 Algorithm overview | `src/matcher.rs` |
 | §6 Domain model | `src/plan.rs` |
 | §7 Configuration | `src/config.rs` (`MatchConfig`) |
-| §8 Normalisation | `src/normalize.rs`, `AGENTS/normalization.md` |
+| §8 Normalisation | `src/normalize.rs`, `agents/normalization.md` |
 | §9–§13 per-component scoring | `src/matcher.rs` component fns |
 | §12 Kind (no gate — optional metadata) | `src/plan.rs` (`Plan::kind`), `src/matcher.rs` |
 | §15–§16 short-circuits | `src/matcher.rs` deterministic gate |
@@ -103,7 +103,7 @@ bigger, split it (`T-12a`, `T-12b`).
 | §19–§21 quality / consumption / compat | top-level docs, integration with `project-portfolio-management-service` |
 | §22 Anti-patterns | this file + AGENTS.md |
 | §23 Tasks | spec.md only — the live work queue |
-| §24 Testing | `AGENTS/testing.md` |
+| §24 Testing | `agents/testing.md` |
 | §25 Change control | this file |
 
 ## Closing the Loop
@@ -152,7 +152,7 @@ spec.md            ← what the library is, how it is built, and what
 README.md          ← user-facing intro (must stay consistent with spec)
 CHANGELOG.md       ← what changed when (history)
 AGENTS.md          ← how to work in the repo (entry point)
-AGENTS/*.md        ← topic-specific agent guides
+agents/*.md        ← topic-specific agent guides
 CLAUDE.md          ← @AGENTS.md (Claude Code entry)
 index.md           ← navigation aid
 ```

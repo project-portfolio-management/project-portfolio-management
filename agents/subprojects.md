@@ -77,7 +77,7 @@ pnpm run check               # svelte-check strict (0/0 expected)
 |---|---|---|---|
 | Living spec | [spec/index.md](../project-portfolio-management-matcher-rust-crate/spec/index.md) (§1–§25) | [spec/index.md](../project-portfolio-management-service-with-loco/spec/index.md) (§1–§18) | [spec/index.md](../project-portfolio-management-front-end-with-svelte/spec/index.md) (§1–§18) |
 | Agent guide | [AGENTS.md](../project-portfolio-management-matcher-rust-crate/AGENTS.md) | [AGENTS.md](../project-portfolio-management-service-with-loco/AGENTS.md) | [AGENTS.md](../project-portfolio-management-front-end-with-svelte/AGENTS.md) |
-| Detailed guides | [AGENTS/](../project-portfolio-management-matcher-rust-crate/AGENTS/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
+| Detailed guides | [agents/](../project-portfolio-management-matcher-rust-crate/agents/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
 | User intro | [README.md](../project-portfolio-management-matcher-rust-crate/README.md) | [README.md](../project-portfolio-management-service-with-loco/README.md) | [README.md](../project-portfolio-management-front-end-with-svelte/README.md) |
 | Changelog | [CHANGELOG.md](../project-portfolio-management-matcher-rust-crate/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-service-with-loco/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-front-end-with-svelte/CHANGELOG.md) |
 

@@ -2,7 +2,7 @@
 
 The portfolio entity practises **spec-driven development** at two levels.
 Read the per-crate discipline first (the matcher's
-[AGENTS/spec-driven-development.md](../project-portfolio-management-matcher-rust-crate/AGENTS/spec-driven-development.md)
+[agents/spec-driven-development.md](../project-portfolio-management-matcher-rust-crate/agents/spec-driven-development.md)
 is the fullest local statement); this file adds the entity-level rules.
 
 ## Authority model

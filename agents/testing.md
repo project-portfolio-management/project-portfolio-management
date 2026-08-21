@@ -2,7 +2,7 @@
 
 Entity-level view; normative inventory in entity spec
 [§11](../spec/11-testing-strategy.md). Per-crate detail: matcher
-[AGENTS/testing.md](../project-portfolio-management-matcher-rust-crate/AGENTS/testing.md).
+[agents/testing.md](../project-portfolio-management-matcher-rust-crate/agents/testing.md).
 
 ## What exists today
 

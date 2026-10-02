@@ -538,6 +538,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 [[package]]
 name = "authentication-verifier"
 version = "0.9.0"
+source = "git+https://github.com/SixArm/main-x-service.git?rev=52b107a9f06c0ae8896149e964c8d9b0739d2cc4#52b107a9f06c0ae8896149e964c8d9b0739d2cc4"
 dependencies = [
  "axum-keycloak-auth",
  "base64 0.23.1",
@@ -3395,6 +3396,7 @@ dependencies = [
 [[package]]
 name = "integrity-mac"
 version = "0.2.0"
+source = "git+https://github.com/SixArm/main-x-service.git?rev=52b107a9f06c0ae8896149e964c8d9b0739d2cc4#52b107a9f06c0ae8896149e964c8d9b0739d2cc4"
 dependencies = [
  "getrandom 0.4.3",
  "hkdf",

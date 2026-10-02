@@ -18,7 +18,8 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::discussion as rules;
 use crate::models::_entities::{
-    canvas_items, comment_edits, comments, ideas, plans, proposals, reactions, risks, tasks,
+    budget_lines, canvas_items, comment_edits, comments, ideas, plans, proposals, reactions, risks,
+    scenarios, tasks,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
@@ -143,6 +144,34 @@ pub(crate) async fn resolve_subject(
                 pid,
                 plan_pid: None,
                 owner_ref: row.owner_ref,
+            }
+        }
+        "budget_line" => {
+            let row = budget_lines::Entity::find()
+                .filter(budget_lines::Column::Pid.eq(pid))
+                .filter(budget_lines::Column::DeletedAt.is_null())
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .ok_or(Error::NotFound)?;
+            Subject {
+                pid,
+                plan_pid: Some(row.plan_pid),
+                owner_ref: None,
+            }
+        }
+        "scenario" => {
+            scenarios::Entity::find()
+                .filter(scenarios::Column::Pid.eq(pid))
+                .filter(scenarios::Column::DeletedAt.is_null())
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .ok_or(Error::NotFound)?;
+            Subject {
+                pid,
+                plan_pid: None,
+                owner_ref: None,
             }
         }
         _ => return Err(unprocessable("unknown subject_kind")),

@@ -25,6 +25,7 @@
 #![deny(missing_docs)]
 
 pub mod app;
+pub mod approvals;
 pub mod auth;
 /// Pure workflow-automation rules (trigger matching, action shapes, due-ness).
 pub mod automation;

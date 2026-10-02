@@ -12,7 +12,16 @@ use std::collections::BTreeSet;
 use uuid::Uuid;
 
 /// What can be commented on / reacted to.
-pub const SUBJECT_KINDS: &[&str] = &["plan", "task", "risk", "proposal", "idea", "canvas_item"];
+pub const SUBJECT_KINDS: &[&str] = &[
+    "plan",
+    "task",
+    "risk",
+    "proposal",
+    "idea",
+    "canvas_item",
+    "budget_line",
+    "scenario",
+];
 
 /// The closed reaction set.
 pub const REACTION_KINDS: &[&str] = &["thumbs_up", "heart", "celebrate", "eyes", "question"];

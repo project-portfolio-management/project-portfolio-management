@@ -74,6 +74,7 @@ pub fn paths() -> Value {
     merge(&mut all, component_paths());
     merge(&mut all, custom_field_paths());
     merge(&mut all, watcher_paths());
+    merge(&mut all, approval_paths());
     all
 }
 
@@ -169,6 +170,31 @@ fn watcher_paths() -> Value {
             "get": op("watchers", "What the caller follows, newest first",
                 "Private to the caller; capped at 500 entries.", vec![],
                 &[("200", "{ count, items }"), ("401", "Missing or invalid bearer token")])
+        }
+    })
+}
+
+/// Approval requests (PL-1).
+fn approval_paths() -> Value {
+    json!({
+        "/api/approvals": {
+            "post": op("approvals", "Ask a named person to approve a subject",
+                "Subjects: plan, task, risk, proposal, idea, canvas_item, budget_line, scenario. Names exactly one approver (a person: or worker: reference). The approver is notified; the owning plan's record-level read check applies. Requires a bearer token.",
+                vec![], &[("200", "The pending request"), ("401", "Missing or invalid bearer token"), ("403", "Owning plan not readable"), ("404", "Unknown subject"), ("422", "Unknown subject_kind, or a malformed approver_ref")]),
+            "get": op("approvals", "Requests involving the caller, or attached to one subject",
+                "Without subject_kind and subject_pid it lists requests where the caller is the approver or the requester (narrow with mine=approver|requester); with them it lists that subject's requests, subject to the read check. Capped at 500, newest first.",
+                vec![query("mine", false, "approver or requester"), query("status", false, "pending, approved, rejected or withdrawn"), query("subject_kind", false, "With subject_pid"), query("subject_pid", false, "With subject_kind")],
+                &[("200", "Requests"), ("401", "Missing or invalid bearer token"), ("422", "Invalid mine or status")])
+        },
+        "/api/approvals/{pid}/decide": {
+            "post": op("approvals", "The named approver decides",
+                "Only the named approver may decide (403 otherwise); a rejection must carry a comment (422); a decision is final, so a request that is not pending is 409. The decision and comment are audited and the requester is notified.",
+                vec![uuid_param("pid")], &[("200", "The decided request"), ("401", "Missing or invalid bearer token"), ("403", "Not the named approver, or the owning plan is not readable"), ("404", "Unknown request"), ("409", "Already decided or withdrawn"), ("422", "Unknown decision, a rejection without a comment, or an over-long comment")])
+        },
+        "/api/approvals/{pid}/withdraw": {
+            "post": op("approvals", "The requester withdraws a pending request",
+                "Writes no decision. A request that is already decided or withdrawn is 409.",
+                vec![uuid_param("pid")], &[("200", "The withdrawn request"), ("401", "Missing or invalid bearer token"), ("403", "Not the requester"), ("404", "Unknown request"), ("409", "Not pending")])
         }
     })
 }

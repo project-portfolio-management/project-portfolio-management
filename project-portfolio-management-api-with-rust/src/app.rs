@@ -191,6 +191,7 @@ impl Hooks for App {
             .add_route(controllers::components::routes())
             .add_route(controllers::custom_fields::routes())
             .add_route(controllers::watchers::routes())
+            .add_route(controllers::approvals::routes())
             .add_route(controllers::metrics::routes())
     }
 

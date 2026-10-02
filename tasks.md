@@ -322,7 +322,7 @@ Derived from [plan.md](plan.md) "Third source: Platform Collective" (research
 2026-10-02). IDs are `PL-n`; same sizes, tick rule and conventions as above.
 Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
 
-- [ ] **PL-1 (S) — Approval requests on any subject.** Extend `reviews` (or
+- [x] **PL-1 (S) — Approval requests on any subject.** **Landed 2026-10-02.** Service: `approval_requests` (migration `m20261003_000007_approval_requests`), `POST/GET /api/approvals`, `/{pid}/decide`, `/{pid}/withdraw`; `src/approvals.rs` (5 unit tests); only the **named approver** decides, a decision is **final** (409), a rejection needs a comment (422), only the requester withdraws, and withdrawing writes no decision. Subjects are the comment kinds **plus budget lines and scenarios** (now also commentable/watchable). Both sides are notified (`approval_requested`, `approval_decided`) through notification preferences. `tests/approvals.rs` end to end with three real users. **Not built:** reconciliation with `/reviews/consensus` (separate mechanism), multi-approver, front-end. Extend `reviews` (or
   add a thin `approval_requests`) so the subject may be a task, budget line,
   scenario commit, canvas item or custom subject, with a `decision_comment`
   required on reject. Status `pending → approved | rejected | withdrawn`.

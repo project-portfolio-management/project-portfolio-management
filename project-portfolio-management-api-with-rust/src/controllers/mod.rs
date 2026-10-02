@@ -205,6 +205,7 @@ pub mod pagination {
         response
     }
 }
+pub mod approvals;
 pub mod components;
 pub mod custom_fields;
 pub mod watchers;

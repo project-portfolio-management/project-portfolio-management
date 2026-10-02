@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — approval requests (PL-1, 2026-10-02)
+
+`approval_requests` and `/api/approvals`: ask one named person to approve a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Only that person decides, a decision is final, a rejection must carry a comment, only the requester withdraws. Budget lines and scenarios are now also valid comment / watcher subjects.
+
 ### Added — watchers (RM-3, 2026-10-02)
 
 `watchers` and `/api/watchers`, `/api/me/watching`: follow a plan, task, risk, proposal, idea or canvas item. A watcher is told once of a comment or task move, never the actor. Auto-watch on create / assign / comment, switchable off with the `auto_watch` preference.

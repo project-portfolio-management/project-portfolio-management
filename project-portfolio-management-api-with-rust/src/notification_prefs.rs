@@ -24,6 +24,8 @@ use crate::tz::{self, Tz};
 /// when a new `notify(...)` call introduces one**, or it cannot be
 /// switched off.
 pub const KINDS: &[&str] = &[
+    "approval_decided",
+    "approval_requested",
     "auto_watch",
     "automation",
     "comment",

@@ -1346,7 +1346,7 @@ fn discussion_paths() -> Value {
         "schema": { "type": "string", "format": "uuid" } });
     let subject = json!([
         { "name": "subject_kind", "in": "query", "required": true,
-          "schema": { "type": "string", "enum": ["plan", "task", "risk", "proposal", "idea", "canvas_item"] } },
+          "schema": { "type": "string", "enum": ["plan", "task", "risk", "proposal", "idea", "canvas_item", "budget_line", "scenario"] } },
         { "name": "subject_pid", "in": "query", "required": true,
           "schema": { "type": "string", "format": "uuid" } }
     ]);
@@ -1354,7 +1354,7 @@ fn discussion_paths() -> Value {
         "/api/comments": {
             "post": {
                 "tags": ["discussion"],
-                "summary": "Comment on a plan, task, risk, proposal, idea or canvas item",
+                "summary": "Comment on a plan, task, risk, proposal, idea, canvas item, budget line or scenario",
                 "description": "Notifies the subject's owner and every earlier commenter, never the author, each exactly once. A subject owned by a plan applies that plan's record-level read check, so a thread never reveals a plan its reader could not GET.",
                 "responses": {
                     "200": { "description": "Added ({ pid })" },
@@ -2038,6 +2038,7 @@ mod tests {
             crate::controllers::components::routes(),
             crate::controllers::custom_fields::routes(),
             crate::controllers::watchers::routes(),
+            crate::controllers::approvals::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();

@@ -53,3 +53,13 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`
   (both crates); `pnpm run check` strict 0/0 and production build
   (front-end).
+
+### 7.x Time and time zones
+
+Doctrine (LT-9, `src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);
+a `date` is a **calendar date with no zone**; **the server never reads its own
+zone** (`chrono::Local` is banned by `clippy.toml` and by a unit test, so any
+process `TZ` yields identical answers); **portfolio-wide views use the UTC
+date** so two callers see one answer; **personal views take an explicit IANA
+zone** per request (`?tz=`), and fixed offsets are refused because they cannot
+follow daylight saving.

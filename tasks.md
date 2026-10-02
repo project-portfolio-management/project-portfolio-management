@@ -114,7 +114,15 @@ audited; people stay references.
   non-`http(s)` schemes are refused; links are shown, never fetched
   server-side.
 
-- [ ] **LT-9 (S) — Timezone audit.** Verify every stored timestamp is UTC
+- [x] **LT-9 (S) — Timezone audit.** **Done 2026-10-02.** Findings:
+  every stored instant is `timestamptz` written from `Utc::now()` (clean);
+  no source file reads the process zone (clean, now enforced by
+  `clippy.toml` and a test); the 20-odd "today" computations all use the UTC
+  date, which is correct for portfolio-wide views and **wrong only for
+  personal ones** (none existed; LT-3 is the first, via `src/tz.rs`);
+  `engineering.rs` already converts with `to_utc()` before taking a date
+  (clean); date-only fields are zone-free by design. **Gap found:** tasks
+  had **no due date**, which LT-3 needs (added there). Doctrine in spec §7.x. Verify every stored timestamp is UTC
   (`timestamptz`) and that every *date bucket* (due today, overdue, sprint
   day, burndown day) is computed in an explicit zone, not the server's.
   Write down the doctrine in the spec and add a test that runs the date-bucket

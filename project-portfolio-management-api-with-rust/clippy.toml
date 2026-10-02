@@ -1,0 +1,9 @@
+# LT-9 timezone doctrine: the server runs in UTC and never consults the
+# process zone. A caller's "today" comes from an explicit IANA zone (src/tz.rs).
+disallowed-types = [
+  { path = "chrono::Local", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+]
+disallowed-methods = [
+  { path = "chrono::Local::now", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+  { path = "chrono::Local::today", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+]

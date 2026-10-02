@@ -106,6 +106,7 @@ pub mod tba;
 /// Estimate to Complete — is the value still to come worth the money
 /// still to spend?
 pub mod tpc;
+pub mod tz;
 pub mod validation;
 /// Realized gains and strategic performance: transformation ROI, value
 /// realization rate, time to value, adoption, earned-value indices and

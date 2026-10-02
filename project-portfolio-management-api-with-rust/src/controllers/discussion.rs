@@ -42,18 +42,18 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 }
 
 /// What the controller needs to know about a resolved subject.
-struct Subject {
-    pid: Uuid,
+pub(crate) struct Subject {
+    pub(crate) pid: Uuid,
     /// The owning plan, for the record-level read check.
-    plan_pid: Option<Uuid>,
+    pub(crate) plan_pid: Option<Uuid>,
     /// An `EntityRef` URN who owns / is assigned the subject, if any.
-    owner_ref: Option<String>,
+    pub(crate) owner_ref: Option<String>,
 }
 
 /// Resolve `(kind, pid)` to a live row, or `404`. Applies the owning
 /// plan's record-level read check (`403` when the policy denies it).
 #[allow(clippy::too_many_lines)] // one arm per subject kind
-async fn resolve_subject(
+pub(crate) async fn resolve_subject(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     kind: &str,

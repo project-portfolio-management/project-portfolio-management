@@ -187,7 +187,7 @@ Derived from [plan.md](plan.md) "Second source: Redmine" (research 2026-10-02).
 IDs are `RM-n`; same sizes, tick rule and conventions as above. Nothing here is
 started.
 
-- [ ] **RM-1 (L) — Typed custom fields.** `custom_field_defs` (`key`,
+- [x] **RM-1 (L) — Typed custom fields.** **Landed 2026-10-02.** Service: `custom_field_defs` + `custom_field_values` (a separate table, so a value can **never** reach the matcher), six routes under `/api/custom-fields`, six types validated and normalised (`src/custom_fields.rs`, 6 unit tests), kind scoping, atomic writes, equality/contains search, withdrawn definitions keep readable values. **Deviation:** a **required** field blocks **task** create (the `custom` map on the task body); plan create takes the bare matcher `Plan`, so a required plan field is reported as `missing_required` on read rather than blocking create. **Not built:** list-endpoint filtering inside `GET /api/plans` (use `/custom-fields/search`), saved-report projection, front-end. `custom_field_defs` (`key`,
   `label`, `type` ∈ `text | date | bool | integer | list | multi_list`,
   `applies_to` ∈ `plan | task`, optional `kinds[]`, `required`, `options[]`)
   and values stored on the record's `data` JSON under a `custom` key, validated

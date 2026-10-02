@@ -42,6 +42,7 @@ pub mod controllers;
 /// (feedforward / concurrent / feedback) that fix what a failing
 /// control may do.
 pub mod controls;
+pub mod custom_fields;
 pub mod data;
 pub mod discussion;
 /// Pure rules for the engineering-team features (tasks / burndown / MoSCoW).

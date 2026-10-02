@@ -20,6 +20,8 @@ pub mod components;
 pub mod control_actions;
 pub mod control_readings;
 pub mod controls;
+pub mod custom_field_defs;
+pub mod custom_field_values;
 pub mod devops_events;
 pub mod event_outbox;
 pub mod gate_reviews;

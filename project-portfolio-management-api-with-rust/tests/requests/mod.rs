@@ -6,6 +6,7 @@
 mod canvas;
 mod capabilities;
 mod components;
+mod custom_fields;
 mod discussion;
 mod effort;
 mod event_outbox;

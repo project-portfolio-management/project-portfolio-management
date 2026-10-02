@@ -72,6 +72,7 @@ pub fn paths() -> Value {
     let mut all = json!({});
     // Feature path functions are merged here as they land.
     merge(&mut all, component_paths());
+    merge(&mut all, custom_field_paths());
     all
 }
 
@@ -101,6 +102,43 @@ fn component_paths() -> Value {
             "delete": op("components", "Delete a component",
                 "Refused with 409 while any live task still belongs to it; tasks are never silently orphaned.",
                 vec![pid, cpid], &[("200", "Deleted (soft)"), ("404", "Unknown plan or component"), ("409", "Tasks still belong to it")])
+        }
+    })
+}
+
+/// Typed custom fields (RM-1).
+fn custom_field_paths() -> Value {
+    let subject = vec![
+        query("applies_to", true, "plan or task"),
+        query("subject_pid", true, "The plan or task pid"),
+    ];
+    json!({
+        "/api/custom-fields": {
+            "post": op("custom-fields", "Declare a typed custom field for plans or tasks",
+                "Types: text, date (YYYY-MM-DD), bool, integer, list (one of options), multi_list (a distinct subset of options). A plan field may be scoped to certain kinds and may be required. Values are stored apart from the plan payload, so a custom value can never reach the matcher.",
+                vec![], &[("200", "Declared"), ("409", "A live field with this key already exists for this subject type"), ("422", "Invalid key, label, type, applies_to, kinds or options")]),
+            "get": op("custom-fields", "Live field definitions",
+                "Plain list of declared definitions, optionally narrowed by applies_to; withdrawn definitions are not listed.",
+                vec![query("applies_to", false, "plan or task")], &[("200", "Definitions")])
+        },
+        "/api/custom-fields/{pid}": {
+            "delete": op("custom-fields", "Withdraw a definition",
+                "Soft-delete only: values already stored are kept and stay readable, marked withdrawn. New values for a withdrawn key are refused.",
+                vec![uuid_param("pid")], &[("200", "Withdrawn"), ("404", "Unknown definition")])
+        },
+        "/api/custom-fields/values": {
+            "put": op("custom-fields", "Set or clear a subject's custom values",
+                "Atomic: one invalid value refuses the whole call and nothing is written. A null clears a value, except for a required field. A kind-scoped field is refused on a plan of another kind. Applies the owning plan's record-level read check.",
+                vec![], &[("200", "The subject's values"), ("403", "Owning plan not readable"), ("404", "Unknown subject"), ("422", "Unknown key, wrong type, value outside the options, kind mismatch, or clearing a required field")]),
+            "get": op("custom-fields", "A subject's custom values and the required fields still unset",
+                "Includes values whose definition has since been withdrawn (marked withdrawn), so withdrawing a field never hides stored data. missing_required lists the live required fields with no value yet.",
+                subject, &[("200", "values, missing_required"), ("403", "Owning plan not readable"), ("404", "Unknown subject"), ("422", "applies_to not plan or task")])
+        },
+        "/api/custom-fields/search": {
+            "get": op("custom-fields", "Subjects whose custom field equals a value",
+                "Equality after the same normalisation a write gets (multi_list matches when the list contains the value). Subjects whose owning plan the caller cannot read are omitted. At most 5000 stored values are scanned and the response says truncated if more exist.",
+                vec![query("applies_to", true, "plan or task"), query("key", true, "The field key"), query("value", true, "The value to match")],
+                &[("200", "count, pids, truncated"), ("422", "Unknown field")])
         }
     })
 }

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — typed custom fields (RM-1, 2026-10-02)
+
+`custom_field_defs` / `custom_field_values` and `/api/custom-fields` (definitions, values, search). Types text, date, bool, integer, list, multi_list; plan fields may be kind-scoped; a required task field blocks task creation; values are stored apart from the plan payload so they never reach the matcher; withdrawing a definition keeps stored values readable.
+
 ### Added — task components (PL-11, 2026-10-02)
 
 `components` (migration `m20261003_000002_components`) and `tasks.component_pid`: five routes under `/api/plans/{pid}/components`, a `?component=` filter on the task list, and `/components/summary` whose buckets always sum to the plan's task total (every component, empty ones at zero, plus `unassigned`). A task's component must belong to its own plan; deleting one in use is `409`.

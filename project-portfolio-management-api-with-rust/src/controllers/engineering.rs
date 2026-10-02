@@ -103,6 +103,11 @@ struct TaskPayload {
     /// Optional component (grouping) of this plan.
     #[serde(default)]
     component_pid: Option<Uuid>,
+    /// Custom-field values (RM-1), honoured on **create** only; every
+    /// required task field must be supplied there. Edit them afterwards
+    /// through `PUT /api/custom-fields/values`.
+    #[serde(default)]
+    custom: Option<std::collections::BTreeMap<String, serde_json::Value>>,
     /// Optional story points (team-local; 0–100).
     #[serde(default)]
     points: Option<i32>,
@@ -211,6 +216,15 @@ async fn create_task(
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (status, workflow) = validate_task(&ctx, item.pid, &payload).await?;
+    // Required custom fields block creation; validated before any write.
+    let custom = super::custom_fields::prepare(
+        &ctx,
+        "task",
+        None,
+        &payload.custom.clone().unwrap_or_default(),
+        true,
+    )
+    .await?;
     let now = chrono::Utc::now();
     // The task and its opening transition commit together: a task
     // without one would have no measurable start, and the time-based
@@ -249,6 +263,7 @@ async fn create_task(
     .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
+    super::custom_fields::store(&txn, "task", row.pid, &custom).await?;
     crate::tba::transition_row(
         row.pid,
         item.pid,

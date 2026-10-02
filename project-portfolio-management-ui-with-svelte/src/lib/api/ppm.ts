@@ -626,6 +626,18 @@ export interface Task {
   blocked_days: number | null;
 }
 
+/** `GET /api/plans/{pid}/modules` (RM-7): the feature modules a plan exposes. */
+export interface PlanModules {
+  plan_pid: string;
+  /** `plan` when someone chose a set for this plan, `default` otherwise. */
+  source: "plan" | "default";
+  /** The enabled module keys. */
+  modules: string[];
+  available: Array<{ key: string; enabled: boolean; segments: string[] }>;
+  default: string[];
+  personal_preset: string[];
+}
+
 /** The five due-date buckets of `GET /api/me/tasks`, in display order. */
 export const MY_WORK_BUCKETS = [
   "overdue",
@@ -1072,6 +1084,17 @@ export class PpmClient {
   }
   regulatorExtract(): Promise<RegulatorExtract> {
     return this.http.get("/api/regulator/extract");
+  }
+  /** Which feature modules this plan exposes (RM-7). */
+  planModules(pid: string): Promise<PlanModules> {
+    return this.http.get(`/api/plans/${pid}/modules`);
+  }
+  /** Set a plan's modules, apply the personal preset, or reset to default. */
+  setPlanModules(
+    pid: string,
+    body: { modules: string[] } | { preset: "personal" } | { reset: true },
+  ): Promise<PlanModules> {
+    return this.http.put(`/api/plans/${pid}/modules`, { body });
   }
   /**
    * The caller's open tasks by due date in `tz` (an IANA zone name; the

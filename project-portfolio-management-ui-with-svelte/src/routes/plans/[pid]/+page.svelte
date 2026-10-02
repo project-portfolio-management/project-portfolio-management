@@ -11,6 +11,8 @@
   import { PlanRepository } from "#lib/api/plans.js";
   import type { ScoredRef, Plan } from "#lib/api/types.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { PpmClient } from "#lib/api/ppm.js";
+  import { visiblePlanLinks } from "#lib/modules.js";
 
   const pid = page.params.pid ?? "";
   const repo = PlanRepository.withFetch();
@@ -20,10 +22,18 @@
   let error = $state<string | null>(null);
   let duplicates = $state<ScoredRef[] | null>(null);
   let checking = $state(false);
+  // RM-7: the modules this plan exposes; null = unknown ⇒ show every link.
+  let modules = $state<string[] | null>(null);
+  const links = $derived(visiblePlanLinks(modules));
 
   onMount(async () => {
     try {
       record = await repo.get(pid);
+      // Best effort: a failure leaves `modules` null and every link shown.
+      PpmClient.withFetch()
+        .planModules(pid)
+        .then((m) => (modules = m.modules))
+        .catch(() => {});
     } catch (err) {
       error = err instanceof Error ? err.message : t("detail.notFound");
     } finally {
@@ -59,10 +69,18 @@
 {:else if record}
   <h1>{record.name}</h1>
   <p class="small">
-    <a class="button small" href={`/plans/${pid}/governance`}>{t("ppm.common.governance")}</a>
-    <a class="button small" href={`/plans/${pid}/board`}>{t("ppm.common.board")}</a>
-    <a class="button small" href={`/plans/${pid}/schedule`}>{t("ppm.common.schedule")}</a>
-    <a class="button small" href={`/plans/${pid}/flow`}>Flow</a>
+    {#if links.includes("governance")}
+      <a class="button small" href={`/plans/${pid}/governance`}>{t("ppm.common.governance")}</a>
+    {/if}
+    {#if links.includes("board")}
+      <a class="button small" href={`/plans/${pid}/board`}>{t("ppm.common.board")}</a>
+    {/if}
+    {#if links.includes("schedule")}
+      <a class="button small" href={`/plans/${pid}/schedule`}>{t("ppm.common.schedule")}</a>
+    {/if}
+    {#if links.includes("flow")}
+      <a class="button small" href={`/plans/${pid}/flow`}>Flow</a>
+    {/if}
   </p>
   <div class="surface stack">
     {#if record.kind}<div><strong>{t("detail.caseType")}</strong> {record.kind}</div>{/if}

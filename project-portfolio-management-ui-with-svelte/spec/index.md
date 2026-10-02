@@ -460,6 +460,27 @@ links are **never** a match signal (entity spec §1).
 > This is the build queue for the implemented app (MVP shipped); check off
 > in three-part PRs (spec + code + test).
 
+- [x] **2026-10-02 — LT-3: the "My work" page (`/me`).** The signed-in
+  person's open tasks in five due-date buckets (overdue / today / this week /
+  later / no due date), computed **in the browser's own IANA zone**, sent
+  explicitly as `?tz=` — the service never guesses a zone and refuses fixed
+  offsets (service spec §7.x). `PpmClient.myTasks(tz, asOf?)`, the `MyWork`
+  types, a nav entry, and `/me` in the mobile-audit route list. A deployment
+  makes it a persona's landing page with `view=me` (T-28f); the default landing
+  page is unchanged. English-first. **Not built:** a one-line quick-add (needs
+  the caller's own `person:` URN in the browser, which the BFF does not expose).
+  **Not run:** the Playwright mobile audit (no browser in this environment).
+  Tests: `tests/unit/ppm.test.ts` (client path).
+
+- [x] **2026-10-03 — RM-7: module-aware plan links.** `/plans/[pid]` hides the
+  Governance / Board / Schedule / Flow links whose feature module is off for
+  that plan, via the pure `src/lib/modules.ts` (`visiblePlanLinks`) over
+  `PpmClient.planModules(pid)`. **Fails open**: an unknown module list (still
+  loading, or the call failed) shows every link — hiding a feature because of a
+  transient error would be worse than a link the service then refuses with 404.
+  The sub-routes stay reachable by URL (the service answers `404
+  module_disabled`). Tests: `tests/unit/modules.test.ts`.
+
 - [ ] **FE-2 (M) Masked view + GDPR export UI for `/plans/[pid]`.** The
   service has carried `GET /api/plans/{pid}/masked` and
   `GET /api/plans/{pid}/export` since 2026-08-02 (this crate's own

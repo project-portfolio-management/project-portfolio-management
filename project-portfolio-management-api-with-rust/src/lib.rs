@@ -42,6 +42,7 @@ pub mod controllers;
 /// control may do.
 pub mod controls;
 pub mod data;
+pub mod discussion;
 /// Pure rules for the engineering-team features (tasks / burndown / MoSCoW).
 /// Flow Distribution: the mix of work types completed — feature,
 /// defect, risk, debt, and the honest fifth, `unclassified`.

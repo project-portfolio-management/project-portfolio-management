@@ -1725,6 +1725,11 @@ mod tests {
         "/api/canvases/{pid}/items",
         "/api/canvases/{pid}/items/{item_pid}",
         "/api/canvases/{pid}/items/{item_pid}/promote",
+        // comments and reactions (LT-4)
+        "/api/comments",
+        "/api/comments/{pid}",
+        "/api/comments/{pid}/history",
+        "/api/reactions",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -1758,6 +1763,7 @@ mod tests {
             crate::controllers::prioritisation::routes(),
             crate::controllers::saved_views::routes(),
             crate::controllers::canvas::routes(),
+            crate::controllers::discussion::routes(),
             crate::controllers::docs::routes(),
             crate::controllers::metrics::routes(),
         ];

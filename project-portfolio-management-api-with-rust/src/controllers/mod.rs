@@ -12,6 +12,7 @@ pub mod compliance;
 /// The Controlling-process register: standards, readings, actions, and
 /// the coverage report of what is **not** being controlled.
 pub mod controls;
+pub mod discussion;
 /// Flow Distribution: the feature / defect / risk / debt mix.
 pub mod distribution;
 pub mod docs;

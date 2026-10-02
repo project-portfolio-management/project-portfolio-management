@@ -53,8 +53,17 @@ audited; people stay references.
   error; unreadable plans' tasks are omitted, not shown masked.
   *Front-end:* `/me`, one focus list, no chrome. Pairs with LT-9.
 
-- [ ] **LT-4 (M) — Comments and reactions.** *Priority 2 (workers discuss
-  their own tasks daily).* `comments` and `reactions`
+- [x] **LT-4 (M) — Comments and reactions.** **Service landed 2026-10-02**
+  (`src/discussion.rs`, `src/controllers/discussion.rs`, migration
+  `m20261002_000002_comments_reactions`, 6 unit + 3 DB-gated request tests).
+  **Deviation:** one generic surface (`/api/comments`, `/api/reactions` with
+  `subject_kind` + `subject_pid`) instead of per-entity paths, so a new subject
+  kind is code, not routes. **Not built:** front-end; OpenAPI entries (on the
+  `KNOWN_UNDOCUMENTED` register); the author-only rule is proven by a unit
+  test, not an end-to-end token test (request tests run with auth off).
+  Notifications address an earlier commenter as `person:<sub>` only when the
+  `sub` is a UUID — an assumption to confirm with the auth service.
+  *Priority 2 (workers discuss their own tasks daily).* `comments` and `reactions`
   tables keyed `(subject_kind, subject_pid)`; endpoints under
   `/api/{subject}/{pid}/comments` and `/reactions`. Subject kinds: plan, task,
   risk, proposal, idea, canvas item. Reactions are a small closed set,

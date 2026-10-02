@@ -1,0 +1,21 @@
+//! `SeaORM` Entity — `comment_edits` (LT-4 comments and reactions).
+
+#![allow(missing_docs)]
+
+use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[sea_orm(table_name = "comment_edits")]
+pub struct Model {
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
+    #[sea_orm(primary_key)]
+    pub id: i64,
+    pub comment_pid: Uuid,
+    pub previous_body: String,
+    pub edited_by: Option<String>,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}

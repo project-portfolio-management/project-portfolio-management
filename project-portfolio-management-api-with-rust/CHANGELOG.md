@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — comments and reactions (LT-4, 2026-10-02)
+
+`comments`, `comment_edits` (append-only) and `reactions` (migration
+`m20261002_000002_comments_reactions`); routes `/api/comments[/{pid}[/history]]`
+and `/api/reactions`. Subjects: plan, task, risk, proposal, idea, canvas item.
+A plan-owned subject applies the owning plan's record-level read check. Only
+the author edits or deletes; every edit keeps the previous body; a repeat
+reaction is idempotent and every reaction kind is counted, zero included. A
+comment notifies the subject's owner and earlier commenters, never the author,
+once each.
+
 ### Added — strategy canvases (LT-1, 2026-10-02)
 
 `canvases` / `canvas_items` (migration `m20261002_000001_canvases`) and nine

@@ -43,6 +43,7 @@ pub mod plan_access_settings;
 pub mod plan_dependencies;
 pub mod plan_modules;
 pub mod plan_templates;
+pub mod planned_slots;
 pub mod plans;
 pub mod prelude;
 pub mod proposals;

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — personal planner (PL-4, 2026-10-03)
+
+`planned_slots`, `/api/me/planned-slots`, `/api/me/plan`: block time for a task and see a local day's slots in your own zone. Overlaps are reported as clashes (back-to-back is not one); a slot never changes the task's due date; slots also appear in the calendar feed as timed events.
+
 ### Added — live board updates (SSE) (PL-3, 2026-10-03)
 
 `GET /api/plans/{pid}/live`: a server-sent-event stream of task created / moved / updated and comment added on a plan, with `Last-Event-ID` resume from a bounded ring and an explicit `resync` when a gap cannot be replayed. In-process hub: per replica.

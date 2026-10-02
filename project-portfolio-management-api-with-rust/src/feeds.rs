@@ -90,6 +90,8 @@ pub struct Event {
     pub summary: String,
     /// Optional longer text.
     pub description: Option<String>,
+    /// A timed event's span in UTC (PL-4); `None` is an all-day event on `date`.
+    pub span: Option<(DateTime<Utc>, DateTime<Utc>)>,
 }
 
 fn ymd(d: NaiveDate) -> String {
@@ -113,8 +115,13 @@ pub fn ical(name: &str, stamp: DateTime<Utc>, events: &[Event]) -> String {
         lines.push("BEGIN:VEVENT".into());
         lines.push(format!("UID:{}", e.uid));
         lines.push(format!("DTSTAMP:{stamp}"));
-        lines.push(format!("DTSTART;VALUE=DATE:{}", ymd(e.date)));
-        lines.push(format!("DTEND;VALUE=DATE:{}", ymd(next)));
+        if let Some((a, b)) = e.span {
+            lines.push(format!("DTSTART:{}", a.format("%Y%m%dT%H%M%SZ")));
+            lines.push(format!("DTEND:{}", b.format("%Y%m%dT%H%M%SZ")));
+        } else {
+            lines.push(format!("DTSTART;VALUE=DATE:{}", ymd(e.date)));
+            lines.push(format!("DTEND;VALUE=DATE:{}", ymd(next)));
+        }
         lines.push(format!("SUMMARY:{}", ical_escape(&e.summary)));
         if let Some(d) = &e.description {
             lines.push(format!("DESCRIPTION:{}", ical_escape(d)));
@@ -237,6 +244,7 @@ mod tests {
             date: NaiveDate::from_ymd_opt(2026, 10, 31).unwrap(),
             summary: "Ship, then rest".into(),
             description: Some("line1\nline2".into()),
+            span: None,
         }];
         let a = ical("My work", at(), &events);
         let b = ical("My work", at(), &events);
@@ -255,6 +263,26 @@ mod tests {
             !a.contains("\n\n") && a.replace("\r\n", "").find('\n').is_none(),
             "CRLF only"
         );
+    }
+
+    #[test]
+    fn a_timed_event_is_utc_and_not_all_day() {
+        let start = Utc.with_ymd_and_hms(2026, 10, 3, 9, 30, 0).unwrap();
+        let end = Utc.with_ymd_and_hms(2026, 10, 3, 10, 15, 0).unwrap();
+        let cal = ical(
+            "x",
+            at(),
+            &[Event {
+                uid: "slot-1@ppm".into(),
+                date: start.date_naive(),
+                summary: "Focus".into(),
+                description: None,
+                span: Some((start, end)),
+            }],
+        );
+        assert!(cal.contains("DTSTART:20261003T093000Z\r\n"));
+        assert!(cal.contains("DTEND:20261003T101500Z\r\n"));
+        assert!(!cal.contains("VALUE=DATE"), "a timed event is not all-day");
     }
 
     #[test]

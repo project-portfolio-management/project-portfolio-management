@@ -200,6 +200,7 @@ impl Hooks for App {
             .add_route(controllers::timesheets::routes())
             .add_route(controllers::plan_templates::routes())
             .add_route(controllers::live::routes())
+            .add_route(controllers::planner::routes())
             .add_route(controllers::metrics::routes())
     }
 

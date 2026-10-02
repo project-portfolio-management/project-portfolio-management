@@ -24,7 +24,9 @@ use uuid::Uuid;
 
 use crate::auth::AuthUser;
 use crate::feeds::{self as rules, Entry, Event};
-use crate::models::_entities::{feed_tokens, milestones, notifications, plans, sprints, tasks};
+use crate::models::_entities::{
+    feed_tokens, milestones, notifications, planned_slots, plans, sprints, tasks,
+};
 
 fn db_err(e: sea_orm::DbErr) -> Error {
     Error::Model(ModelError::from(e))
@@ -128,6 +130,7 @@ fn refs_of(sub: &str) -> Vec<String> {
 /// milestones and sprint dates of the plans those tasks sit in, as all-day
 /// events with stable UIDs.
 #[debug_handler]
+#[allow(clippy::too_many_lines)] // one linear pipeline: tasks, plans, milestones, sprints, slots
 async fn calendar(
     State(ctx): State<AppContext>,
     Query(p): Query<TokenParams>,
@@ -177,6 +180,7 @@ async fn calendar(
             date: due,
             summary: t.title.clone(),
             description: Some(format!("Task in {plan}")),
+            span: None,
         });
     }
     if !live.is_empty() {
@@ -196,6 +200,7 @@ async fn calendar(
                 description: plan_names
                     .get(&m.plan_pid)
                     .map(|p| format!("Milestone of {p}")),
+                span: None,
             });
         }
         for s in sprints::Entity::find()
@@ -211,14 +216,47 @@ async fn calendar(
                 date: s.starts_on,
                 summary: format!("Sprint starts: {}", s.name),
                 description: None,
+                span: None,
             });
             events.push(Event {
                 uid: format!("sprint-end-{}@ppm", s.pid),
                 date: s.ends_on,
                 summary: format!("Sprint ends: {}", s.name),
                 description: None,
+                span: None,
             });
         }
+    }
+    // PL-4: the owner's own planned slots, as timed events (UTC). Slots on a
+    // task that is gone are skipped; recent and future ones only.
+    let cutoff = chrono::Utc::now() - chrono::Duration::days(7);
+    for s in planned_slots::Entity::find()
+        .filter(planned_slots::Column::Sub.eq(sub.as_str()))
+        .filter(planned_slots::Column::DeletedAt.is_null())
+        .filter(planned_slots::Column::EndsAt.gt(cutoff))
+        .order_by_asc(planned_slots::Column::StartsAt)
+        .limit(500)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        let Some(t) = tasks::Entity::find()
+            .filter(tasks::Column::Pid.eq(s.task_pid))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?
+        else {
+            continue;
+        };
+        let (a, b) = (s.starts_at.to_utc(), s.ends_at.to_utc());
+        events.push(Event {
+            uid: format!("slot-{}@ppm", s.pid),
+            date: a.date_naive(),
+            summary: format!("Focus: {}", t.title),
+            description: None,
+            span: Some((a, b)),
+        });
     }
     events.sort_by(|a, b| a.date.cmp(&b.date).then(a.uid.cmp(&b.uid)));
     let body = rules::ical("My work", chrono::Utc::now(), &events);

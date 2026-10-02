@@ -2050,6 +2050,7 @@ mod tests {
             crate::controllers::timesheets::routes(),
             crate::controllers::plan_templates::routes(),
             crate::controllers::live::routes(),
+            crate::controllers::planner::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();

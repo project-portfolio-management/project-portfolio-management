@@ -352,7 +352,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   retained window; a slow client is dropped, not buffered without bound;
   nothing is sent for a soft-deleted plan.
 
-- [ ] **PL-4 (M) — Personal planner.** `planned_slots` (`task_pid`, `sub`,
+- [x] **PL-4 (M) — Personal planner.** **Landed 2026-10-03.** Service: `planned_slots` (migration `m20261003_000014_planned_slots`), `POST /api/me/planned-slots`, remove (DELETE + POST twin), `GET /api/me/plan?day=&tz=`; `src/planner.rs` (4 unit tests) + `tests/planner.rs` end to end with real tokens. A slot is UTC, ≤12h, private to its owner, and **never changes the task's due date** (asserted). Overlaps are **allowed and reported as clashes** (transitively; back-to-back is **not** a clash). The day window is built from **local midnights** so it is 23/25 hours across daylight saving (unit-tested on the real 2026 US changes); each slot is returned both in UTC and rendered in the caller's zone; `due_on_day` lists what the day still owes. A slot on an unreadable task is omitted and counted. The slots also appear in the **iCalendar feed** as timed UTC events (`DTSTART:…Z`). **Side finding:** the LT-9 guard test matched `chrono::LocalResult` as `chrono::Local` — it now matches whole identifiers only. **Not built:** front-end. `planned_slots` (`task_pid`, `sub`,
   `starts_at`, `ends_at`); `GET /api/me/plan?day=` returns the day's slots
   beside LT-3's due buckets; the iCal feed (LT-7) includes them.
   **Acceptance:** overlapping slots for one user are allowed but **reported**

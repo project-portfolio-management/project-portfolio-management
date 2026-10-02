@@ -102,6 +102,27 @@ mod tests {
         assert!(parse_zone(" Europe/London ").is_ok(), "trimmed");
     }
 
+    /// Whether `needle` occurs in `text` as a whole identifier path — not as
+    /// the prefix of a longer name such as `chrono::LocalResult`.
+    fn contains_word(text: &str, needle: &str) -> bool {
+        text.match_indices(needle).any(|(i, _)| {
+            !text[i + needle.len()..]
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
+        })
+    }
+
+    #[test]
+    fn the_guard_matches_whole_names_only() {
+        assert!(contains_word("use chrono::Local;", "chrono::Local"));
+        assert!(contains_word("let t = Local::now();", "Local::now"));
+        assert!(!contains_word(
+            "match chrono::LocalResult::None",
+            "chrono::Local"
+        ));
+    }
+
     /// LT-9: no source file may read the process time zone. `clippy.toml`
     /// bans it too; this fails even where clippy is not run.
     #[test]
@@ -120,7 +141,7 @@ mod tests {
                     && path.file_name().is_some_and(|n| n != "tz.rs")
                 {
                     let text = std::fs::read_to_string(&path).expect("read file");
-                    if needles.iter().any(|n| text.contains(n.as_str())) {
+                    if needles.iter().any(|n| contains_word(&text, n)) {
                         offenders.push(path.display().to_string());
                     }
                 }

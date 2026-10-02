@@ -83,6 +83,7 @@ pub fn paths() -> Value {
     merge(&mut all, timesheet_paths());
     merge(&mut all, template_paths());
     merge(&mut all, live_paths());
+    merge(&mut all, planner_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -406,6 +407,31 @@ fn live_paths() -> Value {
                 "Events: task_created, task_moved, task_updated, comment_added (identifiers and the changed fact only). The plan is read-checked once at connect: one the caller cannot see (record-level policy or a private plan) or that no longer exists is 404 before any event. Each event carries an id; a reconnecting client sends Last-Event-ID and is replayed what it missed from a bounded in-memory ring, or receives a resync event when the gap is larger than the ring remembers, so a gap is never silent. A subscriber that falls behind the bounded channel gets a resync event and is disconnected rather than buffered without limit. Optional limit closes the stream after that many events and idle_ms after that long with nothing to send, for clients that cannot hold a connection. Limits: the hub is per process, so with several replicas an event reaches only the clients connected to the replica that handled the write.",
                 vec![uuid_param("pid"), query("limit", false, "Close after this many events"), query("idle_ms", false, "Close after this many milliseconds idle")],
                 &[("200", "text/event-stream"), ("404", "Unknown plan, or one the caller cannot see")])
+        }
+    })
+}
+
+/// Personal planner (PL-4).
+fn planner_paths() -> Value {
+    json!({
+        "/api/me/planned-slots": {
+            "post": op("planner", "Block time for a task",
+                "Requires a bearer token and the ability to read the task. A slot runs forward and is at most 12 hours; instants are UTC. It never changes the task's due date. Overlapping slots are allowed (reported as clashes by GET /api/me/plan, never refused). At most 2000 live slots per person.",
+                vec![], &[("200", "The slot"), ("401", "Missing or invalid bearer token"), ("404", "Unknown task, or one the caller cannot read"), ("422", "ends_at not after starts_at, over 12 hours, or too many slots")])
+        },
+        "/api/me/planned-slots/{pid}": {
+            "delete": op("planner", "Remove one of your own slots",
+                "Another person's slot is 404, identically, so a slot's existence is not disclosed.", vec![uuid_param("pid")], &[("200", "Removed"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/me/planned-slots/{pid}/delete": {
+            "post": op("planner", "Remove one of your own slots (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", vec![uuid_param("pid")], &[("200", "Removed"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/me/plan": {
+            "get": op("planner", "The caller's slots for one local calendar day, in their zone",
+                "day is a calendar date and tz an IANA zone (fixed offsets are refused). The window is built from local midnights, so it is 23 or 25 hours across a daylight-saving change. Each slot carries its UTC instants and the same instants rendered in tz. clashes lists groups of overlapping slots (transitively; back-to-back is not a clash). due_on_day lists the caller's open tasks due that day, i.e. what the day still owes. A slot on a task the caller can no longer read is omitted and counted.",
+                vec![query("day", true, "YYYY-MM-DD"), query("tz", true, "An IANA zone")],
+                &[("200", "day, tz, window, slots, clashes, due_on_day, omitted_unreadable"), ("401", "Missing or invalid bearer token"), ("422", "Invalid day or tz")])
         }
     })
 }

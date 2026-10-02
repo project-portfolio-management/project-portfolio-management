@@ -91,6 +91,7 @@ pub mod openapi_more;
 pub mod phase;
 pub mod plan_access;
 pub mod plan_templates;
+pub mod planner;
 pub mod prioritisation;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;

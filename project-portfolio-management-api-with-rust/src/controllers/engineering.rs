@@ -369,6 +369,34 @@ async fn update_task(
     format::json(task_view(&row))
 }
 
+/// RM-2: a move may be restricted to named roles. Like the other refusals
+/// in the move path this writes **no** transition row. The caller's roles
+/// are the token's `role` attribute (a vocabulary the deployment declares, as
+/// with `view`); a caller with none holds no role.
+fn enforce_move_roles(
+    workflow: &crate::workflow::WorkflowDef,
+    from: &str,
+    to: &str,
+    caller: &MaybeAuthUser,
+) -> Result<()> {
+    let roles = caller
+        .claims()
+        .and_then(|c| c.attrs.get("role").cloned())
+        .unwrap_or_default();
+    crate::workflow::may_transition_as(workflow, from, to, &roles).map_err(|denied| {
+        Error::CustomError(
+            axum::http::StatusCode::FORBIDDEN,
+            loco_rs::controller::ErrorDetail::new(
+                "forbidden",
+                format!(
+                    "moving `{from}` -> `{to}` is restricted to the role(s): {}",
+                    denied.allowed.join(", ")
+                ),
+            ),
+        )
+    })
+}
+
 /// `PATCH /api/plans/{pid}/tasks/{t_pid}` body: the move.
 #[derive(Debug, Deserialize)]
 struct MovePayload {
@@ -459,6 +487,7 @@ async fn move_task(
             task.status, payload.status
         )));
     }
+    enforce_move_roles(&workflow, &task.status, &payload.status, &caller)?;
     // WIP limits (env-configured, per plan board): refuse a move
     // into a capped column that is already full. No config ⇒ no caps.
     check_wip(&ctx, item.pid, &payload.status, &workflow).await?;

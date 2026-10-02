@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — per-role workflow transitions (RM-2, 2026-10-02)
+
+`workflow_transitions.roles`: a workflow transition may name the roles allowed to make it (empty means anyone, so every existing workflow is unchanged). A restricted move is refused `403` naming the roles and writes no transition row. Roles are the token's `role` attribute.
+
 ### Added — typed custom fields (RM-1, 2026-10-02)
 
 `custom_field_defs` / `custom_field_values` and `/api/custom-fields` (definitions, values, search). Types text, date, bool, integer, list, multi_list; plan fields may be kind-scoped; a required task field blocks task creation; values are stored apart from the plan payload so they never reach the matcher; withdrawing a definition keeps stored values readable.

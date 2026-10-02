@@ -50,6 +50,7 @@ mod m20261003_000001_plan_modules;
 mod m20261003_000002_components;
 mod m20261003_000003_custom_field_defs;
 mod m20261003_000004_custom_field_values;
+mod m20261003_000005_workflow_transition_roles;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -100,6 +101,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000002_components::Migration),
             Box::new(m20261003_000003_custom_field_defs::Migration),
             Box::new(m20261003_000004_custom_field_values::Migration),
+            Box::new(m20261003_000005_workflow_transition_roles::Migration),
             // inject-above (do not remove this comment)
         ]
     }

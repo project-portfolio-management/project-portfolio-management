@@ -200,7 +200,7 @@ started.
   `Program`; filtering by a custom field returns exactly the matching rows.
   *Scope question:* plan.md "Open questions (Redmine)".
 
-- [ ] **RM-2 (S) — Per-role workflow transitions.** Add an optional `roles[]`
+- [x] **RM-2 (S) — Per-role workflow transitions.** **Landed 2026-10-02.** `workflow_transitions.roles` (migration `m20261003_000005_workflow_transition_roles`, empty = anyone); `workflow::may_transition_as` (3 unit tests); the move path refuses with 403 naming the allowed roles and writes **no** transition row. Roles come from the token's `role` attribute (a deployment-declared vocabulary, like `view`). `tests/workflow_roles.rs` end to end with real tokens. **Not built:** front-end display of the role on a transition. Add an optional `roles[]`
   to `workflow_transitions`: when present, only a caller whose ABAC role
   attribute is listed may make that move. Empty ⇒ unconstrained, preserving
   T-15's opt-in constraint.

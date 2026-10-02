@@ -966,7 +966,7 @@ fn workflow_paths() -> Value {
             "post": {
                 "tags": ["workflow"],
                 "summary": "Register a state vocabulary for a plan's tasks or issues",
-                "description": "Every state must declare a category (todo, active, waiting, done): the board, the burndown and every flow figure are computed from what a state means, not its name, so a state without one is refused by name here and by the schema too. A plan-scoped workflow is never the deployment default — default means the fallback when a plan has none.",
+                "description": "Every state must declare a category (todo, active, waiting, done): the board, the burndown and every flow figure are computed from what a state means, not its name, so a state without one is refused by name here and by the schema too. A plan-scoped workflow is never the deployment default — default means the fallback when a plan has none. A transition may name roles; a move restricted to roles is refused 403 (naming them, and writing no transition row) for a caller whose token role attribute holds none of them, while a transition with no roles stays open to anyone.",
                 "responses": {
                     "200": { "description": "Registered" },
                     "404": { "description": "plan_pid names no live plan" },

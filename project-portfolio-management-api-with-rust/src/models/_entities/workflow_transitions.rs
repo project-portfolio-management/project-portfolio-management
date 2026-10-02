@@ -20,6 +20,8 @@ pub struct Model {
     pub workflow_pid: Uuid,
     pub from_key: String,
     pub to_key: String,
+    /// Roles allowed to make this move; an empty array means anyone.
+    pub roles: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

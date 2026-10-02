@@ -104,6 +104,10 @@ pub struct TransitionDef {
     pub from: String,
     /// Target state key.
     pub to: String,
+    /// Roles allowed to make this move (RM-2). **Empty means anyone**, so a
+    /// workflow that declares none behaves exactly as before.
+    #[serde(default)]
+    pub roles: Vec<String>,
 }
 
 /// A complete workflow.
@@ -210,6 +214,52 @@ pub fn may_transition(def: &WorkflowDef, from: &str, to: &str) -> bool {
         return true;
     }
     def.transitions.iter().any(|t| t.from == from && t.to == to)
+}
+
+/// Why a role-restricted move is refused.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RoleDenied {
+    /// Every role that could make this move (the union across any matching
+    /// transitions), so the refusal can say who to ask.
+    pub allowed: Vec<String>,
+}
+
+/// Whether a caller holding `roles` may make the move `from -> to`, **given
+/// that the move is already permitted** by [`may_transition`] (RM-2).
+///
+/// A transition with no roles is open to anyone; so is a workflow with no
+/// transitions at all. If several transitions declare the same move, any one
+/// that admits the caller is enough. Otherwise the refusal lists every role
+/// that would have been accepted.
+///
+/// # Errors
+///
+/// [`RoleDenied`] when every matching transition is role-restricted and the
+/// caller holds none of its roles.
+pub fn may_transition_as(
+    def: &WorkflowDef,
+    from: &str,
+    to: &str,
+    roles: &[String],
+) -> Result<(), RoleDenied> {
+    let matching: Vec<&TransitionDef> = def
+        .transitions
+        .iter()
+        .filter(|t| t.from == from && t.to == to)
+        .collect();
+    if matching.is_empty() || matching.iter().any(|t| t.roles.is_empty()) {
+        return Ok(());
+    }
+    if matching
+        .iter()
+        .any(|t| t.roles.iter().any(|r| roles.contains(r)))
+    {
+        return Ok(());
+    }
+    let mut allowed: Vec<String> = matching.iter().flat_map(|t| t.roles.clone()).collect();
+    allowed.sort();
+    allowed.dedup();
+    Err(RoleDenied { allowed })
 }
 
 /// The category of a declared state, or `None` if undeclared.
@@ -390,6 +440,7 @@ mod tests {
             transitions: vec![TransitionDef {
                 from: "dup".to_string(),
                 to: "nowhere".to_string(),
+                roles: vec![],
             }],
         };
         let problems = validate(&def).unwrap_err();
@@ -413,16 +464,83 @@ mod tests {
 
     /// Declared transitions constrain, and only the declared ones pass.
     #[test]
+    fn a_role_restricted_move_admits_only_those_roles() {
+        let mut def = built_in_task();
+        def.transitions = vec![
+            TransitionDef {
+                from: "in_review".to_string(),
+                to: "done".to_string(),
+                roles: vec!["lead".to_string(), "qa".to_string()],
+            },
+            TransitionDef {
+                from: "todo".to_string(),
+                to: "in_progress".to_string(),
+                roles: vec![],
+            },
+        ];
+        let lead = vec!["lead".to_string()];
+        let nobody: Vec<String> = vec![];
+        assert!(may_transition_as(&def, "in_review", "done", &lead).is_ok());
+        let denied = may_transition_as(&def, "in_review", "done", &nobody).unwrap_err();
+        assert_eq!(
+            denied.allowed,
+            ["lead", "qa"],
+            "the refusal names who could"
+        );
+        assert!(
+            may_transition_as(&def, "in_review", "done", &["dev".to_string()]).is_err(),
+            "holding some other role is not enough"
+        );
+        // Unrestricted transition: anyone, including no roles at all.
+        assert!(may_transition_as(&def, "todo", "in_progress", &nobody).is_ok());
+    }
+
+    #[test]
+    fn duplicate_declarations_of_one_move_are_unioned() {
+        let mut def = built_in_task();
+        def.transitions = vec![
+            TransitionDef {
+                from: "a".into(),
+                to: "b".into(),
+                roles: vec!["lead".into()],
+            },
+            TransitionDef {
+                from: "a".into(),
+                to: "b".into(),
+                roles: vec!["qa".into()],
+            },
+        ];
+        assert!(may_transition_as(&def, "a", "b", &["qa".to_string()]).is_ok());
+        assert!(may_transition_as(&def, "a", "b", &["lead".to_string()]).is_ok());
+        assert!(may_transition_as(&def, "a", "b", &["dev".to_string()]).is_err());
+        // One unrestricted declaration opens the move to everyone.
+        def.transitions.push(TransitionDef {
+            from: "a".into(),
+            to: "b".into(),
+            roles: vec![],
+        });
+        assert!(may_transition_as(&def, "a", "b", &[]).is_ok());
+    }
+
+    #[test]
+    fn an_unconstrained_workflow_is_open_to_every_role() {
+        let def = built_in_task();
+        assert!(may_transition_as(&def, "todo", "done", &[]).is_ok());
+    }
+
+    #[test]
     fn declared_transitions_constrain() {
         let mut def = built_in_task();
         def.transitions = vec![
             TransitionDef {
                 from: "todo".to_string(),
                 to: "in_progress".to_string(),
+                roles: vec![],
             },
             TransitionDef {
                 from: "in_progress".to_string(),
                 to: "done".to_string(),
+                roles: vec![],
             },
         ];
         assert!(may_transition(&def, "todo", "in_progress"));

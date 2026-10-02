@@ -74,6 +74,7 @@ async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::Wo
             .map(|row| rules::TransitionDef {
                 from: row.from_key.clone(),
                 to: row.to_key.clone(),
+                roles: serde_json::from_value(row.roles.clone()).unwrap_or_default(),
             })
             .collect(),
     })
@@ -154,6 +155,9 @@ struct StatePayload {
 struct TransitionPayload {
     from: String,
     to: String,
+    /// Roles allowed to make this move (RM-2); empty/absent means anyone.
+    #[serde(default)]
+    roles: Vec<String>,
 }
 
 /// Write the workflow and its states and transitions.
@@ -204,6 +208,7 @@ async fn persist(
             workflow_pid: ActiveValue::set(workflow.pid),
             from_key: ActiveValue::set(transition.from.clone()),
             to_key: ActiveValue::set(transition.to.clone()),
+            roles: ActiveValue::set(serde_json::json!(transition.roles)),
             ..Default::default()
         }
         .insert(&ctx.db)
@@ -268,9 +273,20 @@ async fn create(
             .map(|t| rules::TransitionDef {
                 from: t.from.trim().to_string(),
                 to: t.to.trim().to_string(),
+                roles: t.roles.iter().map(|r| r.trim().to_string()).collect(),
             })
             .collect(),
     };
+    if def
+        .transitions
+        .iter()
+        .flat_map(|t| &t.roles)
+        .any(|r| r.is_empty() || r.chars().count() > 64)
+    {
+        return Err(unprocessable(
+            "transition roles must be non-blank names of at most 64 characters",
+        ));
+    }
     if let Err(problems) = rules::validate(&def) {
         return Err(unprocessable(&format!(
             "workflow is not usable: {}",

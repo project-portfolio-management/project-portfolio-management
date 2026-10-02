@@ -281,3 +281,122 @@ relation that caused it.
 Inbound email; admin impersonation header; SCM browsing; forums/news modules;
 plugin and theme system; LDAP / self-registration modes. Reasons in
 [plan.md §10](plan.md).
+
+---
+
+# Tasks from Platform Collective (Huly)
+
+Derived from [plan.md](plan.md) "Third source: Platform Collective" (research
+2026-10-02). IDs are `PL-n`; same sizes, tick rule and conventions as above.
+Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
+
+- [ ] **PL-1 (S) — Approval requests on any subject.** Extend `reviews` (or
+  add a thin `approval_requests`) so the subject may be a task, budget line,
+  scenario commit, canvas item or custom subject, with a `decision_comment`
+  required on reject. Status `pending → approved | rejected | withdrawn`.
+  **Acceptance:** an approver who is not named is refused 403; a reject without
+  a comment is 422; a decided request cannot be decided again (409); the
+  decision is audited with the comment; withdrawing writes no decision;
+  record-level read check applies to the subject's owning plan.
+  *Reconcile with* the existing review consensus (`/reviews/consensus`).
+
+- [ ] **PL-2 (L) — Multi-step approval processes** — **decide after PL-1.** A
+  `process` is an ordered list of steps (`approve`, `todo`, `notify`), each
+  naming an approver / assignee; starting one creates an `execution` with a
+  per-step `execution_log` (started, completed, skipped, failed). Triggered
+  manually or by an automation action.
+  **Acceptance:** a step runs only after its predecessor completes; a rejected
+  approval ends the execution `rejected` and skips the rest, **logging each
+  skipped step**; an execution is resumable after a restart (state in the
+  database, not memory); the log is append-only; a process definition edited
+  mid-run does not change a running execution (it is pinned by version).
+
+- [ ] **PL-3 (M) — Live board updates (SSE).** `GET
+  /api/plans/{pid}/live` as `text/event-stream`: task created / moved / edited,
+  comment added, with the same record-level read check as the plan.
+  **Acceptance:** a task move by one client appears on a second open stream;
+  a caller who cannot read the plan gets 403 before any event; the stream
+  resumes from `Last-Event-ID` without duplicating or dropping within the
+  retained window; a slow client is dropped, not buffered without bound;
+  nothing is sent for a soft-deleted plan.
+
+- [ ] **PL-4 (M) — Personal planner.** `planned_slots` (`task_pid`, `sub`,
+  `starts_at`, `ends_at`); `GET /api/me/plan?day=` returns the day's slots
+  beside LT-3's due buckets; the iCal feed (LT-7) includes them.
+  **Acceptance:** overlapping slots for one user are allowed but **reported**
+  as a clash, not refused; a slot on a task the user can no longer read is
+  omitted; slots are in UTC and rendered in the caller's zone (LT-9); a slot
+  never changes the task's due date.
+
+- [ ] **PL-5 (M) — Notification preferences.** `notification_prefs` keyed
+  `(sub, kind, channel)` with `enabled` and an optional `digest` (`instant |
+  daily`); an in-app inbox that groups by subject. Defaults preserve today's
+  behaviour (everything on, in-app).
+  **Acceptance:** a disabled kind writes no notification for that user and
+  every other recipient is unaffected; a user with no preferences gets exactly
+  the current behaviour (pinned by an existing test unchanged); a digest
+  collapses N events into one entry listing all N; preferences are per-user
+  and never readable by another user.
+  *Enabler for* LT-4, RM-3, LT-6, RM-11.
+
+- [ ] **PL-6 (L) — Controlled documents** — **decide with LT-8.** Versioned
+  documents with `draft → in_review → approved → effective → superseded`,
+  an effective date, and a mandatory approval (PL-1) before `effective`.
+  **Acceptance:** a version once `effective` is immutable (an edit creates the
+  next draft); exactly one version is effective at a date; superseding records
+  the successor; a document with no approval cannot become effective; every
+  transition is audited. Recommendation: do not build unless a regulator or
+  auditor asks (`compliance/*` surfaces first).
+
+- [ ] **PL-7 (M) — Guest access.** A `guest` principal scoped to named
+  `(subject_kind, subject_pid)` grants, read-only by default, optionally
+  comment-only (LT-4). Time-boxed (`expires_at`), revocable, listed per plan.
+  **Acceptance:** a guest sees only granted subjects and gets 404 elsewhere;
+  an expired or revoked grant stops working immediately; a guest never sees
+  people references (the masked view); every grant and revoke is audited;
+  guests cannot enumerate plans or search.
+
+- [ ] **PL-8 (M) — Attachment text extraction for search.** After LT-5: extract
+  text from PDF / DOCX / plain text on upload into the search index, scoped to
+  the subject's ABAC.
+  **Acceptance:** a phrase inside an uploaded PDF finds its plan for a reader
+  who may read it and **not** for one who may not; an unparseable file is
+  stored, flagged `unindexed`, and never fails the upload; extraction runs
+  out of the request path; deleting the attachment removes its text from the
+  index. *Privacy:* extracted text is personal data if the file is; it
+  inherits the attachment's masking.
+
+- [ ] **PL-10 (S) — Printable output.** `GET …/pack.pdf` for the board pack
+  and a plan summary, server-rendered, deterministic for fixed data, carrying
+  its `as_of`. Signing is **out of scope** until a signer is named (plan.md
+  open question).
+  **Acceptance:** two renders of unchanged data are byte-identical; the PDF
+  states its `as_of` and the masking profile used; a caller denied the JSON
+  pack is denied the PDF; masked fields do not appear in the PDF text layer.
+
+- [ ] **PL-11 (S) — Components (task grouping within a plan).** `components`
+  per plan (`name`, optional `lead_ref`) and an optional `component_pid` on a
+  task; filter and group-by in lists and saved reports. Corroborated by
+  Redmine's issue categories.
+  **Acceptance:** deleting a component with tasks is refused 409 (or reassigns
+  explicitly — never silently orphans); a task's component must belong to the
+  same plan; group-by reports an `unassigned` bucket rather than dropping
+  those tasks; counts reconcile with the unfiltered total.
+
+## Amendments
+
+- **LT-2 (plan templates):** a template **carries its child tasks** (Huly's
+  `IssueTemplate` has `IssueTemplateChild`); acceptance gains "children are
+  instantiated with fresh pids, preserving order and nesting, and none carry
+  assignees or dates".
+- **LT-11 (timesheets):** check Huly's `TimeReportDayType`; if it models
+  overtime / holiday, add a `day_type` to time entries, sourced from the
+  existing `non_working` periods. **Unverified**: confirm the enum values
+  before designing.
+
+## Not taken (Huly)
+
+Microservice architecture and its five datastores; Yjs co-editing (until a
+wiki exists and concurrency is a real complaint); CRM, HR, recruiting,
+inventory, billing, video meetings; an AI assistant inside the service;
+desktop app and presence. Reasons in [plan.md §16](plan.md).

@@ -214,3 +214,94 @@ individual worker's path; Redmine informs the PMO's configurability.
 - Are custom fields ever **matchable** (deduplication signal)? Assumed no, in
   keeping with the matchable / operational partition.
 - Is outbound email wanted at all, given in-app-only is a stated design stance?
+
+---
+
+# Third source: Platform Collective (a Huly fork)
+
+Research date: 2026-10-02. Subject:
+[Platform-Collective/platform](https://github.com/Platform-Collective/platform)
+(TypeScript + Svelte; EPL-2.0; 57 stars; pushed today). An independent fork of
+**Huly Platform**, so this is evidence about the Huly model.
+
+**Evidence base.** Read: the README, `ARCHITECTURE_OVERVIEW.md`, the directory
+listings of `models/`, `plugins/` and `server-plugins/`, and the exported type
+names of the `tracker`, `request` and `process` plugins. Not read: any
+implementation, the UI, or enum values (e.g. what `TimeReportDayType`
+contains is **unverified**). **Licence note:** EPL-2.0 is weak copyleft; this
+plan takes *ideas only*, and no code should be copied from it.
+
+## 13. What it is
+
+Not a project-management tool but a **business-application framework** whose
+project tracker is one plugin among CRM, HR, recruiting, chat, documents,
+calendar, inventory and quality management. Architecture: 30+ microservices
+(account, transactor, workspace, fulltext, collaborator, export, print, sign,
+process …) over CockroachDB, Elasticsearch, MinIO, Redpanda (Kafka) and Redis,
+with a WebSocket transactor pushing every mutation to clients and a Yjs CRDT
+service for co-editing.
+
+The contrast is the main finding: Huly needs five infrastructure systems and
+30 services; this service is one binary over Postgres. We should take its
+*product* ideas, not its *shape*.
+
+## 14. Where we already match or lead
+
+- Issue-tracker core (statuses, milestones, sprints, time reports, templates
+  planned in LT-2), automation (T-21 / `automations`), notifications, full-text
+  search, export, audit, OpenTelemetry tracing, event outbox.
+- We have no equivalent of its CRM / HR / ATS / chat / video modules, by design
+  (out of scope for a PPM service).
+
+## 15. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **Approval requests** with a status and per-decision comments, on any subject | Our `reviews` cover idea / proposal / plan; gate reviews cover stages. Budget changes, scenario commits and task moves have no ask-and-decide step | High; small extension of `reviews` | PL-1 |
+| 2 | **Multi-step processes** — states, human steps (to-do, approve), an execution record with a per-step log | Our automations are one trigger → N actions; real governance is "finance approves, then the director". Huly models `Process`, `Execution`, `ExecutionLog`, `ApproveRequest` | Medium-high; decide scope | PL-2 |
+| 3 | **Live updates** — pushed changes to open boards | A worker and a PM looking at the same board see stale data. Huly's WebSocket transactor is its core. SSE fits our stack | Medium-high | PL-3 |
+| 4 | **Personal planner** — schedule a to-do into a calendar slot | Extends LT-3 "My work" from *what is due* to *when I'll do it*; Huly's `time` plugin | Medium; worker audience | PL-4 |
+| 5 | **Notification preferences** per event type and channel, one inbox | Our notifications are unconditional. With LT-4, RM-3, LT-6 and RM-11 adding sources and channels, users need control or it becomes noise | High (enabler) | PL-5 |
+| 6 | **Controlled documents** — versioned, reviewed, approved, effective-dated | A QMS capability; overlaps LT-8 (wiki) and our compliance / regulator surfaces | Medium; decide with LT-8 | PL-6 |
+| 7 | **Guest access** — an external collaborator scoped to named subjects | We have `reviewer_scope: external` on reviews only. Vendors and clients need a scoped view of a plan | Medium | PL-7 |
+| 8 | **Document text extraction for search** (their `rekoni`) | Makes LT-5's attachments findable; raises a masking question | Low-medium; after LT-5 | PL-8 |
+| 9 | **Issue templates with child issues** | Direct evidence for LT-2's design: a template carries its children | High; amend LT-2 | amend LT-2 |
+| 10 | **Printable output (PDF) and signed documents** | `board/pack` and regulator extracts are JSON/CSV today; boards want a document. Huly has `print` and `sign` services | Medium | PL-10 |
+| 11 | **Components** (grouping tasks inside a plan) | Huly *and* Redmine (issue categories) both have it: two independent sources agreeing. Cheap, filterable, reportable | Medium-high | PL-11 |
+| 12 | **Time-report day types** | Huly's `TimeReportDayType` suggests overtime / holiday handling; our `non_working` periods cover only the calendar side. Values unverified | Low; verify first | amend LT-11 |
+
+## 16. Deliberately not taken (Huly)
+
+- **The microservice shape** — 30 services and five datastores for a registry
+  of plans is the wrong trade; we keep one service and Postgres.
+- **CRDT co-editing (Yjs collaborator).** Only worth it if LT-8's wiki is built
+  *and* concurrent editing is a real complaint. Optimistic concurrency with
+  ETags (already used by the dashboard) is the cheap answer first.
+- **CRM, HR, recruiting, inventory, billing, video meetings and recording.**
+  Other products.
+- **An AI assistant inside the service.** Same refusal as T-28: it would be the
+  one output that cannot disclose its inputs.
+- **Desktop app, presence indicators.** Not a stated need.
+
+## 17. Sequencing across all three sources
+
+1. **Enabler first: PL-5** (notification preferences). LT-4, RM-3, LT-6 and
+   RM-11 all add notification volume; shipping them without control creates
+   the noise the worker audience is trying to escape.
+2. Worker path as before (LT-3, LT-12, LT-9, RM-7), with **PL-4** (planner)
+   and **PL-3** (live board) as its second wave.
+3. PMO governance: RM-1, RM-2, **PL-1** (approvals), then **PL-2** only after
+   PL-1 shows whether one-step approvals suffice.
+4. **PL-11** (components) with RM-1 (custom fields): both are "name your own
+   grouping".
+5. Decide together: LT-8, PL-6, PL-8 (documents family).
+
+## 18. Open questions for the owner (Huly)
+
+- Approvals: is "ask and decide" on arbitrary subjects wanted, or only on the
+  existing review subjects?
+- Do boards need a PDF, and does it need a signature (who signs: the system or
+  a person)?
+- External guests: vendors only, or also clients? It changes the disclosure
+  model.
+- Is live update wanted for every board, or only plans a user has open?

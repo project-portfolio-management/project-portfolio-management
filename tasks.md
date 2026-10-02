@@ -161,3 +161,123 @@ audited; people stay references.
 Plugin runtime and marketplace; JSON-RPC API; screen/webcam recording;
 gamification; LDAP / OIDC / 2FA (authentication service, EV-2). Reasons in
 [plan.md §4](plan.md).
+
+---
+
+# Tasks from Redmine
+
+Derived from [plan.md](plan.md) "Second source: Redmine" (research 2026-10-02).
+IDs are `RM-n`; same sizes, tick rule and conventions as above. Nothing here is
+started.
+
+- [ ] **RM-1 (L) — Typed custom fields.** `custom_field_defs` (`key`,
+  `label`, `type` ∈ `text | date | bool | integer | list | multi_list`,
+  `applies_to` ∈ `plan | task`, optional `kinds[]`, `required`, `options[]`)
+  and values stored on the record's `data` JSON under a `custom` key, validated
+  against the definition. Filterable on list endpoints and projectable in saved
+  reports. **Never fed to the matcher** (the matchable / operational partition).
+  **Acceptance:** a value of the wrong type is refused 422; a `required` field
+  blocks create; a `list` value outside `options` is refused; deleting a
+  definition keeps stored values readable (soft-delete the definition, never
+  silently drop data); a definition scoped to `kind=Project` is rejected on a
+  `Program`; filtering by a custom field returns exactly the matching rows.
+  *Scope question:* plan.md "Open questions (Redmine)".
+
+- [ ] **RM-2 (S) — Per-role workflow transitions.** Add an optional `roles[]`
+  to `workflow_transitions`: when present, only a caller whose ABAC role
+  attribute is listed may make that move. Empty ⇒ unconstrained, preserving
+  T-15's opt-in constraint.
+  **Acceptance:** a transition restricted to `lead` is refused 403 for another
+  role and **writes no transition row**; the same move by `lead` succeeds; a
+  workflow with no `roles` behaves exactly as before; the refusal names the
+  allowed roles.
+
+- [ ] **RM-3 (M) — Watchers.** `watchers` table keyed `(subject_kind,
+  subject_pid, sub)`; `POST/DELETE /api/watchers`, `GET` a subject's watchers
+  and `GET /api/me/watching`. A watcher is added to LT-4's `notify_targets`
+  and to status-change notifications. Auto-watch on creating or being assigned
+  a subject (opt-out per user).
+  **Acceptance:** watching twice is idempotent; a watcher gets a notification
+  on comment and on status change exactly once; the actor of a change is never
+  notified of their own change; a watcher of a plan the caller can no longer
+  read stops receiving notifications and sees nothing (record-level read check
+  re-applied at delivery).
+
+- [ ] **RM-5 (M) — Subtask roll-up audit and fill.** Verify what a parent
+  derives from its children today (start, due, % done, estimate, spent time,
+  priority). Where Redmine's rule is sound and we lack it, add it **derived on
+  read** (never stored, so it cannot drift): start = earliest child start, due
+  = latest child due, spent/estimated = sums, done ratio = estimate-weighted.
+  **Acceptance:** a findings list (carried / missing per field); for each added
+  field, a test that it equals the recomputation from children; a parent with
+  no children reports `null` with a reason, not zero; a child with no estimate
+  is excluded from the weighting and **named**, not treated as zero.
+
+- [ ] **RM-6 (S) — Atom activity feeds.** `GET /api/feeds/activity.atom`,
+  `…/plans/{pid}.atom`, `…/me.atom` with a per-user revocable feed token (shared
+  with LT-7's iCal token). Entries from the existing activity events.
+  **Acceptance:** valid Atom 1.0; entry ids are stable across fetches; a revoked
+  token returns 401; entries the caller cannot read are absent; `If-None-Match`
+  returns 304 when nothing changed (reuse the ETag approach of `at-a-glance`).
+
+- [ ] **RM-7 (M) — Per-plan module toggles.** A `modules` set on a plan
+  (`tasks`, `time`, `canvases`, `comments`, `governance`, `financials`,
+  `risks`, …) with deployment defaults and a personal-plan preset (`tasks` +
+  `time`). A disabled module's routes for that plan return 404 and its
+  front-end panels disappear. Disabling never deletes data.
+  **Acceptance:** with `risks` off, `GET /plans/{pid}/risks` is 404 and the
+  data is intact when re-enabled; defaults apply to a plan with no explicit
+  set; the toggle is audited; a plan created from the personal preset exposes
+  only its modules. *Pairs with LT-12 simple mode.*
+
+- [ ] **RM-8 (S) — Private plans and tasks.** A `visibility` of `private`
+  limits a plan (and its tasks) to its members and admins, via the existing
+  record-level ABAC rather than a second mechanism.
+  **Acceptance:** a non-member gets 404, not 403, so existence is not
+  disclosed; search, duplicate-check and rollups omit it for non-members; a
+  member sees it everywhere; flipping to public is audited.
+
+- [ ] **RM-9 (M) — Bulk edit, copy and move tasks.** `POST
+  /api/tasks/bulk` with `{ids, set: {...}}`, `…/copy`, `…/move` between plans.
+  Moving re-validates against the **target** plan's workflow; per-item results
+  like T-8's report (`ok | refused` + reason), one failure never aborts.
+  **Acceptance:** a move to a plan whose workflow lacks the task's status maps
+  it to that workflow's initial state **and says so**; copy gets a fresh pid and
+  no transition history; counts reconcile; every change is audited.
+
+- [ ] **RM-10 (S) — Time reports.** Extend saved reports (T-28e) with a
+  `collection: "time_entries"`, `group_by` ∈ `person | plan | category |
+  billable | month`, integer minutes, CSV. Depends on T-28e's `group_by`
+  (landed) and shares LT-11's views.
+  **Acceptance:** group totals equal the sum of entries (no rounding drift);
+  billable and non-billable never merge without both shown; a person with no
+  entries in range reports `null`, not zero.
+
+- [ ] **RM-11 (S) — Outbound email sink** — **decide first.** In-app only is a
+  stated stance. If email is wanted: a sink in LT-6's framework (templates, a
+  per-user opt-in, a digest option, no tracking pixels). Inbound email is
+  refused (plan.md §10).
+  **Acceptance (if built):** a user without an address or opt-in receives
+  nothing and the notification still lands in-app; a failed send is retried and
+  never blocks the write; the message contains no more than the in-app text.
+
+- [ ] **RM-12 (S) — REST ergonomics.** `?include=` on plan and task GET to
+  embed named sub-resources (`milestones`, `risks`, `time`, …); `total_count`,
+  `limit`, `offset` present on every list.
+  **Acceptance:** `include` of an unknown name is 422 listing the allowed
+  names; an included sub-resource the caller cannot read is omitted, not
+  masked; the OpenAPI document describes the parameter on each route.
+
+## Amendment to LT-10 (task relations)
+
+Adopt Redmine's behaviours as the acceptance set: `precedes` forbids a
+successor start on or before the predecessor's end; `blocks` prevents closing
+the blocked task while the blocker is open; `duplicates` closing the primary
+closes the duplicate; `copied_from` is informational. Each refusal names the
+relation that caused it.
+
+## Not taken (Redmine)
+
+Inbound email; admin impersonation header; SCM browsing; forums/news modules;
+plugin and theme system; LDAP / self-registration modes. Reasons in
+[plan.md §10](plan.md).

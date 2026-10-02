@@ -128,3 +128,89 @@ LT-2 and LT-5 are blocked on, or shaped by, the T-8 design awaiting approval
   canvas? The task assumes generic.
 - Should comments / reactions be on *every* entity or only plans, tasks, risks
   and proposals?
+
+---
+
+# Second source: Redmine
+
+Research date: 2026-10-02. Subject: [Redmine](https://www.redmine.org/projects/redmine/wiki)
+(Ruby on Rails; GPL v2; self-hosted; 49 languages).
+
+**Evidence base.** Read: the wiki home page, the Features page, the
+RedmineIssues page and the REST API page. The issues page names many features
+(watchers, private issues, bulk edit, saved queries, categories) without
+describing them, so those are treated as pointers. Not read: the source, the
+plugin directory, release notes. What we carry was checked against our
+entities and routes (no `custom_fields`, watchers, bulk-edit or per-role
+workflow rule exists today).
+
+## 7. What Redmine is, and how it differs from Leantime
+
+Redmine is the configurable generalist: **its core idea is that the
+organisation defines its own vocabulary**: issue types, statuses, custom
+fields, roles, and a transition matrix per type and role. It is
+administrator-centric and sits at the opposite pole from Leantime's
+"simple for non-project-managers". For this product that is useful as the
+*other half* of the owner's two audiences (§5): Leantime informs the
+individual worker's path; Redmine informs the PMO's configurability.
+
+## 8. Where we already match
+
+- **Configurable workflows:** T-15 (custom workflow states and transitions per
+  plan, category-mandatory, WIP caps).
+- **Issue relations (partially):** plan-to-plan `plan_dependencies` with cycle
+  refusal, lag and critical path; LT-10 plans task relations.
+- **Gantt, calendar, time entries, roles/ABAC, REST + OpenAPI, i18n (13
+  locales), activity events, audit.**
+- Redmine has **no** equivalent of our scenario modelling, flow metrics,
+  forecasting, TPC, per-currency finance, masking or signed audit chain.
+
+## 9. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **Typed custom fields** on plans and tasks (text, date, bool, integer, list, multi-list), per `kind`, filterable and reportable | The single most-requested enterprise PM feature, and Redmine's defining one. Today a team that needs "cost centre" or "regulatory class" has no place for it | High | RM-1 |
+| 2 | **Per-role transition rules** on workflows (who may move X → Y) | T-15 constrains *which* moves are legal, not *who* may make them. Redmine's matrix is per tracker **and role** | High; small extension of T-15 | RM-2 |
+| 3 | **Watchers** — follow a plan / task and be notified of changes | Our notification targets are owner + prior commenters (LT-4). Following is how a worker keeps up without owning | High for the worker audience | RM-3 |
+| 4 | **Relation semantics** — `precedes` auto-constrains dates, `blocks` prevents closing, `duplicates` closes the twin, `copied_from` | Refines LT-10 with Redmine's concrete, proven behaviours | Medium-high | amend LT-10 |
+| 5 | **Subtask roll-up** — parent's dates, % done, estimate and spent time computed from children | Verify what we derive today; a PMO reads parents, not leaves | Medium; audit first | RM-5 |
+| 6 | **Atom / RSS activity feeds** (activity, issues, changes) | Pairs with LT-7's iCal: a worker follows their work in the reader they use. Cheap and read-only | Medium | RM-6 |
+| 7 | **Per-plan module toggles** (tracking, time, canvases, comments… on or off) | Directly serves two audiences: a personal plan shows tasks and time only; a PMO plan shows governance. Redmine does this at project level | High; ties to LT-12 simple mode | RM-7 |
+| 8 | **Private plans / private tasks** | Redmine's public/private projects and private issues; we have ABAC but no simple owner-set visibility | Medium | RM-8 |
+| 9 | **Bulk edit, copy and move** of tasks across plans | In-app counterpart to T-8's file import | Medium | RM-9 |
+| 10 | **Time reports grouped by user / type / category / activity** | Entries exist; T-28e just gave saved reports `group_by` but only over plans | Medium; extends T-28e and LT-11 | RM-10 |
+| 11 | **Email as a delivery sink** (outbound) | Redmine's notifications are email-first; ours are in-app only by design. Reuse LT-6's sink framework rather than a new subsystem | Medium; decide | RM-11 |
+| 12 | **`include=` expansion and consistent paging metadata** on the REST API | One request instead of five for the worker's screens; Redmine's `include`, `limit`/`offset`, `total_count` | Low-medium | RM-12 |
+
+## 10. Deliberately not taken (Redmine)
+
+- **Inbound email creating or commenting on issues.** A mail receiver is a new
+  attack surface (spoofed senders, attachments) for a service whose guard is
+  bearer tokens. Outbound only (RM-11).
+- **Admin impersonation (`X-Redmine-Switch-User`).** Useful for support, but
+  it lets one principal act as another; if ever wanted it needs dual
+  attribution in the audit chain, not a header.
+- **SCM repository browsing** (SVN/Git/Hg diff and annotate). Out of scope;
+  `devops/events` and `engineering/delivery-links` already link work to code.
+- **Forums and a separate news module.** LT-4's comments cover discussion;
+  announcements can be a plan-level pinned comment.
+- **Plugin and theme system** — refused for the same reason as in §4.
+- **Account self-registration modes and LDAP** — the authentication service.
+
+## 11. Sequencing with the Leantime items
+
+1. Worker path stays first (LT-3, LT-12, LT-9), now with **RM-7** (module
+   toggles) as the mechanism that keeps a worker's screens uncluttered, and
+   **RM-3** (watchers) so LT-4's comments reach people who follow without
+   owning.
+2. **RM-2 and RM-1** are the PMO half: configurability with permission.
+3. LT-10 absorbs RM's relation semantics.
+4. RM-6 ships with LT-7 (one "subscribe" story: iCal and Atom).
+
+## 12. Open questions for the owner (Redmine)
+
+- Custom fields: per `kind`, per plan, or global? (Assumed per `kind`, with an
+  admin-declared field set.)
+- Are custom fields ever **matchable** (deduplication signal)? Assumed no, in
+  keeping with the matchable / operational partition.
+- Is outbound email wanted at all, given in-app-only is a stated design stance?

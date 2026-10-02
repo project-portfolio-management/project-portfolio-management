@@ -1718,6 +1718,13 @@ mod tests {
         // per-user saved views (T-28l)
         "/api/saved-views",
         "/api/saved-views/{pid}",
+        // strategy canvases (LT-1)
+        "/api/canvas-templates",
+        "/api/canvases",
+        "/api/canvases/{pid}",
+        "/api/canvases/{pid}/items",
+        "/api/canvases/{pid}/items/{item_pid}",
+        "/api/canvases/{pid}/items/{item_pid}/promote",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -1750,6 +1757,7 @@ mod tests {
             crate::controllers::automation::routes(),
             crate::controllers::prioritisation::routes(),
             crate::controllers::saved_views::routes(),
+            crate::controllers::canvas::routes(),
             crate::controllers::docs::routes(),
             crate::controllers::metrics::routes(),
         ];

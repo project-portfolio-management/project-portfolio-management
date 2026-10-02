@@ -1,6 +1,9 @@
 //! HTTP controllers for the portfolio service.
 
 pub mod automation;
+/// Per-user saved views: route-scoped filter/sort/column presets,
+/// keyed by the token `sub` (T-28l).
+pub mod canvas;
 /// Sprint ceremonies and the commitment snapshot.
 pub mod ceremony;
 pub mod collaboration;
@@ -29,8 +32,6 @@ pub mod oversight;
 pub mod phase;
 pub mod plans;
 pub mod prioritisation;
-/// Per-user saved views: route-scoped filter/sort/column presets,
-/// keyed by the token `sub` (T-28l).
 pub mod saved_views;
 pub mod strategy;
 /// Time-based analysis: the read surface over the task transition log —

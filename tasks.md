@@ -11,7 +11,13 @@ Convention carried over from T-28: absent evidence is `null` with a reason,
 never zero; new endpoints are pinned in `src/openapi.rs`; every write is
 audited; people stay references.
 
-- [ ] **LT-1 (L) — Strategy canvases.** A generic canvas engine: a
+- [x] **LT-1 (L) — Strategy canvases.** **Service landed 2026-10-02**
+  (`src/canvas.rs`, `src/controllers/canvas.rs`, migration
+  `m20261002_000001_canvases`, 7 unit + 4 DB-gated request tests, all passing
+  against Postgres). **Not built:** the front-end pages, and OpenAPI entries
+  (the six routes are on the `KNOWN_UNDOCUMENTED` register in
+  `src/openapi.rs`, to be documented). The `risk` and `goal` templates are
+  this service's own box sets, not a copy of Leantime's. A generic canvas engine: a
   `canvases` table (plan-scoped or free-standing, `template` key) and
   `canvas_items` (`box` key, text, optional owner ref, `position`), with
   built-in templates Lean, Business Model, SWOT, risk, empathy map, logic

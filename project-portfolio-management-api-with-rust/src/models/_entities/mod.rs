@@ -11,6 +11,8 @@ pub mod budget_baseline_periods;
 pub mod budget_baselines;
 pub mod budget_lines;
 pub mod business_case_targets;
+pub mod canvas_items;
+pub mod canvases;
 pub mod ceremonies;
 pub mod control_actions;
 pub mod control_readings;

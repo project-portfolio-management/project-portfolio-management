@@ -28,6 +28,9 @@ pub mod app;
 pub mod auth;
 /// Pure workflow-automation rules (trigger matching, action shapes, due-ness).
 pub mod automation;
+/// Per-user saved views: route-scoped filter/sort/column presets,
+/// keyed by the token `sub` and nothing else identity-shaped (T-28l).
+pub mod canvas;
 /// Pure collaborative-review + assignee-workload rules.
 pub mod collaboration;
 /// Compliance controls: row-level integrity and keyed MACs.
@@ -81,8 +84,6 @@ pub mod prioritisation;
 pub mod privacy;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod relay;
-/// Per-user saved views: route-scoped filter/sort/column presets,
-/// keyed by the token `sub` and nothing else identity-shaped (T-28l).
 pub mod saved_views;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;

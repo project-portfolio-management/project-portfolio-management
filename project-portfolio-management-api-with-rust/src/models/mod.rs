@@ -3,6 +3,7 @@
 
 pub mod _entities;
 pub mod audit_logs;
+pub mod canvases;
 pub mod capabilities;
 pub mod event_outbox;
 pub mod governance;

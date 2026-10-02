@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — strategy canvases (LT-1, 2026-10-02)
+
+`canvases` / `canvas_items` (migration `m20261002_000001_canvases`) and nine
+routes under `/api/canvases` + `/api/canvas-templates`. Seven built-in
+templates (Lean, Business Model, SWOT, empathy map, logic model, risk, goal)
+live in `src/canvas.rs` as box lists, so a new canvas type is data, not a
+migration. A canvas may be plan-scoped or free-standing; a rendered canvas
+reports **every** box, empty ones at count 0. An item can be **promoted** to
+an idea, a risk (plan-scoped canvas only; probability and impact required,
+never defaulted) or an objective, in one transaction with an audit row naming
+the source item; a second promotion is `409`.
+
 ### Added — real-Keycloak container test (2026-10-02)
 
 `tests/keycloak_container.rs` (feature `keycloak`, `#[ignore]`d): Testcontainers

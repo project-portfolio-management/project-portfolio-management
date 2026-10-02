@@ -215,7 +215,17 @@ async fn create_comment(
     AuditModel::record(&ctx.db, row.pid, "comment_added", caller.actor(), None)
         .await
         .ok();
-    for target in rules::notify_targets(caller.actor(), subject.owner_ref.as_deref(), &prior) {
+    // Commenting follows the thread (unless the user opted out of auto-watch).
+    if let Some(sub) = caller.actor() {
+        super::watchers::ensure_watching(&ctx.db, &payload.subject_kind, subject.pid, sub).await;
+    }
+    let watching = super::watchers::watcher_subs(&ctx.db, &payload.subject_kind, subject.pid).await;
+    for target in rules::notify_targets(
+        caller.actor(),
+        subject.owner_ref.as_deref(),
+        &prior,
+        &watching,
+    ) {
         // Best-effort: a failed notification must never lose the comment.
         cap_models::notify(
             &ctx.db,

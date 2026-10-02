@@ -282,6 +282,9 @@ async fn create_task(
     AuditModel::record(&ctx.db, row.pid, "task_created", caller.actor(), None)
         .await
         .ok();
+    if let Some(sub) = caller.actor() {
+        super::watchers::ensure_watching(&ctx.db, "task", row.pid, sub).await;
+    }
     format::json(task_view(&row))
 }
 
@@ -539,6 +542,15 @@ async fn move_task(
     )
     .await
     .ok();
+    // Watchers (RM-3) are told once, the mover never; best-effort.
+    super::watchers::notify_watchers(
+        &ctx,
+        "task",
+        task_pid,
+        caller.actor(),
+        "A task you follow moved to a new status",
+    )
+    .await;
     // Workflow automation: the move is already committed, so a rule
     // that fails is logged as a failed run and never undoes the move.
     super::automation::fire(

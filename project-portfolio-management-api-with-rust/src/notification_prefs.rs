@@ -18,10 +18,13 @@ use uuid::Uuid;
 
 use crate::tz::{self, Tz};
 
-/// Notification kinds a user may set preferences for. **Add a kind here
+/// Notification kinds a user may set preferences for. (`auto_watch` is not a
+/// notification: switching it off stops the service following things *for*
+/// the user — RM-3.) **Add a kind here
 /// when a new `notify(...)` call introduces one**, or it cannot be
 /// switched off.
 pub const KINDS: &[&str] = &[
+    "auto_watch",
     "automation",
     "comment",
     "reschedule_proposed",
@@ -29,6 +32,7 @@ pub const KINDS: &[&str] = &[
     "review_submitted",
     "scheduled",
     "task_assigned",
+    "watch_update",
 ];
 
 /// Delivery channels that exist today. (Chat, webhook and email sinks —

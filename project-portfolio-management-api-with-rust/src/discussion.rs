@@ -77,21 +77,22 @@ pub fn sub_as_recipient(sub: &str) -> Option<String> {
     Uuid::parse_str(sub).ok().map(|u| format!("person:{u}"))
 }
 
-/// Who a new comment notifies: the subject's owner (an `EntityRef` URN,
-/// when the subject has one) plus every earlier commenter, **never the
-/// author**, each exactly once, in a stable order.
+/// Who a new comment (or a watched change) notifies: the subject's owner (an
+/// `EntityRef` URN, when the subject has one), every earlier commenter, and
+/// every watcher (RM-3), **never the author**, each exactly once, in a stable order.
 #[must_use]
 pub fn notify_targets(
     author: Option<&str>,
     owner_ref: Option<&str>,
     prior_authors: &[String],
+    watchers: &[String],
 ) -> Vec<String> {
     let author_ref = author.and_then(sub_as_recipient);
     let mut out: BTreeSet<String> = BTreeSet::new();
     if let Some(owner) = owner_ref {
         out.insert(owner.to_string());
     }
-    for sub in prior_authors {
+    for sub in prior_authors.iter().chain(watchers) {
         if let Some(r) = sub_as_recipient(sub) {
             out.insert(r);
         }
@@ -139,6 +140,7 @@ mod tests {
             Some(U1),
             Some(&owner),
             &[U1.to_string(), U2.to_string(), U2.to_string()],
+            &[],
         );
         assert_eq!(t, vec![owner], "owner once, author excluded");
     }
@@ -161,14 +163,29 @@ mod tests {
     #[test]
     fn a_non_uuid_sub_is_skipped_not_guessed() {
         assert_eq!(sub_as_recipient("alice"), None);
-        assert!(notify_targets(None, None, &["alice".to_string()]).is_empty());
+        assert!(notify_targets(None, None, &["alice".to_string()], &[]).is_empty());
         assert_eq!(sub_as_recipient(U1), Some(format!("person:{U1}")));
+    }
+
+    #[test]
+    fn a_watcher_joins_once_even_if_also_a_prior_commenter_and_never_the_author() {
+        let t = notify_targets(
+            Some(U1),
+            None,
+            &[U2.to_string()],
+            &[U2.to_string(), U1.to_string()],
+        );
+        assert_eq!(
+            t,
+            vec![format!("person:{U2}")],
+            "once, and the author watching is not told"
+        );
     }
 
     #[test]
     fn an_owner_who_is_the_author_is_dropped() {
         let owner = format!("person:{U1}");
-        assert!(notify_targets(Some(U1), Some(&owner), &[]).is_empty());
+        assert!(notify_targets(Some(U1), Some(&owner), &[], &[]).is_empty());
     }
 
     #[test]

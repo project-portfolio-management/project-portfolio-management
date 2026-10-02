@@ -73,6 +73,7 @@ pub fn paths() -> Value {
     // Feature path functions are merged here as they land.
     merge(&mut all, component_paths());
     merge(&mut all, custom_field_paths());
+    merge(&mut all, watcher_paths());
     all
 }
 
@@ -139,6 +140,35 @@ fn custom_field_paths() -> Value {
                 "Equality after the same normalisation a write gets (multi_list matches when the list contains the value). Subjects whose owning plan the caller cannot read are omitted. At most 5000 stored values are scanned and the response says truncated if more exist.",
                 vec![query("applies_to", true, "plan or task"), query("key", true, "The field key"), query("value", true, "The value to match")],
                 &[("200", "count, pids, truncated"), ("422", "Unknown field")])
+        }
+    })
+}
+
+/// Watchers (RM-3).
+fn watcher_paths() -> Value {
+    let subject = vec![
+        query(
+            "subject_kind",
+            true,
+            "plan, task, risk, proposal, idea or canvas_item",
+        ),
+        query("subject_pid", true, "The subject pid"),
+    ];
+    json!({
+        "/api/watchers": {
+            "post": op("watchers", "Follow a subject (idempotent)",
+                "Requires a bearer token and the ability to read the subject (the owning plan's record-level check applies). A watcher joins the notification targets of a comment and, for a task, of a status move: each told exactly once, never the person who made the change. Watching grants no access and the notification text is generic.",
+                vec![], &[("200", "{ watching, created }"), ("401", "Missing or invalid bearer token"), ("403", "Owning plan not readable"), ("404", "Unknown subject"), ("422", "Unknown subject_kind")]),
+            "get": op("watchers", "How many follow a subject, and whether the caller does",
+                "Other watchers are never named: only a count and the caller's own state are returned.",
+                subject.clone(), &[("200", "{ count, mine }"), ("401", "Missing or invalid bearer token"), ("404", "Unknown subject")]),
+            "delete": op("watchers", "Stop following a subject (idempotent)",
+                "Removes only the caller's own watch.", subject, &[("200", "Removed (or already absent)"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/me/watching": {
+            "get": op("watchers", "What the caller follows, newest first",
+                "Private to the caller; capped at 500 entries.", vec![],
+                &[("200", "{ count, items }"), ("401", "Missing or invalid bearer token")])
         }
     })
 }

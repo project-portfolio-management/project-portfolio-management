@@ -209,7 +209,7 @@ started.
   workflow with no `roles` behaves exactly as before; the refusal names the
   allowed roles.
 
-- [ ] **RM-3 (M) — Watchers.** `watchers` table keyed `(subject_kind,
+- [x] **RM-3 (M) — Watchers.** **Landed 2026-10-02.** Service: `watchers` table (migration `m20261003_000006_watchers`), `POST/GET/DELETE /api/watchers` and `GET /api/me/watching`. A watcher joins a comment's targets and a task move's: each told once, **never the actor**, and never twice when also a prior commenter (`discussion::notify_targets`, now taking watchers). Auto-watch on creating a task, commenting, or being assigned; `auto_watch` off (a notification preference) stops it. Other watchers are never named. `tests/watchers.rs` end to end with three real users. **Deviation:** the read check is applied when following; at **delivery** it cannot be re-run for an absent user (their claims are not held), so the notification text is deliberately generic and the subject stays readable only under the reader's own ABAC. Status-change notification covers tasks; plan status changes are not wired. **Not built:** front-end. `watchers` table keyed `(subject_kind,
   subject_pid, sub)`; `POST/DELETE /api/watchers`, `GET` a subject's watchers
   and `GET /api/me/watching`. A watcher is added to LT-4's `notify_targets`
   and to status-change notifications. Auto-watch on creating or being assigned

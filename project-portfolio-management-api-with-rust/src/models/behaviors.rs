@@ -11,3 +11,4 @@ use super::_entities::*;
 impl ActiveModelBehavior for components::ActiveModel {}
 impl ActiveModelBehavior for custom_field_defs::ActiveModel {}
 impl ActiveModelBehavior for custom_field_values::ActiveModel {}
+impl ActiveModelBehavior for watchers::ActiveModel {}

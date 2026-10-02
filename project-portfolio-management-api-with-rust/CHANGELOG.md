@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — watchers (RM-3, 2026-10-02)
+
+`watchers` and `/api/watchers`, `/api/me/watching`: follow a plan, task, risk, proposal, idea or canvas item. A watcher is told once of a comment or task move, never the actor. Auto-watch on create / assign / comment, switchable off with the `auto_watch` preference.
+
 ### Added — per-role workflow transitions (RM-2, 2026-10-02)
 
 `workflow_transitions.roles`: a workflow transition may name the roles allowed to make it (empty means anyone, so every existing workflow is unchanged). A restricted move is refused `403` naming the roles and writes no transition row. Roles are the token's `role` attribute.

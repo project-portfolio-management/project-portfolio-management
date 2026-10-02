@@ -47,6 +47,7 @@ struct MyTasksParams {
 
 /// `GET /api/me/tasks` — see the module docs.
 #[debug_handler]
+#[allow(clippy::too_many_lines)] // one linear pipeline: resolve, fetch, filter, group
 async fn my_tasks(
     State(ctx): State<AppContext>,
     AuthUser(claims): AuthUser,
@@ -100,8 +101,16 @@ async fn my_tasks(
             .map_err(|e| Error::Model(ModelError::from(e)))?
     };
     let caller = crate::auth::MaybeAuthUser(Some(claims.clone()));
+    // RM-8: tasks in a private plan the caller is not a member of are omitted.
+    let hidden = super::plan_access::hidden_plans(
+        &ctx,
+        &plan_rows.iter().map(|p| p.pid).collect::<Vec<_>>(),
+        &caller,
+    )
+    .await;
     let readable: HashMap<Uuid, String> = plan_rows
         .into_iter()
+        .filter(|p| !hidden.contains(&p.pid))
         .filter(|p| {
             crate::auth::authorize_record(
                 &caller,

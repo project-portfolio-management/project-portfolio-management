@@ -262,7 +262,7 @@ started.
   set; the toggle is audited; a plan created from the personal preset exposes
   only its modules. *Pairs with LT-12 simple mode.*
 
-- [ ] **RM-8 (S) — Private plans and tasks.** A `visibility` of `private`
+- [x] **RM-8 (S) — Private plans and tasks.** **Landed 2026-10-02.** Service: `plan_access_settings` (migration `m20261003_000011_plan_access_settings`), `GET/PUT /api/plans/{pid}/access`; `src/plan_access.rs` (4 unit tests) + `tests/plan_access.rs` end to end with real tokens. A guard layer answers **404, never 403** to a non-member for `/api/plans/{pid}` and everything beneath it; plan **lists, duplicate checks**, discussion/watchers/approvals/custom fields (via the shared resolver), task relations and **My work** all omit or 404 a private plan for a non-member (My work counts it in `omitted_unreadable`); members and `access=admin` callers see it; making a plan private always adds the caller as a member; a private plan is **hidden from an anonymous caller (fail closed)**; changes are audited. **NOT COVERED — important:** cross-plan **aggregate views** (at-a-glance, executive, board, financials, reports, capacity, scenarios) still include a private plan's figures, so "private" hides a plan's *records*, not its contribution to portfolio totals (see **RM-8b**). **Search results** are filtered by the same hidden set but were not separately tested. **Lesson:** loco's `create_table` pluralises table names — a singular name creates a different table than the SQL refers to; the scaffolder now asserts a plural name. A `visibility` of `private`
   limits a plan (and its tasks) to its members and admins, via the existing
   record-level ABAC rather than a second mechanism.
   **Acceptance:** a non-member gets 404, not 403, so existence is not
@@ -456,3 +456,14 @@ desktop app and presence. Reasons in [plan.md §16](plan.md).
   only write access; the DELETE routes remain. **Rule for new endpoints:** a
   person's undo of their *own* action is a POST. The older `DELETE /api/saved-views/{pid}` had the same flaw and
   now has the twin `/api/saved-views/{pid}/delete`.
+
+- [ ] **RM-8b (L) — Keep private plans out of the aggregate views.** RM-8
+  hides a private plan's *records* but cross-plan aggregates (at-a-glance,
+  executive, board, financials, reports, capacity, scenarios, TBA rollups, the
+  Smart Score ranking) are computed over every plan and still count it.
+  Introduce one shared "plans this caller may see" query (live, not hidden by
+  `plan_access_settings`) and route every aggregate through it.
+  **Acceptance:** for a non-member, every aggregate endpoint's totals equal the
+  totals computed with the private plan deleted; a member's equal the full
+  totals; a test enumerates the mounted aggregate routes so a new one cannot
+  skip the filter.

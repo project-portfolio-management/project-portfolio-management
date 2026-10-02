@@ -340,12 +340,16 @@ async fn list_relations(
             .await
             .map_err(db_err)?
             .and_then(|p| p.stage);
-        let readable = crate::auth::authorize_record(
-            &caller,
-            authentication_verifier::Action::Read,
-            &crate::auth::plan_resource_attrs(stage.as_deref()),
-        )
-        .is_ok();
+        let private_hidden = super::plan_access::hidden_plans(&ctx, &[other.plan_pid], &caller)
+            .await
+            .contains(&other.plan_pid);
+        let readable = !private_hidden
+            && crate::auth::authorize_record(
+                &caller,
+                authentication_verifier::Action::Read,
+                &crate::auth::plan_resource_attrs(stage.as_deref()),
+            )
+            .is_ok();
         if !readable {
             hidden += 1;
             continue;

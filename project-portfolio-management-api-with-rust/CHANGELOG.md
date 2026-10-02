@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — private plans (RM-8, 2026-10-02)
+
+`plan_access_settings` and `GET/PUT /api/plans/{pid}/access`: make a plan private for named members. A non-member gets `404` (never `403`) on the plan and everything beneath it; lists, duplicate checks, discussion, watchers, approvals, custom fields, task relations and My work omit it; members and admins see it. **Cross-plan aggregate views still include a private plan's figures.**
+
 ### Added — iCalendar and Atom feeds (LT-7, 2026-10-02)
 
 `feed_tokens` and `/api/feeds/calendar.ics`, `/api/feeds/me.atom`: per-user revocable token (only its hash stored). The calendar carries the owner's due tasks plus the milestones and sprint dates of those plans (RFC 5545, stable UIDs); the Atom feed carries their notifications, with ETag / 304. Exempt from the bearer guard; scope is the owner's own work.

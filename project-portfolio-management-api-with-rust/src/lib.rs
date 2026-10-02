@@ -88,6 +88,7 @@ pub mod openapi_more;
 /// Closing: one-step advancement, explicitly-reasoned regression, and
 /// per-phase durations from the transition log.
 pub mod phase;
+pub mod plan_access;
 pub mod prioritisation;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;

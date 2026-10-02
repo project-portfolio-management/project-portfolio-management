@@ -39,6 +39,7 @@ pub mod notifications;
 pub mod objective_links;
 pub mod objectives;
 pub mod phase_transitions;
+pub mod plan_access_settings;
 pub mod plan_dependencies;
 pub mod plan_modules;
 pub mod plans;

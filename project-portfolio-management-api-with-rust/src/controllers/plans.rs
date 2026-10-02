@@ -165,8 +165,13 @@ impl PlanRef {
 /// With `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` off (the default)
 /// or no configured deny rule, `authorize_record` never denies, so this
 /// is a no-op and every row passes through unchanged.
-fn readable_refs(rows: &[PlanModel], caller: &MaybeAuthUser) -> Vec<PlanRef> {
+fn readable_refs(
+    rows: &[PlanModel],
+    caller: &MaybeAuthUser,
+    hidden: &std::collections::HashSet<uuid::Uuid>,
+) -> Vec<PlanRef> {
     rows.iter()
+        .filter(|row| !hidden.contains(&row.pid))
         .filter(|row| {
             crate::auth::authorize_record(
                 caller,
@@ -555,7 +560,13 @@ async fn list(
         .filter(|p| !p.is_empty());
     let rows = PlanModel::list_paged(&ctx.db, parent, limit, offset).await?;
     let total = PlanModel::count_for(&ctx.db, parent).await?;
-    let refs = readable_refs(&rows, &caller);
+    let hidden = super::plan_access::hidden_plans(
+        &ctx,
+        &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
+        &caller,
+    )
+    .await;
+    let refs = readable_refs(&rows, &caller, &hidden);
     Ok(with_page_headers(format::json(refs)?, total, limit, offset))
 }
 
@@ -610,7 +621,13 @@ async fn search(
     )?;
     let rows = PlanModel::find_by_pids(&ctx.db, &parse_pids(&pids)).await?;
     let total = index_total as u64;
-    let refs = readable_refs(&rows, &caller);
+    let hidden = super::plan_access::hidden_plans(
+        &ctx,
+        &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
+        &caller,
+    )
+    .await;
+    let refs = readable_refs(&rows, &caller, &hidden);
     Ok(with_page_headers(format::json(refs)?, total, limit, offset))
 }
 
@@ -671,8 +688,18 @@ async fn check_duplicates(
     };
     let candidates = index.candidates(&query, CHECK_DUPLICATES_CANDIDATE_LIMIT)?;
     let rows = PlanModel::find_by_pids(&ctx.db, &parse_pids(&candidates)).await?;
+    // A private plan never appears as a duplicate to someone who cannot see it.
+    let hidden = super::plan_access::hidden_plans(
+        &ctx,
+        &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
+        &caller,
+    )
+    .await;
     let mut hits: Vec<ScoredRef> = Vec::new();
     for row in &rows {
+        if hidden.contains(&row.pid) {
+            continue;
+        }
         let candidate = row.to_plan()?;
         let r = engine.match_plans(&query, &candidate);
         if !r.is_match {

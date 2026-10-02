@@ -195,6 +195,7 @@ impl Hooks for App {
             .add_route(controllers::task_relations::routes())
             .add_route(controllers::task_tree::routes())
             .add_route(controllers::feeds::routes())
+            .add_route(controllers::plan_access::routes())
             .add_route(controllers::metrics::routes())
     }
 
@@ -235,6 +236,10 @@ impl Hooks for App {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.clone(),
                 controllers::modules::modules_mw,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.clone(),
+                controllers::plan_access::privacy_mw,
             ))
             .layer(axum::middleware::from_fn(require_auth_mw))
             .layer(axum::middleware::from_fn(

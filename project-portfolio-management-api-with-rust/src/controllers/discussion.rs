@@ -177,6 +177,13 @@ pub(crate) async fn resolve_subject(
         _ => return Err(unprocessable("unknown subject_kind")),
     };
     if let Some(plan_pid) = subject.plan_pid {
+        // RM-8: a subject in a private plan is `404` to a non-member.
+        if super::plan_access::hidden_plans(ctx, &[plan_pid], caller)
+            .await
+            .contains(&plan_pid)
+        {
+            return Err(Error::NotFound);
+        }
         let stage = plans::Entity::find()
             .filter(plans::Column::Pid.eq(plan_pid))
             .one(&ctx.db)

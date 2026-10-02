@@ -78,6 +78,7 @@ pub fn paths() -> Value {
     merge(&mut all, relation_paths());
     merge(&mut all, rollup_paths());
     merge(&mut all, feed_paths());
+    merge(&mut all, access_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -292,6 +293,21 @@ fn self_service_paths() -> Value {
             "post": op("discussion", "Soft-delete a comment, author only (POST twin)", note,
                 vec![uuid_param("pid")],
                 &[("200", "Deleted"), ("403", "Not the author"), ("404", "Unknown comment")])
+        }
+    })
+}
+
+/// Private plans (RM-8).
+fn access_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    json!({
+        "/api/plans/{pid}/access": {
+            "get": op("access", "Whether a plan is private, and its members",
+                "A plan is public unless someone made it private. This route is itself behind the privacy guard: a non-member gets 404 here too.",
+                pid.clone(), &[("200", "plan_pid, private, members"), ("404", "Unknown plan, or a private plan the caller cannot see")]),
+            "put": op("access", "Make a plan private (naming its members) or public again",
+                "Members are user ids (UUIDs, the token sub). Making a plan private always adds the caller as a member, so it can never be locked away from the person who locked it. Every change is audited with the before and after. WHAT IS ENFORCED: any request addressed to /api/plans/{pid} or beneath it answers 404 (never 403, so existence is not disclosed) to a non-member who is not an admin; plan lists, search and duplicate checks omit it; discussion, watchers, approvals, custom fields, task relations and My work resolve their subjects through the same check. A private plan with no identity at all is hidden (fail closed). WHAT IS NOT ENFORCED: cross-plan aggregate views (at-a-glance, executive, board, financials, reports, capacity, scenarios) are computed over every plan and still include a private plan's figures.",
+                pid, &[("200", "plan_pid, private, members"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan, or a private plan the caller cannot see"), ("422", "Invalid members, or an identity that is not a user id")])
         }
     })
 }

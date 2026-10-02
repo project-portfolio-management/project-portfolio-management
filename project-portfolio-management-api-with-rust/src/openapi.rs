@@ -326,7 +326,9 @@ fn aux_paths() -> Value {
             "/api/plans/{pid}": {
                 "parameters": [{ "name": "pid", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
                 "get": { "tags": ["plans"], "summary": "Fetch the stored plan",
-                    "responses": { "200": { "description": "Plan", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Plan" } } } }, "404": { "description": "Not found" } } },
+                    "description": "Without include the response is the bare plan, unchanged. With include (a comma list of milestones, risks, tasks, components, time_entries, budget_lines) the response is { plan, included, omitted }: the same live rows each sub-resource's own route returns (at most 200 each), saving a request apiece. A sub-resource whose module is off for the plan is left out and listed in omitted with reason module_disabled; a masked read pulls nothing operational and lists every requested name as masked. An unknown name is 422 listing the allowed ones.",
+                    "parameters": [{ "name": "include", "in": "query", "required": false, "description": "Comma-separated sub-resources to embed", "schema": { "type": "string" } }],
+                    "responses": { "200": { "description": "Plan, or { plan, included, omitted } with include", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Plan" } } } }, "404": { "description": "Not found" }, "422": { "description": "Unknown include name" } } },
                 "put": { "tags": ["plans"], "summary": "Replace a plan's payload",
                     "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Plan" } } } },
                     "responses": { "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PlanRef" } } } }, "404": { "description": "Not found" }, "422": { "description": "Validation failure" } } },

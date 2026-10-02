@@ -12,6 +12,7 @@ mod effort;
 mod event_outbox;
 mod financials;
 mod governance;
+mod includes;
 mod insights;
 mod metrics_control;
 mod modules;

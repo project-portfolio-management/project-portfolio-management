@@ -298,6 +298,14 @@ fn score_desc(a: f64, b: f64) -> std::cmp::Ordering {
     b.partial_cmp(&a).unwrap_or(std::cmp::Ordering::Equal)
 }
 
+/// `GET /api/plans/{pid}` query.
+#[derive(Debug, Deserialize)]
+struct GetParams {
+    /// Embed named sub-resources (`milestones,risks,tasks,…`), RM-12.
+    #[serde(default)]
+    include: Option<String>,
+}
+
 /// `POST /api/plans` query.
 #[derive(Debug, Deserialize)]
 struct CreateParams {
@@ -364,6 +372,7 @@ async fn get_one(
     Path(pid): Path<String>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    Query(params): Query<GetParams>,
 ) -> Result<Response> {
     let model = PlanModel::find_by_pid(&ctx.db, &pid)
         .await
@@ -375,11 +384,28 @@ async fn get_one(
         &crate::auth::plan_resource_attrs(model.stage.as_deref()),
     )
     .map_err(super::record_rejection)?;
-    if obligations.iter().any(|o| o == "mask") {
-        format::json(crate::privacy::mask_plan(&plan))
+    let masked = obligations.iter().any(|o| o == "mask");
+    let body = if masked {
+        serde_json::json!(crate::privacy::mask_plan(&plan))
     } else {
-        format::json(plan)
-    }
+        serde_json::json!(plan)
+    };
+    // RM-12: without `include` the response is the bare plan, unchanged.
+    let Some(raw) = params.include.as_deref() else {
+        return format::json(body);
+    };
+    let names = super::includes::parse(raw).map_err(|m| {
+        Error::CustomError(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            ErrorDetail::new("validation", m),
+        )
+    })?;
+    let (included, omitted) = super::includes::build(&ctx, model.pid, &names, masked).await?;
+    format::json(serde_json::json!({
+        "plan": body,
+        "included": included,
+        "omitted": omitted,
+    }))
 }
 
 /// The masked view of a plan.

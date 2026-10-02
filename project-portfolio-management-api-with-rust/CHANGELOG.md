@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — REST `include=` (RM-12, 2026-10-02)
+
+`GET /api/plans/{pid}?include=…`: embed milestones, risks, tasks, components, time entries or budget lines in one response. Absent `include` the response is unchanged; a disabled module's sub-resource is omitted and listed rather than silently missing.
+
 ### Added — timesheets (LT-11, 2026-10-02)
 
 `timesheet_weeks` and `/api/timesheets`, `/submit`, `/decide`: a person's week as a grid by day and plan (integer minutes, billable and non-billable never merged), submitted by its owner and approved or rejected by an approver; an approved week is locked against new entries.

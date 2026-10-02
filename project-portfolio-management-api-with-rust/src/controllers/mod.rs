@@ -209,6 +209,7 @@ pub mod approvals;
 pub mod components;
 pub mod custom_fields;
 pub mod feeds;
+pub mod includes;
 pub mod plan_access;
 pub mod task_bulk;
 pub mod task_relations;

@@ -293,7 +293,7 @@ started.
   nothing and the notification still lands in-app; a failed send is retried and
   never blocks the write; the message contains no more than the in-app text.
 
-- [ ] **RM-12 (S) — REST ergonomics.** `?include=` on plan and task GET to
+- [x] **RM-12 (S) — REST ergonomics.** **Landed 2026-10-02.** Delivered the `?include=` half: `GET /api/plans/{pid}?include=milestones,risks,tasks,components,time_entries,budget_lines` returns `{plan, included, omitted}` (the same live rows each sub-route returns, ≤200 each); **without `include` the response is the bare plan, unchanged**; an unknown name is 422 listing the allowed ones; a disabled module's sub-resource is omitted **and listed** (`module_disabled`); a masked read pulls nothing operational (`masked`). `src/controllers/includes.rs` (3 unit tests) + 1 DB-gated test, OpenAPI parameter documented. **Not built (split out as RM-12b):** `include` on task GET, and `total_count`/`limit`/`offset` on **every** list (only some lists carry `X-Total-Count` headers today). `?include=` on plan and task GET to
   embed named sub-resources (`milestones`, `risks`, `time`, …); `total_count`,
   `limit`, `offset` present on every list.
   **Acceptance:** `include` of an unknown name is 422 listing the allowed
@@ -467,3 +467,11 @@ desktop app and presence. Reasons in [plan.md §16](plan.md).
   totals computed with the private plan deleted; a member's equal the full
   totals; a test enumerates the mounted aggregate routes so a new one cannot
   skip the filter.
+
+- [ ] **RM-12b (S) — Consistent list paging and `include` on tasks.** Split from
+  RM-12: give every list endpoint `limit` / `offset` and an `X-Total-Count`
+  (only some lists carry them today), and add `include` to task GET.
+  **Acceptance:** an OpenAPI-driven test enumerates every documented list
+  `GET` and asserts the three paging parameters and the count header; an
+  `include` on a task that names an unknown sub-resource is 422 listing the
+  allowed names.

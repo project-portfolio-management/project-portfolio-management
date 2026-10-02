@@ -215,6 +215,7 @@ pub mod guests;
 pub mod includes;
 pub mod live;
 pub mod plan_access;
+pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
 pub mod task_bulk;

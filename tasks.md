@@ -113,7 +113,7 @@ audited; people stay references.
   two fetches; a revoked token returns 401; an item the caller cannot read is
   absent; all-day versus timed values use the correct `VALUE=DATE`.
 
-- [ ] **LT-8 (M) — Wiki / documents** — **decide first.** Options:
+- [x] **LT-8 (M) — Wiki / documents** **Landed 2026-10-03.** **Decision taken (the recommended option (b)): typed links, not a wiki.** `plan_links` (migration `m20261003_000020_plan_links`), `POST/GET /api/plans/{pid}/links`, remove (DELETE + POST twin); `src/plan_links.rs` (2 unit tests) + 1 DB-gated test. A plan links to where its real documents live (docs, repo, ticket, design, chat, other); the service stores the link and **never fetches or renders it**. **Only absolute http(s) URLs with a host** — never `javascript:`, `data:`, `file:`, a protocol-relative URL, or one with embedded credentials (asserted). One link per URL per plan; ≤100 per plan; audited. **Not built:** a wiki or controlled documents (PL-6 stays a separate, undecided item); front-end. — **decide first.** Options:
   (a) build `pages` + `page_versions` with templates; (b) a `links` field that
   points plans at an external doc system; (c) refuse. Recommendation: **(b)**
   first. A registry that stores prose competes with the organisation's real

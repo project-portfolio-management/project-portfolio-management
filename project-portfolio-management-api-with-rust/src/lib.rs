@@ -93,6 +93,7 @@ pub mod openapi_more;
 /// per-phase durations from the transition log.
 pub mod phase;
 pub mod plan_access;
+pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
 pub mod prioritisation;

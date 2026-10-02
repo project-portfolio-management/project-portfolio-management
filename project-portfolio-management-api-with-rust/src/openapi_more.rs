@@ -87,6 +87,7 @@ pub fn paths() -> Value {
     merge(&mut all, attachment_paths());
     merge(&mut all, bulk_paths());
     merge(&mut all, guest_paths());
+    merge(&mut all, link_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -568,6 +569,31 @@ fn guest_paths() -> Value {
             "post": op("guests", "Revoke a guest grant",
                 "Effective on the guest's very next request (the guard reads the grants every time). Idempotent and audited.",
                 with_grant, &[("200", "Revoked"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan or grant")])
+        }
+    })
+}
+
+/// Typed links on a plan (LT-8).
+fn link_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    let mut with_link = pid.clone();
+    with_link.push(uuid_param("lpid"));
+    json!({
+        "/api/plans/{pid}/links": {
+            "post": op("links", "Link a plan to where its real documents live",
+                "Kinds: docs, repo, ticket, design, chat, other. The service stores the link and never fetches or renders it. Only absolute http and https URLs with a host are accepted - never javascript:, data:, file: or a URL with embedded credentials. A URL can be linked once per plan, and a plan holds at most 100 links.",
+                pid.clone(), &[("200", "The link"), ("404", "Unknown plan"), ("409", "Already linked"), ("422", "Unknown kind, an unsafe or over-long URL, a blank label, or too many links")]),
+            "get": op("links", "A plan's links",
+                "Plain list of the plan's live links.", pid, &[("200", "Links"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/links/{lpid}": {
+            "delete": op("links", "Remove a link (soft-delete)", "Audited.", with_link.clone(),
+                &[("200", "Removed"), ("404", "Unknown plan or link")])
+        },
+        "/api/plans/{pid}/links/{lpid}/delete": {
+            "post": op("links", "Remove a link (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", with_link,
+                &[("200", "Removed"), ("404", "Unknown plan or link")])
         }
     })
 }

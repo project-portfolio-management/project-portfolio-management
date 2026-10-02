@@ -20,6 +20,7 @@ mod live;
 mod metrics_control;
 mod modules;
 mod oversight;
+mod plan_links;
 mod plan_templates;
 mod plans;
 mod scale;

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — plan links (LT-8, 2026-10-03)
+
+`plan_links` and `/api/plans/{pid}/links`: typed links (docs, repo, ticket, design, chat, other) from a plan to where its documents live. Only absolute http(s) URLs with a host; the service never fetches or renders them.
+
 ### Added — guest access (PL-7, 2026-10-03)
 
 `guest_grants` and `/api/plans/{pid}/guests`: scoped, time-boxed, revocable access for outside collaborators (a token with `role=guest`). A guest sees only the plans they hold a live grant on, masked, plus comments if granted; everything else is 404 and they cannot write or enumerate.

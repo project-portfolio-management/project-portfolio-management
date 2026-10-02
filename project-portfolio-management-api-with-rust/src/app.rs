@@ -204,6 +204,7 @@ impl Hooks for App {
             .add_route(controllers::attachments::routes())
             .add_route(controllers::bulk::routes())
             .add_route(controllers::guests::routes())
+            .add_route(controllers::plan_links::routes())
             .add_route(controllers::metrics::routes())
     }
 

@@ -2054,6 +2054,7 @@ mod tests {
             crate::controllers::attachments::routes(),
             crate::controllers::bulk::routes(),
             crate::controllers::guests::routes(),
+            crate::controllers::plan_links::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();
@@ -2205,6 +2206,7 @@ mod tests {
         "/api/canvases",
         "/api/comments",
         "/api/comments/{pid}/history",
+        "/api/plans/{pid}/links",
     ];
 
     /// Words and phrases this family's response conventions actually use

@@ -19,6 +19,7 @@ mod oversight;
 mod plans;
 mod scale;
 mod strategy;
+mod task_bulk;
 mod task_relations;
 mod task_tree;
 mod tba;

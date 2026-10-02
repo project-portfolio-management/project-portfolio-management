@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — bulk task edit, copy and move (RM-9, 2026-10-02)
+
+`POST /api/tasks/bulk`, `/copy`, `/move`: change, copy or re-home many tasks in one call, with a result per task and counts that reconcile. A move re-validates against the target workflow and states any status it had to map; `status` is not bulk-editable.
+
 ### Added — private plans (RM-8, 2026-10-02)
 
 `plan_access_settings` and `GET/PUT /api/plans/{pid}/access`: make a plan private for named members. A non-member gets `404` (never `403`) on the plan and everything beneath it; lists, duplicate checks, discussion, watchers, approvals, custom fields, task relations and My work omit it; members and admins see it. **Cross-plan aggregate views still include a private plan's figures.**

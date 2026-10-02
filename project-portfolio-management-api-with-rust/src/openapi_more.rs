@@ -79,6 +79,7 @@ pub fn paths() -> Value {
     merge(&mut all, rollup_paths());
     merge(&mut all, feed_paths());
     merge(&mut all, access_paths());
+    merge(&mut all, bulk_task_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -308,6 +309,29 @@ fn access_paths() -> Value {
             "put": op("access", "Make a plan private (naming its members) or public again",
                 "Members are user ids (UUIDs, the token sub). Making a plan private always adds the caller as a member, so it can never be locked away from the person who locked it. Every change is audited with the before and after. WHAT IS ENFORCED: any request addressed to /api/plans/{pid} or beneath it answers 404 (never 403, so existence is not disclosed) to a non-member who is not an admin; plan lists, search and duplicate checks omit it; discussion, watchers, approvals, custom fields, task relations and My work resolve their subjects through the same check. A private plan with no identity at all is hidden (fail closed). WHAT IS NOT ENFORCED: cross-plan aggregate views (at-a-glance, executive, board, financials, reports, capacity, scenarios) are computed over every plan and still include a private plan's figures.",
                 pid, &[("200", "plan_pid, private, members"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan, or a private plan the caller cannot see"), ("422", "Invalid members, or an identity that is not a user id")])
+        }
+    })
+}
+
+/// Bulk task operations (RM-9).
+fn bulk_task_paths() -> Value {
+    let results = "Every requested task gets its own result (ok or refused, with the reason or a note), so one bad item never aborts the rest and the counts reconcile: ok + refused equals requested after de-duplication. At most 200 ids. Each task goes through the same read check as any task access, and every change is audited.";
+    let r = |tail: &str| format!("{results} {tail}");
+    json!({
+        "/api/tasks/bulk": {
+            "post": op("tasks-bulk", "Set the same fields on many tasks",
+                &r("Settable: assignee_ref, due_date, component_pid (null clears). status is deliberately not bulk-editable: a status change must pass the workflow, WIP, role and blocker rules that belong to the board move. A component must belong to each task's own plan, and a due date that would break a precedes relation refuses that task. Assigning notifies and auto-watches like a single assignment."),
+                vec![], &[("200", "requested, ok, refused, results"), ("422", "No ids, too many, an unknown or malformed field, or an empty set")])
+        },
+        "/api/tasks/copy": {
+            "post": op("tasks-bulk", "Copy tasks into a plan",
+                &r("Copies get fresh pids, the target workflow's initial status and no transition history; the assignee is kept only with keep_assignee. A copied_from relation links each copy to its source, and the source's custom-field values are carried so a required field is never left empty."),
+                vec![], &[("200", "requested, ok, refused, results"), ("422", "No ids, too many, or a target plan the caller cannot see")])
+        },
+        "/api/tasks/move": {
+            "post": op("tasks-bulk", "Move tasks into another plan",
+                &r("Re-validated against the target plan's workflow: a status the target lacks maps to its initial state and the result says so. Component, sprint and parent links are plan-specific and are cleared. A task with subtasks is refused until they are moved or detached; a task already in the target plan is refused. Earlier transition history keeps its original plan."),
+                vec![], &[("200", "requested, ok, refused, results"), ("422", "No ids, too many, or a target plan the caller cannot see")])
         }
     })
 }

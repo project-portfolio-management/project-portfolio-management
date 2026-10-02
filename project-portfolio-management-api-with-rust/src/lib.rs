@@ -104,6 +104,7 @@ pub mod snapshots;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).
 pub mod strategy;
 pub mod streaming;
+pub mod task_bulk;
 pub mod task_relations;
 pub mod task_rollup;
 pub mod tasks;

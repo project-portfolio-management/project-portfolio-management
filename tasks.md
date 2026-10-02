@@ -269,7 +269,7 @@ started.
   disclosed; search, duplicate-check and rollups omit it for non-members; a
   member sees it everywhere; flipping to public is audited.
 
-- [ ] **RM-9 (M) — Bulk edit, copy and move tasks.** `POST
+- [x] **RM-9 (M) — Bulk edit, copy and move tasks.** **Landed 2026-10-02.** Service: `POST /api/tasks/bulk`, `/copy`, `/move`; `src/task_bulk.rs` (5 unit tests) + 1 DB-gated test. **One result per requested task** (an unknown id never aborts the rest; duplicates collapse) and `requested = ok + refused` always. **edit** sets `assignee_ref` / `due_date` / `component_pid` only — `status` is refused as a bulk field because a status change must pass the workflow, WIP, role and blocker rules that belong to the board move; a due date that breaks a `precedes` relation refuses *that task*; assigning notifies and auto-watches. **copy**: fresh pid, the target workflow's initial status, no transition history, assignee only with `keep_assignee`, a `copied_from` relation, custom-field values carried. **move**: re-validated against the **target workflow** — a status it lacks maps to its initial state **and the result says so**; component/sprint/parent links cleared; a task with subtasks is refused. **Deviation:** earlier transition history keeps its original plan. **Not built:** bulk status change, front-end. `POST
   /api/tasks/bulk` with `{ids, set: {...}}`, `…/copy`, `…/move` between plans.
   Moving re-validates against the **target** plan's workflow; per-item results
   like T-8's report (`ok | refused` + reason), one failure never aborts.

@@ -496,6 +496,9 @@ aggregator's concern (it sees both ends).
 
 ### 9.8 Bulk import/export (deferred, §13)
 
+Design drafted in [`spec/bulk-import-export.md`](../spec/bulk-import-export.md)
+(awaiting approval); the endpoint list below is the intended surface.
+
 The five uniform endpoints on the plans collection
 ([`agents/share/bulk-import-export.md`](../../../agents/share/bulk-import-export.md) §4):
 

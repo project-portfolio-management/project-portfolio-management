@@ -1250,6 +1250,11 @@ described manual check confirms it. Split tasks too big for one PR
 - [ ] **T-8 — Bulk import / export.**
   See §9.6, §10.4 and
   [bulk import/export](../../agents/share/bulk-import-export.md).
+  **Design drafted 2026-10-02 in
+  [bulk-import-export.md](bulk-import-export.md)** (the family doc is not
+  in this repo): schema, endpoints, worker, per-row pipeline, the
+  `review_queue` it introduces, and §12's open decisions — awaiting owner
+  approval before code.
   - [ ] `bulk_jobs` migration (shared doc §3 schema, with
     `UNIQUE (entity, kind, idempotency_key)`; `entity` is the one
     `plans` collection).

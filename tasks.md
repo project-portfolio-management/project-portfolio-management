@@ -348,7 +348,18 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   omitted; slots are in UTC and rendered in the caller's zone (LT-9); a slot
   never changes the task's due date.
 
-- [ ] **PL-5 (M) — Notification preferences.** `notification_prefs` keyed
+- [x] **PL-5 (M) — Notification preferences.** **Service landed 2026-10-02**
+  (`src/notification_prefs.rs`, `src/controllers/notification_prefs.rs`,
+  migration `m20261002_000004_notification_prefs`; 6 unit tests +
+  `tests/notification_prefs.rs` end to end with real tokens). Suppression
+  lives in `models::capabilities::notify` (now returns `Ok(None)` on opt-out),
+  so **no call site can forget it**; the automation engine reports an opt-out
+  as `skipped` (`recipient_opted_out`), not `failed`. Digest is applied **at
+  read** (`GET /api/me/inbox?tz=`), grouping per (kind, subject, local day) and
+  listing every member — nothing is delayed or dropped. **Not built:**
+  front-end settings page; channels beyond `in_app` (LT-6 / RM-11 add them);
+  OpenAPI entries (undocumented register). A new `notify(...)` kind must be
+  added to `notification_prefs::KINDS` or it cannot be switched off. `notification_prefs` keyed
   `(sub, kind, channel)` with `enabled` and an optional `digest` (`instant |
   daily`); an in-app inbox that groups by subject. Defaults preserve today's
   behaviour (everything on, in-app).

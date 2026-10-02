@@ -1732,6 +1732,9 @@ mod tests {
         "/api/reactions",
         // personal task view (LT-3)
         "/api/me/tasks",
+        // notification preferences and the caller's inbox (PL-5)
+        "/api/me/notification-prefs",
+        "/api/me/inbox",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -1766,6 +1769,7 @@ mod tests {
             crate::controllers::saved_views::routes(),
             crate::controllers::canvas::routes(),
             crate::controllers::my_work::routes(),
+            crate::controllers::notification_prefs::routes(),
             crate::controllers::discussion::routes(),
             crate::controllers::docs::routes(),
             crate::controllers::metrics::routes(),

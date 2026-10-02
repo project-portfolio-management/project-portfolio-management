@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — notification preferences (PL-5, 2026-10-02)
+
+`notification_prefs` (migration `m20261002_000004_notification_prefs`);
+`PUT/GET/DELETE /api/me/notification-prefs` and `GET /api/me/inbox?tz=`. A user
+may switch a notification kind off (nothing is written for them; everyone else
+is unaffected) or set it to a daily digest, which collapses the local day's
+events for one subject into a single inbox line listing every member. No
+preference means today's behaviour. `models::capabilities::notify` now returns
+`Result<Option<_>>`: `None` is a recipient opt-out, reported by the automation
+engine as `skipped`.
+
 ### Added — "My work" and the time-zone doctrine (LT-3 / LT-9, 2026-10-02)
 
 `GET /api/me/tasks?tz=<IANA>[&as_of=]`: the caller's open tasks in five buckets

@@ -29,6 +29,7 @@ pub mod key_results;
 pub mod merge_records;
 pub mod milestones;
 pub mod non_working_periods;
+pub mod notification_prefs;
 pub mod notifications;
 pub mod objective_links;
 pub mod objectives;

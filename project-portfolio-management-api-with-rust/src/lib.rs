@@ -67,6 +67,7 @@ pub mod merge;
 pub mod metrics;
 pub mod models;
 pub mod my_work;
+pub mod notification_prefs;
 /// Structured logging + real OpenTelemetry OTLP export (repo `tasks.md`
 /// PRO-H12, slice 7 of 7 — the last). Installed via
 /// [`app::App::init_logger`]; [`observability::trace_mw`] is layered in

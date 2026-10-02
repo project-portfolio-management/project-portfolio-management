@@ -25,6 +25,7 @@ pub mod governance;
 pub mod insights;
 pub mod metrics;
 pub mod my_work;
+pub mod notification_prefs;
 /// The OKR engine: key results, check-ins, and the derived objective
 /// and alignment-weighted plan scores.
 pub mod okr;

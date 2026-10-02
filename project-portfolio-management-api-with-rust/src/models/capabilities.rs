@@ -8,7 +8,9 @@ use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
-use super::_entities::{automation_runs, automations, notifications, reviews, scheduled_actions};
+use super::_entities::{
+    automation_runs, automations, notification_prefs, notifications, reviews, scheduled_actions,
+};
 
 impl ActiveModelBehavior for reviews::ActiveModel {}
 impl ActiveModelBehavior for automations::ActiveModel {}
@@ -81,8 +83,14 @@ pub async fn enabled_automations<C: ConnectionTrait>(
         .map_err(|e| Error::Model(ModelError::from(e)))
 }
 
-/// Write one in-app notification. In-app only — this service has no
-/// email or push transport, and does not pretend to.
+/// Write one in-app notification, unless the recipient has switched that
+/// kind off (PL-5). In-app only — this service has no email or push
+/// transport, and does not pretend to.
+///
+/// Returns `Ok(None)` when the recipient opted out: **suppression is a
+/// result, not an error**, so a caller can report it ("skipped") rather
+/// than log a failure. A recipient with no preference row — including every
+/// `organization:` reference — gets today's behaviour.
 ///
 /// # Errors
 ///
@@ -94,8 +102,24 @@ pub async fn notify<C: ConnectionTrait>(
     subject_pid: Uuid,
     kind: &str,
     message: &str,
-) -> Result<notifications::Model> {
-    notifications::ActiveModel {
+) -> Result<Option<notifications::Model>> {
+    if let Some(sub) = crate::notification_prefs::recipient_sub(recipient_ref) {
+        let opted_out = notification_prefs::Entity::find()
+            .filter(notification_prefs::Column::Sub.eq(sub))
+            .filter(notification_prefs::Column::Kind.eq(kind))
+            .filter(
+                notification_prefs::Column::Channel.eq(crate::notification_prefs::DEFAULT_CHANNEL),
+            )
+            .filter(notification_prefs::Column::Enabled.eq(false))
+            .one(db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?
+            .is_some();
+        if opted_out {
+            return Ok(None);
+        }
+    }
+    let row = notifications::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         recipient_ref: ActiveValue::set(recipient_ref.to_string()),
         subject_kind: ActiveValue::set(subject_kind.to_string()),
@@ -108,7 +132,8 @@ pub async fn notify<C: ConnectionTrait>(
     }
     .insert(db)
     .await
-    .map_err(|e| Error::Model(ModelError::from(e)))
+    .map_err(|e| Error::Model(ModelError::from(e)))?;
+    Ok(Some(row))
 }
 
 /// Record what one **action** of one automation firing did.

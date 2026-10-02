@@ -465,7 +465,12 @@ async fn act_notify(
     )
     .await
     {
-        Ok(_) => ("applied", serde_json::json!({ "recipient_ref": recipient })),
+        Ok(Some(_)) => ("applied", serde_json::json!({ "recipient_ref": recipient })),
+        // The recipient switched this kind off (PL-5): not a failure.
+        Ok(None) => (
+            "skipped",
+            serde_json::json!({ "recipient_ref": recipient, "reason": "recipient_opted_out" }),
+        ),
         Err(e) => ("failed", serde_json::json!({ "reason": e.to_string() })),
     }
 }
@@ -1323,7 +1328,8 @@ async fn perform_scheduled(ctx: &AppContext, row: &scheduled_actions::Model) -> 
                 )
                 .await
                 {
-                    Ok(_) => "notified".to_string(),
+                    Ok(Some(_)) => "notified".to_string(),
+                    Ok(None) => "notified: recipient opted out".to_string(),
                     Err(e) => format!("failed: {e}"),
                 },
                 None => "failed: no recipient_ref".to_string(),

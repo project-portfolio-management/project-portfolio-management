@@ -49,6 +49,7 @@ fn paths() -> Value {
     merge_object(&mut paths, discussion_paths());
     merge_object(&mut paths, personal_paths());
     merge_object(&mut paths, module_paths());
+    merge_object(&mut paths, crate::openapi_more::paths());
     paths
 }
 
@@ -2034,6 +2035,7 @@ mod tests {
             crate::controllers::notification_prefs::routes(),
             crate::controllers::discussion::routes(),
             crate::controllers::docs::routes(),
+            crate::controllers::components::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();

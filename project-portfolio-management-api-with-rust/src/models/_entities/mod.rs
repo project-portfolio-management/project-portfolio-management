@@ -16,6 +16,7 @@ pub mod canvases;
 pub mod ceremonies;
 pub mod comment_edits;
 pub mod comments;
+pub mod components;
 pub mod control_actions;
 pub mod control_readings;
 pub mod controls;

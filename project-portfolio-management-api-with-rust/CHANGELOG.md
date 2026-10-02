@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — task components (PL-11, 2026-10-02)
+
+`components` (migration `m20261003_000002_components`) and `tasks.component_pid`: five routes under `/api/plans/{pid}/components`, a `?component=` filter on the task list, and `/components/summary` whose buckets always sum to the plan's task total (every component, empty ones at zero, plus `unassigned`). A task's component must belong to its own plan; deleting one in use is `409`.
+
 ### Added — per-plan feature modules (RM-7, 2026-10-03)
 
 `plan_modules` (migration `m20261003_000001_plan_modules`); `GET/PUT

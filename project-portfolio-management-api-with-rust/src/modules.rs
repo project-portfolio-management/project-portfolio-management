@@ -36,7 +36,14 @@ pub struct ModuleDef {
 pub const MODULES: &[ModuleDef] = &[
     ModuleDef {
         key: "tasks",
-        segments: &["tasks", "sprints", "burndown", "velocity", "standup"],
+        segments: &[
+            "tasks",
+            "components",
+            "sprints",
+            "burndown",
+            "velocity",
+            "standup",
+        ],
     },
     ModuleDef {
         key: "time",

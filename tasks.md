@@ -416,7 +416,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   states its `as_of` and the masking profile used; a caller denied the JSON
   pack is denied the PDF; masked fields do not appear in the PDF text layer.
 
-- [ ] **PL-11 (S) — Components (task grouping within a plan).** `components`
+- [x] **PL-11 (S) — Components (task grouping within a plan).** **Landed 2026-10-02.** Service: `components` table + `tasks.component_pid`, five routes under `/api/plans/{pid}/components`, `?component=<pid|unassigned>` task filter, and a per-component summary that always reconciles (every component, empty ones at zero, plus `unassigned`). Module `tasks` owns the route. 3 unit + 1 DB-gated test, OpenAPI. **Not built:** saved-report group-by on component (the summary endpoint covers the need); front-end. `components`
   per plan (`name`, optional `lead_ref`) and an optional `component_pid` on a
   task; filter and group-by in lists and saved reports. Corroborated by
   Redmine's issue categories.

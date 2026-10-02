@@ -76,6 +76,7 @@ fn task_view(task: &tasks::Model) -> serde_json::Value {
         "assignee_ref": task.assignee_ref,
         "points": task.points,
         "due_date": task.due_date,
+        "component_pid": task.component_pid,
         "sprint_pid": task.sprint_pid,
         "created_at": task.created_at.to_utc(),
         "status_changed_at": task.status_changed_at.to_utc(),
@@ -99,6 +100,9 @@ struct TaskPayload {
     /// Optional due **calendar date** (`YYYY-MM-DD`, no zone).
     #[serde(default)]
     due_date: Option<chrono::NaiveDate>,
+    /// Optional component (grouping) of this plan.
+    #[serde(default)]
+    component_pid: Option<Uuid>,
     /// Optional story points (team-local; 0–100).
     #[serde(default)]
     points: Option<i32>,
@@ -168,6 +172,18 @@ async fn validate_task(
              item unclassified",
         ));
     }
+    if let Some(component_pid) = payload.component_pid {
+        let found = crate::models::_entities::components::Entity::find()
+            .filter(crate::models::_entities::components::Column::Pid.eq(component_pid))
+            .filter(crate::models::_entities::components::Column::PlanPid.eq(plan_pid))
+            .filter(crate::models::_entities::components::Column::DeletedAt.is_null())
+            .one(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?;
+        if found.is_none() {
+            return Err(refuse("component_pid must name a component of this plan"));
+        }
+    }
     if let Some(sprint_pid) = payload.sprint_pid {
         let sprint = sprints::Entity::find()
             .filter(sprints::Column::Pid.eq(sprint_pid))
@@ -215,6 +231,7 @@ async fn create_task(
         assignee_ref: sea_orm::ActiveValue::set(payload.assignee_ref.clone()),
         points: sea_orm::ActiveValue::set(payload.points),
         due_date: sea_orm::ActiveValue::set(payload.due_date),
+        component_pid: sea_orm::ActiveValue::set(payload.component_pid),
         status_changed_at: sea_orm::ActiveValue::set(now.into()),
         flow_type: sea_orm::ActiveValue::set(payload.flow_type.clone()),
         // Stamped from the state's **category**, not from the literal
@@ -253,14 +270,37 @@ async fn create_task(
     format::json(task_view(&row))
 }
 
+/// `GET /api/plans/{pid}/tasks` query.
+#[derive(Debug, Deserialize)]
+struct TaskListParams {
+    #[serde(default)]
+    component: Option<String>,
+}
+
 /// `GET /api/plans/{pid}/tasks` — the item's live tasks plus
 /// per-status counts (board columns).
 #[debug_handler]
-async fn list_tasks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+async fn list_tasks(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+    Query(params): Query<TaskListParams>,
+) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let rows = tasks::Entity::find()
+    let mut query = tasks::Entity::find()
         .filter(tasks::Column::PlanPid.eq(item.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
+        .filter(tasks::Column::DeletedAt.is_null());
+    // `?component=<pid>` narrows to one component; `?component=unassigned`
+    // to the tasks with none (never silently dropped from a grouping).
+    match params.component.as_deref() {
+        None => {}
+        Some("unassigned") => query = query.filter(tasks::Column::ComponentPid.is_null()),
+        Some(raw) => {
+            let component = Uuid::parse_str(raw)
+                .map_err(|_| refuse("component must be a component pid or \"unassigned\""))?;
+            query = query.filter(tasks::Column::ComponentPid.eq(component));
+        }
+    }
+    let rows = query
         .order_by_asc(tasks::Column::Id)
         .all(&ctx.db)
         .await
@@ -302,6 +342,7 @@ async fn update_task(
     active.assignee_ref = sea_orm::ActiveValue::set(payload.assignee_ref.clone());
     active.points = sea_orm::ActiveValue::set(payload.points);
     active.due_date = sea_orm::ActiveValue::set(payload.due_date);
+    active.component_pid = sea_orm::ActiveValue::set(payload.component_pid);
     active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
     let row = active
         .update(&ctx.db)

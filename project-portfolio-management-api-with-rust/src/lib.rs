@@ -35,6 +35,7 @@ pub mod canvas;
 pub mod collaboration;
 /// Compliance controls: row-level integrity and keyed MACs.
 pub mod compliance;
+pub mod components;
 pub mod controllers;
 /// Pure rules for the **Controlling process** — set a standard,
 /// measure, compare, act — and the three control timings
@@ -78,6 +79,7 @@ pub mod observability;
 /// alignment-weighted plan score — all derived on read.
 pub mod okr;
 pub mod openapi;
+pub mod openapi_more;
 /// The pure, explainable Smart Score behind data-driven prioritisation.
 /// Pure rules for the sequential project phase — Initiating through
 /// Closing: one-step advancement, explicitly-reasoned regression, and

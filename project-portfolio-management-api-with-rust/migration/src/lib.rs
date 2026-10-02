@@ -47,6 +47,7 @@ mod m20261002_000002_comments_reactions;
 mod m20261002_000003_task_due_date;
 mod m20261002_000004_notification_prefs;
 mod m20261003_000001_plan_modules;
+mod m20261003_000002_components;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -94,6 +95,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261002_000003_task_due_date::Migration),
             Box::new(m20261002_000004_notification_prefs::Migration),
             Box::new(m20261003_000001_plan_modules::Migration),
+            Box::new(m20261003_000002_components::Migration),
             // inject-above (do not remove this comment)
         ]
     }

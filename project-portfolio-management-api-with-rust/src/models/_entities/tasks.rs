@@ -28,6 +28,8 @@ pub struct Model {
     pub done_at: Option<DateTimeWithTimeZone>,
     /// Due **calendar date** — zone-free by the time-zone doctrine (`crate::tz`).
     pub due_date: Option<Date>,
+    /// The component (grouping) of this plan the task belongs to, if any.
+    pub component_pid: Option<Uuid>,
     /// The declared Flow Framework work-item type (`feature` /
     /// `defect` / `risk` / `debt`). `None` means **nobody declared
     /// one**, reported as `unclassified` and counted separately — never

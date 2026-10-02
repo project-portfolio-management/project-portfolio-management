@@ -5,6 +5,7 @@
 
 mod canvas;
 mod capabilities;
+mod components;
 mod discussion;
 mod effort;
 mod event_outbox;

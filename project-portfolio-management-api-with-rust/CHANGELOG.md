@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — real-Keycloak container test (2026-10-02)
+
+`tests/keycloak_container.rs` (feature `keycloak`, `#[ignore]`d): Testcontainers
+starts Keycloak 26.0 under Podman, imports `tests/fixtures/keycloak/mxi-realm.json`,
+and checks authentication, the role map and ABAC through the real guard. New
+dev-dependency `testcontainers`. Run instructions: spec §11.2a.
+
 ### Added — report grouping (T-28e, first half, 2026-09-20)
 
 `report_definitions.group_by` (migration `m20260920_000001_report_group_by`,

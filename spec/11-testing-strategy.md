@@ -40,6 +40,26 @@ The integration contract this spec owns needs pinning at four seams:
   `src/lib/api/types.ts` are hand-mirrored; a Playwright smoke against
   a running service is the planned guard.
 
+### 11.2a Real Keycloak via Testcontainers (Podman)
+
+`project-portfolio-management-api-with-rust/tests/keycloak_container.rs`
+starts a real Keycloak (`quay.io/keycloak/keycloak:26.0`, fully qualified
+because Podman refuses short names), imports
+`tests/fixtures/keycloak/mxi-realm.json`, mints tokens with the password
+grant, and drives them through the real auth guard. It complements the
+DB-free `tests/keycloak_guard.rs` (local OIDC stand-in). `#[ignore]`d and
+behind the `keycloak` feature; see
+[testcontainers-keycloak/](testcontainers-keycloak/index.md). Run:
+
+```sh
+export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+export TESTCONTAINERS_RYUK_DISABLED=true
+cargo test --features keycloak --test keycloak_container -- --ignored
+```
+
+Token fetch and verifier configuration must use the same origin
+(`http://localhost:<mapped port>`): Keycloak derives `iss` from the request host.
+
 ### 11.3 Gates
 
 Rust: `cargo test`, `cargo clippy --all-targets -- -D warnings`,

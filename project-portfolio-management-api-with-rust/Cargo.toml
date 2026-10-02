@@ -145,6 +145,9 @@ sha2 = { version = "0.10" }
 base64 = { version = "0.23" }
 # Temp directories for the search-index tests.
 tempfile = { version = "3" }
+# A real Keycloak in a container for tests/keycloak_container.rs (Podman via
+# its Docker-compatible socket; see the test's module docs). `#[ignore]`d.
+testcontainers = { version = "0.28" }
 
 # An in-process OTLP/gRPC collector for `tests/otlp_export.rs` /
 # `tests/otlp_middleware.rs` (PRO-H12, ported from case-service): the

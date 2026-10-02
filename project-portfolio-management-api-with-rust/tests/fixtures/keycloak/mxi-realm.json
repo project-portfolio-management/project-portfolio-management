@@ -1,0 +1,65 @@
+{
+  "realm": "mxi",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      { "name": "editor" },
+      { "name": "root" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "mxi-api",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "fullScopeAllowed": true,
+      "protocolMappers": [
+        {
+          "name": "mxi-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mxi-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "edith",
+      "enabled": true,
+      "email": "edith@example.com",
+      "emailVerified": true,
+      "firstName": "Edith",
+      "lastName": "Editor",
+      "credentials": [{ "type": "password", "value": "edith-pw", "temporary": false }],
+      "realmRoles": ["editor"]
+    },
+    {
+      "username": "rhea",
+      "enabled": true,
+      "email": "rhea@example.com",
+      "emailVerified": true,
+      "firstName": "Rhea",
+      "lastName": "Root",
+      "credentials": [{ "type": "password", "value": "rhea-pw", "temporary": false }],
+      "realmRoles": ["root"]
+    },
+    {
+      "username": "nora",
+      "enabled": true,
+      "email": "nora@example.com",
+      "emailVerified": true,
+      "firstName": "Nora",
+      "lastName": "Nobody",
+      "credentials": [{ "type": "password", "value": "nora-pw", "temporary": false }]
+    }
+  ]
+}

@@ -45,6 +45,9 @@ fn paths() -> Value {
     merge_object(&mut paths, effort_paths());
     merge_object(&mut paths, ceremony_paths());
     merge_object(&mut paths, value_paths());
+    merge_object(&mut paths, canvas_paths());
+    merge_object(&mut paths, discussion_paths());
+    merge_object(&mut paths, personal_paths());
     paths
 }
 
@@ -1238,6 +1241,252 @@ fn value_paths() -> Value {
     })
 }
 
+/// Strategy canvases (LT-1): templates, canvases, items, and promotion of
+/// an item into an idea, risk or objective.
+fn canvas_paths() -> Value {
+    let pid = json!({ "name": "pid", "in": "path", "required": true,
+        "schema": { "type": "string", "format": "uuid" } });
+    let item = json!({ "name": "item_pid", "in": "path", "required": true,
+        "schema": { "type": "string", "format": "uuid" } });
+    json!({
+        "/api/canvas-templates": {
+            "get": {
+                "tags": ["canvas"],
+                "summary": "Every built-in canvas template and its ordered boxes",
+                "description": "Lean, Business Model, SWOT, empathy map, logic model, risk and goal. A template is only a list of boxes, so a new canvas type is a code change to that list, never a migration. The risk and goal box sets are this service's own design.",
+                "responses": { "200": { "description": "Templates" } }
+            }
+        },
+        "/api/canvases": {
+            "post": {
+                "tags": ["canvas"],
+                "summary": "Create a canvas from a template",
+                "description": "Optionally scoped to a plan (plan_pid); without one it is a free-standing, pre-proposal canvas.",
+                "responses": {
+                    "200": { "description": "Created ({ pid })" },
+                    "404": { "description": "plan_pid names no live plan" },
+                    "422": { "description": "Unknown template, or a blank or over-long title" }
+                }
+            },
+            "get": {
+                "tags": ["canvas"],
+                "summary": "Live canvases, optionally by plan and template",
+                "parameters": [
+                    { "name": "plan", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+                    { "name": "template", "in": "query", "schema": { "type": "string" } }
+                ],
+                "responses": { "200": { "description": "Canvases" }, "422": { "description": "plan is not a UUID" } }
+            }
+        },
+        "/api/canvases/{pid}": {
+            "get": {
+                "tags": ["canvas"],
+                "summary": "A canvas with every box of its template, and its items",
+                "description": "Every box is reported, empty ones at count 0: an empty box is itself the finding on a canvas, so it never silently disappears.",
+                "parameters": [pid],
+                "responses": { "200": { "description": "canvas, boxes (with counts), items" }, "404": { "description": "Unknown or deleted canvas" } }
+            },
+            "delete": {
+                "tags": ["canvas"],
+                "summary": "Soft-delete a canvas and its items, atomically",
+                "parameters": [pid],
+                "responses": { "200": { "description": "Deleted" }, "404": { "description": "Unknown canvas" } }
+            }
+        },
+        "/api/canvases/{pid}/items": {
+            "post": {
+                "tags": ["canvas"],
+                "summary": "Add an item to a box",
+                "description": "The box must belong to the canvas's template, the body is capped, and a canvas holds a bounded number of items.",
+                "parameters": [pid],
+                "responses": {
+                    "200": { "description": "Added ({ pid })" },
+                    "404": { "description": "Unknown canvas" },
+                    "422": { "description": "Unknown box for this template, a blank or over-long body, a malformed owner_ref, or the canvas is full" }
+                }
+            }
+        },
+        "/api/canvases/{pid}/items/{item_pid}": {
+            "put": {
+                "tags": ["canvas"],
+                "summary": "Edit or move an item",
+                "description": "Every field is optional. An item is addressable only through its own canvas; another canvas's item is a 404.",
+                "parameters": [pid, item],
+                "responses": { "200": { "description": "Updated item" }, "404": { "description": "Unknown canvas or item" }, "422": { "description": "Invalid box, body, owner_ref or position" } }
+            },
+            "delete": {
+                "tags": ["canvas"],
+                "summary": "Soft-delete one item",
+                "parameters": [pid, item],
+                "responses": { "200": { "description": "Deleted" }, "404": { "description": "Unknown canvas or item" } }
+            }
+        },
+        "/api/canvases/{pid}/items/{item_pid}/promote": {
+            "post": {
+                "tags": ["canvas"],
+                "summary": "Promote an item to an idea, a risk or an objective",
+                "description": "One transaction: the target row, the item's back-link and two audit rows commit together or not at all, and the target's audit row names its source item. Never repeatable: a second promotion is 409. A risk needs a plan-scoped canvas, and probability and impact (1-5) must be supplied; they are never defaulted.",
+                "parameters": [pid, item],
+                "responses": {
+                    "200": { "description": "Promoted ({ kind, pid })" },
+                    "404": { "description": "Unknown canvas or item" },
+                    "409": { "description": "Already promoted" },
+                    "422": { "description": "Unknown target, an item with no text, or a risk without a plan or without probability and impact" }
+                }
+            }
+        }
+    })
+}
+
+/// Comments and reactions (LT-4).
+fn discussion_paths() -> Value {
+    let pid = json!({ "name": "pid", "in": "path", "required": true,
+        "schema": { "type": "string", "format": "uuid" } });
+    let subject = json!([
+        { "name": "subject_kind", "in": "query", "required": true,
+          "schema": { "type": "string", "enum": ["plan", "task", "risk", "proposal", "idea", "canvas_item"] } },
+        { "name": "subject_pid", "in": "query", "required": true,
+          "schema": { "type": "string", "format": "uuid" } }
+    ]);
+    json!({
+        "/api/comments": {
+            "post": {
+                "tags": ["discussion"],
+                "summary": "Comment on a plan, task, risk, proposal, idea or canvas item",
+                "description": "Notifies the subject's owner and every earlier commenter, never the author, each exactly once. A subject owned by a plan applies that plan's record-level read check, so a thread never reveals a plan its reader could not GET.",
+                "responses": {
+                    "200": { "description": "Added ({ pid })" },
+                    "403": { "description": "The owning plan is not readable by this caller" },
+                    "404": { "description": "The subject does not exist" },
+                    "422": { "description": "Unknown subject_kind, or a blank or over-long body" }
+                }
+            },
+            "get": {
+                "tags": ["discussion"],
+                "summary": "A subject's live thread, oldest first",
+                "parameters": subject,
+                "responses": { "200": { "description": "Comments" }, "403": { "description": "Owning plan not readable" }, "404": { "description": "Unknown subject" } }
+            }
+        },
+        "/api/comments/{pid}": {
+            "put": {
+                "tags": ["discussion"],
+                "summary": "Edit a comment (author only)",
+                "description": "The previous body is kept in the same transaction, so a discussion cannot be silently rewritten.",
+                "parameters": [pid],
+                "responses": { "200": { "description": "Updated comment" }, "403": { "description": "Not the author" }, "404": { "description": "Unknown or deleted comment" }, "422": { "description": "Blank or over-long body" } }
+            },
+            "delete": {
+                "tags": ["discussion"],
+                "summary": "Soft-delete a comment (author only)",
+                "parameters": [pid],
+                "responses": { "200": { "description": "Deleted" }, "403": { "description": "Not the author" }, "404": { "description": "Unknown comment" } }
+            }
+        },
+        "/api/comments/{pid}/history": {
+            "get": {
+                "tags": ["discussion"],
+                "summary": "A comment's previous bodies, oldest first",
+                "parameters": [pid],
+                "responses": { "200": { "description": "Edit history" }, "403": { "description": "Owning plan not readable" }, "404": { "description": "Unknown comment" } }
+            }
+        },
+        "/api/reactions": {
+            "post": {
+                "tags": ["discussion"],
+                "summary": "React to a subject (idempotent)",
+                "description": "One reaction per (subject, user, kind). A repeat is 200 with created false and writes nothing. The kinds are a small closed set: thumbs_up, heart, celebrate, eyes, question.",
+                "responses": { "200": { "description": "{ created: bool }" }, "404": { "description": "Unknown subject" }, "422": { "description": "Unknown subject_kind or reaction kind" } }
+            },
+            "get": {
+                "tags": ["discussion"],
+                "summary": "Reaction counts per kind and the caller's own",
+                "description": "Every kind is reported, zero included, so a client can render a stable bar.",
+                "parameters": subject,
+                "responses": { "200": { "description": "{ counts, mine }" }, "404": { "description": "Unknown subject" } }
+            },
+            "delete": {
+                "tags": ["discussion"],
+                "summary": "Remove the caller's own reaction (idempotent)",
+                "parameters": [
+                    { "name": "subject_kind", "in": "query", "required": true, "schema": { "type": "string" } },
+                    { "name": "subject_pid", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+                    { "name": "kind", "in": "query", "required": true, "schema": { "type": "string" } }
+                ],
+                "responses": { "200": { "description": "Removed (or already absent)" }, "422": { "description": "Unknown kind" } }
+            }
+        }
+    })
+}
+
+/// The caller's own views: "My work" (LT-3), notification preferences and
+/// the inbox (PL-5). All require a bearer token.
+fn personal_paths() -> Value {
+    let tz = json!({ "name": "tz", "in": "query", "required": true,
+        "description": "An IANA zone such as Europe/London. Fixed offsets and abbreviations are refused: they cannot follow daylight saving.",
+        "schema": { "type": "string" } });
+    json!({
+        "/api/me/tasks": {
+            "get": {
+                "tags": ["me"],
+                "summary": "The caller's open tasks by due date, in the caller's own zone",
+                "description": "Five buckets, always all present: overdue, today, this_week (the next six days), later, undated. An undated task is a finding, never treated as due. 'Today' is the caller's local date in tz, so one due date can be today in one zone and overdue in another at the same instant. Tasks in plans the caller cannot read are omitted and counted in omitted_unreadable. A token whose sub is not a UUID cannot be matched to assignments and gets empty buckets with reason sub_not_addressable.",
+                "security": [{ "bearer": [] }],
+                "parameters": [
+                    tz,
+                    { "name": "as_of", "in": "query",
+                      "description": "Evaluate as of this RFC 3339 instant instead of now.",
+                      "schema": { "type": "string", "format": "date-time" } }
+                ],
+                "responses": {
+                    "200": { "description": "tz, as_of, today, buckets, counts, total, omitted_unreadable, truncated, reason" },
+                    "401": { "description": "Missing or invalid bearer token" },
+                    "422": { "description": "Missing, unknown, fixed-offset or abbreviated tz, or a malformed as_of" }
+                }
+            }
+        },
+        "/api/me/notification-prefs": {
+            "put": {
+                "tags": ["me"],
+                "summary": "Set one notification choice (kind x channel)",
+                "description": "Switch a kind off, or set it to a daily digest. No choice means the default: everything on, instant, in-app. Refused for a sign-in identity that is not a UUID, because its preference could never take effect.",
+                "security": [{ "bearer": [] }],
+                "responses": { "200": { "description": "The stored choice" }, "401": { "description": "Missing or invalid bearer token" }, "422": { "description": "Unknown kind, channel or digest, or an identity that cannot be addressed" } }
+            },
+            "get": {
+                "tags": ["me"],
+                "summary": "The caller's own choices, what can be chosen, and the default",
+                "description": "Never returns another user's preferences.",
+                "security": [{ "bearer": [] }],
+                "responses": { "200": { "description": "prefs, known_kinds, channels, digests, default" }, "401": { "description": "Missing or invalid bearer token" } }
+            },
+            "delete": {
+                "tags": ["me"],
+                "summary": "Restore the default for one kind (idempotent)",
+                "security": [{ "bearer": [] }],
+                "parameters": [
+                    { "name": "kind", "in": "query", "required": true, "schema": { "type": "string" } },
+                    { "name": "channel", "in": "query", "schema": { "type": "string", "default": "in_app" } }
+                ],
+                "responses": { "200": { "description": "Reset" }, "401": { "description": "Missing or invalid bearer token" }, "422": { "description": "Unknown kind or channel" } }
+            }
+        },
+        "/api/me/inbox": {
+            "get": {
+                "tags": ["me"],
+                "summary": "The caller's notifications with their digest choices applied",
+                "description": "A kind set to daily collapses into one line per (subject, local day in tz) that lists every notification it stands for in pids; nothing is dropped or delayed. unread_count counts individual notifications, not lines.",
+                "security": [{ "bearer": [] }],
+                "parameters": [
+                    tz,
+                    { "name": "unread", "in": "query", "schema": { "type": "boolean" } }
+                ],
+                "responses": { "200": { "description": "tz, items, unread_count" }, "401": { "description": "Missing or invalid bearer token" }, "422": { "description": "Invalid tz, or an identity that cannot be addressed" } }
+            }
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1718,23 +1967,6 @@ mod tests {
         // per-user saved views (T-28l)
         "/api/saved-views",
         "/api/saved-views/{pid}",
-        // strategy canvases (LT-1)
-        "/api/canvas-templates",
-        "/api/canvases",
-        "/api/canvases/{pid}",
-        "/api/canvases/{pid}/items",
-        "/api/canvases/{pid}/items/{item_pid}",
-        "/api/canvases/{pid}/items/{item_pid}/promote",
-        // comments and reactions (LT-4)
-        "/api/comments",
-        "/api/comments/{pid}",
-        "/api/comments/{pid}/history",
-        "/api/reactions",
-        // personal task view (LT-3)
-        "/api/me/tasks",
-        // notification preferences and the caller's inbox (PL-5)
-        "/api/me/notification-prefs",
-        "/api/me/inbox",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -1919,6 +2151,10 @@ mod tests {
         "/api/plans/{pid}/controls",
         "/api/plans/{pid}/budget-baselines",
         "/api/plans/{pid}/time-entries",
+        // plain record lists (LT-1 / LT-4): nothing computed across them
+        "/api/canvases",
+        "/api/comments",
+        "/api/comments/{pid}/history",
     ];
 
     /// Words and phrases this family's response conventions actually use
@@ -2006,6 +2242,68 @@ mod tests {
                 paths[*path]["get"].is_object(),
                 "{path} is registered as a plain CRUD GET but is not a \
                  documented GET at all — fix or remove the entry"
+            );
+        }
+    }
+
+    /// LT-1 / LT-4 / LT-3 / PL-5: the canvas, discussion and personal
+    /// surfaces are documented, and the descriptions carry the properties
+    /// a client must rely on (not just the paths).
+    #[test]
+    fn spec_documents_the_canvas_discussion_and_personal_surfaces() {
+        let s = spec();
+        let paths = &s["paths"];
+        for (path, method) in [
+            ("/api/canvas-templates", "get"),
+            ("/api/canvases", "post"),
+            ("/api/canvases", "get"),
+            ("/api/canvases/{pid}", "get"),
+            ("/api/canvases/{pid}", "delete"),
+            ("/api/canvases/{pid}/items", "post"),
+            ("/api/canvases/{pid}/items/{item_pid}", "put"),
+            ("/api/canvases/{pid}/items/{item_pid}", "delete"),
+            ("/api/canvases/{pid}/items/{item_pid}/promote", "post"),
+            ("/api/comments", "post"),
+            ("/api/comments", "get"),
+            ("/api/comments/{pid}", "put"),
+            ("/api/comments/{pid}", "delete"),
+            ("/api/comments/{pid}/history", "get"),
+            ("/api/reactions", "post"),
+            ("/api/reactions", "get"),
+            ("/api/reactions", "delete"),
+            ("/api/me/tasks", "get"),
+            ("/api/me/notification-prefs", "put"),
+            ("/api/me/notification-prefs", "get"),
+            ("/api/me/notification-prefs", "delete"),
+            ("/api/me/inbox", "get"),
+        ] {
+            assert!(
+                paths[path][method].is_object(),
+                "{method} {path} undocumented"
+            );
+        }
+        let text = |path: &str, method: &str| {
+            paths[path][method]["description"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string()
+        };
+        assert!(text("/api/canvases/{pid}", "get").contains("count 0"));
+        let promote = text("/api/canvases/{pid}/items/{item_pid}/promote", "post");
+        assert!(promote.contains("409") && promote.contains("never defaulted"));
+        assert!(text("/api/comments/{pid}", "put").contains("previous body"));
+        assert!(text("/api/reactions", "post").contains("created false"));
+        let mine = text("/api/me/tasks", "get");
+        assert!(mine.contains("undated") && mine.contains("sub_not_addressable"));
+        // The personal routes require a bearer token.
+        for (path, method) in [
+            ("/api/me/tasks", "get"),
+            ("/api/me/notification-prefs", "put"),
+            ("/api/me/inbox", "get"),
+        ] {
+            assert!(
+                paths[path][method]["security"].is_array(),
+                "{path} needs bearer security"
             );
         }
     }

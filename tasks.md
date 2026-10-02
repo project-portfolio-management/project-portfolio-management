@@ -14,9 +14,7 @@ audited; people stay references.
 - [x] **LT-1 (L) — Strategy canvases.** **Service landed 2026-10-02**
   (`src/canvas.rs`, `src/controllers/canvas.rs`, migration
   `m20261002_000001_canvases`, 7 unit + 4 DB-gated request tests, all passing
-  against Postgres). **Not built:** the front-end pages, and OpenAPI entries
-  (the six routes are on the `KNOWN_UNDOCUMENTED` register in
-  `src/openapi.rs`, to be documented). The `risk` and `goal` templates are
+  against Postgres). **OpenAPI documented 2026-10-02.** **Not built:** the front-end pages. The `risk` and `goal` templates are
   this service's own box sets, not a copy of Leantime's. A generic canvas engine: a
   `canvases` table (plan-scoped or free-standing, `template` key) and
   `canvas_items` (`box` key, text, optional owner ref, `position`), with
@@ -70,8 +68,7 @@ audited; people stay references.
   `m20261002_000002_comments_reactions`, 6 unit + 3 DB-gated request tests).
   **Deviation:** one generic surface (`/api/comments`, `/api/reactions` with
   `subject_kind` + `subject_pid`) instead of per-entity paths, so a new subject
-  kind is code, not routes. **Not built:** front-end; OpenAPI entries (on the
-  `KNOWN_UNDOCUMENTED` register); the author-only rule is proven by a unit
+  kind is code, not routes. **OpenAPI documented 2026-10-02.** **Not built:** front-end; the author-only rule is proven by a unit
   test, not an end-to-end token test (request tests run with auth off).
   Notifications address an earlier commenter as `person:<sub>` only when the
   `sub` is a UUID — an assumption to confirm with the auth service.
@@ -356,9 +353,8 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   so **no call site can forget it**; the automation engine reports an opt-out
   as `skipped` (`recipient_opted_out`), not `failed`. Digest is applied **at
   read** (`GET /api/me/inbox?tz=`), grouping per (kind, subject, local day) and
-  listing every member — nothing is delayed or dropped. **Not built:**
-  front-end settings page; channels beyond `in_app` (LT-6 / RM-11 add them);
-  OpenAPI entries (undocumented register). A new `notify(...)` kind must be
+  listing every member — nothing is delayed or dropped. **OpenAPI documented 2026-10-02.** **Not built:**
+  front-end settings page; channels beyond `in_app` (LT-6 / RM-11 add them). A new `notify(...)` kind must be
   added to `notification_prefs::KINDS` or it cannot be switched off. `notification_prefs` keyed
   `(sub, kind, channel)` with `enabled` and an optional `digest` (`instant |
   daily`); an in-app inbox that groups by subject. Defaults preserve today's

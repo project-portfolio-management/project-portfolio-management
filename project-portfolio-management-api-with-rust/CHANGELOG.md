@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — file attachments and the artifact store (LT-5, 2026-10-03)
+
+`artifacts`, `attachments`, `/api/attachments`: attach a file (raw body) to a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Type allow-list and size cap enforced before storage; SHA-256 re-verified on download; downloads re-authorised on the subject and served with `nosniff` and a UTF-8-safe `Content-Disposition`.
+
 ### Added — personal planner (PL-4, 2026-10-03)
 
 `planned_slots`, `/api/me/planned-slots`, `/api/me/plan`: block time for a task and see a local day's slots in your own zone. Overlaps are reported as clashes (back-to-back is not one); a slot never changes the task's due date; slots also appear in the calendar feed as timed events.

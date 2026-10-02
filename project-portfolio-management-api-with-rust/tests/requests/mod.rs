@@ -3,6 +3,7 @@
 //! outbox suite in [`event_outbox`], and the PPM Phase-A governance
 //! suite (intake / gates / risks / budgets) in [`governance`].
 
+mod attachments;
 mod canvas;
 mod capabilities;
 mod components;

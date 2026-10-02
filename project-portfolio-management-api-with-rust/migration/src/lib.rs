@@ -60,6 +60,8 @@ mod m20261003_000011_plan_access_settings;
 mod m20261003_000012_timesheet_weeks;
 mod m20261003_000013_plan_templates;
 mod m20261003_000014_planned_slots;
+mod m20261003_000015_artifacts;
+mod m20261003_000016_attachments;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -120,6 +122,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000012_timesheet_weeks::Migration),
             Box::new(m20261003_000013_plan_templates::Migration),
             Box::new(m20261003_000014_planned_slots::Migration),
+            Box::new(m20261003_000015_artifacts::Migration),
+            Box::new(m20261003_000016_attachments::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -19,3 +19,5 @@ impl ActiveModelBehavior for plan_access_settings::ActiveModel {}
 impl ActiveModelBehavior for timesheet_weeks::ActiveModel {}
 impl ActiveModelBehavior for plan_templates::ActiveModel {}
 impl ActiveModelBehavior for planned_slots::ActiveModel {}
+impl ActiveModelBehavior for artifacts::ActiveModel {}
+impl ActiveModelBehavior for attachments::ActiveModel {}

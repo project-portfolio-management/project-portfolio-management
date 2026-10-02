@@ -84,6 +84,7 @@ pub fn paths() -> Value {
     merge(&mut all, template_paths());
     merge(&mut all, live_paths());
     merge(&mut all, planner_paths());
+    merge(&mut all, attachment_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -432,6 +433,49 @@ fn planner_paths() -> Value {
                 "day is a calendar date and tz an IANA zone (fixed offsets are refused). The window is built from local midnights, so it is 23 or 25 hours across a daylight-saving change. Each slot carries its UTC instants and the same instants rendered in tz. clashes lists groups of overlapping slots (transitively; back-to-back is not a clash). due_on_day lists the caller's open tasks due that day, i.e. what the day still owes. A slot on a task the caller can no longer read is omitted and counted.",
                 vec![query("day", true, "YYYY-MM-DD"), query("tz", true, "An IANA zone")],
                 &[("200", "day, tz, window, slots, clashes, due_on_day, omitted_unreadable"), ("401", "Missing or invalid bearer token"), ("422", "Invalid day or tz")])
+        }
+    })
+}
+
+/// File attachments (LT-5).
+fn attachment_paths() -> Value {
+    let subject = vec![
+        query(
+            "subject_kind",
+            true,
+            "plan, task, risk, proposal, idea, canvas_item, budget_line or scenario",
+        ),
+        query("subject_pid", true, "The subject pid"),
+    ];
+    let mut upload = subject.clone();
+    upload.push(query(
+        "filename",
+        true,
+        "The display name; UTF-8 is preserved, path components are dropped",
+    ));
+    json!({
+        "/api/attachments": {
+            "post": op("attachments", "Attach a file to a subject (the raw request body)",
+                "Send the file bytes as the request body with its Content-Type. Refused before anything is stored: a content type outside the allow-list (pdf, png, jpeg, gif, webp, txt, csv, markdown, json, docx, xlsx, pptx; never html, svg, archives or executables) or a size over the limit (10 MiB by default) is 422, and an empty file is 422. The stored bytes carry a SHA-256. The subject's record-level read check and private-plan membership apply.",
+                upload, &[("200", "pid, filename, content_type, size_bytes, sha256"), ("404", "Unknown subject, or one the caller cannot see"), ("413", "Over the transport ceiling"), ("422", "Disallowed type, empty, over the limit, or unknown subject_kind")]),
+            "get": op("attachments", "A subject's attachments",
+                "Name, type, size, SHA-256, uploader and time for each live attachment.", subject,
+                &[("200", "Attachments"), ("404", "Unknown subject, or one the caller cannot see")])
+        },
+        "/api/attachments/{pid}/download": {
+            "get": op("attachments", "Download an attachment",
+                "Re-authorised against the SUBJECT's policy, not just the attachment's own row, so losing access to the plan loses the file. The bytes are re-verified against the stored SHA-256 and never served if they differ. Served with X-Content-Type-Options: nosniff, Cache-Control: private, no-store and Content-Disposition: attachment carrying both an ASCII fallback and the RFC 5987 UTF-8 name, so a non-Latin filename survives and is never doubled.",
+                vec![uuid_param("pid")], &[("200", "The file"), ("404", "Unknown attachment, or its subject is not visible"), ("500", "The stored file failed its integrity check")])
+        },
+        "/api/attachments/{pid}": {
+            "delete": op("attachments", "Remove an attachment (soft-delete)",
+                "The uploader or an admin may. The bytes remain until an artifact sweep.", vec![uuid_param("pid")],
+                &[("200", "Removed"), ("403", "Not the uploader or an admin"), ("404", "Unknown attachment")])
+        },
+        "/api/attachments/{pid}/delete": {
+            "post": op("attachments", "Remove an attachment (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", vec![uuid_param("pid")],
+                &[("200", "Removed"), ("403", "Not the uploader or an admin"), ("404", "Unknown attachment")])
         }
     })
 }

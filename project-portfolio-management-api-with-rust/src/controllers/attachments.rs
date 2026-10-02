@@ -1,0 +1,292 @@
+//! File attachments (LT-5) over the artifact store ([`crate::artifacts`]).
+//!
+//! An upload is the **raw request body** (`POST /api/attachments?subject_kind=
+//! &subject_pid=&filename=` with its `Content-Type`), refused **before
+//! anything is stored** when the type is not on the allow-list or the size is
+//! over the cap. The stored bytes carry a SHA-256 that is re-checked on every
+//! download. A download is re-authorised against the **subject's** record-level
+//! policy (and private-plan membership), not just the attachment's own row,
+//! and is served with `nosniff` and `Content-Disposition: attachment` so a
+//! file can never be rendered as a page.
+
+use axum::body::Bytes;
+use axum::extract::DefaultBodyLimit;
+use axum::http::{HeaderMap, StatusCode, header};
+use axum::response::IntoResponse;
+use loco_rs::controller::ErrorDetail;
+use loco_rs::prelude::*;
+use sea_orm::QueryOrder;
+use serde::Deserialize;
+use uuid::Uuid;
+
+use super::discussion::resolve_subject;
+use crate::artifacts::{self, Store};
+use crate::auth::MaybeAuthUser;
+use crate::discussion as subject_rules;
+use crate::models::_entities::{artifacts as artifact_rows, attachments};
+use crate::models::audit_logs::Model as AuditModel;
+
+fn unprocessable(message: &str) -> Error {
+    Error::CustomError(
+        StatusCode::UNPROCESSABLE_ENTITY,
+        ErrorDetail::new("unprocessable", message),
+    )
+}
+
+fn forbidden(message: &str) -> Error {
+    Error::CustomError(
+        StatusCode::FORBIDDEN,
+        ErrorDetail::new("forbidden", message),
+    )
+}
+
+fn db_err(e: sea_orm::DbErr) -> Error {
+    Error::Model(ModelError::from(e))
+}
+
+fn is_admin(caller: &MaybeAuthUser) -> bool {
+    caller.claims().is_some_and(|c| {
+        c.attrs
+            .get("access")
+            .is_some_and(|v| v.iter().any(|a| a == "admin"))
+    })
+}
+
+/// `POST /api/attachments` query.
+#[derive(Debug, Deserialize)]
+struct UploadParams {
+    subject_kind: String,
+    subject_pid: String,
+    filename: String,
+}
+
+/// `POST /api/attachments` — attach the request body to a subject.
+#[debug_handler]
+async fn upload(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+    Query(p): Query<UploadParams>,
+    body: Bytes,
+) -> Result<Response> {
+    if !subject_rules::is_token(subject_rules::SUBJECT_KINDS, &p.subject_kind) {
+        return Err(unprocessable(&format!(
+            "unknown subject_kind (allowed: {:?})",
+            subject_rules::SUBJECT_KINDS
+        )));
+    }
+    let declared = headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default();
+    // Everything that can be refused is refused before a byte is stored.
+    let problems = artifacts::upload_problems(declared, body.len(), artifacts::max_bytes());
+    if !problems.is_empty() {
+        return Err(unprocessable(&problems.join("; ")));
+    }
+    let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
+    let filename = artifacts::sanitize_filename(&p.filename);
+    let sha = artifacts::sha256_hex(&body);
+    let size = i64::try_from(body.len()).unwrap_or(i64::MAX);
+    let bytes = body.to_vec();
+    let key = tokio::task::spawn_blocking(move || Store::from_env().put(&bytes))
+        .await
+        .map_err(|e| Error::string(&e.to_string()))?
+        .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
+    let artifact = artifact_rows::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        kind: ActiveValue::set("attachment".to_string()),
+        filename: ActiveValue::set(filename.clone()),
+        content_type: ActiveValue::set(artifacts::media_type(declared)),
+        size_bytes: ActiveValue::set(size),
+        sha256: ActiveValue::set(sha.clone()),
+        storage_key: ActiveValue::set(Some(key)),
+        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        expires_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await
+    .map_err(db_err)?;
+    let row = attachments::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        subject_kind: ActiveValue::set(p.subject_kind.clone()),
+        subject_pid: ActiveValue::set(subject.pid),
+        artifact_pid: ActiveValue::set(artifact.pid),
+        uploaded_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "attachment_added",
+        caller.actor(),
+        Some(
+            serde_json::json!({ "subject_kind": p.subject_kind, "subject_pid": subject.pid,
+                                  "filename": filename, "sha256": sha }),
+        ),
+    )
+    .await
+    .ok();
+    format::json(serde_json::json!({
+        "pid": row.pid, "filename": filename, "content_type": artifact.content_type,
+        "size_bytes": size, "sha256": sha,
+    }))
+}
+
+/// `GET /api/attachments` query.
+#[derive(Debug, Deserialize)]
+struct SubjectParams {
+    subject_kind: String,
+    subject_pid: String,
+}
+
+/// `GET /api/attachments?subject_kind=&subject_pid=` — a subject's files.
+#[debug_handler]
+async fn list(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(p): Query<SubjectParams>,
+) -> Result<Response> {
+    let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
+    let rows = attachments::Entity::find()
+        .filter(attachments::Column::SubjectKind.eq(p.subject_kind.as_str()))
+        .filter(attachments::Column::SubjectPid.eq(subject.pid))
+        .filter(attachments::Column::DeletedAt.is_null())
+        .order_by_asc(attachments::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut out = Vec::new();
+    for r in rows {
+        let Some(a) = artifact_rows::Entity::find()
+            .filter(artifact_rows::Column::Pid.eq(r.artifact_pid))
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?
+        else {
+            continue;
+        };
+        out.push(serde_json::json!({
+            "pid": r.pid, "filename": a.filename, "content_type": a.content_type,
+            "size_bytes": a.size_bytes, "sha256": a.sha256,
+            "uploaded_by": r.uploaded_by, "created_at": r.created_at,
+        }));
+    }
+    format::json(out)
+}
+
+async fn find_attachment(ctx: &AppContext, pid: &str) -> Result<attachments::Model> {
+    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    attachments::Entity::find()
+        .filter(attachments::Column::Pid.eq(pid))
+        .filter(attachments::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)
+}
+
+/// `GET /api/attachments/{pid}/download` — the bytes, re-authorised against
+/// the subject and re-verified against the stored SHA-256.
+#[debug_handler]
+async fn download(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<axum::response::Response> {
+    let att = find_attachment(&ctx, &pid).await?;
+    // Authorised on the SUBJECT, so losing access to the plan loses the file.
+    resolve_subject(
+        &ctx,
+        &caller,
+        &att.subject_kind,
+        &att.subject_pid.to_string(),
+    )
+    .await?;
+    let artifact = artifact_rows::Entity::find()
+        .filter(artifact_rows::Column::Pid.eq(att.artifact_pid))
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    let key = artifact.storage_key.clone().ok_or(Error::NotFound)?;
+    let bytes = tokio::task::spawn_blocking(move || Store::from_env().get(&key))
+        .await
+        .map_err(|e| Error::string(&e.to_string()))?
+        .map_err(|_| Error::NotFound)?;
+    if artifacts::sha256_hex(&bytes) != artifact.sha256 {
+        // The file on disk is not the file that was uploaded. Never serve it.
+        tracing::error!(attachment = %att.pid, "stored attachment failed its SHA-256 check");
+        return Err(Error::string("the stored file failed its integrity check"));
+    }
+    Ok((
+        [
+            (header::CONTENT_TYPE, artifact.content_type.clone()),
+            (
+                header::CONTENT_DISPOSITION,
+                artifacts::content_disposition(&artifact.filename),
+            ),
+            (
+                header::HeaderName::from_static("x-content-type-options"),
+                "nosniff".to_string(),
+            ),
+            (header::CACHE_CONTROL, "private, no-store".to_string()),
+        ],
+        bytes,
+    )
+        .into_response())
+}
+
+/// `POST /api/attachments/{pid}/delete` (and `DELETE`) — soft-delete. The
+/// uploader or an admin may; the bytes stay until a sweep.
+#[debug_handler]
+async fn delete_one(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let att = find_attachment(&ctx, &pid).await?;
+    resolve_subject(
+        &ctx,
+        &caller,
+        &att.subject_kind,
+        &att.subject_pid.to_string(),
+    )
+    .await?;
+    if att.uploaded_by.as_deref() != caller.actor() && !is_admin(&caller) {
+        return Err(forbidden(
+            "only the uploader or an admin may remove an attachment",
+        ));
+    }
+    let att_pid = att.pid;
+    let mut active: attachments::ActiveModel = att.into();
+    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    active.update(&ctx.db).await.map_err(db_err)?;
+    AuditModel::record(&ctx.db, att_pid, "attachment_removed", caller.actor(), None)
+        .await
+        .ok();
+    format::empty_json()
+}
+
+/// The attachment routes.
+pub fn routes() -> Routes {
+    // Axum's default body limit is 2 MiB; raise it to the configured cap (plus
+    // a little) for the upload route only. The handler still refuses anything
+    // over the cap, so this layer is a transport ceiling, not the rule.
+    let ceiling = artifacts::max_bytes().saturating_add(64 * 1024);
+    Routes::new()
+        .prefix("/api")
+        .add(
+            "/attachments",
+            post(upload).layer(DefaultBodyLimit::max(ceiling)),
+        )
+        .add("/attachments", get(list))
+        .add("/attachments/{pid}/download", get(download))
+        .add("/attachments/{pid}", delete(delete_one))
+        .add("/attachments/{pid}/delete", post(delete_one))
+}

@@ -1,0 +1,147 @@
+//! Attachment request tests (LT-5): refused before storing (type, size,
+//! empty), the SHA-256 matches, a download carries safe headers and a UTF-8
+//! name, tampering is detected, and removal hides the file.
+//!
+//! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
+
+use axum::body::Bytes;
+use loco_rs::testing::prelude::*;
+use project_portfolio_management_service::app::App;
+use project_portfolio_management_service::artifacts::sha256_hex;
+use serde_json::{Value, json};
+use serial_test::serial;
+
+fn stored_files(dir: &std::path::Path) -> usize {
+    let mut n = 0;
+    let mut stack = vec![dir.to_path_buf()];
+    while let Some(d) = stack.pop() {
+        if let Ok(rd) = std::fs::read_dir(&d) {
+            for e in rd.flatten() {
+                let p = e.path();
+                if p.is_dir() {
+                    stack.push(p);
+                } else {
+                    n += 1;
+                }
+            }
+        }
+    }
+    n
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn attachments_are_refused_before_storing_verified_and_served_safely() {
+    super::isolate_search_index();
+    let dir = tempfile::tempdir().expect("tempdir");
+    // SAFETY: `#[serial]` — nothing else runs while these are set.
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR", dir.path());
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES", "100");
+    }
+    let root = dir.path().to_path_buf();
+    request::<App, _, _>(move |request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let upload = |name: &str, ctype: &str, body: &[u8]| {
+            let url = format!("/api/attachments?subject_kind=plan&subject_pid={p}&filename={name}");
+            let (request, ctype, body) = (&request, ctype.to_string(), Bytes::copy_from_slice(body));
+            async move { request.post(&url).content_type(&ctype).bytes(body).await }
+        };
+
+        // Refused BEFORE anything is stored.
+        assert_eq!(upload("x.html", "text/html", b"<script>1</script>").await.status_code(), 422, "markup");
+        assert_eq!(upload("x.svg", "image/svg+xml", b"<svg/>").await.status_code(), 422, "svg");
+        assert_eq!(upload("x.zip", "application/zip", b"PK").await.status_code(), 422, "archive");
+        assert_eq!(upload("x.pdf", "application/pdf", b"").await.status_code(), 422, "empty");
+        assert_eq!(upload("x.pdf", "application/pdf", &[b'a'; 101]).await.status_code(), 422, "over the cap");
+        assert_eq!(stored_files(&root), 0, "no refused upload left a byte on disk");
+        let none: Value = request.get(&format!("/api/attachments?subject_kind=plan&subject_pid={p}")).await.json();
+        assert!(none.as_array().unwrap().is_empty());
+
+        // An unknown subject and an unknown kind.
+        assert_eq!(
+            request
+                .post("/api/attachments?subject_kind=plan&subject_pid=3f2c6b7e-0000-4000-8000-000000000bad&filename=a.pdf")
+                .content_type("application/pdf")
+                .bytes(Bytes::from_static(b"%PDF"))
+                .await
+                .status_code(),
+            404
+        );
+        assert_eq!(
+            request
+                .post(&format!("/api/attachments?subject_kind=nope&subject_pid={p}&filename=a.pdf"))
+                .content_type("application/pdf")
+                .bytes(Bytes::from_static(b"%PDF"))
+                .await
+                .status_code(),
+            422
+        );
+
+        // A good upload, under a non-Latin name (percent-encoded in the query).
+        let content = b"%PDF-1.7 hello";
+        let ok = upload("%D0%BE%D1%82%D1%87%D1%91%D1%82.pdf", "application/pdf; charset=binary", content).await;
+        ok.assert_status_ok();
+        let up: Value = ok.json();
+        assert_eq!(up["filename"], "отчёт.pdf", "UTF-8 survives upload");
+        assert_eq!(up["sha256"], sha256_hex(content), "the stored hash is the hash of the bytes");
+        assert_eq!(up["content_type"], "application/pdf");
+        assert_eq!(stored_files(&root), 1);
+        let att = up["pid"].as_str().unwrap().to_string();
+
+        let listed: Value = request.get(&format!("/api/attachments?subject_kind=plan&subject_pid={p}")).await.json();
+        assert_eq!(listed[0]["size_bytes"], content.len());
+
+        // Download: same bytes, safe headers, the real name.
+        let dl = request.get(&format!("/api/attachments/{att}/download")).await;
+        dl.assert_status_ok();
+        assert_eq!(dl.as_bytes().as_ref(), content);
+        let h = dl.headers();
+        assert_eq!(h.get("x-content-type-options").unwrap(), "nosniff");
+        assert_eq!(h.get("cache-control").unwrap(), "private, no-store");
+        let cd = h.get("content-disposition").unwrap().to_str().unwrap().to_string();
+        assert!(cd.starts_with("attachment;"), "{cd}");
+        assert!(cd.contains("filename*=UTF-8''%D0%BE%D1%82%D1%87%D1%91%D1%82.pdf"), "{cd}");
+        assert_eq!(cd.matches(".pdf").count(), 2, "never a double extension: {cd}");
+
+        // Tamper with the file on disk: the download refuses rather than serve it.
+        let file = walk(&root);
+        std::fs::write(&file, b"%PDF-1.7 EVIL!!").unwrap();
+        assert_eq!(request.get(&format!("/api/attachments/{att}/download")).await.status_code(), 500);
+        std::fs::write(&file, content).unwrap();
+        request.get(&format!("/api/attachments/{att}/download")).await.assert_status_ok();
+
+        // Remove (POST twin): hidden from the list and the download.
+        request.post(&format!("/api/attachments/{att}/delete")).await.assert_status_ok();
+        let after: Value = request.get(&format!("/api/attachments?subject_kind=plan&subject_pid={p}")).await.json();
+        assert!(after.as_array().unwrap().is_empty());
+        assert_eq!(request.get(&format!("/api/attachments/{att}/download")).await.status_code(), 404);
+    })
+    .await;
+    unsafe {
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR");
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES");
+    }
+}
+
+/// The one stored file under `dir`.
+fn walk(dir: &std::path::Path) -> std::path::PathBuf {
+    let mut stack = vec![dir.to_path_buf()];
+    while let Some(d) = stack.pop() {
+        for e in std::fs::read_dir(&d).unwrap().flatten() {
+            let p = e.path();
+            if p.is_dir() {
+                stack.push(p);
+            } else {
+                return p;
+            }
+        }
+    }
+    panic!("no stored file");
+}

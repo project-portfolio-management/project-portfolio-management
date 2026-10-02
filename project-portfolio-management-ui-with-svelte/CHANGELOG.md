@@ -523,7 +523,7 @@ left open on 2026-08-01. This wires the two consuming routes to it.
 ### Added
 
 - **Inaugural spec + docs (spec-only).** First deliverable for
-  `project-portfolio-management-front-end-with-svelte`: the living `spec/index.md` (§1–§18)
+  `project-portfolio-management-ui-with-svelte`: the living `spec/index.md` (§1–§18)
   and the doc-set (`README.md`, `CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`,
   `index.md`). No `src/` yet — code is tracked as the spec §13 build
   queue.

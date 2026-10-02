@@ -10,7 +10,7 @@ default-run = "project-portfolio-management-service"
 authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
 description = "Project portfolio management service — plan registry (one recursive plan tree; kind is an optional label, no gate) and full project-management suite: workflows, OKRs, phases, flow, effort, ceremonies, controls, TPC, value realization"
 readme = "README.md"
-repository = "https://github.com/sixarm/main-x-service/project-portfolio-management-service-with-loco"
+repository = "https://github.com/sixarm/main-x-service/project-portfolio-management-api-with-rust"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
 keywords = ["portfolio", "project", "product", "program", "project-management"]
 categories = ["development-tools", "rust-patterns"]
@@ -62,7 +62,7 @@ mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }
 
 # Canonical matching algorithm — embedded and used directly as the API DTO.
-project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-rust-crate" }
+project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-with-rust" }
 
 # Offline PASETO v4.public verification against the authentication-service Ed25519 keys (local path; monorepo 0.2 verifier).
 # The `fetch` feature adds `Verifier::from_paseto_keys_url` for the boot-time key-set fetch (`PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`).

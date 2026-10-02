@@ -24,9 +24,9 @@ it. Two load-bearing ideas:
 
 ### 5.1 Canonical `Plan` (matcher crate) — the thin matchable record
 
-Defined in `project-portfolio-management-matcher-rust-crate/src/plan.rs`; normative
+Defined in `project-portfolio-management-matcher-with-rust/src/plan.rs`; normative
 reference: matcher
-[spec §6](../project-portfolio-management-matcher-rust-crate/spec/index.md).
+[spec §6](../project-portfolio-management-matcher-with-rust/spec/index.md).
 
 | Field | Type | Notes |
 |---|---|---|

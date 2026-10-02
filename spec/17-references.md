@@ -68,9 +68,9 @@ useful when judging whether two records describe the same plan:
 ### 17.4 Family references
 
 - Subproject specs (to be scaffolded, T-1):
-  [service](../project-portfolio-management-service-with-loco/spec/index.md),
-  [matcher](../project-portfolio-management-matcher-rust-crate/spec/index.md),
-  [front-end](../project-portfolio-management-front-end-with-svelte/spec/index.md).
+  [service](../project-portfolio-management-api-with-rust/spec/index.md),
+  [matcher](../project-portfolio-management-matcher-with-rust/spec/index.md),
+  [front-end](../project-portfolio-management-ui-with-svelte/spec/index.md).
 - Entity AGENTS reference set: [`agents/index.md`](../agents/index.md).
 - Adopted family designs:
   [cross-service-linking.md](../../agents/share/cross-service-linking.md),

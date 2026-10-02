@@ -253,7 +253,7 @@ by computing `spent_on` and the leave period relative to
 `chrono::Utc::now()` (mirroring `tests/requests/insights.rs`'s existing
 pattern) rather than a fixed calendar date. Verified locally against a
 real Postgres: `scripts/ci-check.sh test-db
-project-portfolio-management/project-portfolio-management-service-with-loco`,
+project-portfolio-management/project-portfolio-management-api-with-rust`,
 79/79 passing.
 
 ### Added — explainability pin: every derived GET discloses its inputs (T-28j)
@@ -1114,7 +1114,7 @@ delegations, and one inbox were still hard-capped at `LIST_CAP = 200`.
   `automation_lists_are_paginated` (covers all three automation-side
   endpoints, including the soonest-first-under-paging pin) and
   `collaboration_lists_are_paginated` (delegations + one inbox).
-- Front-end: `project-portfolio-management-front-end-with-svelte` wires
+- Front-end: `project-portfolio-management-ui-with-svelte` wires
   the consuming routes to `ApiClient.getPage()`/`listPage()` — see that
   crate's own `CHANGELOG.md`.
 

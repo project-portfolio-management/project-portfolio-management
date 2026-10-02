@@ -18,9 +18,9 @@ service crate + matcher crate + front-end.
 
 | Subproject | Spec | Agent guide | Detailed guides |
 |---|---|---|---|
-| [project-portfolio-management-service-with-loco](../project-portfolio-management-service-with-loco/) | [spec/index.md](../project-portfolio-management-service-with-loco/spec/index.md) | [AGENTS.md](../project-portfolio-management-service-with-loco/AGENTS.md) | — (thin; see entity spec §13 T-1) |
-| [project-portfolio-management-matcher-rust-crate](../project-portfolio-management-matcher-rust-crate/) | [spec/index.md](../project-portfolio-management-matcher-rust-crate/spec/index.md) | [AGENTS.md](../project-portfolio-management-matcher-rust-crate/AGENTS.md) | [agents/](../project-portfolio-management-matcher-rust-crate/agents/index.md) (algorithm, normalization, SDD, testing) |
-| [project-portfolio-management-front-end-with-svelte](../project-portfolio-management-front-end-with-svelte/) | [spec/index.md](../project-portfolio-management-front-end-with-svelte/spec/index.md) | [AGENTS.md](../project-portfolio-management-front-end-with-svelte/AGENTS.md) | — (thin) |
+| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | [spec/index.md](../project-portfolio-management-api-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | — (thin; see entity spec §13 T-1) |
+| [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (algorithm, normalization, SDD, testing) |
+| [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) | — (thin) |
 
 ## Shared documents (project root)
 

@@ -13,7 +13,7 @@ The portfolio entity is two things at once:
    (timeline / Gantt, burndown).
 
 Normative definitions: entity spec [§5](../spec/05-domain-model.md)
-and matcher [spec §6](../project-portfolio-management-matcher-rust-crate/spec/index.md).
+and matcher [spec §6](../project-portfolio-management-matcher-with-rust/spec/index.md).
 
 ## The optional kind label + recursive containment
 
@@ -32,7 +32,7 @@ HTTP `422`.
 
 ## `Plan` (matchable identity)
 
-**File:** [`project-portfolio-management-matcher-rust-crate/src/plan.rs`](../project-portfolio-management-matcher-rust-crate/src/plan.rs)
+**File:** [`project-portfolio-management-matcher-with-rust/src/plan.rs`](../project-portfolio-management-matcher-with-rust/src/plan.rs)
 
 | Field | Type | Description |
 |---|---|---|
@@ -115,8 +115,8 @@ canonical state.
 ## Service persistence model
 
 **Files:**
-[`src/models/`](../project-portfolio-management-service-with-loco/src/models/),
-[`migration/src/`](../project-portfolio-management-service-with-loco/migration/src/)
+[`src/models/`](../project-portfolio-management-api-with-rust/src/models/),
+[`migration/src/`](../project-portfolio-management-api-with-rust/migration/src/)
 
 One core table `plans` — `{id` (PK)`, pid` (public UUID)`, name`
 (denormalised from `data.name`)`, kind` (nullable)`, parent_pid`
@@ -132,7 +132,7 @@ keyed by the parent `plan_pid`. Supporting tables: `audit_logs`,
 
 ## Wire DTOs (service controller)
 
-**File:** [`src/controllers/`](../project-portfolio-management-service-with-loco/src/controllers/)
+**File:** [`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/)
 
 | Type | Shape | Used by |
 |---|---|---|
@@ -142,7 +142,7 @@ keyed by the parent `plan_pid`. Supporting tables: `audit_logs`,
 
 ## Front-end TypeScript mirror
 
-**File:** [`src/lib/api/types.ts`](../project-portfolio-management-front-end-with-svelte/src/lib/api/types.ts)
+**File:** [`src/lib/api/types.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/types.ts)
 — `Plan`, `PlanKind`, `PlanStatus`, `Goal`, `GoalStatus`,
 `Task`, `TaskStatus`, `Issue`, `IssueKind`, `IssueSeverity`,
 `IssueStatus`, `PlanRelationship`, `RelationKind`,

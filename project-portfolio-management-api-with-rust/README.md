@@ -2,7 +2,7 @@
 
 A registry of **plan** records — and a project-management tool —
 built on **loco.rs** and embedding the canonical
-[project-portfolio-management-matcher](../project-portfolio-management-matcher-rust-crate).
+[project-portfolio-management-matcher](../project-portfolio-management-matcher-with-rust).
 
 A *plan* is a matchable identity in one recursive collection. Its `kind`
 — **Portfolio**, **Project**, **Product**, **Program**, **Practice**,
@@ -20,7 +20,7 @@ containment-cycle check).
 - Spec: [spec/index.md](./spec/index.md)
 - Entity-wide contract: [portfolio entity spec](../spec/index.md)
 - Agent guide: [AGENTS.md](./AGENTS.md)
-- Sibling UI: [project-portfolio-management-front-end-with-svelte](../project-portfolio-management-front-end-with-svelte)
+- Sibling UI: [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte)
 
 > **Status: implemented (MVP, v0.1.0).** The crate builds and tests
 > green; the remaining deferrals live in the work queue at

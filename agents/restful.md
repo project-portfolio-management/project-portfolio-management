@@ -3,7 +3,7 @@
 The service is loco.rs and returns **raw JSON** — no
 `{success, data, error}` envelope (unlike the pre-loco person service).
 Source:
-[`src/controllers/`](../project-portfolio-management-service-with-loco/src/controllers/).
+[`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/).
 Base URL in development: `http://localhost:5150`.
 
 The service exposes **one matchable collection** — `/api/plans`. Every
@@ -151,9 +151,9 @@ curl -s localhost:5150/api/plans \
 ## Front-end consumption
 
 **Files:**
-[`src/lib/api/client.ts`](../project-portfolio-management-front-end-with-svelte/src/lib/api/client.ts)
+[`src/lib/api/client.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/client.ts)
 (lean fetch wrapper + `ApiError`),
-[`src/lib/api/plans.ts`](../project-portfolio-management-front-end-with-svelte/src/lib/api/plans.ts)
+[`src/lib/api/plans.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/plans.ts)
 (`PlanRepository`: CRUD + sub-resource CRUD + `checkDuplicates` +
 timeline / burndown reads).
 

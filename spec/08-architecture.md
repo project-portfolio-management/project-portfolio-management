@@ -4,7 +4,7 @@
 
 ```
 +--------------------------------------------------------------+
-|              project-portfolio-management-front-end-with-svelte                  |
+|              project-portfolio-management-ui-with-svelte                  |
 |  SvelteKit 2 SPA · Svelte 5 runes · TypeScript strict         |
 |  routes: /plans                                               |
 |          /plans/new  /plans/[pid]  /plans/[pid]/edit          |
@@ -15,7 +15,7 @@
                                | REST (raw loco JSON, no envelope)
                                | PUBLIC_API_BASE_URL (default :5150)
 +------------------------------v-------------------------------+
-|              project-portfolio-management-service-with-loco                     |
+|              project-portfolio-management-api-with-rust                     |
 |  loco.rs 0.16 (Axum 0.8) · port 5150                          |
 |  controllers/plans.rs                                         |
 |     CRUD + /match + /check-duplicates                         |
@@ -41,7 +41,7 @@ Dependency direction is strictly downward: front-end → service →
 matcher. The matcher depends on nothing in the workspace (serde,
 strsim, unicode-normalization, chrono/time for date proximity,
 thiserror only). The service declares
-`project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-rust-crate" }` and
+`project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-with-rust" }` and
 uses the matcher's `Plan` directly as its API DTO for the thin
 record — there is no adapter layer (the care-pathway posture).
 
@@ -73,7 +73,7 @@ payload stays current.
 > than by resource. Drawn from the tree, not from the plan:
 
 ```
-project-portfolio-management-service-with-loco/
+project-portfolio-management-api-with-rust/
 ├── src/
 │   ├── app.rs                       loco Hooks (routes, workers, boot init)
 │   ├── bin/                         loco CLI entrypoint

@@ -1,11 +1,11 @@
-# project-portfolio-management-front-end-with-svelte — documentation index
+# project-portfolio-management-ui-with-svelte — documentation index
 
 Operator UI for **plan** identity CRUD + matching + merge over **one
 recursive `/api/plans` collection**, plus the **project-management
 workspace** (Kanban board, governance, schedule), a wide set of
 oversight / executive dashboard views, and cookie-session / SSO auth
 (BFF; the browser holds no token), consuming the
-[Portfolio Service](../project-portfolio-management-service-with-loco).
+[Portfolio Service](../project-portfolio-management-api-with-rust).
 
 > **Status: implemented (v0.1.0).** `npm run check` is 0/0 and the vitest
 > suite passes; the build queue is [spec/index.md](./spec/index.md) §13.

@@ -894,7 +894,7 @@ each sum to the lead time; work ≤ process ≤ cycle ≤ lead; ratios in
 ## 16. Implementation status
 
 TBA-1 … TBA-8 are **implemented**. In
-`project-portfolio-management-service-with-loco`:
+`project-portfolio-management-api-with-rust`:
 
 | Piece | Location |
 |---|---|
@@ -913,7 +913,7 @@ once, and an API that shipped the log to the browser to re-derive it
 would be sending far more data to compute what the server already
 indexes.
 
-In `project-portfolio-management-front-end-with-svelte`:
+In `project-portfolio-management-ui-with-svelte`:
 
 | Piece | Location |
 |---|---|

@@ -12,7 +12,7 @@
 # Build with:
 #
 #   podman build \
-#     -f project-portfolio-management/project-portfolio-management-service-with-loco/Dockerfile \
+#     -f project-portfolio-management/project-portfolio-management-api-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
 #
 # run from the repository root (see examples/compose/ for the wired
@@ -39,24 +39,24 @@ WORKDIR /app
 # so they layer-cache independently of day-to-day edits here.
 COPY integrity/integrity-mac-rust-crate integrity/integrity-mac-rust-crate
 COPY authentication/authentication-verifier-rust-crate authentication/authentication-verifier-rust-crate
-COPY project-portfolio-management/project-portfolio-management-matcher-rust-crate project-portfolio-management/project-portfolio-management-matcher-rust-crate
+COPY project-portfolio-management/project-portfolio-management-matcher-with-rust project-portfolio-management/project-portfolio-management-matcher-with-rust
 
 # This crate itself: manifests first (better layer caching), then the
 # nested `migration` sub-crate (loco's sea-orm-migration bridge — a
 # same-directory path dependency, so it travels with the COPY below
 # regardless), then sources.
-COPY project-portfolio-management/project-portfolio-management-service-with-loco/Cargo.toml project-portfolio-management/project-portfolio-management-service-with-loco/Cargo.lock project-portfolio-management/project-portfolio-management-service-with-loco/
-COPY project-portfolio-management/project-portfolio-management-service-with-loco/migration project-portfolio-management/project-portfolio-management-service-with-loco/migration
-COPY project-portfolio-management/project-portfolio-management-service-with-loco/src project-portfolio-management/project-portfolio-management-service-with-loco/src
+COPY project-portfolio-management/project-portfolio-management-api-with-rust/Cargo.toml project-portfolio-management/project-portfolio-management-api-with-rust/Cargo.lock project-portfolio-management/project-portfolio-management-api-with-rust/
+COPY project-portfolio-management/project-portfolio-management-api-with-rust/migration project-portfolio-management/project-portfolio-management-api-with-rust/migration
+COPY project-portfolio-management/project-portfolio-management-api-with-rust/src project-portfolio-management/project-portfolio-management-api-with-rust/src
 # Cargo parses the whole manifest even for a --bin-only build, and this
 # crate's Cargo.toml declares `[[bench]] name = "service_bench"` — the
 # same trap place-service's own container fix already documented for
 # its `bridge_bench`. Without this, cargo refuses to parse the
 # manifest at all ("can't find `service_bench` bench at
 # `benches/service_bench.rs`").
-COPY project-portfolio-management/project-portfolio-management-service-with-loco/benches project-portfolio-management/project-portfolio-management-service-with-loco/benches
+COPY project-portfolio-management/project-portfolio-management-api-with-rust/benches project-portfolio-management/project-portfolio-management-api-with-rust/benches
 
-WORKDIR /app/project-portfolio-management/project-portfolio-management-service-with-loco
+WORKDIR /app/project-portfolio-management/project-portfolio-management-api-with-rust
 
 # Build the binary target declared by src/bin/main.rs. Migration SQL
 # is embedded into the binary at compile time via `include_str!`
@@ -87,12 +87,12 @@ RUN useradd --create-home --uid 1000 --shell /bin/bash portfolio
 WORKDIR /app
 
 COPY --from=builder --chown=portfolio:portfolio \
-    /app/project-portfolio-management/project-portfolio-management-service-with-loco/target/release/project-portfolio-management-service \
+    /app/project-portfolio-management/project-portfolio-management-api-with-rust/target/release/project-portfolio-management-service \
     /app/project-portfolio-management-service
 
 # loco reads config/<environment>.yaml at runtime (not baked into the
 # binary); LOCO_ENV below selects `production.yaml`.
-COPY --chown=portfolio:portfolio project-portfolio-management/project-portfolio-management-service-with-loco/config ./config
+COPY --chown=portfolio:portfolio project-portfolio-management/project-portfolio-management-api-with-rust/config ./config
 
 # Tantivy full-text index (PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH,
 # default `data/search-index` relative to CWD — see src/search/mod.rs).

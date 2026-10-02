@@ -54,7 +54,7 @@ This spec owns the **cross-subproject contract**:
 
 ### 2.2 In scope — per subproject
 
-**project-portfolio-management-service-with-loco** owns:
+**project-portfolio-management-api-with-rust** owns:
 
 - Plan CRUD with soft delete (`deleted_at`) over the thin matchable
   record on the single `/api/plans` collection.
@@ -87,7 +87,7 @@ This spec owns the **cross-subproject contract**:
   sub-resource and family-baseline tables (§10).
 - loco.rs app structure, migrations, configuration.
 
-**project-portfolio-management-matcher-rust-crate** owns:
+**project-portfolio-management-matcher-with-rust** owns:
 
 - Pure-library pairwise comparison: kind-agnostic deterministic
   short-circuits (shared deterministic-scheme identifier, same owner-org
@@ -102,7 +102,7 @@ This spec owns the **cross-subproject contract**:
   date-proximity scoring, config presets (`strict` / `default` /
   `lenient`).
 
-**project-portfolio-management-front-end-with-svelte** owns:
+**project-portfolio-management-ui-with-svelte** owns:
 
 - Operator routes for the one plans collection — list (`/plans`), create
   (`/plans/new`), detail + delete + check-duplicates (`/plans/[pid]`),

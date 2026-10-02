@@ -71,7 +71,7 @@ kind label — **and** a project-management tool.
 
 A **loco.rs** service for plan records: CRUD + matching, embedding the
 canonical
-[`project-portfolio-management-matcher`](../project-portfolio-management-matcher-rust-crate).
+[`project-portfolio-management-matcher`](../project-portfolio-management-matcher-with-rust).
 The API DTO **is** `project_portfolio_management_matcher::Plan` — stored
 verbatim (JSONB) and matched with the same type, so there is no separate
 model or adapter to drift (mirrors care-pathway). A `Plan` carries an
@@ -388,11 +388,11 @@ production image. **Build context must be the repository root**, not
 this directory — this crate's sibling path dependencies
 (`integrity-mac`, `authentication-verifier`,
 `project-portfolio-management-matcher`) live outside
-`project-portfolio-management/project-portfolio-management-service-with-loco/`:
+`project-portfolio-management/project-portfolio-management-api-with-rust/`:
 
 ```sh
 podman build \
-  -f project-portfolio-management/project-portfolio-management-service-with-loco/Dockerfile \
+  -f project-portfolio-management/project-portfolio-management-api-with-rust/Dockerfile \
   -t project-portfolio-management-service .   # run from the repository root
 ```
 

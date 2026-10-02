@@ -797,7 +797,7 @@ described manual check confirms it. Split tasks too big for one PR
     reachable by URL regardless of the attribute.
     **Landed 2026-09-19, implemented in the front-end** (not this
     crate — it is presentation, not an API surface); full account in
-    `project-portfolio-management-front-end-with-svelte/spec/index.md`
+    `project-portfolio-management-ui-with-svelte/spec/index.md`
     §13 T-28f. **This task's own premise ("the BFF already gets attrs
     from `/whoami`") was factually wrong — corrected, not guessed
     around**: `GET /api/auth/me` (there is no `/whoami` endpoint)
@@ -989,7 +989,7 @@ described manual check confirms it. Split tasks too big for one PR
     named test, not a screenshot.
     **Landed 2026-09-19, implemented in the front-end** (not this crate
     — it is layout, not an API surface); full account in
-    `project-portfolio-management-front-end-with-svelte/spec/index.md`
+    `project-portfolio-management-ui-with-svelte/spec/index.md`
     §13 T-28k. **This task's own route count was slightly off —
     corrected, not guessed around**: the real route tree has 35 pages,
     not 34 (`find src/routes -name "+page.svelte"`). Verified real
@@ -1131,7 +1131,7 @@ described manual check confirms it. Split tasks too big for one PR
     walks the guide's links against the route tree).
     Landed 2026-09-18 in the sibling front-end crate (this task is
     front-end content, not an API surface, so the implementation lives
-    in `project-portfolio-management-front-end-with-svelte`, not
+    in `project-portfolio-management-ui-with-svelte`, not
     here) — `/onboarding` route, `src/lib/onboarding.ts` (pure data,
     three roles), `tests/unit/onboarding.test.ts` (walks every step
     against the real route tree via `fs.existsSync`, plus a regex
@@ -1146,9 +1146,9 @@ described manual check confirms it. Split tasks too big for one PR
   dependencies.
 
 - [ ] **T-1 — Scaffold the trio.**
-  - [ ] Create `project-portfolio-management-matcher-rust-crate/`,
-    `project-portfolio-management-service-with-loco/`, and
-    `project-portfolio-management-front-end-with-svelte/` from the care-pathway / plan
+  - [ ] Create `project-portfolio-management-matcher-with-rust/`,
+    `project-portfolio-management-api-with-rust/`, and
+    `project-portfolio-management-ui-with-svelte/` from the care-pathway / plan
     siblings (copy-adapt; drift accepted — repo decision 2026-06-02).
   - [ ] Each subproject ships its own `spec/` (matcher §1–§25; service
     + front-end §1–§18) referencing this entity spec's §5 as the

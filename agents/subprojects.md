@@ -8,9 +8,9 @@ operational sub-resources and derived views.
 
 | Subproject | Kind | Responsibility |
 |---|---|---|
-| [project-portfolio-management-matcher-rust-crate](../project-portfolio-management-matcher-rust-crate/) | Rust library (edition 2024, dependency-light) | Pairwise `Plan` comparison: kind-agnostic deterministic short-circuits + weighted probabilistic scoring with per-component breakdown. Owns the canonical `Plan` domain type. |
-| [project-portfolio-management-service-with-loco](../project-portfolio-management-service-with-loco/) | loco.rs 0.16 service (Axum 0.8, SeaORM 1.1, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/deduplicate` + `/merge`; sub-resource CRUD (goals, tasks, issues); timeline + burndown read views; cross-service links; bulk import/export. Stores the matcher type verbatim as JSONB. |
-| [project-portfolio-management-front-end-with-svelte](../project-portfolio-management-front-end-with-svelte/) | SvelteKit 2 SPA (Svelte 5 runes, TS strict) | Operator UI: plan list / create / detail / edit / delete / check-duplicates + sub-resource management + timeline / burndown views over the service REST API; a plan detail rolls up its child plans. |
+| [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | Rust library (edition 2024, dependency-light) | Pairwise `Plan` comparison: kind-agnostic deterministic short-circuits + weighted probabilistic scoring with per-component breakdown. Owns the canonical `Plan` domain type. |
+| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | loco.rs 0.16 service (Axum 0.8, SeaORM 1.1, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/deduplicate` + `/merge`; sub-resource CRUD (goals, tasks, issues); timeline + burndown read views; cross-service links; bulk import/export. Stores the matcher type verbatim as JSONB. |
+| [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | SvelteKit 2 SPA (Svelte 5 runes, TS strict) | Operator UI: plan list / create / detail / edit / delete / check-duplicates + sub-resource management + timeline / burndown views over the service REST API; a plan detail rolls up its child plans. |
 
 ## Dependency direction
 
@@ -53,18 +53,18 @@ link aggregator's job.
 
 ```bash
 # Matcher — pure library; tests + demo
-cd project-portfolio-management-matcher-rust-crate
+cd project-portfolio-management-matcher-with-rust
 cargo test
 cargo run                    # demo binary (not SemVer surface)
 
 # Service — needs PostgreSQL; port 5150
-cd project-portfolio-management-service-with-loco
+cd project-portfolio-management-api-with-rust
 export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_development
 cargo loco start             # migrations auto-run in development
 cargo test --test matching   # DB-free tests
 
 # Front-end — needs the service running
-cd project-portfolio-management-front-end-with-svelte
+cd project-portfolio-management-ui-with-svelte
 cp .env.example .env         # PUBLIC_API_BASE_URL=http://localhost:5150
 pnpm install
 pnpm dev                     # http://localhost:5173
@@ -75,11 +75,11 @@ pnpm run check               # svelte-check strict (0/0 expected)
 
 | Doc | Matcher | Service | Front-end |
 |---|---|---|---|
-| Living spec | [spec/index.md](../project-portfolio-management-matcher-rust-crate/spec/index.md) (§1–§25) | [spec/index.md](../project-portfolio-management-service-with-loco/spec/index.md) (§1–§18) | [spec/index.md](../project-portfolio-management-front-end-with-svelte/spec/index.md) (§1–§18) |
-| Agent guide | [AGENTS.md](../project-portfolio-management-matcher-rust-crate/AGENTS.md) | [AGENTS.md](../project-portfolio-management-service-with-loco/AGENTS.md) | [AGENTS.md](../project-portfolio-management-front-end-with-svelte/AGENTS.md) |
-| Detailed guides | [agents/](../project-portfolio-management-matcher-rust-crate/agents/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
-| User intro | [README.md](../project-portfolio-management-matcher-rust-crate/README.md) | [README.md](../project-portfolio-management-service-with-loco/README.md) | [README.md](../project-portfolio-management-front-end-with-svelte/README.md) |
-| Changelog | [CHANGELOG.md](../project-portfolio-management-matcher-rust-crate/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-service-with-loco/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-front-end-with-svelte/CHANGELOG.md) |
+| Living spec | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) (§1–§25) | [spec/index.md](../project-portfolio-management-api-with-rust/spec/index.md) (§1–§18) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) (§1–§18) |
+| Agent guide | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) |
+| Detailed guides | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
+| User intro | [README.md](../project-portfolio-management-matcher-with-rust/README.md) | [README.md](../project-portfolio-management-api-with-rust/README.md) | [README.md](../project-portfolio-management-ui-with-svelte/README.md) |
+| Changelog | [CHANGELOG.md](../project-portfolio-management-matcher-with-rust/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-api-with-rust/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-ui-with-svelte/CHANGELOG.md) |
 
 The entity-level contract between the three lives in
 [`../spec/`](../spec/index.md). Drift between this front-end and its

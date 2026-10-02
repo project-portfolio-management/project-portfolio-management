@@ -4,8 +4,8 @@ The matching system compares two `Plan` records and produces a
 `MatchResult`: score in `[0.0, 1.0]`, `Confidence`, `is_match`, and a
 per-component `MatchBreakdown`. The algorithm lives entirely in the
 matcher crate; the service embeds it unchanged. Canonical detail:
-matcher [spec §5–§18](../project-portfolio-management-matcher-rust-crate/spec/index.md) and
-[agents/matching-algorithm.md](../project-portfolio-management-matcher-rust-crate/agents/matching-algorithm.md).
+matcher [spec §5–§18](../project-portfolio-management-matcher-with-rust/spec/index.md) and
+[agents/matching-algorithm.md](../project-portfolio-management-matcher-with-rust/agents/matching-algorithm.md).
 
 Matching is over the **plan identity** — the plan header. The optional
 `kind` label (Portfolio / Project / Product / Program / Practice /
@@ -94,7 +94,7 @@ side has no `parent_ref`.
 
 ## Where matching runs in the service
 
-**File:** [`src/controllers/`](../project-portfolio-management-service-with-loco/src/controllers/)
+**File:** [`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/)
 — the plan matching endpoints construct
 `MatchingEngine::new(MatchConfig::default())`:
 

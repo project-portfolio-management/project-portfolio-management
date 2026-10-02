@@ -1,8 +1,8 @@
 # Postgres for this service's DB-gated test suite.
 #
-#   scripts/test-db.sh up   project-portfolio-management/project-portfolio-management-service-with-loco
-#   scripts/ci-check.sh test-db project-portfolio-management/project-portfolio-management-service-with-loco
-#   scripts/test-db.sh down project-portfolio-management/project-portfolio-management-service-with-loco
+#   scripts/test-db.sh up   project-portfolio-management/project-portfolio-management-api-with-rust
+#   scripts/ci-check.sh test-db project-portfolio-management/project-portfolio-management-api-with-rust
+#   scripts/test-db.sh down project-portfolio-management/project-portfolio-management-api-with-rust
 #
 # Podman, not Docker (agents/share/rust-loco-stack.md). The file is plain
 # Compose spec, so `podman compose -f compose.test.yaml up -d` drives it

@@ -6,8 +6,8 @@
 >
 > Entity-wide contract: [portfolio entity spec](../../spec/index.md) (the API
 > DTO **is** the matcher's `Plan` type; canonical domain model in its §5).
-> Sibling matcher: [project-portfolio-management-matcher](../../project-portfolio-management-matcher-rust-crate/spec/index.md).
-> Sibling front-end: [project-portfolio-management-front-end-with-svelte](../../project-portfolio-management-front-end-with-svelte/spec/index.md).
+> Sibling matcher: [project-portfolio-management-matcher](../../project-portfolio-management-matcher-with-rust/spec/index.md).
+> Sibling front-end: [project-portfolio-management-ui-with-svelte](../../project-portfolio-management-ui-with-svelte/spec/index.md).
 
 ## 1. Purpose and vision
 
@@ -115,7 +115,7 @@ titles feed matching via `data.goals[]`).
 
 > **Matching is kind-agnostic.** There is no kind gate: two plans may
 > match regardless of their (optional) `kind` labels
-> ([project-portfolio-management-matcher §1–§25](../../project-portfolio-management-matcher-rust-crate/spec/index.md)).
+> ([project-portfolio-management-matcher §1–§25](../../project-portfolio-management-matcher-with-rust/spec/index.md)).
 > The matcher's `MatchBreakdown.kind_gate_blocked` remains only as a
 > vestigial, always-`false` field. Containment is expressed with
 > `parent_ref`, not with a collection boundary.
@@ -991,7 +991,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   assertion. *Verified:* 42 DB-gated (2 new: `automation_lists_are_paginated`,
   `collaboration_lists_are_paginated`) + 1 masking + 1 enforcement + 1
   outbox-audit green vs Postgres 18; 205 lib tests; fmt + clippy clean.
-  Front-end: see the sibling `project-portfolio-management-front-end-with-svelte`
+  Front-end: see the sibling `project-portfolio-management-ui-with-svelte`
   `spec/index.md` §13 for the consuming-route changes.
 - [x] **2026-08-02 — Privacy: field masking + GDPR export (repo
   tasks.md P-4, as P-1/organization; lower sensitivity).** The
@@ -1563,7 +1563,7 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 ## 17. References
 
 - The [portfolio entity spec](../../spec/index.md) (canonical model §5);
-  the [project-portfolio-management-matcher spec](../../project-portfolio-management-matcher-rust-crate/spec/index.md);
+  the [project-portfolio-management-matcher spec](../../project-portfolio-management-matcher-with-rust/spec/index.md);
   loco.rs; [cross-service linking](../../../agents/share/cross-service-linking.md);
   [bulk import/export](../../../agents/share/bulk-import-export.md);
   [event bus](../../../agents/share/event-bus.md).

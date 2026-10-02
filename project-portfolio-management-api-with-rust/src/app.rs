@@ -183,6 +183,7 @@ impl Hooks for App {
             .add_route(controllers::prioritisation::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())
+            .add_route(controllers::my_work::routes())
             .add_route(controllers::discussion::routes())
             .add_route(controllers::docs::routes())
             .add_route(controllers::metrics::routes())

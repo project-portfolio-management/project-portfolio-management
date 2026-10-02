@@ -44,6 +44,7 @@ mod m20260918_000003_saved_views;
 mod m20260920_000001_report_group_by;
 mod m20261002_000001_canvases;
 mod m20261002_000002_comments_reactions;
+mod m20261002_000003_task_due_date;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -88,6 +89,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260920_000001_report_group_by::Migration),
             Box::new(m20261002_000001_canvases::Migration),
             Box::new(m20261002_000002_comments_reactions::Migration),
+            Box::new(m20261002_000003_task_due_date::Migration),
             // inject-above (do not remove this comment)
         ]
     }

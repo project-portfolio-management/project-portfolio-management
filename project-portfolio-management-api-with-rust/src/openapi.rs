@@ -1730,6 +1730,8 @@ mod tests {
         "/api/comments/{pid}",
         "/api/comments/{pid}/history",
         "/api/reactions",
+        // personal task view (LT-3)
+        "/api/me/tasks",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -1763,6 +1765,7 @@ mod tests {
             crate::controllers::prioritisation::routes(),
             crate::controllers::saved_views::routes(),
             crate::controllers::canvas::routes(),
+            crate::controllers::my_work::routes(),
             crate::controllers::discussion::routes(),
             crate::controllers::docs::routes(),
             crate::controllers::metrics::routes(),

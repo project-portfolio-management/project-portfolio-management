@@ -40,7 +40,15 @@ audited; people stay references.
   created plan goes through `create_and_emit` (events + audit not bypassed).
   *Depends on:* nothing; shares clone logic with T-8's import pipeline.
 
-- [ ] **LT-3 (M) — "My work" personal task view.** **Priority 1 — about half
+- [~] **LT-3 (M) — "My work" personal task view.** **Service landed 2026-10-02**
+  (`src/my_work.rs`, `src/controllers/my_work.rs`, `GET /api/me/tasks?tz=`,
+  migration `m20261002_000003_task_due_date` adding `tasks.due_date`; 4 unit
+  tests + `tests/my_work.rs` end to end with real tokens, two zones). **Added
+  because the audit found none:** tasks had no due date. **Not built yet:** the
+  `/me` front-end page and the default-landing rule. Quick-add reuses the
+  existing task create. Matching assumes a token `sub` that is a UUID is
+  addressable as `person:<sub>` / `worker:<sub>`; otherwise empty buckets with
+  `reason: sub_not_addressable`. **Priority 1 — about half
   the users are individual workers (owner, 2026-10-02).** Default landing page
   for a caller whose `view` attribute is not a PMO persona. `GET /api/me/tasks`
   bucketed `overdue / today / this_week / later / undated` in the **caller's**

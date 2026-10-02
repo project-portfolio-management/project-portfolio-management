@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — "My work" and the time-zone doctrine (LT-3 / LT-9, 2026-10-02)
+
+`GET /api/me/tasks?tz=<IANA>[&as_of=]`: the caller's open tasks in five buckets
+(`overdue` / `today` / `this_week` / `later` / `undated`, all always present),
+computed in **the caller's** zone. New `tasks.due_date` (a zone-free `DATE`;
+migration `m20261002_000003_task_due_date`) accepted on task create and update.
+Plans the caller cannot read are omitted and counted (`omitted_unreadable`). A
+fixed offset or abbreviation for `tz` is refused 422 (it cannot follow daylight
+saving). Doctrine in `src/tz.rs` and spec §7.x: store UTC; dates carry no zone;
+the server never reads its own zone (`chrono::Local` banned by `clippy.toml` and
+a test); portfolio-wide views stay on the UTC date.
+
 ### Added — comments and reactions (LT-4, 2026-10-02)
 
 `comments`, `comment_edits` (append-only) and `reactions` (migration

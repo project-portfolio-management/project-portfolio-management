@@ -75,6 +75,7 @@ fn task_view(task: &tasks::Model) -> serde_json::Value {
         "status": task.status,
         "assignee_ref": task.assignee_ref,
         "points": task.points,
+        "due_date": task.due_date,
         "sprint_pid": task.sprint_pid,
         "created_at": task.created_at.to_utc(),
         "status_changed_at": task.status_changed_at.to_utc(),
@@ -95,6 +96,9 @@ struct TaskPayload {
     assignee_ref: Option<String>,
     #[serde(default)]
     sprint_pid: Option<Uuid>,
+    /// Optional due **calendar date** (`YYYY-MM-DD`, no zone).
+    #[serde(default)]
+    due_date: Option<chrono::NaiveDate>,
     /// Optional story points (team-local; 0–100).
     #[serde(default)]
     points: Option<i32>,
@@ -210,6 +214,7 @@ async fn create_task(
         status: sea_orm::ActiveValue::set(status.clone()),
         assignee_ref: sea_orm::ActiveValue::set(payload.assignee_ref.clone()),
         points: sea_orm::ActiveValue::set(payload.points),
+        due_date: sea_orm::ActiveValue::set(payload.due_date),
         status_changed_at: sea_orm::ActiveValue::set(now.into()),
         flow_type: sea_orm::ActiveValue::set(payload.flow_type.clone()),
         // Stamped from the state's **category**, not from the literal
@@ -296,6 +301,7 @@ async fn update_task(
     active.description = sea_orm::ActiveValue::set(payload.description.clone());
     active.assignee_ref = sea_orm::ActiveValue::set(payload.assignee_ref.clone());
     active.points = sea_orm::ActiveValue::set(payload.points);
+    active.due_date = sea_orm::ActiveValue::set(payload.due_date);
     active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
     let row = active
         .update(&ctx.db)

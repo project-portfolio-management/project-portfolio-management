@@ -390,7 +390,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   transition is audited. Recommendation: do not build unless a regulator or
   auditor asks (`compliance/*` surfaces first).
 
-- [ ] **PL-7 (M) — Guest access.** A `guest` principal scoped to named
+- [x] **PL-7 (M) — Guest access.** **Landed 2026-10-03.** Service: `guest_grants` (migration `m20261003_000019_guest_grants`), `POST/GET /api/plans/{pid}/guests`, `POST …/guests/{grant}/revoke`; `src/guests.rs` (4 unit tests) + `tests/guests.rs` end to end with real tokens (a granter, two guests). A **guest** is a token with `role=guest`; a guard layer confines them (the outermost plan guard): they may read only a plan they hold a **live grant** on — its **masked** record (no people references), milestones and components — and, with `comment` access, read/add comments on it, plus their own `/api/me` endpoints; **everything else is 404**, so they cannot enumerate plans, search, or read a report, and cannot write. Grants are `read` or `comment` (comment implies read), time-boxed, **revocable, and both take effect on the very next request** (asserted for revoke and for expiry). Audited. **Deviations, stated plainly:** grants are on **plans** only (the design said "named subjects"); **tasks, risks and allocations are not offered to guests at all** because they carry assignee/owner references — a guest-safe task view is future work; a guest cannot upload. **Not built:** a front-end. A `guest` principal scoped to named
   `(subject_kind, subject_pid)` grants, read-only by default, optionally
   comment-only (LT-4). Time-boxed (`expires_at`), revocable, listed per plan.
   **Acceptance:** a guest sees only granted subjects and gets 404 elsewhere;

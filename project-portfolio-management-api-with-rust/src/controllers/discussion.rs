@@ -177,6 +177,12 @@ pub(crate) async fn resolve_subject(
         _ => return Err(unprocessable("unknown subject_kind")),
     };
     if let Some(plan_pid) = subject.plan_pid {
+        // PL-7: a guest sees a subject only through a live grant on its plan.
+        if super::guests::caller_is_guest(caller)
+            && !super::guests::guest_covers_plan(&ctx.db, caller, plan_pid, "read").await
+        {
+            return Err(Error::NotFound);
+        }
         // RM-8: a subject in a private plan is `404` to a non-member.
         if super::plan_access::hidden_plans(ctx, &[plan_pid], caller)
             .await
@@ -225,6 +231,14 @@ async fn create_comment(
     }
     let subject =
         resolve_subject(&ctx, &caller, &payload.subject_kind, &payload.subject_pid).await?;
+    if super::guests::caller_is_guest(&caller) {
+        let Some(plan) = subject.plan_pid else {
+            return Err(Error::NotFound);
+        };
+        if !super::guests::guest_covers_plan(&ctx.db, &caller, plan, "comment").await {
+            return Err(forbidden("this guest grant does not allow commenting"));
+        }
+    }
     let prior: Vec<String> = comments::Entity::find()
         .filter(comments::Column::SubjectKind.eq(payload.subject_kind.as_str()))
         .filter(comments::Column::SubjectPid.eq(subject.pid))

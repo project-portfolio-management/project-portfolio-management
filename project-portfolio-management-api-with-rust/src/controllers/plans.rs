@@ -388,7 +388,8 @@ async fn get_one(
         &crate::auth::plan_resource_attrs(model.stage.as_deref()),
     )
     .map_err(super::record_rejection)?;
-    let masked = obligations.iter().any(|o| o == "mask");
+    // A guest never sees people references: their view is always the masked one.
+    let masked = obligations.iter().any(|o| o == "mask") || super::guests::caller_is_guest(&caller);
     let body = if masked {
         serde_json::json!(crate::privacy::mask_plan(&plan))
     } else {

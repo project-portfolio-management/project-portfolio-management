@@ -203,6 +203,7 @@ impl Hooks for App {
             .add_route(controllers::planner::routes())
             .add_route(controllers::attachments::routes())
             .add_route(controllers::bulk::routes())
+            .add_route(controllers::guests::routes())
             .add_route(controllers::metrics::routes())
     }
 
@@ -247,6 +248,12 @@ impl Hooks for App {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.clone(),
                 controllers::plan_access::privacy_mw,
+            ))
+            // Outermost of the plan guards: a guest is confined before anything
+            // else looks at the request.
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.clone(),
+                controllers::guests::guest_mw,
             ))
             .layer(axum::middleware::from_fn(require_auth_mw))
             .layer(axum::middleware::from_fn(

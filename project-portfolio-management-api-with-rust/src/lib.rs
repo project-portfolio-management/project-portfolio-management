@@ -64,6 +64,7 @@ pub mod financials;
 pub mod flow_metrics;
 /// Pure PPM governance rules (proposal pipeline, phase gates, risks, money).
 pub mod governance;
+pub mod guests;
 pub mod initializers;
 /// Pure derivations for the executive insight areas (CEO / CFO / CTO).
 pub mod insights;

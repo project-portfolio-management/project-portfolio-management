@@ -64,6 +64,7 @@ mod m20261003_000015_artifacts;
 mod m20261003_000016_attachments;
 mod m20261003_000017_bulk_jobs;
 mod m20261003_000018_review_queue_items;
+mod m20261003_000019_guest_grants;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -128,6 +129,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000016_attachments::Migration),
             Box::new(m20261003_000017_bulk_jobs::Migration),
             Box::new(m20261003_000018_review_queue_items::Migration),
+            Box::new(m20261003_000019_guest_grants::Migration),
             // inject-above (do not remove this comment)
         ]
     }

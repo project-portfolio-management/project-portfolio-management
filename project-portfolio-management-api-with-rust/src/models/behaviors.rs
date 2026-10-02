@@ -23,3 +23,4 @@ impl ActiveModelBehavior for artifacts::ActiveModel {}
 impl ActiveModelBehavior for attachments::ActiveModel {}
 impl ActiveModelBehavior for bulk_jobs::ActiveModel {}
 impl ActiveModelBehavior for review_queue_items::ActiveModel {}
+impl ActiveModelBehavior for guest_grants::ActiveModel {}

@@ -86,6 +86,7 @@ pub fn paths() -> Value {
     merge(&mut all, planner_paths());
     merge(&mut all, attachment_paths());
     merge(&mut all, bulk_paths());
+    merge(&mut all, guest_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -544,6 +545,29 @@ fn bulk_paths() -> Value {
             "post": op("bulk", "It is a duplicate: discard the candidate",
                 "Nothing was created for it, so nothing is undone. A decided item is 409.",
                 vec![uuid_param("pid")], &[("200", "The item, now rejected"), ("404", "Unknown item"), ("409", "Already decided")])
+        }
+    })
+}
+
+/// Guest access (PL-7).
+fn guest_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    let mut with_grant = pid.clone();
+    with_grant.push(uuid_param("grant"));
+    let confined = "A guest is a caller whose token carries role=guest. A guard layer confines them: they may read only a plan they hold a live grant on - its MASKED record (no people references), its milestones and its components - read and (with comment access) add comments on that plan, and call their own /api/me endpoints. Everything else, including listing plans, search, reports, tasks, risks and uploads, is 404, so a guest cannot enumerate. Grants expire and are revocable; both take effect on the guest's next request.";
+    json!({
+        "/api/plans/{pid}/guests": {
+            "post": op("guests", "Grant an outside collaborator access to this plan",
+                &format!("{confined} access is read or comment (comment implies read); expires_at, when given, must be in the future. Audited. The caller needs write access to the plan."),
+                pid.clone(), &[("200", "The grant"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan, or one the caller cannot see"), ("422", "Unknown access, or an expiry in the past")]),
+            "get": op("guests", "A plan's guest grants, live and not",
+                "Each grant shows its guest, access level, expiry, who granted it, when it was revoked, and whether it is live now.",
+                pid, &[("200", "Grants"), ("404", "Unknown plan, or one the caller cannot see")])
+        },
+        "/api/plans/{pid}/guests/{grant}/revoke": {
+            "post": op("guests", "Revoke a guest grant",
+                "Effective on the guest's very next request (the guard reads the grants every time). Idempotent and audited.",
+                with_grant, &[("200", "Revoked"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan or grant")])
         }
     })
 }

@@ -30,6 +30,7 @@ pub mod devops_events;
 pub mod event_outbox;
 pub mod feed_tokens;
 pub mod gate_reviews;
+pub mod guest_grants;
 pub mod ideas;
 pub mod insight_snapshots;
 pub mod key_result_check_ins;

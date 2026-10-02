@@ -93,7 +93,11 @@ pub fn validate(wi: &Plan) -> Result<()> {
 /// # Errors
 ///
 /// `422` when the edge would introduce a cycle.
-async fn check_no_cycle(ctx: &AppContext, self_pid: Option<uuid::Uuid>, wi: &Plan) -> Result<()> {
+pub(crate) async fn check_no_cycle(
+    ctx: &AppContext,
+    self_pid: Option<uuid::Uuid>,
+    wi: &Plan,
+) -> Result<()> {
     let Some(parent) = wi
         .parent_ref
         .as_deref()

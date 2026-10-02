@@ -35,7 +35,7 @@ use crate::{
     },
     observability::{self, Telemetry, TelemetryConfig},
     tasks,
-    workers::downloader::DownloadWorker,
+    workers::{bulk::BulkWorker, downloader::DownloadWorker},
 };
 
 /// The installed telemetry providers, so `on_shutdown` can flush what the
@@ -202,6 +202,7 @@ impl Hooks for App {
             .add_route(controllers::live::routes())
             .add_route(controllers::planner::routes())
             .add_route(controllers::attachments::routes())
+            .add_route(controllers::bulk::routes())
             .add_route(controllers::metrics::routes())
     }
 
@@ -260,6 +261,7 @@ impl Hooks for App {
     }
     async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
         queue.register(DownloadWorker::build(ctx)).await?;
+        queue.register(BulkWorker::build(ctx)).await?;
         Ok(())
     }
 

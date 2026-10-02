@@ -1247,7 +1247,9 @@ described manual check confirms it. Split tasks too big for one PR
     `relationships` and never fed to the matcher.
   - **Acceptance:** a link create emits `linked`, a delete emits
     `unlinked`, and a test asserts no link ever reaches the matcher.
-- [ ] **T-8 — Bulk import / export.**
+- [x] **T-8 — Bulk import / export.** **Landed 2026-10-03** — see
+  [bulk-import-export.md](bulk-import-export.md) (*Implementation notes* lists the
+  departures). Unblocks T-28e's scheduled runs and T-28n's import codec.
   See §9.6, §10.4 and
   [bulk import/export](../../agents/share/bulk-import-export.md).
   **Design drafted 2026-10-02 in

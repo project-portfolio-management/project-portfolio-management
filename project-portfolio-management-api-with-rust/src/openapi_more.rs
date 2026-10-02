@@ -85,6 +85,7 @@ pub fn paths() -> Value {
     merge(&mut all, live_paths());
     merge(&mut all, planner_paths());
     merge(&mut all, attachment_paths());
+    merge(&mut all, bulk_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -476,6 +477,73 @@ fn attachment_paths() -> Value {
             "post": op("attachments", "Remove an attachment (POST twin)",
                 "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", vec![uuid_param("pid")],
                 &[("200", "Removed"), ("403", "Not the uploader or an admin"), ("404", "Unknown attachment")])
+        }
+    })
+}
+
+/// Bulk import / export of plans (T-8).
+fn bulk_paths() -> Value {
+    let job = vec![uuid_param("id")];
+    let formats = "Formats: jsonl (one plan object per line, the lossless reference) and csv (RFC 4180 with every repeated or nested field as compact JSON in its cell, so it round-trips exactly as jsonl does).";
+    json!({
+        "/api/plans/import": {
+            "post": op("bulk", "Queue an import of the request body (202 with a job id)",
+                &format!("{formats} Send the file as the request body; format=jsonl|csv and on_keyless=review|create are query parameters, and an Idempotency-Key header makes a retried request return the original job (200, replayed true). Each row goes through the same validation, cycle check, events and audit as POST /api/plans. A row is matched to an existing plan by its stable key, in this order: pid; a globally-unique external identifier (Jira key, Asana gid, Trello id, MS Project id, GitHub project id, Linear id, URI, UUID); owner_org_id plus code (a bare code is not a key). A keyed row is created, updated, or reported unchanged (re-importing the same file changes nothing). A pid that names no plan is an error row, never a silent create. A keyless row is checked for duplicates and, if it looks like one, held in the review queue (provenance import) rather than created or merged (on_keyless=create skips the check). One bad row never aborts the load, and the counts always reconcile: created + updated + unchanged + queued_for_review + failed equals total. Import is a destructive action at the guard; per-row record-level stage policy is not applied because the background worker has no claims."),
+                vec![query("format", false, "jsonl (default) or csv"), query("on_keyless", false, "review (default) or create")],
+                &[("202", "{ job_id, status }"), ("200", "A replay of an earlier Idempotency-Key"), ("422", "Empty body, over the size limit, or an unknown format")])
+        },
+        "/api/plans/import/{id}": {
+            "get": op("bulk", "An import job's status, counts and links",
+                "status is queued, running, completed, completed_with_errors or failed (failed means the job itself could not run, with failure_reason). counts carries created, updated, unchanged, queued_for_review and failed, and reconciles states whether they sum to total. errors_url appears when rows failed, review_url when rows await review. Visible to the requester and to an admin; anyone else gets 404.",
+                job.clone(), &[("200", "The job"), ("404", "Unknown job, or not yours")])
+        },
+        "/api/plans/export": {
+            "post": op("bulk", "Queue an export of the plans the caller may read (202 with a job id)",
+                &format!("{formats} Authorisation is evaluated now, with the caller's identity: the job carries only the plans the caller may read (record-level policy and private plans applied), and rows_omitted reports how many were left out. masking_profile masked (default) hides people references (the lead is dropped, owner organisation fields are partly hidden); full carries them and, like include_soft_deleted, needs the destructive right (403 otherwise). Optional filters: kind and name_like. Rows are ordered by id, so two exports of unchanged data are byte-identical. EVERY export is audited, including one that matches zero rows."),
+                vec![], &[("202", "{ job_id, status }"), ("403", "full masking or soft-deleted rows without the destructive right"), ("422", "Unknown format or masking_profile, or more than 100000 plans")])
+        },
+        "/api/plans/export/{id}": {
+            "get": op("bulk", "An export job's status and download link",
+                "download_url appears once the job has completed; expires_at is when the file will be swept (24 hours by default).",
+                job.clone(), &[("200", "The job"), ("404", "Unknown job, or not yours")])
+        },
+        "/api/plans/export/{id}/download": {
+            "get": op("bulk", "Download the export file",
+                "Served with nosniff, private no-store caching and an attachment disposition; the bytes are re-verified against the stored SHA-256. 404 after the file has expired.",
+                job.clone(), &[("200", "The file"), ("404", "Unknown job, not yours, or expired")])
+        },
+        "/api/plans/bulk-jobs": {
+            "get": op("bulk", "The caller's bulk jobs, newest first",
+                "Filter by kind and status. An admin sees every job; anyone else only their own. Capped at 200.",
+                vec![query("kind", false, "import or export"), query("status", false, "queued, running, completed, completed_with_errors or failed")],
+                &[("200", "Jobs")])
+        },
+        "/api/plans/bulk-jobs/{id}/errors": {
+            "get": op("bulk", "The per-row error report of a job",
+                "CSV by default (format=jsonl for JSONL) with the columns row_number, source_line, field, code, message. row_number is the 1-based data-row ordinal; source_line is the physical line, which differs for multi-line CSV cells. The report names the offending field and never echoes the source value, so it can be shared without leaking personal data.",
+                {let mut p = job.clone(); p.push(query("format", false, "csv (default) or jsonl")); p},
+                &[("200", "The report"), ("404", "Unknown job, not yours, or no rows failed")])
+        },
+        "/api/plans/bulk-jobs/sweep": {
+            "post": op("bulk", "Delete expired artifact files and re-queue abandoned jobs",
+                "Admin only. Deletes the files of artifacts past their expiry (the rows remain as tombstones) and re-queues running jobs untouched for ten minutes; processing a job is idempotent, so a re-run is safe.",
+                vec![], &[("200", "artifacts_deleted, jobs_requeued"), ("403", "Not an admin")])
+        },
+        "/api/plans/review-queue": {
+            "get": op("bulk", "Imported rows held for a human decision",
+                "Keyless imported rows that the matcher scores as probable duplicates are held here with their candidate matches, never created or merged automatically. Filter by status (pending by default) and by job.",
+                vec![query("status", false, "pending (default), confirmed or rejected"), query("job", false, "A bulk job id")],
+                &[("200", "Items")])
+        },
+        "/api/plans/review-queue/{pid}/confirm": {
+            "post": op("bulk", "It is a new plan after all: create it",
+                "Creates the held candidate through the normal create path. A decided item is 409. Merging into a match is not offered here: reject the item and use the merge endpoint.",
+                vec![uuid_param("pid")], &[("200", "The item, now confirmed"), ("404", "Unknown item"), ("409", "Already decided"), ("422", "The candidate is no longer valid")])
+        },
+        "/api/plans/review-queue/{pid}/reject": {
+            "post": op("bulk", "It is a duplicate: discard the candidate",
+                "Nothing was created for it, so nothing is undone. A decided item is 409.",
+                vec![uuid_param("pid")], &[("200", "The item, now rejected"), ("404", "Unknown item"), ("409", "Already decided")])
         }
     })
 }

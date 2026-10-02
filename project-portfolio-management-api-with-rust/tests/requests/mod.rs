@@ -4,6 +4,7 @@
 //! suite (intake / gates / risks / budgets) in [`governance`].
 
 mod attachments;
+mod bulk;
 mod canvas;
 mod capabilities;
 mod components;

@@ -21,3 +21,5 @@ impl ActiveModelBehavior for plan_templates::ActiveModel {}
 impl ActiveModelBehavior for planned_slots::ActiveModel {}
 impl ActiveModelBehavior for artifacts::ActiveModel {}
 impl ActiveModelBehavior for attachments::ActiveModel {}
+impl ActiveModelBehavior for bulk_jobs::ActiveModel {}
+impl ActiveModelBehavior for review_queue_items::ActiveModel {}

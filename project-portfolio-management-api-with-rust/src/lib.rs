@@ -30,6 +30,7 @@ pub mod artifacts;
 pub mod auth;
 /// Pure workflow-automation rules (trigger matching, action shapes, due-ness).
 pub mod automation;
+pub mod bulk;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` and nothing else identity-shaped (T-28l).
 pub mod canvas;

@@ -1,6 +1,6 @@
 # Bulk import / export — design (T-8)
 
-**Status: design for approval; nothing here is implemented.** It stands
+**Status: implemented 2026-10-03** (migrations `…_000017_bulk_jobs`, `…_000018_review_queue_items`; `src/bulk.rs`, `src/controllers/bulk.rs`, `src/workers/bulk.rs`; tests in `tests/requests/bulk.rs`). The owner's open decisions in §12 were taken at their stated defaults — local-directory artifacts, 50 MiB / 100 000 rows, review queue used by import only, `full` export gated by the destructive right. Departures from the design as written are listed in *Implementation notes* at the end. It stands
 in for the family document `agents/share/bulk-import-export.md`, which
 `spec/13-tasks.md` T-8 and the API spec §9.8 / §10 cite but which is not
 in this repository. If that document is later supplied, it wins on
@@ -231,3 +231,22 @@ Integration tests (Postgres, in the existing DB-gated suite):
   flows, or keep them separate.
 - **Export `full` gate:** `Destructive` (assumed) or a dedicated
   attribute.
+
+## Implementation notes (what differs from the design above)
+
+- **`review_queue` is `review_queue_items`.** loco's `create_table` pluralises
+  table names; a singular name creates a different table than the SQL refers to.
+- **Authorisation is evaluated when the job is requested**, not in the worker
+  (a background worker holds no claims). An export stores the plans the caller
+  may read; `full` masking and soft-deleted rows need the destructive right.
+- **Record-level stage policy is not applied per imported row** — an import is a
+  destructive action at the guard instead. A gate-locked plan updated by an
+  import is therefore *not* an error row, unlike the design's test 6.
+- **Review resolution** offers `confirm` (create it) and `reject` (discard it);
+  *merge into a match* is not implemented — reject, then use the merge endpoint.
+- **Export filters** are `kind` and `name_like` (the design said the report
+  filters; those are plans-collection reports).
+- **The sweep** (`POST /api/plans/bulk-jobs/sweep`, admin) also re-queues
+  `running` jobs older than a ten-minute lease; there is no ticker yet.
+- **Not built:** Parquet export; multipart upload (the file is the raw body);
+  a front-end.

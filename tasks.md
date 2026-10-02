@@ -34,7 +34,9 @@ audited; people stay references.
   created plan goes through `create_and_emit` (events + audit not bypassed).
   *Depends on:* nothing; shares clone logic with T-8's import pipeline.
 
-- [ ] **LT-3 (M) — "My work" personal task view.** `GET /api/me/tasks`
+- [ ] **LT-3 (M) — "My work" personal task view.** **Priority 1 — about half
+  the users are individual workers (owner, 2026-10-02).** Default landing page
+  for a caller whose `view` attribute is not a PMO persona. `GET /api/me/tasks`
   bucketed `overdue / today / this_week / later / undated` in the **caller's**
   timezone, plus a quick-add (`POST /api/plans/{pid}/tasks` already exists;
   the front-end adds a one-line form). Assigned-to-me by `actor_ref` from the
@@ -45,7 +47,8 @@ audited; people stay references.
   error; unreadable plans' tasks are omitted, not shown masked.
   *Front-end:* `/me`, one focus list, no chrome. Pairs with LT-9.
 
-- [ ] **LT-4 (M) — Comments and reactions.** `comments` and `reactions`
+- [ ] **LT-4 (M) — Comments and reactions.** *Priority 2 (workers discuss
+  their own tasks daily).* `comments` and `reactions`
   tables keyed `(subject_kind, subject_pid)`; endpoints under
   `/api/{subject}/{pid}/comments` and `/reactions`. Subject kinds: plan, task,
   risk, proposal, idea, canvas item. Reactions are a small closed set,
@@ -123,7 +126,8 @@ audited; people stay references.
   entries reports `null` hours with a reason, not zero; billable and
   non-billable never merge into one number without both being shown.
 
-- [ ] **LT-12 (M) — Neurodivergent-friendly UX pass.** Audit the front-end
+- [ ] **LT-12 (M) — Neurodivergent-friendly UX pass.** **Priority 1, built
+  alongside LT-3, not after it.** Audit the front-end
   against Leantime's stated goal: plain-language labels, one primary action
   per screen, predictable reading order, `prefers-reduced-motion` honoured,
   contrast at WCAG AA, a dyslexia-friendly font option, and a per-user
@@ -132,7 +136,10 @@ audited; people stay references.
   serious/critical violations; reduced-motion disables the tour and splash
   animation; simple mode persists per user (reusing `saved_views` storage)
   and does not remove any capability, only its prominence.
-  *Scope question:* see plan.md §6 (is the user a non-PM at all?).
+  *Scope settled:* workers are about half the users, so simple mode is the
+  default for a non-PMO persona and an opt-in toggle for everyone else.
+  Success is measured on the worker path: a first-time worker reaches "what
+  do I do today?" in one click from sign-in (a Playwright check on `/me`).
 
 ## Not taken (recorded so they are not re-proposed)
 

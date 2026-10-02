@@ -92,21 +92,37 @@ task in [tasks.md](tasks.md) (`LT-n`).
 
 ## 5. Sequencing
 
-1. **Cheap, high value first:** LT-3 (My work), LT-9 (timezone audit), LT-7 (iCal).
-2. **Needs T-8's artifact store:** LT-5 (attachments); LT-2 (templates) can use
-   the same clone path as T-8's import pipeline.
-3. **Strategy layer:** LT-1 (canvases), then LT-4 (comments/reactions) because
-   canvas items want discussion.
-4. **Extend what exists:** LT-6, LT-11, LT-10.
-5. **Decide before building:** LT-8 (wiki), LT-12 (UX pass scope).
+**Owner input (2026-10-02): roughly half the users are individual workers,
+not project managers.** That promotes the personal-experience items (LT-3,
+LT-12, LT-4) from nice-to-have to core, and it changes the product's shape:
+two audiences share one service, so the individual's path must work without
+the PMO machinery being in the way. Governance depth stays; it just must not
+be the first thing a worker sees.
+
+1. **Individual-worker path first:** LT-3 (My work) is now the top item, with
+   LT-12 (simple mode, plain language, accessibility) designed alongside it
+   rather than after. LT-9 (timezone audit) is a prerequisite for LT-3's
+   "today" being correct.
+2. **Cheap and shared:** LT-7 (iCal), so a worker sees due dates in the
+   calendar app they already use.
+3. **Collaboration a worker uses daily:** LT-4 (comments / reactions), then
+   LT-11 (timesheet views: workers fill them in, managers approve).
+4. **Needs T-8's artifact store:** LT-5 (attachments); LT-2 (templates) shares
+   the clone path with T-8's import.
+5. **Strategy layer for the PM half:** LT-1 (canvases).
+6. **Extend what exists:** LT-6, LT-10.
+7. **Decide before building:** LT-8 (wiki).
 
 LT-2 and LT-5 are blocked on, or shaped by, the T-8 design awaiting approval
 ([spec/bulk-import-export.md](spec/bulk-import-export.md)).
 
 ## 6. Open questions for the owner
 
-- Is the target user ever a *non-project-manager*, or only a PMO? If the PMO
-  only, LT-3 and LT-12 drop in priority.
+- ~~Is the target user ever a non-project-manager?~~ **Answered:** about half
+  are individual workers. LT-3 and LT-12 are core (see §5).
+- With two audiences, should the signed-in landing page differ by role
+  (T-28f's `view` attribute already exists), with workers defaulting to
+  `/me`?
 - Wiki: build, or link out to the organisation's existing docs system?
 - Canvases: generic engine (one table, typed templates) or a bespoke table per
   canvas? The task assumes generic.

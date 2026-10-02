@@ -175,8 +175,9 @@ async fn saved_views_are_scoped_to_their_owner_and_their_route() {
         assert_eq!(alice_view_after.as_array().expect("array").len(), 1);
 
         // Alice can delete her own.
+        // The POST twin (DELETE needs the admin attribute by default).
         request
-            .delete(&format!("/api/saved-views/{alice_plans_pid}"))
+            .post(&format!("/api/saved-views/{alice_plans_pid}/delete"))
             .add_header(alice_key.clone(), alice_val.clone())
             .await
             .assert_status_ok();

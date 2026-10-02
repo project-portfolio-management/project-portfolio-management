@@ -147,4 +147,7 @@ pub fn routes() -> Routes {
         .add("/saved-views", post(create_saved_view))
         .add("/saved-views", get(list_saved_views))
         .add("/saved-views/{pid}", delete(delete_saved_view))
+        // POST twin: DELETE needs the admin attribute under the default
+        // policy, and a person must always be able to remove their own view.
+        .add("/saved-views/{pid}/delete", post(delete_saved_view))
 }

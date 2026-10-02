@@ -1997,6 +1997,7 @@ mod tests {
         // per-user saved views (T-28l)
         "/api/saved-views",
         "/api/saved-views/{pid}",
+        "/api/saved-views/{pid}/delete",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —

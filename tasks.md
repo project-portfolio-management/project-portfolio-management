@@ -454,5 +454,5 @@ desktop app and presence. Reasons in [plan.md §16](plan.md).
   `/api/watchers/unwatch`, `/api/reactions/remove`,
   `/api/me/notification-prefs/reset`, `/api/comments/{pid}/delete`) that need
   only write access; the DELETE routes remain. **Rule for new endpoints:** a
-  person's undo of their *own* action is a POST. **Still affected, not
-  changed:** the older `DELETE /api/saved-views/{pid}`.
+  person's undo of their *own* action is a POST. The older `DELETE /api/saved-views/{pid}` had the same flaw and
+  now has the twin `/api/saved-views/{pid}/delete`.

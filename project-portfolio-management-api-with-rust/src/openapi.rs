@@ -48,6 +48,7 @@ fn paths() -> Value {
     merge_object(&mut paths, canvas_paths());
     merge_object(&mut paths, discussion_paths());
     merge_object(&mut paths, personal_paths());
+    merge_object(&mut paths, module_paths());
     paths
 }
 
@@ -1487,6 +1488,34 @@ fn personal_paths() -> Value {
     })
 }
 
+/// Per-plan feature modules (RM-7).
+fn module_paths() -> Value {
+    let pid = json!({ "name": "pid", "in": "path", "required": true,
+        "schema": { "type": "string", "format": "uuid" } });
+    json!({
+        "/api/plans/{pid}/modules": {
+            "get": {
+                "tags": ["modules"],
+                "summary": "Which feature modules this plan exposes, and where that came from",
+                "description": "source is plan when someone chose a set for this plan, default otherwise. A plan nobody configured gets the deployment default, which is every module unless PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES narrows it, so existing plans behave exactly as before. Each available module lists the plan-scoped path segments it owns.",
+                "parameters": [pid],
+                "responses": { "200": { "description": "plan_pid, source, modules, available, default, personal_preset" }, "404": { "description": "Unknown plan" } }
+            },
+            "put": {
+                "tags": ["modules"],
+                "summary": "Set the plan's modules, apply the personal preset, or reset to the default",
+                "description": "Send exactly one of modules (a list), preset (personal: tasks and time only) or reset (true). Disabling a module hides its plan-scoped routes with 404 module_disabled; it never deletes data, so re-enabling restores everything written while it was on. Only plan-scoped paths are gated: portfolio-wide views read across plans and are unaffected. Every change is audited with the before and after sets.",
+                "parameters": [pid],
+                "responses": {
+                    "200": { "description": "The new view" },
+                    "404": { "description": "Unknown plan" },
+                    "422": { "description": "Not exactly one of modules / preset / reset, an unknown module, or an unknown preset" }
+                }
+            }
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2000,6 +2029,7 @@ mod tests {
             crate::controllers::prioritisation::routes(),
             crate::controllers::saved_views::routes(),
             crate::controllers::canvas::routes(),
+            crate::controllers::modules::routes(),
             crate::controllers::my_work::routes(),
             crate::controllers::notification_prefs::routes(),
             crate::controllers::discussion::routes(),

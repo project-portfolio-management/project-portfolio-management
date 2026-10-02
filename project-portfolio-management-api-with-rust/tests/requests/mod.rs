@@ -12,6 +12,7 @@ mod financials;
 mod governance;
 mod insights;
 mod metrics_control;
+mod modules;
 mod oversight;
 mod plans;
 mod scale;

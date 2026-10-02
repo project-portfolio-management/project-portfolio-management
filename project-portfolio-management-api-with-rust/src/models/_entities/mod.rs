@@ -35,6 +35,7 @@ pub mod objective_links;
 pub mod objectives;
 pub mod phase_transitions;
 pub mod plan_dependencies;
+pub mod plan_modules;
 pub mod plans;
 pub mod prelude;
 pub mod proposals;

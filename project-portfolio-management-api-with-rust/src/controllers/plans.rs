@@ -293,6 +293,15 @@ fn score_desc(a: f64, b: f64) -> std::cmp::Ordering {
     b.partial_cmp(&a).unwrap_or(std::cmp::Ordering::Equal)
 }
 
+/// `POST /api/plans` query.
+#[derive(Debug, Deserialize)]
+struct CreateParams {
+    /// Start the plan with a module preset (`personal`: tasks and time
+    /// only) instead of the deployment default (RM-7).
+    #[serde(default)]
+    modules_preset: Option<String>,
+}
+
 /// Create a plan. `POST /api/plans`.
 ///
 /// # Errors
@@ -302,11 +311,31 @@ fn score_desc(a: f64, b: f64) -> std::cmp::Ordering {
 async fn create(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    Query(params): Query<CreateParams>,
     Json(wi): Json<Plan>,
 ) -> Result<Response> {
     validate(&wi)?;
     check_no_cycle(&ctx, None, &wi).await?;
+    // Resolve the preset before writing anything, so a bad one creates no plan.
+    let modules = match params.modules_preset.as_deref() {
+        None => None,
+        Some("personal") => Some(
+            crate::modules::PERSONAL
+                .iter()
+                .map(|m| (*m).to_string())
+                .collect::<std::collections::BTreeSet<String>>(),
+        ),
+        Some(_) => {
+            return Err(Error::CustomError(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ErrorDetail::new("validation", "modules_preset must be \"personal\""),
+            ));
+        }
+    };
     let model = streaming::create_and_emit(&ctx.db, &wi, caller.actor()).await?;
+    if modules.is_some() {
+        super::modules::set_modules(&ctx, model.pid, modules, caller.actor()).await?;
+    }
     // Audit is written inside `create_and_emit` (see `streaming`).
     Metrics::global().plan_created_total.inc();
     format::json(PlanRef::of(&model))

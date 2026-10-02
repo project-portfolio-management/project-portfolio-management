@@ -237,7 +237,20 @@ started.
   token returns 401; entries the caller cannot read are absent; `If-None-Match`
   returns 304 when nothing changed (reuse the ETag approach of `at-a-glance`).
 
-- [ ] **RM-7 (M) — Per-plan module toggles.** A `modules` set on a plan
+- [~] **RM-7 (M) — Per-plan module toggles.** **Service landed 2026-10-03**
+  (`src/modules.rs`, `src/controllers/modules.rs`, migration
+  `m20261003_000001_plan_modules`; 7 unit + 3 DB-gated request tests, plus
+  OpenAPI). Six modules (`tasks`, `time`, `risks`, `financials`, `milestones`,
+  `governance`) own the plan-scoped path segments listed in `src/modules.rs`; a
+  guard layer answers `404 module_disabled` for a disabled module on **any**
+  method, so no handler can forget it. Stored in its own `plan_modules` table
+  (no row ⇒ the deployment default, `PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES`,
+  all modules when unset), which leaves the plan row and its integrity hash
+  untouched. `PUT /api/plans/{pid}/modules` takes `modules`, `preset:
+  "personal"` or `reset`; `POST /api/plans?modules_preset=personal` creates a
+  plan already on the preset. **Not gated, by design:** portfolio-wide views
+  (`at-a-glance`, `capacity`, reports) read across plans. **Not built:** the
+  front-end hiding of panels. A `modules` set on a plan
   (`tasks`, `time`, `canvases`, `comments`, `governance`, `financials`,
   `risks`, …) with deployment defaults and a personal-plan preset (`tasks` +
   `time`). A disabled module's routes for that plan return 404 and its

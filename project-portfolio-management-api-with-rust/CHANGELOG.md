@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — per-plan feature modules (RM-7, 2026-10-03)
+
+`plan_modules` (migration `m20261003_000001_plan_modules`); `GET/PUT
+/api/plans/{pid}/modules`; `POST /api/plans?modules_preset=personal`. A plan
+exposes a set of modules (`tasks`, `time`, `risks`, `financials`, `milestones`,
+`governance`); a plan-scoped route of a disabled module answers `404
+module_disabled`, for every method, from a middleware layer. Disabling never
+deletes data. No explicit set means the deployment default (all modules unless
+`PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES` narrows it), so existing plans
+are unchanged. Every change is audited with the before and after sets.
+
 ### Added — notification preferences (PL-5, 2026-10-02)
 
 `notification_prefs` (migration `m20261002_000004_notification_prefs`);

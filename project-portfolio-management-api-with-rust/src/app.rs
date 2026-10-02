@@ -183,6 +183,7 @@ impl Hooks for App {
             .add_route(controllers::prioritisation::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())
+            .add_route(controllers::modules::routes())
             .add_route(controllers::my_work::routes())
             .add_route(controllers::notification_prefs::routes())
             .add_route(controllers::discussion::routes())
@@ -222,6 +223,12 @@ impl Hooks for App {
         // `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` flag is read per request and the layer is a
         // near-noop when the flag is off (the default).
         Ok(router
+            // Innermost: runs after the auth guard and versioning, so an
+            // unauthenticated caller never learns which modules a plan has.
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.clone(),
+                controllers::modules::modules_mw,
+            ))
             .layer(axum::middleware::from_fn(require_auth_mw))
             .layer(axum::middleware::from_fn(
                 crate::version::require_version_mw,

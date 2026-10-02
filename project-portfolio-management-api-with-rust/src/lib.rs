@@ -102,6 +102,7 @@ pub mod snapshots;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).
 pub mod strategy;
 pub mod streaming;
+pub mod task_relations;
 pub mod tasks;
 /// Time-based analysis (TBA): pure computation over the task
 /// status-transition log — cycle versus lead time, flow efficiency,

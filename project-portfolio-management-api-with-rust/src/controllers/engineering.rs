@@ -353,6 +353,9 @@ async fn update_task(
         return Err(refuse("status changes go through PATCH (the board move)"));
     }
     validate_task(&ctx, item.pid, &payload).await?;
+    if payload.due_date != task.due_date {
+        super::task_relations::check_due_change(&ctx, task.pid, payload.due_date).await?;
+    }
     let task_pid = task.pid;
     let mut active: tasks::ActiveModel = task.into();
     active.title = sea_orm::ActiveValue::set(payload.title.clone());
@@ -491,6 +494,10 @@ async fn move_task(
         )));
     }
     enforce_move_roles(&workflow, &task.status, &payload.status, &caller)?;
+    // LT-10: a task cannot be finished while a `blocks` relation's blocker is open.
+    if crate::workflow::is_done(&workflow, &payload.status) {
+        super::task_relations::ensure_not_blocked(&ctx, task.pid).await?;
+    }
     // WIP limits (env-configured, per plan board): refuse a move
     // into a capped column that is already full. No config ⇒ no caps.
     check_wip(&ctx, item.pid, &payload.status, &workflow).await?;
@@ -542,6 +549,10 @@ async fn move_task(
     )
     .await
     .ok();
+    // LT-10: finishing a primary closes the tasks that duplicate it.
+    if first_done {
+        super::task_relations::close_duplicates(&ctx, task_pid, caller.actor()).await;
+    }
     // Watchers (RM-3) are told once, the mover never; best-effort.
     super::watchers::notify_watchers(
         &ctx,

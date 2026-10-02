@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — task relations (LT-10, 2026-10-02)
+
+`task_relations` and `/api/plans/{pid}/tasks/{t}/relations`: related, blocks, precedes, duplicates, copied_from. `blocks` stops the blocked task finishing, `precedes` constrains due dates (also at edit), finishing a primary closes its duplicates.
+
 ### Added — approval requests (PL-1, 2026-10-02)
 
 `approval_requests` and `/api/approvals`: ask one named person to approve a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Only that person decides, a decision is final, a rejection must carry a comment, only the requester withdraws. Budget lines and scenarios are now also valid comment / watcher subjects.

@@ -19,6 +19,7 @@ mod oversight;
 mod plans;
 mod scale;
 mod strategy;
+mod task_relations;
 mod tba;
 mod value_ceremony;
 mod visibility;

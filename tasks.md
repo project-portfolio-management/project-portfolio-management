@@ -142,7 +142,7 @@ audited; people stay references.
   *Why:* Leantime's 3.10.1 fixed timestamps stored in viewer-local time,
   midnight due-date buckets and "Invalid DateTime" in the calendar.
 
-- [ ] **LT-10 (S) — Task relations.** `task_relations` (`from`, `kind` ∈
+- [x] **LT-10 (S) — Task relations.** **Landed 2026-10-02.** Service: `task_relations` (migration `m20261003_000008_task_relations`), three routes under `/api/plans/{pid}/tasks/{t}/relations`; `src/task_relations.rs` (4 unit tests). Redmine's behaviours as the acceptance set, every refusal naming the relation: **`blocks`** stops the blocked task finishing while the blocker is open; **`precedes`** needs the successor due strictly after (checked at create **and** when either due date is edited); **`duplicates`** closes the duplicate (with a transition row and audit) when the primary finishes; `related` (symmetric) and `copied_from` are informational. `blocks`/`precedes` must stay acyclic; self and exact-duplicate relations refused; cross-plan allowed; a relation to a task in an unreadable plan is hidden and counted. 1 DB-gated test. **Deviation:** tasks have a due date, not a start date, so `precedes` is on due dates. **Not built:** front-end. `task_relations` (`from`, `kind` ∈
   `related | duplicates | blocks`, `to`); `blocks` reuses dependency cycle
   refusal. Shown on the task detail.
   **Acceptance:** self-relations and exact duplicates are refused; a `blocks`

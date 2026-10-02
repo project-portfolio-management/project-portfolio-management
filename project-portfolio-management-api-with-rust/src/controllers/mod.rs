@@ -208,4 +208,5 @@ pub mod pagination {
 pub mod approvals;
 pub mod components;
 pub mod custom_fields;
+pub mod task_relations;
 pub mod watchers;

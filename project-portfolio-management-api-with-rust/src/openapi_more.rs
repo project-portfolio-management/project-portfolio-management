@@ -75,6 +75,7 @@ pub fn paths() -> Value {
     merge(&mut all, custom_field_paths());
     merge(&mut all, watcher_paths());
     merge(&mut all, approval_paths());
+    merge(&mut all, relation_paths());
     all
 }
 
@@ -195,6 +196,28 @@ fn approval_paths() -> Value {
             "post": op("approvals", "The requester withdraws a pending request",
                 "Writes no decision. A request that is already decided or withdrawn is 409.",
                 vec![uuid_param("pid")], &[("200", "The withdrawn request"), ("401", "Missing or invalid bearer token"), ("403", "Not the requester"), ("404", "Unknown request"), ("409", "Not pending")])
+        }
+    })
+}
+
+/// Task relations (LT-10).
+fn relation_paths() -> Value {
+    let p = vec![uuid_param("pid"), uuid_param("t_pid")];
+    let mut with_r = p.clone();
+    with_r.push(uuid_param("r_pid"));
+    json!({
+        "/api/plans/{pid}/tasks/{t_pid}/relations": {
+            "post": op("task-relations", "Relate this task to another (related, blocks, precedes, duplicates, copied_from)",
+                "From is this task, to is to_task_pid; cross-plan relations are allowed. blocks: from blocks to, and to cannot be finished while from is open. precedes: from precedes to, and to must be due after from when both are dated; this is enforced again when either due date is edited. duplicates: from is a duplicate of to, and finishing to closes from. related and copied_from are informational. blocks and precedes must stay acyclic. Every refusal names the relation that caused it.",
+                p.clone(), &[("200", "The relation"), ("404", "Unknown plan or task"), ("409", "The relation already exists (related is symmetric)"), ("422", "Unknown kind, a self-relation, a target that is not a live task, a cycle, or a precedes that the due dates already violate")]),
+            "get": op("task-relations", "A task's relations in both directions",
+                "Each carries its direction (outgoing or incoming) and a summary of the other task. A relation whose other task sits in a plan the caller cannot read is omitted and counted in hidden; a relation to a deleted task is not shown.",
+                p, &[("200", "relations, hidden"), ("404", "Unknown plan or task")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/relations/{r_pid}": {
+            "delete": op("task-relations", "Remove a relation",
+                "Soft-delete; the tasks themselves are untouched.", with_r,
+                &[("200", "Removed"), ("404", "Unknown plan, task or relation")])
         }
     })
 }

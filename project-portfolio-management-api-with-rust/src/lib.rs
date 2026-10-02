@@ -89,6 +89,7 @@ pub mod openapi_more;
 /// per-phase durations from the transition log.
 pub mod phase;
 pub mod plan_access;
+pub mod plan_templates;
 pub mod prioritisation;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;

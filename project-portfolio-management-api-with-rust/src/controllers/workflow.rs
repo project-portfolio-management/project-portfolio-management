@@ -80,6 +80,52 @@ async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::Wo
     })
 }
 
+/// The task workflow a plan **owns**, if it has one (never the default or the
+/// built-in) — what a plan template captures.
+///
+/// # Errors
+///
+/// Propagates a database error.
+pub(crate) async fn own_definition(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+) -> Result<Option<rules::WorkflowDef>> {
+    let own = workflows::Entity::find()
+        .filter(workflows::Column::PlanPid.eq(plan_pid))
+        .filter(workflows::Column::AppliesTo.eq("task"))
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    match own {
+        Some(w) => Ok(Some(definition_of(ctx, w.pid).await?)),
+        None => Ok(None),
+    }
+}
+
+/// Register `def` as the task workflow owned by `plan_pid` (a plan template
+/// instantiation giving the new plan the vocabulary its source had).
+///
+/// # Errors
+///
+/// Propagates a database error.
+pub(crate) async fn register_own(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    name: &str,
+    def: &rules::WorkflowDef,
+) -> Result<()> {
+    let payload = WorkflowPayload {
+        name: name.to_string(),
+        applies_to: "task".to_string(),
+        plan_pid: Some(plan_pid),
+        is_default: false,
+        states: Vec::new(),
+        transitions: Vec::new(),
+    };
+    persist(ctx, &payload, def).await.map(|_| ())
+}
+
 /// The workflow in force for a plan and resource kind.
 ///
 /// The plan's own, else the deployment default, else the built-in.

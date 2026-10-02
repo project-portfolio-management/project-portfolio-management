@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — plan templates (LT-2, 2026-10-02)
+
+`plan_templates` and `/api/plans/{pid}/save-as-template`, `/api/plans/from-template/{tpl}`: save a plan tree as a template (no people, no identity, dates as offsets) and create a fresh tree from it with a start date. Tasks restart at the workflow's initial state; every plan goes through the normal create path so events and audit are written.
+
 ### Added — REST `include=` (RM-12, 2026-10-02)
 
 `GET /api/plans/{pid}?include=…`: embed milestones, risks, tasks, components, time entries or budget lines in one response. Absent `include` the response is unchanged; a disabled module's sub-resource is omitted and listed rather than silently missing.

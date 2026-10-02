@@ -198,6 +198,7 @@ impl Hooks for App {
             .add_route(controllers::plan_access::routes())
             .add_route(controllers::task_bulk::routes())
             .add_route(controllers::timesheets::routes())
+            .add_route(controllers::plan_templates::routes())
             .add_route(controllers::metrics::routes())
     }
 

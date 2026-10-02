@@ -17,6 +17,7 @@ mod insights;
 mod metrics_control;
 mod modules;
 mod oversight;
+mod plan_templates;
 mod plans;
 mod scale;
 mod strategy;

@@ -81,6 +81,7 @@ pub fn paths() -> Value {
     merge(&mut all, access_paths());
     merge(&mut all, bulk_task_paths());
     merge(&mut all, timesheet_paths());
+    merge(&mut all, template_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -362,6 +363,36 @@ fn timesheet_paths() -> Value {
                 &format!("{units} Dates are calendar dates (no zone); the default window is the last 90 days. JSON, or CSV with format=csv. Plans the caller cannot read are omitted and counted; at most 20000 entries are read and the response says truncated if more exist."),
                 vec![query("group_by", true, "person, plan, category, billable or month"), query("from", false, "YYYY-MM-DD"), query("to", false, "YYYY-MM-DD"), query("plan", false, "Narrow to one plan"), query("person", false, "Narrow to one person URN"), query("format", false, "json (default) or csv")],
                 &[("200", "groups, split, total_minutes, reason, omitted_unreadable, truncated (or text/csv)"), ("422", "Unknown group_by, or from after to")])
+        }
+    })
+}
+
+/// Plan templates (LT-2).
+fn template_paths() -> Value {
+    let rules = "A template is a self-contained snapshot: the plan and its readable descendants (at most 200 plans, 2000 tasks, six levels), their tasks, components, milestones and each plan's own task workflow. People and identity are never captured (leads, assignees, external identifiers, same_as, codes, alternate names are dropped), every date is stored as an offset from a base date, and tasks are re-created at the workflow's initial state with no history.";
+    json!({
+        "/api/plans/{pid}/save-as-template": {
+            "post": op("templates", "Save a plan tree as a reusable template",
+                &format!("{rules} A descendant the caller cannot read is left out with its subtree and counted in omitted_unreadable. Template names are unique, case-insensitively."),
+                vec![uuid_param("pid")], &[("200", "pid, name, plans, tasks, milestones, needs_start_date, omitted_unreadable"), ("404", "Unknown plan, or one the caller cannot see"), ("409", "A template with this name exists"), ("422", "Blank name, or the tree exceeds the caps")])
+        },
+        "/api/plans/from-template/{tpl}": {
+            "post": op("templates", "Create a new plan tree from a template",
+                "Every plan is created through the same path as POST /api/plans, so events and audit are written exactly as for a single create. start_date is required when the template captured any date (each date becomes start_date plus its offset). No person reference is copied; tasks start at the workflow's initial state. Not one transaction: if it fails part-way the plans already created are soft-deleted and the failure is reported, so a half-built tree is never left behind.",
+                vec![uuid_param("tpl")], &[("200", "root_pid, plans, tasks_created, milestones_created"), ("404", "Unknown template"), ("422", "start_date missing for a dated template, an unreadable snapshot, an invalid plan, or a parent the caller cannot see")])
+        },
+        "/api/plan-templates": {
+            "get": op("templates", "Saved templates (name, description, size)",
+                "Plain list of stored templates without their snapshots.", vec![], &[("200", "Templates")])
+        },
+        "/api/plan-templates/{pid}": {
+            "get": op("templates", "A template's full snapshot", rules, vec![uuid_param("pid")], &[("200", "The template"), ("404", "Unknown template")]),
+            "delete": op("templates", "Soft-delete a template",
+                "Plans already created from it are untouched.", vec![uuid_param("pid")], &[("200", "Deleted"), ("404", "Unknown template")])
+        },
+        "/api/plan-templates/{pid}/delete": {
+            "post": op("templates", "Soft-delete a template (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", vec![uuid_param("pid")], &[("200", "Deleted"), ("404", "Unknown template")])
         }
     })
 }

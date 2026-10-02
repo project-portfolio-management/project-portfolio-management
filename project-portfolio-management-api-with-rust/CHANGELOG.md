@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — bulk import / export of plans (T-8, 2026-10-03)
+
+`bulk_jobs` and `review_queue_items` (migrations `…_000017`, `…_000018`);
+`POST /api/plans/import` (the raw body; `Idempotency-Key`), `POST
+/api/plans/export`, job status / download / error-report routes, the review
+queue (`confirm` / `reject`) and an artifact sweep; a loco `BulkWorker`. JSONL
+and CSV (every nested field as JSON in its cell) are both lossless. A row is
+matched by `pid`, a globally-unique external identifier, or `owner_org_id` +
+`code`; keyed rows are created, updated or reported unchanged (re-import is
+idempotent); a keyless probable duplicate is held for review, never created or
+merged. Counts always reconcile; the error report names the field, never the
+value. Exports mask people references by default (`full` and soft-deleted rows
+need the destructive right), are byte-stable, and are audited even at zero rows.
+
 ### Added — file attachments and the artifact store (LT-5, 2026-10-03)
 
 `artifacts`, `attachments`, `/api/attachments`: attach a file (raw body) to a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Type allow-list and size cap enforced before storage; SHA-256 re-verified on download; downloads re-authorised on the subject and served with `nosniff` and a UTF-8-safe `Content-Disposition`.

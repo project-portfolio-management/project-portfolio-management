@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — live board updates (SSE) (PL-3, 2026-10-03)
+
+`GET /api/plans/{pid}/live`: a server-sent-event stream of task created / moved / updated and comment added on a plan, with `Last-Event-ID` resume from a bounded ring and an explicit `resync` when a gap cannot be replayed. In-process hub: per replica.
+
 ### Added — plan templates (LT-2, 2026-10-02)
 
 `plan_templates` and `/api/plans/{pid}/save-as-template`, `/api/plans/from-template/{tpl}`: save a plan tree as a template (no people, no identity, dates as offsets) and create a fresh tree from it with a start date. Tasks restart at the workflow's initial state; every plan goes through the normal create path so events and audit are written.

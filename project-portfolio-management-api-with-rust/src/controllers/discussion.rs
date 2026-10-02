@@ -251,6 +251,13 @@ async fn create_comment(
     AuditModel::record(&ctx.db, row.pid, "comment_added", caller.actor(), None)
         .await
         .ok();
+    if let Some(plan_pid) = subject.plan_pid {
+        crate::live::publish(
+            plan_pid,
+            "comment_added",
+            serde_json::json!({ "subject_kind": payload.subject_kind, "subject_pid": subject.pid }),
+        );
+    }
     // Commenting follows the thread (unless the user opted out of auto-watch).
     if let Some(sub) = caller.actor() {
         super::watchers::ensure_watching(&ctx.db, &payload.subject_kind, subject.pid, sub).await;

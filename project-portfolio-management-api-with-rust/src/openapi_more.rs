@@ -82,6 +82,7 @@ pub fn paths() -> Value {
     merge(&mut all, bulk_task_paths());
     merge(&mut all, timesheet_paths());
     merge(&mut all, template_paths());
+    merge(&mut all, live_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -393,6 +394,18 @@ fn template_paths() -> Value {
         "/api/plan-templates/{pid}/delete": {
             "post": op("templates", "Soft-delete a template (POST twin)",
                 "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", vec![uuid_param("pid")], &[("200", "Deleted"), ("404", "Unknown template")])
+        }
+    })
+}
+
+/// Live plan updates (PL-3).
+fn live_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/live": {
+            "get": op("live", "A text/event-stream of changes to a plan's board",
+                "Events: task_created, task_moved, task_updated, comment_added (identifiers and the changed fact only). The plan is read-checked once at connect: one the caller cannot see (record-level policy or a private plan) or that no longer exists is 404 before any event. Each event carries an id; a reconnecting client sends Last-Event-ID and is replayed what it missed from a bounded in-memory ring, or receives a resync event when the gap is larger than the ring remembers, so a gap is never silent. A subscriber that falls behind the bounded channel gets a resync event and is disconnected rather than buffered without limit. Optional limit closes the stream after that many events and idle_ms after that long with nothing to send, for clients that cannot hold a connection. Limits: the hub is per process, so with several replicas an event reaches only the clients connected to the replica that handled the write.",
+                vec![uuid_param("pid"), query("limit", false, "Close after this many events"), query("idle_ms", false, "Close after this many milliseconds idle")],
+                &[("200", "text/event-stream"), ("404", "Unknown plan, or one the caller cannot see")])
         }
     })
 }

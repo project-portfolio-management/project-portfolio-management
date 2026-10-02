@@ -343,7 +343,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   database, not memory); the log is append-only; a process definition edited
   mid-run does not change a running execution (it is pinned by version).
 
-- [ ] **PL-3 (M) — Live board updates (SSE).** `GET
+- [x] **PL-3 (M) — Live board updates (SSE).** **Landed 2026-10-03.** Service: `GET /api/plans/{pid}/live` (`text/event-stream`); `src/live.rs` (3 unit tests) + 1 DB-gated test using the `limit`/`idle_ms` parameters to make the infinite stream finite. Events `task_created`, `task_moved`, `task_updated`, `comment_added` (identifiers and the changed fact only). Read-checked **once at connect** (ABAC + private plans; unknown plan 404 before any event). Resume with `Last-Event-ID` from a **bounded ring**; a gap larger than the ring ⇒ a `resync` event, never silence; a slow subscriber is told to `resync` and **disconnected** (bounded channel, no unbounded buffer); another plan's events are not delivered. **Limits, stated plainly:** the hub is **per process** (with several replicas an event reaches only clients on the replica that handled the write — the outbox relay is the extension); authorisation is checked at connect, not per event; a soft-deleted plan is refused at connect but an open stream is not actively closed. New deps: `async-stream`, `futures-util`, tokio `sync`+`time`. **Not built:** front-end subscription. `GET
   /api/plans/{pid}/live` as `text/event-stream`: task created / moved / edited,
   comment added, with the same record-level read check as the plan.
   **Acceptance:** a task move by one client appears on a second open stream;

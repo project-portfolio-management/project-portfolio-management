@@ -291,6 +291,11 @@ async fn create_task(
     if let Some(sub) = caller.actor() {
         super::watchers::ensure_watching(&ctx.db, "task", row.pid, sub).await;
     }
+    crate::live::publish(
+        item.pid,
+        "task_created",
+        serde_json::json!({ "task_pid": row.pid, "title": row.title, "status": row.status }),
+    );
     format::json(task_view(&row))
 }
 
@@ -380,6 +385,11 @@ async fn update_task(
     AuditModel::record(&ctx.db, task_pid, "task_updated", caller.actor(), None)
         .await
         .ok();
+    crate::live::publish(
+        item.pid,
+        "task_updated",
+        serde_json::json!({ "task_pid": task_pid }),
+    );
     format::json(task_view(&row))
 }
 
@@ -464,6 +474,7 @@ async fn check_wip(
 /// **category** is `done` stamps `done_at` (kept thereafter — the
 /// completion history stays true).
 #[debug_handler]
+#[allow(clippy::too_many_lines)] // the move pipeline: validate, refuse, commit, then side effects
 async fn move_task(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -557,6 +568,11 @@ async fn move_task(
     )
     .await
     .ok();
+    crate::live::publish(
+        item.pid,
+        "task_moved",
+        serde_json::json!({ "task_pid": task_pid, "from": from, "to": payload.status }),
+    );
     // LT-10: finishing a primary closes the tasks that duplicate it.
     if first_done {
         super::task_relations::close_duplicates(&ctx, task_pid, caller.actor()).await;

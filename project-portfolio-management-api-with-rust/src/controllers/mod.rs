@@ -210,6 +210,7 @@ pub mod components;
 pub mod custom_fields;
 pub mod feeds;
 pub mod includes;
+pub mod live;
 pub mod plan_access;
 pub mod plan_templates;
 pub mod task_bulk;

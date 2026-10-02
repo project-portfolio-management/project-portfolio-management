@@ -38,7 +38,14 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision"] }
 tokio = { version = "1.53", default-features = false, features = [
   "rt-multi-thread",
+  # `sync` for the live-update broadcast channel (src/live.rs); `time` for
+  # its SSE keep-alive.
+  "sync",
+  "time",
 ] }
+# Server-sent events (PL-3): a stream built from the broadcast receiver.
+async-stream = { version = "0.3" }
+futures-util = { version = "0.3", default-features = false }
 async-trait = { version = "0.1" }
 axum = { version = "0.8" }
 tracing = { version = "0.1" }

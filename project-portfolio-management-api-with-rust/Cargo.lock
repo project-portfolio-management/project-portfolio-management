@@ -5269,6 +5269,7 @@ dependencies = [
 name = "project-portfolio-management-service"
 version = "0.3.0"
 dependencies = [
+ "async-stream",
  "async-trait",
  "authentication-verifier",
  "axum",
@@ -5279,6 +5280,7 @@ dependencies = [
  "criterion",
  "ed25519-dalek 3.0.0",
  "fluvio",
+ "futures-util",
  "include_dir",
  "insta",
  "integrity-mac",

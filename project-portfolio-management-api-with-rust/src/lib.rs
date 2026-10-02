@@ -67,6 +67,7 @@ pub mod initializers;
 pub mod insights;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;
+pub mod live;
 pub mod merge;
 pub mod metrics;
 pub mod models;

@@ -64,6 +64,38 @@ pub fn variance_by_currency(lines: &[MoneyLine]) -> Vec<VarianceRow> {
         .collect()
 }
 
+/// One group of a grouped report: the group value, how many plans fell
+/// in it, and its money lines rolled up **per currency** — never one
+/// cross-currency sum (T-28e).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct ReportGroup {
+    /// The grouped field's value (`unspecified` when the plan has none).
+    pub value: String,
+    /// Plans in the group.
+    pub count: usize,
+    /// One variance row per currency; empty when the group has no lines.
+    pub money: Vec<VarianceRow>,
+}
+
+/// Group `(group value, money lines)` entries — one per selected plan —
+/// into [`ReportGroup`]s, ordered by group value ascending.
+#[must_use]
+pub fn group_report(entries: Vec<(String, Vec<MoneyLine>)>) -> Vec<ReportGroup> {
+    let mut per: BTreeMap<String, (usize, Vec<MoneyLine>)> = BTreeMap::new();
+    for (value, lines) in entries {
+        let entry = per.entry(value).or_default();
+        entry.0 += 1;
+        entry.1.extend(lines);
+    }
+    per.into_iter()
+        .map(|(value, (count, lines))| ReportGroup {
+            value,
+            count,
+            money: variance_by_currency(&lines),
+        })
+        .collect()
+}
+
 /// The four technology-radar rings, outermost first.
 pub const RADAR_RINGS: [&str; 4] = ["assess", "trial", "adopt", "hold"];
 
@@ -179,6 +211,36 @@ pub fn parse_appetite(raw: Option<&str>) -> Option<RiskAppetite> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn line(currency: &str, planned: i64, actual: i64) -> MoneyLine {
+        MoneyLine {
+            currency: currency.into(),
+            planned_minor: planned,
+            actual_minor: actual,
+        }
+    }
+
+    #[test]
+    fn grouped_report_never_sums_across_currencies() {
+        let groups = group_report(vec![
+            (
+                "active".into(),
+                vec![line("GBP", 100, 40), line("EUR", 200, 50)],
+            ),
+            ("active".into(), vec![line("GBP", 10, 5)]),
+            ("closed".into(), vec![]),
+        ]);
+        assert_eq!(groups.len(), 2);
+        let active = &groups[0];
+        assert_eq!((active.value.as_str(), active.count), ("active", 2));
+        // Two currencies in the group → two rows, never one sum.
+        assert_eq!(active.money.len(), 2);
+        assert_eq!(active.money[0].currency, "EUR");
+        assert_eq!(active.money[1].planned_minor, 110);
+        // A group with no lines reports empty money, not a zero row.
+        assert_eq!(groups[1].count, 1);
+        assert!(groups[1].money.is_empty());
+    }
 
     #[test]
     fn variance_keeps_currencies_apart_and_flags_overrun() {

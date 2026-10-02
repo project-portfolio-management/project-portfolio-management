@@ -19,6 +19,7 @@ pub struct Model {
     pub collection: String,
     pub filters: Json,
     pub fields: Json,
+    pub group_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

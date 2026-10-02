@@ -451,6 +451,61 @@ async fn reports_filter_project_and_render_csv() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+// T-28e: a grouped run counts plans per group and sums budget lines per
+// currency within each group — never across currencies; an unknown
+// `group_by` refuses at save time.
+async fn grouped_report_keeps_currencies_apart() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let a = item(&request, "projects", "Project", "Alpha", None, None).await;
+        let b = item(&request, "projects", "Project", "Beta", None, None).await;
+        item(&request, "programs", "Program", "Gamma", None, None).await;
+        for (plan, currency, planned) in [(&a, "GBP", 100), (&b, "GBP", 50), (&b, "EUR", 70)] {
+            request
+                .post(&format!("/api/plans/{plan}/budget-lines"))
+                .json(&json!({ "category": "capex", "description": "x", "currency": currency, "planned_minor": planned }))
+                .await
+                .assert_status_ok();
+        }
+        assert_eq!(
+            request
+                .post("/api/reports")
+                .json(&json!({ "name": "bad", "collection": "", "fields": ["name"], "group_by": "name" }))
+                .await
+                .status_code(),
+            422
+        );
+        let saved: Value = request
+            .post("/api/reports")
+            .json(&json!({ "name": "By kind", "collection": "", "fields": ["name"], "group_by": "kind" }))
+            .await
+            .json();
+        let report = saved["pid"].as_str().expect("report pid");
+        let ran: Value = request
+            .get(&format!("/api/reports/{report}/run"))
+            .await
+            .json();
+        let groups = ran["groups"].as_array().expect("groups");
+        let project = groups
+            .iter()
+            .find(|g| g["value"].as_str().is_some_and(|v| v.eq_ignore_ascii_case("project")))
+            .expect("project group");
+        assert_eq!(project["count"], 2);
+        assert_eq!(project["money"].as_array().expect("money").len(), 2);
+        let gbp = project["money"]
+            .as_array()
+            .expect("money")
+            .iter()
+            .find(|r| r["currency"] == "GBP")
+            .expect("GBP row");
+        assert_eq!(gbp["planned_minor"], 150);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 // The dashboard: per-collection RAG + stage rollups, site tiles, and
 // the ETag conditional cycle (304 until state changes).
 async fn dashboard_rolls_up_and_is_conditional() {

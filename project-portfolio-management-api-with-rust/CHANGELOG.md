@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — report grouping (T-28e, first half, 2026-09-20)
+
+`report_definitions.group_by` (migration `m20260920_000001_report_group_by`,
+nullable; one of `kind` / `stage` / `status` / `start_date` / `target_date`).
+A grouped `GET /api/reports/{pid}/run` returns one entry per group value with
+the plan count and the group's budget lines summed **per currency** — never
+across currencies (`insights::group_report`); `?format=csv` emits one row per
+group × currency. Ungrouped definitions run unchanged. Scheduled runs remain
+open, blocked on T-8.
+
 ### Added — optional Keycloak bearer acceptance; PASETO is now a feature (KC-1, 2026-09-29)
 
 `keycloak` cargo feature (off by default): the blanket guard and the

@@ -13,6 +13,7 @@ use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
+use std::fmt::Write as _;
 use uuid::Uuid;
 
 use super::plans::parse_kind_label;
@@ -593,6 +594,9 @@ struct ReportPayload {
     #[serde(default)]
     filters: serde_json::Value,
     fields: Vec<String>,
+    /// Optional one-field grouping (T-28e); see [`GROUP_FIELDS`].
+    #[serde(default)]
+    group_by: Option<String>,
 }
 
 /// Columns a report may project.
@@ -606,6 +610,10 @@ const REPORT_FIELDS: &[&str] = &[
     "target_date",
     "created_at",
 ];
+
+/// Columns a report may group by — the categorical ones; `pid`, `name`
+/// and `created_at` are unique-ish and would make one group per plan.
+const GROUP_FIELDS: &[&str] = &["kind", "stage", "status", "start_date", "target_date"];
 
 #[debug_handler]
 async fn create_report(
@@ -637,6 +645,15 @@ async fn create_report(
             ));
         }
     }
+    if let Some(group) = payload
+        .group_by
+        .as_deref()
+        .filter(|g| !GROUP_FIELDS.contains(g))
+    {
+        problems.push(format!(
+            "unknown group_by {group:?} (allowed: {GROUP_FIELDS:?})"
+        ));
+    }
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
@@ -646,6 +663,7 @@ async fn create_report(
         collection: ActiveValue::set(payload.collection.clone()),
         filters: ActiveValue::set(payload.filters.clone()),
         fields: ActiveValue::set(serde_json::json!(payload.fields)),
+        group_by: ActiveValue::set(payload.group_by.clone()),
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
@@ -759,6 +777,16 @@ async fn run_report(
                 .is_none_or(|want| m.name.to_lowercase().contains(want))
         })
         .collect();
+    if let Some(group_field) = def.group_by.as_deref() {
+        return run_grouped(
+            &ctx,
+            &def.name,
+            group_field,
+            &selected,
+            params.format.as_deref(),
+        )
+        .await;
+    }
     if params.format.as_deref() == Some("csv") {
         let mut csv = fields
             .iter()
@@ -800,6 +828,83 @@ async fn run_report(
         "collection": def.collection,
         "rows": objects.len(),
         "data": objects,
+    }))
+}
+
+/// A grouped run (T-28e): one row per group value with the plan count
+/// and the group's budget lines summed **per currency** — currencies are
+/// never merged, and a group with no lines reports an empty `money`.
+async fn run_grouped(
+    ctx: &AppContext,
+    name: &str,
+    group_field: &str,
+    selected: &[&plans::Model],
+    format: Option<&str>,
+) -> Result<Response> {
+    let pids: Vec<Uuid> = selected.iter().map(|m| m.pid).collect();
+    let lines = budget_lines::Entity::find()
+        .filter(budget_lines::Column::DeletedAt.is_null())
+        .filter(budget_lines::Column::PlanPid.is_in(pids))
+        .all(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let entries = selected
+        .iter()
+        .map(|m| {
+            let value = match report_cell(m, group_field) {
+                v if v.is_empty() => "unspecified".to_string(),
+                v => v,
+            };
+            let money = lines
+                .iter()
+                .filter(|b| b.plan_pid == m.pid)
+                .map(|b| crate::insights::MoneyLine {
+                    currency: b.currency.clone(),
+                    planned_minor: b.planned_minor,
+                    actual_minor: b.actual_minor,
+                })
+                .collect();
+            (value, money)
+        })
+        .collect();
+    let groups = crate::insights::group_report(entries);
+    if format == Some("csv") {
+        let mut csv = format!(
+            "{},plans,currency,planned_minor,actual_minor,remaining_minor,line_count\n",
+            rules::csv_field(group_field)
+        );
+        for g in &groups {
+            let head = format!("{},{}", rules::csv_field(&g.value), g.count);
+            if g.money.is_empty() {
+                let _ = writeln!(csv, "{head},,,,,");
+            }
+            for r in &g.money {
+                let _ = writeln!(
+                    csv,
+                    "{head},{},{},{},{},{}",
+                    rules::csv_field(&r.currency),
+                    r.planned_minor,
+                    r.actual_minor,
+                    r.remaining_minor,
+                    r.line_count
+                );
+            }
+        }
+        return Ok((
+            StatusCode::OK,
+            [(
+                header::CONTENT_TYPE,
+                header::HeaderValue::from_static("text/csv"),
+            )],
+            csv,
+        )
+            .into_response());
+    }
+    format::json(serde_json::json!({
+        "name": name,
+        "group_by": group_field,
+        "rows": selected.len(),
+        "groups": groups,
     }))
 }
 

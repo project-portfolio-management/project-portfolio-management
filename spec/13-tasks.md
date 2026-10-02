@@ -777,7 +777,10 @@ described manual check confirms it. Split tasks too big for one PR
     itself works (not just that it compiles) by asserting a non-zero
     count at the small-roster baseline before comparing it against the
     scaled-up count.
-  - [ ] **T-28e (M) — Report grouping and scheduled runs.**
+  - [ ] **T-28e (M) — Report grouping and scheduled runs.** *(Grouping
+    half landed 2026-09-20 — `group_by`, per-currency sums,
+    `insights::group_report`, `grouped_report_keeps_currencies_apart`;
+    scheduled runs still open, blocked on T-8.)*
     `report_definitions.group_by` (one field, counts + the money
     columns summed per currency); scheduled runs as a loco `worker`
     job writing a bulk artifact with the family TTL posture. The

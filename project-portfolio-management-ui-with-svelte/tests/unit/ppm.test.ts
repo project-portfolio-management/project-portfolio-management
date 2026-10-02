@@ -19,6 +19,19 @@ function recordingClient(): { ppm: PpmClient; calls: { url: string; method: stri
   return { ppm, calls };
 }
 
+describe("PpmClient my-work path (LT-3)", () => {
+  it("sends the IANA zone and, when given, as_of", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.myTasks("America/Los_Angeles");
+    await ppm.myTasks("Europe/London", "2026-10-02T23:30:00Z");
+    expect(calls[0].url).toBe("http://svc/api/me/tasks?tz=America%2FLos_Angeles");
+    expect(calls[1].url).toBe(
+      "http://svc/api/me/tasks?tz=Europe%2FLondon&as_of=2026-10-02T23%3A30%3A00Z",
+    );
+    expect(calls.every((c) => c.method === "GET")).toBe(true);
+  });
+});
+
 describe("PpmClient paths", () => {
   it("maps the catalogue endpoints", async () => {
     const { ppm, calls } = recordingClient();

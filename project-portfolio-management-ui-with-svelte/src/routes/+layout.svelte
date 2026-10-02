@@ -91,6 +91,9 @@
     // Record merge (fold a confirmed duplicate plan into a survivor).
     { href: "/plans/merge", label: t("nav.merge") },
     // PPM catalogue views (fully localized 2026-07-18).
+    // LT-3: the individual worker's personal task view. A deployment opts a
+    // persona into it as its landing page with `view=me` (T-28f).
+    { href: "/me", label: "My work" },
     { href: "/dashboard", label: t("ppm.nav.dashboard") },
     { href: "/prioritisation", label: "Prioritisation" },
     { href: "/lifecycle", label: "Lifecycle" },

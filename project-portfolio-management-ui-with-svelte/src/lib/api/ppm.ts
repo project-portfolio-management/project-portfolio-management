@@ -617,11 +617,50 @@ export interface Task {
   status: "todo" | "in_progress" | "in_review" | "done" | "blocked";
   assignee_ref: string | null;
   points: number | null;
+  /** Due calendar date (`YYYY-MM-DD`, no zone), or null. */
+  due_date: string | null;
   sprint_pid: string | null;
   created_at: string;
   status_changed_at: string;
   done_at: string | null;
   blocked_days: number | null;
+}
+
+/** The five due-date buckets of `GET /api/me/tasks`, in display order. */
+export const MY_WORK_BUCKETS = [
+  "overdue",
+  "today",
+  "this_week",
+  "later",
+  "undated",
+] as const;
+export type MyWorkBucket = (typeof MY_WORK_BUCKETS)[number];
+
+/** One task on the "My work" view. */
+export interface MyTask {
+  pid: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+  points: number | null;
+  plan_pid: string;
+  plan_name: string;
+}
+
+/** `GET /api/me/tasks` response (LT-3). Every bucket is always present. */
+export interface MyWork {
+  tz: string;
+  as_of: string;
+  /** The caller's local calendar date in `tz`. */
+  today: string;
+  buckets: Record<MyWorkBucket, MyTask[]>;
+  counts: Record<MyWorkBucket, number>;
+  total: number;
+  /** Tasks left out because their plan is not readable by this caller. */
+  omitted_unreadable: number;
+  truncated: boolean;
+  /** Set (e.g. `sub_not_addressable`) when the buckets are empty for a stated reason. */
+  reason: string | null;
 }
 
 /** A time-boxed sprint. */
@@ -1033,6 +1072,16 @@ export class PpmClient {
   }
   regulatorExtract(): Promise<RegulatorExtract> {
     return this.http.get("/api/regulator/extract");
+  }
+  /**
+   * The caller's open tasks by due date in `tz` (an IANA zone name; the
+   * server refuses fixed offsets). `asOf` is for "what will my day look
+   * like at …" and tests.
+   */
+  myTasks(tz: string, asOf?: string): Promise<MyWork> {
+    const q = new URLSearchParams({ tz });
+    if (asOf) q.set("as_of", asOf);
+    return this.http.get(`/api/me/tasks?${q.toString()}`);
   }
   listTasks(
     pid: string,

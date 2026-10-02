@@ -40,13 +40,17 @@ audited; people stay references.
   created plan goes through `create_and_emit` (events + audit not bypassed).
   *Depends on:* nothing; shares clone logic with T-8's import pipeline.
 
-- [~] **LT-3 (M) — "My work" personal task view.** **Service landed 2026-10-02**
+- [x] **LT-3 (M) — "My work" personal task view.** **Landed 2026-10-02**
   (`src/my_work.rs`, `src/controllers/my_work.rs`, `GET /api/me/tasks?tz=`,
   migration `m20261002_000003_task_due_date` adding `tasks.due_date`; 4 unit
   tests + `tests/my_work.rs` end to end with real tokens, two zones). **Added
-  because the audit found none:** tasks had no due date. **Not built yet:** the
-  `/me` front-end page and the default-landing rule. Quick-add reuses the
-  existing task create. Matching assumes a token `sub` that is a UUID is
+  because the audit found none:** tasks had no due date. **Front-end:** `/me`
+  page (English-first), `PpmClient.myTasks`, a nav entry, a unit test, and the
+  mobile-audit route list (the Playwright audit was **not run** here — no
+  browser). A deployment makes `/me` a persona's landing page with `view=me`
+  (T-28f); the default landing is unchanged. **Not built:** the one-line
+  quick-add (it needs the caller's own `person:` URN in the browser, which the
+  BFF does not expose yet). Matching assumes a token `sub` that is a UUID is
   addressable as `person:<sub>` / `worker:<sub>`; otherwise empty buckets with
   `reason: sub_not_addressable`. **Priority 1 — about half
   the users are individual workers (owner, 2026-10-02).** Default landing page

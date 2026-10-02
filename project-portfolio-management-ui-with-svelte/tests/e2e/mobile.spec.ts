@@ -68,6 +68,22 @@ async function stubPlansApi(page: Page) {
     if (path === `/api/plans/${PID}/schedule` && method === "GET") {
       return route.fulfill({ json: { items: [], edges: [] } });
     }
+    if (path === "/api/me/tasks" && method === "GET") {
+      const empty = { overdue: [], today: [], this_week: [], later: [], undated: [] };
+      return route.fulfill({
+        json: {
+          tz: "UTC",
+          as_of: "2026-10-02T00:00:00Z",
+          today: "2026-10-02",
+          buckets: empty,
+          counts: { overdue: 0, today: 0, this_week: 0, later: 0, undated: 0 },
+          total: 0,
+          omitted_unreadable: 0,
+          truncated: false,
+          reason: null,
+        },
+      });
+    }
     return route.fulfill({ status: 404, json: { error: "unhandled in stub" } });
   });
 }
@@ -89,6 +105,7 @@ const ROUTES = [
   "/gantt",
   "/ideas",
   "/lifecycle",
+  "/me",
   "/objectives",
   "/onboarding",
   "/plans",

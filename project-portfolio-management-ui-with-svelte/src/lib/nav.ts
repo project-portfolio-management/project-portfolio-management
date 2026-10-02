@@ -31,6 +31,7 @@ export interface NavItem {
  * ordering, which checks `navItems` directly.
  */
 export const KNOWN_NAV_HREFS = [
+  "/me",
   "/plans",
   "/plans/merge",
   "/dashboard",

@@ -149,7 +149,7 @@ audited; people stay references.
   cycle is refused; deleting a task soft-deletes its relations; a relation to
   a task in an unreadable plan is hidden from the reader.
 
-- [ ] **LT-11 (M) — Timesheet views and approval.** On the existing
+- [x] **LT-11 (M) — Timesheet views and approval.** **Landed 2026-10-02.** Service: `timesheet_weeks` (migration `m20261003_000012_timesheet_weeks`), `GET /api/timesheets?person=&week=` (week grid by day and plan), `POST /api/timesheets/submit` (your own week only; an empty week is 422; once), `POST /api/timesheets/decide` (approver only — `access=admin` or the `timesheet_approver` role — never on their own week; a rejection needs a comment; **approved is final**); `src/timesheets.rs` (5 unit tests) + `tests/timesheets.rs` end to end with an owner, an approver and a bystander. **Integer minutes; billable and non-billable are always carried apart**; an empty week is `null` + `no_entries`, never zero. An **approved week is locked**: a new time entry against it is 409 (the lock is in the time-entry create path). **Deviation:** there is no edit/delete route for time entries, so the lock covers *creation*; if edit/delete is added it must call `timesheets::week_is_locked`. **Not built:** front-end. On the existing
   `time_entries`: `GET /api/timesheets?person=&week=` (a week grid by day and
   plan), `POST …/submit` and `…/approve|reject` per person-week, billable
   roll-up per plan. Approved weeks are locked against edit.
@@ -277,7 +277,7 @@ started.
   it to that workflow's initial state **and says so**; copy gets a fresh pid and
   no transition history; counts reconcile; every change is audited.
 
-- [ ] **RM-10 (S) — Time reports.** Extend saved reports (T-28e) with a
+- [x] **RM-10 (S) — Time reports.** **Landed 2026-10-02.** Delivered with LT-11: `GET /api/time-reports?group_by=person|plan|category|billable|month&from=&to=&plan=&person=&format=csv`. Group totals equal the sum of entries (asserted); **billable and non-billable are separate groups and every row carries both halves**; no entries ⇒ `total_minutes: null` + `no_entries`; plans the caller cannot read are omitted and counted. **Deviation:** a dedicated endpoint rather than a `collection: time_entries` on saved reports (a saved report is a plan filter + projection; time is a different shape). Extend saved reports (T-28e) with a
   `collection: "time_entries"`, `group_by` ∈ `person | plan | category |
   billable | month`, integer minutes, CSV. Depends on T-28e's `group_by`
   (landed) and shares LT-11's views.

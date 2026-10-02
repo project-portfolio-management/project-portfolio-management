@@ -57,6 +57,7 @@ mod m20261003_000008_task_relations;
 mod m20261003_000009_task_parent;
 mod m20261003_000010_feed_tokens;
 mod m20261003_000011_plan_access_settings;
+mod m20261003_000012_timesheet_weeks;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -114,6 +115,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000009_task_parent::Migration),
             Box::new(m20261003_000010_feed_tokens::Migration),
             Box::new(m20261003_000011_plan_access_settings::Migration),
+            Box::new(m20261003_000012_timesheet_weeks::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -60,6 +60,7 @@ pub mod task_relations;
 pub mod task_transitions;
 pub mod tasks;
 pub mod time_entries;
+pub mod timesheet_weeks;
 pub mod total_project_control;
 pub mod value_points;
 pub mod watchers;

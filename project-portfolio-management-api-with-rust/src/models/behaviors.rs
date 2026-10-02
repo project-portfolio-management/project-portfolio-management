@@ -16,3 +16,4 @@ impl ActiveModelBehavior for approval_requests::ActiveModel {}
 impl ActiveModelBehavior for task_relations::ActiveModel {}
 impl ActiveModelBehavior for feed_tokens::ActiveModel {}
 impl ActiveModelBehavior for plan_access_settings::ActiveModel {}
+impl ActiveModelBehavior for timesheet_weeks::ActiveModel {}

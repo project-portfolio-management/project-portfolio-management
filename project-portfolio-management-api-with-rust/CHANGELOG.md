@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — timesheets (LT-11, 2026-10-02)
+
+`timesheet_weeks` and `/api/timesheets`, `/submit`, `/decide`: a person's week as a grid by day and plan (integer minutes, billable and non-billable never merged), submitted by its owner and approved or rejected by an approver; an approved week is locked against new entries.
+
 ### Added — bulk task edit, copy and move (RM-9, 2026-10-02)
 
 `POST /api/tasks/bulk`, `/copy`, `/move`: change, copy or re-home many tasks in one call, with a result per task and counts that reconcile. A move re-validates against the target workflow and states any status it had to map; `status` is not bulk-editable.

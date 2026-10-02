@@ -94,6 +94,16 @@ async fn create_entry(
         ));
     }
 
+    // LT-11: an approved week is locked against new entries.
+    if super::timesheets::week_is_locked(&ctx, &payload.actor_ref, payload.spent_on).await? {
+        return Err(Error::CustomError(
+            axum::http::StatusCode::CONFLICT,
+            loco_rs::controller::ErrorDetail::new(
+                "conflict",
+                "that person's week is approved and locked; it cannot take new entries",
+            ),
+        ));
+    }
     let row = time_entries::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),

@@ -113,6 +113,7 @@ pub mod tasks;
 /// rework and first-pass yield, the service level expectation,
 /// constraint ranking, and queueing-theory flow.
 pub mod tba;
+pub mod timesheets;
 /// Total Project Control (TPC): pure rules for Devaux's Index of
 /// Project Performance (DIPP), Expected Monetary Value, and Cost
 /// Estimate to Complete — is the value still to come worth the money

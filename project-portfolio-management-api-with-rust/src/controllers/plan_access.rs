@@ -81,6 +81,41 @@ pub(crate) async fn hidden_plans(
         .collect()
 }
 
+/// The subset of `pids` whose plan is live and **readable** by `caller`: not
+/// private-and-hidden, and not denied by the record-level ABAC policy.
+/// (A plan that does not exist is simply not in the result.)
+pub(crate) async fn readable_plans(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pids: &[Uuid],
+) -> HashSet<Uuid> {
+    use crate::models::_entities::plans;
+    if pids.is_empty() {
+        return HashSet::new();
+    }
+    let Ok(rows) = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(pids.to_vec()))
+        .filter(plans::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+    else {
+        return HashSet::new();
+    };
+    let hidden = hidden_plans(ctx, pids, caller).await;
+    rows.into_iter()
+        .filter(|p| !hidden.contains(&p.pid))
+        .filter(|p| {
+            crate::auth::authorize_record(
+                caller,
+                authentication_verifier::Action::Read,
+                &crate::auth::plan_resource_attrs(p.stage.as_deref()),
+            )
+            .is_ok()
+        })
+        .map(|p| p.pid)
+        .collect()
+}
+
 /// The plan a path addresses: `/api/plans/{uuid}` or anything beneath it.
 fn plan_pid_of(path: &str) -> Option<Uuid> {
     let rest = path.strip_prefix("/api/plans/")?;

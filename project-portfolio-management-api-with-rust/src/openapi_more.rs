@@ -80,6 +80,7 @@ pub fn paths() -> Value {
     merge(&mut all, feed_paths());
     merge(&mut all, access_paths());
     merge(&mut all, bulk_task_paths());
+    merge(&mut all, timesheet_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -332,6 +333,35 @@ fn bulk_task_paths() -> Value {
             "post": op("tasks-bulk", "Move tasks into another plan",
                 &r("Re-validated against the target plan's workflow: a status the target lacks maps to its initial state and the result says so. Component, sprint and parent links are plan-specific and are cleared. A task with subtasks is refused until they are moved or detached; a task already in the target plan is refused. Earlier transition history keeps its original plan."),
                 vec![], &[("200", "requested, ok, refused, results"), ("422", "No ids, too many, or a target plan the caller cannot see")])
+        }
+    })
+}
+
+/// Timesheets (LT-11) and time reports (RM-10).
+fn timesheet_paths() -> Value {
+    let units = "All figures are whole minutes, and billable and non-billable are always carried apart (a combined total only ever appears beside the split). A figure with no evidence is null with a reason (no_entries), never zero.";
+    json!({
+        "/api/timesheets": {
+            "get": op("timesheets", "One person's week by day and plan, and its approval state",
+                &format!("{units} The person defaults to the caller; reading someone else's week needs the approver right (access=admin or the timesheet_approver role). Plans the reader cannot see are left out and counted in omitted_unreadable. status is open until the week is submitted."),
+                vec![query("person", false, "A person:/worker: URN; defaults to the caller"), query("week", true, "An ISO week such as 2026-W40")],
+                &[("200", "person, week_start, status, grid, omitted_unreadable"), ("401", "Missing or invalid bearer token"), ("403", "Not the person and not an approver"), ("422", "Invalid week or person")])
+        },
+        "/api/timesheets/submit": {
+            "post": op("timesheets", "Submit your own week",
+                "Only the person a week belongs to may submit it. A week with no entries cannot be submitted (422), and a week that is already submitted or approved is 409. A rejected week can be resubmitted.",
+                vec![], &[("200", "The week's state"), ("401", "Missing or invalid bearer token"), ("403", "Not your week"), ("409", "Already submitted or approved"), ("422", "No entries, or invalid week")])
+        },
+        "/api/timesheets/decide": {
+            "post": op("timesheets", "Approve or reject a submitted week",
+                "Needs the approver right and never applies to the approver's own week. A rejection must carry a comment. Approved is final, and an approved week is locked: a new time entry against it is refused with 409. Audited.",
+                vec![], &[("200", "The week's state"), ("401", "Missing or invalid bearer token"), ("403", "Not an approver, or their own week"), ("409", "The week is not submitted"), ("422", "Unknown decision, or a rejection without a comment")])
+        },
+        "/api/time-reports": {
+            "get": op("timesheets", "Time grouped by person, plan, category, billable or month",
+                &format!("{units} Dates are calendar dates (no zone); the default window is the last 90 days. JSON, or CSV with format=csv. Plans the caller cannot read are omitted and counted; at most 20000 entries are read and the response says truncated if more exist."),
+                vec![query("group_by", true, "person, plan, category, billable or month"), query("from", false, "YYYY-MM-DD"), query("to", false, "YYYY-MM-DD"), query("plan", false, "Narrow to one plan"), query("person", false, "Narrow to one person URN"), query("format", false, "json (default) or csv")],
+                &[("200", "groups, split, total_minutes, reason, omitted_unreadable, truncated (or text/csv)"), ("422", "Unknown group_by, or from after to")])
         }
     })
 }

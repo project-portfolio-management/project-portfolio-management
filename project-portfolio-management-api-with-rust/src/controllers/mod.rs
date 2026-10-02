@@ -213,4 +213,5 @@ pub mod plan_access;
 pub mod task_bulk;
 pub mod task_relations;
 pub mod task_tree;
+pub mod timesheets;
 pub mod watchers;

@@ -76,6 +76,7 @@ pub fn paths() -> Value {
     merge(&mut all, watcher_paths());
     merge(&mut all, approval_paths());
     merge(&mut all, relation_paths());
+    merge(&mut all, rollup_paths());
     all
 }
 
@@ -218,6 +219,18 @@ fn relation_paths() -> Value {
             "delete": op("task-relations", "Remove a relation",
                 "Soft-delete; the tasks themselves are untouched.", with_r,
                 &[("200", "Removed"), ("404", "Unknown plan, task or relation")])
+        }
+    })
+}
+
+/// Subtask roll-up (RM-5).
+fn rollup_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/tasks/{t_pid}/rollup": {
+            "get": op("task-tree", "A parent task's figures derived from its subtasks",
+                "Derived on read, never stored, so it cannot drift: due is the latest descendant due date; estimate is the sum of descendants' story points; progress is estimate-weighted (basis points) over the descendants that have an estimate, which are the only ones weighed; those without an estimate are named in excluded_unestimated and never counted as zero; spent is recorded minutes across the parent and its descendants. A figure that cannot be derived is null with a reason (no_children, no_estimates, no_dated_children), never zero. Parents are set with parent_task_pid on task create or update: same plan, no cycle, at most ten deep.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "task_pid, rollup"), ("404", "Unknown plan or task")])
         }
     })
 }

@@ -20,6 +20,7 @@ mod plans;
 mod scale;
 mod strategy;
 mod task_relations;
+mod task_tree;
 mod tba;
 mod value_ceremony;
 mod visibility;

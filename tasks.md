@@ -220,7 +220,7 @@ started.
   read stops receiving notifications and sees nothing (record-level read check
   re-applied at delivery).
 
-- [ ] **RM-5 (M) — Subtask roll-up audit and fill.** Verify what a parent
+- [x] **RM-5 (M) — Subtask roll-up audit and fill.** **Landed 2026-10-02.** **Audit finding:** before this, tasks had **no parent concept** (carried: none of start, due, % done, estimate, spent, priority rolled up). Added `tasks.parent_task_pid` (migration `m20261003_000009_task_parent`; same plan, no cycle, at most ten deep) and `GET /api/plans/{pid}/tasks/{t}/rollup`, **derived on read, never stored**: due = latest descendant due, estimate = summed points, progress = estimate-weighted basis points over the estimated descendants only, spent minutes across the family; no-children / no-estimates / no-dated-children are `null` with a reason, and unestimated children are **named** in `excluded_unestimated`, never counted as zero. `src/task_rollup.rs` (5 unit tests) + 1 DB-gated test. **Not built:** priority roll-up (tasks carry no priority), a start date (tasks have none), front-end. Verify what a parent
   derives from its children today (start, due, % done, estimate, spent time,
   priority). Where Redmine's rule is sound and we lack it, add it **derived on
   read** (never stored, so it cannot drift): start = earliest child start, due

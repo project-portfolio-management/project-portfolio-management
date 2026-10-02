@@ -2040,6 +2040,7 @@ mod tests {
             crate::controllers::watchers::routes(),
             crate::controllers::approvals::routes(),
             crate::controllers::task_relations::routes(),
+            crate::controllers::task_tree::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();

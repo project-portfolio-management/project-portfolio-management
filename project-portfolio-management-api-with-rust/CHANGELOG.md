@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — subtasks and the derived roll-up (RM-5, 2026-10-02)
+
+`tasks.parent_task_pid` and `GET /api/plans/{pid}/tasks/{t}/rollup`: a parent's due date, estimate, estimate-weighted progress and spent time derived on read from its subtasks, with null + reason for anything that cannot be derived and unestimated children named rather than counted as zero.
+
 ### Added — task relations (LT-10, 2026-10-02)
 
 `task_relations` and `/api/plans/{pid}/tasks/{t}/relations`: related, blocks, precedes, duplicates, copied_from. `blocks` stops the blocked task finishing, `precedes` constrains due dates (also at edit), finishing a primary closes its duplicates.

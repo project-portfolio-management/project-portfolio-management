@@ -30,6 +30,8 @@ pub struct Model {
     pub due_date: Option<Date>,
     /// The component (grouping) of this plan the task belongs to, if any.
     pub component_pid: Option<Uuid>,
+    /// The parent task (a subtask's parent), if any. Roll-ups derive on read.
+    pub parent_task_pid: Option<Uuid>,
     /// The declared Flow Framework work-item type (`feature` /
     /// `defect` / `risk` / `debt`). `None` means **nobody declared
     /// one**, reported as `unclassified` and counted separately — never

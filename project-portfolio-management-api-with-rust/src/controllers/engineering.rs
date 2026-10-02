@@ -77,6 +77,7 @@ fn task_view(task: &tasks::Model) -> serde_json::Value {
         "points": task.points,
         "due_date": task.due_date,
         "component_pid": task.component_pid,
+        "parent_task_pid": task.parent_task_pid,
         "sprint_pid": task.sprint_pid,
         "created_at": task.created_at.to_utc(),
         "status_changed_at": task.status_changed_at.to_utc(),
@@ -103,6 +104,9 @@ struct TaskPayload {
     /// Optional component (grouping) of this plan.
     #[serde(default)]
     component_pid: Option<Uuid>,
+    /// Optional parent task of this plan (a subtask); see `task_tree`.
+    #[serde(default)]
+    parent_task_pid: Option<Uuid>,
     /// Custom-field values (RM-1), honoured on **create** only; every
     /// required task field must be supplied there. Edit them afterwards
     /// through `PUT /api/custom-fields/values`.
@@ -225,6 +229,7 @@ async fn create_task(
         true,
     )
     .await?;
+    super::task_tree::check_parent(&ctx, item.pid, None, payload.parent_task_pid).await?;
     let now = chrono::Utc::now();
     // The task and its opening transition commit together: a task
     // without one would have no measurable start, and the time-based
@@ -246,6 +251,7 @@ async fn create_task(
         points: sea_orm::ActiveValue::set(payload.points),
         due_date: sea_orm::ActiveValue::set(payload.due_date),
         component_pid: sea_orm::ActiveValue::set(payload.component_pid),
+        parent_task_pid: sea_orm::ActiveValue::set(payload.parent_task_pid),
         status_changed_at: sea_orm::ActiveValue::set(now.into()),
         flow_type: sea_orm::ActiveValue::set(payload.flow_type.clone()),
         // Stamped from the state's **category**, not from the literal
@@ -353,6 +359,7 @@ async fn update_task(
         return Err(refuse("status changes go through PATCH (the board move)"));
     }
     validate_task(&ctx, item.pid, &payload).await?;
+    super::task_tree::check_parent(&ctx, item.pid, Some(task.pid), payload.parent_task_pid).await?;
     if payload.due_date != task.due_date {
         super::task_relations::check_due_change(&ctx, task.pid, payload.due_date).await?;
     }
@@ -364,6 +371,7 @@ async fn update_task(
     active.points = sea_orm::ActiveValue::set(payload.points);
     active.due_date = sea_orm::ActiveValue::set(payload.due_date);
     active.component_pid = sea_orm::ActiveValue::set(payload.component_pid);
+    active.parent_task_pid = sea_orm::ActiveValue::set(payload.parent_task_pid);
     active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
     let row = active
         .update(&ctx.db)

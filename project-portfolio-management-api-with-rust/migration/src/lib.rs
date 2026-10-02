@@ -54,6 +54,7 @@ mod m20261003_000005_workflow_transition_roles;
 mod m20261003_000006_watchers;
 mod m20261003_000007_approval_requests;
 mod m20261003_000008_task_relations;
+mod m20261003_000009_task_parent;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -108,6 +109,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000006_watchers::Migration),
             Box::new(m20261003_000007_approval_requests::Migration),
             Box::new(m20261003_000008_task_relations::Migration),
+            Box::new(m20261003_000009_task_parent::Migration),
             // inject-above (do not remove this comment)
         ]
     }

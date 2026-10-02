@@ -103,6 +103,7 @@ pub mod snapshots;
 pub mod strategy;
 pub mod streaming;
 pub mod task_relations;
+pub mod task_rollup;
 pub mod tasks;
 /// Time-based analysis (TBA): pure computation over the task
 /// status-transition log — cycle versus lead time, flow efficiency,

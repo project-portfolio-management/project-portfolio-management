@@ -85,8 +85,9 @@ async fn comments_thread_notify_edit_and_delete() {
             .json();
         assert_eq!(history[0]["previous_body"], "first", "edit history kept");
 
+        // The POST twin of DELETE.
         request
-            .delete(&format!("/api/comments/{c1}"))
+            .post(&format!("/api/comments/{c1}/delete"))
             .await
             .assert_status_ok();
         let after: Value = request
@@ -193,7 +194,12 @@ async fn reactions_are_idempotent_and_every_kind_is_counted() {
         );
         let remove = format!("/api/reactions?subject_kind=plan&subject_pid={p}&kind=heart");
         request.delete(&remove).await.assert_status_ok();
-        request.delete(&remove).await.assert_status_ok();
+        // Idempotent, and the POST twin behaves the same.
+        request
+            .post("/api/reactions/remove")
+            .json(&react)
+            .await
+            .assert_status_ok();
         let after: Value = request
             .get(&format!("/api/reactions?subject_kind=plan&subject_pid={p}"))
             .await

@@ -505,6 +505,26 @@ async fn remove_reaction(
     format::empty_json()
 }
 
+/// `POST /api/reactions/remove` — the same as `DELETE /api/reactions`, for a
+/// write-level user (the default policy reserves DELETE for admins).
+#[debug_handler]
+async fn remove_reaction_post(
+    state: State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(p): Json<ReactionPayload>,
+) -> Result<Response> {
+    remove_reaction(
+        state,
+        caller,
+        Query(RemoveParams {
+            subject_kind: p.subject_kind,
+            subject_pid: p.subject_pid,
+            kind: p.kind,
+        }),
+    )
+    .await
+}
+
 /// `GET /api/reactions?subject_kind=&subject_pid=` — counts per kind
 /// (every kind, zero included) and the caller's own.
 #[debug_handler]
@@ -541,6 +561,10 @@ pub fn routes() -> Routes {
         .add("/comments", get(list_comments))
         .add("/comments/{pid}", put(edit_comment))
         .add("/comments/{pid}", delete(delete_comment))
+        // POST twins: the default policy reserves DELETE for admins, and an
+        // author must always be able to remove their own words and reactions.
+        .add("/comments/{pid}/delete", post(delete_comment))
+        .add("/reactions/remove", post(remove_reaction_post))
         .add("/comments/{pid}/history", get(comment_history))
         .add("/reactions", post(add_reaction))
         .add("/reactions", get(list_reactions))

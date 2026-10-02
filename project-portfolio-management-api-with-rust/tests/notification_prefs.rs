@@ -156,9 +156,11 @@ async fn notification_preferences_suppress_digest_and_stay_private() {
         );
 
         // Reset restores the default.
+        // The POST twin of DELETE (a write-level user cannot DELETE).
         request
-            .delete("/api/me/notification-prefs?kind=task_assigned")
+            .post("/api/me/notification-prefs/reset")
             .add_header(ak.clone(), av.clone())
+            .json(&json!({ "kind": "task_assigned" }))
             .await
             .assert_status_ok();
         for _ in 0..2 {

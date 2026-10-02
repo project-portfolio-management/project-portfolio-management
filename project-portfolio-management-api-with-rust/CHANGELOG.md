@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — iCalendar and Atom feeds (LT-7, 2026-10-02)
+
+`feed_tokens` and `/api/feeds/calendar.ics`, `/api/feeds/me.atom`: per-user revocable token (only its hash stored). The calendar carries the owner's due tasks plus the milestones and sprint dates of those plans (RFC 5545, stable UIDs); the Atom feed carries their notifications, with ETag / 304. Exempt from the bearer guard; scope is the owner's own work.
+
 ### Added — subtasks and the derived roll-up (RM-5, 2026-10-02)
 
 `tasks.parent_task_pid` and `GET /api/plans/{pid}/tasks/{t}/rollup`: a parent's due date, estimate, estimate-weighted progress and spent time derived on read from its subtasks, with null + reason for anything that cannot be derived and unestimated children named rather than counted as zero.

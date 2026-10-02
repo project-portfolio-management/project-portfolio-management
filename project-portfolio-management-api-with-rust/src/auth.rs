@@ -450,6 +450,10 @@ fn is_public_path(path: &str) -> bool {
         || path == "/api-docs/openapi.json"
         || path.starts_with("/swagger-ui")
         || path == "/metrics.prom"
+        // Feeds authenticate themselves with a per-user revocable token in the
+        // query string (a calendar app cannot send a bearer header); see
+        // `controllers::feeds`.
+        || path.starts_with("/api/feeds/")
 }
 
 /// The blanket-enforcement decision: authentication, then ABAC
@@ -955,6 +959,8 @@ mod tests {
             "/swagger-ui",
             "/swagger-ui/index.html",
             "/metrics.prom",
+            "/api/feeds/calendar.ics",
+            "/api/feeds/me.atom",
         ] {
             assert!(
                 enforce(

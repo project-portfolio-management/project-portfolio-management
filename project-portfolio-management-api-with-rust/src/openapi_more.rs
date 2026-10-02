@@ -77,6 +77,8 @@ pub fn paths() -> Value {
     merge(&mut all, approval_paths());
     merge(&mut all, relation_paths());
     merge(&mut all, rollup_paths());
+    merge(&mut all, feed_paths());
+    merge(&mut all, self_service_paths());
     all
 }
 
@@ -231,6 +233,65 @@ fn rollup_paths() -> Value {
                 "Derived on read, never stored, so it cannot drift: due is the latest descendant due date; estimate is the sum of descendants' story points; progress is estimate-weighted (basis points) over the descendants that have an estimate, which are the only ones weighed; those without an estimate are named in excluded_unestimated and never counted as zero; spent is recorded minutes across the parent and its descendants. A figure that cannot be derived is null with a reason (no_children, no_estimates, no_dated_children), never zero. Parents are set with parent_task_pid on task create or update: same plan, no cycle, at most ten deep.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "task_pid, rollup"), ("404", "Unknown plan or task")])
+        }
+    })
+}
+
+/// Feeds (LT-7, RM-6).
+fn feed_paths() -> Value {
+    let token = vec![query(
+        "token",
+        true,
+        "A feed token from POST /api/me/feed-token",
+    )];
+    json!({
+        "/api/me/feed-token": {
+            "post": op("feeds", "Mint a feed token",
+                "Requires a bearer token. The token is shown once in this response; only its SHA-256 is stored. It lets a calendar app or feed reader fetch the caller's own feeds without a bearer header, and nothing else.",
+                vec![], &[("200", "token, calendar_url, atom_url"), ("401", "Missing or invalid bearer token")]),
+            "delete": op("feeds", "Revoke all of the caller's feed tokens",
+                "Takes effect on the next fetch; every feed URL minted so far stops working.",
+                vec![], &[("200", "Revoked"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/feeds/calendar.ics": {
+            "get": op("feeds", "The owner's due tasks, milestones and sprint dates as an iCalendar feed",
+                "Authenticated by the token alone (this path is exempt from the bearer guard). Scope is the owner's own work: open tasks assigned to them with a due date, plus the open milestones and sprint dates of the plans those tasks sit in. RFC 5545: CRLF line ends, lines folded at 75 octets, all-day events with the exclusive next-day end, and stable UIDs (task-, milestone-, sprint-start- and sprint-end- plus the pid) so a calendar app updates an item instead of duplicating it. A token that is unknown, malformed or revoked is 401.",
+                token.clone(), &[("200", "text/calendar"), ("401", "Unknown, malformed or revoked token")])
+        },
+        "/api/feeds/me.atom": {
+            "get": op("feeds", "The owner's notifications as an Atom feed",
+                "Authenticated by the token alone. The newest 100 notifications for the token's owner, with stable urn:uuid entry ids; the feed's updated time follows its newest entry, so an unchanged feed is byte-identical and If-None-Match returns 304. A token that is unknown, malformed or revoked is 401.",
+                token, &[("200", "application/atom+xml"), ("304", "Not modified"), ("401", "Unknown, malformed or revoked token")])
+        }
+    })
+}
+
+/// POST twins of the self-service DELETEs. The default policy reserves DELETE
+/// for admins, so a write-level user could not otherwise undo their own
+/// follow, reaction, preference, comment or feed token.
+fn self_service_paths() -> Value {
+    let note = "The POST twin of the DELETE route: under the default policy DELETE needs the admin attribute, but a person must always be able to undo their own action with ordinary write access. Same behaviour, idempotent where the DELETE is.";
+    json!({
+        "/api/me/feed-token/revoke": {
+            "post": op("feeds", "Revoke all of the caller's feed tokens (POST twin)", note, vec![],
+                &[("200", "Revoked"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/watchers/unwatch": {
+            "post": op("watchers", "Stop following a subject (POST twin)", note, vec![],
+                &[("200", "Removed (or already absent)"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/reactions/remove": {
+            "post": op("discussion", "Remove the caller's own reaction (POST twin)", note, vec![],
+                &[("200", "Removed (or already absent)"), ("422", "Unknown kind")])
+        },
+        "/api/me/notification-prefs/reset": {
+            "post": op("me", "Restore the default for one notification kind (POST twin)", note, vec![],
+                &[("200", "Reset"), ("401", "Missing or invalid bearer token"), ("422", "Unknown kind or channel")])
+        },
+        "/api/comments/{pid}/delete": {
+            "post": op("discussion", "Soft-delete a comment, author only (POST twin)", note,
+                vec![uuid_param("pid")],
+                &[("200", "Deleted"), ("403", "Not the author"), ("404", "Unknown comment")])
         }
     })
 }

@@ -203,9 +203,11 @@ async fn watchers_are_told_once_and_the_actor_never() {
         );
 
         // Unfollow: a later move tells Alice nothing.
+        // The POST twin: a write-level user cannot DELETE under the default policy.
         request
-            .delete(&format!("/api/watchers?subject_kind=task&subject_pid={t}"))
+            .post("/api/watchers/unwatch")
             .add_header(ak.clone(), av.clone())
+            .json(&w)
             .await
             .assert_status_ok();
         let before = inbox(ak.clone(), av.clone()).await;

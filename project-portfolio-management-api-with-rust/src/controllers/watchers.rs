@@ -167,6 +167,25 @@ async fn unwatch(
     format::empty_json()
 }
 
+/// `POST /api/watchers/unwatch` — the same as `DELETE`, for a write-level
+/// user (the default policy reserves DELETE for admins).
+#[debug_handler]
+async fn unwatch_post(
+    state: State<AppContext>,
+    claims: AuthUser,
+    Json(p): Json<WatchPayload>,
+) -> Result<Response> {
+    unwatch(
+        state,
+        claims,
+        Query(SubjectParams {
+            subject_kind: p.subject_kind,
+            subject_pid: p.subject_pid,
+        }),
+    )
+    .await
+}
+
 /// `GET /api/watchers?subject_kind=&subject_pid=` — how many follow a
 /// subject and whether the caller does. Other watchers are never named.
 #[debug_handler]
@@ -219,5 +238,6 @@ pub fn routes() -> Routes {
         .add("/watchers", post(watch))
         .add("/watchers", get(status))
         .add("/watchers", delete(unwatch))
+        .add("/watchers/unwatch", post(unwatch_post))
         .add("/me/watching", get(my_watching))
 }

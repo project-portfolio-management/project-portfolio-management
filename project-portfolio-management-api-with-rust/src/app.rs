@@ -194,6 +194,7 @@ impl Hooks for App {
             .add_route(controllers::approvals::routes())
             .add_route(controllers::task_relations::routes())
             .add_route(controllers::task_tree::routes())
+            .add_route(controllers::feeds::routes())
             .add_route(controllers::metrics::routes())
     }
 

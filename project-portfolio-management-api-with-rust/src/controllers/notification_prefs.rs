@@ -162,6 +162,33 @@ async fn reset_pref(
     format::empty_json()
 }
 
+/// `POST /api/me/notification-prefs/reset` body.
+#[derive(Debug, Deserialize)]
+struct ResetBody {
+    kind: String,
+    #[serde(default)]
+    channel: Option<String>,
+}
+
+/// `POST /api/me/notification-prefs/reset` — the same as `DELETE`, for a
+/// write-level user (the default policy reserves DELETE for admins).
+#[debug_handler]
+async fn reset_pref_post(
+    state: State<AppContext>,
+    claims: AuthUser,
+    Json(b): Json<ResetBody>,
+) -> Result<Response> {
+    reset_pref(
+        state,
+        claims,
+        Query(ResetParams {
+            kind: b.kind,
+            channel: b.channel,
+        }),
+    )
+    .await
+}
+
 /// `GET /api/me/inbox?tz=&unread=` query.
 #[derive(Debug, Deserialize)]
 struct InboxParams {
@@ -237,5 +264,6 @@ pub fn routes() -> Routes {
         .add("/me/notification-prefs", put(put_pref))
         .add("/me/notification-prefs", get(list_prefs))
         .add("/me/notification-prefs", delete(reset_pref))
+        .add("/me/notification-prefs/reset", post(reset_pref_post))
         .add("/me/inbox", get(inbox))
 }

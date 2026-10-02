@@ -14,3 +14,4 @@ impl ActiveModelBehavior for custom_field_values::ActiveModel {}
 impl ActiveModelBehavior for watchers::ActiveModel {}
 impl ActiveModelBehavior for approval_requests::ActiveModel {}
 impl ActiveModelBehavior for task_relations::ActiveModel {}
+impl ActiveModelBehavior for feed_tokens::ActiveModel {}

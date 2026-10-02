@@ -105,7 +105,7 @@ audited; people stay references.
   retried and logged like a deployment webhook and never blocks the
   notification write; no secret is returned by any read endpoint.
 
-- [ ] **LT-7 (S) — iCalendar feed.** `GET /api/calendar.ics?token=…`: milestones,
+- [x] **LT-7 (S) — iCalendar feed.** **Landed 2026-10-02.** Service: shared `feed_tokens` (migration `m20261003_000010_feed_tokens`; only the SHA-256 is stored, 244-bit token shown once), `POST /api/me/feed-token` + revoke, and `GET /api/feeds/calendar.ics?token=`: the owner's open **assigned** tasks with a due date plus the open milestones and sprint dates of those plans, as RFC 5545 all-day events (CRLF, 75-octet folding on char boundaries, escaped text, exclusive next-day DTEND, **stable UIDs**). `/api/feeds/` is exempt from the bearer guard (a calendar app cannot send one) and authenticates by token alone; revocation is immediate. `src/feeds.rs` (5 unit tests) + `tests/feeds.rs` end to end **with enforcement ON**. **Deviation:** scope is *your own work*, not *everything you may read* — a feed fetch carries no claims, so record-level ABAC cannot be evaluated for it. **Not built:** a per-user feed UI. `GET /api/calendar.ics?token=…`: milestones,
   sprint start/end, and task due dates the caller may read, as VEVENTs with
   stable `UID`s, so a calendar app updates instead of duplicating.
   Per-user revocable feed token (not the session token).
@@ -230,7 +230,7 @@ started.
   no children reports `null` with a reason, not zero; a child with no estimate
   is excluded from the weighting and **named**, not treated as zero.
 
-- [ ] **RM-6 (S) — Atom activity feeds.** `GET /api/feeds/activity.atom`,
+- [x] **RM-6 (S) — Atom activity feeds.** **Landed 2026-10-02.** Delivered with LT-7 (one `feed_tokens` mechanism): `GET /api/feeds/me.atom?token=` — the owner's notifications (newest 100), valid Atom 1.0, stable `urn:uuid` entry ids, **`If-None-Match` ⇒ 304** (an empty feed is epoch-stamped so it is byte-stable too — the conditional-GET test caught a clock-stamped bug). **Deviation:** the per-plan and portfolio activity feeds are **not built**: a token fetch carries no claims, so plan-level ABAC cannot be applied to them. `GET /api/feeds/activity.atom`,
   `…/plans/{pid}.atom`, `…/me.atom` with a per-user revocable feed token (shared
   with LT-7's iCal token). Entries from the existing activity events.
   **Acceptance:** valid Atom 1.0; entry ids are stable across fetches; a revoked
@@ -442,3 +442,17 @@ Microservice architecture and its five datastores; Yjs co-editing (until a
 wiki exists and concurrency is a real complaint); CRM, HR, recruiting,
 inventory, billing, video meetings; an AI assistant inside the service;
 desktop app and presence. Reasons in [plan.md §16](plan.md).
+
+## Findings (surfaced while building the backlog)
+
+- **DELETE is admin-only under the default ABAC policy** (`access=admin` ⇒
+  destructive/delete; `write` does not include it). Every *self-service*
+  removal built as a DELETE — revoke my feed token, unfollow, un-react, reset a
+  notification preference, delete my own comment — would therefore be refused
+  to an ordinary user the moment enforcement is on. Found by the feeds test
+  (enforcement ON). **Fixed** with POST twins (`/api/me/feed-token/revoke`,
+  `/api/watchers/unwatch`, `/api/reactions/remove`,
+  `/api/me/notification-prefs/reset`, `/api/comments/{pid}/delete`) that need
+  only write access; the DELETE routes remain. **Rule for new endpoints:** a
+  person's undo of their *own* action is a POST. **Still affected, not
+  changed:** the older `DELETE /api/saved-views/{pid}`.

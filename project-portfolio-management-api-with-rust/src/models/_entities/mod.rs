@@ -4,6 +4,7 @@ pub mod adoption_snapshots;
 pub mod allocations;
 pub mod approval_requests;
 pub mod artifacts;
+pub mod attachment_texts;
 pub mod attachments;
 pub mod audit_logs;
 pub mod automation_milestone_fires;

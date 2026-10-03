@@ -45,6 +45,9 @@ tokio = { version = "1.53", default-features = false, features = [
   # `net` for the sink dispatcher's DNS check (src/controllers/sinks.rs).
   "net",
 ] }
+# Office documents are zip containers: read their XML for text extraction
+# (PL-8). Deflate only; no encryption, no unsafe formats.
+zip = { version = "2", default-features = false, features = ["deflate"] }
 # Server-sent events (PL-3): a stream built from the broadcast receiver.
 async-stream = { version = "0.3" }
 futures-util = { version = "0.3", default-features = false }

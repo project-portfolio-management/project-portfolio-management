@@ -90,6 +90,7 @@ pub fn paths() -> Value {
     merge(&mut all, link_paths());
     merge(&mut all, pdf_paths());
     merge(&mut all, sink_paths());
+    merge(&mut all, attachment_search_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -656,6 +657,18 @@ fn sink_paths() -> Value {
             "post": op("sinks", "Send the deliveries that are due now",
                 "Admin only. A ticker does this on its own every few seconds (PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS, 0 turns it off); this is for operators and tests. Returns how many were sent, are retrying, failed or were skipped.",
                 vec![], &[("200", "sent, retrying, failed, skipped"), ("403", "Not an admin")])
+        }
+    })
+}
+
+/// Attachment text search (PL-8).
+fn attachment_search_paths() -> Value {
+    json!({
+        "/api/attachments/search": {
+            "get": op("attachments", "Find attachments by their text",
+                "Full-text search over text extracted at upload: plain text, CSV, Markdown and JSON as UTF-8, and .docx, .xlsx and .pptx from their XML. PDFs and images are NOT indexed (no extractor, no OCR) and are recorded unindexed with the reason; unindexed_attachments says how many, so no result is not mistaken for not there. Access follows the subject: a hit the caller may not read is dropped entirely (not a title, not a count). Soft-deleted attachments never match. Up to 50 hits with a snippet.",
+                vec![query("q", true, "Search text, 2 to 200 characters")],
+                &[("200", "results and unindexed_attachments"), ("401", "Missing or invalid bearer token"), ("422", "q is too short or too long")])
         }
     })
 }

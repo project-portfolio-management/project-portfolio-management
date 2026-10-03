@@ -145,3 +145,77 @@ fn walk(dir: &std::path::Path) -> std::path::PathBuf {
     }
     panic!("no stored file");
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn attachment_text_is_searchable_and_honest_about_what_it_cannot_read() {
+    super::isolate_search_index();
+    let dir = tempfile::tempdir().expect("tempdir");
+    // SAFETY: `#[serial]` — nothing else runs while these are set.
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR", dir.path());
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES");
+    }
+    request::<App, _, _>(move |request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let upload = |name: &str, ctype: &str, body: &[u8]| {
+            let url = format!("/api/attachments?subject_kind=plan&subject_pid={p}&filename={name}");
+            let (request, ctype, body) =
+                (&request, ctype.to_string(), Bytes::copy_from_slice(body));
+            async move { request.post(&url).content_type(&ctype).bytes(body).await }
+        };
+        let search = |q: &str| {
+            let (request, q) = (&request, q.to_string());
+            async move { request.get(&format!("/api/attachments/search?q={q}")).await }
+        };
+
+        let note: Value = upload(
+            "risk.txt",
+            "text/plain",
+            b"The vendor contract renews in March; negotiate the penalty clause.",
+        )
+        .await
+        .json();
+        let pdf = upload("scan.pdf", "application/pdf", b"%PDF-1.7 penalty").await;
+        assert_eq!(pdf.status_code(), 200, "an unreadable type still uploads");
+
+        let hit: Value = search("penalty").await.json();
+        let results = hit["results"].as_array().unwrap();
+        assert_eq!(results.len(), 1, "{hit}");
+        assert_eq!(results[0]["attachment_pid"], note["pid"]);
+        assert_eq!(results[0]["filename"], "risk.txt");
+        assert!(
+            results[0]["snippet"]
+                .as_str()
+                .unwrap()
+                .to_lowercase()
+                .contains("penalty")
+        );
+        assert_eq!(
+            hit["unindexed_attachments"], 1,
+            "the PDF is reported, not silently skipped"
+        );
+
+        // A miss, a too-short query, and a removed attachment.
+        let miss: Value = search("zebra").await.json();
+        assert!(miss["results"].as_array().unwrap().is_empty());
+        assert_eq!(search("a").await.status_code(), 422);
+        let pid = note["pid"].as_str().unwrap();
+        request
+            .post(&format!("/api/attachments/{pid}/delete"))
+            .await
+            .assert_status_ok();
+        let gone: Value = search("penalty").await.json();
+        assert!(
+            gone["results"].as_array().unwrap().is_empty(),
+            "a removed file is not found"
+        );
+    })
+    .await;
+}

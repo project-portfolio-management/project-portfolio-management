@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — attachment text search (PL-8, 2026-10-03)
+
+`GET /api/attachments/search?q=` finds attachments by their text (plain text, CSV, Markdown, JSON, .docx, .xlsx, .pptx). PDFs and images are reported as unindexed, never silently skipped. Results follow the access of the attachment's subject.
+
 ### Added — notification sinks (webhook and chat) (LT-6, 2026-10-03)
 
 `notification_sinks`, `sink_deliveries`, `/api/me/notification-sinks`: a person registers a signed webhook or a Slack / Mattermost / Discord / Telegram destination for their own notifications. A notification only enqueues a delivery; a dispatcher sends it with bounded retries. Destinations must be public https hosts and are never returned in full.

@@ -27,3 +27,4 @@ impl ActiveModelBehavior for guest_grants::ActiveModel {}
 impl ActiveModelBehavior for plan_links::ActiveModel {}
 impl ActiveModelBehavior for notification_sinks::ActiveModel {}
 impl ActiveModelBehavior for sink_deliveries::ActiveModel {}
+impl ActiveModelBehavior for attachment_texts::ActiveModel {}

@@ -68,6 +68,7 @@ mod m20261003_000019_guest_grants;
 mod m20261003_000020_plan_links;
 mod m20261003_000021_notification_sinks;
 mod m20261003_000022_sink_deliveries;
+mod m20261003_000023_attachment_texts;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -136,6 +137,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000020_plan_links::Migration),
             Box::new(m20261003_000021_notification_sinks::Migration),
             Box::new(m20261003_000022_sink_deliveries::Migration),
+            Box::new(m20261003_000023_attachment_texts::Migration),
             // inject-above (do not remove this comment)
         ]
     }

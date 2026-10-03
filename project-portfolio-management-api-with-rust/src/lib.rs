@@ -56,6 +56,7 @@ pub mod distribution;
 /// five obligations in `agents/share/time-based-analysis.md` §7.1.
 pub mod effort;
 pub mod engineering;
+pub mod extract;
 pub mod feeds;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).
 pub mod financials;

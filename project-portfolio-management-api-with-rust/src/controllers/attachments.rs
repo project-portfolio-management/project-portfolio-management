@@ -15,7 +15,7 @@ use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
-use sea_orm::QueryOrder;
+use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -23,7 +23,7 @@ use super::discussion::resolve_subject;
 use crate::artifacts::{self, Store};
 use crate::auth::MaybeAuthUser;
 use crate::discussion as subject_rules;
-use crate::models::_entities::{artifacts as artifact_rows, attachments};
+use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, attachments};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn unprocessable(message: &str) -> Error {
@@ -120,6 +120,7 @@ async fn upload(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
+    index_text(&ctx, row.pid, declared, &body).await;
     AuditModel::record(
         &ctx.db,
         row.pid,
@@ -136,6 +137,105 @@ async fn upload(
         "pid": row.pid, "filename": filename, "content_type": artifact.content_type,
         "size_bytes": size, "sha256": sha,
     }))
+}
+
+/// Extract and store an attachment's text (PL-8). Best-effort: whatever goes
+/// wrong is recorded as `unindexed` with a reason and **never fails the
+/// upload**. Reads untrusted bytes, so it runs off the async threads and is
+/// bounded (see [`crate::extract`]).
+async fn index_text(ctx: &AppContext, attachment_pid: Uuid, declared: &str, body: &Bytes) {
+    let media = artifacts::media_type(declared);
+    let bytes = body.to_vec();
+    let result = tokio::task::spawn_blocking(move || crate::extract::extract(&media, &bytes))
+        .await
+        .unwrap_or(crate::extract::Extraction::Unindexed("extractor_failed"));
+    let (status, reason, text) = match result {
+        crate::extract::Extraction::Text(t) => ("indexed", None, t),
+        crate::extract::Extraction::Unindexed(r) => {
+            ("unindexed", Some(r.to_string()), String::new())
+        }
+    };
+    // Postgres text cannot hold NUL.
+    let text = text.replace('\0', "");
+    let _ = attachment_texts::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        attachment_pid: ActiveValue::set(attachment_pid),
+        status: ActiveValue::set(status.to_string()),
+        reason: ActiveValue::set(reason),
+        body: ActiveValue::set(text),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await;
+}
+
+/// `GET /api/attachments/search` query.
+#[derive(Debug, Deserialize)]
+struct SearchParams {
+    q: String,
+}
+
+/// `GET /api/attachments/search?q=` — find attachments by their text (PL-8).
+///
+/// **Access follows the subject:** every candidate hit is passed through the
+/// same record-level check as reading the attachment itself, and one the caller
+/// may not read is dropped — not shown as a count, not as a title. Soft-deleted
+/// attachments never match. The response also says how many attachments have no
+/// extractable text (so "no result" is not mistaken for "not there").
+#[debug_handler]
+async fn search(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(p): Query<SearchParams>,
+) -> Result<Response> {
+    let q = p.q.trim();
+    if q.chars().count() < 2 || q.chars().count() > 200 {
+        return Err(unprocessable("q must be 2 to 200 characters"));
+    }
+    let rows = ctx
+        .db
+        .query_all_raw(sea_orm::Statement::from_sql_and_values(
+            sea_orm::DatabaseBackend::Postgres,
+            "SELECT a.pid AS attachment_pid, a.subject_kind, a.subject_pid, f.filename, \
+                    ts_headline('simple', t.body, plainto_tsquery('simple', $1), \
+                                'MaxFragments=1,MaxWords=18,MinWords=5') AS snippet \
+             FROM attachment_texts t \
+             JOIN attachments a ON a.pid = t.attachment_pid AND a.deleted_at IS NULL \
+             JOIN artifacts f ON f.pid = a.artifact_pid \
+             WHERE t.status = 'indexed' \
+               AND to_tsvector('simple', t.body) @@ plainto_tsquery('simple', $1) \
+             ORDER BY ts_rank(to_tsvector('simple', t.body), plainto_tsquery('simple', $1)) DESC, a.id \
+             LIMIT 200",
+            [q.into()],
+        ))
+        .await
+        .map_err(db_err)?;
+    let mut out = Vec::new();
+    for r in rows {
+        let kind: String = r.try_get("", "subject_kind").map_err(db_err)?;
+        let subject: Uuid = r.try_get("", "subject_pid").map_err(db_err)?;
+        if resolve_subject(&ctx, &caller, &kind, &subject.to_string())
+            .await
+            .is_err()
+        {
+            continue;
+        }
+        out.push(serde_json::json!({
+            "attachment_pid": r.try_get::<Uuid>("", "attachment_pid").map_err(db_err)?,
+            "subject_kind": kind, "subject_pid": subject,
+            "filename": r.try_get::<String>("", "filename").map_err(db_err)?,
+            "snippet": r.try_get::<String>("", "snippet").map_err(db_err)?,
+        }));
+        if out.len() >= 50 {
+            break;
+        }
+    }
+    let unindexed = attachment_texts::Entity::find()
+        .filter(attachment_texts::Column::Status.eq("unindexed"))
+        .count(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    format::json(serde_json::json!({ "results": out, "unindexed_attachments": unindexed }))
 }
 
 /// `GET /api/attachments` query.
@@ -286,6 +386,7 @@ pub fn routes() -> Routes {
             post(upload).layer(DefaultBodyLimit::max(ceiling)),
         )
         .add("/attachments", get(list))
+        .add("/attachments/search", get(search))
         .add("/attachments/{pid}/download", get(download))
         .add("/attachments/{pid}", delete(delete_one))
         .add("/attachments/{pid}/delete", post(delete_one))

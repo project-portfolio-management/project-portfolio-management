@@ -8,6 +8,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Gantt, Willow } from "@svar-ui/svelte-gantt";
+  import LilyGanttTable from "#lib/components/LilyGanttTable.svelte";
   import { PpmClient } from "#lib/api/ppm.js";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { PlanRef } from "#lib/api/types.js";
@@ -19,6 +20,7 @@
   let portfolios = $state<PlanRef[]>([]);
   let selected = $state<string>("");
   let schedule = $state<ScheduleView | null>(null);
+  let view = $state<"chart" | "table">("chart");
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -73,6 +75,16 @@
     })),
   );
 
+  const lilyItems = $derived(
+    (schedule?.items ?? []).map((i) => ({
+      pid: i.pid,
+      name: i.name,
+      start: i.start ?? null,
+      end: i.end ?? null,
+      critical: i.on_critical_path,
+    })),
+  );
+
   const undated = $derived(
     (schedule?.items ?? []).filter((i) => !i.start || !i.end),
   );
@@ -107,11 +119,21 @@
        phone viewport (a horizontal-scrolling timeline needs real
        width); `.mobile-list` below is its read-only stand-in,
        switched purely by `@media (max-width: 600px)`. -->
+  <div class="view-toggle" role="group" aria-label="Schedule view">
+    <button type="button" aria-pressed={view === "chart"} onclick={() => (view = "chart")}>Chart</button>
+    <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>
+      Accessible table
+    </button>
+  </div>
+  {#if view === "table"}
+    <LilyGanttTable items={lilyItems} label={t("ppm.nav.gantt")} />
+  {:else}
   <div class="gantt-wrap" data-testid="ppm-gantt">
     <Willow>
       <Gantt {tasks} {links} readonly />
     </Willow>
   </div>
+  {/if}
   <ul class="mobile-list">
     {#each tasks as task (task.id)}
       <li>
@@ -122,7 +144,7 @@
       </li>
     {/each}
   </ul>
-  {#if undated.length > 0}
+  {#if view === "chart" && undated.length > 0}
     <p class="muted small">
       {t("list.empty")}:
       {#each undated as item (item.pid)}
@@ -133,6 +155,15 @@
 {/if}
 
 <style>
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-block: 0.5rem;
+  }
+  .view-toggle button[aria-pressed="true"] {
+    font-weight: 700;
+    text-decoration: underline;
+  }
   .gantt-wrap {
     height: 560px;
   }

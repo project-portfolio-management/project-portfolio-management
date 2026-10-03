@@ -122,9 +122,14 @@ match breakdown).
                              allocations)
 /plans/[pid]/schedule        plan schedule (child timeframes)
 /plans/[pid]/board           per-plan task Kanban + sprints +
-                             honest burndown + standup digest
+                             honest burndown + standup digest; an
+                             "Accessible table" view (Lily headless
+                             KanbanTable) moves a card with a labelled
+                             control, no drag needed
 /gantt                       schedule Gantt (SVAR; dependency links +
-                             critical path; read-only)
+                             critical path; read-only) with an
+                             "Accessible table" view (Lily headless
+                             GanttTable: a bar is a run of named cells)
 /capacity                    resource capacity rollup
 /engineering                 blocked aging + MoSCoW + delivery links
 /calendar                    estate milestone calendar (kind filter)
@@ -985,3 +990,21 @@ Update this spec with any behavioural change; a behavioural change is
 one PR with three parts (spec + code + test). Bump `CHANGELOG.md`. Keep
 `src/lib/api/types.ts` in lockstep with the matcher `Plan` type — if
 a field changes in the service / matcher, fix it here in the same cycle.
+
+## Accessible table views (Lily headless Gantt and Kanban)
+
+`@lilydesignsystem/svelte-headless` (already a dependency) ships `GanttTable*`
+and `KanbanTable*`; there is **no separate Lily gantt or kanban npm package**.
+`src/lib/lily-grids.ts` holds the pure helpers (`ganttGrid`, `kanbanGrid`,
+`gridKeyTarget`), and `LilyGanttTable.svelte` / `LilyKanbanTable.svelte` render
+them as a labelled `role="grid"` with arrow / Home / End navigation (the
+WAI-ARIA grid keys the headless components leave to the consumer). They sit
+**beside** the SVAR widgets behind a Chart / Table toggle; they do not replace
+them, and the default stays the SVAR view. Rules: dates are zone-free and
+handled as UTC day numbers (a DST change cannot shift a bar); a task with no
+usable range is listed, never invented onto the timeline; a long range coarsens
+the unit (day, week, month) and says so; a card with an unknown status is
+listed, never dropped; the Kanban table only reports `onmove` and the service
+stays the single writer. Tests: `tests/unit/lily-grids.test.ts`,
+`tests/unit/lily-tables.test.ts`. Not done: an axe-core / Playwright audit of
+these views (LT-12).

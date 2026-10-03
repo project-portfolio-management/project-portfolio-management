@@ -19,6 +19,7 @@
     type Task,
     type Velocity,
   } from "#lib/api/ppm.js";
+  import LilyKanbanTable from "#lib/components/LilyKanbanTable.svelte";
   import { t } from "#lib/i18n.svelte.js";
   const pid = page.params.pid ?? "";
   const ppm = PpmClient.withFetch();
@@ -33,6 +34,7 @@
   let noteBody = $state("");
   let noteCategory = $state("action");
   let points = $state("");
+  let view = $state<"board" | "table">("board");
   let error = $state<string | null>(null);
   let title = $state("");
   let sprintName = $state("");
@@ -157,17 +159,32 @@
 </form>
 
 {#if tasks !== null}
-  <div class="board-wrap" data-testid="task-board">
-    <Willow>
-      <Kanban
-        {cards}
-        columns={COLUMNS}
-        columnAccessor="status"
-        card={{ ...getCardShape(), menu: false }}
-        {init}
-      />
-    </Willow>
+  <div class="view-toggle" role="group" aria-label="Board view">
+    <button type="button" aria-pressed={view === "board"} onclick={() => (view = "board")}>Board</button>
+    <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>
+      Accessible table
+    </button>
   </div>
+  {#if view === "table"}
+    <LilyKanbanTable
+      cards={tasks.map((task) => ({ pid: task.pid, title: task.title, status: task.status }))}
+      columns={COLUMNS.map(({ id, label }) => ({ id, label }))}
+      label={t("ppm.common.board")}
+      onmove={(taskPid, status) => void act(() => ppm.moveTask(pid, taskPid, status))}
+    />
+  {:else}
+    <div class="board-wrap" data-testid="task-board">
+      <Willow>
+        <Kanban
+          {cards}
+          columns={COLUMNS}
+          columnAccessor="status"
+          card={{ ...getCardShape(), menu: false }}
+          {init}
+        />
+      </Willow>
+    </div>
+  {/if}
 {/if}
 
 <h2>Sprints</h2>
@@ -279,6 +296,15 @@
 {/if}
 
 <style>
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-block: 0.5rem;
+  }
+  .view-toggle button[aria-pressed="true"] {
+    font-weight: 700;
+    text-decoration: underline;
+  }
   .row { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; margin-bottom: 1rem; }
   .board-wrap { height: 480px; overflow-x: auto; }
   input.points { width: 4rem; }

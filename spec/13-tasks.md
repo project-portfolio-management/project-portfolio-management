@@ -777,10 +777,24 @@ described manual check confirms it. Split tasks too big for one PR
     itself works (not just that it compiles) by asserting a non-zero
     count at the small-roster baseline before comparing it against the
     scaled-up count.
-  - [ ] **T-28e (M) — Report grouping and scheduled runs.** *(Grouping
+  - [x] **T-28e (M) — Report grouping and scheduled runs.** *(Grouping
     half landed 2026-09-20 — `group_by`, per-currency sums,
-    `insights::group_report`, `grouped_report_keeps_currencies_apart`;
-    scheduled runs still open, blocked on T-8.)*
+    `insights::group_report`, `grouped_report_keeps_currencies_apart`.
+    **Scheduled half landed 2026-10-03:** `report_schedules` (migration
+    `…_000024`), `POST /api/reports/{pid}/schedule` (daily / weekly /
+    monthly, csv or json, UTC dates), own-only list, stop (DELETE + POST
+    twin), owner-only `…/latest` download, and an admin `POST
+    /api/report-schedules/sweep` that the scheduler ticker also calls.
+    Runs go through the **same `execute_report`** as the on-demand run;
+    output is an artifact that expires (30 days,
+    `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS`); **every run is audited
+    like an export, even at zero rows** (`last_rows: 0` is a real zero).
+    The sweep is claim-based (no double run with ticker + cron), a missed
+    run runs once and moves to the next future date, a failure is recorded
+    and the date still advances. **Deviations:** a plain cron-less cadence
+    rather than cron expressions; a scheduled run reads what the on-demand
+    run reads (reports are not yet record-level ABAC-filtered — RM-8b);
+    run in the sweep, not as a loco worker; no email of the output.)*
     `report_definitions.group_by` (one field, counts + the money
     columns summed per currency); scheduled runs as a loco `worker`
     job writing a bulk artifact with the family TTL posture. The

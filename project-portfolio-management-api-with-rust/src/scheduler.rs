@@ -63,6 +63,13 @@ pub fn spawn(ctx: AppContext) {
                 Ok(_) => {}
                 Err(err) => tracing::warn!("scheduled-action sweep failed: {err}"),
             }
+            match crate::controllers::report_schedules::run_due(&ctx, 200).await {
+                Ok(r) if r.ran > 0 || r.failed > 0 => {
+                    tracing::info!("report-schedule sweep ran {} (failed {})", r.ran, r.failed);
+                }
+                Ok(_) => {}
+                Err(err) => tracing::warn!("report-schedule sweep failed: {err}"),
+            }
             match crate::controllers::automation::sweep_milestone_due(&ctx).await {
                 Ok((fired, already_claimed, capped)) if fired > 0 || capped => {
                     tracing::info!(

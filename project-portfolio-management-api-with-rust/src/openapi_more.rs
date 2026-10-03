@@ -91,6 +91,7 @@ pub fn paths() -> Value {
     merge(&mut all, pdf_paths());
     merge(&mut all, sink_paths());
     merge(&mut all, attachment_search_paths());
+    merge(&mut all, report_schedule_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -669,6 +670,41 @@ fn attachment_search_paths() -> Value {
                 "Full-text search over text extracted at upload: plain text, CSV, Markdown and JSON as UTF-8, and .docx, .xlsx and .pptx from their XML. PDFs and images are NOT indexed (no extractor, no OCR) and are recorded unindexed with the reason; unindexed_attachments says how many, so no result is not mistaken for not there. Access follows the subject: a hit the caller may not read is dropped entirely (not a title, not a count). Soft-deleted attachments never match. Up to 50 hits with a snippet.",
                 vec![query("q", true, "Search text, 2 to 200 characters")],
                 &[("200", "results and unindexed_attachments"), ("401", "Missing or invalid bearer token"), ("422", "q is too short or too long")])
+        }
+    })
+}
+
+/// Scheduled report runs (T-28e).
+fn report_schedule_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    json!({
+        "/api/reports/{pid}/schedule": {
+            "post": op("reports", "Run a saved report on a cadence",
+                "cadence is daily, weekly or monthly (monthly keeps the day, clamped in short months); format is csv (default) or json; start is the first UTC date (default today). Each due run goes through the same code as GET /api/reports/{pid}/run, is stored as an artifact that expires (30 days by default) and is audited like an export, even at zero rows. A missed run runs once and then moves to the next future date; a failure is recorded on the schedule and the date still advances. At most 20 per person.", pid.clone(),
+                &[("200", "The schedule"), ("401", "Missing or invalid bearer token"), ("404", "Unknown report"), ("422", "Bad cadence, format or start, or too many schedules")])
+        },
+        "/api/report-schedules": {
+            "get": op("reports", "Your scheduled report runs",
+                "Each with its next run date, last status, last row count (0 is a real zero) and whether an output exists. Only your own.",
+                vec![], &[("200", "Schedules"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/report-schedules/sweep": {
+            "post": op("reports", "Run the scheduled reports that are due now",
+                "Admin only. The scheduler ticker does this too; this is for an external cron and tests. Claim-based, so running both cannot run a schedule twice.",
+                vec![], &[("200", "ran, failed, already_claimed"), ("403", "Not an admin")])
+        },
+        "/api/report-schedules/{pid}": {
+            "delete": op("reports", "Stop a scheduled report", "Another person's schedule is 404, identically.", pid.clone(),
+                &[("200", "Stopped"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/report-schedules/{pid}/delete": {
+            "post": op("reports", "Stop a scheduled report (POST twin)", "The POST twin of DELETE (the default policy reserves DELETE for admins).", pid.clone(),
+                &[("200", "Stopped"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/report-schedules/{pid}/latest": {
+            "get": op("reports", "Download the latest scheduled output",
+                "Owner only. 404 before the first run and after the artifact has expired. Served as an attachment with nosniff and private no-store.", pid,
+                &[("200", "The report file"), ("401", "Missing or invalid bearer token"), ("404", "No output, expired, unknown, or not yours")])
         }
     })
 }

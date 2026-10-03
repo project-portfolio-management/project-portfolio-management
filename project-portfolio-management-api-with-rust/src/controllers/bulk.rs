@@ -134,7 +134,10 @@ async fn store_artifact(
     .map_err(db_err)
 }
 
-async fn read_artifact(ctx: &AppContext, pid: Uuid) -> Result<(artifact_rows::Model, Vec<u8>)> {
+pub(crate) async fn read_artifact(
+    ctx: &AppContext,
+    pid: Uuid,
+) -> Result<(artifact_rows::Model, Vec<u8>)> {
     let row = artifact_rows::Entity::find()
         .filter(artifact_rows::Column::Pid.eq(pid))
         .one(&ctx.db)

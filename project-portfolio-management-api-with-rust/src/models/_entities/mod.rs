@@ -56,6 +56,7 @@ pub mod prelude;
 pub mod proposals;
 pub mod reactions;
 pub mod report_definitions;
+pub mod report_schedules;
 pub mod review_queue_items;
 pub mod reviews;
 pub mod risks;

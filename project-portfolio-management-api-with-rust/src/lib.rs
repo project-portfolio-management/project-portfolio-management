@@ -103,6 +103,7 @@ pub mod prioritisation;
 pub mod privacy;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod relay;
+pub mod report_schedules;
 pub mod saved_views;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;

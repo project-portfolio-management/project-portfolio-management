@@ -748,6 +748,19 @@ async fn run_report(
 ) -> Result<Response> {
     let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
     let def = vis_models::find_report(&ctx.db, pid).await?;
+    execute_report(&ctx, &def, params.format.as_deref()).await
+}
+
+/// Run a saved report definition to a response (shared by the on-demand run and
+/// the scheduled run, T-28e, so the two can never produce different output).
+pub(crate) async fn execute_report(
+    ctx: &AppContext,
+    def: &report_definitions::Model,
+    format: Option<&str>,
+) -> Result<Response> {
+    let params = RunParams {
+        format: format.map(str::to_string),
+    };
     // The report's legacy `collection` is now an optional kind filter over
     // the single recursive `plans` collection: blank (or unrecognised) ⇒
     // all plans; a kind label ⇒ that kind only (filtered in-memory below).
@@ -779,7 +792,7 @@ async fn run_report(
         .collect();
     if let Some(group_field) = def.group_by.as_deref() {
         return run_grouped(
-            &ctx,
+            ctx,
             &def.name,
             group_field,
             &selected,

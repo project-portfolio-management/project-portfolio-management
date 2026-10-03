@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — scheduled report runs (T-28e, 2026-10-03)
+
+`report_schedules`, `POST /api/reports/{pid}/schedule`, `/api/report-schedules`: run a saved report daily, weekly or monthly. Each run is stored as an expiring artifact and audited like an export, even at zero rows. Claim-based, so a missed run runs once.
+
 ### Added — attachment text search (PL-8, 2026-10-03)
 
 `GET /api/attachments/search?q=` finds attachments by their text (plain text, CSV, Markdown, JSON, .docx, .xlsx, .pptx). PDFs and images are reported as unindexed, never silently skipped. Results follow the access of the attachment's subject.

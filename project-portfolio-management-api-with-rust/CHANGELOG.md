@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — calendars and constraints (SC-2, 2026-10-03)
+
+Working calendars per plan and per person (a person's recorded absences count), task date constraints (snet, snlt, fnet, fnlt, mso, mfo) and soft deadlines with negative float. Hard constraints need a reason and a permission.
+
 ### Added — critical-path engine (SC-1, 2026-10-03)
 
 `GET /api/plans/{pid}/cpm` gives total and free float, critical and near-critical tasks and every critical chain, for all four relationship types with lag and lead. The plan-level critical path now counts lag (previously ignored).

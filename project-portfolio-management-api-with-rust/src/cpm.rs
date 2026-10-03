@@ -783,6 +783,36 @@ pub fn schedule_problems(start: Option<NaiveDate>, duration: Option<i32>) -> Vec
     out
 }
 
+/// Everything wrong with a constraint, as a pair `(kind, date)` and a deadline:
+/// both or neither of kind and date, a known kind (`alap` is not supported
+/// yet), and dates in range.
+#[must_use]
+pub fn constraint_problems(
+    kind: Option<&str>,
+    date: Option<NaiveDate>,
+    deadline: Option<NaiveDate>,
+) -> Vec<String> {
+    let mut out = Vec::new();
+    match (kind, date) {
+        (None, None) => {}
+        (Some(k), Some(d)) => {
+            if ConstraintKind::parse(k).is_none() {
+                out.push(format!(
+                    "constraint_kind must be one of snet, snlt, fnet, fnlt, mso, mfo (got {k:?}; alap is not supported yet)"
+                ));
+            }
+            if d < EPOCH || d.year() > 2100 {
+                out.push("constraint_date must be between 1970-01-05 and 2100-12-31".to_string());
+            }
+        }
+        _ => out.push("constraint_kind and constraint_date go together".to_string()),
+    }
+    if deadline.is_some_and(|d| d < EPOCH || d.year() > 2100) {
+        out.push("deadline must be between 1970-01-05 and 2100-12-31".to_string());
+    }
+    out
+}
+
 /// How a node's dates moved between two analyses (PJ-8).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Moved {
@@ -1255,7 +1285,11 @@ mod tests {
             "early dates ignore the deadline"
         );
         assert_eq!(get(&r, 2).early_finish, MON() + Duration::days(6));
-        assert_eq!(get(&r, 2).total_float, -1, "finishes on day 6, deadline day 5");
+        assert_eq!(
+            get(&r, 2).total_float,
+            -1,
+            "finishes on day 6, deadline day 5"
+        );
         // A comfortable deadline leaves float untouched.
         let mut b = node(2, 4);
         b.deadline = Some(MON() + Duration::days(30));
@@ -1338,6 +1372,33 @@ mod tests {
         )];
         let r = run(&n, &[]);
         assert_eq!(r.unscheduled[0].reason, "date_out_of_range");
+    }
+
+    #[test]
+    fn constraints_are_validated_all_at_once() {
+        assert!(constraint_problems(None, None, None).is_empty());
+        assert!(
+            constraint_problems(Some("fnlt"), Some(d(2026, 10, 5)), Some(d(2026, 12, 1)))
+                .is_empty()
+        );
+        assert_eq!(
+            constraint_problems(Some("fnlt"), None, None).len(),
+            1,
+            "a kind needs a date"
+        );
+        assert_eq!(
+            constraint_problems(None, Some(d(2026, 10, 5)), None).len(),
+            1,
+            "a date needs a kind"
+        );
+        assert_eq!(
+            constraint_problems(Some("alap"), Some(d(2026, 10, 5)), None).len(),
+            1
+        );
+        assert_eq!(
+            constraint_problems(Some("zzz"), Some(d(1960, 1, 1)), Some(d(2200, 1, 1))).len(),
+            3
+        );
     }
 
     #[test]

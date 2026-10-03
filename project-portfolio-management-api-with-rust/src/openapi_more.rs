@@ -93,6 +93,7 @@ pub fn paths() -> Value {
     merge(&mut all, attachment_search_paths());
     merge(&mut all, report_schedule_paths());
     merge(&mut all, cpm_paths());
+    merge(&mut all, calendar_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -721,9 +722,28 @@ fn cpm_paths() -> Value {
         },
         "/api/plans/{pid}/tasks/{t_pid}/schedule": {
             "put": op("cpm", "Set a task's planned start and working duration",
-                "start_date is a calendar date and duration_days a number of working days (0 is a milestone); an absent or null field clears it. The answer carries what moved across the whole network (start, finish or both, in working days), not only the edited task: an empty list when nothing moved. Audited with the old and new values.",
+                "start_date is a calendar date and duration_days a number of working days (0 is a milestone); an absent or null field clears it. constraint_kind (snet, snlt, fnet, fnlt, mso, mfo) goes with constraint_date; deadline is a soft date that bounds the LATE dates only, so a threatened deadline gives negative float and never moves an early date. A HARD constraint (mso, mfo) overrides the schedule's logic: it needs a reason and, when authentication is on, access=admin or scheduling=hard_constraints (403 otherwise). alap is not supported yet. The answer carries what moved across the whole network (start, finish or both, in working days), not only the edited task: an empty list when nothing moved. Audited with the old and new values and the reason.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
-                &[("200", "task and moved"), ("404", "Unknown plan or task"), ("422", "Out-of-range start_date or duration_days")])
+                &[("200", "task and moved"), ("403", "A hard constraint without the permission"), ("404", "Unknown plan or task"), ("422", "Out-of-range values, an unknown constraint kind, a kind without a date, or a hard constraint without a reason")])
+        }
+    })
+}
+
+/// Working calendars (SC-2).
+fn calendar_paths() -> Value {
+    let body = "weekdays is seven 0/1 characters, Monday first, with at least one working day (1111100 is Monday to Friday); holidays is a list of dates (at most 400). A plan with no calendar works all seven days, so nothing stored before calendars existed changes.";
+    json!({
+        "/api/plans/{pid}/calendar": {
+            "get": op("cpm", "The plan's working calendar", "All seven days when none was set (source default).", vec![uuid_param("pid")],
+                &[("200", "weekdays, holidays and source"), ("404", "Unknown plan")]),
+            "put": op("cpm", "Set the plan's working calendar", body, vec![uuid_param("pid")],
+                &[("200", "The calendar"), ("404", "Unknown plan"), ("422", "A malformed mask, no working day, duplicate or out-of-range holidays")])
+        },
+        "/api/me/calendar": {
+            "get": op("cpm", "Your own working calendar", "Your weekly pattern and holidays. Recorded absences (POST /api/non-working) count as your holidays automatically. A task is scheduled on its plan's calendar and yours narrows it: your work happens only on days both work.", vec![],
+                &[("200", "weekdays, holidays and source"), ("401", "Missing or invalid bearer token"), ("422", "This identity has no person reference")]),
+            "put": op("cpm", "Set your own working calendar", body, vec![],
+                &[("200", "The calendar"), ("401", "Missing or invalid bearer token"), ("422", "A malformed mask, or no person reference")])
         }
     })
 }

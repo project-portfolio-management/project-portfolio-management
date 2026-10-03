@@ -29,3 +29,4 @@ impl ActiveModelBehavior for notification_sinks::ActiveModel {}
 impl ActiveModelBehavior for sink_deliveries::ActiveModel {}
 impl ActiveModelBehavior for attachment_texts::ActiveModel {}
 impl ActiveModelBehavior for report_schedules::ActiveModel {}
+impl ActiveModelBehavior for work_calendars::ActiveModel {}

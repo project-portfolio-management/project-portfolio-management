@@ -77,6 +77,7 @@ pub mod total_project_control;
 pub mod value_points;
 pub mod watchers;
 pub mod webhook_deliveries;
+pub mod work_calendars;
 pub mod workflow_states;
 pub mod workflow_transitions;
 pub mod workflows;

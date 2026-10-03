@@ -232,3 +232,88 @@ async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn calendars_constraints_deadlines_and_a_persons_absence() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Gemini" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+
+        // The default calendar, then validation, then a Monday-to-Friday calendar with a holiday.
+        let none: Value = request.get(&format!("/api/plans/{p}/calendar")).await.json();
+        assert_eq!((none["source"].as_str(), none["weekdays"].as_str()), (Some("default"), Some("1111111")));
+        for bad in [json!({ "weekdays": "0000000" }), json!({ "weekdays": "11111" }), json!({ "weekdays": "1111100", "holidays": ["2026-12-25", "2026-12-25"] })] {
+            assert_eq!(request.put(&format!("/api/plans/{p}/calendar")).json(&bad).await.status_code(), 422, "{bad}");
+        }
+        request
+            .put(&format!("/api/plans/{p}/calendar"))
+            .json(&json!({ "weekdays": "1111100", "holidays": ["2026-10-12"] }))
+            .await
+            .assert_status_ok();
+
+        // A Friday start of 2 working days ends the following Monday; across the holiday it ends Tuesday.
+        let a = task(&request, &p, "A", Some("2026-10-02"), Some(2)).await;
+        let c = task(&request, &p, "C", Some("2026-10-09"), Some(2)).await;
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let node = |pid: &str| cpm["nodes"].as_array().unwrap().iter().find(|n| n["pid"] == pid).cloned().unwrap();
+        assert_eq!(cpm["calendar"], "plan");
+        assert_eq!(node(&a)["early_finish"], "2026-10-05", "Fri + Mon");
+        assert_eq!(node(&c)["early_finish"], "2026-10-13", "Fri, skip the weekend and the Monday holiday, Tue");
+
+        // A person's recorded absence stretches the task assigned to them.
+        let who = "person:3f2c6b7e-0000-4000-8000-0000000000aa";
+        let t: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Mine", "assignee_ref": who, "start_date": "2026-10-05", "duration_days": 3 }))
+            .await
+            .json();
+        let mine = t["pid"].as_str().unwrap().to_string();
+        let before: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let f = |v: &Value| v["nodes"].as_array().unwrap().iter().find(|n| n["pid"] == mine.as_str()).cloned().unwrap();
+        assert_eq!(f(&before)["early_finish"], "2026-10-07");
+        assert_eq!(f(&before)["calendar"], "plan");
+        request
+            .post("/api/non-working")
+            .json(&json!({ "person_ref": who, "starts_on": "2026-10-06", "ends_on": "2026-10-06", "kind": "leave" }))
+            .await
+            .assert_status_ok();
+        let after: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        assert_eq!(f(&after)["early_finish"], "2026-10-08", "Mon, (leave), Wed, Thu");
+        assert_eq!(f(&after)["calendar"], "plan+person");
+
+        // Constraints: validation, a threatened FNLT gives negative float without moving the early date.
+        let put = |task: &str, body: Value| {
+            let (request, url) = (&request, format!("/api/plans/{p}/tasks/{task}/schedule"));
+            async move { request.put(&url).json(&body).await }
+        };
+        assert_eq!(put(&a, json!({ "start_date": "2026-10-02", "duration_days": 2, "constraint_kind": "fnlt" })).await.status_code(), 422, "kind without date");
+        assert_eq!(put(&a, json!({ "start_date": "2026-10-02", "duration_days": 2, "constraint_kind": "alap", "constraint_date": "2026-10-09" })).await.status_code(), 422, "alap unsupported");
+        put(&a, json!({ "start_date": "2026-10-02", "duration_days": 2, "constraint_kind": "fnlt", "constraint_date": "2026-10-02" })).await.assert_status_ok();
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let n = |pid: &str| cpm["nodes"].as_array().unwrap().iter().find(|x| x["pid"] == pid).cloned().unwrap();
+        assert_eq!(n(&a)["early_finish"], "2026-10-05", "FNLT does not move the early finish");
+        assert!(n(&a)["total_float"].as_i64().unwrap() < 0, "negative float: {}", n(&a));
+        assert_eq!(n(&a)["constraint"], "fnlt");
+
+        // A soft deadline behaves the same way and never moves an early date.
+        put(&c, json!({ "start_date": "2026-10-09", "duration_days": 2, "deadline": "2026-10-09" })).await.assert_status_ok();
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let c_node = cpm["nodes"].as_array().unwrap().iter().find(|x| x["pid"] == c.as_str()).cloned().unwrap();
+        assert_eq!(c_node["early_finish"], "2026-10-13");
+        assert!(c_node["total_float"].as_i64().unwrap() < 0);
+
+        // A hard constraint needs a reason; with a reason (auth off) it pins the task and is flagged when logic disagrees.
+        assert_eq!(put(&a, json!({ "start_date": "2026-10-02", "duration_days": 2, "constraint_kind": "mso", "constraint_date": "2026-10-06" })).await.status_code(), 422, "no reason");
+        put(&a, json!({ "start_date": "2026-10-02", "duration_days": 2, "constraint_kind": "mso", "constraint_date": "2026-10-06", "reason": "customer fixed the start" }))
+            .await
+            .assert_status_ok();
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let a_node = cpm["nodes"].as_array().unwrap().iter().find(|x| x["pid"] == a.as_str()).cloned().unwrap();
+        assert_eq!(a_node["early_start"], "2026-10-06", "the pin wins");
+        assert_eq!(a_node["constraint"], "mso");
+    })
+    .await;
+}

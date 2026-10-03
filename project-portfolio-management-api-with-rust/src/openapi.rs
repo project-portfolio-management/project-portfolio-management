@@ -2059,6 +2059,7 @@ mod tests {
             crate::controllers::sinks::routes(),
             crate::controllers::report_schedules::routes(),
             crate::controllers::cpm::routes(),
+            crate::controllers::calendars::routes(),
             crate::controllers::metrics::routes(),
         ];
         let mut mounted = std::collections::BTreeSet::new();

@@ -44,6 +44,30 @@ pub(crate) struct Network {
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
     pub rows: Vec<tasks::Model>,
+    /// The plan's calendar and where it came from (`plan` or `default`).
+    pub plan_cal: WorkCalendar,
+    pub cal_source: &'static str,
+    /// Per-assignee calendars (the plan's intersected with theirs); a node's
+    /// `own_calendar` indexes into it.
+    pub own: Vec<WorkCalendar>,
+    /// Assignees whose calendar shares no working day with the plan's.
+    pub conflicts: Vec<String>,
+}
+
+impl Network {
+    /// Run the engine on this network.
+    pub(crate) fn analyze(&self, near: i64) -> std::result::Result<cpm::CpmResult, cpm::CpmError> {
+        cpm::analyze_with(
+            &self.nodes,
+            &self.edges,
+            &self.plan_cal,
+            &self.own,
+            Options {
+                near_critical_days: near,
+                ..Options::default()
+            },
+        )
+    }
 }
 
 /// Load a plan's tasks and the edges among them.
@@ -56,13 +80,34 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
         .await
         .map_err(db_err)?;
     let pids: std::collections::HashSet<Uuid> = rows.iter().map(|t| t.pid).collect();
+    let (plan_cal, cal_source) = super::calendars::plan_calendar(ctx, plan_pid).await?;
+    let mut refs: Vec<String> = rows.iter().filter_map(|t| t.assignee_ref.clone()).collect();
+    refs.sort();
+    refs.dedup();
+    let (person, conflicts) = super::calendars::person_calendars(ctx, &plan_cal, &refs).await?;
+    let mut own: Vec<WorkCalendar> = Vec::new();
+    let mut index_of: HashMap<String, usize> = HashMap::new();
+    for (r, cal) in person {
+        index_of.insert(r, own.len());
+        own.push(cal);
+    }
     let nodes = rows
         .iter()
         .map(|t| Node {
             pid: t.pid,
             duration: t.duration_days.map(i64::from),
             planned_start: t.start_date,
-            ..Node::default()
+            constraint: t
+                .constraint_kind
+                .as_deref()
+                .and_then(cpm::ConstraintKind::parse)
+                .zip(t.constraint_date)
+                .map(|(kind, date)| cpm::Constraint { kind, date }),
+            deadline: t.deadline,
+            own_calendar: t
+                .assignee_ref
+                .as_ref()
+                .and_then(|r| index_of.get(r).copied()),
         })
         .collect();
     let mut edges: Vec<Edge> = Vec::new();
@@ -105,7 +150,15 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
             });
         }
     }
-    Ok(Network { nodes, edges, rows })
+    Ok(Network {
+        nodes,
+        edges,
+        rows,
+        plan_cal,
+        cal_source,
+        own,
+        conflicts,
+    })
 }
 
 fn cycle_error(on: &[Uuid]) -> Error {
@@ -142,27 +195,25 @@ async fn plan_cpm(
             cpm::MAX_DAYS
         )));
     }
-    let result = cpm::analyze(
-        &net.nodes,
-        &net.edges,
-        &WorkCalendar::seven_day(),
-        Options {
-            near_critical_days: near,
-            ..Options::default()
-        },
-    )
-    .map_err(|cpm::CpmError::Cycle(on)| cycle_error(&on))?;
+    let result = net
+        .analyze(near)
+        .map_err(|cpm::CpmError::Cycle(on)| cycle_error(&on))?;
     let by: HashMap<Uuid, &tasks::Model> = net.rows.iter().map(|t| (t.pid, t)).collect();
     let name = |pid: Uuid| by.get(&pid).map(|t| t.title.clone());
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
-        "calendar": "seven_day",
+        "calendar": net.cal_source,
+        "calendar_conflicts": net.conflicts,
         "project_finish": result.project_finish,
         "nodes": result.nodes.iter().map(|n| {
             let t = by.get(&n.pid);
             let mut v = serde_json::to_value(n).unwrap_or_default();
             v["title"] = serde_json::json!(name(n.pid));
             v["status"] = serde_json::json!(t.map(|t| t.status.clone()));
+            v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
+            v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
+            let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);
+            v["calendar"] = serde_json::json!(if own.is_some() { "plan+person" } else { "plan" });
             v
         }).collect::<Vec<_>>(),
         "unscheduled": result.unscheduled.iter().map(|u| serde_json::json!({
@@ -170,7 +221,7 @@ async fn plan_cpm(
         "ignored_edges": result.ignored_edges,
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,
-        "note": "Float is computed over the plan's tasks only, in working days of the calendar named above. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
+        "note": "Float is computed over the plan's tasks only, in working days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
     }))
 }
 
@@ -181,6 +232,32 @@ struct ScheduleBody {
     start_date: Option<NaiveDate>,
     #[serde(default)]
     duration_days: Option<i32>,
+    /// `snet`, `snlt`, `fnet`, `fnlt`, `mso` or `mfo`; with `constraint_date`.
+    #[serde(default)]
+    constraint_kind: Option<String>,
+    #[serde(default)]
+    constraint_date: Option<NaiveDate>,
+    /// A soft deadline: late dates only (negative float), never early dates.
+    #[serde(default)]
+    deadline: Option<NaiveDate>,
+    /// Required (and audited) when setting a hard constraint.
+    #[serde(default)]
+    reason: Option<String>,
+}
+
+/// Whether the caller may set a **hard** constraint (`mso` / `mfo`), which
+/// overrides the schedule's logic. With authentication off there is no caller to
+/// refuse (the deployment's posture for every write); with it on, the token needs
+/// `access=admin` or `scheduling=hard_constraints`.
+fn may_set_hard_constraint(caller: &MaybeAuthUser) -> bool {
+    caller.claims().is_none_or(|c| {
+        let has = |key: &str, want: &str| {
+            c.attrs
+                .get(key)
+                .is_some_and(|v| v.iter().any(|a| a == want))
+        };
+        has("access", "admin") || has("scheduling", "hard_constraints")
+    })
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/schedule` — set a task's planned start
@@ -194,9 +271,33 @@ async fn set_schedule(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
-    let problems = cpm::schedule_problems(b.start_date, b.duration_days);
+    let mut problems = cpm::schedule_problems(b.start_date, b.duration_days);
+    problems.extend(cpm::constraint_problems(
+        b.constraint_kind.as_deref(),
+        b.constraint_date,
+        b.deadline,
+    ));
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
+    }
+    let kind = b.constraint_kind.as_deref().map(str::to_ascii_lowercase);
+    let hard = kind
+        .as_deref()
+        .and_then(cpm::ConstraintKind::parse)
+        .is_some_and(cpm::ConstraintKind::is_hard);
+    if hard {
+        if !may_set_hard_constraint(&caller) {
+            return Err(Error::CustomError(
+                StatusCode::FORBIDDEN,
+                ErrorDetail::new(
+                    "forbidden",
+                    "a hard constraint (mso, mfo) overrides the schedule's logic and needs access=admin or scheduling=hard_constraints",
+                ),
+            ));
+        }
+        if b.reason.as_deref().is_none_or(|r| r.trim().is_empty()) {
+            return Err(unprocessable("a hard constraint needs a reason"));
+        }
     }
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(t_pid))
@@ -206,19 +307,21 @@ async fn set_schedule(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    let analyse = |net: &Network| {
-        cpm::analyze(
-            &net.nodes,
-            &net.edges,
-            &WorkCalendar::seven_day(),
-            Options::default(),
-        )
-    };
+    let analyse = |net: &Network| net.analyze(Options::default().near_critical_days);
     let before = analyse(&load_network(&ctx, plan.pid).await?);
-    let was = (task.start_date, task.duration_days);
+    let was = (
+        task.start_date,
+        task.duration_days,
+        task.constraint_kind.clone(),
+        task.constraint_date,
+        task.deadline,
+    );
     let mut a: tasks::ActiveModel = task.into();
     a.start_date = ActiveValue::set(b.start_date);
     a.duration_days = ActiveValue::set(b.duration_days);
+    a.constraint_kind = ActiveValue::set(kind.clone());
+    a.constraint_date = ActiveValue::set(b.constraint_date);
+    a.deadline = ActiveValue::set(b.deadline);
     let row = a.update(&ctx.db).await.map_err(db_err)?;
     let after = analyse(&load_network(&ctx, plan.pid).await?);
     AuditModel::record(
@@ -227,8 +330,12 @@ async fn set_schedule(
         "task_schedule_updated",
         caller.actor(),
         Some(serde_json::json!({
-            "from": { "start_date": was.0, "duration_days": was.1 },
-            "to": { "start_date": row.start_date, "duration_days": row.duration_days },
+            "from": { "start_date": was.0, "duration_days": was.1, "constraint_kind": was.2,
+                      "constraint_date": was.3, "deadline": was.4 },
+            "to": { "start_date": row.start_date, "duration_days": row.duration_days,
+                    "constraint_kind": row.constraint_kind, "constraint_date": row.constraint_date,
+                    "deadline": row.deadline },
+            "reason": b.reason, "hard": hard,
         })),
     )
     .await
@@ -241,7 +348,9 @@ async fn set_schedule(
         ),
     };
     format::json(serde_json::json!({
-        "task": { "pid": row.pid, "start_date": row.start_date, "duration_days": row.duration_days },
+        "task": { "pid": row.pid, "start_date": row.start_date, "duration_days": row.duration_days,
+                  "constraint_kind": row.constraint_kind, "constraint_date": row.constraint_date,
+                  "deadline": row.deadline },
         "moved": moved,
         "note": note,
     }))

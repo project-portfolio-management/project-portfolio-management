@@ -246,7 +246,8 @@ async fn portfolio_schedule(
         .collect();
     let violations = rules::violations(&facts, &edges);
     let critical = rules::critical_path(&facts, &edges);
-    let cpm_block = plan_level_cpm(&members, &facts, &edges);
+    let (plan_cal, cal_source) = super::calendars::plan_calendar(&ctx, parent_pid).await?;
+    let cpm_block = plan_level_cpm(&members, &facts, &edges, &plan_cal, cal_source);
     let items: Vec<_> = members
         .iter()
         .zip(&facts)
@@ -286,8 +287,10 @@ fn plan_level_cpm(
     members: &[plans::Model],
     facts: &[rules::ScheduleItem],
     edges: &[rules::ScheduleEdge],
+    calendar: &crate::cpm::WorkCalendar,
+    calendar_source: &str,
 ) -> serde_json::Value {
-    use crate::cpm::{self, Edge, Node, Options, WorkCalendar};
+    use crate::cpm::{self, Edge, Node, Options};
     let container = members.first().map(|m| m.pid);
     let nodes: Vec<Node> = facts
         .iter()
@@ -312,14 +315,9 @@ fn plan_level_cpm(
             lag: i64::from(e.lag_days),
         })
         .collect();
-    match cpm::analyze(
-        &nodes,
-        &cpm_edges,
-        &WorkCalendar::seven_day(),
-        Options::default(),
-    ) {
+    match cpm::analyze(&nodes, &cpm_edges, calendar, Options::default()) {
         Ok(r) => serde_json::json!({
-            "calendar": "seven_day",
+            "calendar": calendar_source,
             "project_finish": r.project_finish,
             "nodes": r.nodes.iter().map(|n| serde_json::json!({
                 "pid": n.pid, "total_float": n.total_float, "free_float": n.free_float,

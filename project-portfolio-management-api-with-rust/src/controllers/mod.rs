@@ -208,6 +208,7 @@ pub mod pagination {
 pub mod approvals;
 pub mod attachments;
 pub mod bulk;
+pub mod calendars;
 pub mod components;
 pub mod cpm;
 pub mod custom_fields;

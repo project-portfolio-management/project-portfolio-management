@@ -32,6 +32,12 @@ pub struct Model {
     pub start_date: Option<Date>,
     /// Working-day duration (PJ-1); `0` is a milestone.
     pub duration_days: Option<i32>,
+    /// A date constraint kind (SC-2): `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`.
+    pub constraint_kind: Option<String>,
+    /// The constraint's date; set exactly when the kind is.
+    pub constraint_date: Option<Date>,
+    /// A soft deadline: bounds late dates only (negative float), never early ones.
+    pub deadline: Option<Date>,
     /// The component (grouping) of this plan the task belongs to, if any.
     pub component_pid: Option<Uuid>,
     /// The parent task (a subtask's parent), if any. Roll-ups derive on read.

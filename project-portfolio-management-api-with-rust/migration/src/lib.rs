@@ -71,6 +71,7 @@ mod m20261003_000022_sink_deliveries;
 mod m20261003_000023_attachment_texts;
 mod m20261003_000024_report_schedules;
 mod m20261003_000025_schedule_fields;
+mod m20261003_000026_work_calendars;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -142,6 +143,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000023_attachment_texts::Migration),
             Box::new(m20261003_000024_report_schedules::Migration),
             Box::new(m20261003_000025_schedule_fields::Migration),
+            Box::new(m20261003_000026_work_calendars::Migration),
             // inject-above (do not remove this comment)
         ]
     }

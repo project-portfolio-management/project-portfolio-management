@@ -481,14 +481,15 @@ compliance is made anywhere.
   where they apply), durations measured in **working days** by the engine
   (fixes F-7), and a per-task **constraint**: `asap` (default), `alap`,
   `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`, with a separate soft
-  **deadline** date that **never moves** a date but produces negative float
-  when threatened. `mso` / `mfo` are flagged **hard**. Setting a hard
+  **deadline** that **never moves an early date** but bounds the late dates,
+  so a threatened deadline produces negative float (corrected 2026-10-03: the
+  first wording said it changed no date, which cannot give negative float). `mso` / `mfo` are flagged **hard**. Setting a hard
   constraint needs a role (see plan.md Q) and is audited with a reason.
   **Acceptance:** a Friday-to-Monday task is 2 working days; a holiday inside
   a span is skipped; `fnlt` earlier than the early finish yields **negative
   total float** rather than silently shifting the date; `mso` overrides logic
   and is reported as a hard constraint on that item; a deadline never changes
-  an early or late date; no calendar means 7-day behaviour, so every existing
+  an early date; no calendar means 7-day behaviour, so every existing
   plan is unchanged (an existing test passes untouched); constraint and
   calendar changes are audited.
 

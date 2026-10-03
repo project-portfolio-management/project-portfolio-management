@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — notification sinks (webhook and chat) (LT-6, 2026-10-03)
+
+`notification_sinks`, `sink_deliveries`, `/api/me/notification-sinks`: a person registers a signed webhook or a Slack / Mattermost / Discord / Telegram destination for their own notifications. A notification only enqueues a delivery; a dispatcher sends it with bounded retries. Destinations must be public https hosts and are never returned in full.
+
 ### Added — PDF board pack and plan summary (PL-10, 2026-10-03)
 
 `GET /api/board/pack.pdf` and `GET /api/plans/{pid}/summary.pdf`: server-rendered documents. The board pack uses the same data function and authorisation as the JSON; the summary is masked and carries no people references; both are byte-identical for fixed data when stamped with `as_of`. Unsigned.

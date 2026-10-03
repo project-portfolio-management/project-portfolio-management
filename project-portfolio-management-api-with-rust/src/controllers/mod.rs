@@ -219,6 +219,7 @@ pub mod plan_access;
 pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
+pub mod sinks;
 pub mod task_bulk;
 pub mod task_relations;
 pub mod task_tree;

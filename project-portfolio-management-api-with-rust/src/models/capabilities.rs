@@ -133,6 +133,9 @@ pub async fn notify<C: ConnectionTrait>(
     .insert(db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // LT-6 / RM-11: enqueue this person's sink deliveries. Best-effort and
+    // outside the notification's own success: it never fails the write.
+    crate::controllers::sinks::enqueue(db, &row).await;
     Ok(Some(row))
 }
 

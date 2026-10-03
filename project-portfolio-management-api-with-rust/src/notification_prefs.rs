@@ -37,9 +37,9 @@ pub const KINDS: &[&str] = &[
     "watch_update",
 ];
 
-/// Delivery channels that exist today. (Chat, webhook and email sinks —
-/// LT-6 / RM-11 — will add to this list.)
-pub const CHANNELS: &[&str] = &["in_app"];
+/// Delivery channels: the in-app inbox, and the three kinds of sink a person
+/// may register (`webhook`, `chat`, `email` — see [`crate::sinks`]).
+pub const CHANNELS: &[&str] = &["in_app", "webhook", "chat", "email"];
 
 /// The channel every existing notification uses.
 pub const DEFAULT_CHANNEL: &str = "in_app";

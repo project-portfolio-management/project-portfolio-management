@@ -255,7 +255,7 @@ enum AttemptResult {
 /// contacted is the operator-configured target — a receiver returning a
 /// `3xx` cannot bounce the request to a different, attacker-chosen host.
 /// Built once and reused.
-fn client() -> &'static reqwest::Client {
+pub(crate) fn client() -> &'static reqwest::Client {
     static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
     CLIENT.get_or_init(|| {
         reqwest::Client::builder()

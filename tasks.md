@@ -95,7 +95,7 @@ audited; people stay references.
   *Blocked on:* T-8 step 1–2 (artifact store). Gate-review and risk evidence
   are the first consumers.
 
-- [ ] **LT-6 (M) — Per-user webhooks and chat sinks.** Extend T-28m
+- [x] **LT-6 (M) — Per-user webhooks and chat sinks.** **Landed 2026-10-03.** Service: `notification_sinks` + `sink_deliveries` (migrations `…_000021`, `…_000022`), `POST/GET /api/me/notification-sinks`, remove (DELETE + POST twin), `…/{pid}/deliveries`, admin `POST /api/notification-sinks/dispatch`; a ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS`, 0 = off); `src/sinks.rs` (8 unit tests) + `tests/sinks.rs` end to end with a **real local HTTP receiver**. A person registers destinations for **their own** notifications: signed `webhook` (the family envelope + `X-Mxi-Event-Id` / `X-Mxi-Signature`), and chat formats `slack`, `mattermost`, `discord`, `telegram` (golden-pinned bodies carrying **only the notification's own text**). **Never in the notification's path:** `notify()` only *enqueues* (asserted: nothing is sent until dispatch); failures retry at 1/5/25/125 min then give up, keeping the last error, so a dead destination cannot delay or fail a notification. Per-channel preferences (`webhook`/`chat`/`email`) are honoured per kind; one person's notifications never reach another's sink. **Safe by construction (SSRF):** https to a **public** host only — loopback, private, link-local/metadata (169.254.169.254), CGNAT, unique-local, `.internal`/`.local` names and URLs with credentials are refused, the name is **re-resolved at send time** and refused if any answer is private, redirects are not followed; the destination is a **secret returned only masked**. **Residual risk, stated:** DNS rebinding between the check and the connection is not closed (the client resolves again). **Not built:** a front-end; a per-sink test-send button. Extend T-28m
   (`src/webhooks.rs`): a user registers their own destination for **their**
   notifications; and a `format` option renders the payload for Slack,
   Mattermost, Discord or Telegram instead of the family envelope.
@@ -285,7 +285,7 @@ started.
   billable and non-billable never merge without both shown; a person with no
   entries in range reports `null`, not zero.
 
-- [ ] **RM-11 (S) — Outbound email sink** — **decide first.** In-app only is a
+- [x] **RM-11 (S) — Outbound email sink** **Landed 2026-10-03.** Delivered with LT-6 (one sink framework): an `email` sink — **outbound only, inbound email stays refused** — sent through loco's mailer (`ctx.mailer`; the test profile's stub, asserted), from `PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM` (unset ⇒ the delivery fails with that reason and is never retried). The subject and body carry **only the notification's text** (a header-injection attempt in the address or text is neutralised, unit-tested), the channel is `email` in preferences so a user can switch it off per kind, and a person with no sink or no address receives nothing by email while the notification still lands in-app. **Decision taken:** built (the in-app-only stance is unchanged for anyone who registers no email sink). **Not built:** digest emails; a verified-address handshake (an address is trusted as given by its owner). — **decide first.** In-app only is a
   stated stance. If email is wanted: a sink in LT-6's framework (templates, a
   per-user opt-in, a digest option, no tracking pixels). Inbound email is
   refused (plan.md §10).

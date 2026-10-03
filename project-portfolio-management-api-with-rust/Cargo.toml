@@ -42,6 +42,8 @@ tokio = { version = "1.53", default-features = false, features = [
   # its SSE keep-alive.
   "sync",
   "time",
+  # `net` for the sink dispatcher's DNS check (src/controllers/sinks.rs).
+  "net",
 ] }
 # Server-sent events (PL-3): a stream built from the broadcast receiver.
 async-stream = { version = "0.3" }

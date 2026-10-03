@@ -89,6 +89,7 @@ pub fn paths() -> Value {
     merge(&mut all, guest_paths());
     merge(&mut all, link_paths());
     merge(&mut all, pdf_paths());
+    merge(&mut all, sink_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -619,6 +620,42 @@ fn pdf_paths() -> Value {
                 &format!("Read-checked like the plan itself (record-level policy, private plans). Rendered from the MASKED record and counts only: no lead, owner organisation, assignee or risk owner ever reaches the text layer. Shows kind, status, phase, stage, dates, keywords, goals, task counts by status, the number of risks recorded and the milestones. {rules}"),
                 vec![uuid_param("pid"), as_of],
                 &[("200", "application/pdf"), ("404", "Unknown plan, or one the caller cannot see"), ("422", "Malformed as_of")])
+        }
+    })
+}
+
+/// Notification delivery sinks (LT-6, RM-11).
+fn sink_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    let rules = "Kinds: webhook (the family envelope, signed with X-Mxi-Signature over the exact body), slack, mattermost, discord, telegram (needs settings.chat_id) and email. Delivery is never in the notification's path: a notification only enqueues a delivery, and a dispatcher sends it later with bounded retries (1, 5, 25, 125 minutes, then given up), so a slow or dead destination cannot delay or fail the notification. The person's channel preferences (webhook, chat, email) are honoured per notification kind. A chat or email message carries only the notification's own text, never more than the in-app inbox shows.";
+    json!({
+        "/api/me/notification-sinks": {
+            "post": op("sinks", "Register a delivery destination for your own notifications",
+                &format!("{rules} The destination must be an https URL to a PUBLIC host: never credentials in the URL, plain http, localhost, a private, link-local or metadata address, or an .internal or .local name (the name is resolved again at send time and refused if any answer is private; redirects are not followed). It is a secret and only a masked form is ever returned. At most ten per person; an identity that is not a user id is refused."),
+                vec![], &[("200", "The sink, destination masked"), ("401", "Missing or invalid bearer token"), ("422", "Unknown kind, an unacceptable destination, a telegram sink without chat_id, too many sinks, or an identity that cannot be addressed")]),
+            "get": op("sinks", "Your own sinks, destinations masked",
+                "Each sink with its kind, channel, enabled flag and a masked destination (scheme and host plus the last four characters, or the email domain). Never another person's, and never a full secret.",
+                vec![], &[("200", "Sinks"), ("401", "Missing or invalid bearer token")])
+        },
+        "/api/me/notification-sinks/{pid}": {
+            "delete": op("sinks", "Remove one of your own sinks",
+                "Another person's sink is 404, identically. Pending deliveries to it are skipped.", pid.clone(),
+                &[("200", "Removed"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/me/notification-sinks/{pid}/delete": {
+            "post": op("sinks", "Remove one of your own sinks (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", pid.clone(),
+                &[("200", "Removed"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/me/notification-sinks/{pid}/deliveries": {
+            "get": op("sinks", "Recent deliveries to one of your own sinks",
+                "Status (pending, sent, failed, skipped), the number of attempts, the last error, and when the next attempt is due, for the newest fifty.", pid,
+                &[("200", "Deliveries"), ("401", "Missing or invalid bearer token"), ("404", "Unknown, or not yours")])
+        },
+        "/api/notification-sinks/dispatch": {
+            "post": op("sinks", "Send the deliveries that are due now",
+                "Admin only. A ticker does this on its own every few seconds (PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS, 0 turns it off); this is for operators and tests. Returns how many were sent, are retrying, failed or were skipped.",
+                vec![], &[("200", "sent, retrying, failed, skipped"), ("403", "Not an admin")])
         }
     })
 }

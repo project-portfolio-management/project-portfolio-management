@@ -107,6 +107,7 @@ pub mod saved_views;
 pub mod scheduler;
 /// Tantivy full-text search: index schema, engine, and query surface.
 pub mod search;
+pub mod sinks;
 /// Point-in-time estate snapshots (board / CRO trends).
 pub mod snapshots;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).

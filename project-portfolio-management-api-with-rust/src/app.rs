@@ -206,6 +206,7 @@ impl Hooks for App {
             .add_route(controllers::guests::routes())
             .add_route(controllers::plan_links::routes())
             .add_route(controllers::pdf::routes())
+            .add_route(controllers::sinks::routes())
             .add_route(controllers::metrics::routes())
     }
 
@@ -232,6 +233,8 @@ impl Hooks for App {
         // Set-and-forget: the optional scheduled-action sweep ticker
         // (env-gated, default off — the sweep endpoint always works).
         crate::scheduler::spawn(ctx.clone());
+        // Notification sinks: send due deliveries (env-gated; 0 turns it off).
+        controllers::sinks::spawn(ctx);
         // Rebuild the full-text index if it is empty while records exist
         // — the upgrade path for a deployment whose data predates the
         // index, and the recovery path for an index directory that did

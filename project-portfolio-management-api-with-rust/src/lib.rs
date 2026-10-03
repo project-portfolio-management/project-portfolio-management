@@ -45,6 +45,7 @@ pub mod controllers;
 /// (feedforward / concurrent / feedback) that fix what a failing
 /// control may do.
 pub mod controls;
+pub mod cpm;
 pub mod custom_fields;
 pub mod data;
 pub mod discussion;

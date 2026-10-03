@@ -112,6 +112,23 @@ pub async fn allocations_for(
 pub async fn all_allocations(db: &DatabaseConnection) -> Result<Vec<allocations::Model>> {
     allocations::Entity::find()
         .filter(allocations::Column::DeletedAt.is_null())
+        .filter(allocations::Column::Booking.eq("committed"))
+        .all(db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))
+}
+
+/// Every live allocation, **proposed ones included** (PJ-4). The committed view
+/// above is what utilisation and over-allocation use: a proposal never counts.
+///
+/// # Errors
+///
+/// When the query fails.
+pub async fn all_allocations_with_proposed(
+    db: &DatabaseConnection,
+) -> Result<Vec<allocations::Model>> {
+    allocations::Entity::find()
+        .filter(allocations::Column::DeletedAt.is_null())
         .all(db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))

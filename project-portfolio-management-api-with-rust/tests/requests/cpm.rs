@@ -590,3 +590,62 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn proposed_bookings_never_count_until_committed() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let (a, b) = ("person:3f2c6b7e-0000-4000-8000-0000000000c1", "person:3f2c6b7e-0000-4000-8000-0000000000c2");
+        let alloc = |who: &str, pct: i64, booking: Option<&str>| {
+            let mut body = json!({ "person_ref": who, "percent": pct, "start_date": "2026-10-05", "end_date": "2026-10-18" });
+            if let Some(k) = booking {
+                body["booking"] = json!(k);
+                body["requested"] = json!(true);
+            }
+            let (request, url) = (&request, format!("/api/plans/{p}/allocations"));
+            async move { request.post(&url).json(&body).await }
+        };
+        assert_eq!(alloc(a, 30, Some("tentative")).await.status_code(), 422, "unknown booking");
+        alloc(a, 70, None).await.assert_status_ok();
+        let proposal: Value = alloc(a, 50, Some("proposed")).await.json();
+        let only_proposed: Value = alloc(b, 20, Some("proposed")).await.json();
+        let proposal = proposal["pid"].as_str().unwrap().to_string();
+        let only_proposed = only_proposed["pid"].as_str().unwrap().to_string();
+
+        let cap = |who: &str| {
+            let (request, who) = (&request, who.to_string());
+            async move {
+                let v: Value = request.get("/api/capacity?from=2026-10-05&to=2026-10-18").await.json();
+                v["people"].as_array().unwrap().iter().find(|x| x["person_ref"] == who.as_str()).cloned().unwrap()
+            }
+        };
+        // The firm figures ignore the proposal; the proposed series is separate; a person with only proposals still shows.
+        let c = cap(a).await;
+        assert_eq!((c["allocated_percent"].as_i64(), c["over_allocated"].as_bool()), (Some(70), Some(false)), "{c}");
+        assert_eq!(c["proposed"], json!({ "percent": 50, "allocations": 1, "would_exceed_capacity": true }));
+        let cb = cap(b).await;
+        assert_eq!((cb["allocated_percent"].as_i64(), cb["proposed"]["percent"].as_i64(), cb["proposed"]["would_exceed_capacity"].as_bool()), (Some(0), Some(20), Some(false)));
+
+        // Committing the one that fits needs no confirmation; the one that overloads is a 409 with the numbers.
+        request.post(&format!("/api/plans/{p}/allocations/{only_proposed}/commit")).await.assert_status_ok();
+        let refused = request.post(&format!("/api/plans/{p}/allocations/{proposal}/commit")).await;
+        assert_eq!(refused.status_code(), 409);
+        assert!(refused.text().contains("over capacity") && refused.text().contains("120"), "{}", refused.text());
+        assert_eq!(cap(a).await["proposed"]["allocations"], 1, "still a proposal");
+        let done: Value = request.post(&format!("/api/plans/{p}/allocations/{proposal}/commit?confirm=true")).await.json();
+        assert_eq!((done["booking"].as_str(), done["over_capacity"].as_bool()), (Some("committed"), Some(true)));
+        let c = cap(a).await;
+        assert_eq!((c["allocated_percent"].as_i64(), c["over_allocated"].as_bool(), c["proposed"]["allocations"].as_i64()), (Some(120), Some(true), Some(0)));
+        assert_eq!(request.post(&format!("/api/plans/{p}/allocations/{proposal}/commit")).await.status_code(), 409, "already committed");
+
+        // The plan's own list shows the booking and the request flag.
+        let list: Value = request.get(&format!("/api/plans/{p}/allocations")).await.json();
+        assert!(list.as_array().unwrap().iter().all(|x| x["booking"] == "committed"));
+        assert!(list.as_array().unwrap().iter().any(|x| x["requested"] == true));
+    })
+    .await;
+}

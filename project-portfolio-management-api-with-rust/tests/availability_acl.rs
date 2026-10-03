@@ -106,6 +106,27 @@ async fn availability_is_private_to_the_person_and_their_managers() {
         let pid = mine["pid"].as_str().unwrap();
         assert_eq!(request.post(&format!("/api/availability/{pid}/delete")).add_header(bk.clone(), bv.clone()).await.status_code(), 404);
         request.post(&format!("/api/availability/{pid}/delete")).add_header(ak.clone(), av.clone()).await.assert_status_ok();
+
+        // Committing a proposed booking (PJ-4): the named person or a manager may; Bob may not.
+        let plan: Value = request.post("/api/plans").add_header(ak.clone(), av.clone()).json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let propose = |_n: u8| {
+            let (request, url, who) = (&request, format!("/api/plans/{p}/allocations"), alice.clone());
+            let (k, v) = (ak.clone(), av.clone());
+            async move {
+                let r: Value = request
+                    .post(&url)
+                    .add_header(k, v)
+                    .json(&json!({ "person_ref": who, "percent": 30, "booking": "proposed", "start_date": "2026-10-05", "end_date": "2026-10-09" }))
+                    .await
+                    .json();
+                r["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (one, two) = (propose(1).await, propose(2).await);
+        assert_eq!(request.post(&format!("/api/plans/{p}/allocations/{one}/commit")).add_header(bk.clone(), bv.clone()).await.status_code(), 404, "Bob may not commit Alice's time");
+        request.post(&format!("/api/plans/{p}/allocations/{one}/commit")).add_header(ak.clone(), av.clone()).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/allocations/{two}/commit")).add_header(rk.clone(), rv.clone()).await.assert_status_ok();
     })
     .await;
 }

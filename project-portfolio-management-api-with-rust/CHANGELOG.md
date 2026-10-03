@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — proposed vs committed bookings (PJ-4, 2026-10-03)
+
+Allocations can be proposed (hoped for) or committed (firm, the default). A proposal never counts toward utilisation; `GET /api/capacity` reports it as its own series. Committing one that would put the person over their per-day capacity needs `?confirm=true`.
+
 ### Added — availability over time (PJ-3, 2026-10-03)
 
 `/api/availability`: a person's capacity by date range (part-time, leave, ramp-up). `GET /api/capacity` now reads capacity per day from it; with no ranges nothing changes. A person sets their own; resource managers and admins set anyone's.

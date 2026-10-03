@@ -96,6 +96,7 @@ pub fn paths() -> Value {
     merge(&mut all, calendar_paths());
     merge(&mut all, mspdi_paths());
     merge(&mut all, availability_paths());
+    merge(&mut all, booking_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -782,6 +783,18 @@ fn availability_paths() -> Value {
         "/api/availability/{pid}/delete": {
             "post": op("availability", "Remove an availability range (POST twin)", "The POST twin of DELETE (the default policy reserves DELETE for admins).", vec![uuid_param("pid")],
                 &[("200", "Removed"), ("404", "Unknown, or not yours")])
+        }
+    })
+}
+
+/// Proposed vs committed bookings (PJ-4).
+fn booking_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/allocations/{a_pid}/commit": {
+            "post": op("availability", "Commit a proposed booking",
+                "POST /api/plans/{pid}/allocations takes booking (proposed or committed, default committed) and requested. A proposed booking is hoped for: it never counts toward committed utilisation or over-allocation, and GET /api/capacity reports it as its own series (proposed.percent, proposed.allocations, proposed.would_exceed_capacity), never merged into the firm figures. Committing it is allowed to the named person, a resource manager or an admin (others 404). If, with it firm, the person would be over their per-day capacity (availability, PJ-3) the answer is 409 over_capacity with the numbers, and only ?confirm=true commits it anyway (audited as an over-commitment). Committing an already committed booking is 409.",
+                vec![uuid_param("pid"), uuid_param("a_pid"), query("confirm", false, "true to commit despite being over capacity")],
+                &[("200", "pid, booking and whether it is over capacity"), ("404", "Unknown, or not yours to commit"), ("409", "Already committed, or over capacity without ?confirm=true")])
         }
     })
 }

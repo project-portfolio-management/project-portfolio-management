@@ -20,6 +20,10 @@ pub struct Model {
     pub person_ref: String,
     pub role: Option<String>,
     pub percent: i32,
+    /// `committed` (firm, the default) or `proposed` (hoped for; PJ-4).
+    pub booking: String,
+    /// Asked of the resource manager (PJ-4).
+    pub requested: bool,
     pub start_date: Option<Date>,
     pub end_date: Option<Date>,
     pub deleted_at: Option<DateTimeWithTimeZone>,

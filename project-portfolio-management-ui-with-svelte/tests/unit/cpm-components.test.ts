@@ -197,3 +197,35 @@ describe("CapacityMeter", () => {
     done();
   });
 });
+
+import VarianceTable from "../../src/lib/components/VarianceTable.svelte";
+
+describe("VarianceTable", () => {
+  const variance = {
+    rows: [
+      { task_pid: "a", title: "Design", standing: "slipped" as const, baseline_start: "2026-10-05", baseline_finish: "2026-10-07", start: "2026-10-05", finish: "2026-10-09", start_variance_days: 0, finish_variance_days: 2, duration_variance_days: 2 },
+      { task_pid: "b", title: "New thing", standing: "added" as const, baseline_start: null, baseline_finish: null, start: "2026-10-12", finish: "2026-10-14", start_variance_days: null, finish_variance_days: null, duration_variance_days: null },
+      { task_pid: "c", title: "Dropped", standing: "removed" as const, baseline_start: "2026-10-05", baseline_finish: "2026-10-30", start: null, finish: null, start_variance_days: null, finish_variance_days: null, duration_variance_days: null },
+    ],
+    summary: { baseline_tasks: 2, current_tasks: 2, matched: 1, slipped: 1, pulled_in: 0, on_baseline: 0, unmeasurable: 0, added: 1, removed: 1, plan_finish_slip_days: -3 },
+  };
+  it("states slip, added and removed apart, in words, and warns when a removal makes the plan look better", () => {
+    const { root, done } = render(VarianceTable, { variance });
+    const text = (root.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain("1 of 2 baselined tasks are still in the plan");
+    expect(text).toContain("1 added and 1 removed since");
+    expect(text).toContain("3 working days earlier than baselined");
+    expect(text).toContain("deleting work is not an improvement");
+    expect(text).toContain("Slipped: finishes 2 working days later");
+    expect(text).toContain("Added: not in the baseline, so it has no slip");
+    expect(text).toContain("Removed: was in the baseline and is gone");
+    expect(root.querySelector("caption")).not.toBeNull();
+    expect([...root.querySelectorAll("tbody th[scope=row]")]).toHaveLength(3);
+    done();
+  });
+  it("says the plan finish cannot be compared when it cannot", () => {
+    const { root, done } = render(VarianceTable, { variance: { ...variance, summary: { ...variance.summary, plan_finish_slip_days: null, removed: 0 } } });
+    expect((root.textContent ?? "").replace(/\s+/g, " ")).toContain("cannot be compared");
+    done();
+  });
+});

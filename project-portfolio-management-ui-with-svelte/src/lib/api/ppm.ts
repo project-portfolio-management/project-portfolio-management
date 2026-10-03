@@ -713,6 +713,59 @@ export interface Cpm {
   note: string;
 }
 
+/** A schedule baseline (SC-3): a numbered, append-only snapshot. */
+export interface ScheduleBaseline {
+  pid: string;
+  version: number;
+  reason: string;
+  created_by: string | null;
+  created_at: string;
+  task_count: number;
+  project_finish: string | null;
+}
+
+/** How a task compares with a baseline. */
+export type VarianceStanding = "slipped" | "pulled_in" | "on_baseline" | "added" | "removed" | "unmeasurable";
+
+export interface VarianceRow {
+  task_pid: string;
+  title: string;
+  standing: VarianceStanding;
+  baseline_start: string | null;
+  baseline_finish: string | null;
+  start: string | null;
+  finish: string | null;
+  /** Working days; positive is later; null when no variance can be stated. */
+  start_variance_days: number | null;
+  finish_variance_days: number | null;
+  duration_variance_days: number | null;
+  reason?: string;
+}
+
+/** `GET /api/plans/{pid}/schedule-variance`. */
+export interface ScheduleVariance {
+  /** `null` when no baseline has been taken. */
+  baseline: ScheduleBaseline | null;
+  reason?: "no_baseline";
+  note: string;
+  variance: {
+    rows: VarianceRow[];
+    summary: {
+      baseline_tasks: number;
+      current_tasks: number;
+      matched: number;
+      slipped: number;
+      pulled_in: number;
+      on_baseline: number;
+      unmeasurable: number;
+      added: number;
+      removed: number;
+      /** Working days the plan's own finish moved; null when either side has no finish. */
+      plan_finish_slip_days: number | null;
+    };
+  } | null;
+}
+
 /** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
 export interface TaskScheduleBody {
   start_date?: string | null;
@@ -1223,6 +1276,17 @@ export class PpmClient {
   /** Set a task's planned start, duration, constraint and deadline; answers with what moved. */
   setTaskSchedule(pid: string, taskPid: string, body: TaskScheduleBody): Promise<ScheduleMoved> {
     return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/schedule`, { body });
+  }
+  scheduleBaselines(pid: string): Promise<ScheduleBaseline[]> {
+    return this.http.get(`/api/plans/${pid}/schedule-baselines`);
+  }
+  /** Take the next baseline (append-only); a reason is required. */
+  takeScheduleBaseline(pid: string, reason: string): Promise<ScheduleBaseline> {
+    return this.http.post(`/api/plans/${pid}/schedule-baselines`, { body: { reason } });
+  }
+  scheduleVariance(pid: string, baseline?: number): Promise<ScheduleVariance> {
+    const q = baseline === undefined ? "" : `?baseline=${baseline}`;
+    return this.http.get(`/api/plans/${pid}/schedule-variance${q}`);
   }
   planCalendar(pid: string): Promise<WorkCalendarView> {
     return this.http.get(`/api/plans/${pid}/calendar`);

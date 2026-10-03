@@ -649,3 +649,206 @@ async fn proposed_bookings_never_count_until_committed() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn baselines_are_append_only_and_variance_separates_slip_added_and_removed() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let post = |reason: Value| {
+            let (request, url) = (&request, format!("/api/plans/{p}/schedule-baselines"));
+            async move { request.post(&url).json(&json!({ "reason": reason })).await }
+        };
+
+        // No baseline: variance is unknown, not zero; and nothing scheduled yet cannot be baselined.
+        let none: Value = request
+            .get(&format!("/api/plans/{p}/schedule-variance"))
+            .await
+            .json();
+        assert_eq!(
+            (none["reason"].as_str(), none["variance"].is_null()),
+            (Some("no_baseline"), true)
+        );
+        assert_eq!(
+            post(json!("kickoff")).await.status_code(),
+            422,
+            "nothing is scheduled yet"
+        );
+
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(3)).await; // Mon-Wed
+        let b = task(&request, &p, "B", None, Some(4)).await;
+        let gone = task(&request, &p, "Gone", Some("2026-10-05"), Some(10)).await;
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a, "successor_pid": b }))
+            .await
+            .assert_status_ok();
+
+        // A reason is required; then version 1.
+        assert_eq!(post(json!("  ")).await.status_code(), 422);
+        assert_eq!(post(json!("x".repeat(501))).await.status_code(), 422);
+        let v1: Value = post(json!("Approved plan")).await.json();
+        assert_eq!(
+            (v1["version"].as_i64(), v1["task_count"].as_i64()),
+            (Some(1), Some(3))
+        );
+
+        // The plan changes: A grows, a task is added, one is removed.
+        request
+            .put(&format!("/api/plans/{p}/tasks/{a}/schedule"))
+            .json(&json!({ "start_date": "2026-10-05", "duration_days": 5 }))
+            .await
+            .assert_status_ok();
+        let added = task(&request, &p, "Added", Some("2026-10-05"), Some(2)).await;
+        request
+            .delete(&format!("/api/plans/{p}/tasks/{gone}"))
+            .await
+            .assert_status_ok();
+
+        let var: Value = request
+            .get(&format!("/api/plans/{p}/schedule-variance"))
+            .await
+            .json();
+        assert_eq!(var["baseline"]["version"], 1);
+        let rows = var["variance"]["rows"].as_array().unwrap();
+        let row = |pid: &str| rows.iter().find(|r| r["task_pid"] == pid).cloned().unwrap();
+        assert_eq!(row(&a)["standing"], "slipped");
+        assert_eq!(row(&a)["finish_variance_days"], 2, "3 days became 5");
+        assert_eq!(row(&a)["duration_variance_days"], 2);
+        assert_eq!(row(&b)["standing"], "slipped", "B follows A");
+        assert_eq!(row(&added)["standing"], "added");
+        assert!(
+            row(&added)["finish_variance_days"].is_null(),
+            "an added task is not slip"
+        );
+        assert_eq!(row(&gone)["standing"], "removed");
+        assert_eq!(
+            row(&gone)["baseline_finish"],
+            "2026-10-14",
+            "a removed task keeps its baselined dates"
+        );
+        let s = &var["variance"]["summary"];
+        assert_eq!(
+            (s["baseline_tasks"].as_i64(), s["current_tasks"].as_i64()),
+            (Some(3), Some(3))
+        );
+        assert_eq!(
+            (
+                s["matched"].as_i64(),
+                s["added"].as_i64(),
+                s["removed"].as_i64(),
+                s["slipped"].as_i64()
+            ),
+            (Some(2), Some(1), Some(1), Some(2))
+        );
+        // The longest baselined task was deleted, so the plan's own finish moved EARLIER by a
+        // day: the report says so, and the removed row above shows why that is no improvement.
+        assert_eq!(s["plan_finish_slip_days"], -1);
+
+        // A re-baseline is version 2 with its reason; version 1 is untouched and still comparable.
+        let v2: Value = post(json!("Re-baselined after the change")).await.json();
+        assert_eq!(v2["version"], 2);
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/schedule-baselines"))
+            .await
+            .json();
+        assert_eq!(
+            list.as_array()
+                .unwrap()
+                .iter()
+                .map(|b| b["version"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![2, 1],
+            "newest first, both kept"
+        );
+        assert_eq!(list[1]["reason"], "Approved plan");
+        let latest: Value = request
+            .get(&format!("/api/plans/{p}/schedule-variance"))
+            .await
+            .json();
+        assert_eq!(latest["baseline"]["version"], 2);
+        assert_eq!(
+            latest["variance"]["summary"]["slipped"], 0,
+            "against the new baseline nothing has slipped"
+        );
+        let old: Value = request
+            .get(&format!("/api/plans/{p}/schedule-variance?baseline=1"))
+            .await
+            .json();
+        assert_eq!(
+            old["variance"]["summary"]["slipped"], 2,
+            "version 1 still says what it said"
+        );
+        assert_eq!(
+            request
+                .get(&format!("/api/plans/{p}/schedule-variance?baseline=9"))
+                .await
+                .status_code(),
+            404
+        );
+
+        // There is no way to change or remove a baseline.
+        for method in ["put", "delete"] {
+            let url = format!(
+                "/api/plans/{p}/schedule-baselines/{}",
+                v1["pid"].as_str().unwrap()
+            );
+            let status = if method == "put" {
+                request.put(&url).json(&json!({})).await.status_code()
+            } else {
+                request.delete(&url).await.status_code()
+            };
+            assert!(status == 404 || status == 405, "{method} {status}");
+        }
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_baseline_limit_refuses_rather_than_overwrites() {
+    super::isolate_search_index();
+    // SAFETY: `#[serial]` — nothing else runs while this is set.
+    unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES", "2") };
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Limit" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        task(&request, &p, "A", Some("2026-10-05"), Some(3)).await;
+        for _ in 0..2 {
+            request
+                .post(&format!("/api/plans/{p}/schedule-baselines"))
+                .json(&json!({ "reason": "r" }))
+                .await
+                .assert_status_ok();
+        }
+        let third = request
+            .post(&format!("/api/plans/{p}/schedule-baselines"))
+            .json(&json!({ "reason": "r" }))
+            .await;
+        assert_eq!(third.status_code(), 409);
+        assert!(
+            third.text().contains("never overwritten"),
+            "{}",
+            third.text()
+        );
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/schedule-baselines"))
+            .await
+            .json();
+        assert_eq!(list.as_array().unwrap().len(), 2, "both survive");
+    })
+    .await;
+    unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES") };
+}

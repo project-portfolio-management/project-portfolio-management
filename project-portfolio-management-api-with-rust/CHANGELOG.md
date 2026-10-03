@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — schedule baselines and variance (SC-3, 2026-10-03)
+
+`/api/plans/{pid}/schedule-baselines` takes numbered, append-only snapshots of a plan's task schedule (a reason is required); `/schedule-variance` shows, in working days, what slipped, was pulled in, was added or was removed since. Added tasks are not slip and removed tasks stay listed.
+
 ### Added — proposed vs committed bookings (PJ-4, 2026-10-03)
 
 Allocations can be proposed (hoped for) or committed (firm, the default). A proposal never counts toward utilisation; `GET /api/capacity` reports it as its own series. Committing one that would put the person over their per-day capacity needs `?confirm=true`.

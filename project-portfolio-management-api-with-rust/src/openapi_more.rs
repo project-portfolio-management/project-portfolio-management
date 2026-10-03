@@ -97,6 +97,7 @@ pub fn paths() -> Value {
     merge(&mut all, mspdi_paths());
     merge(&mut all, availability_paths());
     merge(&mut all, booking_paths());
+    merge(&mut all, baseline_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -795,6 +796,26 @@ fn booking_paths() -> Value {
                 "POST /api/plans/{pid}/allocations takes booking (proposed or committed, default committed) and requested. A proposed booking is hoped for: it never counts toward committed utilisation or over-allocation, and GET /api/capacity reports it as its own series (proposed.percent, proposed.allocations, proposed.would_exceed_capacity), never merged into the firm figures. Committing it is allowed to the named person, a resource manager or an admin (others 404). If, with it firm, the person would be over their per-day capacity (availability, PJ-3) the answer is 409 over_capacity with the numbers, and only ?confirm=true commits it anyway (audited as an over-commitment). Committing an already committed booking is 409.",
                 vec![uuid_param("pid"), uuid_param("a_pid"), query("confirm", false, "true to commit despite being over capacity")],
                 &[("200", "pid, booking and whether it is over capacity"), ("404", "Unknown, or not yours to commit"), ("409", "Already committed, or over capacity without ?confirm=true")])
+        }
+    })
+}
+
+/// Schedule baselines (SC-3).
+fn baseline_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/schedule-baselines": {
+            "post": op("cpm", "Take a schedule baseline",
+                "Snapshots every task's early start, early finish and working duration (the critical-path engine's dates) as the next numbered version, with a required reason (up to 500 characters). Append-only: there is no update and no delete, a re-baseline is the next version and the earlier one stays. A bounded number are kept per plan (11 by default); at the limit a new one is refused 409 rather than overwriting history. A task that cannot be scheduled is recorded with no dates and the reason. Refused 422 when nothing is scheduled yet or the dependencies contain a cycle.",
+                vec![uuid_param("pid")],
+                &[("200", "The baseline"), ("404", "Unknown plan"), ("409", "At the per-plan limit, or another baseline was taken at the same moment"), ("422", "No reason, nothing scheduled, or a cycle")]),
+            "get": op("cpm", "A plan's schedule baselines, newest first", "Version, reason, who, when, task count and the baselined project finish.",
+                vec![uuid_param("pid")], &[("200", "Baselines"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/schedule-variance": {
+            "get": op("cpm", "How the schedule differs from a baseline",
+                "Per task: start, finish and duration variance in working days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
+                vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
+                &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
         }
     })
 }

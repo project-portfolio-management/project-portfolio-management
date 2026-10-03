@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — schedule baselines and variance (SC-3)
+
+Take a numbered, append-only baseline on the critical-path page; the Gantt shows an outline where each task was baselined; a variance table separates slipped, pulled in, added and removed in working days.
+
 ### Added — availability and proposed bookings (PJ-3, PJ-4)
 
 `/capacity` draws firm load against capacity in force with the proposed bookings as a separate hatched series and a strip of over-capacity days; `/me/calendar` edits availability ranges; allocations can be proposed and committed (with a confirm when it would overload).

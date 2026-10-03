@@ -48,6 +48,10 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.availability("person:x y");
     await ppm.setAvailability({ person_ref: "person:x", from: "2026-10-12", to: "2026-10-18", max_percent: 40 });
     await ppm.removeAvailability("v1");
+    await ppm.scheduleBaselines("p1");
+    await ppm.takeScheduleBaseline("p1", "approved");
+    await ppm.scheduleVariance("p1");
+    await ppm.scheduleVariance("p1", 2);
     expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
       "GET /api/plans/p1/cpm",
       "GET /api/plans/p1/cpm?near=3",
@@ -62,6 +66,10 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
       "GET /api/availability?person_ref=person%3Ax%20y",
       "POST /api/availability",
       "POST /api/availability/v1/delete",
+      "GET /api/plans/p1/schedule-baselines",
+      "POST /api/plans/p1/schedule-baselines",
+      "GET /api/plans/p1/schedule-variance",
+      "GET /api/plans/p1/schedule-variance?baseline=2",
     ]);
   });
 });

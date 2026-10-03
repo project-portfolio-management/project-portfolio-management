@@ -45,6 +45,9 @@ pub const MODULES: &[ModuleDef] = &[
             "standup",
             // The critical-path view of a plan's tasks (SC-1).
             "cpm",
+            // Schedule baselines and variance against them (SC-3).
+            "schedule-baselines",
+            "schedule-variance",
         ],
     },
     ModuleDef {

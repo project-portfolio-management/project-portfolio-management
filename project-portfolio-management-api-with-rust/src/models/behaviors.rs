@@ -31,3 +31,5 @@ impl ActiveModelBehavior for attachment_texts::ActiveModel {}
 impl ActiveModelBehavior for report_schedules::ActiveModel {}
 impl ActiveModelBehavior for work_calendars::ActiveModel {}
 impl ActiveModelBehavior for person_availabilities::ActiveModel {}
+impl ActiveModelBehavior for schedule_baselines::ActiveModel {}
+impl ActiveModelBehavior for schedule_baseline_tasks::ActiveModel {}

@@ -64,6 +64,8 @@ pub mod risks;
 pub mod satisfaction_responses;
 pub mod saved_views;
 pub mod scenarios;
+pub mod schedule_baseline_tasks;
+pub mod schedule_baselines;
 pub mod scheduled_actions;
 pub mod sink_deliveries;
 pub mod sprint_commitments;

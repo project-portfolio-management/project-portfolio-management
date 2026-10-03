@@ -7,6 +7,7 @@ import {
   maskToWeekdays,
   monthGrid,
   shiftMonth,
+  standingText,
   toggleHoliday,
   unscheduledReason,
   weekdaysToMask,
@@ -169,5 +170,44 @@ describe("unscheduledReason", () => {
     expect(unscheduledReason("no_duration")).toMatch(/no duration/);
     expect(unscheduledReason("no_anchor")).toMatch(/no start date/);
     expect(unscheduledReason("weird")).toBe("weird");
+  });
+});
+
+describe("baseline ghosts and variance wording (SC-3)", () => {
+  const node = (pid: string, es: string, ef: string, lf: string) => ({
+    pid,
+    title: pid,
+    early_start: es,
+    early_finish: ef,
+    late_finish: lf,
+    total_float: 0,
+    critical: true,
+    near_critical: false,
+  });
+  it("draws where a task was baselined and widens the span to include it", () => {
+    const base = new Map([["a", { start: "2026-10-05", finish: "2026-10-07" }]]);
+    const c = cpmBars([node("a", "2026-10-08", "2026-10-09", "2026-10-09")], base)!;
+    expect(c.from).toBe("2026-10-05");
+    expect(c.bars[0]!.ghost).toMatchObject({ startPct: 0 });
+    expect(c.bars[0]!.ghost!.widthPct).toBeCloseTo(60); // 3 of the 5 days drawn
+    expect(c.bars[0]!.label).toContain("Baselined 2026-10-05 to 2026-10-07");
+  });
+  it("has no ghost without a baseline, or for a bad one", () => {
+    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")])!.bars[0]!.ghost).toBeNull();
+    const bad = new Map([["a", { start: "2026-10-09", finish: "2026-10-05" }]]);
+    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], bad)!.bars[0]!.ghost).toBeNull();
+    const missing = new Map([["a", { start: null, finish: null }]]);
+    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], missing)!.bars[0]!.ghost).toBeNull();
+  });
+  it("says slip in words with a marker, pluralised", () => {
+    expect(standingText({ standing: "slipped", finish_variance_days: 3 })).toMatchObject({ marker: "▲", word: "Slipped", detail: "finishes 3 working days later than baselined" });
+    expect(standingText({ standing: "slipped", finish_variance_days: 1 }).detail).toContain("1 working day later");
+    expect(standingText({ standing: "pulled_in", finish_variance_days: -2 }).detail).toContain("2 working days earlier");
+    expect(standingText({ standing: "added", finish_variance_days: null }).detail).toContain("no slip");
+    expect(standingText({ standing: "removed", finish_variance_days: null }).detail).toContain("baselined dates are kept");
+    expect(standingText({ standing: "unmeasurable", finish_variance_days: null, reason: "not_scheduled_then" }).detail).toContain("no schedule when baselined");
+    expect(standingText({ standing: "unmeasurable", finish_variance_days: null, reason: "not_scheduled_now" }).detail).toContain("no schedule now");
+    const markers = ["slipped", "pulled_in", "on_baseline", "added", "removed", "unmeasurable"].map((s) => standingText({ standing: s, finish_variance_days: 0 }).marker);
+    expect(new Set(markers).size).toBe(6);
   });
 });

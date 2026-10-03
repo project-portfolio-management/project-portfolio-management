@@ -10,10 +10,18 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
-  import { PpmClient, type Cpm, type CpmNode, type ScheduleMoved } from "#lib/api/ppm.js";
+  import {
+    PpmClient,
+    type Cpm,
+    type CpmNode,
+    type ScheduleBaseline,
+    type ScheduleMoved,
+    type ScheduleVariance,
+  } from "#lib/api/ppm.js";
   import CpmGantt from "#lib/components/CpmGantt.svelte";
   import CpmTable from "#lib/components/CpmTable.svelte";
   import NetworkDiagram from "#lib/components/NetworkDiagram.svelte";
+  import VarianceTable from "#lib/components/VarianceTable.svelte";
   import { floatLabel, unscheduledReason } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -27,6 +35,13 @@
   let result = $state<ScheduleMoved | null>(null);
   let saving = $state(false);
 
+  // Baselines (SC-3): append-only; variance is against a chosen version.
+  let baselines = $state<ScheduleBaseline[]>([]);
+  let chosen = $state<number | null>(null);
+  let variance = $state<ScheduleVariance | null>(null);
+  let baselineReason = $state("");
+  let showBaseline = $state(true);
+
   // The editor's fields (an absent field clears it, so the form is always complete).
   let start = $state("");
   let duration = $state("");
@@ -35,15 +50,48 @@
   let deadline = $state("");
   let reason = $state("");
 
+  async function loadBaselines() {
+    try {
+      baselines = await ppm.scheduleBaselines(pid);
+      variance = await ppm.scheduleVariance(pid, chosen ?? undefined);
+      chosen = variance.baseline?.version ?? null;
+    } catch (err) {
+      error = err instanceof Error ? err.message : "Could not load the baselines";
+    }
+  }
+
+  async function takeBaseline(event: SubmitEvent) {
+    event.preventDefault();
+    error = null;
+    try {
+      await ppm.takeScheduleBaseline(pid, baselineReason);
+      baselineReason = "";
+      chosen = null;
+      await loadBaselines();
+    } catch (err) {
+      error = err instanceof Error ? err.message : "Could not take the baseline";
+    }
+  }
+
   async function load() {
     try {
       cpm = await ppm.planCpm(pid, near);
       error = null;
+      await loadBaselines();
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not load the schedule";
     }
   }
   onMount(() => void load());
+
+  // Where each task was baselined to sit, for the outline under its Gantt bar.
+  const ghosts = $derived(
+    new Map(
+      (showBaseline ? (variance?.variance?.rows ?? []) : [])
+        .filter((r) => r.baseline_start && r.baseline_finish)
+        .map((r) => [r.task_pid, { start: r.baseline_start, finish: r.baseline_finish }] as const),
+    ),
+  );
 
   const titleOf = $derived(new Map((cpm?.nodes ?? []).map((n) => [n.pid, n.title ?? "(untitled)"])));
   const node = $derived<CpmNode | null>(cpm?.nodes.find((n) => n.pid === selected) ?? null);
@@ -121,12 +169,39 @@
   </div>
 
   {#if view === "gantt"}
-    <CpmGantt nodes={cpm.nodes} {selected} onselect={select} />
+    <CpmGantt nodes={cpm.nodes} baseline={ghosts} {selected} onselect={select} />
   {:else if view === "network"}
     <NetworkDiagram nodes={cpm.nodes} edges={cpm.edges} chains={cpm.critical_chains} {selected} onselect={select} />
   {:else}
     <CpmTable nodes={cpm.nodes} />
   {/if}
+
+  <section aria-labelledby="bl-h" class="stack">
+    <h2 id="bl-h">Baselines</h2>
+    <p class="small muted">
+      A baseline is a numbered snapshot of the schedule, kept for good: re-baselining makes the next version and never replaces one.
+    </p>
+    <form onsubmit={takeBaseline} class="row">
+      <label>Why a baseline now? <input type="text" bind:value={baselineReason} required maxlength="500" /></label>
+      <button type="submit">Take baseline</button>
+    </form>
+    {#if baselines.length > 0}
+      <label>
+        Compare with
+        <select bind:value={chosen} onchange={() => void loadBaselines()}>
+          {#each baselines as b (b.pid)}
+            <option value={b.version}>Version {b.version}: {b.reason} ({b.created_at.slice(0, 10)})</option>
+          {/each}
+        </select>
+      </label>
+      <label><input type="checkbox" bind:checked={showBaseline} /> Show the baseline under each bar</label>
+    {/if}
+    {#if variance?.variance}
+      <VarianceTable variance={variance.variance} />
+    {:else if variance}
+      <p class="muted">No baseline yet, so nothing can be said about slip.</p>
+    {/if}
+  </section>
 
   {#if cpm.critical_chains.length > 0}
     <h2>Critical chains</h2>
@@ -206,6 +281,12 @@
 {/if}
 
 <style>
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: end;
+  }
   .toolbar {
     display: flex;
     flex-wrap: wrap;

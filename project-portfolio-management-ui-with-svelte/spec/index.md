@@ -1075,3 +1075,18 @@ calendar symbols), `tests/unit/ppm.test.ts` (paths and verbs).
   (`?confirm=true`), and the server audits it as an over-commitment.
 - **Not built:** a resource-manager inbox for `requested` proposals, the demand
   vs capacity heatmap by role (SC-7), and a browser audit.
+
+## Schedule baselines (SC-3)
+
+On `/plans/[pid]/critical-path`: **Take baseline** (a reason is required),
+a version picker, a *show the baseline under each bar* toggle (an outline under
+the Gantt bar where the task was baselined to sit; `cpmBars` widens the span to
+include it) and the **variance table** (`VarianceTable`). Rules the page keeps:
+a baseline is **append-only** (the page offers no edit or delete, re-baselining
+is the next version); variance is in **working days**; every row has a marker
+and a sentence (▲ slipped, ▼ pulled in, = on baseline, + **added — no slip**, −
+**removed — kept with its baselined dates**, ? cannot say); the summary states
+the plan's own finish movement and warns when it improved only because tasks
+were removed; with no baseline it says so instead of showing zero slip.
+**Not built:** comparing two baselines with each other, and a baseline for
+plan-level (non-task) nodes.

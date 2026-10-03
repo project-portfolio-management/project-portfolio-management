@@ -12,11 +12,18 @@
 
   let {
     nodes,
+    baseline = new Map(),
     selected = null,
     onselect,
-  }: { nodes: CpmNode[]; selected?: string | null; onselect?: (pid: string) => void } = $props();
+  }: {
+    nodes: CpmNode[];
+    /** Baselined start and finish per task (SC-3), drawn as an outline under each bar. */
+    baseline?: Map<string, { start: string | null; finish: string | null }>;
+    selected?: string | null;
+    onselect?: (pid: string) => void;
+  } = $props();
 
-  const chart = $derived(cpmBars(nodes));
+  const chart = $derived(cpmBars(nodes, baseline));
 </script>
 
 {#if chart}
@@ -26,6 +33,7 @@
       <li><span class="mk">◐</span> near-critical</li>
       <li><span class="mk">○</span> has float (the hatched tail)</li>
       <li><span class="mk">!</span> cannot meet a constraint or deadline (the line marks the limit)</li>
+      {#if baseline.size > 0}<li><span class="mk">▭</span> the outline under a bar is where it was baselined</li>{/if}
     </ul>
     <div class="axis" aria-hidden="true">
       <span class="name"></span>
@@ -44,6 +52,9 @@
             <span class="sr-only">. {bar.label}</span>
           </button>
           <span class="track" aria-hidden="true">
+            {#if bar.ghost}
+              <span class="ghost" style="left:{bar.ghost.startPct}%;width:{bar.ghost.widthPct}%"></span>
+            {/if}
             <span class="bar {bar.state}" style="left:{bar.startPct}%;width:{bar.widthPct}%"></span>
             {#if bar.floatPct > 0}
               <span class="float" style="left:{bar.startPct + bar.widthPct}%;width:{bar.floatPct}%"></span>
@@ -152,6 +163,14 @@
     background: #7f1d1d;
     outline: 2px dashed #7f1d1d;
     outline-offset: 1px;
+  }
+  .ghost {
+    position: absolute;
+    bottom: 0;
+    height: 0.25rem;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    opacity: 0.8;
   }
   .float {
     background: repeating-linear-gradient(135deg, var(--accent, #35547c) 0 2px, transparent 2px 6px);

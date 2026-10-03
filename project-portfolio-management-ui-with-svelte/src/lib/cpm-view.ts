@@ -151,6 +151,8 @@ export interface CpmBar {
   state: ReturnType<typeof floatState>["key"];
   marker: string;
   label: string;
+  /** Where the task was **baselined** to sit (SC-3), drawn as an outline under the bar; `null` without one. */
+  ghost: { startPct: number; widthPct: number } | null;
 }
 
 /** A timeline tick. */
@@ -185,13 +187,24 @@ interface BarInput {
  * *before* its early finish (negative float) gets a limit marker instead, so the
  * shortfall is visible. Weekly ticks for short spans, monthly for longer ones.
  */
-export function cpmBars(nodes: readonly BarInput[]): CpmChart | null {
+export function cpmBars(
+  nodes: readonly BarInput[],
+  baseline: ReadonlyMap<string, { start: string | null; finish: string | null }> = new Map(),
+): CpmChart | null {
   const valid = nodes.filter(
     (n) => dayNumber(n.early_start) !== null && dayNumber(n.early_finish) !== null && dayNumber(n.late_finish) !== null,
   );
   if (valid.length === 0) return null;
-  const starts = valid.map((n) => dayNumber(n.early_start) as number);
-  const ends = valid.map((n) => Math.max(dayNumber(n.early_finish) as number, dayNumber(n.late_finish) as number));
+  const ghostDays = (n: BarInput) => {
+    const g = baseline.get(n.pid);
+    const a = g ? dayNumber(g.start) : null;
+    const b = g ? dayNumber(g.finish) : null;
+    return a !== null && b !== null && b >= a ? ([a, b] as const) : null;
+  };
+  const starts = valid.map((n) => Math.min(dayNumber(n.early_start) as number, ghostDays(n)?.[0] ?? Infinity));
+  const ends = valid.map((n) =>
+    Math.max(dayNumber(n.early_finish) as number, dayNumber(n.late_finish) as number, ghostDays(n)?.[1] ?? -Infinity),
+  );
   const first = Math.min(...starts);
   const last = Math.max(...ends);
   const days = last - first + 1;
@@ -210,7 +223,13 @@ export function cpmBars(nodes: readonly BarInput[]): CpmChart | null {
       limitPct: lf < ef ? pct(lf + 1) : null,
       state: st.key,
       marker: st.marker,
-      label: `${n.title ?? "(untitled)"}: ${n.early_start} to ${n.early_finish}. ${floatLabel(n)}`,
+      label: `${n.title ?? "(untitled)"}: ${n.early_start} to ${n.early_finish}. ${floatLabel(n)}${
+        ghostDays(n) ? `. Baselined ${baseline.get(n.pid)?.start} to ${baseline.get(n.pid)?.finish}` : ""
+      }`,
+      ghost: (() => {
+        const g = ghostDays(n);
+        return g ? { startPct: pct(g[0]), widthPct: ((g[1] - g[0] + 1) / days) * 100 } : null;
+      })(),
     };
   });
   const ticks: Tick[] = [];
@@ -314,5 +333,32 @@ export function unscheduledReason(reason: string): string {
       return "has a date outside the supported range";
     default:
       return reason;
+  }
+}
+
+/** The word, marker and sentence for a variance row, so slip is never colour or a bare number alone. */
+export function standingText(r: {
+  standing: string;
+  finish_variance_days: number | null;
+  reason?: string;
+}): { marker: string; word: string; detail: string } {
+  const d = (n: number) => `${Math.abs(n)} working day${Math.abs(n) === 1 ? "" : "s"}`;
+  switch (r.standing) {
+    case "slipped":
+      return { marker: "▲", word: "Slipped", detail: `finishes ${d(r.finish_variance_days ?? 0)} later than baselined` };
+    case "pulled_in":
+      return { marker: "▼", word: "Pulled in", detail: `finishes ${d(r.finish_variance_days ?? 0)} earlier than baselined` };
+    case "on_baseline":
+      return { marker: "=", word: "On baseline", detail: "finishes when it was baselined to" };
+    case "added":
+      return { marker: "+", word: "Added", detail: "not in the baseline, so it has no slip" };
+    case "removed":
+      return { marker: "−", word: "Removed", detail: "was in the baseline and is gone; its baselined dates are kept" };
+    default:
+      return {
+        marker: "?",
+        word: "Cannot say",
+        detail: r.reason === "not_scheduled_then" ? "it had no schedule when baselined" : "it has no schedule now",
+      };
   }
 }

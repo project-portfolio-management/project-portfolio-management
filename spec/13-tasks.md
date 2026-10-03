@@ -1107,6 +1107,11 @@ described manual check confirms it. Split tasks too big for one PR
     (already a dev-dependency for `tests/otlp_middleware.rs`) moved to
     `[dependencies]` rather than duplicated.
   - [ ] **T-28n (M) — Source-tool import codec.** Depends on **T-8**.
+    **Partly landed 2026-10-03: the MS Project half** (MSPDI XML only,
+    `POST /api/plans/{pid}/import/mspdi`, root `tasks.md` PJ-10 — idempotent by
+    `external_ref`, nothing silently dropped, hard constraints gated). **Jira and
+    Asana remain open**, and so does the registry-twin dedup (`JiraProjectKey`)
+    that this MS Project import does not need.
     A Jira project export (and Asana's, the two most asked about)
     mapped to plans + tasks: the project key → `JiraProjectKey` so the
     plan deduplicates against its registry twin (R-0), issues → tasks

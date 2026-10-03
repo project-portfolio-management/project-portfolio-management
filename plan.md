@@ -434,3 +434,136 @@ inside that feature. The cheapest honest order is therefore the engine first.
   per-plan uncertainty band, and says that is what it did.
 - **Money for EVM:** actual cost from timesheets (hours × rate) or from
   budget-line actuals entered by hand? They disagree, and EV needs one.
+
+
+---
+
+# Research: ProjectLibre (open-source desktop alternative to Microsoft Project)
+
+Source: <https://sourceforge.net/p/projectlibre/code/ci/master/tree/> (branch
+`master`, latest commit "ProjectLibre 1.9.8", 2025-04-30; a `dev` branch and old
+tags exist). Plus the project's public description: "Gantt charts, network
+diagrams, WBS/RBS charts, earned-value costing, resource histograms, multi-project
+resource pools, Microsoft Project compatibility", positioned for **an individual
+project manager managing one project locally on a desktop**.
+
+**Evidence base, stated plainly.** Read: the directory trees of `projectlibre_core`
+(`pm/{assignment,availability,calendar,costing,criticalpath,dependency,key,
+resource,scheduling,snapshot,task,time}`, plus `algorithm`, `job`, `undo`,
+`command`, `transaction`, `timescale`, `scripting` …), `projectlibre_exchange`
+and `projectlibre_reports`, and the **full text of nine small constants files**
+(`ConstraintType`, `DependencyType`, `EarnedValueMethodType`, `SchedulingType`,
+`BookingType`, `RequestDemandType`, `ProjectStatus`, `ProjectType`,
+`DateChangeStatus`). **Not read:** the scheduling algorithm itself
+(`SchedulingAlgorithm`, `CriticalPath`), the costing calculators, the importer, or
+any UI. So the *vocabulary and the data model's shape* below are evidenced; *how*
+anything behaves is not, and the contour shapes and the meaning of
+`PertWeights` are **inferred from class names** and flagged where used.
+
+**Licence note — a hard line.** The files carry the **Common Public Attribution
+License 1.0** (Mozilla-style with an *attribution-logo condition on every user
+interface screen* and a **network-use clause** that treats a hosted service as
+distribution). This service is hosted. **Ideas only; no code, no text, no
+resources are to be copied.** Anything borrowed is a concept re-derived from
+public standards (the MS Project / MPX vocabulary is an industry convention, not
+ProjectLibre's).
+
+## 25. Where we already match, and where they are ahead
+
+| Topic | ProjectLibre | Here |
+|---|---|---|
+| Constraint types | Exactly the eight MS Project ones (ASAP, ALAP, MSO, MFO, SNET, SNLT, FNET, FNLT) **plus a hammock type**; ids "same as mpx" | SC-2 names the same eight; the **hammock** is new (PJ-7) |
+| Dependency types | FF, FS, SF, SS with **FS the default**; ids FF=0, FS=1, SF=2, SS=3 | SC-1 has the same four; the **id order differs from the order we list**, which matters for import (PJ-10) |
+| Baselines | A `snapshot` package (`Snapshottable`, `BaselineScheduleFields`, `TaskSnapshot`) | SC-3 is the same idea, append-only |
+| Earned value | Two methods only: **percent complete** and **physical percent complete** | SC-4 has more (0/100, 50/50, points, manual). Their split is useful evidence that *schedule-percent and physical-percent are different things* and both are needed |
+| Calendars | `WorkCalendar`, `WorkWeek`, `WorkDay`, `WorkRange`, `CalendarCatalog`, `HasCalendar` on **tasks and resources** | SC-2 plans one calendar per plan; ProjectLibre shows the per-resource and per-task case is wanted in practice (see Q in §30) |
+| Critical path | `criticalpath` package with `ScheduleWindow`, `PredecessorTaskList/Tree`, `DateChangeStatus` | SC-1; their **change status** (which dates a recalculation moved) is a good output we had not planned (PJ-8) |
+| Resources | `Resource`, `EnterpriseResource`, `EnterpriseResourcePool`, `ResourceType`, **`BookingType`: proposed / committed** | We have allocations only; **proposed vs committed** is new and valuable (PJ-4) |
+| Costing | `CostRateTable` / `CostRateIndex` (several **effective-dated rate tables** per resource), `Accrual`, `ExpenseType`, `EarnedValueCalculator` | **We have no rates at all**, so "actual cost = hours × rate" (SC-4) has nothing to multiply by (PJ-2) |
+| Time-phased data | `assignment/contour` (standard and personal contours), `TimeDistributedDataConsolidator` | Nothing time-phased below the plan; resource histograms and S-curves need it (PJ-5) |
+| Scheduling rules | `FixedUnits`, `FixedDuration`, `FixedWork`, `CanBeLeveled`, `Delayable` | One date model; effort-driven rules are a deliberate decision (PJ-6) |
+| Jobs | `Job`, `JobQueue`, `ExtendedProgressMonitor`, **`JobCanceledException`** | `bulk_jobs` run to completion; no progress, no cancel (PJ-11) |
+| Interchange | `projectlibre_exchange`: `MicrosoftImporter`, `ImportedCalendarService` | T-28n is open and unscoped; this fixes its target (PJ-10) |
+| Sub-projects | `SubProj`, `SubprojectHandler`, `ExternalTaskManager`, `TaskLinkReference` | We link *plans* (LT-8) and have plan-level dependencies, but no task-to-task edge across plans (PJ-13) |
+| Statuses | PLANNING, PENDING_APPROVAL, ACTIVE, COMPLETED, CANCELLED, ON_HOLD | Our lifecycle and approvals (PL-1) cover these; **verify `on_hold` exists** before assuming |
+| Scripting, undo, command, transaction | A scripting engine; a command/undo/transaction stack | Not taken (scripting); the *what-if then commit* idea is taken (PJ-9) |
+
+**The main finding is about us, not them.** Reading how ProjectLibre models a
+task (`Task` with dates, duration, constraint, calendar, assignments, baseline)
+exposed that **our schedule network is plan-level, not task-level**:
+`ScheduleItem` is built from a *plan's* `start_date` / `target_date`
+(`src/controllers/visibility.rs`, `schedule_item`), `plan_dependencies` joins
+plans, and a **task has only `due_date`** — no start, no duration, no estimate.
+Every SC task I wrote last turn says "per task". That is not buildable as written.
+It is recorded as finding F-9 and as **PJ-1, which must be decided first**.
+
+## 26. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **Task-level schedule fields** (start, working duration, constraint) and a decision on the schedule's unit | Without it SC-1…SC-4 can only be plan-level. Tasks (LT-10 relations, RM-5 subtasks, sprints) are where workers live | High; **decide first** | PJ-1 |
+| 2 | **Effective-dated cost rates**, fixed-cost expenses and accrual | EVM's AC and any cost report need rates; a rate change must never rewrite past actuals | High; **sensitive data** | PJ-2 |
+| 3 | **Resource availability over time** (part-time, leave, ramp-up) | Capacity is a flat percent today; real capacity changes by date | Medium-high | PJ-3 |
+| 4 | **Proposed vs committed bookings** (and request/demand) | The portfolio question "what is firm, what is hoped for" — and what happens when we commit | High | PJ-4 |
+| 5 | **Time-phased assignments with work contours** and a consolidator | The data behind resource histograms, S-curves and leveling; spreads work across periods without rounding drift | Medium-high | PJ-5 |
+| 6 | **Scheduling rules**: fixed units / fixed duration / fixed work | Changing one of duration, units or work should recompute the others by a stated rule | Low-medium; **decide first** | PJ-6 |
+| 7 | **Hammock (span-by-link) activities** | A "from the first design task to the last test" bar that follows its links | Low | PJ-7 |
+| 8 | **Recalculation change set**: which dates moved, by how much | Feeds watchers, audit and "why did my date move?" | Medium; small | PJ-8 |
+| 9 | **What-if sandbox**: apply edits to a copy, see the impact, commit or discard | The safe half of leveling and of any bulk reschedule | Medium-high | PJ-9 |
+| 10 | **MS Project interchange (MSPDI XML)** as the T-28n codec | The one format most migrating users have; the id tables above are the traps | High | PJ-10 |
+| 11 | **Cancellable jobs with progress** | Long exports, imports and Monte-Carlo runs need a stop button and a bar | Medium; small | PJ-11 |
+| 12 | **Network (PERT) diagram, WBS tree with generated WBS codes, RBS** | The views schedulers ask for by name; WBS codes are derived display, never identifiers | Medium | PJ-12 |
+| 13 | **Cross-plan task links** (sub-project style) | A vendor plan's task gates ours; the edge must not leak a hidden plan | Medium | PJ-13 |
+
+## 27. Deliberately not taken (ProjectLibre)
+
+- **Any code, text or assets.** CPAL 1.0 with an on-screen logo condition and a
+  network-use clause; this is a hosted service. Concepts only.
+- **An embedded scripting engine** (`script`, `scripting` packages). Running
+  user scripts in a multi-tenant service is a security liability with no stated
+  need; saved reports, automations and webhooks are the extension surface.
+- **The desktop, single-user, local-file model** (workspace, session, server
+  sync). Our value *is* the multi-user, access-controlled service.
+- **A Swing-style rich desktop UI and its undo stack.** We take the *what-if*
+  idea (PJ-9), not a global undo; self-service undo stays a per-feature POST.
+- **Hard-wiring the MS Project numeric ids into our model.** They are kept at the
+  edge, in the import codec (PJ-10); our enums stay readable strings.
+
+## 28. Sequencing with the SC items
+
+1. **PJ-1 first** — before SC-1 — because it decides what SC-1's nodes *are*.
+2. **PJ-8** is a free by-product of SC-1; build it in the same change.
+3. **PJ-2, PJ-3, PJ-4, PJ-5** feed SC-4 (AC), SC-6 (leveling) and SC-7; PJ-4 and
+   PJ-3 are small and can run before SC-1.
+4. **PJ-9** underpins SC-6's "apply"; **PJ-11** underpins SC-8's long runs.
+5. **PJ-10** is T-28n's real scope and can start once PJ-1 fixes the task shape.
+6. **PJ-12, PJ-13** after the engine; **PJ-6, PJ-7** only if asked.
+
+## 29. Findings (from reading ProjectLibre against our code)
+
+- **F-9: our CPM/schedule network is plan-level.** See §25. Tasks have no start,
+  duration or estimate; the SC items assumed they did. Decision needed (PJ-1).
+- **F-10: no rates anywhere.** There is no rate, rate table or cost-per-hour in
+  the service, so the SC-4 note "AC from timesheets × rate" cannot be done until
+  PJ-2 exists. Budget-line actuals (entered by hand) are the only AC source today.
+- **F-11: import ids are a trap.** MS Project's dependency ids order FF, FS, SF,
+  SS (0–3) — not the order a reader would guess, and FS is 1, not 0. The
+  constraint ids run ASAP 0 … FNLT 7 with a hammock at 100. A codec that guessed
+  would swap relationship types silently; PJ-10 pins both tables with tests.
+
+## 30. Open questions for the owner (ProjectLibre)
+
+- **Schedule unit (PJ-1):** is the schedule network of *plans* (as now), of
+  *tasks*, or both in one network? Recommendation: both, with a task's parent
+  plan as its container, so a worker's task and a PMO's plan share float.
+- **Per-resource calendars:** ProjectLibre attaches calendars to tasks and
+  resources. Is a per-person calendar (part-time, regional holidays) needed, or
+  is one calendar per plan enough?
+- **Cost rates are salary-adjacent.** Who may see and set them? Proposal: a
+  finance attribute only; masked everywhere else, and never shown to a worker.
+- **MS Project:** do migrating users bring `.xml` (MSPDI) files? If most bring
+  `.mpp`, we would need to ask them to export XML — and say so in the UI.
+- **Fixed-work scheduling (PJ-6):** wanted, or is "fixed duration" (the default
+  everyone assumes) enough?
+- **Proposed bookings:** should a proposed booking be visible to the person it
+  names, or only to resource managers until committed?

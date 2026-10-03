@@ -623,6 +623,196 @@ optimiser; silent auto-rescheduling; critical-chain buffers and crashing advice;
 correlated risk models; binary `.mpp` / `.xer` round trips; free-text percent
 complete. Reasons in [plan.md §21](plan.md).
 
+## ProjectLibre ideas (PJ-n)
+
+Source: research of ProjectLibre's code tree, 2026-10-03; evidence base, licence
+constraint (**CPAL 1.0 — concepts only, copy nothing**) and findings in
+[plan.md §25–§30](plan.md). These items support the SC items above: **PJ-1 must
+be decided before SC-1**, because the schedule network is plan-level today
+(finding F-9). Money stays integer minor units and per currency; absent evidence
+is `null` with a reason, never zero.
+
+- [ ] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** —
+  **decide first.** Add to a task an optional `start_date`, a working
+  `duration_days` (or an end date), and a `constraint` (SC-2's set), so a task
+  can be a node in the network. A **schedule node** is either a plan with a
+  timeframe or a task with a start and duration; a task's parent plan is its
+  container; LT-10 `precedes` / `blocks` relations become edges (type FS unless
+  set). Recommendation: one network of both kinds. Undated tasks stay valid and
+  are simply `unscheduled`.
+  **Acceptance:** every existing task, plan and relation behaves exactly as
+  today (existing tests pass unchanged); a task with no start is `unscheduled`
+  in the engine, never float 0; an edge between two nodes needs read access to
+  both; a task's dates are zone-free calendar dates; the OpenAPI shows the new
+  fields; changing a task's schedule fields is audited.
+
+- [ ] **PJ-2 (M) — Cost rates (effective-dated), fixed-cost expenses, accrual.**
+  `cost_rate_tables` per person or role (several named tables, as ProjectLibre
+  has — standard, overtime, and so on), each rate **effective from a date**, in
+  one currency; an expense type (labour, material, **fixed cost**) and an accrual
+  rule (at start, prorated, at end). Feeds SC-4's AC and any cost report.
+  **Rates are sensitive**: finance attribute only; masked elsewhere; **never**
+  visible to a worker, and never in a guest view.
+  **Acceptance:** a rate lookup by date returns the rate in force that day; a
+  rate change **never rewrites an existing actual** (the rate used is recorded
+  on the timesheet-derived cost); no rate ⇒ cost `null` + `no_rate`, **never
+  zero**; two currencies are never summed; a caller without the finance
+  attribute gets 404 on rate routes and no rate field anywhere; every rate
+  change is audited with its effective date; accrual rules are pinned by tests
+  (prorated across a 3-period task sums exactly to the cost).
+
+- [ ] **PJ-3 (M) — Resource availability over time.** `availability` ranges per
+  person (`from`, `to`, `max_percent`), so part-time, leave and ramp-up change
+  capacity by date; folded into `/capacity`, `/capacity/utilization`, SC-6 and
+  SC-7 as the denominator. Existing `non_working_periods` stay.
+  **Acceptance:** with no ranges, capacity is exactly what it is today; ranges
+  may not overlap for one person (409); utilisation uses the availability in
+  force each day, not an average; a person on 0% shows as unavailable, not as
+  an error; a worker may see their own ranges only; changes audited.
+
+- [ ] **PJ-4 (M) — Proposed vs committed bookings.** An allocation gains
+  `booking: proposed | committed` (default `committed`, so nothing changes) and
+  an optional `request` flag for "asked of the resource manager". Capacity and
+  utilisation report the two **as separate series**; committing a proposal goes
+  through approval (PL-1) when the plan is governed.
+  **Acceptance:** existing allocations are `committed` and every figure is
+  unchanged; **proposed never counts toward committed utilisation**; both are
+  shown, never merged; committing an allocation that would push a person over
+  100% warns with the number and requires an explicit confirm; a person sees
+  proposals naming them only per the owner's answer (plan.md Q); changes audited.
+
+- [ ] **PJ-5 (M) — Time-phased assignments and work contours.** Spread an
+  assignment's work across periods by a **contour** — `flat` (default),
+  `front_loaded`, `back_loaded`, `bell`, `turtle`, or `custom` (named per
+  assignment) — into stored or derived **buckets**, with a consolidator that
+  rolls buckets up plan → portfolio. The data behind resource histograms,
+  S-curve PV and leveling. (Shape names are **inferred from class names** and
+  are the usual scheduling-tool set; confirm before pinning.)
+  **Acceptance:** buckets **sum to the assignment's work exactly** (largest
+  remainder, no rounding drift); calendar-aware (no work on non-working days);
+  `custom` must sum to 100%; the roll-up equals the sum of its children at every
+  level; no assignment ⇒ `null` + `no_assignments`; a contour change keeps total
+  work unchanged and is audited.
+
+- [ ] **PJ-6 (M) — Scheduling rules: fixed units / duration / work** —
+  **decide first; recommendation: build only `fixed_duration` (default) and
+  `fixed_work`.** A task with an assignment recomputes the third of
+  (duration, units, work) when one of the other two changes, per its rule;
+  integer minutes; deterministic. Whether ProjectLibre also implements an
+  "effort-driven" flag is **not verified** (its constants file does not mention
+  it).
+  **Acceptance:** a worked example per rule pinned in a test; changing work under
+  `fixed_duration` changes units, never duration; a result that implies units
+  over the person's availability (PJ-3) is flagged, not clamped silently;
+  default behaviour of every existing task is unchanged.
+
+- [ ] **PJ-7 (S) — Hammock activities.** A task or plan of type `hammock` whose
+  start is the earliest and finish the latest of the items it links to, so a
+  summary bar follows its links rather than its children (ProjectLibre's id
+  100). Distinct from RM-5's roll-up (which follows children).
+  **Acceptance:** a hammock with no links is `unscheduled`; it never drives a
+  link target's float (it is a derived span, not work); removing a link
+  recomputes; a hammock can't link to itself or create a cycle.
+
+- [ ] **PJ-8 (S) — Recalculation change set.** Every CPM recalculation (SC-1)
+  returns **what moved**: per item `start_moved`, `finish_moved` or `both`,
+  by how many working days, and what triggered it — ProjectLibre's
+  `DateChangeStatus` idea. Feeds watchers (RM-3), the audit log and a "why did my
+  date move?" line in *My work* (LT-3).
+  **Acceptance:** a recalculation that changes nothing returns an empty set (not
+  an error); the set names the edit that caused it; notifications honour the
+  user's preferences (PL-5); dates that move *because of a hard constraint* say
+  so.
+
+- [ ] **PJ-9 (M) — What-if sandbox for schedule edits.** Apply a list of edits
+  (move, change duration, add or remove a link, change a constraint) to an
+  in-memory copy, return the resulting dates, float, critical path and cost
+  impact, then **commit or discard**. The apply step of SC-6 and of any bulk
+  reschedule (RM-9) goes through it.
+  **Acceptance:** a discarded preview writes nothing (asserted: no rows, no
+  audit entry); committing applies exactly the previewed result and records one
+  audit entry per changed item; the same input gives the same preview; a
+  commit made against a plan that changed since the preview is refused 409
+  (ETag), not merged; masked fields stay masked in the preview.
+
+- [ ] **PJ-10 (M) — MS Project interchange (MSPDI XML) — the T-28n codec.**
+  Import (and export) tasks, WBS, outline levels, dependencies, constraints,
+  calendars, resources, assignments, baselines and percent complete through the
+  existing bulk machinery (T-8; review queue for ambiguous matches). **Id tables
+  are pinned in tests (F-11):** dependency FF 0, FS 1, SF 2, SS 3; constraint
+  ASAP 0, ALAP 1, MSO 2, MFO 3, SNET 4, SNLT 5, FNET 6, FNLT 7, hammock 100.
+  Binary `.mpp` is **not** read: the UI says "export as XML".
+  **Acceptance:** a fixture project round-trips with stable pids through the
+  deterministic external ids; **every field not mapped is listed in the job's
+  report**, never silently dropped; a dependency type is never swapped (a test
+  that fails if FS and FF are exchanged); a row failing validation is reported
+  with its line and the rest still import; a re-import is idempotent; no code or
+  text from ProjectLibre is used (CPAL).
+
+- [ ] **PJ-11 (S) — Cancellable long jobs with progress.** `bulk_jobs` (and
+  SC-8 simulations) gain `progress` (0–100, monotone) and a cooperative `POST
+  /api/…/jobs/{pid}/cancel`; a cancelled job ends `cancelled`, keeps what it
+  finished, and says so. Source: ProjectLibre's `JobQueue`, `ExtendedProgress
+  Monitor`, `JobCanceledException`.
+  **Acceptance:** progress never goes backwards; cancelling a finished job is a
+  no-op, not an error; a cancelled import leaves no half-written row (each row is
+  atomic) and reports counts; only the requester or an admin may cancel; the
+  cancel is audited.
+
+- [ ] **PJ-12 (M) — Network diagram, WBS tree and RBS views.** Front-end: a
+  precedence **network diagram** (nodes = schedule nodes, edges = links,
+  critical and near-critical emphasised), a **WBS tree** with **generated WBS
+  codes** (`1`, `1.2`, `1.2.3`) derived from the plan / task hierarchy, and an
+  **RBS** grouping of resources by role and skill. WBS codes are **display only —
+  never an identifier**, because they change when siblings are reordered.
+  **Acceptance:** every diagram has a table twin (the Lily tables, SC-11);
+  critical status is never conveyed by colour alone; WBS codes recompute on
+  reorder and no API accepts one as a key; a node the caller may not read shows
+  as "restricted", not by name; a very large network degrades to a list rather
+  than freezing.
+
+- [ ] **PJ-13 (S) — Cross-plan task links.** A task may depend on a task in
+  **another plan** (ProjectLibre's sub-project and external-task idea), included
+  in the network and the float calculation. Visibility: an edge is shown only if
+  the caller can read **both** ends; otherwise it appears as "external
+  dependency (restricted)" with **no name, owner or date** of the hidden side.
+  **Acceptance:** a private plan (RM-8) or guest view never reveals the other
+  plan through an edge (a regression test per case); deleting a plan with
+  inbound external edges is refused 409 or shows the dependants; cycle checks
+  span plans; float across plans uses the same calendar rule (SC-2).
+
+## Amendments (ProjectLibre)
+
+- **SC-1 / SC-3 / SC-4:** their "per task" wording assumed task-level dates that
+  do not exist (finding F-9); each depends on **PJ-1**. Until then they operate
+  on plans, as `critical_path()` does today.
+- **SC-2:** the constraint set is the same eight ProjectLibre and MS Project
+  use; the hammock is PJ-7. **Per-resource calendars** are in question (plan.md
+  §30) — start with one per plan, with PJ-3 availability as the per-person
+  mechanism.
+- **SC-4:** keep ProjectLibre's split of *percent complete* and *physical percent
+  complete* visible: they answer different questions (time elapsed vs work
+  done) and EV must say which it used. AC's source needs **PJ-2** (finding F-10).
+- **SC-6 / SC-7:** consume PJ-3 (availability), PJ-4 (committed vs proposed) and
+  PJ-5 (time-phased buckets); SC-6's apply goes through **PJ-9**.
+- **SC-8:** PERT-style weighting `(O + 4M + P) / 6` is the standard three-point
+  mean; ProjectLibre's `PertWeights` appears to store such weights (**inferred
+  from the name, unverified**). Run long simulations as jobs with **PJ-11**.
+- **T-28n:** its scope is **PJ-10**; the spec should cite MSPDI as the target.
+- **LT-2 (plan templates):** ProjectLibre's project types (Professional
+  Services, Product Development, Event Planning, Marketing Campaign, Sales
+  Campaign, Technical Support, IT) suggest a `category` on templates for
+  discovery. Optional; no behavioural change.
+- **Statuses:** ProjectLibre's PENDING_APPROVAL and ON_HOLD map to our approvals
+  (PL-1) and lifecycle; **verify an `on_hold` state exists** before assuming.
+
+## Not taken (ProjectLibre)
+
+Any code or text from it (CPAL 1.0, logo and network-use conditions); an embedded
+scripting engine; the single-user local-file desktop model; a global undo stack;
+the MS Project numeric ids as our own enums. Reasons in
+[plan.md §27](plan.md).
+
 ## Findings (surfaced while building the backlog)
 
 - **DELETE is admin-only under the default ABAC policy** (`access=admin` ⇒

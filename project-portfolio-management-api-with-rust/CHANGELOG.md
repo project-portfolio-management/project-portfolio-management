@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — availability over time (PJ-3, 2026-10-03)
+
+`/api/availability`: a person's capacity by date range (part-time, leave, ramp-up). `GET /api/capacity` now reads capacity per day from it; with no ranges nothing changes. A person sets their own; resource managers and admins set anyone's.
+
 ### Added — MS Project XML import (PJ-10, 2026-10-03)
 
 `POST /api/plans/{pid}/import/mspdi` reads an MS Project XML (MSPDI) file into a plan: tasks, outline, dates, durations, constraints, deadlines, dependencies (with their types, lags and leads) and the calendar. A dry run is the default; a re-import updates in place. Anything not carried over is listed with its reason.

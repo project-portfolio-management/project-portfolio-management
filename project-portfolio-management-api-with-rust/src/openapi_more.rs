@@ -95,6 +95,7 @@ pub fn paths() -> Value {
     merge(&mut all, cpm_paths());
     merge(&mut all, calendar_paths());
     merge(&mut all, mspdi_paths());
+    merge(&mut all, availability_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -757,6 +758,30 @@ fn mspdi_paths() -> Value {
                 "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, working-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",
                 vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
                 &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not MSPDI, not UTF-8 XML, a DTD, too large or too many tasks")])
+        }
+    })
+}
+
+/// Availability over time (PJ-3).
+fn availability_paths() -> Value {
+    let who = "A person may read and set their own ranges; a resource manager (role=resource_manager) or an admin may for anyone; another person's are 404, not 403. With authentication off there is no caller to refuse.";
+    json!({
+        "/api/availability": {
+            "post": op("availability", "Set a person's capacity for a date range",
+                &format!("max_percent is the most of their time they can commit between from and to, 0 to 100 (60 is a part-time spell, 0 is leave). Where no range applies capacity is 100, so nothing set before this existed changes. Ranges for one person may not overlap (409). GET /api/capacity reads capacity per day, never averaged. {who}"),
+                vec![], &[("200", "The range"), ("404", "Not yours to set"), ("409", "Overlaps an existing range"), ("422", "A bad person_ref, to before from, or max_percent outside 0 to 100")]),
+            "get": op("availability", "A person's availability ranges",
+                &format!("person_ref defaults to the caller's own. {who}"),
+                vec![query("person_ref", false, "Whose ranges (a person: or worker: URN)")],
+                &[("200", "Ranges, earliest first"), ("404", "Not yours to read"), ("422", "No person_ref and no caller identity")])
+        },
+        "/api/availability/{pid}": {
+            "delete": op("availability", "Remove an availability range", who, vec![uuid_param("pid")],
+                &[("200", "Removed"), ("404", "Unknown, or not yours")])
+        },
+        "/api/availability/{pid}/delete": {
+            "post": op("availability", "Remove an availability range (POST twin)", "The POST twin of DELETE (the default policy reserves DELETE for admins).", vec![uuid_param("pid")],
+                &[("200", "Removed"), ("404", "Unknown, or not yours")])
         }
     })
 }

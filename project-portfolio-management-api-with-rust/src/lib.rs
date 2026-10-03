@@ -30,6 +30,7 @@ pub mod artifacts;
 pub mod auth;
 /// Pure workflow-automation rules (trigger matching, action shapes, due-ness).
 pub mod automation;
+pub mod availability;
 pub mod bulk;
 pub mod calendars;
 /// Per-user saved views: route-scoped filter/sort/column presets,

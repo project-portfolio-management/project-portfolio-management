@@ -211,6 +211,7 @@ impl Hooks for App {
             .add_route(controllers::cpm::routes())
             .add_route(controllers::calendars::routes())
             .add_route(controllers::mspdi_import::routes())
+            .add_route(controllers::availability::routes())
             .add_route(controllers::metrics::routes())
     }
 

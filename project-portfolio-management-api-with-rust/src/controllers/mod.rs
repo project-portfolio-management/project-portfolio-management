@@ -207,6 +207,7 @@ pub mod pagination {
 }
 pub mod approvals;
 pub mod attachments;
+pub mod availability;
 pub mod bulk;
 pub mod calendars;
 pub mod components;

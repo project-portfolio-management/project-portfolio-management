@@ -73,6 +73,7 @@ mod m20261003_000024_report_schedules;
 mod m20261003_000025_schedule_fields;
 mod m20261003_000026_work_calendars;
 mod m20261003_000027_task_external_ref;
+mod m20261003_000028_person_availabilities;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -146,6 +147,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000025_schedule_fields::Migration),
             Box::new(m20261003_000026_work_calendars::Migration),
             Box::new(m20261003_000027_task_external_ref::Migration),
+            Box::new(m20261003_000028_person_availabilities::Migration),
             // inject-above (do not remove this comment)
         ]
     }

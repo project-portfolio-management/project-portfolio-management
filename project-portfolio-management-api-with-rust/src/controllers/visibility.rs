@@ -669,6 +669,9 @@ async fn capacity(
     if to < from {
         return Err(unprocessable("to is before from"));
     }
+    if (to - from).num_days() > crate::availability::MAX_WINDOW_DAYS {
+        return Err(unprocessable("the window may span at most ten years"));
+    }
     let rows = vis_models::all_allocations(&ctx.db).await?;
     let mut people: Vec<&str> = rows.iter().map(|a| a.person_ref.as_str()).collect();
     people.sort_unstable();
@@ -681,11 +684,41 @@ async fn capacity(
             .map(|a| (a.percent, a.start_date, a.end_date))
             .collect();
         let total = rules::summed_percent(&theirs, from, to);
+        // PJ-3: capacity is read per day from the person's availability ranges.
+        // With none in the window the answer is exactly what it was before
+        // (summed demand over 100); with some, a day is over when its demand
+        // exceeds the capacity in force that day.
+        let ranges = super::availability::ranges_for(&ctx, person).await?;
+        let in_window: Vec<_> = ranges
+            .iter()
+            .copied()
+            .filter(|r| r.from <= to && r.to >= from)
+            .collect();
+        let allocs: Vec<crate::availability::Alloc> = theirs
+            .iter()
+            .map(|(percent, start, end)| crate::availability::Alloc {
+                percent: *percent,
+                start: *start,
+                end: *end,
+            })
+            .collect();
+        let load = crate::availability::load(from, to, &allocs, &in_window);
+        let over_allocated = if in_window.is_empty() {
+            total > 100
+        } else {
+            load.days_over > 0
+        };
         out.push(serde_json::json!({
             "person_ref": person,
             "allocated_percent": total,
-            "over_allocated": total > 100,
+            "over_allocated": over_allocated,
             "allocations": theirs.len(),
+            "capacity": {
+                "source": if in_window.is_empty() { "default" } else { "availability" },
+                "min_percent": load.min_capacity,
+            },
+            "peak_percent": load.peak_demand,
+            "over_capacity": load.over,
         }));
     }
     out.sort_by_key(|v| -v["allocated_percent"].as_i64().unwrap_or(0));

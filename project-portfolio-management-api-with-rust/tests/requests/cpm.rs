@@ -528,3 +528,65 @@ async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_droppe
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn capacity_is_read_per_day_from_availability_ranges() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let who = "person:3f2c6b7e-0000-4000-8000-0000000000bb";
+        request
+            .post(&format!("/api/plans/{p}/allocations"))
+            .json(&json!({ "person_ref": who, "percent": 80, "start_date": "2026-10-05", "end_date": "2026-10-18" }))
+            .await
+            .assert_status_ok();
+        let cap = |from: &str, to: &str| {
+            let (request, url) = (&request, format!("/api/capacity?from={from}&to={to}"));
+            async move {
+                let v: Value = request.get(&url).await.json();
+                v["people"].as_array().unwrap().iter().find(|x| x["person_ref"] == who).cloned().unwrap()
+            }
+        };
+
+        // No ranges: exactly as before (80% of 100 is not over).
+        let before = cap("2026-10-05", "2026-10-18").await;
+        assert_eq!((before["over_allocated"].as_bool(), before["capacity"]["source"].as_str()), (Some(false), Some("default")));
+        assert_eq!(before["allocated_percent"], 80);
+
+        // Validation and the range itself.
+        let post = |body: Value| {
+            let request = &request;
+            async move { request.post("/api/availability").json(&body).await }
+        };
+        assert_eq!(post(json!({ "person_ref": "alex", "from": "2026-10-12", "to": "2026-10-18", "max_percent": 40 })).await.status_code(), 422);
+        assert_eq!(post(json!({ "person_ref": who, "from": "2026-10-18", "to": "2026-10-12", "max_percent": 40 })).await.status_code(), 422);
+        assert_eq!(post(json!({ "person_ref": who, "from": "2026-10-12", "to": "2026-10-18", "max_percent": 140 })).await.status_code(), 422);
+        let part_time: Value = post(json!({ "person_ref": who, "from": "2026-10-12", "to": "2026-10-18", "max_percent": 40, "note": "part-time" })).await.json();
+        assert_eq!(post(json!({ "person_ref": who, "from": "2026-10-18", "to": "2026-10-20", "max_percent": 50 })).await.status_code(), 409, "touching on the 18th overlaps");
+        post(json!({ "person_ref": who, "from": "2026-10-19", "to": "2026-10-20", "max_percent": 0, "note": "leave" })).await.assert_status_ok();
+
+        // Capacity is per day: the 40% week is over, the full-capacity week is not, and the sum is unchanged.
+        let c = cap("2026-10-05", "2026-10-18").await;
+        assert_eq!(c["over_allocated"], true, "{c}");
+        assert_eq!(c["allocated_percent"], 80, "the old figure is unchanged");
+        assert_eq!(c["capacity"], json!({ "source": "availability", "min_percent": 40 }));
+        assert_eq!(c["over_capacity"], json!([{ "from": "2026-10-12", "to": "2026-10-18", "demand": 80, "capacity": 40 }]));
+        let early = cap("2026-10-05", "2026-10-11").await;
+        assert_eq!((early["over_allocated"].as_bool(), early["capacity"]["source"].as_str()), (Some(false), Some("default")), "a window before the range is untouched");
+
+        // The list, and removal through the POST twin restores the old answer.
+        let list: Value = request.get(&format!("/api/availability?person_ref={who}")).await.json();
+        assert_eq!(list.as_array().unwrap().len(), 2);
+        assert_eq!(list[0]["note"], "part-time");
+        request.post(&format!("/api/availability/{}/delete", part_time["pid"].as_str().unwrap())).await.assert_status_ok();
+        let after = cap("2026-10-05", "2026-10-18").await;
+        assert_eq!(after["over_allocated"], false);
+        // A leave day with demand is over capacity (0%).
+        let leave = cap("2026-10-19", "2026-10-20").await;
+        assert_eq!(leave["capacity"]["min_percent"], 0);
+    })
+    .await;
+}

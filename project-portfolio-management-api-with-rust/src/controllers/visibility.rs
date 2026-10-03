@@ -673,6 +673,7 @@ async fn capacity(
         return Err(unprocessable("the window may span at most ten years"));
     }
     let rows = vis_models::all_allocations(&ctx.db).await?;
+    let all_ranges = super::availability::all_ranges(&ctx).await?;
     let mut people: Vec<&str> = rows.iter().map(|a| a.person_ref.as_str()).collect();
     people.sort_unstable();
     people.dedup();
@@ -688,7 +689,7 @@ async fn capacity(
         // With none in the window the answer is exactly what it was before
         // (summed demand over 100); with some, a day is over when its demand
         // exceeds the capacity in force that day.
-        let ranges = super::availability::ranges_for(&ctx, person).await?;
+        let ranges = all_ranges.get(person).map_or(&[][..], Vec::as_slice);
         let in_window: Vec<_> = ranges
             .iter()
             .copied()

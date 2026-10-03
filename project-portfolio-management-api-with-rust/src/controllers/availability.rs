@@ -53,6 +53,28 @@ pub(crate) fn may_manage_person(caller: &MaybeAuthUser, person_ref: &str) -> boo
     })
 }
 
+/// Every person's ranges in **one** query, grouped by person: a view over many
+/// people must not do a query per person (the scale test pins this).
+pub(crate) async fn all_ranges(
+    ctx: &AppContext,
+) -> Result<std::collections::HashMap<String, Vec<Range>>> {
+    let mut out: std::collections::HashMap<String, Vec<Range>> = std::collections::HashMap::new();
+    for r in person_availabilities::Entity::find()
+        .filter(person_availabilities::Column::DeletedAt.is_null())
+        .order_by_asc(person_availabilities::Column::FromDate)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        out.entry(r.person_ref).or_default().push(Range {
+            from: r.from_date,
+            to: r.to_date,
+            max_percent: r.max_percent,
+        });
+    }
+    Ok(out)
+}
+
 /// A person's ranges, as pure [`Range`]s.
 pub(crate) async fn ranges_for(ctx: &AppContext, person_ref: &str) -> Result<Vec<Range>> {
     Ok(person_availabilities::Entity::find()

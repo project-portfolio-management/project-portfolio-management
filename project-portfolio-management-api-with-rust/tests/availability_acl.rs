@@ -93,6 +93,15 @@ async fn availability_is_private_to_the_person_and_their_managers() {
             .await
             .assert_status_ok();
 
+        // person_ref defaults to the caller's own.
+        let defaulted: Value = request
+            .post("/api/availability")
+            .add_header(bk.clone(), bv.clone())
+            .json(&json!({ "from": "2026-12-01", "to": "2026-12-03", "max_percent": 0 }))
+            .await
+            .json();
+        assert_eq!(defaulted["person_ref"], format!("person:{BOB}"));
+
         // Reading: Alice her own (the default), the manager hers, Bob gets 404 either way.
         let own: Value = request.get("/api/availability").add_header(ak.clone(), av.clone()).await.json();
         assert_eq!(own.as_array().unwrap().len(), 2, "her own default, including the one a manager set");
@@ -100,7 +109,7 @@ async fn availability_is_private_to_the_person_and_their_managers() {
         assert_eq!(seen.as_array().unwrap().len(), 2);
         assert_eq!(request.get(&format!("/api/availability?person_ref={alice}")).add_header(bk.clone(), bv.clone()).await.status_code(), 404);
         let bobs: Value = request.get("/api/availability").add_header(bk.clone(), bv.clone()).await.json();
-        assert!(bobs.as_array().unwrap().is_empty(), "Bob's default is Bob's own, which is empty");
+        assert_eq!(bobs.as_array().unwrap().len(), 1, "Bob's default is Bob's own, and Alice's are not in it");
 
         // Removal: not by Bob (404, identically to a missing one); by Alice.
         let pid = mine["pid"].as_str().unwrap();

@@ -769,7 +769,7 @@ fn availability_paths() -> Value {
     json!({
         "/api/availability": {
             "post": op("availability", "Set a person's capacity for a date range",
-                &format!("max_percent is the most of their time they can commit between from and to, 0 to 100 (60 is a part-time spell, 0 is leave). Where no range applies capacity is 100, so nothing set before this existed changes. Ranges for one person may not overlap (409). GET /api/capacity reads capacity per day, never averaged. {who}"),
+                &format!("max_percent is the most of their time they can commit between from and to, 0 to 100 (60 is a part-time spell, 0 is leave). Where no range applies capacity is 100, so nothing set before this existed changes. person_ref defaults to the caller's own. Ranges for one person may not overlap (409). GET /api/capacity reads capacity per day, never averaged. {who}"),
                 vec![], &[("200", "The range"), ("404", "Not yours to set"), ("409", "Overlaps an existing range"), ("422", "A bad person_ref, to before from, or max_percent outside 0 to 100")]),
             "get": op("availability", "A person's availability ranges",
                 &format!("person_ref defaults to the caller's own. {who}"),

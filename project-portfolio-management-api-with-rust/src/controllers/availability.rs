@@ -75,6 +75,14 @@ pub(crate) async fn all_ranges(
     Ok(out)
 }
 
+/// The caller's own `person:` reference, when their token carries a user id.
+pub(crate) fn own_ref(caller: &MaybeAuthUser) -> Option<String> {
+    caller
+        .claims()
+        .and_then(|c| Uuid::parse_str(&c.sub).ok())
+        .map(|u| format!("person:{u}"))
+}
+
 /// A person's ranges, as pure [`Range`]s.
 pub(crate) async fn ranges_for(ctx: &AppContext, person_ref: &str) -> Result<Vec<Range>> {
     Ok(person_availabilities::Entity::find()
@@ -103,7 +111,9 @@ fn view(r: &person_availabilities::Model) -> serde_json::Value {
 /// `POST /api/availability` body.
 #[derive(Debug, Deserialize)]
 struct Body {
-    person_ref: String,
+    /// Whose; defaults to the caller's own.
+    #[serde(default)]
+    person_ref: Option<String>,
     from: NaiveDate,
     to: NaiveDate,
     max_percent: i32,
@@ -118,7 +128,11 @@ async fn create(
     caller: MaybeAuthUser,
     Json(b): Json<Body>,
 ) -> Result<Response> {
-    if !super::governance::valid_ref(&b.person_ref, &["person", "worker"]) {
+    let person_ref = match b.person_ref.clone() {
+        Some(r) => r,
+        None => own_ref(&caller).ok_or_else(|| unprocessable("person_ref is required"))?,
+    };
+    if !super::governance::valid_ref(&person_ref, &["person", "worker"]) {
         return Err(unprocessable("person_ref must be a person:/worker: URN"));
     }
     let mut problems = rules::problems(b.from, b.to, b.max_percent);
@@ -131,10 +145,10 @@ async fn create(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    if !may_manage_person(&caller, &b.person_ref) {
+    if !may_manage_person(&caller, &person_ref) {
         return Err(Error::NotFound);
     }
-    if rules::overlaps(&ranges_for(&ctx, &b.person_ref).await?, b.from, b.to) {
+    if rules::overlaps(&ranges_for(&ctx, &person_ref).await?, b.from, b.to) {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new(
@@ -145,7 +159,7 @@ async fn create(
     }
     let row = person_availabilities::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
-        person_ref: ActiveValue::set(b.person_ref.clone()),
+        person_ref: ActiveValue::set(person_ref.clone()),
         from_date: ActiveValue::set(b.from),
         to_date: ActiveValue::set(b.to),
         max_percent: ActiveValue::set(b.max_percent),
@@ -187,11 +201,7 @@ async fn list(
 ) -> Result<Response> {
     let person = match p.person_ref {
         Some(r) => r,
-        None => caller
-            .claims()
-            .and_then(|c| Uuid::parse_str(&c.sub).ok())
-            .map(|u| format!("person:{u}"))
-            .ok_or_else(|| unprocessable("person_ref is required"))?,
+        None => own_ref(&caller).ok_or_else(|| unprocessable("person_ref is required"))?,
     };
     if !may_manage_person(&caller, &person) {
         return Err(Error::NotFound);

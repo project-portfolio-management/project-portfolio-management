@@ -9,6 +9,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
+  import { ApiError } from "#lib/api/client.js";
+  import { isOverCapacityConflict } from "#lib/capacity-view.js";
   import {
     PpmClient,
     money,
@@ -54,6 +56,7 @@
   let milestoneDue = $state("");
   let allocPerson = $state("");
   let allocPercent = $state(50);
+  let allocProposed = $state(false);
 
   async function refresh() {
     try {
@@ -83,6 +86,24 @@
       await refresh();
     } catch (err) {
       error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+    }
+  }
+
+  // PJ-4: committing a proposed booking; a 409 over_capacity offers "Commit anyway".
+  let overCapacity = $state<string | null>(null);
+  async function commit(allocationPid: string, confirm: boolean) {
+    error = null;
+    try {
+      await ppm.commitAllocation(pid, allocationPid, confirm);
+      overCapacity = null;
+      await refresh();
+    } catch (err) {
+      if (err instanceof ApiError && isOverCapacityConflict(err.status, err.body)) {
+        overCapacity = allocationPid;
+        error = err.message;
+      } else {
+        error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      }
     }
   }
 
@@ -409,6 +430,16 @@
       <li class="small">
         {allocation.person_ref} — {allocation.percent}%
         {#if allocation.role}({allocation.role}){/if}
+        {#if allocation.booking === "proposed"}
+          <span class="chip">proposed{allocation.requested ? ", requested" : ""} — not counted</span>
+          <button class="button small" type="button" onclick={() => void commit(allocation.pid, false)}>Commit</button>
+          {#if overCapacity === allocation.pid}
+            <span role="alert">
+              Committing this puts them over capacity.
+              <button class="button small" type="button" onclick={() => void commit(allocation.pid, true)}>Commit anyway</button>
+            </span>
+          {/if}
+        {/if}
       </li>
     {/each}
   </ul>
@@ -420,12 +451,14 @@
         ppm.createAllocation(pid, {
           person_ref: allocPerson,
           percent: allocPercent,
+          booking: allocProposed ? "proposed" : "committed",
         }),
       ).then(() => (allocPerson = ""));
     }}
   >
     <input placeholder="worker:<uuid>" bind:value={allocPerson} size="42" required />
     <label class="small">% <input type="number" min="1" max="100" bind:value={allocPercent} /></label>
+    <label class="small"><input type="checkbox" bind:checked={allocProposed} /> proposed (does not count until committed)</label>
     <button class="button small" type="submit">{t("ppm.gov.allocate")}</button>
   </form>
 </details>

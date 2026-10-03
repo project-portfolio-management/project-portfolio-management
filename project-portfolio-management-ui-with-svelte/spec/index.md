@@ -1055,3 +1055,23 @@ come from `GET /api/plans/{pid}/cpm`; the pure helpers are `src/lib/cpm-view.ts`
 Tests: `tests/unit/cpm-view.test.ts` (masks, month grids, bars, float wording,
 layout), `tests/unit/cpm-components.test.ts` (markers, table headers, keyboard,
 calendar symbols), `tests/unit/ppm.test.ts` (paths and verbs).
+
+## Capacity: availability and proposed bookings (PJ-3, PJ-4)
+
+- **`/capacity`** now draws each person's load with `CapacityMeter`: the solid bar
+  is what is **firm**, the capacity line is the capacity in force (it moves left
+  for a part-time spell or leave), the **hatched extension is proposed and never
+  added into the firm figure**, and a strip marks the days over capacity. A
+  marker and a sentence say the same thing (○ within capacity, ◐ within, but
+  committing the proposals would exceed it, ! over). `src/lib/capacity-view.ts`
+  holds the pure model; `tests/unit/capacity-view.test.ts` pins it.
+- **`/me/calendar`** also edits the caller's **availability ranges** (the most
+  they can commit between two dates: 60 part-time, 0 leave). Capacity is read day
+  by day, so a short spell is never averaged away. The service defaults the
+  person to the caller.
+- **Plan → governance → allocations**: an allocation can be created as *proposed*,
+  shows a "proposed — not counted" chip, and has a **Commit** button. If the
+  service answers `409 over_capacity` the page offers **Commit anyway**
+  (`?confirm=true`), and the server audits it as an over-commitment.
+- **Not built:** a resource-manager inbox for `requested` proposals, the demand
+  vs capacity heatmap by role (SC-7), and a browser audit.

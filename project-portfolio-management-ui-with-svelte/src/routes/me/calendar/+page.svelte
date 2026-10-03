@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { PpmClient, type WorkCalendarView } from "#lib/api/ppm.js";
+  import { PpmClient, type AvailabilityRange, type WorkCalendarView } from "#lib/api/ppm.js";
   import CalendarMonth from "#lib/components/CalendarMonth.svelte";
   import { WEEKDAY_NAMES, maskToWeekdays, toggleHoliday, weekdaysToMask, weekdaysValid } from "#lib/cpm-view.js";
 
@@ -17,6 +17,12 @@
   let holidays = $state<string[]>([]);
   let error = $state<string | null>(null);
   let saved = $state(false);
+  let ranges = $state<AvailabilityRange[]>([]);
+  let rFrom = $state("");
+  let rTo = $state("");
+  let rPercent = $state(50);
+  let rNote = $state("");
+  let rError = $state<string | null>(null);
   const today = new Date();
   let year = $state(today.getFullYear());
   let month = $state(today.getMonth() + 1);
@@ -26,6 +32,7 @@
       loaded = await ppm.meCalendar();
       days = maskToWeekdays(loaded.weekdays);
       holidays = loaded.holidays;
+      ranges = await ppm.availability();
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not load your calendar";
     }
@@ -42,6 +49,29 @@
       saved = true;
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not save";
+    }
+  }
+
+  async function addRange(event: SubmitEvent) {
+    event.preventDefault();
+    rError = null;
+    try {
+      // No person_ref: the service sets your own.
+      await ppm.setAvailability({ from: rFrom, to: rTo, max_percent: rPercent, note: rNote || undefined });
+      ranges = await ppm.availability();
+      rFrom = rTo = rNote = "";
+    } catch (err) {
+      rError = err instanceof Error ? err.message : "Could not save";
+    }
+  }
+
+  async function dropRange(pid: string) {
+    rError = null;
+    try {
+      await ppm.removeAvailability(pid);
+      ranges = await ppm.availability();
+    } catch (err) {
+      rError = err instanceof Error ? err.message : "Could not remove";
     }
   }
 </script>
@@ -68,11 +98,40 @@
   <CalendarMonth bind:year bind:month {mask} {holidays} editable ontoggle={(d) => (holidays = toggleHoliday(holidays, d))} />
   <p><button type="button" onclick={() => void save()} disabled={!valid}>Save</button>
     {#if saved}<span role="status"> Saved.</span>{/if}</p>
+
+  <h2>Part-time spells and leave</h2>
+  <p class="small muted">
+    The most of your time you can commit between two dates: 60 for a part-time spell, 0 for leave. Outside these dates it is 100.
+    Capacity is read day by day, so a short spell is never averaged away.
+  </p>
+  {#if rError}<p class="banner" role="alert">{rError}</p>{/if}
+  <ul>
+    {#each ranges as r (r.pid)}
+      <li>
+        {r.from} to {r.to}: {r.max_percent}%{r.note ? ` (${r.note})` : ""}
+        <button type="button" onclick={() => void dropRange(r.pid)}>Remove</button>
+      </li>
+    {/each}
+    {#if ranges.length === 0}<li class="muted">None set.</li>{/if}
+  </ul>
+  <form onsubmit={addRange} class="row">
+    <label>From <input type="date" bind:value={rFrom} required /></label>
+    <label>To <input type="date" bind:value={rTo} required /></label>
+    <label>Most I can commit (%) <input type="number" min="0" max="100" bind:value={rPercent} required /></label>
+    <label>Note <input type="text" bind:value={rNote} /></label>
+    <button type="submit">Add</button>
+  </form>
 {:else if !error}
   <p>Loading…</p>
 {/if}
 
 <style>
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: end;
+  }
   .day {
     display: inline-flex;
     gap: 0.3rem;

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — availability and proposed bookings (PJ-3, PJ-4)
+
+`/capacity` draws firm load against capacity in force with the proposed bookings as a separate hatched series and a strip of over-capacity days; `/me/calendar` edits availability ranges; allocations can be proposed and committed (with a confirm when it would overload).
+
 ### Added — critical path and calendars (SC-1, SC-2, PJ-12)
 
 `/plans/[pid]/critical-path` (Gantt with float tails, precedence network diagram, table, and a schedule editor that reports what moved), `/plans/[pid]/calendar` and `/me/calendar` (weekly pattern, holidays, absences, with symbols as well as colour). Pure helpers in `src/lib/cpm-view.ts`.

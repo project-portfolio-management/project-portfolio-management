@@ -6,6 +6,7 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type CapacityView } from "#lib/api/ppm.js";
+  import CapacityMeter from "#lib/components/CapacityMeter.svelte";
 
   const ppm = PpmClient.withFetch();
   let view = $state<CapacityView | null>(null);
@@ -43,8 +44,22 @@
 
 {#if view}
   <p class="small muted">window: {view.from} → {view.to}</p>
+  <ul class="legend small" aria-label="Legend">
+    <li><span class="mk">○</span> within capacity</li>
+    <li><span class="mk">◐</span> within capacity, but committing the proposed bookings would exceed it</li>
+    <li><span class="mk">!</span> over capacity (solid bar: firm bookings; line: capacity in force)</li>
+    <li>hatched extension: proposed, not counted</li>
+  </ul>
   <table>
-    <thead><tr><th>{t("ppm.capacity.person")}</th><th>{t("ppm.capacity.allocated")}</th><th>{t("ppm.capacity.load")}</th><th>{t("ppm.nav.capacity")}</th></tr></thead>
+    <thead>
+      <tr>
+        <th>{t("ppm.capacity.person")}</th>
+        <th>{t("ppm.capacity.allocated")}</th>
+        <th>Proposed</th>
+        <th>{t("ppm.capacity.load")}</th>
+        <th>{t("ppm.nav.capacity")}</th>
+      </tr>
+    </thead>
     <tbody>
       {#each view.people as person (person.person_ref)}
         <tr>
@@ -53,15 +68,8 @@
             {person.allocated_percent}%
             {#if person.over_allocated}<span class="chip red">over</span>{/if}
           </td>
-          <td>
-            <span class="meter">
-              <span
-                class="fill"
-                class:over={person.over_allocated}
-                style={`width:${Math.min(person.allocated_percent, 150) / 1.5}%`}
-              ></span>
-            </span>
-          </td>
+          <td>{person.proposed.allocations > 0 ? `${person.proposed.percent}%` : "—"}</td>
+          <td><CapacityMeter {person} from={view.from} to={view.to} /></td>
           <td>{person.allocations}</td>
         </tr>
       {/each}
@@ -83,14 +91,6 @@
     padding: 0 0.5rem;
     font-size: 0.75rem;
   }
-  .meter {
-    display: inline-block;
-    width: 160px;
-    height: 0.7rem;
-    background: var(--surface-2, #f0f0f0);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .fill { display: block; height: 100%; background: #1d8a4e; }
-  .fill.over { background: #a4262c; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; list-style: none; margin: 0.5rem 0; padding: 0; }
+  .mk { font-weight: 700; display: inline-block; min-width: 1.1em; }
 </style>

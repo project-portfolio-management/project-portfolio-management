@@ -161,3 +161,39 @@ describe("CalendarMonth", () => {
     done();
   });
 });
+
+import CapacityMeter from "../../src/lib/components/CapacityMeter.svelte";
+
+describe("CapacityMeter", () => {
+  const person = {
+    person_ref: "person:x",
+    allocated_percent: 80,
+    over_allocated: true,
+    allocations: 1,
+    capacity: { source: "availability" as const, min_percent: 40 },
+    peak_percent: 80,
+    over_capacity: [{ from: "2026-10-12", to: "2026-10-18", demand: 80, capacity: 40 }],
+    proposed: { percent: 30, allocations: 1, would_exceed_capacity: true },
+  };
+  it("draws the firm bar, the capacity line, the proposal apart and the over-capacity strip, with words", () => {
+    const { root, done } = render(CapacityMeter, { person, from: "2026-10-05", to: "2026-10-18" });
+    expect(root.querySelector(".fill")).not.toBeNull();
+    expect(root.querySelector(".proposed")).not.toBeNull();
+    expect(root.querySelector(".cap")).not.toBeNull();
+    expect(root.querySelectorAll(".seg")).toHaveLength(1);
+    const text = root.textContent ?? "";
+    expect(text).toContain("80% committed against a capacity as low as 40%");
+    expect(text).toContain("30% proposed, not counted");
+    expect(text).toContain("!");
+    expect(root.querySelector("[role=img]")?.getAttribute("aria-label")).toContain("committed");
+    done();
+  });
+  it("omits the strip and the proposal when there are none", () => {
+    const quiet = { ...person, over_allocated: false, over_capacity: [], proposed: { percent: 0, allocations: 0, would_exceed_capacity: false } };
+    const { root, done } = render(CapacityMeter, { person: quiet, from: "2026-10-05", to: "2026-10-18" });
+    expect(root.querySelector(".proposed")).toBeNull();
+    expect(root.querySelector(".strip")).toBeNull();
+    expect(root.textContent).toContain("○");
+    done();
+  });
+});

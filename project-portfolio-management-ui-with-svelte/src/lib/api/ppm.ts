@@ -145,6 +145,30 @@ export interface Allocation {
   percent: number;
   start_date: string | null;
   end_date: string | null;
+  /** `committed` (firm) or `proposed` (hoped for; never counts toward utilisation). PJ-4. */
+  booking: "committed" | "proposed";
+  /** Asked of the resource manager. */
+  requested: boolean;
+}
+
+/** A run of days where demand exceeded the capacity in force (PJ-3). */
+export interface OverCapacitySpan {
+  from: string;
+  to: string;
+  /** Summed percent asked for on each of those days. */
+  demand: number;
+  /** The capacity in force on each of those days. */
+  capacity: number;
+}
+
+/** One availability range (PJ-3): the most of their time a person can commit between two dates. */
+export interface AvailabilityRange {
+  pid: string;
+  person_ref: string;
+  from: string;
+  to: string;
+  max_percent: number;
+  note: string | null;
 }
 
 export interface CapacityView {
@@ -152,9 +176,16 @@ export interface CapacityView {
   to: string;
   people: {
     person_ref: string;
+    /** Committed bookings only; a proposal never counts here. */
     allocated_percent: number;
     over_allocated: boolean;
     allocations: number;
+    /** `default` (100) or `availability` (a range applies in the window). */
+    capacity: { source: "default" | "availability"; min_percent: number };
+    peak_percent: number;
+    over_capacity: OverCapacitySpan[];
+    /** The hoped-for bookings, kept apart from the firm figures. */
+    proposed: { percent: number; allocations: number; would_exceed_capacity: boolean };
   }[];
 }
 
@@ -1023,6 +1054,22 @@ export class PpmClient {
   }
   allocations(pid: string): Promise<Allocation[]> {
     return this.http.get(`/api/plans/${pid}/allocations`);
+  }
+  /** Make a proposed booking firm; a 409 `over_capacity` needs `confirm` to go ahead. */
+  commitAllocation(pid: string, allocationPid: string, confirm = false): Promise<{ pid: string; booking: string; over_capacity: boolean }> {
+    return this.http.post(
+      `/api/plans/${pid}/allocations/${allocationPid}/commit${confirm ? "?confirm=true" : ""}`,
+    );
+  }
+  availability(personRef?: string): Promise<AvailabilityRange[]> {
+    const q = personRef ? `?person_ref=${encodeURIComponent(personRef)}` : "";
+    return this.http.get(`/api/availability${q}`);
+  }
+  setAvailability(body: { person_ref?: string; from: string; to: string; max_percent: number; note?: string }): Promise<AvailabilityRange> {
+    return this.http.post("/api/availability", { body });
+  }
+  removeAvailability(pid: string): Promise<unknown> {
+    return this.http.post(`/api/availability/${pid}/delete`);
   }
   createAllocation(pid: string, body: unknown): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/allocations`, { body });

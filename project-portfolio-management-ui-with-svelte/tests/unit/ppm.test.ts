@@ -42,6 +42,12 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.setPlanCalendar("p1", { weekdays: "1111100", holidays: [] });
     await ppm.meCalendar();
     await ppm.setMeCalendar({ weekdays: "1110000", holidays: [] });
+    await ppm.commitAllocation("p1", "a1");
+    await ppm.commitAllocation("p1", "a1", true);
+    await ppm.availability();
+    await ppm.availability("person:x y");
+    await ppm.setAvailability({ person_ref: "person:x", from: "2026-10-12", to: "2026-10-18", max_percent: 40 });
+    await ppm.removeAvailability("v1");
     expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
       "GET /api/plans/p1/cpm",
       "GET /api/plans/p1/cpm?near=3",
@@ -50,6 +56,12 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
       "PUT /api/plans/p1/calendar",
       "GET /api/me/calendar",
       "PUT /api/me/calendar",
+      "POST /api/plans/p1/allocations/a1/commit",
+      "POST /api/plans/p1/allocations/a1/commit?confirm=true",
+      "GET /api/availability",
+      "GET /api/availability?person_ref=person%3Ax%20y",
+      "POST /api/availability",
+      "POST /api/availability/v1/delete",
     ]);
   });
 });

@@ -84,6 +84,9 @@
     {#if links.includes("critical-path")}
       <a class="button small" href={`/plans/${pid}/critical-path`}>Critical path</a>
     {/if}
+    {#if links.includes("raci")}
+      <a class="button small" href={`/plans/${pid}/raci`}>RACI</a>
+    {/if}
     {#if links.includes("calendar")}
       <a class="button small" href={`/plans/${pid}/calendar`}>Calendar</a>
     {/if}

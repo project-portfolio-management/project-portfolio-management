@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — RACI matrix (RM-13, 2026-10-03)
+
+`/api/plans/{pid}/raci` and `PUT …/tasks/{pid}/raci`: who is Responsible, Accountable, Consulted and Informed on each task. One Accountable per task (refused otherwise, and enforced in the database); incomplete rows are reported, not hidden; CSV export; R, A and I people are auto-subscribed.
+
 ### Added — schedule baselines and variance (SC-3, 2026-10-03)
 
 `/api/plans/{pid}/schedule-baselines` takes numbered, append-only snapshots of a plan's task schedule (a reason is required); `/schedule-variance` shows, in working days, what slipped, was pulled in, was added or was removed since. Added tasks are not slip and removed tasks stay listed.

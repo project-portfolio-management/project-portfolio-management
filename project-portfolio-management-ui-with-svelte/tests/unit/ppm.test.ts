@@ -52,6 +52,8 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.takeScheduleBaseline("p1", "approved");
     await ppm.scheduleVariance("p1");
     await ppm.scheduleVariance("p1", 2);
+    await ppm.planRaci("p1");
+    await ppm.setRaciRow("p1", "t1", [{ person_ref: "person:x", roles: "AR" }]);
     expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
       "GET /api/plans/p1/cpm",
       "GET /api/plans/p1/cpm?near=3",
@@ -70,6 +72,8 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
       "POST /api/plans/p1/schedule-baselines",
       "GET /api/plans/p1/schedule-variance",
       "GET /api/plans/p1/schedule-variance?baseline=2",
+      "GET /api/plans/p1/raci",
+      "PUT /api/plans/p1/tasks/t1/raci",
     ]);
   });
 });

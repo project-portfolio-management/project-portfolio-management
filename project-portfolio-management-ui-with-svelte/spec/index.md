@@ -1090,3 +1090,20 @@ the plan's own finish movement and warns when it improved only because tasks
 were removed; with no baseline it says so instead of showing zero slip.
 **Not built:** comparing two baselines with each other, and a baseline for
 plan-level (non-task) nodes.
+
+## RACI matrix
+
+Route `/plans/[pid]/raci` (the plan page links to it with the `tasks` module):
+tasks down, people across, and in each cell four toggle **buttons** — R
+Responsible, A Accountable, C Consulted, I Informed — each with a sentence for
+assistive technology ("Design: 3f2c6b7e… is Responsible and Accountable") and a
+visible letter, so colour is never the only signal. A toggle saves the row.
+Rules the page keeps (`src/lib/raci-view.ts`): **one Accountable per task**
+(giving it to someone moves it and a status line says so); a person left with no
+letter drops out of the matrix; a row missing an Accountable or a Responsible is
+named in words (⚠), not hidden; a person is added as a column by their
+`person:` / `worker:` reference; the summary counts reconcile with the rows;
+**Export to a spreadsheet** is the service's CSV. People marked R, A or I are
+auto-subscribed to the task by the service (unless they switched `auto_watch`
+off). **Not built:** role columns (only people), deliverable-level rows (only
+tasks), a copy-row-from-another-task shortcut.

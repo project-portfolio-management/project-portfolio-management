@@ -33,3 +33,4 @@ impl ActiveModelBehavior for work_calendars::ActiveModel {}
 impl ActiveModelBehavior for person_availabilities::ActiveModel {}
 impl ActiveModelBehavior for schedule_baselines::ActiveModel {}
 impl ActiveModelBehavior for schedule_baseline_tasks::ActiveModel {}
+impl ActiveModelBehavior for raci_assignments::ActiveModel {}

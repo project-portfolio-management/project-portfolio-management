@@ -852,3 +852,86 @@ async fn the_baseline_limit_refuses_rather_than_overwrites() {
     .await;
     unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES") };
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_raci_matrix_refuses_two_accountable_and_reports_gaps() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let (ann, bob, cy) = (
+            "person:3f2c6b7e-0000-4000-8000-0000000000a1",
+            "person:3f2c6b7e-0000-4000-8000-0000000000a2",
+            "person:3f2c6b7e-0000-4000-8000-0000000000a3",
+        );
+        let design = task(&request, &p, "Design, v2", None, None).await;
+        let build = task(&request, &p, "Build", None, None).await;
+        let untouched = task(&request, &p, "Untouched", None, None).await;
+        let put = |t: &str, body: Value| {
+            let (request, url) = (&request, format!("/api/plans/{p}/tasks/{t}/raci"));
+            async move { request.put(&url).json(&body).await }
+        };
+
+        // Nothing assigned: every task is a row with no cells and both gaps.
+        let m0: Value = request.get(&format!("/api/plans/{p}/raci")).await.json();
+        assert_eq!(m0["rows"].as_array().unwrap().len(), 3);
+        assert_eq!(m0["summary"]["missing_accountable"], 3);
+        assert!(m0["people"].as_array().unwrap().is_empty());
+
+        // Refusals: two Accountable, a bad letter, the same person twice, no letters, not a URN, an unknown task.
+        let two = json!({ "assignments": [{ "person_ref": ann, "roles": "A" }, { "person_ref": bob, "roles": "AR" }] });
+        let r = put(&design, two).await;
+        assert_eq!(r.status_code(), 422);
+        assert!(r.text().contains("one Accountable person, not 2"), "{}", r.text());
+        assert_eq!(put(&design, json!({ "assignments": [{ "person_ref": ann, "roles": "AX" }] })).await.status_code(), 422);
+        assert_eq!(put(&design, json!({ "assignments": [{ "person_ref": ann, "roles": "A" }, { "person_ref": ann, "roles": "R" }] })).await.status_code(), 422);
+        assert_eq!(put(&design, json!({ "assignments": [{ "person_ref": ann, "roles": "" }] })).await.status_code(), 422);
+        assert_eq!(put(&design, json!({ "assignments": [{ "person_ref": "ann", "roles": "A" }] })).await.status_code(), 422);
+        assert_eq!(put("3f2c6b7e-0000-4000-8000-000000000bad", json!({ "assignments": [] })).await.status_code(), 404);
+        let still: Value = request.get(&format!("/api/plans/{p}/raci")).await.json();
+        assert!(still["people"].as_array().unwrap().is_empty(), "a refused row wrote nothing");
+
+        // A good row: A/R on one person, a consulted, an informed.
+        let ok: Value = put(&design, json!({ "assignments": [{ "person_ref": ann, "roles": "ar" }, { "person_ref": bob, "roles": "C" }, { "person_ref": cy, "roles": "I" }] })).await.json();
+        assert_eq!(ok["cells"][ann], "RA", "normalised to R-A-C-I order");
+        assert_eq!(ok["findings"], json!([]));
+        // An incomplete row is allowed, and says what is missing.
+        let partial: Value = put(&build, json!({ "assignments": [{ "person_ref": bob, "roles": "R" }] })).await.json();
+        assert_eq!(partial["findings"], json!(["no_accountable"]));
+
+        let m: Value = request.get(&format!("/api/plans/{p}/raci")).await.json();
+        assert_eq!(m["people"], json!([ann, bob, cy]));
+        assert_eq!(m["summary"], json!({ "tasks": 3, "complete": 1, "missing_accountable": 2, "multiple_accountable": 0, "missing_responsible": 1 }));
+        let rows = m["rows"].as_array().unwrap();
+        let row = |t: &str| rows.iter().find(|r| r["task_pid"] == t).unwrap().clone();
+        assert_eq!(row(&design)["cells"][bob], "C");
+        assert!(row(&untouched)["cells"].as_object().unwrap().is_empty());
+        let w = |who: &str| m["workload"].as_array().unwrap().iter().find(|x| x["person_ref"] == who).unwrap().clone();
+        assert_eq!((w(ann)["accountable"].as_i64(), w(ann)["responsible"].as_i64()), (Some(1), Some(1)));
+        assert_eq!((w(bob)["responsible"].as_i64(), w(bob)["consulted"].as_i64()), (Some(1), Some(1)));
+
+        // The CSV: people as columns, the title quoted, the gaps in words.
+        let csv = request.get(&format!("/api/plans/{p}/raci?format=csv")).await;
+        assert_eq!(csv.status_code(), 200);
+        let text = csv.text();
+        assert!(text.starts_with(&format!("task,{ann},{bob},{cy},gaps\n")), "{text}");
+        assert!(text.contains("\"Design, v2\",RA,C,I,"), "{text}");
+        assert!(text.contains("no accountable; no responsible"), "{text}");
+
+        // Replacing the row replaces it entirely: Ann is out, Bob now owns and does it.
+        put(&design, json!({ "assignments": [{ "person_ref": bob, "roles": "AR" }] })).await.assert_status_ok();
+        let m2: Value = request.get(&format!("/api/plans/{p}/raci")).await.json();
+        let design_row = m2["rows"].as_array().unwrap().iter().find(|r| r["task_pid"] == design.as_str()).unwrap().clone();
+        assert_eq!(design_row["cells"].as_object().unwrap().len(), 1);
+        assert_eq!(design_row["cells"][bob], "RA");
+        assert!(m2["workload"].as_array().unwrap().iter().all(|x| x["person_ref"] != ann), "Ann holds nothing now, so she is not a column");
+
+        // Clearing a row is allowed and leaves it as a gap.
+        put(&build, json!({ "assignments": [] })).await.assert_status_ok();
+        let m3: Value = request.get(&format!("/api/plans/{p}/raci")).await.json();
+        assert_eq!(m3["summary"]["missing_responsible"], 2);
+    })
+    .await;
+}

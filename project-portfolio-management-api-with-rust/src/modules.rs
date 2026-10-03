@@ -48,6 +48,8 @@ pub const MODULES: &[ModuleDef] = &[
             // Schedule baselines and variance against them (SC-3).
             "schedule-baselines",
             "schedule-variance",
+            // The RACI matrix of a plan's tasks.
+            "raci",
         ],
     },
     ModuleDef {

@@ -766,6 +766,19 @@ export interface ScheduleVariance {
   } | null;
 }
 
+/** What is incomplete on a RACI row. */
+export type RaciFinding = "no_accountable" | "no_responsible" | "many_accountable";
+
+/** `GET /api/plans/{pid}/raci`. */
+export interface RaciMatrix {
+  plan_pid: string;
+  /** Everyone who holds a letter anywhere, sorted. */
+  people: string[];
+  rows: { task_pid: string; title: string; cells: Record<string, string>; findings: RaciFinding[] }[];
+  summary: { tasks: number; complete: number; missing_accountable: number; multiple_accountable: number; missing_responsible: number };
+  workload: { person_ref: string; responsible: number; accountable: number; consulted: number; informed: number }[];
+}
+
 /** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
 export interface TaskScheduleBody {
   start_date?: string | null;
@@ -1287,6 +1300,17 @@ export class PpmClient {
   scheduleVariance(pid: string, baseline?: number): Promise<ScheduleVariance> {
     const q = baseline === undefined ? "" : `?baseline=${baseline}`;
     return this.http.get(`/api/plans/${pid}/schedule-variance${q}`);
+  }
+  planRaci(pid: string): Promise<RaciMatrix> {
+    return this.http.get(`/api/plans/${pid}/raci`);
+  }
+  /** Replace a task's RACI row; `roles` is letters such as `"AR"`. */
+  setRaciRow(
+    pid: string,
+    taskPid: string,
+    assignments: { person_ref: string; roles: string }[],
+  ): Promise<{ task_pid: string; cells: Record<string, string>; findings: RaciFinding[] }> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/raci`, { body: { assignments } });
   }
   planCalendar(pid: string): Promise<WorkCalendarView> {
     return this.http.get(`/api/plans/${pid}/calendar`);

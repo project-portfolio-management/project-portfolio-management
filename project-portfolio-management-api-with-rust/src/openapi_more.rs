@@ -98,6 +98,7 @@ pub fn paths() -> Value {
     merge(&mut all, availability_paths());
     merge(&mut all, booking_paths());
     merge(&mut all, baseline_paths());
+    merge(&mut all, raci_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -816,6 +817,24 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in working days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// The RACI matrix.
+fn raci_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/raci": {
+            "get": op("raci", "The plan's RACI matrix",
+                "People across, tasks down, letters in the cells (R Responsible, A Accountable, C Consulted, I Informed; a person may hold several, e.g. AR). Each row lists what is missing (no_accountable, no_responsible, many_accountable); the summary counts reconcile with the rows (a task with none of that is complete); workload counts each person's R, A, C and I. A task with no assignments is still a row. ?format=csv returns a spreadsheet with a gaps column.",
+                vec![uuid_param("pid"), query("format", false, "csv for a spreadsheet")],
+                &[("200", "people, rows, summary, workload, legend (or CSV)"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/raci": {
+            "put": op("raci", "Replace a task's RACI row",
+                "Send {assignments: [{person_ref, roles: \"AR\"}]}; that becomes the row, atomically, and the old assignments are soft-deleted so history is kept. REFUSED 422: more than one Accountable person (the database enforces it too), a letter that is not R, A, C or I, a person twice, a person with no letters, a person_ref that is not a person:/worker: URN, more than 50 people. A row with no Accountable or no Responsible is allowed and reported in findings, because that is how a plan looks while it is being set up. People who are R, A or I are auto-subscribed to the task unless they turned auto_watch off; removing them from the row does not unsubscribe them.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "task_pid, cells and findings"), ("404", "Unknown plan or task"), ("422", "The row is refused (see above)")])
         }
     })
 }

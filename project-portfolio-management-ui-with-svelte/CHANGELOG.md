@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — RACI matrix
+
+`/plans/[pid]/raci`: tasks down, people across, R/A/C/I toggles per cell, one Accountable per task, rows with gaps named in words, load by person, and a spreadsheet export.
+
 ### Added — schedule baselines and variance (SC-3)
 
 Take a numbered, append-only baseline on the critical-path page; the Gantt shows an outline where each task was baselined; a variance table separates slipped, pulled in, added and removed in working days.

@@ -55,6 +55,7 @@ pub mod planned_slots;
 pub mod plans;
 pub mod prelude;
 pub mod proposals;
+pub mod raci_assignments;
 pub mod reactions;
 pub mod report_definitions;
 pub mod report_schedules;

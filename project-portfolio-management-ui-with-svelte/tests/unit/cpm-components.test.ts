@@ -229,3 +229,53 @@ describe("VarianceTable", () => {
     done();
   });
 });
+
+import RaciMatrixTable from "../../src/lib/components/RaciMatrix.svelte";
+
+describe("RaciMatrix", () => {
+  const ann = "person:3f2c6b7e-0000-4000-8000-0000000000a1";
+  const bob = "person:3f2c6b7e-0000-4000-8000-0000000000a2";
+  const matrix = {
+    plan_pid: "p",
+    people: [ann, bob],
+    rows: [
+      { task_pid: "t1", title: "Design", cells: { [ann]: "RA", [bob]: "C" }, findings: [] },
+      { task_pid: "t2", title: "Build", cells: { [bob]: "R" }, findings: ["no_accountable" as const] },
+    ],
+    summary: { tasks: 2, complete: 1, missing_accountable: 1, multiple_accountable: 0, missing_responsible: 0 },
+    workload: [],
+  };
+  it("shows the four letters as pressed buttons with a sentence each, and names a row's gap in words", () => {
+    const { root, done } = render(RaciMatrixTable, { matrix, people: [ann, bob], onchange: () => undefined });
+    expect(root.querySelector("caption")).not.toBeNull();
+    expect(root.querySelectorAll("tbody tr")).toHaveLength(2);
+    const buttons = [...root.querySelectorAll("button.l")] as HTMLButtonElement[];
+    expect(buttons).toHaveLength(2 * 2 * 4);
+    const pressed = buttons.filter((b) => b.getAttribute("aria-pressed") === "true");
+    expect(pressed.map((b) => b.textContent)).toEqual(["R", "A", "C", "R"]);
+    expect(buttons[0]!.getAttribute("aria-label")).toBe("Responsible"); // the state is aria-pressed
+    expect(buttons[0]!.parentElement?.getAttribute("aria-label")).toBe("Design: 3f2c6b7e… is Responsible and Accountable");
+    expect(root.textContent).toContain("Nobody is accountable");
+    expect(root.textContent).toContain("✓");
+    done();
+  });
+  it("reports a toggle with the new row, and says when Accountable moves", () => {
+    const calls: Array<[string, Record<string, string>, string | null]> = [];
+    const { root, done } = render(RaciMatrixTable, { matrix, people: [ann, bob], onchange: (t: string, c: Record<string, string>, n: string | null) => calls.push([t, c, n]) });
+    // Bob's A on Design (row 1, second person, second letter).
+    const rowButtons = [...root.querySelectorAll("tbody tr")][0]!.querySelectorAll("button.l");
+    (rowButtons[4 + 1] as HTMLButtonElement).click();
+    expect(calls).toHaveLength(1);
+    expect(calls[0]![0]).toBe("t1");
+    expect(calls[0]![1]).toEqual({ [ann]: "R", [bob]: "AC" });
+    expect(calls[0]![2]).toContain("Accountable moved from 3f2c6b7e… to 3f2c6b7e…");
+    done();
+  });
+  it("shows a column for a person with no letters yet", () => {
+    const carol = "person:3f2c6b7e-0000-4000-8000-0000000000a3";
+    const { root, done } = render(RaciMatrixTable, { matrix, people: [ann, bob, carol], onchange: () => undefined });
+    expect(root.querySelectorAll("thead th")).toHaveLength(1 + 3 + 1);
+    expect(root.querySelectorAll("button.l[aria-pressed=true]")).toHaveLength(4);
+    done();
+  });
+});

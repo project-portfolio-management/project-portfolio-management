@@ -77,6 +77,7 @@ mod m20261003_000028_person_availabilities;
 mod m20261003_000029_allocation_booking;
 mod m20261003_000030_schedule_baselines;
 mod m20261003_000031_schedule_baseline_tasks;
+mod m20261003_000032_raci_assignments;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -154,6 +155,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000029_allocation_booking::Migration),
             Box::new(m20261003_000030_schedule_baselines::Migration),
             Box::new(m20261003_000031_schedule_baseline_tasks::Migration),
+            Box::new(m20261003_000032_raci_assignments::Migration),
             // inject-above (do not remove this comment)
         ]
     }

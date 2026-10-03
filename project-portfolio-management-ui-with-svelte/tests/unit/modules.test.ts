@@ -9,9 +9,15 @@ describe("visiblePlanLinks (RM-7)", () => {
   });
 
   it("shows only the links whose module is on", () => {
-    expect(visiblePlanLinks(["tasks", "time"])).toEqual(["board", "flow"]);
+    expect(visiblePlanLinks(["tasks", "time"])).toEqual(["board", "flow", "critical-path"]);
     expect(visiblePlanLinks(["governance"])).toEqual(["governance"]);
-    expect(visiblePlanLinks(["milestones", "tasks"])).toEqual(["board", "schedule", "flow"]);
+    expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
+      "board",
+      "schedule",
+      "flow",
+      "critical-path",
+      "calendar",
+    ]);
   });
 
   it("an explicit empty set is a real choice and hides every link", () => {

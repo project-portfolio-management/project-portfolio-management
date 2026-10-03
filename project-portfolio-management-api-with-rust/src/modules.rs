@@ -43,6 +43,8 @@ pub const MODULES: &[ModuleDef] = &[
             "burndown",
             "velocity",
             "standup",
+            // The critical-path view of a plan's tasks (SC-1).
+            "cpm",
         ],
     },
     ModuleDef {
@@ -59,7 +61,7 @@ pub const MODULES: &[ModuleDef] = &[
     },
     ModuleDef {
         key: "milestones",
-        segments: &["milestones", "schedule"],
+        segments: &["milestones", "schedule", "calendar"],
     },
     ModuleDef {
         key: "governance",

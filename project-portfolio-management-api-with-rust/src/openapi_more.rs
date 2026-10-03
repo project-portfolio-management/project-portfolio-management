@@ -719,7 +719,7 @@ fn cpm_paths() -> Value {
             "get": op("cpm", "Float, critical tasks and critical chains for a plan's tasks",
                 "Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= working days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many working days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Working days use the plan's calendar (all seven days until SC-2).",
                 vec![uuid_param("pid"), query("near", false, "Working days of float counted as near-critical, 0 to 3650")],
-                &[("200", "nodes, unscheduled, ignored_edges, critical_chains"), ("404", "Unknown plan"), ("422", "Bad near, or a dependency cycle")])
+                &[("200", "nodes, edges, unscheduled, ignored_edges, critical_chains"), ("404", "Unknown plan"), ("422", "Bad near, or a dependency cycle")])
         },
         "/api/plans/{pid}/tasks/{t_pid}/schedule": {
             "put": op("cpm", "Set a task's planned start and working duration",

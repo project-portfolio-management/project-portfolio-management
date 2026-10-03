@@ -126,6 +126,11 @@ match breakdown).
                              "Accessible table" view (Lily headless
                              KanbanTable) moves a card with a labelled
                              control, no drag needed
+/plans/[pid]/critical-path   float, critical chains, Gantt + network
+                             diagram + table, and a task schedule editor
+                             that answers with what moved (SC-1/SC-2)
+/plans/[pid]/calendar        the plan's working weekdays and holidays
+/me/calendar                 my working weekdays and days off
 /gantt                       schedule Gantt (SVAR; dependency links +
                              critical path; read-only) with an
                              "Accessible table" view (Lily headless
@@ -1008,3 +1013,45 @@ listed, never dropped; the Kanban table only reports `onmove` and the service
 stays the single writer. Tests: `tests/unit/lily-grids.test.ts`,
 `tests/unit/lily-tables.test.ts`. Not done: an axe-core / Playwright audit of
 these views (LT-12).
+
+## Critical path and calendars (SC-1, SC-2, PJ-12)
+
+Routes `/plans/[pid]/critical-path`, `/plans/[pid]/calendar` and `/me/calendar`
+(links from the plan page and from *My work*; the plan links obey the RM-7
+modules: critical path with `tasks`, calendar with `milestones`). The numbers
+come from `GET /api/plans/{pid}/cpm`; the pure helpers are `src/lib/cpm-view.ts`.
+
+- **Three views of one result:** a Gantt (`CpmGantt`: each bar from early start to
+  early finish, then the task's **float as a hatched tail**, and a limit marker
+  when float is negative), a precedence **network diagram** (`NetworkDiagram`:
+  columns by longest predecessor chain, critical chains drawn heavier, non-trivial
+  links labelled `SS +2d`), and a **table** (`CpmTable`, with free float,
+  constraint, deadline and calendar).
+- **State is never colour alone.** Every task has a marker (● critical, ◐
+  near-critical, ○ float, ! cannot meet a constraint or deadline) *and* a
+  sentence ("3 working days of float", "Cannot meet its constraint or deadline: 2
+  working days short"). Negative float is said in words, never a bare minus.
+  The diagram has a list twin; the Gantt has the table.
+- **Honest about what is missing.** Tasks with no duration, or no start and no
+  scheduled predecessor, are listed under *Not scheduled* with the reason.
+  Assignees whose calendar shares no working day with the plan are named in a
+  banner. Float is in working days; bars are drawn in calendar days (a weekend
+  inside a bar is drawn, not counted).
+- **The editor** sets start, duration (0 = milestone), a constraint and a
+  deadline, and shows **what moved** across the network. A hard constraint
+  (`mso`, `mfo`) asks for a reason; the service refuses it without the
+  `scheduling=hard_constraints` (or admin) permission and the page shows that
+  message. `alap` is not offered (the service does not support it).
+- **Calendars:** `CalendarMonth` shows working days, off days (–), holidays (✕)
+  and recorded absences (A) with a symbol each; editable, a working day is a
+  button that toggles a holiday. A plan with no calendar says "every day works".
+  A person's calendar narrows the plan's for their own tasks.
+- **Not built:** a WBS tree with generated codes and an RBS (PJ-12's other
+  halves), the S-curve and resource heatmap (they need earned value and
+  availability), float in *My work* (SC-10), the MS Project import screen (the
+  API client is JSON-only; the import is API-only for now), a browser (Playwright
+  / axe) audit of these views (LT-12).
+
+Tests: `tests/unit/cpm-view.test.ts` (masks, month grids, bars, float wording,
+layout), `tests/unit/cpm-components.test.ts` (markers, table headers, keyboard,
+calendar symbols), `tests/unit/ppm.test.ts` (paths and verbs).

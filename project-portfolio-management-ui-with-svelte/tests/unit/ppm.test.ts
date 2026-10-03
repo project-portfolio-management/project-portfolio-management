@@ -32,6 +32,28 @@ describe("PpmClient my-work path (LT-3)", () => {
   });
 });
 
+describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
+  it("maps the endpoints and verbs", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.planCpm("p1");
+    await ppm.planCpm("p1", 3);
+    await ppm.setTaskSchedule("p1", "t1", { duration_days: 3 });
+    await ppm.planCalendar("p1");
+    await ppm.setPlanCalendar("p1", { weekdays: "1111100", holidays: [] });
+    await ppm.meCalendar();
+    await ppm.setMeCalendar({ weekdays: "1110000", holidays: [] });
+    expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
+      "GET /api/plans/p1/cpm",
+      "GET /api/plans/p1/cpm?near=3",
+      "PUT /api/plans/p1/tasks/t1/schedule",
+      "GET /api/plans/p1/calendar",
+      "PUT /api/plans/p1/calendar",
+      "GET /api/me/calendar",
+      "PUT /api/me/calendar",
+    ]);
+  });
+});
+
 describe("PpmClient paths", () => {
   it("maps the catalogue endpoints", async () => {
     const { ppm, calls } = recordingClient();

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — critical path and calendars (SC-1, SC-2, PJ-12)
+
+`/plans/[pid]/critical-path` (Gantt with float tails, precedence network diagram, table, and a schedule editor that reports what moved), `/plans/[pid]/calendar` and `/me/calendar` (weekly pattern, holidays, absences, with symbols as well as colour). Pure helpers in `src/lib/cpm-view.ts`.
+
 ### Added — accessible Gantt and Kanban tables (Lily headless)
 
 `/gantt` and `/plans/[pid]/board` gain an "Accessible table" view built on `GanttTable*` / `KanbanTable*` from `@lilydesignsystem/svelte-headless`, with pure helpers in `src/lib/lily-grids.ts`: named cells, arrow / Home / End navigation, a labelled Move control per card, undated and unknown-status items listed rather than hidden.

@@ -81,6 +81,12 @@
     {#if links.includes("flow")}
       <a class="button small" href={`/plans/${pid}/flow`}>Flow</a>
     {/if}
+    {#if links.includes("critical-path")}
+      <a class="button small" href={`/plans/${pid}/critical-path`}>Critical path</a>
+    {/if}
+    {#if links.includes("calendar")}
+      <a class="button small" href={`/plans/${pid}/calendar`}>Calendar</a>
+    {/if}
   </p>
   <div class="surface stack">
     {#if record.kind}<div><strong>{t("detail.caseType")}</strong> {record.kind}</div>{/if}

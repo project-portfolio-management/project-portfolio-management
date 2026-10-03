@@ -39,6 +39,7 @@
 <svelte:head><title>My work — PPM</title></svelte:head>
 
 <h1>My work</h1>
+<p class="small"><a href="/me/calendar">My calendar</a> — the days you work, so your dates are honest.</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if work}

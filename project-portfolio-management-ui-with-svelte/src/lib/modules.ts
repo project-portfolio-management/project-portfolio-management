@@ -13,6 +13,8 @@ export const PLAN_LINKS = [
   { key: "board", module: "tasks" },
   { key: "schedule", module: "milestones" },
   { key: "flow", module: "tasks" },
+  { key: "critical-path", module: "tasks" },
+  { key: "calendar", module: "milestones" },
 ] as const;
 
 export type PlanLinkKey = (typeof PLAN_LINKS)[number]["key"];

@@ -626,6 +626,88 @@ export interface Task {
   blocked_days: number | null;
 }
 
+/** One task in `GET /api/plans/{pid}/cpm` (SC-1, SC-2). Dates are `YYYY-MM-DD`. */
+export interface CpmNode {
+  pid: string;
+  title: string | null;
+  status: string | null;
+  early_start: string;
+  early_finish: string;
+  late_start: string;
+  late_finish: string;
+  /** Working days it can slip before the project finish moves; negative = cannot meet a constraint or deadline. */
+  total_float: number;
+  /** Working days before any successor is delayed. */
+  free_float: number;
+  critical: boolean;
+  near_critical: boolean;
+  planned_start: string | null;
+  /** The stored working-day duration (0 = milestone). */
+  duration_days: number | null;
+  /** Working days logic forces the start later than planned. */
+  pushed_days: number;
+  constraint: "snet" | "snlt" | "fnet" | "fnlt" | "mso" | "mfo" | null;
+  constraint_date: string | null;
+  deadline: string | null;
+  /** A hard constraint pins this task earlier than its predecessors allow. */
+  hard_conflict: boolean;
+  /** `plan`, or `plan+person` when the assignee's own calendar narrows it. */
+  calendar: "plan" | "plan+person";
+}
+
+/** A dependency between two tasks. */
+export interface CpmEdge {
+  pid: string;
+  predecessor_pid: string;
+  successor_pid: string;
+  kind: "fs" | "ss" | "ff" | "sf";
+  /** Working days; negative is a lead. */
+  lag_days: number;
+}
+
+/** `GET /api/plans/{pid}/cpm`. */
+export interface Cpm {
+  plan_pid: string;
+  /** `plan` or `default` (all seven days work). */
+  calendar: "plan" | "default";
+  calendar_conflicts: string[];
+  project_finish: string | null;
+  nodes: CpmNode[];
+  /** The dependencies used, so a diagram can draw them. */
+  edges: CpmEdge[];
+  unscheduled: { pid: string; title: string | null; reason: "no_duration" | "no_anchor" | "date_out_of_range" }[];
+  ignored_edges: string[];
+  critical_chains: string[][];
+  chains_truncated: boolean;
+  note: string;
+}
+
+/** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
+export interface TaskScheduleBody {
+  start_date?: string | null;
+  duration_days?: number | null;
+  constraint_kind?: string | null;
+  constraint_date?: string | null;
+  deadline?: string | null;
+  /** Required for a hard constraint (`mso`, `mfo`). */
+  reason?: string | null;
+}
+
+/** What moved across the network after a schedule edit (PJ-8). */
+export interface ScheduleMoved {
+  task: { pid: string };
+  moved: { pid: string; moved: "start" | "finish" | "both"; start_days: number; finish_days: number }[] | null;
+  note: string | null;
+}
+
+/** A working calendar (SC-2): seven `0`/`1` characters, Monday first, plus holidays. */
+export interface WorkCalendarView {
+  source: "default" | "plan" | "person";
+  weekdays: string;
+  holidays: string[];
+  note?: string;
+}
+
 /** `GET /api/plans/{pid}/modules` (RM-7): the feature modules a plan exposes. */
 export interface PlanModules {
   plan_pid: string;
@@ -1084,6 +1166,28 @@ export class PpmClient {
   }
   regulatorExtract(): Promise<RegulatorExtract> {
     return this.http.get("/api/regulator/extract");
+  }
+  // ---- critical path and calendars (SC-1, SC-2) ----
+  /** Float, critical chains and constraints for a plan's tasks. */
+  planCpm(pid: string, near?: number): Promise<Cpm> {
+    const q = near === undefined ? "" : `?near=${near}`;
+    return this.http.get(`/api/plans/${pid}/cpm${q}`);
+  }
+  /** Set a task's planned start, duration, constraint and deadline; answers with what moved. */
+  setTaskSchedule(pid: string, taskPid: string, body: TaskScheduleBody): Promise<ScheduleMoved> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/schedule`, { body });
+  }
+  planCalendar(pid: string): Promise<WorkCalendarView> {
+    return this.http.get(`/api/plans/${pid}/calendar`);
+  }
+  setPlanCalendar(pid: string, body: { weekdays: string; holidays: string[] }): Promise<WorkCalendarView> {
+    return this.http.put(`/api/plans/${pid}/calendar`, { body });
+  }
+  meCalendar(): Promise<WorkCalendarView> {
+    return this.http.get("/api/me/calendar");
+  }
+  setMeCalendar(body: { weekdays: string; holidays: string[] }): Promise<WorkCalendarView> {
+    return this.http.put("/api/me/calendar", { body });
   }
   /** Which feature modules this plan exposes (RM-7). */
   planModules(pid: string): Promise<PlanModules> {

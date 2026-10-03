@@ -210,6 +210,7 @@ async fn plan_cpm(
             let mut v = serde_json::to_value(n).unwrap_or_default();
             v["title"] = serde_json::json!(name(n.pid));
             v["status"] = serde_json::json!(t.map(|t| t.status.clone()));
+            v["duration_days"] = serde_json::json!(t.and_then(|t| t.duration_days));
             v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
             let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);
@@ -218,6 +219,9 @@ async fn plan_cpm(
         }).collect::<Vec<_>>(),
         "unscheduled": result.unscheduled.iter().map(|u| serde_json::json!({
             "pid": u.pid, "title": name(u.pid), "reason": u.reason })).collect::<Vec<_>>(),
+        "edges": net.edges.iter().map(|e| serde_json::json!({
+            "pid": e.pid, "predecessor_pid": e.pred, "successor_pid": e.succ,
+            "kind": e.kind, "lag_days": e.lag })).collect::<Vec<_>>(),
         "ignored_edges": result.ignored_edges,
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,

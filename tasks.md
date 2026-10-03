@@ -606,6 +606,7 @@ compliance is made anywhere.
   **Acceptance:** each view states its `as_of`, baseline version and
   assumptions; colour is never the only signal; every chart has a data table
   twin; undefined figures read "not enough data" with the reason.
+  **Partly landed 2026-10-03:** the float/critical **Gantt** with float tails and a negative-float limit marker, the **table twin**, the **network diagram**, the **working-calendar editors** (`/plans/{pid}/calendar`, `/me/calendar`) and a schedule editor that shows *what moved* — all with a symbol and a sentence besides colour. **Still open:** schedule-health scorecard (SC-9), S-curve (SC-4/5), leveling diff (SC-6), resource heatmap (SC-7), risk histogram (SC-8), and a browser (axe/Playwright) audit.
 
 ## Amendments (scheduling and cost canon)
 
@@ -771,6 +772,7 @@ is `null` with a reason, never zero.
   reorder and no API accepts one as a key; a node the caller may not read shows
   as "restricted", not by name; a very large network degrades to a list rather
   than freezing.
+  **Partly landed 2026-10-03 (front-end):** the **precedence network diagram** (`NetworkDiagram`: layered by longest predecessor chain, critical chains heavier with a ● marker, lag/kind labels, a list twin, keyboard selection) on `/plans/{pid}/critical-path`; layout is the pure, tested `layoutNetwork`. **Still open:** the WBS tree with generated codes and the RBS.
 
 - [ ] **PJ-13 (S) — Cross-plan task links.** A task may depend on a task in
   **another plan** (ProjectLibre's sub-project and external-task idea), included

@@ -1041,3 +1041,146 @@ async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
     })
     .await;
 }
+
+#[allow(clippy::too_many_arguments)]
+async fn ev_plan(
+    request: &axum_test::TestServer,
+    name: &str,
+    parent: Option<&str>,
+    currency: &str,
+    planned: i64,
+    done: usize,
+    todo: usize,
+    actual: i64,
+) -> String {
+    let mut body = json!({ "kind": "Project", "name": name });
+    if let Some(p) = parent {
+        body["parent_ref"] = json!(p);
+    }
+    let plan: Value = request.post("/api/plans").json(&body).await.json();
+    let p = plan["pid"].as_str().unwrap().to_string();
+    let today = chrono::Utc::now().date_naive();
+    request
+        .post(&format!("/api/plans/{p}/budget-baselines"))
+        .json(&json!({ "currency": currency, "periods": [{
+            "period_start": (today - chrono::Duration::days(9)).to_string(), "period_end": today.to_string(), "planned_minor": planned }] }))
+        .await
+        .assert_status_ok();
+    for i in 0..done + todo {
+        let t = task(request, &p, &format!("T{i}"), None, None).await;
+        if i < done {
+            request
+                .patch(&format!("/api/plans/{p}/tasks/{t}"))
+                .json(&json!({ "status": "done" }))
+                .await
+                .assert_status_ok();
+        }
+    }
+    let line: Value = request
+        .post(&format!("/api/plans/{p}/budget-lines"))
+        .json(&json!({ "category": "capex", "description": "spend", "currency": currency, "planned_minor": planned }))
+        .await
+        .json();
+    request
+        .post(&format!(
+            "/api/plans/{p}/budget-lines/{}/actual",
+            line["pid"].as_str().unwrap()
+        ))
+        .json(&json!({ "amount_minor": actual }))
+        .await
+        .assert_status_ok();
+    p
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        // BAC 4 000 (10 days ending today at 1 000, 10 more at 3 000); 2 of 4 done: EV 2 000; AC 2 500;
+        // PV today 1 000, so SPI 2.00 and CPI 0.80.
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let today = chrono::Utc::now().date_naive();
+        let day = |n: i64| (today + chrono::Duration::days(n)).to_string();
+        request
+            .post(&format!("/api/plans/{p}/budget-baselines"))
+            .json(&json!({ "currency": "GBP", "periods": [
+                { "period_start": day(-9), "period_end": day(0), "planned_minor": 1000 },
+                { "period_start": day(1), "period_end": day(10), "planned_minor": 3000 } ] }))
+            .await
+            .assert_status_ok();
+        let none: Value = request.get(&format!("/api/plans/{p}/earned-value/forecast")).await.json();
+        assert_eq!(none["absent"], "no_weighted_tasks");
+        for i in 0..4 {
+            let t = task(&request, &p, &format!("T{i}"), None, None).await;
+            if i < 2 {
+                request.patch(&format!("/api/plans/{p}/tasks/{t}")).json(&json!({ "status": "done" })).await.assert_status_ok();
+            }
+        }
+        let line: Value = request.post(&format!("/api/plans/{p}/budget-lines")).json(&json!({ "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 4000 })).await.json();
+        request.post(&format!("/api/plans/{p}/budget-lines/{}/actual", line["pid"].as_str().unwrap())).json(&json!({ "amount_minor": 2500 })).await.assert_status_ok();
+
+        // Every EAC variant is named by its formula, and each number is the hand-worked one.
+        let f: Value = request.get(&format!("/api/plans/{p}/earned-value/forecast")).await.json();
+        let fc = &f["forecasts"][0];
+        let v = |name: &str| fc["variants"].as_array().unwrap().iter().find(|x| x["variant"] == name).cloned().unwrap();
+        assert_eq!(v("budget_rate")["eac"]["minor"], 4500, "2 500 + (4 000 - 2 000)");
+        assert_eq!(v("cpi")["eac"]["minor"], 5000, "2 500 + 2 000 / 0.80");
+        assert_eq!(v("cpi_spi")["eac"]["minor"], 3750, "2 500 + 2 000 / (0.80 x 2.00)");
+        assert_eq!(v("cpi")["vac"]["minor"], -1000);
+        assert_eq!(v("cpi")["etc"]["minor"], 2500);
+        assert!(v("cpi")["formula"].as_str().unwrap().contains("CPI"));
+        assert_eq!(v("bottom_up")["eac"]["absent"], "no_bottom_up_estimate", "nobody re-estimated");
+        assert_eq!((fc["recommended"]["variant"].as_str(), fc["recommended"]["eac_minor"].as_i64()), (Some("cpi"), Some(5000)), "schedule is fine, so cost efficiency continues");
+        assert!(fc["recommended"]["why"].as_str().unwrap().len() > 10, "the rule is stated");
+        assert_eq!(fc["tcpi_to_budget"]["tcpi"]["bp"], 13333, "(4 000 - 2 000) / (4 000 - 2 500)");
+        assert_eq!(fc["tcpi_to_budget"]["tcpi"]["needs_improved_efficiency"], true);
+        assert_eq!(fc["tcpi_to_budget"]["rag"], "red");
+        assert_eq!(fc["tcpi_to_recommended_eac"]["tcpi"]["bp"], 8000);
+        assert_eq!((fc["spi"]["rag"].as_str(), fc["cpi"]["rag"].as_str()), (Some("green"), Some("red")));
+        assert_eq!(f["thresholds"]["source"], "default");
+
+        // Thresholds are per deployment and the response says where they came from.
+        // SAFETY: `#[serial]` — nothing else runs while this is set.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS", "spi_cpi_amber=8000,spi_cpi_red=7000") };
+        let lenient: Value = request.get(&format!("/api/plans/{p}/earned-value/forecast")).await.json();
+        assert_eq!(lenient["forecasts"][0]["cpi"]["rag"], "green", "0.80 clears an 0.80 line");
+        assert_eq!(lenient["thresholds"]["source"], "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS");
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS") };
+
+        // The series: the planned curve is whole; earned value and cost only where a snapshot was recorded.
+        let before: Value = request.get(&format!("/api/plans/{p}/earned-value/series")).await.json();
+        let pts = before["curves"][0]["points"].as_array().unwrap();
+        assert!(pts.iter().all(|x| x["ev_minor"].is_null() && x["ac_minor"].is_null()), "nothing recorded yet, nothing invented");
+        assert_eq!(pts.last().unwrap()["pv_minor"], 4000);
+        assert_eq!(pts[0]["pv_minor"], 0, "the day before the baseline starts");
+        let snap: Value = request.post(&format!("/api/plans/{p}/earned-value/snapshot")).await.json();
+        assert_eq!(snap["snapshotted"], 1);
+        request.post(&format!("/api/plans/{p}/earned-value/snapshot")).await.assert_status_ok(); // idempotent per day
+        let after: Value = request.get(&format!("/api/plans/{p}/earned-value/series")).await.json();
+        assert_eq!(after["curves"][0]["snapshots"], 1, "a second snapshot the same day replaced the first");
+        let today_pt = after["curves"][0]["points"].as_array().unwrap().iter().find(|x| x["date"] == today.to_string().as_str()).cloned().unwrap();
+        assert_eq!((today_pt["pv_minor"].as_i64(), today_pt["ev_minor"].as_i64(), today_pt["ac_minor"].as_i64()), (Some(1000), Some(2000), Some(2500)));
+        let csv = request.get(&format!("/api/plans/{p}/earned-value/series?format=csv")).await;
+        assert!(csv.text().starts_with("currency,date,pv_minor,ev_minor,ac_minor\n"), "{}", csv.text());
+        assert!(csv.text().contains(&format!("GBP,{today},1000,2000,2500\n")), "{}", csv.text());
+        assert!(csv.text().contains(",4000,,\n"), "no EV or AC is invented on the baseline's last day: {}", csv.text());
+
+        // Roll-up: a parent with no baseline of its own, a GBP child and a USD child. Currencies stay apart.
+        let parent: Value = request.post("/api/plans").json(&json!({ "kind": "Portfolio", "name": "Programme" })).await.json();
+        let parent = parent["pid"].as_str().unwrap().to_string();
+        ev_plan(&request, "GBP child", Some(&parent), "GBP", 1000, 1, 1, 400).await; // EV 500, AC 400
+        ev_plan(&request, "USD child", Some(&parent), "USD", 2000, 1, 0, 1000).await; // EV 2 000, AC 1 000
+        let r: Value = request.get(&format!("/api/plans/{parent}/earned-value/rollup")).await.json();
+        let cur = |c: &str| r["currencies"].as_array().unwrap().iter().find(|x| x["currency"] == c).cloned().unwrap();
+        let (gbp, usd) = (cur("GBP"), cur("USD"));
+        assert_eq!((gbp["totals"]["bac_minor"].as_i64(), gbp["totals"]["ev_minor"].as_i64(), gbp["totals"]["ac_minor"].as_i64()), (Some(1000), Some(500), Some(400)), "{r}");
+        assert_eq!((gbp["spi"]["bp"].as_i64(), gbp["cpi"]["bp"].as_i64()), (Some(5000), Some(12500)));
+        assert_eq!((usd["totals"]["bac_minor"].as_i64(), usd["totals"]["ev_minor"].as_i64()), (Some(2000), Some(2000)));
+        assert_eq!(r["currencies"].as_array().unwrap().len(), 2, "two currencies, two totals, no merged figure");
+        assert_eq!(r["plans_without_figures"], 1, "the parent itself has no baseline: counted, not guessed");
+    })
+    .await;
+}

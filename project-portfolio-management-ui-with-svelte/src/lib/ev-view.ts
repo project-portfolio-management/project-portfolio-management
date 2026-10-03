@@ -4,7 +4,8 @@
  * units; both are formatted with integer arithmetic only.
  */
 
-import type { EvBlock, EvRatio } from "./api/ppm";
+import { dayNumber } from "./lily-grids";
+import type { EvAmount, EvBlock, EvRag, EvRatio, EvSeries, EvTcpi } from "./api/ppm";
 
 /** `8000` → `"0.80"`; `null` → `"—"`. Two decimals, half-up, integer arithmetic. */
 export function ratioText(bp: number | null): string {
@@ -120,4 +121,93 @@ export function methodSentence(pc: {
   if (pc.manual_tasks.length > 0) parts.push(`${pc.manual_tasks.length} counted by a person-entered percent (manual)`);
   if (pc.unweighted_tasks.length > 0) parts.push(`${pc.unweighted_tasks.length} with no points carry no weight`);
   return parts.join("; ");
+}
+
+const RAG: Record<EvRag, { marker: string; word: string }> = {
+  green: { marker: "●", word: "on track" },
+  amber: { marker: "◐", word: "slipping" },
+  red: { marker: "✖", word: "off plan" },
+  unknown: { marker: "?", word: "not yet known" },
+};
+
+/** A marker and a word for a traffic light, so the colour is never the only signal. */
+export function ragText(r: EvRag): { marker: string; word: string } {
+  return RAG[r];
+}
+
+/** Why a forecast amount is missing, in words. */
+export function amountAbsentText(a: EvAmount): string {
+  switch (a.absent) {
+    case "no_actual_cost":
+      return "no actual cost is recorded";
+    case "undefined_denominator":
+      return "the ratio it divides by is not defined yet";
+    case "no_bottom_up_estimate":
+      return "no estimate to complete has been entered";
+    case "budget_exhausted":
+      return "the budget is already spent";
+    case "no_remaining_cost":
+      return "no cost remains";
+    default:
+      return "not available";
+  }
+}
+
+/** The sentence for what the remaining work needs, which says so when it cannot be met. */
+export function tcpiSentence(t: EvTcpi, target: string): string {
+  if (t.bp === null) {
+    return t.absent === "budget_exhausted"
+      ? `Against ${target}: the money is already spent, so no efficiency can deliver the remaining work within it.`
+      : `Against ${target}: ${amountAbsentText({ minor: null, absent: t.absent })}.`;
+  }
+  if (t.needs_improved_efficiency) {
+    return `Against ${target}: the remaining work must be done ${ratioText(t.bp)} times as efficiently as the work so far (TCPI ${ratioText(t.bp)}), which needs improved efficiency.`;
+  }
+  return `Against ${target}: the remaining work can be done at ${ratioText(t.bp)} of the cost efficiency of the work so far (TCPI ${ratioText(t.bp)}).`;
+}
+
+/** The S-curve's drawing data for one currency, in SVG user units. */
+export interface SCurveGeometry {
+  width: number;
+  height: number;
+  /** Planned value as a polyline `x,y x,y …`. */
+  pv: string;
+  /** Earned value on the days it was recorded. */
+  ev: { x: number; y: number; label: string }[];
+  /** Actual cost on the days it was recorded. */
+  ac: { x: number; y: number; label: string }[];
+  /** The y of the budget-at-completion line. */
+  bacY: number;
+  from: string;
+  to: string;
+}
+
+/**
+ * Geometry for the S-curve. The planned curve is the whole baseline; earned value
+ * and actual cost are **dots only where they were recorded** (never joined or
+ * filled in between, because between snapshots they are not known).
+ */
+export function sCurve(curve: EvSeries["curves"][number], width = 640, height = 260): SCurveGeometry | null {
+  const days = curve.points.map((p) => dayNumber(p.date)).filter((d): d is number => d !== null);
+  if (days.length === 0) return null;
+  const [lo, hi] = [Math.min(...days), Math.max(...days)];
+  const span = Math.max(hi - lo, 1);
+  const top = Math.max(
+    curve.bac_minor,
+    ...curve.points.map((p) => Math.max(p.pv_minor, p.ev_minor ?? 0, p.ac_minor ?? 0)),
+    1,
+  );
+  const x = (d: number) => ((d - lo) / span) * width;
+  const y = (v: number) => height - (v / top) * height;
+  const at = (date: string) => dayNumber(date) ?? lo;
+  return {
+    width,
+    height,
+    pv: curve.points.map((p) => `${x(at(p.date)).toFixed(1)},${y(p.pv_minor).toFixed(1)}`).join(" "),
+    ev: curve.points.filter((p) => p.ev_minor !== null).map((p) => ({ x: x(at(p.date)), y: y(p.ev_minor ?? 0), label: `${p.date}: earned ${p.ev_minor}` })),
+    ac: curve.points.filter((p) => p.ac_minor !== null).map((p) => ({ x: x(at(p.date)), y: y(p.ac_minor ?? 0), label: `${p.date}: spent ${p.ac_minor}` })),
+    bacY: y(curve.bac_minor),
+    from: curve.points[0]?.date ?? "",
+    to: curve.points[curve.points.length - 1]?.date ?? "",
+  };
 }

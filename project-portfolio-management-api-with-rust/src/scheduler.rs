@@ -70,6 +70,9 @@ pub fn spawn(ctx: AppContext) {
                 Ok(_) => {}
                 Err(err) => tracing::warn!("report-schedule sweep failed: {err}"),
             }
+            if let Err(err) = crate::controllers::earned_value::snapshot_all(&ctx).await {
+                tracing::warn!("earned-value snapshot pass failed: {err}");
+            }
             match crate::controllers::automation::sweep_milestone_due(&ctx).await {
                 Ok((fired, already_claimed, capped)) if fired > 0 || capped => {
                     tracing::info!(

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — EVM analytics (SC-5, 2026-10-03)
+
+`/api/plans/{pid}/earned-value/forecast` gives every EAC variant by its formula with ETC, VAC, TCPI and traffic lights; `/series` the S-curve data (earned value and cost only on recorded days, snapshotted daily); `/rollup` per-currency totals beneath a plan.
+
 ### Added — earned value (SC-4, 2026-10-03)
 
 `GET /api/plans/{pid}/earned-value`: planned value, earned value and actual cost per currency, with SV, CV, SPI, CPI and earned-schedule SPI(t). Percent complete is physical and its method is chosen per plan and per task; a manual percent needs a note and is always flagged. `/performance` now reports the real ratios.

@@ -57,6 +57,10 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.earnedValue("p1");
     await ppm.setEarnedValueMethod("p1", "points");
     await ppm.setTaskPercent("p1", "t1", { method: "manual", percent: 60, note: "why" });
+    await ppm.earnedValueForecast("p1");
+    await ppm.earnedValueSeries("p1");
+    await ppm.snapshotEarnedValue("p1");
+    await ppm.earnedValueRollup("p1");
     expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
       "GET /api/plans/p1/cpm",
       "GET /api/plans/p1/cpm?near=3",
@@ -80,6 +84,10 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
       "GET /api/plans/p1/earned-value",
       "PUT /api/plans/p1/earned-value-settings",
       "PUT /api/plans/p1/tasks/t1/percent-complete",
+      "GET /api/plans/p1/earned-value/forecast",
+      "GET /api/plans/p1/earned-value/series",
+      "POST /api/plans/p1/earned-value/snapshot",
+      "GET /api/plans/p1/earned-value/rollup",
     ]);
   });
 });

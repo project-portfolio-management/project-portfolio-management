@@ -10,9 +10,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { PpmClient, money, type EarnedValue, type Task } from "#lib/api/ppm.js";
-  import EvBars from "#lib/components/EvBars.svelte";
   import {
+    PpmClient,
+    money,
+    type EarnedValue,
+    type EvForecast,
+    type EvRollup,
+    type EvSeries,
+    type Task,
+  } from "#lib/api/ppm.js";
+  import EvBars from "#lib/components/EvBars.svelte";
+  import SCurve from "#lib/components/SCurve.svelte";
+  import {
+    amountAbsentText,
+    ragText,
+    tcpiSentence,
     costSentence,
     earnedScheduleSentence,
     health,
@@ -26,6 +38,10 @@
   const pid = $derived(page.params.pid ?? "");
 
   let ev = $state<EarnedValue | null>(null);
+  let forecast = $state<EvForecast | null>(null);
+  let series = $state<EvSeries | null>(null);
+  let rollup = $state<EvRollup | null>(null);
+  let recorded = $state(false);
   let tasks = $state<Task[]>([]);
   let error = $state<string | null>(null);
   let editing = $state<string | null>(null);
@@ -37,6 +53,11 @@
     try {
       ev = await ppm.earnedValue(pid);
       tasks = (await ppm.listTasks(pid)).tasks;
+      [forecast, series, rollup] = await Promise.all([
+        ppm.earnedValueForecast(pid),
+        ppm.earnedValueSeries(pid),
+        ppm.earnedValueRollup(pid),
+      ]);
       error = null;
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not load earned value";
@@ -53,6 +74,18 @@
       await load();
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not save";
+    }
+  }
+
+  async function snapshotNow() {
+    error = null;
+    recorded = false;
+    try {
+      await ppm.snapshotEarnedValue(pid);
+      recorded = true;
+      await load();
+    } catch (err) {
+      error = err instanceof Error ? err.message : "Could not record";
     }
   }
 
@@ -148,6 +181,82 @@
       </p>
     {/if}
 
+    {#if forecast?.forecasts}
+      <h2>Where it is heading</h2>
+      {#each forecast.forecasts as f (f.currency)}
+        {@const c = (n: number) => money(n, f.currency)}
+        <section class="surface stack" aria-labelledby="fc-{f.currency}">
+          <h3 id="fc-{f.currency}">{f.currency}</h3>
+          <p>
+            <span aria-hidden="true">{ragText(f.spi.rag).marker}</span> Schedule is {ragText(f.spi.rag).word}.
+            <span aria-hidden="true">{ragText(f.cpi.rag).marker}</span> Cost is {ragText(f.cpi.rag).word}.
+          </p>
+          <table>
+            <caption class="sr-only">{f.currency} forecasts of the final cost, each by its own formula</caption>
+            <thead>
+              <tr><th scope="col">Forecast</th><th scope="col">Final cost (EAC)</th><th scope="col">Still to spend (ETC)</th><th scope="col">Against the budget (VAC)</th></tr>
+            </thead>
+            <tbody>
+              {#each f.variants as v (v.variant)}
+                <tr class:chosen={v.variant === f.recommended.variant}>
+                  <th scope="row">
+                    {v.formula}
+                    {#if v.variant === f.recommended.variant}<strong> — the one to lead with</strong>{/if}
+                  </th>
+                  <td>{v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor)}</td>
+                  <td>{v.etc.minor === null ? "—" : c(v.etc.minor)}</td>
+                  <td>{v.vac.minor === null ? "—" : `${c(v.vac.minor)}${v.vac.minor < 0 ? " (overrun)" : ""}`}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+          <p class="small">Leading with that one because {f.recommended.why}. The others are shown beside it: which is right depends on whether past overruns will continue.</p>
+          <p><span aria-hidden="true">{ragText(f.tcpi_to_budget.rag).marker}</span> {tcpiSentence(f.tcpi_to_budget.tcpi, "the budget")}</p>
+          {#if f.tcpi_to_recommended_eac}
+            <p><span aria-hidden="true">{ragText(f.tcpi_to_recommended_eac.rag).marker}</span> {tcpiSentence(f.tcpi_to_recommended_eac.tcpi, "the forecast")}</p>
+          {/if}
+        </section>
+      {/each}
+      {#if forecast.thresholds}
+        <p class="small muted">Lights use {forecast.thresholds.source === "default" ? "the default thresholds" : "this deployment's thresholds"}: {JSON.stringify(forecast.thresholds.values)} (basis points).</p>
+      {/if}
+    {/if}
+
+    <h2>Over time</h2>
+    {#if series && series.curves.length > 0}
+      {#each series.curves as curve (curve.currency)}
+        <h3>{curve.currency}</h3>
+        <SCurve {curve} />
+      {/each}
+      <p class="small muted">{series.note}</p>
+    {/if}
+    <p>
+      <button type="button" onclick={() => void snapshotNow()}>Record today's figures now</button>
+      {#if recorded}<span role="status"> Recorded.</span>{/if}
+      <span class="small muted"> The scheduler also records them daily.</span>
+    </p>
+
+    {#if rollup && rollup.currencies.length > 0 && rollup.currencies.some((c) => c.totals.plans > 1)}
+      <h2>This plan and everything beneath it</h2>
+      {#each rollup.currencies as r (r.currency)}
+        <section class="surface stack" aria-labelledby="ru-{r.currency}">
+          <h3 id="ru-{r.currency}">{r.currency} <span class="small muted">{r.totals.plans} plans</span></h3>
+          <p>
+            Budget {money(r.totals.bac_minor, r.currency)}; planned {money(r.totals.pv_minor, r.currency)};
+            earned {money(r.totals.ev_minor, r.currency)}; spent {money(r.totals.ac_minor, r.currency)}{r.totals.plans_without_ac > 0 ? ` (cost unknown for ${r.totals.plans_without_ac} plans)` : ""}.
+          </p>
+          <p>
+            <span aria-hidden="true">{ragText(r.spi.rag).marker}</span> SPI {ratioOrReason({ bp: r.spi.bp })}
+            · <span aria-hidden="true">{ragText(r.cpi.rag).marker}</span> CPI {r.cpi.bp === null ? "not stated: cost is unknown for some plans" : ratioOrReason({ bp: r.cpi.bp })}
+            {#if r.eac.minor !== null}· forecast final cost {money(r.eac.minor, r.currency)}{/if}
+          </p>
+        </section>
+      {/each}
+      {#if rollup.plans_without_figures > 0}
+        <p class="small muted">{rollup.plans_without_figures} plan{rollup.plans_without_figures === 1 ? "" : "s"} below have no figures yet (no baseline or nothing to measure) and are not guessed at.</p>
+      {/if}
+    {/if}
+
     <h2>Count a task another way</h2>
     <ul class="small">
       {#each ev.percent_complete?.tasks ?? [] as t (t.pid)}
@@ -185,6 +294,9 @@
 {/if}
 
 <style>
+  tr.chosen th[scope="row"] {
+    border-inline-start: 4px solid var(--mxi-color-focus, #1d4ed8);
+  }
   table {
     border-collapse: collapse;
   }

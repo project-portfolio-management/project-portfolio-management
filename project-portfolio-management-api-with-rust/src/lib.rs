@@ -61,6 +61,7 @@ pub mod distribution;
 pub mod earned_value;
 pub mod effort;
 pub mod engineering;
+pub mod evm;
 pub mod extract;
 pub mod feeds;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).

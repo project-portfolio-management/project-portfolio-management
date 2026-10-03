@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   absentText,
+  amountAbsentText,
+  ragText,
+  sCurve,
+  tcpiSentence,
   costSentence,
   earnedScheduleSentence,
   evBars,
@@ -117,5 +121,62 @@ describe("methodSentence", () => {
       "1 task counted, weighted by story points; finished work counts for its story points; 1 counted by a person-entered percent (manual); 2 with no points carry no weight",
     );
     expect(methodSentence({ default_method: "fifty_fifty", weighting: "equal", tasks_counted: 2, manual_tasks: [], unweighted_tasks: [] })).toContain("started work counts half");
+  });
+});
+
+describe("traffic lights and TCPI wording", () => {
+  it("gives every light a marker and a word", () => {
+    const all = (["green", "amber", "red", "unknown"] as const).map(ragText);
+    expect(new Set(all.map((a) => a.marker)).size).toBe(4);
+    expect(ragText("red").word).toBe("off plan");
+  });
+  it("says what the remaining work needs, and when it cannot be met", () => {
+    expect(tcpiSentence({ bp: 13_333, needs_improved_efficiency: true }, "the budget")).toBe(
+      "Against the budget: the remaining work must be done 1.33 times as efficiently as the work so far (TCPI 1.33), which needs improved efficiency.",
+    );
+    expect(tcpiSentence({ bp: 8_000, needs_improved_efficiency: false }, "the forecast")).toBe(
+      "Against the forecast: the remaining work can be done at 0.80 of the cost efficiency of the work so far (TCPI 0.80).",
+    );
+    expect(tcpiSentence({ bp: null, absent: "budget_exhausted", needs_improved_efficiency: true }, "the budget")).toContain("already spent");
+    expect(tcpiSentence({ bp: null, absent: "no_actual_cost", needs_improved_efficiency: false }, "the budget")).toContain("no actual cost is recorded");
+  });
+  it("explains each missing amount in words", () => {
+    expect(amountAbsentText({ minor: null, absent: "undefined_denominator" })).toMatch(/not defined yet/);
+    expect(amountAbsentText({ minor: null, absent: "no_bottom_up_estimate" })).toMatch(/no estimate to complete/);
+    expect(amountAbsentText({ minor: null, absent: "no_remaining_cost" })).toMatch(/no cost remains/);
+    expect(amountAbsentText({ minor: null })).toBe("not available");
+  });
+});
+
+describe("sCurve", () => {
+  const curve = {
+    currency: "GBP",
+    baseline_version: 1,
+    bac_minor: 400_000,
+    snapshots: 1,
+    points: [
+      { date: "2026-01-01", pv_minor: 0, ev_minor: null, ac_minor: null },
+      { date: "2026-01-11", pv_minor: 100_000, ev_minor: 80_000, ac_minor: 90_000 },
+      { date: "2026-01-21", pv_minor: 400_000, ev_minor: null, ac_minor: null },
+    ],
+  };
+  it("draws the whole planned curve and only the recorded earned and actual points", () => {
+    const g = sCurve(curve)!;
+    expect(g.pv.split(" ")).toHaveLength(3);
+    expect(g.ev).toHaveLength(1);
+    expect(g.ac).toHaveLength(1);
+    expect(g.ev[0]!.x).toBeCloseTo(320);
+    expect(g.ev[0]!.label).toBe("2026-01-11: earned 80000");
+    expect(g.bacY).toBe(0);
+    expect(g.pv.startsWith("0.0,260.0")).toBe(true);
+  });
+  it("never joins or invents earned value between snapshots", () => {
+    const g = sCurve({ ...curve, points: curve.points.map((p) => ({ ...p, ev_minor: null, ac_minor: null })) })!;
+    expect(g.ev).toEqual([]);
+    expect(g.ac).toEqual([]);
+  });
+  it("is null with nothing to draw and survives a single point", () => {
+    expect(sCurve({ ...curve, points: [] })).toBeNull();
+    expect(sCurve({ ...curve, points: [curve.points[0]!] })).not.toBeNull();
   });
 });

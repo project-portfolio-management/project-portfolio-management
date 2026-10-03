@@ -827,6 +827,74 @@ export interface EarnedValue {
   note?: string;
 }
 
+export type EvRag = "green" | "amber" | "red" | "unknown";
+
+/** An amount, or why there is none (EVM analytics, SC-5). */
+export interface EvAmount {
+  minor: number | null;
+  absent?: "no_actual_cost" | "undefined_denominator" | "no_bottom_up_estimate" | "budget_exhausted" | "no_remaining_cost";
+}
+
+export interface EvTcpi {
+  bp: number | null;
+  absent?: EvAmount["absent"];
+  needs_improved_efficiency: boolean;
+}
+
+/** `GET /api/plans/{pid}/earned-value/forecast`. */
+export interface EvForecast {
+  plan_pid: string;
+  as_of: string;
+  /** `null` with `absent` when there is nothing to forecast against. */
+  forecasts: {
+    currency: string;
+    baseline_version: number;
+    spi: { bp: number | null; rag: EvRag };
+    cpi: { bp: number | null; rag: EvRag };
+    variants: { variant: "budget_rate" | "cpi" | "cpi_spi" | "bottom_up"; formula: string; eac: EvAmount; etc: EvAmount; vac: EvAmount }[];
+    recommended: { variant: string; why: string; eac_minor: number | null };
+    tcpi_to_budget: { tcpi: EvTcpi; rag: EvRag };
+    tcpi_to_recommended_eac: { tcpi: EvTcpi; rag: EvRag } | null;
+    bac_minor: number;
+    ev_minor: number;
+    ac_minor: number | null;
+  }[] | null;
+  absent?: "no_baseline" | "no_weighted_tasks";
+  reason?: string;
+  thresholds?: { values: Record<string, number>; source: string };
+  note?: string;
+}
+
+/** `GET /api/plans/{pid}/earned-value/series`. */
+export interface EvSeries {
+  plan_pid: string;
+  curves: {
+    currency: string;
+    baseline_version: number;
+    bac_minor: number;
+    snapshots: number;
+    /** Earned value and actual cost are null except on the days a snapshot was recorded. */
+    points: { date: string; pv_minor: number; ev_minor: number | null; ac_minor: number | null }[];
+  }[];
+  note: string;
+}
+
+/** `GET /api/plans/{pid}/earned-value/rollup`. */
+export interface EvRollup {
+  root_plan_pid: string;
+  as_of: string;
+  currencies: {
+    currency: string;
+    totals: { bac_minor: number; pv_minor: number; ev_minor: number; ac_minor: number; plans: number; plans_without_ac: number };
+    spi: { bp: number | null; rag: EvRag };
+    cpi: { bp: number | null; rag: EvRag; absent?: string | null };
+    eac: { minor: number | null; plans_counted: number; plans_total: number; note: string };
+    vac_minor: number | null;
+  }[];
+  plans_without_figures: number;
+  note: string;
+}
+
 /** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
 export interface TaskScheduleBody {
   start_date?: string | null;
@@ -1373,6 +1441,19 @@ export class PpmClient {
     body: { method?: "zero_hundred" | "fifty_fifty" | "manual"; percent?: number; note?: string },
   ): Promise<unknown> {
     return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/percent-complete`, { body });
+  }
+  earnedValueForecast(pid: string): Promise<EvForecast> {
+    return this.http.get(`/api/plans/${pid}/earned-value/forecast`);
+  }
+  earnedValueSeries(pid: string): Promise<EvSeries> {
+    return this.http.get(`/api/plans/${pid}/earned-value/series`);
+  }
+  /** Record today's figures now (the scheduler also does this daily). */
+  snapshotEarnedValue(pid: string): Promise<{ snapshotted: number }> {
+    return this.http.post(`/api/plans/${pid}/earned-value/snapshot`);
+  }
+  earnedValueRollup(pid: string): Promise<EvRollup> {
+    return this.http.get(`/api/plans/${pid}/earned-value/rollup`);
   }
   planCalendar(pid: string): Promise<WorkCalendarView> {
     return this.http.get(`/api/plans/${pid}/calendar`);

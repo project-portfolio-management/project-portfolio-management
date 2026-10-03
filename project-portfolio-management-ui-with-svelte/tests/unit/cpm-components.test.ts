@@ -306,3 +306,30 @@ describe("EvBars", () => {
     done();
   });
 });
+
+import SCurve from "../../src/lib/components/SCurve.svelte";
+
+describe("SCurve", () => {
+  const curve = {
+    currency: "GBP", baseline_version: 1, bac_minor: 400_000, snapshots: 1,
+    points: [
+      { date: "2026-01-01", pv_minor: 0, ev_minor: null, ac_minor: null },
+      { date: "2026-01-11", pv_minor: 100_000, ev_minor: 80_000, ac_minor: 90_000 },
+      { date: "2026-01-21", pv_minor: 400_000, ev_minor: null, ac_minor: null },
+    ],
+  };
+  it("draws the planned line, dots only where recorded, the budget line, and a table with every number", () => {
+    const { root, done } = render(SCurve, { curve });
+    expect(root.querySelectorAll("polyline.pv")).toHaveLength(1);
+    expect(root.querySelectorAll("circle.ev")).toHaveLength(1);
+    expect(root.querySelectorAll("rect.ac")).toHaveLength(1);
+    expect(root.querySelectorAll("line.bac")).toHaveLength(1);
+    expect(root.querySelector("svg")?.getAttribute("role")).toBe("img");
+    const text = root.textContent ?? "";
+    expect(text).toContain("only on days recorded (1 so far)");
+    expect(text).toContain("not recorded");
+    expect(text).toContain("4,000.00 GBP");
+    expect(root.querySelectorAll("tbody tr")).toHaveLength(3);
+    done();
+  });
+});

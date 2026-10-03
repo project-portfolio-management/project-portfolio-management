@@ -282,7 +282,7 @@ async fn actual_lines(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<(String, i
 }
 
 /// Build one plan's forecast from its live inputs.
-async fn forecast_of(ctx: &AppContext, plan_pid: Uuid) -> Result<rules::Forecast> {
+pub(crate) async fn forecast_of(ctx: &AppContext, plan_pid: Uuid) -> Result<rules::Forecast> {
     let baseline = latest_baseline(ctx, plan_pid).await?;
     let tpc_cec = latest_tpc_cec(ctx, plan_pid).await?;
     let lines = actual_lines(ctx, plan_pid).await?;

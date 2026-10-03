@@ -100,6 +100,7 @@ pub fn paths() -> Value {
     merge(&mut all, baseline_paths());
     merge(&mut all, raci_paths());
     merge(&mut all, earned_value_paths());
+    merge(&mut all, evm_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -859,6 +860,33 @@ fn earned_value_paths() -> Value {
                 "method zero_hundred, fifty_fifty or manual overrides the plan default for this task; an absent or null method clears the override. manual needs percent (0 to 100) and a note saying why, is flagged wherever earned value is shown, and is audited with the old and new values.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "The task's method"), ("404", "Unknown plan or task"), ("422", "Unknown method, a manual percent without percent or note, or percent/note with another method")])
+        }
+    })
+}
+
+/// EVM analytics (SC-5).
+fn evm_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/earned-value/forecast": {
+            "get": op("earned-value", "Where the plan is heading: EAC variants, ETC, VAC, TCPI and traffic lights",
+                "Per currency: every EAC variant named by its formula (budget_rate: AC + (BAC - EV); cpi: AC + (BAC - EV) / CPI; cpi_spi: AC + (BAC - EV) / (CPI x SPI); bottom_up: AC + the plan's own estimate to complete from the budget forecast), each with ETC (EAC - AC) and VAC (BAC - EAC, negative is an overrun). None is presented as the answer: `recommended` is a stated rule (cost efficiency continues when the schedule is on track; both pressures when it is behind the amber line; the one-off reading when there is no CPI) and the others are returned beside it. TCPI to the budget and to the recommended forecast: above 1.00 the remaining work must be done more efficiently than the work so far; a target already spent is budget_exhausted, never infinity. A missing denominator is null with undefined_denominator, never zero. Traffic lights use thresholds from PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS (spi_cpi_amber, spi_cpi_red, tcpi_amber, tcpi_red, in basis points), shown in the response with their source. Currencies are never added together.",
+                vec![uuid_param("pid")], &[("200", "forecasts, thresholds and a note (or an absent reason)"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/earned-value/series": {
+            "get": op("earned-value", "The S-curve data (planned value, earned value, actual cost over time)",
+                "The planned-value curve is the whole baseline, per currency. Earned value and actual cost appear ONLY on the days a snapshot was recorded (daily by the scheduler, or POST …/earned-value/snapshot): they carry no date at source, so the past cannot be reconstructed and is never filled in between (null on every other date). ?format=csv gives currency,date,pv_minor,ev_minor,ac_minor.",
+                vec![uuid_param("pid"), query("format", false, "csv for a spreadsheet")],
+                &[("200", "curves per currency (or CSV)"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/earned-value/snapshot": {
+            "post": op("earned-value", "Record today's earned-value figures now",
+                "One row per plan, currency and day; a second call the same day replaces the first. The scheduler does this daily for every plan with a baseline; this is for an immediate record. Returns how many currencies were recorded (0 when there is nothing to measure).",
+                vec![uuid_param("pid")], &[("200", "as_of and snapshotted"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/earned-value/rollup": {
+            "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
+                "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
+                vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
         }
     })
 }

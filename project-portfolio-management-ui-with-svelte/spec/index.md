@@ -1127,3 +1127,26 @@ baseline are named, never added in. The page lets you set the plan's default met
 and count one task another way (a manual percent needs a note). Measured as of
 today. **Not built:** the S-curve over time and the EAC/TCPI analytics (SC-5),
 actual cost from timesheets (needs cost rates, PJ-2).
+
+## EVM analytics (SC-5)
+
+On `/plans/[pid]/earned-value`, below the figures:
+
+- **Where it is heading**: every forecast of the final cost **named by its formula**
+  (the overrun so far is a one-off / today's cost efficiency continues / cost and
+  schedule pressure both continue / the plan's own estimate), with ETC and VAC (an
+  overrun is labelled). One is marked "the one to lead with" by a **stated rule**
+  and the sentence under the table gives it; the others stay beside it. A TCPI
+  sentence says what the remaining work needs, and says plainly when the money is
+  already spent. Lights (● on track, ◐ slipping, ✖ off plan, ? not yet known) use
+  the deployment's thresholds, shown on the page.
+- **Over time** (`SCurve`): the planned-value line is the whole baseline; earned
+  value (●) and actual cost (■) are **dots only on days they were recorded**, never
+  joined or filled in; a table under the picture holds every number; a button records
+  today's figures now (the scheduler records them daily).
+- **This plan and everything beneath it**: totals per currency, SPI and CPI from the
+  totals (no CPI when some plan's cost is unknown), and a count of plans with no
+  figures.
+
+**Not built:** a per-period history before snapshots began (it cannot be
+reconstructed), a spreadsheet link for the series on the page (the CSV is in the API).

@@ -18,7 +18,10 @@
 //! **Currencies never merge.** One block per baseline currency; budget lines in a
 //! currency with no baseline are listed, not added in.
 
-use axum::http::StatusCode;
+use axum::http::{StatusCode, header};
+use std::fmt::Write as _;
+
+use axum::response::IntoResponse;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
@@ -27,8 +30,10 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::earned_value::{self as ev, DefaultMethod, Method, Period, TaskInput, TaskState};
+use crate::evm::{self, Thresholds};
 use crate::models::_entities::{
-    budget_baseline_periods, budget_baselines, budget_lines, earned_value_settings, tasks,
+    budget_baseline_periods, budget_baselines, budget_lines, earned_value_settings,
+    earned_value_snapshots, plans, tasks,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -361,11 +366,417 @@ async fn put_percent(
     )
 }
 
+// ───────────────────────── SC-5: forecasts, series, roll-up ─────────────────────────
+
+fn thresholds() -> (Thresholds, bool) {
+    evm::parse_thresholds(
+        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS")
+            .ok()
+            .as_deref(),
+    )
+}
+
+fn rag_json(r: evm::Rag) -> serde_json::Value {
+    serde_json::to_value(r).unwrap_or_default()
+}
+
+/// One block's forecast: every EAC variant named by its formula, the rule-chosen
+/// one marked, ETC, VAC, TCPI to the budget and to the chosen forecast, lights.
+fn forecast_view(
+    currency: &str,
+    version: i32,
+    b: &ev::Block,
+    bottom_up_eac: Option<i64>,
+    t: &Thresholds,
+) -> serde_json::Value {
+    let variants = evm::eac_variants(
+        b.bac_minor,
+        b.ev_minor,
+        b.ac_minor,
+        b.cpi.bp,
+        b.spi.bp,
+        bottom_up_eac,
+    );
+    let (chosen, why) = evm::recommended(b.cpi.bp, b.spi.bp, t);
+    let chosen_eac = variants
+        .iter()
+        .find(|v| v.variant == chosen)
+        .and_then(|v| v.eac.minor);
+    let tcpi_budget = evm::tcpi(b.bac_minor, b.ev_minor, b.ac_minor, b.bac_minor);
+    let tcpi_forecast = chosen_eac.map(|e| evm::tcpi(b.bac_minor, b.ev_minor, b.ac_minor, e));
+    serde_json::json!({
+        "currency": currency,
+        "baseline_version": version,
+        "spi": { "bp": b.spi.bp, "rag": rag_json(evm::rag_ratio(b.spi.bp, t)) },
+        "cpi": { "bp": b.cpi.bp, "rag": rag_json(evm::rag_ratio(b.cpi.bp, t)) },
+        "variants": variants,
+        "recommended": { "variant": chosen, "why": why, "eac_minor": chosen_eac },
+        "tcpi_to_budget": { "tcpi": tcpi_budget, "rag": rag_json(evm::rag_tcpi(tcpi_budget.bp, t)) },
+        "tcpi_to_recommended_eac": tcpi_forecast.map(|x| serde_json::json!({ "tcpi": x, "rag": rag_json(evm::rag_tcpi(x.bp, t)) })),
+        "bac_minor": b.bac_minor, "ev_minor": b.ev_minor, "ac_minor": b.ac_minor,
+    })
+}
+
+/// `GET /api/plans/{pid}/earned-value/forecast` — where the plan is heading.
+#[debug_handler]
+async fn forecast(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let as_of = chrono::Utc::now().date_naive();
+    let (t, defaulted) = thresholds();
+    let body = match compute(&ctx, plan.pid, as_of).await? {
+        Outcome::NoBaseline => {
+            serde_json::json!({ "plan_pid": plan.pid, "as_of": as_of, "forecasts": null,
+            "absent": "no_baseline", "reason": "no phased budget baseline, so there is nothing to forecast against" })
+        }
+        Outcome::NoPercent => {
+            serde_json::json!({ "plan_pid": plan.pid, "as_of": as_of, "forecasts": null,
+            "absent": "no_weighted_tasks", "reason": "nothing to measure percent complete against, so no forecast" })
+        }
+        Outcome::Figures { blocks, .. } => {
+            let own = super::financials::forecast_of(&ctx, plan.pid).await?;
+            let forecasts: Vec<serde_json::Value> = blocks
+                .iter()
+                .map(|(cur, ver, b)| {
+                    // Only a real estimate counts as bottom-up (a TPC cost-estimate-to-complete).
+                    // The baseline's not-yet-elapsed periods is a schedule-driven fallback, not
+                    // someone re-estimating, so it is not offered as one.
+                    let bottom_up = (own.currency.as_deref() == Some(cur.as_str())
+                        && own.etc_source == Some(crate::financials::EtcSource::Tpc))
+                    .then_some(own.estimate_at_completion_minor)
+                    .flatten();
+                    forecast_view(cur, *ver, b, bottom_up, &t)
+                })
+                .collect();
+            serde_json::json!({
+                "plan_pid": plan.pid, "as_of": as_of, "forecasts": forecasts,
+                "thresholds": { "values": t, "source": if defaulted { "default" } else { "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS" } },
+                "note": "Every EAC names its formula; none is the answer, because which is right depends on whether past overruns will continue. `recommended` is a stated rule, and the others are returned beside it. A TCPI above 1.00 means the remaining work must be done more efficiently than the work so far; a target already spent is budget_exhausted, not infinity. Currencies are never added together.",
+            })
+        }
+    };
+    format::json(body)
+}
+
+/// Record today's figures for a plan (one row per currency; a second call the
+/// same day replaces the first). Returns how many currencies were recorded.
+pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize> {
+    let today = chrono::Utc::now().date_naive();
+    let Outcome::Figures { blocks, .. } = compute(ctx, plan, today).await? else {
+        return Ok(0);
+    };
+    for (currency, version, b) in &blocks {
+        let existing = earned_value_snapshots::Entity::find()
+            .filter(earned_value_snapshots::Column::PlanPid.eq(plan))
+            .filter(earned_value_snapshots::Column::Currency.eq(currency.as_str()))
+            .filter(earned_value_snapshots::Column::AsOf.eq(today))
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        match existing {
+            Some(row) => {
+                let mut a: earned_value_snapshots::ActiveModel = row.into();
+                a.baseline_version = ActiveValue::set(*version);
+                a.bac_minor = ActiveValue::set(b.bac_minor);
+                a.pv_minor = ActiveValue::set(b.pv_minor);
+                a.ev_minor = ActiveValue::set(b.ev_minor);
+                a.ac_minor = ActiveValue::set(b.ac_minor);
+                a.update(&ctx.db).await.map_err(db_err)?;
+            }
+            None => {
+                earned_value_snapshots::ActiveModel {
+                    pid: ActiveValue::set(Uuid::new_v4()),
+                    plan_pid: ActiveValue::set(plan),
+                    currency: ActiveValue::set(currency.clone()),
+                    as_of: ActiveValue::set(today),
+                    baseline_version: ActiveValue::set(*version),
+                    bac_minor: ActiveValue::set(b.bac_minor),
+                    pv_minor: ActiveValue::set(b.pv_minor),
+                    ev_minor: ActiveValue::set(b.ev_minor),
+                    ac_minor: ActiveValue::set(b.ac_minor),
+                    ..Default::default()
+                }
+                .insert(&ctx.db)
+                .await
+                .map_err(db_err)?;
+            }
+        }
+    }
+    Ok(blocks.len())
+}
+
+/// Snapshot every plan that has a baseline and no snapshot yet today. The
+/// scheduler calls this; it is idempotent and cheap on the second pass of a day.
+///
+/// # Errors
+///
+/// Propagates database errors from finding the plans.
+pub async fn snapshot_all(ctx: &AppContext) -> Result<usize> {
+    let today = chrono::Utc::now().date_naive();
+    let with_baseline: std::collections::BTreeSet<Uuid> = budget_baselines::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|b| b.plan_pid)
+        .collect();
+    let done: std::collections::BTreeSet<Uuid> = earned_value_snapshots::Entity::find()
+        .filter(earned_value_snapshots::Column::AsOf.eq(today))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|s| s.plan_pid)
+        .collect();
+    let mut n = 0;
+    for plan in with_baseline.difference(&done) {
+        n += snapshot_plan(ctx, *plan).await.unwrap_or(0);
+    }
+    Ok(n)
+}
+
+/// `POST /api/plans/{pid}/earned-value/snapshot` — record today's figures now.
+#[debug_handler]
+async fn snapshot(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let n = snapshot_plan(&ctx, plan.pid).await?;
+    format::json(
+        serde_json::json!({ "plan_pid": plan.pid, "as_of": chrono::Utc::now().date_naive(), "snapshotted": n }),
+    )
+}
+
+#[derive(Debug, Deserialize)]
+struct SeriesParams {
+    /// `csv` for a spreadsheet.
+    #[serde(default)]
+    format: Option<String>,
+}
+
+#[allow(clippy::too_many_lines)]
+/// `GET /api/plans/{pid}/earned-value/series[?format=csv]` — the S-curve data: the
+/// planned-value curve from the baseline (complete), and earned value and actual
+/// cost on the days they were **recorded** (never filled in between).
+#[debug_handler]
+async fn series(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+    Query(p): Query<SeriesParams>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let baselines = budget_baselines::Entity::find()
+        .filter(budget_baselines::Column::PlanPid.eq(plan.pid))
+        .order_by_desc(budget_baselines::Column::Version)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let snaps = earned_value_snapshots::Entity::find()
+        .filter(earned_value_snapshots::Column::PlanPid.eq(plan.pid))
+        .order_by_asc(earned_value_snapshots::Column::AsOf)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut seen: Vec<&budget_baselines::Model> = Vec::new();
+    for b in &baselines {
+        if !seen.iter().any(|s| s.currency == b.currency) {
+            seen.push(b);
+        }
+    }
+    let mut curves = Vec::new();
+    for b in seen {
+        let periods: Vec<Period> = budget_baseline_periods::Entity::find()
+            .filter(budget_baseline_periods::Column::BaselinePid.eq(b.pid))
+            .order_by_asc(budget_baseline_periods::Column::PeriodStart)
+            .limit(5_000)
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|r| Period {
+                start: r.period_start,
+                end: r.period_end,
+                planned_minor: r.planned_minor,
+            })
+            .collect();
+        let Some(start) = ev::baseline_start(&periods) else {
+            continue;
+        };
+        let mine: Vec<&earned_value_snapshots::Model> =
+            snaps.iter().filter(|s| s.currency == b.currency).collect();
+        let mut dates: Vec<chrono::NaiveDate> = periods
+            .iter()
+            .map(|r| r.end)
+            .chain(mine.iter().map(|s| s.as_of))
+            .collect();
+        dates.push(start - chrono::Duration::days(1));
+        dates.sort_unstable();
+        dates.dedup();
+        let points: Vec<serde_json::Value> = dates
+            .iter()
+            .map(|d| {
+                let t = if *d < start {
+                    0
+                } else {
+                    (*d - start).num_days() + 1
+                };
+                let snap = mine.iter().find(|s| s.as_of == *d);
+                serde_json::json!({
+                    "date": d,
+                    "pv_minor": ev::pv_after(&periods, start, t),
+                    "ev_minor": snap.map(|s| s.ev_minor),
+                    "ac_minor": snap.and_then(|s| s.ac_minor),
+                })
+            })
+            .collect();
+        curves.push(serde_json::json!({
+            "currency": b.currency, "baseline_version": b.version, "bac_minor": ev::bac(&periods),
+            "snapshots": mine.len(), "points": points,
+        }));
+    }
+    if p.format.as_deref() == Some("csv") {
+        let mut out = String::from("currency,date,pv_minor,ev_minor,ac_minor\n");
+        for c in &curves {
+            for pt in c["points"].as_array().into_iter().flatten() {
+                let cell = |k: &str| pt[k].as_i64().map_or(String::new(), |n| n.to_string());
+                let _ = writeln!(
+                    out,
+                    "{},{},{},{},{}",
+                    c["currency"].as_str().unwrap_or(""),
+                    pt["date"].as_str().unwrap_or(""),
+                    cell("pv_minor"),
+                    cell("ev_minor"),
+                    cell("ac_minor")
+                );
+            }
+        }
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (
+                    header::CONTENT_DISPOSITION,
+                    "attachment; filename=\"earned-value-series.csv\"",
+                ),
+            ],
+            out,
+        )
+            .into_response());
+    }
+    format::json(serde_json::json!({
+        "plan_pid": plan.pid,
+        "curves": curves,
+        "note": "The planned-value curve is the whole baseline. Earned value and actual cost appear only on the days a snapshot was recorded (daily by the scheduler, or POST …/earned-value/snapshot): they carry no date at source, so the past cannot be reconstructed and is never filled in between.",
+    }))
+}
+
+async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
+    let mut all = vec![root];
+    let mut frontier = vec![root];
+    for _ in 0..10 {
+        if frontier.is_empty() || all.len() >= 500 {
+            break;
+        }
+        let kids: Vec<Uuid> = plans::Entity::find()
+            .filter(plans::Column::ParentPid.is_in(frontier.clone()))
+            .filter(plans::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|p| p.pid)
+            .filter(|p| !all.contains(p))
+            .collect();
+        all.extend(kids.iter().copied());
+        frontier = kids;
+    }
+    all.truncate(500);
+    Ok(all)
+}
+
+/// `GET /api/plans/{pid}/earned-value/rollup` — the plan and everything beneath it,
+/// summed **per currency**. Plans the caller cannot read are left out without a
+/// trace; plans with no figures are counted, not guessed at.
+#[debug_handler]
+async fn rollup(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let root = super::governance::find_item(&ctx, &pid).await?;
+    let as_of = chrono::Utc::now().date_naive();
+    let (t, defaulted) = thresholds();
+    let all = descendants(&ctx, root.pid).await?;
+    let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
+    let mut totals = std::collections::BTreeMap::new();
+    let mut eac: std::collections::BTreeMap<String, (i64, usize)> =
+        std::collections::BTreeMap::new();
+    let mut without = 0_usize;
+    for plan in all.iter().filter(|p| readable.contains(p)) {
+        match compute(&ctx, *plan, as_of).await? {
+            Outcome::Figures { blocks, .. } => {
+                for (cur, _, b) in &blocks {
+                    evm::add(
+                        &mut totals,
+                        cur,
+                        b.bac_minor,
+                        b.pv_minor,
+                        b.ev_minor,
+                        b.ac_minor,
+                    );
+                    let variants = evm::eac_variants(
+                        b.bac_minor,
+                        b.ev_minor,
+                        b.ac_minor,
+                        b.cpi.bp,
+                        b.spi.bp,
+                        None,
+                    );
+                    let (chosen, _) = evm::recommended(b.cpi.bp, b.spi.bp, &t);
+                    if let Some(e) = variants
+                        .iter()
+                        .find(|v| v.variant == chosen)
+                        .and_then(|v| v.eac.minor)
+                    {
+                        let slot = eac.entry(cur.clone()).or_insert((0, 0));
+                        slot.0 = slot.0.saturating_add(e);
+                        slot.1 += 1;
+                    }
+                }
+            }
+            _ => without += 1,
+        }
+    }
+    let currencies: Vec<serde_json::Value> = totals
+        .iter()
+        .map(|(cur, tot)| {
+            let spi = evm::ratio_bp(tot.ev_minor, tot.pv_minor);
+            let cpi = (tot.plans_without_ac == 0).then(|| evm::ratio_bp(tot.ev_minor, tot.ac_minor)).flatten();
+            let (eac_minor, eac_plans) = eac.get(cur).copied().unwrap_or((0, 0));
+            serde_json::json!({
+                "currency": cur, "totals": tot,
+                "spi": { "bp": spi, "rag": rag_json(evm::rag_ratio(spi, &t)) },
+                "cpi": { "bp": cpi, "rag": rag_json(evm::rag_ratio(cpi, &t)),
+                         "absent": (cpi.is_none()).then_some("cost_unknown_for_some_plans_or_zero") },
+                "eac": { "minor": (eac_plans == tot.plans).then_some(eac_minor), "plans_counted": eac_plans, "plans_total": tot.plans,
+                         "note": "the sum of each plan's own recommended EAC; absent unless every plan has one" },
+                "vac_minor": (eac_plans == tot.plans).then(|| tot.bac_minor - eac_minor),
+            })
+        })
+        .collect();
+    format::json(serde_json::json!({
+        "root_plan_pid": root.pid, "as_of": as_of, "currencies": currencies,
+        "plans_without_figures": without,
+        "thresholds": { "values": t, "source": if defaulted { "default" } else { "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS" } },
+        "note": "Summed per currency, never across currencies. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. Plans you cannot read are not included.",
+    }))
+}
+
 /// The earned-value routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
         .add("/plans/{pid}/earned-value", get(earned_value))
+        .add("/plans/{pid}/earned-value/forecast", get(forecast))
+        .add("/plans/{pid}/earned-value/series", get(series))
+        .add("/plans/{pid}/earned-value/rollup", get(rollup))
+        .add("/plans/{pid}/earned-value/snapshot", post(snapshot))
         .add("/plans/{pid}/earned-value-settings", put(put_settings))
         .add(
             "/plans/{pid}/tasks/{t_pid}/percent-complete",

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — MS Project XML import (PJ-10, 2026-10-03)
+
+`POST /api/plans/{pid}/import/mspdi` reads an MS Project XML (MSPDI) file into a plan: tasks, outline, dates, durations, constraints, deadlines, dependencies (with their types, lags and leads) and the calendar. A dry run is the default; a re-import updates in place. Anything not carried over is listed with its reason.
+
 ### Added — calendars and constraints (SC-2, 2026-10-03)
 
 Working calendars per plan and per person (a person's recorded absences count), task date constraints (snet, snlt, fnet, fnlt, mso, mfo) and soft deadlines with negative float. Hard constraints need a reason and a permission.

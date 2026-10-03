@@ -94,6 +94,7 @@ pub fn paths() -> Value {
     merge(&mut all, report_schedule_paths());
     merge(&mut all, cpm_paths());
     merge(&mut all, calendar_paths());
+    merge(&mut all, mspdi_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -744,6 +745,18 @@ fn calendar_paths() -> Value {
                 &[("200", "weekdays, holidays and source"), ("401", "Missing or invalid bearer token"), ("422", "This identity has no person reference")]),
             "put": op("cpm", "Set your own working calendar", body, vec![],
                 &[("200", "The calendar"), ("401", "Missing or invalid bearer token"), ("422", "A malformed mask, or no person reference")])
+        }
+    })
+}
+
+/// MS Project (MSPDI XML) import (PJ-10, T-28n).
+fn mspdi_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/import/mspdi": {
+            "post": op("cpm", "Import an MS Project XML (MSPDI) file into this plan",
+                "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, working-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",
+                vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
+                &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not MSPDI, not UTF-8 XML, a DTD, too large or too many tasks")])
         }
     })
 }

@@ -317,3 +317,214 @@ async fn calendars_constraints_deadlines_and_a_persons_absence() {
     })
     .await;
 }
+
+const MSPDI: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+  <Name>Apollo</Name><MinutesPerDay>480</MinutesPerDay><CalendarUID>1</CalendarUID>
+  <Calendars><Calendar><UID>1</UID><IsBaseCalendar>1</IsBaseCalendar><WeekDays>
+    <WeekDay><DayType>1</DayType><DayWorking>0</DayWorking></WeekDay>
+    <WeekDay><DayType>2</DayType><DayWorking>1</DayWorking></WeekDay>
+    <WeekDay><DayType>3</DayType><DayWorking>1</DayWorking></WeekDay>
+    <WeekDay><DayType>4</DayType><DayWorking>1</DayWorking></WeekDay>
+    <WeekDay><DayType>5</DayType><DayWorking>1</DayWorking></WeekDay>
+    <WeekDay><DayType>6</DayType><DayWorking>1</DayWorking></WeekDay>
+    <WeekDay><DayType>7</DayType><DayWorking>0</DayWorking></WeekDay></WeekDays></Calendar></Calendars>
+  <Tasks>
+    <Task><UID>0</UID><Name>Apollo</Name><Summary>1</Summary></Task>
+    <Task><UID>1</UID><Name>Design</Name><OutlineLevel>1</OutlineLevel><Summary>1</Summary><Start>2026-10-05T08:00:00</Start><Duration>PT64H0M0S</Duration></Task>
+    <Task><UID>2</UID><Name>Draft</Name><OutlineLevel>2</OutlineLevel><Start>2026-10-05T08:00:00</Start><Duration>PT24H0M0S</Duration><PercentComplete>100</PercentComplete></Task>
+    <Task><UID>3</UID><Name>Review</Name><OutlineLevel>2</OutlineLevel><Duration>PT32H0M0S</Duration><PercentComplete>40</PercentComplete>
+      <PredecessorLink><PredecessorUID>2</PredecessorUID><Type>1</Type><LinkLag>0</LinkLag></PredecessorLink></Task>
+    <Task><UID>4</UID><Name>Sign-off</Name><OutlineLevel>1</OutlineLevel><Milestone>1</Milestone><Duration>PT0H0M0S</Duration>
+      <ConstraintType>2</ConstraintType><ConstraintDate>2026-11-02T08:00:00</ConstraintDate>
+      <PredecessorLink><PredecessorUID>3</PredecessorUID><Type>3</Type><LinkLag>4800</LinkLag></PredecessorLink>
+      <PredecessorLink><PredecessorUID>2</PredecessorUID><Type>0</Type></PredecessorLink></Task>
+    <Task><UID>5</UID><Name>Cycle</Name><OutlineLevel>1</OutlineLevel><Duration>PT8H0M0S</Duration>
+      <PredecessorLink><PredecessorUID>4</PredecessorUID><Type>1</Type></PredecessorLink></Task>
+    <Task><UID>6</UID><Name>Back</Name><OutlineLevel>1</OutlineLevel><Duration>PT8H0M0S</Duration>
+      <ConstraintType>1</ConstraintType>
+      <PredecessorLink><PredecessorUID>4</PredecessorUID><Type>1</Type></PredecessorLink></Task>
+  </Tasks>
+  <Resources><Resource><UID>1</UID><Name>Alex</Name></Resource></Resources>
+  <Assignments><Assignment><TaskUID>2</TaskUID><ResourceUID>1</ResourceUID></Assignment></Assignments>
+</Project>"#;
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_dropped() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let post = |q: &str, body: &str| {
+            let (request, url, body) = (
+                &request,
+                format!("/api/plans/{p}/import/mspdi{q}"),
+                body.to_string(),
+            );
+            async move {
+                request
+                    .post(&url)
+                    .content_type("application/xml")
+                    .text(body)
+                    .await
+            }
+        };
+
+        // Refusals: not MSPDI, a DTD, and not XML.
+        assert_eq!(post("", "<Other/>").await.status_code(), 422);
+        assert_eq!(post("", "not xml").await.status_code(), 422);
+        assert_eq!(
+            post(
+                "",
+                r#"<?xml version="1.0"?><!DOCTYPE p [<!ENTITY a "x">]><Project/>"#
+            )
+            .await
+            .status_code(),
+            422,
+            "a DTD"
+        );
+
+        // A dry run (the default) reports and writes nothing.
+        let dry: Value = post("", MSPDI).await.json();
+        assert_eq!(
+            (
+                dry["dry_run"].as_bool(),
+                dry["tasks_created"].as_i64(),
+                dry["tasks_in_file"].as_i64()
+            ),
+            (Some(true), Some(6), Some(6)),
+            "{dry}"
+        );
+        let none: Value = request.get(&format!("/api/plans/{p}/tasks")).await.json();
+        assert!(
+            none["tasks"].as_array().unwrap().is_empty(),
+            "a dry run writes nothing"
+        );
+
+        // The real import. With auth off, the hard constraint on Sign-off is allowed.
+        let done: Value = post("?dry_run=false", MSPDI).await.json();
+        assert_eq!(
+            (
+                done["tasks_created"].as_i64(),
+                done["tasks_updated"].as_i64()
+            ),
+            (Some(6), Some(0)),
+            "{done}"
+        );
+        assert_eq!(done["calendar_imported"], true);
+        let list: Value = request.get(&format!("/api/plans/{p}/tasks")).await.json();
+        let by = |title: &str| {
+            list["tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|t| t["title"] == title)
+                .cloned()
+                .unwrap()
+        };
+        assert_eq!(by("Draft")["duration_days"], 3);
+        assert_eq!(by("Draft")["start_date"], "2026-10-05");
+        assert_eq!(by("Draft")["status"], "done", "100% complete");
+        assert_eq!(by("Review")["status"], "in_progress", "40% complete");
+        assert_eq!(by("Design")["parent_task_pid"], Value::Null);
+        assert_eq!(
+            by("Draft")["parent_task_pid"],
+            by("Design")["pid"],
+            "outline level 2 under Design"
+        );
+        assert!(
+            by("Design")["duration_days"].is_null(),
+            "a summary row carries no schedule fields"
+        );
+        assert_eq!(by("Sign-off")["duration_days"], 0, "a milestone");
+        assert!(
+            by("Draft")["description"].is_null()
+                || by("Draft")["description"]
+                    .as_str()
+                    .unwrap()
+                    .contains("Alex")
+        );
+
+        // Dependencies keep their type and lag; the calendar came across; the network is analysable.
+        let deps: Value = request.get("/api/dependencies").await.json();
+        let kinds: Vec<(String, i64)> = deps
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| {
+                (
+                    d["kind"].as_str().unwrap().to_string(),
+                    d["lag_days"].as_i64().unwrap(),
+                )
+            })
+            .collect();
+        assert!(kinds.contains(&("fs".to_string(), 0)), "{kinds:?}");
+        assert!(
+            kinds.contains(&("ss".to_string(), 1)),
+            "Review→Sign-off SS with 1 day lag: {kinds:?}"
+        );
+        assert!(
+            kinds.contains(&("ff".to_string(), 0)),
+            "type 0 is FF, never FS: {kinds:?}"
+        );
+        let cal: Value = request
+            .get(&format!("/api/plans/{p}/calendar"))
+            .await
+            .json();
+        assert_eq!(
+            (cal["source"].as_str(), cal["weekdays"].as_str()),
+            (Some("plan"), Some("1111100"))
+        );
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        assert_eq!(cpm["calendar"], "plan");
+        assert!(!cpm["nodes"].as_array().unwrap().is_empty());
+
+        // The report lists what did not come across, with reasons.
+        let reasons: Vec<String> = done["unmapped"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|u| format!("{}:{}", u["what"], u["reason"]))
+            .collect();
+        let has = |needle: &str| reasons.iter().any(|r| r.contains(needle));
+        assert!(has("as-late-as-possible"), "{reasons:?}");
+        assert!(has("not matched to a person"), "{reasons:?}");
+        assert!(has("cost rates"), "{reasons:?}");
+
+        // Idempotent: importing again updates in place, creates nothing, moves no status.
+        request
+            .put(&format!(
+                "/api/plans/{p}/tasks/{}",
+                by("Review")["pid"].as_str().unwrap()
+            ))
+            .json(&json!({ "title": "Review", "assignee_ref": null }))
+            .await
+            .assert_status_ok();
+        let again: Value = post("?dry_run=false", MSPDI).await.json();
+        assert_eq!(
+            (
+                again["tasks_created"].as_i64(),
+                again["tasks_updated"].as_i64()
+            ),
+            (Some(0), Some(6)),
+            "{again}"
+        );
+        assert_eq!(again["links_created"], 0, "no duplicate dependencies");
+        let list2: Value = request.get(&format!("/api/plans/{p}/tasks")).await.json();
+        assert_eq!(list2["tasks"].as_array().unwrap().len(), 6, "no duplicates");
+        let deps2: Value = request.get("/api/dependencies").await.json();
+        assert_eq!(
+            deps2.as_array().unwrap().len(),
+            deps.as_array().unwrap().len()
+        );
+        let audit_note = again["note"].as_str().unwrap();
+        assert!(audit_note.contains("never changes status"));
+    })
+    .await;
+}

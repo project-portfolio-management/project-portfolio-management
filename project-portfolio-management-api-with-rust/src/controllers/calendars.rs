@@ -128,6 +128,28 @@ struct CalendarBody {
     holidays: Vec<NaiveDate>,
 }
 
+/// Set a plan's calendar (used by the MS Project import as well as the route).
+pub(crate) async fn set_plan_calendar(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    weekdays: &str,
+    holidays: &[NaiveDate],
+    actor: Option<&str>,
+) -> Result<()> {
+    let body = CalendarBody {
+        weekdays: weekdays.to_string(),
+        holidays: holidays.to_vec(),
+    };
+    upsert(ctx, "plan", &plan_pid.to_string(), &body, actor)
+        .await
+        .map(|_| ())
+}
+
+/// Whether a plan already has its own calendar.
+pub(crate) async fn plan_has_calendar(ctx: &AppContext, plan_pid: Uuid) -> Result<bool> {
+    Ok(find(ctx, "plan", &plan_pid.to_string()).await?.is_some())
+}
+
 async fn upsert(
     ctx: &AppContext,
     scope: &str,

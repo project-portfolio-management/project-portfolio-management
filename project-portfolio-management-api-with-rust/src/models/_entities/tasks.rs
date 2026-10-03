@@ -38,6 +38,8 @@ pub struct Model {
     pub constraint_date: Option<Date>,
     /// A soft deadline: bounds late dates only (negative float), never early ones.
     pub deadline: Option<Date>,
+    /// Where the task came from (`mspdi:<UID>`); unique per plan (PJ-10).
+    pub external_ref: Option<String>,
     /// The component (grouping) of this plan the task belongs to, if any.
     pub component_pid: Option<Uuid>,
     /// The parent task (a subtask's parent), if any. Roll-ups derive on read.

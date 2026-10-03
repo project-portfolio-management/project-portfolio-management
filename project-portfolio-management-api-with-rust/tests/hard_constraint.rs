@@ -99,6 +99,35 @@ async fn a_hard_constraint_needs_the_permission_and_a_reason() {
         request.put(&url).add_header(mk.clone(), mv.clone()).json(&hard).await.assert_status_ok();
         let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).add_header(ak.clone(), av.clone()).await.json();
         assert_eq!(cpm["nodes"][0]["constraint"], "mso");
+
+        // The MS Project import honours the same permission: without it a hard
+        // constraint is dropped *and reported*; with it, it is kept.
+        let xml = r#"<Project xmlns="http://schemas.microsoft.com/project"><Tasks>
+            <Task><UID>1</UID><Name>Pinned</Name><Start>2026-10-05T08:00:00</Start><Duration>PT8H0M0S</Duration>
+            <ConstraintType>2</ConstraintType><ConstraintDate>2026-10-07T08:00:00</ConstraintDate></Task></Tasks></Project>"#;
+        let import = |k: axum::http::HeaderName, v: axum::http::HeaderValue, plan: String| {
+            let request = &request;
+            async move {
+                request
+                    .post(&format!("/api/plans/{plan}/import/mspdi?dry_run=false"))
+                    .add_header(k, v)
+                    .content_type("application/xml")
+                    .text(xml)
+                    .await
+                    .json::<Value>()
+            }
+        };
+        let p2: Value = request.post("/api/plans").add_header(ak.clone(), av.clone()).json(&json!({ "kind": "Project", "name": "Two" })).await.json();
+        let p2 = p2["pid"].as_str().unwrap().to_string();
+        let r = import(ak.clone(), av.clone(), p2.clone()).await;
+        assert!(r["unmapped"].to_string().contains("needs access=admin"), "{r}");
+        let cpm: Value = request.get(&format!("/api/plans/{p2}/cpm")).add_header(ak.clone(), av.clone()).await.json();
+        assert!(cpm["nodes"][0]["constraint"].is_null(), "imported without the hard constraint");
+        let p3: Value = request.post("/api/plans").add_header(ak.clone(), av.clone()).json(&json!({ "kind": "Project", "name": "Three" })).await.json();
+        let p3 = p3["pid"].as_str().unwrap().to_string();
+        import(mk.clone(), mv.clone(), p3.clone()).await;
+        let cpm: Value = request.get(&format!("/api/plans/{p3}/cpm")).add_header(ak.clone(), av.clone()).await.json();
+        assert_eq!(cpm["nodes"][0]["constraint"], "mso", "an admin's import keeps it");
     })
     .await;
 }

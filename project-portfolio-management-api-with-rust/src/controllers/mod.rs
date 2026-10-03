@@ -216,6 +216,7 @@ pub mod feeds;
 pub mod guests;
 pub mod includes;
 pub mod live;
+pub mod mspdi_import;
 pub mod pdf;
 pub mod plan_access;
 pub mod plan_links;

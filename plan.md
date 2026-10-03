@@ -305,3 +305,132 @@ The contrast is the main finding: Huly needs five infrastructure systems and
 - External guests: vendors only, or also clients? It changes the disclosure
   model.
 - Is live update wanted for every board, or only plans a user has open?
+
+
+---
+
+# Research: scheduling and cost-control canon (CPM, EVM, DCMA, leveling, schedule risk)
+
+Source of this section: the eight topics the owner listed on 2026-10-03 —
+critical path and float, resource leveling, baselines and constraints, earned
+value, portfolio resource management, Monte Carlo risk analysis, DCMA project
+audits, and EVM cost and performance analytics. These are *disciplines with
+published standards*, not a product, so the comparison below is to the standards
+(PMI Practice Standard for Scheduling; AACE RP 49R-06 on identifying the critical
+path; the DCMA 14-Point Assessment; ANSI/EIA-748 and ISO 21508 for earned value;
+Lipke's earned schedule), and to **this repository's code, which I read**.
+
+**Evidence base, stated plainly.** Read: `src/visibility.rs` (`critical_path`,
+`violations`, `ScheduleEdge`), `src/tpc.rs`, the T-28b entry and the T-23 SPI/CPI
+note in `spec/13-tasks.md`, the `allocations` entity, `summed_percent`,
+`src/tba.rs` Monte-Carlo (TBA-11) and the `non_working_periods` table. **Not
+fetched live:** the standards themselves; the DCMA thresholds below are the
+commonly published ones and **must be checked against the current DCMA guide
+before they are pinned in a test** (SC-9 says so in its acceptance).
+
+## 19. What we already have, and the gaps it leaves
+
+| Topic | Already here | Gap (verified in code) |
+|---|---|---|
+| Critical path and float | `critical_path()`: the longest-duration chain over finish-start edges; `violations()`: a successor that starts before predecessor end + lag | **No float at all** (no early/late dates, no total or free float). **Relationships are finish-to-start only** (`ScheduleEdge` has no type). **`critical_path()` ignores `lag_days`** — the path length counts item durations only, so a lagged chain can be reported shorter than it is (finding F-6). It returns **one** chain: ties and near-critical paths are invisible. Everything is **calendar days**, so a weekend counts as work |
+| Resource leveling | `allocations` (percent over a window); `summed_percent` flags over-allocation; `/capacity` and `/capacity/utilization`; skill-gap | Detects over-allocation, **never proposes a fix**; nothing knows how much a task can slip without moving the finish (needs float) |
+| Baselines and constraints | **Budget** baselines, append-only and versioned (T-28b) | **No schedule baseline** (planned start/finish per task), so no start/finish variance, slip count or baseline execution index. **No constraint types**; a date is a date. No distinction between a soft deadline and a hard "must start on" |
+| Earned value | Budget baseline, EAC/ETC (T-28b), DIPP/EMV/CEC (`tpc.rs`); SPI/CPI deliberately `null` + `no_baseline`, and after T-28b "a baseline exists, but nothing scores it" | **No earned value**: no percent-complete method, so no EV, hence no SV/CV, SPI/CPI, TCPI or S-curve. Tasks carry `points` and `status`, so a physical percent complete is *derivable*, but nothing derives it |
+| Portfolio resource management | Capacity rollup, utilization, skill-gap, scenarios, planner, timesheets (actual hours) | No **demand vs capacity by role over time**; no generic (role-only) placeholder demand; no planned-vs-actual hours report; nothing for a resource manager to *act on* |
+| Monte Carlo | TBA-11: forecast "how long for N items / how many in N periods" from the **throughput** distribution, seeded and disclosed | That is *delivery* forecasting. **Schedule-risk** simulation (three-point durations, risk events from the register, P50/P80/P90 finish, criticality index, sensitivity) does not exist, and **needs CPM first** |
+| DCMA audit | Gate reviews, compliance and auditor surfaces | No schedule-quality assessment; most of the 14 checks need float, constraints and a baseline that do not exist yet |
+| EVM analytics | `budget_baselines`, per-currency variance, EAC/ETC/portfolio overrun forecast (T-28b) | No TCPI, VAC, EAC variants chosen by CPI/SPI, no S-curve series, no EV roll-up across plans |
+
+**The main finding.** Seven of the eight topics are one dependency chain: a
+*real* CPM engine (SC-1) → calendars and constraints (SC-2) → schedule baselines
+(SC-3) → earned value (SC-4). Leveling, schedule risk and the DCMA audit are
+all *consumers* of float. Building any of them first would mean inventing float
+inside that feature. The cheapest honest order is therefore the engine first.
+
+## 20. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **CPM engine**: forward and backward pass, total and free float, all four relationship types (FS, SS, FF, SF) with lag and lead, multiple and near-critical paths | Every other item here is a consumer. Also fixes the lag-ignored defect (F-6) | High; the enabler | SC-1 |
+| 2 | **Working calendars and constraints** (ASAP, ALAP, SNET, SNLT, FNET, FNLT, MSO, MFO) plus a separate soft **deadline** | A weekend counted as work and a date that cannot be pinned make every float wrong. A hard constraint is the thing DCMA audits for | High | SC-2 |
+| 3 | **Schedule baselines**, append-only and versioned, with start/finish/duration variance and slip | The schedule twin of T-28b; the denominator for BEI, SV and "how late are we" | High | SC-3 |
+| 4 | **Earned value**: a percent-complete method per task, then PV, EV, AC, SV, CV, SPI, CPI and earned-schedule SPI(t) | Closes the T-23 gap: SPI/CPI stop being permanently `no_baseline` | High; **per-currency** | SC-4 |
+| 5 | **EVM analytics**: EAC variants, TCPI, VAC, S-curve series, portfolio roll-up | What a sponsor reads; every formula must name itself | Medium-high | SC-5 |
+| 6 | **Resource leveling** as an *advisory proposal*, applied only on confirm | Today we say "over-allocated" and stop. Proposal = delay within float, never past a hard constraint | Medium | SC-6 |
+| 7 | **Portfolio resource management**: demand vs capacity by role and period, generic placeholders, planned vs actual hours | The resource manager's real question: "can we staff Q1?" | Medium-high | SC-7 |
+| 8 | **Schedule-risk Monte Carlo**: three-point durations, register risks as events, P50/P80/P90 finish, criticality index | The honest answer to "when will it finish" is a distribution, and we already do this for throughput | Medium; after SC-1/2 | SC-8 |
+| 9 | **DCMA-style 14-point schedule health** with offender lists | A checklist people already know; each check is a pure function. Named a *self-check*, not a compliance claim | Medium-high | SC-9 |
+| 10 | **Worker view of float**: "this task has 3 days of float" / "on the critical path" in *My work* | Half our users are workers; the one schedule fact that changes their day | High; small | SC-10 |
+| 11 | **Front-end**: schedule-health scorecard, float column in the Lily Gantt table, S-curve, leveling diff, resource heatmap, risk histogram | None of it is usable as JSON alone | Medium | SC-11 |
+
+## 21. Deliberately not taken (scheduling and cost canon)
+
+- **A claim of ANSI/EIA-748 compliance (the 32 EVMS guidelines).** That is an
+  accredited-system certification about process and people, not a feature. We
+  compute EVM figures with disclosed formulas; we do not say the system is
+  "EIA-748 compliant", and neither do the DCMA-style checks say "DCMA compliant".
+- **Automatic resource-constrained scheduling (an RCPSP optimiser that rewrites
+  dates).** Leveling is advisory and deterministic; it never silently moves a
+  critical task. An optimiser is a different product and an unexplainable one.
+- **Silent auto-reschedule when a predecessor slips.** The engine *reports*
+  float and violations; a person decides. (Same stance as the automation work.)
+- **Critical-chain buffers (CCPM)** and **crashing / fast-tracking advice.**
+  Related, but the Theory-of-Constraints analysis already in `tba.rs` is the
+  flow-side answer; a schedule-side one needs a real user asking.
+- **Correlated risk (copula) models and cost-risk correlation matrices.**
+  SC-8 states "inputs are independent" as a limitation rather than fake the
+  rigour.
+- **MS Project `.mpp` / Primavera `.xer` round trips.** T-28n covers
+  interchange formats; binary formats are out.
+- **Percent complete as a free-text vibe.** If a manual method is allowed it
+  carries a note and is flagged `manual` everywhere EV is shown.
+
+## 22. Sequencing
+
+1. **SC-1 first** (CPM engine), including the lag fix. Nothing below is honest
+   without float.
+2. **SC-2** (calendars and constraints), then **SC-3** (schedule baselines).
+3. **SC-9** (14-point health) can start as soon as SC-1 and SC-2 land: ten of
+   the fourteen checks need only them; CPLI and BEI wait for SC-3.
+4. **SC-4** (earned value) needs SC-3 and the existing budget baseline; **SC-5**
+   follows it.
+5. **SC-6** (leveling) and **SC-8** (schedule risk) need SC-1 and SC-2.
+6. **SC-7** (portfolio resource management) is independent of the engine and can
+   run in parallel; it reuses allocations, timesheets and scenarios.
+7. **SC-10** (float for workers) the moment SC-1 lands; **SC-11** after each.
+
+## 23. Findings (scheduling code, 2026-10-03)
+
+- **F-6: `critical_path()` ignores lag.** `src/visibility.rs` sums item
+  durations along edges and never adds `ScheduleEdge.lag_days`, while
+  `violations()` does honour it. A chain with a 10-day lag can be reported as
+  *shorter* than an unlagged one, so the wrong chain can be called critical.
+  Fixed by SC-1; until then the "critical path" label on the Gantt is
+  duration-only and should be read that way.
+- **F-7: every duration is calendar days.** `(end - start).num_days() + 1` and
+  `Days::new(lag)`: a Friday-to-Monday task is four days long. The doctrine for
+  *dates* is zone-free, which is right; the missing piece is a **working
+  calendar** (SC-2), not a time zone.
+- **F-8: SPI and CPI cannot exist yet, and the message is accurate.** After
+  T-28b the service says "a baseline exists, but nothing scores it". That stays
+  true until SC-4 gives a task a percent complete.
+
+## 24. Open questions for the owner (scheduling and cost canon)
+
+- **Working time:** one working calendar per plan, or per resource (a part-time
+  contractor, a regional holiday)? Per plan is far simpler and covers most uses.
+- **Duration unit:** keep calendar days and add a calendar, or move durations to
+  working days throughout? The second is more correct and touches every date.
+- **Percent complete:** which method is the default — 0/100 (done or not),
+  50/50, or points-based physical percent (derivable today)? And may a manager
+  type a percent by hand (flagged `manual`)?
+- **Hard constraints:** who may set one? They are the commonest source of a
+  schedule that "works" and lies. A role gate (and an audit) is proposed.
+- **DCMA relevance:** are there defence or government customers, or should the
+  checks be presented as generic "schedule quality checks" with the 14-point
+  thresholds as one preset?
+- **Three-point estimates:** are workers willing to give optimistic / likely /
+  pessimistic durations? If not, SC-8 can start from a single estimate plus a
+  per-plan uncertainty band, and says that is what it did.
+- **Money for EVM:** actual cost from timesheets (hours × rate) or from
+  budget-line actuals entered by hand? They disagree, and EV needs one.

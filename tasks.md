@@ -443,6 +443,186 @@ wiki exists and concurrency is a real complaint); CRM, HR, recruiting,
 inventory, billing, video meetings; an AI assistant inside the service;
 desktop app and presence. Reasons in [plan.md §16](plan.md).
 
+## Scheduling and cost-control canon (SC-n)
+
+Source: the eight topics the owner listed on 2026-10-03; analysis and the
+evidence base in [plan.md §19–§24](plan.md). Seven of the eight are one
+dependency chain — **SC-1 (CPM) → SC-2 → SC-3 → SC-4** — and leveling, schedule
+risk and the DCMA-style audit all consume float, so **SC-1 comes first**.
+Money stays integer minor units and **per currency, never merged**; absent
+evidence is `null` with a reason, never zero; every derived figure names the
+formula and the baseline version it used; no claim of ANSI/EIA-748 or DCMA
+compliance is made anywhere.
+
+- [ ] **SC-1 (L) — CPM engine: float, all relationship types, multiple paths.**
+  A pure module (`src/cpm.rs`): forward pass (early start / finish), backward
+  pass (late start / finish), **total float** (LS − ES) and **free float**,
+  relationship types **FS, SS, FF, SF** each with **lag and lead** (negative
+  lag), and a `near_critical_days` threshold. Returns **every** critical chain
+  (ties are all reported) and the near-critical set. Replaces the
+  duration-only `critical_path()` in `src/visibility.rs`; `ScheduleEdge` gains a
+  `kind` (default `fs`, so existing edges mean what they meant) and the
+  dependency endpoints accept it. `GET /api/plans/{pid}/cpm?as_of=` returns per
+  item `{early_start, early_finish, late_start, late_finish, total_float,
+  free_float, critical}`; items with no usable dates are listed under
+  `unscheduled` with a reason, never given a float of zero. **Fixes F-6**
+  (lag was ignored by the critical path).
+  **Acceptance:** a textbook network (golden test, numbers worked by hand in
+  the test) gives the published ES/EF/LS/LF and floats; a 10-day lag lengthens
+  the chain and can change which chain is critical (a test that fails on the
+  old code); SS, FF and SF each behave per definition; two equal chains are
+  both critical; total float ≥ free float ≥ 0 unless a constraint makes it
+  negative (SC-2); a cycle cannot be created (existing check) and a cyclic
+  input from import yields an error, not a hang; items without dates are
+  `unscheduled`, not `float: 0`; the Gantt's critical highlight reads from this.
+
+- [ ] **SC-2 (M) — Working calendars and constraints.** A plan **working
+  calendar** (working weekdays, plus holidays; reuse `non_working_periods`
+  where they apply), durations measured in **working days** by the engine
+  (fixes F-7), and a per-task **constraint**: `asap` (default), `alap`,
+  `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`, with a separate soft
+  **deadline** date that **never moves** a date but produces negative float
+  when threatened. `mso` / `mfo` are flagged **hard**. Setting a hard
+  constraint needs a role (see plan.md Q) and is audited with a reason.
+  **Acceptance:** a Friday-to-Monday task is 2 working days; a holiday inside
+  a span is skipped; `fnlt` earlier than the early finish yields **negative
+  total float** rather than silently shifting the date; `mso` overrides logic
+  and is reported as a hard constraint on that item; a deadline never changes
+  an early or late date; no calendar means 7-day behaviour, so every existing
+  plan is unchanged (an existing test passes untouched); constraint and
+  calendar changes are audited.
+
+- [ ] **SC-3 (M) — Schedule baselines.** `schedule_baselines` (+ per-task rows),
+  **append-only and versioned**, mirroring T-28b: snapshot every task's planned
+  start, finish and working duration; a re-baseline is a new version **with a
+  reason**; a bounded number kept per plan (default 11, as scheduling tools do).
+  `GET /api/plans/{pid}/schedule-variance?baseline=<n>` gives start / finish /
+  duration variance per task, plan finish slip, and counts of tasks slipped,
+  pulled in and **added or removed since** the baseline.
+  **Acceptance:** a baseline is immutable; a re-baseline keeps its predecessor
+  and records who and why; a task deleted after baselining stays in the
+  baseline and shows as `removed`; a task added later shows as `added`, not as
+  slip; no baseline ⇒ variance `null` + `no_baseline`; variance sums reconcile
+  with per-task rows; every figure names the baseline version used.
+
+- [ ] **SC-4 (M) — Earned value.** A per-task **percent-complete method**
+  (`zero_hundred`, `fifty_fifty`, `points` — derived from `points` and `status`,
+  and `manual` with a mandatory note and a `manual` flag shown wherever EV
+  appears), a per-plan default, and the figures **PV** (from the phased budget
+  baseline, T-28b, aligned to the schedule baseline), **EV**, **AC** (from the
+  source the owner picks: timesheets × rate or budget-line actuals), **SV, CV,
+  SPI, CPI**, and **earned-schedule SPI(t)** (SPI stays meaningful after a
+  project is late). `GET /api/plans/{pid}/earned-value?as_of=`.
+  **Acceptance:** EV never exceeds BAC; completing a task moves EV by exactly
+  that task's weight; no baseline ⇒ `null` + `no_baseline` exactly as today;
+  **never merged across currencies** (one block per currency); ratios in basis
+  points and money in minor units, no float; a plan whose tasks all use
+  `manual` is labelled so; PV = 0 gives SPI `null` + reason, not infinity;
+  every figure carries `as_of` and the baseline version.
+
+- [ ] **SC-5 (M) — EVM analytics.** On top of SC-4: **EAC** by named variant
+  (`AC + BAC − EV`; `AC + (BAC − EV)/CPI`; `AC + (BAC − EV)/(CPI × SPI)`; and
+  the bottom-up ETC from T-28b), **ETC, VAC, TCPI** to BAC and to EAC, an
+  **S-curve series** (PV, EV, AC per period) for charting and CSV, a portfolio
+  roll-up **per currency**, and a RAG from configurable thresholds. The
+  response says which EAC variant it used and why.
+  **Acceptance:** each formula is pinned against hand-worked textbook numbers;
+  CPI = 0 or SPI = 0 gives `null` + `undefined_denominator`; TCPI > 1 flags
+  "needs improved efficiency", and a TCPI that cannot be met is stated, not
+  hidden; the series sums to the totals; the roll-up never adds two currencies;
+  RAG thresholds are per deployment and shown in the response.
+
+- [ ] **SC-6 (M) — Resource leveling (advisory).** Detect over-allocation by
+  period (day or week) from allocations and dated tasks, then **propose** a
+  deterministic set of delays that stay **within total float** (SC-1), respect
+  hard constraints (SC-2) and priority (higher priority keeps its date).
+  Output is a proposal: each change with the finish-date effect; **apply is a
+  separate, confirmed call** that goes through the bulk edit (RM-9) so it is
+  audited. Unresolvable conflicts are reported, not forced.
+  **Acceptance:** the same input always gives the same proposal; a proposal
+  never violates a dependency or a hard constraint; it never moves a critical
+  task without saying so and showing the finish impact; with nothing
+  over-allocated the proposal is empty; applying records one audit entry per
+  moved task; a person's allocation detail is masked for a caller who may not
+  see people (the same masking as `/capacity`).
+
+- [ ] **SC-7 (M) — Portfolio resource management.** Demand vs capacity **by role
+  or skill and period** across plans (a heatmap's data), **generic
+  placeholders** (role-only demand with no person yet) that can be resolved to a
+  named person, and a **planned vs actual hours** report from timesheets
+  (LT-11). What-if through the existing scenarios. Independent of SC-1.
+  **Acceptance:** per-period totals reconcile with the sum of per-plan
+  allocations; a role gap is stated in **FTE** (never as a percentage mixed with
+  headcount); unassigned demand is shown as its own row, never dropped; actual
+  hours with no matching allocation are listed, not ignored; a caller who may
+  not see people sees roles and totals only; absent timesheets give `null` +
+  `no_actuals`, not zero hours.
+
+- [ ] **SC-8 (L) — Schedule-risk Monte Carlo.** Optimistic / likely / pessimistic
+  duration per task (triangular or PERT; or a single estimate plus a per-plan
+  uncertainty band, **labelled as such**), the existing **risk register** as
+  discrete events (probability × schedule impact on a named task), a seeded
+  simulation over the CPM network (SC-1, SC-2), and outputs **P50 / P80 / P90
+  finish**, a **criticality index** per task (share of iterations it was
+  critical), and a sensitivity measure. Seeded, bounded and disclosed like
+  TBA-11 (seed, iterations, assumptions echoed in the response).
+  **Acceptance:** same seed ⇒ identical result; with zero uncertainty P50 equals
+  the CPM finish exactly; P50 ≤ P80 ≤ P90; iterations are capped; the response
+  states that **inputs are treated as independent** (no correlation); a task
+  with no estimate is listed and uses the stated fallback, never silently zero;
+  a risk event with no probability is skipped and named.
+
+- [ ] **SC-9 (M) — DCMA-style schedule health (14 checks).** `GET
+  /api/plans/{pid}/schedule-health` runs the 14 checks as **pure functions**,
+  each returning `{value, threshold, pass, offenders[]}` so a scheduler can fix
+  what failed: missing logic, leads, lags, relationship-type mix (FS share),
+  hard constraints, high float, negative float, high duration, invalid dates,
+  missing resources, missed tasks, a critical-path test, the critical-path
+  length index (CPLI) and the baseline execution index (BEI). Thresholds are
+  the commonly published ones as a **default preset**, configurable. Named a
+  *self-check*, never "DCMA compliant".
+  **Acceptance:** each check has a golden test on a small crafted network; the
+  **denominator is incomplete tasks** where the check says so; a check that
+  cannot be computed (BEI or variance with no baseline, float with no CPM
+  inputs) reports `null` + a reason and is **never a pass**; offenders are
+  listed by pid; **before the thresholds are pinned in tests they are checked
+  against the current DCMA guide** (they were not fetched when this was
+  written); the preset name appears in the response.
+
+- [ ] **SC-10 (S) — Float for the worker.** In *My work* (LT-3), a task shows
+  "on the critical path" or "N days of float", with a plain sentence for a
+  negative float ("this is already late for the plan"). Dependent on SC-1.
+  **Acceptance:** a task with no schedule data shows nothing rather than "0
+  days"; the figure is the CPM total float for the caller's task and nothing
+  about other people's; a worker with no plan-level view still sees their own
+  tasks' float; text is reachable by screen reader.
+
+- [ ] **SC-11 (M) — Front-end for the scheduling canon.** A schedule-health
+  scorecard (offenders link to the item), a float / critical column in the Lily
+  Gantt table and the SVAR chart, an S-curve with the baseline, a leveling diff
+  preview with an explicit apply, a resource-demand heatmap, and a risk
+  histogram with P50 / P80 / P90 marked. Each lands with its service task.
+  **Acceptance:** each view states its `as_of`, baseline version and
+  assumptions; colour is never the only signal; every chart has a data table
+  twin; undefined figures read "not enough data" with the reason.
+
+## Amendments (scheduling and cost canon)
+
+- **T-28b / T-23:** once SC-4 lands, the "a baseline exists, but nothing scores
+  it" message is replaced by real SPI/CPI; the `no_baseline` path stays
+  byte-for-byte for plans without one.
+- **TBA-11:** keep the throughput forecast as the *flow* answer. SC-8 is the
+  *schedule* answer; the two are shown side by side, never blended.
+- **Gantt (`/gantt`):** the "critical path" highlight is duration-only until
+  SC-1 (finding F-6).
+
+## Not taken (scheduling and cost canon)
+
+A claim of ANSI/EIA-748 or DCMA compliance; an automatic resource-constrained
+optimiser; silent auto-rescheduling; critical-chain buffers and crashing advice;
+correlated risk models; binary `.mpp` / `.xer` round trips; free-text percent
+complete. Reasons in [plan.md §21](plan.md).
+
 ## Findings (surfaced while building the backlog)
 
 - **DELETE is admin-only under the default ABAC policy** (`access=admin` ⇒

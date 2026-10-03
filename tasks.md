@@ -784,6 +784,8 @@ is `null` with a reason, never zero.
 
 ## Amendments (ProjectLibre)
 
+- **Owner priority 2026-10-03:** **Jira and Asana import (the remainder of T-28n) is deferred to the end** of the backlog. Focus now: **calendars and visualizations** (the front-end for float, critical chains, calendars and the network diagram — PJ-12, SC-11).
+
 - **Decisions 2026-10-03 ([plan.md §31](plan.md)):** one network of plans and
   tasks; calendars **per person and per plan**; cost rates under ABAC; MSPDI XML
   only; all three scheduling rules; proposed bookings visible to the person they

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — PDF board pack and plan summary (PL-10, 2026-10-03)
+
+`GET /api/board/pack.pdf` and `GET /api/plans/{pid}/summary.pdf`: server-rendered documents. The board pack uses the same data function and authorisation as the JSON; the summary is masked and carries no people references; both are byte-identical for fixed data when stamped with `as_of`. Unsigned.
+
 ### Added — plan links (LT-8, 2026-10-03)
 
 `plan_links` and `/api/plans/{pid}/links`: typed links (docs, repo, ticket, design, chat, other) from a plan to where its documents live. Only absolute http(s) URLs with a host; the service never fetches or renders them.

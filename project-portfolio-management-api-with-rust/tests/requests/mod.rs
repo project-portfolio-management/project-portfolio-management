@@ -20,6 +20,7 @@ mod live;
 mod metrics_control;
 mod modules;
 mod oversight;
+mod pdf;
 mod plan_links;
 mod plan_templates;
 mod plans;

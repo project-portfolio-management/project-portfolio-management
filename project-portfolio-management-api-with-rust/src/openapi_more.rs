@@ -88,6 +88,7 @@ pub fn paths() -> Value {
     merge(&mut all, bulk_paths());
     merge(&mut all, guest_paths());
     merge(&mut all, link_paths());
+    merge(&mut all, pdf_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -594,6 +595,30 @@ fn link_paths() -> Value {
             "post": op("links", "Remove a link (POST twin)",
                 "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", with_link,
                 &[("200", "Removed"), ("404", "Unknown plan or link")])
+        }
+    })
+}
+
+/// Printable output (PL-10).
+fn pdf_paths() -> Value {
+    let as_of = query(
+        "as_of",
+        false,
+        "An RFC 3339 instant to stamp the document with; without it, now",
+    );
+    let rules = "A PDF is never more permissive than its JSON, is deterministic when stamped (pass as_of and two renders of unchanged data are byte-identical), and is NOT signed: signing needs a named signer and a key policy, which is an open decision. Text outside WinAnsi (Latin-1) is written as a question mark rather than guessed.";
+    json!({
+        "/api/board/pack.pdf": {
+            "get": op("pdf", "The board pack as a PDF document",
+                &format!("Built from the same function as GET /api/board/pack, behind the same oversight authorisation, so a caller denied the JSON is denied the PDF. The pack carries no people references. {rules}"),
+                vec![query("from", false, "Window start"), query("to", false, "Window end"), as_of.clone()],
+                &[("200", "application/pdf"), ("403", "Not authorised for oversight reads"), ("422", "Malformed as_of")])
+        },
+        "/api/plans/{pid}/summary.pdf": {
+            "get": op("pdf", "A one-plan summary as a PDF document",
+                &format!("Read-checked like the plan itself (record-level policy, private plans). Rendered from the MASKED record and counts only: no lead, owner organisation, assignee or risk owner ever reaches the text layer. Shows kind, status, phase, stage, dates, keywords, goals, task counts by status, the number of risks recorded and the milestones. {rules}"),
+                vec![uuid_param("pid"), as_of],
+                &[("200", "application/pdf"), ("404", "Unknown plan, or one the caller cannot see"), ("422", "Malformed as_of")])
         }
     })
 }

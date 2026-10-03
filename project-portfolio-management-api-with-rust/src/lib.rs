@@ -87,6 +87,7 @@ pub mod observability;
 pub mod okr;
 pub mod openapi;
 pub mod openapi_more;
+pub mod pdf;
 /// The pure, explainable Smart Score behind data-driven prioritisation.
 /// Pure rules for the sequential project phase — Initiating through
 /// Closing: one-step advancement, explicitly-reasoned regression, and

@@ -145,7 +145,35 @@ async fn board_pack(
     headers: HeaderMap,
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
-    let (from, to) = window(&query);
+    let body = board_pack_body(&ctx, &query).await?;
+    conditional(&headers, &body)
+}
+
+/// The board pack's data for the PDF route, **after the same oversight
+/// authorisation as the JSON route** — a caller denied one is denied the other.
+///
+/// # Errors
+///
+/// `403`-class when the oversight read is denied; database errors.
+pub(crate) async fn authorized_board_pack(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    from: Option<String>,
+    to: Option<String>,
+) -> Result<serde_json::Value> {
+    authorize_oversight_read(caller)?;
+    board_pack_body(ctx, &WindowQuery { from, to }).await
+}
+
+/// The board pack's data, shared by the JSON route and the PDF (PL-10) so the
+/// two can never disagree.
+///
+/// # Errors
+///
+/// Propagates database errors.
+#[allow(clippy::too_many_lines)] // one pass over the whole estate
+async fn board_pack_body(ctx: &AppContext, query: &WindowQuery) -> Result<serde_json::Value> {
+    let (from, to) = window(query);
     let items = live!(plans, &ctx.db);
     let risk_rows = live!(risks, &ctx.db);
     let budget_rows = live!(budget_lines, &ctx.db);
@@ -176,7 +204,7 @@ async fn board_pack(
     }
 
     // Decisions in the window (shared builder, filtered).
-    let decisions: Vec<serde_json::Value> = decision_entries(&ctx)
+    let decisions: Vec<serde_json::Value> = decision_entries(ctx)
         .await?
         .into_iter()
         .filter(|(at, _)| *at >= from && *at <= to)
@@ -249,7 +277,7 @@ async fn board_pack(
             "per_currency": released_money,
         },
     });
-    conditional(&headers, &body)
+    Ok(body)
 }
 
 /// `GET /api/board/investments` — money-moving decisions, newest

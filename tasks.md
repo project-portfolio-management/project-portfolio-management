@@ -408,7 +408,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   index. *Privacy:* extracted text is personal data if the file is; it
   inherits the attachment's masking.
 
-- [ ] **PL-10 (S) — Printable output.** `GET …/pack.pdf` for the board pack
+- [x] **PL-10 (S) — Printable output.** **Landed 2026-10-03.** Service: `GET /api/board/pack.pdf?from=&to=&as_of=` and `GET /api/plans/{pid}/summary.pdf?as_of=`; a dependency-free PDF writer (`src/pdf.rs`, 5 unit tests: valid xref offsets, determinism, escaping so a plan name cannot inject PDF syntax, WinAnsi fallback, wrapping/pagination) + 1 DB-gated test. The board PDF is built from the **same function** as the JSON pack (`oversight::board_pack_body`, extracted) **behind the same oversight authorisation** — a caller denied one is denied the other. The plan summary is rendered from the **masked** record and counts only: the test asserts the lead, assignee and risk-owner ids and the owner organisation name **never appear in the text layer**. **Deterministic when stamped**: with `?as_of=` two renders are byte-identical (asserted); without it `as_of` is the render time. **Not signed** — signing needs a named signer and key policy (still an open question in `plan.md`). Text outside WinAnsi is written as `?`, not guessed. **Not built:** signing; a front-end link. `GET …/pack.pdf` for the board pack
   and a plan summary, server-rendered, deterministic for fixed data, carrying
   its `as_of`. Signing is **out of scope** until a signer is named (plan.md
   open question).

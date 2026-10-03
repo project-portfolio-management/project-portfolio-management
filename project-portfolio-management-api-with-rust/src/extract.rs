@@ -97,7 +97,9 @@ fn office_text(bytes: &[u8]) -> Result<String, &'static str> {
     for i in 0..zip.len() {
         let Ok(entry) = zip.by_index(i) else { continue };
         let name = entry.name().to_string();
-        // The parts that carry prose in .docx / .xlsx / .pptx.
+        // The parts that carry prose in .docx / .xlsx / .pptx. OOXML part names
+        // are case-sensitive, so the exact comparison is intended.
+        #[allow(clippy::case_sensitive_file_extension_comparisons)]
         let wanted = (name.starts_with("word/") && name.ends_with(".xml"))
             || (name.starts_with("ppt/slides/") && name.ends_with(".xml"))
             || name == "xl/sharedStrings.xml";

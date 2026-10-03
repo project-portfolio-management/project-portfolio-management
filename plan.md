@@ -567,3 +567,24 @@ It is recorded as finding F-9 and as **PJ-1, which must be decided first**.
   everyone assumes) enough?
 - **Proposed bookings:** should a proposed booking be visible to the person it
   names, or only to resource managers until committed?
+
+## 31. Owner decisions (2026-10-03)
+
+Answers to §24 and §30, recorded so they are not re-asked:
+
+- **Schedule unit:** **both** — one network of plans *and* tasks (PJ-1).
+- **Calendars:** **per person and per plan.** A plan has a working calendar; a
+  person has their own (part-time, regional holidays, leave). A task is scheduled
+  on its plan's calendar, and an assignment's *work* is scheduled on the
+  intersection with the assignee's calendar (SC-2, PJ-3).
+- **Cost rates:** governed by **ABAC**, not a hard-coded role: a `cost_rate`
+  resource with its own actions in the policy, deny by default (PJ-2).
+- **MS Project:** **XML (MSPDI) only**; binary `.mpp` is not read and the UI says
+  so (PJ-10).
+- **Fixed-work scheduling:** **yes, in addition to fixed duration** — and fixed
+  units too, so all three rules (PJ-6).
+- **Proposed bookings:** **visible to the person they name**, as well as to
+  resource managers (PJ-4).
+- **Still open:** default percent-complete method, who may set a hard constraint
+  (now an ABAC action too), DCMA wording, three-point estimates, and the money
+  source for EVM (§24).

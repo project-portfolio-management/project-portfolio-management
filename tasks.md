@@ -633,7 +633,7 @@ be decided before SC-1**, because the schedule network is plan-level today
 is `null` with a reason, never zero.
 
 - [ ] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** —
-  **decide first.** Add to a task an optional `start_date`, a working
+  **decided 2026-10-03: one network of both plans and tasks.** Add to a task an optional `start_date`, a working
   `duration_days` (or an end date), and a `constraint` (SC-2's set), so a task
   can be a node in the network. A **schedule node** is either a plan with a
   timeframe or a task with a start and duration; a task's parent plan is its
@@ -651,8 +651,9 @@ is `null` with a reason, never zero.
   has — standard, overtime, and so on), each rate **effective from a date**, in
   one currency; an expense type (labour, material, **fixed cost**) and an accrual
   rule (at start, prorated, at end). Feeds SC-4's AC and any cost report.
-  **Rates are sensitive**: finance attribute only; masked elsewhere; **never**
-  visible to a worker, and never in a guest view.
+  **Rates are sensitive and governed by ABAC (decided 2026-10-03):** a
+  `cost_rate` resource with `read` / `write` actions in the policy, deny by
+  default; masked elsewhere; never in a guest view.
   **Acceptance:** a rate lookup by date returns the rate in force that day; a
   rate change **never rewrites an existing actual** (the rate used is recorded
   on the timesheet-derived cost); no rate ⇒ cost `null` + `no_rate`, **never
@@ -695,8 +696,7 @@ is `null` with a reason, never zero.
   work unchanged and is audited.
 
 - [ ] **PJ-6 (M) — Scheduling rules: fixed units / duration / work** —
-  **decide first; recommendation: build only `fixed_duration` (default) and
-  `fixed_work`.** A task with an assignment recomputes the third of
+  **decided 2026-10-03: build all three (fixed work too).** A task with an assignment recomputes the third of
   (duration, units, work) when one of the other two changes, per its rule;
   integer minutes; deterministic. Whether ProjectLibre also implements an
   "effort-driven" flag is **not verified** (its constants file does not mention
@@ -782,6 +782,11 @@ is `null` with a reason, never zero.
   span plans; float across plans uses the same calendar rule (SC-2).
 
 ## Amendments (ProjectLibre)
+
+- **Decisions 2026-10-03 ([plan.md §31](plan.md)):** one network of plans and
+  tasks; calendars **per person and per plan**; cost rates under ABAC; MSPDI XML
+  only; all three scheduling rules; proposed bookings visible to the person they
+  name.
 
 - **SC-1 / SC-3 / SC-4:** their "per task" wording assumed task-level dates that
   do not exist (finding F-9); each depends on **PJ-1**. Until then they operate

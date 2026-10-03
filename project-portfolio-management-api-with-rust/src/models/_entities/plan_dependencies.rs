@@ -18,6 +18,8 @@ pub struct Model {
     pub predecessor_pid: Uuid,
     pub successor_pid: Uuid,
     pub lag_days: i32,
+    /// `fs` (default), `ss`, `ff` or `sf`.
+    pub kind: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

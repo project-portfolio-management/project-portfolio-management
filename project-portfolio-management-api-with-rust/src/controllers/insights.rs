@@ -59,6 +59,7 @@ pub(crate) fn rag_by_pid(
             predecessor: e.predecessor_pid,
             successor: e.successor_pid,
             lag_days: e.lag_days,
+            kind: crate::cpm::Kind::parse(&e.kind).unwrap_or(crate::cpm::Kind::Fs),
         })
         .collect();
     let violated: std::collections::HashSet<Uuid> = rules::violations(&facts, &edges)

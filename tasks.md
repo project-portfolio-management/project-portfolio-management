@@ -454,7 +454,7 @@ evidence is `null` with a reason, never zero; every derived figure names the
 formula and the baseline version it used; no claim of ANSI/EIA-748 or DCMA
 compliance is made anywhere.
 
-- [ ] **SC-1 (L) — CPM engine: float, all relationship types, multiple paths.**
+- [x] **SC-1 (L) — CPM engine: float, all relationship types, multiple paths.** **Landed 2026-10-03.** Pure engine `src/cpm.rs` (15 unit tests incl. the textbook network worked by hand, lag changing which chain is critical, each of FS/SS/FF/SF, a lead, equal chains both critical, near-critical, cycles, unscheduled reasons, DST-free dates, and a 200-network randomised property test that **found and fixed a real bug**: free float exceeding total float under a lead). `GET /api/plans/{pid}/cpm?near=`: early/late start and finish, **total and free float**, critical and near-critical, **every** critical chain, `pushed_days` (logic forcing a start later than planned), `unscheduled` with a reason, ignored edges listed, cycle ⇒ 422. **Fixes F-6**: the plan-level `critical_path` now counts lag (regression test `critical_path_counts_lag`), and `/schedule` gains a float-based `cpm` block over a plan's children. **Deviations, stated plainly:** the old `critical_path` field and `on_critical_path` flag **remain the longest dependent chain** (so the existing Gantt highlight and test are unchanged) — the `cpm` block is the float-based answer and **the one to trust when they differ** (they do differ whenever a successor has slack); the calendar is **seven-day** until SC-2, so durations are not yet working-day-aware; the container plan is a summary and is not a node; completed tasks are included and carry their status; `violations()` judges FS edges only. **Not built:** constraints and negative float (SC-2), the front-end Gantt highlight switch, a unified plan+task run.
   A pure module (`src/cpm.rs`): forward pass (early start / finish), backward
   pass (late start / finish), **total float** (LS − ES) and **free float**,
   relationship types **FS, SS, FF, SF** each with **lag and lead** (negative
@@ -632,7 +632,7 @@ be decided before SC-1**, because the schedule network is plan-level today
 (finding F-9). Money stays integer minor units and per currency; absent evidence
 is `null` with a reason, never zero.
 
-- [ ] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** —
+- [x] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** **Landed 2026-10-03.** Migration `…_000025_schedule_fields`: `tasks.start_date` + `tasks.duration_days` (0–3650 working days, 0 = milestone), and `plan_dependencies.kind` (`fs` default). `POST /api/plans/{pid}/tasks` takes both on create; **`PUT …/tasks/{pid}/schedule`** changes them (absent or null clears) and is audited with old and new. A dependency may now join **two tasks, two plans, or one of each**; kind `fs|ss|ff|sf`; lag `-3650..3650` (**negative = a lead**); cycle checks include task `precedes` relations. Every existing row and route is unchanged (the full suite passes untouched). **Decision taken (owner, 2026-10-03): one network of both.** **Deviations:** the plan-level and task-level networks are analysed separately (`/schedule` over a plan's children, `/cpm` over a plan's tasks) — a plan's own tasks do **not** roll up into the plan's dates, and an edge between a task and a plan is accepted but not yet analysed (PJ-13 / a unified run); only `precedes` relations (not `blocks`, which is about status) are schedule edges. **Not built:** a front-end. —
   **decided 2026-10-03: one network of both plans and tasks.** Add to a task an optional `start_date`, a working
   `duration_days` (or an end date), and a `constraint` (SC-2's set), so a task
   can be a node in the network. A **schedule node** is either a plan with a
@@ -714,7 +714,7 @@ is `null` with a reason, never zero.
   link target's float (it is a derived span, not work); removing a link
   recomputes; a hammock can't link to itself or create a cycle.
 
-- [ ] **PJ-8 (S) — Recalculation change set.** Every CPM recalculation (SC-1)
+- [x] **PJ-8 (S) — Recalculation change set.** **Landed 2026-10-03.** Returned by `PUT …/tasks/{pid}/schedule` as `moved`: per task `start`, `finish` or `both`, with the working days each moved, across the **whole network** (not only the edited task); empty when nothing moved (tested). `cpm::diff` is pure. **Not built:** feeding watchers (RM-3) and the *My work* line; a cycle yields `moved: null` with a note. Every CPM recalculation (SC-1)
   returns **what moved**: per item `start_moved`, `finish_moved` or `both`,
   by how many working days, and what triggered it — ProjectLibre's
   `DateChangeStatus` idea. Feeds watchers (RM-3), the audit log and a "why did my

@@ -28,6 +28,10 @@ pub struct Model {
     pub done_at: Option<DateTimeWithTimeZone>,
     /// Due **calendar date** — zone-free by the time-zone doctrine (`crate::tz`).
     pub due_date: Option<Date>,
+    /// Planned start (PJ-1); a lower bound for the critical-path engine.
+    pub start_date: Option<Date>,
+    /// Working-day duration (PJ-1); `0` is a milestone.
+    pub duration_days: Option<i32>,
     /// The component (grouping) of this plan the task belongs to, if any.
     pub component_pid: Option<Uuid>,
     /// The parent task (a subtask's parent), if any. Roll-ups derive on read.

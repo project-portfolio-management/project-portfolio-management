@@ -76,6 +76,8 @@ fn task_view(task: &tasks::Model) -> serde_json::Value {
         "assignee_ref": task.assignee_ref,
         "points": task.points,
         "due_date": task.due_date,
+        "start_date": task.start_date,
+        "duration_days": task.duration_days,
         "component_pid": task.component_pid,
         "parent_task_pid": task.parent_task_pid,
         "sprint_pid": task.sprint_pid,
@@ -101,6 +103,14 @@ struct TaskPayload {
     /// Optional due **calendar date** (`YYYY-MM-DD`, no zone).
     #[serde(default)]
     due_date: Option<chrono::NaiveDate>,
+    /// Optional planned start **calendar date** (PJ-1), honoured on **create**
+    /// only; change it afterwards with `PUT …/tasks/{pid}/schedule`, which also
+    /// reports what moved.
+    #[serde(default)]
+    start_date: Option<chrono::NaiveDate>,
+    /// Optional working-day duration (PJ-1; `0` is a milestone), on create only.
+    #[serde(default)]
+    duration_days: Option<i32>,
     /// Optional component (grouping) of this plan.
     #[serde(default)]
     component_pid: Option<Uuid>,
@@ -219,6 +229,11 @@ async fn create_task(
     Json(payload): Json<TaskPayload>,
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
+    let schedule_problems =
+        crate::cpm::schedule_problems(payload.start_date, payload.duration_days);
+    if !schedule_problems.is_empty() {
+        return Err(refuse(&schedule_problems.join("; ")));
+    }
     let (status, workflow) = validate_task(&ctx, item.pid, &payload).await?;
     // Required custom fields block creation; validated before any write.
     let custom = super::custom_fields::prepare(
@@ -250,6 +265,8 @@ async fn create_task(
         assignee_ref: sea_orm::ActiveValue::set(payload.assignee_ref.clone()),
         points: sea_orm::ActiveValue::set(payload.points),
         due_date: sea_orm::ActiveValue::set(payload.due_date),
+        start_date: sea_orm::ActiveValue::set(payload.start_date),
+        duration_days: sea_orm::ActiveValue::set(payload.duration_days),
         component_pid: sea_orm::ActiveValue::set(payload.component_pid),
         parent_task_pid: sea_orm::ActiveValue::set(payload.parent_task_pid),
         status_changed_at: sea_orm::ActiveValue::set(now.into()),

@@ -65,13 +65,38 @@ pub(crate) fn is_finished(model: &plans::Model) -> bool {
     )
 }
 
-/// `POST /api/dependencies` body: a finish-start edge.
+/// `POST /api/dependencies` body: a dependency between two plans, two tasks,
+/// or one of each (SC-1): a relationship `kind` (`fs` default, `ss`, `ff`,
+/// `sf`) and a lag in working days, **negative for a lead**.
 #[derive(Debug, Deserialize)]
 struct DependencyPayload {
     predecessor_pid: Uuid,
     successor_pid: Uuid,
     #[serde(default)]
     lag_days: i32,
+    #[serde(default)]
+    kind: Option<String>,
+}
+
+/// Whether `pid` is a live plan or a live task (a dependency endpoint).
+async fn node_exists(ctx: &AppContext, pid: Uuid) -> Result<bool> {
+    if plans::Entity::find()
+        .filter(plans::Column::Pid.eq(pid))
+        .filter(plans::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?
+        .is_some()
+    {
+        return Ok(true);
+    }
+    Ok(crate::models::_entities::tasks::Entity::find()
+        .filter(crate::models::_entities::tasks::Column::Pid.eq(pid))
+        .filter(crate::models::_entities::tasks::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?
+        .is_some())
 }
 
 /// `POST /api/dependencies` — add an edge (both items must exist,
@@ -82,21 +107,42 @@ async fn create_dependency(
     caller: MaybeAuthUser,
     Json(payload): Json<DependencyPayload>,
 ) -> Result<Response> {
-    if payload.lag_days < 0 {
-        return Err(unprocessable("lag_days must be non-negative"));
+    if !(-3650..=3650).contains(&payload.lag_days) {
+        return Err(unprocessable(
+            "lag_days must be -3650 to 3650 (negative is a lead)",
+        ));
     }
-    find_any_item(&ctx, payload.predecessor_pid).await?;
-    find_any_item(&ctx, payload.successor_pid).await?;
+    let kind = payload.kind.as_deref().unwrap_or("fs").to_ascii_lowercase();
+    if crate::cpm::Kind::parse(&kind).is_none() {
+        return Err(unprocessable("kind must be one of fs, ss, ff, sf"));
+    }
+    for end in [payload.predecessor_pid, payload.successor_pid] {
+        if !node_exists(&ctx, end).await? {
+            return Err(Error::NotFound);
+        }
+    }
     let existing = vis_models::all_dependencies(&ctx.db).await?;
     if existing.iter().any(|e| {
         e.predecessor_pid == payload.predecessor_pid && e.successor_pid == payload.successor_pid
     }) {
         return Err(unprocessable("this dependency already exists"));
     }
-    let edges: Vec<(Uuid, Uuid)> = existing
+    let mut edges: Vec<(Uuid, Uuid)> = existing
         .iter()
         .map(|e| (e.predecessor_pid, e.successor_pid))
         .collect();
+    // Task `precedes` relations are schedule edges too: a cycle through them
+    // is a cycle.
+    edges.extend(
+        crate::models::_entities::task_relations::Entity::find()
+            .filter(crate::models::_entities::task_relations::Column::DeletedAt.is_null())
+            .filter(crate::models::_entities::task_relations::Column::Kind.eq("precedes"))
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?
+            .into_iter()
+            .map(|r| (r.from_task_pid, r.to_task_pid)),
+    );
     if rules::would_create_cycle(&edges, payload.predecessor_pid, payload.successor_pid) {
         return Err(unprocessable("this dependency would create a cycle"));
     }
@@ -105,6 +151,7 @@ async fn create_dependency(
         predecessor_pid: ActiveValue::set(payload.predecessor_pid),
         successor_pid: ActiveValue::set(payload.successor_pid),
         lag_days: ActiveValue::set(payload.lag_days),
+        kind: ActiveValue::set(kind),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -194,10 +241,12 @@ async fn portfolio_schedule(
             predecessor: e.predecessor_pid,
             successor: e.successor_pid,
             lag_days: e.lag_days,
+            kind: crate::cpm::Kind::parse(&e.kind).unwrap_or(crate::cpm::Kind::Fs),
         })
         .collect();
     let violations = rules::violations(&facts, &edges);
     let critical = rules::critical_path(&facts, &edges);
+    let cpm_block = plan_level_cpm(&members, &facts, &edges);
     let items: Vec<_> = members
         .iter()
         .zip(&facts)
@@ -217,12 +266,70 @@ async fn portfolio_schedule(
             "predecessor_pid": e.predecessor.to_string(),
             "successor_pid": e.successor.to_string(),
             "lag_days": e.lag_days,
+            "kind": e.kind,
         })).collect::<Vec<_>>(),
+        "cpm": cpm_block,
         "violations": violations,
         "critical_path": critical.iter().map(ToString::to_string).collect::<Vec<_>>(),
         "undated": facts.iter().filter(|f| f.start.is_none() || f.end.is_none())
             .map(|f| f.pid.to_string()).collect::<Vec<_>>(),
     }))
+}
+
+/// The float-based critical path over a plan's **children** (the container is a
+/// summary, not work, so it is not a node). Plan durations are the working days
+/// between the parsed start and target (all seven days work until calendars,
+/// SC-2); lag and kind come from the dependency. `critical_path` above stays the
+/// longest dependent chain (now lag-aware); this block is the float-based answer
+/// and the one to trust when they differ.
+fn plan_level_cpm(
+    members: &[plans::Model],
+    facts: &[rules::ScheduleItem],
+    edges: &[rules::ScheduleEdge],
+) -> serde_json::Value {
+    use crate::cpm::{self, Edge, Node, Options, WorkCalendar};
+    let container = members.first().map(|m| m.pid);
+    let nodes: Vec<Node> = facts
+        .iter()
+        .filter(|f| Some(f.pid) != container)
+        .map(|f| Node {
+            pid: f.pid,
+            duration: match (f.start, f.end) {
+                (Some(s), Some(e)) if e >= s => Some((e - s).num_days() + 1),
+                _ => None,
+            },
+            planned_start: f.start,
+        })
+        .collect();
+    let cpm_edges: Vec<Edge> = edges
+        .iter()
+        .map(|e| Edge {
+            pid: e.pid,
+            pred: e.predecessor,
+            succ: e.successor,
+            kind: e.kind,
+            lag: i64::from(e.lag_days),
+        })
+        .collect();
+    match cpm::analyze(
+        &nodes,
+        &cpm_edges,
+        &WorkCalendar::seven_day(),
+        Options::default(),
+    ) {
+        Ok(r) => serde_json::json!({
+            "calendar": "seven_day",
+            "project_finish": r.project_finish,
+            "nodes": r.nodes.iter().map(|n| serde_json::json!({
+                "pid": n.pid, "total_float": n.total_float, "free_float": n.free_float,
+                "critical": n.critical, "near_critical": n.near_critical,
+                "early_start": n.early_start, "early_finish": n.early_finish,
+                "pushed_days": n.pushed_days })).collect::<Vec<_>>(),
+            "unscheduled": r.unscheduled,
+            "critical_chains": r.chains,
+        }),
+        Err(cpm::CpmError::Cycle(on)) => serde_json::json!({ "error": "cycle", "on": on }),
+    }
 }
 
 /// `POST /api/plans/{pid}/milestones` body.
@@ -961,6 +1068,7 @@ async fn at_a_glance(State(ctx): State<AppContext>, headers: HeaderMap) -> Resul
             predecessor: e.predecessor_pid,
             successor: e.successor_pid,
             lag_days: e.lag_days,
+            kind: crate::cpm::Kind::parse(&e.kind).unwrap_or(crate::cpm::Kind::Fs),
         })
         .collect();
     let all_violations = rules::violations(&facts, &edges);

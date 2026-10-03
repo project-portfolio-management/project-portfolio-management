@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — critical-path engine (SC-1, 2026-10-03)
+
+`GET /api/plans/{pid}/cpm` gives total and free float, critical and near-critical tasks and every critical chain, for all four relationship types with lag and lead. The plan-level critical path now counts lag (previously ignored).
+
+### Added — task schedule fields and dependency kinds (PJ-1, 2026-10-03)
+
+Tasks gain `start_date` and `duration_days`; dependencies gain a relationship kind (fs, ss, ff, sf) and may carry a negative lag (a lead) and join tasks as well as plans. `PUT /api/plans/{pid}/tasks/{pid}/schedule` sets a task's schedule.
+
 ### Added — scheduled report runs (T-28e, 2026-10-03)
 
 `report_schedules`, `POST /api/reports/{pid}/schedule`, `/api/report-schedules`: run a saved report daily, weekly or monthly. Each run is stored as an expiring artifact and audited like an export, even at zero rows. Claim-based, so a missed run runs once.

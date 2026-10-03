@@ -8,6 +8,7 @@ mod bulk;
 mod canvas;
 mod capabilities;
 mod components;
+mod cpm;
 mod custom_fields;
 mod discussion;
 mod effort;

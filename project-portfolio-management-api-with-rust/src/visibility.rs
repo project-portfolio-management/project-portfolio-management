@@ -100,8 +100,10 @@ pub struct ScheduleEdge {
     pub predecessor: Uuid,
     /// May start `lag_days` after the predecessor finishes.
     pub successor: Uuid,
-    /// Working lag in days (may be 0).
+    /// Working lag in days (may be 0, or negative for a lead).
     pub lag_days: i32,
+    /// Relationship type. [`violations`] judges finish-to-start edges only.
+    pub kind: crate::cpm::Kind,
 }
 
 /// A violated finish-start constraint: the successor starts before
@@ -127,7 +129,7 @@ pub struct Violation {
 pub fn violations(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Violation> {
     let by_pid: HashMap<Uuid, &ScheduleItem> = items.iter().map(|i| (i.pid, i)).collect();
     let mut out = Vec::new();
-    for edge in edges {
+    for edge in edges.iter().filter(|e| e.kind == crate::cpm::Kind::Fs) {
         let (Some(pred), Some(succ)) = (by_pid.get(&edge.predecessor), by_pid.get(&edge.successor))
         else {
             continue;
@@ -135,8 +137,11 @@ pub fn violations(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Violati
         let (Some(pred_end), Some(succ_start)) = (pred.end, succ.start) else {
             continue;
         };
-        let earliest =
-            pred_end + chrono::Days::new(u64::try_from(edge.lag_days.max(0)).unwrap_or(0));
+        let earliest = if edge.lag_days >= 0 {
+            pred_end + chrono::Days::new(u64::try_from(edge.lag_days).unwrap_or(0))
+        } else {
+            pred_end - chrono::Days::new(u64::try_from(-edge.lag_days).unwrap_or(0))
+        };
         if succ_start < earliest {
             out.push(Violation {
                 edge_pid: edge.pid,
@@ -160,7 +165,7 @@ pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid
     fn best(
         node: Uuid,
         duration: &HashMap<Uuid, i64>,
-        successors: &HashMap<Uuid, Vec<Uuid>>,
+        successors: &HashMap<Uuid, Vec<(Uuid, i64)>>,
         memo: &mut HashMap<Uuid, (i64, Vec<Uuid>)>,
     ) -> (i64, Vec<Uuid>) {
         if let Some(hit) = memo.get(&node) {
@@ -169,12 +174,14 @@ pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid
         let own = *duration.get(&node).unwrap_or(&0);
         let mut result = (own, vec![node]);
         if let Some(nexts) = successors.get(&node) {
-            for next in nexts {
+            for (next, lag) in nexts {
                 let (tail_total, tail_path) = best(*next, duration, successors, memo);
-                if own + tail_total > result.0 {
+                // The chain's length includes the lag on each edge (F-6: it
+                // used to be ignored, so a lagged chain looked shorter).
+                if own + lag + tail_total > result.0 {
                     let mut path = vec![node];
                     path.extend(tail_path.iter().copied());
-                    result = (own + tail_total, path);
+                    result = (own + lag + tail_total, path);
                 }
             }
         }
@@ -191,12 +198,12 @@ pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid
             (i.pid, days)
         })
         .collect();
-    let mut successors: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    let mut successors: HashMap<Uuid, Vec<(Uuid, i64)>> = HashMap::new();
     for edge in edges {
         successors
             .entry(edge.predecessor)
             .or_default()
-            .push(edge.successor);
+            .push((edge.successor, i64::from(edge.lag_days)));
     }
     let mut memo = HashMap::new();
     let mut top: (i64, Vec<Uuid>) = (0, Vec::new());
@@ -398,6 +405,7 @@ mod tests {
             predecessor: p,
             successor: s,
             lag_days: lag,
+            kind: crate::cpm::Kind::Fs,
         };
         // 2 starts 2026-03-01, before 1 ends 2026-03-31 ⇒ violation.
         let found = violations(&items, &[edge(pid(1), pid(2), 0)]);
@@ -455,6 +463,7 @@ mod tests {
             predecessor: p,
             successor: s,
             lag_days: 0,
+            kind: crate::cpm::Kind::Fs,
         };
         let path = critical_path(
             &items,
@@ -465,6 +474,39 @@ mod tests {
             ],
         );
         assert_eq!(path, vec![pid(1), pid(3)], "a→c (121d) beats a→b→d (71d)");
+    }
+
+    /// F-6: the critical path used to ignore lag, so a lagged chain looked
+    /// shorter than it is and the wrong chain was called critical.
+    #[test]
+    fn critical_path_counts_lag() {
+        let item = |n, s: (i32, u32, u32), e: (i32, u32, u32)| ScheduleItem {
+            pid: pid(n),
+            start: Some(date(s.0, s.1, s.2)),
+            end: Some(date(e.0, e.1, e.2)),
+        };
+        // a(10d) → b(10d) with no lag = 20; a → c(10d) with 30d lag = 50.
+        let items = vec![
+            item(1, (2026, 1, 1), (2026, 1, 10)),
+            item(2, (2026, 1, 11), (2026, 1, 20)),
+            item(3, (2026, 2, 10), (2026, 2, 19)),
+        ];
+        let edge = |n, p, s, lag| ScheduleEdge {
+            pid: pid(n),
+            predecessor: p,
+            successor: s,
+            lag_days: lag,
+            kind: crate::cpm::Kind::Fs,
+        };
+        let path = critical_path(
+            &items,
+            &[edge(9, pid(1), pid(2), 0), edge(10, pid(1), pid(3), 30)],
+        );
+        assert_eq!(
+            path,
+            vec![pid(1), pid(3)],
+            "the lagged chain is the longer one"
+        );
     }
 
     /// RAG: red beats amber beats green; finished items don't go red

@@ -92,6 +92,7 @@ pub fn paths() -> Value {
     merge(&mut all, sink_paths());
     merge(&mut all, attachment_search_paths());
     merge(&mut all, report_schedule_paths());
+    merge(&mut all, cpm_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -705,6 +706,24 @@ fn report_schedule_paths() -> Value {
             "get": op("reports", "Download the latest scheduled output",
                 "Owner only. 404 before the first run and after the artifact has expired. Served as an attachment with nosniff and private no-store.", pid,
                 &[("200", "The report file"), ("401", "Missing or invalid bearer token"), ("404", "No output, expired, unknown, or not yours")])
+        }
+    })
+}
+
+/// The critical-path engine (SC-1, PJ-1, PJ-8).
+fn cpm_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/cpm": {
+            "get": op("cpm", "Float, critical tasks and critical chains for a plan's tasks",
+                "Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= working days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many working days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Working days use the plan's calendar (all seven days until SC-2).",
+                vec![uuid_param("pid"), query("near", false, "Working days of float counted as near-critical, 0 to 3650")],
+                &[("200", "nodes, unscheduled, ignored_edges, critical_chains"), ("404", "Unknown plan"), ("422", "Bad near, or a dependency cycle")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/schedule": {
+            "put": op("cpm", "Set a task's planned start and working duration",
+                "start_date is a calendar date and duration_days a number of working days (0 is a milestone); an absent or null field clears it. The answer carries what moved across the whole network (start, finish or both, in working days), not only the edited task: an empty list when nothing moved. Audited with the old and new values.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "task and moved"), ("404", "Unknown plan or task"), ("422", "Out-of-range start_date or duration_days")])
         }
     })
 }

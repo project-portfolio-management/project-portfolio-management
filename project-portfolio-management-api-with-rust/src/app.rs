@@ -208,6 +208,7 @@ impl Hooks for App {
             .add_route(controllers::pdf::routes())
             .add_route(controllers::sinks::routes())
             .add_route(controllers::report_schedules::routes())
+            .add_route(controllers::cpm::routes())
             .add_route(controllers::metrics::routes())
     }
 

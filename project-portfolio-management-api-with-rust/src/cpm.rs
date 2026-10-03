@@ -566,6 +566,28 @@ pub fn analyze(
     })
 }
 
+/// Most working days a duration or lag may be (about fourteen years).
+pub const MAX_DAYS: i64 = 3650;
+
+/// Everything wrong with a task's schedule fields (all of it, not the first).
+#[must_use]
+pub fn schedule_problems(start: Option<NaiveDate>, duration: Option<i32>) -> Vec<String> {
+    let mut out = Vec::new();
+    if let Some(d) = duration
+        && !(0..=i32::try_from(MAX_DAYS).unwrap_or(i32::MAX)).contains(&d)
+    {
+        out.push(format!(
+            "duration_days must be 0 to {MAX_DAYS} (0 is a milestone)"
+        ));
+    }
+    if let Some(s) = start
+        && (s < EPOCH || s.year() > 2100)
+    {
+        out.push("start_date must be between 1970-01-05 and 2100-12-31".to_string());
+    }
+    out
+}
+
 /// How a node's dates moved between two analyses (PJ-8).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Moved {
@@ -890,6 +912,19 @@ mod tests {
     }
 
     #[test]
+    fn schedule_fields_are_validated_all_at_once() {
+        assert!(schedule_problems(Some(d(2026, 10, 5)), Some(3)).is_empty());
+        assert!(
+            schedule_problems(None, Some(0)).is_empty(),
+            "a milestone, floating"
+        );
+        assert!(schedule_problems(None, None).is_empty());
+        assert_eq!(schedule_problems(Some(d(1960, 1, 1)), Some(-1)).len(), 2);
+        assert_eq!(schedule_problems(None, Some(3651)).len(), 1);
+        assert_eq!(schedule_problems(Some(d(2101, 1, 1)), None).len(), 1);
+    }
+
+    #[test]
     fn a_milestone_has_zero_duration_and_one_date() {
         let n = vec![anchored(1, 3, MON()), node(2, 0)];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
@@ -919,6 +954,11 @@ mod tests {
     }
 
     #[test]
+    #[allow(
+        clippy::cast_possible_wrap,
+        clippy::cast_possible_truncation,
+        clippy::cast_lossless
+    )]
     fn invariants_hold_on_many_random_networks() {
         // A tiny deterministic generator so the test needs no dependency.
         let mut seed = 0x9E37_79B9_7F4A_7C15_u64;

@@ -209,6 +209,7 @@ pub mod approvals;
 pub mod attachments;
 pub mod bulk;
 pub mod components;
+pub mod cpm;
 pub mod custom_fields;
 pub mod feeds;
 pub mod guests;

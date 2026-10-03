@@ -91,6 +91,23 @@ impl WorkCalendar {
         })
     }
 
+    /// The calendar on which **both** work: a day works only if it works in each
+    /// (a part-time person on a five-day plan), and a holiday of either stands.
+    ///
+    /// # Errors
+    ///
+    /// [`CalendarError::NoWorkingDays`] when no weekday works in both.
+    pub fn intersect(&self, other: &Self) -> Result<Self, CalendarError> {
+        let mut working = [false; 7];
+        for (i, w) in working.iter_mut().enumerate() {
+            *w = self.working[i] && other.working[i];
+        }
+        Self::new(
+            working,
+            self.holidays.iter().chain(other.holidays.iter()).copied(),
+        )
+    }
+
     fn per_week(&self) -> i64 {
         i64::try_from(self.working.iter().filter(|w| **w).count()).unwrap_or(7)
     }
@@ -178,8 +195,64 @@ impl Kind {
     }
 }
 
+/// A date constraint on a node (SC-2).
+///
+/// `Snet` / `Fnet` push the **early** dates later; `Snlt` / `Fnlt` bound the
+/// **late** dates, so a node already past them gets **negative float** instead of
+/// being silently moved; `Mso` / `Mfo` pin the node to a date **overriding
+/// logic** — those two are *hard*, and a node whose predecessors force it later
+/// than the pin is flagged `hard_conflict`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ConstraintKind {
+    /// Start no earlier than.
+    Snet,
+    /// Start no later than.
+    Snlt,
+    /// Finish no earlier than.
+    Fnet,
+    /// Finish no later than.
+    Fnlt,
+    /// Must start on (hard).
+    Mso,
+    /// Must finish on (hard).
+    Mfo,
+}
+
+impl ConstraintKind {
+    /// Parse `snet` … `mfo`, case-insensitively. (`asap` is "no constraint";
+    /// `alap` is not supported yet and is not parsed.)
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "snet" => Some(Self::Snet),
+            "snlt" => Some(Self::Snlt),
+            "fnet" => Some(Self::Fnet),
+            "fnlt" => Some(Self::Fnlt),
+            "mso" => Some(Self::Mso),
+            "mfo" => Some(Self::Mfo),
+            _ => None,
+        }
+    }
+
+    /// Whether it overrides logic (needs the hard-constraint permission).
+    #[must_use]
+    pub fn is_hard(self) -> bool {
+        matches!(self, Self::Mso | Self::Mfo)
+    }
+}
+
+/// A constraint and its date.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Constraint {
+    /// Which.
+    pub kind: ConstraintKind,
+    /// The date it applies to.
+    pub date: NaiveDate,
+}
+
 /// One schedulable node (a plan with a timeframe, or a task).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Node {
     /// Identity.
     pub pid: Uuid,
@@ -187,6 +260,14 @@ pub struct Node {
     pub duration: Option<i64>,
     /// Planned start: a lower bound on the earliest start.
     pub planned_start: Option<NaiveDate>,
+    /// A date constraint, if any.
+    pub constraint: Option<Constraint>,
+    /// A soft deadline: bounds the **late** dates only (negative float when
+    /// threatened), never moves an early date.
+    pub deadline: Option<NaiveDate>,
+    /// Index into the `own_calendars` slice of [`analyze_with`]: the calendar
+    /// this node's *work* runs on (the plan's intersected with the assignee's).
+    pub own_calendar: Option<usize>,
 }
 
 /// A dependency.
@@ -251,6 +332,10 @@ pub struct NodeResult {
     pub es_index: i64,
     /// Working-day index one past the last working day of the earliest finish.
     pub ef_index: i64,
+    /// The constraint applied, if any.
+    pub constraint: Option<ConstraintKind>,
+    /// A hard constraint pins this node earlier than its predecessors allow.
+    pub hard_conflict: bool,
 }
 
 /// A node the engine could not place.
@@ -326,16 +411,34 @@ fn topo(
     }
 }
 
-/// Run the analysis.
+/// Run the analysis with no per-node calendars.
+///
+/// # Errors
+///
+/// [`CpmError::Cycle`] when the edges contain a cycle.
+pub fn analyze(
+    nodes: &[Node],
+    edges: &[Edge],
+    calendar: &WorkCalendar,
+    options: Options,
+) -> Result<CpmResult, CpmError> {
+    analyze_with(nodes, edges, calendar, &[], options)
+}
+
+/// Run the analysis. `calendar` is the network's (the plan's); a node whose
+/// `own_calendar` indexes into `own_calendars` has its *work* placed on that
+/// calendar (which must work only on days `calendar` works — build it with
+/// [`WorkCalendar::intersect`]), while lag and float stay in `calendar`'s days.
 ///
 /// # Errors
 ///
 /// [`CpmError::Cycle`] when the edges contain a cycle.
 #[allow(clippy::too_many_lines)]
-pub fn analyze(
+pub fn analyze_with(
     nodes: &[Node],
     edges: &[Edge],
     calendar: &WorkCalendar,
+    own_calendars: &[WorkCalendar],
     options: Options,
 ) -> Result<CpmResult, CpmError> {
     let order: Vec<Uuid> = nodes.iter().map(|n| n.pid).collect();
@@ -365,16 +468,66 @@ pub fn analyze(
         .map(|n| n.planned_start.and_then(|d| calendar.index_of(d)))
         .collect();
 
+    // The working-day index of a constraint date, or `None` out of range.
+    let w = |d: NaiveDate| calendar.index_of(d);
+    // The calendar a node's work runs on, when it has its own.
+    let own = |i: usize| -> Option<&WorkCalendar> {
+        nodes[i].own_calendar.and_then(|k| own_calendars.get(k))
+    };
+    // Place `d` working days of node `i` starting no earlier than plan index
+    // `start`; returns (start, finish) plan indices (finish exclusive).
+    let place_forward = |i: usize, start: i64, d: i64| -> (i64, i64) {
+        match own(i) {
+            Some(e) if d > 0 => {
+                let first = e.index_of(calendar.date_of(start)).unwrap_or(0);
+                let s_date = e.date_of(first);
+                let end_date = e.date_of(first + d - 1);
+                (
+                    calendar.index_of(s_date).unwrap_or(start),
+                    calendar.index_of(end_date).map_or(start + d, |x| x + 1),
+                )
+            }
+            _ => (start, start + d),
+        }
+    };
+    // The latest placement of `d` working days finishing no later than plan
+    // index `finish` (exclusive); returns (start, finish).
+    let place_backward = |i: usize, finish: i64, d: i64| -> (i64, i64) {
+        match own(i) {
+            Some(e) if d > 0 && finish > 0 => {
+                let x = calendar.date_of(finish - 1);
+                let last = e.index_of(x + Duration::days(1)).unwrap_or(0) - 1;
+                if last < 0 {
+                    return (finish - d, finish);
+                }
+                let end_date = e.date_of(last);
+                let s_date = e.date_of((last - (d - 1)).max(0));
+                (
+                    calendar.index_of(s_date).unwrap_or(finish - d),
+                    calendar.index_of(end_date).map_or(finish, |v| v + 1),
+                )
+            }
+            _ => (finish - d, finish),
+        }
+    };
+    // Target finish index for a date (exclusive end), for a node of duration d.
+    let finish_at =
+        |date: NaiveDate, d: i64| -> Option<i64> { w(date).map(|i| if d > 0 { i + 1 } else { i }) };
+
     // Forward pass.
     let mut es: Vec<Option<i64>> = vec![None; nodes.len()];
     let mut ef: Vec<Option<i64>> = vec![None; nodes.len()];
+    let mut conflict: Vec<bool> = vec![false; nodes.len()];
     let mut unscheduled: HashMap<usize, &'static str> = HashMap::new();
     for &i in &sorted {
         let Some(d) = dur[i] else {
             unscheduled.insert(i, "no_duration");
             continue;
         };
-        if nodes[i].planned_start.is_some() && planned_idx[i].is_none() {
+        if (nodes[i].planned_start.is_some() && planned_idx[i].is_none())
+            || nodes[i].constraint.is_some_and(|c| w(c.date).is_none())
+            || nodes[i].deadline.is_some_and(|x| w(x).is_none())
+        {
             unscheduled.insert(i, "date_out_of_range");
             continue;
         }
@@ -392,13 +545,38 @@ pub fn analyze(
             };
             lower = Some(lower.map_or(bound, |l| l.max(bound)));
         }
-        let Some(start) = lower else {
-            unscheduled.insert(i, "no_anchor");
-            continue;
+        let mut pinned: Option<i64> = None;
+        if let Some(c) = nodes[i].constraint {
+            let target_start = |date: NaiveDate| w(date);
+            match c.kind {
+                ConstraintKind::Snet => {
+                    let b = target_start(c.date).unwrap_or(0);
+                    lower = Some(lower.map_or(b, |l| l.max(b)));
+                }
+                ConstraintKind::Fnet => {
+                    let b = finish_at(c.date, d).unwrap_or(0) - d;
+                    lower = Some(lower.map_or(b, |l| l.max(b)));
+                }
+                ConstraintKind::Mso => pinned = target_start(c.date),
+                ConstraintKind::Mfo => pinned = finish_at(c.date, d).map(|f| f - d),
+                ConstraintKind::Snlt | ConstraintKind::Fnlt => {}
+            }
+        }
+        let start = if let Some(p) = pinned {
+            if lower.is_some_and(|l| l > p) {
+                conflict[i] = true;
+            }
+            p
+        } else {
+            let Some(start) = lower else {
+                unscheduled.insert(i, "no_anchor");
+                continue;
+            };
+            start
         };
-        let start = start.max(0);
-        es[i] = Some(start);
-        ef[i] = Some(start + d);
+        let (s, f) = place_forward(i, start.max(0), d);
+        es[i] = Some(s);
+        ef[i] = Some(f);
     }
     let scheduled = |i: usize| es[i].is_some();
     for e in edges {
@@ -452,8 +630,23 @@ pub fn analyze(
             };
             upper = upper.min(bound);
         }
-        lf[i] = Some(upper);
-        ls[i] = Some(upper - d);
+        // Constraints and the deadline bound the LATE dates only.
+        if let Some(c) = nodes[i].constraint {
+            let b = match c.kind {
+                ConstraintKind::Snlt | ConstraintKind::Mso => w(c.date).map(|x| x + d),
+                ConstraintKind::Fnlt | ConstraintKind::Mfo => finish_at(c.date, d),
+                ConstraintKind::Snet | ConstraintKind::Fnet => None,
+            };
+            if let Some(b) = b {
+                upper = upper.min(b);
+            }
+        }
+        if let Some(x) = nodes[i].deadline.and_then(|x| finish_at(x, d)) {
+            upper = upper.min(x);
+        }
+        let (start, finish) = place_backward(i, upper, d);
+        lf[i] = Some(finish);
+        ls[i] = Some(start);
     }
 
     // Free float per node, and each edge's slack.
@@ -508,6 +701,8 @@ pub fn analyze(
             pushed_days: pushed,
             es_index: s0,
             ef_index: f0,
+            constraint: node.constraint.map(|c| c.kind),
+            hard_conflict: conflict[i],
         });
     }
 
@@ -642,7 +837,7 @@ mod tests {
         Node {
             pid: id(n),
             duration: Some(dur),
-            planned_start: None,
+            ..Node::default()
         }
     }
     fn anchored(n: u128, dur: i64, start: NaiveDate) -> Node {
@@ -650,6 +845,7 @@ mod tests {
             pid: id(n),
             duration: Some(dur),
             planned_start: Some(start),
+            ..Node::default()
         }
     }
     fn edge(n: u128, p: u128, s: u128, kind: Kind, lag: i64) -> Edge {
@@ -828,6 +1024,7 @@ mod tests {
                 pid: id(2),
                 duration: None,
                 planned_start: Some(MON()),
+                ..Node::default()
             },
             node(3, 2), // no start and no predecessor
             node(4, 2), // reachable only from the unplaceable node 3
@@ -951,6 +1148,306 @@ mod tests {
             Some(("both", 2, 2))
         );
         assert!(m(1).is_none(), "A did not move");
+    }
+
+    fn constrained(mut n: Node, kind: ConstraintKind, date: NaiveDate) -> Node {
+        n.constraint = Some(Constraint { kind, date });
+        n
+    }
+
+    #[test]
+    fn snet_pushes_the_early_start_later() {
+        let n = vec![constrained(
+            anchored(1, 3, MON()),
+            ConstraintKind::Snet,
+            MON() + Duration::days(4),
+        )];
+        let r = run(&n, &[]);
+        assert_eq!(get(&r, 1).early_start, MON() + Duration::days(4));
+        assert_eq!(get(&r, 1).total_float, 0);
+    }
+
+    #[test]
+    fn fnlt_earlier_than_the_early_finish_gives_negative_float_and_does_not_move_it() {
+        // A(3) -> B(4); B must finish no later than day 5 but cannot before day 7.
+        let n = vec![
+            anchored(1, 3, MON()),
+            constrained(node(2, 4), ConstraintKind::Fnlt, MON() + Duration::days(4)),
+        ];
+        let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
+        let b = get(&r, 2);
+        assert_eq!(
+            b.early_finish,
+            MON() + Duration::days(6),
+            "early dates are untouched by FNLT"
+        );
+        assert!(b.total_float < 0, "negative float: {b:?}");
+        assert!(b.critical);
+        assert!(get(&r, 1).total_float < 0, "and it propagates back to A");
+    }
+
+    #[test]
+    fn snlt_gives_negative_float_when_logic_starts_it_too_late() {
+        let n = vec![
+            anchored(1, 5, MON()),
+            constrained(node(2, 2), ConstraintKind::Snlt, MON() + Duration::days(2)),
+        ];
+        let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
+        assert_eq!(get(&r, 2).total_float, -3, "starts at 5, must start by 2");
+    }
+
+    #[test]
+    fn fnet_pushes_the_finish_out() {
+        let n = vec![constrained(
+            anchored(1, 2, MON()),
+            ConstraintKind::Fnet,
+            MON() + Duration::days(9),
+        )];
+        let r = run(&n, &[]);
+        assert_eq!(get(&r, 1).early_finish, MON() + Duration::days(9));
+    }
+
+    #[test]
+    fn a_hard_start_overrides_logic_and_says_so() {
+        // B must start on day 1, but A (4 days) forces day 4.
+        let n = vec![
+            anchored(1, 4, MON()),
+            constrained(node(2, 2), ConstraintKind::Mso, MON() + Duration::days(1)),
+        ];
+        let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
+        let b = get(&r, 2);
+        assert_eq!(
+            b.early_start,
+            MON() + Duration::days(1),
+            "the pin wins over logic"
+        );
+        assert!(b.hard_conflict, "and the conflict is reported");
+        assert_eq!(b.constraint, Some(ConstraintKind::Mso));
+        // Without a conflict the flag stays off.
+        let n = vec![
+            anchored(1, 1, MON()),
+            constrained(node(2, 2), ConstraintKind::Mso, MON() + Duration::days(5)),
+        ];
+        assert!(!get(&run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]), 2).hard_conflict);
+    }
+
+    #[test]
+    fn a_hard_finish_pins_the_end() {
+        let n = vec![constrained(
+            node(1, 3),
+            ConstraintKind::Mfo,
+            MON() + Duration::days(7),
+        )];
+        let r = run(&n, &[]);
+        assert_eq!(get(&r, 1).early_finish, MON() + Duration::days(7));
+        assert_eq!(get(&r, 1).early_start, MON() + Duration::days(5));
+    }
+
+    #[test]
+    fn a_deadline_makes_negative_float_but_never_moves_an_early_date() {
+        let mut b = node(2, 4);
+        b.deadline = Some(MON() + Duration::days(5));
+        let n = vec![anchored(1, 3, MON()), b];
+        let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
+        assert_eq!(
+            get(&r, 2).early_start,
+            MON() + Duration::days(3),
+            "early dates ignore the deadline"
+        );
+        assert_eq!(get(&r, 2).early_finish, MON() + Duration::days(6));
+        assert_eq!(get(&r, 2).total_float, -1, "finishes on day 6, deadline day 5");
+        // A comfortable deadline leaves float untouched.
+        let mut b = node(2, 4);
+        b.deadline = Some(MON() + Duration::days(30));
+        let n = vec![anchored(1, 3, MON()), b];
+        assert_eq!(
+            get(&run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]), 2).total_float,
+            0,
+            "the project finish still bounds it"
+        );
+    }
+
+    #[test]
+    fn a_part_time_assignee_stretches_a_task_across_their_off_days() {
+        // Plan works Mon-Fri; the person works Mon-Wed. 4 days of work from Monday:
+        // Mon, Tue, Wed, then NEXT Monday.
+        let plan = WorkCalendar::mon_fri();
+        let mon_wed =
+            WorkCalendar::new([true, true, true, false, false, false, false], []).unwrap();
+        let person = plan.intersect(&mon_wed).unwrap();
+        let mut t = anchored(1, 4, MON());
+        t.own_calendar = Some(0);
+        let r = analyze_with(
+            &[t, node(2, 1)],
+            &[edge(1, 1, 2, Kind::Fs, 0)],
+            &plan,
+            std::slice::from_ref(&person),
+            Options::default(),
+        )
+        .unwrap();
+        assert_eq!(get(&r, 1).early_finish, d(2026, 10, 12), "next Monday");
+        assert_eq!(
+            get(&r, 2).early_start,
+            d(2026, 10, 13),
+            "the successor follows on the plan's calendar"
+        );
+        assert_eq!(
+            get(&r, 1).total_float,
+            0,
+            "backward pass is consistent with the forward one"
+        );
+        // A task starting on the person's day off waits for their next working day.
+        let mut t = anchored(1, 1, d(2026, 10, 8)); // Thursday
+        t.own_calendar = Some(0);
+        let r = analyze_with(
+            &[t],
+            &[],
+            &plan,
+            std::slice::from_ref(&person),
+            Options::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            get(&r, 1).early_start,
+            d(2026, 10, 12),
+            "Thursday is the person's day off"
+        );
+    }
+
+    #[test]
+    fn an_absence_is_a_holiday_of_the_person_and_intersection_keeps_both() {
+        let plan = WorkCalendar::new([true; 7], [d(2026, 10, 7)]).unwrap();
+        let person = WorkCalendar::new([true; 7], [d(2026, 10, 6)]).unwrap();
+        let both = plan.intersect(&person).unwrap();
+        assert!(!both.is_working(d(2026, 10, 7)) && !both.is_working(d(2026, 10, 6)));
+        assert!(both.is_working(d(2026, 10, 5)));
+        let weekend =
+            WorkCalendar::new([false, false, false, false, false, true, true], []).unwrap();
+        assert!(
+            WorkCalendar::mon_fri().intersect(&weekend).is_err(),
+            "no common working day"
+        );
+    }
+
+    #[test]
+    fn a_constraint_date_out_of_range_leaves_the_node_unscheduled() {
+        let n = vec![constrained(
+            anchored(1, 1, MON()),
+            ConstraintKind::Snet,
+            d(1960, 1, 1),
+        )];
+        let r = run(&n, &[]);
+        assert_eq!(r.unscheduled[0].reason, "date_out_of_range");
+    }
+
+    #[test]
+    fn constraint_names_parse() {
+        assert_eq!(ConstraintKind::parse("FNLT"), Some(ConstraintKind::Fnlt));
+        assert!(ConstraintKind::parse("alap").is_none(), "not supported yet");
+        assert!(
+            ConstraintKind::Mso.is_hard()
+                && ConstraintKind::Mfo.is_hard()
+                && !ConstraintKind::Snet.is_hard()
+        );
+    }
+
+    #[test]
+    #[allow(
+        clippy::cast_possible_wrap,
+        clippy::cast_possible_truncation,
+        clippy::cast_lossless
+    )]
+    fn per_node_calendars_and_constraints_keep_the_network_consistent() {
+        let mut seed = 0xD1B5_4A32_D192_ED03_u64;
+        let mut next = move |m: u64| {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed % m
+        };
+        let plan = WorkCalendar::mon_fri();
+        let mwf = WorkCalendar::new(
+            [true, false, true, false, true, false, false],
+            [d(2026, 10, 14)],
+        )
+        .unwrap();
+        let part = plan.intersect(&mwf).unwrap();
+        let kinds = [
+            ConstraintKind::Snet,
+            ConstraintKind::Fnet,
+            ConstraintKind::Snlt,
+            ConstraintKind::Fnlt,
+        ];
+        for _ in 0..200 {
+            let count = 2 + next(8) as u128;
+            let nodes: Vec<Node> = (1..=count)
+                .map(|i| {
+                    let mut n = if i == 1 {
+                        anchored(i, 1 + next(5) as i64, MON())
+                    } else {
+                        node(i, next(5) as i64)
+                    };
+                    if next(3) == 0 {
+                        n.own_calendar = Some(0);
+                    }
+                    if next(5) == 0 {
+                        n.constraint = Some(Constraint {
+                            kind: kinds[next(4) as usize],
+                            date: MON() + Duration::days(next(40) as i64),
+                        });
+                    }
+                    if next(6) == 0 {
+                        n.deadline = Some(MON() + Duration::days(next(60) as i64));
+                    }
+                    n
+                })
+                .collect();
+            let mut edges = Vec::new();
+            for s in 2..=count {
+                for p in 1..s {
+                    if next(3) == 0 {
+                        let kind = [Kind::Fs, Kind::Ss, Kind::Ff, Kind::Sf][next(4) as usize];
+                        edges.push(edge(edges.len() as u128, p, s, kind, next(5) as i64 - 1));
+                    }
+                }
+            }
+            let r = analyze_with(
+                &nodes,
+                &edges,
+                &plan,
+                std::slice::from_ref(&part),
+                Options::default(),
+            )
+            .unwrap();
+            for n in &r.nodes {
+                let (ls, es) = (
+                    plan.index_of(n.late_start).unwrap(),
+                    plan.index_of(n.early_start).unwrap(),
+                );
+                assert_eq!(
+                    n.total_float,
+                    ls - es,
+                    "float is LS - ES in plan days: {n:?}"
+                );
+                assert!(n.free_float >= 0, "{n:?}");
+                assert!(plan.is_working(n.early_start) && plan.is_working(n.early_finish));
+            }
+            for e in &edges {
+                let (Some(p), Some(s)) = (
+                    r.nodes.iter().find(|n| n.pid == e.pred),
+                    r.nodes.iter().find(|n| n.pid == e.succ),
+                ) else {
+                    continue;
+                };
+                let ok = match e.kind {
+                    Kind::Fs => s.es_index >= p.ef_index + e.lag,
+                    Kind::Ss => s.es_index >= p.es_index + e.lag,
+                    Kind::Ff => s.ef_index >= p.ef_index + e.lag,
+                    Kind::Sf => s.ef_index >= p.es_index + e.lag,
+                };
+                assert!(ok, "edge {e:?}: {p:?} -> {s:?}");
+            }
+        }
     }
 
     #[test]

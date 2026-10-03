@@ -299,6 +299,7 @@ fn plan_level_cpm(
                 _ => None,
             },
             planned_start: f.start,
+            ..Node::default()
         })
         .collect();
     let cpm_edges: Vec<Edge> = edges

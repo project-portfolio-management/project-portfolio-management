@@ -62,6 +62,7 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
             pid: t.pid,
             duration: t.duration_days.map(i64::from),
             planned_start: t.start_date,
+            ..Node::default()
         })
         .collect();
     let mut edges: Vec<Edge> = Vec::new();

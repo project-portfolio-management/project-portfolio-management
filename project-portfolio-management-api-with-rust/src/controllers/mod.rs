@@ -213,6 +213,7 @@ pub mod calendars;
 pub mod components;
 pub mod cpm;
 pub mod custom_fields;
+pub mod earned_value;
 pub mod feeds;
 pub mod guests;
 pub mod includes;

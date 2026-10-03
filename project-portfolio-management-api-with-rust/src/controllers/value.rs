@@ -20,8 +20,8 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    adoption_snapshots, budget_baselines, budget_lines, business_case_targets, plans,
-    satisfaction_responses, value_points,
+    adoption_snapshots, budget_lines, business_case_targets, plans, satisfaction_responses,
+    value_points,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::value as rules;
@@ -417,45 +417,56 @@ async fn performance(
         .filter_map(|r| u8::try_from(r.score).ok())
         .collect();
 
-    // T-28b (spec §13) added the phased budget baseline itself, so
-    // "no phased budget baseline" is no longer always true — but it
-    // did **not** add an earned-value signal (percent complete against
-    // that baseline), which is what SPI/CPI actually need beyond the
-    // baseline. Both stay `null` with an accurate reason either way,
-    // never defaulted to 1.0 ("exactly on plan").
-    let has_baseline = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan.pid))
-        .limit(1)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some();
-    let (absent, reason) = if has_baseline {
-        (
-            "no_earned_value_signal",
-            "a baseline exists, but this service computes no percent-complete \
-             (earned value) signal yet to score it against",
-        )
-    } else {
-        (
-            "no_baseline",
-            "no phased budget baseline: a plan without one is unmeasured, not on track",
-        )
-    };
+    // SC-4: schedule and cost performance are real earned-value figures now. They are
+    // `null` with an accurate reason whenever they cannot be stated — never defaulted
+    // to 1.0 ("exactly on plan").
+    let as_of = chrono::Utc::now().date_naive();
+    let (spi, cpi, absent, reason): (Option<i64>, Option<i64>, Option<&str>, Option<String>) =
+        match super::earned_value::compute(&ctx, plan.pid, as_of).await? {
+            super::earned_value::Outcome::NoBaseline => (
+                None,
+                None,
+                Some("no_baseline"),
+                Some("no phased budget baseline: a plan without one is unmeasured, not on track".to_string()),
+            ),
+            super::earned_value::Outcome::NoPercent => (
+                None,
+                None,
+                Some("no_weighted_tasks"),
+                Some("a baseline exists, but there is no task to measure percent complete against".to_string()),
+            ),
+            super::earned_value::Outcome::Figures { blocks, .. } => match blocks.as_slice() {
+                [(_, _, b)] => (
+                    b.spi.bp,
+                    b.cpi.bp,
+                    if b.spi.bp.is_none() || b.cpi.bp.is_none() { Some("not_yet_defined") } else { None },
+                    None,
+                ),
+                _ => (
+                    None,
+                    None,
+                    Some("several_currencies"),
+                    Some("the plan has baselines in several currencies; see /earned-value for one block per currency".to_string()),
+                ),
+            },
+        };
 
     let body = serde_json::json!({
         "plan_pid": plan.pid.to_string(),
         "stakeholder": { "nps": rules::nps(&scores) },
         "schedule": {
-            "spi": serde_json::Value::Null,
+            "spi": spi,
+            "unit": "basis_points",
             "absent": absent,
             "reason": reason,
         },
         "financial": {
-            "cpi": serde_json::Value::Null,
+            "cpi": cpi,
+            "unit": "basis_points",
             "absent": absent,
             "reason": reason,
         },
+        "detail": format!("/api/plans/{}/earned-value", plan.pid),
         "as_of": chrono::Utc::now(),
     });
     let etag = super::etag_of(&body);

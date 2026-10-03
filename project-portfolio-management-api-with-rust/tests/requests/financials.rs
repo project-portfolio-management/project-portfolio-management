@@ -238,7 +238,7 @@ async fn the_rollup_never_merges_two_currencies_into_one_sum() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-async fn performance_names_the_missing_earned_value_signal_once_a_baseline_exists() {
+async fn performance_names_why_it_has_no_earned_value_once_a_baseline_exists() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
         let plan = seed_plan(&request, "PerformancePlan").await;
@@ -264,11 +264,11 @@ async fn performance_names_the_missing_earned_value_signal_once_a_baseline_exist
             .json();
         assert!(
             after["schedule"]["spi"].is_null(),
-            "still null — a baseline alone is not an earned-value signal"
+            "still null — a baseline with no task to measure is not on plan"
         );
         assert_eq!(
-            after["schedule"]["absent"], "no_earned_value_signal",
-            "the reason must stay true: it is no longer really \"no baseline\""
+            after["schedule"]["absent"], "no_weighted_tasks",
+            "the reason must stay true: it is no longer \"no baseline\", and there is nothing to measure percent complete against"
         );
     })
     .await;

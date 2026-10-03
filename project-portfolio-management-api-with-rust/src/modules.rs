@@ -62,7 +62,14 @@ pub const MODULES: &[ModuleDef] = &[
     },
     ModuleDef {
         key: "financials",
-        segments: &["budget-lines", "budget-baselines", "financials"],
+        segments: &[
+            "budget-lines",
+            "budget-baselines",
+            "financials",
+            // Earned value (SC-4).
+            "earned-value",
+            "earned-value-settings",
+        ],
     },
     ModuleDef {
         key: "milestones",

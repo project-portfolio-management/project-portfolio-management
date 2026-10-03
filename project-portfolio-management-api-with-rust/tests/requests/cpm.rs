@@ -935,3 +935,109 @@ async fn the_raci_matrix_refuses_two_accountable_and_reports_gaps() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let ev = || {
+            let (request, url) = (&request, format!("/api/plans/{p}/earned-value"));
+            async move { request.get(&url).await.json::<Value>() }
+        };
+
+        // No baseline, then a baseline but no task: each says why, and neither is zero or 1.0.
+        let none = ev().await;
+        assert_eq!((none["absent"].as_str(), none["blocks"].is_null()), (Some("no_baseline"), true));
+        let today = chrono::Utc::now().date_naive();
+        let day = |n: i64| (today + chrono::Duration::days(n)).to_string();
+        // GBP: 10 days ending today at 1 000, then the next 10 days at 3 000. BAC 4 000, PV today 1 000.
+        request
+            .post(&format!("/api/plans/{p}/budget-baselines"))
+            .json(&json!({ "currency": "GBP", "periods": [
+                { "period_start": day(-9), "period_end": day(0), "planned_minor": 1000 },
+                { "period_start": day(1), "period_end": day(10), "planned_minor": 3000 } ] }))
+            .await
+            .assert_status_ok();
+        assert_eq!(ev().await["absent"], "no_weighted_tasks");
+
+        // Four tasks, two finished: 50% of a 4 000 budget is 2 000 earned against 1 000 planned.
+        let mut ids = Vec::new();
+        for (i, name) in ["A", "B", "C", "D"].iter().enumerate() {
+            let t = task(&request, &p, name, None, None).await;
+            if i < 2 {
+                request.patch(&format!("/api/plans/{p}/tasks/{t}")).json(&json!({ "status": "done" })).await.assert_status_ok();
+            }
+            ids.push(t);
+        }
+        let line: Value = request
+            .post(&format!("/api/plans/{p}/budget-lines"))
+            .json(&json!({ "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 4000 }))
+            .await
+            .json();
+        let line = line["pid"].as_str().unwrap().to_string();
+        request.post(&format!("/api/plans/{p}/budget-lines/{line}/actual")).json(&json!({ "amount_minor": 2500 })).await.assert_status_ok();
+        // A line in a currency with no baseline is listed, never added in.
+        request
+            .post(&format!("/api/plans/{p}/budget-lines"))
+            .json(&json!({ "category": "capex", "description": "dollars", "currency": "USD", "planned_minor": 100 }))
+            .await
+            .assert_status_ok();
+
+        let v = ev().await;
+        assert_eq!(v["percent_complete"]["percent_bp"], 5000, "{v}");
+        assert_eq!(v["percent_complete"]["weighting"], "equal");
+        assert_eq!(v["percent_complete"]["manual"], false);
+        let b = &v["blocks"][0];
+        assert_eq!((b["currency"].as_str(), b["baseline_version"].as_i64()), (Some("GBP"), Some(1)));
+        assert_eq!((b["bac_minor"].as_i64(), b["pv_minor"].as_i64(), b["ev_minor"].as_i64(), b["ac_minor"].as_i64()), (Some(4000), Some(1000), Some(2000), Some(2500)));
+        assert_eq!((b["sv_minor"].as_i64(), b["cv_minor"].as_i64()), (Some(1000), Some(-500)));
+        assert_eq!(b["spi"]["bp"], 20000, "ahead of the plan: 2000 / 1000");
+        assert_eq!(b["cpi"]["bp"], 8000, "over budget: 2000 / 2500");
+        assert_eq!(v["blocks"].as_array().unwrap().len(), 1, "one block per baseline currency");
+        assert_eq!(v["unbaselined_currencies"], json!(["USD"]));
+        // Earned schedule: the plan first reaches 2 000 on day 14 (1 000 + 300 a day: 1 900 after day 13,
+        // 2 200 after day 14), and today is day 10.
+        assert_eq!(b["earned_schedule_days"], 14);
+        assert_eq!(b["actual_days"], 10);
+        assert_eq!(b["spi_t"]["bp"], 14000);
+
+        // Completing a task moves earned value by exactly its weight (one of four tasks: 1 000).
+        request.patch(&format!("/api/plans/{p}/tasks/{}", ids[2])).json(&json!({ "status": "done" })).await.assert_status_ok();
+        assert_eq!(ev().await["blocks"][0]["ev_minor"], 3000);
+
+        // A manual percent needs a number and a note, and is flagged.
+        let manual = |body: Value| {
+            let (request, url) = (&request, format!("/api/plans/{p}/tasks/{}/percent-complete", ids[3]));
+            async move { request.put(&url).json(&body).await }
+        };
+        assert_eq!(manual(json!({ "method": "manual", "percent": 60 })).await.status_code(), 422, "no note");
+        assert_eq!(manual(json!({ "method": "manual", "note": "why" })).await.status_code(), 422, "no percent");
+        assert_eq!(manual(json!({ "method": "manual", "percent": 140, "note": "why" })).await.status_code(), 422);
+        assert_eq!(manual(json!({ "method": "fifty_fifty", "percent": 10 })).await.status_code(), 422, "percent only with manual");
+        assert_eq!(manual(json!({ "method": "vibes" })).await.status_code(), 422);
+        manual(json!({ "method": "manual", "percent": 60, "note": "tests half written" })).await.assert_status_ok();
+        let m = ev().await;
+        assert_eq!(m["percent_complete"]["manual"], true);
+        assert_eq!(m["percent_complete"]["manual_tasks"], json!([ids[3]]));
+        assert_eq!(m["percent_complete"]["percent_bp"], 9000, "(100+100+100+60)/4");
+        assert_eq!(m["blocks"][0]["ev_minor"], 3600);
+        manual(json!({})).await.assert_status_ok(); // clears the override
+
+        // The plan default: fifty_fifty gives started work half credit; points weights by points.
+        assert_eq!(request.put(&format!("/api/plans/{p}/earned-value-settings")).json(&json!({ "default_method": "vibes" })).await.status_code(), 422);
+        request.put(&format!("/api/plans/{p}/earned-value-settings")).json(&json!({ "default_method": "points" })).await.assert_status_ok();
+        assert_eq!(ev().await["absent"], "no_weighted_tasks", "counting by points with no points is no percent, not zero");
+        request.put(&format!("/api/plans/{p}/earned-value-settings")).json(&json!({ "default_method": "zero_hundred" })).await.assert_status_ok();
+
+        // /performance now reports the real ratios, in basis points.
+        let perf: Value = request.get(&format!("/api/plans/{p}/performance")).await.json();
+        assert_eq!(perf["schedule"]["spi"], 30000, "3000 / 1000");
+        assert_eq!(perf["schedule"]["unit"], "basis_points");
+        assert!(perf["schedule"]["absent"].is_null());
+    })
+    .await;
+}

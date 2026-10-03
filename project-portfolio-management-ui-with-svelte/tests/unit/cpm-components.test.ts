@@ -279,3 +279,30 @@ describe("RaciMatrix", () => {
     done();
   });
 });
+
+import EvBars from "../../src/lib/components/EvBars.svelte";
+
+describe("EvBars", () => {
+  const block = {
+    currency: "GBP", baseline_version: 1, bac_minor: 400_000, pv_minor: 100_000, ev_minor: 200_000, ac_minor: 250_000,
+    sv_minor: 100_000, cv_minor: -50_000, spi: { bp: 20_000 }, cpi: { bp: 8000 }, earned_schedule_days: 14, actual_days: 10, spi_t: { bp: 14_000 },
+  };
+  it("shows planned, earned and actual with their amounts as text, against the budget line", () => {
+    const { root, done } = render(EvBars, { block });
+    const text = root.textContent ?? "";
+    expect(root.querySelectorAll(".fill")).toHaveLength(3);
+    expect(root.querySelectorAll(".bac")).toHaveLength(3);
+    expect(text).toContain("Planned value");
+    expect(text).toContain("1,000.00 GBP");
+    expect(text).toContain("2,000.00 GBP");
+    expect(text).toContain("2,500.00 GBP");
+    expect(text).toContain("budget at completion: 4,000.00 GBP");
+    done();
+  });
+  it("calls an unrecorded actual cost unknown, never zero", () => {
+    const { root, done } = render(EvBars, { block: { ...block, ac_minor: null, cv_minor: null } });
+    expect(root.textContent).toContain("unknown");
+    expect(root.textContent).not.toContain("0.00 GBP\n");
+    done();
+  });
+});

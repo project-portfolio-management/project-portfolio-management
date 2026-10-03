@@ -34,3 +34,4 @@ impl ActiveModelBehavior for person_availabilities::ActiveModel {}
 impl ActiveModelBehavior for schedule_baselines::ActiveModel {}
 impl ActiveModelBehavior for schedule_baseline_tasks::ActiveModel {}
 impl ActiveModelBehavior for raci_assignments::ActiveModel {}
+impl ActiveModelBehavior for earned_value_settings::ActiveModel {}

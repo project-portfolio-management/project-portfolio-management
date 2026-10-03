@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — earned value (SC-4)
+
+`/plans/[pid]/earned-value`: planned value, earned value and actual cost per currency, schedule and cost performance and earned-schedule SPI(t) in plain sentences; how percent complete is counted is stated, and a manual percent is always flagged.
+
 ### Added — RACI matrix
 
 `/plans/[pid]/raci`: tasks down, people across, R/A/C/I toggles per cell, one Accountable per task, rows with gaps named in words, load by person, and a spreadsheet export.

@@ -1107,3 +1107,23 @@ named in words (⚠), not hidden; a person is added as a column by their
 auto-subscribed to the task by the service (unless they switched `auto_watch`
 off). **Not built:** role columns (only people), deliverable-level rows (only
 tasks), a copy-row-from-another-task shortcut.
+
+## Earned value (SC-4)
+
+Route `/plans/[pid]/earned-value` (the plan page links to it with the `financials`
+module): one section **per currency** with `EvBars` (planned value, earned value
+and actual cost as three bars against the budget-at-completion line, each with its
+amount as text), schedule and cost performance and earned-schedule SPI(t) in
+sentences with a marker (▲ ahead, ● on track, ▼ behind, ? unknown — a stated 5%
+band is "on track"), and a table of every figure. Rules the page keeps
+(`src/lib/ev-view.ts`): ratios are basis points shown to two decimals by integer
+arithmetic; a ratio the service cannot state shows its **reason** (nothing planned
+yet, no cost recorded), never zero or 1.00; an unknown actual cost is "unknown",
+not 0; how percent complete was counted is said before the numbers (the plan's
+method, equal or story-point weights); **any figure resting on a person-entered
+percent carries a banner naming those tasks**; a plan with no baseline, or nothing
+to weigh, says why instead of showing figures; budget lines in a currency with no
+baseline are named, never added in. The page lets you set the plan's default method
+and count one task another way (a manual percent needs a note). Measured as of
+today. **Not built:** the S-curve over time and the EAC/TCPI analytics (SC-5),
+actual cost from timesheets (needs cost rates, PJ-2).

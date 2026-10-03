@@ -15,6 +15,7 @@ export const PLAN_LINKS = [
   { key: "flow", module: "tasks" },
   { key: "critical-path", module: "tasks" },
   { key: "raci", module: "tasks" },
+  { key: "earned-value", module: "financials" },
   { key: "calendar", module: "milestones" },
 ] as const;
 

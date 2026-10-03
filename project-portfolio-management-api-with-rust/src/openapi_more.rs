@@ -99,6 +99,7 @@ pub fn paths() -> Value {
     merge(&mut all, booking_paths());
     merge(&mut all, baseline_paths());
     merge(&mut all, raci_paths());
+    merge(&mut all, earned_value_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -835,6 +836,29 @@ fn raci_paths() -> Value {
                 "Send {assignments: [{person_ref, roles: \"AR\"}]}; that becomes the row, atomically, and the old assignments are soft-deleted so history is kept. REFUSED 422: more than one Accountable person (the database enforces it too), a letter that is not R, A, C or I, a person twice, a person with no letters, a person_ref that is not a person:/worker: URN, more than 50 people. A row with no Accountable or no Responsible is allowed and reported in findings, because that is how a plan looks while it is being set up. People who are R, A or I are auto-subscribed to the task unless they turned auto_watch off; removing them from the row does not unsubscribe them.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "task_pid, cells and findings"), ("404", "Unknown plan or task"), ("422", "The row is refused (see above)")])
+        }
+    })
+}
+
+/// Earned value (SC-4).
+fn earned_value_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/earned-value": {
+            "get": op("earned-value", "Earned value: PV, EV, AC, SV, CV, SPI, CPI and SPI(t), one block per currency",
+                "Planned value follows the phased budget baseline (the latest version in each currency; linear within a period, the standard EVM convention). Earned value is the budget times the plan's PHYSICAL percent complete: each task is counted 0/100, 0/50/100, or by a person-entered percent (always flagged, always with a note), weighted equally or by story points (the plan default, PUT …/earned-value-settings). Actual cost is the plan's recorded budget-line actuals in that currency; timesheets x a rate is not offered until cost rates exist. Ratios are basis points (10000 = 1.0), money minor units, all integer. SPI(t) is earned schedule over actual time and, unlike SPI, still says so when a project finishes late. Undefined figures are null with a reason (no_planned_value_yet, no_actuals_recorded, no_planned_value), never zero or 1.0; with no baseline the answer is blocks null, absent no_baseline; with nothing to weigh, no_weighted_tasks. Measured as of today (UTC date): actuals carry no date, so the past is not reconstructed. Currencies never merge: budget lines in a currency with no baseline are listed in unbaselined_currencies.",
+                vec![uuid_param("pid")],
+                &[("200", "percent_complete and one block per currency (or an absent reason)"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/earned-value-settings": {
+            "put": op("earned-value", "How the plan's tasks are counted by default",
+                "default_method is zero_hundred (finished tasks only, equal weights), fifty_fifty (started work counts half) or points (finished tasks, weighted by story points: the physical percent of points delivered; a task with no points carries no weight and is listed). A plan with no setting counts zero_hundred. Audited.",
+                vec![uuid_param("pid")], &[("200", "The setting"), ("404", "Unknown plan"), ("422", "Unknown method")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/percent-complete": {
+            "put": op("earned-value", "Count one task another way",
+                "method zero_hundred, fifty_fifty or manual overrides the plan default for this task; an absent or null method clears the override. manual needs percent (0 to 100) and a note saying why, is flagged wherever earned value is shown, and is audited with the old and new values.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "The task's method"), ("404", "Unknown plan or task"), ("422", "Unknown method, a manual percent without percent or note, or percent/note with another method")])
         }
     })
 }

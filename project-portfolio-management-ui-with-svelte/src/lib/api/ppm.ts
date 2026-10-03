@@ -779,6 +779,54 @@ export interface RaciMatrix {
   workload: { person_ref: string; responsible: number; accountable: number; consulted: number; informed: number }[];
 }
 
+/** A basis-point ratio (10 000 = 1.0), or why there is none. */
+export interface EvRatio {
+  bp: number | null;
+  absent?: "no_planned_value_yet" | "no_actuals_recorded" | "no_planned_value";
+}
+
+/** One currency's earned-value figures (SC-4). Money is minor units. */
+export interface EvBlock {
+  currency: string;
+  baseline_version: number;
+  bac_minor: number;
+  pv_minor: number;
+  ev_minor: number;
+  /** `null` when actual cost cannot be stated. */
+  ac_minor: number | null;
+  sv_minor: number;
+  cv_minor: number | null;
+  spi: EvRatio;
+  cpi: EvRatio;
+  earned_schedule_days: number | null;
+  actual_days: number;
+  spi_t: EvRatio;
+}
+
+/** `GET /api/plans/{pid}/earned-value`. */
+export interface EarnedValue {
+  plan_pid: string;
+  as_of: string;
+  /** `null` with `absent` when there is nothing to show. */
+  blocks: EvBlock[] | null;
+  absent?: "no_baseline" | "no_weighted_tasks";
+  reason?: string;
+  percent_complete?: {
+    percent_bp: number;
+    default_method: "zero_hundred" | "fifty_fifty" | "points";
+    weighting: "equal" | "points";
+    tasks_counted: number;
+    unweighted_tasks: string[];
+    manual_tasks: string[];
+    /** Any task is counted by a person-entered percent. */
+    manual: boolean;
+    tasks: { pid: string; weight: number; percent_bp: number; method: "zero_hundred" | "fifty_fifty" | "manual" }[];
+  };
+  unbaselined_currencies?: string[];
+  ac_source?: string;
+  note?: string;
+}
+
 /** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
 export interface TaskScheduleBody {
   start_date?: string | null;
@@ -1311,6 +1359,20 @@ export class PpmClient {
     assignments: { person_ref: string; roles: string }[],
   ): Promise<{ task_pid: string; cells: Record<string, string>; findings: RaciFinding[] }> {
     return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/raci`, { body: { assignments } });
+  }
+  earnedValue(pid: string): Promise<EarnedValue> {
+    return this.http.get(`/api/plans/${pid}/earned-value`);
+  }
+  setEarnedValueMethod(pid: string, defaultMethod: "zero_hundred" | "fifty_fifty" | "points"): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/earned-value-settings`, { body: { default_method: defaultMethod } });
+  }
+  /** Count one task another way; no `method` clears the override. `manual` needs `percent` and `note`. */
+  setTaskPercent(
+    pid: string,
+    taskPid: string,
+    body: { method?: "zero_hundred" | "fifty_fifty" | "manual"; percent?: number; note?: string },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/percent-complete`, { body });
   }
   planCalendar(pid: string): Promise<WorkCalendarView> {
     return this.http.get(`/api/plans/${pid}/calendar`);

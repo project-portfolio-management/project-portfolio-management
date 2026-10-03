@@ -84,6 +84,9 @@
     {#if links.includes("critical-path")}
       <a class="button small" href={`/plans/${pid}/critical-path`}>Critical path</a>
     {/if}
+    {#if links.includes("earned-value")}
+      <a class="button small" href={`/plans/${pid}/earned-value`}>Earned value</a>
+    {/if}
     {#if links.includes("raci")}
       <a class="button small" href={`/plans/${pid}/raci`}>RACI</a>
     {/if}

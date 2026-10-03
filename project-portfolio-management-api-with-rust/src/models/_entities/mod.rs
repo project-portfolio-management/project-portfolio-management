@@ -28,6 +28,7 @@ pub mod controls;
 pub mod custom_field_defs;
 pub mod custom_field_values;
 pub mod devops_events;
+pub mod earned_value_settings;
 pub mod event_outbox;
 pub mod feed_tokens;
 pub mod gate_reviews;

@@ -40,6 +40,12 @@ pub struct Model {
     pub deadline: Option<Date>,
     /// Where the task came from (`mspdi:<UID>`); unique per plan (PJ-10).
     pub external_ref: Option<String>,
+    /// A per-task earned-value method override (SC-4): `zero_hundred`, `fifty_fifty` or `manual`.
+    pub percent_method: Option<String>,
+    /// The person-entered percent (0-100), set exactly when the method is `manual`.
+    pub percent_manual: Option<i32>,
+    /// Why a manual percent is what it is (mandatory with one).
+    pub percent_note: Option<String>,
     /// The component (grouping) of this plan the task belongs to, if any.
     pub component_pid: Option<Uuid>,
     /// The parent task (a subtask's parent), if any. Roll-ups derive on read.

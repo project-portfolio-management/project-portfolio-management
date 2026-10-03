@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — earned value (SC-4, 2026-10-03)
+
+`GET /api/plans/{pid}/earned-value`: planned value, earned value and actual cost per currency, with SV, CV, SPI, CPI and earned-schedule SPI(t). Percent complete is physical and its method is chosen per plan and per task; a manual percent needs a note and is always flagged. `/performance` now reports the real ratios.
+
 ### Added — RACI matrix (RM-13, 2026-10-03)
 
 `/api/plans/{pid}/raci` and `PUT …/tasks/{pid}/raci`: who is Responsible, Accountable, Consulted and Informed on each task. One Accountable per task (refused otherwise, and enforced in the database); incomplete rows are reported, not hidden; CSV export; R, A and I people are auto-subscribed.

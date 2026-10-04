@@ -9,14 +9,14 @@
   import PlanForm from "#lib/components/PlanForm.svelte";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { Plan } from "#lib/api/types.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   const repo = PlanRepository.withFetch();
   const initial: Plan = { name: "" };
 
   async function handleSubmit(record: Plan) {
     const created = await repo.create(record);
-    await goto(`/plans/${created.pid}`);
+    await goto(localeHref(`/plans/${created.pid}`));
   }
 </script>
 

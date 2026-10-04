@@ -6,6 +6,7 @@
 // origin, then redirects home. No access token is ever exposed to client
 // JS, localStorage, or a URL fragment.
 
+import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
 import type { PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 import {
@@ -20,7 +21,7 @@ import { verifyMagicLink } from "#lib/server/auth.js";
 // without reading the DOM.
 const TITLE = "Sign-in link";
 
-export const load: PageServerLoad = async ({ url, fetch, cookies }) => {
+export const load: PageServerLoad = async ({ url, fetch, cookies, locals }) => {
   const token = url.searchParams.get("token");
   if (!token) {
     return { error: "missingToken" as const, title: TITLE };
@@ -50,5 +51,5 @@ export const load: PageServerLoad = async ({ url, fetch, cookies }) => {
     return { error: "noSession" as const, title: TITLE };
   }
   cookies.set(SESSION_COOKIE, sid, SESSION_COOKIE_OPTIONS);
-  redirect(303, "/");
+  redirect(303, localizePath("/", locals.locale ?? DEFAULT_LOCALE));
 };

@@ -7,6 +7,7 @@
   drop out of the matrix. Export to a spreadsheet from the link.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { API_BASE_URL } from "#lib/config.js";
@@ -63,7 +64,7 @@
 
 <svelte:head><title>RACI — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/${pid}`}>← Plan</a></p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a></p>
 <h1>RACI matrix</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if notice}<p class="banner" role="status">{notice}</p>{/if}

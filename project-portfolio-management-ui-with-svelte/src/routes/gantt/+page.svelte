@@ -13,7 +13,7 @@
   import { PlanRepository } from "#lib/api/plans.js";
   import type { PlanRef } from "#lib/api/types.js";
   import type { ScheduleView } from "#lib/api/ppm.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   const client = PpmClient.withFetch();
 
@@ -137,7 +137,7 @@
   <ul class="mobile-list">
     {#each tasks as task (task.id)}
       <li>
-        <a href="/plans/{task.id}">{task.text}</a>
+        <a href={localeHref(`/plans/${task.id}`)}>{task.text}</a>
         <span class="dates"
           >{task.start.toLocaleDateString()} – {task.end.toLocaleDateString()}</span
         >

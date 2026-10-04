@@ -1,10 +1,15 @@
-// Lightweight, dependency-free i18n for the Portfolio SPA. A per-locale
-// strings map plus a reactive `$state` current-locale (Svelte 5 runes),
-// exposed via a `t(key)` accessor. Deliberately no i18n library: the
-// surface is small and we keep the front-end dependency-light (drift
-// across the family front-ends is accepted, see AGENTS.md). Shared chrome
-// / common terms reuse the family's established translations so this app
-// stays consistent with its siblings.
+// i18n for the Portfolio SPA: a per-locale strings catalog (`STRINGS`, English
+// is the source of truth) formatted by Sveltia I18n (`@sveltia/i18n`,
+// Unicode MessageFormat 2), behind a reactive `$state` current-locale (Svelte
+// 5 runes) and a `t(key, values?)` accessor. The locale set and its pure
+// helpers (URL prefixes, aliases, Accept-Language) live in `./locales.ts`.
+//
+// The locale is **in the URL**: every page is served under `/<locale>/…`
+// (`/en-001/plans`, `/cy-001/plans`) and a bare two-letter alias (`/en/…`)
+// redirects to its locale. The root layout calls `i18n.set(data.locale)` from
+// the URL, so the URL, not localStorage, decides what is shown; the choice is
+// still remembered (localStorage here, a cookie set by the server hooks) only
+// to pick the locale for a bare, unprefixed URL.
 //
 // Supported locales (family-wide set, sorted by code): Arabic (`ar-001`,
 // RTL), Welsh (`cy-001`, for the public-sector Welsh-language duty),
@@ -12,70 +17,29 @@
 // (`fr-001`), Hindi (`hi-001`), and Simplified Chinese for China
 // (`zh-cn`). `-001` is the UN M.49 code for "world": a language with no
 // regional variant. An unknown key/locale falls back to `en-001`, then to
-// the key string itself. The chosen locale persists to localStorage and
-// drives the UI strings, `<html lang>`, and `<html dir>` (right-to-left
-// for `ar-001`).
+// the key string itself.
 
 import { browser } from "$app/env";
+import {
+  _ as format,
+  addMessages,
+  init as initSveltia,
+  locale as sveltiaLocale,
+} from "@sveltia/i18n";
 
-/**
- * Locales for which the UI is translated, sorted alphabetically by code
- * (the LocalePicker shows them in this order). To add one, extend this
- * tuple AND add a matching entry to {@link LOCALE_LABELS} and `STRINGS`.
- */
-export const LOCALES = [
-  "ar-001",
-  "cy-001",
-  "de-de",
-  "en-001",
-  "es-001",
-  "fr-001",
-  "hi-001",
-  "zh-cn",
-] as const;
+import {
+  LOCALES,
+  DEFAULT_LOCALE,
+  LOCALE_LABELS,
+  RTL_LOCALES,
+  isRtl,
+  localizePath,
+  normaliseLocale,
+  type Locale,
+} from "./locales.js";
 
-/** A supported locale code (one of {@link LOCALES}). */
-export type Locale = (typeof LOCALES)[number];
-
-/** Fallback locale for an unknown key, locale, or missing translation. */
-export const DEFAULT_LOCALE: Locale = "en-001";
-
-/**
- * Human-readable name for the locale switcher, written in that locale.
- * A `-001` (world) locale is labelled by its language alone; a regional
- * locale reads "<language> - <region>" (never "<language> (<region>)").
- */
-export const LOCALE_LABELS: Record<Locale, string> = {
-  "ar-001": "العربية",
-  "cy-001": "Cymraeg",
-  "de-de": "Deutsch - Deutschland",
-  "en-001": "English",
-  "es-001": "Español",
-  "fr-001": "Français",
-  "hi-001": "हिन्दी",
-  "zh-cn": "中文 - 中国",
-};
-
-/**
- * Right-to-left locales. The layout mirrors `<html dir>` to `rtl` for
- * these (and `ltr` for everyone else) via {@link isRtl}.
- */
-export const RTL_LOCALES = ["ar-001"] as const satisfies readonly Locale[];
-
-/**
- * Whether `locale` is written right-to-left. Used by the layout to set
- * `<html dir>`; tolerant of region subtags via {@link normaliseLocale}.
- *
- * @param locale - A locale code (region subtag like `ar-EG` accepted).
- * @returns `true` for `ar-001`, otherwise `false`.
- */
-export function isRtl(locale: string): boolean {
-  const primary = normaliseLocale(locale);
-
-  return (
-    primary !== null && (RTL_LOCALES as readonly string[]).includes(primary)
-  );
-}
+export { LOCALES, DEFAULT_LOCALE, LOCALE_LABELS, RTL_LOCALES, isRtl };
+export type { Locale };
 
 /**
  * localStorage key under which the chosen UI locale is persisted. Exported
@@ -3078,17 +3042,33 @@ export const STRINGS_BY_LOCALE: Record<
   Record<string, string>
 > = STRINGS;
 
-// Normalise raw input to a supported locale, or null if unsupported.
-// Case-insensitive and hyphen/underscore-insensitive. A region or legacy
-// code resolves by primary language (`es-MX`, `en_US`, `zh`, `en` all map
-// to the one supported locale of that language).
-function normaliseLocale(raw: string | null | undefined): Locale | null {
-  if (!raw) return null;
-  const normalized = raw.trim().replace(/_/g, "-").toLowerCase();
-  const exact = LOCALES.find((l) => l === normalized);
-  if (exact) return exact;
-  const primary = normalized.split("-")[0] ?? "";
-  return LOCALES.find((l) => l.split("-")[0] === primary) ?? null;
+// MessageFormat 2 reads `{`, `}` and `\` in text as syntax. The catalog is
+// plain text with `{name}` placeholders, so convert once at registration:
+// escape the text, turn each `{name}` into `{$name}`, and wrap the whole thing
+// as a quoted pattern (which also keeps a leading `.` or space literal).
+const PLACEHOLDER = /\{([A-Za-z_]\w*)\}/g;
+
+/** One catalog string as an MF2 message. Exported for the coverage test. */
+export function toMessageFormat(source: string): string {
+  let out = "";
+  let last = 0;
+  const text = (s: string) =>
+    s.replace(/\\/g, "\\\\").replace(/[{}]/g, (c) => `\\${c}`);
+  for (const m of source.matchAll(PLACEHOLDER)) {
+    out += text(source.slice(last, m.index)) + `{$${m[1]}}`;
+    last = (m.index ?? 0) + m[0].length;
+  }
+  return `{{${out}${text(source.slice(last))}}}`;
+}
+
+initSveltia({ fallbackLocale: DEFAULT_LOCALE });
+for (const locale of LOCALES) {
+  addMessages(
+    locale,
+    Object.fromEntries(
+      Object.entries(STRINGS[locale]).map(([k, v]) => [k, toMessageFormat(v)]),
+    ),
+  );
 }
 
 // Seed the reactive locale from localStorage (default off the browser).
@@ -3115,7 +3095,8 @@ export const i18n = {
     return current;
   },
   /**
-   * Switch the active locale and persist the choice.
+   * Switch the active locale and remember the choice. The root layout calls
+   * this with the locale named in the URL.
    *
    * @param next - Desired locale (a region subtag like `es-MX` is
    *   accepted); unsupported input falls back to {@link DEFAULT_LOCALE}.
@@ -3123,6 +3104,7 @@ export const i18n = {
   set(next: string): void {
     const locale = normaliseLocale(next) ?? DEFAULT_LOCALE;
     current = locale;
+    void sveltiaLocale.set(locale);
     if (browser && typeof localStorage !== "undefined")
       localStorage.setItem(LOCALE_KEY, locale);
   },
@@ -3131,6 +3113,9 @@ export const i18n = {
     return LOCALES;
   },
 };
+
+/** Values for a message's `{name}` placeholders. */
+export type MessageValues = Record<string, string | number>;
 
 /**
  * Translate `key` in `locale` with graceful fallbacks.
@@ -3142,11 +3127,15 @@ export const i18n = {
  *
  * @param key - A valid {@link StringKey}.
  * @param locale - Target locale; defaults to the current reactive locale.
+ * @param values - Values for the message's `{name}` placeholders.
  * @returns The translated string (or the key as a last resort).
  */
-export function translate(key: StringKey, locale: Locale = current): string {
-  const table = STRINGS[locale] ?? STRINGS[DEFAULT_LOCALE];
-  return table[key] ?? STRINGS[DEFAULT_LOCALE][key] ?? key;
+export function translate(
+  key: StringKey,
+  locale: Locale = current,
+  values?: MessageValues,
+): string {
+  return format(key, { locale, values });
 }
 
 /**
@@ -3156,8 +3145,18 @@ export function translate(key: StringKey, locale: Locale = current): string {
  * string rendered through it.
  *
  * @param key - A valid {@link StringKey}.
+ * @param values - Values for the message's `{name}` placeholders.
  * @returns The translated string in the current locale.
  */
-export function t(key: StringKey): string {
-  return translate(key, current);
+export function t(key: StringKey, values?: MessageValues): string {
+  return translate(key, current, values);
+}
+
+/**
+ * An app path under the current locale: `localeHref("/plans")` is
+ * `/cy-001/plans` while Welsh is showing. Reactive, like {@link t}. Use it for
+ * every in-app `href` and `goto`.
+ */
+export function localeHref(path: string): string {
+  return localizePath(path, current);
 }

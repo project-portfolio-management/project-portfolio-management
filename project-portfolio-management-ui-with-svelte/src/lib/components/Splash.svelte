@@ -9,7 +9,7 @@
   No props and no data fetching — purely presentational.
 -->
 <script lang="ts">
-  import { t, type StringKey } from "#lib/i18n.svelte.js";
+  import { t, type StringKey, localeHref } from "#lib/i18n.svelte.js";
 
   const TILES = [1, 2, 3, 4, 5, 6] as const;
   const AREAS = [
@@ -27,8 +27,8 @@
     <h1 id="hero-title">{t("splash.hero.title")}</h1>
     <p class="lead">{t("splash.hero.subtitle")}</p>
     <div class="actions">
-      <a class="cta primary" href="/signin">{t("auth.signin")}</a>
-      <a class="cta secondary" href="/tour">{t("splash.hero.tour")}</a>
+      <a class="cta primary" href={localeHref("/signin")}>{t("auth.signin")}</a>
+      <a class="cta secondary" href={localeHref("/tour")}>{t("splash.hero.tour")}</a>
     </div>
   </section>
 
@@ -52,7 +52,7 @@
   <section class="closing" aria-labelledby="closing-title">
     <h2 id="closing-title">{t("splash.cta.title")}</h2>
     <p>{t("splash.cta.body")}</p>
-    <a class="cta primary" href="/signin">{t("auth.signin")}</a>
+    <a class="cta primary" href={localeHref("/signin")}>{t("auth.signin")}</a>
   </section>
 </div>
 

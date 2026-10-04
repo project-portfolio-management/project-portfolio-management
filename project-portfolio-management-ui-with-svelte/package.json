@@ -32,7 +32,8 @@
     "@svar-ui/svelte-filter": "^2.6.1",
     "@svar-ui/svelte-gantt": "^2.7.3",
     "@svar-ui/svelte-grid": "^2.7.3",
-    "@svar-ui/svelte-kanban": "^2.6.0"
+    "@svar-ui/svelte-kanban": "^2.6.0",
+    "@sveltia/i18n": "^1.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

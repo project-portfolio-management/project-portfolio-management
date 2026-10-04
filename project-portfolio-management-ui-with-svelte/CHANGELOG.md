@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — localized routes and Sveltia I18n
+
+Every page is served under a locale prefix: `/en-001/plans`, `/cy-001/plans` (also `ar-001`, `de-de`, `es-001`, `fr-001`, `hi-001`, `zh-cn`). A bare two-letter alias redirects (301) to its locale — `/en/…` to `/en-001/…`, `/cy/…` to `/cy-001/…`, and `de`, `zh` to their one regional locale. A bare, unprefixed URL (a bookmark, the magic-link email) redirects (302) to the locale in the `locale` cookie, else `Accept-Language`, else `en-001`. The routes themselves did not move: the universal `reroute` hook strips the prefix. The API, `/_app`, `/assets` and static files are never prefixed. Messages are now formatted by Sveltia I18n (`@sveltia/i18n`, MessageFormat 2) behind the same `t(key)`, which also takes `{name}` values; `localeHref(path)` prefixes every in-app link, and the language picker navigates to the same page under the chosen prefix. `<html lang>` and `dir` are set by the server per request.
+
 ### Added — EVM analytics (SC-5)
 
 On the earned-value page: EAC variants each named by formula with a stated recommendation, ETC, VAC, TCPI and traffic lights, an S-curve (earned value and cost only where recorded), and a per-currency roll-up beneath a plan.

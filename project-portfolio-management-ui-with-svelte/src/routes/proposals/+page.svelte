@@ -5,7 +5,7 @@
   duplicate-demand checks, and promote-to-work-item.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type DemandHit, type Proposal, money } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
@@ -134,7 +134,7 @@
             </button>
           {/if}
           {#if proposal.status === "promoted" && proposal.promoted_plan_pid}
-            <a href={`/plans/${proposal.promoted_plan_pid}`}>{t("ppm.proposals.workItem")}</a>
+            <a href={localeHref(`/plans/${proposal.promoted_plan_pid}`)}>{t("ppm.proposals.workItem")}</a>
           {:else}
             <button class="button small" onclick={() => showDuplicates(proposal.pid)}>
               {t("ppm.proposals.duplicates")}

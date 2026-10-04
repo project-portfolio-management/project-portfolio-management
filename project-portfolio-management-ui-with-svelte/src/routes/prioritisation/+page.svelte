@@ -8,6 +8,7 @@
   reported as no evidence, never as a low score.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
     CapabilityClient,
@@ -92,7 +93,7 @@
     <tbody>
       {#each view.plans as plan (plan.pid)}
         <tr>
-          <td><a href={`/plans/${plan.pid}`}>{plan.name}</a></td>
+          <td><a href={localeHref(`/plans/${plan.pid}`)}>{plan.name}</a></td>
           <td>{plan.score === null ? "—" : plan.score.toFixed(1)}</td>
           <td><span class={`chip ${plan.band}`}>{plan.band}</span></td>
           <td>{Math.round(plan.coverage * 100)}%</td>

@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import {
@@ -121,7 +122,7 @@
 
 <svelte:head><title>Earned value — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/${pid}/governance`}>← Governance</a> · <a href={`/plans/${pid}/critical-path`}>Critical path</a></p>
+<p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>← Governance</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
 <h1>Earned value</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 

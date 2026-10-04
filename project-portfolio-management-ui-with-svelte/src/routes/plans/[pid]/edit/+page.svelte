@@ -11,7 +11,7 @@
   import PlanForm from "#lib/components/PlanForm.svelte";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { Plan } from "#lib/api/types.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   const pid = page.params.pid ?? "";
   const repo = PlanRepository.withFetch();
@@ -32,7 +32,7 @@
 
   async function handleSubmit(updated: Plan) {
     await repo.update(pid, updated);
-    await goto(`/plans/${pid}`);
+    await goto(localeHref(`/plans/${pid}`));
   }
 </script>
 

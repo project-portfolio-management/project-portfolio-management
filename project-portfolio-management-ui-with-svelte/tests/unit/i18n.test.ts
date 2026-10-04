@@ -13,6 +13,7 @@ import {
   translate,
   isRtl,
   i18n,
+  toMessageFormat,
   type Locale,
 } from "../../src/lib/i18n.svelte";
 
@@ -101,11 +102,19 @@ describe("i18n catalog", () => {
     expect(mergeKeys.length).toBeGreaterThanOrEqual(24);
     for (const locale of LOCALES) {
       for (const key of mergeKeys) {
-        expect(translate(key, locale), `${locale} missing ${key}`).toBeTruthy();
+        expect(
+          translate(key, locale, { dup: "x", main: "y" }),
+          `${locale} missing ${key}`,
+        ).toBeTruthy();
       }
-      const confirm = translate("merge.confirm", locale);
-      expect(confirm, `${locale} merge.confirm {dup}`).toContain("{dup}");
-      expect(confirm, `${locale} merge.confirm {main}`).toContain("{main}");
+      // Both values must arrive (MF2 may wrap them in bidi isolates).
+      const confirm = translate("merge.confirm", locale, {
+        dup: "DUP-ID",
+        main: "MAIN-ID",
+      });
+      expect(confirm, `${locale} merge.confirm dup`).toContain("DUP-ID");
+      expect(confirm, `${locale} merge.confirm main`).toContain("MAIN-ID");
+      expect(confirm, `${locale} unfilled placeholder`).not.toMatch(/[{}$]/);
     }
     expect(translate("merge.title", "fr-001")).toBe("Fusionner des plans");
     expect(translate("merge.title", "zh-cn")).toBe("合并计划");
@@ -149,5 +158,27 @@ describe("i18n catalog", () => {
         }
       }
     }
+  });
+});
+
+describe("Sveltia I18n catalog", () => {
+  // Every catalog string is plain text; MessageFormat 2 must give it back
+  // unchanged, whatever braces, backslashes or leading dots it contains.
+  it("returns every string of every locale unchanged (placeholders aside)", () => {
+    for (const locale of LOCALES) {
+      for (const [key, source] of Object.entries(STRINGS_BY_LOCALE[locale])) {
+        if (/\{[A-Za-z_]\w*\}/.test(source)) continue;
+        expect(translate(key as never, locale), `${locale} ${key}`).toBe(source);
+      }
+    }
+  });
+
+  it("escapes MF2 syntax in plain text and converts placeholders", () => {
+    expect(toMessageFormat("a {b} c")).toBe("{{a {$b} c}}");
+    expect(toMessageFormat("{ } \\ .x")).toBe("{{\\{ \\} \\\\ .x}}");
+  });
+
+  it("falls back to the key when no locale has it", () => {
+    expect(translate("no.such.key" as never, "cy-001")).toBe("no.such.key");
   });
 });

@@ -4,7 +4,7 @@
   members. Any plan may contain children, so this works for any plan.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ScheduleView } from "#lib/api/ppm.js";
@@ -46,7 +46,7 @@
 
 <svelte:head><title>Schedule — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/${pid}/governance`}>{t("ppm.common.governance")}</a></p>
+<p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>{t("ppm.common.governance")}</a></p>
 <h1>{t("ppm.schedule.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
@@ -66,7 +66,7 @@
     {#each schedule.items as item (item.pid)}
       <div class="lane">
         <span class="label small">
-          <a href={`/plans/${item.pid}/governance`}>{item.name}</a>
+          <a href={localeHref(`/plans/${item.pid}/governance`)}>{item.name}</a>
           {#if item.on_critical_path}<span class="chip critical">{t("ppm.schedule.critical")}</span>{/if}
           {#if item.stage}<span class="chip">{item.stage}</span>{/if}
         </span>

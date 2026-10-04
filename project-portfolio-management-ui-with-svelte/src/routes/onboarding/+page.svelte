@@ -7,6 +7,7 @@
   measured how long a first hour with this guide actually takes.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { ONBOARDING_ROLES } from "#lib/onboarding.js";
 </script>
 
@@ -26,7 +27,7 @@
     <ol>
       {#each role.steps as step, i (step.route + i)}
         <li>
-          <a href={step.route}>{step.label}</a>
+          <a href={localeHref(step.route)}>{step.label}</a>
           <p class="small muted">{step.note}</p>
         </li>
       {/each}

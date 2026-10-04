@@ -6,6 +6,7 @@
   what every plan did before calendars existed.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type WorkCalendarView } from "#lib/api/ppm.js";
@@ -51,14 +52,14 @@
 
 <svelte:head><title>Working calendar — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/${pid}/critical-path`}>← Critical path</a></p>
+<p class="small"><a href={localeHref(`/plans/${pid}/critical-path`)}>← Critical path</a></p>
 <h1>Working calendar</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if loaded}
   <p class="small muted">
     {loaded.source === "plan" ? "This plan has its own calendar." : "No calendar set: every day works."}
-    Each person can also set their own (<a href="/me/calendar">My calendar</a>); their work then happens only on days both calendars work.
+    Each person can also set their own (<a href={localeHref("/me/calendar")}>My calendar</a>); their work then happens only on days both calendars work.
   </p>
   <fieldset>
     <legend>Working weekdays</legend>

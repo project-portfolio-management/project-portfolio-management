@@ -6,7 +6,7 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -112,7 +112,7 @@
 
 <svelte:head><title>Governance — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/`}>{t("ppm.gov.backToItem")}</a></p>
+<p class="small"><a href={localeHref(`/plans/`)}>{t("ppm.gov.backToItem")}</a></p>
 <h1>{t("ppm.gov.title")}{#if summary} — {summary.name}{/if}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
@@ -132,7 +132,7 @@
         {total.currency}: {money(total.actual_minor)} / {money(total.planned_minor)}
       </span>
     {/each}
-    <a class="button small" href={`/plans/${pid}/schedule`}>{t("ppm.common.schedule")}</a>
+    <a class="button small" href={localeHref(`/plans/${pid}/schedule`)}>{t("ppm.common.schedule")}</a>
   </section>
 {/if}
 

@@ -3,7 +3,7 @@
   objective alignment rollups (which items serve it, with weights).
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Alignment, type Objective } from "#lib/api/ppm.js";
 
@@ -76,7 +76,7 @@
           <ul class="small">
             {#each alignment.items as item (item.pid)}
               <li>
-                <a href={`/${item.kind.toLowerCase()}s/${item.pid}/governance`}>{item.name}</a>
+                <a href={localeHref(`/${item.kind.toLowerCase()}s/${item.pid}/governance`)}>{item.name}</a>
                 (w{item.weight})
               </li>
             {/each}

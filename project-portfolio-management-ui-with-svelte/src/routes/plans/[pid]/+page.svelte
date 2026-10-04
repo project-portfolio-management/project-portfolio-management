@@ -10,7 +10,7 @@
   import { page } from "$app/state";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { ScoredRef, Plan } from "#lib/api/types.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient } from "#lib/api/ppm.js";
   import { visiblePlanLinks } from "#lib/modules.js";
 
@@ -43,7 +43,7 @@
 
   async function handleDelete() {
     await repo.remove(pid);
-    await goto(`/plans`);
+    await goto(localeHref(`/plans`));
   }
 
   async function handleCheckDuplicates() {
@@ -70,28 +70,28 @@
   <h1>{record.name}</h1>
   <p class="small">
     {#if links.includes("governance")}
-      <a class="button small" href={`/plans/${pid}/governance`}>{t("ppm.common.governance")}</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/governance`)}>{t("ppm.common.governance")}</a>
     {/if}
     {#if links.includes("board")}
-      <a class="button small" href={`/plans/${pid}/board`}>{t("ppm.common.board")}</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/board`)}>{t("ppm.common.board")}</a>
     {/if}
     {#if links.includes("schedule")}
-      <a class="button small" href={`/plans/${pid}/schedule`}>{t("ppm.common.schedule")}</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/schedule`)}>{t("ppm.common.schedule")}</a>
     {/if}
     {#if links.includes("flow")}
-      <a class="button small" href={`/plans/${pid}/flow`}>Flow</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/flow`)}>Flow</a>
     {/if}
     {#if links.includes("critical-path")}
-      <a class="button small" href={`/plans/${pid}/critical-path`}>Critical path</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a>
     {/if}
     {#if links.includes("earned-value")}
-      <a class="button small" href={`/plans/${pid}/earned-value`}>Earned value</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/earned-value`)}>Earned value</a>
     {/if}
     {#if links.includes("raci")}
-      <a class="button small" href={`/plans/${pid}/raci`}>RACI</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/raci`)}>RACI</a>
     {/if}
     {#if links.includes("calendar")}
-      <a class="button small" href={`/plans/${pid}/calendar`}>Calendar</a>
+      <a class="button small" href={localeHref(`/plans/${pid}/calendar`)}>Calendar</a>
     {/if}
   </p>
   <div class="surface stack">
@@ -128,7 +128,7 @@
   </div>
 
   <div class="row" style="margin-top:1rem">
-    <a class="button" href={`/plans/${pid}/edit`}>{t("detail.edit")}</a>
+    <a class="button" href={localeHref(`/plans/${pid}/edit`)}>{t("detail.edit")}</a>
     <button class="button" onclick={handleCheckDuplicates} disabled={checking}>
       {checking ? t("detail.checking") : t("detail.checkDuplicates")}
     </button>
@@ -143,7 +143,7 @@
       <ul class="stack">
         {#each duplicates as dup (dup.pid)}
           <li class="surface row">
-            <a href={`/plans/${dup.pid}`}>{dup.name}</a>
+            <a href={localeHref(`/plans/${dup.pid}`)}>{dup.name}</a>
             <span>{dup.score.toFixed(3)} · {dup.confidence}</span>
           </li>
         {/each}

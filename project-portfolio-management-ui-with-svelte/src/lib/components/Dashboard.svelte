@@ -14,14 +14,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   let { landingRoute }: { landingRoute: string } = $props();
 
   onMount(() => {
-    void goto(landingRoute, { replaceState: true });
+    void goto(localeHref(landingRoute), { replaceState: true });
   });
 </script>
 
 <h1>{t("list.title")}</h1>
-<p><a href="/plans">{t("list.title")}</a></p>
+<p><a href={localeHref("/plans")}>{t("list.title")}</a></p>

@@ -3,6 +3,7 @@
 
 import type { Actions, PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
+import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
 import { signout } from "#lib/server/auth.js";
 import { SESSION_COOKIE } from "#lib/server/session.js";
 
@@ -19,6 +20,6 @@ export const actions: Actions = {
       await signout(fetch, locals.sessionId);
     }
     cookies.delete(SESSION_COOKIE, { path: "/" });
-    redirect(303, "/");
+    redirect(303, localizePath("/", locals.locale ?? DEFAULT_LOCALE));
   },
 };

@@ -6,6 +6,7 @@
   is listed, never invented onto the timeline. Read-only, like the chart.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import {
     GanttTable,
     GanttTableThead,
@@ -73,7 +74,7 @@
           {#each grid.rows as row, r (row.pid)}
             <GanttTableTr>
               <GanttTableTH scope="row">
-                <a href="/plans/{row.pid}">{row.name}</a>{#if row.critical}
+                <a href={localeHref(`/plans/${row.pid}`)}>{row.name}</a>{#if row.critical}
                   <span class="chip">critical path</span>{/if}
               </GanttTableTH>
               {#each row.cells as cell, c (c)}

@@ -6,6 +6,7 @@
   critical path honestly, instead of someone promising dates they cannot keep.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type AvailabilityRange, type WorkCalendarView } from "#lib/api/ppm.js";
   import CalendarMonth from "#lib/components/CalendarMonth.svelte";
@@ -78,7 +79,7 @@
 
 <svelte:head><title>My calendar — PPM</title></svelte:head>
 
-<p class="small"><a href="/me">← My work</a></p>
+<p class="small"><a href={localeHref("/me")}>← My work</a></p>
 <h1>My calendar</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 

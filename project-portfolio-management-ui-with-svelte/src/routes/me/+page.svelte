@@ -9,6 +9,7 @@
   English-first, like the other recent views; localisation follows.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
 
@@ -39,7 +40,7 @@
 <svelte:head><title>My work — PPM</title></svelte:head>
 
 <h1>My work</h1>
-<p class="small"><a href="/me/calendar">My calendar</a> — the days you work, so your dates are honest.</p>
+<p class="small"><a href={localeHref("/me/calendar")}>My calendar</a> — the days you work, so your dates are honest.</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if work}
@@ -69,7 +70,7 @@
         <ul class="tasks">
           {#each work.buckets[bucket] as task (task.pid)}
             <li>
-              <a href={`/plans/${task.plan_pid}`}>{task.title}</a>
+              <a href={localeHref(`/plans/${task.plan_pid}`)}>{task.title}</a>
               <span class="small muted">
                 — {task.plan_name}{#if task.due_date} · due {task.due_date}{/if}
               </span>

@@ -16,7 +16,7 @@
   } from "@svar-ui/svelte-filter";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { PlanRef } from "#lib/api/types.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   const repo = PlanRepository.withFetch();
 
@@ -66,7 +66,7 @@
     on(action: string, cb: (ev: { id: string | number }) => void): void;
   }) {
     api.on("select-row", (ev) => {
-      void goto(`/plans/${ev.id}`);
+      void goto(localeHref(`/plans/${ev.id}`));
     });
   }
 </script>
@@ -74,14 +74,14 @@
 <svelte:head><title>{t("list.title")} — Main X</title></svelte:head>
 
 <h1>{t("list.title")}</h1>
-<p><a class="button" href="/plans/new">{t("list.new")}</a></p>
+<p><a class="button" href={localeHref("/plans/new")}>{t("list.new")}</a></p>
 
 {#if loading}
   <p>{t("list.loading")}</p>
 {:else if error}
   <p class="banner" role="alert">{error}</p>
 {:else if items.length === 0}
-  <p class="surface">{t("list.empty")} <a href="/plans/new">{t("list.createOne")}</a>.</p>
+  <p class="surface">{t("list.empty")} <a href={localeHref("/plans/new")}>{t("list.createOne")}</a>.</p>
 {:else}
   <p class="count">
     {items.length === total ? `${total}` : `${items.length} / ${total}`}
@@ -107,7 +107,7 @@
   </GridTheme>
   <ul class="mobile-list">
     {#each filtered as row (row.id)}
-      <li><a href="/plans/{row.id}">{row.name}</a></li>
+      <li><a href={localeHref(`/plans/${row.id}`)}>{row.name}</a></li>
     {/each}
   </ul>
 {/if}

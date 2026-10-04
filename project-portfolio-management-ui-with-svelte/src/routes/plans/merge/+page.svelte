@@ -27,7 +27,7 @@
   import { ApiError } from "#lib/api/client.js";
   import { validateMerge } from "#lib/components/merge-validation.js";
   import type { MergeRecordRow, MergeResponse, Plan } from "#lib/api/types.js";
-  import { t, translate } from "#lib/i18n.svelte.js";
+  import { t, translate, localeHref } from "#lib/i18n.svelte.js";
 
   const repo = PlanRepository.withFetch();
 
@@ -76,9 +76,10 @@
       return;
     }
     // Destructive — the duplicate is soft-deleted. Confirm explicitly.
-    const question = translate("merge.confirm")
-      .replace("{dup}", duplicateId)
-      .replace("{main}", mainId);
+    const question = translate("merge.confirm", undefined, {
+      dup: duplicateId,
+      main: mainId,
+    });
     if (!confirm(question)) return;
     merging = true;
     error = null;
@@ -175,8 +176,8 @@
     <!-- SPA navigation to the surviving plan's detail page. -->
     <a
       class="button primary"
-      href={`/plans/${result.main_pid}`}
-      onclick={() => result && goto(`/plans/${result.main_pid}`)}
+      href={localeHref(`/plans/${result.main_pid}`)}
+      onclick={() => result && goto(localeHref(`/plans/${result.main_pid}`))}
     >
       {t("merge.viewMain")}
     </a>
@@ -199,7 +200,7 @@
       {#each recent as row (row.id)}
         <tr>
           <td>{new Date(row.created_at).toLocaleString()}</td>
-          <td><a href={`/plans/${row.main_pid}`}><code>{row.main_pid}</code></a></td>
+          <td><a href={localeHref(`/plans/${row.main_pid}`)}><code>{row.main_pid}</code></a></td>
           <td><code>{row.duplicate_pid}</code></td>
           <td>{row.reason ?? "—"}</td>
           <td>{row.actor ?? "—"}</td>

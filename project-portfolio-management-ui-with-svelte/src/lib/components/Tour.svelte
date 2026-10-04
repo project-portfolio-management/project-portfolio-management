@@ -13,7 +13,7 @@
       Nth entry's copy is `tour.s{N}.*`. `href` is the app screen to open.
 -->
 <script lang="ts">
-  import { t, type StringKey } from "#lib/i18n.svelte.js";
+  import { t, type StringKey, localeHref } from "#lib/i18n.svelte.js";
 
   let { sections }: { sections: { href: string }[] } = $props();
 
@@ -70,7 +70,7 @@
           </ol>
           <p class="section-links">
             {#if s.href}
-              <a class="open" href={s.href}>{t("tour.open")}</a>
+              <a class="open" href={localeHref(s.href)}>{t("tour.open")}</a>
             {/if}
             <a class="top" href="#top">{t("tour.top")}</a>
           </p>
@@ -80,7 +80,7 @@
       <section class="closing" aria-labelledby="tour-cta-title">
         <h2 id="tour-cta-title">{t("splash.cta.title")}</h2>
         <p>{t("splash.cta.body")}</p>
-        <a class="cta" href="/signin">{t("auth.signin")}</a>
+        <a class="cta" href={localeHref("/signin")}>{t("auth.signin")}</a>
       </section>
     </div>
   </div>

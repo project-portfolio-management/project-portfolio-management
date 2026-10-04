@@ -2,7 +2,7 @@
   import type { ActionData } from "./$types";
   import { enhance } from "$app/forms";
   import { PUBLIC_OIDC_SIGNIN_ENABLED } from '$app/env/public';
-  import { i18n, t } from "#lib/i18n.svelte.js";
+  import { i18n, t, localeHref } from "#lib/i18n.svelte.js";
 
   let { form }: { form: ActionData } = $props();
   // Opt-in OIDC "Sign in with SSO": a plain <a> (browser navigation), shown
@@ -38,6 +38,6 @@
 {/if}
 {#if ssoEnabled}
     <p>
-        <a class="button" href="/signin/sso">{t("signin.sso")}</a>
+        <a class="button" href={localeHref("/signin/sso")}>{t("signin.sso")}</a>
     </p>
 {/if}

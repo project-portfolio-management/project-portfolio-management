@@ -18,6 +18,7 @@
   English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
   import {
@@ -182,7 +183,7 @@
         {#each aging.aging as row (row.task.pid)}
           <tr class:past={row.aging.past_sle}>
             <th scope="row">
-              <a href={`/plans/${pid}/board`}>{row.task.title}</a>
+              <a href={localeHref(`/plans/${pid}/board`)}>{row.task.title}</a>
             </th>
             <td>{row.status}</td>
             <td>{days(row.aging.age_days)}</td>

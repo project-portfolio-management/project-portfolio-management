@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -136,7 +137,7 @@
 
 <svelte:head><title>Critical path — PPM</title></svelte:head>
 
-<p class="small"><a href={`/plans/${pid}`}>← Plan</a> · <a href={`/plans/${pid}/calendar`}>Working calendar</a></p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/calendar`)}>Working calendar</a></p>
 <h1>Critical path</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 

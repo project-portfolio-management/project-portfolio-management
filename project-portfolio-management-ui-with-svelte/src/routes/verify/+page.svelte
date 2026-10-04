@@ -5,6 +5,7 @@
   never handles an access token.
 -->
 <script lang="ts">
+  import { localeHref } from "#lib/i18n.svelte.js";
     import type { PageData } from "./$types";
 
     let { data }: { data: PageData } = $props();
@@ -22,4 +23,4 @@
 
 <h1>Sign-in link</h1>
 <p class="banner" role="alert">{message}</p>
-<p><a class="button" href="/signin">Request a new link</a></p>
+<p><a class="button" href={localeHref("/signin")}>Request a new link</a></p>

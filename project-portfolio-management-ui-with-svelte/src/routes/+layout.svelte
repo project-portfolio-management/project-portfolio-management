@@ -3,9 +3,18 @@
   import { browser } from '$app/env';
   import { page } from "$app/state";
   import { enhance } from "$app/forms";
+  import { goto } from "$app/navigation";
   import type { Snippet } from "svelte";
   import type { LayoutData } from "./$types";
-  import { i18n, t, isRtl, LOCALES, LOCALE_LABELS } from "#lib/i18n.svelte.js";
+  import {
+    i18n,
+    t,
+    isRtl,
+    localeHref,
+    LOCALES,
+    LOCALE_LABELS,
+  } from "#lib/i18n.svelte.js";
+  import { localizePath, normaliseLocale, splitPath } from "#lib/locales.js";
   import { COLLECTIONS } from "#lib/api/types.js";
   import { orderNavForView } from "#lib/nav.js";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
@@ -55,6 +64,26 @@
   // `data.signedIn` is resolved server-side from the httpOnly session
   // cookie (`+layout.server.ts`).
   let { children, data }: { children: Snippet; data: LayoutData } = $props();
+
+  // The locale is in the URL (`/cy-001/plans`): hand it to the i18n store
+  // before first render, and again whenever navigation changes it.
+  // svelte-ignore state_referenced_locally
+  i18n.set(data.locale ?? "en-001");
+  $effect.pre(() => {
+    i18n.set(data.locale ?? "en-001");
+  });
+
+  // The page's path without its locale prefix, for the active-nav check.
+  const here = $derived(splitPath(page.url.pathname).rest);
+
+  // Picking a language goes to the same page under that language's prefix.
+  function switchLocale(code: string): void {
+    const next = normaliseLocale(code);
+    if (!next || next === i18n.locale) return;
+    void goto(
+      localizePath(`${here}${page.url.search}${page.url.hash}`, next),
+    );
+  }
 
   // The `page.data.title` convention: each route's own load function
   // (`+page.ts`/`+page.server.ts`) returns a plain `title` string that
@@ -167,14 +196,14 @@
       onclick={() => menuOpen = !menuOpen}
     ><span class="hamburger-box" aria-hidden="true"></span></button>
 
-    <a href="/" class="brand">{t("brand.name")}</a>
+    <a href={localeHref("/")} class="brand">{t("brand.name")}</a>
     <nav id="primary-nav" class="primary-nav" class:open={menuOpen}>
       <ul>
         {#each orderedNavItems as item (item.href)}
           <li>
             <a
-              href={item.href}
-              aria-current={page.url.pathname === item.href ? "page" : undefined}
+              href={localeHref(item.href)}
+              aria-current={here === item.href ? "page" : undefined}
               onclick={() => menuOpen = false}
             >{item.label}</a>
           </li>
@@ -185,14 +214,14 @@
       {#if signedIn}
         <!-- Sign-out posts to the root page's \`signout\` action
              (BFF: revokes server-side + clears the cookie). -->
-        <form method="POST" action="/?/signout" use:enhance>
+        <form method="POST" action={localeHref("/?/signout")} use:enhance>
           <button type="submit" class="session-button">
             {t("auth.signout")}
           </button>
         </form>
       {:else}
         <!-- Per-app magic-link login on this app's own origin. -->
-        <a class="session-button signin" href="/signin">{t("auth.signin")}</a>
+        <a class="session-button signin" href={localeHref("/signin")}>{t("auth.signin")}</a>
       {/if}
       <PickerBar
         labels={{
@@ -216,7 +245,7 @@
           value: i18n.locale,
           localeLabels: LOCALE_LABELS,
           applyDir: false,
-          onChange: (code: string) => i18n.set(code),
+          onChange: switchLocale,
         }}
         textSizeProps={{
           storageKey: "lily-text-size",

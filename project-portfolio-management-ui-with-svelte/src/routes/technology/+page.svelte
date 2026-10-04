@@ -7,7 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -82,7 +82,7 @@
     <tbody>
       {#each risk.top_fan_out as row (row.item.pid)}
         <tr>
-          <td><a href="/{row.item.kind.toLowerCase()}s/{row.item.pid}">{row.item.name}</a></td>
+          <td><a href={localeHref(`/${row.item.kind.toLowerCase()}s/${row.item.pid}`)}>{row.item.name}</a></td>
           <td>{row.item.kind}</td>
           <td>{row.dependents}</td>
           <td>{row.rag ?? "—"}</td>

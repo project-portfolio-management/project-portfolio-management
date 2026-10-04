@@ -6,7 +6,7 @@
 //! through the same read check as any task access (record-level ABAC and
 //! private plans); every change is audited.
 //!
-//! - **edit** sets `assignee_ref`, `due_date` and/or `component_pid`
+//! - **edit** sets `assignee_ref`, `due_date`, `start_date` and/or `component_pid`
 //!   (`status` is deliberately *not* bulk-editable: a status change must pass
 //!   the workflow, WIP, role and blocker rules, which belong to the board
 //!   move);
@@ -82,13 +82,13 @@ async fn readable_task(
 }
 
 /// The fields a bulk edit may set.
-const ALLOWED: &[&str] = &["assignee_ref", "due_date", "component_pid"];
+const ALLOWED: &[&str] = &["assignee_ref", "due_date", "component_pid", "start_date"];
 
 /// `POST /api/tasks/bulk` body.
 #[derive(Debug, Deserialize)]
 struct EditBody {
     ids: Vec<Uuid>,
-    /// Any of `assignee_ref`, `due_date`, `component_pid`; `null` clears.
+    /// Any of `assignee_ref`, `due_date`, `component_pid`, `start_date`; `null` clears.
     set: BTreeMap<String, Value>,
 }
 
@@ -139,21 +139,54 @@ async fn bulk_edit(
         Some(_) => return Err(unprocessable("component_pid must be a UUID or null")),
     };
 
+    let start = match b.set.get("start_date") {
+        None => Change::Keep,
+        Some(Value::Null) => Change::Clear,
+        Some(Value::String(s)) => Change::Set(
+            chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                .map_err(|_| unprocessable("start_date must be YYYY-MM-DD or null"))?,
+        ),
+        Some(_) => return Err(unprocessable("start_date must be YYYY-MM-DD or null")),
+    };
+    if let Change::Set(d) = &start {
+        let problems = crate::cpm::schedule_problems(Some(*d), None);
+        if !problems.is_empty() {
+            return Err(unprocessable(&problems.join("; ")));
+        }
+    }
+
+    let edit = Edit {
+        assignee,
+        due,
+        component,
+        start,
+    };
     let mut results = Vec::new();
     for pid in ids {
-        results.push(edit_one(&ctx, &caller, pid, &assignee, &due, &component).await);
+        results.push(edit_one(&ctx, &caller, pid, &edit, "task_bulk_edited", None).await);
     }
     summary(&results)
 }
 
-async fn edit_one(
+/// What one bulk edit does to each field.
+pub(super) struct Edit {
+    pub(super) assignee: Change<String>,
+    pub(super) due: Change<chrono::NaiveDate>,
+    pub(super) component: Change<Uuid>,
+    pub(super) start: Change<chrono::NaiveDate>,
+}
+
+/// Edit one task. `audit_kind` and `audit_detail` name the single audit entry
+/// written (the bulk edit's own, or the caller's, e.g. leveling's).
+pub(super) async fn edit_one(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     pid: Uuid,
-    assignee: &Change<String>,
-    due: &Change<chrono::NaiveDate>,
-    component: &Change<Uuid>,
+    edit: &Edit,
+    audit_kind: &str,
+    audit_detail: Option<Value>,
 ) -> ItemResult {
+    let (assignee, due, component) = (&edit.assignee, &edit.due, &edit.component);
     let task = match readable_task(ctx, caller, pid).await {
         Ok(t) => t,
         Err(why) => return ItemResult::refused(pid, why),
@@ -186,14 +219,16 @@ async fn edit_one(
         due.apply(task.due_date),
         component.apply(task.component_pid),
     );
+    let new_start = edit.start.apply(task.start_date);
     let mut active: tasks::ActiveModel = task.into();
     active.assignee_ref = ActiveValue::set(new_assignee);
     active.due_date = ActiveValue::set(new_due);
+    active.start_date = ActiveValue::set(new_start);
     active.component_pid = ActiveValue::set(new_component);
     if let Err(e) = active.update(&ctx.db).await {
         return ItemResult::refused(pid, e.to_string());
     }
-    AuditModel::record(&ctx.db, pid, "task_bulk_edited", caller.actor(), None)
+    AuditModel::record(&ctx.db, pid, audit_kind, caller.actor(), audit_detail)
         .await
         .ok();
     if let Change::Set(who) = assignee {

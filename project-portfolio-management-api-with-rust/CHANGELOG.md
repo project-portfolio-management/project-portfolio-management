@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — resource leveling (SC-6, 2026-10-04)
+
+`GET /api/plans/{pid}/leveling` proposes start delays that remove over-allocation within float (advice only); `POST …/leveling/apply` applies confirmed moves through the bulk edit with one audit entry per moved task. `POST /api/tasks/bulk` can now set `start_date`.
+
 ### Added — EVM analytics (SC-5, 2026-10-03)
 
 `/api/plans/{pid}/earned-value/forecast` gives every EAC variant by its formula with ETC, VAC, TCPI and traffic lights; `/series` the S-curve data (earned value and cost only on recorded days, snapshotted daily); `/rollup` per-currency totals beneath a plan.

@@ -1184,3 +1184,98 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
+    use project_portfolio_management_service::models::_entities::audit_logs;
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let who = format!("person:{}", uuid::Uuid::new_v4());
+        let mk = |title: &'static str, days: i64, assignee: Option<String>| {
+            let request = &request;
+            let p = p.clone();
+            async move {
+                let mut body = json!({ "title": title, "start_date": "2026-10-05", "duration_days": days });
+                if let Some(a) = assignee {
+                    body["assignee_ref"] = json!(a);
+                }
+                let t: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&body).await.json();
+                t["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let start_of = |c: &str| {
+            let request = &request;
+            let p = p.clone();
+            let c = c.to_string();
+            async move {
+                let list: Value = request.get(&format!("/api/plans/{p}/tasks")).await.json();
+                let items = list["tasks"].as_array().cloned().unwrap();
+                items.iter().find(|t| t["pid"] == c.as_str()).cloned().unwrap()["start_date"].clone()
+            }
+        };
+        let _a = mk("Critical", 5, None).await;
+        let _b = mk("B", 2, Some(who.clone())).await;
+        let c = mk("C", 2, Some(who.clone())).await;
+
+        // The proposal is advice: it names the over-allocation and one delay, and
+        // changes nothing.
+        let r: Value = request.get(&format!("/api/plans/{p}/leveling")).await.json();
+        assert_eq!(r["advisory"], true);
+        assert_eq!(r["over_allocated"].as_array().unwrap().len(), 1);
+        let moves = r["moves"].as_array().unwrap();
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves[0]["pid"], c.as_str());
+        assert_eq!(moves[0]["to_start"], "2026-10-07");
+        assert_eq!(moves[0]["critical"], false);
+        assert_eq!(r["finish_delay_days"], 0);
+        assert_eq!(r["finish_before"], r["finish_after"]);
+        assert_eq!(moves[0]["person_ref"], who.as_str(), "auth is off: not masked");
+        let again: Value = request.get(&format!("/api/plans/{p}/leveling")).await.json();
+        assert_eq!(r, again, "the same input gives the same proposal");
+        assert_eq!(start_of(&c).await, "2026-10-05", "reading changed nothing");
+
+        // Applying is a separate, confirmed call.
+        let move_body = |confirm: bool, date: &str| json!({
+            "moves": [{ "task_pid": c, "start_date": date }], "confirm": confirm, "reason": "level" });
+        request
+            .post(&format!("/api/plans/{p}/leveling/apply"))
+            .json(&move_body(false, "2026-10-07"))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request
+            .post(&format!("/api/plans/{p}/leveling/apply"))
+            .json(&move_body(true, "2026-10-09"))
+            .await
+            .assert_status(axum::http::StatusCode::CONFLICT);
+        let ok: Value = request
+            .post(&format!("/api/plans/{p}/leveling/apply"))
+            .json(&move_body(true, "2026-10-07"))
+            .await
+            .json();
+        assert_eq!(ok["ok"], 1);
+        assert_eq!(ok["refused"], 0);
+        assert_eq!(start_of(&c).await, "2026-10-07");
+
+        // One audit entry per moved task, and nothing is over-allocated now.
+        let n = audit_logs::Entity::find()
+            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&c).unwrap()))
+            .filter(audit_logs::Column::Action.eq("task_leveled"))
+            .count(&ctx.db)
+            .await
+            .unwrap();
+        assert_eq!(n, 1);
+        let after: Value = request.get(&format!("/api/plans/{p}/leveling")).await.json();
+        assert!(after["moves"].as_array().unwrap().is_empty());
+        assert!(after["over_allocated"].as_array().unwrap().is_empty());
+    })
+    .await;
+}

@@ -101,6 +101,7 @@ pub fn paths() -> Value {
     merge(&mut all, raci_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
+    merge(&mut all, leveling_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -341,7 +342,7 @@ fn bulk_task_paths() -> Value {
     json!({
         "/api/tasks/bulk": {
             "post": op("tasks-bulk", "Set the same fields on many tasks",
-                &r("Settable: assignee_ref, due_date, component_pid (null clears). status is deliberately not bulk-editable: a status change must pass the workflow, WIP, role and blocker rules that belong to the board move. A component must belong to each task's own plan, and a due date that would break a precedes relation refuses that task. Assigning notifies and auto-watches like a single assignment."),
+                &r("Settable: assignee_ref, due_date, start_date, component_pid (null clears). status is deliberately not bulk-editable: a status change must pass the workflow, WIP, role and blocker rules that belong to the board move. A component must belong to each task's own plan, and a due date that would break a precedes relation refuses that task. Assigning notifies and auto-watches like a single assignment."),
                 vec![], &[("200", "requested, ok, refused, results"), ("422", "No ids, too many, an unknown or malformed field, or an empty set")])
         },
         "/api/tasks/copy": {
@@ -887,6 +888,24 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Resource leveling (SC-6).
+fn leveling_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/leveling": {
+            "get": op("scheduling", "Propose a resource leveling (advice only; changes nothing)",
+                "Finds the days a person's unfinished, assigned, scheduled tasks ask for more than their capacity (availability, 100% when none; plus their committed bookings in other plans) and proposes start delays. The first over-allocated day is resolved by keeping tasks in priority order (cannot-move first, then least total float, then earliest start, then input order) and delaying the lowest-priority task left over; a delay is accepted only if the network re-run shows no negative float, no hard-constraint conflict, nothing newly unscheduled and, unless allow_critical=true, an unchanged project finish. A task already started or with a hard constraint is never moved; a critical task is never moved without allow_critical, and then it is marked and the finish impact shown. What cannot be fixed is listed under unresolved with a reason (fixed_tasks, critical_task, no_float, hard_constraint, did_not_move, limit). The same input always gives the same proposal. Each moved task is for a person: a caller who may not manage that person sees person-N labels, no person_ref and no percentages. load_percent (default 100) is what one task asks of its assignee per working day.",
+                vec![uuid_param("pid"), query("allow_critical", false, "true to let a critical task move"), query("load_percent", false, "1-100, default 100")],
+                &[("200", "moves, effects, over_allocated, unresolved, finish_before/after, finish_delay_days"), ("404", "Unknown plan"), ("422", "A dependency cycle, or a bad load_percent")])
+        },
+        "/api/plans/{pid}/leveling/apply": {
+            "post": op("scheduling", "Apply moves from a leveling proposal (confirmed)",
+                "Body: moves [{task_pid, start_date}], confirm (must be true), optional allow_critical / load_percent (as read) and reason. The proposal is recomputed and every move must be part of it at that date, otherwise 409 stale_proposal and nothing is changed. Each start date is set through the bulk task edit (so the same read checks apply) and writes exactly one task_leveled audit entry per moved task, with from, to, delay and finish impact. Returns one result per move.",
+                vec![uuid_param("pid")],
+                &[("200", "requested, ok, refused, results, finish impact"), ("404", "Unknown plan"), ("409", "A move is not part of the current proposal"), ("422", "confirm missing, no moves, or a bad value")])
         }
     })
 }

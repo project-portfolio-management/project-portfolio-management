@@ -80,6 +80,7 @@ mod m20261003_000031_schedule_baseline_tasks;
 mod m20261003_000032_raci_assignments;
 mod m20261003_000033_earned_value;
 mod m20261003_000034_earned_value_snapshots;
+mod m20261004_000035_resource_roles;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -160,6 +161,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000032_raci_assignments::Migration),
             Box::new(m20261003_000033_earned_value::Migration),
             Box::new(m20261003_000034_earned_value_snapshots::Migration),
+            Box::new(m20261004_000035_resource_roles::Migration),
             // inject-above (do not remove this comment)
         ]
     }

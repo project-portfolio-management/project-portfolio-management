@@ -61,6 +61,7 @@ pub mod raci_assignments;
 pub mod reactions;
 pub mod report_definitions;
 pub mod report_schedules;
+pub mod resource_roles;
 pub mod review_queue_items;
 pub mod reviews;
 pub mod risks;

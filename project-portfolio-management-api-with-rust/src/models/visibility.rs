@@ -113,6 +113,9 @@ pub async fn all_allocations(db: &DatabaseConnection) -> Result<Vec<allocations:
     allocations::Entity::find()
         .filter(allocations::Column::DeletedAt.is_null())
         .filter(allocations::Column::Booking.eq("committed"))
+        // A placeholder (SC-7) is role demand with no person yet: it is not a
+        // person's load, so it never enters per-person capacity.
+        .filter(allocations::Column::PersonRef.not_like("placeholder:%"))
         .all(db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))
@@ -129,6 +132,24 @@ pub async fn all_allocations_with_proposed(
 ) -> Result<Vec<allocations::Model>> {
     allocations::Entity::find()
         .filter(allocations::Column::DeletedAt.is_null())
+        .filter(allocations::Column::PersonRef.not_like("placeholder:%"))
+        .all(db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))
+}
+
+/// Every live allocation, proposed and **placeholders** included (SC-7): the
+/// portfolio resource view's demand input.
+///
+/// # Errors
+///
+/// When the query fails.
+pub async fn all_allocations_with_placeholders(
+    db: &DatabaseConnection,
+) -> Result<Vec<allocations::Model>> {
+    allocations::Entity::find()
+        .filter(allocations::Column::DeletedAt.is_null())
+        .order_by_asc(allocations::Column::Id)
         .all(db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))

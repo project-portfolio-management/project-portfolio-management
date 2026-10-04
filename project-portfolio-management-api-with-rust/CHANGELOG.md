@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — portfolio resource management (SC-7, 2026-10-04)
+
+`GET /api/resource-plan` gives demand against supply by role (or skill) and week or month, in FTE, across plans; `/hours` planned against actual hours. Role-only placeholders (`POST …/allocations {placeholder: true, role}`) are resolved with `POST …/allocations/{a_pid}/resolve`; `PUT /api/resource-roles` sets a person's primary role.
+
 ### Added — resource leveling (SC-6, 2026-10-04)
 
 `GET /api/plans/{pid}/leveling` proposes start delays that remove over-allocation within float (advice only); `POST …/leveling/apply` applies confirmed moves through the bulk edit with one audit entry per moved task. `POST /api/tasks/bulk` can now set `start_date`.

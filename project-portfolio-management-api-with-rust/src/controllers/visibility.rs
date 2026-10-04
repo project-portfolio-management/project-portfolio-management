@@ -507,8 +507,13 @@ async fn complete_milestone(
 /// `POST /api/plans/{pid}/allocations` body.
 #[derive(Debug, Deserialize)]
 struct AllocationPayload {
-    /// `person:` / `worker:` `EntityRef` URN.
+    /// `person:` / `worker:` `EntityRef` URN. Omit it with `placeholder: true`.
+    #[serde(default)]
     person_ref: String,
+    /// Role-only demand with no person yet (SC-7): needs a `role`, takes no
+    /// `person_ref`, and is resolved to a named person later.
+    #[serde(default)]
+    placeholder: bool,
     #[serde(default)]
     role: Option<String>,
     /// Percent of the person's capacity (1–100).
@@ -538,7 +543,14 @@ async fn create_allocation(
     Json(payload): Json<AllocationPayload>,
 ) -> Result<Response> {
     let mut problems = Vec::new();
-    if !super::governance::valid_ref(&payload.person_ref, &["person", "worker"]) {
+    if payload.placeholder {
+        if !payload.person_ref.is_empty() {
+            problems.push("a placeholder takes no person_ref".to_string());
+        }
+        if payload.role.as_deref().is_none_or(|r| r.trim().is_empty()) {
+            problems.push("a placeholder needs a role".to_string());
+        }
+    } else if !super::governance::valid_ref(&payload.person_ref, &["person", "worker"]) {
         problems.push("person_ref must be a person:/worker: URN".to_string());
     }
     if !(1..=100).contains(&payload.percent) {
@@ -575,7 +587,15 @@ async fn create_allocation(
     let row = allocations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
-        person_ref: ActiveValue::set(payload.person_ref.clone()),
+        person_ref: ActiveValue::set(if payload.placeholder {
+            format!(
+                "{}{}",
+                crate::portfolio_resources::PLACEHOLDER_PREFIX,
+                Uuid::new_v4()
+            )
+        } else {
+            payload.person_ref.clone()
+        }),
         role: ActiveValue::set(payload.role.clone()),
         percent: ActiveValue::set(payload.percent),
         booking: ActiveValue::set(
@@ -613,7 +633,8 @@ async fn skill_gap(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Re
     for row in &rows {
         let tags: Vec<String> =
             serde_json::from_value(row.skills_required.clone()).unwrap_or_default();
-        if tags.is_empty() {
+        // A placeholder has no person whose skills could be held yet.
+        if tags.is_empty() || crate::portfolio_resources::is_placeholder(&row.person_ref) {
             continue;
         }
         let resolved = workers_client::resolve_skills(base_url.as_deref(), &row.person_ref).await;

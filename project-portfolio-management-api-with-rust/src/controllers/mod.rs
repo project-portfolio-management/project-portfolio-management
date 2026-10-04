@@ -225,6 +225,7 @@ pub mod plan_access;
 pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
+pub mod portfolio_resources;
 pub mod raci;
 pub mod report_schedules;
 pub mod schedule_baselines;

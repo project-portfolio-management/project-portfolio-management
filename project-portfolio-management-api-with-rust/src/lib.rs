@@ -106,6 +106,7 @@ pub mod plan_access;
 pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
+pub mod portfolio_resources;
 pub mod prioritisation;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;

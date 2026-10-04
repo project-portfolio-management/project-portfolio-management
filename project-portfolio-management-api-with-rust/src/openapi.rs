@@ -2060,6 +2060,7 @@ mod tests {
             crate::controllers::report_schedules::routes(),
             crate::controllers::cpm::routes(),
             crate::controllers::leveling::routes(),
+            crate::controllers::portfolio_resources::routes(),
             crate::controllers::calendars::routes(),
             crate::controllers::mspdi_import::routes(),
             crate::controllers::availability::routes(),

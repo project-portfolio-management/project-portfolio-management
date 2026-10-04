@@ -1279,3 +1279,74 @@ async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let mk_plan = |name: &'static str| {
+            let request = &request;
+            async move {
+                let p: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": name })).await.json();
+                p["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (a, b) = (mk_plan("Apollo").await, mk_plan("Gemini").await);
+        let who = |n: u8| format!("person:00000000-0000-4000-8000-0000000000{n:02}");
+        let (alice, bob) = (who(1), who(2));
+        let qs = "from=2026-10-05&to=2026-10-11&period=week";
+
+        // Two developers (2.00 FTE); demand 100% + 50% named, plus a 100% placeholder.
+        for p in [&alice, &bob] {
+            request.put("/api/resource-roles").json(&json!({ "person_ref": p, "role": "dev" })).await.assert_status_ok();
+        }
+        let alloc = |plan: String, body: Value| {
+            let request = &request;
+            async move {
+                let r: Value = request.post(&format!("/api/plans/{plan}/allocations")).json(&body).await.json();
+                r["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let _ = alloc(a.clone(), json!({ "person_ref": alice, "role": "dev", "percent": 100, "start_date": "2026-10-05", "end_date": "2026-10-11" })).await;
+        let _ = alloc(b.clone(), json!({ "person_ref": bob, "role": "dev", "percent": 50, "start_date": "2026-10-05", "end_date": "2026-10-11" })).await;
+        let ph = alloc(b.clone(), json!({ "placeholder": true, "role": "dev", "percent": 100, "start_date": "2026-10-05", "end_date": "2026-10-11" })).await;
+        let _ = alloc(a.clone(), json!({ "person_ref": alice, "role": "dev", "percent": 100, "booking": "proposed", "start_date": "2026-10-05", "end_date": "2026-10-11" })).await;
+        // A placeholder takes a role and no person.
+        request.post(&format!("/api/plans/{a}/allocations")).json(&json!({ "placeholder": true, "percent": 10 })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+
+        let r: Value = request.get(&format!("/api/resource-plan?{qs}")).await.json();
+        let row = r["periods"][0]["rows"].as_array().unwrap().iter().find(|x| x["key"] == "dev").cloned().unwrap();
+        assert_eq!(row["demand_fte"], 2.5);
+        assert_eq!(row["placeholder_fte"], 1.0, "the placeholder is shown apart");
+        assert_eq!(row["supply_fte"], 2.0);
+        assert_eq!(row["gap_fte"], -0.5, "short by half an FTE");
+        assert_eq!(row["headcount"], 2);
+        assert_eq!(row["proposed_fte"], 1.0, "proposed stays a separate series");
+        assert_eq!(r["placeholders"].as_array().unwrap().len(), 1);
+        let by_plan: i64 = r["by_plan"].as_array().unwrap().iter().map(|s| s["demand_percent_days"][0].as_i64().unwrap()).sum();
+        assert_eq!(by_plan, r["periods"][0]["total_demand_percent_days"].as_i64().unwrap(), "per-plan sums to the total");
+
+        // A placeholder never counts as a person's load.
+        let cap: Value = request.get("/api/capacity?from=2026-10-05&to=2026-10-11").await.json();
+        assert!(cap["people"].as_array().unwrap().iter().all(|p| !p["person_ref"].as_str().unwrap().starts_with("placeholder:")));
+
+        // Resolving names the person; the placeholder then stops being unassigned.
+        request.post(&format!("/api/plans/{b}/allocations/{ph}/resolve")).json(&json!({ "person_ref": bob })).await.assert_status(axum::http::StatusCode::CONFLICT); // bob would be at 150%
+        request.post(&format!("/api/plans/{b}/allocations/{ph}/resolve")).json(&json!({ "person_ref": bob, "confirm": true })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{b}/allocations/{ph}/resolve")).json(&json!({ "person_ref": alice })).await.assert_status(axum::http::StatusCode::CONFLICT);
+        let r: Value = request.get(&format!("/api/resource-plan?{qs}")).await.json();
+        assert!(r["placeholders"].as_array().unwrap().is_empty());
+        assert_eq!(r["periods"][0]["rows"][0]["placeholder_fte"], 0.0);
+
+        // Hours: nothing recorded is null, never zero; unplanned time is listed.
+        let h: Value = request.get("/api/resource-plan/hours?from=2026-10-05&to=2026-10-11").await.json();
+        assert!(h["total_actual_minutes"].is_null());
+        assert_eq!(h["total_actual_reason"], "no_actuals");
+        let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
+        assert_eq!(plan_a["planned_minutes"], 5 * 480);
+        assert!(plan_a["actual_minutes"].is_null());
+    })
+    .await;
+}

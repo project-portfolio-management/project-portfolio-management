@@ -102,6 +102,7 @@ pub fn paths() -> Value {
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
+    merge(&mut all, portfolio_resource_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -906,6 +907,38 @@ fn leveling_paths() -> Value {
                 "Body: moves [{task_pid, start_date}], confirm (must be true), optional allow_critical / load_percent (as read) and reason. The proposal is recomputed and every move must be part of it at that date, otherwise 409 stale_proposal and nothing is changed. Each start date is set through the bulk task edit (so the same read checks apply) and writes exactly one task_leveled audit entry per moved task, with from, to, delay and finish impact. Returns one result per move.",
                 vec![uuid_param("pid")],
                 &[("200", "requested, ok, refused, results, finish impact"), ("404", "Unknown plan"), ("409", "A move is not part of the current proposal"), ("422", "confirm missing, no moves, or a bad value")])
+        }
+    })
+}
+
+/// Portfolio resource management (SC-7).
+fn portfolio_resource_paths() -> Value {
+    json!({
+        "/api/resource-plan": {
+            "get": op("resources", "Demand against supply by role or skill and period, in FTE",
+                "Across every plan the caller can read. Demand is committed allocations (percent x days, summed as percent-days, then turned into FTE = percent-days / (100 x days in the period)); placeholders (role-only demand, no person yet) count toward their role and are shown apart as placeholder_fte; proposed bookings are a separate series and never enter demand or the gap. Supply is the people whose primary role it is (PUT /api/resource-roles), read per day from their availability. gap_fte is supply minus demand (negative is a shortage); headcount is a separate field and never mixed with FTE. Demand with no role, and people with no role, are the `unclassified` row, never dropped. group_by=skill is demand-only (a person's skills are resolved live from the worker service) and its rows overlap. ?scenario=<pid> limits demand to that scenario's plans (what-if). A caller without access=admin or role=resource_manager gets roles and totals only (masked: true, no people_by_role). The per-plan series sums to the per-period totals.",
+                vec![query("from", false, "YYYY-MM-DD, default today"), query("to", false, "default from + 89 days"), query("period", false, "week or month (default)"), query("group_by", false, "role (default) or skill"), query("scenario", false, "a scenario pid")],
+                &[("200", "periods with rows, by_plan, placeholders, people_by_role"), ("404", "Unknown scenario"), ("422", "A bad window, period or group_by")])
+        },
+        "/api/resource-plan/hours": {
+            "get": op("resources", "Planned against actual hours per plan and person",
+                "Planned is a named, committed allocation's percent of an 8-hour day on each Monday to Friday of the window (placeholder demand is reported apart); actual is recorded time entries, whether or not the week is approved. A plan with nothing recorded is null with actual_reason no_actuals, never zero hours. Time recorded by someone with no allocation on that plan in the window is listed under unplanned_actuals (per person for a manager, per plan with a count for anyone else). Plans the caller cannot read are left out.",
+                vec![query("from", false, "default to - 27 days"), query("to", false, "default today")],
+                &[("200", "plans, unplanned_actuals, totals"), ("422", "A bad window")])
+        },
+        "/api/resource-roles": {
+            "get": op("resources", "Primary roles for capacity planning",
+                "A manager (access=admin or role=resource_manager) sees everyone's; anyone else sees only their own.",
+                vec![], &[("200", "person_ref and role")]),
+            "put": op("resources", "Set or clear a person's primary role",
+                "Body: person_ref and role (null clears it). One role per person: it is the role whose supply they count toward. A manager's call (403 otherwise); audited with old and new.",
+                vec![], &[("200", "person_ref and role"), ("403", "Not a manager"), ("422", "A bad person_ref or role")])
+        },
+        "/api/plans/{pid}/allocations/{a_pid}/resolve": {
+            "post": op("resources", "Give a placeholder a named person",
+                "A placeholder is created with POST /api/plans/{pid}/allocations {placeholder: true, role, percent, ...} (no person_ref). Resolving sets the person; a manager's call. If it would put a committed booking's person over capacity on any day the answer is 409 over_capacity with the numbers, and only confirm=true goes ahead (audited as allocation_resolved with over_capacity).",
+                vec![uuid_param("pid"), uuid_param("a_pid")],
+                &[("200", "pid, person_ref, over_capacity"), ("403", "Not a manager"), ("404", "Unknown plan or allocation"), ("409", "Already names a person, or over capacity"), ("422", "A bad person_ref")])
         }
     })
 }

@@ -4,6 +4,7 @@ import {
   LOCALE_ALIASES,
   isUnlocalized,
   localeFromAcceptLanguage,
+  localeRedirect,
   localeOfPath,
   localizePath,
   splitPath,
@@ -15,9 +16,9 @@ describe("locale aliases", () => {
     expect(LOCALE_ALIASES.cy).toBe("cy-001");
     expect(LOCALE_ALIASES.ar).toBe("ar-001");
   });
-  it("maps a language with one regional locale to it", () => {
-    expect(LOCALE_ALIASES.de).toBe("de-de");
-    expect(LOCALE_ALIASES.zh).toBe("zh-cn");
+  it("maps de and zh to their -001 locales, not the regional copies", () => {
+    expect(LOCALE_ALIASES.de).toBe("de-001");
+    expect(LOCALE_ALIASES.zh).toBe("zh-001");
   });
   it("never shadows a real locale", () => {
     for (const alias of Object.keys(LOCALE_ALIASES)) {
@@ -113,13 +114,42 @@ describe("localeFromAcceptLanguage", () => {
   it("picks the first supported tag, by quality", () => {
     expect(localeFromAcceptLanguage("cy-GB,cy;q=0.9,en;q=0.8")).toBe("cy-001");
     expect(localeFromAcceptLanguage("ja,fr;q=0.8,en;q=0.5")).toBe("fr-001");
-    expect(localeFromAcceptLanguage("en;q=0.5,de;q=0.9")).toBe("de-de");
-    expect(localeFromAcceptLanguage("zh-TW")).toBe("zh-cn");
+    expect(localeFromAcceptLanguage("en;q=0.5,de;q=0.9")).toBe("de-001");
+    expect(localeFromAcceptLanguage("zh-TW")).toBe("zh-001");
   });
   it("ignores wildcards, q=0 and nothing-supported", () => {
     expect(localeFromAcceptLanguage("*")).toBeNull();
     expect(localeFromAcceptLanguage("cy;q=0,ja")).toBeNull();
     expect(localeFromAcceptLanguage("")).toBeNull();
     expect(localeFromAcceptLanguage(null)).toBeNull();
+  });
+});
+
+describe("localeRedirect", () => {
+  const u = (pathname: string, search = "", hash = "") => ({
+    pathname,
+    search,
+    hash,
+  });
+  it("gives a bare path the preferred locale, keeping query and fragment", () => {
+    expect(localeRedirect(u("/plans", "?a=1", "#x"), "cy-001")).toEqual({
+      status: 307,
+      location: "/cy-001/plans?a=1#x",
+    });
+    expect(localeRedirect(u("/"), "de-de")).toEqual({
+      status: 307,
+      location: "/de-de",
+    });
+  });
+  it("sends an alias to its locale permanently, ignoring the preference", () => {
+    expect(localeRedirect(u("/en/plans"), "cy-001")).toEqual({
+      status: 301,
+      location: "/en-001/plans",
+    });
+  });
+  it("leaves localized and unlocalized URLs alone", () => {
+    expect(localeRedirect(u("/cy-001/plans"), "en-001")).toBeNull();
+    expect(localeRedirect(u("/api/proxy/x"), "en-001")).toBeNull();
+    expect(localeRedirect(u("/assets/a.css"), "en-001")).toBeNull();
   });
 });

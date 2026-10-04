@@ -18,25 +18,29 @@ import {
 } from "../../src/lib/i18n.svelte";
 
 describe("i18n catalog", () => {
-  it("supports exactly the seven required locales, sorted by code", () => {
+  it("supports exactly the required locales, sorted by code", () => {
     expect([...LOCALES]).toEqual([
       "ar-001",
       "cy-001",
+      "de-001",
       "de-de",
       "en-001",
       "es-001",
       "fr-001",
       "hi-001",
+      "zh-001",
       "zh-cn",
     ]);
     expect(LOCALE_LABELS).toEqual({
       "ar-001": "العربية",
       "cy-001": "Cymraeg",
+      "de-001": "Deutsch",
       "de-de": "Deutsch - Deutschland",
       "en-001": "English",
       "es-001": "Español",
       "fr-001": "Français",
       "hi-001": "हिन्दी",
+      "zh-001": "中文",
       "zh-cn": "中文 - 中国",
     });
   });
@@ -180,5 +184,13 @@ describe("Sveltia I18n catalog", () => {
 
   it("falls back to the key when no locale has it", () => {
     expect(translate("no.such.key" as never, "cy-001")).toBe("no.such.key");
+  });
+});
+
+describe("copied locales", () => {
+  it("de-001 and zh-001 start as copies of de-de and zh-cn", () => {
+    expect(STRINGS_BY_LOCALE["de-001"]).toEqual(STRINGS_BY_LOCALE["de-de"]);
+    expect(STRINGS_BY_LOCALE["zh-001"]).toEqual(STRINGS_BY_LOCALE["zh-cn"]);
+    expect(translate("nav.merge", "de-001")).toBe(translate("nav.merge", "de-de"));
   });
 });

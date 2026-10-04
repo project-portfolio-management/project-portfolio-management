@@ -96,7 +96,7 @@ describe("handle", () => {
     expect(await run("/cy/")).toEqual({ status: 301, location: "/cy-001" });
     expect(await run("/de/tour")).toEqual({
       status: 301,
-      location: "/de-de/tour",
+      location: "/de-001/tour",
     });
   });
 

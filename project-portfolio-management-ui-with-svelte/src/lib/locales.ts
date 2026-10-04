@@ -20,11 +20,13 @@
 export const LOCALES = [
   "ar-001",
   "cy-001",
+  "de-001",
   "de-de",
   "en-001",
   "es-001",
   "fr-001",
   "hi-001",
+  "zh-001",
   "zh-cn",
 ] as const;
 
@@ -42,11 +44,13 @@ export const DEFAULT_LOCALE: Locale = "en-001";
 export const LOCALE_LABELS: Record<Locale, string> = {
   "ar-001": "العربية",
   "cy-001": "Cymraeg",
+  "de-001": "Deutsch",
   "de-de": "Deutsch - Deutschland",
   "en-001": "English",
   "es-001": "Español",
   "fr-001": "Français",
   "hi-001": "हिन्दी",
+  "zh-001": "中文",
   "zh-cn": "中文 - 中国",
 };
 
@@ -86,8 +90,7 @@ export function isRtl(locale: string): boolean {
 /**
  * Two-letter alias -> the locale it stands for: `en` -> `en-001`, `cy` ->
  * `cy-001`, and likewise for every language that has a `-001` locale; a
- * language with exactly one (regional) locale aliases to it (`de` -> `de-de`,
- * `zh` -> `zh-cn`). Never shadows a real locale code.
+ * language with exactly one (regional) locale would alias to it. Never shadows a real locale code.
  */
 export function localeAliases(): Record<string, Locale> {
   const out: Record<string, Locale> = {};
@@ -198,4 +201,23 @@ export function localeFromAcceptLanguage(
     if (l) return l;
   }
   return null;
+}
+
+/**
+ * Where a URL that is not in the locale tree should go, or null if it is fine
+ * where it is: an alias goes to its locale (permanent), a bare path gains
+ * `preferred`'s prefix (temporary). Used by the root layout's `load`, which
+ * catches client-side navigations the server never sees.
+ */
+export function localeRedirect(
+  url: { pathname: string; search: string; hash: string },
+  preferred: Locale,
+): { status: 301 | 307; location: string } | null {
+  if (isUnlocalized(url.pathname)) return null;
+  const { locale, alias, rest } = splitPath(url.pathname);
+  if (locale) return null;
+  return {
+    status: alias ? 301 : 307,
+    location: `${localizePath(rest, alias ?? preferred)}${url.search}${url.hash}`,
+  };
 }

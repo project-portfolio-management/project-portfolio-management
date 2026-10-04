@@ -103,6 +103,7 @@ pub fn paths() -> Value {
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
     merge(&mut all, portfolio_resource_paths());
+    merge(&mut all, schedule_risk_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -939,6 +940,30 @@ fn portfolio_resource_paths() -> Value {
                 "A placeholder is created with POST /api/plans/{pid}/allocations {placeholder: true, role, percent, ...} (no person_ref). Resolving sets the person; a manager's call. If it would put a committed booking's person over capacity on any day the answer is 409 over_capacity with the numbers, and only confirm=true goes ahead (audited as allocation_resolved with over_capacity).",
                 vec![uuid_param("pid"), uuid_param("a_pid")],
                 &[("200", "pid, person_ref, over_capacity"), ("403", "Not a manager"), ("404", "Unknown plan or allocation"), ("409", "Already names a person, or over capacity"), ("422", "A bad person_ref")])
+        }
+    })
+}
+
+/// Schedule-risk Monte Carlo (SC-8).
+fn schedule_risk_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/schedule-risk": {
+            "get": op("scheduling", "Seeded schedule-risk simulation: P50 / P80 / P90 finish, criticality and sensitivity",
+                "Each iteration draws a whole-working-day duration for every task from its optimistic / likely (duration_days) / pessimistic estimate (triangular, or PERT), lets each register risk with a task, an impact and a probability strike with that probability, and re-runs the critical-path analysis. Reports the finish percentiles (nearest rank), the share of iterations finishing by the deterministic CPM finish (cpm_finish_confidence_bp), a criticality index per task (share of iterations with no float), a sensitivity correlation per task, and a finish histogram. Seeded: the same seed gives the identical result. With no uncertainty every percentile equals the CPM finish. Every assumption is echoed, including that inputs are treated as independent (no correlation). A task with a likely duration but no estimate is simulated at that duration +/- fallback_band_percent (default 20) and marked source=fallback, never treated as certain; a risk missing a probability, task or impact is skipped and named under events.skipped. Iterations are capped (20 000, and iterations x tasks 5 000 000).",
+                vec![uuid_param("pid"), query("iterations", false, "default 2000, max 20000"), query("seed", false, "default 1"), query("distribution", false, "triangular (default) or pert"), query("fallback_band_percent", false, "0-100, default 20")],
+                &[("200", "assumptions, percentiles, histogram, tasks, events, unscheduled"), ("404", "Unknown plan"), ("422", "A cycle, nothing schedulable, or over the caps")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/estimate": {
+            "put": op("scheduling", "Set a task's optimistic and pessimistic duration",
+                "Working days; the likely duration is the task's duration_days, which must be set first, and optimistic <= likely <= pessimistic. A field left out or null clears it. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "optimistic, likely and pessimistic days"), ("404", "Unknown plan or task"), ("422", "Out of order, out of range, or no likely duration")])
+        },
+        "/api/plans/{pid}/risks/{r_pid}/schedule-impact": {
+            "put": op("scheduling", "Make a register risk a schedule event",
+                "Names the task it threatens (a task of this plan), the working days it adds if it happens (1-365) and its probability in percent (0-100). All optional; the simulation skips, and names, a risk that has some of these but not all, or is not open or mitigating. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("r_pid")],
+                &[("200", "the risk's schedule fields"), ("404", "Unknown plan or risk"), ("422", "A bad value or a task of another plan")])
         }
     })
 }

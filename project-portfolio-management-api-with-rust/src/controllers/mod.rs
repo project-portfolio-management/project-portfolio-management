@@ -229,6 +229,7 @@ pub mod portfolio_resources;
 pub mod raci;
 pub mod report_schedules;
 pub mod schedule_baselines;
+pub mod schedule_risk;
 pub mod sinks;
 pub mod task_bulk;
 pub mod task_relations;

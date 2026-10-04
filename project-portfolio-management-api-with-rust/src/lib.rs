@@ -115,6 +115,7 @@ pub mod raci;
 pub mod relay;
 pub mod report_schedules;
 pub mod saved_views;
+pub mod schedule_risk;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;
 /// Tantivy full-text search: index schema, engine, and query surface.

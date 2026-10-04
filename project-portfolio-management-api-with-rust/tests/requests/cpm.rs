@@ -1350,3 +1350,162 @@ async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(5)).await;
+        let b = task(&request, &p, "B", Some("2026-10-05"), Some(4)).await;
+        let c = task(&request, &p, "C", None, Some(3)).await;
+        for (f, t) in [(&a, &c), (&b, &c)] {
+            request
+                .post("/api/dependencies")
+                .json(&json!({ "predecessor_pid": f, "successor_pid": t }))
+                .await
+                .assert_status_ok();
+        }
+        let url = |q: &str| format!("/api/plans/{p}/schedule-risk?{q}");
+
+        // No estimates: every task uses the stated fallback, and says so.
+        let r: Value = request.get(&url("seed=7")).await.json();
+        assert_eq!(r["assumptions"]["correlation"], "none");
+        assert!(
+            r["assumptions"]["independence"]
+                .as_str()
+                .unwrap()
+                .contains("independent")
+        );
+        assert_eq!(
+            r["assumptions"]["tasks_using_fallback"]
+                .as_array()
+                .unwrap()
+                .len(),
+            3
+        );
+        assert!(
+            r["tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|t| t["source"] == "fallback")
+        );
+
+        // Same seed, same result; another seed, another.
+        let again: Value = request.get(&url("seed=7")).await.json();
+        assert_eq!(r, again);
+        let other: Value = request.get(&url("seed=8")).await.json();
+        assert_ne!(r["histogram"], other["histogram"]);
+
+        // Percentiles are ordered.
+        let ps: Vec<String> = r["percentiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x["finish"].as_str().unwrap().to_string())
+            .collect();
+        assert!(ps.windows(2).all(|w| w[0] <= w[1]));
+
+        // Zero uncertainty: every percentile is the CPM finish exactly.
+        let flat: Value = request.get(&url("fallback_band_percent=0")).await.json();
+        assert!(
+            flat["percentiles"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|x| x["finish"] == flat["cpm_finish"])
+        );
+        assert_eq!(flat["cpm_finish_confidence_bp"], 10_000);
+
+        // An estimate must sit around the likely duration.
+        request
+            .put(&format!("/api/plans/{p}/tasks/{a}/estimate"))
+            .json(&json!({ "optimistic_days": 6 }))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request
+            .put(&format!("/api/plans/{p}/tasks/{a}/estimate"))
+            .json(&json!({ "optimistic_days": 3, "pessimistic_days": 10 }))
+            .await
+            .assert_status_ok();
+        let est: Value = request
+            .get(&url("fallback_band_percent=0&seed=3"))
+            .await
+            .json();
+        let ta = est["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["pid"] == a.as_str())
+            .cloned()
+            .unwrap();
+        assert_eq!(ta["source"], "estimated");
+        assert!(
+            ta["sensitivity"].as_f64().unwrap() > 0.5,
+            "A now drives the finish"
+        );
+
+        // Register risks: one complete event, one with no probability (named).
+        let risk = |title: &'static str| {
+            let request = &request;
+            let p = p.clone();
+            async move {
+                let r: Value = request
+                    .post(&format!("/api/plans/{p}/risks"))
+                    .json(&json!({ "title": title, "probability": 3, "impact": 3 }))
+                    .await
+                    .json();
+                r["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (hit, nop, plain) = (
+            risk("Vendor slips").await,
+            risk("Unquantified").await,
+            risk("Not a schedule risk").await,
+        );
+        let _ = plain;
+        request
+            .put(&format!("/api/plans/{p}/risks/{hit}/schedule-impact"))
+            .json(&json!({ "task_pid": a, "impact_days": 10, "probability_percent": 100 }))
+            .await
+            .assert_status_ok();
+        request
+            .put(&format!("/api/plans/{p}/risks/{nop}/schedule-impact"))
+            .json(&json!({ "task_pid": b, "impact_days": 5 }))
+            .await
+            .assert_status_ok();
+        let ev: Value = request
+            .get(&url("fallback_band_percent=0&seed=3"))
+            .await
+            .json();
+        assert_eq!(ev["events"]["used"].as_array().unwrap().len(), 1);
+        let skipped = ev["events"]["skipped"].as_array().unwrap();
+        assert_eq!(skipped.len(), 1);
+        assert_eq!(skipped[0]["risk_pid"], nop.as_str());
+        assert_eq!(skipped[0]["reason"], "no_probability");
+        assert_eq!(ev["events"]["risks_without_schedule_fields"], 1);
+        assert_eq!(
+            ev["cpm_finish_confidence_bp"], 0,
+            "a certain 10-day slip never meets the CPM date"
+        );
+
+        // Caps are refused, not truncated.
+        request
+            .get(&url("iterations=0"))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request
+            .get(&url("iterations=1000000"))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+    })
+    .await;
+}

@@ -26,6 +26,12 @@ pub struct Model {
     pub review_date: Option<Date>,
     pub escalated_at: Option<DateTimeWithTimeZone>,
     pub category: Option<String>,
+    /// The task this risk threatens, if it is a schedule event (SC-8).
+    pub task_pid: Option<Uuid>,
+    /// Working days it adds to that task if it happens (1-365).
+    pub schedule_impact_days: Option<i32>,
+    /// Chance it happens, in percent (0-100); no value means it is skipped.
+    pub schedule_probability_percent: Option<i32>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

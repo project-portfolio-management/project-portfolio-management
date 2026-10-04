@@ -32,6 +32,10 @@ pub struct Model {
     pub start_date: Option<Date>,
     /// Working-day duration (PJ-1); `0` is a milestone.
     pub duration_days: Option<i32>,
+    /// Optimistic working-day duration (SC-8); the likely one is `duration_days`.
+    pub duration_optimistic_days: Option<i32>,
+    /// Pessimistic working-day duration (SC-8).
+    pub duration_pessimistic_days: Option<i32>,
     /// A date constraint kind (SC-2): `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`.
     pub constraint_kind: Option<String>,
     /// The constraint's date; set exactly when the kind is.

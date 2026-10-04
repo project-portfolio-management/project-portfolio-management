@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — schedule-risk Monte Carlo (SC-8, 2026-10-04)
+
+`GET /api/plans/{pid}/schedule-risk` runs a seeded simulation over the task network: P10/P50/P80/P90 finish, the chance of meeting the CPM date, a criticality index and a sensitivity per task, and a finish histogram. Inputs: `PUT …/tasks/{pid}/estimate` (optimistic and pessimistic days) and `PUT …/risks/{pid}/schedule-impact` (task, days, probability). Inputs are treated as independent, and the response says so.
+
 ### Added — portfolio resource management (SC-7, 2026-10-04)
 
 `GET /api/resource-plan` gives demand against supply by role (or skill) and week or month, in FTE, across plans; `/hours` planned against actual hours. Role-only placeholders (`POST …/allocations {placeholder: true, role}`) are resolved with `POST …/allocations/{a_pid}/resolve`; `PUT /api/resource-roles` sets a person's primary role.

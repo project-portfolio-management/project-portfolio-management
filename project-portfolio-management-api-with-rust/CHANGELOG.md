@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — schedule health self-check (SC-9, 2026-10-05)
+
+`GET /api/plans/{pid}/schedule-health` runs fourteen DCMA-style checks (missing logic, leads, lags, relationship types, hard constraints, high and negative float, high duration, invalid dates, resources, missed tasks, critical path test, CPLI, BEI), each with count, threshold, pass and offenders by pid. A check that cannot be computed is `pass: null` with a reason, never a pass. A self-check, not a DCMA compliance assessment.
+
 ### Added — schedule-risk Monte Carlo (SC-8, 2026-10-04)
 
 `GET /api/plans/{pid}/schedule-risk` runs a seeded simulation over the task network: P10/P50/P80/P90 finish, the chance of meeting the CPM date, a criticality index and a sensitivity per task, and a finish histogram. Inputs: `PUT …/tasks/{pid}/estimate` (optimistic and pessimistic days) and `PUT …/risks/{pid}/schedule-impact` (task, days, probability). Inputs are treated as independent, and the response says so.

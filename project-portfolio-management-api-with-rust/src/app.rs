@@ -212,6 +212,7 @@ impl Hooks for App {
             .add_route(controllers::leveling::routes())
             .add_route(controllers::portfolio_resources::routes())
             .add_route(controllers::schedule_risk::routes())
+            .add_route(controllers::schedule_health::routes())
             .add_route(controllers::calendars::routes())
             .add_route(controllers::mspdi_import::routes())
             .add_route(controllers::availability::routes())

@@ -104,6 +104,7 @@ pub fn paths() -> Value {
     merge(&mut all, leveling_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
+    merge(&mut all, schedule_health_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -964,6 +965,18 @@ fn schedule_risk_paths() -> Value {
                 "Names the task it threatens (a task of this plan), the working days it adds if it happens (1-365) and its probability in percent (0-100). All optional; the simulation skips, and names, a risk that has some of these but not all, or is not open or mitigating. Audited with old and new.",
                 vec![uuid_param("pid"), uuid_param("r_pid")],
                 &[("200", "the risk's schedule fields"), ("404", "Unknown plan or risk"), ("422", "A bad value or a task of another plan")])
+        }
+    })
+}
+
+/// Schedule health self-check (SC-9).
+fn schedule_health_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/schedule-health": {
+            "get": op("scheduling", "Schedule health self-check: fourteen DCMA-style checks",
+                "Runs fourteen checks over the plan's task network: missing logic, leads, lags, relationship types (finish-to-start share), hard constraints, high float, negative float, high duration, invalid dates, resources, missed tasks, the critical path test, the critical path length index (CPLI) and the baseline execution index (BEI). Each returns count, of, value, threshold, pass and offenders by pid, and names its denominator (incomplete tasks, relationships into incomplete tasks, or tasks baselined due by the status date). A check that cannot be computed (no baseline, a cycle, nothing to measure) has pass null and a reason and is never a pass; all_pass is true only when all fourteen were computed and passed. A self-check in the style of the DCMA 14-Point Assessment, not a DCMA compliance assessment. The preset (dcma-default) is echoed with its thresholds; PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS (JSON) overrides any, and the response shows the source.",
+                vec![uuid_param("pid"), query("as_of", false, "the status date, YYYY-MM-DD (default today)")],
+                &[("200", "checks, counts, thresholds and preset"), ("404", "Unknown plan"), ("422", "A bad as_of")])
         }
     })
 }

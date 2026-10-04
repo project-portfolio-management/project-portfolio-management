@@ -1509,3 +1509,88 @@ async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() 
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn schedule_health_runs_fourteen_checks_and_never_passes_what_it_cannot_compute() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(5)).await;
+        let b = task(&request, &p, "B", None, Some(5)).await;
+        let c = task(&request, &p, "C", None, Some(50)).await;
+        for (f, t) in [(&a, &b), (&b, &c)] {
+            request
+                .post("/api/dependencies")
+                .json(&json!({ "predecessor_pid": f, "successor_pid": t }))
+                .await
+                .assert_status_ok();
+        }
+        let h: Value = request
+            .get(&format!("/api/plans/{p}/schedule-health?as_of=2026-10-05"))
+            .await
+            .json();
+        assert_eq!(h["preset"], "dcma-default");
+        assert!(
+            h["disclaimer"]
+                .as_str()
+                .unwrap()
+                .contains("not a DCMA assessment")
+        );
+        assert_eq!(h["thresholds"]["source"], "default");
+        let checks = h["checks"].as_array().unwrap();
+        assert_eq!(checks.len(), 14);
+        let by = |k: &str| checks.iter().find(|x| x["key"] == k).cloned().unwrap();
+        // No baseline: BEI and missed tasks are null with a reason, not passes.
+        for k in ["missed_tasks", "bei"] {
+            assert!(by(k)["pass"].is_null(), "{k}");
+            assert_eq!(by(k)["reason"], "no_baseline");
+        }
+        assert_eq!(h["all_pass"], false);
+        // C is 50 working days: the one high-duration offender, named by pid.
+        let hd = by("high_duration");
+        assert_eq!(hd["pass"], false);
+        assert_eq!(hd["offenders"][0]["pid"], c.as_str());
+        // Nobody is assigned: every duration task is a resources offender.
+        assert_eq!(by("resources")["count"], 3);
+        assert_eq!(by("negative_float")["pass"], true);
+        // A bad status date is refused.
+        request
+            .get(&format!("/api/plans/{p}/schedule-health?as_of=1900-01-01"))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+
+        // With a baseline taken, the baseline checks compute.
+        request
+            .post(&format!("/api/plans/{p}/schedule-baselines"))
+            .json(&json!({ "reason": "first" }))
+            .await
+            .assert_status_ok();
+        let h: Value = request
+            .get(&format!("/api/plans/{p}/schedule-health?as_of=2026-10-30"))
+            .await
+            .json();
+        let bei = h["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["key"] == "bei")
+            .cloned()
+            .unwrap();
+        assert!(
+            bei["pass"].is_boolean(),
+            "computed once a baseline exists: {bei}"
+        );
+        assert_eq!(
+            bei["pass"], false,
+            "nothing is done but A and B were baselined due"
+        );
+    })
+    .await;
+}

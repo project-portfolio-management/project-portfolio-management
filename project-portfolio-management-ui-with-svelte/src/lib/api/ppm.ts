@@ -902,6 +902,49 @@ export interface LabourCosts {
   note: string;
 }
 
+export type SandboxEdit =
+  | { op: "move"; task_pid: string; start_date: string }
+  | { op: "duration"; task_pid: string; duration_days: number }
+  | { op: "constraint"; task_pid: string; constraint_kind: string | null; constraint_date: string | null; reason?: string }
+  | { op: "add_link"; predecessor_pid: string; successor_pid: string; kind?: string; lag_days?: number }
+  | { op: "remove_link"; link_pid: string };
+
+export interface SandboxDates {
+  early_start: string;
+  early_finish: string;
+  late_finish: string;
+  total_float: number;
+  critical: boolean;
+}
+
+export interface SandboxPreview {
+  plan_pid: string;
+  plan_etag: string;
+  result_etag: string;
+  changes: Array<{ item: "task" | "link_added" | "link_removed"; pid: string }>;
+  finish: { before: string | null; after: string | null };
+  tasks: Array<{ pid: string; title: string; assignee?: string | null; before: SandboxDates | null; after: SandboxDates | null }>;
+  moved: Array<{ pid: string; moved: string; start_days: number; finish_days: number }>;
+  critical_path: { before: string[]; after: string[]; added: string[]; removed: string[] };
+  assignments_recomputed: Array<{ task_pid: string; derived: string | null; exact: boolean | null; units_percent: number; work_minutes: number }>;
+  cost_impact:
+    | { available: false; reason: string }
+    | {
+        available: true;
+        labour: Array<{ currency: string; before_minor: number; after_minor: number; delta_minor: number }>;
+        unrated_minutes_before: number;
+        unrated_minutes_after: number;
+      };
+  masked: boolean;
+  note: string;
+}
+
+export interface SandboxCommitted {
+  committed: boolean;
+  audit_entries: number;
+  finish: { before: string | null; after: string | null };
+}
+
 /** `GET /api/executive/health` response. */
 export interface ExecutiveHealth {
   as_of: string;
@@ -2222,6 +2265,15 @@ export class PpmClient {
   }
   labourCosts(pid: string): Promise<LabourCosts> {
     return this.http.get(`/api/plans/${pid}/labour-costs`);
+  }
+  sandboxPreview(pid: string, edits: SandboxEdit[]): Promise<SandboxPreview> {
+    return this.http.post(`/api/plans/${pid}/sandbox/preview`, { body: { edits } });
+  }
+  sandboxCommit(pid: string, edits: SandboxEdit[], planEtag: string, reason?: string): Promise<SandboxCommitted> {
+    return this.http.post(`/api/plans/${pid}/sandbox/commit`, {
+      body: { edits, reason: reason || undefined },
+      headers: { "If-Match": planEtag },
+    });
   }
   planCpm(pid: string, near?: number): Promise<Cpm> {
     const q = near === undefined ? "" : `?near=${near}`;

@@ -45,6 +45,7 @@
     "cost-risk": "Cost risk",
     "joint-risk": "Cost and schedule risk",
     work: "Work and assignments",
+    "what-if": "What-if",
     costs: "Costs",
   };
   const linkLabel = (k: string): string =>

@@ -7,7 +7,7 @@
   --mxi-color-fg: var(--color-base-content, #111827);
   --mxi-color-muted: color-mix(
     in oklch,
-    var(--color-base-content, #6b7280) 55%,
+    var(--color-base-content, #6b7280) 68%,
     var(--color-base-100, #fafafa)
   );
   --mxi-color-border: var(--color-base-300, #e5e7eb);
@@ -67,6 +67,15 @@ a {
   text-decoration: none;
 }
 a:hover {
+  text-decoration: underline;
+}
+/* A link inside running text must not rely on colour alone to be seen as a link
+   (WCAG 1.4.1). Buttons, call-to-action links and the navigation keep their own look. */
+main p a:not(.button):not(.cta),
+main li a:not(.button):not(.cta),
+main td a:not(.button):not(.cta),
+main th a:not(.button):not(.cta),
+main figcaption a:not(.button):not(.cta) {
   text-decoration: underline;
 }
 

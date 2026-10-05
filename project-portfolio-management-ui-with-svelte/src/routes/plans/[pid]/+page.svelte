@@ -93,6 +93,15 @@
     {#if links.includes("calendar")}
       <a class="button small" href={localeHref(`/plans/${pid}/calendar`)}>Calendar</a>
     {/if}
+    {#if links.includes("schedule-health")}
+      <a class="button small" href={localeHref(`/plans/${pid}/schedule-health`)}>Schedule health</a>
+    {/if}
+    {#if links.includes("leveling")}
+      <a class="button small" href={localeHref(`/plans/${pid}/leveling`)}>Leveling</a>
+    {/if}
+    {#if links.includes("schedule-risk")}
+      <a class="button small" href={localeHref(`/plans/${pid}/schedule-risk`)}>Schedule risk</a>
+    {/if}
   </p>
   <div class="surface stack">
     {#if record.kind}<div><strong>{t("detail.caseType")}</strong> {record.kind}</div>{/if}

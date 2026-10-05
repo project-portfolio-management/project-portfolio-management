@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — scheduling views (SC-11) and a browser accessibility audit
+
+`/plans/{pid}/schedule-health`, `/plans/{pid}/leveling` (proposal, then an explicit confirmed apply), `/resources` (role heatmap with a table twin) and `/plans/{pid}/schedule-risk` (histogram with P50 / P80 / P90 and a table twin). `tests/e2e/scheduling.spec.ts` runs axe over them and the milestone, KPI and OKR pages. Fixed two defects it found: links in running text are now underlined, and muted text meets the 4.5:1 contrast minimum.
+
 ### Added — milestones page
 
 `/milestones`: every milestone with status, forecast from the schedule, slip and how it was achieved; complete, reopen, reschedule with a reason, link tasks, and see the slip history.

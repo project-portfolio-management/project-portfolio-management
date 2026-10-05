@@ -17,6 +17,9 @@ export const PLAN_LINKS = [
   { key: "raci", module: "tasks" },
   { key: "earned-value", module: "financials" },
   { key: "calendar", module: "milestones" },
+  { key: "schedule-health", module: "tasks" },
+  { key: "leveling", module: "tasks" },
+  { key: "schedule-risk", module: "tasks" },
 ] as const;
 
 export type PlanLinkKey = (typeof PLAN_LINKS)[number]["key"];

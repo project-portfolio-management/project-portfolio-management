@@ -9,7 +9,15 @@ describe("visiblePlanLinks (RM-7)", () => {
   });
 
   it("shows only the links whose module is on", () => {
-    expect(visiblePlanLinks(["tasks", "time"])).toEqual(["board", "flow", "critical-path", "raci"]);
+    expect(visiblePlanLinks(["tasks", "time"])).toEqual([
+      "board",
+      "flow",
+      "critical-path",
+      "raci",
+      "schedule-health",
+      "leveling",
+      "schedule-risk",
+    ]);
     expect(visiblePlanLinks(["governance"])).toEqual(["governance"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
       "board",
@@ -18,6 +26,9 @@ describe("visiblePlanLinks (RM-7)", () => {
       "critical-path",
       "raci",
       "calendar",
+      "schedule-health",
+      "leveling",
+      "schedule-risk",
     ]);
   });
 
@@ -26,7 +37,14 @@ describe("visiblePlanLinks (RM-7)", () => {
   });
 
   it("every link names a module the service knows", () => {
-    const known = ["tasks", "time", "risks", "financials", "milestones", "governance"];
+    const known = [
+      "tasks",
+      "time",
+      "risks",
+      "financials",
+      "milestones",
+      "governance",
+    ];
     for (const l of PLAN_LINKS) expect(known).toContain(l.module);
   });
 });

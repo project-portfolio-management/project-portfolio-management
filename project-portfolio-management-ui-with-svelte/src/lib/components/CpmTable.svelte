@@ -29,7 +29,7 @@
     <tbody>
       {#each nodes as n (n.pid)}
         {@const st = floatState(n)}
-        <tr class={st.key}>
+        <tr class={st.key} id={`task-${n.pid}`}>
           <th scope="row">{n.title ?? "(untitled)"}</th>
           <td>{n.early_start}</td>
           <td>{n.early_finish}</td>

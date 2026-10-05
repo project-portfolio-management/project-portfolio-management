@@ -138,6 +138,183 @@ export interface Milestone {
   overdue: boolean;
 }
 
+// ---- Scheduling canon views (SC-6 .. SC-9) ----
+
+/** One of the fourteen schedule health checks (SC-9). */
+export interface HealthCheck {
+  id: number;
+  key: string;
+  name: string;
+  of_what: string;
+  count: number;
+  of: number;
+  value: number | null;
+  threshold: { op: string; limit: number | null; unit: "percent" | "milli" | "days" | "result" };
+  /** Null when the check cannot be computed (never a pass). */
+  pass: boolean | null;
+  reason: string | null;
+  offenders: { pid: string; title: string | null }[];
+  note: string | null;
+}
+
+/** `GET /api/plans/{pid}/schedule-health`. */
+export interface ScheduleHealth {
+  name: string;
+  disclaimer: string;
+  preset: string;
+  thresholds: { values: Record<string, number>; source: string };
+  plan_pid: string;
+  as_of: string;
+  calendar: string;
+  baseline: { version: number; taken: string } | null;
+  tasks: number;
+  checks: HealthCheck[];
+  passed: number;
+  failed: number;
+  not_computable: number;
+  all_pass: boolean;
+  note: string;
+}
+
+export interface LevelingRun {
+  person: string;
+  person_ref: string | null;
+  masked?: boolean;
+  from: string;
+  to: string;
+  demand: number | null;
+  capacity: number | null;
+  tasks: { pid: string; title: string | null }[];
+  reason?: string | null;
+}
+
+export interface LevelingMove {
+  pid: string;
+  title: string | null;
+  person: string;
+  person_ref: string | null;
+  masked?: boolean;
+  from_start: string;
+  to_start: string;
+  scheduled_start: string;
+  from_finish: string;
+  to_finish: string;
+  delay_days: number;
+  critical: boolean;
+  float_before: number;
+  float_after: number;
+  because_of: string;
+}
+
+/** `GET /api/plans/{pid}/leveling` (advice only). */
+export interface LevelingProposal {
+  advisory: boolean;
+  calendar: string;
+  allow_critical: boolean;
+  load_percent: number;
+  moves: LevelingMove[];
+  effects: { pid: string; title: string | null; moved: string; start_days: number; finish_days: number }[];
+  over_allocated: LevelingRun[];
+  unresolved: LevelingRun[];
+  finish_before: string | null;
+  finish_after: string | null;
+  finish_delay_days: number;
+  critical_moved: boolean;
+  truncated: boolean;
+  note: string;
+}
+
+export interface LevelingApplyResult {
+  requested: number;
+  ok: number;
+  refused: number;
+  results: { pid: string; result: "ok" | "refused"; note: string | null }[];
+  finish_before: string | null;
+  finish_after: string | null;
+  finish_delay_days: number;
+}
+
+export interface ResourceRow {
+  key: string;
+  demand_fte: number;
+  named_fte: number;
+  placeholder_fte: number;
+  proposed_fte: number;
+  /** Null for skills: supply is not known for them. */
+  supply_fte: number | null;
+  gap_fte: number | null;
+  headcount: number;
+}
+
+export interface ResourcePeriod {
+  from: string;
+  to: string;
+  days: number;
+  rows: ResourceRow[];
+  total_demand_fte: number;
+  total_placeholder_fte: number;
+  total_proposed_fte: number;
+}
+
+/** `GET /api/resource-plan`. */
+export interface ResourcePlan {
+  scope: { kind: string; name?: string };
+  from: string;
+  to: string;
+  period: "week" | "month";
+  group_by: "role" | "skill";
+  overlapping: boolean;
+  periods: ResourcePeriod[];
+  placeholders: { allocation_pid: string; plan_pid: string; role: string | null; percent: number; start_date: string | null; end_date: string | null; booking: string }[];
+  people_by_role: Record<string, string[]> | null;
+  masked: boolean;
+  note: string;
+}
+
+export interface RiskTask {
+  pid: string;
+  title: string | null;
+  optimistic: number;
+  likely: number;
+  pessimistic: number;
+  source: "estimated" | "fallback" | "milestone";
+  widened: boolean;
+  criticality_bp: number;
+  sensitivity: number | null;
+}
+
+/** `GET /api/plans/{pid}/schedule-risk`. */
+export interface ScheduleRisk {
+  plan_pid: string;
+  calendar: string;
+  assumptions: {
+    seed: number;
+    iterations: number;
+    max_iterations: number;
+    distribution: "triangular" | "pert";
+    fallback_band_percent: number;
+    correlation: string;
+    independence: string;
+    durations: string;
+    tasks_using_fallback: string[];
+    fallback: string;
+  };
+  cpm_finish: string | null;
+  percentiles: { p: number; finish: string }[];
+  cpm_finish_confidence_bp: number;
+  earliest: string | null;
+  latest: string | null;
+  histogram: { date: string; count: number }[];
+  tasks: RiskTask[];
+  events: {
+    used: { risk_pid: string; title: string; task_pid: string; probability_percent: number; impact_days: number }[];
+    skipped: { risk_pid: string; title: string; reason: string }[];
+    risks_without_schedule_fields: number;
+  };
+  unscheduled: { pid: string; title: string | null; reason: string }[];
+  note: string;
+}
+
 // ---- Milestones as a concept (portfolio view) ----
 
 export type MilestoneStatus = "achieved" | "late" | "due_soon" | "upcoming";
@@ -1504,6 +1681,39 @@ export class PpmClient {
   }
   alignment(pid: string): Promise<Alignment> {
     return this.http.get(`/api/objectives/${pid}/alignment`);
+  }
+
+  // ---- scheduling canon (SC-6 .. SC-9) ----
+  scheduleHealth(pid: string, asOf?: string): Promise<ScheduleHealth> {
+    return this.http.get(`/api/plans/${pid}/schedule-health${asOf ? `?as_of=${asOf}` : ""}`);
+  }
+  levelingProposal(pid: string, opts: { allowCritical?: boolean; loadPercent?: number } = {}): Promise<LevelingProposal> {
+    const q = new URLSearchParams();
+    if (opts.allowCritical) q.set("allow_critical", "true");
+    if (opts.loadPercent) q.set("load_percent", String(opts.loadPercent));
+    const qs = q.toString();
+    return this.http.get(`/api/plans/${pid}/leveling${qs ? `?${qs}` : ""}`);
+  }
+  applyLeveling(
+    pid: string,
+    body: { moves: { task_pid: string; start_date: string }[]; confirm: boolean; allow_critical?: boolean; load_percent?: number; reason?: string },
+  ): Promise<LevelingApplyResult> {
+    return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
+  }
+  resourcePlan(params: { from?: string; to?: string; period?: "week" | "month"; group_by?: "role" | "skill"; scenario?: string } = {}): Promise<ResourcePlan> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return this.http.get(`/api/resource-plan${qs ? `?${qs}` : ""}`);
+  }
+  scheduleRisk(pid: string, opts: { iterations?: number; seed?: number; distribution?: "triangular" | "pert"; fallbackBandPercent?: number } = {}): Promise<ScheduleRisk> {
+    const q = new URLSearchParams();
+    if (opts.iterations) q.set("iterations", String(opts.iterations));
+    if (opts.seed !== undefined) q.set("seed", String(opts.seed));
+    if (opts.distribution) q.set("distribution", opts.distribution);
+    if (opts.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(opts.fallbackBandPercent));
+    const qs = q.toString();
+    return this.http.get(`/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`);
   }
 
   // ---- OKRs ----

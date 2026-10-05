@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — a forecast could miss what had just happened
+
+The throughput forecasts (`GET /api/proposals/forecast`, `GET /api/plans/{pid}/forecast`) bucket history over a half-open window ending at "now", so an event stamped in the same millisecond as the request was dropped — intermittently, and only when the request followed the event closely. The window now ends one millisecond after "now" (`tba::history_window`), so everything recorded up to and including it is counted; the number of periods is unchanged.
+
 ### Changed — simulation inputs are returned by the lists
 
 `GET …/risks` now includes `task_pid`, `schedule_impact_days`, `probability_percent`, `cost_impact_minor` and `cost_currency`; task views and `GET …/cpm` nodes include `duration_optimistic_days` and `duration_pessimistic_days`.

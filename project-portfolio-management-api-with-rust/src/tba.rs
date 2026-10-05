@@ -1612,6 +1612,26 @@ impl Rng {
     }
 }
 
+/// The window of whole periods ending **at** `now_ms`, as `(from_ms, to_ms)`.
+///
+/// [`throughput_history`] buckets over the half-open interval `[from, to)`, so
+/// an event stamped in the very millisecond of `now_ms` would fall outside a
+/// window that simply ended at `now_ms` — and a forecast asked for right after
+/// something happened would miss it, some of the time (a real intermittent
+/// failure: three approvals counted as two). The window therefore ends one
+/// millisecond after `now_ms`, which puts everything recorded up to and
+/// including `now_ms` inside it while leaving the number of periods unchanged.
+#[must_use]
+pub fn history_window(now_ms: i64, periods: usize, period_ms: i64) -> (i64, i64) {
+    let to_ms = now_ms.saturating_add(1);
+    let from_ms = to_ms.saturating_sub(
+        i64::try_from(periods)
+            .unwrap_or(0)
+            .saturating_mul(period_ms),
+    );
+    (from_ms, to_ms)
+}
+
 /// Bucket completion instants into fixed periods, oldest first.
 ///
 /// This is the input a batch forecast actually needs — **not** the
@@ -2914,6 +2934,29 @@ mod tests {
     }
 
     // -- Monte-Carlo forecasting (§15 TBA-11) ------------------------------
+
+    #[test]
+    fn an_event_stamped_at_now_is_inside_the_history_window() {
+        let week = 7 * DAY_MS;
+        let now = at(100);
+        // The last of three completions is stamped in the same millisecond as "now".
+        let completed = vec![now - 3 * DAY_MS, now - DAY_MS, now];
+        let (from, to) = history_window(now, 6, week);
+        let history = throughput_history(&completed, from, to, week);
+        assert_eq!(history.len(), 6, "the number of periods is unchanged");
+        assert_eq!(
+            history.iter().sum::<usize>(),
+            3,
+            "nothing recorded up to now is dropped"
+        );
+        assert_eq!(history[5], 3);
+        // A window that simply ended at `now` would have dropped it.
+        let naive = throughput_history(&completed, now - 6 * week, now, week);
+        assert_eq!(naive.iter().sum::<usize>(), 2);
+        // An event after now is still outside.
+        let later = throughput_history(&[now + 5], from, to, week);
+        assert_eq!(later.iter().sum::<usize>(), 0);
+    }
 
     #[test]
     fn throughput_history_buckets_completions_into_whole_periods() {

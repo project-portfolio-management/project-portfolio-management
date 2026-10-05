@@ -795,12 +795,7 @@ async fn forecast(
         .filter_map(|task| task.done_at.map(|at| at.timestamp_millis()))
         .collect();
     let period_ms = period_days.saturating_mul(tba::DAY_MS);
-    let to_ms = now.timestamp_millis();
-    let from_ms = to_ms.saturating_sub(
-        i64::try_from(history_periods)
-            .unwrap_or(0)
-            .saturating_mul(period_ms),
-    );
+    let (from_ms, to_ms) = tba::history_window(now.timestamp_millis(), history_periods, period_ms);
     let history = tba::throughput_history(&completed_ms, from_ms, to_ms, period_ms);
 
     // What is left to do, so the default question is the useful one.

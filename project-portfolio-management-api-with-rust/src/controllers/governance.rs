@@ -371,12 +371,8 @@ async fn intake_forecast(
 
     let now = chrono::Utc::now();
     let period_ms = period_days.saturating_mul(crate::tba::DAY_MS);
-    let to_ms = now.timestamp_millis();
-    let from_ms = to_ms.saturating_sub(
-        i64::try_from(history_periods)
-            .unwrap_or(0)
-            .saturating_mul(period_ms),
-    );
+    let (from_ms, to_ms) =
+        crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms);
 
     let approved_ms: Vec<i64> = audit_logs::Entity::find()
         .filter(audit_logs::Column::Action.eq(rules::ProposalAction::Approve.token()))

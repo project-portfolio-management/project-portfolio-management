@@ -943,6 +943,17 @@ export const MY_WORK_BUCKETS = [
 ] as const;
 export type MyWorkBucket = (typeof MY_WORK_BUCKETS)[number];
 
+/**
+ * A task's own schedule figure (SC-10): the critical-path total float in
+ * working days. Only ever the caller's own task; absent (`null` on the task)
+ * when the engine has no schedule data for it.
+ */
+export interface MyTaskSchedule {
+  total_float: number;
+  critical: boolean;
+  late: boolean;
+}
+
 /** One task on the "My work" view. */
 export interface MyTask {
   pid: string;
@@ -952,6 +963,9 @@ export interface MyTask {
   points: number | null;
   plan_pid: string;
   plan_name: string;
+  /** Null when there is no schedule data; `schedule_reason` says why. */
+  schedule?: MyTaskSchedule | null;
+  schedule_reason?: string | null;
 }
 
 /** `GET /api/me/tasks` response (LT-3). Every bucket is always present. */

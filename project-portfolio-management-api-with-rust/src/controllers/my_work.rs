@@ -122,6 +122,43 @@ async fn my_tasks(
         .map(|p| (p.pid, p.name))
         .collect();
 
+    // SC-10: each of the caller's own tasks' float, from its plan's critical-path
+    // analysis. Only the caller's tasks are read out of it — nothing about
+    // anyone else's task, and no chain — so a worker with no plan-level view
+    // still sees their own tasks' float. A task the engine cannot place carries
+    // no figure and a reason, never a zero.
+    let mine: std::collections::HashSet<Uuid> = rows.iter().map(|t| t.pid).collect();
+    let mut schedule: HashMap<Uuid, Result<(i64, bool), &'static str>> = HashMap::new();
+    for plan_pid in readable.keys() {
+        let Ok(net) = super::cpm::load_network(&ctx, *plan_pid).await else {
+            continue;
+        };
+        match net.analyze(0) {
+            Err(_) => {
+                for t in net.rows.iter().filter(|t| mine.contains(&t.pid)) {
+                    schedule.insert(t.pid, Err("cycle"));
+                }
+            }
+            Ok(result) => {
+                for t in net.rows.iter().filter(|t| mine.contains(&t.pid)) {
+                    let figure = result
+                        .nodes
+                        .iter()
+                        .find(|n| n.pid == t.pid)
+                        .map(|n| Ok((n.total_float, n.critical)))
+                        .or_else(|| {
+                            result
+                                .unscheduled
+                                .iter()
+                                .find(|u| u.pid == t.pid)
+                                .map(|u| Err(u.reason))
+                        })
+                        .unwrap_or(Err("no_schedule_data"));
+                    schedule.insert(t.pid, figure);
+                }
+            }
+        }
+    }
     let items: Vec<(Option<chrono::NaiveDate>, serde_json::Value)> = rows
         .iter()
         .filter_map(|t| {
@@ -136,6 +173,20 @@ async fn my_tasks(
                         "points": t.points,
                         "plan_pid": t.plan_pid,
                         "plan_name": plan_name,
+                        // Null with a reason when there is no schedule data.
+                        "schedule": match schedule.get(&t.pid) {
+                            Some(Ok((float, critical))) => serde_json::json!({
+                                "total_float": float,
+                                "critical": critical,
+                                "late": *float < 0,
+                            }),
+                            _ => serde_json::Value::Null,
+                        },
+                        "schedule_reason": match schedule.get(&t.pid) {
+                            Some(Err(why)) => Some(*why),
+                            None => Some("no_schedule_data"),
+                            Some(Ok(_)) => None,
+                        },
                     }),
                 )
             })

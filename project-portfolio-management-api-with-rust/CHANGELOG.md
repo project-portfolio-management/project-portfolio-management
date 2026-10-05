@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — float for the worker (SC-10, 2026-10-05)
+
+`GET /api/me/tasks` gives each task a `schedule` block with its own critical-path total float (and `critical`, `late` flags), or `null` with a `schedule_reason` when there is no schedule data.
+
 ### Added — schedule health self-check (SC-9, 2026-10-05)
 
 `GET /api/plans/{pid}/schedule-health` runs fourteen DCMA-style checks (missing logic, leads, lags, relationship types, hard constraints, high and negative float, high duration, invalid dates, resources, missed tasks, critical path test, CPLI, BEI), each with count, threshold, pass and offenders by pid. A check that cannot be computed is `pass: null` with a reason, never a pass. A self-check, not a DCMA compliance assessment.

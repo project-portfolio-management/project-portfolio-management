@@ -12,6 +12,7 @@
   import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
+  import { floatText } from "#lib/my-work-view.js";
 
   const ppm = PpmClient.withFetch();
   let work = $state<MyWork | null>(null);
@@ -74,6 +75,16 @@
               <span class="small muted">
                 — {task.plan_name}{#if task.due_date} · due {task.due_date}{/if}
               </span>
+              <!-- SC-10: the task's own float, in words (never colour alone);
+                   nothing at all when there is no schedule data. -->
+              {#if floatText(task.schedule)}
+                {@const f = floatText(task.schedule)}
+                {#if f}
+                  <span class={`small float ${f.kind}`}>
+                    {#if f.kind === "late"}<span aria-hidden="true">⚠ </span>{/if}{f.text}
+                  </span>
+                {/if}
+              {/if}
             </li>
           {/each}
         </ul>
@@ -94,5 +105,15 @@
   }
   .overdue {
     color: var(--danger, #b00020);
+  }
+  .float {
+    display: block;
+  }
+  .float.late {
+    color: var(--danger, #b00020);
+    font-weight: 600;
+  }
+  .float.critical {
+    font-weight: 600;
   }
 </style>

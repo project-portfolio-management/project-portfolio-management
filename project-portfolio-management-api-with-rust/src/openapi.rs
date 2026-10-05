@@ -1434,7 +1434,7 @@ fn personal_paths() -> Value {
             "get": {
                 "tags": ["me"],
                 "summary": "The caller's open tasks by due date, in the caller's own zone",
-                "description": "Five buckets, always all present: overdue, today, this_week (the next six days), later, undated. An undated task is a finding, never treated as due. 'Today' is the caller's local date in tz, so one due date can be today in one zone and overdue in another at the same instant. Tasks in plans the caller cannot read are omitted and counted in omitted_unreadable. A token whose sub is not a UUID cannot be matched to assignments and gets empty buckets with reason sub_not_addressable.",
+                "description": "Five buckets, always all present: overdue, today, this_week (the next six days), later, undated. An undated task is a finding, never treated as due. 'Today' is the caller's local date in tz, so one due date can be today in one zone and overdue in another at the same instant. Tasks in plans the caller cannot read are omitted and counted in omitted_unreadable. A token whose sub is not a UUID cannot be matched to assignments and gets empty buckets with reason sub_not_addressable. Each task also carries schedule (SC-10): its own critical-path total_float in working days with critical and late flags, or null with schedule_reason when there is no schedule data (never a zero); only the caller's own tasks' figures are read, none about anyone else's.",
                 "security": [{ "bearer": [] }],
                 "parameters": [
                     tz,

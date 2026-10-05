@@ -220,6 +220,75 @@ async fn my_work_buckets_by_due_date_in_the_callers_zone() {
             .json();
         assert_eq!(carol["total"], 0);
         assert_eq!(carol["reason"], "sub_not_addressable");
+
+        // SC-10: float for the worker. A second plan with scheduled tasks.
+        let plan2: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Gemini" }))
+            .await
+            .json();
+        let p2 = plan2["pid"].as_str().expect("plan pid").to_string();
+        let sched = |title: &str, who: &str, days: Option<i64>| {
+            let mut body = json!({ "title": title, "assignee_ref": who });
+            if let Some(d) = days {
+                body["start_date"] = json!("2026-10-05");
+                body["duration_days"] = json!(d);
+            }
+            body
+        };
+        let mut pids = std::collections::HashMap::new();
+        for (title, who, days) in [
+            ("long", &alice_p, Some(5)),
+            ("short", &alice_p, Some(2)),
+            ("late", &alice_p, Some(5)),
+            ("bobs short", &bob_p, Some(2)),
+            ("unplanned", &alice_p, None),
+        ] {
+            let t: Value = request
+                .post(&format!("/api/plans/{p2}/tasks"))
+                .json(&sched(title, who, days))
+                .await
+                .json();
+            pids.insert(title, t["pid"].as_str().expect("task pid").to_string());
+        }
+        // A deadline two days into a five-day task: negative float.
+        request
+            .put(&format!("/api/plans/{p2}/tasks/{}/schedule", pids["late"]))
+            .json(&json!({ "start_date": "2026-10-05", "duration_days": 5, "deadline": "2026-10-07" }))
+            .await
+            .assert_status_ok();
+        let mine: Value = request
+            .get(&format!("/api/me/tasks?tz=UTC&as_of={AS_OF}"))
+            .add_header(ak.clone(), av.clone())
+            .await
+            .json();
+        let find = |title: &str| -> Value {
+            ["overdue", "today", "this_week", "later", "undated"]
+                .iter()
+                .flat_map(|b| mine["buckets"][b].as_array().cloned().unwrap_or_default())
+                .find(|t| t["title"] == title)
+                .unwrap_or_else(|| panic!("{title} listed"))
+        };
+        let long = find("long");
+        assert_eq!(long["schedule"]["critical"], true, "it finishes with the project");
+        assert_eq!(long["schedule"]["total_float"], 0);
+        assert_eq!(long["schedule"]["late"], false);
+        let short = find("short");
+        assert!(short["schedule"]["total_float"].as_i64().unwrap() > 0);
+        assert_eq!(short["schedule"]["late"], false);
+        let late = find("late");
+        assert!(late["schedule"]["total_float"].as_i64().unwrap() < 0, "{late}");
+        assert_eq!(late["schedule"]["late"], true);
+        assert_eq!(late["schedule"]["critical"], true);
+        // No schedule data: no figure and a reason, never zero.
+        let plain = find("due Oct 20");
+        assert!(plain["schedule"].is_null());
+        assert_eq!(plain["schedule_reason"], "no_duration");
+        let unplanned = find("unplanned");
+        assert!(unplanned["schedule"].is_null());
+        assert!(unplanned["schedule_reason"].is_string());
+        // Nothing about other people's tasks appears.
+        assert!(!mine.to_string().contains("bobs short"));
     })
     .await;
 }

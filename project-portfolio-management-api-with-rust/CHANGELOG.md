@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — KPIs, and the OKR portfolio view (KO-1, KO-2, 2026-10-05)
+
+`/api/kpis` (+ readings): standing measures with a target and a red line; status, trend and staleness derived on read, `no_data` when unread. `GET /api/okrs` lists objectives with derived scores (unmeasured last); objectives and key results can now be edited and deleted (the baseline stays fixed).
+
 ### Added — float for the worker (SC-10, 2026-10-05)
 
 `GET /api/me/tasks` gives each task a `schedule` block with its own critical-path total float (and `critical`, `late` flags), or `null` with a `schedule_reason` when there is no schedule data.

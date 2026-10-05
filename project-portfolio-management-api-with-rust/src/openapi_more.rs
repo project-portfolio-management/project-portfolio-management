@@ -105,6 +105,7 @@ pub fn paths() -> Value {
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
+    merge(&mut all, kpi_okr_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -977,6 +978,55 @@ fn schedule_health_paths() -> Value {
                 "Runs fourteen checks over the plan's task network: missing logic, leads, lags, relationship types (finish-to-start share), hard constraints, high float, negative float, high duration, invalid dates, resources, missed tasks, the critical path test, the critical path length index (CPLI) and the baseline execution index (BEI). Each returns count, of, value, threshold, pass and offenders by pid, and names its denominator (incomplete tasks, relationships into incomplete tasks, or tasks baselined due by the status date). A check that cannot be computed (no baseline, a cycle, nothing to measure) has pass null and a reason and is never a pass; all_pass is true only when all fourteen were computed and passed. A self-check in the style of the DCMA 14-Point Assessment, not a DCMA compliance assessment. The preset (dcma-default) is echoed with its thresholds; PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS (JSON) overrides any, and the response shows the source.",
                 vec![uuid_param("pid"), query("as_of", false, "the status date, YYYY-MM-DD (default today)")],
                 &[("200", "checks, counts, thresholds and preset"), ("404", "Unknown plan"), ("422", "A bad as_of")])
+        }
+    })
+}
+
+/// KPIs, and the OKR portfolio view / edit / delete.
+fn kpi_okr_paths() -> Value {
+    json!({
+        "/api/kpis": {
+            "post": op("kpis", "Define a KPI",
+                "A standing measure: name, unit, direction (higher_better or lower_better), target_value, red_value (the line beyond which it is red, strictly on the worse side of the target), optional cadence (daily, weekly, monthly, quarterly), owner_ref, plan_pid (omit for a portfolio KPI) and objective_pid. Values are integers (scale them: basis points, minor units). Refused 422 when the red line is on the wrong side of the target.",
+                vec![], &[("200", "the new KPI's pid"), ("404", "Unknown plan"), ("422", "A bad direction, thresholds, cadence, owner or objective")]),
+            "get": op("kpis", "KPIs with their derived status",
+                "Each KPI carries status (green at or better than the target, red at or worse than the red line, amber between, no_data when it has no reading — never red or green), the latest reading, trend (direction-aware, from the last two readings) and stale (a cadence KPI with no reading within twice the interval). Ordered red, amber, no_data, green. summary counts every visible KPI whatever the status filter. KPIs on plans the caller cannot read are left out.",
+                vec![query("plan", false, "a plan pid"), query("objective", false, "an objective pid"), query("status", false, "green, amber, red or no_data"), query("as_of", false, "date staleness is judged against (default today)")],
+                &[("200", "kpis, summary, as_of"), ("422", "A bad status")])
+        },
+        "/api/kpis/{pid}": {
+            "get": op("kpis", "One KPI with its readings", "The definition, derived status, trend, staleness and the full reading history, newest first.",
+                vec![uuid_param("pid")], &[("200", "the KPI and its history"), ("404", "Unknown KPI, or on a plan the caller cannot read")]),
+            "put": op("kpis", "Edit a KPI",
+                "Name, description, unit, target, red line, cadence, owner and objective. The direction and the plan are not editable (changing which way is good would silently re-colour every past reading); sending one is refused. Audited with old and new.",
+                vec![uuid_param("pid")], &[("200", "the KPI"), ("404", "Unknown KPI"), ("422", "A bad field, thresholds, or an unknown field")]),
+            "delete": op("kpis", "Delete a KPI", "Soft delete; its readings are kept.",
+                vec![uuid_param("pid")], &[("200", "deleted"), ("404", "Unknown KPI")])
+        },
+        "/api/kpis/{pid}/readings": {
+            "post": op("kpis", "Record a reading",
+                "Append-only. observed_on defaults to today and may not be in the future. The latest by observed day (then entry order) is the one status rests on, so a correction is a newer reading for the same day. Returns the KPI with its new derived status.",
+                vec![uuid_param("pid")], &[("200", "the reading and the KPI"), ("404", "Unknown KPI"), ("422", "A future or implausible date")]),
+            "get": op("kpis", "Readings of a KPI", "Every reading, newest first; an earlier entry for a day that has a later one is marked superseded.",
+                vec![uuid_param("pid")], &[("200", "readings"), ("404", "Unknown KPI")])
+        },
+        "/api/okrs": {
+            "get": op("okrs", "Objectives with key results and derived scores",
+                "Every objective (optionally one period) with each key result's derived progress or the reason it has none, its latest check-in with confidence, and the objective's score. Ordered least progressed first; an objective with no measurable key result is unmeasured and sorts last, never as zero. Confidence is shown beside each key result and never blended into a score.",
+                vec![query("period", false, "an exact period, e.g. 2026-Q4")], &[("200", "objectives and as_of")])
+        },
+        "/api/objectives/{pid}": {
+            "put": op("okrs", "Edit an objective", "Replaces title, description and period (null clears the last two). Audited with old and new.",
+                vec![uuid_param("pid")], &[("200", "the objective"), ("404", "Unknown objective"), ("422", "A bad title or an unknown field")]),
+            "delete": op("okrs", "Delete an objective", "Soft delete. Its key results are read through it, and plans stop counting it toward their score.",
+                vec![uuid_param("pid")], &[("200", "deleted"), ("404", "Unknown objective")])
+        },
+        "/api/key-results/{pid}": {
+            "put": op("okrs", "Edit a key result",
+                "Title, target_value, tolerance, unit, owner_ref and due_date. The baseline (start_value), metric, direction and currency are not editable (progress from a moving baseline is not progress) and sending one is refused. The target may not equal the baseline. Audited with old and new.",
+                vec![uuid_param("pid")], &[("200", "the key result"), ("404", "Unknown key result"), ("422", "A bad value or a field that cannot be edited")]),
+            "delete": op("okrs", "Delete a key result", "Soft delete; scores that rest on it are recomputed without it.",
+                vec![uuid_param("pid")], &[("200", "deleted"), ("404", "Unknown key result")])
         }
     })
 }

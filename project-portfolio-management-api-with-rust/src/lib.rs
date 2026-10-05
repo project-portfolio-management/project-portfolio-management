@@ -75,6 +75,7 @@ pub mod guests;
 pub mod initializers;
 /// Pure derivations for the executive insight areas (CEO / CFO / CTO).
 pub mod insights;
+pub mod kpi;
 pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;

@@ -2059,6 +2059,7 @@ mod tests {
             crate::controllers::sinks::routes(),
             crate::controllers::report_schedules::routes(),
             crate::controllers::cpm::routes(),
+            crate::controllers::kpis::routes(),
             crate::controllers::leveling::routes(),
             crate::controllers::portfolio_resources::routes(),
             crate::controllers::schedule_risk::routes(),

@@ -217,6 +217,7 @@ pub mod earned_value;
 pub mod feeds;
 pub mod guests;
 pub mod includes;
+pub mod kpis;
 pub mod leveling;
 pub mod live;
 pub mod mspdi_import;

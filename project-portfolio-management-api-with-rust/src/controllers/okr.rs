@@ -347,6 +347,19 @@ async fn plan_okr(
         .await
         .map_err(db_err)?;
 
+    // A deleted objective no longer counts toward the plan.
+    let live: std::collections::HashSet<Uuid> = objectives::Entity::find()
+        .filter(objectives::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|o| o.pid)
+        .collect();
+    let links: Vec<_> = links
+        .into_iter()
+        .filter(|l| live.contains(&l.objective_pid))
+        .collect();
     let mut aligned = Vec::with_capacity(links.len());
     let mut detail = Vec::with_capacity(links.len());
     for link in &links {
@@ -381,6 +394,243 @@ async fn plan_okr(
     super::conditional_json(&headers, &etag, &body)
 }
 
+// ───────────────────────── portfolio view, edit and delete ─────────────────────────
+
+/// `GET /api/okrs?period=` query.
+#[derive(Debug, Deserialize)]
+struct OkrParams {
+    /// Only objectives of this period (an exact match).
+    #[serde(default)]
+    period: Option<String>,
+}
+
+/// `GET /api/okrs` — every objective with its key results, each one's derived
+/// progress (or why it has none) and latest check-in, and the objective's score.
+///
+/// Objectives are ordered **least progressed first** (where attention is needed),
+/// and an objective with no measurable key result is `unmeasured` and sorts
+/// **last** — never as a zero. Confidence is shown beside each key result and is
+/// never blended into a score.
+#[debug_handler]
+async fn list_okrs(
+    State(ctx): State<AppContext>,
+    axum::extract::Query(q): axum::extract::Query<OkrParams>,
+) -> Result<Response> {
+    let mut query = objectives::Entity::find().filter(objectives::Column::DeletedAt.is_null());
+    if let Some(period) = &q.period {
+        query = query.filter(objectives::Column::Period.eq(period.as_str()));
+    }
+    let objs = query
+        .order_by_asc(objectives::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut rows: Vec<(Option<i64>, serde_json::Value)> = Vec::with_capacity(objs.len());
+    for o in &objs {
+        let krs = key_results_of(&ctx, o.pid).await?;
+        let pids: Vec<Uuid> = krs.iter().map(|k| k.pid).collect();
+        let check_ins = if pids.is_empty() {
+            Vec::new()
+        } else {
+            key_result_check_ins::Entity::find()
+                .filter(key_result_check_ins::Column::KeyResultPid.is_in(pids))
+                .order_by_desc(key_result_check_ins::Column::ObservedAt)
+                .order_by_desc(key_result_check_ins::Column::Id)
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+        };
+        let facts: Vec<rules::KeyResultFact> = krs.iter().filter_map(fact_of).collect();
+        let score = rules::objective_score(&facts);
+        let view: Vec<serde_json::Value> = krs
+            .iter()
+            .map(|row| {
+                let (progress, reason) =
+                    fact_of(row).map_or((None, None), |fact| match rules::progress(&fact) {
+                        Ok(value) => (Some(value), None),
+                        Err(why) => (None, Some(why)),
+                    });
+                let latest = check_ins.iter().find(|c| c.key_result_pid == row.pid);
+                serde_json::json!({
+                    "key_result": row,
+                    "progress_basis_points": progress,
+                    "unmeasurable": reason,
+                    "latest_check_in": latest.map(|c| serde_json::json!({
+                        "observed_at": c.observed_at, "value": c.value,
+                        "confidence": c.confidence, "note": c.note })),
+                })
+            })
+            .collect();
+        rows.push((
+            score,
+            serde_json::json!({
+                "objective": o,
+                "score_basis_points": score,
+                "measured": score.is_some(),
+                "key_results": view,
+                "single_currency": rules::same_currency(&facts),
+            }),
+        ));
+    }
+    // Measured, least progressed first; unmeasured last. Stable on creation order.
+    rows.sort_by_key(|(score, _)| (score.is_none(), score.unwrap_or(0)));
+    format::json(serde_json::json!({
+        "period": q.period,
+        "objectives": rows.into_iter().map(|(_, v)| v).collect::<Vec<_>>(),
+        "as_of": chrono::Utc::now(),
+        "note": "Scores are derived on read. An objective with no measurable key result is unmeasured and sorts last, never as zero. Confidence is recorded beside each key result and never blended into a score.",
+    }))
+}
+
+/// `PUT /api/objectives/{pid}` body: replaces title, description and period.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ObjectiveUpdate {
+    title: String,
+    #[serde(default)]
+    description: Option<String>,
+    #[serde(default)]
+    period: Option<String>,
+}
+
+/// `PUT /api/objectives/{pid}` — edit an objective's title, description, period.
+#[debug_handler]
+async fn update_objective(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<ObjectiveUpdate>,
+) -> Result<Response> {
+    let objective = find_objective(&ctx, &pid).await?;
+    if b.title.trim().is_empty() || b.title.len() > crate::validation::MAX_TEXT_LEN {
+        return Err(unprocessable("title is required (and capped)"));
+    }
+    let was = serde_json::json!({ "title": objective.title, "description": objective.description,
+                                   "period": objective.period });
+    let mut a: objectives::ActiveModel = objective.into();
+    a.title = ActiveValue::set(b.title.trim().to_string());
+    a.description = ActiveValue::set(b.description.clone());
+    a.period = ActiveValue::set(b.period.clone());
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "objective_updated",
+        caller.actor(),
+        Some(serde_json::json!({ "from": was, "to": { "title": row.title,
+            "description": row.description, "period": row.period } })),
+    )
+    .await
+    .ok();
+    format::json(row)
+}
+
+/// `DELETE /api/objectives/{pid}` — soft-delete an objective. Its key results go
+/// with it (they are read through it), and plans stop counting it.
+#[debug_handler]
+async fn delete_objective(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+) -> Result<Response> {
+    let objective = find_objective(&ctx, &pid).await?;
+    let row_pid = objective.pid;
+    let mut a: objectives::ActiveModel = objective.into();
+    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    a.update(&ctx.db).await.map_err(db_err)?;
+    AuditModel::record(&ctx.db, row_pid, "objective_deleted", caller.actor(), None)
+        .await
+        .ok();
+    format::empty_json()
+}
+
+/// `PUT /api/key-results/{pid}` body. The baseline (`start_value`), `metric`,
+/// `direction` and `currency` are **not** editable — progress measured from a
+/// moving baseline, or a changed unit, is not progress — and sending one is
+/// refused.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct KeyResultUpdate {
+    title: String,
+    target_value: i64,
+    #[serde(default)]
+    tolerance: Option<i64>,
+    #[serde(default)]
+    unit: Option<String>,
+    #[serde(default)]
+    owner_ref: Option<String>,
+    #[serde(default)]
+    due_date: Option<chrono::NaiveDate>,
+}
+
+/// `PUT /api/key-results/{pid}` — edit a key result's title, target, tolerance,
+/// unit, owner and due date.
+#[debug_handler]
+async fn update_key_result(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<KeyResultUpdate>,
+) -> Result<Response> {
+    let kr = find_key_result(&ctx, &pid).await?;
+    if b.title.trim().is_empty() || b.title.len() > crate::validation::MAX_TEXT_LEN {
+        return Err(unprocessable("title is required (and capped)"));
+    }
+    if b.tolerance.is_some_and(|t| t < 0) {
+        return Err(unprocessable("tolerance must not be negative"));
+    }
+    let maintain = parse_direction(&kr.direction) == Some(rules::Direction::Maintain);
+    if maintain && b.tolerance.is_none() {
+        return Err(unprocessable("a `maintain` key result needs a `tolerance`"));
+    }
+    if !maintain && b.target_value == kr.start_value {
+        return Err(unprocessable(
+            "target_value equals the baseline, so there would be no distance to travel",
+        ));
+    }
+    let was = serde_json::json!({ "title": kr.title, "target_value": kr.target_value,
+        "tolerance": kr.tolerance, "unit": kr.unit, "owner_ref": kr.owner_ref, "due_date": kr.due_date });
+    let mut a: key_results::ActiveModel = kr.into();
+    a.title = ActiveValue::set(b.title.trim().to_string());
+    a.target_value = ActiveValue::set(b.target_value);
+    a.tolerance = ActiveValue::set(b.tolerance);
+    a.unit = ActiveValue::set(b.unit.clone());
+    a.owner_ref = ActiveValue::set(b.owner_ref.clone());
+    a.due_date = ActiveValue::set(b.due_date);
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "key_result_updated",
+        caller.actor(),
+        Some(serde_json::json!({ "from": was, "to": { "title": row.title,
+            "target_value": row.target_value, "tolerance": row.tolerance, "unit": row.unit,
+            "owner_ref": row.owner_ref, "due_date": row.due_date } })),
+    )
+    .await
+    .ok();
+    format::json(row)
+}
+
+/// `DELETE /api/key-results/{pid}` — soft-delete a key result. Scores that rest
+/// on it are recomputed without it.
+#[debug_handler]
+async fn delete_key_result(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+) -> Result<Response> {
+    let kr = find_key_result(&ctx, &pid).await?;
+    let row_pid = kr.pid;
+    let mut a: key_results::ActiveModel = kr.into();
+    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    a.update(&ctx.db).await.map_err(db_err)?;
+    AuditModel::record(&ctx.db, row_pid, "key_result_deleted", caller.actor(), None)
+        .await
+        .ok();
+    format::empty_json()
+}
+
 /// The OKR routes.
 #[must_use]
 pub fn routes() -> Routes {
@@ -391,4 +641,9 @@ pub fn routes() -> Routes {
         .add("/key-results/{pid}/check-ins", post(create_check_in))
         .add("/key-results/{pid}/check-ins", get(list_check_ins))
         .add("/plans/{pid}/okr", get(plan_okr))
+        .add("/okrs", get(list_okrs))
+        .add("/objectives/{pid}", put(update_objective))
+        .add("/objectives/{pid}", delete(delete_objective))
+        .add("/key-results/{pid}", put(update_key_result))
+        .add("/key-results/{pid}", delete(delete_key_result))
 }

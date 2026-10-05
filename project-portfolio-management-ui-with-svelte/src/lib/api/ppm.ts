@@ -251,6 +251,112 @@ export interface Objective {
   period: string | null;
 }
 
+// ---- OKRs (the portfolio view) and KPIs ----
+
+export type KeyResultMetric = "number" | "percent" | "currency" | "boolean";
+export type KeyResultDirection = "increase" | "decrease" | "maintain";
+
+export interface KeyResult {
+  pid: string;
+  objective_pid: string;
+  title: string;
+  metric: KeyResultMetric;
+  direction: KeyResultDirection;
+  start_value: number;
+  target_value: number;
+  current_value: number;
+  tolerance: number | null;
+  unit: string | null;
+  currency: string | null;
+  owner_ref: string | null;
+  due_date: string | null;
+}
+
+export interface OkrKeyResult {
+  key_result: KeyResult;
+  /** Null with `unmeasurable` saying why; never a zero standing in for "unknown". */
+  progress_basis_points: number | null;
+  unmeasurable: string | null;
+  latest_check_in: {
+    observed_at: string;
+    value: number;
+    /** 0-100; recorded beside the score, never blended into it. */
+    confidence: number | null;
+    note: string | null;
+  } | null;
+}
+
+export interface OkrObjective {
+  objective: Objective;
+  score_basis_points: number | null;
+  measured: boolean;
+  key_results: OkrKeyResult[];
+  single_currency: boolean;
+}
+
+/** `GET /api/okrs`. */
+export interface OkrList {
+  period: string | null;
+  objectives: OkrObjective[];
+  as_of: string;
+  note: string;
+}
+
+export type KpiStatus = "green" | "amber" | "red" | "no_data";
+export type KpiDirection = "higher_better" | "lower_better";
+export type KpiCadence = "daily" | "weekly" | "monthly" | "quarterly";
+export type KpiTrend = "improving" | "worsening" | "flat";
+
+export interface Kpi {
+  pid: string;
+  plan_pid: string | null;
+  objective_pid: string | null;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  direction: KpiDirection;
+  target_value: number;
+  red_value: number;
+  cadence: KpiCadence | null;
+  owner_ref: string | null;
+}
+
+export interface KpiReading {
+  pid: string;
+  observed_on: string;
+  value: number;
+  note: string | null;
+  actor: string | null;
+}
+
+/** A KPI with everything derived on read. */
+export interface KpiView {
+  kpi: Kpi;
+  status: KpiStatus;
+  latest: { value: number; observed_on: string; note: string | null } | null;
+  trend: KpiTrend | null;
+  /** Null when the KPI has no cadence. */
+  stale: boolean | null;
+  readings: number;
+  /** Only on `GET /api/kpis/{pid}`. */
+  history?: KpiReading[];
+}
+
+export interface KpiSummary {
+  green: number;
+  amber: number;
+  red: number;
+  no_data: number;
+}
+
+/** `GET /api/kpis`. */
+export interface KpiList {
+  as_of: string;
+  kpis: KpiView[];
+  summary: KpiSummary;
+  note: string;
+}
+
 export interface Alignment {
   objective_pid: string;
   title: string;
@@ -1308,6 +1414,53 @@ export class PpmClient {
   }
   alignment(pid: string): Promise<Alignment> {
     return this.http.get(`/api/objectives/${pid}/alignment`);
+  }
+
+  // ---- OKRs ----
+  okrs(period?: string): Promise<OkrList> {
+    const q = period ? `?period=${encodeURIComponent(period)}` : "";
+    return this.http.get(`/api/okrs${q}`);
+  }
+  updateObjective(pid: string, body: { title: string; description?: string | null; period?: string | null }): Promise<Objective> {
+    return this.http.put(`/api/objectives/${pid}`, { body });
+  }
+  deleteObjective(pid: string): Promise<void> {
+    return this.http.delete(`/api/objectives/${pid}`);
+  }
+  createKeyResult(objectivePid: string, body: unknown): Promise<{ pid: string }> {
+    return this.http.post(`/api/objectives/${objectivePid}/key-results`, { body });
+  }
+  updateKeyResult(pid: string, body: unknown): Promise<KeyResult> {
+    return this.http.put(`/api/key-results/${pid}`, { body });
+  }
+  deleteKeyResult(pid: string): Promise<void> {
+    return this.http.delete(`/api/key-results/${pid}`);
+  }
+  checkIn(keyResultPid: string, body: { value: number; confidence?: number | null; note?: string | null }): Promise<unknown> {
+    return this.http.post(`/api/key-results/${keyResultPid}/check-ins`, { body });
+  }
+
+  // ---- KPIs ----
+  kpis(params: { plan?: string; objective?: string; status?: KpiStatus } = {}): Promise<KpiList> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return this.http.get(`/api/kpis${qs ? `?${qs}` : ""}`);
+  }
+  kpi(pid: string): Promise<KpiView> {
+    return this.http.get(`/api/kpis/${pid}`);
+  }
+  createKpi(body: unknown): Promise<{ pid: string }> {
+    return this.http.post("/api/kpis", { body });
+  }
+  updateKpi(pid: string, body: unknown): Promise<Kpi> {
+    return this.http.put(`/api/kpis/${pid}`, { body });
+  }
+  deleteKpi(pid: string): Promise<void> {
+    return this.http.delete(`/api/kpis/${pid}`);
+  }
+  addKpiReading(pid: string, body: { value: number; observed_on?: string; note?: string | null }): Promise<{ reading_pid: string; kpi: KpiView }> {
+    return this.http.post(`/api/kpis/${pid}/readings`, { body });
   }
 
   // ---- reports (PPM-9) ----

@@ -38,6 +38,8 @@ pub mod ideas;
 pub mod insight_snapshots;
 pub mod key_result_check_ins;
 pub mod key_results;
+pub mod kpi_readings;
+pub mod kpis;
 pub mod merge_records;
 pub mod milestones;
 pub mod non_working_periods;

@@ -82,6 +82,7 @@ mod m20261003_000033_earned_value;
 mod m20261003_000034_earned_value_snapshots;
 mod m20261004_000035_resource_roles;
 mod m20261004_000036_schedule_risk_inputs;
+mod m20261005_000037_kpis;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -164,6 +165,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261003_000034_earned_value_snapshots::Migration),
             Box::new(m20261004_000035_resource_roles::Migration),
             Box::new(m20261004_000036_schedule_risk_inputs::Migration),
+            Box::new(m20261005_000037_kpis::Migration),
             // inject-above (do not remove this comment)
         ]
     }

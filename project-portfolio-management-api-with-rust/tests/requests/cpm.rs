@@ -1594,3 +1594,130 @@ async fn schedule_health_runs_fourteen_checks_and_never_passes_what_it_cannot_co
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_deleted() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let today = chrono::Utc::now().date_naive();
+        let day = |n: i64| (today - chrono::Duration::days(n)).to_string();
+
+        // ── KPIs ──
+        // The red line must sit on the worse side of the target.
+        request.post("/api/kpis").json(&json!({ "name": "Uptime", "direction": "higher_better", "target_value": 95, "red_value": 99 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post("/api/kpis").json(&json!({ "name": "Defects", "direction": "lower_better", "target_value": 5, "red_value": 2 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post("/api/kpis").json(&json!({ "name": "x", "direction": "sideways", "target_value": 1, "red_value": 0 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let k: Value = request.post("/api/kpis").json(&json!({
+            "name": "Uptime", "unit": "percent", "direction": "higher_better",
+            "target_value": 95, "red_value": 80, "cadence": "weekly" })).await.json();
+        let kp = k["pid"].as_str().unwrap().to_string();
+        let defects: Value = request.post("/api/kpis").json(&json!({
+            "name": "Open defects", "direction": "lower_better", "target_value": 5, "red_value": 20 })).await.json();
+        let dp = defects["pid"].as_str().unwrap().to_string();
+
+        // No reading: no data — not red, not green.
+        let one: Value = request.get(&format!("/api/kpis/{kp}")).await.json();
+        assert_eq!(one["status"], "no_data");
+        assert_eq!(one["stale"], true, "a cadence KPI never read is stale");
+        assert!(one["latest"].is_null() && one["trend"].is_null());
+
+        let read = |pid: String, value: i64, on: String| {
+            let request = &request;
+            async move {
+                request.post(&format!("/api/kpis/{pid}/readings")).json(&json!({ "value": value, "observed_on": on })).await
+            }
+        };
+        let r = read(kp.clone(), 90, day(8)).await;
+        r.assert_status_ok();
+        assert_eq!(r.json::<Value>()["kpi"]["status"], "amber");
+        let r: Value = read(kp.clone(), 70, day(1)).await.json();
+        assert_eq!(r["kpi"]["status"], "red");
+        assert_eq!(r["kpi"]["trend"], "worsening");
+        assert_eq!(r["kpi"]["stale"], false);
+        // A real zero is a reading.
+        read(dp.clone(), 0, day(0)).await.assert_status_ok();
+        assert_eq!(request.get(&format!("/api/kpis/{dp}")).await.json::<Value>()["status"], "green");
+        // A future date is refused.
+        let future = (today + chrono::Duration::days(3)).to_string();
+        read(kp.clone(), 99, future).await.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // A correction is a newer reading for the same day; the status follows it.
+        let r: Value = read(kp.clone(), 99, day(1)).await.json();
+        assert_eq!(r["kpi"]["status"], "green");
+        let rs: Value = request.get(&format!("/api/kpis/{kp}/readings")).await.json();
+        let rs = rs["readings"].as_array().unwrap();
+        assert_eq!(rs.len(), 3);
+        assert_eq!(rs[0]["value"], 99);
+        assert_eq!(rs[1]["superseded"], true, "the 70 is superseded by the 99");
+
+        // The list: red first, summary over the whole set, filter by status.
+        let k2: Value = request.post("/api/kpis").json(&json!({
+            "name": "Cost per unit", "direction": "lower_better", "target_value": 10, "red_value": 30 })).await.json();
+        let k2p = k2["pid"].as_str().unwrap().to_string();
+        read(k2p.clone(), 40, day(0)).await.assert_status_ok();
+        let list: Value = request.get("/api/kpis").await.json();
+        assert_eq!(list["kpis"][0]["status"], "red");
+        assert!(list["summary"]["green"].as_u64().unwrap() >= 2 && list["summary"]["red"].as_u64().unwrap() >= 1);
+        let reds: Value = request.get("/api/kpis?status=red").await.json();
+        assert!(reds["kpis"].as_array().unwrap().iter().all(|x| x["status"] == "red"));
+        assert_eq!(reds["summary"], list["summary"], "the summary ignores the status filter");
+        request.get("/api/kpis?status=purple").await.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // Direction is not editable; thresholds are checked against it.
+        request.put(&format!("/api/kpis/{kp}")).json(&json!({ "name": "Uptime", "target_value": 95, "red_value": 80, "direction": "lower_better" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put(&format!("/api/kpis/{kp}")).json(&json!({ "name": "Uptime", "target_value": 95, "red_value": 97 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put(&format!("/api/kpis/{kp}")).json(&json!({ "name": "Uptime (SLO)", "target_value": 99, "red_value": 90 })).await.assert_status_ok();
+        let after: Value = request.get(&format!("/api/kpis/{kp}")).await.json();
+        assert_eq!(after["status"], "green", "99 still meets the new 99 target");
+        request.delete(&format!("/api/kpis/{k2p}")).await.assert_status_ok();
+        request.get(&format!("/api/kpis/{k2p}")).await.assert_status(S::NOT_FOUND);
+
+        // ── OKRs ──
+        let obj = |title: &'static str| {
+            let request = &request;
+            async move {
+                let o: Value = request.post("/api/objectives").json(&json!({ "title": title, "period": "2026-Q4" })).await.json();
+                o["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (measured, empty) = (obj("Grow").await, obj("Unmeasured one").await);
+        let kr: Value = request.post(&format!("/api/objectives/{measured}/key-results")).json(&json!({
+            "title": "Users", "metric": "number", "direction": "increase", "start_value": 0, "target_value": 100 })).await.json();
+        let krp = kr["pid"].as_str().unwrap().to_string();
+        request.post(&format!("/api/key-results/{krp}/check-ins")).json(&json!({ "value": 40, "confidence": 3 })).await.assert_status_ok();
+
+        let okrs: Value = request.get("/api/okrs?period=2026-Q4").await.json();
+        let objs = okrs["objectives"].as_array().unwrap();
+        assert_eq!(objs.len(), 2);
+        assert_eq!(objs[0]["objective"]["pid"], measured.as_str());
+        assert_eq!(objs[0]["score_basis_points"], 4000);
+        assert_eq!(objs[0]["key_results"][0]["latest_check_in"]["confidence"], 3);
+        assert_eq!(objs[1]["objective"]["pid"], empty.as_str());
+        assert_eq!(objs[1]["measured"], false, "unmeasured sorts last and is not a zero");
+        assert!(objs[1]["score_basis_points"].is_null());
+        let none: Value = request.get("/api/okrs?period=1999-Q1").await.json();
+        assert!(none["objectives"].as_array().unwrap().is_empty());
+
+        // The baseline and unit cannot be edited; the target can.
+        request.put(&format!("/api/key-results/{krp}")).json(&json!({ "title": "Users", "target_value": 200, "start_value": 50 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put(&format!("/api/key-results/{krp}")).json(&json!({ "title": "Users", "target_value": 0 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put(&format!("/api/key-results/{krp}")).json(&json!({ "title": "Active users", "target_value": 200 })).await.assert_status_ok();
+        let okrs: Value = request.get("/api/okrs?period=2026-Q4").await.json();
+        assert_eq!(okrs["objectives"][0]["score_basis_points"], 2000, "40 of 200 from a baseline of 0");
+
+        // Edit and delete an objective.
+        request.put(&format!("/api/objectives/{measured}")).json(&json!({ "title": "Grow faster", "period": "2026-Q4" })).await.assert_status_ok();
+        request.put(&format!("/api/objectives/{measured}")).json(&json!({ "title": "  " })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.delete(&format!("/api/key-results/{krp}")).await.assert_status_ok();
+        let okrs: Value = request.get("/api/okrs?period=2026-Q4").await.json();
+        assert!(okrs["objectives"].as_array().unwrap().iter().all(|o| o["measured"] == false), "with its key result gone it is unmeasured");
+        request.delete(&format!("/api/objectives/{measured}")).await.assert_status_ok();
+        request.delete(&format!("/api/objectives/{measured}")).await.assert_status(S::NOT_FOUND);
+        let okrs: Value = request.get("/api/okrs?period=2026-Q4").await.json();
+        assert_eq!(okrs["objectives"].as_array().unwrap().len(), 1);
+    })
+    .await;
+}

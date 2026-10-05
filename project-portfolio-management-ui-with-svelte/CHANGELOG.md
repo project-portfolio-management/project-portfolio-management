@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — KPI and OKR pages
+
+`/okrs` and `/kpis`: create, check in or read, edit and delete; derived scores and statuses, with "Not measured" and "No data yet" as their own states, and status as a word and shape rather than colour alone.
+
 ### Added — float on My work (SC-10)
 
 Each task on `/me` says "On the critical path", "N days of float", or, for negative float, "This is already late for the plan"; a task with no schedule data shows nothing. Plain text, not colour alone.

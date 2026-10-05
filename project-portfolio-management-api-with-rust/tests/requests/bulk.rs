@@ -363,3 +363,94 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
     .await;
     unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR") };
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_back() {
+    use project_portfolio_management_service::controllers::bulk::run_job;
+    use project_portfolio_management_service::models::_entities::bulk_jobs;
+    use sea_orm::{ActiveModelTrait, ActiveValue, ConnectionTrait};
+    super::isolate_search_index();
+    let dir = tempfile::tempdir().expect("tempdir");
+    // SAFETY: `#[serial]` — nothing else runs while this is set.
+    unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR", dir.path()) };
+    request::<App, _, _>(|request, ctx| async move {
+        use axum::http::StatusCode as S;
+        let audits = |action: &'static str| {
+            let db = ctx.db.clone();
+            async move { audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&db).await.unwrap() }
+        };
+        let cancel = |id: &str| {
+            let (request, url) = (&request, format!("/api/plans/bulk-jobs/{id}/cancel"));
+            async move { request.post(&url).await }
+        };
+
+        // Unknown and malformed ids are 404, not 500.
+        cancel("00000000-0000-4000-8000-00000000ffff").await.assert_status(S::NOT_FOUND);
+        cancel("not-a-uuid").await.assert_status(S::NOT_FOUND);
+
+        // A finished job: cancelling it is a no-op, not an error, and is not audited.
+        let rows: String = (0..25).map(|i| json!({ "name": format!("Plan {i}"), "kind": "Project", "code": format!("P-{i}") }).to_string()).collect::<Vec<_>>().join("\n");
+        let (code, first) = import(&request, "jsonl", &rows, None, "create").await;
+        assert_eq!(code, 202);
+        let id = first["job_id"].as_str().unwrap().to_string();
+        let done = job(&request, &id).await;
+        assert_eq!((done["status"].as_str(), done["progress"].as_i64()), (Some("completed"), Some(100)), "{done}");
+        let before = audits("bulk_job_cancel_requested").await + audits("bulk_job_cancelled").await;
+        let r: Value = cancel(&id).await.json();
+        assert_eq!((r["status"].as_str(), r["changed"].as_bool()), (Some("completed"), Some(false)));
+        assert_eq!(audits("bulk_job_cancel_requested").await + audits("bulk_job_cancelled").await, before);
+        assert_eq!(job(&request, &id).await["counts"]["created"], 25, "nothing was undone");
+
+        // A queued job is cancelled before it ever runs, and the worker leaves it alone.
+        let queued = bulk_jobs::ActiveModel {
+            pid: ActiveValue::set(uuid::Uuid::new_v4()),
+            entity: ActiveValue::set("plan".to_string()),
+            kind: ActiveValue::set("import".to_string()),
+            status: ActiveValue::set("queued".to_string()),
+            format: ActiveValue::set("jsonl".to_string()),
+            params: ActiveValue::set(json!({})),
+            rows_total: ActiveValue::set(0), rows_created: ActiveValue::set(0), rows_updated: ActiveValue::set(0),
+            rows_unchanged: ActiveValue::set(0), rows_queued_for_review: ActiveValue::set(0),
+            rows_failed: ActiveValue::set(0), rows_omitted: ActiveValue::set(0),
+            progress: ActiveValue::set(0),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .unwrap();
+        let qid = queued.pid.to_string();
+        let r: Value = cancel(&qid).await.json();
+        assert_eq!((r["status"].as_str(), r["changed"].as_bool()), (Some("cancelled"), Some(true)));
+        assert_eq!(audits("bulk_job_cancelled").await, 1);
+        run_job(&ctx, queued.pid).await.unwrap();
+        let after = job(&request, &qid).await;
+        assert_eq!((after["status"].as_str(), after["cancelled"].as_bool()), (Some("cancelled"), Some(true)), "the worker did not resurrect it");
+        let again: Value = cancel(&qid).await.json();
+        assert_eq!(again["changed"], false, "cancelling twice is harmless");
+        assert_eq!(audits("bulk_job_cancelled").await, 1, "audited once");
+
+        // A running job notices between rows, ends cancelled, keeps and counts what it did.
+        // (Re-queue the finished import with the cancel flag already raised.)
+        let plans_before = plan_count(&request).await;
+        ctx.db.execute_unprepared(&format!(
+            "UPDATE bulk_jobs SET status='queued', rows_total=0, rows_created=0, rows_updated=0, rows_unchanged=0, rows_queued_for_review=0, rows_failed=0, finished_at=NULL, cancel_requested_at=now() WHERE pid='{id}'"
+        )).await.unwrap();
+        run_job(&ctx, uuid::Uuid::parse_str(&id).unwrap()).await.unwrap();
+        let c = job(&request, &id).await;
+        assert_eq!(c["status"], "cancelled", "{c}");
+        assert_eq!(c["counts"]["created"], 0, "it stopped before the first row");
+        assert_eq!(c["rows_omitted"], 25, "and counted what it did not reach");
+        assert!(c["note"].as_str().unwrap().contains("were not reached"));
+        assert_eq!(plan_count(&request).await, plans_before, "no half-written rows");
+        assert_eq!(audits("bulk_job_cancelled").await, 2);
+
+        // Progress never goes backwards, whatever writes it.
+        ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 60 WHERE pid='{qid}'")).await.unwrap();
+        ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 10 WHERE pid='{qid}'")).await.unwrap();
+        assert_eq!(job(&request, &qid).await["progress"], 60);
+        assert!(ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 101 WHERE pid='{qid}'")).await.is_err(), "out of range is refused");
+    })
+    .await;
+}

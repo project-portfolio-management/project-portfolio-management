@@ -90,6 +90,7 @@ mod m20261006_000041_cost_rates;
 mod m20261006_000042_announcements;
 mod m20261006_000043_onboarding;
 mod m20261006_000044_hammocks;
+mod m20261006_000045_job_progress_cancel;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -180,6 +181,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261006_000042_announcements::Migration),
             Box::new(m20261006_000043_onboarding::Migration),
             Box::new(m20261006_000044_hammocks::Migration),
+            Box::new(m20261006_000045_job_progress_cancel::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -181,6 +181,17 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
         assert_eq!(with!(request.post(&format!("/api/plans/{p}/handover/preview")), writer).json(&hand).await.status_code(), 403);
         with!(request.post(&format!("/api/plans/{p}/handover/preview")), admin).json(&hand).await.assert_status_ok();
         assert_eq!(with!(request.get(&format!("/api/plans/{p}/closeout")), writer).await.status_code(), 200, "readiness names no one");
+
+        // Only the requester or an admin may cancel a bulk job; anyone else gets the 404 an unknown id would.
+        let imported = with!(request.post("/api/plans/import?format=jsonl&on_keyless=create"), writer)
+            .content_type("text/plain")
+            .text(r#"{"name":"Imported","kind":"Project","code":"IMP-1"}"#)
+            .await;
+        let job_id = imported.json::<Value>()["job_id"].as_str().unwrap().to_string();
+        let cancel_url = format!("/api/plans/bulk-jobs/{job_id}/cancel");
+        assert_eq!(with!(request.post(&cancel_url), fin).await.status_code(), 404, "not the requester, not an admin");
+        assert_eq!(with!(request.post(&cancel_url), writer).await.status_code(), 200, "the requester");
+        assert_eq!(with!(request.post(&cancel_url), admin).await.status_code(), 200, "an admin");
     })
     .await;
 }

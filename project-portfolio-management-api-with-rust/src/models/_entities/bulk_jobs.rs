@@ -34,6 +34,9 @@ pub struct Model {
     pub started_at: Option<DateTimeWithTimeZone>,
     pub finished_at: Option<DateTimeWithTimeZone>,
     pub failure_reason: Option<String>,
+    pub progress: i32,
+    pub cancel_requested_at: Option<DateTimeWithTimeZone>,
+    pub cancelled_by: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

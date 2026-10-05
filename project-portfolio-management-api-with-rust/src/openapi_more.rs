@@ -120,6 +120,7 @@ pub fn paths() -> Value {
     merge(&mut all, sandbox_paths());
     merge(&mut all, onboarding_paths());
     merge(&mut all, hammock_paths());
+    merge(&mut all, job_cancel_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1327,6 +1328,17 @@ fn hammock_paths() -> Value {
         "/api/plans/{pid}/hammocks/{h_pid}/links/{member}": {
             "delete": op("scheduling", "Remove a hammock link", "The span is recomputed on the next read. Audited.",
                 vec![uuid_param("pid"), uuid_param("h_pid"), uuid_param("member")], &[("200", "removed"), ("404", "Unknown link")])
+        }
+    })
+}
+
+/// Cancelling bulk jobs (PJ-11).
+fn job_cancel_paths() -> Value {
+    json!({
+        "/api/plans/bulk-jobs/{id}/cancel": {
+            "post": op("bulk", "Ask a bulk import or export to stop",
+                "Cooperative. A queued job is cancelled at once and never runs. A running job is told to stop, finishes the row it is on (each row is complete before the next begins, so no row is half-written), and ends `cancelled`: what it processed is kept and counted in counts, what it did not reach is in rows_omitted, and progress stays where it was. A cancelled export produces no file (a partial one would pass for a whole one). Cancelling a finished or already-cancelled job is a no-op (changed=false), not an error. Only the requester or an admin may cancel; anyone else gets the 404 an unknown id gets. Audited once (bulk_job_cancel_requested / bulk_job_cancelled). Job views carry progress (0-100, never decreasing; 100 only when finished), cancel_requested and cancelled.",
+                vec![uuid_param("id")], &[("200", "job_id, status, cancel_requested, changed"), ("404", "Unknown job, or not yours")])
         }
     })
 }

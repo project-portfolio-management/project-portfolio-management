@@ -476,6 +476,13 @@ impl Counters {
             == self.total
     }
 
+    /// The status of a job that was cancelled part-way: always `cancelled`, never
+    /// `completed`, whatever was finished — it says it stopped early.
+    #[must_use]
+    pub const fn cancelled_status() -> &'static str {
+        "cancelled"
+    }
+
     /// The terminal status of a job that ran to the end.
     #[must_use]
     pub const fn status(&self) -> &'static str {
@@ -487,9 +494,46 @@ impl Counters {
     }
 }
 
+/// How far a running job is, as a whole percent. It never reaches 100 while the job
+/// is still running (100 means finished), is never below 1 once a row is done, and
+/// is `0` for a job with nothing to do yet.
+#[must_use]
+pub fn progress_percent(done: i64, total: i64) -> i32 {
+    if total <= 0 || done <= 0 {
+        return 0;
+    }
+    let p = (done.min(total) * 100) / total;
+    i32::try_from(p.clamp(1, 99)).unwrap_or(99)
+}
+
+/// How many rows are processed between looks at the cancel flag.
+pub const CANCEL_CHECK_EVERY: usize = 10;
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn progress_is_whole_monotone_and_never_100_until_finished() {
+        assert_eq!(progress_percent(0, 10), 0);
+        assert_eq!(progress_percent(5, 10), 50);
+        assert_eq!(
+            progress_percent(10, 10),
+            99,
+            "100 is reserved for a finished job"
+        );
+        assert_eq!(progress_percent(1, 10_000), 1, "the first row shows");
+        assert_eq!(progress_percent(0, 0), 0);
+        assert_eq!(progress_percent(5, 0), 0, "no total, no claim");
+        assert_eq!(progress_percent(50, 10), 99, "never past the total");
+        let mut last = 0;
+        for done in 0..=200 {
+            let p = progress_percent(done, 200);
+            assert!(p >= last, "progress went backwards at {done}");
+            last = p;
+        }
+    }
+
     use serde_json::json;
 
     fn rich() -> Value {

@@ -211,6 +211,12 @@ fn job_view(
             .then(|| format!("/api/plans/export/{id}/download")),
         "expires_at": artifact_expiry,
         "failure_reason": job.failure_reason,
+        "progress": job.progress,
+        "cancel_requested": job.cancel_requested_at.is_some(),
+        "cancelled": job.status == "cancelled",
+        "note": (job.status == "cancelled").then(|| format!(
+            "cancelled: {} row(s) were processed and kept, {} were not reached",
+            job.rows_total, job.rows_omitted)),
         "started_at": job.started_at,
         "finished_at": job.finished_at,
     })
@@ -378,6 +384,9 @@ async fn new_job(
         started_at: ActiveValue::set(None),
         finished_at: ActiveValue::set(None),
         failure_reason: ActiveValue::set(None),
+        progress: ActiveValue::set(0),
+        cancel_requested_at: ActiveValue::set(None),
+        cancelled_by: ActiveValue::set(None),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -485,6 +494,76 @@ async fn export(
         .await
         .unwrap_or(job);
     Ok(accepted(&fresh))
+}
+
+// ───────────────────────────── cancel ─────────────────────────────
+
+/// `POST /api/plans/bulk-jobs/{id}/cancel` — ask a job to stop.
+///
+/// Cooperative: a **queued** job is cancelled at once (it never runs); a
+/// **running** one is told to stop and ends `cancelled` after the row it is on,
+/// keeping what it finished and counting what it did not reach. Cancelling a job
+/// that has already finished (or already been cancelled) is a no-op, not an error.
+/// Only the requester or an admin may cancel (anyone else gets the `404` an unknown
+/// id would). Audited, once.
+#[debug_handler]
+async fn cancel_job(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(id): Path<String>,
+) -> Result<Response> {
+    let job = find_job(&ctx, &id, None).await?;
+    visible(&job, &caller)?;
+    let now = chrono::Utc::now();
+    let who = caller.actor().map(str::to_string);
+    // Queued: cancel it before it starts. The claim in `run_job` needs `queued`, so
+    // the two cannot both win.
+    let queued = bulk_jobs::Entity::update_many()
+        .col_expr(bulk_jobs::Column::Status, Expr::value("cancelled"))
+        .col_expr(bulk_jobs::Column::CancelledBy, Expr::value(who.clone()))
+        .col_expr(bulk_jobs::Column::CancelRequestedAt, Expr::value(now))
+        .col_expr(bulk_jobs::Column::FinishedAt, Expr::value(now))
+        .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
+        .filter(bulk_jobs::Column::Pid.eq(job.pid))
+        .filter(bulk_jobs::Column::Status.eq("queued"))
+        .exec(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let (changed, kind) = if queued.rows_affected == 1 {
+        (true, "bulk_job_cancelled")
+    } else {
+        let running = bulk_jobs::Entity::update_many()
+            .col_expr(bulk_jobs::Column::CancelRequestedAt, Expr::value(now))
+            .col_expr(bulk_jobs::Column::CancelledBy, Expr::value(who.clone()))
+            .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
+            .filter(bulk_jobs::Column::Pid.eq(job.pid))
+            .filter(bulk_jobs::Column::Status.eq("running"))
+            .filter(bulk_jobs::Column::CancelRequestedAt.is_null())
+            .exec(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        (running.rows_affected == 1, "bulk_job_cancel_requested")
+    };
+    if changed {
+        AuditModel::record(
+            &ctx.db,
+            job.pid,
+            kind,
+            caller.actor(),
+            Some(serde_json::json!({ "kind": job.kind })),
+        )
+        .await
+        .ok();
+    }
+    let now_job = find_job(&ctx, &id, None).await?;
+    format::json(serde_json::json!({
+        "job_id": now_job.pid,
+        "status": now_job.status,
+        "cancel_requested": now_job.cancel_requested_at.is_some(),
+        "changed": changed,
+        "note": if changed { "asked to stop: a running job finishes the row it is on, keeps what it processed, and ends cancelled" }
+                else { "nothing to cancel: the job has already finished, or was already asked to stop" },
+    }))
 }
 
 // ───────────────────────────── status / download ─────────────────────────────
@@ -1026,6 +1105,7 @@ async fn finish(
 ) -> std::result::Result<(), String> {
     let mut m: bulk_jobs::ActiveModel = job.clone().into();
     m.status = ActiveValue::set(c.status().to_string());
+    m.progress = ActiveValue::set(100);
     m.rows_total = ActiveValue::set(c.total);
     m.rows_created = ActiveValue::set(c.created);
     m.rows_updated = ActiveValue::set(c.updated);
@@ -1041,6 +1121,68 @@ async fn finish(
         .await
         .map(|_| ())
         .map_err(|e| e.to_string())
+}
+
+/// Record how far a running job is. A trigger in the database makes the stored
+/// value monotone even if two updates race or a caller passes a lower number.
+async fn set_progress(ctx: &AppContext, job: Uuid, percent: i32) {
+    let _ = bulk_jobs::Entity::update_many()
+        .col_expr(
+            bulk_jobs::Column::Progress,
+            Expr::cust_with_values("GREATEST(progress, $1)", [percent]),
+        )
+        .filter(bulk_jobs::Column::Pid.eq(job))
+        .filter(bulk_jobs::Column::Status.eq("running"))
+        .exec(&ctx.db)
+        .await;
+}
+
+/// Whether someone asked for this job to stop.
+async fn cancel_requested(ctx: &AppContext, job: Uuid) -> bool {
+    bulk_jobs::Entity::find()
+        .filter(bulk_jobs::Column::Pid.eq(job))
+        .one(&ctx.db)
+        .await
+        .ok()
+        .flatten()
+        .is_some_and(|j| j.cancel_requested_at.is_some())
+}
+
+/// End a job that was cancelled part-way: `cancelled`, with what was processed kept
+/// and counted and what was not reached in `rows_omitted`.
+async fn finish_cancelled(
+    ctx: &AppContext,
+    job: &bulk_jobs::Model,
+    c: Counters,
+    not_reached: i64,
+    errors: Option<Uuid>,
+) -> std::result::Result<(), String> {
+    let mut m: bulk_jobs::ActiveModel = job.clone().into();
+    m.status = ActiveValue::set(bulk::Counters::cancelled_status().to_string());
+    m.rows_total = ActiveValue::set(c.total);
+    m.rows_created = ActiveValue::set(c.created);
+    m.rows_updated = ActiveValue::set(c.updated);
+    m.rows_unchanged = ActiveValue::set(c.unchanged);
+    m.rows_queued_for_review = ActiveValue::set(c.queued_for_review);
+    m.rows_failed = ActiveValue::set(c.failed);
+    m.rows_omitted = ActiveValue::set(not_reached);
+    m.error_artifact = ActiveValue::set(errors);
+    m.finished_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    m.updated_at = ActiveValue::set(chrono::Utc::now().into());
+    m.update(&ctx.db)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())?;
+    AuditModel::record(
+        &ctx.db,
+        job.pid,
+        "bulk_job_cancelled",
+        job.cancelled_by.as_deref().or(job.requested_by.as_deref()),
+        Some(serde_json::json!({ "counts": c, "not_reached": not_reached })),
+    )
+    .await
+    .ok();
+    Ok(())
 }
 
 async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
@@ -1062,7 +1204,12 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     let actor = job.requested_by.as_deref();
     let mut counters = Counters::default();
     let mut errors: Vec<RowError> = Vec::new();
-    for d in &decoded {
+    let total_rows = i64::try_from(decoded.len()).unwrap_or(i64::MAX);
+    let mut cancelled = cancel_requested(ctx, job.pid).await;
+    for (n, d) in decoded.iter().enumerate() {
+        if cancelled {
+            break;
+        }
         counters.total += 1;
         match &d.result {
             Err(errs) => {
@@ -1081,6 +1228,17 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
                     }
                 }
             }
+        }
+        // Each row is complete before the next begins, so stopping here leaves no
+        // half-written row. Look at the cancel flag every few rows, and say how far we are.
+        if (n + 1) % bulk::CANCEL_CHECK_EVERY == 0 {
+            set_progress(
+                ctx,
+                job.pid,
+                bulk::progress_percent(counters.total, total_rows),
+            )
+            .await;
+            cancelled = cancel_requested(ctx, job.pid).await;
         }
     }
     debug_assert!(counters.reconciles());
@@ -1101,6 +1259,16 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
             .pid,
         )
     };
+    if cancelled && counters.total < total_rows {
+        return finish_cancelled(
+            ctx,
+            job,
+            counters,
+            total_rows - counters.total,
+            error_artifact,
+        )
+        .await;
+    }
     finish(ctx, job, counters, 0, None, error_artifact).await?;
     AuditModel::record(
         &ctx.db,
@@ -1114,6 +1282,7 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
     let pids: Vec<Uuid> = job.params["pids"]
         .as_array()
@@ -1126,7 +1295,33 @@ async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     let masked = job.params["masking_profile"].as_str() != Some("full");
     let omitted = job.params["omitted"].as_i64().unwrap_or(0);
     let mut items: Vec<(Uuid, serde_json::Value)> = Vec::new();
-    for chunk in pids.chunks(500) {
+    let chunks = i64::try_from(pids.chunks(500).count()).unwrap_or(1);
+    for (n, chunk) in pids.chunks(500).enumerate() {
+        if cancel_requested(ctx, job.pid).await {
+            // A partial export would pass for a whole one, so a cancelled export
+            // produces no file; it says so and reports how far it got.
+            let c = Counters::default();
+            let done = i64::try_from(items.len()).unwrap_or(i64::MAX);
+            let c = Counters {
+                total: done,
+                unchanged: done,
+                ..c
+            };
+            return finish_cancelled(
+                ctx,
+                job,
+                c,
+                i64::try_from(pids.len()).unwrap_or(0) - done,
+                None,
+            )
+            .await;
+        }
+        set_progress(
+            ctx,
+            job.pid,
+            bulk::progress_percent(i64::try_from(n).unwrap_or(0), chunks),
+        )
+        .await;
         let rows = plans::Entity::find()
             .filter(plans::Column::Pid.is_in(chunk.to_vec()))
             .order_by_asc(plans::Column::Id)
@@ -1210,6 +1405,7 @@ pub fn routes() -> Routes {
         .add("/plans/bulk-jobs", get(list_jobs))
         .add("/plans/bulk-jobs/sweep", post(sweep))
         .add("/plans/bulk-jobs/{id}/errors", get(job_errors))
+        .add("/plans/bulk-jobs/{id}/cancel", post(cancel_job))
         .add("/plans/review-queue", get(list_queue))
         .add("/plans/review-queue/{pid}/confirm", post(confirm_item))
         .add("/plans/review-queue/{pid}/reject", post(reject_item))

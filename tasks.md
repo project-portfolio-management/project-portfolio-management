@@ -739,7 +739,7 @@ is `null` with a reason, never zero.
   over the person's availability (PJ-3) is flagged, not clamped silently;
   default behaviour of every existing task is unchanged.
 
-- [ ] **PJ-7 (S) — Hammock activities.** A task or plan of type `hammock` whose
+- [x] **PJ-7 (S) — Hammock activities.** **Landed 2026-10-06.** Migration `…_000044_hammocks` (`tasks.is_hammock`, `hammock_links`; a DB check that a hammock has no duration, work or constraint), `src/hammock.rs` (7 unit tests), `POST …/tasks/{pid}/hammock`, `POST/DELETE …/hammocks/{pid}/links`, `GET …/hammocks`, and `hammocks` on the CPM response. **Acceptance, as tested:** a hammock with no links is `unscheduled` (`no_links`; all-unscheduled or deleted links is `members_unscheduled`); it is **not in the dependency network** (excluded from `load_network`), so it never changes any task's float or the finish (asserted against the plan's CPM before and after), and it takes no dependency, schedule, assignment or sandbox edit (422); removing a link or deleting a member recomputes; a hammock can't link to itself, duplicate a link, link a task of another plan, or close a cycle of hammocks; hammocks nest. A task that carries schedule or dependencies can't become one (422 names what to clear). **Deviations:** links are to tasks **of the same plan** (a plan-level hammock and cross-plan spans wait for PJ-13); the MSPDI hammock id is still not imported; no front-end. A task or plan of type `hammock` whose
   start is the earliest and finish the latest of the items it links to, so a
   summary bar follows its links rather than its children (ProjectLibre's id
   100). Distinct from RM-5's roll-up (which follows children).

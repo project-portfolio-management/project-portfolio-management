@@ -75,6 +75,8 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
     let rows = tasks::Entity::find()
         .filter(tasks::Column::PlanPid.eq(plan_pid))
         .filter(tasks::Column::DeletedAt.is_null())
+        // A hammock is a derived span, not work: it is not in the network.
+        .filter(tasks::Column::IsHammock.eq(false))
         .order_by_asc(tasks::Column::Id)
         .all(&ctx.db)
         .await
@@ -228,6 +230,7 @@ async fn plan_cpm(
         "edges": net.edges.iter().map(|e| serde_json::json!({
             "pid": e.pid, "predecessor_pid": e.pred, "successor_pid": e.succ,
             "kind": e.kind, "lag_days": e.lag })).collect::<Vec<_>>(),
+        "hammocks": super::hammock::spans_for(&ctx, plan.pid, Some(&result)).await?,
         "ignored_edges": result.ignored_edges,
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,
@@ -273,6 +276,7 @@ pub(crate) fn may_set_hard_constraint(caller: &MaybeAuthUser) -> bool {
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/schedule` — set a task's planned start
 /// and working duration; answers with the task and **what moved** (PJ-8).
 #[debug_handler]
+#[allow(clippy::too_many_lines)]
 async fn set_schedule(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -317,6 +321,11 @@ async fn set_schedule(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+    if task.is_hammock {
+        return Err(unprocessable(
+            "a hammock's span is derived from the tasks it links to: it has no schedule of its own to set",
+        ));
+    }
     let analyse = |net: &Network| net.analyze(Options::default().near_critical_days);
     let before = analyse(&load_network(&ctx, plan.pid).await?);
     // A task that carries an assignment (units and work) has its third quantity

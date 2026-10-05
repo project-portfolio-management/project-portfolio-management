@@ -69,6 +69,7 @@ pub struct Model {
     /// one**, reported as `unclassified` and counted separately — never
     /// folded into `feature`.
     pub flow_type: Option<String>,
+    pub is_hammock: bool,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

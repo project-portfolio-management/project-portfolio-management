@@ -119,6 +119,7 @@ pub fn paths() -> Value {
     merge(&mut all, announcement_paths());
     merge(&mut all, sandbox_paths());
     merge(&mut all, onboarding_paths());
+    merge(&mut all, hammock_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1301,6 +1302,31 @@ fn onboarding_paths() -> Value {
             "post": op("onboarding", "Apply the previewed handover",
                 &format!("Needs If-Match: the preview's handover_etag (428 without). If what the person holds changed since, 409 stale_preview and nothing is written. Otherwise one transaction and one audit entry per item. {people}"),
                 vec![uuid_param("pid")], &[("200", "committed, audit_entries, holdings"), ("403", "Not permitted"), ("409", "Changed since the preview"), ("422", "Invalid"), ("428", "If-Match missing")])
+        }
+    })
+}
+
+/// Hammock activities (PJ-7).
+fn hammock_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/tasks/{t_pid}/hammock": {
+            "post": op("scheduling", "Make a task a hammock, or an ordinary task again",
+                "A hammock's span is derived from the tasks it links to, so it is not work: becoming one needs the task to carry no duration, work, constraint or dependency (422 names what to clear), and its stored start is cleared. Becoming ordinary again removes its links. Doing either twice changes nothing (changed=false). A hammock is not in the dependency network, so it never affects another task's float, and it has no schedule or assignment of its own. Audited.",
+                vec![uuid_param("pid"), uuid_param("t_pid")], &[("200", "pid, is_hammock, changed"), ("404", "Unknown plan or task"), ("422", "The task carries schedule or dependencies")])
+        },
+        "/api/plans/{pid}/hammocks": {
+            "get": op("scheduling", "Each hammock with the span derived from its links",
+                "Start is the earliest start and finish the latest finish of the tasks it links to (a linked hammock contributes its own span). With no links the span is unscheduled/no_links; with links that are all unscheduled or deleted, unscheduled/members_unscheduled: never an invented span. Derived on read from the critical-path analysis.",
+                vec![uuid_param("pid")], &[("200", "hammocks"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/hammocks/{h_pid}/links": {
+            "post": op("scheduling", "Link a hammock to a task or another hammock of the plan",
+                "member_pid must be a live task of the same plan. A hammock cannot link to itself, duplicate a link, or close a cycle of hammocks (422). Audited.",
+                vec![uuid_param("pid"), uuid_param("h_pid")], &[("200", "pid"), ("404", "Unknown plan or task"), ("422", "Not a hammock, a foreign task, a duplicate, or a cycle")])
+        },
+        "/api/plans/{pid}/hammocks/{h_pid}/links/{member}": {
+            "delete": op("scheduling", "Remove a hammock link", "The span is recomputed on the next read. Audited.",
+                vec![uuid_param("pid"), uuid_param("h_pid"), uuid_param("member")], &[("200", "removed"), ("404", "Unknown link")])
         }
     })
 }

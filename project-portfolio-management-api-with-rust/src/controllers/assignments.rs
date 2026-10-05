@@ -126,6 +126,11 @@ async fn set_assignment(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+    if task.is_hammock {
+        return Err(unprocessable(
+            "a hammock is a derived span, not work: it takes no assignment",
+        ));
+    }
     let Some(person) = task.assignee_ref.clone() else {
         return Err(unprocessable(
             "assign the task to someone first: units are a share of their day",

@@ -222,6 +222,7 @@ pub mod custom_fields;
 pub mod earned_value;
 pub mod feeds;
 pub mod guests;
+pub mod hammock;
 pub mod handover;
 pub mod includes;
 pub mod kpis;

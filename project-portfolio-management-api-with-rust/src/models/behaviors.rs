@@ -38,6 +38,7 @@ impl ActiveModelBehavior for earned_value_settings::ActiveModel {}
 impl ActiveModelBehavior for earned_value_snapshots::ActiveModel {}
 impl ActiveModelBehavior for resource_roles::ActiveModel {}
 impl ActiveModelBehavior for kpis::ActiveModel {}
+impl ActiveModelBehavior for hammock_links::ActiveModel {}
 impl ActiveModelBehavior for access_records::ActiveModel {}
 impl ActiveModelBehavior for onboarding_cases::ActiveModel {}
 impl ActiveModelBehavior for onboarding_items::ActiveModel {}

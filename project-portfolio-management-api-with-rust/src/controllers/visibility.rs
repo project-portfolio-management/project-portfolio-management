@@ -121,6 +121,22 @@ async fn create_dependency(
             return Err(Error::NotFound);
         }
     }
+    // A hammock is a derived span, not work: it is linked through hammock links, never dependencies.
+    if crate::models::_entities::tasks::Entity::find()
+        .filter(crate::models::_entities::tasks::Column::IsHammock.eq(true))
+        .filter(
+            crate::models::_entities::tasks::Column::Pid
+                .is_in([payload.predecessor_pid, payload.successor_pid]),
+        )
+        .one(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?
+        .is_some()
+    {
+        return Err(unprocessable(
+            "a hammock is a derived span, not work: link it with hammock links, not a dependency",
+        ));
+    }
     let existing = vis_models::all_dependencies(&ctx.db).await?;
     if existing.iter().any(|e| {
         e.predecessor_pid == payload.predecessor_pid && e.successor_pid == payload.successor_pid

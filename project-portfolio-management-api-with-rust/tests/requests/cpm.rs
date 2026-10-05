@@ -2891,3 +2891,310 @@ async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_hammock_follows_its_links_and_never_touches_the_network() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Hammocks" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        request
+            .put(&format!("/api/plans/{p}/calendar"))
+            .json(&json!({ "weekdays": "1111111" }))
+            .await
+            .assert_status_ok();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(3)).await; // 5-7 Oct
+        let b = task(&request, &p, "B", Some("2026-10-10"), Some(2)).await; // 10-11 Oct
+        let c = task(&request, &p, "C", Some("2026-10-06"), Some(1)).await; // 6 Oct
+        let dep: Value = request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a, "successor_pid": b, "lag_days": 0 }))
+            .await
+            .json();
+        let _ = dep;
+        let float_of = |cpm: &Value, pid: &str| {
+            cpm["nodes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|n| n["pid"] == pid)
+                .map(|n| n["total_float"].clone())
+        };
+        let cpm0: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+
+        // A task that carries schedule or dependencies cannot become a hammock; the answer says what to clear.
+        let h_url = |t: &str| format!("/api/plans/{p}/tasks/{t}/hammock");
+        let r = request
+            .post(&h_url(&a))
+            .json(&json!({ "enabled": true }))
+            .await;
+        r.assert_status(S::UNPROCESSABLE_ENTITY);
+        assert!(
+            r.text().contains("duration") && r.text().contains("dependencies"),
+            "{}",
+            r.text()
+        );
+        request
+            .post(&h_url("not-a-uuid"))
+            .json(&json!({ "enabled": true }))
+            .await
+            .assert_status(S::NOT_FOUND);
+
+        // A bare task becomes one; doing it twice changes nothing.
+        let h: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Summary" }))
+            .await
+            .json();
+        let h = h["pid"].as_str().unwrap().to_string();
+        assert_eq!(
+            request
+                .post(&h_url(&h))
+                .json(&json!({ "enabled": true }))
+                .await
+                .json::<Value>()["changed"],
+            true
+        );
+        assert_eq!(
+            request
+                .post(&h_url(&h))
+                .json(&json!({ "enabled": true }))
+                .await
+                .json::<Value>()["changed"],
+            false
+        );
+        let links = format!("/api/plans/{p}/hammocks/{h}/links");
+
+        // No links: unscheduled, never an invented span.
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        assert_eq!(
+            list["hammocks"][0]["span"],
+            json!({ "state": "unscheduled", "reason": "no_links" })
+        );
+
+        // Linking: validation first.
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": h }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": "00000000-0000-4000-8000-00000000ffff" }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .post(&format!("/api/plans/{p}/hammocks/{a}/links"))
+            .json(&json!({ "member_pid": c }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        let other: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Other" }))
+            .await
+            .json();
+        let foreign = task(
+            &request,
+            other["pid"].as_str().unwrap(),
+            "Elsewhere",
+            Some("2026-10-05"),
+            Some(1),
+        )
+        .await;
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": foreign }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // Span = earliest start to latest finish.
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": a }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": b }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": b }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        assert_eq!(
+            list["hammocks"][0]["span"],
+            json!({ "state": "scheduled", "start": "2026-10-05", "finish": "2026-10-11" })
+        );
+
+        // It is not in the network: it never changes anyone's float or the finish.
+        let cpm1: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        for t in [&a, &b, &c] {
+            assert_eq!(float_of(&cpm0, t), float_of(&cpm1, t), "float of {t}");
+        }
+        assert_eq!(cpm0["project_finish"], cpm1["project_finish"]);
+        assert!(
+            cpm1["nodes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|n| n["pid"] != h.as_str()),
+            "the hammock is not a CPM node"
+        );
+        assert_eq!(cpm1["hammocks"][0]["pid"], h.as_str());
+
+        // It has no schedule, assignment or dependency of its own.
+        request
+            .put(&format!("/api/plans/{p}/tasks/{h}/schedule"))
+            .json(&json!({ "start_date": "2026-10-05", "duration_days": 2 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .put(&format!("/api/plans/{p}/tasks/{h}/assignment"))
+            .json(&json!({ "units_percent": 100 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": h, "successor_pid": c, "lag_days": 0 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": c, "successor_pid": h, "lag_days": 0 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        let sandbox = request
+            .post(&format!("/api/plans/{p}/sandbox/preview"))
+            .json(&json!({ "edits": [{ "op": "duration", "task_pid": h, "duration_days": 4 }] }))
+            .await;
+        sandbox.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // Nesting, and no cycles.
+        let h2: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Outer" }))
+            .await
+            .json();
+        let h2 = h2["pid"].as_str().unwrap().to_string();
+        request
+            .post(&h_url(&h2))
+            .json(&json!({ "enabled": true }))
+            .await
+            .assert_status_ok();
+        let links2 = format!("/api/plans/{p}/hammocks/{h2}/links");
+        request
+            .post(&links2)
+            .json(&json!({ "member_pid": h }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&links2)
+            .json(&json!({ "member_pid": c }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&links)
+            .json(&json!({ "member_pid": h2 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        let outer = list["hammocks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["pid"] == h2.as_str())
+            .unwrap();
+        assert_eq!(
+            outer["span"]["finish"], "2026-10-11",
+            "the outer one spans the inner one"
+        );
+
+        // Removing a link recomputes; removing an unknown link is 404; a deleted member is ignored, not an error.
+        request
+            .delete(&format!("{links}/{b}"))
+            .await
+            .assert_status_ok();
+        request
+            .delete(&format!("{links}/{b}"))
+            .await
+            .assert_status(S::NOT_FOUND);
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        let inner = list["hammocks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["pid"] == h.as_str())
+            .unwrap();
+        assert_eq!(inner["span"]["finish"], "2026-10-07");
+        request
+            .delete(&format!("/api/plans/{p}/tasks/{a}"))
+            .await
+            .assert_status_ok();
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        let inner = list["hammocks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["pid"] == h.as_str())
+            .unwrap();
+        assert_eq!(
+            inner["span"],
+            json!({ "state": "unscheduled", "reason": "members_unscheduled" }),
+            "its only live link is gone"
+        );
+
+        // Back to an ordinary task: its links go with it.
+        request
+            .post(&h_url(&h))
+            .json(&json!({ "enabled": false }))
+            .await
+            .assert_status_ok();
+        let list: Value = request
+            .get(&format!("/api/plans/{p}/hammocks"))
+            .await
+            .json();
+        assert!(
+            list["hammocks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|x| x["pid"] != h.as_str())
+        );
+        let outer = list["hammocks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["pid"] == h2.as_str())
+            .unwrap();
+        assert_eq!(
+            outer["span"]["start"], "2026-10-06",
+            "the outer hammock now follows only the one task left"
+        );
+    })
+    .await;
+}

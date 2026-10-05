@@ -78,6 +78,8 @@ fn task_view(task: &tasks::Model) -> serde_json::Value {
         "due_date": task.due_date,
         "start_date": task.start_date,
         "duration_days": task.duration_days,
+        "duration_optimistic_days": task.duration_optimistic_days,
+        "duration_pessimistic_days": task.duration_pessimistic_days,
         "component_pid": task.component_pid,
         "parent_task_pid": task.parent_task_pid,
         "sprint_pid": task.sprint_pid,

@@ -13,7 +13,13 @@
   --mxi-color-border: var(--color-base-300, #e5e7eb);
   --mxi-color-primary: var(--color-primary, #2563eb);
   --mxi-color-primary-fg: var(--color-primary-content, #ffffff);
-  --mxi-color-danger: var(--color-error, #b91c1c);
+  /* The theme's error colour is a light tint that fails 4.5:1 as text on the page
+     background (2.7:1 measured); mixing in the text colour keeps its hue and passes. */
+  --mxi-color-danger: color-mix(
+    in oklch,
+    var(--color-error, #b91c1c) 55%,
+    var(--color-base-content, #111827)
+  );
   --mxi-color-success: var(--color-success, #15803d);
   --mxi-color-surface: var(--color-base-200, #ffffff);
   --mxi-radius: var(--radius-field, 6px);

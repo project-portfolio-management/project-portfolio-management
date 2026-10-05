@@ -6,6 +6,8 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
+  import RiskInputs from "#lib/components/RiskInputs.svelte";
+  import LineRange from "#lib/components/LineRange.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -181,7 +183,10 @@
     <tbody>
       {#each risks as risk (risk.pid)}
         <tr>
-          <td>{risk.title}{#if risk.mitigation}<div class="small muted">{risk.mitigation}</div>{/if}</td>
+          <td>
+            {risk.title}{#if risk.mitigation}<div class="small muted">{risk.mitigation}</div>{/if}
+            <RiskInputs {risk} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
+          </td>
           <td>{risk.probability}×{risk.impact} = <strong>{risk.exposure}</strong></td>
           <td><span class="chip" class:red={risk.status === "materialised"}>{risk.status}</span></td>
           <td>
@@ -219,12 +224,13 @@
   <summary><h2>{t("ppm.gov.budget")}</h2></summary>
   {#if budget}
     <table>
-      <thead><tr><th>Line</th><th>Planned</th><th>Actual</th><th>Record actual</th></tr></thead>
+      <thead><tr><th>Line</th><th>Planned</th><th>Range for cost risk</th><th>Actual</th><th>Record actual</th></tr></thead>
       <tbody>
         {#each budget.lines as line (line.pid)}
           <tr>
             <td>{line.description} <span class="chip">{line.category}</span></td>
             <td>{money(line.planned_minor, line.currency)}</td>
+            <td><LineRange {line} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} /></td>
             <td>{money(line.actual_minor, line.currency)}</td>
             <td>
               <form

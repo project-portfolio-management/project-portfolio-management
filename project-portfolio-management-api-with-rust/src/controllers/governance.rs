@@ -697,6 +697,11 @@ async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
                 "probability": r.probability, "impact": r.impact, "exposure": exposure,
                 "owner_ref": r.owner_ref, "mitigation": r.mitigation,
                 "review_date": r.review_date, "escalated_at": r.escalated_at,
+                // Simulation inputs (schedule-risk, cost-risk): the event's
+                // probability is shared by both.
+                "task_pid": r.task_pid, "schedule_impact_days": r.schedule_impact_days,
+                "probability_percent": r.schedule_probability_percent,
+                "cost_impact_minor": r.cost_impact_minor, "cost_currency": r.cost_currency,
             })
         })
         .collect();

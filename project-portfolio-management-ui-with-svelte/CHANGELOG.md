@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — forms for the Monte Carlo inputs
+
+On the governance page: a risk's simulation inputs (one probability, the task it delays, the cost it adds) and a budget line's low / high range. On the critical-path page: a task's optimistic / pessimistic range. Mistakes are refused in words before anything is sent. Fixed: the Escalate button's text contrast, and two input-handling bugs found by the browser tests.
+
 ### Added — cost-risk and joint-risk pages
 
 `/plans/{pid}/cost-risk`, `/cost-risk` (portfolio) and `/plans/{pid}/joint-risk`: histograms with labelled P50 / P80 / P90 and budget lines and a table twin, the joint confidence beside both marginals with a quadrant table and scatter, and every assumption stated.

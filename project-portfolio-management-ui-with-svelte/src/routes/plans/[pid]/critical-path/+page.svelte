@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { taskEstimateProblems, taskRangeText } from "#lib/simulation-inputs.js";
   import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -46,6 +47,10 @@
   // The editor's fields (an absent field clears it, so the form is always complete).
   let start = $state("");
   let duration = $state("");
+  let optimistic = $state("");
+  let pessimistic = $state("");
+  let estimateProblem = $state<string[]>([]);
+  let estimateSaved = $state(false);
   let ckind = $state("");
   let cdate = $state("");
   let deadline = $state("");
@@ -104,6 +109,10 @@
     const n = cpm?.nodes.find((x) => x.pid === p);
     start = n?.planned_start ?? "";
     duration = n?.duration_days === null || n?.duration_days === undefined ? "" : String(n.duration_days);
+    optimistic = n?.duration_optimistic_days === null || n?.duration_optimistic_days === undefined ? "" : String(n.duration_optimistic_days);
+    pessimistic = n?.duration_pessimistic_days === null || n?.duration_pessimistic_days === undefined ? "" : String(n.duration_pessimistic_days);
+    estimateProblem = [];
+    estimateSaved = false;
     ckind = n?.constraint ?? "";
     cdate = n?.constraint_date ?? "";
     deadline = n?.deadline ?? "";
@@ -111,6 +120,24 @@
   }
 
   const hard = $derived(ckind === "mso" || ckind === "mfo");
+
+  async function saveEstimate(event: SubmitEvent) {
+    event.preventDefault();
+    if (!selected) return;
+    estimateSaved = false;
+    estimateProblem = taskEstimateProblems(optimistic, pessimistic, node?.duration_days ?? null);
+    if (estimateProblem.length > 0) return;
+    try {
+      await ppm.setTaskEstimate(pid, selected, {
+        optimistic_days: optimistic === "" ? null : Number(optimistic),
+        pessimistic_days: pessimistic === "" ? null : Number(pessimistic),
+      });
+      estimateSaved = true;
+      await load();
+    } catch (err) {
+      error = err instanceof ApiError || err instanceof Error ? err.message : "Could not save the estimate";
+    }
+  }
 
   async function save(event: SubmitEvent) {
     event.preventDefault();
@@ -253,6 +280,15 @@
         {/if}
         <label>Deadline (a goal: it shows as negative float, it never moves the task) <input type="date" bind:value={deadline} /></label>
         <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save schedule"}</button>
+      </form>
+      <form onsubmit={saveEstimate} class="stack" aria-labelledby="est-h">
+        <h3 id="est-h">Range for schedule risk</h3>
+        <p class="small muted">{taskRangeText(node?.duration_optimistic_days, node?.duration_days ?? null, node?.duration_pessimistic_days)}. The duration above is the likely value.</p>
+        <label>Optimistic (working days) <input type="number" min="0" max="3650" step="1" bind:value={optimistic} /></label>
+        <label>Pessimistic (working days) <input type="number" min="0" max="3650" step="1" bind:value={pessimistic} /></label>
+        <button type="submit">Save range</button>
+        {#each estimateProblem as p (p)}<p class="banner" role="alert">{p}</p>{/each}
+        {#if estimateSaved}<p role="status" class="small">Range saved.</p>{/if}
       </form>
       {#if result}
         <div role="status" data-testid="moved">

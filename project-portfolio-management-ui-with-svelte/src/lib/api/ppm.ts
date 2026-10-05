@@ -67,6 +67,12 @@ export interface Risk {
   mitigation: string | null;
   review_date: string | null;
   escalated_at: string | null;
+  /** Simulation inputs (schedule risk and cost risk); one probability is shared. */
+  task_pid?: string | null;
+  schedule_impact_days?: number | null;
+  probability_percent?: number | null;
+  cost_impact_minor?: number | null;
+  cost_currency?: string | null;
 }
 
 export interface BudgetBoard {
@@ -77,6 +83,9 @@ export interface BudgetBoard {
     currency: string;
     planned_minor: number;
     actual_minor: number;
+    /** Low and high final cost for cost risk; the planned amount is the likely one. */
+    low_minor?: number | null;
+    high_minor?: number | null;
   }[];
   totals: {
     currency: string;
@@ -1123,6 +1132,9 @@ export interface CpmNode {
   planned_start: string | null;
   /** The stored working-day duration (0 = milestone). */
   duration_days: number | null;
+  /** Optimistic and pessimistic duration for schedule risk; the likely one is `duration_days`. */
+  duration_optimistic_days?: number | null;
+  duration_pessimistic_days?: number | null;
   /** Working days logic forces the start later than planned. */
   pushed_days: number;
   constraint: "snet" | "snlt" | "fnet" | "fnlt" | "mso" | "mfo" | null;
@@ -1832,6 +1844,20 @@ export class PpmClient {
     if (opts.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(opts.fallbackBandPercent));
     const qs = q.toString();
     return this.http.get(`/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`);
+  }
+
+  // ---- simulation inputs ----
+  setTaskEstimate(pid: string, taskPid: string, body: { optimistic_days: number | null; pessimistic_days: number | null }): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/estimate`, { body });
+  }
+  setLineEstimate(pid: string, linePid: string, body: { low_minor: number | null; high_minor: number | null }): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/budget-lines/${linePid}/estimate`, { body });
+  }
+  setRiskScheduleImpact(pid: string, riskPid: string, body: { task_pid: string | null; impact_days: number | null; probability_percent: number | null }): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/schedule-impact`, { body });
+  }
+  setRiskCostImpact(pid: string, riskPid: string, body: { cost_impact_minor: number | null; cost_currency: string | null; probability_percent?: number }): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/cost-impact`, { body });
   }
 
   // ---- cost-risk and joint Monte Carlo ----

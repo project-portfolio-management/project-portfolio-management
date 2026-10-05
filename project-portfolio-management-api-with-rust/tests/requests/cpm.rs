@@ -1436,6 +1436,26 @@ async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() 
             .json(&json!({ "optimistic_days": 3, "pessimistic_days": 10 }))
             .await
             .assert_status_ok();
+        let tasks: Value = request.get(&format!("/api/plans/{p}/tasks")).await.json();
+        let ta_listed = tasks["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["pid"] == a.as_str())
+            .cloned()
+            .unwrap();
+        assert_eq!(ta_listed["duration_optimistic_days"], 3);
+        assert_eq!(ta_listed["duration_pessimistic_days"], 10);
+        let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
+        let node = cpm["nodes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|n| n["pid"] == a.as_str())
+            .cloned()
+            .unwrap();
+        assert_eq!(node["duration_optimistic_days"], 3);
+        assert_eq!(node["duration_pessimistic_days"], 10);
         let est: Value = request
             .get(&url("fallback_band_percent=0&seed=3"))
             .await
@@ -2010,6 +2030,17 @@ async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
         put_cost(&rp, json!({ "cost_impact_minor": 0, "cost_currency": "GBP" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         put_cost(&rp, json!({ "cost_impact_minor": 4_000, "cost_currency": "gbp", "probability_percent": 100 })).await.assert_status_ok();
         put_cost(&np, json!({ "cost_impact_minor": 1_000, "cost_currency": "GBP" })).await.assert_status_ok();
+        // The inputs come back from the lists, so a form can show what is stored.
+        let listed: Value = request.get(&format!("/api/plans/{p}/risks")).await.json();
+        let mine = listed.as_array().unwrap().iter().find(|r| r["pid"] == rp.as_str()).cloned().unwrap();
+        assert_eq!(mine["cost_impact_minor"], 4_000);
+        assert_eq!(mine["cost_currency"], "GBP");
+        assert_eq!(mine["probability_percent"], 100);
+        assert!(mine["task_pid"].is_null() && mine["schedule_impact_days"].is_null());
+        let lines: Value = request.get(&format!("/api/plans/{p}/budget-lines")).await.json();
+        let first = lines["lines"].as_array().unwrap().iter().find(|l| l["pid"] == l1.as_str()).cloned().unwrap();
+        assert_eq!(first["low_minor"], 10_000);
+        assert_eq!(first["high_minor"], 10_000);
         let ev: Value = request.get(&url("fallback_band_percent=0&seed=2")).await.json();
         assert_eq!(ev["events"]["used"].as_array().unwrap().len(), 1);
         assert_eq!(ev["events"]["skipped"][0]["risk_pid"], np.as_str());

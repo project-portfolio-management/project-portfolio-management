@@ -641,7 +641,9 @@ test("cost risk: budget confidence, labelled P50/P80/P90 and budget, a table twi
   await expect(page.getByText("Unquantified: no probability")).toBeVisible();
   await expect(page.getByText(/drawn independently/)).toBeVisible();
   await page.getByText("The same figures as a table").click();
-  await expect(page.getByRole("cell", { name: "1500", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "1500", exact: true }),
+  ).toBeVisible();
   await audit(page);
 });
 
@@ -766,5 +768,206 @@ test("joint risk: the joint confidence sits beside both marginals, with a quadra
   await expect(
     page.getByText("Cost — Unquantified: no probability"),
   ).toBeVisible();
+  await audit(page);
+});
+
+// ───────────────────────── the simulation input forms ─────────────────────────
+
+const RISK_ID = "99999999-9999-4999-8999-999999999999";
+const LINE_ID = "88888888-8888-4888-8888-888888888888";
+
+async function stubGovernance(
+  page: Page,
+  sent: { method: string; path: string; body: unknown }[],
+) {
+  const put = (path: string) => (_r: Route, body: unknown) => {
+    sent.push({ method: "PUT", path, body });
+    return { ok: true };
+  };
+  await stub(page, {
+    [`GET /api/plans/${PLAN}/governance`]: {
+      pid: PLAN,
+      name: "Apollo",
+      stage: null,
+      next_gate: null,
+      gate_reviews: 0,
+      latest_review: null,
+      risks: { open: 1, materialised: 0, max_exposure: 9, total_exposure: 9 },
+      budget: [],
+    },
+    [`GET /api/plans/${PLAN}/gate-reviews`]: {
+      stage: null,
+      next_gate: null,
+      reviews: [],
+    },
+    [`GET /api/plans/${PLAN}/risks`]: [
+      {
+        pid: RISK_ID,
+        title: "Vendor slips",
+        status: "open",
+        probability: 3,
+        impact: 3,
+        exposure: 9,
+        owner_ref: null,
+        mitigation: null,
+        review_date: null,
+        escalated_at: null,
+        task_pid: null,
+        schedule_impact_days: null,
+        probability_percent: null,
+        cost_impact_minor: null,
+        cost_currency: null,
+      },
+    ],
+    [`GET /api/plans/${PLAN}/budget-lines`]: {
+      lines: [
+        {
+          pid: LINE_ID,
+          category: "capex",
+          description: "Platform build",
+          currency: "GBP",
+          planned_minor: 1_000_000,
+          actual_minor: 0,
+          low_minor: null,
+          high_minor: null,
+        },
+      ],
+      totals: [],
+    },
+    [`GET /api/plans/${PLAN}/benefits`]: { benefits: [], totals: [] },
+    [`GET /api/plans/${PLAN}/objectives`]: [],
+    [`GET /api/plans/${PLAN}/milestones`]: [],
+    [`GET /api/plans/${PLAN}/allocations`]: [],
+    "GET /api/objectives": [],
+    [`GET /api/plans/${PLAN}/tasks`]: {
+      tasks: [
+        {
+          pid: T1,
+          title: "Build the thing",
+          description: null,
+          status: "todo",
+          assignee_ref: null,
+          points: null,
+          due_date: null,
+        },
+      ],
+      counts: {},
+    },
+    [`PUT /api/plans/${PLAN}/risks/${RISK_ID}/cost-impact`]: put(
+      `/risks/${RISK_ID}/cost-impact`,
+    ),
+    [`PUT /api/plans/${PLAN}/risks/${RISK_ID}/schedule-impact`]: put(
+      `/risks/${RISK_ID}/schedule-impact`,
+    ),
+    [`PUT /api/plans/${PLAN}/budget-lines/${LINE_ID}/estimate`]: put(
+      `/budget-lines/${LINE_ID}/estimate`,
+    ),
+  });
+}
+
+test("risk inputs: a cost-only risk sends only the cost call, with one shared probability", async ({
+  page,
+}) => {
+  const sent: { method: string; path: string; body: unknown }[] = [];
+  await stubGovernance(page, sent);
+  await page.goto(`/en-001/plans/${PLAN}/governance`);
+  await expect(page.getByText("Not used in the simulations")).toBeVisible();
+  const risk = page.locator("details.risk-inputs");
+  await risk.locator("summary").click();
+  await risk.getByLabel("Probability (%)").fill("40");
+  await risk.getByLabel("Adds cost").fill("1500.50");
+  await risk.getByLabel("Currency").fill("gbp");
+  await risk.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0]).toEqual({
+    method: "PUT",
+    path: `/risks/${RISK_ID}/cost-impact`,
+    body: {
+      cost_impact_minor: 150_050,
+      cost_currency: "GBP",
+      probability_percent: 40,
+    },
+  });
+});
+
+test("risk inputs: a risk that delays a task and adds cost makes both calls, and mistakes are refused before any call", async ({
+  page,
+}) => {
+  const sent: { method: string; path: string; body: unknown }[] = [];
+  await stubGovernance(page, sent);
+  await page.goto(`/en-001/plans/${PLAN}/governance`);
+  const risk = page.locator("details.risk-inputs");
+  await risk.locator("summary").click();
+  // Days without a task: refused in words, nothing sent.
+  await risk.getByLabel("Probability (%)").fill("100");
+  await risk.getByLabel("by (working days)").fill("4");
+  await risk.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(
+    risk
+      .getByRole("alert")
+      .filter({ hasText: "task and the days it adds together" }),
+  ).toBeVisible();
+  expect(sent).toHaveLength(0);
+  // Fix it and add a cost.
+  await risk
+    .getByLabel("Delays task")
+    .selectOption({ label: "Build the thing" });
+  await risk.getByLabel("Adds cost").fill("40");
+  await risk.getByLabel("Currency").fill("GBP");
+  await risk.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => sent.length).toBe(2);
+  expect(sent.map((s) => s.path)).toEqual([
+    `/risks/${RISK_ID}/schedule-impact`,
+    `/risks/${RISK_ID}/cost-impact`,
+  ]);
+  expect(sent[0]?.body).toEqual({
+    task_pid: T1,
+    impact_days: 4,
+    probability_percent: 100,
+  });
+  expect(sent[1]?.body).toEqual({
+    cost_impact_minor: 4000,
+    cost_currency: "GBP",
+    probability_percent: 100,
+  });
+});
+
+test("budget line range: the high cannot be below the planned amount; a valid range is sent in minor units", async ({
+  page,
+}) => {
+  const sent: { method: string; path: string; body: unknown }[] = [];
+  await stubGovernance(page, sent);
+  await page.goto(`/en-001/plans/${PLAN}/governance`);
+  await expect(
+    page.getByText("No range: the simulation uses its fallback band"),
+  ).toBeVisible();
+  const range = page.locator("details.line-range");
+  await range.locator("summary").click();
+  await range.getByLabel("Low", { exact: true }).fill("8000");
+  await range.getByLabel("High", { exact: true }).fill("5000");
+  await range.getByRole("button", { name: "Save range" }).click();
+  await expect(
+    range
+      .getByRole("alert")
+      .filter({ hasText: "high amount cannot be below the planned amount" }),
+  ).toBeVisible();
+  expect(sent).toHaveLength(0);
+  await range.getByLabel("High", { exact: true }).fill("16000");
+  await range.getByRole("button", { name: "Save range" }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0]?.body).toEqual({ low_minor: 800_000, high_minor: 1_600_000 });
+});
+
+test("the governance page with its new input forms open passes axe", async ({
+  page,
+}) => {
+  await stubGovernance(page, []);
+  await page.goto(`/en-001/plans/${PLAN}/governance`);
+  const risk = page.locator("details.risk-inputs");
+  await risk.locator("summary").click();
+  await page
+    .getByText("No range: the simulation uses its fallback band")
+    .click();
+  await expect(page.getByLabel("Probability (%)")).toBeVisible();
   await audit(page);
 });

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — simulation inputs are returned by the lists
+
+`GET …/risks` now includes `task_pid`, `schedule_impact_days`, `probability_percent`, `cost_impact_minor` and `cost_currency`; task views and `GET …/cpm` nodes include `duration_optimistic_days` and `duration_pessimistic_days`.
+
 ### Added — cost-risk and joint Monte Carlo (CR-1..2, 2026-10-05)
 
 `GET /api/plans/{pid}/cost-risk` and `GET /api/cost-risk` (portfolio) simulate final cost per currency from budget lines (low / planned / high, never below what is spent) and register risks with a cost impact. `GET /api/plans/{pid}/joint-risk` simulates cost and schedule together, with delay cost and a joint confidence; a risk with both effects strikes once. Inputs: `PUT …/budget-lines/{id}/estimate`, `PUT …/risks/{id}/cost-impact`.

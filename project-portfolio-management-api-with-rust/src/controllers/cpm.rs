@@ -211,6 +211,8 @@ async fn plan_cpm(
             v["title"] = serde_json::json!(name(n.pid));
             v["status"] = serde_json::json!(t.map(|t| t.status.clone()));
             v["duration_days"] = serde_json::json!(t.and_then(|t| t.duration_days));
+            v["duration_optimistic_days"] = serde_json::json!(t.and_then(|t| t.duration_optimistic_days));
+            v["duration_pessimistic_days"] = serde_json::json!(t.and_then(|t| t.duration_pessimistic_days));
             v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
             let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);

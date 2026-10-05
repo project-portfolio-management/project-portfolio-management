@@ -130,6 +130,31 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
             assert_eq!(with!(request.get(&format!("/api/plans/{p}/earned-value?ac={ac}")), fin).await.status_code(), 200, "{ac}");
         }
         assert_eq!(with!(request.get(&format!("/api/plans/{p}/earned-value?ac=nonsense")), fin).await.status_code(), 422);
+
+        // The what-if sandbox applies the same gates: no cost and no assignee for a plain
+        // writer, a hard constraint only for who may set one, and a refusal writes nothing.
+        let t: Value = with!(request.post(&format!("/api/plans/{p}/tasks")), writer)
+            .json(&json!({ "title": "Ship", "start_date": "2026-10-05", "duration_days": 3,
+                           "assignee_ref": "person:00000000-0000-4000-8000-0000000000f1" }))
+            .await.json();
+        let t = t["pid"].as_str().unwrap().to_string();
+        let url = format!("/api/plans/{p}/sandbox/preview");
+        let edit = json!({ "edits": [{ "op": "duration", "task_pid": t, "duration_days": 5 }] });
+        let as_writer: Value = with!(request.post(&url), writer).json(&edit).await.json();
+        assert_eq!(as_writer["masked"], true);
+        assert_eq!(as_writer["cost_impact"]["reason"], "no_finance_access");
+        assert!(as_writer["tasks"][0].get("assignee").is_none(), "who does the work stays masked: {as_writer}");
+        let as_admin: Value = with!(request.post(&url), admin).json(&edit).await.json();
+        assert_eq!(as_admin["masked"], false);
+        assert!(as_admin["tasks"][0].get("assignee").is_some());
+        assert_ne!(as_admin["cost_impact"]["reason"], "no_finance_access");
+        let hard = json!({ "edits": [{ "op": "constraint", "task_pid": t, "constraint_kind": "mso",
+            "constraint_date": "2026-10-07", "reason": "contractual" }] });
+        assert_eq!(with!(request.post(&url), writer).json(&hard).await.status_code(), 403);
+        with!(request.post(&url), admin).json(&hard).await.assert_status_ok();
+        let commit = format!("/api/plans/{p}/sandbox/commit");
+        let etag = with!(request.post(&url), writer).json(&edit).await.header("etag").to_str().unwrap().to_string();
+        assert_eq!(with!(request.post(&commit), writer).json(&hard).add_header(axum::http::header::IF_MATCH, etag.parse::<axum::http::HeaderValue>().unwrap()).await.status_code(), 403, "a commit is gated like a preview");
     })
     .await;
 }

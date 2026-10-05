@@ -120,6 +120,7 @@ pub mod raci;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod relay;
 pub mod report_schedules;
+pub mod sandbox;
 pub mod saved_views;
 pub mod schedule_health;
 pub mod schedule_risk;

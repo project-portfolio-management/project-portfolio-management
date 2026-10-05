@@ -23,11 +23,9 @@ use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
 
-use super::task_bulk::{Edit, edit_one};
 use crate::auth::MaybeAuthUser;
 use crate::leveling::{self, Demand, Input, Params, Proposal, Resource};
 use crate::models::visibility as vis_models;
-use crate::task_bulk::Change;
 use crate::workflow::{Category, category_of};
 
 fn unprocessable(message: &str) -> Error {
@@ -292,34 +290,45 @@ async fn apply(
             ));
         }
     }
-    let mut results = Vec::with_capacity(b.moves.len());
+    // The apply goes through the what-if sandbox (PJ-9): one transaction, one
+    // audit entry per moved task (kept as `task_leveled`, with the proposal's words).
+    let mut edits = Vec::with_capacity(b.moves.len());
+    let mut overrides = super::sandbox::AuditOverrides::new();
     for m in &b.moves {
         let p = proposed[&m.task_pid];
-        let detail = serde_json::json!({
-            "from_start": p.from_start, "to_start": p.to_start,
-            "delay_days": p.delay_days, "critical": p.critical,
-            "because_of": p.because_of, "reason": b.reason,
-            "finish_before": c.proposal.finish_before, "finish_after": c.proposal.finish_after,
+        edits.push(crate::sandbox::Edit::Move {
+            task_pid: m.task_pid,
+            start_date: m.start_date,
         });
-        let edit = Edit {
-            assignee: Change::Keep,
-            due: Change::Keep,
-            component: Change::Keep,
-            start: Change::Set(m.start_date),
-        };
-        results.push(
-            edit_one(
-                &ctx,
-                &caller,
-                m.task_pid,
-                &edit,
+        overrides.insert(
+            m.task_pid,
+            (
                 "task_leveled",
-                Some(detail),
-            )
-            .await,
+                serde_json::json!({
+                    "from_start": p.from_start, "to_start": p.to_start,
+                    "delay_days": p.delay_days, "critical": p.critical,
+                    "because_of": p.because_of, "reason": b.reason,
+                    "finish_before": c.proposal.finish_before, "finish_after": c.proposal.finish_after,
+                }),
+            ),
         );
     }
-    let ok = results.iter().filter(|r| r.result == "ok").count();
+    super::sandbox::commit(
+        &ctx,
+        &caller,
+        plan.pid,
+        &edits,
+        None,
+        b.reason.as_deref(),
+        &overrides,
+    )
+    .await?;
+    let results: Vec<Value> = b
+        .moves
+        .iter()
+        .map(|m| serde_json::json!({ "pid": m.task_pid, "result": "ok" }))
+        .collect();
+    let ok = results.len();
     format::json(serde_json::json!({
         "requested": results.len(),
         "ok": ok,

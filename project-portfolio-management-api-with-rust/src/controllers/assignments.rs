@@ -21,6 +21,7 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{plans, tasks};
 use crate::models::audit_logs::Model as AuditModel;
+pub(crate) use crate::scheduling_rules::Recomputed;
 use crate::scheduling_rules::{self as rules, Field, Rule, Triple};
 use crate::work_profile::{self as wp, Contour, Grain, Unplaced};
 
@@ -387,13 +388,22 @@ pub(crate) fn working_days_of(
 pub(crate) async fn plan_work(ctx: &AppContext, plan: Uuid) -> Result<Vec<TaskWork>> {
     let net = super::cpm::load_network(ctx, plan).await?;
     let analysis = net.analyze(0).ok();
+    Ok(work_of(&net, analysis.as_ref()))
+}
+
+/// [`plan_work`] for a network already in hand (the what-if sandbox runs it on a
+/// copy with edits applied).
+pub(crate) fn work_of(
+    net: &super::cpm::Network,
+    analysis: Option<&crate::cpm::CpmResult>,
+) -> Vec<TaskWork> {
     let mut out = Vec::new();
     for (i, t) in net.rows.iter().enumerate() {
         let Some(work) = t.work_minutes.filter(|w| *w > 0) else {
             continue;
         };
         let contour = contour_of(t);
-        let (per_day, unplaced) = match working_days_of(&net, analysis.as_ref(), i) {
+        let (per_day, unplaced) = match working_days_of(net, analysis, i) {
             None => (Vec::new(), Some("unscheduled".to_string())),
             Some(days) => match wp::distribute(work, &days, &contour) {
                 Ok(p) => (p, None),
@@ -411,7 +421,7 @@ pub(crate) async fn plan_work(ctx: &AppContext, plan: Uuid) -> Result<Vec<TaskWo
             unplaced,
         });
     }
-    Ok(out)
+    out
 }
 
 #[derive(Debug, Deserialize)]

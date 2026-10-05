@@ -711,6 +711,49 @@ async fn cost_plan(
     }))
 }
 
+/// A plan's planned labour cost by currency, for a network already in hand (the
+/// what-if sandbox prices the original and the edited copy).
+pub(crate) struct LabourTotals {
+    /// Total minor units per currency, each priced day by day at the rate in force.
+    pub by_currency: BTreeMap<String, i64>,
+    /// Minutes of work that no rate covers (unknown, never zero).
+    pub unrated_minutes: i64,
+}
+
+pub(crate) async fn labour_totals(
+    ctx: &AppContext,
+    net: &super::cpm::Network,
+    analysis: Option<&crate::cpm::CpmResult>,
+) -> Result<LabourTotals> {
+    let mut out = LabourTotals {
+        by_currency: BTreeMap::new(),
+        unrated_minutes: 0,
+    };
+    let mut cache: HashMap<String, Option<Applicable>> = HashMap::new();
+    for w in super::assignments::work_of(net, analysis) {
+        if w.unplaced.is_some() {
+            continue;
+        }
+        let Some(person) = &w.assignee else {
+            out.unrated_minutes += w.work_minutes;
+            continue;
+        };
+        if !cache.contains_key(person) {
+            let a = applicable(ctx, person, "standard").await?;
+            cache.insert(person.clone(), a);
+        }
+        match cache.get(person).and_then(Option::as_ref) {
+            None => out.unrated_minutes += w.work_minutes,
+            Some(a) => {
+                let priced = rules::price_days(&w.per_day, |d| rules::rate_on(&a.rates, d));
+                out.unrated_minutes += priced.unrated_minutes;
+                *out.by_currency.entry(a.currency.clone()).or_default() += priced.total_minor;
+            }
+        }
+    }
+    Ok(out)
+}
+
 // ───────────────────────── labour cost actuals ─────────────────────────
 
 #[derive(Debug, Deserialize)]

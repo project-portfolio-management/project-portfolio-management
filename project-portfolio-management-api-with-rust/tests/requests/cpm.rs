@@ -2577,3 +2577,142 @@ async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_it_showed() {
+    use project_portfolio_management_service::models::_entities::{audit_logs, plan_dependencies};
+    use sea_orm::{EntityTrait, PaginatorTrait};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        use axum::http::StatusCode as S;
+        let who = "person:00000000-0000-4000-8000-0000000000e1";
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Sandbox" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        request.put(&format!("/api/plans/{p}/calendar")).json(&json!({ "weekdays": "1111100" })).await.assert_status_ok();
+        let a: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({
+            "title": "A", "start_date": "2026-10-05", "duration_days": 3, "assignee_ref": who })).await.json();
+        let a = a["pid"].as_str().unwrap().to_string();
+        let b = task(&request, &p, "B", Some("2026-10-05"), Some(2)).await;
+        let c = task(&request, &p, "C", Some("2026-10-05"), Some(1)).await;
+        let link: Value = request.post("/api/dependencies").json(&json!({ "predecessor_pid": a, "successor_pid": b, "lag_days": 0 })).await.json();
+        let link = link["pid"].as_str().unwrap().to_string();
+        // A carries work at a rate, so a longer A costs more.
+        request.put(&format!("/api/plans/{p}/tasks/{a}/assignment")).json(&json!({ "units_percent": 100 })).await.assert_status_ok();
+        let t: Value = request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "person_ref": who, "currency": "GBP" })).await.json();
+        request.post(&format!("/api/cost-rate-tables/{}/rates", t["pid"].as_str().unwrap())).json(&json!({ "effective_from": "2026-01-01", "per_hour_minor": 5000 })).await.assert_status_ok();
+
+        let preview = |edits: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/sandbox/preview");
+            async move { request.post(&url).json(&json!({ "edits": edits })).await }
+        };
+        let audit_count = || {
+            let db = ctx.db.clone();
+            async move { audit_logs::Entity::find().count(&db).await.unwrap() }
+        };
+        let cpm = || {
+            let request = &request;
+            let url = format!("/api/plans/{p}/cpm");
+            async move { request.get(&url).await.json::<Value>() }
+        };
+        let start_of = |t: &Value, pid: &str| t["nodes"].as_array().unwrap().iter().find(|n| n["pid"] == pid).cloned().unwrap();
+
+        // ── A preview writes nothing, and the same edits give the same answer ──
+        let before_cpm = cpm().await;
+        let audits = audit_count().await;
+        let edits = json!([{ "op": "duration", "task_pid": a, "duration_days": 6 }]);
+        let r1 = preview(edits.clone()).await;
+        r1.assert_status_ok();
+        let etag = r1.header("etag").to_str().unwrap().to_string();
+        let r1: Value = r1.json();
+        let r2: Value = preview(edits.clone()).await.json();
+        assert_eq!(r1, r2, "the same input gives the same preview");
+        assert_eq!(r1["plan_etag"], etag.as_str());
+        assert_eq!(cpm().await, before_cpm, "the plan is untouched");
+        assert_eq!(audit_count().await, audits, "a preview leaves no audit entry");
+        let dep_rows = plan_dependencies::Entity::find().count(&ctx.db).await.unwrap();
+        assert_eq!(dep_rows, 1);
+
+        // What it shows: A is longer, B moves later, the finish moves, and A's work (so its cost) doubles.
+        assert_eq!(r1["changes"].as_array().unwrap().len(), 1);
+        let moved: Vec<&str> = r1["moved"].as_array().unwrap().iter().map(|m| m["pid"].as_str().unwrap()).collect();
+        assert!(moved.contains(&b.as_str()) && !moved.contains(&c.as_str()));
+        assert_ne!(r1["finish"]["before"], r1["finish"]["after"]);
+        assert!(r1["critical_path"]["after"].as_array().unwrap().iter().any(|x| x == a.as_str()));
+        assert_eq!(r1["cost_impact"]["available"], true, "{r1}");
+        let gbp = &r1["cost_impact"]["labour"][0];
+        assert_eq!((gbp["currency"].as_str(), gbp["before_minor"].as_i64(), gbp["after_minor"].as_i64()), (Some("GBP"), Some(120_000), Some(240_000)), "3 d then 6 d at 8 h x 50.00");
+        assert_eq!(r1["assignments_recomputed"][0]["work_minutes"], 2880);
+
+        // Edits are refused before anything is shown: bad input, unknown task, cycle, task relation.
+        preview(json!([])).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        preview(json!([{ "op": "duration", "task_pid": a, "duration_days": -2 }])).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        preview(json!([{ "op": "move", "task_pid": "00000000-0000-4000-8000-00000000ffff", "start_date": "2026-10-07" }])).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        preview(json!([{ "op": "add_link", "predecessor_pid": b, "successor_pid": a }])).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        preview(json!([{ "op": "constraint", "task_pid": c, "constraint_kind": "mso", "constraint_date": "2026-10-07" }])).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        assert_eq!(audit_count().await, audits, "refusals write nothing either");
+
+        // ── A commit needs the preview's etag ──
+        let commit = |edits: Value, etag: Option<&str>| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/sandbox/commit");
+            let etag = etag.map(str::to_string);
+            async move {
+                let mut rb = request.post(&url).json(&json!({ "edits": edits, "reason": "what if" }));
+                if let Some(e) = etag {
+                    rb = rb.add_header(axum::http::header::IF_MATCH, e.parse::<axum::http::HeaderValue>().unwrap());
+                }
+                rb.await
+            }
+        };
+        assert_eq!(commit(edits.clone(), None).await.status_code(), 428);
+        assert_eq!(commit(edits.clone(), Some("W/\"0000000000000000\"")).await.status_code(), 409);
+        assert_eq!(audit_count().await, audits);
+        // A change made after the preview makes the commit stale: refused, not merged.
+        request.put(&format!("/api/plans/{p}/tasks/{c}/schedule")).json(&json!({ "start_date": "2026-10-06", "duration_days": 1 })).await.assert_status_ok();
+        assert_eq!(commit(edits.clone(), Some(&etag)).await.status_code(), 409, "the plan changed since the preview");
+        assert_eq!(start_of(&cpm().await, &a)["early_finish"], start_of(&before_cpm, &a)["early_finish"], "A is unchanged");
+
+        // ── Commit applies exactly the previewed result, one audit entry per changed item ──
+        let fresh = preview(edits.clone()).await;
+        let etag = fresh.header("etag").to_str().unwrap().to_string();
+        let shown: Value = fresh.json();
+        let audits = audit_count().await;
+        let done = commit(edits.clone(), Some(&etag)).await;
+        done.assert_status_ok();
+        let done: Value = done.json();
+        assert_eq!((done["committed"].as_bool(), done["audit_entries"].as_i64()), (Some(true), Some(1)));
+        assert_eq!(audit_count().await, audits + 1);
+        let after_cpm = cpm().await;
+        for d in shown["tasks"].as_array().unwrap() {
+            let node = start_of(&after_cpm, d["pid"].as_str().unwrap());
+            assert_eq!(node["early_start"], d["after"]["early_start"], "{d}");
+            assert_eq!(node["early_finish"], d["after"]["early_finish"], "{d}");
+            assert_eq!(node["total_float"], d["after"]["total_float"], "{d}");
+        }
+        assert_eq!(after_cpm["project_finish"], shown["finish"]["after"]);
+        assert_eq!(start_of(&after_cpm, &a)["work_minutes"], 2880, "the recomputed work was stored");
+        // The same commit again is stale (the plan is now what the preview said it would become).
+        assert_eq!(commit(edits.clone(), Some(&etag)).await.status_code(), 409);
+
+        // ── Links: remove one, add one; one audit entry each; a discarded preview of them wrote nothing ──
+        let link_edits = json!([
+            { "op": "remove_link", "link_pid": link },
+            { "op": "add_link", "predecessor_pid": c, "successor_pid": b, "kind": "ss", "lag_days": 1 },
+        ]);
+        let pv = preview(link_edits.clone()).await;
+        let etag = pv.header("etag").to_str().unwrap().to_string();
+        let pv: Value = pv.json();
+        assert_eq!(pv["changes"].as_array().unwrap().len(), 2);
+        assert_eq!(plan_dependencies::Entity::find().count(&ctx.db).await.unwrap(), 1, "still the original link");
+        let audits = audit_count().await;
+        commit(link_edits.clone(), Some(&etag)).await.assert_status_ok();
+        assert_eq!(audit_count().await, audits + 2);
+        let deps = plan_dependencies::Entity::find().all(&ctx.db).await.unwrap();
+        assert_eq!(deps.len(), 1);
+        assert_eq!((deps[0].kind.as_str(), deps[0].lag_days, deps[0].predecessor_pid.to_string()), ("ss", 1, c.clone()));
+    })
+    .await;
+}

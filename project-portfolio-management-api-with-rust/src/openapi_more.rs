@@ -111,6 +111,7 @@ pub fn paths() -> Value {
     merge(&mut all, assignment_paths());
     merge(&mut all, cost_rate_paths());
     merge(&mut all, announcement_paths());
+    merge(&mut all, sandbox_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1208,6 +1209,25 @@ fn announcement_paths() -> Value {
                 vec![uuid_param("pid")], &[("200", "the announcement"), ("403", "Not permitted"), ("404", "Unknown"), ("422", "Invalid")]),
             "delete": op("announcements", "Retract an announcement", &format!("Soft delete. {gate}"),
                 vec![uuid_param("pid")], &[("200", "retracted"), ("403", "Not permitted"), ("404", "Unknown")])
+        }
+    })
+}
+
+/// The what-if sandbox (PJ-9).
+fn sandbox_paths() -> Value {
+    let edits = "edits is a list of up to 100 of: {op: move, task_pid, start_date}, {op: duration, task_pid, duration_days}, {op: constraint, task_pid, constraint_kind (snet|snlt|fnet|fnlt|mso|mfo or null to clear), constraint_date, reason (required for mso/mfo)}, {op: add_link, predecessor_pid, successor_pid, kind (fs default|ss|ff|sf), lag_days}, {op: remove_link, link_pid}. Edits to one task are coalesced; an edit that leaves a task as it was is no change. A link may not be a self-link, a duplicate or close a cycle (counting links in other plans); only a stored dependency can be removed, not a task relation. A hard constraint needs access=admin or scheduling=hard_constraints (403), in a preview as in a commit.";
+    json!({
+        "/api/plans/{pid}/sandbox/preview": {
+            "post": op("scheduling", "What-if: preview schedule edits on an in-memory copy",
+                &format!("Applies the edits to a copy of the plan and answers with the resulting dates, float and critical path (tasks lists those that changed, before and after; critical_path says which tasks joined or left it), what moved, the project finish, and the planned labour-cost impact per currency (cost_impact; only for callers admitted to the finance area, else available=false with reason no_finance_access; work with no rate is counted apart, never zero). It writes NOTHING: no row and no audit entry, even when it refuses, and the same edits give the same answer. A duration change on a task with work recomputes its units or work by its scheduling rule (assignments_recomputed). Who does the work is shown only to a caller who may manage people (masked says which). plan_etag (also the ETag header) identifies the plan state the preview was made against; send it as If-Match to commit. To discard a preview, do nothing. {edits}"),
+                vec![uuid_param("pid")],
+                &[("200", "changes, finish, tasks, moved, critical_path, cost_impact, plan_etag, result_etag"), ("403", "A hard constraint without permission"), ("404", "Unknown plan"), ("422", "Invalid edits, an unknown task, a cycle, or a plan that already has a cycle")])
+        },
+        "/api/plans/{pid}/sandbox/commit": {
+            "post": op("scheduling", "Commit previewed schedule edits",
+                &format!("Applies the same edits for real, in one transaction, with one audit entry per changed item (a changed task, an added link, a removed link). Requires If-Match: the plan_etag from the preview (428 if missing). If the plan changed since the preview the answer is 409 stale_preview and nothing is written: it is never merged. Commits to one plan are serialized. reason (500 characters) is audited with each item. The leveling apply (SC-6) goes through this. {edits}"),
+                vec![uuid_param("pid")],
+                &[("200", "committed, changes, audit_entries, finish"), ("403", "A hard constraint without permission"), ("404", "Unknown plan"), ("409", "The plan changed since the preview"), ("422", "Invalid edits"), ("428", "If-Match missing")])
         }
     })
 }

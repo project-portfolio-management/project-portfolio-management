@@ -17,6 +17,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "schedule-health",
       "leveling",
       "schedule-risk",
+      "work",
     ]);
     expect(visiblePlanLinks(["governance"])).toEqual(["governance"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
@@ -29,6 +30,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "schedule-health",
       "leveling",
       "schedule-risk",
+      "work",
     ]);
   });
 

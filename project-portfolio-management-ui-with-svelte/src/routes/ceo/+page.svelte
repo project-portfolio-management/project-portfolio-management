@@ -1,8 +1,8 @@
 <!--
   CEO dashboard (`/ceo`): the whole picture on ONE screen of an iPad (9th gen,
   1080 × 810 CSS pixels, landscape or portrait), with no scrolling of the page.
-  Five tiles — portfolio health, milestones to watch, KPIs that need a look,
-  risk and money, announcements. Each tile shows a few lines and a link to the
+  Six tiles — portfolio health, risk and money, milestones to watch, KPIs that
+  need a look, recent decisions, announcements. Each tile shows a few lines and a link to the
   full page, so nothing is hidden, only one tap away. A tile that cannot load
   says so on its own; the others still show. Status is a word and a shape,
   never colour alone. Touch targets are at least 44 px.
@@ -12,12 +12,14 @@
   import {
     PpmClient,
     type AnnouncementList,
+    type DecisionEntry,
     type ExecutiveHealth,
     type KpiList,
     type MilestoneList,
   } from "#lib/api/ppm.js";
   import { STATUS_SYMBOL, STATUS_TEXT } from "#lib/kpi-view.js";
   import {
+    decisionLines,
     escalatedRisks,
     healthSentence,
     milestonesToWatch,
@@ -36,6 +38,7 @@
   let milestones = $state<MilestoneList | null>(null);
   let kpis = $state<KpiList | null>(null);
   let news = $state<AnnouncementList | null>(null);
+  let decisions = $state<DecisionEntry[] | null>(null);
   let failed = $state<Record<string, string>>({});
   const now = new Date();
 
@@ -45,6 +48,7 @@
     ppm.executiveHealth().then((v) => (health = v), (e) => fail("health", e));
     ppm.portfolioMilestones().then((v) => (milestones = v), (e) => fail("milestones", e));
     ppm.kpis().then((v) => (kpis = v), (e) => fail("kpis", e));
+    ppm.executiveDecisions(30).then((v) => (decisions = v.decisions), (e) => fail("decisions", e));
     ppm.announcements({ limit: 3 }).then((v) => (news = v), (e) => fail("news", e));
   });
 
@@ -129,7 +133,27 @@
     <a class="more" href={localeHref("/kpis")}>All KPIs</a>
   </section>
 
-  <section class="tile wide" aria-labelledby="t-news" data-testid="tile-news">
+  <section class="tile" aria-labelledby="t-dec" data-testid="tile-decisions">
+    <h2 id="t-dec">Recent decisions</h2>
+    {#if failed.decisions}<p class="banner error" role="alert">{failed.decisions}</p>
+    {:else if !decisions}<p class="muted">Loading…</p>
+    {:else}
+      {@const d = decisionLines(decisions, 4)}
+      {#if d.lines.length === 0}
+        <p class="small">No decisions recorded yet.</p>
+      {:else}
+        <ul>
+          {#each d.lines as l (l.key)}
+            <li>{l.text} <span class="muted small">{l.at}</span></li>
+          {/each}
+        </ul>
+        {#if d.more}<p class="small muted">and {d.more} more</p>{/if}
+      {/if}
+    {/if}
+    <a class="more" href={localeHref("/executive")}>Decision log</a>
+  </section>
+
+  <section class="tile" aria-labelledby="t-news" data-testid="tile-news">
     <h2 id="t-news">Announcements</h2>
     {#if failed.news}<p class="banner error" role="alert">{failed.news}</p>
     {:else if !news}<p class="muted">Loading…</p>
@@ -181,9 +205,6 @@
     padding: 0.75rem 1rem;
     min-width: 0;
   }
-  .tile.wide {
-    grid-column: 1 / -1;
-  }
   h2 {
     font-size: 1rem;
     margin: 0 0 0.25rem;
@@ -207,9 +228,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .tile.wide li {
-    white-space: normal;
   }
   .more {
     margin-top: auto;

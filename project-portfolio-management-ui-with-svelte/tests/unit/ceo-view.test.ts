@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  decisionLines,
   escalatedRisks,
   healthSentence,
   milestonesToWatch,
@@ -84,5 +85,19 @@ describe("announcement words", () => {
     expect(excerpt("the quick brown fox jumps over", 15)).toBe("the quick…");
     expect(stateLabel({ state: "live" })).toBe("");
     expect(stateLabel({ state: "expired" })).toBe("Expired");
+  });
+});
+
+describe("decisionLines", () => {
+  it("lists the newest first, words each kind, and counts the rest", () => {
+    const d = (at: string, kind: string, decision: string, name: string | null) =>
+      ({ at, kind, decision, subject: { pid: "x", name } }) as never;
+    const r = decisionLines(
+      [d("2026-10-01T00:00:00Z", "merge", "done", null), d("2026-10-04T00:00:00Z", "gate_review", "Approved", "Apollo"), d("2026-10-03T00:00:00Z", "proposal", "Rejected", "Zed")],
+      2,
+    );
+    expect(r.lines.map((l) => l.text)).toEqual(["Gate review: Approved — Apollo", "Proposal: Rejected — Zed"]);
+    expect(r.lines[0]!.at).toBe("2026-10-04");
+    expect(r.more).toBe(1);
   });
 });

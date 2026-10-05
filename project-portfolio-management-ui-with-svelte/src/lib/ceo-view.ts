@@ -3,6 +3,7 @@
 // owns; this only counts, orders and words what it was given.
 
 import type {
+  DecisionEntry,
   ExecutiveHealth,
   KpiView,
   MilestoneView,
@@ -85,4 +86,27 @@ export function milestonesToWatch(
         a.name.localeCompare(b.name),
     );
   return { shown: open.slice(0, n), more: Math.max(0, open.length - n) };
+}
+
+const DECISION_TEXT: Record<string, string> = {
+  gate_review: "Gate review",
+  scenario_commit: "Scenario committed",
+  proposal: "Proposal",
+  merge: "Plans merged",
+};
+
+/** The `n` newest decisions as one line each ("Gate review: Approved — Apollo"). */
+export function decisionLines(
+  decisions: DecisionEntry[],
+  n: number,
+): { lines: { key: string; text: string; at: string }[]; more: number } {
+  const sorted = [...decisions].sort((a, b) => b.at.localeCompare(a.at));
+  return {
+    lines: sorted.slice(0, n).map((d, i) => ({
+      key: `${d.at}-${i}`,
+      text: `${DECISION_TEXT[d.kind] ?? d.kind}: ${d.decision}${d.subject.name ? ` — ${d.subject.name}` : ""}`,
+      at: d.at.slice(0, 10),
+    })),
+    more: Math.max(0, sorted.length - n),
+  };
 }

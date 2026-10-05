@@ -63,6 +63,20 @@ async function stub(page: Page, opts: { long?: boolean; healthFails?: boolean } 
       },
     }),
   );
+  await page.route("**/api/executive/decisions**", (r) =>
+    r.fulfill({
+      json: {
+        as_of: "2026-10-05",
+        total: 6,
+        decisions: Array.from({ length: 6 }, (_, i) => ({
+          at: `2026-10-0${i + 1}T00:00:00Z`,
+          kind: "gate_review",
+          decision: name(`Decision ${i}`),
+          subject: { pid: "p", name: name("Apollo") },
+        })),
+      },
+    }),
+  );
   await page.route("**/api/announcements**", (r) =>
     r.fulfill({
       json: {
@@ -98,7 +112,9 @@ for (const size of SIZES) {
       await page.goto("/en-001/ceo");
       await expect(page.getByTestId("tile-news").getByText("Announcement 0")).toBeVisible();
       await expect(page.getByTestId("tile-milestones").getByText("Milestone 0")).toBeVisible();
-      for (const id of ["health", "risk", "milestones", "kpis", "news"]) {
+      await expect(page.getByTestId("tile-decisions").getByText("Decision 5")).toBeVisible();
+      expect(await page.locator("[data-testid^=tile-]").count()).toBe(6);
+      for (const id of ["health", "risk", "milestones", "kpis", "decisions", "news"]) {
         await expect(page.getByTestId(`tile-${id}`)).toBeVisible();
       }
       const m = await page.evaluate(() => ({

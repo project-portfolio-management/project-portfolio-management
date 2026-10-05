@@ -108,6 +108,8 @@ pub fn paths() -> Value {
     merge(&mut all, kpi_okr_paths());
     merge(&mut all, milestone_paths());
     merge(&mut all, cost_risk_paths());
+    merge(&mut all, assignment_paths());
+    merge(&mut all, cost_rate_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1101,6 +1103,88 @@ fn cost_risk_paths() -> Value {
             "put": op("risk", "Make a register risk a cost event",
                 "cost_impact_minor (positive) and cost_currency (3 letters) go together; null clears both. probability_percent, when given, is the event's probability and is shared with the schedule simulation (the same field schedule-impact sets), so one risk is one event. Left out: the probability is unchanged. Audited with old and new.",
                 vec![uuid_param("pid"), uuid_param("r_pid")], &[("200", "the risk's cost fields"), ("404", "Unknown plan or risk"), ("422", "A bad value or an impact without a currency")])
+        }
+    })
+}
+
+/// Assignments, scheduling rules and time-phased work.
+fn assignment_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/tasks/{t_pid}/assignment": {
+            "put": op("scheduling", "Set a task's units, work and duration under a scheduling rule",
+                "The task needs an assignee (units are a share of their day). Work (minutes) = duration (working days) x units (% of a day) x 480 / 100. Give ONE of duration_days, units_percent, work_minutes to change it and the rule decides which of the other two moves: fixed_units (default): work edits move duration, duration/units edits move work; fixed_duration: work edits move UNITS (never duration), duration/units edits move work; fixed_work: duration/units edits move the other, work edits move duration. The first time, give two and the third is derived. A duration derived from work rounds up to whole days, units to the nearest percent, work to the nearest minute; the edited quantity is never changed by rounding and `exact` says whether the relation then holds to the minute. Units above the assignee's availability on a day of the task are flagged under capacity, never clamped. Audited with old and new. Changing the duration through PUT …/tasks/{pid}/schedule recomputes the same way (a task that carries work cannot become a milestone).",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "rule, the three quantities, which was derived, exact, capacity"), ("404", "Unknown plan or task"), ("422", "No assignee, more than one change, out of range, or work on a milestone")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/contour": {
+            "put": op("scheduling", "Set how a task's work is spread over its working days",
+                "contour: flat (default), front_loaded, back_loaded, bell, turtle or custom (custom: percentages summing to exactly 100, 1-40 of them, stretched over the days). The shape names are inferred from the reference tool's and their definitions are this project's own (confirm before treating them as a standard). The total work is unchanged; audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "the contour"), ("404", "Unknown plan or task"), ("422", "An unknown contour or custom weights that do not sum to 100")])
+        },
+        "/api/plans/{pid}/work-profile": {
+            "get": op("scheduling", "A plan's work as buckets of days, weeks or months",
+                "Each task's work is spread over the working days of its own calendar between its earliest start and finish, by its contour, in whole minutes that sum to its work exactly (largest remainder) and never on a non-working day; buckets are derived on read. The plan's totals are the sum of its tasks'. Work that cannot be placed (the task is unscheduled, or has no working day) is listed under unplaced and counted, never dropped; work outside the window is counted. With no task carrying work: buckets null with reason no_assignments. Who does the work is shown only to a caller who may manage people.",
+                vec![uuid_param("pid"), query("from", false, "default: the first placed day"), query("to", false, "default: the last placed day"), query("period", false, "day, week (default) or month")],
+                &[("200", "tasks, totals, unplaced, people"), ("404", "Unknown plan"), ("422", "A bad window or period")])
+        },
+        "/api/work-profile": {
+            "get": op("scheduling", "Work buckets across the portfolio",
+                "The same, for every plan the caller can read: each plan's buckets are the sum of its tasks', and the portfolio total is the sum of the plans' at every period. Plans the caller cannot read are left out.",
+                vec![query("from", false, "default: the first placed day"), query("to", false, "default: the last placed day"), query("period", false, "day, week (default) or month")],
+                &[("200", "plans and totals"), ("422", "A bad window or period")])
+        }
+    })
+}
+
+/// Cost rates, task costs and labour cost. All finance-gated (404 otherwise).
+fn cost_rate_paths() -> Value {
+    let gate = "Finance data: only a caller with access=admin or finance=cost_rates (or with authentication off) may use it; anyone else gets 404. This is a handler check, not an entry in the policy file.";
+    json!({
+        "/api/cost-rate-tables": {
+            "post": op("costs", "Create a named rate table for a person or a role",
+                &format!("name (e.g. standard, overtime), exactly one of person_ref and role, and a 3-letter currency. {gate}"),
+                vec![], &[("200", "pid"), ("404", "Not permitted"), ("409", "That person or role already has a table of that name"), ("422", "Invalid")]),
+            "get": op("costs", "List rate tables with their rates",
+                &format!("Filter by person_ref or role. {gate}"),
+                vec![query("person_ref", false, ""), query("role", false, "")], &[("200", "tables"), ("404", "Not permitted")])
+        },
+        "/api/cost-rate-tables/{pid}/rates": {
+            "post": op("costs", "Add a rate effective from a date",
+                &format!("per_hour_minor is minor units of the table's currency per hour. Append-only: no edit, no delete; one rate per date (409). The rate for a day is the latest effective on or before it. {gate}"),
+                vec![uuid_param("pid")], &[("200", "the rate"), ("404", "Unknown table or not permitted"), ("409", "A rate already starts that day"), ("422", "Invalid")])
+        },
+        "/api/cost-rates/lookup": {
+            "get": op("costs", "The rate in force for a person on a date",
+                &format!("The person's own table, else their role's. No rate is null with reason no_rate, never zero. {gate}"),
+                vec![query("person_ref", true, ""), query("date", true, "YYYY-MM-DD"), query("table", false, "default standard")],
+                &[("200", "rate or null with reason"), ("404", "Not permitted")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/costs": {
+            "post": op("costs", "Add a material or fixed-cost expense to a task",
+                &format!("kind material or fixed; amount_minor above zero; currency; accrual start (first working day), prorated (evenly, whole minor units summing to the amount) or end (last working day). {gate}"),
+                vec![uuid_param("pid"), uuid_param("t_pid")], &[("200", "pid"), ("404", "Unknown or not permitted"), ("422", "Invalid")]),
+            "get": op("costs", "A task's expenses", gate, vec![uuid_param("pid"), uuid_param("t_pid")], &[("200", "costs"), ("404", "Unknown or not permitted")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/costs/{c_pid}": {
+            "delete": op("costs", "Remove a task expense", &format!("Soft delete, audited. {gate}"),
+                vec![uuid_param("pid"), uuid_param("t_pid"), uuid_param("c_pid")], &[("200", "removed"), ("404", "Unknown or not permitted")])
+        },
+        "/api/plans/{pid}/cost-plan": {
+            "get": op("costs", "The planned cost by period, per currency",
+                &format!("Labour = each task's work profile (PJ-5) priced day by day at the rate in force that day; daily costs sum exactly to the rounded total. Expenses accrue by their rule. Work with no rate is listed under unrated and costs nothing here (unknown, never zero); currencies are never added together. Same window and period parameters as work-profile, plus table. {gate}"),
+                vec![uuid_param("pid"), query("from", false, ""), query("to", false, ""), query("period", false, "day, week (default) or month"), query("table", false, "default standard")],
+                &[("200", "currencies, tasks, unrated, unassigned, unplaced"), ("404", "Unknown or not permitted"), ("422", "Bad window")])
+        },
+        "/api/plans/{pid}/labour-costs/record": {
+            "post": op("costs", "Price recorded time entries and store the rate with each cost",
+                &format!("Prices only entries with no recorded cost yet, at the rate in force the day they were worked. A recorded cost is never rewritten, so a later rate change leaves actuals as they were. Entries with no rate are listed and left unrecorded. Audited. {gate}"),
+                vec![uuid_param("pid"), query("table", false, "default standard")], &[("200", "recorded, already_recorded, no_rate"), ("404", "Unknown or not permitted")])
+        },
+        "/api/plans/{pid}/labour-costs": {
+            "get": op("costs", "Recorded labour cost, per currency",
+                &format!("Each entry shows the rate it was priced at. Unrecorded or unrated entries are counted under unpriced (unknown, not zero). {gate}"),
+                vec![uuid_param("pid")], &[("200", "currencies, entries, unpriced"), ("404", "Unknown or not permitted")])
         }
     })
 }

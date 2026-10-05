@@ -213,6 +213,9 @@ async fn plan_cpm(
             v["duration_days"] = serde_json::json!(t.and_then(|t| t.duration_days));
             v["duration_optimistic_days"] = serde_json::json!(t.and_then(|t| t.duration_optimistic_days));
             v["duration_pessimistic_days"] = serde_json::json!(t.and_then(|t| t.duration_pessimistic_days));
+            v["work_minutes"] = serde_json::json!(t.and_then(|t| t.work_minutes));
+            v["units_percent"] = serde_json::json!(t.and_then(|t| t.units_percent));
+            v["scheduling_rule"] = serde_json::json!(t.and_then(|t| t.scheduling_rule.clone()));
             v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
             let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);
@@ -315,6 +318,10 @@ async fn set_schedule(
         .ok_or(Error::NotFound)?;
     let analyse = |net: &Network| net.analyze(Options::default().near_critical_days);
     let before = analyse(&load_network(&ctx, plan.pid).await?);
+    // A task that carries an assignment (units and work) has its third quantity
+    // recomputed, per its rule, when its duration changes (PJ-6).
+    let assignment = super::assignments::recompute_for_duration(&task, b.duration_days)
+        .map_err(|m| unprocessable(&m))?;
     let was = (
         task.start_date,
         task.duration_days,
@@ -328,6 +335,10 @@ async fn set_schedule(
     a.constraint_kind = ActiveValue::set(kind.clone());
     a.constraint_date = ActiveValue::set(b.constraint_date);
     a.deadline = ActiveValue::set(b.deadline);
+    if let Some(r) = &assignment {
+        a.units_percent = ActiveValue::set(i32::try_from(r.triple.units_percent).ok());
+        a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
+    }
     let row = a.update(&ctx.db).await.map_err(db_err)?;
     let after = analyse(&load_network(&ctx, plan.pid).await?);
     AuditModel::record(
@@ -359,6 +370,11 @@ async fn set_schedule(
                   "deadline": row.deadline },
         "moved": moved,
         "note": note,
+        // Present when the task carries work: what the rule recomputed.
+        "assignment": assignment.map(|r| serde_json::json!({
+            "derived": r.derived, "exact": r.exact,
+            "units_percent": r.triple.units_percent, "work_minutes": r.triple.work_minutes,
+            "duration_days": r.triple.duration_days })),
     }))
 }
 

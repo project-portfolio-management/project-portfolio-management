@@ -2077,3 +2077,412 @@ async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_days() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let who = "person:00000000-0000-4000-8000-0000000000a1";
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        // A Monday-to-Friday calendar, so weekends are not working days.
+        request
+            .put(&format!("/api/plans/{p}/calendar"))
+            .json(&json!({ "weekdays": "1111100" }))
+            .await
+            .assert_status_ok();
+        let mk = |title: &'static str,
+                  assignee: Option<&'static str>,
+                  start: Option<&'static str>,
+                  days: i64| {
+            let request = &request;
+            let p = p.clone();
+            async move {
+                let mut body = json!({ "title": title, "duration_days": days });
+                if let Some(a) = assignee {
+                    body["assignee_ref"] = json!(a);
+                }
+                if let Some(s) = start {
+                    body["start_date"] = json!(s);
+                }
+                let t: Value = request
+                    .post(&format!("/api/plans/{p}/tasks"))
+                    .json(&body)
+                    .await
+                    .json();
+                t["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let put_asg = |t: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/tasks/{t}/assignment");
+            async move { request.put(&url).json(&body).await }
+        };
+        let nobody = mk("Unassigned", None, Some("2026-10-05"), 5).await;
+        put_asg(&nobody, json!({ "units_percent": 100 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // A first assignment: duration 5 stored, units 100 given, work derived.
+        let a = mk("Build", Some(who), Some("2026-10-05"), 8).await;
+        let r: Value = put_asg(&a, json!({ "units_percent": 100 })).await.json();
+        assert_eq!(
+            (
+                r["work_minutes"].as_i64(),
+                r["derived"].as_str(),
+                r["exact"].as_bool()
+            ),
+            (Some(3840), Some("work"), Some(true)),
+            "8 days at 100%"
+        );
+        put_asg(&a, json!({ "units_percent": 50, "work_minutes": 100 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_asg(&a, json!({ "rule": "sideways" }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_asg(&a, json!({}))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // fixed_units (the default): raising work moves duration, never units.
+        let r: Value = put_asg(&a, json!({ "work_minutes": 4800 })).await.json();
+        assert_eq!(
+            (
+                r["duration_days"].as_i64(),
+                r["units_percent"].as_i64(),
+                r["work_minutes"].as_i64(),
+                r["derived"].as_str()
+            ),
+            (Some(10), Some(100), Some(4800), Some("duration"))
+        );
+        // fixed_duration: changing work moves UNITS and never duration.
+        let r: Value = put_asg(
+            &a,
+            json!({ "rule": "fixed_duration", "work_minutes": 2400 }),
+        )
+        .await
+        .json();
+        assert_eq!(
+            (
+                r["duration_days"].as_i64(),
+                r["units_percent"].as_i64(),
+                r["derived"].as_str()
+            ),
+            (Some(10), Some(50), Some("units"))
+        );
+        // Units above what the assignee can give are flagged, not clamped.
+        let r: Value = put_asg(&a, json!({ "units_percent": 300 })).await.json();
+        assert_eq!(r["units_percent"], 300);
+        assert_eq!(r["capacity"]["checked"], true);
+        assert_eq!(
+            r["capacity"]["over_capacity"], true,
+            "300% against a default capacity of 100%"
+        );
+        assert!(r["capacity"]["days_over"].as_i64().unwrap() > 0);
+
+        // The schedule editor applies the same rule when the duration changes (fixed_work: units move).
+        put_asg(&a, json!({ "rule": "fixed_work", "units_percent": 100 }))
+            .await
+            .assert_status_ok();
+        let work_now = put_asg(&a, json!({ "rule": "fixed_work" }))
+            .await
+            .json::<Value>()["work_minutes"]
+            .as_i64()
+            .unwrap();
+        let edited: Value = request
+            .put(&format!("/api/plans/{p}/tasks/{a}/schedule"))
+            .json(&json!({ "start_date": "2026-10-05", "duration_days": 20 }))
+            .await
+            .json();
+        assert_eq!(edited["assignment"]["derived"], "units");
+        assert_eq!(
+            edited["assignment"]["work_minutes"], work_now,
+            "fixed work is kept"
+        );
+        assert_eq!(
+            edited["assignment"]["units_percent"], 150,
+            "14 400 minutes over 20 days is 150%"
+        );
+        // A task that carries work cannot become a milestone.
+        request
+            .put(&format!("/api/plans/{p}/tasks/{a}/schedule"))
+            .json(&json!({ "start_date": "2026-10-05", "duration_days": 0 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // ── contours and the work profile ──
+        let b = mk("Test", Some(who), Some("2026-10-05"), 8).await;
+        put_asg(&b, json!({ "units_percent": 100 }))
+            .await
+            .assert_status_ok(); // 3 840 minutes over 8 working days
+        let put_contour = |t: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/tasks/{t}/contour");
+            async move { request.put(&url).json(&body).await }
+        };
+        put_contour(&b, json!({ "contour": "wavy" }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_contour(&b, json!({ "contour": "custom", "custom": [40, 50] }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_contour(&b, json!({ "contour": "front_loaded" }))
+            .await
+            .assert_status_ok();
+
+        let prof: Value = request
+            .get(&format!(
+                "/api/plans/{p}/work-profile?period=day&from=2026-10-05&to=2026-10-20"
+            ))
+            .await
+            .json();
+        let task_b = prof["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["pid"] == b.as_str())
+            .cloned()
+            .unwrap();
+        let days = task_b["buckets"].as_array().unwrap();
+        let sum: i64 = days.iter().map(|d| d["minutes"].as_i64().unwrap()).sum();
+        assert_eq!(sum, 3840, "the buckets sum to the work exactly");
+        // 5-9 and 12-14 Oct are the eight working days; the weekend between them carries nothing.
+        let on = |date: &str| {
+            days.iter()
+                .find(|d| d["from"] == date)
+                .map(|d| d["minutes"].as_i64().unwrap())
+                .unwrap()
+        };
+        assert_eq!(
+            (on("2026-10-10"), on("2026-10-11")),
+            (0, 0),
+            "no work on the weekend"
+        );
+        assert!(
+            on("2026-10-05") > on("2026-10-14"),
+            "front-loaded: more first than last"
+        );
+        // The plan's totals are the sum of its tasks'.
+        let total: i64 = prof["totals"]["buckets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["minutes"].as_i64().unwrap())
+            .sum();
+        let tasks_sum: i64 = prof["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|t| {
+                t["buckets"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|d| d["minutes"].as_i64().unwrap())
+            })
+            .sum();
+        assert_eq!(total, tasks_sum);
+        assert_eq!(prof["totals"]["unplaced_work_minutes"], 0);
+        // Another contour keeps the total unchanged.
+        put_contour(&b, json!({ "contour": "custom", "custom": [10, 20, 70] }))
+            .await
+            .assert_status_ok();
+        let prof2: Value = request
+            .get(&format!(
+                "/api/plans/{p}/work-profile?period=day&from=2026-10-05&to=2026-10-20"
+            ))
+            .await
+            .json();
+        let b2 = prof2["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["pid"] == b.as_str())
+            .cloned()
+            .unwrap();
+        assert_eq!(
+            b2["buckets"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|d| d["minutes"].as_i64().unwrap())
+                .sum::<i64>(),
+            3840
+        );
+        assert_ne!(b2["buckets"], task_b["buckets"], "the shape changed");
+
+        // Work that cannot be placed is listed and counted, never dropped.
+        let loose = mk("Loose", Some(who), None, 3).await;
+        put_asg(&loose, json!({ "units_percent": 100 }))
+            .await
+            .assert_status_ok();
+        let prof3: Value = request
+            .get(&format!("/api/plans/{p}/work-profile?period=week"))
+            .await
+            .json();
+        let un = prof3["unplaced"].as_array().unwrap();
+        assert_eq!(un.len(), 1);
+        assert_eq!(un[0]["reason"], "unscheduled");
+        assert_eq!(prof3["totals"]["unplaced_work_minutes"], 1440);
+
+        // The portfolio is the sum of the plans; a plan with no assignments says so.
+        let empty: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Empty" }))
+            .await
+            .json();
+        let ep = empty["pid"].as_str().unwrap().to_string();
+        let e: Value = request
+            .get(&format!("/api/plans/{ep}/work-profile"))
+            .await
+            .json();
+        assert_eq!(e["reason"], "no_assignments");
+        assert!(e["totals"]["buckets"].is_null());
+        let all: Value = request
+            .get("/api/work-profile?period=week&from=2026-10-05&to=2026-12-28")
+            .await
+            .json();
+        let ours = all["plans"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["plan_pid"] == p.as_str())
+            .cloned()
+            .unwrap();
+        let ours_sum: i64 = ours["buckets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["minutes"].as_i64().unwrap())
+            .sum();
+        let plan_total: i64 = request
+            .get(&format!(
+                "/api/plans/{p}/work-profile?period=week&from=2026-10-05&to=2026-12-28"
+            ))
+            .await
+            .json::<Value>()["totals"]["buckets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["minutes"].as_i64().unwrap())
+            .sum();
+        assert_eq!(
+            ours_sum, plan_total,
+            "the portfolio's figure for a plan is the plan's own"
+        );
+        let grand: i64 = all["totals"]["buckets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["minutes"].as_i64().unwrap())
+            .sum();
+        let by_plan: i64 = all["plans"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|x| {
+                x["buckets"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|d| d["minutes"].as_i64().unwrap())
+            })
+            .sum();
+        assert_eq!(
+            grand, by_plan,
+            "the portfolio total is the sum of its plans"
+        );
+        request
+            .get(&format!("/api/plans/{p}/work-profile?period=year"))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let who = "person:00000000-0000-4000-8000-0000000000b1";
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Costed" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        request.put(&format!("/api/plans/{p}/calendar")).json(&json!({ "weekdays": "1111100" })).await.assert_status_ok();
+
+        // Tables and rates validate; a date carries one rate.
+        request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "currency": "GBP" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "person_ref": who, "currency": "pounds" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let t: Value = request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "person_ref": who, "currency": "gbp" })).await.json();
+        let table = t["pid"].as_str().unwrap().to_string();
+        request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "person_ref": who, "currency": "GBP" })).await.assert_status(S::CONFLICT);
+        let add = |from: &str, rate: i64| {
+            let request = &request;
+            let url = format!("/api/cost-rate-tables/{table}/rates");
+            let body = json!({ "effective_from": from, "per_hour_minor": rate });
+            async move { request.post(&url).json(&body).await }
+        };
+        add("2026-01-01", 5000).await.assert_status_ok();
+        add("2026-10-07", 6000).await.assert_status_ok();
+        add("2026-10-07", 7000).await.assert_status(S::CONFLICT);
+        add("2026-10-08", -1).await.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        let look = |date: &str| {
+            let request = &request;
+            let url = format!("/api/cost-rates/lookup?person_ref={who}&date={date}");
+            async move { request.get(&url).await.json::<Value>() }
+        };
+        assert_eq!(look("2026-10-06").await["rate"]["per_hour_minor"], 5000);
+        assert_eq!(look("2026-10-07").await["rate"]["per_hour_minor"], 6000);
+        let before = look("2025-12-31").await;
+        assert!(before["rate"].is_null());
+        assert_eq!(before["reason"], "no_rate");
+
+        // Planned labour: 3 days at 100% from Mon 5 Oct; Wed 7 Oct is at the new rate.
+        let task: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({
+            "title": "Build", "assignee_ref": who, "start_date": "2026-10-05", "duration_days": 3 })).await.json();
+        let tp = task["pid"].as_str().unwrap().to_string();
+        request.put(&format!("/api/plans/{p}/tasks/{tp}/assignment")).json(&json!({ "units_percent": 100 })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/tasks/{tp}/costs")).json(&json!({
+            "kind": "material", "description": "Timber", "amount_minor": 100, "currency": "gbp", "accrual": "prorated" })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/tasks/{tp}/costs")).json(&json!({
+            "kind": "fixed", "description": "x", "amount_minor": 0, "currency": "GBP", "accrual": "start" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let plan_cost: Value = request.get(&format!("/api/plans/{p}/cost-plan?period=day")).await.json();
+        let gbp = &plan_cost["currencies"][0];
+        assert_eq!(gbp["currency"], "GBP");
+        assert_eq!(gbp["labour"]["total_minor"], 2 * 40_000 + 48_000, "two days at 50.00, one at 60.00");
+        assert_eq!(gbp["fixed"]["total_minor"], 100, "the prorated expense sums exactly");
+        assert_eq!(gbp["total"]["total_minor"], 128_100);
+        assert!(plan_cost["unrated"].as_array().unwrap().is_empty());
+
+        // Time entries are priced once, with their rate stored; a later rate does not rewrite them.
+        let entry: Value = request.post(&format!("/api/plans/{p}/time-entries")).json(&json!({
+            "task_pid": tp, "actor_ref": who, "spent_on": "2026-10-06", "minutes": 120, "category": "work" })).await.json();
+        let _ = entry;
+        let rec: Value = request.post(&format!("/api/plans/{p}/labour-costs/record")).await.json();
+        assert_eq!(rec["recorded"], 1);
+        add("2026-10-06", 9000).await.assert_status_ok(); // a rate backdated onto the entry's day
+        let again: Value = request.post(&format!("/api/plans/{p}/labour-costs/record")).await.json();
+        assert_eq!((again["recorded"].as_i64(), again["already_recorded"].as_i64()), (Some(0), Some(1)));
+        let actuals: Value = request.get(&format!("/api/plans/{p}/labour-costs")).await.json();
+        assert_eq!(actuals["entries"][0]["per_hour_minor"], 5000, "the rate it was priced at");
+        assert_eq!(actuals["currencies"][0]["cost_minor"], 10_000, "2 h at 50.00");
+        assert_eq!(actuals["unpriced"]["entries"], 0);
+
+        // Someone with no finance attribute does not see any of it exist.
+        let nobody = "person:00000000-0000-4000-8000-0000000000b2";
+        let r: Value = request.get(&format!("/api/cost-rates/lookup?person_ref={nobody}&date=2026-10-06")).await.json();
+        assert!(r["rate"].is_null(), "an unrated person has no rate, not zero");
+    })
+    .await;
+}

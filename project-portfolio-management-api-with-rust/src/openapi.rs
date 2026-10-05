@@ -2058,6 +2058,8 @@ mod tests {
             crate::controllers::pdf::routes(),
             crate::controllers::sinks::routes(),
             crate::controllers::report_schedules::routes(),
+            crate::controllers::assignments::routes(),
+            crate::controllers::cost_rates::routes(),
             crate::controllers::cost_risk::routes(),
             crate::controllers::cpm::routes(),
             crate::controllers::kpis::routes(),

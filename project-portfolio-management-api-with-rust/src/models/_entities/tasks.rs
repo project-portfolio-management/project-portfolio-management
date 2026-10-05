@@ -36,6 +36,16 @@ pub struct Model {
     pub duration_optimistic_days: Option<i32>,
     /// Pessimistic working-day duration (SC-8).
     pub duration_pessimistic_days: Option<i32>,
+    /// Work, in minutes (PJ-6): with `units_percent` and the duration, one of three related quantities.
+    pub work_minutes: Option<i64>,
+    /// How much of the assignee's day the task takes, percent (PJ-6).
+    pub units_percent: Option<i32>,
+    /// Which quantity stays fixed when another is edited: `fixed_units`, `fixed_duration`, `fixed_work`.
+    pub scheduling_rule: Option<String>,
+    /// How the work is spread over the working days (PJ-5): `flat`, `front_loaded`, `back_loaded`, `bell`, `turtle`, `custom`.
+    pub contour: String,
+    /// The weights of a `custom` contour (percent, summing to 100).
+    pub contour_custom: Option<Json>,
     /// A date constraint kind (SC-2): `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`.
     pub constraint_kind: Option<String>,
     /// The constraint's date; set exactly when the kind is.

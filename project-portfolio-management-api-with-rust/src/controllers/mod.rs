@@ -1,5 +1,6 @@
 //! HTTP controllers for the portfolio service.
 
+pub mod assignments;
 pub mod automation;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` (T-28l).
@@ -211,6 +212,7 @@ pub mod availability;
 pub mod bulk;
 pub mod calendars;
 pub mod components;
+pub mod cost_rates;
 pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;

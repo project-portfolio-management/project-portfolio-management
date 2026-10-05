@@ -208,6 +208,8 @@ impl Hooks for App {
             .add_route(controllers::pdf::routes())
             .add_route(controllers::sinks::routes())
             .add_route(controllers::report_schedules::routes())
+            .add_route(controllers::assignments::routes())
+            .add_route(controllers::cost_rates::routes())
             .add_route(controllers::cost_risk::routes())
             .add_route(controllers::cpm::routes())
             .add_route(controllers::kpis::routes())

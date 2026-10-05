@@ -48,6 +48,7 @@ pub mod controllers;
 /// (feedforward / concurrent / feedback) that fix what a failing
 /// control may do.
 pub mod controls;
+pub mod cost_rates;
 pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;
@@ -123,6 +124,7 @@ pub mod schedule_health;
 pub mod schedule_risk;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;
+pub mod scheduling_rules;
 /// Tantivy full-text search: index schema, engine, and query surface.
 pub mod search;
 pub mod sinks;
@@ -159,6 +161,7 @@ pub mod visibility;
 /// Outbound webhook delivery — the `WebhookSink` family contract
 /// (`agents/share/event-bus.md` §12, repo `tasks.md` EV-3).
 pub mod webhooks;
+pub mod work_profile;
 pub mod workers;
 /// Live worker-skill resolution over the worker service by
 /// `EntityRef`, TTL-cached, never persisted (T-28c).

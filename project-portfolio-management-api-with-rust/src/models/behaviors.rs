@@ -38,6 +38,7 @@ impl ActiveModelBehavior for earned_value_settings::ActiveModel {}
 impl ActiveModelBehavior for earned_value_snapshots::ActiveModel {}
 impl ActiveModelBehavior for resource_roles::ActiveModel {}
 impl ActiveModelBehavior for kpis::ActiveModel {}
+impl ActiveModelBehavior for announcements::ActiveModel {}
 impl ActiveModelBehavior for cost_rate_tables::ActiveModel {}
 impl ActiveModelBehavior for cost_rates::ActiveModel {}
 impl ActiveModelBehavior for task_costs::ActiveModel {}

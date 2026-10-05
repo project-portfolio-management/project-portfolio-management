@@ -24,6 +24,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod announcements;
 pub mod app;
 pub mod approvals;
 pub mod artifacts;

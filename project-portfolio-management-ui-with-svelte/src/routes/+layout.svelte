@@ -140,6 +140,8 @@
     { href: "/gantt", label: t("ppm.nav.gantt") },
     { href: "/engineering", label: t("ppm.nav.engineering") },
     { href: "/calendar", label: t("ppm.nav.calendar") },
+    { href: "/ceo", label: "CEO dashboard" },
+    { href: "/announcements", label: "Announcements" },
     { href: "/executive", label: t("ppm.nav.executive") },
     { href: "/financials", label: t("ppm.nav.financials") },
     { href: "/technology", label: t("ppm.nav.technology") },

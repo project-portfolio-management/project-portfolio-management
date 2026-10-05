@@ -110,6 +110,7 @@ pub fn paths() -> Value {
     merge(&mut all, cost_risk_paths());
     merge(&mut all, assignment_paths());
     merge(&mut all, cost_rate_paths());
+    merge(&mut all, announcement_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1185,6 +1186,29 @@ fn cost_rate_paths() -> Value {
             "get": op("costs", "Recorded labour cost, per currency",
                 &format!("Each entry shows the rate it was priced at. Unrecorded or unrated entries are counted under unpriced (unknown, not zero). {gate}"),
                 vec![uuid_param("pid")], &[("200", "currencies, entries, unpriced"), ("404", "Unknown or not permitted")])
+        }
+    })
+}
+
+/// The announcement feed.
+fn announcement_paths() -> Value {
+    let gate =
+        "Needs access=admin or comms=publish (or authentication off); otherwise 403. Audited.";
+    json!({
+        "/api/announcements": {
+            "get": op("announcements", "The live announcement feed",
+                "Anyone may read it. Live means publish_at has passed and expires_at has not (expiry exclusive). Order: pinned first, then urgent, important, info, then newest. include=all (publishers only, else 403) also lists scheduled and expired ones, each with its state. total and truncated say whether limit (default 50, max 200) cut the list.",
+                vec![query("include", false, "all, for publishers"), query("limit", false, "1-200, default 50")],
+                &[("200", "announcements, total, truncated, as_of"), ("403", "include=all without permission")]),
+            "post": op("announcements", "Publish or schedule an announcement",
+                &format!("title (120), body (4000), severity info (default), important or urgent, pinned, publish_at (default now; a future time schedules it), expires_at (must be later). {gate}"),
+                vec![], &[("200", "the announcement"), ("403", "Not permitted"), ("422", "Invalid")])
+        },
+        "/api/announcements/{pid}": {
+            "put": op("announcements", "Edit an announcement", &format!("Replaces its fields. {gate}"),
+                vec![uuid_param("pid")], &[("200", "the announcement"), ("403", "Not permitted"), ("404", "Unknown"), ("422", "Invalid")]),
+            "delete": op("announcements", "Retract an announcement", &format!("Soft delete. {gate}"),
+                vec![uuid_param("pid")], &[("200", "retracted"), ("403", "Not permitted"), ("404", "Unknown")])
         }
     })
 }

@@ -768,6 +768,37 @@ export interface VarianceRow {
   line_count: number;
 }
 
+export type AnnouncementSeverity = "info" | "important" | "urgent";
+
+/** One announcement (`GET /api/announcements`). */
+export interface Announcement {
+  pid: string;
+  title: string;
+  body: string;
+  severity: AnnouncementSeverity;
+  pinned: boolean;
+  publish_at: string;
+  expires_at: string | null;
+  author_ref: string | null;
+  state: "scheduled" | "live" | "expired";
+}
+
+export interface AnnouncementList {
+  announcements: Announcement[];
+  total: number;
+  truncated: boolean;
+  as_of: string;
+}
+
+export interface AnnouncementInput {
+  title: string;
+  body: string;
+  severity: AnnouncementSeverity;
+  pinned: boolean;
+  publish_at?: string | null;
+  expires_at?: string | null;
+}
+
 /** `GET /api/executive/health` response. */
 export interface ExecutiveHealth {
   as_of: string;
@@ -1941,6 +1972,19 @@ export class PpmClient {
   }
 
   // ---- executive insight areas (CEO / CFO / CTO) ----
+  announcements(params: { include?: "all"; limit?: number } = {}): Promise<AnnouncementList> {
+    const q = new URLSearchParams();
+    if (params.include) q.set("include", params.include);
+    if (params.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return this.http.get(`/api/announcements${qs ? `?${qs}` : ""}`);
+  }
+  publishAnnouncement(body: AnnouncementInput): Promise<Announcement> {
+    return this.http.post("/api/announcements", { body });
+  }
+  retractAnnouncement(pid: string): Promise<void> {
+    return this.http.delete(`/api/announcements/${pid}`);
+  }
   executiveHealth(): Promise<ExecutiveHealth> {
     return this.http.get("/api/executive/health");
   }

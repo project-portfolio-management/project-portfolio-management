@@ -2,6 +2,7 @@
 
 pub mod adoption_snapshots;
 pub mod allocations;
+pub mod announcements;
 pub mod approval_requests;
 pub mod artifacts;
 pub mod attachment_texts;

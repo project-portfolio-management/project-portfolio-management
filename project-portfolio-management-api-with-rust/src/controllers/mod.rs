@@ -1,5 +1,6 @@
 //! HTTP controllers for the portfolio service.
 
+pub mod announcements;
 pub mod assignments;
 pub mod automation;
 /// Per-user saved views: route-scoped filter/sort/column presets,

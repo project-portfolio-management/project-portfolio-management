@@ -2486,3 +2486,45 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_announcement_feed_orders_hides_scheduled_and_expired_and_retracts() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let post = |body: Value| {
+            let request = &request;
+            async move { request.post("/api/announcements").json(&body).await }
+        };
+        post(json!({ "title": "", "body": "x" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        post(json!({ "title": "t", "body": "x", "severity": "loud" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let info: Value = post(json!({ "title": "Lunch", "body": "Pizza at noon" })).await.json();
+        let urgent: Value = post(json!({ "title": "Outage", "body": "Down", "severity": "urgent" })).await.json();
+        let pinned: Value = post(json!({ "title": "Welcome", "body": "Hello", "pinned": true })).await.json();
+        post(json!({ "title": "Later", "body": "x", "publish_at": "2099-01-01T00:00:00Z" })).await.assert_status_ok();
+        post(json!({ "title": "Gone", "body": "x", "publish_at": "2020-01-01T00:00:00Z", "expires_at": "2020-01-02T00:00:00Z" })).await.assert_status_ok();
+        post(json!({ "title": "Backwards", "body": "x", "publish_at": "2030-01-02T00:00:00Z", "expires_at": "2030-01-01T00:00:00Z" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        let feed: Value = request.get("/api/announcements").await.json();
+        let titles: Vec<&str> = feed["announcements"].as_array().unwrap().iter().map(|a| a["title"].as_str().unwrap()).collect();
+        assert_eq!(titles, vec!["Welcome", "Outage", "Lunch"], "pinned, then urgent, then info; scheduled and expired are hidden");
+        let all: Value = request.get("/api/announcements?include=all").await.json();
+        let states: Vec<&str> = all["announcements"].as_array().unwrap().iter().map(|a| a["state"].as_str().unwrap()).collect();
+        assert!(states.contains(&"scheduled") && states.contains(&"expired"));
+        let one: Value = request.get("/api/announcements?limit=1").await.json();
+        assert_eq!((one["announcements"].as_array().unwrap().len(), one["truncated"].as_bool(), one["total"].as_i64()), (1, Some(true), Some(3)));
+
+        let pid = urgent["pid"].as_str().unwrap();
+        let edited: Value = request.put(&format!("/api/announcements/{pid}")).json(&json!({ "title": "Outage over", "body": "Fixed", "severity": "info" })).await.json();
+        assert_eq!(edited["title"], "Outage over");
+        request.delete(&format!("/api/announcements/{}", info["pid"].as_str().unwrap())).await.assert_status_ok();
+        request.delete(&format!("/api/announcements/{}", info["pid"].as_str().unwrap())).await.assert_status(S::NOT_FOUND);
+        let feed: Value = request.get("/api/announcements").await.json();
+        let titles: Vec<&str> = feed["announcements"].as_array().unwrap().iter().map(|a| a["title"].as_str().unwrap()).collect();
+        assert_eq!(titles, vec!["Welcome", "Outage over"]);
+        let _ = pinned;
+    })
+    .await;
+}

@@ -68,7 +68,9 @@
 
 use std::sync::OnceLock;
 
-use authentication_verifier::{Action, Claims, Policy, ReloadablePolicy};
+use authentication_verifier::{
+    Action, ActionPattern, Claims, Effect, Policy, ReloadablePolicy, Rule,
+};
 #[cfg(feature = "paseto")]
 use authentication_verifier::{ReloadableVerifier, Verifier};
 use axum::extract::FromRequestParts;
@@ -392,13 +394,97 @@ pub fn policy_from_env() -> Policy {
                 }
             }
         });
-    match source {
+    with_service_rules(match source {
         Some(json) => Policy::from_json(&json).unwrap_or_else(|error| {
             tracing::warn!(%error, "ABAC policy JSON invalid; using the built-in default policy");
             Policy::default_policy()
         }),
         None => Policy::default_policy(),
+    })
+}
+
+/// A rule over one `resource.area` and the subject attribute that opens it.
+fn area_rule(
+    effect: Effect,
+    actions: &[ActionPattern],
+    area: &str,
+    subject: Option<(&str, &str)>,
+) -> Rule {
+    let mut when = std::collections::BTreeMap::new();
+    when.insert("resource.area".to_string(), vec![area.to_string()]);
+    if let Some((key, value)) = subject {
+        when.insert(key.to_string(), vec![value.to_string()]);
     }
+    Rule {
+        effect,
+        actions: actions.to_vec(),
+        when,
+        obligations: Vec::new(),
+    }
+}
+
+/// The rules this service **always** puts in front of the deployment's policy, so
+/// that an operator's policy file (or the built-in default) cannot leave them open:
+///
+/// * `resource.area = finance` (cost rates, task costs, labour cost, and the
+///   earned-value figures that rest on them): every action needs
+///   `access=admin` or `finance=cost_rates`;
+/// * `resource.area = comms` (announcements): **writes** need `access=admin` or
+///   `comms=publish`; reads fall through to the policy (the default allows them).
+///
+/// A handler asks with [`area_allows`]. A deployment that wants other holders can
+/// widen who carries those attributes in its identity service; it cannot widen
+/// these rules from the policy file, by design.
+#[must_use]
+pub fn service_rules() -> Vec<Rule> {
+    use ActionPattern::{Any, Delete, Destructive, Write};
+    let mut rules = Vec::new();
+    for (area, who, actions) in [
+        ("finance", "finance", vec![Any]),
+        ("comms", "comms", vec![Write, Delete, Destructive]),
+    ] {
+        let key = if who == "finance" {
+            ("finance", "cost_rates")
+        } else {
+            ("comms", "publish")
+        };
+        rules.push(area_rule(
+            Effect::Allow,
+            &actions,
+            area,
+            Some(("access", "admin")),
+        ));
+        rules.push(area_rule(Effect::Allow, &actions, area, Some(key)));
+        rules.push(area_rule(Effect::Deny, &actions, area, None));
+    }
+    rules
+}
+
+/// `policy` with [`service_rules`] first (first match wins).
+#[must_use]
+pub fn with_service_rules(policy: Policy) -> Policy {
+    let mut rules = service_rules();
+    rules.extend(policy.rules);
+    Policy { rules }
+}
+
+/// Whether the caller may do `action` in a service `area` (`finance`, `comms`),
+/// decided by the policy. Allowed when enforcement is off (the deployment's posture
+/// for every write); denied when it is on and there are no verified claims.
+#[must_use]
+pub fn area_allows(caller: &MaybeAuthUser, area: &str, action: Action) -> bool {
+    if !require_auth() {
+        return true;
+    }
+    let Some(claims) = caller.claims() else {
+        return false;
+    };
+    let mut resource = std::collections::BTreeMap::new();
+    resource.insert("area".to_string(), vec![area.to_string()]);
+    policy()
+        .current()
+        .evaluate_with_resource(claims, action, ENTITY, &resource)
+        .allowed
 }
 
 /// Derive the request's ABAC action from its HTTP method and path (per
@@ -1396,5 +1482,116 @@ mod tests {
         assert_eq!(verifier.key_count(), 1);
         let token = sign(&kid, 10_000_000_000);
         assert!(bearer_claims(&bearer(&token), &verifier).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod area_tests {
+    use super::*;
+
+    fn claims(attrs: &[(&str, &str)]) -> Claims {
+        Claims {
+            sub: "s".into(),
+            email: "e@example.com".into(),
+            name: "n".into(),
+            iss: "i".into(),
+            aud: "a".into(),
+            exp: 2_000_000_000,
+            iat: 1_900_000_000,
+            nbf: None,
+            sid: "x".into(),
+            scope: vec![],
+            roles: vec![],
+            attrs: attrs
+                .iter()
+                .map(|(k, v)| ((*k).to_string(), vec![(*v).to_string()]))
+                .collect(),
+        }
+    }
+    fn allowed(p: &Policy, c: &Claims, a: Action, area: &str) -> bool {
+        let mut r = std::collections::BTreeMap::new();
+        r.insert("area".to_string(), vec![area.to_string()]);
+        p.evaluate_with_resource(c, a, ENTITY, &r).allowed
+    }
+
+    #[test]
+    fn finance_needs_admin_or_the_finance_attribute_for_every_action() {
+        let p = with_service_rules(Policy::default_policy());
+        for a in [Action::Read, Action::Write, Action::Delete] {
+            assert!(
+                allowed(&p, &claims(&[("access", "admin")]), a, "finance"),
+                "{a:?}"
+            );
+            assert!(
+                allowed(&p, &claims(&[("finance", "cost_rates")]), a, "finance"),
+                "{a:?}"
+            );
+            assert!(
+                !allowed(&p, &claims(&[("access", "write")]), a, "finance"),
+                "a writer is not finance: {a:?}"
+            );
+            assert!(!allowed(&p, &claims(&[]), a, "finance"), "{a:?}");
+        }
+    }
+
+    #[test]
+    fn announcements_are_readable_by_all_and_writable_by_publishers() {
+        let p = with_service_rules(Policy::default_policy());
+        assert!(allowed(&p, &claims(&[]), Action::Read, "comms"));
+        assert!(!allowed(
+            &p,
+            &claims(&[("access", "write")]),
+            Action::Write,
+            "comms"
+        ));
+        assert!(allowed(
+            &p,
+            &claims(&[("comms", "publish")]),
+            Action::Write,
+            "comms"
+        ));
+        assert!(allowed(
+            &p,
+            &claims(&[("access", "admin")]),
+            Action::Delete,
+            "comms"
+        ));
+        assert!(!allowed(
+            &p,
+            &claims(&[("access", "write")]),
+            Action::Delete,
+            "comms"
+        ));
+    }
+
+    #[test]
+    fn a_deployments_own_policy_cannot_open_these_areas_and_other_areas_are_untouched() {
+        // A permissive operator policy that allows everything to everyone.
+        let open = Policy {
+            rules: vec![Rule {
+                effect: Effect::Allow,
+                actions: vec![ActionPattern::Any],
+                when: std::collections::BTreeMap::default(),
+                obligations: vec![],
+            }],
+        };
+        let p = with_service_rules(open);
+        let nobody = claims(&[]);
+        assert!(!allowed(&p, &nobody, Action::Read, "finance"));
+        assert!(!allowed(&p, &nobody, Action::Write, "comms"));
+        assert!(
+            allowed(&p, &nobody, Action::Write, "plan"),
+            "other areas follow the deployment's policy"
+        );
+        // With the default policy, ordinary writes and reads are as they were.
+        let d = with_service_rules(Policy::default_policy());
+        assert!(allowed(
+            &d,
+            &claims(&[("access", "write")]),
+            Action::Write,
+            "plan"
+        ));
+        assert!(allowed(&d, &nobody, Action::Read, "plan"));
+        assert!(!allowed(&d, &nobody, Action::Write, "plan"));
     }
 }

@@ -13,10 +13,11 @@
 //!   time, **snapshotted with the rate used**, so a later rate change never
 //!   rewrites an actual.
 //!
-//! **Rates are finance data.** Every route here is available only to a caller with
-//! `access=admin` or the `finance=cost_rates` attribute (or when authentication is
-//! off, the deployment's posture for every write); anyone else gets `404`, and no
-//! rate or cost appears in any other response.
+//! **Rates are finance data.** Every route here is available only to a caller the
+//! policy admits to the `finance` area (`access=admin` or `finance=cost_rates`,
+//! see [`crate::auth::service_rules`]; or when authentication is off, the
+//! deployment's posture for every write); anyone else gets `404`, and no rate or
+//! cost appears in any other response.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -53,14 +54,7 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 
 /// Whether the caller may see or change rates and the costs derived from them.
 pub(crate) fn may_see_rates(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
-        let has = |key: &str, want: &str| {
-            c.attrs
-                .get(key)
-                .is_some_and(|v| v.iter().any(|a| a == want))
-        };
-        has("access", "admin") || has("finance", "cost_rates")
-    })
+    crate::auth::area_allows(caller, "finance", authentication_verifier::Action::Read)
 }
 
 /// A route a caller without the finance attribute must not know exists.

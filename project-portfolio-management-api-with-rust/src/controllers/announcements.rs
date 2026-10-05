@@ -1,7 +1,8 @@
 //! The announcement feed. Rules in [`crate::announcements`]; this is the wiring.
 //!
 //! Anyone may read the live feed. **Publishing, editing and retracting** need
-//! `access=admin` or `comms=publish` (or authentication off, as for every write);
+//! admission to the `comms` area by the policy (`access=admin` or `comms=publish`,
+//! see [`crate::auth::service_rules`]; or authentication off, as for every write);
 //! otherwise `403`. Audited. `?include=all` (publishers only) also lists the
 //! scheduled and expired ones, which is how a publisher manages the feed.
 
@@ -31,10 +32,7 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 
 /// Whether the caller may publish, edit or retract announcements.
 fn may_publish(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
-        let has = |k: &str, v: &str| c.attrs.get(k).is_some_and(|x| x.iter().any(|a| a == v));
-        has("access", "admin") || has("comms", "publish")
-    })
+    crate::auth::area_allows(caller, "comms", authentication_verifier::Action::Write)
 }
 
 fn forbidden() -> Error {

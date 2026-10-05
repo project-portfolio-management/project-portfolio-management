@@ -2528,3 +2528,52 @@ async fn the_announcement_feed_orders_hides_scheduled_and_expired_and_retracts()
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let who = "person:00000000-0000-4000-8000-0000000000d1";
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let today = chrono::Utc::now().date_naive();
+        let day = |n: i64| (today + chrono::Duration::days(n)).to_string();
+        request.post(&format!("/api/plans/{p}/budget-baselines")).json(&json!({ "currency": "GBP", "periods": [
+            { "period_start": day(-9), "period_end": day(0), "planned_minor": 1000 },
+            { "period_start": day(1), "period_end": day(10), "planned_minor": 3000 } ] })).await.assert_status_ok();
+        let a = task(&request, &p, "A", None, None).await;
+        task(&request, &p, "B", None, None).await;
+        request.patch(&format!("/api/plans/{p}/tasks/{a}")).json(&json!({ "status": "done" })).await.assert_status_ok();
+        let line: Value = request.post(&format!("/api/plans/{p}/budget-lines")).json(&json!({
+            "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 4000 })).await.json();
+        request.post(&format!("/api/plans/{p}/budget-lines/{}/actual", line["pid"].as_str().unwrap())).json(&json!({ "amount_minor": 2500 })).await.assert_status_ok();
+        let ac = |q: &'static str| {
+            let (request, url) = (&request, format!("/api/plans/{p}/earned-value{q}"));
+            async move { request.get(&url).await.json::<Value>() }
+        };
+
+        // The default is unchanged and says where it came from.
+        let d = ac("").await;
+        assert_eq!((d["ac_source"].as_str(), d["blocks"][0]["ac_minor"].as_i64()), (Some("budget_line_actuals"), Some(2500)));
+        // Asked for labour before any is recorded: no actual cost (null), not zero.
+        let none = ac("?ac=labour").await;
+        assert_eq!(none["ac_source"], "labour_costs");
+        assert!(none["blocks"][0]["ac_minor"].is_null(), "{none}");
+        assert!(none["blocks"][0]["cpi"].is_null() || none["blocks"][0]["cpi"]["bp"].is_null());
+
+        // Two hours at 50.00 recorded: 10 000.
+        let t: Value = request.post("/api/cost-rate-tables").json(&json!({ "name": "standard", "person_ref": who, "currency": "GBP" })).await.json();
+        request.post(&format!("/api/cost-rate-tables/{}/rates", t["pid"].as_str().unwrap())).json(&json!({ "effective_from": "2026-01-01", "per_hour_minor": 5000 })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/time-entries")).json(&json!({
+            "task_pid": a, "actor_ref": who, "spent_on": today.to_string(), "minutes": 120, "category": "work" })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/labour-costs/record")).await.assert_status_ok();
+        assert_eq!(ac("?ac=labour").await["blocks"][0]["ac_minor"], 10_000);
+        assert_eq!(ac("?ac=both").await["blocks"][0]["ac_minor"], 12_500, "budget lines 2 500 + labour 10 000");
+        assert_eq!(ac("").await["blocks"][0]["ac_minor"], 2500, "the default still ignores labour");
+        assert_eq!(ac("?ac=both").await["ac_source"], "budget_line_actuals_plus_labour_costs");
+        assert_eq!(request.get(&format!("/api/plans/{p}/earned-value?ac=sideways")).await.status_code(), 422);
+    })
+    .await;
+}

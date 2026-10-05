@@ -33,7 +33,7 @@ use crate::earned_value::{self as ev, DefaultMethod, Method, Period, TaskInput, 
 use crate::evm::{self, Thresholds};
 use crate::models::_entities::{
     budget_baseline_periods, budget_baselines, budget_lines, earned_value_settings,
-    earned_value_snapshots, plans, tasks,
+    earned_value_snapshots, plans, tasks, time_entry_costs,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -100,11 +100,53 @@ pub(crate) enum Outcome {
     },
 }
 
-/// Compute a plan's earned-value figures as of `as_of`.
+/// Where actual cost (AC) comes from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum AcSource {
+    /// The plan's recorded budget-line actuals (the default, and what every other
+    /// endpoint uses).
+    BudgetLines,
+    /// Recorded labour cost (PJ-2): time entries priced at the rate in force, with
+    /// the rate stored. Finance data.
+    Labour,
+    /// Both added: **only right when budget lines do not already include labour**,
+    /// which the API cannot know — the caller says so by asking for it.
+    Both,
+}
+
+impl AcSource {
+    fn parse(s: &str) -> Option<Self> {
+        match s {
+            "budget_lines" => Some(Self::BudgetLines),
+            "labour" => Some(Self::Labour),
+            "both" => Some(Self::Both),
+            _ => None,
+        }
+    }
+    fn token(self) -> &'static str {
+        match self {
+            Self::BudgetLines => "budget_line_actuals",
+            Self::Labour => "labour_costs",
+            Self::Both => "budget_line_actuals_plus_labour_costs",
+        }
+    }
+}
+
+/// Compute a plan's earned-value figures as of `as_of`, from budget-line actuals.
 pub(crate) async fn compute(
     ctx: &AppContext,
     plan: Uuid,
     as_of: chrono::NaiveDate,
+) -> Result<Outcome> {
+    compute_with(ctx, plan, as_of, AcSource::BudgetLines).await
+}
+
+/// Compute a plan's earned-value figures as of `as_of`, with the AC from `source`.
+pub(crate) async fn compute_with(
+    ctx: &AppContext,
+    plan: Uuid,
+    as_of: chrono::NaiveDate,
+    source: AcSource,
 ) -> Result<Outcome> {
     let baselines = budget_baselines::Entity::find()
         .filter(budget_baselines::Column::PlanPid.eq(plan))
@@ -132,6 +174,15 @@ pub(crate) async fn compute(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let labour_rows = if source == AcSource::BudgetLines {
+        Vec::new()
+    } else {
+        time_entry_costs::Entity::find()
+            .filter(time_entry_costs::Column::PlanPid.eq(plan))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+    };
     let mut blocks = Vec::new();
     for b in seen {
         let periods: Vec<Period> = budget_baseline_periods::Entity::find()
@@ -148,11 +199,23 @@ pub(crate) async fn compute(
                 planned_minor: p.planned_minor,
             })
             .collect();
-        let ac = lines
+        let budget_ac = lines
             .iter()
             .filter(|l| l.currency == b.currency)
             .fold(0_i64, |a, l| a.saturating_add(l.actual_minor));
-        if let Some(block) = ev::block(&periods, pc.numerator, pc.denominator, Some(ac), as_of) {
+        let labour: Vec<i64> = labour_rows
+            .iter()
+            .filter(|c| c.currency == b.currency)
+            .map(|c| c.cost_minor)
+            .collect();
+        let labour_ac = labour.iter().fold(0_i64, |a, c| a.saturating_add(*c));
+        // No labour recorded in this currency is "no actuals" (null), never a zero.
+        let ac = match source {
+            AcSource::BudgetLines => Some(budget_ac),
+            AcSource::Labour => (!labour.is_empty()).then_some(labour_ac),
+            AcSource::Both => Some(budget_ac.saturating_add(labour_ac)),
+        };
+        if let Some(block) = ev::block(&periods, pc.numerator, pc.denominator, ac, as_of) {
             blocks.push((b.currency.clone(), b.version, block));
         }
     }
@@ -184,12 +247,41 @@ fn pc_view(default: DefaultMethod, pc: &ev::PercentComplete) -> serde_json::Valu
     })
 }
 
+/// `?ac=` on `GET …/earned-value`.
+#[derive(Debug, Deserialize)]
+struct EarnedValueParams {
+    /// `budget_lines` (default), `labour` or `both`.
+    #[serde(default)]
+    ac: Option<String>,
+}
+
 /// `GET /api/plans/{pid}/earned-value` — the plan's earned-value figures today.
 #[debug_handler]
-async fn earned_value(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+async fn earned_value(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Query(q): Query<EarnedValueParams>,
+) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
+    let source = match q.ac.as_deref() {
+        None => AcSource::BudgetLines,
+        Some(a) => AcSource::parse(a).ok_or_else(|| {
+            Error::CustomError(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ErrorDetail::new("unprocessable", "ac must be budget_lines, labour or both"),
+            )
+        })?,
+    };
+    // Labour cost is finance data: asking for it needs the same admission as the rates.
+    if source != AcSource::BudgetLines && !super::cost_rates::may_see_rates(&caller) {
+        return Err(Error::CustomError(
+            StatusCode::FORBIDDEN,
+            ErrorDetail::new("forbidden", "actual cost from labour needs finance access"),
+        ));
+    }
     let as_of = chrono::Utc::now().date_naive();
-    let body = match compute(&ctx, plan.pid, as_of).await? {
+    let body = match compute_with(&ctx, plan.pid, as_of, source).await? {
         Outcome::NoBaseline => serde_json::json!({
             "plan_pid": plan.pid, "as_of": as_of, "blocks": null, "absent": "no_baseline",
             "reason": "no phased budget baseline: a plan without one is unmeasured, not on track",
@@ -214,8 +306,8 @@ async fn earned_value(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
                 v
             }).collect::<Vec<_>>(),
             "unbaselined_currencies": unbaselined_currencies,
-            "ac_source": "budget_line_actuals",
-            "note": "Measured as of today: actuals carry no date and intermediate task progress is not stored by date, so the past is not reconstructed. Planned value is linear within each baseline period. Percent complete is physical (work finished), not elapsed time. Cost per currency is never added across currencies. Actual cost is the recorded budget-line actuals; timesheets x a rate is not offered until cost rates exist.",
+            "ac_source": source.token(),
+            "note": "Measured as of today: actuals carry no date and intermediate task progress is not stored by date, so the past is not reconstructed. Planned value is linear within each baseline period. Percent complete is physical (work finished), not elapsed time. Cost per currency is never added across currencies. Actual cost defaults to the recorded budget-line actuals; ac=labour uses recorded labour cost (time entries x the rate in force, rate stored) and ac=both adds the two, which is only right when the budget lines do not already include labour. A currency with no recorded labour has no actual cost (null), never zero. The forecast, S-curve, snapshots and portfolio figures still use budget-line actuals.",
         }),
     };
     format::json(body)

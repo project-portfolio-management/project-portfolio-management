@@ -856,9 +856,9 @@ fn earned_value_paths() -> Value {
     json!({
         "/api/plans/{pid}/earned-value": {
             "get": op("earned-value", "Earned value: PV, EV, AC, SV, CV, SPI, CPI and SPI(t), one block per currency",
-                "Planned value follows the phased budget baseline (the latest version in each currency; linear within a period, the standard EVM convention). Earned value is the budget times the plan's PHYSICAL percent complete: each task is counted 0/100, 0/50/100, or by a person-entered percent (always flagged, always with a note), weighted equally or by story points (the plan default, PUT …/earned-value-settings). Actual cost is the plan's recorded budget-line actuals in that currency; timesheets x a rate is not offered until cost rates exist. Ratios are basis points (10000 = 1.0), money minor units, all integer. SPI(t) is earned schedule over actual time and, unlike SPI, still says so when a project finishes late. Undefined figures are null with a reason (no_planned_value_yet, no_actuals_recorded, no_planned_value), never zero or 1.0; with no baseline the answer is blocks null, absent no_baseline; with nothing to weigh, no_weighted_tasks. Measured as of today (UTC date): actuals carry no date, so the past is not reconstructed. Currencies never merge: budget lines in a currency with no baseline are listed in unbaselined_currencies.",
-                vec![uuid_param("pid")],
-                &[("200", "percent_complete and one block per currency (or an absent reason)"), ("404", "Unknown plan")])
+                "Planned value follows the phased budget baseline (the latest version in each currency; linear within a period, the standard EVM convention). Earned value is the budget times the plan's PHYSICAL percent complete: each task is counted 0/100, 0/50/100, or by a person-entered percent (always flagged, always with a note), weighted equally or by story points (the plan default, PUT …/earned-value-settings). Actual cost is, by default, the plan's recorded budget-line actuals in that currency; ?ac=labour uses recorded labour cost instead (time entries x the rate in force, the rate stored with each; a currency with none recorded has no actual cost, null, never zero) and ?ac=both adds the two, which is only right when the budget lines do not already include labour. The response names the source in ac_source. ac=labour and ac=both are finance data and need finance access (403 otherwise); the forecast, S-curve, snapshots and portfolio figures still use budget-line actuals. Ratios are basis points (10000 = 1.0), money minor units, all integer. SPI(t) is earned schedule over actual time and, unlike SPI, still says so when a project finishes late. Undefined figures are null with a reason (no_planned_value_yet, no_actuals_recorded, no_planned_value), never zero or 1.0; with no baseline the answer is blocks null, absent no_baseline; with nothing to weigh, no_weighted_tasks. Measured as of today (UTC date): actuals carry no date, so the past is not reconstructed. Currencies never merge: budget lines in a currency with no baseline are listed in unbaselined_currencies.",
+                vec![uuid_param("pid"), query("ac", false, "budget_lines (default), labour or both")],
+                &[("200", "percent_complete and one block per currency (or an absent reason)"), ("403", "ac=labour or both without finance access"), ("404", "Unknown plan"), ("422", "An unknown ac")])
         },
         "/api/plans/{pid}/earned-value-settings": {
             "put": op("earned-value", "How the plan's tasks are counted by default",
@@ -1140,7 +1140,7 @@ fn assignment_paths() -> Value {
 
 /// Cost rates, task costs and labour cost. All finance-gated (404 otherwise).
 fn cost_rate_paths() -> Value {
-    let gate = "Finance data: only a caller with access=admin or finance=cost_rates (or with authentication off) may use it; anyone else gets 404. This is a handler check, not an entry in the policy file.";
+    let gate = "Finance data: only a caller with access=admin or finance=cost_rates (or with authentication off) may use it; anyone else gets 404. Decided by the policy: the service puts its own finance rules in front of the deployment's (see auth::service_rules), so a policy file cannot open it. A finance holder also needs write access for the write routes.";
     json!({
         "/api/cost-rate-tables": {
             "post": op("costs", "Create a named rate table for a person or a role",
@@ -1192,8 +1192,7 @@ fn cost_rate_paths() -> Value {
 
 /// The announcement feed.
 fn announcement_paths() -> Value {
-    let gate =
-        "Needs access=admin or comms=publish (or authentication off); otherwise 403. Audited.";
+    let gate = "Writes need access=admin or comms=publish, decided by the policy (auth::service_rules; a policy file cannot widen it), or authentication off; otherwise 403. Audited.";
     json!({
         "/api/announcements": {
             "get": op("announcements", "The live announcement feed",

@@ -32,6 +32,9 @@ pub struct Model {
     pub schedule_impact_days: Option<i32>,
     /// Chance it happens, in percent (0-100); no value means it is skipped.
     pub schedule_probability_percent: Option<i32>,
+    /// The cost it adds, in minor units of `cost_currency`, if it happens (cost-risk).
+    pub cost_impact_minor: Option<i64>,
+    pub cost_currency: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

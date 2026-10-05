@@ -217,34 +217,10 @@ fn bp(percent: i32) -> i64 {
     i64::from(percent) * 100
 }
 
-/// `GET /api/plans/{pid}/schedule-risk` — simulate the plan's task network.
-#[debug_handler]
-#[allow(clippy::too_many_lines)]
-async fn schedule_risk(
-    State(ctx): State<AppContext>,
-    Path(pid): Path<String>,
-    Query(q): Query<RunParams>,
-) -> Result<Response> {
-    let plan = super::governance::find_item(&ctx, &pid).await?;
-    let distribution = match q.distribution.as_deref() {
-        None => Distribution::Triangular,
-        Some(d) => Distribution::parse(d)
-            .ok_or_else(|| unprocessable("distribution must be triangular or pert"))?,
-    };
-    let band = q.fallback_band_percent.unwrap_or(sim::DEFAULT_BAND_PERCENT);
-    if !(0..=100).contains(&band) {
-        return Err(unprocessable("fallback_band_percent must be 0 to 100"));
-    }
-    let params = Params {
-        iterations: q.iterations.unwrap_or(sim::DEFAULT_ITERATIONS),
-        seed: q.seed.unwrap_or(sim::DEFAULT_SEED),
-        distribution,
-        fallback_band_percent: band,
-    };
-    let net = super::cpm::load_network(&ctx, plan.pid).await?;
-    let estimates: HashMap<Uuid, Estimate> = net
-        .rows
-        .iter()
+/// Each task's optimistic / pessimistic estimate, for those that have one and a
+/// likely duration to sit around.
+pub(crate) fn estimates_of(rows: &[tasks::Model]) -> HashMap<Uuid, Estimate> {
+    rows.iter()
         .filter_map(|t| {
             match (
                 t.duration_optimistic_days,
@@ -261,23 +237,25 @@ async fn schedule_risk(
                 )),
             }
         })
-        .collect();
+        .collect()
+}
 
-    // The register's schedule events: used, skipped (named), or not schedule
-    // risks at all (counted).
-    let register = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .order_by_asc(risks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let in_network: std::collections::HashSet<Uuid> = net.nodes.iter().map(|n| n.pid).collect();
+/// The register's schedule events: those that can be simulated, those skipped
+/// with a named reason, and the count of risks with no schedule fields at all.
+pub(crate) fn classify_events(
+    register: &[risks::Model],
+    in_network: &std::collections::HashSet<Uuid>,
+) -> (
+    Vec<Event>,
+    Vec<serde_json::Value>,
+    Vec<serde_json::Value>,
+    usize,
+) {
     let mut events = Vec::new();
     let mut used = Vec::new();
     let mut skipped = Vec::new();
     let mut not_schedule = 0_usize;
-    for r in &register {
+    for r in register {
         if r.task_pid.is_none()
             && r.schedule_impact_days.is_none()
             && r.schedule_probability_percent.is_none()
@@ -320,6 +298,47 @@ async fn schedule_risk(
                 "reason": reason.unwrap_or("incomplete") })),
         }
     }
+    (events, used, skipped, not_schedule)
+}
+
+/// `GET /api/plans/{pid}/schedule-risk` — simulate the plan's task network.
+#[debug_handler]
+#[allow(clippy::too_many_lines)]
+async fn schedule_risk(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+    Query(q): Query<RunParams>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let distribution = match q.distribution.as_deref() {
+        None => Distribution::Triangular,
+        Some(d) => Distribution::parse(d)
+            .ok_or_else(|| unprocessable("distribution must be triangular or pert"))?,
+    };
+    let band = q.fallback_band_percent.unwrap_or(sim::DEFAULT_BAND_PERCENT);
+    if !(0..=100).contains(&band) {
+        return Err(unprocessable("fallback_band_percent must be 0 to 100"));
+    }
+    let params = Params {
+        iterations: q.iterations.unwrap_or(sim::DEFAULT_ITERATIONS),
+        seed: q.seed.unwrap_or(sim::DEFAULT_SEED),
+        distribution,
+        fallback_band_percent: band,
+    };
+    let net = super::cpm::load_network(&ctx, plan.pid).await?;
+    let estimates = estimates_of(&net.rows);
+
+    // The register's schedule events: used, skipped (named), or not schedule
+    // risks at all (counted).
+    let register = risks::Entity::find()
+        .filter(risks::Column::PlanPid.eq(plan.pid))
+        .filter(risks::Column::DeletedAt.is_null())
+        .order_by_asc(risks::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let in_network: std::collections::HashSet<Uuid> = net.nodes.iter().map(|n| n.pid).collect();
+    let (events, used, skipped, not_schedule) = classify_events(&register, &in_network);
 
     let outcome = sim::simulate(
         &net.nodes,

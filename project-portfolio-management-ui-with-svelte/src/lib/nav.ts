@@ -60,6 +60,7 @@ export const KNOWN_NAV_HREFS = [
   "/regulator",
   "/capacity",
   "/resources",
+  "/cost-risk",
   "/reports",
   "/onboarding",
 ] as const;

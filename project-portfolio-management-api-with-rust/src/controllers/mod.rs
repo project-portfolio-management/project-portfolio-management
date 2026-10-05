@@ -211,6 +211,7 @@ pub mod availability;
 pub mod bulk;
 pub mod calendars;
 pub mod components;
+pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;
 pub mod earned_value;

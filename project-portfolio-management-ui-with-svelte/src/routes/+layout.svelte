@@ -149,6 +149,7 @@
     { href: "/regulator", label: t("ppm.nav.regulator") },
     { href: "/capacity", label: t("ppm.nav.capacity") },
     { href: "/resources", label: "Resources" },
+    { href: "/cost-risk", label: "Cost risk" },
     { href: "/reports", label: t("ppm.nav.reports") },
     { href: "/onboarding", label: "Onboarding" },
     { href: "/tour", label: t("nav.tour") },

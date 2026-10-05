@@ -1936,3 +1936,113 @@ async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(5)).await;
+        let b = task(&request, &p, "B", None, Some(3)).await;
+        request.post("/api/dependencies").json(&json!({ "predecessor_pid": a, "successor_pid": b })).await.assert_status_ok();
+        let line = |cat: &'static str, cur: &'static str, planned: i64| {
+            let request = &request;
+            let p = p.clone();
+            async move {
+                let l: Value = request.post(&format!("/api/plans/{p}/budget-lines")).json(&json!({
+                    "category": cat, "description": cat, "currency": cur, "planned_minor": planned })).await.json();
+                l["pid"].as_str().unwrap().to_string()
+            }
+        };
+        // No lines yet: a clear refusal.
+        request.get(&format!("/api/plans/{p}/cost-risk")).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let l1 = line("capex", "GBP", 10_000).await;
+        let _l2 = line("opex", "GBP", 5_000).await;
+        let _usd = line("capex", "USD", 700).await;
+
+        // Estimates must sit around the planned amount.
+        let put_est = |l: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/budget-lines/{l}/estimate");
+            async move { request.put(&url).json(&body).await }
+        };
+        put_est(&l1, json!({ "low_minor": 12_000 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_est(&l1, json!({ "high_minor": 9_000 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_est(&l1, json!({ "low_minor": 8_000, "high_minor": 16_000 })).await.assert_status_ok();
+
+        let url = |q: &str| format!("/api/plans/{p}/cost-risk?{q}");
+        let r: Value = request.get(&url("seed=5")).await.json();
+        assert_eq!(r["assumptions"]["correlation"], "none");
+        assert!(r["assumptions"]["independence"].as_str().unwrap().contains("independent"));
+        let cur = |v: &Value, c: &str| v["currencies"].as_array().unwrap().iter().find(|x| x["currency"] == c).cloned().unwrap();
+        // Currencies are separate blocks, never added.
+        assert_eq!(r["currencies"].as_array().unwrap().len(), 2);
+        assert_eq!(cur(&r, "GBP")["budget_minor"], 15_000);
+        assert_eq!(cur(&r, "USD")["budget_minor"], 700);
+        // The un-estimated GBP line uses the marked fallback.
+        let lines = cur(&r, "GBP")["lines"].as_array().unwrap().clone();
+        assert_eq!(lines.iter().filter(|l| l["source"] == "fallback").count(), 1);
+        // Seeded.
+        assert_eq!(r, request.get(&url("seed=5")).await.json::<Value>());
+        // No uncertainty: every percentile is the budget.
+        put_est(&l1, json!({ "low_minor": 10_000, "high_minor": 10_000 })).await.assert_status_ok();
+        let flat: Value = request.get(&url("fallback_band_percent=0")).await.json();
+        let g = cur(&flat, "GBP");
+        assert!(g["percentiles"].as_array().unwrap().iter().all(|x| x["minor"] == 15_000));
+        assert_eq!(g["budget_confidence_bp"], 10_000);
+        request.get(&url("iterations=0")).await.assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // A risk: probability is shared; cost needs a currency.
+        let risk: Value = request.post(&format!("/api/plans/{p}/risks")).json(&json!({ "title": "Vendor", "probability": 3, "impact": 3 })).await.json();
+        let rp = risk["pid"].as_str().unwrap().to_string();
+        let noprob: Value = request.post(&format!("/api/plans/{p}/risks")).json(&json!({ "title": "Unquantified", "probability": 2, "impact": 2 })).await.json();
+        let np = noprob["pid"].as_str().unwrap().to_string();
+        let put_cost = |r: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/risks/{r}/cost-impact");
+            async move { request.put(&url).json(&body).await }
+        };
+        put_cost(&rp, json!({ "cost_impact_minor": 4_000 })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_cost(&rp, json!({ "cost_impact_minor": 0, "cost_currency": "GBP" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_cost(&rp, json!({ "cost_impact_minor": 4_000, "cost_currency": "gbp", "probability_percent": 100 })).await.assert_status_ok();
+        put_cost(&np, json!({ "cost_impact_minor": 1_000, "cost_currency": "GBP" })).await.assert_status_ok();
+        let ev: Value = request.get(&url("fallback_band_percent=0&seed=2")).await.json();
+        assert_eq!(ev["events"]["used"].as_array().unwrap().len(), 1);
+        assert_eq!(ev["events"]["skipped"][0]["risk_pid"], np.as_str());
+        assert_eq!(ev["events"]["skipped"][0]["reason"], "no_probability");
+        let g = cur(&ev, "GBP");
+        assert!(g["percentiles"].as_array().unwrap().iter().all(|x| x["minor"] == 19_000), "15 000 + a certain 4 000");
+        assert_eq!(g["budget_confidence_bp"], 0);
+
+        // Portfolio: the same plan appears, with its mean beside its budget.
+        let all: Value = request.get("/api/cost-risk?fallback_band_percent=0").await.json();
+        assert_eq!(all["scope"]["kind"], "portfolio");
+        assert!(cur(&all, "GBP")["plans"].as_array().unwrap().iter().any(|x| x["plan"] == p.as_str() && x["name"] == "Apollo"));
+
+        // Joint: several currencies need a choice; then the shared event drives both.
+        request.get(&format!("/api/plans/{p}/joint-risk")).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put(&format!("/api/plans/{p}/risks/{rp}/schedule-impact")).json(&json!({ "task_pid": a, "impact_days": 4, "probability_percent": 100 })).await.assert_status_ok();
+        let jurl = |q: &str| format!("/api/plans/{p}/joint-risk?currency=GBP&{q}");
+        let j: Value = request.get(&jurl("fallback_band_percent=0&delay_cost_per_day_minor=500&seed=3")).await.json();
+        assert_eq!(j["currency"], "GBP");
+        assert_eq!(j["other_currencies_not_simulated"][0], "USD");
+        assert_eq!(j["assumptions"]["shared_events"].as_array().unwrap().len(), 1);
+        // Certain: 4 days late at 500 a day, plus the 4 000 risk, on 15 000.
+        assert!(j["cost"]["percentiles"].as_array().unwrap().iter().all(|x| x["minor"] == 21_000));
+        assert_eq!(j["confidence"]["joint_bp"], 0);
+        assert_eq!(j["cost"]["mean_delay_cost_minor"], 2_000);
+        assert_eq!(j, request.get(&jurl("fallback_band_percent=0&delay_cost_per_day_minor=500&seed=3")).await.json::<Value>());
+        let pts = j["points"].as_array().unwrap();
+        assert!(!pts.is_empty() && pts.len() <= 300);
+        request
+            .get(&format!("/api/plans/{p}/joint-risk?currency=EUR"))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request.get(&format!("/api/plans/{p}/joint-risk?currency=GBP&delay_cost_per_day_minor=-5")).await.assert_status(S::UNPROCESSABLE_ENTITY);
+    })
+    .await;
+}

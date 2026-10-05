@@ -324,3 +324,219 @@ export function distributionText(
     ? "PERT (favours the likely value)"
     : "Triangular";
 }
+
+// ───────────────────────── cost risk and joint risk ─────────────────────────
+
+export interface CostBar {
+  from: number;
+  to: number;
+  count: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface CostHistogram {
+  width: number;
+  height: number;
+  baseline: number;
+  bars: CostBar[];
+  /** P50, P80 and P90 lines. */
+  markers: { p: number; minor: number; x: number }[];
+  /** The budget line, if the budget falls inside the plotted range. */
+  budgetX: number | null;
+}
+
+/** Bars for the cost histogram, with P50 / P80 / P90 and the budget marked. */
+export function costHistogramGeometry(
+  bins: { from_minor: number; to_minor: number; count: number }[],
+  percentiles: { p: number; minor: number }[],
+  budgetMinor: number,
+  width = 640,
+  height = 220,
+): CostHistogram | null {
+  const first = bins[0];
+  const last = bins[bins.length - 1];
+  if (!first || !last) return null;
+  const pad = 24;
+  const lo = first.from_minor;
+  const hi = Math.max(last.to_minor, lo + 1);
+  const baseline = height - pad;
+  const usable = baseline - pad;
+  const max = Math.max(1, ...bins.map((b) => b.count));
+  const xOf = (v: number): number =>
+    pad + ((v - lo) / (hi - lo)) * (width - pad * 2);
+  return {
+    width,
+    height,
+    baseline,
+    bars: bins.map((b) => {
+      const h = (b.count / max) * usable;
+      return {
+        from: b.from_minor,
+        to: b.to_minor,
+        count: b.count,
+        x: xOf(b.from_minor),
+        y: baseline - h,
+        w: Math.max(1, xOf(b.to_minor) - xOf(b.from_minor) - 1),
+        h,
+      };
+    }),
+    markers: percentiles
+      .filter((p) => [50, 80, 90].includes(p.p))
+      .map((p) => ({
+        p: p.p,
+        minor: p.minor,
+        x: xOf(Math.min(Math.max(p.minor, lo), hi)),
+      })),
+    budgetX: budgetMinor >= lo && budgetMinor <= hi ? xOf(budgetMinor) : null,
+  };
+}
+
+/** How likely the budget is, in words. `budgetText` is the formatted budget. */
+export function budgetConfidenceText(bp: number, budgetText: string): string {
+  return `${Math.round(bp / 100)}% of the simulated outcomes cost no more than the budget (${budgetText}).`;
+}
+
+const COST_SKIPPED: Record<string, string> = {
+  no_probability: "no probability",
+  closed: "the risk is not open",
+  no_budget_in_currency: "the plan has no budget line in its currency",
+  incomplete: "incomplete",
+};
+
+export function costSkippedText(reason: string): string {
+  return COST_SKIPPED[reason] ?? reason;
+}
+
+/** A line's estimate source, flagging a fallback loudly. */
+export function lineSourceText(l: {
+  source: "estimated" | "fallback";
+  widened: boolean;
+}): string {
+  if (l.source === "fallback") return "No estimate: using the fallback band";
+  return l.widened
+    ? "Estimated (widened to include the planned amount)"
+    : "Estimated";
+}
+
+/** The stated probability against how often the event actually struck. */
+export function eventHitText(probabilityBp: number, hitBp: number): string {
+  return `stated ${Math.round(probabilityBp / 100)}%, struck in ${(hitBp / 100).toFixed(1)}% of runs`;
+}
+
+export interface QuadrantRow {
+  key: "both" | "budget_only" | "time_only" | "neither";
+  label: string;
+  symbol: string;
+  count: number;
+  share: string;
+}
+
+/** The four ways an iteration can fall, as table rows with shares. */
+export function quadrantRows(q: {
+  both: number;
+  budget_only: number;
+  time_only: number;
+  neither: number;
+}): QuadrantRow[] {
+  const total = q.both + q.budget_only + q.time_only + q.neither;
+  const share = (n: number): string =>
+    total === 0 ? "—" : `${((n / total) * 100).toFixed(1)}%`;
+  return [
+    {
+      key: "both",
+      label: "Within budget and on time",
+      symbol: "✓",
+      count: q.both,
+      share: share(q.both),
+    },
+    {
+      key: "budget_only",
+      label: "Within budget but late",
+      symbol: "▲",
+      count: q.budget_only,
+      share: share(q.budget_only),
+    },
+    {
+      key: "time_only",
+      label: "On time but over budget",
+      symbol: "▲",
+      count: q.time_only,
+      share: share(q.time_only),
+    },
+    {
+      key: "neither",
+      label: "Over budget and late",
+      symbol: "■",
+      count: q.neither,
+      share: share(q.neither),
+    },
+  ];
+}
+
+/** The three confidences in one sentence; the joint one is never the largest. */
+export function jointConfidenceText(c: {
+  budget_bp: number;
+  finish_bp: number;
+  joint_bp: number;
+}): string {
+  const pct = (bp: number): string => `${Math.round(bp / 100)}%`;
+  return `Both within budget and on time: ${pct(c.joint_bp)} (within budget alone ${pct(c.budget_bp)}; on time alone ${pct(c.finish_bp)}).`;
+}
+
+export interface Scatter {
+  width: number;
+  height: number;
+  dots: { x: number; y: number; days: number; cost: number }[];
+  /** The "on time" line (zero days late). */
+  onTimeX: number;
+  /** The budget line. */
+  budgetY: number;
+}
+
+/** Cost against days late, with the on-time and budget lines. */
+export function scatterGeometry(
+  points: { days_late: number; cost_minor: number }[],
+  budgetMinor: number,
+  width = 480,
+  height = 320,
+): Scatter | null {
+  if (points.length === 0) return null;
+  const pad = 32;
+  const days = points.map((p) => p.days_late).concat(0);
+  const costs = points.map((p) => p.cost_minor).concat(budgetMinor);
+  const [dMin, dMax] = [Math.min(...days), Math.max(...days)];
+  const [cMin, cMax] = [Math.min(...costs), Math.max(...costs)];
+  const x = (d: number): number =>
+    pad +
+    (dMax === dMin ? 0.5 : (d - dMin) / (dMax - dMin)) * (width - pad * 2);
+  const y = (c: number): number =>
+    height -
+    pad -
+    (cMax === cMin ? 0.5 : (c - cMin) / (cMax - cMin)) * (height - pad * 2);
+  return {
+    width,
+    height,
+    dots: points.map((p) => ({
+      x: x(p.days_late),
+      y: y(p.cost_minor),
+      days: p.days_late,
+      cost: p.cost_minor,
+    })),
+    onTimeX: x(0),
+    budgetY: y(budgetMinor),
+  };
+}
+
+/** Delay cost in words. */
+export function delayCostText(
+  perDayMinor: number,
+  currency: string,
+  format: (minor: number, currency: string) => string,
+): string {
+  return perDayMinor === 0
+    ? "A late finish costs nothing extra in this run (delay cost per day is 0)."
+    : `Each working day late adds ${format(perDayMinor, currency)}; finishing early earns nothing back.`;
+}

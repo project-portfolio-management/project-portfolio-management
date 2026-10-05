@@ -35,7 +35,10 @@ async function audit(page: Page) {
     (v) => v.impact === "serious" || v.impact === "critical",
   );
   expect(
-    bad.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => `${n.target.join(" ")} [${n.any[0]?.message ?? ""}]`).join("; ")}`),
+    bad.map(
+      (v) =>
+        `${v.id}: ${v.help} — ${v.nodes.map((n) => `${n.target.join(" ")} [${n.any[0]?.message ?? ""}]`).join("; ")}`,
+    ),
   ).toEqual([]);
 }
 
@@ -502,4 +505,266 @@ test("milestones, KPIs and OKRs pass the axe audit", async ({ page }) => {
   }
   await page.goto("/en-001/kpis");
   await expect(page.getByText("No data yet").first()).toBeVisible();
+});
+
+const COST_ASSUMPTIONS = {
+  seed: 1,
+  iterations: 5000,
+  max_iterations: 50000,
+  distribution: "triangular",
+  fallback_band_percent: 20,
+  correlation: "none",
+  independence:
+    "Every line cost and every risk event is drawn independently: there is no correlation between them.",
+  floor: "What is already spent is never given back.",
+  currencies:
+    "Each currency is simulated and reported on its own; currencies are never added or converted.",
+  budget: "The budget is the sum of the lines' planned amounts.",
+  fallback:
+    "A line with no low or high estimate is simulated at its planned amount plus and minus the band.",
+};
+
+const COST_RISK = {
+  scope: { kind: "plan", plan_pid: PLAN, plans: 1 },
+  assumptions: COST_ASSUMPTIONS,
+  currencies: [
+    {
+      currency: "GBP",
+      budget_minor: 1_500_000,
+      spent_minor: 200_000,
+      mean_minor: 1_620_000,
+      percentiles: [
+        { p: 10, minor: 1_450_000 },
+        { p: 50, minor: 1_600_000 },
+        { p: 80, minor: 1_720_000 },
+        { p: 90, minor: 1_800_000 },
+      ],
+      budget_confidence_bp: 3500,
+      min_minor: 1_300_000,
+      max_minor: 2_000_000,
+      histogram: [1_300_000, 1_435_000, 1_570_000, 1_705_000, 1_840_000].map(
+        (from, i) => ({
+          from_minor: from,
+          to_minor: from + 135_000,
+          count: [100, 600, 1500, 500, 100][i] ?? 0,
+        }),
+      ),
+      lines: [
+        {
+          pid: "l1",
+          plan: PLAN,
+          description: "Platform build",
+          category: "capex",
+          low: 800_000,
+          likely: 1_000_000,
+          high: 1_400_000,
+          actual: 200_000,
+          source: "estimated",
+          widened: false,
+          sensitivity: 0.9,
+        },
+        {
+          pid: "l2",
+          plan: PLAN,
+          description: "Training",
+          category: "opex",
+          low: 400_000,
+          likely: 500_000,
+          high: 600_000,
+          actual: 0,
+          source: "fallback",
+          widened: false,
+          sensitivity: 0.3,
+        },
+      ],
+      events: [
+        {
+          risk: "r1",
+          plan: PLAN,
+          title: "Vendor price rise",
+          probability_bp: 3000,
+          impact_minor: 150_000,
+          hit_bp: 2950,
+        },
+      ],
+      plans: [
+        {
+          plan: PLAN,
+          name: "Apollo",
+          budget_minor: 1_500_000,
+          mean_minor: 1_620_000,
+        },
+      ],
+    },
+  ],
+  events: {
+    used: [
+      {
+        risk_pid: "r1",
+        plan_pid: PLAN,
+        title: "Vendor price rise",
+        probability_percent: 30,
+        cost_impact_minor: 150_000,
+        currency: "GBP",
+        also_a_schedule_event: false,
+      },
+    ],
+    skipped: [
+      { risk_pid: "r2", title: "Unquantified", reason: "no_probability" },
+    ],
+    risks_without_cost_fields: 2,
+  },
+  note: "Percentiles are the cost that share of iterations came in at or under.",
+};
+
+test("cost risk: budget confidence, labelled P50/P80/P90 and budget, a table twin, and the fallback marked", async ({
+  page,
+}) => {
+  await stub(page, { [`GET /api/plans/${PLAN}/cost-risk`]: COST_RISK });
+  await page.goto(`/en-001/plans/${PLAN}/cost-risk`);
+  await expect(
+    page.getByText(
+      /35% of the simulated outcomes cost no more than the budget/,
+    ),
+  ).toBeVisible();
+  const svg = page.getByRole("img", {
+    name: /Histogram of simulated GBP cost/,
+  });
+  for (const label of ["P50", "P80", "P90", "budget"])
+    await expect(svg.getByText(label, { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("No estimate: using the fallback band"),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/stated 30%, struck in 29\.5% of runs/),
+  ).toBeVisible();
+  await expect(page.getByText("Unquantified: no probability")).toBeVisible();
+  await expect(page.getByText(/drawn independently/)).toBeVisible();
+  await page.getByText("The same figures as a table").click();
+  await expect(page.getByRole("cell", { name: "1500", exact: true })).toBeVisible();
+  await audit(page);
+});
+
+test("portfolio cost risk lists each plan's mean beside its budget and passes axe", async ({
+  page,
+}) => {
+  await stub(page, {
+    "GET /api/cost-risk": {
+      ...COST_RISK,
+      scope: { kind: "portfolio", plans: 3 },
+    },
+  });
+  await page.goto("/en-001/cost-risk");
+  await expect(page.getByText("All 3 plans you can read")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "By plan" })).toBeVisible();
+  await expect(page.getByRole("rowheader", { name: "Apollo" })).toBeVisible();
+  await audit(page);
+});
+
+const JOINT = {
+  plan_pid: PLAN,
+  currency: "GBP",
+  other_currencies_not_simulated: ["USD"],
+  calendar: "default",
+  assumptions: {
+    ...COST_ASSUMPTIONS,
+    iterations: 2000,
+    delay_cost: {
+      per_day_minor: 50_000,
+      currency: "GBP",
+      rule: "Each working day the finish is later than the critical-path finish adds this much.",
+    },
+    shared_events: ["r1"],
+    shared_events_rule:
+      "A risk with both a schedule impact and a cost impact is one event with one probability: it strikes once and drives both.",
+  },
+  schedule: {
+    cpm_finish: "2026-10-12",
+    percentiles: [
+      { p: 10, finish: "2026-10-11" },
+      { p: 50, finish: "2026-10-13" },
+      { p: 80, finish: "2026-10-15" },
+      { p: 90, finish: "2026-10-16" },
+    ],
+    earliest: "2026-10-10",
+    latest: "2026-10-20",
+    tasks: [],
+  },
+  cost: {
+    budget_minor: 1_500_000,
+    spent_minor: 0,
+    mean_minor: 1_640_000,
+    mean_delay_cost_minor: 90_000,
+    percentiles: [
+      { p: 10, minor: 1_450_000 },
+      { p: 50, minor: 1_620_000 },
+      { p: 80, minor: 1_750_000 },
+      { p: 90, minor: 1_830_000 },
+    ],
+    lines: [
+      {
+        pid: "l1",
+        plan: PLAN,
+        description: "Platform build",
+        low: 800_000,
+        likely: 1_000_000,
+        high: 1_400_000,
+        actual: 0,
+        source: "estimated",
+        widened: false,
+        sensitivity: 0.9,
+      },
+    ],
+  },
+  confidence: { budget_bp: 4000, finish_bp: 3000, joint_bp: 1800 },
+  quadrants: { both: 360, budget_only: 440, time_only: 240, neither: 960 },
+  points: [
+    { days_late: -1, cost_minor: 1_400_000 },
+    { days_late: 0, cost_minor: 1_500_000 },
+    { days_late: 5, cost_minor: 1_900_000 },
+  ],
+  events: {
+    schedule: { used: [], skipped: [], risks_without_schedule_fields: 0 },
+    cost: {
+      used: [],
+      skipped: [
+        { risk_pid: "r2", title: "Unquantified", reason: "no_probability" },
+      ],
+      risks_without_cost_fields: 0,
+    },
+  },
+  note: "Joint confidence is never above the smaller of the two on their own.",
+};
+
+test("joint risk: the joint confidence sits beside both marginals, with a quadrant table and the shared-event rule", async ({
+  page,
+}) => {
+  await stub(page, { [`GET /api/plans/${PLAN}/joint-risk`]: JOINT });
+  await page.goto(`/en-001/plans/${PLAN}/joint-risk`);
+  await expect(
+    page.getByText(
+      "Both within budget and on time: 18% (within budget alone 40%; on time alone 30%).",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: /Within budget but late/ }),
+  ).toContainText("440");
+  await expect(
+    page.getByRole("img", { name: /Scatter of simulated total cost/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/1 risk affect both the schedule and the cost/),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Budget lines in USD are not part of this run/),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /Each working day late adds 500\.00 GBP; finishing early earns nothing back\./,
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Cost — Unquantified: no probability"),
+  ).toBeVisible();
+  await audit(page);
 });

@@ -285,3 +285,123 @@ describe("risk histogram", () => {
     expect(skippedReasonText("zzz")).toBe("zzz");
   });
 });
+
+import {
+  budgetConfidenceText,
+  costHistogramGeometry,
+  costSkippedText,
+  delayCostText,
+  eventHitText,
+  jointConfidenceText,
+  lineSourceText,
+  quadrantRows,
+  scatterGeometry,
+} from "../../src/lib/scheduling-view";
+
+describe("cost risk words and geometry", () => {
+  const bins = [
+    { from_minor: 1000, to_minor: 2000, count: 10 },
+    { from_minor: 2000, to_minor: 3000, count: 40 },
+    { from_minor: 3000, to_minor: 4000, count: 0 },
+  ];
+  const pcts = [
+    { p: 10, minor: 1200 },
+    { p: 50, minor: 2400 },
+    { p: 80, minor: 2900 },
+    { p: 90, minor: 3100 },
+  ];
+  it("draws every bin, tallest for the biggest, and marks P50 / P80 / P90 and the budget", () => {
+    const g = costHistogramGeometry(bins, pcts, 2500);
+    expect(g?.bars).toHaveLength(3);
+    expect(g?.bars[1]?.h).toBeGreaterThan(g?.bars[0]?.h ?? 0);
+    expect(g?.bars[2]?.h).toBe(0);
+    expect(g?.markers.map((m) => m.p)).toEqual([50, 80, 90]);
+    expect(g?.budgetX).not.toBeNull();
+    expect(costHistogramGeometry(bins, pcts, 9999)?.budgetX).toBeNull();
+    expect(costHistogramGeometry([], [], 0)).toBeNull();
+  });
+  it("states the budget confidence and the events in words", () => {
+    expect(budgetConfidenceText(6200, "150.00 GBP")).toBe(
+      "62% of the simulated outcomes cost no more than the budget (150.00 GBP).",
+    );
+    expect(eventHitText(5000, 4987)).toBe(
+      "stated 50%, struck in 49.9% of runs",
+    );
+    expect(costSkippedText("no_probability")).toBe("no probability");
+    expect(costSkippedText("no_budget_in_currency")).toContain(
+      "no budget line",
+    );
+    expect(costSkippedText("zzz")).toBe("zzz");
+    expect(lineSourceText({ source: "fallback", widened: false })).toContain(
+      "No estimate",
+    );
+    expect(lineSourceText({ source: "estimated", widened: true })).toContain(
+      "widened",
+    );
+    expect(lineSourceText({ source: "estimated", widened: false })).toBe(
+      "Estimated",
+    );
+  });
+});
+
+describe("joint risk words and geometry", () => {
+  it("lists the four quadrants with shares that add up", () => {
+    const rows = quadrantRows({
+      both: 50,
+      budget_only: 20,
+      time_only: 10,
+      neither: 20,
+    });
+    expect(rows.map((r) => r.key)).toEqual([
+      "both",
+      "budget_only",
+      "time_only",
+      "neither",
+    ]);
+    expect(rows.map((r) => r.share)).toEqual([
+      "50.0%",
+      "20.0%",
+      "10.0%",
+      "20.0%",
+    ]);
+    expect(new Set(rows.map((r) => r.label)).size).toBe(4);
+    expect(
+      quadrantRows({ both: 0, budget_only: 0, time_only: 0, neither: 0 })[0]
+        ?.share,
+    ).toBe("—");
+  });
+  it("states the joint confidence beside both marginals", () => {
+    expect(
+      jointConfidenceText({ budget_bp: 7000, finish_bp: 6000, joint_bp: 4500 }),
+    ).toBe(
+      "Both within budget and on time: 45% (within budget alone 70%; on time alone 60%).",
+    );
+  });
+  it("places dots with an on-time line at zero days and a budget line", () => {
+    const s = scatterGeometry(
+      [
+        { days_late: -2, cost_minor: 900 },
+        { days_late: 0, cost_minor: 1000 },
+        { days_late: 6, cost_minor: 1400 },
+      ],
+      1000,
+    );
+    expect(s?.dots).toHaveLength(3);
+    expect(s?.onTimeX).toBeGreaterThan(s?.dots[0]?.x ?? 0);
+    expect(s?.onTimeX).toBeLessThan(s?.dots[2]?.x ?? 0);
+    // Higher cost is higher on the page (a smaller y).
+    expect((s?.dots[2]?.y ?? 0) < (s?.dots[0]?.y ?? 0)).toBe(true);
+    expect(s?.budgetY).toBeCloseTo(s?.dots[1]?.y ?? -1);
+    expect(scatterGeometry([], 0)).toBeNull();
+    expect(
+      scatterGeometry([{ days_late: 0, cost_minor: 5 }], 5),
+    ).not.toBeNull();
+  });
+  it("says what a late day costs", () => {
+    const f = (m: number, c: string) => `${m / 100} ${c}`;
+    expect(delayCostText(0, "GBP", f)).toContain("costs nothing extra");
+    expect(delayCostText(50_000, "GBP", f)).toBe(
+      "Each working day late adds 500 GBP; finishing early earns nothing back.",
+    );
+  });
+});

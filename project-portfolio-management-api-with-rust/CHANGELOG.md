@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — cost-risk and joint Monte Carlo (CR-1..2, 2026-10-05)
+
+`GET /api/plans/{pid}/cost-risk` and `GET /api/cost-risk` (portfolio) simulate final cost per currency from budget lines (low / planned / high, never below what is spent) and register risks with a cost impact. `GET /api/plans/{pid}/joint-risk` simulates cost and schedule together, with delay cost and a joint confidence; a risk with both effects strikes once. Inputs: `PUT …/budget-lines/{id}/estimate`, `PUT …/risks/{id}/cost-impact`.
+
 ### Added — milestones as a concept (MS-1..3, 2026-10-05)
 
 `GET /api/milestones` (portfolio view with status, critical-path forecast and slip), `GET /api/milestones/{pid}`, `PUT …/milestones/{m_pid}/tasks` (the tasks a milestone waits for; a linked one is achieved when they are all done), `POST …/milestones/{m_pid}/reopen`. Completing a linked milestone over open tasks needs a reason; every reschedule is kept in an append-only history (optional `reason` on `PUT …/milestones/{m_pid}`).

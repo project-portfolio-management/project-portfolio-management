@@ -107,6 +107,7 @@ pub fn paths() -> Value {
     merge(&mut all, schedule_health_paths());
     merge(&mut all, kpi_okr_paths());
     merge(&mut all, milestone_paths());
+    merge(&mut all, cost_risk_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1055,6 +1056,51 @@ fn milestone_paths() -> Value {
             "post": op("milestones", "Reopen a milestone marked done",
                 "Body: reason (required, up to 500 characters). Clears the manual completion; audited. A milestone achieved only because its linked tasks are all done cannot be reopened here (409): reopen a task instead.",
                 vec![uuid_param("pid"), uuid_param("m_pid")], &[("200", "done and whether it is still achieved by its tasks"), ("404", "Unknown plan or milestone"), ("409", "Not marked done, or achieved by its tasks"), ("422", "No reason")])
+        }
+    })
+}
+
+/// Cost-risk and joint cost-and-schedule Monte Carlo.
+fn cost_risk_paths() -> Value {
+    let sim_params = || {
+        vec![
+            query(
+                "iterations",
+                false,
+                "default 5000 (joint: 2000), up to 50000 (joint: 20000)",
+            ),
+            query("seed", false, "default 1"),
+            query("distribution", false, "triangular (default) or pert"),
+            query("fallback_band_percent", false, "0-100, default 20"),
+        ]
+    };
+    json!({
+        "/api/plans/{pid}/cost-risk": {
+            "get": op("risk", "Seeded cost-risk simulation for one plan",
+                "Each iteration draws a final cost for every budget line from its low / likely (planned_minor) / high estimate (triangular or PERT), never below the recorded actual (what is spent is spent), then lets each open or mitigating register risk with a cost impact, a currency and a probability strike and add its cost. Per currency, never added across: the budget (sum of planned amounts), mean, cost at P10/P50/P80/P90, the share at or under the budget (budget_confidence_bp), a histogram, a per-line sensitivity correlation, how often each event struck. Seeded: the same seed gives the same result; with no uncertainty every percentile is the budget. Assumptions are echoed, including that inputs are independent (no correlation). A line with no estimate uses the fallback band and is marked source=fallback; a risk with no probability, or in a currency with no budget line, is skipped and named under events.skipped.",
+                { let mut v = vec![uuid_param("pid")]; v.extend(sim_params()); v },
+                &[("200", "assumptions, per-currency results, events"), ("404", "Unknown plan"), ("422", "No budget lines, a bad parameter, or over the caps")])
+        },
+        "/api/cost-risk": {
+            "get": op("risk", "Seeded cost-risk simulation across the portfolio",
+                "The same simulation over every budget line and risk of every plan the caller can read (plans they cannot read are left out without a trace), per currency, with each plan's mean cost beside its budget. Lines and events are independent across plans too.",
+                sim_params(), &[("200", "assumptions, per-currency results, events"), ("422", "No budget lines, a bad parameter, or over the caps")])
+        },
+        "/api/plans/{pid}/joint-risk": {
+            "get": op("risk", "Cost and schedule simulated together, with the joint confidence",
+                "One simulation in which the schedule (as in schedule-risk) and the cost of one currency move together, drawn from one random stream. A register risk with both a schedule impact and a cost impact is a single event with one probability: it strikes once and drives both. Each working day the finish is later than the critical-path finish adds delay_cost_per_day_minor (default 0; finishing early earns nothing back). Reports the cost percentiles including delay cost, the share within budget, the share on time, the joint share (both) — never above the smaller of the two — the four quadrant counts, and a thinned sample of (days late, cost) points for a scatter. Needs currency= when the plan budgets in several.",
+                { let mut v = vec![uuid_param("pid"), query("currency", false, "required when the plan has lines in several currencies"), query("delay_cost_per_day_minor", false, "cost of each working day late, default 0")]; v.extend(sim_params()); v },
+                &[("200", "schedule, cost, confidence, quadrants, points, events"), ("404", "Unknown plan"), ("422", "No budget lines, several currencies without currency=, a cycle, or over the caps")])
+        },
+        "/api/plans/{pid}/budget-lines/{l_pid}/estimate": {
+            "put": op("risk", "Set a budget line's low and high final cost",
+                "Minor units. low_minor may not exceed the planned amount nor high_minor be below it (the planned amount is the likely cost); a field left out or null clears it. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("l_pid")], &[("200", "the estimate"), ("404", "Unknown plan or line"), ("422", "Out of order")])
+        },
+        "/api/plans/{pid}/risks/{r_pid}/cost-impact": {
+            "put": op("risk", "Make a register risk a cost event",
+                "cost_impact_minor (positive) and cost_currency (3 letters) go together; null clears both. probability_percent, when given, is the event's probability and is shared with the schedule simulation (the same field schedule-impact sets), so one risk is one event. Left out: the probability is unchanged. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("r_pid")], &[("200", "the risk's cost fields"), ("404", "Unknown plan or risk"), ("422", "A bad value or an impact without a currency")])
         }
     })
 }

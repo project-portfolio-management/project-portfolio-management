@@ -22,6 +22,10 @@ pub struct Model {
     pub currency: String,
     pub planned_minor: i64,
     pub actual_minor: i64,
+    /// Low estimate of the final cost (cost-risk); the likely one is `planned_minor`.
+    pub low_minor: Option<i64>,
+    /// High estimate of the final cost (cost-risk).
+    pub high_minor: Option<i64>,
     pub period_start: Option<Date>,
     pub period_end: Option<Date>,
     pub gate: Option<String>,

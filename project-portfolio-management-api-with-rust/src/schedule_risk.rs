@@ -194,10 +194,10 @@ pub enum RunError {
 
 /// A deterministic xorshift64* generator, its seed scrambled so that nearby
 /// seeds give unrelated streams.
-struct Rng(u64);
+pub struct Rng(u64);
 
 impl Rng {
-    fn new(seed: u64) -> Self {
+    pub(crate) fn new(seed: u64) -> Self {
         // SplitMix64 finaliser; never zero.
         let mut z = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -206,7 +206,7 @@ impl Rng {
         Self(if z == 0 { 0x9E37_79B9_7F4A_7C15 } else { z })
     }
 
-    fn next_u64(&mut self) -> u64 {
+    pub(crate) fn next_u64(&mut self) -> u64 {
         self.0 ^= self.0 << 13;
         self.0 ^= self.0 >> 7;
         self.0 ^= self.0 << 17;
@@ -214,7 +214,7 @@ impl Rng {
     }
 
     /// Uniform in `(0, 1)`.
-    fn unit(&mut self) -> f64 {
+    pub(crate) fn unit(&mut self) -> f64 {
         #[allow(clippy::cast_precision_loss)]
         let v = ((self.next_u64() >> 11) as f64 + 0.5) / (1u64 << 53) as f64;
         v
@@ -245,7 +245,7 @@ impl Rng {
 }
 
 /// Draw a duration in `[o, p]` with mode `m`.
-fn draw(rng: &mut Rng, o: f64, m: f64, p: f64, dist: Distribution) -> f64 {
+pub(crate) fn draw(rng: &mut Rng, o: f64, m: f64, p: f64, dist: Distribution) -> f64 {
     if p <= o {
         return o;
     }
@@ -294,7 +294,7 @@ fn resolve<S: std::hash::BuildHasher>(
 }
 
 /// Pearson correlation of two series, or `None` when either has no variance.
-fn correlation(x: &[f64], y: &[f64]) -> Option<f64> {
+pub(crate) fn correlation(x: &[f64], y: &[f64]) -> Option<f64> {
     #[allow(clippy::cast_precision_loss)]
     let n = x.len() as f64;
     if n < 2.0 {
@@ -314,7 +314,7 @@ fn correlation(x: &[f64], y: &[f64]) -> Option<f64> {
 }
 
 /// Nearest-rank percentile of an ascending slice.
-fn nearest_rank<T: Copy>(sorted: &[T], p: u32) -> T {
+pub(crate) fn nearest_rank<T: Copy>(sorted: &[T], p: u32) -> T {
     let n = sorted.len();
     let rank = (n * usize::try_from(p).unwrap_or(100)).div_ceil(100).max(1);
     sorted[rank.min(n) - 1]
@@ -335,6 +335,41 @@ pub fn simulate<S: std::hash::BuildHasher>(
     estimates: &HashMap<Uuid, Estimate, S>,
     events: &[Event],
     params: Params,
+) -> Result<Outcome, RunError> {
+    simulate_with(
+        nodes,
+        edges,
+        calendar,
+        own,
+        estimates,
+        events,
+        params,
+        |_, _, _, _, _| {},
+    )
+}
+
+/// [`simulate`], calling `hook(iteration, finish, delay_days, struck, rng)` after each
+/// iteration's schedule is drawn and analysed. `delay_days` is how many working
+/// days later than the critical-path finish this iteration finished (negative if
+/// earlier) and `struck` the risks that struck in it. The hook draws from the **same** random stream, so a second model
+/// (cost) rides along deterministically with the first.
+///
+/// # Errors
+///
+/// As [`simulate`].
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+pub fn simulate_with<
+    S: std::hash::BuildHasher,
+    H: FnMut(usize, NaiveDate, i64, &[Uuid], &mut Rng),
+>(
+    nodes: &[Node],
+    edges: &[Edge],
+    calendar: &WorkCalendar,
+    own: &[WorkCalendar],
+    estimates: &HashMap<Uuid, Estimate, S>,
+    events: &[Event],
+    params: Params,
+    mut hook: H,
 ) -> Result<Outcome, RunError> {
     if params.iterations == 0 || params.iterations > MAX_ITERATIONS {
         return Err(RunError::TooMuchWork(format!(
@@ -386,6 +421,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
             drawn.push(d);
             node.duration = Some(d);
         }
+        let mut struck: Vec<Uuid> = Vec::new();
         for e in &events {
             let hit = {
                 #[allow(clippy::cast_precision_loss)]
@@ -395,6 +431,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
             if hit && let Some(&i) = index_of.get(&e.task) {
                 drawn[i] += e.impact_days;
                 trial[i].duration = Some(drawn[i]);
+                struck.push(e.risk);
             }
         }
         let res = analyze_with(&trial, edges, calendar, own, options)
@@ -403,6 +440,8 @@ pub fn simulate<S: std::hash::BuildHasher>(
             return Err(RunError::NothingScheduled);
         };
         finishes.push(f);
+        let delay = calendar.index_of(f).unwrap_or(0) - calendar.index_of(cpm_finish).unwrap_or(0);
+        hook(finishes.len() - 1, f, delay, &struck, &mut rng);
         finish_idx.push(f64::from(chrono::Datelike::num_days_from_ce(&f)));
         for r in &res.nodes {
             if r.critical

@@ -102,6 +102,12 @@
     {#if links.includes("schedule-risk")}
       <a class="button small" href={localeHref(`/plans/${pid}/schedule-risk`)}>Schedule risk</a>
     {/if}
+    {#if links.includes("cost-risk")}
+      <a class="button small" href={localeHref(`/plans/${pid}/cost-risk`)}>Cost risk</a>
+    {/if}
+    {#if links.includes("joint-risk")}
+      <a class="button small" href={localeHref(`/plans/${pid}/joint-risk`)}>Cost and schedule risk</a>
+    {/if}
   </p>
   <div class="surface stack">
     {#if record.kind}<div><strong>{t("detail.caseType")}</strong> {record.kind}</div>{/if}

@@ -315,6 +315,102 @@ export interface ScheduleRisk {
   note: string;
 }
 
+// ---- Cost-risk and joint cost-and-schedule Monte Carlo ----
+
+export interface CostLineResult {
+  pid: string;
+  plan: string;
+  description?: string;
+  category?: string;
+  low: number;
+  likely: number;
+  high: number;
+  actual: number;
+  source: "estimated" | "fallback";
+  widened: boolean;
+  sensitivity: number | null;
+}
+
+export interface CostCurrencyResult {
+  currency: string;
+  budget_minor: number;
+  spent_minor: number;
+  mean_minor: number;
+  percentiles: { p: number; minor: number }[];
+  budget_confidence_bp: number;
+  min_minor: number;
+  max_minor: number;
+  histogram: { from_minor: number; to_minor: number; count: number }[];
+  lines: CostLineResult[];
+  events: { risk: string; plan: string; title: string | null; probability_bp: number; impact_minor: number; hit_bp: number }[];
+  plans: { plan: string; name: string | null; budget_minor: number; mean_minor: number }[];
+}
+
+export interface CostRiskAssumptions {
+  seed: number;
+  iterations: number;
+  max_iterations: number;
+  distribution: "triangular" | "pert";
+  fallback_band_percent: number;
+  correlation: string;
+  independence: string;
+  floor: string;
+  currencies: string;
+  budget: string;
+  fallback: string;
+  lines_using_fallback?: string[];
+}
+
+/** `GET /api/plans/{pid}/cost-risk` and `GET /api/cost-risk`. */
+export interface CostRisk {
+  scope: { kind: "plan" | "portfolio"; plans: number; plan_pid?: string };
+  assumptions: CostRiskAssumptions;
+  currencies: CostCurrencyResult[];
+  events: {
+    used: { risk_pid: string; plan_pid: string; title: string; probability_percent: number; cost_impact_minor: number; currency: string; also_a_schedule_event: boolean }[];
+    skipped: { risk_pid: string; title: string; reason: string }[];
+    risks_without_cost_fields: number;
+  };
+  note: string;
+}
+
+/** `GET /api/plans/{pid}/joint-risk`. */
+export interface JointRisk {
+  plan_pid: string;
+  currency: string;
+  other_currencies_not_simulated: string[];
+  calendar: string;
+  assumptions: CostRiskAssumptions & {
+    delay_cost: { per_day_minor: number; currency: string; rule: string };
+    shared_events: string[];
+    shared_events_rule: string;
+    durations?: string;
+  };
+  schedule: {
+    cpm_finish: string | null;
+    percentiles: { p: number; finish: string }[];
+    earliest: string | null;
+    latest: string | null;
+    tasks: RiskTask[];
+  };
+  cost: {
+    budget_minor: number;
+    spent_minor: number;
+    mean_minor: number;
+    mean_delay_cost_minor: number;
+    percentiles: { p: number; minor: number }[];
+    lines: CostLineResult[];
+  };
+  confidence: { budget_bp: number; finish_bp: number; joint_bp: number };
+  quadrants: { both: number; budget_only: number; time_only: number; neither: number };
+  points: { days_late: number; cost_minor: number }[];
+  events: {
+    schedule: { used: unknown[]; skipped: { risk_pid: string; title: string; reason: string }[]; risks_without_schedule_fields: number };
+    cost: { used: unknown[]; skipped: { risk_pid: string; title: string; reason: string }[]; risks_without_cost_fields: number };
+  };
+  note: string;
+}
+
 // ---- Milestones as a concept (portfolio view) ----
 
 export type MilestoneStatus = "achieved" | "late" | "due_soon" | "upcoming";
@@ -1464,6 +1560,28 @@ export interface DevopsReleases {
   }>;
 }
 
+/** Options shared by the Monte Carlo endpoints. */
+export interface SimOptions {
+  iterations?: number;
+  seed?: number;
+  distribution?: "triangular" | "pert";
+  fallbackBandPercent?: number;
+  currency?: string;
+  delayCostPerDayMinor?: number;
+}
+
+function simQuery(o: SimOptions): string {
+  const q = new URLSearchParams();
+  if (o.iterations) q.set("iterations", String(o.iterations));
+  if (o.seed !== undefined) q.set("seed", String(o.seed));
+  if (o.distribution) q.set("distribution", o.distribution);
+  if (o.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(o.fallbackBandPercent));
+  if (o.currency) q.set("currency", o.currency);
+  if (o.delayCostPerDayMinor !== undefined) q.set("delay_cost_per_day_minor", String(o.delayCostPerDayMinor));
+  const qs = q.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export class PpmClient {
   constructor(private readonly http: ApiClient) {}
 
@@ -1714,6 +1832,17 @@ export class PpmClient {
     if (opts.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(opts.fallbackBandPercent));
     const qs = q.toString();
     return this.http.get(`/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`);
+  }
+
+  // ---- cost-risk and joint Monte Carlo ----
+  costRisk(pid: string, opts: SimOptions = {}): Promise<CostRisk> {
+    return this.http.get(`/api/plans/${pid}/cost-risk${simQuery(opts)}`);
+  }
+  portfolioCostRisk(opts: SimOptions = {}): Promise<CostRisk> {
+    return this.http.get(`/api/cost-risk${simQuery(opts)}`);
+  }
+  jointRisk(pid: string, opts: SimOptions & { currency?: string; delayCostPerDayMinor?: number } = {}): Promise<JointRisk> {
+    return this.http.get(`/api/plans/${pid}/joint-risk${simQuery(opts)}`);
   }
 
   // ---- OKRs ----

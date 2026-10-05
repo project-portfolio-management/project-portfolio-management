@@ -48,6 +48,7 @@ pub mod controllers;
 /// (feedforward / concurrent / feedback) that fix what a failing
 /// control may do.
 pub mod controls;
+pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;
 pub mod data;
@@ -75,6 +76,7 @@ pub mod guests;
 pub mod initializers;
 /// Pure derivations for the executive insight areas (CEO / CFO / CTO).
 pub mod insights;
+pub mod joint_risk;
 pub mod kpi;
 pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).

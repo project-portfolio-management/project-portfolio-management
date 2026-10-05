@@ -978,6 +978,12 @@ pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool
         .await
         .map_err(db_err)?;
     let capped = due.len() as u64 >= SWEEP_CAP;
+    // A linked milestone whose tasks are all done is achieved, not overdue.
+    let achieved = super::milestones::achieved_by_tasks(ctx, &due).await?;
+    let due: Vec<_> = due
+        .into_iter()
+        .filter(|m| !achieved.contains(&m.pid))
+        .collect();
     let candidates = cap_models::enabled_automations(&ctx.db, "milestone_due").await?;
     let (mut fired, mut already_claimed) = (0, 0);
     for milestone in &due {

@@ -1721,3 +1721,218 @@ async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_dele
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let other: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Other" }))
+            .await
+            .json();
+        let op = other["pid"].as_str().unwrap().to_string();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(5)).await;
+        let b = task(&request, &p, "B", None, Some(3)).await;
+        let stray = task(&request, &op, "Stray", Some("2026-10-05"), Some(1)).await;
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a, "successor_pid": b }))
+            .await
+            .assert_status_ok();
+        let ms = |name: &'static str, due: &'static str| {
+            let request = &request;
+            let p = p.clone();
+            async move {
+                let m: Value = request
+                    .post(&format!("/api/plans/{p}/milestones"))
+                    .json(&json!({ "name": name, "due": due }))
+                    .await
+                    .json();
+                m["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let m1 = ms("Beta", "2026-10-20").await;
+        let m2 = ms("Kickoff", "2026-10-06").await;
+        let get = |q: &str| {
+            let request = &request;
+            let url = format!("/api/milestones?{q}");
+            async move { request.get(&url).await.json::<Value>() }
+        };
+        let find = |v: &Value, pid: &str| {
+            v["milestones"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|m| m["pid"] == pid)
+                .cloned()
+                .unwrap()
+        };
+
+        // Links: the tasks must be this plan's; a linked milestone needs tasks.
+        let put_links = |m: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/milestones/{m}/tasks");
+            async move { request.put(&url).json(&body).await }
+        };
+        put_links(&m1, json!({ "task_pids": [stray] }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_links(&m1, json!({ "task_pids": [], "completion_mode": "linked" }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_links(&m1, json!({ "task_pids": [a, a] }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        put_links(&m1, json!({ "task_pids": [a, b] }))
+            .await
+            .assert_status_ok();
+
+        // Forecast on the default seven-day calendar: A runs 5-9 Oct, B 10-12 Oct;
+        // the due date, 20 Oct, is 8 days later.
+        let v = get("as_of=2026-10-05").await;
+        let m = find(&v, &m1);
+        assert_eq!(m["completion_mode"], "linked");
+        assert_eq!(m["schedule"]["forecast"], "2026-10-12");
+        assert_eq!(m["schedule"]["slack_days"], 8);
+        assert_eq!(
+            m["schedule"]["state"], "on_track",
+            "more than 5 days of slack"
+        );
+        assert_eq!(m["open_tasks"], 2);
+        let tight = get("as_of=2026-10-05&at_risk_days=8").await;
+        assert_eq!(
+            find(&tight, &m1)["schedule"]["state"],
+            "at_risk",
+            "8 days of slack is inside an 8-day window"
+        );
+        // Move the due date before the forecast: forecast late.
+        request
+            .put(&format!("/api/plans/{p}/milestones/{m1}"))
+            .json(&json!({ "due": "2026-10-11", "reason": "customer asked" }))
+            .await
+            .assert_status_ok();
+        let moved = find(&get("as_of=2026-10-05").await, &m1);
+        assert_eq!(moved["schedule"]["state"], "forecast_late");
+        assert_eq!(moved["schedule"]["slack_days"], -1);
+        // A manual milestone with nothing to forecast from is never "on track".
+        let k = find(&v, &m2);
+        assert_eq!(k["schedule"]["state"], "no_forecast");
+        assert_eq!(k["schedule"]["reason"], "no_linked_tasks");
+
+        // Status against the calendar and the filter; the summary ignores it.
+        let late = get("as_of=2026-10-10&status=late").await;
+        assert_eq!(late["milestones"].as_array().unwrap().len(), 1);
+        assert_eq!(late["milestones"][0]["pid"], m2.as_str());
+        assert_eq!(late["summary"]["by_status"]["late"], 1);
+        get("status=bogus").await;
+        request
+            .get("/api/milestones?status=bogus")
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // Completing a linked milestone over open tasks needs a reason.
+        let complete = |m: &str, body: Option<Value>| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/milestones/{m}/complete");
+            async move {
+                match body {
+                    Some(b) => request.post(&url).json(&b).await,
+                    None => request.post(&url).await,
+                }
+            }
+        };
+        complete(&m1, None)
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        complete(&m1, Some(json!({ "reason": "  " })))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        complete(&m1, Some(json!({ "reason": "scope cut, A and B dropped" })))
+            .await
+            .assert_status_ok();
+        let done = find(&get("as_of=2026-10-05").await, &m1);
+        assert_eq!(done["achieved"], true);
+        assert_eq!(done["achieved_by"], "manual");
+        assert_eq!(done["done_reason"], "scope cut, A and B dropped");
+        // The old no-body complete still works for a manual milestone.
+        complete(&m2, None).await.assert_status_ok();
+
+        // Reopen needs a reason and a completion to undo.
+        let reopen = |m: &str, body: Value| {
+            let request = &request;
+            let url = format!("/api/plans/{p}/milestones/{m}/reopen");
+            async move { request.post(&url).json(&body).await }
+        };
+        reopen(&m1, json!({ "reason": "" }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        reopen(&m1, json!({ "reason": "scope is back" }))
+            .await
+            .assert_status_ok();
+        reopen(&m1, json!({ "reason": "again" }))
+            .await
+            .assert_status(S::CONFLICT);
+        assert_eq!(find(&get("as_of=2026-10-05").await, &m1)["achieved"], false);
+
+        // Finish the tasks: the milestone is achieved by them, with their date.
+        for t in [&a, &b] {
+            request
+                .patch(&format!("/api/plans/{p}/tasks/{t}"))
+                .json(&json!({ "status": "done" }))
+                .await
+                .assert_status_ok();
+        }
+        let by_tasks = find(&get("as_of=2026-10-05").await, &m1);
+        assert_eq!(by_tasks["achieved"], true);
+        assert_eq!(by_tasks["achieved_by"], "tasks");
+        assert!(by_tasks["achieved_on"].is_string());
+        assert_eq!(by_tasks["schedule"]["reason"], "achieved");
+        // It cannot be reopened here; reopen a task.
+        reopen(&m1, json!({ "reason": "x" }))
+            .await
+            .assert_status(S::CONFLICT);
+
+        // Slip history: only real moves are recorded, with their reasons.
+        for (due, why) in [
+            ("2026-10-09", Some("vendor")),
+            ("2026-10-09", None),
+            ("2026-10-16", None),
+        ] {
+            let mut body = json!({ "due": due });
+            if let Some(w) = why {
+                body["reason"] = json!(w);
+            }
+            request
+                .put(&format!("/api/plans/{p}/milestones/{m2}"))
+                .json(&body)
+                .await
+                .assert_status_ok();
+        }
+        let detail: Value = request.get(&format!("/api/milestones/{m2}")).await.json();
+        let hist = detail["history"].as_array().unwrap();
+        assert_eq!(hist.len(), 2, "re-sending the same date is not a move");
+        assert_eq!(hist[0]["from"], "2026-10-06");
+        assert_eq!(hist[0]["reason"], "vendor");
+        assert!(hist[1]["reason"].is_null());
+        assert_eq!(detail["slip"]["original_due"], "2026-10-06");
+        assert_eq!(detail["slip"]["reschedules"], 2);
+        assert_eq!(detail["slip"]["later_moves"], 2);
+        assert_eq!(detail["slip"]["net_days"], 10);
+        // A milestone that never moved reports no slip.
+        assert_eq!(
+            find(&get("as_of=2026-10-05").await, &m1)["slip"]["reschedules"],
+            1
+        );
+    })
+    .await;
+}

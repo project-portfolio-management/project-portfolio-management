@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — milestones page
+
+`/milestones`: every milestone with status, forecast from the schedule, slip and how it was achieved; complete, reopen, reschedule with a reason, link tasks, and see the slip history.
+
 ### Added — KPI and OKR pages
 
 `/okrs` and `/kpis`: create, check in or read, edit and delete; derived scores and statuses, with "Not measured" and "No data yet" as their own states, and status as a word and shape rather than colour alone.

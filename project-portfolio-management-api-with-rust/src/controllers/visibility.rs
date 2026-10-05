@@ -407,6 +407,9 @@ async fn list_milestones(
 #[derive(Debug, Deserialize)]
 struct MilestoneReschedulePayload {
     due: chrono::NaiveDate,
+    /// Why it moved; kept in the slip history (optional, up to 500 characters).
+    #[serde(default)]
+    reason: Option<String>,
 }
 
 /// `PUT /api/plans/{pid}/milestones/{m_pid}` — reschedule a milestone's
@@ -430,6 +433,13 @@ async fn reschedule_milestone(
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
+    if payload
+        .reason
+        .as_deref()
+        .is_some_and(|r| r.chars().count() > 500)
+    {
+        return Err(unprocessable("reason is at most 500 characters"));
+    }
     let old_due = milestone.due;
     let row_pid = milestone.pid;
     let mut active: milestones::ActiveModel = milestone.into();
@@ -438,6 +448,28 @@ async fn reschedule_milestone(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // The slip history: one append-only row per actual move.
+    if old_due != payload.due {
+        crate::models::_entities::milestone_slips::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            milestone_pid: ActiveValue::set(row_pid),
+            from_due: ActiveValue::set(old_due),
+            to_due: ActiveValue::set(payload.due),
+            reason: ActiveValue::set(
+                payload
+                    .reason
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|r| !r.is_empty())
+                    .map(str::to_string),
+            ),
+            actor: ActiveValue::set(caller.actor().map(str::to_string)),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    }
     AuditModel::record(
         &ctx.db,
         row_pid,
@@ -469,25 +501,67 @@ async fn reschedule_milestone(
     }))
 }
 
-/// `POST /api/plans/{pid}/milestones/{m_pid}/complete`.
+/// `POST /api/plans/{pid}/milestones/{m_pid}/complete` body (optional).
+#[derive(Debug, Deserialize, Default)]
+struct MilestoneCompletePayload {
+    /// Why. **Required** when the milestone is linked to tasks that are not all
+    /// done: completing it by hand over open work is allowed, but not silently.
+    #[serde(default)]
+    reason: Option<String>,
+}
+
+/// `POST /api/plans/{pid}/milestones/{m_pid}/complete` — mark a milestone done.
+/// The body is optional; a linked milestone with open tasks needs a `reason`.
 #[debug_handler]
 async fn complete_milestone(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     Path((pid, m_pid)): Path<(String, String)>,
+    body: axum::body::Bytes,
 ) -> Result<Response> {
+    let payload: MilestoneCompletePayload = if body.iter().all(u8::is_ascii_whitespace) {
+        MilestoneCompletePayload::default()
+    } else {
+        serde_json::from_slice(&body)
+            .map_err(|_| unprocessable("body must be JSON like {\"reason\": \"…\"}"))?
+    };
     let item = super::governance::find_item(&ctx, &pid).await?;
     let m_pid = Uuid::parse_str(&m_pid).map_err(|_| Error::NotFound)?;
     let milestone = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
+    let reason = payload
+        .reason
+        .as_deref()
+        .map(str::trim)
+        .filter(|r| !r.is_empty())
+        .map(str::to_string);
+    if reason.as_deref().is_some_and(|r| r.chars().count() > 500) {
+        return Err(unprocessable("reason is at most 500 characters"));
+    }
+    // A linked milestone with open tasks may be completed by hand, but only
+    // with a reason that says so.
+    let progress = super::milestones::linked_progress(&ctx, &milestone).await?;
+    let open = progress.iter().filter(|c| !**c).count();
+    if milestone.completion_mode == "linked" && open > 0 && reason.is_none() {
+        return Err(unprocessable(&format!(
+            "{open} of {} linked tasks are not done; give a reason to complete the milestone anyway",
+            progress.len()
+        )));
+    }
     let row_pid = milestone.pid;
+    let first_stamp = milestone.done_at;
     let mut active: milestones::ActiveModel = milestone.into();
     active.done = ActiveValue::set(true);
     // Stamp the completion instant for the delivery-flow metrics
     // (idempotent completes keep the first stamp).
-    active.done_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    active.done_at = ActiveValue::set(Some(
+        first_stamp.unwrap_or_else(|| chrono::Utc::now().into()),
+    ));
+    if reason.is_some() {
+        active.done_reason = ActiveValue::set(reason.clone());
+    }
     let row = active
         .update(&ctx.db)
         .await
@@ -497,7 +571,9 @@ async fn complete_milestone(
         row_pid,
         "milestone_completed",
         caller.actor(),
-        None,
+        reason
+            .as_ref()
+            .map(|r| serde_json::json!({ "reason": r, "open_linked_tasks": open })),
     )
     .await
     .ok();

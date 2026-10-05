@@ -106,6 +106,7 @@ pub fn paths() -> Value {
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
     merge(&mut all, kpi_okr_paths());
+    merge(&mut all, milestone_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1027,6 +1028,33 @@ fn kpi_okr_paths() -> Value {
                 vec![uuid_param("pid")], &[("200", "the key result"), ("404", "Unknown key result"), ("422", "A bad value or a field that cannot be edited")]),
             "delete": op("okrs", "Delete a key result", "Soft delete; scores that rest on it are recomputed without it.",
                 vec![uuid_param("pid")], &[("200", "deleted"), ("404", "Unknown key result")])
+        }
+    })
+}
+
+/// Milestones as a concept: the portfolio view, links to tasks, reopen.
+fn milestone_paths() -> Value {
+    json!({
+        "/api/milestones": {
+            "get": op("milestones", "Milestones across the portfolio, with derived status, forecast and slip",
+                "Every milestone in the plans the caller can read (others are left out without a trace). status is against the calendar: achieved, late (past due and not achieved), due_soon (within due_soon_days, default 14) or upcoming. A linked milestone is achieved when every task it waits for is done (and it waits for at least one); a manual one when marked done. schedule.state comes from the critical-path forecast of the tasks still open: forecast_late when they finish after the due date, at_risk when they finish within at_risk_days working days before it (default 5), on_track otherwise; a milestone with nothing to forecast from is no_forecast with a reason (no_linked_tasks, no_scheduled_tasks, cycle) and is never on_track. slip reads the append-only reschedule history: original_due, reschedules, later_moves and net_days. The summary counts every visible milestone whatever the status filter. Ordered by due date.",
+                vec![query("plan", false, "a plan pid"), query("status", false, "achieved, late, due_soon or upcoming"), query("kind", false, "a milestone kind"), query("from", false, "due on or after"), query("to", false, "due on or before"), query("due_soon_days", false, "default 14"), query("at_risk_days", false, "default 5"), query("as_of", false, "the date today means (default today)")],
+                &[("200", "milestones and a summary"), ("422", "A bad status, window or range")])
+        },
+        "/api/milestones/{pid}": {
+            "get": op("milestones", "One milestone with its linked tasks and slip history",
+                "Everything the portfolio view derives, plus links (each linked task with whether it is done, its early finish and float) and history (every reschedule: from, to, reason, who, when).",
+                vec![uuid_param("pid")], &[("200", "the milestone"), ("404", "Unknown milestone, or in a plan the caller cannot read")])
+        },
+        "/api/plans/{pid}/milestones/{m_pid}/tasks": {
+            "put": op("milestones", "Set the tasks a milestone waits for",
+                "Body: task_pids (replaces the set; each a live task of this plan, up to 100, no repeats) and completion_mode (manual or linked; by default linked when there are tasks, else manual). A linked milestone must wait for at least one task and is achieved when they are all done. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("m_pid")], &[("200", "the mode and task_pids"), ("404", "Unknown plan or milestone"), ("422", "A task of another plan, a repeat, too many, or linked with no tasks")])
+        },
+        "/api/plans/{pid}/milestones/{m_pid}/reopen": {
+            "post": op("milestones", "Reopen a milestone marked done",
+                "Body: reason (required, up to 500 characters). Clears the manual completion; audited. A milestone achieved only because its linked tasks are all done cannot be reopened here (409): reopen a task instead.",
+                vec![uuid_param("pid"), uuid_param("m_pid")], &[("200", "done and whether it is still achieved by its tasks"), ("404", "Unknown plan or milestone"), ("409", "Not marked done, or achieved by its tasks"), ("422", "No reason")])
         }
     })
 }

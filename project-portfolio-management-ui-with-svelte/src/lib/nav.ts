@@ -44,6 +44,7 @@ export const KNOWN_NAV_HREFS = [
   "/scenarios",
   "/objectives",
   "/okrs",
+  "/milestones",
   "/kpis",
   "/gantt",
   "/engineering",

@@ -41,6 +41,8 @@ pub mod key_results;
 pub mod kpi_readings;
 pub mod kpis;
 pub mod merge_records;
+pub mod milestone_slips;
+pub mod milestone_tasks;
 pub mod milestones;
 pub mod non_working_periods;
 pub mod notification_prefs;

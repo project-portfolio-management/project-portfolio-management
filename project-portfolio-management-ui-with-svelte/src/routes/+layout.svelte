@@ -133,6 +133,7 @@
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     { href: "/okrs", label: "OKRs" },
+    { href: "/milestones", label: "Milestones" },
     { href: "/kpis", label: "KPIs" },
     { href: "/gantt", label: t("ppm.nav.gantt") },
     { href: "/engineering", label: t("ppm.nav.engineering") },

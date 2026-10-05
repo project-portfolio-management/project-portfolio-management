@@ -138,6 +138,75 @@ export interface Milestone {
   overdue: boolean;
 }
 
+// ---- Milestones as a concept (portfolio view) ----
+
+export type MilestoneStatus = "achieved" | "late" | "due_soon" | "upcoming";
+export type MilestoneScheduleState = "on_track" | "at_risk" | "forecast_late" | "no_forecast";
+export type MilestoneMode = "manual" | "linked";
+
+export interface MilestoneSchedule {
+  /** Null once achieved. */
+  state: MilestoneScheduleState | null;
+  forecast: string | null;
+  /** Working days between the forecast and the due date; negative is late. */
+  slack_days: number | null;
+  /** Why there is no forecast (or `achieved`). */
+  reason: string | null;
+  partial: boolean;
+  unforecast_tasks: string[];
+}
+
+export interface MilestoneLink {
+  task_pid: string;
+  title: string;
+  complete: boolean;
+  early_finish: string | null;
+  total_float: number | null;
+}
+
+export interface MilestoneSlip {
+  original_due: string;
+  reschedules: number;
+  later_moves: number;
+  /** Calendar days from the original due date to now. */
+  net_days: number;
+}
+
+/** A milestone with everything derived on read. */
+export interface MilestoneView {
+  pid: string;
+  plan_pid: string;
+  name: string;
+  kind: string;
+  due: string;
+  completion_mode: MilestoneMode;
+  achieved: boolean;
+  achieved_by: "manual" | "tasks" | null;
+  achieved_on: string | null;
+  done_reason: string | null;
+  status: MilestoneStatus;
+  schedule: MilestoneSchedule;
+  linked_tasks: number;
+  open_tasks: number;
+  links: MilestoneLink[];
+  slip: MilestoneSlip;
+  /** Only on `GET /api/milestones/{pid}`. */
+  history?: { from: string; to: string; reason: string | null; actor: string | null; at: string }[];
+}
+
+/** `GET /api/milestones`. */
+export interface MilestoneList {
+  as_of: string;
+  due_soon_days: number;
+  at_risk_days: number;
+  milestones: MilestoneView[];
+  summary: {
+    by_status: Record<MilestoneStatus, number>;
+    by_schedule_state: Partial<Record<MilestoneScheduleState, number>>;
+  };
+  note: string;
+}
+
 export interface Allocation {
   pid: string;
   person_ref: string;
@@ -1348,11 +1417,32 @@ export class PpmClient {
   createMilestone(pid: string, body: unknown): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/milestones`, { body });
   }
-  completeMilestone(pid: string, milestonePid: string): Promise<unknown> {
+  /** A linked milestone with open tasks needs a `reason` (422 without one). */
+  completeMilestone(pid: string, milestonePid: string, reason?: string): Promise<unknown> {
     return this.http.post(
       `/api/plans/${pid}/milestones/${milestonePid}/complete`,
-      { body: {} },
+      { body: reason ? { reason } : {} },
     );
+  }
+  portfolioMilestones(params: { status?: MilestoneStatus; plan?: string; kind?: string } = {}): Promise<MilestoneList> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return this.http.get(`/api/milestones${qs ? `?${qs}` : ""}`);
+  }
+  milestone(pid: string): Promise<MilestoneView> {
+    return this.http.get(`/api/milestones/${pid}`);
+  }
+  rescheduleMilestone(pid: string, milestonePid: string, due: string, reason?: string): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/milestones/${milestonePid}`, { body: { due, reason: reason || undefined } });
+  }
+  reopenMilestone(pid: string, milestonePid: string, reason: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}/milestones/${milestonePid}/reopen`, { body: { reason } });
+  }
+  setMilestoneLinks(pid: string, milestonePid: string, taskPids: string[], completionMode?: MilestoneMode): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/milestones/${milestonePid}/tasks`, {
+      body: { task_pids: taskPids, completion_mode: completionMode },
+    });
   }
   allocations(pid: string): Promise<Allocation[]> {
     return this.http.get(`/api/plans/${pid}/allocations`);

@@ -2061,6 +2061,7 @@ mod tests {
             crate::controllers::cpm::routes(),
             crate::controllers::kpis::routes(),
             crate::controllers::leveling::routes(),
+            crate::controllers::milestones::routes(),
             crate::controllers::portfolio_resources::routes(),
             crate::controllers::schedule_risk::routes(),
             crate::controllers::schedule_health::routes(),

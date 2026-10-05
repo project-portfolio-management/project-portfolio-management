@@ -220,6 +220,7 @@ pub mod includes;
 pub mod kpis;
 pub mod leveling;
 pub mod live;
+pub mod milestones;
 pub mod mspdi_import;
 pub mod pdf;
 pub mod plan_access;

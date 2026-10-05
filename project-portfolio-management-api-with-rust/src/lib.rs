@@ -82,6 +82,7 @@ pub mod lifecycle;
 pub mod live;
 pub mod merge;
 pub mod metrics;
+pub mod milestones;
 pub mod models;
 pub mod modules;
 pub mod mspdi;

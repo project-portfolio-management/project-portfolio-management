@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — milestones as a concept (MS-1..3, 2026-10-05)
+
+`GET /api/milestones` (portfolio view with status, critical-path forecast and slip), `GET /api/milestones/{pid}`, `PUT …/milestones/{m_pid}/tasks` (the tasks a milestone waits for; a linked one is achieved when they are all done), `POST …/milestones/{m_pid}/reopen`. Completing a linked milestone over open tasks needs a reason; every reschedule is kept in an append-only history (optional `reason` on `PUT …/milestones/{m_pid}`).
+
 ### Added — KPIs, and the OKR portfolio view (KO-1, KO-2, 2026-10-05)
 
 `/api/kpis` (+ readings): standing measures with a target and a red line; status, trend and staleness derived on read, `no_data` when unread. `GET /api/okrs` lists objectives with derived scores (unmeasured last); objectives and key results can now be edited and deleted (the baseline stays fixed).

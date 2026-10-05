@@ -22,6 +22,8 @@ export const PLAN_LINKS = [
   { key: "schedule-risk", module: "tasks" },
   { key: "cost-risk", module: "financials" },
   { key: "joint-risk", module: "financials" },
+  { key: "work", module: "tasks" },
+  { key: "costs", module: "financials" },
 ] as const;
 
 export type PlanLinkKey = (typeof PLAN_LINKS)[number]["key"];

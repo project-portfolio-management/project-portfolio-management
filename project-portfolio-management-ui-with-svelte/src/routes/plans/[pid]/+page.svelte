@@ -44,6 +44,8 @@
     "schedule-risk": "Schedule risk",
     "cost-risk": "Cost risk",
     "joint-risk": "Cost and schedule risk",
+    work: "Work and assignments",
+    costs: "Costs",
   };
   const linkLabel = (k: string): string =>
     k === "governance" ? t("ppm.common.governance")

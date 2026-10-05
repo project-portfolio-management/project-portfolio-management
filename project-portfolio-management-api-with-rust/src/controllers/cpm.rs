@@ -216,6 +216,7 @@ async fn plan_cpm(
             v["work_minutes"] = serde_json::json!(t.and_then(|t| t.work_minutes));
             v["units_percent"] = serde_json::json!(t.and_then(|t| t.units_percent));
             v["scheduling_rule"] = serde_json::json!(t.and_then(|t| t.scheduling_rule.clone()));
+            v["contour"] = serde_json::json!(t.map(|t| t.contour.clone()));
             v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
             let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);

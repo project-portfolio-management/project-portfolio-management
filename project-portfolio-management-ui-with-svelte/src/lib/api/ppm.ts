@@ -799,6 +799,109 @@ export interface AnnouncementInput {
   expires_at?: string | null;
 }
 
+export type SchedulingRule = "fixed_units" | "fixed_duration" | "fixed_work";
+export type Contour = "flat" | "front_loaded" | "back_loaded" | "bell" | "turtle" | "custom";
+export type Grain = "day" | "week" | "month";
+
+export interface AssignmentBody {
+  rule?: SchedulingRule;
+  duration_days?: number;
+  units_percent?: number;
+  work_minutes?: number;
+}
+
+export interface AssignmentResult {
+  task_pid: string;
+  rule: SchedulingRule;
+  duration_days: number;
+  units_percent: number;
+  work_minutes: number;
+  derived: "duration" | "units" | "work" | null;
+  exact: boolean | null;
+  capacity: {
+    checked: boolean;
+    reason?: string;
+    over_capacity?: boolean;
+    days_over?: number;
+    from?: string;
+    to?: string;
+  };
+  note: string;
+}
+
+export interface Bucket {
+  from: string;
+  to: string;
+  minutes: number;
+}
+
+export interface WorkProfile {
+  plan_pid: string;
+  from?: string;
+  to?: string;
+  period?: Grain;
+  tasks: Array<{
+    pid: string;
+    title: string;
+    contour: Contour;
+    work_minutes: number;
+    buckets: Bucket[];
+    placed: boolean;
+    assignee?: string | null;
+  }>;
+  totals: {
+    buckets: Bucket[] | null;
+    work_minutes: number;
+    placed_work_minutes?: number;
+    unplaced_work_minutes?: number;
+    outside_window_minutes?: number;
+  };
+  unplaced: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
+  reason?: string;
+  note: string;
+}
+
+export interface CostRateTable {
+  pid: string;
+  name: string;
+  person_ref: string | null;
+  role: string | null;
+  currency: string;
+  rates: Array<{ effective_from: string; per_hour_minor: number }>;
+}
+
+export interface TaskCost {
+  pid: string;
+  kind: "material" | "fixed";
+  description: string;
+  amount_minor: number;
+  currency: string;
+  accrual: "start" | "prorated" | "end";
+}
+
+export interface MoneyBuckets {
+  total_minor: number;
+  buckets: Array<{ from: string; to: string; minor: number }>;
+}
+
+export interface CostPlan {
+  plan_pid: string;
+  from?: string;
+  to?: string;
+  currencies: Array<{ currency: string; labour: MoneyBuckets; fixed: MoneyBuckets; total: MoneyBuckets }>;
+  unrated: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
+  unassigned: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
+  unplaced: Array<{ cost_pid: string; task_pid: string; amount_minor: number; currency: string; reason: string }>;
+  reason?: string;
+  note: string;
+}
+
+export interface LabourCosts {
+  currencies: Array<{ currency: string; cost_minor: number; minutes: number; entries: number }>;
+  unpriced: { entries: number; minutes: number; reason: string | null };
+  note: string;
+}
+
 /** `GET /api/executive/health` response. */
 export interface ExecutiveHealth {
   as_of: string;
@@ -1169,6 +1272,11 @@ export interface CpmNode {
   /** Working days logic forces the start later than planned. */
   pushed_days: number;
   constraint: "snet" | "snlt" | "fnet" | "fnlt" | "mso" | "mfo" | null;
+  /** PJ-5 / PJ-6: work in minutes, units as a percent of the assignee's day, and the rule and contour. */
+  work_minutes?: number | null;
+  units_percent?: number | null;
+  scheduling_rule?: SchedulingRule | null;
+  contour?: Contour | null;
   constraint_date: string | null;
   deadline: string | null;
   /** A hard constraint pins this task earlier than its predecessors allow. */
@@ -2075,6 +2183,46 @@ export class PpmClient {
   }
   // ---- critical path and calendars (SC-1, SC-2) ----
   /** Float, critical chains and constraints for a plan's tasks. */
+  setAssignment(pid: string, taskPid: string, body: AssignmentBody): Promise<AssignmentResult> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/assignment`, { body });
+  }
+  setContour(pid: string, taskPid: string, contour: Contour, custom?: number[]): Promise<{ contour: Contour }> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/contour`, { body: { contour, custom } });
+  }
+  workProfile(pid: string, params: { period?: Grain; from?: string; to?: string } = {}): Promise<WorkProfile> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return this.http.get(`/api/plans/${pid}/work-profile${qs ? `?${qs}` : ""}`);
+  }
+  costRateTables(): Promise<{ tables: CostRateTable[] }> {
+    return this.http.get("/api/cost-rate-tables");
+  }
+  createCostRateTable(body: { name: string; person_ref?: string; role?: string; currency: string }): Promise<{ pid: string }> {
+    return this.http.post("/api/cost-rate-tables", { body });
+  }
+  addCostRate(tablePid: string, body: { effective_from: string; per_hour_minor: number }): Promise<unknown> {
+    return this.http.post(`/api/cost-rate-tables/${tablePid}/rates`, { body });
+  }
+  taskCosts(pid: string, taskPid: string): Promise<{ costs: TaskCost[] }> {
+    return this.http.get(`/api/plans/${pid}/tasks/${taskPid}/costs`);
+  }
+  addTaskCost(pid: string, taskPid: string, body: Omit<TaskCost, "pid">): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/tasks/${taskPid}/costs`, { body });
+  }
+  removeTaskCost(pid: string, taskPid: string, costPid: string): Promise<void> {
+    return this.http.delete(`/api/plans/${pid}/tasks/${taskPid}/costs/${costPid}`);
+  }
+  costPlan(pid: string, params: { period?: Grain } = {}): Promise<CostPlan> {
+    const qs = params.period ? `?period=${params.period}` : "";
+    return this.http.get(`/api/plans/${pid}/cost-plan${qs}`);
+  }
+  recordLabourCosts(pid: string): Promise<{ recorded: number; already_recorded: number; no_rate: unknown[] }> {
+    return this.http.post(`/api/plans/${pid}/labour-costs/record`, { body: {} });
+  }
+  labourCosts(pid: string): Promise<LabourCosts> {
+    return this.http.get(`/api/plans/${pid}/labour-costs`);
+  }
   planCpm(pid: string, near?: number): Promise<Cpm> {
     const q = near === undefined ? "" : `?near=${near}`;
     return this.http.get(`/api/plans/${pid}/cpm${q}`);

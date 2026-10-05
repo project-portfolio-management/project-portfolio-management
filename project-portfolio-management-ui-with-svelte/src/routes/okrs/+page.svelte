@@ -42,7 +42,8 @@
 
 <svelte:head><title>OKRs — PPM</title></svelte:head>
 
-<h1>OKRs</h1>
+<h1>Goals and key results (OKRs)</h1>
+<p class="lede">A goal, with a few measurable results that show whether you reached it.</p>
 <p class="small muted">
   Objectives and key results. Scores are worked out from the check-ins every time you look;
   nothing is stored that could go stale.
@@ -60,7 +61,7 @@
   <form class="filter" onsubmit={addObjective}>
     <label>Title <input type="text" required bind:value={title} /></label>
     <label>Period <input type="text" bind:value={newPeriod} placeholder="2026-Q4" /></label>
-    <button class="button small" type="submit">Create</button>
+    <button class="button small primary" type="submit">Create</button>
   </form>
 </details>
 

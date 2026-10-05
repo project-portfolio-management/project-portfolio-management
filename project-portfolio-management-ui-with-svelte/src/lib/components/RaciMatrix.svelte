@@ -42,7 +42,7 @@
 
 <div class="scroll">
   <table data-testid="raci-matrix">
-    <caption class="sr-only">RACI matrix: who is Responsible, Accountable, Consulted and Informed on each task</caption>
+    <caption class="sr-only">Who does what (RACI matrix): who is Responsible, Accountable, Consulted and Informed on each task</caption>
     <thead>
       <tr>
         <th scope="col">Task</th>

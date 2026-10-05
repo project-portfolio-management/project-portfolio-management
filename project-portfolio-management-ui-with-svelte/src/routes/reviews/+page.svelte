@@ -159,7 +159,7 @@
     <input bind:value={expertise} placeholder="e.g. clinical safety" />
   </label>
   <label class="small">due <input type="date" bind:value={dueOn} /></label>
-  <button class="button small" type="submit">Delegate</button>
+  <button class="button small primary" type="submit">Delegate</button>
 </form>
 
 <div class="row">

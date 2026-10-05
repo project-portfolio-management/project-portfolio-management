@@ -114,7 +114,7 @@
   </section>
 
   <section class="tile" aria-labelledby="t-kpi" data-testid="tile-kpis">
-    <h2 id="t-kpi">KPIs needing a look</h2>
+    <h2 id="t-kpi">Key measures needing a look</h2>
     {#if failed.kpis}<p class="banner error" role="alert">{failed.kpis}</p>
     {:else if !kpis}<p class="muted">Loading…</p>
     {:else}
@@ -130,7 +130,7 @@
         {#if a.more}<p class="small muted">and {a.more} more</p>{/if}
       {/if}
     {/if}
-    <a class="more" href={localeHref("/kpis")}>All KPIs</a>
+    <a class="more" href={localeHref("/kpis")}>All key measures</a>
   </section>
 
   <section class="tile" aria-labelledby="t-dec" data-testid="tile-decisions">

@@ -38,6 +38,7 @@
     main: null,
     duplicate: null,
   });
+  const previewed = $derived(!!(preview.main && preview.duplicate));
   let result = $state<MergeResponse | null>(null);
   let recent = $state<MergeRecordRow[]>([]);
   let error = $state<string | null>(null);
@@ -139,12 +140,13 @@
     />
   </label>
   <div class="row">
-    <button type="button" class="button" onclick={loadPreview}>
+    <button type="button" class="button" class:primary={!previewed} onclick={loadPreview}>
       {t("merge.loadPreview")}
     </button>
     <button
       type="button"
-      class="button primary"
+      class="button"
+      class:primary={previewed}
       onclick={doMerge}
       disabled={merging}
     >
@@ -175,7 +177,7 @@
     </div>
     <!-- SPA navigation to the surviving plan's detail page. -->
     <a
-      class="button primary"
+      class="button"
       href={localeHref(`/plans/${result.main_pid}`)}
       onclick={() => result && goto(localeHref(`/plans/${result.main_pid}`))}
     >

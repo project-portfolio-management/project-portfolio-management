@@ -62,7 +62,8 @@
 
 <svelte:head><title>Resource leveling — PPM</title></svelte:head>
 
-<h1>Resource leveling</h1>
+<h1>Balance workloads (resource leveling)</h1>
+<p class="lede">Suggests moving tasks so that nobody is booked for more than they can do. Nothing changes until you confirm.</p>
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/calendar`)}>Working calendar</a></p>
 <p class="banner" role="note">This is advice. Nothing changes until you choose moves below and apply them.</p>
 
@@ -147,7 +148,7 @@
         <legend>Apply the ticked moves</legend>
         <label>Why (kept with each audit entry) <input type="text" bind:value={reason} maxlength="500" /></label>
         <label class="check"><input type="checkbox" bind:checked={confirmed} /> I have read the proposal and want these start dates changed</label>
-        <button class="button" type="submit" disabled={!confirmed || chosen.length === 0 || busy}>
+        <button class="button primary" type="submit" disabled={!confirmed || chosen.length === 0 || busy}>
           Apply {chosen.length} move{chosen.length === 1 ? "" : "s"}
         </button>
       </fieldset>

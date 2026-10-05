@@ -30,7 +30,7 @@
             <input type="email" name="email" required autocomplete="email" />
         </label>
         <input type="hidden" name="locale" value={i18n.locale} />
-        <button class="button" type="submit">Send magic link</button>
+        <button class="button primary" type="submit">Send magic link</button>
         {#if form?.error}
             <p class="banner" role="alert">Could not send the sign-in link. Please try again.</p>
         {/if}

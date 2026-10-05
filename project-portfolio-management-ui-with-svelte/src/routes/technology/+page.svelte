@@ -7,6 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import Term from "#lib/components/Term.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -77,7 +78,7 @@
   <h3>Most depended-on (single-point-of-failure candidates)</h3>
   <table data-testid="tech-fan-out">
     <thead>
-      <tr><th>Item</th><th>Kind</th><th>Dependents</th><th>RAG</th></tr>
+      <tr><th>Item</th><th>Kind</th><th>Dependents</th><th>Status (<Term t="RAG" />)</th></tr>
     </thead>
     <tbody>
       {#each risk.top_fan_out as row (row.item.pid)}

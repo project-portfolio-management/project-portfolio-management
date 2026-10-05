@@ -188,7 +188,7 @@
               {#if i.resolution}
                 <button class="button" type="button" onclick={() => update(i.pid, { resolution: "open" })}>Reopen</button>
               {:else}
-                <button class="button primary" type="button" onclick={() => update(i.pid, { resolution: "done" })}>Done</button>
+                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "done" })}>Done</button>
                 <input aria-label={`Why skip ${i.title}`} placeholder="Why skip?" value={notes[i.pid] ?? ""} oninput={(e) => (notes[i.pid] = e.currentTarget.value)} />
                 <button class="button" type="button" onclick={() => update(i.pid, { resolution: "skipped", note: notes[i.pid] })}>Skip</button>
               {/if}
@@ -219,7 +219,7 @@
     <label>Person <input bind:value={subject} placeholder="person:…" /></label>
   {/if}
   <label>Takes effect <input type="date" bind:value={date} /></label>
-  <button class="button primary" type="submit">Start</button>
+  <button class="button" class:primary={!open} type="submit">Start</button>
 </form>
 
 <h2>Access record</h2>

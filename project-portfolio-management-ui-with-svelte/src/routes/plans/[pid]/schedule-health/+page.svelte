@@ -33,6 +33,7 @@
 <svelte:head><title>Schedule health — PPM</title></svelte:head>
 
 <h1>Schedule health</h1>
+<p class="lede">Checks the schedule for common problems, such as tasks with no links or no estimate.</p>
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}

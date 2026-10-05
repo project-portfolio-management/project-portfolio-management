@@ -49,7 +49,7 @@
     <select bind:value={distribution}><option value="triangular">Triangular</option><option value="pert">PERT</option></select>
   </label>
   <label>Band for lines with no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
 </form>
 
 {#if result}<CostRiskView {result} />{:else if !error}<p class="muted">Running…</p>{/if}

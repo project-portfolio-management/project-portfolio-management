@@ -4,7 +4,7 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { PID } from "./fixtures";
+import { PID, primaryButtons } from "./fixtures";
 
 async function audit(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
@@ -45,6 +45,7 @@ test("checklists show a word and a shape per item, and readiness says why not", 
   await stub(page);
   await page.route("**/api/onboarding/cases/c1", (r) => r.fulfill({ json: CASE }));
   await page.goto(`/en-001/plans/${PID}/onboarding`);
+  await expect.poll(() => primaryButtons(page), { message: "with no checklist open, starting one is the primary action" }).toEqual(["Start"]);
   await expect(page.getByTestId("closeout")).toContainText("Not ready to close: 2 task(s) are not finished; 1 access grant(s) have not been revoked.");
   await expect(page.getByTestId("cases")).toContainText("1 of 3 done, 1 overdue");
   await expect(page.getByText("2 checklists about people are not shown to you.")).toBeVisible();
@@ -54,6 +55,7 @@ test("checklists show a word and a shape per item, and readiness says why not", 
   await expect(c).toContainText("Done");
   await expect(c).toContainText("Open");
   await expect(page.getByTestId("outstanding")).toContainText("person:x: repo write");
+  await expect.poll(() => primaryButtons(page), { message: "one primary action: finishing the open checklist" }).toEqual(["Complete checklist"]);
   await audit(page);
 });
 
@@ -108,9 +110,11 @@ test("handover previews, then commits with the preview's etag; a changed holding
   await page.getByRole("textbox", { name: "From" }).fill("person:a");
   await page.getByRole("textbox", { name: "To" }).fill("person:b");
   await page.getByRole("button", { name: "Preview" }).click();
+  await expect.poll(() => primaryButtons(page), { message: "before the preview, previewing is" }).toEqual(["Preview"]);
   const pv = page.getByTestId("preview");
   await expect(pv).toContainText("2 items would move to person:b.");
   await expect(pv).toContainText("Write the spec");
+  await expect.poll(() => primaryButtons(page), { message: "after the preview, handing over is the primary action" }).toEqual(["Hand over"]);
   await audit(page);
   await page.getByRole("button", { name: "Hand over" }).click();
   await expect(page.getByRole("status")).toContainText("Done: 2 items handed over and recorded.");

@@ -74,7 +74,7 @@
   {#if holidays.length > 0}
     <p class="small">{holidays.length} holiday{holidays.length === 1 ? "" : "s"}: {holidays.join(", ")}</p>
   {/if}
-  <p><button type="button" onclick={() => void save()} disabled={!valid}>Save calendar</button>
+  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>Save calendar</button>
     {#if saved}<span role="status"> Saved.</span>{/if}</p>
 {:else if !error}
   <p>Loading…</p>

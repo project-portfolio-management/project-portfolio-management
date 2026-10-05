@@ -58,7 +58,8 @@
 
 <svelte:head><title>KPIs — PPM</title></svelte:head>
 
-<h1>KPIs</h1>
+<h1>Key measures (KPIs)</h1>
+<p class="lede">Something you track over time against a target, so you can see early whether you are on course.</p>
 <p class="small muted">
   Standing measures. Green is at or better than the target; red is at or worse than the red
   line; amber is between. A KPI nobody has read yet shows “No data yet”.
@@ -87,7 +88,7 @@
 </form>
 
 <details class="surface">
-  <summary>Define a KPI</summary>
+  <summary>Define a key measure (KPI)</summary>
   <form class="filter" onsubmit={addKpi}>
     <label>Name <input type="text" required bind:value={name} /></label>
     <label>Unit <input type="text" bind:value={unit} placeholder="percent, defects, GBP…" /></label>
@@ -109,7 +110,7 @@
       </select>
     </label>
     <label>Plan (optional pid) <input type="text" bind:value={planPid} placeholder="blank for the whole portfolio" /></label>
-    <button class="button small" type="submit">Define</button>
+    <button class="button small primary" type="submit">Define</button>
   </form>
   <p class="small muted">The red line must be on the worse side of the target. Scale values to whole numbers (basis points, pence).</p>
 </details>

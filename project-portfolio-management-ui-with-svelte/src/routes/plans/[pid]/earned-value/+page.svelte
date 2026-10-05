@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import Term from "#lib/components/Term.svelte";
   import { localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -123,7 +124,8 @@
 <svelte:head><title>Earned value — PPM</title></svelte:head>
 
 <p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>← Governance</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
-<h1>Earned value</h1>
+<h1>Progress against budget (earned value)</h1>
+<p class="lede">Is the work finished worth what was planned by now, and what did it cost? An index above 1.00 is better than planned.</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if ev}
@@ -168,9 +170,9 @@
             <tr><th scope="row">Actual cost</th><td>{b.ac_minor === null ? "unknown" : money(b.ac_minor, b.currency)}</td></tr>
             <tr><th scope="row">Schedule variance (EV − PV)</th><td>{money(b.sv_minor, b.currency)}</td></tr>
             <tr><th scope="row">Cost variance (EV − AC)</th><td>{b.cv_minor === null ? "unknown" : money(b.cv_minor, b.currency)}</td></tr>
-            <tr><th scope="row">SPI</th><td>{ratioOrReason(b.spi)}</td></tr>
-            <tr><th scope="row">CPI</th><td>{ratioOrReason(b.cpi)}</td></tr>
-            <tr><th scope="row">SPI(t)</th><td>{ratioOrReason(b.spi_t)}</td></tr>
+            <tr><th scope="row">Schedule index (<Term t="SPI" />)</th><td>{ratioOrReason(b.spi)}</td></tr>
+            <tr><th scope="row">Cost index (<Term t="CPI" />)</th><td>{ratioOrReason(b.cpi)}</td></tr>
+            <tr><th scope="row">Schedule index by time (<Term t="SPI(t)" />)</th><td>{ratioOrReason(b.spi_t)}</td></tr>
           </tbody>
         </table>
       </section>
@@ -284,8 +286,8 @@
           <label>Percent complete <input type="number" min="0" max="100" bind:value={percent} required /></label>
           <label>Why (required) <input type="text" bind:value={note} required /></label>
         {/if}
-        <button type="submit">Save</button>
-        <button type="button" onclick={() => (editing = null)}>Cancel</button>
+        <button class="button primary" type="submit">Save</button>
+        <button class="button" type="button" onclick={() => (editing = null)}>Cancel</button>
       </form>
     {/if}
     <p class="small muted">{ev.note}</p>

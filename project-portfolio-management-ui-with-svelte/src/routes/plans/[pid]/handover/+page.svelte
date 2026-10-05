@@ -72,7 +72,7 @@
   <h2 id="hv-h">Who is handing over?</h2>
   <label>From <input bind:value={from} oninput={reset} placeholder="person:…" /></label>
   <label>To <input bind:value={to} oninput={reset} placeholder="person:… (empty releases the work)" /></label>
-  <button class="button primary" type="submit" disabled={busy}>Preview</button>
+  <button class="button" class:primary={!preview} type="submit" disabled={busy}>Preview</button>
 </form>
 {#if status}<p role="status" class="small">{status}</p>{/if}
 

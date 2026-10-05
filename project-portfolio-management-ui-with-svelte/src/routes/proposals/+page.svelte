@@ -129,7 +129,7 @@
             </button>
           {/each}
           {#if proposal.status === "approved"}
-            <button class="button primary small" onclick={() => act(() => ppm.promoteProposal(proposal.pid))}>
+            <button class="button small" onclick={() => act(() => ppm.promoteProposal(proposal.pid))}>
               promote
             </button>
           {/if}

@@ -52,7 +52,7 @@
   <section class="closing" aria-labelledby="closing-title">
     <h2 id="closing-title">{t("splash.cta.title")}</h2>
     <p>{t("splash.cta.body")}</p>
-    <a class="cta primary" href={localeHref("/signin")}>{t("auth.signin")}</a>
+    <a class="cta" href={localeHref("/signin")}>{t("auth.signin")}</a>
   </section>
 </div>
 
@@ -183,8 +183,9 @@
     margin: 0 0 1.25rem;
     color: var(--mxi-color-muted);
   }
-  .closing .cta.primary {
-    background: var(--mxi-color-primary);
-    color: var(--mxi-color-primary-fg);
+  .closing .cta {
+    background: transparent;
+    color: var(--mxi-color-fg);
+    border: 2px solid var(--mxi-color-primary);
   }
 </style>

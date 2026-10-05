@@ -39,7 +39,7 @@
 >
   <label class="small">from <input type="date" bind:value={from} /></label>
   <label class="small">to <input type="date" bind:value={to} /></label>
-  <button class="button small" type="submit">{t("ppm.capacity.apply")}</button>
+  <button class="button small primary" type="submit">{t("ppm.capacity.apply")}</button>
 </form>
 
 {#if view}

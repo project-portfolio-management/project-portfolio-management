@@ -135,7 +135,7 @@ for (const size of SIZES) {
       }
       // Each tile ends in a link to its full page, one tap away.
       await expect(page.getByRole("link", { name: "All announcements" })).toBeVisible();
-      const box = await page.getByRole("link", { name: "All KPIs" }).boundingBox();
+      const box = await page.getByRole("link", { name: "All key measures" }).boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
     });
   }

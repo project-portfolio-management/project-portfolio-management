@@ -143,7 +143,7 @@
     class="points"
     inputmode="numeric"
   />
-  <button type="submit">Add task</button>
+  <button class="button primary" type="submit">Add task</button>
   <label>
     Sprint
     <select

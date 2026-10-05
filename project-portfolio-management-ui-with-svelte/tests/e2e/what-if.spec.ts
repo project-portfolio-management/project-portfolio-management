@@ -3,7 +3,7 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { PID } from "./fixtures";
+import { PID, primaryButtons } from "./fixtures";
 
 async function audit(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
@@ -54,11 +54,13 @@ test("stage, preview, then commit sends exactly the staged edits with the previe
   await stageDuration(page);
   await expect(page.getByTestId("staged")).toContainText("Set “Build” to 6 working days");
   await expect(page.getByTestId("preview")).toHaveCount(0);
+  await expect.poll(() => primaryButtons(page), { message: "with edits staged, previewing is the primary action" }).toEqual(["Preview"]);
   await page.getByRole("button", { name: "Preview" }).click();
   const pv = page.getByTestId("preview");
   await expect(pv).toContainText("The finish moves from 2026-10-07 to 2026-10-12.");
   await expect(pv).toContainText("+1,200.00 GBP");
   await expect(pv).toContainText("100% of the day for 48 h of work");
+  await expect.poll(() => primaryButtons(page), { message: "once previewed, committing is the primary action" }).toEqual(["Commit these changes"]);
   await audit(page);
   await page.getByLabel("Reason").fill("try it");
   await page.getByRole("button", { name: "Commit these changes" }).click();

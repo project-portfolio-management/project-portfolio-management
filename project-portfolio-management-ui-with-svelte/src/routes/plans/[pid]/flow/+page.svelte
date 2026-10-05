@@ -75,7 +75,8 @@
 
 <svelte:head><title>Flow — PPM</title></svelte:head>
 
-<h1>Time-based analysis</h1>
+<h1>How long work takes</h1>
+<p class="lede">How long work takes to get done, and how much is in progress at once.</p>
 <p class="muted">
   Of the calendar time these items took, how much of it was somebody
   working on them? Flow efficiency in knowledge work typically measures

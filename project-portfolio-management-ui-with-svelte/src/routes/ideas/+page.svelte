@@ -73,7 +73,7 @@
         {#if idea.pitch}<span class="small muted"> — {idea.pitch}</span>{/if}
       </span>
       <button
-        class="button primary small"
+        class="button small"
         onclick={() => act(() => ppm.convertIdea(idea.pid, convertTarget))}
       >
         {t("ppm.ideas.toProposal")}

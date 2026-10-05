@@ -198,7 +198,7 @@
     {/each}
   </ol>
   <div class="row">
-    <button class="button primary" type="button" onclick={run} disabled={busy}>Preview</button>
+    <button class="button" class:primary={!preview} type="button" onclick={run} disabled={busy}>Preview</button>
     <button class="button" type="button" onclick={discard} disabled={busy}>Discard</button>
   </div>
 {/if}

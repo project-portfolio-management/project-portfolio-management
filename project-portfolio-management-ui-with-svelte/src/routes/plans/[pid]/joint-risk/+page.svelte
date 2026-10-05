@@ -62,6 +62,7 @@
 <svelte:head><title>Cost and schedule risk — PPM</title></svelte:head>
 
 <h1>Cost and schedule together</h1>
+<p class="lede">A late project usually costs more too, so this runs cost and schedule together.</p>
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/schedule-risk`)}>Schedule risk</a> · <a href={localeHref(`/plans/${pid}/cost-risk`)}>Cost risk</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -75,7 +76,7 @@
     <select bind:value={distribution}><option value="triangular">Triangular</option><option value="pert">PERT</option></select>
   </label>
   <label>Band when there is no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
 </form>
 
 {#if result}

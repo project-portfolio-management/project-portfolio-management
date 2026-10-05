@@ -79,7 +79,7 @@
       <option value="unscored">unscored</option>
     </select>
   </label>
-  <button class="button small" type="submit">Apply</button>
+  <button class="button small primary" type="submit">Apply</button>
 </form>
 
 {#if view}

@@ -132,7 +132,7 @@
         <td>
           <button class="button small" onclick={() => evaluate(scenario.pid)}>{t("ppm.scenarios.evaluate")}</button>
           {#if scenario.status === "draft"}
-            <button class="button primary small" onclick={() => act(() => ppm.commitScenario(scenario.pid))}>
+            <button class="button small" onclick={() => act(() => ppm.commitScenario(scenario.pid))}>
               {t("ppm.scenarios.commit")}
             </button>
           {/if}

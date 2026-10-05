@@ -228,7 +228,7 @@
       </select>
     </label>
   {/if}
-  <button class="button small" type="submit">Save rule</button>
+  <button class="button small primary" type="submit">Save rule</button>
 </form>
 
 <h2>Rules</h2>

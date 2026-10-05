@@ -54,6 +54,7 @@
 <svelte:head><title>Schedule risk — PPM</title></svelte:head>
 
 <h1>Schedule risk</h1>
+<p class="lede">Many what-if runs of the schedule show the range of finish dates and how likely each one is.</p>
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -64,11 +65,11 @@
   <label>Distribution
     <select bind:value={distribution}>
       <option value="triangular">Triangular</option>
-      <option value="pert">PERT</option>
+      <option value="pert">Weighted towards the likely value (PERT)</option>
     </select>
   </label>
   <label>Band for tasks with no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
 </form>
 
 {#if run}

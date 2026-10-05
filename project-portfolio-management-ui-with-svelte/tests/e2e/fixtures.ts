@@ -90,3 +90,10 @@ export const ROUTES: string[] = pages("src/routes")
   )
   .map((r) => r.replace(/\[pid\]/g, PID))
   .sort();
+
+/** The visible primary buttons on screen, by name (LT-12: there is at most one). */
+export async function primaryButtons(page: Page): Promise<string[]> {
+  return page
+    .locator("button.primary:visible, a.primary:visible")
+    .evaluateAll((els) => els.map((e) => (e.textContent ?? "").trim()));
+}

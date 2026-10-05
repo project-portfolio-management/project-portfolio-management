@@ -97,7 +97,7 @@
   {#if !valid}<p class="banner" role="alert">At least one weekday must work.</p>{/if}
   <h2>My days off</h2>
   <CalendarMonth bind:year bind:month {mask} {holidays} editable ontoggle={(d) => (holidays = toggleHoliday(holidays, d))} />
-  <p><button type="button" onclick={() => void save()} disabled={!valid}>Save</button>
+  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>Save</button>
     {#if saved}<span role="status"> Saved.</span>{/if}</p>
 
   <h2>Part-time spells and leave</h2>

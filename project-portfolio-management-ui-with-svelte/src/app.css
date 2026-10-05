@@ -245,3 +245,10 @@ html[data-font="dyslexia"] textarea {
   padding: 0.25rem 0 0 0.75rem;
   margin: 0;
 }
+
+/* A plain-language one-liner under a heading (LT-12): what this page is, without jargon. */
+.lede {
+  margin: 0 0 0.75rem;
+  max-width: 60ch;
+  color: var(--mxi-color-muted);
+}

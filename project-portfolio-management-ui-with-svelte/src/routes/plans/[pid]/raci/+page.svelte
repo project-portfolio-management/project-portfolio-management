@@ -31,7 +31,7 @@
       extra = extra.filter((p) => !matrix?.people.includes(p));
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the RACI matrix";
+      error = err instanceof Error ? err.message : "Could not load who does what";
     }
   }
   onMount(() => void load());
@@ -65,7 +65,8 @@
 <svelte:head><title>RACI — PPM</title></svelte:head>
 
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a></p>
-<h1>RACI matrix</h1>
+<h1>Who does what (RACI matrix)</h1>
+<p class="lede">For each task: who does it, who signs it off, who is asked, and who is told.</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if notice}<p class="banner" role="status">{notice}</p>{/if}
 
@@ -83,7 +84,7 @@
 
   <form onsubmit={addPerson} class="row">
     <label>Add a person (person:… or worker:…) <input type="text" bind:value={newPerson} size="46" /></label>
-    <button type="submit">Add column</button>
+    <button class="button primary" type="submit">Add column</button>
   </form>
 
   {#if matrix.rows.length === 0}

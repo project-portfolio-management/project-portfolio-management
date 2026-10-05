@@ -166,6 +166,7 @@
 
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/calendar`)}>Working calendar</a></p>
 <h1>Critical path</h1>
+<p class="lede">The longest chain of tasks, which sets the finish date. A delay to any task on it delays the whole plan.</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if cpm}
@@ -279,7 +280,7 @@
           </label>
         {/if}
         <label>Deadline (a goal: it shows as negative float, it never moves the task) <input type="date" bind:value={deadline} /></label>
-        <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save schedule"}</button>
+        <button class="button primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save schedule"}</button>
       </form>
       <form onsubmit={saveEstimate} class="stack" aria-labelledby="est-h">
         <h3 id="est-h">Range for schedule risk</h3>

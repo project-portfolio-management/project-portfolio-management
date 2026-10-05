@@ -113,6 +113,7 @@
 <svelte:head><title>Work and assignments — PPM</title></svelte:head>
 
 <h1>Work and assignments</h1>
+<p class="lede">How long each task takes, how much of a person's day it uses, and how much work that adds up to.</p>
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/costs`)}>Costs</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 
@@ -163,7 +164,7 @@
                 <label>Units (% of the day) <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
               {/if}
             {/if}
-            <button class="button primary" type="submit">Save assignment</button>
+            <button class="button" type="submit">Save assignment</button>
           </form>
           {#if n.units_percent != null}
             <div class="row">

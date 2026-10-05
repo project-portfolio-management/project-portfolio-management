@@ -15,6 +15,8 @@
     LOCALE_LABELS,
   } from "#lib/i18n.svelte.js";
   import { localizePath, normaliseLocale, splitPath } from "#lib/locales.js";
+  import { display } from "#lib/preferences.svelte.js";
+  import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { COLLECTIONS } from "#lib/api/types.js";
   import { orderNavForView } from "#lib/nav.js";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
@@ -164,6 +166,22 @@
 
   // Reactive: tracks the server-resolved session presence.
   const signedIn = $derived(data.signedIn);
+
+  // Display preferences (LT-12). Simple mode moves the advanced destinations
+  // behind "More" — prominence, not capability: every route still works. It is on
+  // by default for the worker persona (`view=me`); an explicit choice wins.
+  const simple = $derived(effectiveSimple(display.prefs, data.view));
+  const nav = $derived(splitNav(orderedNavItems, simple));
+  $effect(() => {
+    if (!browser) return;
+    const a = htmlAttributes(simple, display.dyslexia);
+    document.documentElement.setAttribute("data-simple", a["data-simple"]);
+    document.documentElement.setAttribute("data-font", a["data-font"]);
+  });
+  $effect(() => {
+    if (browser) void display.sync(signedIn);
+  });
+  const toggleSimple = () => void display.set({ simple: !simple }, signedIn);
 </script>
 
 <!--
@@ -204,7 +222,7 @@
     <a href={localeHref("/")} class="brand">{t("brand.name")}</a>
     <nav id="primary-nav" class="primary-nav" class:open={menuOpen}>
       <ul>
-        {#each orderedNavItems as item (item.href)}
+        {#each nav.front as item (item.href)}
           <li>
             <a
               href={localeHref(item.href)}
@@ -213,9 +231,31 @@
             >{item.label}</a>
           </li>
         {/each}
+        {#if nav.more.length > 0}
+          <li class="more">
+            <details>
+              <summary>More</summary>
+              <ul>
+                {#each nav.more as item (item.href)}
+                  <li>
+                    <a
+                      href={localeHref(item.href)}
+                      aria-current={here === item.href ? "page" : undefined}
+                      onclick={() => menuOpen = false}
+                    >{item.label}</a>
+                  </li>
+                {/each}
+              </ul>
+            </details>
+          </li>
+        {/if}
       </ul>
     </nav>
     <div class="header-end">
+      <button type="button" class="session-button" aria-pressed={simple} onclick={toggleSimple}>
+        Simple view: {simple ? "on" : "off"}
+      </button>
+      <a class="session-button" href={localeHref("/display")}>Display</a>
       {#if signedIn}
         <!-- Sign-out posts to the root page's \`signout\` action
              (BFF: revokes server-side + clears the cookie). -->
@@ -369,9 +409,12 @@
   }
   .header-end {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: flex-end;
+    gap: 0.5rem 0.75rem;
     margin-inline-start: auto;
+    max-width: 100%;
   }
   .header-end form {
     margin: 0;
@@ -416,6 +459,7 @@
      run off either side of a narrow screen. */
   .header-end :global(.picker-bar) {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.375rem;
   }

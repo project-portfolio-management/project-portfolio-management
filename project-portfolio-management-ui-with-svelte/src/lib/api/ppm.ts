@@ -1846,6 +1846,17 @@ export class PpmClient {
     return this.http.get(`/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`);
   }
 
+  // ---- saved views (the user's own; also holds display preferences) ----
+  listSavedViews(route?: string): Promise<{ pid: string; route: string; name: string; filter: unknown }[]> {
+    return this.http.get(`/api/saved-views${route ? `?route=${encodeURIComponent(route)}` : ""}`);
+  }
+  createSavedView(body: { route: string; name: string; filter?: unknown; sort?: unknown; columns?: string[] }): Promise<{ pid: string }> {
+    return this.http.post("/api/saved-views", { body });
+  }
+  deleteSavedView(pid: string): Promise<void> {
+    return this.http.delete(`/api/saved-views/${pid}`);
+  }
+
   // ---- simulation inputs ----
   setTaskEstimate(pid: string, taskPid: string, body: { optimistic_days: number | null; pessimistic_days: number | null }): Promise<unknown> {
     return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/estimate`, { body });

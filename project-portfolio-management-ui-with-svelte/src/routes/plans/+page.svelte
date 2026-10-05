@@ -9,6 +9,7 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { Grid, Willow as GridTheme } from "@svar-ui/svelte-grid";
+  import { repairAria } from "#lib/aria-repair.js";
   import {
     FilterBar,
     Willow as FilterTheme,
@@ -100,7 +101,7 @@
            `@media (max-width: 600px)` is the sole switch, so there is
            no JS viewport detection and nothing to get out of sync with
            SSR (this app has none — ssr = false, +layout.ts). -->
-      <div class="grid-wrap">
+      <div class="grid-wrap" use:repairAria>
         <Grid data={filtered} {columns} select init={initGrid} />
       </div>
     </FilterTheme>

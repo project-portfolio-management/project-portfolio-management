@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { ROUTES, stubPlansApi } from "./fixtures";
 
 // T-28k (repo tasks.md EV-1): a responsive audit at a phone viewport
 // (390x844, set via the "mobile" Playwright project in
@@ -28,125 +29,15 @@ import { test, expect, type Page } from "@playwright/test";
 // this suite also audits their real, populated, SVAR-widget-bearing
 // happy-path layout, not just an error banner.
 
-const PID = "11111111-1111-4111-8111-111111111111";
-
-const WORK_ITEM = {
-  kind: "Project",
-  name: "Website replatform",
-  alternate_names: [],
-  code: "WEB-42",
-  status: "Active",
-  goals: [],
-  keywords: ["platform"],
-  tags: [],
-  identifiers: [],
-  relationships: [],
-  same_as: [],
-  in_language: ["en"],
-};
-
-/** Stub `/api/plans*` (mirrors `smoke.spec.ts`) so `/plans` and
- *  `/plans/{pid}*` render their real, populated layout rather than an
- *  error banner — the only routes whose SVAR grid/Gantt this suite
- *  needs to see in its non-empty, real state. */
-async function stubPlansApi(page: Page) {
-  await page.route("**/api/plans**", async (route) => {
-    const req = route.request();
-    const url = new URL(req.url());
-    const method = req.method();
-    const path = url.pathname.replace(/^\/api\/proxy/, "");
-
-    if (path === "/api/plans" && method === "GET") {
-      return route.fulfill({ json: [{ pid: PID, name: WORK_ITEM.name }] });
-    }
-    if (path.endsWith("/check-duplicates")) {
-      return route.fulfill({ json: [] });
-    }
-    if (path === `/api/plans/${PID}` && method === "GET") {
-      return route.fulfill({ json: WORK_ITEM });
-    }
-    if (path === `/api/plans/${PID}/schedule` && method === "GET") {
-      return route.fulfill({ json: { items: [], edges: [] } });
-    }
-    if (path === "/api/me/tasks" && method === "GET") {
-      const empty = { overdue: [], today: [], this_week: [], later: [], undated: [] };
-      return route.fulfill({
-        json: {
-          tz: "UTC",
-          as_of: "2026-10-02T00:00:00Z",
-          today: "2026-10-02",
-          buckets: empty,
-          counts: { overdue: 0, today: 0, this_week: 0, later: 0, undated: 0 },
-          total: 0,
-          omitted_unreadable: 0,
-          truncated: false,
-          reason: null,
-        },
-      });
-    }
-    return route.fulfill({ status: 404, json: { error: "unhandled in stub" } });
-  });
-}
-
-/** Every real route, from the file tree — static routes as literal
- *  paths, `[pid]` routes filled with the fixture `PID` above. */
-const ROUTES = [
-  "/",
-  "/auditor",
-  "/automations",
-  "/board",
-  "/calendar",
-  "/capacity",
-  "/cost-risk",
-  "/compliance",
-  "/dashboard",
-  "/engineering",
-  "/executive",
-  "/financials",
-  "/gantt",
-  "/ideas",
-  "/kpis",
-  "/lifecycle",
-  "/me",
-  "/milestones",
-  "/objectives",
-  "/okrs",
-  "/onboarding",
-  "/plans",
-  `/plans/${PID}`,
-  `/plans/${PID}/board`,
-  `/plans/${PID}/edit`,
-  `/plans/${PID}/flow`,
-  `/plans/${PID}/governance`,
-  `/plans/${PID}/schedule`,
-  `/plans/${PID}/schedule-health`,
-  `/plans/${PID}/leveling`,
-  `/plans/${PID}/schedule-risk`,
-  `/plans/${PID}/cost-risk`,
-  `/plans/${PID}/joint-risk`,
-  "/plans/merge",
-  "/plans/new",
-  "/prioritisation",
-  "/proposals",
-  "/regulator",
-  "/reports",
-  "/resources",
-  "/reviews",
-  "/risk",
-  "/scenarios",
-  "/security",
-  "/signin",
-  "/technology",
-  "/verify",
-];
-
 test.describe("phone-viewport responsive audit (T-28k)", () => {
   test.beforeEach(async ({ page }) => {
     await stubPlansApi(page);
   });
 
   for (const route of ROUTES) {
-    test(`${route} has no horizontal scroll and shows its heading`, async ({ page }) => {
+    test(`${route} has no horizontal scroll and shows its heading`, async ({
+      page,
+    }) => {
       await page.goto(route, { waitUntil: "networkidle" });
 
       const overflow = await page.evaluate(() => {

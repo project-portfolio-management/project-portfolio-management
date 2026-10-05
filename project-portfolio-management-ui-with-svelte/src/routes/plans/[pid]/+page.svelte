@@ -5,6 +5,8 @@
   check-duplicates (kind does not gate matching).
 -->
 <script lang="ts">
+  import { display } from "#lib/preferences.svelte.js";
+  import { effectiveSimple, splitPlanLinks } from "#lib/preferences.js";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -25,6 +27,29 @@
   // RM-7: the modules this plan exposes; null = unknown ⇒ show every link.
   let modules = $state<string[] | null>(null);
   const links = $derived(visiblePlanLinks(modules));
+  // Simple view keeps governance, board and schedule in front and the rest behind
+  // "More tools" — prominence, not capability: the same links, one step away.
+  const simple = $derived(effectiveSimple(display.prefs, page.data?.view));
+  const split = $derived(splitPlanLinks(links, simple));
+  const front = $derived(split.front);
+  const more = $derived(split.more);
+  const LINK_LABELS: Record<string, string> = {
+    flow: "Flow",
+    "critical-path": "Critical path",
+    "earned-value": "Earned value",
+    raci: "RACI",
+    calendar: "Calendar",
+    "schedule-health": "Schedule health",
+    leveling: "Leveling",
+    "schedule-risk": "Schedule risk",
+    "cost-risk": "Cost risk",
+    "joint-risk": "Cost and schedule risk",
+  };
+  const linkLabel = (k: string): string =>
+    k === "governance" ? t("ppm.common.governance")
+    : k === "board" ? t("ppm.common.board")
+    : k === "schedule" ? t("ppm.common.schedule")
+    : (LINK_LABELS[k] ?? k);
 
   onMount(async () => {
     try {
@@ -69,44 +94,16 @@
 {:else if record}
   <h1>{record.name}</h1>
   <p class="small">
-    {#if links.includes("governance")}
-      <a class="button small" href={localeHref(`/plans/${pid}/governance`)}>{t("ppm.common.governance")}</a>
-    {/if}
-    {#if links.includes("board")}
-      <a class="button small" href={localeHref(`/plans/${pid}/board`)}>{t("ppm.common.board")}</a>
-    {/if}
-    {#if links.includes("schedule")}
-      <a class="button small" href={localeHref(`/plans/${pid}/schedule`)}>{t("ppm.common.schedule")}</a>
-    {/if}
-    {#if links.includes("flow")}
-      <a class="button small" href={localeHref(`/plans/${pid}/flow`)}>Flow</a>
-    {/if}
-    {#if links.includes("critical-path")}
-      <a class="button small" href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a>
-    {/if}
-    {#if links.includes("earned-value")}
-      <a class="button small" href={localeHref(`/plans/${pid}/earned-value`)}>Earned value</a>
-    {/if}
-    {#if links.includes("raci")}
-      <a class="button small" href={localeHref(`/plans/${pid}/raci`)}>RACI</a>
-    {/if}
-    {#if links.includes("calendar")}
-      <a class="button small" href={localeHref(`/plans/${pid}/calendar`)}>Calendar</a>
-    {/if}
-    {#if links.includes("schedule-health")}
-      <a class="button small" href={localeHref(`/plans/${pid}/schedule-health`)}>Schedule health</a>
-    {/if}
-    {#if links.includes("leveling")}
-      <a class="button small" href={localeHref(`/plans/${pid}/leveling`)}>Leveling</a>
-    {/if}
-    {#if links.includes("schedule-risk")}
-      <a class="button small" href={localeHref(`/plans/${pid}/schedule-risk`)}>Schedule risk</a>
-    {/if}
-    {#if links.includes("cost-risk")}
-      <a class="button small" href={localeHref(`/plans/${pid}/cost-risk`)}>Cost risk</a>
-    {/if}
-    {#if links.includes("joint-risk")}
-      <a class="button small" href={localeHref(`/plans/${pid}/joint-risk`)}>Cost and schedule risk</a>
+    {#each front as k (k)}
+      <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
+    {/each}
+    {#if more.length > 0}
+      <details class="more-tools">
+        <summary>More tools</summary>
+        {#each more as k (k)}
+          <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
+        {/each}
+      </details>
     {/if}
   </p>
   <div class="surface stack">

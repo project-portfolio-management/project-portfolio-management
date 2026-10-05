@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — display preferences and an accessibility audit (LT-12)
+
+`/display`: **simple view** (advanced destinations behind "More"; nothing removed; on by default for the worker role, an opt-in otherwise) and a **dyslexia-friendly font** (OpenDyslexic). Kept on the device and, signed in, on the account. Reduced motion is honoured everywhere. An axe audit now covers every route, and fixed: muted and danger text contrast, and the SVAR grid's invalid `aria-rowindex`.
+
 ### Added — forms for the Monte Carlo inputs
 
 On the governance page: a risk's simulation inputs (one probability, the task it delays, the cost it adds) and a budget line's low / high range. On the critical-path page: a task's optimistic / pessimistic range. Mistakes are refused in words before anything is sent. Fixed: the Escalate button's text contrast, and two input-handling bugs found by the browser tests.

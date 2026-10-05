@@ -100,13 +100,14 @@ pub mod observability;
 /// The OKR engine: key-result progress, objective scores, and the
 /// alignment-weighted plan score — all derived on read.
 pub mod okr;
-pub mod openapi;
-pub mod openapi_more;
-pub mod pdf;
 /// The pure, explainable Smart Score behind data-driven prioritisation.
 /// Pure rules for the sequential project phase — Initiating through
 /// Closing: one-step advancement, explicitly-reasoned regression, and
 /// per-phase durations from the transition log.
+pub mod onboarding;
+pub mod openapi;
+pub mod openapi_more;
+pub mod pdf;
 pub mod phase;
 pub mod plan_access;
 pub mod plan_links;

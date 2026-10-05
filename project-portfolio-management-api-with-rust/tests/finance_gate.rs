@@ -155,6 +155,32 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
         let commit = format!("/api/plans/{p}/sandbox/commit");
         let etag = with!(request.post(&url), writer).json(&edit).await.header("etag").to_str().unwrap().to_string();
         assert_eq!(with!(request.post(&commit), writer).json(&hard).add_header(axum::http::header::IF_MATCH, etag.parse::<axum::http::HeaderValue>().unwrap()).await.status_code(), 403, "a commit is gated like a preview");
+
+        // Onboarding: a plan's own checklist is open to a writer; anything about a person
+        // (joiners and leavers, access, handover) needs the permission to manage people.
+        let person = "person:00000000-0000-4000-8000-0000000000f2";
+        let cases = format!("/api/plans/{p}/onboarding/cases");
+        let w_plan: Value = with!(request.post(&cases), writer).json(&json!({ "kind": "plan_closeout", "effective_date": "2026-10-12" })).await.json();
+        assert_eq!(w_plan["masked"], true);
+        let leave = json!({ "kind": "person_leave", "subject_ref": person, "effective_date": "2026-10-12" });
+        assert_eq!(with!(request.post(&cases), writer).json(&leave).await.status_code(), 403);
+        let made: Value = with!(request.post(&cases), admin).json(&leave).await.json();
+        let case = made["pid"].as_str().unwrap().to_string();
+        assert_eq!(made["subject_ref"], person);
+        assert_eq!(with!(request.get(&format!("/api/onboarding/cases/{case}")), writer).await.status_code(), 404, "a person's case does not exist for a writer");
+        assert_eq!(with!(request.get(&format!("/api/onboarding/cases/{case}")), admin).await.status_code(), 200);
+        let listed: Value = with!(request.get(&cases), writer).await.json();
+        assert_eq!(listed["hidden_people_cases"], 1);
+        assert_eq!(listed["cases"].as_array().unwrap().len(), 1, "only the plan's own checklist");
+        let access = format!("/api/plans/{p}/access-records");
+        let grant = json!({ "person_ref": person, "access": "repo write", "action": "granted" });
+        assert_eq!(with!(request.post(&access), writer).json(&grant).await.status_code(), 403);
+        assert_eq!(with!(request.get(&access), writer).await.status_code(), 403);
+        with!(request.post(&access), admin).json(&grant).await.assert_status_ok();
+        let hand = json!({ "from_person": person, "to_person": null });
+        assert_eq!(with!(request.post(&format!("/api/plans/{p}/handover/preview")), writer).json(&hand).await.status_code(), 403);
+        with!(request.post(&format!("/api/plans/{p}/handover/preview")), admin).json(&hand).await.assert_status_ok();
+        assert_eq!(with!(request.get(&format!("/api/plans/{p}/closeout")), writer).await.status_code(), 200, "readiness names no one");
     })
     .await;
 }

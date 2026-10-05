@@ -24,6 +24,8 @@ export const PLAN_LINKS = [
   { key: "joint-risk", module: "financials" },
   { key: "work", module: "tasks" },
   { key: "what-if", module: "tasks" },
+  { key: "onboarding", module: "tasks" },
+  { key: "handover", module: "tasks" },
   { key: "costs", module: "financials" },
 ] as const;
 

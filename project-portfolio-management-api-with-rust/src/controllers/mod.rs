@@ -32,6 +32,7 @@ pub mod notification_prefs;
 /// The OKR engine: key results, check-ins, and the derived objective
 /// and alignment-weighted plan scores.
 pub mod okr;
+pub mod onboarding;
 pub mod oversight;
 /// The sequential project phase: one-step advancement, explicitly
 /// reasoned regression, and per-phase durations.
@@ -221,6 +222,7 @@ pub mod custom_fields;
 pub mod earned_value;
 pub mod feeds;
 pub mod guests;
+pub mod handover;
 pub mod includes;
 pub mod kpis;
 pub mod leveling;

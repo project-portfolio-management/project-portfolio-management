@@ -1,5 +1,6 @@
 //! `SeaORM` Entities.
 
+pub mod access_records;
 pub mod adoption_snapshots;
 pub mod allocations;
 pub mod announcements;
@@ -53,6 +54,9 @@ pub mod notification_sinks;
 pub mod notifications;
 pub mod objective_links;
 pub mod objectives;
+pub mod onboarding_cases;
+pub mod onboarding_items;
+pub mod onboarding_templates;
 pub mod person_availabilities;
 pub mod phase_transitions;
 pub mod plan_access_settings;

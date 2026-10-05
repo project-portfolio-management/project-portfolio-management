@@ -2716,3 +2716,178 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
+    use project_portfolio_management_service::models::_entities::audit_logs;
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        use axum::http::StatusCode as S;
+        let ana = "person:00000000-0000-4000-8000-0000000000a1";
+        let ben = "person:00000000-0000-4000-8000-0000000000a2";
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let audits = |action: &'static str| {
+            let db = ctx.db.clone();
+            async move { audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&db).await.unwrap() }
+        };
+
+        // ── templates: built-in, then custom, then back ──
+        let t: Value = request.get("/api/onboarding/templates").await.json();
+        assert_eq!(t["templates"].as_array().unwrap().len(), 4);
+        assert!(t["templates"].as_array().unwrap().iter().all(|x| x["custom"] == false));
+        request.put("/api/onboarding/templates/plan_closeout").json(&json!({ "items": [] })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.put("/api/onboarding/templates/hire").json(&json!({ "items": [{ "title": "x", "offset_days": 0 }] })).await.assert_status(S::NOT_FOUND);
+        request.put("/api/onboarding/templates/plan_closeout").json(&json!({ "items": [{ "title": "Switch off the lights", "offset_days": 1 }] })).await.assert_status_ok();
+        let t: Value = request.get("/api/onboarding/templates").await.json();
+        let closeout_t = t["templates"].as_array().unwrap().iter().find(|x| x["kind"] == "plan_closeout").unwrap().clone();
+        assert_eq!((closeout_t["custom"].as_bool(), closeout_t["items"].as_array().unwrap().len()), (Some(true), 1));
+        request.delete("/api/onboarding/templates/plan_closeout").await.assert_status_ok();
+
+        // ── a plan intake checklist: dates from the effective date, one open at a time ──
+        let case_url = format!("/api/plans/{p}/onboarding/cases");
+        request.post(&case_url).json(&json!({ "kind": "nonsense", "effective_date": "2026-10-12" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post(&case_url).json(&json!({ "kind": "plan_intake", "subject_ref": ana, "effective_date": "2026-10-12" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post(&case_url).json(&json!({ "kind": "person_join", "subject_ref": "ana", "effective_date": "2026-10-12" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let c: Value = request.post(&case_url).json(&json!({ "kind": "plan_intake", "effective_date": "2026-10-12" })).await.json();
+        let cp = c["pid"].as_str().unwrap().to_string();
+        let items = c["items"].as_array().unwrap().clone();
+        assert_eq!((items.len(), items[0]["due_date"].as_str(), items[1]["due_date"].as_str()), (6, Some("2026-10-12"), Some("2026-10-14")));
+        assert_eq!(c["progress"]["open"], 6);
+        request.post(&case_url).json(&json!({ "kind": "plan_intake", "effective_date": "2026-10-12" })).await.assert_status(S::CONFLICT);
+
+        // Items: done, skipped (needs a note), reopened; the case completes only when none is open.
+        let item = |n: usize| items[n]["pid"].as_str().unwrap().to_string();
+        let put_item = |n: usize, body: Value| {
+            let (request, url) = (&request, format!("/api/onboarding/cases/{cp}/items/{}", items[n]["pid"].as_str().unwrap()));
+            async move { request.put(&url).json(&body).await }
+        };
+        put_item(0, json!({ "resolution": "done", "owner_ref": ana })).await.assert_status_ok();
+        put_item(1, json!({ "resolution": "skipped" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_item(1, json!({ "resolution": "skipped", "note": "not needed for this plan" })).await.assert_status_ok();
+        put_item(2, json!({ "resolution": "maybe" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_item(2, json!({ "owner_ref": "ana" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let _ = item(0);
+        let r = request.post(&format!("/api/onboarding/cases/{cp}/complete")).await;
+        r.assert_status(S::UNPROCESSABLE_ENTITY);
+        assert!(r.text().contains("4 item(s) are still open"), "{}", r.text());
+        for n in 2..6 { put_item(n, json!({ "resolution": "done" })).await.assert_status_ok(); }
+        put_item(5, json!({ "resolution": "open" })).await.assert_status_ok();
+        request.post(&format!("/api/onboarding/cases/{cp}/complete")).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        put_item(5, json!({ "resolution": "done" })).await.assert_status_ok();
+        let done: Value = request.post(&format!("/api/onboarding/cases/{cp}/complete")).await.json();
+        assert_eq!((done["status"].as_str(), done["progress"]["done"].as_i64(), done["progress"]["skipped"].as_i64()), (Some("completed"), Some(5), Some(1)));
+        put_item(0, json!({ "resolution": "open" })).await.assert_status(S::CONFLICT);
+        assert_eq!(audits("onboarding_case_completed").await, 1);
+        // A cancelled checklist needs a reason.
+        let c2: Value = request.post(&case_url).json(&json!({ "kind": "person_join", "subject_ref": ben, "effective_date": "2026-10-12" })).await.json();
+        let c2 = c2["pid"].as_str().unwrap().to_string();
+        request.post(&format!("/api/onboarding/cases/{c2}/cancel")).json(&json!({ "reason": " " })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post(&format!("/api/onboarding/cases/{c2}/cancel")).json(&json!({ "reason": "role changed" })).await.assert_status_ok();
+        let listed: Value = request.get(&format!("{case_url}?status=open")).await.json();
+        assert!(listed["cases"].as_array().unwrap().is_empty());
+
+        // ── access: append-only, outstanding is what was granted and not revoked ──
+        let access = |who: &str, what: &str, action: &str| {
+            let (request, url, body) = (&request, format!("/api/plans/{p}/access-records"), json!({ "person_ref": who, "access": what, "action": action, "recorded_on": "2026-10-06" }));
+            async move { request.post(&url).json(&body).await }
+        };
+        access(ana, "repo write", "granted").await.assert_status_ok();
+        access(ana, "wiki editor", "granted").await.assert_status_ok();
+        access(ana, "repo write", "revoked").await.assert_status_ok();
+        access(ana, "x", "lent").await.assert_status(S::UNPROCESSABLE_ENTITY);
+        access("ana", "x", "granted").await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let a: Value = request.get(&format!("/api/plans/{p}/access-records")).await.json();
+        let out = a["outstanding"].as_array().unwrap();
+        assert_eq!((out.len(), out[0]["access"].as_str()), (1, Some("wiki editor")));
+        assert_eq!(a["records"].as_array().unwrap().len(), 3, "nothing was overwritten");
+
+        // ── handover: ana holds a task, a done task, a booking, a RACI role and a risk ──
+        let mk = |title: &'static str| {
+            let (request, url) = (&request, format!("/api/plans/{p}/tasks"));
+            async move {
+                let t: Value = request.post(&url).json(&json!({ "title": title, "assignee_ref": ana })).await.json();
+                t["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let open_task = mk("Write the spec").await;
+        let done_task = mk("Old chore").await;
+        request.patch(&format!("/api/plans/{p}/tasks/{done_task}")).json(&json!({ "status": "done" })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/allocations")).json(&json!({ "person_ref": ana, "percent": 50, "role": "Engineer" })).await.assert_status_ok();
+        request.put(&format!("/api/plans/{p}/tasks/{open_task}/raci")).json(&json!({ "assignments": [{ "person_ref": ana, "roles": "R" }] })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/risks")).json(&json!({ "title": "Key person", "probability": 3, "impact": 3, "owner_ref": ana })).await.assert_status_ok();
+
+        let closeout: Value = request.get(&format!("/api/plans/{p}/closeout")).await.json();
+        assert_eq!(closeout["ready"], false);
+        let c = &closeout["counts"];
+        assert_eq!((c["open_tasks"].as_i64(), c["open_risks"].as_i64(), c["active_allocations"].as_i64(), c["outstanding_access"].as_i64()), (Some(1), Some(1), Some(1), Some(1)));
+
+        let hv = |to: Option<&str>| {
+            let (request, url) = (&request, format!("/api/plans/{p}/handover/preview"));
+            let body = json!({ "from_person": ana, "to_person": to, "reason": "leaving" });
+            async move { request.post(&url).json(&body).await }
+        };
+        hv(Some(ana)).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        let before_audits = audits("task_handed_over").await;
+        let pv1 = hv(Some(ben)).await;
+        let etag = pv1.header("etag").to_str().unwrap().to_string();
+        let pv1: Value = pv1.json();
+        assert_eq!(pv1, hv(Some(ben)).await.json::<Value>(), "the same input gives the same preview");
+        assert_eq!(pv1["counts"], json!({ "allocation": 1, "raci": 1, "risk": 1, "task": 1 }), "the finished task is not handed over: {pv1}");
+        assert_eq!(audits("task_handed_over").await, before_audits, "a preview writes nothing");
+        let commit = |to: Option<&str>, etag: Option<&str>| {
+            let (request, url) = (&request, format!("/api/plans/{p}/handover/commit"));
+            let body = json!({ "from_person": ana, "to_person": to, "reason": "leaving" });
+            let etag = etag.map(str::to_string);
+            async move {
+                let mut rb = request.post(&url).json(&body);
+                if let Some(e) = etag { rb = rb.add_header(axum::http::header::IF_MATCH, e.parse::<axum::http::HeaderValue>().unwrap()); }
+                rb.await
+            }
+        };
+        assert_eq!(commit(Some(ben), None).await.status_code(), 428);
+        assert_eq!(commit(Some(ben), Some("W/\"0000000000000000\"")).await.status_code(), 409);
+        // Someone else's change in the meantime makes the preview stale.
+        let extra = mk("Late arrival").await;
+        assert_eq!(commit(Some(ben), Some(&etag)).await.status_code(), 409);
+        let task_of = |t: &str| {
+            let (request, url) = (&request, format!("/api/plans/{p}/tasks"));
+            let t = t.to_string();
+            async move {
+                let list: Value = request.get(&url).await.json();
+                let rows = list.as_array().cloned().or_else(|| list["tasks"].as_array().cloned()).unwrap_or_default();
+                rows.iter().find(|r| r["pid"] == t.as_str()).map_or("missing".to_string(), |r| r["assignee_ref"].to_string())
+            }
+        };
+        assert!(task_of(&open_task).await.contains("a1"), "nothing moved");
+        let fresh = hv(Some(ben)).await;
+        let etag = fresh.header("etag").to_str().unwrap().to_string();
+        let done: Value = commit(Some(ben), Some(&etag)).await.json();
+        assert_eq!(done["audit_entries"], 5, "{done}");
+        assert!(task_of(&open_task).await.contains("a2") && task_of(&extra).await.contains("a2"));
+        assert!(task_of(&done_task).await.contains("a1"), "a finished task stays with who did it");
+        assert_eq!(audits("task_handed_over").await, before_audits + 2);
+        assert_eq!(audits("risk_handed_over").await, 1);
+        let again: Value = hv(Some(ben)).await.json();
+        assert!(again["holdings"].as_array().unwrap().is_empty(), "ana holds nothing now");
+
+        // Releasing (no new person) unassigns and ends the bookings.
+        let rel = hv(None).await;
+        let etag = rel.header("etag").to_str().unwrap().to_string();
+        assert_eq!(rel.json::<Value>()["action"], "release");
+        let _ = etag; // ana holds nothing, so there is nothing to release
+        let ben_holds = request.post(&format!("/api/plans/{p}/handover/preview")).json(&json!({ "from_person": ben, "to_person": null })).await;
+        let etag = ben_holds.header("etag").to_str().unwrap().to_string();
+        let released: Value = request.post(&format!("/api/plans/{p}/handover/commit")).json(&json!({ "from_person": ben, "to_person": null }))
+            .add_header(axum::http::header::IF_MATCH, etag.parse::<axum::http::HeaderValue>().unwrap()).await.json();
+        assert_eq!(released["audit_entries"], 5);
+        let closeout: Value = request.get(&format!("/api/plans/{p}/closeout")).await.json();
+        assert_eq!(closeout["counts"]["active_allocations"], 0);
+        assert_eq!(closeout["counts"]["open_risks"], 1, "the risk is unowned, still open");
+        assert_eq!(audits("allocation_released").await, 1);
+    })
+    .await;
+}

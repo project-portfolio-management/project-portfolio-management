@@ -945,6 +945,76 @@ export interface SandboxCommitted {
   finish: { before: string | null; after: string | null };
 }
 
+export type OnboardingKind = "person_join" | "person_leave" | "plan_intake" | "plan_closeout";
+
+export interface OnboardingProgress {
+  total: number;
+  done: number;
+  skipped: number;
+  open: number;
+  overdue: number;
+  resolved_bp: number | null;
+}
+
+export interface OnboardingItem {
+  pid: string;
+  position: number;
+  title: string;
+  owner_ref: string | null;
+  due_date: string | null;
+  resolution: "done" | "skipped" | null;
+  note: string | null;
+  overdue: boolean;
+}
+
+export interface OnboardingCase {
+  pid: string;
+  kind: OnboardingKind;
+  plan_pid: string;
+  title: string;
+  subject_ref: string | null;
+  effective_date: string;
+  status: "open" | "completed" | "cancelled";
+  closed_reason: string | null;
+  progress: OnboardingProgress;
+  items: OnboardingItem[];
+  masked: boolean;
+}
+
+export interface OnboardingCaseSummary {
+  pid: string;
+  kind: OnboardingKind;
+  title: string;
+  status: "open" | "completed" | "cancelled";
+  subject_ref: string | null;
+  effective_date: string;
+  progress: OnboardingProgress;
+}
+
+export interface Closeout {
+  plan_pid: string;
+  ready: boolean;
+  counts: { open_tasks: number; open_risks: number; active_allocations: number; outstanding_access: number; open_cases: number };
+  findings: Array<{ code: string; count: number; text: string }>;
+}
+
+export interface AccessRecords {
+  outstanding: Array<{ person_ref: string; access: string; granted_on: string }>;
+  records: Array<{ pid: string; person_ref: string; access: string; action: "granted" | "revoked"; recorded_on: string; note: string | null }>;
+  note: string;
+}
+
+export interface HandoverPreview {
+  plan_pid: string;
+  from_person: string;
+  to_person: string | null;
+  handover_etag: string;
+  action: "reassign" | "release";
+  holdings: Array<{ kind: "task" | "allocation" | "raci" | "risk"; pid: string; label: string }>;
+  counts: Record<string, number>;
+  note: string;
+}
+
 /** `GET /api/executive/health` response. */
 export interface ExecutiveHealth {
   as_of: string;
@@ -2274,6 +2344,39 @@ export class PpmClient {
       body: { edits, reason: reason || undefined },
       headers: { "If-Match": planEtag },
     });
+  }
+  onboardingCases(pid: string, status?: string): Promise<{ cases: OnboardingCaseSummary[]; hidden_people_cases: number; masked: boolean }> {
+    return this.http.get(`/api/plans/${pid}/onboarding/cases${status ? `?status=${status}` : ""}`);
+  }
+  startOnboarding(pid: string, body: { kind: OnboardingKind; subject_ref?: string; effective_date: string; title?: string }): Promise<OnboardingCase> {
+    return this.http.post(`/api/plans/${pid}/onboarding/cases`, { body });
+  }
+  onboardingCase(casePid: string): Promise<OnboardingCase> {
+    return this.http.get(`/api/onboarding/cases/${casePid}`);
+  }
+  updateOnboardingItem(casePid: string, itemPid: string, body: { owner_ref?: string; due_date?: string; resolution?: "done" | "skipped" | "open"; note?: string }): Promise<OnboardingCase> {
+    return this.http.put(`/api/onboarding/cases/${casePid}/items/${itemPid}`, { body });
+  }
+  completeOnboarding(casePid: string): Promise<OnboardingCase> {
+    return this.http.post(`/api/onboarding/cases/${casePid}/complete`, { body: {} });
+  }
+  cancelOnboarding(casePid: string, reason: string): Promise<OnboardingCase> {
+    return this.http.post(`/api/onboarding/cases/${casePid}/cancel`, { body: { reason } });
+  }
+  closeout(pid: string): Promise<Closeout> {
+    return this.http.get(`/api/plans/${pid}/closeout`);
+  }
+  accessRecords(pid: string): Promise<AccessRecords> {
+    return this.http.get(`/api/plans/${pid}/access-records`);
+  }
+  recordAccess(pid: string, body: { person_ref: string; access: string; action: "granted" | "revoked"; note?: string; case_pid?: string }): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/access-records`, { body });
+  }
+  handoverPreview(pid: string, body: { from_person: string; to_person: string | null }): Promise<HandoverPreview> {
+    return this.http.post(`/api/plans/${pid}/handover/preview`, { body });
+  }
+  handoverCommit(pid: string, body: { from_person: string; to_person: string | null; reason?: string }, etag: string): Promise<{ committed: boolean; audit_entries: number }> {
+    return this.http.post(`/api/plans/${pid}/handover/commit`, { body, headers: { "If-Match": etag } });
   }
   planCpm(pid: string, near?: number): Promise<Cpm> {
     const q = near === undefined ? "" : `?near=${near}`;

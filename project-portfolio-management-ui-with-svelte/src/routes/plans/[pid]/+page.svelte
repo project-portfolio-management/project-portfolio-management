@@ -46,6 +46,8 @@
     "joint-risk": "Cost and schedule risk",
     work: "Work and assignments",
     "what-if": "What-if",
+    onboarding: "Onboarding and offboarding",
+    handover: "Handover",
     costs: "Costs",
   };
   const linkLabel = (k: string): string =>

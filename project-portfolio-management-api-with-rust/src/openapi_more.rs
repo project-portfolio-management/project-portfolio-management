@@ -16,6 +16,12 @@ pub fn uuid_param(name: &str) -> Value {
         "schema": { "type": "string", "format": "uuid" } })
 }
 
+/// A required path parameter named `name`, a plain string.
+#[must_use]
+pub fn str_param(name: &str) -> Value {
+    json!({ "name": name, "in": "path", "required": true, "schema": { "type": "string" } })
+}
+
 /// A query parameter.
 #[must_use]
 pub fn query(name: &str, required: bool, description: &str) -> Value {
@@ -112,6 +118,7 @@ pub fn paths() -> Value {
     merge(&mut all, cost_rate_paths());
     merge(&mut all, announcement_paths());
     merge(&mut all, sandbox_paths());
+    merge(&mut all, onboarding_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1228,6 +1235,72 @@ fn sandbox_paths() -> Value {
                 &format!("Applies the same edits for real, in one transaction, with one audit entry per changed item (a changed task, an added link, a removed link). Requires If-Match: the plan_etag from the preview (428 if missing). If the plan changed since the preview the answer is 409 stale_preview and nothing is written: it is never merged. Commits to one plan are serialized. reason (500 characters) is audited with each item. The leveling apply (SC-6) goes through this. {edits}"),
                 vec![uuid_param("pid")],
                 &[("200", "committed, changes, audit_entries, finish"), ("403", "A hard constraint without permission"), ("404", "Unknown plan"), ("409", "The plan changed since the preview"), ("422", "Invalid edits"), ("428", "If-Match missing")])
+        }
+    })
+}
+
+/// Onboarding and offboarding.
+fn onboarding_paths() -> Value {
+    let people = "About a person, so it needs the permission to manage people (403 otherwise).";
+    json!({
+        "/api/onboarding/templates": {
+            "get": op("onboarding", "The checklist for each kind of onboarding or offboarding",
+                "Four kinds: person_join, person_leave, plan_intake, plan_closeout. Each has a built-in checklist (items with an offset in days from the effective date, negative being before it); a custom template replaces it (custom=true).",
+                vec![], &[("200", "templates")])
+        },
+        "/api/onboarding/templates/{kind}": {
+            "put": op("onboarding", "Replace a kind's checklist", &format!("1 to 50 items, each a title (200) and offset_days (-365..365). {people} Audited."),
+                vec![str_param("kind")], &[("200", "the template"), ("403", "Not permitted"), ("404", "Unknown kind"), ("422", "Invalid items")]),
+            "delete": op("onboarding", "Go back to the built-in checklist", people,
+                vec![str_param("kind")], &[("200", "reverted"), ("403", "Not permitted"), ("404", "Unknown kind")])
+        },
+        "/api/plans/{pid}/onboarding/cases": {
+            "post": op("onboarding", "Start an onboarding or offboarding",
+                "kind, effective_date, optional title; a person_join or person_leave also needs subject_ref (a person URN) and the permission to manage people; a plan_intake or plan_closeout has no subject. The checklist's items are created with due dates from the effective date. One open case per kind, plan and person (409). Audited.",
+                vec![uuid_param("pid")], &[("200", "the case with its items and progress"), ("403", "A person case without permission"), ("404", "Unknown plan"), ("409", "An open one exists"), ("422", "Invalid")]),
+            "get": op("onboarding", "The plan's checklists with their progress",
+                "Cases about a person are listed (and counted in hidden_people_cases) only for a caller who may manage people. status filters open, completed or cancelled.",
+                vec![uuid_param("pid"), query("status", false, "open, completed or cancelled")], &[("200", "cases, hidden_people_cases, masked"), ("404", "Unknown plan"), ("422", "Bad status")])
+        },
+        "/api/onboarding/cases/{pid}": {
+            "get": op("onboarding", "One checklist with its items", "Items carry owner, due date, resolution, note and whether they are overdue today. A case about a person is 404 to a caller who may not manage people.",
+                vec![uuid_param("pid")], &[("200", "the case"), ("404", "Unknown, or hidden")])
+        },
+        "/api/onboarding/cases/{pid}/items/{item}": {
+            "put": op("onboarding", "Assign, date, resolve or reopen an item",
+                "owner_ref (a person URN, or empty to clear), due_date, note, resolution done | skipped | open. Skipping needs a note saying why. A closed checklist is 409. Audited with old and new.",
+                vec![uuid_param("pid"), uuid_param("item")], &[("200", "the case"), ("404", "Unknown"), ("409", "Closed"), ("422", "Invalid")])
+        },
+        "/api/onboarding/cases/{pid}/complete": {
+            "post": op("onboarding", "Complete a checklist", "Only when no item is open (422 names the open ones). Audited.",
+                vec![uuid_param("pid")], &[("200", "the case"), ("404", "Unknown"), ("409", "Already closed"), ("422", "Items still open")])
+        },
+        "/api/onboarding/cases/{pid}/cancel": {
+            "post": op("onboarding", "Abandon a checklist", "A reason is required (500). Audited.",
+                vec![uuid_param("pid")], &[("200", "the case"), ("404", "Unknown"), ("409", "Already closed"), ("422", "No reason")])
+        },
+        "/api/plans/{pid}/access-records": {
+            "post": op("onboarding", "Record access granted or revoked",
+                &format!("Append-only: person_ref, access (in words), action granted | revoked, optional recorded_on (default today), note, case_pid. This service cannot change an identity provider's accounts: the record says someone did it. {people} Audited."),
+                vec![uuid_param("pid")], &[("200", "pid"), ("403", "Not permitted"), ("404", "Unknown plan"), ("422", "Invalid")]),
+            "get": op("onboarding", "The access record and what is still outstanding",
+                &format!("outstanding is each (person, access) whose latest record is a grant. {people}"),
+                vec![uuid_param("pid")], &[("200", "outstanding and records"), ("403", "Not permitted"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/closeout": {
+            "get": op("onboarding", "What stands between the plan and being closed",
+                "Counts of unfinished tasks, open risks, live bookings, access grants not revoked and open checklists; ready is true only when all are zero. Derived on read; no one is named.",
+                vec![uuid_param("pid")], &[("200", "ready, counts, findings"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/handover/preview": {
+            "post": op("onboarding", "What would move if a person's work were handed over",
+                &format!("from_person, and to_person (null releases the work). Lists, in a repeatable order, the unfinished tasks, live bookings, RACI roles and open risks the person holds on the plan. Writes nothing. The new person's capacity is not checked. handover_etag (also the ETag header) identifies what the person holds now. {people}"),
+                vec![uuid_param("pid")], &[("200", "holdings, counts, handover_etag"), ("403", "Not permitted"), ("404", "Unknown plan"), ("422", "Invalid people")])
+        },
+        "/api/plans/{pid}/handover/commit": {
+            "post": op("onboarding", "Apply the previewed handover",
+                &format!("Needs If-Match: the preview's handover_etag (428 without). If what the person holds changed since, 409 stale_preview and nothing is written. Otherwise one transaction and one audit entry per item. {people}"),
+                vec![uuid_param("pid")], &[("200", "committed, audit_entries, holdings"), ("403", "Not permitted"), ("409", "Changed since the preview"), ("422", "Invalid"), ("428", "If-Match missing")])
         }
     })
 }

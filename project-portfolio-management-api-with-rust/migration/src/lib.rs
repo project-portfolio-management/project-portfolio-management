@@ -88,6 +88,7 @@ mod m20261005_000039_cost_risk_inputs;
 mod m20261006_000040_assignment_fields;
 mod m20261006_000041_cost_rates;
 mod m20261006_000042_announcements;
+mod m20261006_000043_onboarding;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -176,6 +177,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261006_000040_assignment_fields::Migration),
             Box::new(m20261006_000041_cost_rates::Migration),
             Box::new(m20261006_000042_announcements::Migration),
+            Box::new(m20261006_000043_onboarding::Migration),
             // inject-above (do not remove this comment)
         ]
     }

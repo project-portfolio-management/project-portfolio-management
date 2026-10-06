@@ -24,7 +24,7 @@
   import CpmTable from "#lib/components/CpmTable.svelte";
   import NetworkDiagram from "#lib/components/NetworkDiagram.svelte";
   import VarianceTable from "#lib/components/VarianceTable.svelte";
-  import { floatLabel, unscheduledReason } from "#lib/cpm-view.js";
+  import { diagramFits, floatLabel, restrictedText, unscheduledReason } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -177,6 +177,9 @@
       {cpm.critical_chains.length} critical chains{cpm.chains_truncated ? " (more not shown)" : ""}.
     {/if}
   </p>
+  {#if (cpm.restricted_edges ?? []).length > 0}
+    <p class="banner" role="note">{restrictedText(cpm.restricted_edges?.length ?? 0)}</p>
+  {/if}
   {#if cpm.calendar_conflicts.length > 0}
     <p class="banner" role="alert">
       These assignees share no working day with the plan's calendar, so the plan's calendar was used for them:
@@ -199,6 +202,9 @@
 
   {#if view === "gantt"}
     <CpmGantt nodes={cpm.nodes} baseline={ghosts} {selected} onselect={select} />
+  {:else if view === "network" && !diagramFits(cpm.nodes.length)}
+    <p class="banner" role="note">This network has {cpm.nodes.length} tasks, too many to draw usefully. The table below says the same thing.</p>
+    <CpmTable nodes={cpm.nodes} />
   {:else if view === "network"}
     <NetworkDiagram nodes={cpm.nodes} edges={cpm.edges} chains={cpm.critical_chains} {selected} onselect={select} />
   {:else}

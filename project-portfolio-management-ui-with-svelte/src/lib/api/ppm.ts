@@ -1359,6 +1359,9 @@ export interface Task {
   status_changed_at: string;
   done_at: string | null;
   blocked_days: number | null;
+  /** The parent task (a sub-task's), or null for a top-level task. */
+  parent_task_pid?: string | null;
+  is_hammock?: boolean;
 }
 
 /** One task in `GET /api/plans/{pid}/cpm` (SC-1, SC-2). Dates are `YYYY-MM-DD`. */
@@ -1392,6 +1395,10 @@ export interface CpmNode {
   contour?: Contour | null;
   constraint_date: string | null;
   deadline: string | null;
+  /** PJ-13: a task of another plan, in this plan's network because a link joins them. */
+  external?: boolean;
+  plan_pid?: string;
+  plan_name?: string;
   /** A hard constraint pins this task earlier than its predecessors allow. */
   hard_conflict: boolean;
   /** `plan`, or `plan+person` when the assignee's own calendar narrows it. */
@@ -1422,6 +1429,11 @@ export interface Cpm {
   ignored_edges: string[];
   critical_chains: string[][];
   chains_truncated: boolean;
+  /** The latest finish across the plan and what it is linked to. */
+  network_finish?: string | null;
+  /** Dependencies to a plan the caller may not read: counted, never named. */
+  restricted_edges?: { pid: string; task_pid: string; side: "predecessor" | "successor"; label: string }[];
+  external_truncated?: boolean;
   note: string;
 }
 

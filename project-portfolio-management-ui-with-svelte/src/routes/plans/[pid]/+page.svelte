@@ -48,6 +48,7 @@
     "what-if": "What-if",
     onboarding: "Onboarding and offboarding",
     handover: "Handover",
+    wbs: "Work breakdown",
     costs: "Costs",
   };
   const linkLabel = (k: string): string =>

@@ -362,3 +362,17 @@ export function standingText(r: {
       };
   }
 }
+
+/** The most tasks the network diagram draws; beyond it the table is the view. */
+export const NETWORK_DIAGRAM_LIMIT = 150;
+
+/** Whether a network is small enough to draw usefully (and without freezing the page). */
+export function diagramFits(nodeCount: number): boolean {
+  return nodeCount <= NETWORK_DIAGRAM_LIMIT;
+}
+
+/** The sentence for dependencies the reader may not see: how many, never what. */
+export function restrictedText(n: number): string {
+  if (n === 0) return "";
+  return `${n} dependenc${n === 1 ? "y" : "ies"} to a plan you cannot see ${n === 1 ? "is" : "are"} left out of these dates.`;
+}

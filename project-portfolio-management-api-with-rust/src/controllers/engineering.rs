@@ -27,12 +27,14 @@ use crate::models::audit_logs::Model as AuditModel;
 
 /// Load all live rows of one entity (soft-deleted excluded).
 macro_rules! live {
-    ($module:ident, $db:expr) => {
-        $module::Entity::find()
-            .filter($module::Column::DeletedAt.is_null())
-            .all($db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
+    ($module:ident, $db:expr, $scope:expr) => {
+        $scope.keep(
+            $module::Entity::find()
+                .filter($module::Column::DeletedAt.is_null())
+                .all($db)
+                .await
+                .map_err(|e| Error::Model(ModelError::from(e)))?,
+        )
     };
 }
 
@@ -1161,15 +1163,19 @@ struct DevopsMetricsQuery {
 async fn devops_metrics(
     axum::extract::Query(query): axum::extract::Query<DevopsMetricsQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let months = i64::from(query.months.unwrap_or(3).clamp(1, 24));
     let now = chrono::Utc::now();
     let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(93));
-    let rows = devops_events::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows = scope.keep(
+        devops_events::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
     let in_window = |at: chrono::DateTime<chrono::Utc>| at >= window_start && at <= now;
 
     let mut deploys_by_month: std::collections::BTreeMap<String, usize> =
@@ -1263,8 +1269,13 @@ async fn devops_metrics(
 /// `GET /api/devops/releases` — the release register: ingested deploy
 /// events newest first (version / environment / item), cap 200.
 #[debug_handler]
-async fn devops_releases(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
+async fn devops_releases(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let rows = devops_events::Entity::find()
@@ -1274,6 +1285,7 @@ async fn devops_releases(State(ctx): State<AppContext>, headers: HeaderMap) -> R
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows = scope.keep(rows);
     let releases: Vec<serde_json::Value> = rows
         .iter()
         .map(|row| {
@@ -1299,17 +1311,24 @@ async fn devops_releases(State(ctx): State<AppContext>, headers: HeaderMap) -> R
 /// `GET /api/engineering/blocked` — every blocked task estate-wide,
 /// oldest blockage first, with age in days (from `status_changed_at`).
 #[debug_handler]
-async fn blocked(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
+async fn blocked(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut rows: Vec<&tasks::Model> = Vec::new();
-    let all_tasks = tasks::Entity::find()
-        .filter(tasks::Column::Status.eq("blocked"))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let all_tasks = scope.keep(
+        tasks::Entity::find()
+            .filter(tasks::Column::Status.eq("blocked"))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
     for task in &all_tasks {
         rows.push(task);
     }
@@ -1341,8 +1360,13 @@ async fn blocked(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Re
 /// `moscow:<band>` tags (convention disclosed; untagged items listed
 /// separately, never guessed into a band).
 #[debug_handler]
-async fn moscow(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
+async fn moscow(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let mut bands: std::collections::BTreeMap<&str, Vec<serde_json::Value>> = rules::MOSCOW_BANDS
         .iter()
         .map(|band| (*band, Vec::new()))
@@ -1380,7 +1404,11 @@ async fn moscow(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Res
 /// which external delivery tool (the `identifiers` schemes the matcher
 /// already short-circuits on), plus the untracked list.
 #[debug_handler]
-async fn delivery_links(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+async fn delivery_links(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
     const TRACKER_SCHEMES: [&str; 6] = [
         "JiraProjectKey",
         "AsanaGid",
@@ -1389,7 +1417,8 @@ async fn delivery_links(State(ctx): State<AppContext>, headers: HeaderMap) -> Re
         "GitHubProjectId",
         "LinearId",
     ];
-    let items = live!(plans, &ctx.db);
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let mut tracked = Vec::new();
     let mut untracked = Vec::new();
     for item in &items {
@@ -1438,8 +1467,10 @@ struct CalendarQuery {
 async fn milestone_calendar(
     axum::extract::Query(query): axum::extract::Query<CalendarQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     if let Some(kind) = query.kind.as_deref()
         && !rules::MILESTONE_KINDS.contains(&kind)
     {
@@ -1448,10 +1479,10 @@ async fn milestone_calendar(
             rules::MILESTONE_KINDS
         )));
     }
-    let items = live!(plans, &ctx.db);
+    let items = live!(plans, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
-    let mut rows = live!(milestones, &ctx.db);
+    let mut rows = live!(milestones, &ctx.db, &scope);
     rows.sort_by_key(|m| m.due);
     let entries: Vec<serde_json::Value> = rows
         .iter()

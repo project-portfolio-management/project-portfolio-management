@@ -335,9 +335,11 @@ struct RollupQuery {
 #[debug_handler]
 async fn rollup(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(query): Query<RollupQuery>,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let depth = query.depth.unwrap_or(crate::tba::MAX_ROLLUP_DEPTH);
     if depth == 0 || depth > crate::tba::MAX_ROLLUP_DEPTH {
         return Err(unprocessable(&format!(
@@ -346,13 +348,20 @@ async fn rollup(
         )));
     }
     let root = find_plan(&ctx, &query.plan).await?;
+    // This route names its plan in the query, so the plan guard does not see it: a plan
+    // the caller may not read is 404 here too, and hidden children are not walked.
+    if scope.plan(&root.pid) {
+        return Err(Error::NotFound);
+    }
 
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .limit(MAX_PLANS_SCANNED)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = scope.keep(
+        plans::Entity::find()
+            .filter(plans::Column::DeletedAt.is_null())
+            .limit(MAX_PLANS_SCANNED)
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?,
+    );
     let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
         std::collections::BTreeMap::new();
     for plan in &all {

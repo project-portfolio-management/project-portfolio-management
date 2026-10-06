@@ -351,8 +351,10 @@ struct IntakeForecastQuery {
 #[debug_handler]
 async fn intake_forecast(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(query): Query<IntakeForecastQuery>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let period_days = query.period_days.unwrap_or(crate::tba::DEFAULT_PERIOD_DAYS);
     if period_days <= 0 || period_days > 90 {
         return Err(refuse("period_days must be between 1 and 90"));
@@ -374,18 +376,24 @@ async fn intake_forecast(
     let (from_ms, to_ms) =
         crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms);
 
+    // A proposal that became a hidden plan is not part of the intake the caller may see.
+    let visible = scope.keep(
+        proposals::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
+    let visible_pids: std::collections::HashSet<Uuid> = visible.iter().map(|p| p.pid).collect();
     let approved_ms: Vec<i64> = audit_logs::Entity::find()
         .filter(audit_logs::Column::Action.eq(rules::ProposalAction::Approve.token()))
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?
         .iter()
+        .filter(|row| visible_pids.contains(&row.entity_pid))
         .map(|row| row.created_at.timestamp_millis())
         .collect();
-    let arrival_ms: Vec<i64> = proposals::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    let arrival_ms: Vec<i64> = visible
         .iter()
         .map(|row| row.created_at.timestamp_millis())
         .collect();

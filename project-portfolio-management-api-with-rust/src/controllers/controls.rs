@@ -864,20 +864,30 @@ async fn plan_coverage(
 /// question. Plans with **no controls at all** are named, because an
 /// empty cell is the finding a register exists to surface.
 #[debug_handler]
-async fn portfolio_coverage(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let rows = controls::Entity::find()
-        .filter(controls::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+async fn portfolio_coverage(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let rows = scope.keep(
+        controls::Entity::find()
+            .filter(controls::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?,
+    );
 
     let controlled: std::collections::HashSet<Uuid> =
         rows.iter().map(|control| control.plan_pid).collect();
-    let uncontrolled: Vec<String> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let uncontrolled: Vec<String> = scope
+        .keep(
+            plans::Entity::find()
+                .filter(plans::Column::DeletedAt.is_null())
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?,
+        )
         .into_iter()
         .filter(|plan| !controlled.contains(&plan.pid))
         .map(|plan| plan.pid.to_string())

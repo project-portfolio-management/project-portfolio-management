@@ -268,17 +268,21 @@ async fn delete_dependency(
 #[debug_handler]
 async fn portfolio_schedule(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let parent_pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
     let portfolio = find_any_item(&ctx, parent_pid).await?;
-    let mut members = plans::Entity::find()
+    let members = plans::Entity::find()
         .filter(plans::Column::ParentPid.eq(parent_pid))
         .filter(plans::Column::DeletedAt.is_null())
         .order_by_asc(plans::Column::Id)
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // A child plan the caller may not see is not on their roadmap.
+    let mut members = scope.keep(members);
     members.insert(0, portfolio);
     let facts: Vec<rules::ScheduleItem> = members.iter().map(schedule_item).collect();
     let member_pids: std::collections::HashSet<Uuid> = facts.iter().map(|f| f.pid).collect();
@@ -928,8 +932,10 @@ struct CapacityParams {
 #[debug_handler]
 async fn capacity(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<CapacityParams>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = chrono::Utc::now().date_naive();
     let from = params.from.unwrap_or(today);
     let to = params.to.unwrap_or(from + chrono::Days::new(30));
@@ -939,10 +945,10 @@ async fn capacity(
     if (to - from).num_days() > crate::availability::MAX_WINDOW_DAYS {
         return Err(unprocessable("the window may span at most ten years"));
     }
-    let rows = vis_models::all_allocations(&ctx.db).await?;
+    let rows = scope.keep(vis_models::all_allocations(&ctx.db).await?);
     // PJ-4: proposed bookings are reported as their own series, never merged in.
-    let proposed_rows: Vec<_> = vis_models::all_allocations_with_proposed(&ctx.db)
-        .await?
+    let proposed_rows: Vec<_> = scope
+        .keep(vis_models::all_allocations_with_proposed(&ctx.db).await?)
         .into_iter()
         .filter(|a| a.booking == "proposed")
         .collect();
@@ -1185,12 +1191,14 @@ struct RunParams {
 #[debug_handler]
 async fn run_report(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
     let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
     let def = vis_models::find_report(&ctx.db, pid).await?;
-    execute_report(&ctx, &def, params.format.as_deref()).await
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    execute_report(&ctx, &def, params.format.as_deref(), &scope).await
 }
 
 /// Run a saved report definition to a response (shared by the on-demand run and
@@ -1199,6 +1207,7 @@ pub(crate) async fn execute_report(
     ctx: &AppContext,
     def: &report_definitions::Model,
     format: Option<&str>,
+    scope: &super::plan_access::HiddenScope,
 ) -> Result<Response> {
     let params = RunParams {
         format: format.map(str::to_string),
@@ -1215,7 +1224,7 @@ pub(crate) async fn execute_report(
         .get("name_like")
         .and_then(|v| v.as_str())
         .map(str::to_lowercase);
-    let rows = crate::models::plans::Model::list(&ctx.db, 1000).await?;
+    let rows = scope.keep(crate::models::plans::Model::list(&ctx.db, 1000).await?);
     let selected: Vec<&plans::Model> = rows
         .iter()
         .filter(|m| {
@@ -1369,30 +1378,45 @@ async fn run_grouped(
 /// estate. ETag-conditional (the tag excludes `as_of`).
 #[debug_handler]
 #[allow(clippy::too_many_lines)] // one pass over the whole estate
-async fn at_a_glance(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+async fn at_a_glance(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = chrono::Utc::now().date_naive();
-    let items = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let risk_rows = risks::Entity::find()
-        .filter(risks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let budget_rows = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let proposal_rows = crate::models::_entities::proposals::Entity::find()
-        .filter(crate::models::_entities::proposals::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let dependency_rows = vis_models::all_dependencies(&ctx.db).await?;
-    let allocation_rows = vis_models::all_allocations(&ctx.db).await?;
+    let items = scope.keep(
+        plans::Entity::find()
+            .filter(plans::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
+    let risk_rows = scope.keep(
+        risks::Entity::find()
+            .filter(risks::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
+    let budget_rows = scope.keep(
+        budget_lines::Entity::find()
+            .filter(budget_lines::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
+    let proposal_rows = scope.keep(
+        crate::models::_entities::proposals::Entity::find()
+            .filter(crate::models::_entities::proposals::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+        (e.predecessor_pid, e.successor_pid)
+    });
+    let allocation_rows = scope.keep(vis_models::all_allocations(&ctx.db).await?);
 
     // Global schedule violations (per successor item).
     let facts: Vec<rules::ScheduleItem> = items.iter().map(schedule_item).collect();

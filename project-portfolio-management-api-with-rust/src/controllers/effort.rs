@@ -346,9 +346,11 @@ fn declared_minutes(config: Option<&working_time_configs::Model>, window_days: i
 #[debug_handler]
 async fn utilization(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<UtilizationParams>,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let by = params.by.unwrap_or_else(|| "team".to_string());
     if !["plan", "team", "person"].contains(&by.as_str()) {
         return Err(unprocessable("by must be plan, team or person"));
@@ -365,7 +367,7 @@ async fn utilization(
     if let Some(plan_pid) = params.plan_pid {
         query = query.filter(time_entries::Column::PlanPid.eq(plan_pid));
     }
-    let entries = query.limit(MAX_ROWS).all(&ctx.db).await.map_err(db_err)?;
+    let entries = scope.keep(query.limit(MAX_ROWS).all(&ctx.db).await.map_err(db_err)?);
 
     let config = working_time_configs::Entity::find()
         .filter(working_time_configs::Column::ScopeRef.is_null())

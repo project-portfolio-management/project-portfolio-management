@@ -8,12 +8,15 @@
 //! custom fields and "My work" resolve their subjects through the same
 //! check. A member (or an `access=admin` caller) sees the plan everywhere.
 //!
-//! **What is NOT enforced — read this before relying on it.** Cross-plan
-//! *aggregate* views (at-a-glance, executive, board, financials, reports,
-//! capacity, scenarios, …) are computed over every plan and **still include a
-//! private plan's figures**. "Private" here hides a plan's *records*, not its
-//! contribution to portfolio totals. Closing that gap means filtering every
-//! aggregate query and is tracked in the repo `tasks.md`.
+//! **Aggregates (RM-8b).** Every cross-plan view — at-a-glance, executive, board,
+//! financials, capacity, risk, compliance, engineering, scenarios, prioritisation,
+//! rollups, the audit and event feeds, and the rest — loads its rows through one
+//! shared [`HiddenScope`], so a private plan contributes to **no** total, list,
+//! ranking or count for someone outside it. A private-plan test compares every
+//! aggregate route before and after a private plan appears, and another enumerates
+//! the mounted routes so a new one cannot skip the decision. What stays full by
+//! design: the admin-only bulk reads (board pack, board investments, board trends,
+//! auditor trail, evidence pack), which answer 403 to everyone else.
 
 use std::collections::HashSet;
 
@@ -114,6 +117,256 @@ pub(crate) async fn readable_plans(
         })
         .map(|p| p.pid)
         .collect()
+}
+
+/// **The one shared "what may this caller see" query** (RM-8b): the private plans
+/// hidden from them, and the tasks inside those plans. Every cross-plan aggregate
+/// loads its rows and passes them through [`HiddenScope::keep`] (or asks
+/// [`HiddenScope::plan`] / [`HiddenScope::node`]), so a hidden plan contributes to
+/// no total, list, ranking or count. Empty (and free) when nothing is private.
+#[derive(Debug, Default, Clone)]
+pub(crate) struct HiddenScope {
+    plans: HashSet<Uuid>,
+    tasks: HashSet<Uuid>,
+}
+
+/// A row that belongs to a plan, so it can be kept out of a view that may not see it.
+pub(crate) trait PlanScoped {
+    /// The plan this row belongs to (a plan is its own).
+    fn scope_plan(&self) -> Option<Uuid>;
+}
+
+macro_rules! scoped_by_plan_pid {
+    ($($m:ident),* $(,)?) => {$(
+        impl PlanScoped for crate::models::_entities::$m::Model {
+            fn scope_plan(&self) -> Option<Uuid> { Some(self.plan_pid) }
+        }
+    )*};
+}
+scoped_by_plan_pid!(
+    risks,
+    budget_lines,
+    milestones,
+    tasks,
+    allocations,
+    time_entries,
+    objective_links,
+    benefits,
+    gate_reviews,
+    devops_events,
+    controls,
+    sprints,
+    components,
+);
+/// Rows that belong to no single plan (a scenario's members are filtered by its own handlers).
+macro_rules! scoped_by_nothing {
+    ($($m:ident),* $(,)?) => {$(
+        impl PlanScoped for crate::models::_entities::$m::Model {
+            fn scope_plan(&self) -> Option<Uuid> { None }
+        }
+    )*};
+}
+scoped_by_nothing!(scenarios, ideas);
+impl PlanScoped for crate::models::_entities::reviews::Model {
+    /// A review of a plan is hidden with the plan.
+    fn scope_plan(&self) -> Option<Uuid> {
+        (self.subject_kind == "plan").then_some(self.subject_pid)
+    }
+}
+impl PlanScoped for crate::models::_entities::proposals::Model {
+    /// A proposal that became a plan is that plan's: hidden with it.
+    fn scope_plan(&self) -> Option<Uuid> {
+        self.promoted_plan_pid
+    }
+}
+impl PlanScoped for crate::models::_entities::plans::Model {
+    fn scope_plan(&self) -> Option<Uuid> {
+        Some(self.pid)
+    }
+}
+
+impl HiddenScope {
+    /// The scope for `caller`: every private plan they are not a member of.
+    ///
+    /// # Errors
+    ///
+    /// A lookup failure is an error, never an empty scope: not knowing what is
+    /// private must not turn into showing it.
+    pub(crate) async fn of(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<Self> {
+        use crate::models::_entities::tasks;
+        let private: Vec<Uuid> = plan_access::Entity::find()
+            .filter(plan_access::Column::Private.eq(true))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|r| r.plan_pid)
+            .collect();
+        if private.is_empty() {
+            return Ok(Self::default());
+        }
+        let plans = hidden_plans(ctx, &private, caller).await;
+        if plans.is_empty() {
+            return Ok(Self::default());
+        }
+        let tasks = tasks::Entity::find()
+            .filter(tasks::Column::PlanPid.is_in(plans.iter().copied().collect::<Vec<_>>()))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|t| t.pid)
+            .collect();
+        Ok(Self { plans, tasks })
+    }
+
+    /// Whether nothing is hidden from this caller.
+    pub(crate) fn is_empty(&self) -> bool {
+        self.plans.is_empty()
+    }
+
+    /// Whether this plan is hidden.
+    pub(crate) fn plan(&self, pid: &Uuid) -> bool {
+        self.plans.contains(pid)
+    }
+
+    /// Whether a node (a plan or a task) is hidden.
+    pub(crate) fn node(&self, pid: &Uuid) -> bool {
+        self.plans.contains(pid) || self.tasks.contains(pid)
+    }
+
+    /// The pids of everything that belongs to a hidden plan (tasks, risks, budget lines,
+    /// milestones, bookings, benefits, time entries, sprints, components, controls,
+    /// gate reviews, deployments, alignments, RACI rows, checklists): what an audit or
+    /// event row about "an entity" must not be shown for.
+    pub(crate) async fn owned_pids(&self, ctx: &AppContext) -> Result<HashSet<Uuid>> {
+        let mut out: HashSet<Uuid> = self
+            .plans
+            .iter()
+            .chain(self.tasks.iter())
+            .copied()
+            .collect();
+        if self.plans.is_empty() {
+            return Ok(out);
+        }
+        let hidden: Vec<Uuid> = self.plans.iter().copied().collect();
+        macro_rules! owned {
+            ($($m:ident),* $(,)?) => {$(
+                out.extend(
+                    crate::models::_entities::$m::Entity::find()
+                        .filter(crate::models::_entities::$m::Column::PlanPid.is_in(hidden.clone()))
+                        .all(&ctx.db)
+                        .await
+                        .map_err(db_err)?
+                        .into_iter()
+                        .map(|r| r.pid),
+                );
+            )*};
+        }
+        owned!(
+            risks,
+            budget_lines,
+            milestones,
+            allocations,
+            benefits,
+            time_entries,
+            sprints,
+            components,
+            controls,
+            gate_reviews,
+            devops_events,
+            objective_links,
+            raci_assignments,
+            onboarding_cases,
+            access_records,
+            automations,
+            budget_baselines,
+            canvases,
+            business_case_targets,
+            earned_value_snapshots,
+            earned_value_settings,
+            plan_links,
+            phase_transitions,
+            satisfaction_responses,
+            schedule_baselines,
+            task_transitions,
+            value_points,
+            time_entry_costs,
+            adoption_snapshots,
+            workflows,
+        );
+        // A KPI may belong to a plan (or to none).
+        out.extend(
+            crate::models::_entities::kpis::Entity::find()
+                .filter(crate::models::_entities::kpis::Column::PlanPid.is_in(hidden.clone()))
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|r| r.pid),
+        );
+        // A proposal that became a hidden plan is hidden with it.
+        out.extend(
+            crate::models::_entities::proposals::Entity::find()
+                .filter(crate::models::_entities::proposals::Column::PromotedPlanPid.is_in(hidden))
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|p| p.pid),
+        );
+        Ok(out)
+    }
+
+    /// Whether `text` (a serialised snapshot or event) names a hidden plan.
+    pub(crate) fn mentions(&self, text: &str) -> bool {
+        self.plans.iter().any(|p| text.contains(&p.to_string()))
+    }
+
+    /// The audit rows the caller may see: none about, or naming, anything in a hidden plan.
+    pub(crate) async fn visible_audit(
+        &self,
+        ctx: &AppContext,
+        rows: Vec<crate::models::_entities::audit_logs::Model>,
+    ) -> Result<Vec<crate::models::_entities::audit_logs::Model>> {
+        if self.is_empty() {
+            return Ok(rows);
+        }
+        let owned = self.owned_pids(ctx).await?;
+        Ok(rows
+            .into_iter()
+            .filter(|r| {
+                !owned.contains(&r.entity_pid)
+                    && !r
+                        .snapshot
+                        .as_ref()
+                        .is_some_and(|s| self.mentions(&s.to_string()))
+            })
+            .collect())
+    }
+
+    /// The edges the caller may see: those with **neither** end hidden.
+    pub(crate) fn keep_edges<T>(&self, rows: Vec<T>, ends: impl Fn(&T) -> (Uuid, Uuid)) -> Vec<T> {
+        if self.is_empty() {
+            return rows;
+        }
+        rows.into_iter()
+            .filter(|r| {
+                let (a, b) = ends(r);
+                !self.node(&a) && !self.node(&b)
+            })
+            .collect()
+    }
+
+    /// The rows the caller may see: those not belonging to a hidden plan.
+    pub(crate) fn keep<T: PlanScoped>(&self, rows: Vec<T>) -> Vec<T> {
+        if self.is_empty() {
+            return rows;
+        }
+        rows.into_iter()
+            .filter(|r| r.scope_plan().is_none_or(|p| !self.plans.contains(&p)))
+            .collect()
+    }
 }
 
 /// The plan a path addresses: `/api/plans/{uuid}` or anything beneath it.

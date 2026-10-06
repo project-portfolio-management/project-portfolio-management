@@ -389,6 +389,9 @@ async fn time_report(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    // Entries of a private plan the caller is not in do not exist for them: not shown, not counted.
+    let rows = scope.keep(rows);
     let truncated = rows.len() as u64 > ROW_CAP;
     let mut plan_pids: Vec<Uuid> = rows.iter().map(|e| e.plan_pid).collect();
     plan_pids.sort();

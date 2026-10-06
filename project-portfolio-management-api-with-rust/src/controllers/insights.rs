@@ -22,6 +22,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::visibility::{is_finished, schedule_item};
+use crate::auth::MaybeAuthUser;
 use crate::insights;
 use crate::models::_entities::{
     benefits, budget_lines, gate_reviews, merge_records, milestones, objective_links, plans,
@@ -32,12 +33,14 @@ use crate::visibility as rules;
 
 /// Load all live rows of one entity (soft-deleted excluded).
 macro_rules! live {
-    ($module:ident, $db:expr) => {
-        $module::Entity::find()
-            .filter($module::Column::DeletedAt.is_null())
-            .all($db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
+    ($module:ident, $db:expr, $scope:expr) => {
+        $scope.keep(
+            $module::Entity::find()
+                .filter($module::Column::DeletedAt.is_null())
+                .all($db)
+                .await
+                .map_err(|e| Error::Model(ModelError::from(e)))?,
+        )
     };
 }
 
@@ -136,13 +139,20 @@ pub(crate) fn category_risks<'r>(
 /// exposure, overrun currencies, and member counts. The bucket status
 /// is the worst member colour. Derivation matches `/api/at-a-glance`.
 #[debug_handler]
-async fn executive_health(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+async fn executive_health(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = chrono::Utc::now().date_naive();
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
-    let milestone_rows = live!(milestones, &ctx.db);
-    let dependency_rows = vis_models::all_dependencies(&ctx.db).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let milestone_rows = live!(milestones, &ctx.db, &scope);
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+        (e.predecessor_pid, e.successor_pid)
+    });
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
 
     // Buckets: each portfolio item (itself + the items under it), plus
@@ -247,17 +257,19 @@ async fn executive_health(State(ctx): State<AppContext>, headers: HeaderMap) -> 
 /// pack.
 pub(crate) async fn decision_entries(
     ctx: &AppContext,
+    scope: &super::plan_access::HiddenScope,
 ) -> Result<Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)>> {
-    let items = live!(plans, &ctx.db);
+    let items = live!(plans, &ctx.db, scope);
     let names: std::collections::BTreeMap<Uuid, &str> =
         items.iter().map(|i| (i.pid, i.name.as_str())).collect();
     let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
 
-    for review in gate_reviews::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-    {
+    for review in scope.keep(
+        gate_reviews::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    ) {
         let at = review.decided_at.to_utc();
         entries.push((
             at,
@@ -273,7 +285,12 @@ pub(crate) async fn decision_entries(
             }),
         ));
     }
-    for scenario in live!(scenarios, &ctx.db) {
+    for scenario in scenarios::Entity::find()
+        .filter(scenarios::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?
+    {
         if let Some(committed_at) = scenario.committed_at {
             let at = committed_at.to_utc();
             entries.push((
@@ -287,7 +304,7 @@ pub(crate) async fn decision_entries(
             ));
         }
     }
-    for proposal in live!(proposals, &ctx.db) {
+    for proposal in live!(proposals, &ctx.db, scope) {
         if matches!(
             proposal.status.as_str(),
             "approved" | "rejected" | "promoted"
@@ -309,6 +326,8 @@ pub(crate) async fn decision_entries(
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?
+        .into_iter()
+        .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
     {
         let at = merge.created_at.to_utc();
         entries.push((
@@ -343,10 +362,12 @@ struct DecisionsQuery {
 async fn executive_decisions(
     axum::extract::Query(query): axum::extract::Query<DecisionsQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let limit = query.limit.unwrap_or(50).min(200);
-    let mut entries = decision_entries(&ctx).await?;
+    let mut entries = decision_entries(&ctx, &scope).await?;
     entries.sort_by_key(|entry| std::cmp::Reverse(entry.0));
     let total = entries.len();
     let decisions: Vec<serde_json::Value> =
@@ -365,9 +386,14 @@ async fn executive_decisions(
 /// positive target exists) plus non-financial benefit counts by
 /// status. Currencies never merge.
 #[debug_handler]
-async fn executive_benefits(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
-    let benefit_rows = live!(benefits, &ctx.db);
+async fn executive_benefits(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let benefit_rows = live!(benefits, &ctx.db, &scope);
     let portfolio_of: std::collections::BTreeMap<Uuid, Option<Uuid>> = items
         .iter()
         .map(|i| {
@@ -443,9 +469,14 @@ async fn executive_benefits(State(ctx): State<AppContext>, headers: HeaderMap) -
 /// in minor units, per currency — rolled up three ways: by owning
 /// collection, by portfolio bucket, and by budget-line category.
 #[debug_handler]
-async fn financial_variance(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
+async fn financial_variance(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
     let kind_of: std::collections::BTreeMap<Uuid, &str> = items
         .iter()
         .map(|i| (i.pid, i.kind.as_deref().unwrap_or("unspecified")))
@@ -521,8 +552,13 @@ async fn financial_variance(State(ctx): State<AppContext>, headers: HeaderMap) -
 /// Deliberately **no** cross-currency total: converting would invent a
 /// number the store does not hold.
 #[debug_handler]
-async fn financial_exposure(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let budget_rows = live!(budget_lines, &ctx.db);
+async fn financial_exposure(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
     let lines: Vec<insights::MoneyLine> = budget_rows
         .iter()
         .map(|b| insights::MoneyLine {
@@ -578,13 +614,17 @@ async fn financial_exposure(State(ctx): State<AppContext>, headers: HeaderMap) -
 #[debug_handler]
 async fn technology_dependency_risk(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = chrono::Utc::now().date_naive();
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
-    let dependency_rows = vis_models::all_dependencies(&ctx.db).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+        (e.predecessor_pid, e.successor_pid)
+    });
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
@@ -669,8 +709,13 @@ struct Tech<'a> {
 }
 
 #[debug_handler]
-async fn technology_radar(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
+async fn technology_radar(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let mut techs: std::collections::BTreeMap<String, Tech<'_>> = std::collections::BTreeMap::new();
     for item in &items {
         let tags = item
@@ -735,14 +780,18 @@ async fn technology_radar(State(ctx): State<AppContext>, headers: HeaderMap) -> 
 #[debug_handler]
 async fn executive_alignment(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
-    let link_rows = objective_links::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let link_rows = scope.keep(
+        objective_links::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
     let aligned: std::collections::HashSet<Uuid> = link_rows.iter().map(|l| l.plan_pid).collect();
 
     let mut per_collection: std::collections::BTreeMap<&str, (usize, usize)> =
@@ -832,9 +881,14 @@ async fn executive_alignment(
 /// escalate / close) — an uncategorised risk reads as `delivery` and
 /// stays off this view.
 #[debug_handler]
-async fn technology_debt(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
+async fn technology_debt(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut debt: Vec<&risks::Model> = category_risks(&risk_rows, "tech_debt");
@@ -888,12 +942,14 @@ struct FlowQuery {
 async fn technology_flow(
     axum::extract::Query(query): axum::extract::Query<FlowQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let months = i64::from(query.months.unwrap_or(6).clamp(1, 24));
     let now = chrono::Utc::now();
     let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(186));
-    let milestone_rows = live!(milestones, &ctx.db);
+    let milestone_rows = live!(milestones, &ctx.db, &scope);
 
     let mut per_month: std::collections::BTreeMap<String, usize> =
         std::collections::BTreeMap::new();

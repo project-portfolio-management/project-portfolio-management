@@ -849,8 +849,14 @@ async fn merge(
 ///
 /// A DB error when the query fails.
 #[debug_handler]
-async fn recent_merges(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = MergeRecordModel::recent(&ctx.db, 100).await?;
+async fn recent_merges(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    // A merge that touched a plan the caller may not see is not in their history.
+    let rows: Vec<_> = MergeRecordModel::recent(&ctx.db, 100)
+        .await?
+        .into_iter()
+        .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
+        .collect();
     format::json(rows)
 }
 
@@ -860,8 +866,12 @@ async fn recent_merges(State(ctx): State<AppContext>) -> Result<Response> {
 ///
 /// A DB error when the query fails.
 #[debug_handler]
-async fn recent_audit(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = AuditModel::recent(&ctx.db, 100).await?;
+async fn recent_audit(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    // Entries about anything in a plan the caller may not see are not in their feed.
+    let rows = scope
+        .visible_audit(&ctx, AuditModel::recent(&ctx.db, 100).await?)
+        .await?;
     format::json(rows)
 }
 
@@ -887,8 +897,19 @@ async fn entity_audit(Path(pid): Path<String>, State(ctx): State<AppContext>) ->
 ///
 /// A DB error when the outbox query fails.
 #[debug_handler]
-async fn recent_events(State(ctx): State<AppContext>) -> Result<Response> {
-    format::json(streaming::recent_events(&ctx.db, 100).await?)
+async fn recent_events(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let owned = scope.owned_pids(&ctx).await?;
+    let events: Vec<_> = streaming::recent_events(&ctx.db, 100)
+        .await?
+        .into_iter()
+        .filter(|e| {
+            let text = serde_json::to_string(e).unwrap_or_default();
+            scope.is_empty()
+                || (!scope.mentions(&text) && !owned.iter().any(|p| text.contains(&p.to_string())))
+        })
+        .collect();
+    format::json(events)
 }
 
 /// Echo the verified bearer-token claims. `GET /api/plans/whoami`;

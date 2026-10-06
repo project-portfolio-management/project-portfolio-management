@@ -29,6 +29,7 @@ use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 
+use crate::auth::MaybeAuthUser;
 use crate::engineering::parse_moscow_tag;
 use crate::lifecycle as life_rules;
 use crate::models::_entities::{
@@ -55,12 +56,14 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 
 /// Load all live rows of one entity.
 macro_rules! live {
-    ($module:ident, $db:expr) => {
-        $module::Entity::find()
-            .filter($module::Column::DeletedAt.is_null())
-            .all($db)
-            .await
-            .map_err(db_err)?
+    ($module:ident, $db:expr, $fence:expr) => {
+        $fence.keep(
+            $module::Entity::find()
+                .filter($module::Column::DeletedAt.is_null())
+                .all($db)
+                .await
+                .map_err(db_err)?,
+        )
     };
 }
 
@@ -115,17 +118,22 @@ pub(crate) struct Estate {
 }
 
 impl Estate {
-    pub(crate) async fn load(ctx: &AppContext) -> Result<Self> {
+    pub(crate) async fn load(
+        ctx: &AppContext,
+        fence: &super::plan_access::HiddenScope,
+    ) -> Result<Self> {
         Ok(Self {
-            plans: live!(plans, &ctx.db),
-            benefits: live!(benefits, &ctx.db),
-            budget_lines: live!(budget_lines, &ctx.db),
-            objective_links: objective_links::Entity::find()
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?,
-            risks: live!(risks, &ctx.db),
-            reviews: live!(reviews, &ctx.db),
+            plans: live!(plans, &ctx.db, fence),
+            benefits: live!(benefits, &ctx.db, fence),
+            budget_lines: live!(budget_lines, &ctx.db, fence),
+            objective_links: fence.keep(
+                objective_links::Entity::find()
+                    .all(&ctx.db)
+                    .await
+                    .map_err(db_err)?,
+            ),
+            risks: live!(risks, &ctx.db, fence),
+            reviews: live!(reviews, &ctx.db, fence),
         })
     }
 
@@ -222,11 +230,13 @@ impl Estate {
 #[debug_handler]
 async fn plan_smart_score(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let estate = Estate::load(&ctx).await?;
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let estate = Estate::load(&ctx, &fence).await?;
     let score = rules::smart_score(&estate.facts(&plan), &weights());
     let body = serde_json::json!({
         "pid": plan.pid.to_string(),
@@ -258,11 +268,13 @@ struct RankParams {
 #[debug_handler]
 async fn prioritisation(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
     Query(params): Query<RankParams>,
 ) -> Result<Response> {
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let limit = params.limit.unwrap_or(50).min(RANK_CAP);
-    let estate = Estate::load(&ctx).await?;
+    let estate = Estate::load(&ctx, &fence).await?;
     let mut rows: Vec<serde_json::Value> = Vec::new();
     let weights = weights();
     let mut scored: Vec<(Option<f64>, serde_json::Value)> = estate
@@ -314,11 +326,16 @@ async fn prioritisation(
 /// `GET /api/lifecycle` — the bird's-eye funnel: how much sits in each
 /// phase of the challenge lifecycle and how much of it has stalled.
 #[debug_handler]
-async fn lifecycle(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+async fn lifecycle(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let fence = &super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let stall = stall_days();
     let mut items: Vec<life_rules::PhaseItem> = Vec::new();
 
-    for idea in live!(ideas, &ctx.db) {
+    for idea in live!(ideas, &ctx.db, fence) {
         if idea.status == "open" {
             items.push(life_rules::PhaseItem {
                 phase: "idea".to_string(),
@@ -326,7 +343,7 @@ async fn lifecycle(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<
             });
         }
     }
-    for proposal in live!(proposals, &ctx.db) {
+    for proposal in live!(proposals, &ctx.db, fence) {
         if matches!(
             proposal.status.as_str(),
             "draft" | "submitted" | "in_review"
@@ -337,11 +354,13 @@ async fn lifecycle(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<
             });
         }
     }
-    let plan_rows = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let plan_rows = fence.keep(
+        plans::Entity::find()
+            .filter(plans::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?,
+    );
     for plan in &plan_rows {
         items.push(life_rules::PhaseItem {
             phase: life_rules::phase_of_plan(plan.stage.as_deref(), plan.active).to_string(),

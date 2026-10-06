@@ -124,9 +124,11 @@ struct Params {
 async fn flow_distribution(
     Path(pid): Path<String>,
     State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
     Query(params): Query<Params>,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let plan = find_plan(&ctx, &pid).await?;
     let window_days = params
         .window_days
@@ -138,12 +140,15 @@ async fn flow_distribution(
     let (items, scanned_plans, capped) = if params.rollup.unwrap_or(false) {
         // One query for the containment map, then the walk costs none —
         // the same N+1 avoidance the TBA rollup already uses.
-        let all = plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .limit(MAX_ROWS)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        // A child plan the caller may not see is not part of the subtree they roll up.
+        let all = scope.keep(
+            plans::Entity::find()
+                .filter(plans::Column::DeletedAt.is_null())
+                .limit(MAX_ROWS)
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?,
+        );
         let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
             std::collections::BTreeMap::new();
         for row in &all {

@@ -291,15 +291,18 @@ async fn create_scenario(
             _ => problems.push("currency (ISO 4217) is required with budget_cap_minor".to_string()),
         }
     }
-    // Every named member must exist (unknown pids listed at once).
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    // Every named member must exist (unknown pids listed at once). One the caller may
+    // not see is unknown to them too.
     for pid in &payload.plan_pids {
-        let exists = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(*pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some();
+        let exists = !fence.plan(pid)
+            && plans::Entity::find()
+                .filter(plans::Column::Pid.eq(*pid))
+                .filter(plans::Column::DeletedAt.is_null())
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .is_some();
         if !exists {
             problems.push(format!("unknown plan {pid}"));
         }
@@ -311,7 +314,7 @@ async fn create_scenario(
             .one(&ctx.db)
             .await
             .map_err(db_err)?
-            .is_some();
+            .is_some_and(|p| !p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)));
         if !exists {
             problems.push(format!("unknown proposal {pid}"));
         }
@@ -346,14 +349,85 @@ async fn create_scenario(
 
 /// `GET /api/scenarios`.
 #[debug_handler]
-async fn list_scenarios(State(ctx): State<AppContext>) -> Result<Response> {
+async fn list_scenarios(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scenarios::Entity::find()
         .filter(scenarios::Column::DeletedAt.is_null())
         .order_by_asc(scenarios::Column::Id)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    format::json(rows)
+    // A scenario's member list names plans: the ones the caller may not see are not in it.
+    let hidden = hidden_members(&ctx, &fence, &rows).await?;
+    let out: Vec<scenarios::Model> = rows
+        .into_iter()
+        .map(|mut s| {
+            s.members = without(&s.members, &hidden);
+            s.must_include = without(&s.must_include, &hidden);
+            s
+        })
+        .collect();
+    format::json(out)
+}
+
+/// The plans and proposals named by `scenarios` that the caller may not see.
+async fn hidden_members(
+    ctx: &AppContext,
+    fence: &super::plan_access::HiddenScope,
+    scenarios: &[scenarios::Model],
+) -> Result<std::collections::HashSet<Uuid>> {
+    let mut hidden = std::collections::HashSet::new();
+    if fence.is_empty() {
+        return Ok(hidden);
+    }
+    let mut proposals_named: Vec<Uuid> = Vec::new();
+    for s in scenarios {
+        for pid in uuids_in(&s.members, "plan_pids") {
+            if fence.plan(&pid) {
+                hidden.insert(pid);
+            }
+        }
+        proposals_named.extend(uuids_in(&s.members, "proposal_pids"));
+    }
+    for p in proposals::Entity::find()
+        .filter(proposals::Column::Pid.is_in(proposals_named))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        if p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)) {
+            hidden.insert(p.pid);
+        }
+    }
+    Ok(hidden)
+}
+
+fn uuids_in(v: &serde_json::Value, key: &str) -> Vec<Uuid> {
+    v.get(key)
+        .and_then(|x| serde_json::from_value(x.clone()).ok())
+        .unwrap_or_default()
+}
+
+/// `v` with every pid in `hidden` removed from its lists (or from itself, if a list).
+fn without(v: &serde_json::Value, hidden: &std::collections::HashSet<Uuid>) -> serde_json::Value {
+    match v {
+        serde_json::Value::Array(a) => serde_json::Value::Array(
+            a.iter()
+                .filter(|x| {
+                    !x.as_str()
+                        .and_then(|s| Uuid::parse_str(s).ok())
+                        .is_some_and(|u| hidden.contains(&u))
+                })
+                .cloned()
+                .collect(),
+        ),
+        serde_json::Value::Object(m) => serde_json::Value::Object(
+            m.iter()
+                .map(|(k, x)| (k.clone(), without(x, hidden)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
 }
 
 /// An evaluation plus its provenance: when it ran and which live rows
@@ -471,6 +545,7 @@ async fn proposal_member_fact(
 pub(crate) async fn evaluate(
     ctx: &AppContext,
     scenario: &scenarios::Model,
+    fence: &super::plan_access::HiddenScope,
 ) -> Result<EvaluationResult> {
     let as_of = chrono::Utc::now();
     let plan_pids: Vec<Uuid> = scenario
@@ -483,6 +558,16 @@ pub(crate) async fn evaluate(
         .get("proposal_pids")
         .and_then(|v| serde_json::from_value(v.clone()).ok())
         .unwrap_or_default();
+    // Members the caller may not see are not evaluated: as if they were not in the scenario.
+    let hidden = hidden_members(ctx, fence, std::slice::from_ref(scenario)).await?;
+    let plan_pids: Vec<Uuid> = plan_pids
+        .into_iter()
+        .filter(|p| !hidden.contains(p))
+        .collect();
+    let proposal_pids: Vec<Uuid> = proposal_pids
+        .into_iter()
+        .filter(|p| !hidden.contains(p))
+        .collect();
     let mut members = Vec::new();
     let mut inputs_read = Vec::new();
     for pid in &plan_pids {
@@ -496,7 +581,11 @@ pub(crate) async fn evaluate(
         inputs_read.append(&mut read);
     }
     let must_include: Vec<Uuid> =
-        serde_json::from_value(scenario.must_include.clone()).unwrap_or_default();
+        serde_json::from_value::<Vec<Uuid>>(scenario.must_include.clone())
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|p| !hidden.contains(p))
+            .collect();
     let evaluation = rules::evaluate_scenario(
         &members,
         &rules::Constraints {
@@ -528,7 +617,9 @@ struct CompareQuery {
 async fn compare_scenarios(
     axum::extract::Query(query): axum::extract::Query<CompareQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
 ) -> Result<Response> {
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let load = |pid: &str| -> Result<Uuid> { Uuid::parse_str(pid).map_err(|_| Error::NotFound) };
     let (a_pid, b_pid) = (load(&query.a)?, load(&query.b)?);
     let mut pair = Vec::new();
@@ -540,7 +631,7 @@ async fn compare_scenarios(
             .await
             .map_err(db_err)?
             .ok_or(Error::NotFound)?;
-        let result = evaluate(&ctx, &scenario).await?;
+        let result = evaluate(&ctx, &scenario, &fence).await?;
         pair.push((scenario, result));
     }
     let (b_side, b_result) = pair.pop().expect("two loaded");
@@ -599,10 +690,12 @@ async fn compare_scenarios(
 #[debug_handler]
 async fn evaluate_scenario(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let scenario = find_scenario(&ctx, &pid).await?;
-    let result = evaluate(&ctx, &scenario).await?;
+    let result = evaluate(&ctx, &scenario, &fence).await?;
     format::json(serde_json::json!({
         "pid": scenario.pid.to_string(),
         "name": scenario.name,
@@ -623,11 +716,12 @@ async fn commit_scenario(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let scenario = find_scenario(&ctx, &pid).await?;
     if scenario.status != "draft" {
         return Err(unprocessable(&format!("scenario is {}", scenario.status)));
     }
-    let result = evaluate(&ctx, &scenario).await?;
+    let result = evaluate(&ctx, &scenario, &fence).await?;
     if !result.evaluation.violations.is_empty() {
         return Err(unprocessable(&format!(
             "cannot commit an infeasible scenario: {}",
@@ -667,7 +761,7 @@ async fn commit_scenario(
 ///
 /// Refused (`409`) unless the scenario is currently `committed` —
 /// mirroring `commit`'s own `draft`-only precondition. There is no
-/// separate "changed since commit" conflict to detect in this scope:
+/// separate "changed since commit" conflict to detect in this fence:
 /// with no member row ever mutated, no member row can have diverged
 /// from what commit wrote.
 #[debug_handler]
@@ -750,7 +844,7 @@ fn cost_of(estate: &prioritisation::Estate, plan_pid: Uuid, currency: &str) -> O
 /// never proposals: Smart Score has no defined evidence trail for a
 /// not-yet-promoted proposal (see `crate::strategy::generate_scenario`
 /// and `spec/13-tasks.md` T-28h for the full "decided rather than
-/// guessed" scope note).
+/// guessed" fence note).
 #[debug_handler]
 async fn generate_scenario(
     State(ctx): State<AppContext>,
@@ -768,7 +862,8 @@ async fn generate_scenario(
         }
     }
 
-    let estate = prioritisation::Estate::load(&ctx).await?;
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let estate = prioritisation::Estate::load(&ctx, &fence).await?;
     let weights = prioritisation::weights();
     let currency = payload.currency.as_deref();
 

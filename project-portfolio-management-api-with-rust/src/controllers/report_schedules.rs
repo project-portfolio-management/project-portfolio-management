@@ -286,7 +286,12 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
         .await
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "the report no longer exists".to_string())?;
-    let resp = super::visibility::execute_report(ctx, &def, Some(&s.format))
+    // A scheduled run has no signed-in reader, so it sees only what anyone may: the
+    // private plans are out of it (a recipient who is a member opens the report themselves).
+    let scope = super::plan_access::HiddenScope::of(ctx, &crate::auth::MaybeAuthUser(None))
+        .await
+        .map_err(|e| e.to_string())?;
+    let resp = super::visibility::execute_report(ctx, &def, Some(&s.format), &scope)
         .await
         .map_err(|e| e.to_string())?;
     let bytes = axum::body::to_bytes(resp.into_body(), 64 << 20)

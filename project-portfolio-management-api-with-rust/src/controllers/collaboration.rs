@@ -604,14 +604,16 @@ struct WorkloadParams {
 #[debug_handler]
 async fn assignee_workload(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
     Query(params): Query<WorkloadParams>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut query = tasks::Entity::find().filter(tasks::Column::DeletedAt.is_null());
     if let Some(plan) = params.plan {
         query = query.filter(tasks::Column::PlanPid.eq(plan));
     }
-    let rows = query.all(&ctx.db).await.map_err(db_err)?;
+    let rows = scope.keep(query.all(&ctx.db).await.map_err(db_err)?);
     let facts: Vec<rules::TaskLoadFact> = rows
         .iter()
         .map(|t| rules::TaskLoadFact {

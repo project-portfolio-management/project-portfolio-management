@@ -1982,8 +1982,6 @@ mod tests {
         "/api/plans/{pid}/benefits",
         "/api/plans/{pid}/benefits/{b_pid}/realize",
         // visibility (PPM Phase B)
-        "/api/dependencies",
-        "/api/dependencies/{pid}",
         "/api/plans/{pid}/schedule",
         "/api/plans/{pid}/milestones",
         "/api/plans/{pid}/milestones/{m_pid}",

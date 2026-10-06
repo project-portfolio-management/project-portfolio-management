@@ -622,9 +622,11 @@ fn rollup_attrition(
 #[debug_handler]
 async fn rollup(
     State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
     Path(pid): Path<String>,
     Query(query): Query<RollupQuery>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let now = chrono::Utc::now();
     let as_of_ms = now.timestamp_millis();
     let depth = query.depth.unwrap_or(tba::MAX_ROLLUP_DEPTH);
@@ -638,12 +640,15 @@ async fn rollup(
 
     // One query for the whole containment map, so the walk costs no
     // queries at all — a query per level is the N+1 this avoids.
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .limit(MAX_PLANS_SCANNED)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // Child plans the caller may not see are not part of the rollup they are given.
+    let all = scope.keep(
+        plans::Entity::find()
+            .filter(plans::Column::DeletedAt.is_null())
+            .limit(MAX_PLANS_SCANNED)
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
     let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
         std::collections::BTreeMap::new();
     for plan in &all {

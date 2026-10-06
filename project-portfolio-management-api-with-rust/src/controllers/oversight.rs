@@ -44,13 +44,22 @@ use crate::models::visibility as vis_models;
 
 /// Load all live rows of one entity (soft-deleted excluded).
 macro_rules! live {
-    ($module:ident, $db:expr) => {
-        $module::Entity::find()
-            .filter($module::Column::DeletedAt.is_null())
-            .all($db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
+    ($module:ident, $db:expr, $scope:expr) => {
+        $scope.keep(
+            $module::Entity::find()
+                .filter($module::Column::DeletedAt.is_null())
+                .all($db)
+                .await
+                .map_err(|e| Error::Model(ModelError::from(e)))?,
+        )
     };
+}
+
+/// The scope of a **privileged** bulk read ([`authorize_oversight_read`]: an admin or a
+/// machine peer): everything, by design. Everyone else's reads are scoped by
+/// [`HiddenScope::of`](super::plan_access::HiddenScope::of).
+fn privileged_scope() -> super::plan_access::HiddenScope {
+    super::plan_access::HiddenScope::default()
 }
 
 /// Authorise one of the oversight bulk-read endpoints (SEC-PPM-3) as a
@@ -145,7 +154,7 @@ async fn board_pack(
     headers: HeaderMap,
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
-    let body = board_pack_body(&ctx, &query).await?;
+    let body = board_pack_body(&ctx, &query, &privileged_scope()).await?;
     conditional(&headers, &body)
 }
 
@@ -162,7 +171,7 @@ pub(crate) async fn authorized_board_pack(
     to: Option<String>,
 ) -> Result<serde_json::Value> {
     authorize_oversight_read(caller)?;
-    board_pack_body(ctx, &WindowQuery { from, to }).await
+    board_pack_body(ctx, &WindowQuery { from, to }, &privileged_scope()).await
 }
 
 /// The board pack's data, shared by the JSON route and the PDF (PL-10) so the
@@ -172,14 +181,20 @@ pub(crate) async fn authorized_board_pack(
 ///
 /// Propagates database errors.
 #[allow(clippy::too_many_lines)] // one pass over the whole estate
-async fn board_pack_body(ctx: &AppContext, query: &WindowQuery) -> Result<serde_json::Value> {
+async fn board_pack_body(
+    ctx: &AppContext,
+    query: &WindowQuery,
+    scope: &super::plan_access::HiddenScope,
+) -> Result<serde_json::Value> {
     let (from, to) = window(query);
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
-    let milestone_rows = live!(milestones, &ctx.db);
-    let benefit_rows = live!(benefits, &ctx.db);
-    let dependency_rows = vis_models::all_dependencies(&ctx.db).await?;
+    let items = live!(plans, &ctx.db, scope);
+    let risk_rows = live!(risks, &ctx.db, scope);
+    let budget_rows = live!(budget_lines, &ctx.db, scope);
+    let milestone_rows = live!(milestones, &ctx.db, scope);
+    let benefit_rows = live!(benefits, &ctx.db, &scope);
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+        (e.predecessor_pid, e.successor_pid)
+    });
     let today = chrono::Utc::now().date_naive();
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
 
@@ -204,7 +219,7 @@ async fn board_pack_body(ctx: &AppContext, query: &WindowQuery) -> Result<serde_
     }
 
     // Decisions in the window (shared builder, filtered).
-    let decisions: Vec<serde_json::Value> = decision_entries(ctx)
+    let decisions: Vec<serde_json::Value> = decision_entries(ctx, scope)
         .await?
         .into_iter()
         .filter(|(at, _)| *at >= from && *at <= to)
@@ -291,11 +306,12 @@ async fn board_investments(
     headers: HeaderMap,
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
-    let items = live!(plans, &ctx.db);
+    let scope = privileged_scope();
+    let items = live!(plans, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
-    for scenario in live!(scenarios, &ctx.db) {
+    for scenario in live!(scenarios, &ctx.db, &scope) {
         if let Some(at) = scenario.committed_at {
             let at = at.to_utc();
             entries.push((
@@ -309,7 +325,7 @@ async fn board_investments(
             ));
         }
     }
-    for line in live!(budget_lines, &ctx.db) {
+    for line in live!(budget_lines, &ctx.db, &scope) {
         if let Some(at) = line.released_at {
             let at = at.to_utc();
             entries.push((
@@ -325,7 +341,7 @@ async fn board_investments(
             ));
         }
     }
-    for proposal in live!(proposals, &ctx.db) {
+    for proposal in live!(proposals, &ctx.db, &scope) {
         if matches!(proposal.status.as_str(), "approved" | "promoted") {
             let at = proposal.updated_at.to_utc();
             entries.push((
@@ -383,8 +399,12 @@ struct TrendsQuery {
 async fn board_trends(
     axum::extract::Query(query): axum::extract::Query<TrendsQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    // The snapshots are totals recorded over **every** plan, private ones included, so
+    // they cannot be filtered for someone who may not see them: a privileged read.
+    authorize_oversight_read(&caller)?;
     let limit = query.limit.unwrap_or(100).min(500);
     let rows = insight_snapshots::Entity::find()
         .filter(insight_snapshots::Column::Kind.eq("estate"))
@@ -520,15 +540,25 @@ async fn auditor_trail(
 /// actors (one identifier space — bearer subjects), never from
 /// cross-space comparisons.
 #[debug_handler]
-async fn auditor_findings(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let items = live!(plans, &ctx.db);
+async fn auditor_findings(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let items = live!(plans, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
-    let audit_rows = audit_logs::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let line_item: std::collections::BTreeMap<Uuid, Uuid> = live!(budget_lines, &ctx.db)
+    let audit_rows = scope
+        .visible_audit(
+            &ctx,
+            audit_logs::Entity::find()
+                .all(&ctx.db)
+                .await
+                .map_err(|e| Error::Model(ModelError::from(e)))?,
+        )
+        .await?;
+    let line_item: std::collections::BTreeMap<Uuid, Uuid> = live!(budget_lines, &ctx.db, &scope)
         .iter()
         .map(|line| (line.pid, line.plan_pid))
         .collect();
@@ -589,6 +619,8 @@ async fn auditor_findings(State(ctx): State<AppContext>, headers: HeaderMap) -> 
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?
+        .into_iter()
+        .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
     {
         if merge.reason.as_deref().is_none_or(|r| r.trim().is_empty()) {
             findings.push(serde_json::json!({
@@ -678,7 +710,7 @@ async fn evidence_pack(
             .body(axum::body::Body::from(csv))
             .map_err(|e| Error::Any(e.into()));
     }
-    let decisions: Vec<serde_json::Value> = decision_entries(&ctx)
+    let decisions: Vec<serde_json::Value> = decision_entries(&ctx, &privileged_scope())
         .await?
         .into_iter()
         .filter(|(at, _)| *at >= from && *at <= to)
@@ -699,9 +731,11 @@ async fn evidence_pack(
 #[debug_handler]
 async fn compliance_register(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let body = risk_register_body(&ctx, "compliance").await?;
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let body = risk_register_body(&ctx, "compliance", &scope).await?;
     conditional(&headers, &body)
 }
 
@@ -720,17 +754,21 @@ struct ConformanceQuery {
 async fn compliance_findings(
     axum::extract::Query(query): axum::extract::Query<ConformanceQuery>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let review_days = i64::from(query.review_days.unwrap_or(90).clamp(1, 365));
     let now = chrono::Utc::now();
     let today = now.date_naive();
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
-    let review_rows = gate_reviews::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
+    let review_rows = scope.keep(
+        gate_reviews::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
     let mut findings: Vec<serde_json::Value> = Vec::new();
 
     // Rule 1: unfinished item past its target date with no gate review
@@ -822,10 +860,15 @@ async fn compliance_findings(
 /// declared risk appetite (or an honest "not configured").
 #[debug_handler]
 #[allow(clippy::too_many_lines)] // one pass: matrix + posture + hygiene + appetite
-async fn risk_heatmap(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+async fn risk_heatmap(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = chrono::Utc::now().date_naive();
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let open: Vec<&risks::Model> = risk_rows
@@ -975,10 +1018,15 @@ async fn risk_heatmap(State(ctx): State<AppContext>, headers: HeaderMap) -> Resu
 /// security-category risk ever recorded (a proxy for "no security
 /// review happened", stated as such).
 #[debug_handler]
-async fn security_register(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    let mut body = risk_register_body(&ctx, "security").await?;
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
+async fn security_register(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    headers: HeaderMap,
+) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let mut body = risk_register_body(&ctx, "security", &scope).await?;
+    let items = live!(plans, &ctx.db, &scope);
+    let risk_rows = live!(risks, &ctx.db, &scope);
     let with_security: std::collections::HashSet<Uuid> = risk_rows
         .iter()
         .filter(|r| r.category.as_deref() == Some("security"))
@@ -1020,6 +1068,7 @@ async fn regulator_extract(
     caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     // Record-level pass: read with no resource attrs; a policy may
     // attach the `mask` obligation (e.g. for dept=regulator tokens).
     let obligations = authorize_record(&caller, Action::Read, &std::collections::BTreeMap::new())
@@ -1031,13 +1080,15 @@ async fn regulator_extract(
     })?;
     let masked = obligations.iter().any(|o| o == "mask");
 
-    let items = live!(plans, &ctx.db);
-    let budget_rows = live!(budget_lines, &ctx.db);
-    let benefit_rows = live!(benefits, &ctx.db);
-    let review_rows = gate_reviews::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let items = live!(plans, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let benefit_rows = live!(benefits, &ctx.db, &scope);
+    let review_rows = scope.keep(
+        gate_reviews::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    );
 
     let mut portfolios = Vec::new();
     for portfolio in items
@@ -1122,9 +1173,13 @@ async fn regulator_extract(
 
 /// The category risk-register body (compliance / security), mirroring
 /// the technical-debt register's shape.
-async fn risk_register_body(ctx: &AppContext, category: &str) -> Result<serde_json::Value> {
-    let items = live!(plans, &ctx.db);
-    let risk_rows = live!(risks, &ctx.db);
+async fn risk_register_body(
+    ctx: &AppContext,
+    category: &str,
+    scope: &super::plan_access::HiddenScope,
+) -> Result<serde_json::Value> {
+    let items = live!(plans, &ctx.db, scope);
+    let risk_rows = live!(risks, &ctx.db, scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut rows = category_risks(&risk_rows, category);

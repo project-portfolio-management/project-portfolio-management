@@ -36,6 +36,17 @@ fn bad_request(code: &str, message: &str) -> Response {
         .into_response()
 }
 
+/// `?limit=` / `?offset=` for a handler that pages in the database.
+#[derive(Debug, Default, serde::Deserialize)]
+pub struct PageQuery {
+    /// Page size.
+    #[serde(default)]
+    pub limit: Option<u64>,
+    /// Rows to skip.
+    #[serde(default)]
+    pub offset: Option<u64>,
+}
+
 /// The paging layer. See the module docs.
 #[allow(clippy::result_large_err)]
 pub async fn paging_mw(req: Request, next: Next) -> Response {

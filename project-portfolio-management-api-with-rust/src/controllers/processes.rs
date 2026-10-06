@@ -179,14 +179,31 @@ async fn process_view(ctx: &AppContext, p: &processes::Model) -> Result<Response
 
 /// `GET /api/processes` — the live definitions.
 #[debug_handler]
-async fn list_processes(State(ctx): State<AppContext>, AuthUser(_): AuthUser) -> Result<Response> {
-    let rows = processes::Entity::find()
+async fn list_processes(
+    State(ctx): State<AppContext>,
+    AuthUser(_): AuthUser,
+    Query(q): Query<super::paging::PageQuery>,
+) -> Result<Response> {
+    let page = super::pagination::Page {
+        limit: q.limit,
+        offset: q.offset,
+    };
+    page.check_offset()?;
+    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let query = processes::Entity::find()
         .filter(processes::Column::DeletedAt.is_null())
-        .order_by_asc(processes::Column::Id)
+        .order_by_asc(processes::Column::Id);
+    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
+    let rows = query
+        .limit(limit)
+        .offset(offset)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    format::json(rows.iter().map(|p| serde_json::json!({ "pid": p.pid, "name": p.name, "current_version": p.current_version })).collect::<Vec<_>>())
+    let body = format::json(rows.iter().map(|p| serde_json::json!({ "pid": p.pid, "name": p.name, "current_version": p.current_version })).collect::<Vec<_>>())?;
+    Ok(super::pagination::with_page_headers(
+        body, total, limit, offset,
+    ))
 }
 
 /// `GET /api/processes/{pid}` — a definition with every version.
@@ -682,6 +699,10 @@ struct ListParams {
     subject_kind: Option<String>,
     #[serde(default)]
     subject_pid: Option<String>,
+    #[serde(default)]
+    limit: Option<u64>,
+    #[serde(default)]
+    offset: Option<u64>,
 }
 
 /// `GET /api/process-executions` — the caller's own runs, or (with `subject_kind` and
@@ -711,14 +732,30 @@ async fn list_executions(
         }
         _ => return Err(unprocessable("give subject_kind and subject_pid together")),
     }
-    let rows = query.all(&ctx.db).await.map_err(db_err)?;
-    format::json(
+    // Paged in the database: the page is all that is read.
+    let page = super::pagination::Page {
+        limit: q.limit,
+        offset: q.offset,
+    };
+    page.check_offset()?;
+    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
+    let rows = query
+        .limit(limit)
+        .offset(offset)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let body = format::json(
         rows.iter()
             .map(|e| serde_json::json!({ "pid": e.pid, "process_pid": e.process_pid, "version": e.version,
                 "subject_kind": e.subject_kind, "subject_pid": e.subject_pid, "status": e.status,
                 "current_step": e.current_step, "started_by": e.started_by, "finished_at": e.finished_at }))
             .collect::<Vec<_>>(),
-    )
+    )?;
+    Ok(super::pagination::with_page_headers(
+        body, total, limit, offset,
+    ))
 }
 
 #[derive(Debug, Deserialize)]

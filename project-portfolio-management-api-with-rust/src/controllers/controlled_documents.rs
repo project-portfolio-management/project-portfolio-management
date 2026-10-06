@@ -234,7 +234,11 @@ async fn create(
 
 /// `GET /api/documents` — the documents the caller may read, with the version in force today.
 #[debug_handler]
-async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+async fn list(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(q): Query<super::paging::PageQuery>,
+) -> Result<Response> {
     require_signed_in(&caller)?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scope.keep(
@@ -246,14 +250,32 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
             .map_err(db_err)?,
     );
     let guest = super::guests::caller_is_guest(&caller);
+    let rows: Vec<_> = rows
+        .into_iter()
+        .filter(|d| !guest || d.plan_pid.is_some())
+        .collect();
+    // Only the requested page is turned into views (each view reads its versions).
+    let page = super::pagination::Page {
+        limit: q.limit,
+        offset: q.offset,
+    };
+    page.check_offset()?;
+    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let total = rows.len() as u64;
     let mut out = Vec::new();
-    for d in &rows {
-        if guest && d.plan_pid.is_none() {
-            continue;
-        }
+    for d in rows
+        .iter()
+        .skip(usize::try_from(offset).unwrap_or(usize::MAX))
+        .take(usize::try_from(limit).unwrap_or(usize::MAX))
+    {
         out.push(doc_view(&ctx, d).await?);
     }
-    format::json(out)
+    Ok(super::pagination::with_page_headers(
+        format::json(out)?,
+        total,
+        limit,
+        offset,
+    ))
 }
 
 /// `GET /api/documents/{pid}` — a document and its versions (without their text).

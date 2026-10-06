@@ -182,6 +182,15 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
         with!(request.post(&format!("/api/plans/{p}/handover/preview")), admin).json(&hand).await.assert_status_ok();
         assert_eq!(with!(request.get(&format!("/api/plans/{p}/closeout")), writer).await.status_code(), 200, "readiness names no one");
 
+        // A task read with `include`: what names people is masked for a caller who may not manage them.
+        let task_url = format!("/api/plans/{p}/tasks/{t}");
+        let as_writer: Value = with!(request.get(&format!("{task_url}?include=children,raci,time_entries,transitions")), writer).await.json();
+        assert!(as_writer["included"].get("children").is_some());
+        let masked: Vec<&str> = as_writer["omitted"].as_array().unwrap().iter().map(|o| o["name"].as_str().unwrap()).collect();
+        assert_eq!(masked, vec!["raci", "time_entries", "transitions"], "{as_writer}");
+        let as_admin: Value = with!(request.get(&format!("{task_url}?include=raci,time_entries,transitions")), admin).await.json();
+        assert!(as_admin["omitted"].as_array().unwrap().is_empty());
+
         // Only the requester or an admin may cancel a bulk job; anyone else gets the 404 an unknown id would.
         let imported = with!(request.post("/api/plans/import?format=jsonl&on_keyless=create"), writer)
             .content_type("text/plain")

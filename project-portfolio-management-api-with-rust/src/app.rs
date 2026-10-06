@@ -213,6 +213,7 @@ impl Hooks for App {
             .add_route(controllers::onboarding::routes())
             .add_route(controllers::handover::routes())
             .add_route(controllers::hammock::routes())
+            .add_route(controllers::task_get::routes())
             .add_route(controllers::assignments::routes())
             .add_route(controllers::cost_rates::routes())
             .add_route(controllers::cost_risk::routes())
@@ -266,7 +267,10 @@ impl Hooks for App {
         // `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` flag is read per request and the layer is a
         // near-noop when the flag is off (the default).
         Ok(router
-            // Innermost: runs after the auth guard and versioning, so an
+            // Every list pages the same way (RM-12b): innermost of all, so what it
+            // slices is exactly what the handler answered.
+            .layer(axum::middleware::from_fn(controllers::paging::paging_mw))
+            // Runs after the auth guard and versioning, so an
             // unauthenticated caller never learns which modules a plan has.
             .layer(axum::middleware::from_fn_with_state(
                 ctx.clone(),

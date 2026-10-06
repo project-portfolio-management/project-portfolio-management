@@ -50,7 +50,101 @@ fn paths() -> Value {
     merge_object(&mut paths, personal_paths());
     merge_object(&mut paths, module_paths());
     merge_object(&mut paths, crate::openapi_more::paths());
+    document_paging(&mut paths);
     paths
+}
+
+/// Every `GET` that answers with a bare JSON array — a list. Each pages the same way
+/// (RM-12b, [`crate::controllers::paging`]): `limit`, `offset`, and the
+/// `X-Total-Count` / `X-Limit` / `X-Offset` headers. A test calls every documented
+/// `GET` it can reach and checks that the lists it finds are exactly these
+/// (and that the ones it cannot reach are named, with a reason), so a new list
+/// cannot go undocumented.
+pub const PAGED_LISTS: &[&str] = &[
+    "/api/approvals",
+    "/api/attachments",
+    "/api/automations",
+    "/api/automations/runs",
+    "/api/availability",
+    "/api/canvas-templates",
+    "/api/canvases",
+    "/api/comments",
+    "/api/comments/{pid}/history",
+    "/api/controls/{pid}/readings",
+    "/api/custom-fields",
+    "/api/dependencies",
+    "/api/me/notification-sinks",
+    "/api/me/notification-sinks/{pid}/deliveries",
+    "/api/objectives/{pid}/key-results",
+    "/api/plan-templates",
+    "/api/plans",
+    "/api/plans/audit/recent",
+    "/api/plans/bulk-jobs",
+    "/api/plans/events/recent",
+    "/api/plans/merges/recent",
+    "/api/plans/review-queue",
+    "/api/plans/search",
+    "/api/plans/{pid}/audit",
+    "/api/plans/{pid}/budget-baselines",
+    "/api/plans/{pid}/components",
+    "/api/plans/{pid}/controls",
+    "/api/plans/{pid}/guests",
+    "/api/plans/{pid}/links",
+    "/api/plans/{pid}/schedule-baselines",
+    "/api/plans/{pid}/sprints",
+    "/api/plans/{pid}/sprints/{s_pid}/notes",
+    "/api/plans/{pid}/time-entries",
+    "/api/plans/{pid}/tpc",
+    "/api/report-schedules",
+    "/api/resource-roles",
+    "/api/reviews",
+    "/api/scheduled-actions",
+    "/api/workflows",
+    "/api/custom-fields/search",
+    "/api/key-results/{pid}/check-ins",
+    "/api/report-schedules/{pid}/latest",
+    "/api/notifications",
+];
+
+/// Add `limit`, `offset` and the count headers to every list in [`PAGED_LISTS`].
+fn document_paging(paths: &mut Value) {
+    let Some(map) = paths.as_object_mut() else {
+        return;
+    };
+    for path in PAGED_LISTS {
+        let Some(get) = map
+            .get_mut(*path)
+            .and_then(|p| p.get_mut("get"))
+            .and_then(Value::as_object_mut)
+        else {
+            continue;
+        };
+        let params = get.entry("parameters").or_insert_with(|| json!([]));
+        if let Some(list) = params.as_array_mut() {
+            for (name, text) in [
+                ("limit", "Page size: default and ceiling 500"),
+                ("offset", "Rows to skip; above 10000 is a 400"),
+            ] {
+                if !list.iter().any(|p| p["name"] == name) {
+                    list.push(
+                        json!({ "name": name, "in": "query", "required": false, "description": text,
+                        "schema": { "type": "integer", "minimum": 0 } }),
+                    );
+                }
+            }
+        }
+        if let Some(ok) = get
+            .get_mut("responses")
+            .and_then(|r| r.get_mut("200"))
+            .and_then(Value::as_object_mut)
+        {
+            ok.insert("headers".to_string(), json!({
+                "X-Total-Count": { "description": "How many rows there are in all", "schema": { "type": "integer" } },
+                "X-Limit": { "description": "The page size used", "schema": { "type": "integer" } },
+                "X-Offset": { "description": "The offset used", "schema": { "type": "integer" } },
+            }));
+        }
+    }
 }
 
 /// The collaboration / automation / prioritisation capability paths:
@@ -193,6 +287,10 @@ fn insight_paths() -> Value {
             "parameters": [
                 { "name": "pid", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
                 { "name": "t_pid", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+            "get": { "tags": ["engineering"], "summary": "One task, optionally with its sub-resources embedded",
+                "description": "Without include the answer is the bare task, as the list shows it. ?include=children,relations,transitions,raci,time_entries answers {task, included, omitted} instead, each set being the live rows its own route would return (capped at 200). A sub-resource whose module is off for the plan is omitted (reason module_disabled); transitions, raci and time_entries name people, so they are omitted for a caller who may not manage people (reason masked); an omitted name is listed, never silently missing. An unknown name is a 422 listing the allowed ones. A task of another plan, or a deleted one, is 404.",
+                "parameters": [{ "name": "include", "in": "query", "required": false, "description": "comma-separated: children, relations, transitions, raci, time_entries", "schema": { "type": "string" } }],
+                "responses": { "200": { "description": "The task, or {task, included, omitted}" }, "404": { "description": "Unknown plan or task" }, "422": { "description": "An unknown include" } } },
             "put": { "tags": ["engineering"], "summary": "Update task fields (status changes go through PATCH)", "responses": { "200": { "description": "The task" }, "422": { "description": "Validation failure" } } },
             "patch": { "tags": ["engineering"], "summary": "Board move: {status}; stamps status_changed_at, first done stamps done_at", "responses": { "200": { "description": "The task" }, "422": { "description": "Unknown status" } } },
             "delete": { "tags": ["engineering"], "summary": "Soft-delete the task", "responses": { "200": { "description": "Deleted" } } }
@@ -2061,6 +2159,7 @@ mod tests {
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),
             crate::controllers::hammock::routes(),
+            crate::controllers::task_get::routes(),
             crate::controllers::assignments::routes(),
             crate::controllers::cost_rates::routes(),
             crate::controllers::cost_risk::routes(),

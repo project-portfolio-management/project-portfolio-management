@@ -54,7 +54,11 @@ fn valid_person_ref(value: &str) -> bool {
 }
 
 /// Find one live task of one plan, or 404.
-async fn find_task(ctx: &AppContext, plan_pid: Uuid, t_pid: &str) -> Result<tasks::Model> {
+pub(crate) async fn find_task(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    t_pid: &str,
+) -> Result<tasks::Model> {
     let t_pid = Uuid::parse_str(t_pid).map_err(|_| Error::NotFound)?;
     tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(t_pid))
@@ -67,7 +71,7 @@ async fn find_task(ctx: &AppContext, plan_pid: Uuid, t_pid: &str) -> Result<task
 }
 
 /// The task wire view (adds blocked-age days to the stored row).
-fn task_view(task: &tasks::Model) -> serde_json::Value {
+pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
     let blocked_days = (task.status == "blocked")
         .then(|| (chrono::Utc::now() - task.status_changed_at.to_utc()).num_days());
     serde_json::json!({

@@ -404,9 +404,69 @@ impl HiddenScope {
 }
 
 /// The plan a path addresses: `/api/plans/{uuid}` or anything beneath it.
+///
+/// The segment is percent-decoded **before** it is parsed, because the handlers see it
+/// decoded: a guard that parsed the raw text would be skipped by `%7B<uuid>%7D` (a braced
+/// form `Uuid::parse_str` accepts) while the handler served the plan.
 fn plan_pid_of(path: &str) -> Option<Uuid> {
     let rest = path.strip_prefix("/api/plans/")?;
-    Uuid::parse_str(rest.split('/').next()?).ok()
+    let raw = rest.split('/').next()?;
+    Uuid::parse_str(&percent_decode(raw)).ok()
+}
+
+/// Decode `%XX` escapes (invalid ones are left as they are).
+fn percent_decode(s: &str) -> String {
+    let b = s.as_bytes();
+    let mut out = Vec::with_capacity(b.len());
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'%' && i + 2 < b.len() {
+            let pair = (
+                char::from(b[i + 1]).to_digit(16),
+                char::from(b[i + 2]).to_digit(16),
+            );
+            if let (Some(h), Some(l)) = pair {
+                out.push(u8::try_from(h * 16 + l).unwrap_or(b'%'));
+                i += 3;
+                continue;
+            }
+        }
+        out.push(b[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+#[cfg(test)]
+mod path_tests {
+    use super::*;
+
+    const P: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
+
+    #[test]
+    fn every_spelling_the_handler_would_accept_is_guarded() {
+        let want = Uuid::parse_str(P).ok();
+        for path in [
+            format!("/api/plans/{P}"),
+            format!("/api/plans/{P}/cpm"),
+            format!("/api/plans/%7B{P}%7D/cpm"),
+            format!("/api/plans/%7b{P}%7d"),
+            format!("/api/plans/{}", P.replace('-', "")),
+            format!("/api/plans/urn:uuid:{P}/tasks"),
+            "/api/plans/%33f2c6b7e-0000-4000-8000-0000000000a1/cpm".to_string(),
+        ] {
+            assert_eq!(plan_pid_of(&path), want, "{path}");
+        }
+        for path in [
+            "/api/plans/search",
+            "/api/plans",
+            "/api/other/x",
+            "/api/plans/%zz",
+            "/api/plans/%",
+        ] {
+            assert_eq!(plan_pid_of(path), None, "{path}");
+        }
+    }
 }
 
 /// The guard layer: a request addressed to a private plan by a non-member is

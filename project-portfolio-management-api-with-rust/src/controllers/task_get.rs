@@ -125,8 +125,8 @@ async fn get_task(
                     .map(super::engineering::task_view)
                     .collect::<Vec<_>>(),
             ),
-            "relations" => serde_json::to_value(
-                task_relations::Entity::find()
+            "relations" => {
+                let found = task_relations::Entity::find()
                     .filter(task_relations::Column::DeletedAt.is_null())
                     .filter(
                         sea_orm::Condition::any()
@@ -137,11 +137,18 @@ async fn get_task(
                     .limit(CAP)
                     .all(&ctx.db)
                     .await
-                    .map_err(db_err)?
-                    .iter()
-                    .map(|r| serde_json::json!({ "pid": r.pid, "from": r.from_task_pid, "to": r.to_task_pid, "kind": r.kind }))
-                    .collect::<Vec<_>>(),
-            ),
+                    .map_err(db_err)?;
+                // A relation to a task in a plan the caller cannot read is not shown, not even as a pid.
+                let ends: Vec<Uuid> = found.iter().flat_map(|r| [r.from_task_pid, r.to_task_pid]).collect();
+                let ok = super::cpm::readable_endpoints(&ctx, &caller, &ends).await?;
+                serde_json::to_value(
+                    found
+                        .iter()
+                        .filter(|r| ok.contains(&r.from_task_pid) && ok.contains(&r.to_task_pid))
+                        .map(|r| serde_json::json!({ "pid": r.pid, "from": r.from_task_pid, "to": r.to_task_pid, "kind": r.kind }))
+                        .collect::<Vec<_>>(),
+                )
+            }
             "transitions" => serde_json::to_value(
                 task_transitions::Entity::find()
                     .filter(task_transitions::Column::TaskPid.eq(task.pid))

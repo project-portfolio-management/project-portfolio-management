@@ -54,8 +54,18 @@ fn is_admin(claims: &authentication_verifier::Claims) -> bool {
         .is_some_and(|v| v.iter().any(|a| a == "admin"))
 }
 
+/// Documents are read by signed-in people only, whether or not they belong to a plan.
+fn require_signed_in(caller: &MaybeAuthUser) -> Result<()> {
+    if caller.0.is_some() {
+        Ok(())
+    } else {
+        Err(Error::Unauthorized("sign in to read documents".to_string()))
+    }
+}
+
 /// A document the caller may read: live, and not in a private plan they are outside.
 async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result<docs::Model> {
+    require_signed_in(caller)?;
     let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
     let doc = docs::Entity::find()
         .filter(docs::Column::Pid.eq(pid))
@@ -225,6 +235,7 @@ async fn create(
 /// `GET /api/documents` — the documents the caller may read, with the version in force today.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    require_signed_in(&caller)?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scope.keep(
         docs::Entity::find()
@@ -430,10 +441,12 @@ async fn edit_version(
     if b.change_summary.is_some() {
         a.change_summary = ActiveValue::set(b.change_summary.clone());
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "document_version_edited", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "chars_before": was, "chars_after": row.body.chars().count() })))
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row.pid, "document_version_edited", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "chars_before": was, "chars_after": row.body.chars().count() })))
         .await
-        .ok();
+        .map_err(Error::Model)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(version_view(&row, true))
 }
 
@@ -459,7 +472,24 @@ async fn submit(
     if !super::governance::valid_ref(&b.approver_ref, &["person", "worker"]) {
         return Err(unprocessable("approver_ref must be a person:/worker: URN"));
     }
-    let v = find_version(&ctx, doc.pid, n).await?;
+    if b.approver_ref.ends_with(&claims.sub) {
+        return Err(unprocessable(
+            "you cannot approve your own document: name someone else",
+        ));
+    }
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    // Serialise per document, then re-read: two submits cannot both pass the draft check.
+    txn.execute_unprepared(&format!(
+        "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
+        doc.pid
+    ))
+    .await
+    .map_err(db_err)?;
+    let v = versions_of(&txn, doc.pid)
+        .await?
+        .into_iter()
+        .find(|v| v.version == n)
+        .ok_or(Error::NotFound)?;
     rules::check_move(
         Status::parse(&v.status).unwrap_or(Status::Superseded),
         Status::InReview,
@@ -468,7 +498,6 @@ async fn submit(
     if v.body.trim().is_empty() {
         return Err(unprocessable("a version with no text cannot be reviewed"));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
     let approval = approval_requests::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         subject_kind: ActiveValue::set("document_version".to_string()),

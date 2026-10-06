@@ -3356,3 +3356,49 @@ async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
     })
     .await;
 }
+
+/// Hardening: the guarantees the code states are held by the database too, and a what-if commit
+/// works in a plan that contains a hammock (the digest sees the same rows before and after).
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
+    use sea_orm::ConnectionTrait;
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        use axum::http::StatusCode as S;
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Hardening" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        request.put(&format!("/api/plans/{p}/calendar")).json(&json!({ "weekdays": "1111111" })).await.assert_status_ok();
+        let a = task(&request, &p, "A", Some("2026-10-05"), Some(3)).await;
+        let h: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({ "title": "Summary" })).await.json();
+        let h = h["pid"].as_str().unwrap().to_string();
+        request.post(&format!("/api/plans/{p}/tasks/{h}/hammock")).json(&json!({ "enabled": true })).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/hammocks/{h}/links")).json(&json!({ "member_pid": a })).await.assert_status_ok();
+
+        // A what-if commit in a plan with a hammock goes through (it used to be a permanent 409).
+        let edits = json!([{ "op": "duration", "task_pid": a, "duration_days": 5 }]);
+        let pv = request.post(&format!("/api/plans/{p}/sandbox/preview")).json(&json!({ "edits": edits })).await;
+        pv.assert_status_ok();
+        let etag = pv.header("etag").to_str().unwrap().to_string();
+        let r = request
+            .post(&format!("/api/plans/{p}/sandbox/commit"))
+            .add_header(axum::http::header::IF_MATCH, etag.parse::<axum::http::HeaderValue>().unwrap())
+            .json(&json!({ "edits": edits, "reason": "what if" }))
+            .await;
+        assert_eq!(r.status_code(), S::OK, "{}", r.text());
+
+        // The database refuses a dependency on a hammock even when the API check is raced.
+        let b = task(&request, &p, "B", Some("2026-10-12"), Some(1)).await;
+        let sql = format!("INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, kind, lag_days, created_at, updated_at) VALUES (gen_random_uuid(), '{b}', '{h}', 'finish_to_start', 0, now(), now())");
+        assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "a hammock has no dependencies of its own");
+
+        // Two open onboarding cases of one kind in one plan cannot exist, API or no API.
+        let body = json!({ "kind": "plan_intake", "effective_date": "2026-10-06" });
+        request.post(&format!("/api/plans/{p}/onboarding/cases")).json(&body).await.assert_status_ok();
+        request.post(&format!("/api/plans/{p}/onboarding/cases")).json(&body).await.assert_status(S::CONFLICT);
+        let dup = format!("INSERT INTO onboarding_cases (pid, kind, plan_pid, subject_ref, title, status, created_at, updated_at) VALUES (gen_random_uuid(), 'plan_intake', '{p}', NULL, 'x', 'open', now(), now())");
+        assert!(ctx.db.execute_unprepared(&dup).await.is_err());
+    })
+    .await;
+}

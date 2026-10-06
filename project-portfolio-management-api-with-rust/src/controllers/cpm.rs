@@ -711,10 +711,11 @@ async fn set_schedule(
         a.units_percent = ActiveValue::set(i32::try_from(r.triple.units_percent).ok());
         a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    let after = analyse(&load_network(&ctx, plan.pid).await?);
+    // The change and its audit row (with the reason) land together or not at all.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
     AuditModel::record(
-        &ctx.db,
+        &txn,
         row.pid,
         "task_schedule_updated",
         caller.actor(),
@@ -728,7 +729,9 @@ async fn set_schedule(
         })),
     )
     .await
-    .ok();
+    .map_err(Error::Model)?;
+    txn.commit().await.map_err(db_err)?;
+    let after = analyse(&load_network(&ctx, plan.pid).await?);
     let (moved, note) = match (&before, &after) {
         (Ok(b), Ok(a)) => (Some(cpm::diff(b, a)), None),
         _ => (

@@ -179,7 +179,7 @@ async fn process_view(ctx: &AppContext, p: &processes::Model) -> Result<Response
 
 /// `GET /api/processes` — the live definitions.
 #[debug_handler]
-async fn list_processes(State(ctx): State<AppContext>) -> Result<Response> {
+async fn list_processes(State(ctx): State<AppContext>, AuthUser(_): AuthUser) -> Result<Response> {
     let rows = processes::Entity::find()
         .filter(processes::Column::DeletedAt.is_null())
         .order_by_asc(processes::Column::Id)
@@ -191,7 +191,11 @@ async fn list_processes(State(ctx): State<AppContext>) -> Result<Response> {
 
 /// `GET /api/processes/{pid}` — a definition with every version.
 #[debug_handler]
-async fn get_process(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+async fn get_process(
+    State(ctx): State<AppContext>,
+    AuthUser(_): AuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
     let p = find_process(&ctx, &pid).await?;
     process_view(&ctx, &p).await
 }
@@ -777,6 +781,12 @@ async fn complete_step(
             // The completion is real even if the next step could not start: record it, then fail.
             let t2 = ctx.db.begin().await.map_err(db_err)?;
             let ex = lock(&t2, ex_pid).await?;
+            // Between the rollback and this lock the execution may have been cancelled or
+            // finished: then the completion is not recorded a second time.
+            if Status::is_final(&ex.status) || usize::try_from(ex.current_step).ok() != Some(index)
+            {
+                return execution_response(&ctx, ex_pid).await;
+            }
             log(
                 &t2,
                 ex.pid,
@@ -962,6 +972,22 @@ async fn resume(
             .map_err(db_err)?;
         if let Some(a) = waiting {
             on_approval(&ctx, &a).await?;
+        } else {
+            // Nothing is waiting and the current step has no log at all: the process stopped
+            // between creating the execution and starting its first step (or the next one).
+            // Run it now; a step that began is left alone.
+            let begun = process_execution_logs::Entity::find()
+                .filter(process_execution_logs::Column::ExecutionPid.eq(ex.pid))
+                .filter(process_execution_logs::Column::StepIndex.eq(ex.current_step))
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .is_some();
+            if !begun {
+                let steps = version_steps(&ctx.db, ex.process_pid, ex.version).await?;
+                let from = usize::try_from(ex.current_step).unwrap_or(0);
+                advance_or_fail(&ctx, ex.pid, from, &steps, Some(&claims.sub)).await?;
+            }
         }
     }
     execution_response(&ctx, ex.pid).await

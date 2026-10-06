@@ -189,6 +189,7 @@ struct CaseBody {
 
 /// `POST /api/plans/{pid}/onboarding/cases` — start an onboarding or offboarding.
 #[debug_handler]
+#[allow(clippy::too_many_lines)]
 async fn create_case(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -238,6 +239,9 @@ async fn create_case(
         Kind::PlanIntake => format!("Taking in {}", plan.name),
         Kind::PlanCloseout => format!("Closing out {}", plan.name),
     });
+    let (seeds, _) = items_for(&ctx, kind).await?;
+    // Case, checklist and audit row land together or not at all.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let case = onboarding_cases::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         kind: ActiveValue::set(kind.token().to_string()),
@@ -251,10 +255,17 @@ async fn create_case(
         closed_reason: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
-    .map_err(db_err)?;
-    let (seeds, _) = items_for(&ctx, kind).await?;
+    .map_err(|e| {
+        if e.to_string().contains("onboarding_cases_one_open") {
+            conflict(
+                "an open checklist of this kind already exists here; finish or cancel it first",
+            )
+        } else {
+            db_err(e)
+        }
+    })?;
     for (i, s) in seeds.iter().enumerate() {
         onboarding_items::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -269,12 +280,12 @@ async fn create_case(
             resolved_by: ActiveValue::set(None),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?;
     }
     AuditModel::record(
-        &ctx.db,
+        &txn,
         case.pid,
         "onboarding_case_opened",
         caller.actor(),
@@ -284,7 +295,8 @@ async fn create_case(
         ),
     )
     .await
-    .ok();
+    .map_err(Error::Model)?;
+    txn.commit().await.map_err(db_err)?;
     case_view(&ctx, &caller, &case).await
 }
 
@@ -345,6 +357,15 @@ async fn find_case(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+    // A case of a private plan the caller is outside (or a guest not granted) does not exist for them.
+    if (super::guests::caller_is_guest(caller)
+        && !super::guests::guest_covers_plan(&ctx.db, caller, c.plan_pid, "read").await)
+        || super::plan_access::hidden_plans(ctx, &[c.plan_pid], caller)
+            .await
+            .contains(&c.plan_pid)
+    {
+        return Err(Error::NotFound);
+    }
     // A case about a person does not exist for someone who may not see people.
     if Kind::parse(&c.kind).is_some_and(Kind::is_person) && !may_manage_people(caller) {
         return Err(Error::NotFound);

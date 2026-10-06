@@ -113,10 +113,13 @@ async fn set_hammock(
                 blockers.join(", ")
             )));
         }
-    } else {
+    }
+    // Links, flag and audit row change together or not at all.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    if !b.enabled {
         hammock_links::Entity::delete_many()
             .filter(hammock_links::Column::HammockPid.eq(task.pid))
-            .exec(&ctx.db)
+            .exec(&txn)
             .await
             .map_err(db_err)?;
     }
@@ -126,9 +129,9 @@ async fn set_hammock(
     if b.enabled {
         a.start_date = ActiveValue::set(None);
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
     AuditModel::record(
-        &ctx.db,
+        &txn,
         row.pid,
         if b.enabled {
             "hammock_enabled"
@@ -139,7 +142,8 @@ async fn set_hammock(
         Some(serde_json::json!({ "plan_pid": plan.pid })),
     )
     .await
-    .ok();
+    .map_err(Error::Model)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(
         serde_json::json!({ "pid": row.pid, "is_hammock": row.is_hammock, "changed": true }),
     )

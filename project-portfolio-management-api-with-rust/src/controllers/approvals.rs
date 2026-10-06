@@ -234,12 +234,14 @@ async fn decide(
         row.subject_kind.clone(),
         row.subject_pid,
     );
-    let mut active: approval_requests::ActiveModel = row.into();
-    active.status = ActiveValue::set(status.to_string());
-    active.decision_comment = ActiveValue::set(p.comment.as_ref().map(|c| c.trim().to_string()));
-    active.decided_by = ActiveValue::set(Some(claims.sub.clone()));
-    active.decided_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let updated = active.update(&ctx.db).await.map_err(db_err)?;
+    let updated = settle(
+        &ctx,
+        request_pid,
+        status,
+        p.comment.as_ref().map(|c| c.trim().to_string()),
+        Some(claims.sub.clone()),
+    )
+    .await?;
     AuditModel::record(
         &ctx.db,
         request_pid,
@@ -285,9 +287,7 @@ async fn withdraw(
     }
     let status = rules::withdraw(&row.status).map_err(|r| conflict(&r.message()))?;
     let request_pid = row.pid;
-    let mut active: approval_requests::ActiveModel = row.into();
-    active.status = ActiveValue::set(status.to_string());
-    let updated = active.update(&ctx.db).await.map_err(db_err)?;
+    let updated = settle(&ctx, request_pid, status, None, None).await?;
     AuditModel::record(
         &ctx.db,
         request_pid,
@@ -300,6 +300,52 @@ async fn withdraw(
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
     format::json(updated)
+}
+
+/// Move a request out of `pending`, and only out of `pending`: the write itself carries
+/// the condition, so of two racing decisions (or a decision and a withdrawal) exactly one
+/// lands and the other is a 409 — never a last-write-wins that leaves what hangs off the
+/// request (a process step, a document version) disagreeing with it.
+async fn settle(
+    ctx: &AppContext,
+    pid: Uuid,
+    status: &str,
+    comment: Option<String>,
+    decided_by: Option<String>,
+) -> Result<approval_requests::Model> {
+    let decided = decided_by.is_some();
+    let mut q = approval_requests::Entity::update_many()
+        .col_expr(
+            approval_requests::Column::Status,
+            sea_orm::sea_query::Expr::value(status.to_string()),
+        )
+        .filter(approval_requests::Column::Pid.eq(pid))
+        .filter(approval_requests::Column::Status.eq("pending"));
+    if decided {
+        q = q
+            .col_expr(
+                approval_requests::Column::DecisionComment,
+                sea_orm::sea_query::Expr::value(comment),
+            )
+            .col_expr(
+                approval_requests::Column::DecidedBy,
+                sea_orm::sea_query::Expr::value(decided_by),
+            )
+            .col_expr(
+                approval_requests::Column::DecidedAt,
+                sea_orm::sea_query::Expr::value(chrono::Utc::now().fixed_offset()),
+            );
+    }
+    let done = q.exec(&ctx.db).await.map_err(db_err)?;
+    if done.rows_affected != 1 {
+        return Err(conflict("this request was already decided or withdrawn"));
+    }
+    approval_requests::Entity::find()
+        .filter(approval_requests::Column::Pid.eq(pid))
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)
 }
 
 /// The approval routes.

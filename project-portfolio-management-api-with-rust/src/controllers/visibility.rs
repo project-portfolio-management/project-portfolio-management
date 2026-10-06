@@ -203,6 +203,15 @@ async fn list_dependencies(
     caller: MaybeAuthUser,
     Query(params): Query<DependencyParams>,
 ) -> Result<Response> {
+    // Filtering by an item the caller cannot read answers exactly as for an item with no
+    // links: an empty list, so the filter cannot be used to probe for ids.
+    if let Some(item) = params.item
+        && !super::cpm::readable_endpoints(&ctx, &caller, &[item])
+            .await?
+            .contains(&item)
+    {
+        return format::json(Vec::<serde_json::Value>::new());
+    }
     let rows = vis_models::all_dependencies(&ctx.db).await?;
     let rows: Vec<_> = rows
         .into_iter()

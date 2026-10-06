@@ -215,6 +215,12 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         }
         assert!(audits("document_version_edited").await >= 3);
 
+        // A checklist case of the plan, opened while it was still public.
+        let case: Value = with!(request.post(&format!("/api/plans/{plan}/onboarding/cases")), owner)
+            .json(&json!({ "kind": "plan_intake", "effective_date": "2026-10-06" }))
+            .await
+            .json();
+        let case = case["pid"].as_str().unwrap().to_string();
         // ── a document of a private plan is not there for someone outside it ──
         with!(request.put(&format!("/api/plans/{plan}/access")), owner).json(&json!({ "private": true, "members": [] })).await.assert_status_ok();
         assert_eq!(with!(request.get(&format!("/api/documents/{d}")), stranger).await.status_code(), 404);
@@ -223,6 +229,16 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         let listed = with!(request.get("/api/documents"), stranger).await.text();
         assert!(!listed.contains(&d) && !listed.contains("Safety policy"), "{listed}");
         assert!(with!(request.get("/api/documents"), owner).await.text().contains(&d));
+        // The guard reads the path the way the handlers do: a braced or percent-encoded
+        // spelling of the plan id is no way round it.
+        for path in [format!("/api/plans/{plan}/cpm"), format!("/api/plans/%7B{plan}%7D/cpm"), format!("/api/plans/%7b{plan}%7d")] {
+            assert_eq!(with!(request.get(&path), stranger).await.status_code(), 404, "{path}");
+        }
+        assert_eq!(with!(request.get(&format!("/api/plans/%7B{plan}%7D")), owner).await.status_code(), 200, "members still get in");
+        // A checklist of a private plan is not there either, nor can it be changed.
+        assert_eq!(with!(request.get(&format!("/api/onboarding/cases/{case}")), stranger).await.status_code(), 404);
+        assert_eq!(with!(request.post(&format!("/api/onboarding/cases/{case}/cancel")), stranger).json(&json!({ "reason": "x" })).await.status_code(), 404);
+        assert_eq!(with!(request.get(&format!("/api/onboarding/cases/{case}")), owner).await.status_code(), 200);
         // Someone who cannot read the plan cannot create a document in it, nor ask for its approval.
         assert_eq!(with!(request.post("/api/documents"), stranger).json(&json!({ "title": "x", "plan_pid": plan })).await.status_code(), 404);
     })

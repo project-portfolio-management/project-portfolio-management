@@ -123,6 +123,8 @@ async fn read_rows<C: sea_orm::ConnectionTrait>(conn: &C, plan: Uuid) -> Result<
     tasks::Entity::find()
         .filter(tasks::Column::PlanPid.eq(plan))
         .filter(tasks::Column::DeletedAt.is_null())
+        // Hammocks are not in the network the preview digests, so the recheck must not see them either.
+        .filter(tasks::Column::IsHammock.eq(false))
         .order_by_asc(tasks::Column::Id)
         .all(conn)
         .await

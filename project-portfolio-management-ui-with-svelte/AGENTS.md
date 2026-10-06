@@ -305,3 +305,7 @@ both default to `http://localhost:5150` (see `.env.example`).
   (own `/signin` + `/verify` BFF routes calling the central
   authentication-service); this app never handles or stores a password,
   and the browser never holds a token.
+
+## Sitemap
+
+`/sitemap.xml` and `/robots.txt` are generated (`src/lib/sitemap.ts`, routes `src/routes/sitemap.xml`, `src/routes/robots.txt`). The page list comes from `import.meta.glob` over `+page.svelte`, so a new static page appears automatically, once per locale with `hreflang` alternates. Parameterised pages (`[pid]`), `/signin`, `/verify`, `/display` and `/api` are never listed. Set `PUBLIC_SITE_URL` (process env) to the public origin behind a proxy; otherwise the request's origin is used. Both paths are unlocalized (`isUnlocalized`).

@@ -152,7 +152,7 @@ export function localeOfPath(pathname: string): Locale | null {
 
 /** Paths that are never localized: the BFF API, framework assets, static files. */
 const UNLOCALIZED =
-  /^\/(api|_app|assets|\.well-known)(\/|$)|^\/(favicon\.svg|robots\.txt)$/;
+  /^\/(api|_app|assets|\.well-known)(\/|$)|^\/(favicon\.svg|robots\.txt|sitemap\.xml)$/;
 
 /** Whether `pathname` belongs outside the locale tree. */
 export function isUnlocalized(pathname: string): boolean {

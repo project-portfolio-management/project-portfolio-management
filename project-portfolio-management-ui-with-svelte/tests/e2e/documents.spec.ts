@@ -4,9 +4,10 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { primaryButtons } from "./fixtures";
+import { primaryButtons, settle } from "./fixtures";
 
 async function audit(page: Page) {
+  await settle(page);
   const r = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
@@ -159,7 +160,9 @@ test("an approved version comes into force; a final version is read-only; the da
     }),
   );
   await page.goto("/en-001/documents/d1");
-  await expect(page.getByRole("button", { name: "Bring into force today" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Bring into force today" }),
+  ).toBeVisible();
   expect(await primaryButtons(page)).toEqual(["Bring into force today"]);
   await page.getByRole("button", { name: /Version 1 — In force/ }).click();
   await expect(page.getByText("This version's text is final")).toBeVisible();

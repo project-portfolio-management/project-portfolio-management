@@ -7,7 +7,10 @@ import { test, expect, type Page } from "@playwright/test";
 
 const LONG = "A very long name that goes on and on ".repeat(6);
 
-async function stub(page: Page, opts: { long?: boolean; healthFails?: boolean } = {}) {
+async function stub(
+  page: Page,
+  opts: { long?: boolean; healthFails?: boolean } = {},
+) {
   const name = (n: string) => (opts.long ? `${n} ${LONG}` : n);
   await page.route("**/api/executive/health**", (r) =>
     opts.healthFails
@@ -106,15 +109,30 @@ const SIZES = [
 
 for (const size of SIZES) {
   for (const long of [false, true]) {
-    test(`the dashboard fits an iPad in ${size.name} without scrolling${long ? " (long content)" : ""}`, async ({ page }) => {
+    test(`the dashboard fits an iPad in ${size.name} without scrolling${long ? " (long content)" : ""}`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: size.width, height: size.height });
       await stub(page, { long });
       await page.goto("/en-001/ceo");
-      await expect(page.getByTestId("tile-news").getByText("Announcement 0")).toBeVisible();
-      await expect(page.getByTestId("tile-milestones").getByText("Milestone 0")).toBeVisible();
-      await expect(page.getByTestId("tile-decisions").getByText("Decision 5")).toBeVisible();
+      await expect(
+        page.getByTestId("tile-news").getByText("Announcement 0"),
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("tile-milestones").getByText("Milestone 0"),
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("tile-decisions").getByText("Decision 5"),
+      ).toBeVisible();
       expect(await page.locator("[data-testid^=tile-]").count()).toBe(6);
-      for (const id of ["health", "risk", "milestones", "kpis", "decisions", "news"]) {
+      for (const id of [
+        "health",
+        "risk",
+        "milestones",
+        "kpis",
+        "decisions",
+        "news",
+      ]) {
         await expect(page.getByTestId(`tile-${id}`)).toBeVisible();
       }
       const m = await page.evaluate(() => ({
@@ -122,10 +140,16 @@ for (const size of SIZES) {
         ih: window.innerHeight,
         sw: document.documentElement.scrollWidth,
         iw: window.innerWidth,
-        tiles: [...document.querySelectorAll("[data-testid^=tile-]")].map((t) => {
-          const r = t.getBoundingClientRect();
-          return { bottom: r.bottom, right: r.right, over: t.scrollHeight > t.clientHeight + 1 };
-        }),
+        tiles: [...document.querySelectorAll("[data-testid^=tile-]")].map(
+          (t) => {
+            const r = t.getBoundingClientRect();
+            return {
+              bottom: r.bottom,
+              right: r.right,
+              over: t.scrollHeight > t.clientHeight + 1,
+            };
+          },
+        ),
       }));
       expect(m.sh, "page height").toBeLessThanOrEqual(m.ih);
       expect(m.sw, "page width").toBeLessThanOrEqual(m.iw);
@@ -134,26 +158,38 @@ for (const size of SIZES) {
         expect(t.right).toBeLessThanOrEqual(m.iw);
       }
       // Each tile ends in a link to its full page, one tap away.
-      await expect(page.getByRole("link", { name: "All announcements" })).toBeVisible();
-      const box = await page.getByRole("link", { name: "All key measures" }).boundingBox();
+      await expect(
+        page.getByRole("link", { name: "All announcements" }),
+      ).toBeVisible();
+      const box = await page
+        .getByRole("link", { name: "All key measures" })
+        .boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
     });
   }
 }
 
-test("a tile that fails says so and the others still show", async ({ page }) => {
+test("a tile that fails says so and the others still show", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1080, height: 810 });
   await stub(page, { healthFails: true });
   await page.goto("/en-001/ceo");
-  await expect(page.getByTestId("tile-health").getByRole("alert")).toBeVisible();
+  await expect(
+    page.getByTestId("tile-health").getByRole("alert"),
+  ).toBeVisible();
   await expect(page.getByTestId("tile-kpis").getByText("KPI 0")).toBeVisible();
 });
 
-test("a phone gets a stacked page that may scroll but never sideways", async ({ page }) => {
+test("a phone gets a stacked page that may scroll but never sideways", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await stub(page);
   await page.goto("/en-001/ceo");
   await expect(page.getByTestId("tile-news")).toBeVisible();
-  const sw = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+  const sw = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  );
   expect(sw).toBe(true);
 });

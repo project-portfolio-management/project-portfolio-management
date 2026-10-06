@@ -5,6 +5,7 @@
 
 import { test, expect, type Page, type Route } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { settle } from "./fixtures";
 
 const PLAN = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const T1 = "11111111-1111-4111-8111-111111111111";
@@ -28,6 +29,7 @@ async function stub(page: Page, routes: Record<string, unknown | Handler>) {
 }
 
 async function audit(page: Page) {
+  await settle(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

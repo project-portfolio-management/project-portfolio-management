@@ -6,7 +6,7 @@
 
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { ROUTES, stubPlansApi } from "./fixtures";
+import { ROUTES, settle, stubPlansApi } from "./fixtures";
 
 test.describe("axe audit of every route (LT-12)", () => {
   test.beforeEach(async ({ page }) => {
@@ -34,6 +34,7 @@ test.describe("axe audit of every route (LT-12)", () => {
         waitUntil: "networkidle",
       });
       await expect(page.locator("h1").first()).toBeVisible();
+      await settle(page);
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();

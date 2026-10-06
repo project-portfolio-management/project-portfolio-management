@@ -12,12 +12,18 @@ test.describe("at most one primary action per screen (LT-12)", () => {
 
   for (const route of ROUTES) {
     test(`${route} shows at most one primary button`, async ({ page }) => {
-      await page.goto(`/en-001${route === "/" ? "" : route}`, { waitUntil: "networkidle" });
+      await page.goto(`/en-001${route === "/" ? "" : route}`, {
+        waitUntil: "networkidle",
+      });
       await expect(page.locator("h1").first()).toBeVisible();
       const names = await page
-        .locator("button.primary:visible, a.primary:visible, a.button.primary:visible")
+        .locator(
+          "button.primary:visible, a.primary:visible, a.button.primary:visible",
+        )
         .evaluateAll((els) => els.map((e) => (e.textContent ?? "").trim()));
-      expect(names, "primary buttons on screen").toHaveLength(Math.min(names.length, 1));
+      expect(names, "primary buttons on screen").toHaveLength(
+        Math.min(names.length, 1),
+      );
     });
   }
 });

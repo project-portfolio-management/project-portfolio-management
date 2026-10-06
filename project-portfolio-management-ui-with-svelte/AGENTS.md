@@ -317,3 +317,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 ## Import (T-28n)
 
 `/plans/[pid]/import` (`src/lib/import-view.ts`): preview (`dry_run=true`) first, then the same single primary button imports. CSV goes through `ApiClient`'s `rawBody` with `content-type: text/csv`. `extractMessage` prefers the server's `description` (the reason) over `error` (the code).
+
+## Flaky accessibility audits
+
+Call `settle(page)` (`tests/e2e/fixtures.ts`) before any axe audit. A button that has just flipped from primary to secondary is otherwise measured halfway through its colour transition, and axe reports a false `color-contrast` failure about 1 run in 20. Check a state *before* the click that changes it, never after (an `expect.poll` for the old state after a click races the response).

@@ -3,9 +3,10 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { PID, primaryButtons } from "./fixtures";
+import { PID, primaryButtons, settle } from "./fixtures";
 
 async function audit(page: Page) {
+  await settle(page);
   const r = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
@@ -146,13 +147,11 @@ test("Microsoft Project XML goes to its own endpoint and its report reads the sa
   await page.goto(`/en-001/plans/${PID}/import`);
   await page.getByLabel("Tracker").selectOption("mspdi");
   await expect(page.getByText("File → Save As → XML Format")).toBeVisible();
-  await page
-    .getByLabel("File", { exact: true })
-    .setInputFiles({
-      name: "plan.xml",
-      mimeType: "application/xml",
-      buffer: Buffer.from("<Project/>"),
-    });
+  await page.getByLabel("File", { exact: true }).setInputFiles({
+    name: "plan.xml",
+    mimeType: "application/xml",
+    buffer: Buffer.from("<Project/>"),
+  });
   await page.getByRole("button", { name: "Preview the import" }).click();
   await expect(page.getByRole("status")).toContainText(
     "Would create 4 tasks and update 0; 2 dependencies.",

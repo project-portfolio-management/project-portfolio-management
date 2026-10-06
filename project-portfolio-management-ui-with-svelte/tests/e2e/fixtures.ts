@@ -97,3 +97,15 @@ export async function primaryButtons(page: Page): Promise<string[]> {
     .locator("button.primary:visible, a.primary:visible")
     .evaluateAll((els) => els.map((e) => (e.textContent ?? "").trim()));
 }
+
+/**
+ * Stop CSS transitions and animations so an accessibility audit reads the final colours: a
+ * button that has just changed from primary to secondary is otherwise measured halfway
+ * through its fade, which axe reports as a (false) colour-contrast failure about 1 run in 20.
+ */
+export async function settle(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content:
+      "*, *::before, *::after { transition: none !important; animation: none !important; }",
+  });
+}

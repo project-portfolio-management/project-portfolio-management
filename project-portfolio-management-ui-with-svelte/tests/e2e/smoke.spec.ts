@@ -129,7 +129,9 @@ test("merge page renders the form and the recent-merges table", async ({
     route.fulfill({ json: [] }),
   );
   await page.goto("/plans/merge", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "Merge plans" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Merge plans" }),
+  ).toBeVisible();
   await expect(page.locator("#merge-main")).toBeVisible();
   await expect(page.locator("#merge-dup")).toBeVisible();
   await expect(
@@ -190,7 +192,9 @@ test("detail check-duplicates hides the record itself (self-exclusion)", async (
   await expect(page.locator("h2 ~ ul a")).toHaveText("Website rebuild");
 });
 
-test("tour renders anonymously with six workflow sections", async ({ page }) => {
+test("tour renders anonymously with six workflow sections", async ({
+  page,
+}) => {
   await page.goto("/tour");
   await expect(page).toHaveURL(/\/tour$/);
   await expect(page.locator(".tour section[id]")).toHaveCount(7);

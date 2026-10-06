@@ -5,7 +5,21 @@ import type { ImportUnmapped, TrackerImportReport } from "#lib/api/ppm.js";
 export const SOURCE_LABEL = {
   jira: "Jira (CSV export)",
   asana: "Asana (CSV export)",
+  mspdi: "Microsoft Project (XML file)",
 } as const;
+
+export type ImportSource = keyof typeof SOURCE_LABEL;
+
+/** What the file picker offers for each source. */
+export const SOURCE_ACCEPT: Record<ImportSource, string> = {
+  jira: ".csv,text/csv",
+  asana: ".csv,text/csv",
+  mspdi: ".xml,application/xml,text/xml",
+};
+
+/** The one thing people get wrong with Microsoft Project: a .mpp file is not the XML export. */
+export const MSPDI_HINT =
+  "In Microsoft Project use File → Save As → XML Format. A .mpp file cannot be read.";
 
 /** What the unmapped kinds are called to a person. */
 const WHAT: Record<string, string> = {
@@ -16,6 +30,11 @@ const WHAT: Record<string, string> = {
   date: "Dates not understood",
   field: "Fields shortened",
   status: "Status notes",
+  resource: "Resources not matched to people",
+  cost: "Costs not imported",
+  schedule: "Schedules not imported",
+  constraint: "Constraints not imported",
+  calendar: "Calendar notes",
 };
 
 /** The unmapped list grouped by kind, kinds in a fixed order, each with its reasons. */

@@ -848,7 +848,7 @@ export interface ImportUnmapped {
 /** `POST /api/plans/{pid}/import/{jira|asana}`. */
 export interface TrackerImportReport {
   dry_run: boolean;
-  source: "jira" | "asana";
+  source: "jira" | "asana" | "mspdi";
   items_in_file: number;
   tasks_created: number;
   tasks_updated: number;
@@ -857,6 +857,34 @@ export interface TrackerImportReport {
   links_already_present: number;
   unmapped: ImportUnmapped[];
   note: string;
+}
+
+/**
+ * The MS Project report, shaped like a tracker report so one screen shows both: its task
+ * `uid` is the item key, and its project calendar (imported or not) is one more line.
+ */
+export function mspdiReport(r: Record<string, unknown>): TrackerImportReport {
+  const un = Array.isArray(r.unmapped)
+    ? (r.unmapped as { what?: string; uid?: number | null; reason?: string }[])
+    : [];
+  return {
+    dry_run: r.dry_run === true,
+    source: "mspdi",
+    items_in_file: Number(r.tasks_in_file ?? 0),
+    tasks_created: Number(r.tasks_created ?? 0),
+    tasks_updated: Number(r.tasks_updated ?? 0),
+    links_in_file: Number(r.links_in_file ?? 0),
+    links_created: Number(r.links_created ?? 0),
+    links_already_present: Number(r.links_already_present ?? 0),
+    unmapped: un.map((u) => ({
+      what: u.what ?? "field",
+      key: u.uid === null || u.uid === undefined ? null : `task ${u.uid}`,
+      reason: u.reason ?? "",
+    })),
+    note:
+      String(r.note ?? "") +
+      (r.calendar_imported ? " The project calendar comes across." : ""),
+  };
 }
 
 /** PL-6: where a version of a controlled document is in its life. */
@@ -2635,16 +2663,21 @@ export class PpmClient {
   }
 
   // ---- tracker import (T-28n) ----
-  importTracker(
+  async importTracker(
     pid: string,
-    source: "jira" | "asana",
-    csv: string,
+    source: "jira" | "asana" | "mspdi",
+    file: string,
     dryRun: boolean,
   ): Promise<TrackerImportReport> {
-    return this.http.post(
-      `/api/plans/${pid}/import/${source}?dry_run=${dryRun}`,
-      { rawBody: csv, headers: { "content-type": "text/csv" } },
-    );
+    const url = `/api/plans/${pid}/import/${source}?dry_run=${dryRun}`;
+    const type = source === "mspdi" ? "application/xml" : "text/csv";
+    const raw = await this.http.post<Record<string, unknown>>(url, {
+      rawBody: file,
+      headers: { "content-type": type },
+    });
+    return source === "mspdi"
+      ? mspdiReport(raw)
+      : (raw as unknown as TrackerImportReport);
   }
 
   // ---- controlled documents (PL-6) ----

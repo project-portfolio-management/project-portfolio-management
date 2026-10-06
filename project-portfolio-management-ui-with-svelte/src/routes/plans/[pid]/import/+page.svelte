@@ -9,11 +9,11 @@
   import { page } from "$app/state";
   import { localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient, type TrackerImportReport } from "#lib/api/ppm.js";
-  import { SOURCE_LABEL, actionLabel, summaryText, unmappedGroups } from "#lib/import-view.js";
+  import { MSPDI_HINT, SOURCE_ACCEPT, SOURCE_LABEL, actionLabel, summaryText, unmappedGroups, type ImportSource } from "#lib/import-view.js";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
-  let source = $state<"jira" | "asana">("jira");
+  let source = $state<ImportSource>("jira");
   let csv = $state<string | null>(null);
   let fileName = $state("");
   let preview = $state<TrackerImportReport | null>(null);
@@ -38,7 +38,7 @@
   async function go(e: SubmitEvent) {
     e.preventDefault();
     if (csv === null) {
-      error = "Choose the CSV file first.";
+      error = "Choose the file first.";
       return;
     }
     busy = true;
@@ -63,7 +63,7 @@
 
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a></p>
 <h1>Import</h1>
-<p class="lede">Bring tasks in from Jira or Asana. You see what would happen first; nothing is written until you confirm.</p>
+<p class="lede">Bring tasks in from Jira, Asana or Microsoft Project. You see what would happen first; nothing is written until you confirm.</p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 
 <form class="surface stack" onsubmit={go} aria-labelledby="src-h">
@@ -73,9 +73,11 @@
     <select bind:value={source} onchange={reset}>
       <option value="jira">{SOURCE_LABEL.jira}</option>
       <option value="asana">{SOURCE_LABEL.asana}</option>
+      <option value="mspdi">{SOURCE_LABEL.mspdi}</option>
     </select>
   </label>
-  <label>CSV file <input type="file" accept=".csv,text/csv" onchange={choose} /></label>
+  <label>File <input type="file" accept={SOURCE_ACCEPT[source]} onchange={choose} /></label>
+  {#if source === "mspdi"}<p class="small muted">{MSPDI_HINT}</p>{/if}
   {#if fileName}<p class="small muted">{fileName}</p>{/if}
   <button class="button primary" type="submit" disabled={busy || csv === null}>{actionLabel(preview)}</button>
   {#if preview}<button type="button" class="button" onclick={reset}>Choose another file</button>{/if}

@@ -87,3 +87,51 @@ describe("the client", () => {
     );
   });
 });
+
+import { mspdiReport } from "../../src/lib/api/ppm";
+import {
+  MSPDI_HINT,
+  SOURCE_ACCEPT,
+  SOURCE_LABEL,
+} from "../../src/lib/import-view";
+
+describe("Microsoft Project", () => {
+  it("its report reads like a tracker report, with the task uid as the key", () => {
+    const r = mspdiReport({
+      dry_run: false,
+      tasks_in_file: 3,
+      tasks_created: 2,
+      tasks_updated: 1,
+      links_in_file: 1,
+      links_created: 1,
+      calendar_imported: true,
+      note: "n",
+      unmapped: [
+        { what: "link", uid: 7, reason: "skipped" },
+        { what: "resource", uid: null, reason: "Ann" },
+      ],
+    });
+    expect(r).toMatchObject({
+      source: "mspdi",
+      dry_run: false,
+      items_in_file: 3,
+      tasks_created: 2,
+      links_created: 1,
+    });
+    expect(r.unmapped).toEqual([
+      { what: "link", key: "task 7", reason: "skipped" },
+      { what: "resource", key: null, reason: "Ann" },
+    ]);
+    expect(r.note).toContain("calendar");
+    expect(summaryText(r)).toBe("Created 2 tasks and updated 1; 1 dependency.");
+  });
+  it("copes with a report that is missing fields", () => {
+    expect(mspdiReport({}).unmapped).toEqual([]);
+    expect(mspdiReport({}).tasks_created).toBe(0);
+  });
+  it("offers XML for it, says how to get the XML, and has a label", () => {
+    expect(SOURCE_ACCEPT.mspdi).toContain(".xml");
+    expect(MSPDI_HINT).toMatch(/\.mpp/);
+    expect(SOURCE_LABEL.mspdi).toMatch(/Microsoft Project/);
+  });
+});

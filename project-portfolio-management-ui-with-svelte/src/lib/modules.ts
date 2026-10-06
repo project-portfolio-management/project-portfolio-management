@@ -27,6 +27,7 @@ export const PLAN_LINKS = [
   { key: "onboarding", module: "tasks" },
   { key: "handover", module: "tasks" },
   { key: "wbs", module: "tasks" },
+  { key: "import", module: "tasks" },
   { key: "costs", module: "financials" },
 ] as const;
 

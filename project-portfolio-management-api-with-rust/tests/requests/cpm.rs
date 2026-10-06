@@ -3402,3 +3402,91 @@ async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
     })
     .await;
 }
+
+/// T-28n: a Jira and an Asana CSV export import once, idempotently, and report what they drop.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn jira_and_asana_exports_import_idempotently_and_report_what_they_drop() {
+    use project_portfolio_management_service::models::_entities::{plan_dependencies, tasks};
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        use axum::http::StatusCode as S;
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Imported" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let jira = "Issue key,Summary,Status,Assignee,Due date,Parent,Outward issue link (Blocks),Outward issue link (Relates),Sprint\n\
+P-1,Epic,In Progress,Ann,15/Oct/26 12:00 AM,,,,S1\n\
+P-2,Build,To Do,Bob,2026-10-20,P-1,P-3,,\n\
+P-3,Ship,Done,,,P-1,,P-2,\n";
+        let post = |what: &str, q: &str, body: &str| {
+            let (request, url, body) = (&request, format!("/api/plans/{p}/import/{what}{q}"), body.to_string());
+            async move { request.post(&url).bytes(body.into()).await }
+        };
+        let count = |ext: &'static str| {
+            let db = ctx.db.clone();
+            let p = p.clone();
+            async move {
+                tasks::Entity::find()
+                    .filter(tasks::Column::PlanPid.eq(uuid::Uuid::parse_str(&p).unwrap()))
+                    .filter(tasks::Column::ExternalRef.like(format!("{ext}:%")))
+                    .count(&db)
+                    .await
+                    .unwrap()
+            }
+        };
+
+        // A dry run (the default) writes nothing and says what it would do.
+        let r: Value = post("jira", "", jira).await.json();
+        assert_eq!((r["dry_run"].as_bool(), r["tasks_created"].as_i64(), r["tasks_updated"].as_i64()), (Some(true), Some(3), Some(0)));
+        assert_eq!(count("jira").await, 0);
+        let unmapped = r["unmapped"].to_string();
+        assert!(unmapped.contains("sprint") && unmapped.contains("relates"), "{unmapped}");
+
+        // Applying creates the tasks, the parents and the blocks link.
+        let r: Value = post("jira", "?dry_run=false", jira).await.json();
+        assert_eq!((r["tasks_created"].as_i64(), r["links_created"].as_i64()), (Some(3), Some(1)));
+        assert_eq!(count("jira").await, 3);
+        let get = |key: &'static str| {
+            let db = ctx.db.clone();
+            async move { tasks::Entity::find().filter(tasks::Column::ExternalRef.eq(format!("jira:{key}"))).one(&db).await.unwrap().unwrap() }
+        };
+        let (p1, p2, p3) = (get("P-1").await, get("P-2").await, get("P-3").await);
+        assert_eq!(p2.parent_task_pid, Some(p1.pid));
+        assert_eq!(p3.parent_task_pid, Some(p1.pid));
+        assert_eq!(p3.status, "done");
+        assert_eq!(p1.status, "in_progress");
+        assert_eq!(p1.deadline.map(|d| d.to_string()).as_deref(), Some("2026-10-15"));
+        assert!(p2.description.as_deref().unwrap().contains("Assigned in Jira: Bob"));
+        assert_eq!(plan_dependencies::Entity::find().filter(plan_dependencies::Column::PredecessorPid.eq(p2.pid)).filter(plan_dependencies::Column::SuccessorPid.eq(p3.pid)).count(&ctx.db).await.unwrap(), 1);
+
+        // Someone moves P-2 on, then the same file is imported again: nothing duplicates, status stays.
+        request.patch(&format!("/api/plans/{p}/tasks/{}", p2.pid)).json(&json!({ "status": "in_progress" })).await.assert_status_ok();
+        let renamed = jira.replace("Build", "Build it");
+        let r: Value = post("jira", "?dry_run=false", &renamed).await.json();
+        assert_eq!((r["tasks_created"].as_i64(), r["tasks_updated"].as_i64(), r["links_created"].as_i64(), r["links_already_present"].as_i64()), (Some(0), Some(3), Some(0), Some(1)));
+        assert_eq!(count("jira").await, 3);
+        let p2 = get("P-2").await;
+        assert_eq!((p2.title.as_str(), p2.status.as_str()), ("Build it", "in_progress"));
+
+        // Not that export, not text, an unclosed quote: refused with a reason, nothing written.
+        for (what, body) in [("jira", "Name,Notes\nx,y\n"), ("asana", jira), ("jira", "Issue key,Summary\nA,\"open\n"), ("jira", "")] {
+            post(what, "?dry_run=false", body).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        }
+        assert_eq!(request.post(&format!("/api/plans/{p}/import/jira")).bytes(vec![0xff, 0xfe, 0x00].into()).await.status_code(), S::UNPROCESSABLE_ENTITY);
+        assert_eq!(count("jira").await, 3);
+
+        // Asana: parents by unique name, a dependency, and ids kept apart from Jira's.
+        let asana = "Task ID,Completed At,Name,Due Date,Parent Task,Blocked By (Dependencies)\n1,,Plan,2026-10-30,,\n2,2026-10-09,Design,,Plan,\n3,,Build,,Plan,2\n";
+        let r: Value = post("asana", "?dry_run=false", asana).await.json();
+        assert_eq!((r["tasks_created"].as_i64(), r["links_created"].as_i64()), (Some(3), Some(1)));
+        assert_eq!(count("asana").await, 3);
+        assert_eq!(count("jira").await, 3, "the two sources do not collide");
+        let a2 = tasks::Entity::find().filter(tasks::Column::ExternalRef.eq("asana:2")).one(&ctx.db).await.unwrap().unwrap();
+        assert_eq!(a2.status, "done");
+        assert!(a2.parent_task_pid.is_some());
+        post("asana", "?dry_run=false", "x").await.assert_status(S::UNPROCESSABLE_ENTITY);
+        request.post("/api/plans/not-a-uuid/import/asana").bytes(asana.into()).await.assert_status(S::NOT_FOUND);
+    })
+    .await;
+}

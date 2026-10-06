@@ -469,6 +469,7 @@ metrics.rs: GET /metrics.prom
 milestones.rs: GET /milestones; GET /milestones/{pid}; PUT /plans/{pid}/milestones/{m_pid}/tasks; POST /plans/{pid}/milestones/{m_pid}/reopen
 modules.rs: GET /plans/{pid}/modules; PUT /plans/{pid}/modules
 mspdi_import.rs: POST /plans/{pid}/import/mspdi
+tracker_import.rs: POST /plans/{pid}/import/jira, /plans/{pid}/import/asana (CSV body, dry_run default true, idempotent by external_ref)
 my_work.rs: GET /me/tasks
 notification_prefs.rs: PUT /me/notification-prefs; GET /me/notification-prefs; DELETE /me/notification-prefs; POST /me/notification-prefs/reset; GET /me/inbox
 okr.rs: POST /objectives/{pid}/key-results; GET /objectives/{pid}/key-results; POST /key-results/{pid}/check-ins; GET /key-results/{pid}/check-ins; GET /plans/{pid}/okr; GET /okrs; PUT /objectives/{pid}; DELETE /objectives/{pid}; PUT /key-results/{pid}; DELETE /key-results/{pid}

@@ -114,7 +114,10 @@ fn node_of(t: &tasks::Model, own_calendar: Option<usize>) -> Node {
 
 /// The dependencies with at least one end among `ids`: the query is bounded by the plan(s)
 /// asked about, never the whole table.
-async fn deps_touching(ctx: &AppContext, ids: Vec<Uuid>) -> Result<Vec<plan_dependencies::Model>> {
+pub(crate) async fn deps_touching(
+    ctx: &AppContext,
+    ids: Vec<Uuid>,
+) -> Result<Vec<plan_dependencies::Model>> {
     if ids.is_empty() {
         return Ok(Vec::new());
     }

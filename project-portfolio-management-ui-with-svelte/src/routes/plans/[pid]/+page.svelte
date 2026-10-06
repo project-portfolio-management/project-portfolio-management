@@ -49,6 +49,7 @@
     onboarding: "Onboarding and offboarding",
     handover: "Handover",
     wbs: "Work breakdown",
+    import: "Import",
     costs: "Costs",
   };
   const linkLabel = (k: string): string =>

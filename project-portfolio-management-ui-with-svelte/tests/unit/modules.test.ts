@@ -22,6 +22,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "onboarding",
       "handover",
       "wbs",
+      "import",
     ]);
     expect(visiblePlanLinks(["governance"])).toEqual(["governance"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
@@ -39,6 +40,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "onboarding",
       "handover",
       "wbs",
+      "import",
     ]);
   });
 

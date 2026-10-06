@@ -313,3 +313,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 ## Documents (PL-6)
 
 `/documents` and `/documents/[pid]` (`src/lib/document-view.ts` holds the words and the one next action per state). The page has a single `primary` button whose label and handler follow `nextAction(doc)`, because the static one-primary test counts literal occurrences. Actions act on `inFlight(doc)`, not the version being viewed.
+
+## Import (T-28n)
+
+`/plans/[pid]/import` (`src/lib/import-view.ts`): preview (`dry_run=true`) first, then the same single primary button imports. CSV goes through `ApiClient`'s `rawBody` with `content-type: text/csv`. `extractMessage` prefers the server's `description` (the reason) over `error` (the code).

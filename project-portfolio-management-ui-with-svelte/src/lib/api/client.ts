@@ -25,6 +25,8 @@ export interface ClientOptions {
 export interface RequestOptions {
   /** JSON request body; serialised with `JSON.stringify`. Omit for bodyless requests (GET/DELETE). */
   body?: unknown;
+  /** A body sent as is (a CSV file, say); wins over `body`. Set the `content-type` header with it. */
+  rawBody?: string;
   /** Override the bearer for this request: a string sets the header, `null`/`""` suppresses it. Omit to send no bearer (the BFF injects one). */
   token?: string | null;
   /** Extra request headers, merged over (and able to override) the JSON defaults. */
@@ -235,7 +237,9 @@ export class ApiClient {
     }
 
     const init: RequestInit = { method, headers, signal: opts.signal };
-    if (opts.body !== undefined) {
+    if (opts.rawBody !== undefined) {
+      init.body = opts.rawBody;
+    } else if (opts.body !== undefined) {
       init.body = JSON.stringify(opts.body);
     }
 
@@ -280,12 +284,13 @@ export class ApiClient {
  * Best-effort extraction of a human-readable message from a parsed error
  * body, trying the common loco.rs/JSON keys in order.
  * @param body Parsed response body (any shape).
- * @returns The first string found under `error`/`message`/`description`, else `undefined`.
+ * @returns The first string found under `description`/`message`/`error`, else `undefined`.
  */
 function extractMessage(body: unknown): string | undefined {
   if (body && typeof body === "object") {
     const record = body as Record<string, unknown>;
-    for (const key of ["error", "message", "description"]) {
+    // The service sends {error: <code>, description: <the reason>}: the reason is what a person needs.
+    for (const key of ["description", "message", "error"]) {
       const value = record[key];
       if (typeof value === "string") return value;
     }

@@ -250,4 +250,5 @@ pub mod task_get;
 pub mod task_relations;
 pub mod task_tree;
 pub mod timesheets;
+pub mod tracker_import;
 pub mod watchers;

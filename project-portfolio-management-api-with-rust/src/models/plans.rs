@@ -100,7 +100,8 @@ impl Model {
     ///
     /// When not found or the query fails.
     pub async fn find_by_pid(db: &DatabaseConnection, pid: &str) -> ModelResult<Self> {
-        let uuid = Uuid::parse_str(pid).map_err(|e| ModelError::Any(e.into()))?;
+        // An id that is not a UUID names nothing: 404, not a 500.
+        let uuid = Uuid::parse_str(pid).map_err(|_| ModelError::EntityNotFound)?;
         let row = plans::Entity::find()
             .filter(plans::Column::Pid.eq(uuid))
             .filter(plans::Column::DeletedAt.is_null())

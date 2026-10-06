@@ -228,6 +228,7 @@ impl Hooks for App {
             .add_route(controllers::schedule_health::routes())
             .add_route(controllers::calendars::routes())
             .add_route(controllers::mspdi_import::routes())
+            .add_route(controllers::tracker_import::routes())
             .add_route(controllers::availability::routes())
             .add_route(controllers::schedule_baselines::routes())
             .add_route(controllers::raci::routes())

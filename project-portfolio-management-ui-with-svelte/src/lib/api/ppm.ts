@@ -838,6 +838,27 @@ export interface VarianceRow {
 
 export type AnnouncementSeverity = "info" | "important" | "urgent";
 
+/** One thing a tracker import left out, with the reason. */
+export interface ImportUnmapped {
+  what: string;
+  key: string | null;
+  reason: string;
+}
+
+/** `POST /api/plans/{pid}/import/{jira|asana}`. */
+export interface TrackerImportReport {
+  dry_run: boolean;
+  source: "jira" | "asana";
+  items_in_file: number;
+  tasks_created: number;
+  tasks_updated: number;
+  links_in_file: number;
+  links_created: number;
+  links_already_present: number;
+  unmapped: ImportUnmapped[];
+  note: string;
+}
+
 /** PL-6: where a version of a controlled document is in its life. */
 export type DocumentStatus =
   "draft" | "in_review" | "approved" | "effective" | "superseded";
@@ -2611,6 +2632,19 @@ export class PpmClient {
   }
   runReport(pid: string): Promise<ReportRun> {
     return this.http.get(`/api/reports/${pid}/run`);
+  }
+
+  // ---- tracker import (T-28n) ----
+  importTracker(
+    pid: string,
+    source: "jira" | "asana",
+    csv: string,
+    dryRun: boolean,
+  ): Promise<TrackerImportReport> {
+    return this.http.post(
+      `/api/plans/${pid}/import/${source}?dry_run=${dryRun}`,
+      { rawBody: csv, headers: { "content-type": "text/csv" } },
+    );
   }
 
   // ---- controlled documents (PL-6) ----

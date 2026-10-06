@@ -124,6 +124,7 @@ pub fn paths() -> Value {
     merge(&mut all, dependency_paths());
     merge(&mut all, process_paths());
     merge(&mut all, document_paths());
+    merge(&mut all, tracker_import_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -786,6 +787,25 @@ fn mspdi_paths() -> Value {
                 "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, working-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",
                 vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
                 &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not MSPDI, not UTF-8 XML, a DTD, too large or too many tasks")])
+        }
+    })
+}
+
+/// Jira and Asana CSV import (T-28n).
+fn tracker_import_paths() -> Value {
+    let common = "The body is the CSV export itself (UTF-8, up to 5 MiB, 20000 rows). dry_run defaults to true and returns the report without writing; dry_run=false applies it in one transaction. Idempotent: the item key is kept as external_ref (unique per plan), so a re-import updates titles, deadlines, start dates and parents in place, never duplicates, and never changes status or description. Due dates come across as deadlines; no durations are guessed. Assignees are names, not identities: they stay in the description. Every column, row, link, date and parent that did not come across is listed in `unmapped` with its reason. Dates are read as YYYY-MM-DD or Jira's 15/Oct/26 form; day-first numeric dates are not guessed.";
+    json!({
+        "/api/plans/{pid}/import/jira": {
+            "post": op("cpm", "Import a Jira issue CSV export into this plan",
+                &format!("Needs the columns Issue key and Summary. Status, Description, Assignee, Due date, Parent, Labels and Outward/Inward issue link (Blocks) are read; a Blocks link becomes a finish-to-start dependency, other link types are reported. {common}"),
+                vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
+                &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not that export, not UTF-8, unclosed quote, or too large")])
+        },
+        "/api/plans/{pid}/import/asana": {
+            "post": op("cpm", "Import an Asana project CSV export into this plan",
+                &format!("Needs the columns Task ID and Name. Notes, Assignee, Due Date, Start Date, Completed At, Parent Task (by name: a parent is used only when exactly one task has that name), Tags and the Blocked By / Blocking dependency columns are read. {common}"),
+                vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
+                &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not that export, not UTF-8, unclosed quote, or too large")])
         }
     })
 }

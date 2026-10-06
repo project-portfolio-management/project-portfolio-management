@@ -157,6 +157,7 @@
     { href: "/cost-rates", label: "Cost rates" },
     { href: "/reports", label: t("ppm.nav.reports") },
     { href: "/onboarding", label: "Onboarding" },
+    { href: "/documents", label: "Documents" },
     { href: "/tour", label: t("nav.tour") },
   ];
 

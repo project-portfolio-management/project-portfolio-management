@@ -309,3 +309,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 ## Sitemap
 
 `/sitemap.xml` and `/robots.txt` are generated (`src/lib/sitemap.ts`, routes `src/routes/sitemap.xml`, `src/routes/robots.txt`). The page list comes from `import.meta.glob` over `+page.svelte`, so a new static page appears automatically, once per locale with `hreflang` alternates. Parameterised pages (`[pid]`), `/signin`, `/verify`, `/display` and `/api` are never listed. Set `PUBLIC_SITE_URL` (process env) to the public origin behind a proxy; otherwise the request's origin is used. Both paths are unlocalized (`isUnlocalized`).
+
+## Documents (PL-6)
+
+`/documents` and `/documents/[pid]` (`src/lib/document-view.ts` holds the words and the one next action per state). The page has a single `primary` button whose label and handler follow `nextAction(doc)`, because the static one-primary test counts literal occurrences. Actions act on `inFlight(doc)`, not the version being viewed.

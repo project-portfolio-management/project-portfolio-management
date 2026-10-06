@@ -838,6 +838,42 @@ export interface VarianceRow {
 
 export type AnnouncementSeverity = "info" | "important" | "urgent";
 
+/** PL-6: where a version of a controlled document is in its life. */
+export type DocumentStatus =
+  "draft" | "in_review" | "approved" | "effective" | "superseded";
+
+/** One version of a controlled document (text only on a single-version read). */
+export interface DocumentVersion {
+  pid: string;
+  version: number;
+  status: DocumentStatus;
+  change_summary: string | null;
+  approval_pid: string | null;
+  effective_from: string | null;
+  superseded_on: string | null;
+  superseded_by: string | null;
+  created_by: string | null;
+  body?: string;
+}
+
+/** `GET /api/documents[/{pid}]`. */
+export interface ControlledDocument {
+  pid: string;
+  title: string;
+  plan_pid: string | null;
+  created_by: string | null;
+  /** The version number in force today, or null. */
+  in_force_today: number | null;
+  versions: DocumentVersion[];
+}
+
+/** `GET /api/documents/{pid}/in-force`. */
+export interface DocumentInForce {
+  document_pid: string;
+  on: string;
+  in_force: DocumentVersion | null;
+}
+
 /** One announcement (`GET /api/announcements`). */
 export interface Announcement {
   pid: string;
@@ -2575,6 +2611,67 @@ export class PpmClient {
   }
   runReport(pid: string): Promise<ReportRun> {
     return this.http.get(`/api/reports/${pid}/run`);
+  }
+
+  // ---- controlled documents (PL-6) ----
+  documents(): Promise<ControlledDocument[]> {
+    return this.http.get("/api/documents");
+  }
+  document(pid: string): Promise<ControlledDocument> {
+    return this.http.get(`/api/documents/${pid}`);
+  }
+  documentVersion(pid: string, version: number): Promise<DocumentVersion> {
+    return this.http.get(`/api/documents/${pid}/versions/${version}`);
+  }
+  documentInForce(pid: string, on?: string): Promise<DocumentInForce> {
+    return this.http.get(
+      `/api/documents/${pid}/in-force${on ? `?on=${encodeURIComponent(on)}` : ""}`,
+    );
+  }
+  createDocument(body: {
+    title: string;
+    body?: string;
+    plan_pid?: string;
+    change_summary?: string;
+  }): Promise<ControlledDocument> {
+    return this.http.post("/api/documents", { body });
+  }
+  newDocumentVersion(
+    pid: string,
+    body: { body?: string; change_summary?: string } = {},
+  ): Promise<DocumentVersion> {
+    return this.http.post(`/api/documents/${pid}/versions`, { body });
+  }
+  editDocumentVersion(
+    pid: string,
+    version: number,
+    body: { body?: string; change_summary?: string },
+  ): Promise<DocumentVersion> {
+    return this.http.put(`/api/documents/${pid}/versions/${version}`, { body });
+  }
+  submitDocumentVersion(
+    pid: string,
+    version: number,
+    body: { approver_ref: string; message?: string },
+  ): Promise<DocumentVersion> {
+    return this.http.post(`/api/documents/${pid}/versions/${version}/submit`, {
+      body,
+    });
+  }
+  makeDocumentVersionEffective(
+    pid: string,
+    version: number,
+  ): Promise<DocumentVersion> {
+    return this.http.post(
+      `/api/documents/${pid}/versions/${version}/make-effective`,
+      { body: {} },
+    );
+  }
+  decideApproval(
+    pid: string,
+    body: { decision: "approved" | "rejected"; comment?: string },
+  ): Promise<unknown> {
+    return this.http.post(`/api/approvals/${pid}/decide`, { body });
   }
 
   // ---- executive insight areas (CEO / CFO / CTO) ----

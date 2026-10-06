@@ -118,6 +118,7 @@ pub mod portfolio_resources;
 pub mod prioritisation;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;
+pub mod processes;
 pub mod raci;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod relay;

@@ -122,6 +122,7 @@ pub fn paths() -> Value {
     merge(&mut all, hammock_paths());
     merge(&mut all, job_cancel_paths());
     merge(&mut all, dependency_paths());
+    merge(&mut all, process_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1359,6 +1360,49 @@ fn dependency_paths() -> Value {
             "delete": op("dependencies", "Remove a dependency",
                 "The caller must be able to read both ends, else 404 as if it did not exist. Audited. A plan that others depend on through task links cannot be deleted (409 naming the dependants the caller can read and counting the rest).",
                 vec![uuid_param("pid")], &[("200", "removed"), ("404", "Unknown, or an end is not readable")])
+        }
+    })
+}
+
+/// Multi-step approval processes (PL-2).
+fn process_paths() -> Value {
+    let steps = "steps is 1 to 20 of {kind: approve | todo | notify, person_ref (a person:/worker: URN), title (200)}. A step starts only after the one before it completes; a notify completes at once; an approve asks that person (a PL-1 approval request) and waits for the decision; a todo waits until that person completes it.";
+    json!({
+        "/api/processes": {
+            "post": op("processes", "Define an approval process (version 1)", &format!("name and steps. {steps} Audited."),
+                vec![], &[("200", "the process"), ("401", "Not signed in"), ("422", "Invalid steps")]),
+            "get": op("processes", "The live process definitions", "Paged like every list.", vec![], &[("200", "name, current_version")])
+        },
+        "/api/processes/{pid}": {
+            "get": op("processes", "A process with every version", "Each edit is a new immutable version (the database refuses to change one).", vec![uuid_param("pid")], &[("200", "the process"), ("404", "Unknown")]),
+            "put": op("processes", "Edit a process: adds a new version", &format!("Only the definer or an admin. {steps} A run already under way keeps the version it started on; only new runs use the new one. Audited."),
+                vec![uuid_param("pid")], &[("200", "the process"), ("403", "Not the definer"), ("404", "Unknown"), ("422", "Invalid")]),
+            "delete": op("processes", "Retire a process", "Only the definer or an admin; running executions continue. Audited.", vec![uuid_param("pid")], &[("200", "retired"), ("403", "Not the definer"), ("404", "Unknown")])
+        },
+        "/api/processes/{pid}/start": {
+            "post": op("processes", "Run a process on a subject", "subject_kind (a commentable kind, e.g. plan) and subject_pid; the caller must be able to read the subject. The execution is pinned to the process's current version, steps run until one needs a person, and the response is the execution with its steps and log. Audited.",
+                vec![uuid_param("pid")], &[("200", "the execution"), ("404", "Unknown process or unreadable subject"), ("422", "Unknown subject_kind")])
+        },
+        "/api/process-executions": {
+            "get": op("processes", "The caller's own runs, or every run on one subject", "With no parameters, the runs the caller started (an admin sees all); with subject_kind and subject_pid, every run on a subject the caller can read. status filters.",
+                vec![query("status", false, "running, completed, rejected, cancelled or failed"), query("subject_kind", false, ""), query("subject_pid", false, "")], &[("200", "executions"), ("422", "Only one of subject_kind and subject_pid")])
+        },
+        "/api/process-executions/{pid}": {
+            "get": op("processes", "An execution: its steps (pending, waiting, completed, skipped, rejected, failed) and its append-only log",
+                "Readable by who started it, an admin, anyone a step names, and anyone who can read the subject; 404 otherwise. The log is append-only in the database itself.",
+                vec![uuid_param("pid")], &[("200", "the execution"), ("404", "Unknown or not readable")])
+        },
+        "/api/process-executions/{pid}/steps/{index}/complete": {
+            "post": op("processes", "The named person completes their todo step", "Only for the person the step names (403); only for the step the execution is on (409: a step runs only after the one before it completes); only a todo is completed by hand (422); a finished execution is 409. The next step then starts.",
+                vec![uuid_param("pid"), query("index", true, "the step index")], &[("200", "the execution"), ("403", "Not their step"), ("404", "Unknown"), ("409", "Not the current step, or over"), ("422", "Not a todo step")])
+        },
+        "/api/process-executions/{pid}/cancel": {
+            "post": op("processes", "Cancel a running execution", "Who started it, or an admin. A pending approval is withdrawn and every step not yet done is skipped and logged. 409 if it is already over.",
+                vec![uuid_param("pid")], &[("200", "the execution"), ("403", "Not the starter"), ("409", "Already over")])
+        },
+        "/api/process-executions/{pid}/resume": {
+            "post": op("processes", "Reconcile a running execution with the approval it waits on", "For the rare crash between a decision and the step after it: applies a decided (or withdrawn) approval the execution has not yet moved past. Idempotent. Who started it, or an admin.",
+                vec![uuid_param("pid")], &[("200", "the execution"), ("403", "Not the starter")])
         }
     })
 }

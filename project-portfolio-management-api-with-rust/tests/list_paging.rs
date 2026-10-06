@@ -154,6 +154,13 @@ async fn every_list_pages_the_same_way() {
         }
         let line = post(format!("/api/plans/{plan}/budget-lines"), json!({ "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 100_000 })).await;
         let _ = line;
+        // A process, and a run of it.
+        if let Some(proc) = pid_of(&post("/api/processes".into(), json!({ "name": "Census", "steps": [{ "kind": "notify", "person_ref": person, "title": "Hello" }] })).await) {
+            if let Some(run) = pid_of(&post(format!("/api/processes/{proc}/start"), json!({ "subject_kind": "plan", "subject_pid": plan })).await) {
+                candidates.push(run);
+            }
+            candidates.push(proc);
+        }
         let objective = pid_of(&post("/api/objectives".into(), json!({ "title": "O" })).await).unwrap();
         candidates.push(objective.clone());
         if let Some(kr) = pid_of(&post(format!("/api/objectives/{objective}/key-results"), json!({ "title": "KR", "metric": "m", "direction": "increase", "start_value": 0, "target_value": 10 })).await) { candidates.push(kr); }

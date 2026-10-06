@@ -104,6 +104,8 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/key-results/{pid}/check-ins",
     "/api/report-schedules/{pid}/latest",
     "/api/notifications",
+    "/api/processes",
+    "/api/process-executions",
 ];
 
 /// Add `limit`, `offset` and the count headers to every list in [`PAGED_LISTS`].
@@ -2159,6 +2161,7 @@ mod tests {
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),
             crate::controllers::hammock::routes(),
+            crate::controllers::processes::routes(),
             crate::controllers::task_get::routes(),
             crate::controllers::assignments::routes(),
             crate::controllers::cost_rates::routes(),
@@ -2300,6 +2303,7 @@ mod tests {
     /// CRUD read, an auth/audit/metrics utility, or a newest-first list
     /// of records with nothing computed across them.
     const NON_DERIVED_GET: &[&str] = &[
+        "/api/processes",
         "/api/plans",
         "/api/plans/search",
         "/api/plans/{pid}",

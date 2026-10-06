@@ -23,6 +23,8 @@ pub struct Model {
     pub decision_comment: Option<String>,
     pub decided_by: Option<String>,
     pub decided_at: Option<DateTimeWithTimeZone>,
+    pub process_execution_pid: Option<Uuid>,
+    pub process_step: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

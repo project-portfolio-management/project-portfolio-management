@@ -168,6 +168,14 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// Every mounted such route must be here or in one of the lists above, so a new aggregate cannot
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
+    (
+        "/api/processes",
+        "process definitions: steps and people, no plan data",
+    ),
+    (
+        "/api/process-executions",
+        "the caller's own runs, or the runs on one subject they can read",
+    ),
     ("/", "service banner"),
     ("/api/whoami", "the caller's own identity"),
     ("/api/me/inbox", "the caller's own inbox"),

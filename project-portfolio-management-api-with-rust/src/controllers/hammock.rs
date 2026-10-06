@@ -16,6 +16,7 @@ use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
+use sea_orm::ConnectionTrait;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -173,8 +174,16 @@ async fn add_link(
     let member = find_task(&ctx, plan.pid, &b.member_pid.to_string())
         .await
         .map_err(|_| unprocessable("a hammock links to a task of the same plan"))?;
+    // One link at a time per plan: two simultaneous A→B and B→A cannot both pass the cycle check.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    txn.execute_unprepared(&format!(
+        "SELECT pg_advisory_xact_lock(hashtext('hammock:{}'))",
+        plan.pid
+    ))
+    .await
+    .map_err(db_err)?;
     let all: Vec<(Uuid, Uuid)> = hammock_links::Entity::find()
-        .all(&ctx.db)
+        .all(&txn)
         .await
         .map_err(db_err)?
         .into_iter()
@@ -194,18 +203,19 @@ async fn add_link(
         member_pid: ActiveValue::set(member.pid),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
     AuditModel::record(
-        &ctx.db,
+        &txn,
         row.pid,
         "hammock_link_added",
         caller.actor(),
         Some(serde_json::json!({ "hammock_pid": hammock.pid, "member_pid": member.pid })),
     )
     .await
-    .ok();
+    .map_err(Error::Model)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 

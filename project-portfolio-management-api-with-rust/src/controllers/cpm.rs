@@ -19,6 +19,7 @@ use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
+use sea_orm::ConnectionTrait;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -111,6 +112,24 @@ fn node_of(t: &tasks::Model, own_calendar: Option<usize>) -> Node {
     }
 }
 
+/// The dependencies with at least one end among `ids`: the query is bounded by the plan(s)
+/// asked about, never the whole table.
+async fn deps_touching(ctx: &AppContext, ids: Vec<Uuid>) -> Result<Vec<plan_dependencies::Model>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    plan_dependencies::Entity::find()
+        .filter(
+            sea_orm::Condition::any()
+                .add(plan_dependencies::Column::PredecessorPid.is_in(ids.clone()))
+                .add(plan_dependencies::Column::SuccessorPid.is_in(ids)),
+        )
+        .order_by_asc(plan_dependencies::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)
+}
+
 /// Load a plan's tasks and the edges among them.
 pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Network> {
     let rows = tasks::Entity::find()
@@ -147,12 +166,7 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
         .collect();
     let mut edges: Vec<Edge> = Vec::new();
     let mut seen: std::collections::HashSet<(Uuid, Uuid)> = std::collections::HashSet::new();
-    for d in plan_dependencies::Entity::find()
-        .order_by_asc(plan_dependencies::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    for d in deps_touching(ctx, pids.iter().copied().collect()).await? {
         if pids.contains(&d.predecessor_pid) && pids.contains(&d.successor_pid) {
             seen.insert((d.predecessor_pid, d.successor_pid));
             edges.push(Edge {
@@ -167,6 +181,7 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
     for r in task_relations::Entity::find()
         .filter(task_relations::Column::DeletedAt.is_null())
         .filter(task_relations::Column::Kind.eq("precedes"))
+        .filter(task_relations::Column::FromTaskPid.is_in(pids.iter().copied().collect::<Vec<_>>()))
         .order_by_asc(task_relations::Column::Id)
         .all(&ctx.db)
         .await
@@ -236,16 +251,12 @@ pub(crate) async fn load_network_cross(
 ) -> Result<Network> {
     let mut net = load_network(ctx, plan_pid).await?;
     let own: HashSet<Uuid> = net.rows.iter().map(|t| t.pid).collect();
-    let deps = plan_dependencies::Entity::find()
-        .order_by_asc(plan_dependencies::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
     // Discover the plans reachable through links, cap and all (readability comes after).
     let mut known_tasks: HashMap<Uuid, Uuid> = own.iter().map(|t| (*t, plan_pid)).collect();
     let mut plans_seen: Vec<Uuid> = vec![plan_pid];
     let mut truncated = false;
     for _ in 0..MAX_LINKED_PLANS {
+        let deps = deps_touching(ctx, known_tasks.keys().copied().collect()).await?;
         let others: Vec<Uuid> = deps
             .iter()
             .filter(|d| {
@@ -305,6 +316,7 @@ pub(crate) async fn load_network_cross(
             break;
         }
     }
+    let deps = deps_touching(ctx, known_tasks.keys().copied().collect()).await?;
     let candidates: Vec<Uuid> = plans_seen
         .iter()
         .copied()
@@ -457,10 +469,8 @@ pub(crate) async fn external_dependants(
     if own.is_empty() {
         return Ok((Vec::new(), 0));
     }
-    let others: Vec<Uuid> = plan_dependencies::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let others: Vec<Uuid> = deps_touching(ctx, own.iter().copied().collect())
+        .await?
         .into_iter()
         .filter_map(|d| {
             match (
@@ -713,6 +723,13 @@ async fn set_schedule(
     }
     // The change and its audit row (with the reason) land together or not at all.
     let txn = ctx.db.begin().await.map_err(db_err)?;
+    // The same lock a what-if commit holds: a plain edit cannot slip in between its freshness check and its writes.
+    txn.execute_unprepared(&format!(
+        "SELECT pg_advisory_xact_lock(hashtext('sandbox:{}'))",
+        plan.pid
+    ))
+    .await
+    .map_err(db_err)?;
     let row = a.update(&txn).await.map_err(db_err)?;
     AuditModel::record(
         &txn,

@@ -40,3 +40,26 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Stable key** | The bulk-import upsert key — a deterministic external PM id, the owner-scoped `(owner_org_id, code)`, or `pid` ([bulk-import-export.md §6, §10](../../agents/share/bulk-import-export.md)) |
 | **SSO** | Single sign-on via the [authentication entity](../../authentication/): magic-link, cookie session + PASETO v4 public token ([authentication-sessions.md](../../agents/share/authentication-sessions.md), supersedes RS256-JWT) |
 | **Drift policy** | Front-ends keep per-project copies of types/client/forms; no shared package (repo decision 2026-06-02) |
+| **Hammock** | A task whose span is derived from the tasks (or hammocks) it is linked to; carries no duration, work, constraint or dependency and never drives float (§6.4d FR-42) |
+| **What-if sandbox** | `sandbox/preview` applies schedule edits to an in-memory copy and writes nothing; `sandbox/commit` applies them for real under `If-Match` (FR-43) |
+| **Scheduling rule** | Which of units, work and duration stays fixed when an assignment is edited: `fixed_units`, `fixed_duration`, `fixed_work` (FR-40) |
+| **Work contour** | How a task's work is spread over its days: flat, front-loaded, back-loaded, bell, turtle, custom (FR-40) |
+| **Work profile** | A task, plan or portfolio's work as day / week / month buckets, derived on read (FR-40) |
+| **Cost rate** | Minor units per hour for a person or role, effective from a date, append-only; a missing rate is `null`, never zero (FR-41) |
+| **Finance gate** | The policy admission (`access=admin` or `finance=cost_rates`) required for rates and costs; others get `404` (FR-41) |
+| **Cross-plan task link** | A dependency between tasks of two plans (`plan_dependencies`); float is computed across it, and a plan the caller cannot read appears only as a restricted edge (FR-44) |
+| **Private plan** | A plan visible only to named members; `404` to everyone else, and excluded from every aggregate through `HiddenScope` (FR-45) |
+| **HiddenScope** | The one shared query of the private plans (and their tasks) a caller may not see, applied to every cross-plan aggregate (FR-45) |
+| **Paging headers** | `X-Total-Count`, `X-Limit`, `X-Offset` on every bare-array list; `limit` default and ceiling 500, `offset` ceiling 10 000 (FR-46) |
+| **`include`** | Query parameter on `GET …/tasks/{t_pid}` embedding sub-resources (`children`, `relations`, `transitions`, `raci`, `time_entries`) (FR-46) |
+| **Cooperative cancel** | A bulk job asked to stop ends `cancelled` after the row it is on, keeping rows already processed (FR-47) |
+| **Process** | A versioned, ordered list of up to 20 steps (`approve`, `todo`, `notify`); each edit is a new immutable version (FR-48) |
+| **Process execution** | One run of a process, pinned to a version, with its state and an append-only log in the database; a rejection skips every later step (FR-48) |
+| **Controlled document** | A document whose versions move draft, in review, approved, effective, superseded; effectiveness requires an approved approval request (FR-49) |
+| **In force** | The one `effective` version of a controlled document (`GET /api/documents/{pid}/in-force`) |
+| **Onboarding case** | A checklist instance of kind `person_join`, `person_leave`, `plan_intake` or `plan_closeout`, with due dates from an effective date (FR-50) |
+| **Access record** | An append-only grant or revocation of access for a person on a plan; the service records access and cannot change an identity provider (FR-50) |
+| **Close-out readiness** | `GET …/closeout`: the findings (open tasks, risks, live bookings, unrevoked access, open cases) standing between a plan and closing (FR-50) |
+| **Handover** | Preview then commit (under `If-Match`) of moving or releasing a person's live tasks, bookings, RACI roles and open risks on a plan (FR-50) |
+| **Announcement** | A dated, severity-tagged feed item (`info`, `important`, `urgent`) published by admins or `comms=publish` holders (FR-51) |
+

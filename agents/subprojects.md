@@ -9,7 +9,7 @@ operational sub-resources and derived views.
 | Subproject | Kind | Responsibility |
 |---|---|---|
 | [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | Rust library (edition 2024, dependency-light) | Pairwise `Plan` comparison: kind-agnostic deterministic short-circuits + weighted probabilistic scoring with per-component breakdown. Owns the canonical `Plan` domain type. |
-| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | loco.rs 0.16 service (Axum 0.8, SeaORM 1.1, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/deduplicate` + `/merge`; sub-resource CRUD (goals, tasks, issues); timeline + burndown read views; cross-service links; bulk import/export. Stores the matcher type verbatim as JSONB. |
+| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | loco.rs 1.2 service (Axum 0.8, SeaORM 2.0, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/merge`; the project-management areas (tasks and sprints, governance, scheduling and critical path, cost, onboarding, approval processes, controlled documents, announcements, …); typed plan links; bulk import/export. `/deduplicate`, goals/issues and `/timeline` are not wired. Stores the matcher type verbatim as JSONB. |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | SvelteKit 2 SPA (Svelte 5 runes, TS strict) | Operator UI: plan list / create / detail / edit / delete / check-duplicates + sub-resource management + timeline / burndown views over the service REST API; a plan detail rolls up its child plans. |
 
 ## Dependency direction
@@ -43,7 +43,7 @@ link aggregator's job.
 
 | Integration | Direction | Purpose |
 |---|---|---|
-| [authentication-service](../../authentication/authentication-service-with-loco/) | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth.rs` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. See [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md) (RS256/JWKS not used). |
+| [authentication-service](../../authentication/authentication-service-with-loco/) | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth.rs` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. RS256/JWKS is not used. |
 | [person-service](../../person/person-service-with-loco/) | portfolio → person `pid` | `lead_ref`, task / issue `assignee_ref` people references |
 | [worker-service](../../worker/worker-service-with-loco/) | portfolio → worker `pid` | `lead_ref`, assignee references on tasks / issues |
 | [organization-service](../../organization/organization-service-with-loco/) | portfolio → org `pid` | `owner_org_id` sponsor, `OwnerOrg` match component |
@@ -61,7 +61,8 @@ cargo run                    # demo binary (not SemVer surface)
 cd project-portfolio-management-api-with-rust
 export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_development
 cargo loco start             # migrations auto-run in development
-cargo test --test matching   # DB-free tests
+cargo test --lib             # DB-free unit tests
+cargo test --test matching   # DB-free embedding tests
 
 # Front-end — needs the service running
 cd project-portfolio-management-ui-with-svelte

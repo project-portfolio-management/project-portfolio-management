@@ -1,0 +1,221 @@
+{
+  "name": "Project Portfolio Management",
+  "summary": "A plan registry and project-management tool: one recursive plan collection with an optional kind label, a Rust matcher library for explainable duplicate detection, a loco.rs REST service (governance, scheduling, cost, approvals, controlled documents), and a SvelteKit UI.",
+  "sections": [
+    {
+      "title": "Specification",
+      "links": [
+        {
+          "title": "Entity living spec",
+          "path": "spec/index.md",
+          "description": "Entity-level contract: the Plan model, the trio, shared invariants; index of sections 1-18"
+        },
+        {
+          "title": "Domain model",
+          "path": "spec/05-domain-model.md",
+          "description": "The Plan DTO, optional kind label, recursive containment, records and derived views"
+        },
+        {
+          "title": "Functional requirements",
+          "path": "spec/06-functional-requirements.md",
+          "description": "What the system must do"
+        },
+        {
+          "title": "Architecture",
+          "path": "spec/08-architecture.md",
+          "description": "Layers, components and dependency direction"
+        },
+        {
+          "title": "API surface",
+          "path": "spec/09-api-surface.md",
+          "description": "Entity-level REST contract"
+        },
+        {
+          "title": "Persistence",
+          "path": "spec/10-persistence.md",
+          "description": "The plans table, JSONB payload and supporting tables"
+        },
+        {
+          "title": "Testing strategy",
+          "path": "spec/11-testing-strategy.md",
+          "description": "Normative test inventory"
+        },
+        {
+          "title": "Compliance",
+          "path": "spec/12-compliance.md",
+          "description": "Privacy, audit and integrity obligations"
+        },
+        {
+          "title": "Entity tasks",
+          "path": "spec/13-tasks.md",
+          "description": "Numbered build-out (T-n) with status"
+        },
+        {
+          "title": "Implementation status",
+          "path": "spec/14-implementation-status.md",
+          "description": "What is built versus specified"
+        },
+        {
+          "title": "Roadmap",
+          "path": "spec/15-roadmap.md",
+          "description": "Planned direction"
+        },
+        {
+          "title": "Open questions",
+          "path": "spec/16-open-questions.md",
+          "description": "Unresolved decisions"
+        },
+        {
+          "title": "Change control",
+          "path": "spec/18-change-control.md",
+          "description": "How spec changes are made"
+        },
+        {
+          "title": "Time-based analysis",
+          "path": "spec/time-based-analysis.md",
+          "description": "Cycle and lead time, flow efficiency, forecasting rules"
+        },
+        {
+          "title": "Bulk import/export",
+          "path": "spec/bulk-import-export.md",
+          "description": "Design of asynchronous import and export jobs"
+        },
+        {
+          "title": "PRINCE2 mapping",
+          "path": "spec/prince2/index.md",
+          "description": "How the service maps to PRINCE2"
+        },
+        {
+          "title": "Total Project Control",
+          "path": "spec/total-project-control/index.md",
+          "description": "DIPP, banding and portfolio triage"
+        },
+        {
+          "title": "Flow framework metrics",
+          "path": "spec/flow-framework-metrics/index.md",
+          "description": "Flow distribution and related metrics"
+        },
+        {
+          "title": "Keycloak test containers",
+          "path": "spec/testcontainers-keycloak/index.md",
+          "description": "Testing against a Keycloak container"
+        },
+        {
+          "title": "API crate spec",
+          "path": "project-portfolio-management-api-with-rust/spec/index.md",
+          "description": "Living spec for the Rust service, including section 9 routes and section 13 tasks"
+        },
+        {
+          "title": "Matcher crate spec",
+          "path": "project-portfolio-management-matcher-with-rust/spec/index.md",
+          "description": "Living spec for the matching library: weights, rules, normalisation"
+        },
+        {
+          "title": "UI spec",
+          "path": "project-portfolio-management-ui-with-svelte/spec/index.md",
+          "description": "Living spec for the SvelteKit operator UI"
+        }
+      ]
+    },
+    {
+      "title": "Agent guides",
+      "links": [
+        {
+          "title": "API service guide",
+          "path": "project-portfolio-management-api-with-rust/AGENTS.md",
+          "description": "Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands"
+        },
+        {
+          "title": "Matcher guide",
+          "path": "project-portfolio-management-matcher-with-rust/AGENTS.md",
+          "description": "Matching rules, golden rules and file layout for the library"
+        },
+        {
+          "title": "UI guide",
+          "path": "project-portfolio-management-ui-with-svelte/AGENTS.md",
+          "description": "Working guide for the SvelteKit UI"
+        },
+        {
+          "title": "Agents index",
+          "path": "agents/index.md",
+          "description": "Entity-level reference documents"
+        },
+        {
+          "title": "Subprojects",
+          "path": "agents/subprojects.md",
+          "description": "The trio: responsibilities, dependency direction, how to run each"
+        },
+        {
+          "title": "Domain models",
+          "path": "agents/models.md",
+          "description": "Plan DTO, supporting types, operational records, persistence"
+        },
+        {
+          "title": "Matching",
+          "path": "agents/matching.md",
+          "description": "Kind-agnostic scoring, weights and deterministic rules"
+        },
+        {
+          "title": "REST conventions",
+          "path": "agents/restful.md",
+          "description": "Registry endpoints, paging, status codes, front-end consumption"
+        },
+        {
+          "title": "Testing",
+          "path": "agents/testing.md",
+          "description": "Test layers, quality gates and contract seams"
+        },
+        {
+          "title": "Spec-driven development",
+          "path": "agents/spec-driven-development.md",
+          "description": "Authority model and three-part PR discipline"
+        }
+      ]
+    },
+    {
+      "title": "Work queue",
+      "links": [
+        {
+          "title": "Tasks",
+          "path": "tasks.md",
+          "description": "LT-n work items derived from the research plan, with acceptance state"
+        },
+        {
+          "title": "Plan",
+          "path": "plan.md",
+          "description": "Research on Leantime and the ideas worth adopting"
+        }
+      ]
+    },
+    {
+      "title": "READMEs and changelogs",
+      "links": [
+        {
+          "title": "API README",
+          "path": "project-portfolio-management-api-with-rust/README.md",
+          "description": "Overview, quick start and testing for the service"
+        },
+        {
+          "title": "API changelog",
+          "path": "project-portfolio-management-api-with-rust/CHANGELOG.md",
+          "description": "Release notes for the service"
+        },
+        {
+          "title": "Matcher README",
+          "path": "project-portfolio-management-matcher-with-rust/README.md",
+          "description": "Usage and weights table for the matching library"
+        },
+        {
+          "title": "Matcher changelog",
+          "path": "project-portfolio-management-matcher-with-rust/CHANGELOG.md",
+          "description": "Release notes for the matcher"
+        },
+        {
+          "title": "UI README",
+          "path": "project-portfolio-management-ui-with-svelte/README.md",
+          "description": "Overview and run instructions for the UI"
+        }
+      ]
+    }
+  ]
+}

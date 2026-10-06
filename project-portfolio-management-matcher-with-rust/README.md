@@ -2,9 +2,9 @@
 
 Pairwise **plan record matching** for Rust, for deduplication across one
 recursive plan collection. A *plan* may contain other plans (a
-recursive tree); the four former kinds (Portfolio / Project / Product /
-Program) are unified into one entity, with `kind` surviving only as
-optional descriptive metadata that does not gate matching. Combines
+recursive tree) with an optional `kind` label (Portfolio / Project /
+Product / Program / Practice / Process / Purpose / Pathway / Proposal)
+that is descriptive metadata and does not gate matching. Combines
 deterministic identifier short-circuits and explainable probabilistic
 scoring. Dependency-light, no IO, no `unsafe`.
 
@@ -44,6 +44,10 @@ metadata only and is never compared.
 | Relationships | 0.05 | Typed-set Jaccard over `(relation, plan_id)` |
 | Tags | 0.05 | Set Jaccard over normalised tags |
 
+Default threshold 0.85 (`MatchConfig::strict()` 0.95, `lenient()` 0.70).
+Weights renormalise over the components both records carry. `phase` and
+`status` are never scored.
+
 **Deterministic short-circuit → 1.0** on a shared globally-unique
 identifier (URI, UUID, Jira project key, Asana GID, Trello board id, MS
 Project id, GitHub project id, Linear id), a same-owner code, or a
@@ -59,9 +63,10 @@ cargo run
 ## Testing
 
 ```bash
-cargo test
-cargo clippy --all-targets -- -D warnings
+cargo test                # unit, public_api, proptest property tests, doctests
+cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
+cargo bench               # benches/match_pair.rs
 ```
 
 ## License

@@ -1,5 +1,23 @@
 ## 13. Tasks
 
+> **Status authority (2026-10-06).** The repo-root
+> [`tasks.md`](../tasks.md) is authoritative for task status. It carries
+> the LT (Leantime), RM (Redmine), PL (Huly), SC / KO / MS / CR
+> (scheduling, cost and KPI canon) and PJ (ProjectLibre) series; at this
+> revision all 71 of its items are ticked, with deviations and "Not
+> taken" decisions recorded beside each. **This file is the older T-n
+> build-out** and is not duplicated there. Its state at this revision:
+>
+> | Items | State |
+> |---|---|
+> | T-8, T-10, T-14 … T-20, T-22 … T-24, T-26, T-27 | landed (ticked below) |
+> | T-21 | partly landed (`[~]`) |
+> | T-25 | **box unticked, but every sub-item beneath it is ticked** and §14.1 lists Total Project Control as delivered; read it as landed |
+> | T-28 | sub-items a-m, o and p ticked; the parent stays open because **T-28n** is partial (MS Project import landed as PJ-10; Jira and Asana open) |
+> | T-1 … T-7, T-9 | unticked **historical** build-out entries (the trio exists and is green); only **T-7**, the cross-service link write-side (`entity_links`), is verified as not built |
+>
+> Work done after 2026-10-01 has no T-n entry; look it up in `tasks.md`.
+
 Live entity-level work queue. (Historical header — the trio has been
 **implemented** since 2026-06-19; per-crate work now lives in each
 subproject's own spec §13. The unchecked items below are the original

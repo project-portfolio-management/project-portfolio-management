@@ -9,25 +9,25 @@ holds no token).
 > Read [`spec/index.md`](./spec/index.md) first — the living spec
 > (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
 >
-> **Status: implemented (MVP, v0.1.0).** `pnpm install` works, `pnpm run
-> check` is **0 errors / 0 warnings**, `pnpm test` (vitest) is green, and
-> `pnpm run build` succeeds. Shipped: the unified identity surface — a
-> static `plans/` route layer (`/plans`, `/plans/new`, `/plans/[pid]`,
-> `/plans/[pid]/{edit,board,schedule,governance}`, `/plans/merge`) with
-> list (SVAR grid + client-side filter) + create + detail + edit + delete
-> + check-duplicates + record-merge (FE-1, 2026-08-03), the `PlanForm`,
-> the `PlanRepository`, the lean `ApiClient`, the BFF proxy +
-> cookie-session auth, the Kanban board (`/plans/[pid]/board`), a wide set
-> of oversight / executive dashboard views (§5 of the spec), and the
-> 13-locale i18n + top-bar hamburger + theme/locale selectors (the
-> dashboard-style views added after the original MVP stay English-first).
-> **Not built** (per `spec/index.md` §13, distinct from "deferred" — no
-> repository method, type, or UI element exists for these yet): the
-> per-plan audit timeline, the recent-activity feed, a match-score
-> breakdown visual, and the detail page's child-plan roll-up. Also not
-> built: the issues list, Gantt/timeline, burndown, and goals sub-routes
-> (`/plans/[pid]/{issues,timeline,burndown,goals}`) — the service defers
-> those sub-resources too.
+> **Status: implemented (v0.1.0), verified 2026-10-06.** `pnpm run check`
+> is **0 errors / 0 warnings**, `npx vitest run` passes (**529 tests**, 40
+> files in `tests/unit/`), and the Playwright suite (14 files in
+> `tests/e2e/`) runs against a production build. There are **64 page
+> routes** under `src/routes`. Shipped: the unified identity surface
+> (`/plans`, `/plans/new`, `/plans/[pid]`, `/plans/[pid]/edit`,
+> `/plans/merge`), the Kanban board, governance and schedule views, the
+> oversight / executive dashboards (listed in [README.md](README.md)), the
+> scheduling canon (critical path, baselines, earned value, leveling,
+> schedule and cost risk, what-if sandbox), work and cost-rate pages, WBS and
+> RBS views, KPIs / OKRs / milestones, onboarding and handover, the CEO
+> dashboard and announcements, cookie-session / SSO auth (BFF), and
+> locale-prefixed URLs in **10 locales** (see **Layout shell**).
+> **Not built:** the per-plan audit timeline, the recent-activity feed, a
+> match-score breakdown visual, the detail page's child-plan roll-up, and the
+> issues / timeline / goals sub-routes (the service defers those too). The
+> backlog of record is the repo-root [`tasks.md`](../tasks.md) (every item
+> ticked as of 2026-10-06; each entry lists what is "Not built"); research
+> history is [`../plan.md`](../plan.md).
 
 ## What this is
 
@@ -84,14 +84,16 @@ of the matching surface (except goal titles).
 - The navigation toggle is a **hamburger menu placed LEFTMOST** in the
   top bar; narrow viewports collapse the nav behind it.
 - The main content area is **full-width**.
-- The nav has a single **Plans** destination (no collection switcher).
+- The nav is the `navItems` list in `src/routes/+layout.svelte` (Plans
+  and the dashboard destinations); there is no collection switcher. `simple view`
+  moves the advanced destinations behind a "More" link (`src/lib/preferences.ts`).
 - The chrome area carries the **theme selector**
   (`lily-design-system-svelte-theme-picker` — full shared catalogue;
   selecting a theme restyles the whole site; persists to
-  `localStorage["portfolio:theme"]`), the **locale selector**
-  (`lily-design-system-svelte-locale-picker` — 13 locales; selecting
-  one switches the language; `ar` / `ur` are RTL; persists to
-  `localStorage["portfolio:locale"]`), and the session affordance (Sign
+  `localStorage["lily-theme"]`), the **locale selector**
+  (`lily-design-system-svelte-locale-picker` — 10 locales, `LOCALES` in
+  `src/lib/locales.ts`; selecting one switches the language; only `ar-001` is
+  RTL; persists to `localStorage["mxi.case.locale"]`), and the session affordance (Sign
   in / Sign out; the browser holds no token — see **Auth** below).
 
 ## Layout (actual `src/` tree, portfolio-specific parts)
@@ -109,12 +111,16 @@ src/
 ├── hooks.server.ts                BFF session handling (reads the httpOnly session cookie)
 ├── lib/
 │   ├── config.ts                  API_BASE_URL → same-origin BFF proxy (/api/proxy); no browser-held bearer
-│   ├── i18n.svelte.ts             13-locale catalogues (en default) + RTL flags + en fallback; one file, not a directory
+│   ├── i18n.svelte.ts             string catalogues for the 10 locales in `locales.ts` (en-001 default, en fallback), formatted by `@sveltia/i18n`; exports `t()` and `localeHref()`; one file, not a directory
+│   ├── locales.ts                 pure locale set, aliases (`/en/…` → `/en-001/…`), RTL flag, `splitPath`; shared by hooks, store and tests
+│   ├── *-view.ts, wbs.ts, rbs.ts  pure view modules (no runes, no `$app/*`): ceo-view, ev-view, cpm-view, whatif-view, work-view, onboarding-view, … — tested in `tests/unit/`
+│   ├── glossary.ts                plain-language glosses for acronyms; rendered by `components/Term.svelte`
 │   ├── api/
 │   │   ├── client.ts              lean fetch wrapper (get/post/put/patch/delete + ApiError); credentials: 'include' (cookie) + CSRF header
 │   │   ├── types.ts               Plan + PlanKind + PlanStatus + Goal + Task + Issue (+ IssueKind/IssueSeverity/IssueStatus) + Relationship + RelationKind + PlanIdentifier + IdentifierScheme + PlanRef + ScoredRef + MergeRequest + MergeResponse + MergeRecordRow. No MatchBreakdown / AuditEntry / PlanEvent / TimelineRow / BurndownPoint type — those capabilities are not built (see the Status note above).
 │   │   ├── capabilities.ts        CapabilityClient (reviews, assignees, notifications, automations, scheduled actions, Smart Score, lifecycle)
-│   │   ├── ppm.ts                 PpmClient — the oversight/executive dashboard views' endpoints (board, governance, schedule, auditor, compliance, …)
+│   │   ├── ppm.ts                 `PpmClient` — typed endpoints for the dashboards and the scheduling, cost, work, what-if, onboarding and WBS pages (the largest module)
+│   │   ├── tba.ts                 `TbaClient`
 │   │   └── plans.ts               PlanRepository (list + listPage + search + get + create + update + remove + checkDuplicates + merge + recentMerges; all paths under /api/plans). No audit() or recentEvents() method.
 │   ├── server/                    BFF-only (never bundled to the browser): auth.ts (magic-link + session→PASETO exchange + currentUser(), T-28f), session.ts (cookie), config.ts (PROJECT_PORTFOLIO_MANAGEMENT_API_URL / AUTH_API_URL)
 │   ├── nav.ts                     T-28f (repo `tasks.md` EV-1), pure, DB-free: viewAttr/orderNavForView/landingRouteForView — role-tailored nav ordering + landing route from a deployment-declared `view` ABAC attribute
@@ -182,17 +188,67 @@ A behavioural change is one PR with three parts:
 3. **Test edit** — `tests/unit/` (vitest) and/or `tests/e2e/`
    (Playwright).
 
-## Commands (once scaffolded)
+## Front-end conventions (verified against the code, 2026-10-06)
+
+- **Pure view modules first.** Logic a page needs (ordering, wording,
+  roll-ups, guards) lives in `src/lib/*-view.ts`, `wbs.ts`, `rbs.ts`,
+  `modules.ts`, `nav.ts` etc. as plain functions with no runes and no
+  `$app/*` imports, and is unit-tested with vitest (`tests/unit/`). Pages
+  only render. Do not recompute what the server owns (e.g. RAG, float).
+- **API access.** Plan identity goes through `PlanRepository`
+  (`src/lib/api/plans.ts`); everything else through `PpmClient`
+  (`src/lib/api/ppm.ts`) or `CapabilityClient` / `TbaClient`, all on the lean
+  `ApiClient`. Add a method there, not a raw `fetch` in a page.
+- **i18n.** `@sveltia/i18n` behind `t(key)` in `src/lib/i18n.svelte.ts`.
+  Every in-app `href` and `goto` goes through `localeHref("/plans")`, which
+  prefixes the current locale (`/cy-001/plans`); the universal `reroute` hook
+  (`src/hooks.ts`) strips the prefix before route matching, and the server
+  redirects bare or two-letter-alias paths. To add a locale extend `LOCALES`,
+  `LOCALE_LABELS` and the catalogues.
+- **One primary action per screen.** At most one visible `button.primary`;
+  repeated per-row buttons are never primary; a multi-step page marks the
+  current step with `class:primary={…}`. Enforced by
+  `tests/unit/primary-action.test.ts` and `tests/e2e/primary-action.spec.ts`.
+- **Plain language.** An acronym never stands alone in a heading, label,
+  button, link, table header or nav entry: follow it with plain words or wrap
+  it in `<Term t="SPI" />` (`src/lib/components/Term.svelte`, glosses in
+  `src/lib/glossary.ts`). Enforced by `tests/unit/plain-language.test.ts`.
+- **CEO dashboard** (`/ceo`, `src/lib/ceo-view.ts`) must show every tile with
+  no page scroll at **1080x810 and 810x1080** CSS px, with long content and
+  with one failing tile (`tests/e2e/ceo.spec.ts`).
+- **Accessibility.** `tests/e2e/a11y.spec.ts` runs axe over every page route,
+  enumerated from `src/routes`, so a new page is audited automatically; the
+  `mobile` project repeats the route list at 390x844. Status is never colour
+  alone (a word and a shape).
+- **Routes added since the MVP** (full table in [README.md](README.md)):
+  `/ceo`, `/announcements`, `/kpis`, `/okrs`, `/milestones`, `/me`,
+  `/display`, `/cost-rates`, `/resources`, `/resources/rbs`, `/tour`, and
+  under `/plans/[pid]/`: `work`, `costs`, `what-if`, `onboarding`, `handover`,
+  `wbs`, `critical-path`, `earned-value`, `raci`, `leveling`,
+  `schedule-health`, `schedule-risk`, `cost-risk`, `joint-risk`, `flow`,
+  `calendar`.
+- **Plan workspace links** are listed in `PLAN_LINKS` (`src/lib/modules.ts`);
+  a new per-plan page needs an entry there and a matching assertion in
+  `tests/unit/modules.test.ts`.
+
+## Commands
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:5173
-pnpm run check    # svelte-check (strict; 0/0 expected)
+pnpm dev                       # http://localhost:5173 (needs the service for real data)
+pnpm run check                 # svelte-kit sync + svelte-check (strict; 0/0 expected)
 pnpm run build
-pnpm test         # vitest unit suite
-pnpm test:e2e     # Playwright — desktop (chromium) + mobile (390x844, T-28k)
-pnpm exec playwright test --project=mobile   # just the phone-viewport audit
+npx vitest run                 # unit suite (same as `pnpm test`), 529 tests
+pkill -f 'vite preview'        # free port 4173 if a stale preview is running
+npx playwright test            # e2e: builds, then `vite preview` on :4173
+npx playwright test --project=mobile   # just the 390x844 audit
 ```
+
+The Playwright config (`playwright.config.ts`) builds and serves
+`vite preview --port 4173 --strictPort`, with `reuseExistingServer` outside CI,
+so a stale preview from an earlier run can serve an old build: kill it first.
+Specs stub the backend per test with `page.route` (see `tests/e2e/fixtures.ts`),
+so no Rust service is needed. `package.json` pins `engines.node` to `=26`.
 
 ## Auth — BFF + cookie session (no token in the browser)
 
@@ -240,7 +296,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 
 - FHIR Plan UI — the service has no FHIR surface.
 - Consent-management UI — out of scope for MVP.
-- Finance / budgeting UI — not a finance system (entity spec §1.3).
+- A general ledger or budgeting system — not a finance system (entity spec §1.3); the budget-variance, cost-rate and earned-value pages are read and decision views over the service's figures.
 - Posts feed / threaded comments — not part of the v1 portfolio
   sub-resource set (tasks / goals / issues only); roadmap-only.
 - Members / role panel — not part of the v1 sub-resource set;

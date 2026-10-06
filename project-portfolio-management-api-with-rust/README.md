@@ -22,13 +22,13 @@ containment-cycle check).
 - Agent guide: [AGENTS.md](./AGENTS.md)
 - Sibling UI: [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte)
 
-> **Status: implemented (MVP, v0.1.0).** The crate builds and tests
-> green; the remaining deferrals live in the work queue at
-> [spec §13](./spec/index.md).
+> **Status: v0.3.0, a full project-management tool.** Deferred items
+> (`/plans/deduplicate`, `/goals`, `/issues`, `/timeline`) live in
+> [spec §13](./spec/index.md); see [CHANGELOG.md](./CHANGELOG.md).
 
 ## API
 
-API URLs are version-free; select the version with the `Accepts-version` header (default `1.0`) — see [`agents/share/api-versioning.md`](../../agents/share/api-versioning.md).
+API URLs are version-free; select the version with the `Accepts-version` header (default `1.0`).
 
 Routes are under `/api/`. Plans live in **one** collection, `/api/plans`;
 sub-resources hang off `/api/plans/{pid}/...`.
@@ -49,7 +49,8 @@ sub-resources hang off `/api/plans/{pid}/...`.
 | GET | `/api/plans/{pid}/masked` · `/export` | Masked view (always redacted) · audited GDPR export |
 | * | `/api/plans/{pid}/tasks` | Task-board CRUD + Kanban `PATCH` move (story points, WIP limits) — `/goals` · `/issues` **deferred, spec §13** |
 | GET | `/api/plans/{pid}/sprints` · `/burndown` · `/velocity` · `/standup` | Sprint tooling — `/timeline` (Gantt) **deferred, spec §13** |
-| POST·GET·DELETE | `/api/plans/{pid}/links` | Cross-service entity links — **deferred, spec §13** |
+| POST·GET·DELETE | `/api/plans/{pid}/links` | Typed links on a plan (stored and returned, never fetched) |
+| POST·GET | `/api/plans/import` · `/export` · `/bulk-jobs` · `/review-queue` | Bulk import/export jobs (202 + job id, progress, cooperative cancel) and the review queue |
 | POST·GET | `/api/reviews` (+ `/consensus`, `/{pid}/respond`, `/{pid}/submit`) | Collaborative review: delegate to internal or external experts |
 | POST | `/api/plans/{pid}/tasks/{t_pid}/assign` | Assign / unassign a task (`null` unassigns) |
 | GET | `/api/assignees/workload` | Open work per assignee, incl. the unassigned pile |
@@ -64,19 +65,30 @@ sub-resources hang off `/api/plans/{pid}/...`.
 | GET | `/api-docs/openapi.json` · `/swagger-ui` | OpenAPI 3 doc + Swagger UI |
 | GET | `/metrics.prom` | Prometheus metrics (root path, public under auth enforcement) |
 
-The table above is the identity-registry core. This service is also a
-full **project-management tool**: PPM governance (`/api/proposals`,
-`/api/plans/{pid}/gate-reviews`, `/risks`, `/budget-lines`), visibility
-(`/api/dependencies`, `/plans/{pid}/schedule`, `/milestones`,
-`/allocations`, `/capacity`, `/at-a-glance`), strategy (`/api/ideas`,
-`/api/scenarios`, `/api/objectives`, `/api/plans/{pid}/benefits`),
-executive insights (`/api/executive/*`, `/financials/*`,
-`/technology/*`), oversight (`/api/board/*`, `/auditor/*`,
-`/compliance/*`, `/risk/heatmap`, `/security/register`,
-`/regulator/extract`), and row-level integrity verification
-(`/api/compliance/records/verify`, `/audit/verify`) — see
-[AGENTS.md](./AGENTS.md) for the full table and
-[spec §9.9–§9.15](./spec/index.md) for each area's contract.
+The table above is the identity-registry core. The service is also a
+full **project-management tool**; one controller per area in
+`src/controllers/`, mapped route by route in [AGENTS.md](./AGENTS.md) and
+in [spec §9](./spec/index.md):
+
+- Governance, visibility, strategy, executive insights, oversight, and
+  row-level integrity verification (`/api/compliance/*/verify`).
+- Engineering and flow: task board, sprints, ceremonies, burndown,
+  time-based analysis, OKRs, effort and utilisation, Total Project Control,
+  controls, value realization.
+- Scheduling: critical path with float across cross-plan links, hammock
+  activities, a what-if sandbox (preview writes nothing; commit needs
+  `If-Match`), assignments with scheduling rules, time-phased work, cost
+  rates and labour cost.
+- People and process: onboarding/offboarding cases, handover, multi-step
+  approval processes (versioned, append-only log), controlled documents
+  (versions gated by approval; immutable past draft), announcements.
+- Access: **private plans** are `404` to non-members and appear in no
+  aggregate; guests are confined to their grants; per-plan modules can be
+  switched off.
+- Every list pages the same way: `?limit=` (default and max 500),
+  `?offset=` (max 10 000), headers `X-Total-Count` / `X-Limit` /
+  `X-Offset`. `GET /api/plans/{pid}/tasks/{t_pid}?include=` returns a task
+  with its sub-resources in one response.
 
 See [AGENTS.md](./AGENTS.md) and [spec §9](./spec/index.md) for the full
 route contract.
@@ -137,56 +149,36 @@ candidate matches.
 ## Testing
 
 ```bash
-cargo test                   # DB-free: matcher embedding, JSON round-trip,
-                             # validation pins, merge + derived-view logic
-cargo test -- --ignored      # request-level tests (need Postgres DATABASE_URL)
-cargo clippy --all-targets
+cargo test --lib                       # DB-free unit tests
+cargo test --test matching             # DB-free: matcher embedding + JSON round-trip
+cargo clippy --all-targets --all-features -- -D warnings
+cargo fmt --check
+
+# Need Postgres (DATABASE_URL; compose.test.yaml provides one on 5432):
+cargo test --test mod -- --ignored --test-threads=1      # request suites
+cargo test --test private_aggregates -- --ignored        # real-token binaries,
+cargo test --test list_paging -- --ignored               #   one per binary
 ```
+
+DB tests are `#[ignore]`d, so a plain `cargo test` needs no database.
+Tests that sign in with real PASETO tokens each get their own test binary,
+because the token verifier is a process-wide `OnceLock`. Details in
+[AGENTS.md](./AGENTS.md).
 
 ## Status
 
-Implemented (MVP, v0.1.0 + PPM Phases A/B/C): CRUD + Tantivy
-full-text/fuzzy/phonetic name search (`?fuzzy=`, `?phonetic=`, `?kind=`;
-replaced the earlier `ILIKE` search 2026-08-02) + kind-agnostic matching
-+ record merge + payload validation over one recursive `plans`
-collection (`kind` is an optional Portfolio / Project / Product /
-Program / Practice / Process / Purpose / Pathway / Proposal label; one
-`plans` table with a nullable `kind` and a `parent_pid`), plus the
-governance / visibility / strategy phases (proposals, gate reviews,
-risks, budget lines; dependencies, milestones, allocations, capacity,
-reports, at-a-glance; ideas, scenarios, objectives, benefits), the
-engineering-team core (Kanban task board with WIP limits + story
-points, sprints, an honest `done_at`-only burndown, velocity, standup,
-DevOps deploy/incident ingest — spec §9.14), the executive insight areas
-(CEO/CFO/CTO views — spec §9.12) and oversight areas (board / auditor /
-compliance-register / risk-heatmap / security / regulator — spec §9.13),
-the collaboration / automation / prioritisation capabilities (collaborative
-review with strict-majority consensus, assignee management, workflow
-automation with a full run log, the claim-based set-and-forget
-scheduler, the explainable Smart Score, and bird's-eye lifecycle
-readiness — spec §9.4a), field masking + audited GDPR export wired to
-the ABAC `mask` obligation (`lead_ref` dropped entirely, owner org
-masked — spec §12/§13, 2026-08-02), row-level integrity verification
-(SHA-256 + SHA3-256 digests + a keyed MAC over `plans` and `audit_logs`,
-default off without a configured MAC key — spec §9.15), audit log
-+ event streaming (durable-bus Phase 2 outbox + Phase 3 relay/retention
-have landed; `src/relay.rs`, gated by
-`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox` +
-`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`; the `FluvioSink` real-broker
-sink is feature-gated and off by default) + OpenAPI/Swagger +
-Prometheus metrics + offline PASETO v4.public verification (published
-Ed25519 key) + blanket `/api/*` auth enforcement (off by default, gated
-by `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`). Deferred (see [spec
-§13](./spec/index.md)): the `goals` / `issues` operational sub-resources
-(only `tasks` is wired) + the derived `/timeline` view, `deduplicate` +
-the review queue, cross-service entity links, front-end merge action,
-bulk import/export, the `posts` / `comments` / `members` collaboration
-sub-resources, gRPC. Auth credentials are issued by the central
-[authentication-service](../../authentication/authentication-service-with-loco):
-the human session is a server-side cookie session, and peers verify a
-short-lived PASETO v4.public token offline. See
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
-(source of truth; RS256/JWKS not used).
+v0.3.0. Beyond the registry core (CRUD, Tantivy search, kind-agnostic
+matching, merge, validation, audit, events, OpenAPI, Prometheus, offline
+PASETO auth, field masking and GDPR export), the service ships the areas
+listed above; migrations run `m20260…` through
+`m20261006_000048_onboarding_one_open`. Event delivery is in-memory by
+default, a durable outbox relay when
+`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`, a Fluvio sink behind
+the `fluvio` feature, and optional signed webhooks. Blanket `/api/*` auth
+enforcement is off unless `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is
+set. Deferred ([spec §13](./spec/index.md)): `/plans/deduplicate`,
+`/goals`, `/issues`, `/timeline`, gRPC. Credentials are issued by the
+central authentication-service (offline PASETO v4.public verification).
 
 ## License
 

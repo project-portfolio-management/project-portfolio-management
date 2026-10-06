@@ -59,16 +59,28 @@ mutation (§10.2).
 - **`merge_records`** — one row per record-merge: `main_pid`,
   `duplicate_pid`, `reason?`, `actor?`, `transferred` (snapshot of the
   duplicate's payload, plus a tally of re-homed sub-resources).
-- **`entity_links`** — the cross-service write-side table per
-  [`agents/share/cross-service-linking.md` §4.1](../../agents/share/cross-service-linking.md):
-  `from_pid`, `kind`, `to_ref` (`EntityRef` URN), `role?`,
-  `confidence`, `provenance`, `valid_from?`, `valid_to?`, `deleted_at`,
-  `UNIQUE (from_pid, kind, to_ref, valid_from)`. The canonical column
-  list is in that doc and is **not** restated.
+- **`plan_links`** (built, LT-8) — typed external links on a plan:
+  `plan_pid`, `kind` (CHECK in `docs`/`repo`/`ticket`/`design`/`chat`/
+  `other`), `url`, `label`, `created_by?`, `deleted_at`; partial unique
+  index `plan_links_one (plan_pid, url)` among live rows (migration
+  `m20261003_000020`).
+- **`entity_links`** — **not built (T-7).** No migration, entity or
+  route exists. The cross-service write-side table in
+  [`agents/share/cross-service-linking.md` §4.1](../../agents/share/cross-service-linking.md)
+  (`from_pid`, `kind`, `to_ref`, `role?`, `confidence`, `provenance`,
+  `valid_from?`, `valid_to?`, `UNIQUE (from_pid, kind, to_ref,
+  valid_from)`) remains a target.
 - **`bulk_jobs`** — the bulk import/export job table per
   [`agents/share/bulk-import-export.md` §3](../../agents/share/bulk-import-export.md),
   with `UNIQUE (entity, kind, idempotency_key)`. Canonical column list
   lives there; not restated (§10.4).
+
+**Reality check (verified against `migration/src`).** There is **no
+`issues` table** (and no `issues` entity or controller); the only
+migration mentioning issues is the `tasks.flow_type` one. The
+`task_snapshots` table above is likewise not created by any migration
+(unverified whether burndown derives from `task_transitions` instead).
+The migrations are the authoritative table list; §10.8 indexes all 82 migrations.
 
 ### 10.2 JSONB rationale and the goals bridge
 
@@ -150,9 +162,12 @@ the service already stores, so it can never drift from the evidence it
 claims to summarise.
 
 
-### 10.6 Full-suite tables (§1.4–§1.6, §6.4c) — planned
+### 10.6 Full-suite tables (§1.4–§1.6, §6.4c)
 
-**Not yet built** (§2.3). Every table carries `pid UUID unique` and
+**Built** (migrations `m20260825_000001` … `m20260826_000003`; §14.1).
+The column lists below are the original design; the migrations are
+authoritative and the column-level match was **unverified** in this
+pass (table names were verified). Every table carries `pid UUID unique` and
 `deleted_at` for soft delete; every plan-scoped table carries an indexed
 `plan_pid UUID`. **None is serialised into any `data` column and none
 reaches the matcher** (§5.6).
@@ -203,3 +218,50 @@ Realization Rate, Time to Value, Adoption Rate, SPI, CPI, NPV, Flow
 Distribution and the OKR scores are all computed on read from the rows
 above, so none can drift from its evidence — the rule §10.5 already
 applies to Smart Score.
+
+### 10.7 Migrations 40-48 (2026-10-06)
+
+Migration files are `migration/src/m20261006_0000NN_*.rs`. Tables carry
+`id`, `pid` (unique uuid) and, where noted, `deleted_at`, as elsewhere.
+
+| # | Migration | Adds |
+|---|---|---|
+| 40 | `assignment_fields` | `tasks.work_minutes` (bigint), `units_percent` (int), `scheduling_rule`, `contour` (NOT NULL, default `flat`), `contour_custom` (jsonb). CHECKs: `tasks_work_range` (0..17 520 000), `tasks_units_range` (1..1000), `tasks_scheduling_rule` (`fixed_units`/`fixed_duration`/`fixed_work` or NULL), `tasks_contour` (`flat`, `front_loaded`, `back_loaded`, `bell`, `turtle`, `custom`) |
+| 41 | `cost_rates` | `cost_rate_tables` (`name`, `person_ref?`, `role?`, `currency`, `deleted_at`), `cost_rates` (`table_pid`, `effective_from`, `per_hour_minor`, `created_by?`), `task_costs` (`task_pid`, `kind`, `description`, `amount_minor`, `currency`, `accrual`, `deleted_at`), `time_entry_costs` (`time_entry_pid`, `plan_pid`, `person_ref`, `table_pid`, `spent_on`, `minutes`, plus the snapshotted rate; remaining columns **unverified**). CHECKs: table scope is person XOR role; currency `^[A-Z]{3}$`; `per_hour_minor >= 0`; cost `kind` in (`material`,`fixed`); `accrual` in (`start`,`prorated`,`end`); `amount_minor > 0`. Indexes: partial unique `(name, person_ref)` and `(name, role)` among live tables; unique `(table_pid, effective_from)` (a rate per day); `task_costs_task`; unique `time_entry_costs_entry` (one snapshot per entry); `time_entry_costs_plan` |
+| 42 | `announcements` | `announcements` (`title`, `body`, `severity`, `pinned`, `publish_at`, `expires_at?`, `author_ref?`, `deleted_at`). CHECKs: severity in (`info`,`important`,`urgent`); `expires_at IS NULL OR expires_at > publish_at`. Index `announcements_live (publish_at DESC)` where not deleted |
+| 43 | `onboarding` | `onboarding_templates` (`kind`, `items` json; unique on `kind`), `onboarding_cases` (`kind`, `plan_pid`, `subject_ref?`, `title`, `effective_date`, `status`, `created_by?`, `closed_at?`, `closed_reason?`), `onboarding_items` (`case_pid`, `position`, `title`, `owner_ref?`, `due_date?`, `resolution?`, `note?`, `resolved_at?`, `resolved_by?`), `access_records` (`plan_pid`, `case_pid?`, `person_ref`, `access`, `action`, `recorded_on`, `recorded_by?`, `note?`). CHECKs: kind in (`person_join`,`person_leave`,`plan_intake`,`plan_closeout`); case status in (`open`,`completed`,`cancelled`); `(kind LIKE 'person_%') = (subject_ref IS NOT NULL)`; item resolution in (`done`,`skipped`); access action in (`granted`,`revoked`). Indexes `onboarding_cases_plan (plan_pid, status)`, `onboarding_items_case (case_pid, position)`, `access_records_plan (plan_pid, person_ref)` |
+| 44 | `hammocks` | `tasks.is_hammock` (bool NOT NULL, default false); `hammock_links` (`hammock_pid`, `member_pid`). CHECKs: `hammock_links_distinct` (hammock <> member); `tasks_hammock_is_derived` (a hammock has NULL `duration_days`, `work_minutes`, `constraint_kind`). Unique `hammock_links_pair`; index `hammock_links_member` |
+| 45 | `job_progress_cancel` | `bulk_jobs.progress` (int 0..100, CHECK `bulk_jobs_progress`), `cancel_requested_at?`, `cancelled_by?`; `bulk_jobs_status` widened to add `cancelled` (`queued`, `running`, `completed`, `completed_with_errors`, `failed`, `cancelled`). Trigger `bulk_jobs_progress_monotone` (BEFORE UPDATE) keeps progress from decreasing |
+| 46 | `processes` | `processes` (`name`, `current_version`, `created_by?`, `deleted_at`; CHECK `current_version >= 1`), `process_versions` (`process_pid`, `version`, `steps` json, `created_by?`; unique `(process_pid, version)`), `process_executions` (`process_pid`, `version`, `subject_kind`, `subject_pid`, `status`, `current_step`, `started_by`, `finished_at?`, `note?`; status in `running`/`completed`/`rejected`/`cancelled`/`failed`; index on `(subject_kind, subject_pid)`), `process_execution_logs` (`execution_pid`, `step_index?`, `event`, `actor?`, `note?`; event CHECK over ten event names; index `(execution_pid, id)`). Triggers `process_versions_immutable` and `process_execution_log_append_only` (BEFORE UPDATE OR DELETE) raise via `processes_refuse_change()`. Adds `approval_requests.process_execution_pid` and `process_step` |
+| 47 | `controlled_documents` | `controlled_documents` (`title`, `plan_pid?`, `created_by?`, `deleted_at`), `document_versions` (`document_pid`, `version`, `body`, `change_summary?`, `status`, `approval_pid?`, `effective_from?`, `superseded_on?`, `superseded_by?`, `created_by?`). Status in (`draft`,`in_review`,`approved`,`effective`,`superseded`). Unique `(document_pid, version)`; partial unique **one `effective`** per document and **one in-flight** (`draft`/`in_review`/`approved`) per document. CHECKs: past review needs `approval_pid`; effective/superseded needs `effective_from`; `(status = 'superseded') = (superseded_by AND superseded_on set)`. Trigger `document_versions_guard`: a version past `draft` is never deleted and its `body`, `change_summary`, `version`, `document_pid` never change (the database refuses, not only the handler) |
+| 48 | `onboarding_one_open` | Unique index `onboarding_cases_one_open` on `(plan_pid, kind, COALESCE(subject_ref, ''))` where `status = 'open'`; trigger `plan_dependencies_not_hammock` (BEFORE INSERT on `plan_dependencies`) refuses a dependency naming a hammock |
+
+### 10.8 Migration index (all 82 migrations, by created tables)
+
+Verified by listing `migration/src`; `+table` marks columns added to an
+existing table. Migrations 1-7 are dated `20220101`.
+
+```
+20220101 01 plans; 02 audit_logs; 03 merge_records; 04 event_outbox; 05 proposals gate_reviews risks budget_lines (+plans); 06 plan_dependencies milestones allocations report_definitions; 07 ideas scenarios objectives objective_links benefits
+20260719 02 (+budget_lines milestones risks); 03 insight_snapshots
+20260720 01 sprints tasks (+milestones); 02 sprint_notes devops_events (+tasks)
+20260722 01 reviews automations automation_runs scheduled_actions notifications
+20260728 01 integrity_digests (no create_table seen: unverified)
+20260823 01 task_transitions
+20260825 01 total_project_control; 02 controls control_readings control_actions; 03 phase_transitions (+plans); 04 flow_type (+tasks); 05 workflows workflow_states workflow_transitions; 06 key_results key_result_check_ins
+20260826 01 time_entries working_time_configs non_working_periods; 02 ceremonies sprint_commitments; 03 business_case_targets value_points adoption_snapshots satisfaction_responses
+20260902 01 automation_multi_action; 02 automation_milestone_fires
+20260908 01 webhook_deliveries
+20260918 01 budget_baselines budget_baseline_periods; 02 allocation_skills; 03 saved_views
+20260920 01 report_group_by (+report_definitions)
+20261002 01 canvases canvas_items; 02 comments comment_edits reactions; 03 task_due_date (+tasks); 04 notification_prefs
+20261003 01 plan_modules; 02 components (+tasks); 03 custom_field_defs; 04 custom_field_values; 05 workflow_transition_roles; 06 watchers; 07 approval_requests; 08 task_relations; 09 task_parent (+tasks); 10 feed_tokens; 11 plan_access_settings; 12 timesheet_weeks; 13 plan_templates; 14 planned_slots; 15 artifacts; 16 attachments; 17 bulk_jobs; 18 review_queue_items; 19 guest_grants; 20 plan_links; 21 notification_sinks; 22 sink_deliveries; 23 attachment_texts; 24 report_schedules; 25 schedule_fields (+plan_dependencies tasks); 26 work_calendars (+tasks); 27 task_external_ref (+tasks); 28 person_availabilities; 29 allocation_booking (+allocations); 30 schedule_baselines; 31 schedule_baseline_tasks; 32 raci_assignments; 33 earned_value_settings (+tasks); 34 earned_value_snapshots
+20261004 35 resource_roles; 36 schedule_risk_inputs (+risks tasks)
+20261005 37 kpis kpi_readings; 38 milestone_links (milestone_tasks milestone_slips, +milestones); 39 cost_risk_inputs (+budget_lines risks)
+20261006 40-48 see §10.7
+```
+
+Row-level soft delete, append-only logs and immutability are enforced
+in the database (CHECKs and triggers) for the 2026-10 groups above;
+for the earlier groups see their own migration files (not re-audited
+here: **unverified**).

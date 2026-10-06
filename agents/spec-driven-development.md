@@ -13,7 +13,7 @@ is the fullest local statement); this file adds the entity-level rules.
   truth **for the cross-subproject contract**: trio composition, the one
   recursive `plans` collection, the DTO contract (API body = matcher
   `Plan`, persisted as JSONB), the endpoint inventory the front-end
-  consumes (plan CRUD + match/merge + sub-resources + derived views +
+  consumes (plan CRUD + match/merge + operational records + derived views +
   links + bulk import/export), and shared invariants (entity spec §5.5).
 - Disagreement about crate internals → the crate spec wins. Disagreement
   about the integration contract → the entity spec wins. Either way: open
@@ -32,8 +32,8 @@ spec §6, entity spec §5, front-end `types.ts` + its spec, and CHANGELOGs.
 | You're changing… | Update entity spec… |
 |---|---|
 | `Plan` fields or enums (PlanKind, PlanStatus, RelationKind, IdentifierScheme) | §5.1 (+ matcher spec §6, front-end types) |
-| Sub-resource shape (Goal, Task, Issue) | §5.2 (+ migration, front-end types) |
-| Derived views (Timeline, Burndown) | §5.4 |
+| Operational record shape (Task, Risk, …) | §5.2 (+ migration, front-end types) |
+| Derived views (burndown, critical path, flow, …) | §5.4 |
 | JSONB persistence shape / table columns (the `plans` table) | §5.3, §10 |
 | Shared invariants | §5.5 |
 | Endpoint inventory or wire conventions | §6, §9 |

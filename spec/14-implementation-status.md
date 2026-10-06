@@ -4,6 +4,12 @@
 front-end). Rust rows verified 2026-08-26 by running them, not by
 reading them; front-end rows last run 2026-08-23:
 
+> **Revision note (2026-10-06).** The check counts below are the last
+> dated runs and were **not re-run for this revision** (the service has
+> since grown by dozens of migrations; current counts are unverified). The
+> capability rows were reconciled against the code and the repo-root
+> [`tasks.md`](../tasks.md), which is authoritative for task status.
+
 | Check | Result |
 |---|---|
 | matcher — `cargo test` | 58 unit + 6 integration + 10 property + 7 doctests, 0 failed (2026-08-26) |
@@ -71,6 +77,17 @@ migrations (`m20260825_000001` … `m20260826_000003`) and a matcher
 | service | Controls register (T-26 / FR-38–39, partial) | Pure `src/controls.rs` (three timings, four comparators, verdict derivation, coverage); migration `m20260825_000002_controls` (the `verdict` CHECK keeps `unmeasured` a real third value); nine routes under `/api/plans/{pid}/controls`, `/api/controls`, `/api/readings`, `/api/actions`; feedforward may block, feedback may only record; `POST /api/actions/{pid}/convert` turns an action into a task on its own plan (issue conversion deferred — no `issues` store) |
 | service | OpenAPI + Swagger | Hand-written `src/openapi.rs`, served at `/api-docs/openapi.json` + `/swagger-ui`, with tests pinning that the documented paths match the mounted routes. All mounted route groups — including the new workflow / effort / ceremony / value groups — are documented; that coverage is landing as PRO-P16 concurrently with this snapshot (2026-08-26) |
 | service | API versioning | Version-free URLs; `Accepts-version` header negotiation (`src/version.rs`) |
+| service | **2026-10 delivery (root `tasks.md` series LT / RM / PL / SC / KO / MS / CR / PJ)** | Migrations `m20261002_000001` … `m20261006_000048` (82 migration files in all at this revision). Per-series status lives in [`tasks.md`](../tasks.md) (every box in it is ticked); rows below name the controller or module that backs each recent group |
+| service | Cost rates, assignments, work contours (PJ-2 / PJ-5 / PJ-6) | `src/cost_rates.rs`, `controllers/cost_rates.rs`, `controllers/assignments.rs`, `src/work_profile.rs`, `src/scheduling_rules.rs`; migrations `…_000040_assignment_fields`, `…_000041_cost_rates` (effective-dated, append-only rates; no rate is `null`, never zero); finance access decided by the policy (`auth::service_rules`) |
+| service | Hammock activities (PJ-7) | `src/hammock.rs`, `controllers/hammock.rs`; migration `…_000044_hammocks` (`tasks.is_hammock`, `hammock_links`); a derived span outside the dependency network; `hammocks` on the CPM response; link edits serialised |
+| service | What-if sandbox (PJ-9) | `src/sandbox.rs`, `controllers/sandbox.rs`: `POST /api/plans/{pid}/sandbox/preview` (writes nothing) and `…/sandbox/commit` (`If-Match` plan ETag, `428` without, `409 stale_preview`); the leveling apply goes through the commit |
+| service | Cross-plan task links (PJ-13) | `controllers/cpm.rs` (`load_network_cross`, `external` nodes, `restricted_edges`, `external_truncated`); a link whose both ends the caller cannot read is opaque; deleting a plan with task links is `409` |
+| service | Cancellable jobs with progress (PJ-11) | Migration `…_000045_job_progress_cancel` (monotone progress trigger, `cancelled` status); `POST /api/plans/bulk-jobs/{id}/cancel` |
+| service | Onboarding, offboarding, handover | `src/onboarding.rs`, `controllers/onboarding.rs`, `controllers/handover.rs`; migrations `…_000043_onboarding`, `…_000048_onboarding_one_open` (one open case per person, enforced in the database); front-end `/plans/[pid]/onboarding`, `/plans/[pid]/handover`. Not a numbered task in `tasks.md` (landed in commit `e1214d4`) |
+| service | Announcements | `src/announcements.rs`, `controllers/announcements.rs`; migration `…_000042_announcements`; policy-decided access; front-end `/announcements` |
+| service | Approval processes and controlled documents (PL-2 / PL-6) | `src/processes.rs`, `controllers/processes.rs` (migration `…_000046_processes`: versioned definitions, append-only execution log); `src/documents.rs`, `controllers/controlled_documents.rs` (migration `…_000047_controlled_documents`: an effective version is immutable, one effective per document, enforced by trigger and partial unique index); both build on the PL-1 approval request. No front-end pages |
+| service | Private-plan guard and paging (RM-8 / RM-8b / RM-12b) | `controllers/plan_access.rs` (`HiddenScope`, applied to every aggregate; path-encoding bypass closed in commit `29154a6`); `controllers/paging.rs` (`paging_mw`: `limit`, `offset`, `X-Total-Count` / `X-Limit` / `X-Offset` on every bare-array `GET`); `controllers/task_get.rs` (single-task read with `?include=`) |
+| front-end | 2026-10 pages | `/cost-rates`, `/plans/[pid]/costs`, `/work`, `/what-if`, `/onboarding`, `/handover`, `/wbs`, `/resources/rbs`, `/critical-path`, `/leveling`, `/earned-value`, `/schedule-risk`, `/joint-risk`, `/schedule-health`, `/raci`, `/okrs`, `/kpis`, `/milestones`, `/ceo`, `/announcements`, plus the LT-12 plain-language and one-primary-action rules as tested checks. Route list read from `src/routes`; test counts unverified |
 | front-end | Operator SPA | 34 routes: plans list / new / detail / edit / merge, per-plan board / schedule / governance, plus dashboard, executive, financials, technology, board, auditor, compliance, regulator, risk, security, scenarios, proposals, ideas, objectives, prioritisation, capacity, calendar, gantt, engineering, lifecycle, reports, reviews, automations, signin, verify |
 | front-end | Stack + chrome | SvelteKit 2 + Svelte 5 runes, SVAR DataGrid / Kanban / Gantt, Lily Design System headless, 13-locale i18n, BFF server routes (`src/lib/server/`) so no token reaches the browser |
 | service | Cross-plan rollup | `GET /api/plans/{pid}/rollup` — flow across a plan and everything it contains: the union of the subtree's tasks (never an average of the children's ratios) plus the per-plan comparison, over a bounded, cycle-safe containment walk that reports its own caps |
@@ -82,33 +99,37 @@ migrations (`m20260825_000001` … `m20260826_000003`) and a matcher
 ### 14.2 Open gaps
 
 Live gaps, each pointing at the task that closes it. Absent from this
-list means delivered above.
+list means delivered above or in [`tasks.md`](../tasks.md). Rows last
+checked against the code on 2026-10-06 unless marked unverified.
 
 | Gap | Task |
 |---|---|
-| No cross-service link write-side (`entity_links`, `linked`/`unlinked` events) — the trio references person / worker / organization by `EntityRef` but originates no edges | T-7 |
-| No bulk import / export (`bulk_jobs`, the five endpoints, JSONL/CSV codecs) — unlike person / organization / case | T-8 |
+| No cross-service link write-side (`entity_links`, `linked`/`unlinked` events): no such entity or route exists. The `plan_links` table (LT-8, migration `…_000020`) is a different thing, typed links from a plan to a document, ticket or URL | T-7 |
 | No FHIR surface — **deliberate**, not a gap: no FHIR resource models a plan ([`fhir.md`](../../agents/share/fhir.md) §3 puts portfolio out of scope) | — |
-| **No `goals` sub-resource** — FR-12 specifies `GET`/`POST`/`PUT`/`DELETE /api/plans/{pid}/goals` and §9.2 lists them, but no route exists; `goals[]` is reachable only by rewriting the whole plan payload. Found 2026-08-25 while building the OKR engine, which had been specified to anchor key results to a `goal_id` that does not exist — `Goal` carries no identifier at all | FR-12 |
-| **No `issues` sub-resource** — FR-14 specifies it and §9.2 / §10.1 list its endpoints and table, but no migration, entity or controller exists. Found 2026-08-25 while building Flow Distribution, which had been specified to derive `defect` from an issue's `kind`. A requirement stated in three sections and built in none is exactly what §14.3 rule 1 is for | FR-14 |
-| No duplicate **review queue** table — `check-duplicates` returns candidates, but there is nowhere to persist a pending/confirmed/rejected decision (person / worker / place / thing / organization have one) | T-4 follow-up |
-| Automation breadth: no field-change, date-arrival or SLE-breach triggers, and no **multi-action rules** (the schema holds one action per rule — a migration plus an engine change, not a validation tweak) | T-21 |
-| SPI / CPI are **permanently unmeasured** — the phased budget baseline they divide by does not exist; NPV, Strategic Alignment Index and defect density likewise each need an input the service does not hold | T-23 |
-| Controls: action → **task** conversion landed 2026-09-02 (`POST /api/actions/{pid}/convert`); issue conversion stays undone since there is no `issues` store (`converted_issue_pid` stays reserved, `NULL`, until FR-14 lands). The controls that already exist in all but name (gate readiness, WIP limits, the SLE, retrospectives) are still not registered, so coverage reports only newly-authored controls — investigated and found to need an owner decision (default thresholds for controls whose feedforward verdict can block a write), not a mechanical fix | T-26, PRO-P33 |
-| No workflow **edit** route (withdraw and re-register); the withdraw guard checks tasks only | T-15 |
-| No front-end routes for the new PM-suite surfaces (`/workflows`, `/plans/[pid]/okr`, `/plans/[pid]/distribution`, TPC, controls, ceremonies, value realization) | T-15 / T-16 / T-20 not-built notes |
-| `blocked` carries no reason vocabulary, so the constraint finding stops at "8 days blocked" rather than naming what blocked it | [time-based-analysis.md §17](time-based-analysis.md) |
-| `pnpm run lint` (prettier) fails on two pre-existing files (`src/lib/api/client.ts`, `src/lib/i18n.svelte.ts`); no `.svelte` file is prettier-checked at all, since `prettier-plugin-svelte` is not installed | §15 |
-| No posts / comments / members sub-resources (deferred from the plan lineage) | §15 |
-| Front-end e2e tests are API-stubbed and not wired into CI | §15 |
-| A scenario commit is one-way (no rollback) and an evaluation names no `as_of`, so two reads of one scenario can disagree silently | T-28a |
-| No phased budget baseline — so no EAC/ETC, no portfolio-level overrun forecast, and the SPI/CPI gap above stays open | T-28b |
-| Allocations carry a `role` string, no skills; capacity has no scale evidence for the 50-plus-plan case | T-28c, T-28d |
-| No outbound transport of any kind — `notify` is in-app only; no webhook, email, or push | T-28m |
-| No source-tool import (Jira / Asana export → plans + tasks); waits on T-8 | T-28n |
-| Mobile layout unverified (one `@media` rule; two desktop-shaped grid dependencies); no per-user saved views; no role-tailored nav | T-28k, T-28l, T-28f |
-| No go-live runbook — and the activation gate defaults off | T-28o |
+| **No `goals` sub-resource** — FR-12 specifies it, but no route or entity exists (re-checked 2026-10-06); `goals[]` is reachable only by rewriting the whole plan payload | FR-12 |
+| **No `issues` sub-resource** — FR-14 specifies it, but no migration, entity or controller exists (re-checked 2026-10-06) | FR-14 |
+| Automation breadth: field-change, date-arrival and SLE-breach triggers and multi-action rules — status unverified since 2026-08-26 (see §13 T-21, partly landed) | T-21 |
+| Source-tool import: the MS Project half landed (`POST /api/plans/{pid}/import/mspdi`, PJ-10); Jira and Asana codecs remain open | T-28n |
+| Controls: action to **issue** conversion stays undone since there is no `issues` store (`converted_issue_pid` reserved, `NULL`); action to task landed | T-26 |
+| Hammock follow-ups: no front-end, the MSPDI hammock id is not imported, hammocks link tasks of one plan only | PJ-7 |
+| Processes and controlled documents have no front-end pages | PL-2, PL-6 |
+| WBS has no sibling reordering and the RBS no task drill-down | PJ-12 |
+| A cancelled export produces no file; a running import may process up to 9 rows after a cancel; simulations are not jobs and cannot be cancelled | PJ-11 |
+| `blocked` carries no reason vocabulary, so the constraint finding stops at "8 days blocked" | [time-based-analysis.md §17](time-based-analysis.md) |
+| Front-end lint / e2e-in-CI status — unverified since 2026-08-23 | §15 |
+| Members sub-resource (comments landed as LT-4; posts and members not found in the code) | §15 |
 | No cross-service link **aggregator** (`link-graph-service`) — out of this trio's scope | §15 / [cross-service-linking.md](../../agents/share/cross-service-linking.md) |
+
+Closed since the 2026-08-26 snapshot (moved out of this table per
+§14.3): bulk import / export and the duplicate review queue (T-8, PJ-11,
+`controllers/bulk.rs`, `review_queue_items`), the phased budget baseline
+and SPI / CPI / EAC (T-28b), scenario rollback (T-28a), skill-aware
+allocation and capacity at scale (T-28c / d), report grouping and
+schedules (T-28e), role-tailored navigation (T-28f), saved views
+(T-28l), outbound webhooks and chat / email sinks (T-28m, LT-6, RM-11),
+and the go-live runbook (T-28o). Three older rows (a workflow edit
+route, the PM-suite front-end routes, the prettier failures) were not
+re-checked and are dropped here rather than carried forward unverified.
 
 ### 14.3 Keeping this section honest
 

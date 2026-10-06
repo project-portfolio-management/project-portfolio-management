@@ -12,8 +12,11 @@ Entity-level view; normative inventory in entity spec
 | matcher | Public-API integration | `cargo test --test public_api` | The `lib.rs` re-export surface |
 | matcher | Doctests | `cargo test` | rustdoc examples |
 | service | DB-free embedding tests | `cargo test --test matching` | Matcher embedding + `Plan` JSON round-trip (the DTO/JSONB contract) |
-| service | Controller validation units | `cargo test --lib` | Blank-name → `422` pin; containment-cycle → `422` (DB-free) |
-| service | Request-level tests (`tests/requests/`) | `cargo test -- --ignored` + Postgres `DATABASE_URL` | Plan CRUD, 422 on blank name + containment cycle (create/update), get 200/404, list, `/match`, `/check-duplicates`, `/merge`; sub-resource CRUD; timeline / burndown reads. `#[ignore]`-gated so default `cargo test` is DB-free |
+| service | Unit tests | `cargo test --lib` | Pure rules beside each controller; validation pins (`422` on blank name, containment cycle) |
+| service | Request suites (`tests/mod.rs` → `tests/requests/*`) | `cargo test --test mod -- --ignored --test-threads=1` + Postgres `DATABASE_URL` | Plan CRUD, match, merge, paging, bulk, cpm, task bulk, … `#[ignore]`d, so a plain `cargo test` is DB-free; serial because the database is shared |
+| service | Real-token binaries | `cargo test --test <name> -- --ignored` | `private_aggregates` (private plans in every aggregate, enumerates mounted GET routes), `list_paging` (every list vs `openapi::PAGED_LISTS`), `approvals`, `processes`, `controlled_documents`, `cross_plan`, `guests`, … One binary each: the token verifier is a process-wide `OnceLock` |
+| service | OTLP | `cargo test --test otlp_export --test otlp_middleware` | Real export to an in-process collector, no database |
+| service | Keycloak | `cargo test --features keycloak --test keycloak_guard` | Keycloak access tokens through the real guard (in-process test IdP) |
 | front-end | Type-level check | `pnpm run check` | svelte-check strict, 0 errors / 0 warnings |
 | front-end | Build | `pnpm run build` | Production build |
 
@@ -21,8 +24,8 @@ Entity-level view; normative inventory in entity spec
 
 ```bash
 # both Rust crates
-cargo test
-cargo clippy --all-targets -- -D warnings
+cargo test --lib
+cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
 # front-end
@@ -33,14 +36,11 @@ pnpm run build
 Three-part PR discipline: a behavioural change carries its spec edit
 and its test edit in the same PR.
 
-## What is missing (tracked in entity spec §13)
+## What is missing
 
-| Gap | Task |
-|---|---|
-| Request-level suite is `#[ignore]`-gated; no DB-backed run wired into CI yet | T-4 follow-up |
-| Front-end vitest units (`ApiClient`, `PlanRepository`) | T-5 |
-| Playwright smoke over the core routes against a running service | T-5 |
-| Derived-view (timeline / burndown) computation tests | T-6 |
+The request suites need a Postgres (`compose.test.yaml`); confirm what CI
+runs against the repository's own CI configuration rather than assuming.
+Front-end gaps are tracked by the UI project.
 
 ## Contract seams worth pinning
 
@@ -55,9 +55,10 @@ and its test edit in the same PR.
 - **Front-end ↔ service.** Types are hand-mirrored; only an e2e smoke
   (T-5) catches drift. Until then, treat any matcher-type change as a
   mandatory `types.ts` review.
-- **Plan ↔ sub-resources.** Cascade / soft-delete behaviour and the
-  goal-title → match-component coupling (the goals bridge) are worth
-  explicit request-level coverage.
+- **Private plans and lists.** A new aggregate `GET` must be decided in
+  `private_aggregates`; a new list must join `PAGED_LISTS`.
+- **Goals bridge.** The goal-title → match-component coupling
+  (`data.goals[]`) is worth explicit request-level coverage.
 
 ## Writing new tests
 
@@ -67,8 +68,10 @@ and its test edit in the same PR.
   one pair with differing `kind` labels to pin that matching is
   kind-agnostic.
 - Service: prefer DB-free tests where the behaviour allows; request-level
-  tests are `#[ignore]`-gated (need Postgres — run with
-  `cargo test -- --ignored` and a `DATABASE_URL`).
+  tests are `#[ignore]`-gated (need Postgres and a `DATABASE_URL`); tests
+  that use real tokens go in their own binary. Never hold a transaction
+  while querying the pool in a test setup either: the test pool has one
+  connection.
 - Construct minimal records with `Plan::new("…")` (kind defaults to
   `None`) and set only the fields under test — renormalisation means
   absent components simply drop out of the score.

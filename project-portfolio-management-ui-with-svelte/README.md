@@ -10,9 +10,11 @@ SvelteKit 2 · Svelte 5 (runes) · TypeScript strict · SPA · SVAR Svelte
 DataGrid · Lily Design System Svelte Headless · 13-locale i18n · full
 theme catalogue.
 
-> **Status: implemented (MVP, v0.1.0).** `pnpm run check` is 0 errors /
-> 0 warnings, the vitest suite is green, and `pnpm run build` succeeds.
-> The live work queue is [`spec/index.md`](spec/index.md) §13.
+> **Status: implemented (v0.1.0), verified 2026-10-06.** `pnpm run check`
+> is 0 errors / 0 warnings and the vitest suite passes (529 tests). There are
+> 64 page routes. The live work queue is [`spec/index.md`](spec/index.md) §13;
+> the repo-level backlog is [`../tasks.md`](../tasks.md). Contributor
+> conventions are in [`AGENTS.md`](AGENTS.md).
 
 ## Plans
 
@@ -48,6 +50,22 @@ Every plan route lives under the static `plans/` directory.
 | `/plans/[pid]/board` | Per-plan task Kanban + sprints + honest burndown + standup digest |
 | `/plans/[pid]/governance` | Governance panel — stage / risk posture / budget variance, gate journey, risks, budget lines, benefits + ROI, OKR mappings, milestones, allocations |
 | `/plans/[pid]/schedule` | Plan schedule — child timeframes, critical-path badges, finish-start violations |
+| `/ceo` | One-screen CEO dashboard (six tiles); fits 1080x810 and 810x1080 without scrolling |
+| `/announcements` | Announcement feed |
+| `/me`, `/me/calendar` | My work (today's tasks) and my calendar |
+| `/kpis`, `/okrs`, `/milestones` | Key measures, goals and key results, milestones (late first) |
+| `/cost-rates` | Cost rates (effective-dated; finance area only) |
+| `/cost-risk` | Portfolio cost-risk Monte Carlo |
+| `/resources`, `/resources/rbs` | Role demand vs supply; resource breakdown (roles, people, skills) |
+| `/display` | Display preferences: simple view, dyslexia font |
+| `/tour` | Guided tour |
+| `/plans/[pid]/work` | Work and assignments, contours, scheduling rules |
+| `/plans/[pid]/costs` | Plan costs |
+| `/plans/[pid]/what-if` | What-if schedule sandbox: preview, then commit |
+| `/plans/[pid]/wbs` | Work breakdown tree with generated codes (table twin past 500 rows) |
+| `/plans/[pid]/onboarding`, `/plans/[pid]/handover` | Onboarding and offboarding checklists; handover of work |
+| `/plans/[pid]/{critical-path,earned-value,raci,leveling,schedule-health,schedule-risk,cost-risk,joint-risk,flow,calendar}` | Scheduling canon: critical path network, earned value, RACI, leveling, schedule health, schedule and cost risk, flow metrics, working calendar |
+| `/auditor`, `/compliance`, `/regulator`, `/risk`, `/security`, `/engineering`, `/board`, `/calendar`, `/automations`, `/reviews`, `/prioritisation`, `/lifecycle` | Oversight, governance and workflow views (see `src/routes`) |
 | `/executive` | CEO area: portfolio-health briefing (server-derived RAG), decision log, benefits realization |
 | `/financials` | CFO area: budget variance (category / kind / plan) + per-currency exposure — minor units, no FX |
 | `/technology` | CTO area: technology radar (`tech:` tags) + dependency-risk lens (fan-out, red predecessors) |
@@ -72,9 +90,11 @@ switcher). The chrome area carries:
 - a **theme selector** (`lily-design-system-svelte-theme-picker`) —
   selecting a theme restyles the whole site (full shared catalogue);
 - a **locale selector** (`lily-design-system-svelte-locale-picker`) —
-  13 locales (`en`, `cy`, `es`, `fr`, `de`, `ar`, `ru`, `hi`, `zh`,
-  `bn`, `pt`, `id`, `ur`); selecting one switches the language; `ar` /
-  `ur` render RTL;
+  10 locales (`ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`, `es-001`,
+  `fr-001`, `hi-001`, `zh-001`, `zh-cn`; `LOCALES` in `src/lib/locales.ts`).
+  Pages live under a locale prefix (`/cy-001/plans`); a two-letter alias such
+  as `/en/plans` redirects to its canonical address. Only `ar-001` renders
+  RTL;
 - a session affordance: **Sign in** leads to this app's own `/signin` +
   `/verify` magic-link pages (BFF), which establish a server-side
   session and set an httpOnly `__Host-mxi_session` cookie. The browser
@@ -86,7 +106,7 @@ switcher). The chrome area carries:
 
 ## Prerequisites
 
-- Node 20+ and pnpm
+- Node 26 (`engines.node` is `=26`) and pnpm
 - A running [Portfolio Service](../project-portfolio-management-api-with-rust)
 - The sibling Lily helper repo (theme / locale selectors are `file:`
   dependencies)
@@ -141,11 +161,18 @@ dashboard / capacity views) consume those and the PPM endpoints.
 ## Testing
 
 ```bash
-pnpm run check     # svelte-check (strict, 0 errors / 0 warnings)
+pnpm run check         # svelte-check (strict, 0 errors / 0 warnings)
 pnpm run build
-pnpm test          # vitest unit suite
-pnpm test:e2e      # Playwright smoke (runs against `vite preview`)
+npx vitest run         # unit suite (tests/unit, jsdom): 529 tests
+pkill -f 'vite preview'   # clear a stale preview server first
+npx playwright test    # e2e (tests/e2e): builds, serves `vite preview` on :4173
+npx playwright test --project=mobile   # 390x844 audit of every route
 ```
+
+Playwright specs stub the backend with `page.route`, so no running service is
+needed. `tests/e2e/a11y.spec.ts` runs an axe audit over every page route
+(enumerated from `src/routes`); `tests/e2e/ceo.spec.ts` checks the CEO
+dashboard at 1080x810 and 810x1080.
 
 ## License
 

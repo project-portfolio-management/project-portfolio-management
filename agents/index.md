@@ -18,38 +18,24 @@ service crate + matcher crate + front-end.
 
 | Subproject | Spec | Agent guide | Detailed guides |
 |---|---|---|---|
-| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | [spec/index.md](../project-portfolio-management-api-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | — (thin; see entity spec §13 T-1) |
+| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | [spec/index.md](../project-portfolio-management-api-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | — (see the crate's AGENTS.md) |
 | [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (algorithm, normalization, SDD, testing) |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) | — (thin) |
 
-## Shared documents (project root)
-
-The shared reference docs live at the project root under
-[`../../agents/share/`](../../agents/share/).
+## Related documents in this repository
 
 | Document | Description |
 |---|---|
-| [overview.md](../../agents/share/overview.md) | High-level project overview |
-| [architecture.md](../../agents/share/architecture.md) | Layered architecture |
-| [rust-loco-stack.md](../../agents/share/rust-loco-stack.md) | Dependency stack |
-| [loco.md](../../agents/share/loco.md) | Loco framework conventions |
-| [match-search-merge.md](../../agents/share/match-search-merge.md) | Match / search / merge workflows |
-| [dataflow.md](../../agents/share/dataflow.md) | Create / search / merge data flows |
-| [privacy.md](../../agents/share/privacy.md) | Masking, GDPR, consent |
-| [auditability.md](../../agents/share/auditability.md) | Audit logging and event streaming |
-| [availability.md](../../agents/share/availability.md) | Health checks, scaling |
-| [observability.md](../../agents/share/observability.md) | Tracing + OpenTelemetry |
-| [restful.md](../../agents/share/restful.md) | REST API conventions |
-| [postgresql.md](../../agents/share/postgresql.md) | PostgreSQL setup |
-| [locales.md](../../agents/share/locales.md) | i18n & l10n |
-| [compliance-for-healthcare.md](../../agents/share/compliance-for-healthcare.md) | HIPAA, NHS, GDPR, … |
-| [compliance-for-technology.md](../../agents/share/compliance-for-technology.md) | ISO, GDPR, … |
+| [../spec/index.md](../spec/index.md) | Entity-level living spec |
+| [../project-portfolio-management-api-with-rust/AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | Service guide: route map, middleware, gotchas, testing |
+| [../tasks.md](../tasks.md) · [../plan.md](../plan.md) | Leantime-derived `LT-n` work queue and its research |
+| [../spec/13-tasks.md](../spec/13-tasks.md) | Numbered build-out (`T-n`) |
+
+Shared documents the older notes cite as `agents/share/…` (privacy,
+auditability, observability, restful conventions, …) live outside this
+repository.
 
 ## See also
 
 - [`../spec/index.md`](../spec/index.md) — entity-level living spec
   (source of truth for the cross-subproject contract)
-- [`../../AGENTS.md`](../../AGENTS.md) — repo-root agent entry point
-- [`../../care-pathway/spec/index.md`](../../care-pathway/spec/index.md) —
-  the closest-shape sibling entity spec (DTO = matcher type as JSONB,
-  no adapter), useful as a parity reference

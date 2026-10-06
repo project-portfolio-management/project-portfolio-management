@@ -1,8 +1,9 @@
 ## 6. Functional Requirements
 
-Each requirement names its owning subproject. The entity is
-**spec-only; no code exists yet** (§14), so every requirement is a
-target tracked in §13 / §15.
+Each requirement names its owning subproject. The trio is implemented
+(§14); §6.1–§6.8 describe what is built unless a requirement says
+**not built**, and delivery state per task is in the repo-root
+[`tasks.md`](../tasks.md) (authoritative).
 
 There is one plans collection — `/api/plans` — where `{pid}` is a plan
 record. All matching, dedup, and merge endpoints are **kind-agnostic**:
@@ -126,7 +127,8 @@ hang off **any** plan.
   (`/api/plans/{pid}/issues`). `Issue { pid, parent_pid, title,
   kind: Bug|Risk|Blocker|Question|Improvement,
   severity: Low|Med|High|Critical, status:
-  Open|InProgress|Resolved|Closed, assignee_ref? }`.
+  Open|InProgress|Resolved|Closed, assignee_ref? }`. **Not built:** no
+  `issues` route, table or entity exists (§14.2).
 - **FR-15 Timeline (derived).** `GET /api/plans/{pid}/timeline`
   returns a Gantt-style projection: goals with a `target_date` as
   milestones + tasks with `due_date` / date ranges as bars. Read-only;
@@ -188,7 +190,8 @@ matcher payload (§5.6); every mutation audits (§6.6).
 
 ### 6.4b Full-suite capabilities — service (§1.4–§1.6)
 
-Committed by §1.4–§1.6; **not yet built** (§2.3). None enters the
+Committed by §1.4–§1.6; delivered in service 0.3.0 except where a
+requirement says otherwise (§14). None enters the
 matcher payload (§5.6); every mutation audits and emits its event
 (§6.6). Types in §5.9, endpoints in §9.2b, tables in §10.6.
 
@@ -429,6 +432,122 @@ sentiment.
   score without them is not reportable — an NPS of 100 from two
   respondents is not a finding. Responses store a role, never an
   identity (§5.9.6).
+
+### 6.4d Scheduling, cost, people and governance extensions — service
+
+Delivered 2026-10-05 / 2026-10-06 (migrations `…_000040` – `…_000048`;
+tasks PJ-2, PJ-5 – PJ-7, PJ-9, PJ-11, PJ-13, PL-1, PL-2, PL-6, RM-8b,
+RM-12b in [`tasks.md`](../tasks.md)). Endpoints in §9; tables in §10.
+Each is audited (§6.6). Money is integer minor units and never summed
+across currencies.
+
+- **FR-40 Assignments, scheduling rules and work contours (PJ-5, PJ-6).**
+  `PUT /api/plans/{pid}/tasks/{t_pid}/assignment` sets units / work /
+  duration under a rule (`fixed_units`, `fixed_duration`, `fixed_work`)
+  and recomputes the third; an assignment needs an assignee.
+  `PUT …/tasks/{t_pid}/contour` spreads work (`flat`, `front_loaded`,
+  `back_loaded`, `bell`, `turtle`, `custom`). `GET …/work-profile` and
+  `GET /api/work-profile` return work as day / week / month buckets,
+  **derived on read** (task → plan → portfolio). Bounds are CHECKed in
+  the database (`work_minutes` 0..17 520 000, `units_percent` 1..1000).
+- **FR-41 Cost rates and labour cost (PJ-2).** Named rate tables per
+  person **or** role (exactly one), each rate effective from a date and
+  append-only; a day before the first rate has no rate (`null`, never
+  zero). Material and fixed task costs with an accrual (`start`,
+  `prorated`, `end`); `GET …/cost-plan` (planned cost by period, per
+  currency); `POST …/labour-costs/record` snapshots the rate used so a
+  later rate change never rewrites an actual. **Finance gate:** every
+  route is admitted only for `access=admin` or `finance=cost_rates`
+  (or authentication off); anyone else gets `404`, and no rate or cost
+  appears in any other response. Earned value can take actual cost from
+  recorded labour (PJ-2 follow-up).
+- **FR-42 Hammock activities (PJ-7).** `POST …/tasks/{t_pid}/hammock`
+  turns a task into a hammock (or back); `POST …/hammocks/{h_pid}/links`
+  and `DELETE …/links/{member}` link it to the tasks or hammocks whose
+  span it follows; `GET …/hammocks` lists each with its derived span.
+  A hammock carries no duration, work, constraint or dependency (CHECK
+  `tasks_hammock_is_derived`; a trigger refuses a dependency naming
+  one), is never in the dependency network and cannot drive float; a
+  link cycle or self-link is refused; no links or all-unscheduled
+  members read as unscheduled, never a made-up span.
+- **FR-43 What-if sandbox (PJ-9).** `POST /api/plans/{pid}/sandbox/preview`
+  applies edits (move, duration, constraint, add / remove link) to an
+  in-memory copy and returns dates, float, critical path and labour-cost
+  impact; it writes nothing. `POST …/sandbox/commit` applies the same
+  edits in one transaction, one audit entry per changed item, and needs
+  `If-Match` with the preview's plan ETag (`409` if the plan changed;
+  never merged). The resource-leveling apply goes through the same
+  commit. Constraint permission, assignee masking and the finance gate
+  apply to a preview as to a commit.
+- **FR-44 Cross-plan task links (PJ-13).** A plan's critical-path
+  network includes the tasks of other plans its tasks are linked to via
+  `plan_dependencies`, so float is computed across the link (each node
+  on its own plan's calendar); cross-plan edges are flagged
+  `cross_plan`. The walk is bounded (8 other plans, 3000 tasks). A link
+  to a plan the caller cannot read is omitted from the calculation and
+  shown only as a restricted edge, with nothing about the far side.
+- **FR-45 Private plans and the aggregate guard (RM-8, RM-8b).** A
+  private plan answers `404` (existence not disclosed) to any request
+  under `/api/plans/{pid}` from a non-member; lists, search and
+  duplicate checks omit it. Every cross-plan aggregate loads through
+  one shared `HiddenScope`, so a hidden plan contributes to no total,
+  list, ranking or count; the admin-only bulk reads stay full and
+  answer `403` to others. A failed lookup fails closed for private
+  plans only.
+- **FR-46 Uniform paging and task `include` (RM-12b).** Every `GET`
+  answering `200` with a bare JSON array pages: `?limit=` (default and
+  ceiling 500), `?offset=` (above 10 000 is `400`), headers
+  `X-Total-Count` / `X-Limit` / `X-Offset`, body still the bare array.
+  `GET /api/plans/{pid}/tasks/{t_pid}?include=` embeds sub-resources
+  (`children`, `relations`, `transitions`, `raci`, `time_entries`); a name whose module is off is
+  omitted with reason `module_disabled`, one naming people with reason
+  `masked`, and an unknown name is `422` listing the allowed ones.
+- **FR-47 Cancellable bulk jobs (PJ-11).** `bulk_jobs` carry `progress`
+  (0-100, never decreasing, enforced by trigger) and the status
+  `cancelled`. `POST /api/plans/bulk-jobs/{id}/cancel` is cooperative:
+  a queued job is cancelled at once; a running job stops after its
+  current row, keeping the rows already processed; cancelling a
+  finished job is a no-op. Only the requester or an admin may cancel
+  (others get the `404` of an unknown job).
+- **FR-48 Approval processes (PL-1, PL-2).** Approval requests
+  (`POST /api/approvals`, `…/{pid}/decide`, `…/{pid}/withdraw`) apply to
+  any subject. A **process** is a named list of up to 20 steps
+  (`approve`, `todo`, `notify`); each edit adds an immutable version and
+  an execution is pinned to the version it started on. Steps run one at
+  a time; a rejection ends the execution `rejected` and skips and logs
+  every later step; `cancel` does the same. State is in the database
+  (execution status `running`, `completed`, `rejected`, `cancelled`,
+  `failed`) with an append-only log; `resume` reconciles an execution
+  with its approval after a restart.
+- **FR-49 Controlled documents (PL-6).** Versions move `draft` ->
+  `in_review` -> `approved` -> `effective` -> `superseded`. Review is an
+  approval request on the version, so only the named approver approves;
+  `make-effective` requires that approval to have been approved and, in
+  the same step, supersedes the prior effective version naming its
+  successor. Only a draft's text may change (an edit after that is the
+  next draft). Exactly one effective and at most one in-flight version
+  per document; immutability is enforced by a database trigger.
+  `GET /api/documents/{pid}/in-force` returns the effective version.
+- **FR-50 Onboarding, offboarding and handover.** Cases of kind
+  `person_join`, `person_leave`, `plan_intake`, `plan_closeout` start
+  from the kind's checklist (built-in or a custom template per kind);
+  due dates are the effective date plus an item offset; an item is
+  `done` or `skipped` (with a note) and a case completes only when none
+  is open; one open case per (plan, kind, subject). Access grants and
+  revocations are an append-only record (this service records access;
+  it cannot change an identity provider). `GET …/closeout` lists what
+  stands between a plan and closing (open tasks, risks, live bookings,
+  unrevoked access, open cases). `POST …/handover/preview` lists a
+  person's live holdings (unfinished tasks, bookings, RACI roles, open
+  risks) and what each becomes; `…/handover/commit` applies it in one
+  transaction and needs `If-Match` with the preview's handover ETag
+  (`409` if holdings changed). Anything naming a person needs the
+  permission to manage people.
+- **FR-51 Announcements.** `GET /api/announcements` is the live feed for
+  anyone; publish / edit / retract need `access=admin` or
+  `comms=publish` (otherwise `403`); severity `info`, `important`,
+  `urgent`; optional expiry after publication; `?include=all`
+  (publishers only) also lists scheduled and expired ones.
 
 ### 6.5 Cross-service links & bulk — service
 

@@ -100,9 +100,10 @@ side has no `parent_ref`.
 
 - `POST /api/plans/match` → `engine.rank(query, candidates)`
   over the request payload (no DB).
-- `POST /api/plans/check-duplicates` → loads up to 1 000 active plan
-  rows, `match_plans` per candidate, returns `is_match` hits sorted by
-  score descending.
+- `POST /api/plans/check-duplicates` → takes up to 200 candidates from
+  the Tantivy index (blocking; the query is never filtered by `kind`),
+  runs `match_plans` per candidate, and returns `is_match` hits sorted
+  by score descending.
 
 ## Source files (matcher crate)
 

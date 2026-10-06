@@ -170,3 +170,28 @@ The items below predate the PPM repositioning and remain valid.
   container hardening.
 - **gRPC.** Tonic stub once a high-throughput consumer exists. (The
   OpenAPI 3 doc + Swagger UI for the REST surface ship under T-9.)
+
+### Status of the longer arc (reconciled 2026-10-06)
+
+Read against the code and the repo-root [`tasks.md`](../tasks.md); the
+bullets above are kept as written and annotated here rather than
+rewritten.
+
+- **Delivered since they were written:** the durable outbox and relay
+  (`event_outbox`, `src/relay.rs`; §14.1); bulk import / export with a
+  duplicate review queue (T-8, `controllers/bulk.rs`); Tantivy search
+  (`src/search/`); blanket auth enforcement behind
+  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` (still **default off**)
+  with ABAC; comments and reactions (LT-4) and watchers (RM-3); an MS
+  Project (MSPDI) import and export (PJ-10).
+- **Still open:** the cross-service link write-side (T-7, no
+  `entity_links`), the Jira and Asana import codecs (T-28n), a members
+  sub-resource, gRPC, and two-way PM-tool sync. A link aggregator stays
+  out of this trio's scope.
+- **The 2026-10 catalogue is in `tasks.md`, not here:** Leantime
+  (LT-n), Redmine (RM-n), Huly (PL-n), the scheduling and cost canon
+  (SC-n, KO-n, MS-n, CR-n) and ProjectLibre (PJ-n) items. All 71 listed
+  items are ticked at this revision, including hammocks (PJ-7), the
+  what-if sandbox (PJ-9), cross-plan links (PJ-13), approval processes
+  (PL-2) and controlled documents (PL-6). Items recorded there under
+  "Not taken" are deliberate non-goals, not roadmap.

@@ -14,7 +14,7 @@
 > source of > truth **for that subproject's internals**. When this spec
 > and a > crate spec disagree about crate internals, the crate spec
 > wins; when > they disagree about the integration contract, this spec
-> wins. Open a > task in §13 to bring the loser in line — do not
+> wins. Open a > task in the repo-root tasks.md (older T-n items: §13) to bring the loser in line — do not
 > silently rewrite > either spec. > > **§5 is the canonical domain
 > model.** This entity-level spec owns > the canonical `Plan` domain
 > model, the optional `PlanKind` label, > recursive `parent_ref`
@@ -82,3 +82,14 @@ kept whole rather than split across them:
   Distribution) and their source. Four are delivered under TBA
   vocabulary; **Flow Distribution** — the mix of feature / defect /
   risk / debt work — is the new one. Committed in §1.6.
+
+## Where to look for what
+
+- **Task status:** the repo-root [`tasks.md`](../tasks.md) is
+  authoritative (LT / RM / PL / SC / KO / MS / CR / PJ series);
+  [§13](13-tasks.md) holds only the older T-n build-out and points to it.
+- **What is delivered, and what is not:** [§14](14-implementation-status.md).
+- **Routes and persistence:** [§9](09-api-surface.md) and
+  [§10](10-persistence.md); the service's own `spec/` and the mounted
+  routes win on crate internals (see above).
+- **Bulk import / export:** [bulk-import-export.md](bulk-import-export.md).

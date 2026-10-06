@@ -5,9 +5,8 @@ optional `PlanKind` label + kind-agnostic matching (§5.2 / §5.5), the
 matchable/operational partition (§5.6), shared invariants (§5.8), the
 API surface (§9), compliance scope (§12) — MUST land in the same commit
 as the corresponding code change, with the corresponding test change
-(three-part PR). Until the trio is scaffolded (§13 T-1), a "code
-change" may be the scaffold itself; the discipline begins with the
-first crate.
+(three-part PR). The trio has been scaffolded since 2026-06-19, so the discipline
+applies to every change.
 
 Authority boundaries (restated from [`index.md`](index.md)):
 
@@ -49,3 +48,23 @@ their canonical tables here.
 Bullet what changed, not how: every spec edit should be a diff a
 reviewer can read in isolation. Keep stylistic re-flows out of
 behavioural diffs.
+
+**Where status lives.** Task status is owned by the repo-root
+[`tasks.md`](../tasks.md) (the LT / RM / PL / SC / KO / MS / CR / PJ
+series) and, for the older T-n build-out, [§13](13-tasks.md); delivered
+capability is recorded in §14.1 and a gap leaves §14.2 in the same
+change that closes it. A change that adds or alters:
+
+- a **route, parameter, status code or response header** updates §9
+  (and the hand-written `src/openapi.rs` / `openapi_more.rs`, which
+  tests pin against the mounted routes) in the same commit;
+- a **table, trigger, index or CHECK** updates §10 and ships as a
+  numbered migration (the latest at this revision is
+  `m20261006_000048_onboarding_one_open`);
+- a **behavioural rule** (a guard, a derivation, a refusal) updates the
+  functional requirement in §6 and, for a new term, the glossary (§4).
+
+Rules the service enforces in the database (an immutable effective
+document version, an append-only process log, monotone job progress,
+one open onboarding case per person) are changed only by a migration;
+spec and code must not describe them as handler-level checks.

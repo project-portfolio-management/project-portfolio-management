@@ -699,3 +699,42 @@ Cataloguing them makes two things visible that are invisible today: a
 control that has **never produced a reading**, and a phase with **no
 controls at all** — which is precisely what an auditor asks for and what
 §12's compliance surface has no answer to yet.
+
+### 5.10 Scheduling, cost, people and governance entities (migrations 40-48)
+
+Operational only: none enters the matcher payload (§5.6). Each lives in
+its own service table or as columns on `tasks` (§10); FRs in §6.4d.
+
+**Columns added to `tasks`.**
+
+| Column | Meaning |
+|---|---|
+| `work_minutes`, `units_percent`, `scheduling_rule`, `contour`, `contour_custom` | Assignment (FR-40): work in minutes (0..17 520 000), units 1..1000 %, rule `fixed_units` \| `fixed_duration` \| `fixed_work` (null = none), contour `flat` (default) \| `front_loaded` \| `back_loaded` \| `bell` \| `turtle` \| `custom` with its JSON weights |
+| `is_hammock` | Hammock flag (FR-42); when true, duration, work and constraint must be null (CHECK) |
+
+**New entities.**
+
+| Entity | Shape | Invariants |
+|---|---|---|
+| `CostRateTable` / `CostRate` | A named table for a `person_ref` **xor** a `role`, one `currency` (`^[A-Z]{3}$`); rates `{ effective_from, per_hour_minor >= 0 }` | One rate per (table, day); rates append-only; a day before the first rate has no rate, never zero |
+| `TaskCost` | `{ task, kind: material \| fixed, amount_minor > 0, currency, accrual: start \| prorated \| end }` | Soft-deleted |
+| `TimeEntryCost` | Snapshot `{ time_entry, person_ref, minutes, per_hour_minor, currency, cost_minor }` | One per time entry; fixed at record time so a later rate change never rewrites an actual |
+| `HammockLink` | `{ hammock_pid, member_pid }` | Distinct ends, unique pair; no cycle among hammocks; a hammock cannot be a dependency endpoint (trigger on `plan_dependencies`) |
+| `Announcement` | `{ title, body, severity: info \| important \| urgent, pinned, publish_at, expires_at?, author_ref? }` | `expires_at > publish_at` |
+| `OnboardingTemplate` | One per kind: `{ kind, items (JSON) }` | `kind` unique |
+| `OnboardingCase` | `{ kind: person_join \| person_leave \| plan_intake \| plan_closeout, plan, subject_ref?, effective_date, status: open \| completed \| cancelled }` | Person kinds carry a `subject_ref`, plan kinds do not (CHECK); one open case per (plan, kind, subject) (migration 48) |
+| `OnboardingItem` | `{ case, position, title, owner_ref?, due_date?, resolution: done \| skipped, note }` | Due date = effective date + offset |
+| `AccessRecord` | `{ plan, person_ref, access, action: granted \| revoked, recorded_on }` | Append-only record; outstanding = granted and not since revoked |
+| `Process` / `ProcessVersion` | `{ name, current_version }`; version `{ steps[] }`, step `{ kind: approve \| todo \| notify, person_ref, title }`, at most 20 | Versions immutable (trigger) |
+| `ProcessExecution` / `ProcessExecutionLog` | Execution `{ process, version, subject_kind, subject_pid, status: running \| completed \| rejected \| cancelled \| failed, current_step }`; log `{ event, step_index?, actor, note }` | Pinned to a version; log append-only (trigger); an approval request carries `process_execution_pid` and `process_step` |
+| `ControlledDocument` / `DocumentVersion` | `{ title, plan? }`; version `{ version, body, status: draft \| in_review \| approved \| effective \| superseded, approval_pid?, effective_from?, superseded_by? }` | One effective and at most one in-flight version per document; approved or later needs an approval; text immutable after draft (trigger) |
+
+**Bulk job additions.** `bulk_jobs` gain `progress` (0-100, monotone by
+trigger), `cancel_requested_at`, `cancelled_by` and status `cancelled`
+(FR-47).
+
+**Private plans.** A plan marked private in `plan_access_settings`
+(RM-8) is hidden from non-members everywhere, including aggregates,
+through one `HiddenScope` (FR-45). Cross-plan task links reuse
+`plan_dependencies` (FR-44); no table was added for them.
+

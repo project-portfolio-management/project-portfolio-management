@@ -8,9 +8,10 @@ The portfolio entity is two things at once:
    crate's `Plan` is the API DTO, the persisted JSONB payload, and the
    matching input. One shape, end to end — no adapter (mirrors
    care-pathway).
-2. A **project-management tool** — a `Plan` owns operational
-   sub-resources (goals, tasks, issues) and exposes derived read views
-   (timeline / Gantt, burndown).
+2. A **project-management tool** — a `Plan` owns operational records
+   in their own tables (tasks, sprints, risks, milestones, allocations,
+   approvals, documents, …) and exposes derived read views (burndown,
+   critical path, flow, cost, …).
 
 Normative definitions: entity spec [§5](../spec/05-domain-model.md)
 and matcher [spec §6](../project-portfolio-management-matcher-with-rust/spec/index.md).
@@ -44,6 +45,7 @@ HTTP `422`.
 | owner_org_name | Option\<String\> | Owning-org display name (informational-only) |
 | lead_ref | Option\<String\> | EntityRef `person:<id>` \| `worker:<id>` — the lead. **Not scored** |
 | parent_ref | Option\<String\> | Parent plan `pid` (recursive containment); absent for a root plan |
+| phase | Option\<PlanPhase\> | Initiating / Planning / Executing / Controlling / Closing — data only, **never scored** |
 | status | Option\<PlanStatus\> | Lifecycle status — informational-only, NOT a match signal |
 | goals | Vec\<Goal\> | In the payload; goal **titles** feed the `Goals` component |
 | start_date | Option\<Date\> | Planned / actual start (feeds `Timeframe`) |
@@ -71,46 +73,39 @@ Construct with `Plan::new(name)` — `kind` defaults to `None`.
 Deterministic schemes pin a match to 1.0 on a shared value;
 owner-scoped schemes never do (see [matching.md](matching.md)).
 
-## Operational sub-resources
+## Operational records
 
-These hang off any `Plan` and make it a project-management tool. They are
-**not** part of the matching surface (except goal *titles* —
-[matching.md](matching.md) `Goals` component). Each is owned by its
-parent plan, has its own table, and is reached under
-`/api/plans/{pid}/…`.
+These hang off a `Plan` by `plan_pid`, each in its own table, and are
+**not** part of the matching surface (goal *titles* bridge in through
+`data.goals[]`). `src/models/_entities/` holds the SeaORM entities (about
+100); the route map is in the service
+[AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md).
+Representative groups:
 
-| Sub-resource | Key fields | Notes |
-|---|---|---|
-| `Goal` | `title`, `description`, `target_date`, `status: GoalStatus` | Titles feed the `Goals` match component; also a payload field via `data.goals[]` (the goals bridge) |
-| `Task` | `title`, `description`, `status: TaskStatus`, `assignee_ref`, `goal_id?`, `parent_task_id?`, `estimate`, `remaining`, `due_date` | Self-nesting for sub-tasks; feeds burndown |
-| `Issue` | `title`, `description`, `kind: IssueKind`, `severity: IssueSeverity`, `status: IssueStatus`, `assignee_ref` | Bugs / risks / blockers / questions / improvements |
-
-| Enum | Variants |
+| Group | Tables (examples) |
 |---|---|
-| `GoalStatus` | `NotStarted`, `InProgress`, `Achieved`, `Missed`, `Custom(String)` |
-| `TaskStatus` | `Todo`, `InProgress`, `InReview`, `Done`, `Blocked` |
-| `IssueKind` | `Bug`, `Risk`, `Blocker`, `Question`, `Improvement` |
-| `IssueSeverity` | `Low`, `Medium`, `High`, `Critical` |
-| `IssueStatus` | `Open`, `InProgress`, `Resolved`, `Closed` |
+| Delivery | `tasks`, `task_transitions`, `task_relations`, `sprints`, `sprint_notes`, `sprint_commitments`, `ceremonies`, `hammock_links` |
+| Schedule | `plan_dependencies` (also cross-plan), `milestones`, `schedule_baselines`, `allocations`, `planned_slots` |
+| Governance | `proposals`, `gate_reviews`, `risks`, `budget_lines`, `controls`, `approval_requests` |
+| Cost / value | `cost_rate_tables`, `cost_rates`, `task_costs`, `time_entries`, `benefits`, `kpis` |
+| Process / documents | `processes`, `process_versions`, `process_executions`, `process_execution_logs`, `controlled_documents`, `document_versions` (append-only / immutable past draft, enforced by triggers) |
+| People | `onboarding_cases`, `onboarding_items`, `access_records`, `guest_grants`, `plan_access_settings` |
+| Platform | `audit_logs`, `merge_records`, `event_outbox`, `bulk_jobs`, `webhook_deliveries`, `announcements`, `plan_links` |
 
+`TaskStatus` values are `todo`, `in_progress`, `in_review`, `done`,
+`blocked` (`src/engineering.rs`), unless a custom workflow is in force.
 `*_ref` fields are opaque references (person `pid`, worker `pid`,
-organization `pid`, auth user id) resolved by the consuming front-end /
-link aggregator — the plan service stores them verbatim.
+organization `pid`, auth user id) the service stores verbatim.
 
-> Posts / comments / members are **not** core sub-resources for the
-> portfolio entity (deferred; roadmap only if a collaboration surface is
-> needed). The matchable surface and the three sub-resources above are
-> the whole model.
+> Goals and issues have **no** sub-resource routes and there is no
+> `/timeline`; they are deferred (spec §13).
 
 ## Derived views (read-only)
 
-Computed from the plan + its sub-resources; never stored as
-canonical state.
-
-| View | Computed from | Endpoint |
-|---|---|---|
-| `Timeline` | `start_date`/`target_date` + task `due_date`/`estimate` + goal `target_date` | `GET …/{pid}/timeline` (Gantt-shaped rows) |
-| `Burndown` | task `status` transitions + `remaining` over the timeframe | `GET …/{pid}/burndown` (remaining-work series) |
+Computed on read from stored rows; never stored as canonical state:
+`burndown` (done-at transitions only), `velocity`, critical path
+(`/cpm`, floats across cross-plan links), hammock spans, work profile,
+cost plan, time-based flow metrics, Smart Score, lifecycle.
 
 ## Service persistence model
 
@@ -121,14 +116,11 @@ canonical state.
 One core table `plans` — `{id` (PK)`, pid` (public UUID)`, name`
 (denormalised from `data.name`)`, kind` (nullable)`, parent_pid`
 (nullable, the recursive containment link)`, data` (JSONB `Plan`)`,
-active, deleted_at` (soft delete)`}`. Model helpers: `create`,
-`find_by_pid`, `list(limit)`, `to_plan()` (deserialise), `update_data`,
-`soft_delete`.
-
-Each sub-resource gets its own child table (`tasks`, `goals`, `issues`)
-keyed by the parent `plan_pid`. Supporting tables: `audit_logs`,
-`merge_records`, `entity_links`, `review_queue`, plus a deferred
-`bulk_jobs`.
+active, deleted_at` (soft delete)`, phase}`. Model helpers: `create`,
+`find_by_pid`, `list_paged`, `to_plan()`, `update_data`, `soft_delete`.
+Migrations live in `migration/src/` (latest `…_000048_onboarding_one_open`);
+`create_table` pluralises names, and trigger functions use
+`CREATE OR REPLACE FUNCTION`.
 
 ## Wire DTOs (service controller)
 
@@ -144,8 +136,7 @@ keyed by the parent `plan_pid`. Supporting tables: `audit_logs`,
 
 **File:** [`src/lib/api/types.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/types.ts)
 — `Plan`, `PlanKind`, `PlanStatus`, `Goal`, `GoalStatus`,
-`Task`, `TaskStatus`, `Issue`, `IssueKind`, `IssueSeverity`,
-`IssueStatus`, `PlanRelationship`, `RelationKind`,
+`Task`, `TaskStatus`, `PlanRelationship`, `RelationKind`,
 `IdentifierScheme`, `PlanRef`, `ScoredRef`. Hand-mirrored; MUST be
 updated in the same change cycle as any matcher-type change (entity
 spec §18).

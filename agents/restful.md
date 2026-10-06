@@ -24,70 +24,58 @@ per-kind collection and no `{collection}` path segment. Matching is
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| POST | `/api/plans` | `Plan` | `{pid, name}` |
-| GET | `/api/plans` | — | `[{pid, name}]` (active, most-recent first, cap 100) |
-| GET | `/api/plans/search?q=` | — | `[{pid, name}]` — `ILIKE` name match (cap 50); blank `q` → `400` |
-| GET | `/api/plans/{pid}` | — | stored `Plan` |
+| POST | `/api/plans` | `Plan` | `{pid, name}`; `409` on a real-time duplicate |
+| GET | `/api/plans` | — | `[{pid, name}]` — paged (default 100) |
+| GET | `/api/plans/search?q=` | — | Tantivy full-text; `?fuzzy=`, `?phonetic=`, `?kind=` (an opt-in narrowing; never applied to duplicate detection); blank `q` is `400` |
+| GET | `/api/plans/{pid}` | — | stored `Plan` (a `mask` obligation returns the redacted view) |
 | PUT | `/api/plans/{pid}` | `Plan` | `{pid, name}` |
 | DELETE | `/api/plans/{pid}` | — | `{}` (soft delete) |
+| GET | `/api/plans/{pid}/masked` · `/export` | — | always-redacted view · audited GDPR export |
 
-`kind` is an optional descriptive label taken verbatim from the body (no
-per-kind collection to stamp it from). A `parent_ref` may point at any
-other plan (recursive containment); a `parent_ref` that targets the plan
-itself or one of its descendants (a containment cycle) is rejected `422`.
+`kind` is an optional descriptive label taken verbatim from the body. A
+`parent_ref` that targets the plan itself or a descendant is `422`. A
+**private** plan is `404` to non-members on every `/api/plans/{pid}/…` path
+and contributes to no aggregate view.
 
-### Matching
+### Matching and merge
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | POST | `/api/plans/match` | `{query, candidates}` | ranked `[(index, MatchResult)]` |
 | POST | `/api/plans/check-duplicates` | `Plan` | `[{pid, name, score, confidence, is_match}]`, score-descending |
-| POST | `/api/plans/deduplicate` | `{threshold?}` | batch scan over active plan rows → clusters of candidate duplicates |
-| POST | `/api/plans/merge` | `{main_pid, duplicate_pid, reason?}` | `{main_pid, duplicate_pid, main}`; `422` equal pids (self-merge), `404` unknown |
-| GET | `/api/plans/merges/recent` | — | recent `merge_records` (history + transferred snapshot) |
+| POST | `/api/plans/merge` | `{main_pid, duplicate_pid, reason?}` | `{main_pid, duplicate_pid, main}`; `422` equal pids, `404` unknown |
+| GET | `/api/plans/merges/recent` | — | recent `merge_records` |
 
-Any two plans may match or merge regardless of their `kind` labels —
-matching is kind-agnostic.
+Matching is kind-agnostic. `POST /api/plans/deduplicate` (batch scan) is
+**not wired** (spec §13).
 
-### Sub-resource CRUD
+### Paging (every list)
 
-Each sub-resource hangs off a parent plan. Read / update / delete are by
-the sub-resource id. Soft-delete semantics match the parent.
+A `GET` that answers `200` with a bare JSON array pages the same way:
+`?limit=` (default and ceiling 500), `?offset=` (above 10 000 is `400`),
+and headers `X-Total-Count` / `X-Limit` / `X-Offset`; the body stays the
+bare array. The service's `openapi::PAGED_LISTS` census is checked by
+`tests/list_paging.rs`.
 
-| Sub-resource | Collection | Item |
-|---|---|---|
-| Goals | `GET` / `POST /api/plans/{pid}/goals` | `GET` / `PUT` / `DELETE …/goals/{id}` |
-| Tasks | `GET` / `POST /api/plans/{pid}/tasks` | `GET` / `PUT` / `DELETE …/tasks/{id}` |
-| Issues | `GET` / `POST /api/plans/{pid}/issues` | `GET` / `PUT` / `DELETE …/issues/{id}` |
+### Areas beyond the registry
 
-Goal writes also mutate the parent's `data.goals[]` payload field (the
-goals bridge), keeping the matcher's `Goals` component in sync.
+The service is also a project-management tool. Rather than repeat the full
+route map, see the crate's
+[AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) (one
+row per area: governance, visibility, strategy, executive and oversight
+views, engineering and flow, critical path with cross-plan float,
+hammocks, what-if sandbox, assignments and cost rates, onboarding and
+handover, approval processes, controlled documents, announcements, bulk
+import/export, task bulk edit/copy/move, `GET …/tasks/{t_pid}?include=`)
+and [spec §9](../project-portfolio-management-api-with-rust/spec/index.md).
+Two commit endpoints need `If-Match` with the etag from their preview, and
+answer `409` if stale: `POST …/sandbox/commit` and `POST …/handover/commit`.
 
-### Derived views (read-only)
+### Typed links
 
-| Method | Path | Returns |
-|---|---|---|
-| GET | `/api/plans/{pid}/timeline` | Gantt-shaped rows from plan + task + goal dates |
-| GET | `/api/plans/{pid}/burndown` | remaining-work series over the plan timeframe |
-
-### Cross-service links
-
-A plan links out to other entities (parent plan, child plans, sponsoring
-organization, lead / assignee people / workers). The link aggregator
-surface:
-
-| Method | Path | Returns |
-|---|---|---|
-| GET | `/api/plans/{pid}/links` | typed outbound + inbound links for the plan |
-| POST | `/api/plans/{pid}/links` | add a typed link `{kind, target}` |
-| DELETE | `/api/plans/{pid}/links/{id}` | remove a link |
-
-### Bulk import / export
-
-| Method | Path | Body | Returns |
-|---|---|---|---|
-| POST | `/api/plans/import` | `[Plan]` (NDJSON or array) | per-row `{pid, name}` / error |
-| GET | `/api/plans/export` | — | full `[Plan]` snapshot (active rows) |
+`POST`/`GET /api/plans/{pid}/links` and `DELETE …/links/{lpid}` store and
+return typed links on a plan; the service never fetches or renders the
+target.
 
 ### Authentication
 
@@ -99,12 +87,12 @@ Short-lived **PASETO v4.public** tokens are verified offline against the
 auth-service's published **Ed25519 key** via the embedded
 `authentication-verifier` (`src/auth.rs`). The `AuthUser` extractor
 requires a token; `MaybeAuthUser` is optional and feeds the audit
-`actor`. Blanket `/api/*` auth enforcement (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`) +
-published-key fetch are follow-ups. (Front-ends use a BFF + cookie
+`actor`. Blanket `/api/*` auth enforcement is off by default
+(`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`); the published-key fetch at boot
+is `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`. (Front-ends use a BFF + cookie
 session, so the browser holds no token; the BFF supplies this bearer
-server-side.) Source of truth:
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
-(RS256/JWKS not used).
+server-side.) Credentials come from
+the central authentication-service (RS256/JWKS not used).
 
 ### Audit & events
 
@@ -114,16 +102,17 @@ server-side.) Source of truth:
 | GET | `/api/plans/{pid}/audit` | audit trail for one plan |
 | GET | `/api/plans/events/recent` | recent `PlanEvent`s from the in-memory stream |
 
-Each create / update / delete (plan or sub-resource) writes a
-best-effort `audit_logs` row (durable) and publishes a
-`created`/`updated`/`deleted` event to the in-memory stream. Durable
-broker is roadmap.
+Each write writes an `audit_logs` row and publishes an event to the
+in-memory stream by default; with
+`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox` a relay delivers from
+a durable outbox (Fluvio sink behind the `fluvio` feature; optional signed
+webhooks).
 
 ### API documentation & metrics
 
 | Method | Path | Returns |
 |---|---|---|
-| GET | `/api-docs/openapi.json` | hand-written OpenAPI 3 document |
+| GET | `/api-docs/openapi.json` | hand-written OpenAPI 3 document (every route is pinned there) |
 | GET | `/swagger-ui` | Swagger UI page (CDN assets) rendering the spec |
 | GET | `/metrics.prom` | Prometheus exposition |
 
@@ -132,8 +121,9 @@ broker is roadmap.
 | Code | Meaning |
 |---|---|
 | 200 | Success |
-| 400 | Malformed body (loco JSON rejection); blank `q` on search |
-| 404 | Unknown or soft-deleted `pid` / sub-resource id |
+| 400 | Malformed body (loco JSON rejection); blank `q` on search; `offset` above 10 000 |
+| 409 | Duplicate on create; stale `If-Match` on a commit |
+| 404 | Unknown or soft-deleted `pid`; a private plan to a non-member |
 | 422 | Validation failure: blank `name` on create/update; containment cycle on `parent_ref`; blank sub-resource title (family convention) |
 | 500 | Internal error |
 
@@ -154,20 +144,9 @@ curl -s localhost:5150/api/plans \
 [`src/lib/api/client.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/client.ts)
 (lean fetch wrapper + `ApiError`),
 [`src/lib/api/plans.ts`](../project-portfolio-management-ui-with-svelte/src/lib/api/plans.ts)
-(`PlanRepository`: CRUD + sub-resource CRUD + `checkDuplicates` +
-timeline / burndown reads).
+(`PlanRepository`).
 
-| Route | Endpoints |
-|---|---|
-| `/plans` | `GET /api/plans` |
-| `/plans/new` | `POST /api/plans` |
-| `/plans/[pid]` | `GET`, `DELETE /api/plans/{pid}`; `POST …/check-duplicates`; sub-resource lists |
-| `/plans/[pid]/edit` | `GET`, `PUT /api/plans/{pid}` |
-| `/plans/[pid]/board` | task list / Kanban via `…/{pid}/tasks` |
-| `/plans/[pid]/issues` | `…/{pid}/issues` |
-| `/plans/[pid]/goals` | `…/{pid}/goals` |
-| `/plans/[pid]/timeline` | `GET …/{pid}/timeline` |
-| `/plans/[pid]/burndown` | `GET …/{pid}/burndown` |
+The UI project owns its route list; see its [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) and spec.
 
 A plan detail also rolls up its child plans (recursive containment). Base
 URL: `PUBLIC_API_BASE_URL` (default `http://localhost:5150`).

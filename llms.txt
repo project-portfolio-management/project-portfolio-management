@@ -1,0 +1,54 @@
+# Project Portfolio Management
+
+> A plan registry and project-management tool: one recursive plan collection with an optional kind label, a Rust matcher library for explainable duplicate detection, a loco.rs REST service (governance, scheduling, cost, approvals, controlled documents), and a SvelteKit UI.
+
+## Specification
+
+- [Entity living spec](spec/index.md): Entity-level contract: the Plan model, the trio, shared invariants; index of sections 1-18
+- [Domain model](spec/05-domain-model.md): The Plan DTO, optional kind label, recursive containment, records and derived views
+- [Functional requirements](spec/06-functional-requirements.md): What the system must do
+- [Architecture](spec/08-architecture.md): Layers, components and dependency direction
+- [API surface](spec/09-api-surface.md): Entity-level REST contract
+- [Persistence](spec/10-persistence.md): The plans table, JSONB payload and supporting tables
+- [Testing strategy](spec/11-testing-strategy.md): Normative test inventory
+- [Compliance](spec/12-compliance.md): Privacy, audit and integrity obligations
+- [Entity tasks](spec/13-tasks.md): Numbered build-out (T-n) with status
+- [Implementation status](spec/14-implementation-status.md): What is built versus specified
+- [Roadmap](spec/15-roadmap.md): Planned direction
+- [Open questions](spec/16-open-questions.md): Unresolved decisions
+- [Change control](spec/18-change-control.md): How spec changes are made
+- [Time-based analysis](spec/time-based-analysis.md): Cycle and lead time, flow efficiency, forecasting rules
+- [Bulk import/export](spec/bulk-import-export.md): Design of asynchronous import and export jobs
+- [PRINCE2 mapping](spec/prince2/index.md): How the service maps to PRINCE2
+- [Total Project Control](spec/total-project-control/index.md): DIPP, banding and portfolio triage
+- [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics
+- [Keycloak test containers](spec/testcontainers-keycloak/index.md): Testing against a Keycloak container
+- [API crate spec](project-portfolio-management-api-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
+- [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalisation
+- [UI spec](project-portfolio-management-ui-with-svelte/spec/index.md): Living spec for the SvelteKit operator UI
+
+## Agent guides
+
+- [API service guide](project-portfolio-management-api-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
+- [Matcher guide](project-portfolio-management-matcher-with-rust/AGENTS.md): Matching rules, golden rules and file layout for the library
+- [UI guide](project-portfolio-management-ui-with-svelte/AGENTS.md): Working guide for the SvelteKit UI
+- [Agents index](agents/index.md): Entity-level reference documents
+- [Subprojects](agents/subprojects.md): The trio: responsibilities, dependency direction, how to run each
+- [Domain models](agents/models.md): Plan DTO, supporting types, operational records, persistence
+- [Matching](agents/matching.md): Kind-agnostic scoring, weights and deterministic rules
+- [REST conventions](agents/restful.md): Registry endpoints, paging, status codes, front-end consumption
+- [Testing](agents/testing.md): Test layers, quality gates and contract seams
+- [Spec-driven development](agents/spec-driven-development.md): Authority model and three-part PR discipline
+
+## Work queue
+
+- [Tasks](tasks.md): LT-n work items derived from the research plan, with acceptance state
+- [Plan](plan.md): Research on Leantime and the ideas worth adopting
+
+## READMEs and changelogs
+
+- [API README](project-portfolio-management-api-with-rust/README.md): Overview, quick start and testing for the service
+- [API changelog](project-portfolio-management-api-with-rust/CHANGELOG.md): Release notes for the service
+- [Matcher README](project-portfolio-management-matcher-with-rust/README.md): Usage and weights table for the matching library
+- [Matcher changelog](project-portfolio-management-matcher-with-rust/CHANGELOG.md): Release notes for the matcher
+- [UI README](project-portfolio-management-ui-with-svelte/README.md): Overview and run instructions for the UI

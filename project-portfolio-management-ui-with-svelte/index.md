@@ -58,7 +58,7 @@ Global navigation is a full-width **top bar** with a **leftmost
 hamburger** toggle (no left sidebar; content is full-width). The nav has
 a single **Plans** destination (no collection switcher). The chrome area
 carries a **theme selector** (full shared catalogue — selecting a
-theme restyles the whole site), a **locale selector** (13 locales;
+theme restyles the whole site), a **locale selector** (10 locales;
 selecting one switches the language; `ar` / `ur` are RTL), and the
 session affordance.
 

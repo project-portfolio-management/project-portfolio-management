@@ -1,5 +1,13 @@
 # Plan: ideas from Leantime
 
+> **Status (2026-10-06).** This file is research and decision history, not a
+> live queue: its ideas became the `LT-`, `RM-`, `PL-`, `SC-`, `PJ-` and related
+> items in [tasks.md](tasks.md), all of which are ticked there (each entry says
+> what is built and what is "Not built"). Sections are numbered §1–§31 across
+> six research passes (Leantime, Redmine, Platform Collective, scheduling and
+> cost canon, ProjectLibre, owner decisions); the "Where we already match"
+> tables are as of each pass's date and are not re-verified.
+
 Research date: 2026-10-02. Subject: [leantime/leantime](https://github.com/leantime/leantime)
 (v3.10.1; PHP / MySQL; AGPLv3; ~11.7k stars).
 

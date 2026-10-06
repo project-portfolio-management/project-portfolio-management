@@ -18,7 +18,11 @@ export interface CapacityPerson {
   capacity: { source: "default" | "availability"; min_percent: number };
   peak_percent: number;
   over_capacity: OverCapacitySpan[];
-  proposed: { percent: number; allocations: number; would_exceed_capacity: boolean };
+  proposed: {
+    percent: number;
+    allocations: number;
+    would_exceed_capacity: boolean;
+  };
 }
 
 /** What the meter draws. */
@@ -44,7 +48,11 @@ export function loadModel(p: CapacityPerson): LoadModel {
   const capacity = Math.max(0, p.capacity.min_percent);
   const need = Math.max(100, committed, committed + proposed, capacity);
   const scale = Math.ceil(need / 25) * 25;
-  const state: LoadModel["state"] = p.over_allocated ? "over" : p.proposed.would_exceed_capacity ? "proposed_over" : "ok";
+  const state: LoadModel["state"] = p.over_allocated
+    ? "over"
+    : p.proposed.would_exceed_capacity
+      ? "proposed_over"
+      : "ok";
   const marker = state === "over" ? "!" : state === "proposed_over" ? "◐" : "○";
   const parts: string[] = [];
   parts.push(
@@ -53,8 +61,12 @@ export function loadModel(p: CapacityPerson): LoadModel {
       : `${committed}% committed`,
   );
   if (p.over_capacity.length > 0) {
-    const worst = p.over_capacity.reduce((a, b) => (b.demand - b.capacity > a.demand - a.capacity ? b : a));
-    parts.push(`over capacity from ${worst.from}${worst.to === worst.from ? "" : ` to ${worst.to}`} (${worst.demand}% asked, ${worst.capacity}% available)`);
+    const worst = p.over_capacity.reduce((a, b) =>
+      b.demand - b.capacity > a.demand - a.capacity ? b : a,
+    );
+    parts.push(
+      `over capacity from ${worst.from}${worst.to === worst.from ? "" : ` to ${worst.to}`} (${worst.demand}% asked, ${worst.capacity}% available)`,
+    );
   } else if (p.over_allocated) {
     parts.push("over capacity");
   }
@@ -66,7 +78,9 @@ export function loadModel(p: CapacityPerson): LoadModel {
   return {
     scale,
     committedPct: clampPct((committed / scale) * 100),
-    proposedPct: clampPct(((committed + proposed) / scale) * 100) - clampPct((committed / scale) * 100),
+    proposedPct:
+      clampPct(((committed + proposed) / scale) * 100) -
+      clampPct((committed / scale) * 100),
     capacityPct: clampPct((capacity / scale) * 100),
     state,
     marker,
@@ -82,7 +96,11 @@ export interface SpanSegment {
 }
 
 /** Place over-capacity runs on the `[from, to]` window as percentages of its width. */
-export function spanSegments(from: string, to: string, spans: readonly OverCapacitySpan[]): SpanSegment[] {
+export function spanSegments(
+  from: string,
+  to: string,
+  spans: readonly OverCapacitySpan[],
+): SpanSegment[] {
   const a = dayNumber(from);
   const b = dayNumber(to);
   if (a === null || b === null || b < a) return [];
@@ -105,7 +123,10 @@ export function spanSegments(from: string, to: string, spans: readonly OverCapac
 }
 
 /** Whether an error from the commit call is the "would be over capacity" 409 that `confirm` can override. */
-export function isOverCapacityConflict(status: number | undefined, body: unknown): boolean {
+export function isOverCapacityConflict(
+  status: number | undefined,
+  body: unknown,
+): boolean {
   if (status !== 409) return false;
   try {
     return JSON.stringify(body ?? "").includes("over_capacity");

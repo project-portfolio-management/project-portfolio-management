@@ -158,7 +158,11 @@ export interface HealthCheck {
   count: number;
   of: number;
   value: number | null;
-  threshold: { op: string; limit: number | null; unit: "percent" | "milli" | "days" | "result" };
+  threshold: {
+    op: string;
+    limit: number | null;
+    unit: "percent" | "milli" | "days" | "result";
+  };
   /** Null when the check cannot be computed (never a pass). */
   pass: boolean | null;
   reason: string | null;
@@ -222,7 +226,13 @@ export interface LevelingProposal {
   allow_critical: boolean;
   load_percent: number;
   moves: LevelingMove[];
-  effects: { pid: string; title: string | null; moved: string; start_days: number; finish_days: number }[];
+  effects: {
+    pid: string;
+    title: string | null;
+    moved: string;
+    start_days: number;
+    finish_days: number;
+  }[];
   over_allocated: LevelingRun[];
   unresolved: LevelingRun[];
   finish_before: string | null;
@@ -274,7 +284,15 @@ export interface ResourcePlan {
   group_by: "role" | "skill";
   overlapping: boolean;
   periods: ResourcePeriod[];
-  placeholders: { allocation_pid: string; plan_pid: string; role: string | null; percent: number; start_date: string | null; end_date: string | null; booking: string }[];
+  placeholders: {
+    allocation_pid: string;
+    plan_pid: string;
+    role: string | null;
+    percent: number;
+    start_date: string | null;
+    end_date: string | null;
+    booking: string;
+  }[];
   people_by_role: Record<string, string[]> | null;
   masked: boolean;
   note: string;
@@ -316,7 +334,13 @@ export interface ScheduleRisk {
   histogram: { date: string; count: number }[];
   tasks: RiskTask[];
   events: {
-    used: { risk_pid: string; title: string; task_pid: string; probability_percent: number; impact_days: number }[];
+    used: {
+      risk_pid: string;
+      title: string;
+      task_pid: string;
+      probability_percent: number;
+      impact_days: number;
+    }[];
     skipped: { risk_pid: string; title: string; reason: string }[];
     risks_without_schedule_fields: number;
   };
@@ -351,8 +375,20 @@ export interface CostCurrencyResult {
   max_minor: number;
   histogram: { from_minor: number; to_minor: number; count: number }[];
   lines: CostLineResult[];
-  events: { risk: string; plan: string; title: string | null; probability_bp: number; impact_minor: number; hit_bp: number }[];
-  plans: { plan: string; name: string | null; budget_minor: number; mean_minor: number }[];
+  events: {
+    risk: string;
+    plan: string;
+    title: string | null;
+    probability_bp: number;
+    impact_minor: number;
+    hit_bp: number;
+  }[];
+  plans: {
+    plan: string;
+    name: string | null;
+    budget_minor: number;
+    mean_minor: number;
+  }[];
 }
 
 export interface CostRiskAssumptions {
@@ -376,7 +412,15 @@ export interface CostRisk {
   assumptions: CostRiskAssumptions;
   currencies: CostCurrencyResult[];
   events: {
-    used: { risk_pid: string; plan_pid: string; title: string; probability_percent: number; cost_impact_minor: number; currency: string; also_a_schedule_event: boolean }[];
+    used: {
+      risk_pid: string;
+      plan_pid: string;
+      title: string;
+      probability_percent: number;
+      cost_impact_minor: number;
+      currency: string;
+      also_a_schedule_event: boolean;
+    }[];
     skipped: { risk_pid: string; title: string; reason: string }[];
     risks_without_cost_fields: number;
   };
@@ -411,11 +455,24 @@ export interface JointRisk {
     lines: CostLineResult[];
   };
   confidence: { budget_bp: number; finish_bp: number; joint_bp: number };
-  quadrants: { both: number; budget_only: number; time_only: number; neither: number };
+  quadrants: {
+    both: number;
+    budget_only: number;
+    time_only: number;
+    neither: number;
+  };
   points: { days_late: number; cost_minor: number }[];
   events: {
-    schedule: { used: unknown[]; skipped: { risk_pid: string; title: string; reason: string }[]; risks_without_schedule_fields: number };
-    cost: { used: unknown[]; skipped: { risk_pid: string; title: string; reason: string }[]; risks_without_cost_fields: number };
+    schedule: {
+      used: unknown[];
+      skipped: { risk_pid: string; title: string; reason: string }[];
+      risks_without_schedule_fields: number;
+    };
+    cost: {
+      used: unknown[];
+      skipped: { risk_pid: string; title: string; reason: string }[];
+      risks_without_cost_fields: number;
+    };
   };
   note: string;
 }
@@ -423,7 +480,8 @@ export interface JointRisk {
 // ---- Milestones as a concept (portfolio view) ----
 
 export type MilestoneStatus = "achieved" | "late" | "due_soon" | "upcoming";
-export type MilestoneScheduleState = "on_track" | "at_risk" | "forecast_late" | "no_forecast";
+export type MilestoneScheduleState =
+  "on_track" | "at_risk" | "forecast_late" | "no_forecast";
 export type MilestoneMode = "manual" | "linked";
 
 export interface MilestoneSchedule {
@@ -473,7 +531,13 @@ export interface MilestoneView {
   links: MilestoneLink[];
   slip: MilestoneSlip;
   /** Only on `GET /api/milestones/{pid}`. */
-  history?: { from: string; to: string; reason: string | null; actor: string | null; at: string }[];
+  history?: {
+    from: string;
+    to: string;
+    reason: string | null;
+    actor: string | null;
+    at: string;
+  }[];
 }
 
 /** `GET /api/milestones`. */
@@ -536,7 +600,11 @@ export interface CapacityView {
     peak_percent: number;
     over_capacity: OverCapacitySpan[];
     /** The hoped-for bookings, kept apart from the firm figures. */
-    proposed: { percent: number; allocations: number; would_exceed_capacity: boolean };
+    proposed: {
+      percent: number;
+      allocations: number;
+      would_exceed_capacity: boolean;
+    };
   }[];
 }
 
@@ -800,7 +868,8 @@ export interface AnnouncementInput {
 }
 
 export type SchedulingRule = "fixed_units" | "fixed_duration" | "fixed_work";
-export type Contour = "flat" | "front_loaded" | "back_loaded" | "bell" | "turtle" | "custom";
+export type Contour =
+  "flat" | "front_loaded" | "back_loaded" | "bell" | "turtle" | "custom";
 export type Grain = "day" | "week" | "month";
 
 export interface AssignmentBody {
@@ -856,7 +925,12 @@ export interface WorkProfile {
     unplaced_work_minutes?: number;
     outside_window_minutes?: number;
   };
-  unplaced: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
+  unplaced: Array<{
+    pid: string;
+    title: string;
+    work_minutes: number;
+    reason: string;
+  }>;
   reason?: string;
   note: string;
 }
@@ -888,16 +962,42 @@ export interface CostPlan {
   plan_pid: string;
   from?: string;
   to?: string;
-  currencies: Array<{ currency: string; labour: MoneyBuckets; fixed: MoneyBuckets; total: MoneyBuckets }>;
-  unrated: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
-  unassigned: Array<{ pid: string; title: string; work_minutes: number; reason: string }>;
-  unplaced: Array<{ cost_pid: string; task_pid: string; amount_minor: number; currency: string; reason: string }>;
+  currencies: Array<{
+    currency: string;
+    labour: MoneyBuckets;
+    fixed: MoneyBuckets;
+    total: MoneyBuckets;
+  }>;
+  unrated: Array<{
+    pid: string;
+    title: string;
+    work_minutes: number;
+    reason: string;
+  }>;
+  unassigned: Array<{
+    pid: string;
+    title: string;
+    work_minutes: number;
+    reason: string;
+  }>;
+  unplaced: Array<{
+    cost_pid: string;
+    task_pid: string;
+    amount_minor: number;
+    currency: string;
+    reason: string;
+  }>;
   reason?: string;
   note: string;
 }
 
 export interface LabourCosts {
-  currencies: Array<{ currency: string; cost_minor: number; minutes: number; entries: number }>;
+  currencies: Array<{
+    currency: string;
+    cost_minor: number;
+    minutes: number;
+    entries: number;
+  }>;
   unpriced: { entries: number; minutes: number; reason: string | null };
   note: string;
 }
@@ -905,8 +1005,20 @@ export interface LabourCosts {
 export type SandboxEdit =
   | { op: "move"; task_pid: string; start_date: string }
   | { op: "duration"; task_pid: string; duration_days: number }
-  | { op: "constraint"; task_pid: string; constraint_kind: string | null; constraint_date: string | null; reason?: string }
-  | { op: "add_link"; predecessor_pid: string; successor_pid: string; kind?: string; lag_days?: number }
+  | {
+      op: "constraint";
+      task_pid: string;
+      constraint_kind: string | null;
+      constraint_date: string | null;
+      reason?: string;
+    }
+  | {
+      op: "add_link";
+      predecessor_pid: string;
+      successor_pid: string;
+      kind?: string;
+      lag_days?: number;
+    }
   | { op: "remove_link"; link_pid: string };
 
 export interface SandboxDates {
@@ -923,15 +1035,42 @@ export interface SandboxPreview {
   result_etag: string;
   changes: Array<{ item: "task" | "link_added" | "link_removed"; pid: string }>;
   finish: { before: string | null; after: string | null };
-  tasks: Array<{ pid: string; title: string; assignee?: string | null; before: SandboxDates | null; after: SandboxDates | null }>;
-  moved: Array<{ pid: string; moved: string; start_days: number; finish_days: number }>;
-  critical_path: { before: string[]; after: string[]; added: string[]; removed: string[] };
-  assignments_recomputed: Array<{ task_pid: string; derived: string | null; exact: boolean | null; units_percent: number; work_minutes: number }>;
+  tasks: Array<{
+    pid: string;
+    title: string;
+    assignee?: string | null;
+    before: SandboxDates | null;
+    after: SandboxDates | null;
+  }>;
+  moved: Array<{
+    pid: string;
+    moved: string;
+    start_days: number;
+    finish_days: number;
+  }>;
+  critical_path: {
+    before: string[];
+    after: string[];
+    added: string[];
+    removed: string[];
+  };
+  assignments_recomputed: Array<{
+    task_pid: string;
+    derived: string | null;
+    exact: boolean | null;
+    units_percent: number;
+    work_minutes: number;
+  }>;
   cost_impact:
     | { available: false; reason: string }
     | {
         available: true;
-        labour: Array<{ currency: string; before_minor: number; after_minor: number; delta_minor: number }>;
+        labour: Array<{
+          currency: string;
+          before_minor: number;
+          after_minor: number;
+          delta_minor: number;
+        }>;
         unrated_minutes_before: number;
         unrated_minutes_after: number;
       };
@@ -945,7 +1084,8 @@ export interface SandboxCommitted {
   finish: { before: string | null; after: string | null };
 }
 
-export type OnboardingKind = "person_join" | "person_leave" | "plan_intake" | "plan_closeout";
+export type OnboardingKind =
+  "person_join" | "person_leave" | "plan_intake" | "plan_closeout";
 
 export interface OnboardingProgress {
   total: number;
@@ -994,13 +1134,30 @@ export interface OnboardingCaseSummary {
 export interface Closeout {
   plan_pid: string;
   ready: boolean;
-  counts: { open_tasks: number; open_risks: number; active_allocations: number; outstanding_access: number; open_cases: number };
+  counts: {
+    open_tasks: number;
+    open_risks: number;
+    active_allocations: number;
+    outstanding_access: number;
+    open_cases: number;
+  };
   findings: Array<{ code: string; count: number; text: string }>;
 }
 
 export interface AccessRecords {
-  outstanding: Array<{ person_ref: string; access: string; granted_on: string }>;
-  records: Array<{ pid: string; person_ref: string; access: string; action: "granted" | "revoked"; recorded_on: string; note: string | null }>;
+  outstanding: Array<{
+    person_ref: string;
+    access: string;
+    granted_on: string;
+  }>;
+  records: Array<{
+    pid: string;
+    person_ref: string;
+    access: string;
+    action: "granted" | "revoked";
+    recorded_on: string;
+    note: string | null;
+  }>;
   note: string;
 }
 
@@ -1010,7 +1167,11 @@ export interface HandoverPreview {
   to_person: string | null;
   handover_etag: string;
   action: "reassign" | "release";
-  holdings: Array<{ kind: "task" | "allocation" | "raci" | "risk"; pid: string; label: string }>;
+  holdings: Array<{
+    kind: "task" | "allocation" | "raci" | "risk";
+    pid: string;
+    label: string;
+  }>;
   counts: Record<string, number>;
   note: string;
 }
@@ -1425,14 +1586,23 @@ export interface Cpm {
   nodes: CpmNode[];
   /** The dependencies used, so a diagram can draw them. */
   edges: CpmEdge[];
-  unscheduled: { pid: string; title: string | null; reason: "no_duration" | "no_anchor" | "date_out_of_range" }[];
+  unscheduled: {
+    pid: string;
+    title: string | null;
+    reason: "no_duration" | "no_anchor" | "date_out_of_range";
+  }[];
   ignored_edges: string[];
   critical_chains: string[][];
   chains_truncated: boolean;
   /** The latest finish across the plan and what it is linked to. */
   network_finish?: string | null;
   /** Dependencies to a plan the caller may not read: counted, never named. */
-  restricted_edges?: { pid: string; task_pid: string; side: "predecessor" | "successor"; label: string }[];
+  restricted_edges?: {
+    pid: string;
+    task_pid: string;
+    side: "predecessor" | "successor";
+    label: string;
+  }[];
   external_truncated?: boolean;
   note: string;
 }
@@ -1449,7 +1619,13 @@ export interface ScheduleBaseline {
 }
 
 /** How a task compares with a baseline. */
-export type VarianceStanding = "slipped" | "pulled_in" | "on_baseline" | "added" | "removed" | "unmeasurable";
+export type VarianceStanding =
+  | "slipped"
+  | "pulled_in"
+  | "on_baseline"
+  | "added"
+  | "removed"
+  | "unmeasurable";
 
 export interface VarianceRow {
   task_pid: string;
@@ -1491,16 +1667,34 @@ export interface ScheduleVariance {
 }
 
 /** What is incomplete on a RACI row. */
-export type RaciFinding = "no_accountable" | "no_responsible" | "many_accountable";
+export type RaciFinding =
+  "no_accountable" | "no_responsible" | "many_accountable";
 
 /** `GET /api/plans/{pid}/raci`. */
 export interface RaciMatrix {
   plan_pid: string;
   /** Everyone who holds a letter anywhere, sorted. */
   people: string[];
-  rows: { task_pid: string; title: string; cells: Record<string, string>; findings: RaciFinding[] }[];
-  summary: { tasks: number; complete: number; missing_accountable: number; multiple_accountable: number; missing_responsible: number };
-  workload: { person_ref: string; responsible: number; accountable: number; consulted: number; informed: number }[];
+  rows: {
+    task_pid: string;
+    title: string;
+    cells: Record<string, string>;
+    findings: RaciFinding[];
+  }[];
+  summary: {
+    tasks: number;
+    complete: number;
+    missing_accountable: number;
+    multiple_accountable: number;
+    missing_responsible: number;
+  };
+  workload: {
+    person_ref: string;
+    responsible: number;
+    accountable: number;
+    consulted: number;
+    informed: number;
+  }[];
 }
 
 /** A basis-point ratio (10 000 = 1.0), or why there is none. */
@@ -1544,7 +1738,12 @@ export interface EarnedValue {
     manual_tasks: string[];
     /** Any task is counted by a person-entered percent. */
     manual: boolean;
-    tasks: { pid: string; weight: number; percent_bp: number; method: "zero_hundred" | "fifty_fifty" | "manual" }[];
+    tasks: {
+      pid: string;
+      weight: number;
+      percent_bp: number;
+      method: "zero_hundred" | "fifty_fifty" | "manual";
+    }[];
   };
   unbaselined_currencies?: string[];
   ac_source?: string;
@@ -1556,7 +1755,12 @@ export type EvRag = "green" | "amber" | "red" | "unknown";
 /** An amount, or why there is none (EVM analytics, SC-5). */
 export interface EvAmount {
   minor: number | null;
-  absent?: "no_actual_cost" | "undefined_denominator" | "no_bottom_up_estimate" | "budget_exhausted" | "no_remaining_cost";
+  absent?:
+    | "no_actual_cost"
+    | "undefined_denominator"
+    | "no_bottom_up_estimate"
+    | "budget_exhausted"
+    | "no_remaining_cost";
 }
 
 export interface EvTcpi {
@@ -1570,19 +1774,27 @@ export interface EvForecast {
   plan_pid: string;
   as_of: string;
   /** `null` with `absent` when there is nothing to forecast against. */
-  forecasts: {
-    currency: string;
-    baseline_version: number;
-    spi: { bp: number | null; rag: EvRag };
-    cpi: { bp: number | null; rag: EvRag };
-    variants: { variant: "budget_rate" | "cpi" | "cpi_spi" | "bottom_up"; formula: string; eac: EvAmount; etc: EvAmount; vac: EvAmount }[];
-    recommended: { variant: string; why: string; eac_minor: number | null };
-    tcpi_to_budget: { tcpi: EvTcpi; rag: EvRag };
-    tcpi_to_recommended_eac: { tcpi: EvTcpi; rag: EvRag } | null;
-    bac_minor: number;
-    ev_minor: number;
-    ac_minor: number | null;
-  }[] | null;
+  forecasts:
+    | {
+        currency: string;
+        baseline_version: number;
+        spi: { bp: number | null; rag: EvRag };
+        cpi: { bp: number | null; rag: EvRag };
+        variants: {
+          variant: "budget_rate" | "cpi" | "cpi_spi" | "bottom_up";
+          formula: string;
+          eac: EvAmount;
+          etc: EvAmount;
+          vac: EvAmount;
+        }[];
+        recommended: { variant: string; why: string; eac_minor: number | null };
+        tcpi_to_budget: { tcpi: EvTcpi; rag: EvRag };
+        tcpi_to_recommended_eac: { tcpi: EvTcpi; rag: EvRag } | null;
+        bac_minor: number;
+        ev_minor: number;
+        ac_minor: number | null;
+      }[]
+    | null;
   absent?: "no_baseline" | "no_weighted_tasks";
   reason?: string;
   thresholds?: { values: Record<string, number>; source: string };
@@ -1598,7 +1810,12 @@ export interface EvSeries {
     bac_minor: number;
     snapshots: number;
     /** Earned value and actual cost are null except on the days a snapshot was recorded. */
-    points: { date: string; pv_minor: number; ev_minor: number | null; ac_minor: number | null }[];
+    points: {
+      date: string;
+      pv_minor: number;
+      ev_minor: number | null;
+      ac_minor: number | null;
+    }[];
   }[];
   note: string;
 }
@@ -1609,10 +1826,22 @@ export interface EvRollup {
   as_of: string;
   currencies: {
     currency: string;
-    totals: { bac_minor: number; pv_minor: number; ev_minor: number; ac_minor: number; plans: number; plans_without_ac: number };
+    totals: {
+      bac_minor: number;
+      pv_minor: number;
+      ev_minor: number;
+      ac_minor: number;
+      plans: number;
+      plans_without_ac: number;
+    };
     spi: { bp: number | null; rag: EvRag };
     cpi: { bp: number | null; rag: EvRag; absent?: string | null };
-    eac: { minor: number | null; plans_counted: number; plans_total: number; note: string };
+    eac: {
+      minor: number | null;
+      plans_counted: number;
+      plans_total: number;
+      note: string;
+    };
     vac_minor: number | null;
   }[];
   plans_without_figures: number;
@@ -1633,7 +1862,14 @@ export interface TaskScheduleBody {
 /** What moved across the network after a schedule edit (PJ-8). */
 export interface ScheduleMoved {
   task: { pid: string };
-  moved: { pid: string; moved: "start" | "finish" | "both"; start_days: number; finish_days: number }[] | null;
+  moved:
+    | {
+        pid: string;
+        moved: "start" | "finish" | "both";
+        start_days: number;
+        finish_days: number;
+      }[]
+    | null;
   note: string | null;
 }
 
@@ -1851,9 +2087,11 @@ function simQuery(o: SimOptions): string {
   if (o.iterations) q.set("iterations", String(o.iterations));
   if (o.seed !== undefined) q.set("seed", String(o.seed));
   if (o.distribution) q.set("distribution", o.distribution);
-  if (o.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(o.fallbackBandPercent));
+  if (o.fallbackBandPercent !== undefined)
+    q.set("fallback_band_percent", String(o.fallbackBandPercent));
   if (o.currency) q.set("currency", o.currency);
-  if (o.delayCostPerDayMinor !== undefined) q.set("delay_cost_per_day_minor", String(o.delayCostPerDayMinor));
+  if (o.delayCostPerDayMinor !== undefined)
+    q.set("delay_cost_per_day_minor", String(o.delayCostPerDayMinor));
   const qs = q.toString();
   return qs ? `?${qs}` : "";
 }
@@ -1989,13 +2227,19 @@ export class PpmClient {
     return this.http.post(`/api/plans/${pid}/milestones`, { body });
   }
   /** A linked milestone with open tasks needs a `reason` (422 without one). */
-  completeMilestone(pid: string, milestonePid: string, reason?: string): Promise<unknown> {
+  completeMilestone(
+    pid: string,
+    milestonePid: string,
+    reason?: string,
+  ): Promise<unknown> {
     return this.http.post(
       `/api/plans/${pid}/milestones/${milestonePid}/complete`,
       { body: reason ? { reason } : {} },
     );
   }
-  portfolioMilestones(params: { status?: MilestoneStatus; plan?: string; kind?: string } = {}): Promise<MilestoneList> {
+  portfolioMilestones(
+    params: { status?: MilestoneStatus; plan?: string; kind?: string } = {},
+  ): Promise<MilestoneList> {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
@@ -2004,13 +2248,32 @@ export class PpmClient {
   milestone(pid: string): Promise<MilestoneView> {
     return this.http.get(`/api/milestones/${pid}`);
   }
-  rescheduleMilestone(pid: string, milestonePid: string, due: string, reason?: string): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/milestones/${milestonePid}`, { body: { due, reason: reason || undefined } });
+  rescheduleMilestone(
+    pid: string,
+    milestonePid: string,
+    due: string,
+    reason?: string,
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/milestones/${milestonePid}`, {
+      body: { due, reason: reason || undefined },
+    });
   }
-  reopenMilestone(pid: string, milestonePid: string, reason: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${pid}/milestones/${milestonePid}/reopen`, { body: { reason } });
+  reopenMilestone(
+    pid: string,
+    milestonePid: string,
+    reason: string,
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${pid}/milestones/${milestonePid}/reopen`,
+      { body: { reason } },
+    );
   }
-  setMilestoneLinks(pid: string, milestonePid: string, taskPids: string[], completionMode?: MilestoneMode): Promise<unknown> {
+  setMilestoneLinks(
+    pid: string,
+    milestonePid: string,
+    taskPids: string[],
+    completionMode?: MilestoneMode,
+  ): Promise<unknown> {
     return this.http.put(`/api/plans/${pid}/milestones/${milestonePid}/tasks`, {
       body: { task_pids: taskPids, completion_mode: completionMode },
     });
@@ -2019,7 +2282,11 @@ export class PpmClient {
     return this.http.get(`/api/plans/${pid}/allocations`);
   }
   /** Make a proposed booking firm; a 409 `over_capacity` needs `confirm` to go ahead. */
-  commitAllocation(pid: string, allocationPid: string, confirm = false): Promise<{ pid: string; booking: string; over_capacity: boolean }> {
+  commitAllocation(
+    pid: string,
+    allocationPid: string,
+    confirm = false,
+  ): Promise<{ pid: string; booking: string; over_capacity: boolean }> {
     return this.http.post(
       `/api/plans/${pid}/allocations/${allocationPid}/commit${confirm ? "?confirm=true" : ""}`,
     );
@@ -2028,7 +2295,13 @@ export class PpmClient {
     const q = personRef ? `?person_ref=${encodeURIComponent(personRef)}` : "";
     return this.http.get(`/api/availability${q}`);
   }
-  setAvailability(body: { person_ref?: string; from: string; to: string; max_percent: number; note?: string }): Promise<AvailabilityRange> {
+  setAvailability(body: {
+    person_ref?: string;
+    from: string;
+    to: string;
+    max_percent: number;
+    note?: string;
+  }): Promise<AvailabilityRange> {
     return this.http.post("/api/availability", { body });
   }
   removeAvailability(pid: string): Promise<unknown> {
@@ -2079,9 +2352,14 @@ export class PpmClient {
 
   // ---- scheduling canon (SC-6 .. SC-9) ----
   scheduleHealth(pid: string, asOf?: string): Promise<ScheduleHealth> {
-    return this.http.get(`/api/plans/${pid}/schedule-health${asOf ? `?as_of=${asOf}` : ""}`);
+    return this.http.get(
+      `/api/plans/${pid}/schedule-health${asOf ? `?as_of=${asOf}` : ""}`,
+    );
   }
-  levelingProposal(pid: string, opts: { allowCritical?: boolean; loadPercent?: number } = {}): Promise<LevelingProposal> {
+  levelingProposal(
+    pid: string,
+    opts: { allowCritical?: boolean; loadPercent?: number } = {},
+  ): Promise<LevelingProposal> {
     const q = new URLSearchParams();
     if (opts.allowCritical) q.set("allow_critical", "true");
     if (opts.loadPercent) q.set("load_percent", String(opts.loadPercent));
@@ -2090,31 +2368,66 @@ export class PpmClient {
   }
   applyLeveling(
     pid: string,
-    body: { moves: { task_pid: string; start_date: string }[]; confirm: boolean; allow_critical?: boolean; load_percent?: number; reason?: string },
+    body: {
+      moves: { task_pid: string; start_date: string }[];
+      confirm: boolean;
+      allow_critical?: boolean;
+      load_percent?: number;
+      reason?: string;
+    },
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
   }
-  resourcePlan(params: { from?: string; to?: string; period?: "week" | "month"; group_by?: "role" | "skill"; scenario?: string } = {}): Promise<ResourcePlan> {
+  resourcePlan(
+    params: {
+      from?: string;
+      to?: string;
+      period?: "week" | "month";
+      group_by?: "role" | "skill";
+      scenario?: string;
+    } = {},
+  ): Promise<ResourcePlan> {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
     return this.http.get(`/api/resource-plan${qs ? `?${qs}` : ""}`);
   }
-  scheduleRisk(pid: string, opts: { iterations?: number; seed?: number; distribution?: "triangular" | "pert"; fallbackBandPercent?: number } = {}): Promise<ScheduleRisk> {
+  scheduleRisk(
+    pid: string,
+    opts: {
+      iterations?: number;
+      seed?: number;
+      distribution?: "triangular" | "pert";
+      fallbackBandPercent?: number;
+    } = {},
+  ): Promise<ScheduleRisk> {
     const q = new URLSearchParams();
     if (opts.iterations) q.set("iterations", String(opts.iterations));
     if (opts.seed !== undefined) q.set("seed", String(opts.seed));
     if (opts.distribution) q.set("distribution", opts.distribution);
-    if (opts.fallbackBandPercent !== undefined) q.set("fallback_band_percent", String(opts.fallbackBandPercent));
+    if (opts.fallbackBandPercent !== undefined)
+      q.set("fallback_band_percent", String(opts.fallbackBandPercent));
     const qs = q.toString();
-    return this.http.get(`/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`);
+    return this.http.get(
+      `/api/plans/${pid}/schedule-risk${qs ? `?${qs}` : ""}`,
+    );
   }
 
   // ---- saved views (the user's own; also holds display preferences) ----
-  listSavedViews(route?: string): Promise<{ pid: string; route: string; name: string; filter: unknown }[]> {
-    return this.http.get(`/api/saved-views${route ? `?route=${encodeURIComponent(route)}` : ""}`);
+  listSavedViews(
+    route?: string,
+  ): Promise<{ pid: string; route: string; name: string; filter: unknown }[]> {
+    return this.http.get(
+      `/api/saved-views${route ? `?route=${encodeURIComponent(route)}` : ""}`,
+    );
   }
-  createSavedView(body: { route: string; name: string; filter?: unknown; sort?: unknown; columns?: string[] }): Promise<{ pid: string }> {
+  createSavedView(body: {
+    route: string;
+    name: string;
+    filter?: unknown;
+    sort?: unknown;
+    columns?: string[];
+  }): Promise<{ pid: string }> {
     return this.http.post("/api/saved-views", { body });
   }
   deleteSavedView(pid: string): Promise<void> {
@@ -2122,17 +2435,49 @@ export class PpmClient {
   }
 
   // ---- simulation inputs ----
-  setTaskEstimate(pid: string, taskPid: string, body: { optimistic_days: number | null; pessimistic_days: number | null }): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/estimate`, { body });
+  setTaskEstimate(
+    pid: string,
+    taskPid: string,
+    body: { optimistic_days: number | null; pessimistic_days: number | null },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/estimate`, {
+      body,
+    });
   }
-  setLineEstimate(pid: string, linePid: string, body: { low_minor: number | null; high_minor: number | null }): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/budget-lines/${linePid}/estimate`, { body });
+  setLineEstimate(
+    pid: string,
+    linePid: string,
+    body: { low_minor: number | null; high_minor: number | null },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/budget-lines/${linePid}/estimate`, {
+      body,
+    });
   }
-  setRiskScheduleImpact(pid: string, riskPid: string, body: { task_pid: string | null; impact_days: number | null; probability_percent: number | null }): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/schedule-impact`, { body });
+  setRiskScheduleImpact(
+    pid: string,
+    riskPid: string,
+    body: {
+      task_pid: string | null;
+      impact_days: number | null;
+      probability_percent: number | null;
+    },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/schedule-impact`, {
+      body,
+    });
   }
-  setRiskCostImpact(pid: string, riskPid: string, body: { cost_impact_minor: number | null; cost_currency: string | null; probability_percent?: number }): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/cost-impact`, { body });
+  setRiskCostImpact(
+    pid: string,
+    riskPid: string,
+    body: {
+      cost_impact_minor: number | null;
+      cost_currency: string | null;
+      probability_percent?: number;
+    },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/risks/${riskPid}/cost-impact`, {
+      body,
+    });
   }
 
   // ---- cost-risk and joint Monte Carlo ----
@@ -2142,7 +2487,13 @@ export class PpmClient {
   portfolioCostRisk(opts: SimOptions = {}): Promise<CostRisk> {
     return this.http.get(`/api/cost-risk${simQuery(opts)}`);
   }
-  jointRisk(pid: string, opts: SimOptions & { currency?: string; delayCostPerDayMinor?: number } = {}): Promise<JointRisk> {
+  jointRisk(
+    pid: string,
+    opts: SimOptions & {
+      currency?: string;
+      delayCostPerDayMinor?: number;
+    } = {},
+  ): Promise<JointRisk> {
     return this.http.get(`/api/plans/${pid}/joint-risk${simQuery(opts)}`);
   }
 
@@ -2151,14 +2502,26 @@ export class PpmClient {
     const q = period ? `?period=${encodeURIComponent(period)}` : "";
     return this.http.get(`/api/okrs${q}`);
   }
-  updateObjective(pid: string, body: { title: string; description?: string | null; period?: string | null }): Promise<Objective> {
+  updateObjective(
+    pid: string,
+    body: {
+      title: string;
+      description?: string | null;
+      period?: string | null;
+    },
+  ): Promise<Objective> {
     return this.http.put(`/api/objectives/${pid}`, { body });
   }
   deleteObjective(pid: string): Promise<void> {
     return this.http.delete(`/api/objectives/${pid}`);
   }
-  createKeyResult(objectivePid: string, body: unknown): Promise<{ pid: string }> {
-    return this.http.post(`/api/objectives/${objectivePid}/key-results`, { body });
+  createKeyResult(
+    objectivePid: string,
+    body: unknown,
+  ): Promise<{ pid: string }> {
+    return this.http.post(`/api/objectives/${objectivePid}/key-results`, {
+      body,
+    });
   }
   updateKeyResult(pid: string, body: unknown): Promise<KeyResult> {
     return this.http.put(`/api/key-results/${pid}`, { body });
@@ -2166,12 +2529,19 @@ export class PpmClient {
   deleteKeyResult(pid: string): Promise<void> {
     return this.http.delete(`/api/key-results/${pid}`);
   }
-  checkIn(keyResultPid: string, body: { value: number; confidence?: number | null; note?: string | null }): Promise<unknown> {
-    return this.http.post(`/api/key-results/${keyResultPid}/check-ins`, { body });
+  checkIn(
+    keyResultPid: string,
+    body: { value: number; confidence?: number | null; note?: string | null },
+  ): Promise<unknown> {
+    return this.http.post(`/api/key-results/${keyResultPid}/check-ins`, {
+      body,
+    });
   }
 
   // ---- KPIs ----
-  kpis(params: { plan?: string; objective?: string; status?: KpiStatus } = {}): Promise<KpiList> {
+  kpis(
+    params: { plan?: string; objective?: string; status?: KpiStatus } = {},
+  ): Promise<KpiList> {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
@@ -2189,7 +2559,10 @@ export class PpmClient {
   deleteKpi(pid: string): Promise<void> {
     return this.http.delete(`/api/kpis/${pid}`);
   }
-  addKpiReading(pid: string, body: { value: number; observed_on?: string; note?: string | null }): Promise<{ reading_pid: string; kpi: KpiView }> {
+  addKpiReading(
+    pid: string,
+    body: { value: number; observed_on?: string; note?: string | null },
+  ): Promise<{ reading_pid: string; kpi: KpiView }> {
     return this.http.post(`/api/kpis/${pid}/readings`, { body });
   }
 
@@ -2205,7 +2578,9 @@ export class PpmClient {
   }
 
   // ---- executive insight areas (CEO / CFO / CTO) ----
-  announcements(params: { include?: "all"; limit?: number } = {}): Promise<AnnouncementList> {
+  announcements(
+    params: { include?: "all"; limit?: number } = {},
+  ): Promise<AnnouncementList> {
     const q = new URLSearchParams();
     if (params.include) q.set("include", params.include);
     if (params.limit) q.set("limit", String(params.limit));
@@ -2308,13 +2683,29 @@ export class PpmClient {
   }
   // ---- critical path and calendars (SC-1, SC-2) ----
   /** Float, critical chains and constraints for a plan's tasks. */
-  setAssignment(pid: string, taskPid: string, body: AssignmentBody): Promise<AssignmentResult> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/assignment`, { body });
+  setAssignment(
+    pid: string,
+    taskPid: string,
+    body: AssignmentBody,
+  ): Promise<AssignmentResult> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/assignment`, {
+      body,
+    });
   }
-  setContour(pid: string, taskPid: string, contour: Contour, custom?: number[]): Promise<{ contour: Contour }> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/contour`, { body: { contour, custom } });
+  setContour(
+    pid: string,
+    taskPid: string,
+    contour: Contour,
+    custom?: number[],
+  ): Promise<{ contour: Contour }> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/contour`, {
+      body: { contour, custom },
+    });
   }
-  workProfile(pid: string, params: { period?: Grain; from?: string; to?: string } = {}): Promise<WorkProfile> {
+  workProfile(
+    pid: string,
+    params: { period?: Grain; from?: string; to?: string } = {},
+  ): Promise<WorkProfile> {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
@@ -2323,57 +2714,116 @@ export class PpmClient {
   costRateTables(): Promise<{ tables: CostRateTable[] }> {
     return this.http.get("/api/cost-rate-tables");
   }
-  createCostRateTable(body: { name: string; person_ref?: string; role?: string; currency: string }): Promise<{ pid: string }> {
+  createCostRateTable(body: {
+    name: string;
+    person_ref?: string;
+    role?: string;
+    currency: string;
+  }): Promise<{ pid: string }> {
     return this.http.post("/api/cost-rate-tables", { body });
   }
-  addCostRate(tablePid: string, body: { effective_from: string; per_hour_minor: number }): Promise<unknown> {
+  addCostRate(
+    tablePid: string,
+    body: { effective_from: string; per_hour_minor: number },
+  ): Promise<unknown> {
     return this.http.post(`/api/cost-rate-tables/${tablePid}/rates`, { body });
   }
   taskCosts(pid: string, taskPid: string): Promise<{ costs: TaskCost[] }> {
     return this.http.get(`/api/plans/${pid}/tasks/${taskPid}/costs`);
   }
-  addTaskCost(pid: string, taskPid: string, body: Omit<TaskCost, "pid">): Promise<{ pid: string }> {
+  addTaskCost(
+    pid: string,
+    taskPid: string,
+    body: Omit<TaskCost, "pid">,
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/tasks/${taskPid}/costs`, { body });
   }
   removeTaskCost(pid: string, taskPid: string, costPid: string): Promise<void> {
-    return this.http.delete(`/api/plans/${pid}/tasks/${taskPid}/costs/${costPid}`);
+    return this.http.delete(
+      `/api/plans/${pid}/tasks/${taskPid}/costs/${costPid}`,
+    );
   }
   costPlan(pid: string, params: { period?: Grain } = {}): Promise<CostPlan> {
     const qs = params.period ? `?period=${params.period}` : "";
     return this.http.get(`/api/plans/${pid}/cost-plan${qs}`);
   }
-  recordLabourCosts(pid: string): Promise<{ recorded: number; already_recorded: number; no_rate: unknown[] }> {
-    return this.http.post(`/api/plans/${pid}/labour-costs/record`, { body: {} });
+  recordLabourCosts(pid: string): Promise<{
+    recorded: number;
+    already_recorded: number;
+    no_rate: unknown[];
+  }> {
+    return this.http.post(`/api/plans/${pid}/labour-costs/record`, {
+      body: {},
+    });
   }
   labourCosts(pid: string): Promise<LabourCosts> {
     return this.http.get(`/api/plans/${pid}/labour-costs`);
   }
   sandboxPreview(pid: string, edits: SandboxEdit[]): Promise<SandboxPreview> {
-    return this.http.post(`/api/plans/${pid}/sandbox/preview`, { body: { edits } });
+    return this.http.post(`/api/plans/${pid}/sandbox/preview`, {
+      body: { edits },
+    });
   }
-  sandboxCommit(pid: string, edits: SandboxEdit[], planEtag: string, reason?: string): Promise<SandboxCommitted> {
+  sandboxCommit(
+    pid: string,
+    edits: SandboxEdit[],
+    planEtag: string,
+    reason?: string,
+  ): Promise<SandboxCommitted> {
     return this.http.post(`/api/plans/${pid}/sandbox/commit`, {
       body: { edits, reason: reason || undefined },
       headers: { "If-Match": planEtag },
     });
   }
-  onboardingCases(pid: string, status?: string): Promise<{ cases: OnboardingCaseSummary[]; hidden_people_cases: number; masked: boolean }> {
-    return this.http.get(`/api/plans/${pid}/onboarding/cases${status ? `?status=${status}` : ""}`);
+  onboardingCases(
+    pid: string,
+    status?: string,
+  ): Promise<{
+    cases: OnboardingCaseSummary[];
+    hidden_people_cases: number;
+    masked: boolean;
+  }> {
+    return this.http.get(
+      `/api/plans/${pid}/onboarding/cases${status ? `?status=${status}` : ""}`,
+    );
   }
-  startOnboarding(pid: string, body: { kind: OnboardingKind; subject_ref?: string; effective_date: string; title?: string }): Promise<OnboardingCase> {
+  startOnboarding(
+    pid: string,
+    body: {
+      kind: OnboardingKind;
+      subject_ref?: string;
+      effective_date: string;
+      title?: string;
+    },
+  ): Promise<OnboardingCase> {
     return this.http.post(`/api/plans/${pid}/onboarding/cases`, { body });
   }
   onboardingCase(casePid: string): Promise<OnboardingCase> {
     return this.http.get(`/api/onboarding/cases/${casePid}`);
   }
-  updateOnboardingItem(casePid: string, itemPid: string, body: { owner_ref?: string; due_date?: string; resolution?: "done" | "skipped" | "open"; note?: string }): Promise<OnboardingCase> {
-    return this.http.put(`/api/onboarding/cases/${casePid}/items/${itemPid}`, { body });
+  updateOnboardingItem(
+    casePid: string,
+    itemPid: string,
+    body: {
+      owner_ref?: string;
+      due_date?: string;
+      resolution?: "done" | "skipped" | "open";
+      note?: string;
+    },
+  ): Promise<OnboardingCase> {
+    return this.http.put(`/api/onboarding/cases/${casePid}/items/${itemPid}`, {
+      body,
+    });
   }
   completeOnboarding(casePid: string): Promise<OnboardingCase> {
-    return this.http.post(`/api/onboarding/cases/${casePid}/complete`, { body: {} });
+    return this.http.post(`/api/onboarding/cases/${casePid}/complete`, {
+      body: {},
+    });
   }
   cancelOnboarding(casePid: string, reason: string): Promise<OnboardingCase> {
-    return this.http.post(`/api/onboarding/cases/${casePid}/cancel`, { body: { reason } });
+    return this.http.post(`/api/onboarding/cases/${casePid}/cancel`, {
+      body: { reason },
+    });
   }
   closeout(pid: string): Promise<Closeout> {
     return this.http.get(`/api/plans/${pid}/closeout`);
@@ -2381,29 +2831,56 @@ export class PpmClient {
   accessRecords(pid: string): Promise<AccessRecords> {
     return this.http.get(`/api/plans/${pid}/access-records`);
   }
-  recordAccess(pid: string, body: { person_ref: string; access: string; action: "granted" | "revoked"; note?: string; case_pid?: string }): Promise<{ pid: string }> {
+  recordAccess(
+    pid: string,
+    body: {
+      person_ref: string;
+      access: string;
+      action: "granted" | "revoked";
+      note?: string;
+      case_pid?: string;
+    },
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/access-records`, { body });
   }
-  handoverPreview(pid: string, body: { from_person: string; to_person: string | null }): Promise<HandoverPreview> {
+  handoverPreview(
+    pid: string,
+    body: { from_person: string; to_person: string | null },
+  ): Promise<HandoverPreview> {
     return this.http.post(`/api/plans/${pid}/handover/preview`, { body });
   }
-  handoverCommit(pid: string, body: { from_person: string; to_person: string | null; reason?: string }, etag: string): Promise<{ committed: boolean; audit_entries: number }> {
-    return this.http.post(`/api/plans/${pid}/handover/commit`, { body, headers: { "If-Match": etag } });
+  handoverCommit(
+    pid: string,
+    body: { from_person: string; to_person: string | null; reason?: string },
+    etag: string,
+  ): Promise<{ committed: boolean; audit_entries: number }> {
+    return this.http.post(`/api/plans/${pid}/handover/commit`, {
+      body,
+      headers: { "If-Match": etag },
+    });
   }
   planCpm(pid: string, near?: number): Promise<Cpm> {
     const q = near === undefined ? "" : `?near=${near}`;
     return this.http.get(`/api/plans/${pid}/cpm${q}`);
   }
   /** Set a task's planned start, duration, constraint and deadline; answers with what moved. */
-  setTaskSchedule(pid: string, taskPid: string, body: TaskScheduleBody): Promise<ScheduleMoved> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/schedule`, { body });
+  setTaskSchedule(
+    pid: string,
+    taskPid: string,
+    body: TaskScheduleBody,
+  ): Promise<ScheduleMoved> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/schedule`, {
+      body,
+    });
   }
   scheduleBaselines(pid: string): Promise<ScheduleBaseline[]> {
     return this.http.get(`/api/plans/${pid}/schedule-baselines`);
   }
   /** Take the next baseline (append-only); a reason is required. */
   takeScheduleBaseline(pid: string, reason: string): Promise<ScheduleBaseline> {
-    return this.http.post(`/api/plans/${pid}/schedule-baselines`, { body: { reason } });
+    return this.http.post(`/api/plans/${pid}/schedule-baselines`, {
+      body: { reason },
+    });
   }
   scheduleVariance(pid: string, baseline?: number): Promise<ScheduleVariance> {
     const q = baseline === undefined ? "" : `?baseline=${baseline}`;
@@ -2417,22 +2894,40 @@ export class PpmClient {
     pid: string,
     taskPid: string,
     assignments: { person_ref: string; roles: string }[],
-  ): Promise<{ task_pid: string; cells: Record<string, string>; findings: RaciFinding[] }> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/raci`, { body: { assignments } });
+  ): Promise<{
+    task_pid: string;
+    cells: Record<string, string>;
+    findings: RaciFinding[];
+  }> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/raci`, {
+      body: { assignments },
+    });
   }
   earnedValue(pid: string): Promise<EarnedValue> {
     return this.http.get(`/api/plans/${pid}/earned-value`);
   }
-  setEarnedValueMethod(pid: string, defaultMethod: "zero_hundred" | "fifty_fifty" | "points"): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/earned-value-settings`, { body: { default_method: defaultMethod } });
+  setEarnedValueMethod(
+    pid: string,
+    defaultMethod: "zero_hundred" | "fifty_fifty" | "points",
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/earned-value-settings`, {
+      body: { default_method: defaultMethod },
+    });
   }
   /** Count one task another way; no `method` clears the override. `manual` needs `percent` and `note`. */
   setTaskPercent(
     pid: string,
     taskPid: string,
-    body: { method?: "zero_hundred" | "fifty_fifty" | "manual"; percent?: number; note?: string },
+    body: {
+      method?: "zero_hundred" | "fifty_fifty" | "manual";
+      percent?: number;
+      note?: string;
+    },
   ): Promise<unknown> {
-    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/percent-complete`, { body });
+    return this.http.put(
+      `/api/plans/${pid}/tasks/${taskPid}/percent-complete`,
+      { body },
+    );
   }
   earnedValueForecast(pid: string): Promise<EvForecast> {
     return this.http.get(`/api/plans/${pid}/earned-value/forecast`);
@@ -2450,13 +2945,19 @@ export class PpmClient {
   planCalendar(pid: string): Promise<WorkCalendarView> {
     return this.http.get(`/api/plans/${pid}/calendar`);
   }
-  setPlanCalendar(pid: string, body: { weekdays: string; holidays: string[] }): Promise<WorkCalendarView> {
+  setPlanCalendar(
+    pid: string,
+    body: { weekdays: string; holidays: string[] },
+  ): Promise<WorkCalendarView> {
     return this.http.put(`/api/plans/${pid}/calendar`, { body });
   }
   meCalendar(): Promise<WorkCalendarView> {
     return this.http.get("/api/me/calendar");
   }
-  setMeCalendar(body: { weekdays: string; holidays: string[] }): Promise<WorkCalendarView> {
+  setMeCalendar(body: {
+    weekdays: string;
+    holidays: string[];
+  }): Promise<WorkCalendarView> {
     return this.http.put("/api/me/calendar", { body });
   }
   /** Which feature modules this plan exposes (RM-7). */

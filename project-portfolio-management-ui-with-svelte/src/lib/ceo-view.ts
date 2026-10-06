@@ -25,7 +25,8 @@ export function ragTotals(health: ExecutiveHealth): Record<Rag, number> {
 /** The worst status among portfolios, or null when there are none. */
 export function worstStatus(health: ExecutiveHealth): Rag | null {
   const order: Rag[] = ["red", "amber", "green"];
-  for (const r of order) if (health.portfolios.some((p) => p.status === r)) return r;
+  for (const r of order)
+    if (health.portfolios.some((p) => p.status === r)) return r;
   return null;
 }
 
@@ -53,7 +54,12 @@ export function overrunPortfolios(health: ExecutiveHealth): string[] {
     .map((p) => p.portfolio?.name ?? "(unassigned)");
 }
 
-const KPI_RANK: Record<string, number> = { red: 0, amber: 1, no_data: 2, green: 3 };
+const KPI_RANK: Record<string, number> = {
+  red: 0,
+  amber: 1,
+  no_data: 2,
+  green: 3,
+};
 
 /** The `n` KPIs that most need a look (red, then amber, then no data), and how many more there are. */
 export function needsAttention(
@@ -70,7 +76,12 @@ export function needsAttention(
   return { shown: bad.slice(0, n), more: Math.max(0, bad.length - n) };
 }
 
-const MS_RANK: Record<string, number> = { late: 0, due_soon: 1, upcoming: 2, achieved: 3 };
+const MS_RANK: Record<string, number> = {
+  late: 0,
+  due_soon: 1,
+  upcoming: 2,
+  achieved: 3,
+};
 
 /** The `n` milestones to watch: late first, then soonest due; achieved ones are left out. */
 export function milestonesToWatch(

@@ -9,7 +9,8 @@ const blank = (v: FieldValue) => str(v).trim() === "";
 
 export const MAX_EDITS = 100;
 
-export type EditKind = "move" | "duration" | "constraint" | "add_link" | "remove_link";
+export type EditKind =
+  "move" | "duration" | "constraint" | "add_link" | "remove_link";
 
 export const EDIT_TEXT: Record<EditKind, string> = {
   move: "Move a task (set its start)",
@@ -57,18 +58,28 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
       if (blank(f.task)) return { error: "Choose a task." };
       const n = Number(str(f.days));
       if (blank(f.days) || !Number.isInteger(n) || n < 0 || n > 3650)
-        return { error: "Duration must be a whole number of working days from 0 to 3650." };
+        return {
+          error:
+            "Duration must be a whole number of working days from 0 to 3650.",
+        };
       return { op: "duration", task_pid: str(f.task), duration_days: n };
     }
     case "constraint": {
       if (blank(f.task)) return { error: "Choose a task." };
       if (blank(f.constraint))
-        return { op: "constraint", task_pid: str(f.task), constraint_kind: null, constraint_date: null };
+        return {
+          op: "constraint",
+          task_pid: str(f.task),
+          constraint_kind: null,
+          constraint_date: null,
+        };
       const kind = str(f.constraint);
       if (!(kind in CONSTRAINTS)) return { error: "Choose a constraint." };
-      if (!isDate(str(f.constraintDate))) return { error: "A constraint needs a date." };
+      if (!isDate(str(f.constraintDate)))
+        return { error: "A constraint needs a date." };
       const hard = kind === "mso" || kind === "mfo";
-      if (hard && blank(f.reason)) return { error: "A hard constraint needs a reason." };
+      if (hard && blank(f.reason))
+        return { error: "A hard constraint needs a reason." };
       return {
         op: "constraint",
         task_pid: str(f.task),
@@ -79,10 +90,14 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
     }
     case "add_link": {
       if (blank(f.from) || blank(f.to)) return { error: "Choose both tasks." };
-      if (str(f.from) === str(f.to)) return { error: "A task cannot depend on itself." };
+      if (str(f.from) === str(f.to))
+        return { error: "A task cannot depend on itself." };
       const lag = blank(f.lag) ? 0 : Number(str(f.lag));
       if (!Number.isInteger(lag) || lag < -3650 || lag > 3650)
-        return { error: "Lag must be a whole number of working days (negative is a lead)." };
+        return {
+          error:
+            "Lag must be a whole number of working days (negative is a lead).",
+        };
       return {
         op: "add_link",
         predecessor_pid: str(f.from),
@@ -98,7 +113,10 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
 }
 
 /** One edit in words. `name` turns a pid into a title. */
-export function describeEdit(e: SandboxEdit, name: (pid: string) => string): string {
+export function describeEdit(
+  e: SandboxEdit,
+  name: (pid: string) => string,
+): string {
   switch (e.op) {
     case "move":
       return `Start “${name(e.task_pid)}” on ${e.start_date}`;

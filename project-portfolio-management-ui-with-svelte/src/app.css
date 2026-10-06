@@ -203,11 +203,11 @@ table {
   font-size: 0.875rem;
 }
 
-
 /* Dyslexia-friendly display (LT-12): OpenDyslexic, bundled and downloaded only
    when the option is on, with the looser spacing that goes with it. */
 html[data-font="dyslexia"] {
-  --mxi-font-dyslexia: "OpenDyslexic", "Atkinson Hyperlegible", Verdana, sans-serif;
+  --mxi-font-dyslexia:
+    "OpenDyslexic", "Atkinson Hyperlegible", Verdana, sans-serif;
 }
 html[data-font="dyslexia"] body,
 html[data-font="dyslexia"] button,

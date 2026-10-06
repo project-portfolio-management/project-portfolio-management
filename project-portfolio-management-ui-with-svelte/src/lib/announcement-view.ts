@@ -41,5 +41,9 @@ export function excerpt(body: string, max: number): string {
 
 /** The state of an announcement as a short label ("" when live). */
 export function stateLabel(a: Pick<Announcement, "state">): string {
-  return a.state === "live" ? "" : a.state === "scheduled" ? "Scheduled" : "Expired";
+  return a.state === "live"
+    ? ""
+    : a.state === "scheduled"
+      ? "Scheduled"
+      : "Expired";
 }

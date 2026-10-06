@@ -75,10 +75,15 @@ export interface GanttGrid {
 
 const MAX_COLUMNS_DEFAULT = 60;
 
-function columnsFor(first: number, last: number, unit: GanttGrid["unit"]): GanttColumn[] {
+function columnsFor(
+  first: number,
+  last: number,
+  unit: GanttGrid["unit"],
+): GanttColumn[] {
   const out: GanttColumn[] = [];
   if (unit === "day") {
-    for (let d = first; d <= last; d++) out.push({ key: dateOf(d), from: dateOf(d), to: dateOf(d) });
+    for (let d = first; d <= last; d++)
+      out.push({ key: dateOf(d), from: dateOf(d), to: dateOf(d) });
     return out;
   }
   if (unit === "week") {
@@ -91,9 +96,15 @@ function columnsFor(first: number, last: number, unit: GanttGrid["unit"]): Gantt
   }
   let cursor = new Date(dateOf(first).slice(0, 7) + "-01T00:00:00Z");
   while (Math.floor(cursor.getTime() / DAY_MS) <= last) {
-    const next = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1));
+    const next = new Date(
+      Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 1),
+    );
     const from = Math.floor(cursor.getTime() / DAY_MS);
-    out.push({ key: dateOf(from).slice(0, 7), from: dateOf(from), to: dateOf(Math.floor(next.getTime() / DAY_MS) - 1) });
+    out.push({
+      key: dateOf(from).slice(0, 7),
+      from: dateOf(from),
+      to: dateOf(Math.floor(next.getTime() / DAY_MS) - 1),
+    });
     cursor = next;
   }
   return out;
@@ -118,7 +129,8 @@ export function ganttGrid(
     else dated.push({ item, s, e });
   }
   const wanted = options.unit ?? "week";
-  if (dated.length === 0) return { unit: wanted, columns: [], rows: [], undated, coarsened: false };
+  if (dated.length === 0)
+    return { unit: wanted, columns: [], rows: [], undated, coarsened: false };
   const first = Math.min(...dated.map((d) => d.s));
   const last = Math.max(...dated.map((d) => d.e));
   const order: GanttGrid["unit"][] = ["day", "week", "month"];
@@ -128,7 +140,9 @@ export function ganttGrid(
     unit = order[order.indexOf(unit) + 1] ?? "month";
     columns = columnsFor(first, last, unit);
   }
-  const bounds = columns.map((c) => [dayNumber(c.from) as number, dayNumber(c.to) as number] as const);
+  const bounds = columns.map(
+    (c) => [dayNumber(c.from) as number, dayNumber(c.to) as number] as const,
+  );
   const rows = dated.map(({ item, s, e }) => ({
     pid: item.pid,
     name: item.name,
@@ -166,11 +180,18 @@ export interface KanbanGrid {
 }
 
 /** Lay cards out in columns by status, keeping each column's order. */
-export function kanbanGrid(cards: KanbanCard[], columns: KanbanColumn[]): KanbanGrid {
-  const byColumn = columns.map((c) => cards.filter((card) => card.status === c.id));
+export function kanbanGrid(
+  cards: KanbanCard[],
+  columns: KanbanColumn[],
+): KanbanGrid {
+  const byColumn = columns.map((c) =>
+    cards.filter((card) => card.status === c.id),
+  );
   const known = new Set(columns.map((c) => c.id));
   const depth = Math.max(0, ...byColumn.map((c) => c.length));
-  const rows = Array.from({ length: depth }, (_, r) => byColumn.map((col) => col[r] ?? null));
+  const rows = Array.from({ length: depth }, (_, r) =>
+    byColumn.map((col) => col[r] ?? null),
+  );
   return {
     columns: columns.map((c, i) => ({ ...c, count: byColumn[i]?.length ?? 0 })),
     rows,
@@ -211,7 +232,9 @@ export function gridKeyTarget(
     case "Home":
       return ctrl ? { row: 0, col: 0 } : { row: pos.row, col: 0 };
     case "End":
-      return ctrl ? { row: rows - 1, col: cols - 1 } : { row: pos.row, col: cols - 1 };
+      return ctrl
+        ? { row: rows - 1, col: cols - 1 }
+        : { row: pos.row, col: cols - 1 };
     default:
       return null;
   }

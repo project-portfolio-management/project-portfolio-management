@@ -30,7 +30,13 @@ export interface WbsRow {
 
 /** Sibling order: oldest first, the pid as the tie-break so the order is total. */
 const byAge = (a: WbsInput, b: WbsInput) =>
-  a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.pid < b.pid ? -1 : 1;
+  a.created_at < b.created_at
+    ? -1
+    : a.created_at > b.created_at
+      ? 1
+      : a.pid < b.pid
+        ? -1
+        : 1;
 
 /** The tasks in tree order with their generated codes. */
 export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
@@ -41,7 +47,8 @@ export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
     const parent = t.parent_task_pid ?? null;
     if (parent === t.pid) continue; // its own parent: shown with the cycles below
     if (parent === null) kids.set(null, [...(kids.get(null) ?? []), t]);
-    else if (known.has(parent) && parent !== t.pid) kids.set(parent, [...(kids.get(parent) ?? []), t]);
+    else if (known.has(parent) && parent !== t.pid)
+      kids.set(parent, [...(kids.get(parent) ?? []), t]);
     else hidden.set(parent, [...(hidden.get(parent) ?? []), t]);
   }
   const out: WbsRow[] = [];
@@ -52,7 +59,14 @@ export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
       seen.add(t.pid);
       const code = prefix ? `${prefix}.${i + 1}` : String(i + 1);
       const own = kids.get(t.pid) ?? [];
-      out.push({ key: t.pid, code, depth, title: t.title, children: own.length, restricted: false });
+      out.push({
+        key: t.pid,
+        code,
+        depth,
+        title: t.title,
+        children: own.length,
+        restricted: false,
+      });
       walk(own, code, depth + 1);
     });
   };
@@ -65,7 +79,14 @@ export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
     n += 1;
     placeholder += 1;
     const code = String(n);
-    out.push({ key: `restricted-${placeholder}`, code, depth: 0, title: "Restricted item", children: group.length, restricted: true });
+    out.push({
+      key: `restricted-${placeholder}`,
+      code,
+      depth: 0,
+      title: "Restricted item",
+      children: group.length,
+      restricted: true,
+    });
     walk(group, code, 1);
   }
   // Anything left is part of a cycle: show it as top-level rather than lose it.

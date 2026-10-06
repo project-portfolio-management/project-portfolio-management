@@ -49,7 +49,11 @@ export interface Toggled {
  * had it (a task has one Accountable person), and says so; a person left with no
  * letters drops out of the row.
  */
-export function toggleLetter(cells: Readonly<Record<string, string>>, person: string, letter: Letter): Toggled {
+export function toggleLetter(
+  cells: Readonly<Record<string, string>>,
+  person: string,
+  letter: Letter,
+): Toggled {
   const next: Record<string, string> = { ...cells };
   const has = (next[person] ?? "").includes(letter);
   let movedFrom: string | null = null;
@@ -71,7 +75,9 @@ export function toggleLetter(cells: Readonly<Record<string, string>>, person: st
 }
 
 /** The payload for the service: one entry per person who holds a letter. */
-export function toAssignments(cells: Readonly<Record<string, string>>): { person_ref: string; roles: string }[] {
+export function toAssignments(
+  cells: Readonly<Record<string, string>>,
+): { person_ref: string; roles: string }[] {
   return Object.entries(cells)
     .filter(([, l]) => l !== "")
     .map(([person_ref, roles]) => ({ person_ref, roles: normalise(roles) }));
@@ -90,13 +96,23 @@ export function findingText(f: RaciFinding): string {
 }
 
 /** A sentence for a cell, for assistive technology: "Design: ann is Responsible and Accountable". */
-export function cellSentence(task: string, person: string, letters: string): string {
-  const words = LETTERS.filter((l) => letters.includes(l)).map((l) => LETTER_WORD[l]);
+export function cellSentence(
+  task: string,
+  person: string,
+  letters: string,
+): string {
+  const words = LETTERS.filter((l) => letters.includes(l)).map(
+    (l) => LETTER_WORD[l],
+  );
   const who = shortRef(person);
-  return words.length === 0 ? `${task}: ${who} has no role` : `${task}: ${who} is ${words.join(" and ")}`;
+  return words.length === 0
+    ? `${task}: ${who} has no role`
+    : `${task}: ${who} is ${words.join(" and ")}`;
 }
 
 /** A person reference the page will accept as a new column. */
 export function validPersonRef(ref: string): boolean {
-  return /^(person|worker):[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(ref.trim());
+  return /^(person|worker):[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+    ref.trim(),
+  );
 }

@@ -6,7 +6,8 @@
 export const GLOSSARY: Record<string, string> = {
   SPI: "Schedule performance index: work done compared with work planned by now. Above 1.00 is ahead of plan.",
   CPI: "Cost performance index: value of the work done compared with what it cost. Above 1.00 is under budget.",
-  "SPI(t)": "Schedule index by time: how far along the plan we are in time, which stays truthful even when a project finishes late.",
+  "SPI(t)":
+    "Schedule index by time: how far along the plan we are in time, which stays truthful even when a project finishes late.",
   EV: "Earned value: the budget for the work actually finished.",
   PV: "Planned value: the budget for the work that should be finished by now.",
   AC: "Actual cost: what has really been spent.",
@@ -24,9 +25,34 @@ export const GLOSSARY: Record<string, string> = {
 
 /** Acronyms that must not stand alone in a heading, label, button or table header. */
 export const ACRONYMS: readonly string[] = [
-  "CPM", "RAG", "EV", "PV", "AC", "SPI", "CPI", "EAC", "TCPI", "ETC", "BAC", "VAC",
-  "RACI", "WBS", "PERT", "ETag", "ABAC", "OKR", "OKRs", "KPI", "KPIs", "MSPDI", "URN",
-  "SV", "CV", "WIP", "TBA", "PMO",
+  "CPM",
+  "RAG",
+  "EV",
+  "PV",
+  "AC",
+  "SPI",
+  "CPI",
+  "EAC",
+  "TCPI",
+  "ETC",
+  "BAC",
+  "VAC",
+  "RACI",
+  "WBS",
+  "PERT",
+  "ETag",
+  "ABAC",
+  "OKR",
+  "OKRs",
+  "KPI",
+  "KPIs",
+  "MSPDI",
+  "URN",
+  "SV",
+  "CV",
+  "WIP",
+  "TBA",
+  "PMO",
 ];
 
 /** The gloss for a term, or null when there is none. */

@@ -75,9 +75,14 @@ export function monthGrid(
   absences: readonly string[] = [],
 ): MonthCell[][] {
   const days = maskToWeekdays(mask);
-  const first = dayNumber(`${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-01`);
+  const first = dayNumber(
+    `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-01`,
+  );
   if (first === null) return [];
-  const next = month === 12 ? dayNumber(`${year + 1}-01-01`) : dayNumber(`${year}-${String(month + 1).padStart(2, "0")}-01`);
+  const next =
+    month === 12
+      ? dayNumber(`${year + 1}-01-01`)
+      : dayNumber(`${year}-${String(month + 1).padStart(2, "0")}-01`);
   const length = (next ?? first + 30) - first;
   const lead = mondayIndex(first);
   const rows = Math.ceil((lead + length) / 7);
@@ -105,19 +110,31 @@ export function monthGrid(
 }
 
 /** The (year, month) before / after `(year, month)`. */
-export function shiftMonth(year: number, month: number, by: number): { year: number; month: number } {
+export function shiftMonth(
+  year: number,
+  month: number,
+  by: number,
+): { year: number; month: number } {
   const index = year * 12 + (month - 1) + by;
-  return { year: Math.floor(index / 12), month: (((index % 12) + 12) % 12) + 1 };
+  return {
+    year: Math.floor(index / 12),
+    month: (((index % 12) + 12) % 12) + 1,
+  };
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${Math.abs(n) === 1 ? one : many}`;
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${Math.abs(n) === 1 ? one : many}`;
 
 /**
  * A plain sentence for a task's float, for the worker as much as the planner.
  * Negative float means a constraint or deadline cannot be met; it is said so,
  * not shown as a bare minus sign.
  */
-export function floatLabel(n: { total_float: number; critical: boolean; near_critical: boolean }): string {
+export function floatLabel(n: {
+  total_float: number;
+  critical: boolean;
+  near_critical: boolean;
+}): string {
   if (n.total_float < 0) {
     return `Cannot meet its constraint or deadline: ${plural(-n.total_float, "working day", "working days")} short`;
   }
@@ -189,10 +206,16 @@ interface BarInput {
  */
 export function cpmBars(
   nodes: readonly BarInput[],
-  baseline: ReadonlyMap<string, { start: string | null; finish: string | null }> = new Map(),
+  baseline: ReadonlyMap<
+    string,
+    { start: string | null; finish: string | null }
+  > = new Map(),
 ): CpmChart | null {
   const valid = nodes.filter(
-    (n) => dayNumber(n.early_start) !== null && dayNumber(n.early_finish) !== null && dayNumber(n.late_finish) !== null,
+    (n) =>
+      dayNumber(n.early_start) !== null &&
+      dayNumber(n.early_finish) !== null &&
+      dayNumber(n.late_finish) !== null,
   );
   if (valid.length === 0) return null;
   const ghostDays = (n: BarInput) => {
@@ -201,9 +224,15 @@ export function cpmBars(
     const b = g ? dayNumber(g.finish) : null;
     return a !== null && b !== null && b >= a ? ([a, b] as const) : null;
   };
-  const starts = valid.map((n) => Math.min(dayNumber(n.early_start) as number, ghostDays(n)?.[0] ?? Infinity));
+  const starts = valid.map((n) =>
+    Math.min(dayNumber(n.early_start) as number, ghostDays(n)?.[0] ?? Infinity),
+  );
   const ends = valid.map((n) =>
-    Math.max(dayNumber(n.early_finish) as number, dayNumber(n.late_finish) as number, ghostDays(n)?.[1] ?? -Infinity),
+    Math.max(
+      dayNumber(n.early_finish) as number,
+      dayNumber(n.late_finish) as number,
+      ghostDays(n)?.[1] ?? -Infinity,
+    ),
   );
   const first = Math.min(...starts);
   const last = Math.max(...ends);
@@ -224,22 +253,28 @@ export function cpmBars(
       state: st.key,
       marker: st.marker,
       label: `${n.title ?? "(untitled)"}: ${n.early_start} to ${n.early_finish}. ${floatLabel(n)}${
-        ghostDays(n) ? `. Baselined ${baseline.get(n.pid)?.start} to ${baseline.get(n.pid)?.finish}` : ""
+        ghostDays(n)
+          ? `. Baselined ${baseline.get(n.pid)?.start} to ${baseline.get(n.pid)?.finish}`
+          : ""
       }`,
       ghost: (() => {
         const g = ghostDays(n);
-        return g ? { startPct: pct(g[0]), widthPct: ((g[1] - g[0] + 1) / days) * 100 } : null;
+        return g
+          ? { startPct: pct(g[0]), widthPct: ((g[1] - g[0] + 1) / days) * 100 }
+          : null;
       })(),
     };
   });
   const ticks: Tick[] = [];
   if (days <= 56) {
     for (let d = first; d <= last; d++) {
-      if (mondayIndex(d) === 0) ticks.push({ pct: pct(d), label: dateOf(d).slice(5) });
+      if (mondayIndex(d) === 0)
+        ticks.push({ pct: pct(d), label: dateOf(d).slice(5) });
     }
   } else {
     for (let d = first; d <= last; d++) {
-      if (dateOf(d).endsWith("-01")) ticks.push({ pct: pct(d), label: dateOf(d).slice(0, 7) });
+      if (dateOf(d).endsWith("-01"))
+        ticks.push({ pct: pct(d), label: dateOf(d).slice(0, 7) });
     }
   }
   return { from: dateOf(first), to: dateOf(last), days, ticks, bars };
@@ -273,7 +308,9 @@ export function layoutNetwork(
   chains: readonly (readonly string[])[] = [],
 ): { nodes: NetNode[]; edges: NetEdge[]; layers: number } {
   const known = new Set(ids);
-  const usable = edges.filter((e) => known.has(e.from) && known.has(e.to) && e.from !== e.to);
+  const usable = edges.filter(
+    (e) => known.has(e.from) && known.has(e.to) && e.from !== e.to,
+  );
   const preds = new Map<string, string[]>();
   for (const e of usable) preds.set(e.to, [...(preds.get(e.to) ?? []), e.from]);
   const depth = new Map<string, number>();
@@ -292,19 +329,27 @@ export function layoutNetwork(
   const columns: string[][] = Array.from({ length: layerCount }, () => []);
   for (const id of ids) columns[layerOf(id)]?.push(id);
   const succs = new Map<string, string[]>();
-  for (const e of usable) succs.set(e.from, [...(succs.get(e.from) ?? []), e.to]);
+  for (const e of usable)
+    succs.set(e.from, [...(succs.get(e.from) ?? []), e.to]);
   const rowOf = new Map<string, number>();
-  const reindex = () => columns.forEach((col) => col.forEach((id, i) => rowOf.set(id, i)));
+  const reindex = () =>
+    columns.forEach((col) => col.forEach((id, i) => rowOf.set(id, i)));
   reindex();
   const sweep = (neighbours: Map<string, string[]>, order: number[]) => {
     for (const c of order) {
       const col = columns[c] ?? [];
       const score = (id: string) => {
         const ns = (neighbours.get(id) ?? []).map((n) => rowOf.get(n) ?? 0);
-        return ns.length === 0 ? (rowOf.get(id) ?? 0) : ns.reduce((a, b) => a + b, 0) / ns.length;
+        return ns.length === 0
+          ? (rowOf.get(id) ?? 0)
+          : ns.reduce((a, b) => a + b, 0) / ns.length;
       };
       const original = new Map(col.map((id, i) => [id, i]));
-      col.sort((a, b) => score(a) - score(b) || (original.get(a) ?? 0) - (original.get(b) ?? 0));
+      col.sort(
+        (a, b) =>
+          score(a) - score(b) ||
+          (original.get(a) ?? 0) - (original.get(b) ?? 0),
+      );
       col.forEach((id, i) => rowOf.set(id, i));
     }
   };
@@ -313,11 +358,19 @@ export function layoutNetwork(
   sweep(succs, [...forward].reverse().slice(1));
   const critical = new Set<string>();
   for (const chain of chains) {
-    for (let i = 0; i + 1 < chain.length; i++) critical.add(`${chain[i]}>${chain[i + 1]}`);
+    for (let i = 0; i + 1 < chain.length; i++)
+      critical.add(`${chain[i]}>${chain[i + 1]}`);
   }
   return {
-    nodes: ids.map((pid) => ({ pid, layer: layerOf(pid), row: rowOf.get(pid) ?? 0 })),
-    edges: usable.map((e) => ({ ...e, critical: critical.has(`${e.from}>${e.to}`) })),
+    nodes: ids.map((pid) => ({
+      pid,
+      layer: layerOf(pid),
+      row: rowOf.get(pid) ?? 0,
+    })),
+    edges: usable.map((e) => ({
+      ...e,
+      critical: critical.has(`${e.from}>${e.to}`),
+    })),
     layers: layerCount,
   };
 }
@@ -342,23 +395,47 @@ export function standingText(r: {
   finish_variance_days: number | null;
   reason?: string;
 }): { marker: string; word: string; detail: string } {
-  const d = (n: number) => `${Math.abs(n)} working day${Math.abs(n) === 1 ? "" : "s"}`;
+  const d = (n: number) =>
+    `${Math.abs(n)} working day${Math.abs(n) === 1 ? "" : "s"}`;
   switch (r.standing) {
     case "slipped":
-      return { marker: "▲", word: "Slipped", detail: `finishes ${d(r.finish_variance_days ?? 0)} later than baselined` };
+      return {
+        marker: "▲",
+        word: "Slipped",
+        detail: `finishes ${d(r.finish_variance_days ?? 0)} later than baselined`,
+      };
     case "pulled_in":
-      return { marker: "▼", word: "Pulled in", detail: `finishes ${d(r.finish_variance_days ?? 0)} earlier than baselined` };
+      return {
+        marker: "▼",
+        word: "Pulled in",
+        detail: `finishes ${d(r.finish_variance_days ?? 0)} earlier than baselined`,
+      };
     case "on_baseline":
-      return { marker: "=", word: "On baseline", detail: "finishes when it was baselined to" };
+      return {
+        marker: "=",
+        word: "On baseline",
+        detail: "finishes when it was baselined to",
+      };
     case "added":
-      return { marker: "+", word: "Added", detail: "not in the baseline, so it has no slip" };
+      return {
+        marker: "+",
+        word: "Added",
+        detail: "not in the baseline, so it has no slip",
+      };
     case "removed":
-      return { marker: "−", word: "Removed", detail: "was in the baseline and is gone; its baselined dates are kept" };
+      return {
+        marker: "−",
+        word: "Removed",
+        detail: "was in the baseline and is gone; its baselined dates are kept",
+      };
     default:
       return {
         marker: "?",
         word: "Cannot say",
-        detail: r.reason === "not_scheduled_then" ? "it had no schedule when baselined" : "it has no schedule now",
+        detail:
+          r.reason === "not_scheduled_then"
+            ? "it had no schedule when baselined"
+            : "it has no schedule now",
       };
   }
 }

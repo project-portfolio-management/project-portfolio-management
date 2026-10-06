@@ -34,23 +34,44 @@ export interface Rbs {
   skillNote: string;
 }
 
-const sum = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0) * 100) / 100;
+const sum = (xs: number[]) =>
+  Math.round(xs.reduce((a, b) => a + b, 0) * 100) / 100;
 
 /** The RBS from a by-role plan and (optionally) a by-skill plan. */
-export function buildRbs(byRole: ResourcePlan, bySkill: ResourcePlan | null): Rbs {
+export function buildRbs(
+  byRole: ResourcePlan,
+  bySkill: ResourcePlan | null,
+): Rbs {
   const keys = new Set<string>();
   for (const p of byRole.periods) for (const r of p.rows) keys.add(r.key);
   for (const k of Object.keys(byRole.people_by_role ?? {})) keys.add(k);
   const roles: RbsRole[] = [...keys].sort().map((role) => {
-    const rows = byRole.periods.flatMap((p) => p.rows.filter((r) => r.key === role));
-    const people = (byRole.people_by_role?.[role] ?? []).map((ref) => ({ ref }));
-    const headcount = Math.max(people.length, ...rows.map((r) => r.headcount), 0);
-    const supply = rows.some((r) => r.supply_fte !== null) ? sum(rows.map((r) => r.supply_fte ?? 0)) : null;
-    return { role, people, headcount, demand_fte: sum(rows.map((r) => r.demand_fte)), supply_fte: supply };
+    const rows = byRole.periods.flatMap((p) =>
+      p.rows.filter((r) => r.key === role),
+    );
+    const people = (byRole.people_by_role?.[role] ?? []).map((ref) => ({
+      ref,
+    }));
+    const headcount = Math.max(
+      people.length,
+      ...rows.map((r) => r.headcount),
+      0,
+    );
+    const supply = rows.some((r) => r.supply_fte !== null)
+      ? sum(rows.map((r) => r.supply_fte ?? 0))
+      : null;
+    return {
+      role,
+      people,
+      headcount,
+      demand_fte: sum(rows.map((r) => r.demand_fte)),
+      supply_fte: supply,
+    };
   });
   const skillRows = new Map<string, number>();
   for (const p of bySkill?.periods ?? [])
-    for (const r of p.rows) skillRows.set(r.key, (skillRows.get(r.key) ?? 0) + r.demand_fte);
+    for (const r of p.rows)
+      skillRows.set(r.key, (skillRows.get(r.key) ?? 0) + r.demand_fte);
   const skills: RbsSkill[] = [...skillRows.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([skill, demand]) => ({ skill, demand_fte: sum([demand]) }));
@@ -65,7 +86,10 @@ export function buildRbs(byRole: ResourcePlan, bySkill: ResourcePlan | null): Rb
 
 /** A role in words: "Engineer: 3 people, demand 2.5 FTE, supply 3 FTE". */
 export function roleText(r: RbsRole, masked: boolean): string {
-  const people = masked ? `${r.headcount} ${r.headcount === 1 ? "person" : "people"}` : `${r.people.length} named`;
-  const supply = r.supply_fte === null ? "supply not known" : `supply ${r.supply_fte} FTE`;
+  const people = masked
+    ? `${r.headcount} ${r.headcount === 1 ? "person" : "people"}`
+    : `${r.people.length} named`;
+  const supply =
+    r.supply_fte === null ? "supply not known" : `supply ${r.supply_fte} FTE`;
   return `${r.role}: ${people}, demand ${r.demand_fte} FTE, ${supply}`;
 }

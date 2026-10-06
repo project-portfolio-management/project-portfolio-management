@@ -38,6 +38,8 @@ impl ActiveModelBehavior for earned_value_settings::ActiveModel {}
 impl ActiveModelBehavior for earned_value_snapshots::ActiveModel {}
 impl ActiveModelBehavior for resource_roles::ActiveModel {}
 impl ActiveModelBehavior for kpis::ActiveModel {}
+impl ActiveModelBehavior for controlled_documents::ActiveModel {}
+impl ActiveModelBehavior for document_versions::ActiveModel {}
 impl ActiveModelBehavior for processes::ActiveModel {}
 impl ActiveModelBehavior for process_versions::ActiveModel {}
 impl ActiveModelBehavior for process_executions::ActiveModel {}

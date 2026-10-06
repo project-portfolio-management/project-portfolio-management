@@ -21,6 +21,7 @@ pub const SUBJECT_KINDS: &[&str] = &[
     "canvas_item",
     "budget_line",
     "scenario",
+    "document_version",
 ];
 
 /// The closed reaction set.

@@ -154,6 +154,10 @@ async fn every_list_pages_the_same_way() {
         }
         let line = post(format!("/api/plans/{plan}/budget-lines"), json!({ "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 100_000 })).await;
         let _ = line;
+        // A controlled document.
+        if let Some(doc) = pid_of(&post("/api/documents".into(), json!({ "title": "Policy", "body": "text" })).await) {
+            candidates.push(doc);
+        }
         // A process, and a run of it.
         if let Some(proc) = pid_of(&post("/api/processes".into(), json!({ "name": "Census", "steps": [{ "kind": "notify", "person_ref": person, "title": "Hello" }] })).await) {
             if let Some(run) = pid_of(&post(format!("/api/processes/{proc}/start"), json!({ "subject_kind": "plan", "subject_pid": plan })).await) {
@@ -180,6 +184,7 @@ async fn every_list_pages_the_same_way() {
             ("pid", candidates.clone()),
             ("t_pid", vec![task.clone()]),
             ("s_pid", vec![sprint.clone()]),
+            ("version", vec!["1".to_string()]),
             ("id", vec![job_id, export_id]),
         ]);
         // Query strings some lists need to answer at all.

@@ -106,6 +106,7 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/notifications",
     "/api/processes",
     "/api/process-executions",
+    "/api/documents",
 ];
 
 /// Add `limit`, `offset` and the count headers to every list in [`PAGED_LISTS`].
@@ -2161,6 +2162,7 @@ mod tests {
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),
             crate::controllers::hammock::routes(),
+            crate::controllers::controlled_documents::routes(),
             crate::controllers::processes::routes(),
             crate::controllers::task_get::routes(),
             crate::controllers::assignments::routes(),

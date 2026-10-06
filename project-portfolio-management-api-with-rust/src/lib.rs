@@ -61,6 +61,7 @@ pub mod discussion;
 pub mod distribution;
 /// Recorded effort and utilisation — including per person, under the
 /// five obligations in `agents/share/time-based-analysis.md` §7.1.
+pub mod documents;
 pub mod earned_value;
 pub mod effort;
 pub mod engineering;

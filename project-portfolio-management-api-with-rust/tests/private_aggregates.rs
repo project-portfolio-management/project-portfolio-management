@@ -142,6 +142,7 @@ const AGGREGATES: &[&str] = &[
     "/api/approvals",
     "/api/plans/bulk-jobs",
     "/api/plans/review-queue",
+    "/api/documents",
 ];
 
 /// Reads that need an admin (or a machine peer) and are full by design: a non-admin, member or not,
@@ -381,6 +382,11 @@ async fn seed(
     post(
         format!("/api/plans/{p}/gate-reviews"),
         json!({ "gate": "g0_concept", "decision": "approved" }),
+    )
+    .await;
+    post(
+        "/api/documents".into(),
+        json!({ "title": format!("{name} policy"), "plan_pid": p, "body": format!("{name} text") }),
     )
     .await;
     post(format!("/api/plans/{p}/sprints"), json!({ "name": format!("{name} sprint"), "starts_on": "2026-10-05", "ends_on": "2026-10-19" })).await;

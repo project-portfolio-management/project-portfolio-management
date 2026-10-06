@@ -123,6 +123,7 @@ pub fn paths() -> Value {
     merge(&mut all, job_cancel_paths());
     merge(&mut all, dependency_paths());
     merge(&mut all, process_paths());
+    merge(&mut all, document_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -1403,6 +1404,43 @@ fn process_paths() -> Value {
         "/api/process-executions/{pid}/resume": {
             "post": op("processes", "Reconcile a running execution with the approval it waits on", "For the rare crash between a decision and the step after it: applies a decided (or withdrawn) approval the execution has not yet moved past. Idempotent. Who started it, or an admin.",
                 vec![uuid_param("pid")], &[("200", "the execution"), ("403", "Not the starter")])
+        }
+    })
+}
+
+/// Controlled documents (PL-6).
+fn document_paths() -> Value {
+    json!({
+        "/api/documents": {
+            "post": op("documents", "Create a controlled document and its first draft", "title, optional plan_pid (the plan the document belongs to; the caller must be able to read it), body, change_summary. Audited.",
+                vec![], &[("200", "the document"), ("401", "Not signed in"), ("404", "A plan the caller cannot read"), ("422", "Invalid")]),
+            "get": op("documents", "The documents the caller may read, with the version in force today",
+                "A document that belongs to a private plan the caller is outside is not listed (and is 404 on its own routes). Paged like every list.", vec![], &[("200", "documents")])
+        },
+        "/api/documents/{pid}": {
+            "get": op("documents", "A document and its versions (without their text)", "Each version carries status, approval_pid, effective_from, superseded_on and superseded_by. in_force_today names the version in force today, or null.",
+                vec![uuid_param("pid")], &[("200", "the document"), ("404", "Unknown, or in a private plan the caller is outside")])
+        },
+        "/api/documents/{pid}/in-force": {
+            "get": op("documents", "The version in force on a date, with its text", "?on=YYYY-MM-DD, default today. A version is in force from the day it became effective until (not including) the day its successor did; at most one is, by construction. in_force is null when none was.",
+                vec![uuid_param("pid"), query("on", false, "a date, default today")], &[("200", "in_force, or null"), ("404", "Unknown or hidden")])
+        },
+        "/api/documents/{pid}/versions": {
+            "post": op("documents", "Start the next draft", "Only the document's creator or an admin. Copies the latest text unless a body is given. 409 while another version is still in flight (draft, in review or approved): one at a time. Audited.",
+                vec![uuid_param("pid")], &[("200", "the new draft with its text"), ("403", "Not the creator"), ("409", "A version is in flight"), ("422", "Invalid")])
+        },
+        "/api/documents/{pid}/versions/{version}": {
+            "get": op("documents", "One version with its text", "The version as stored, including its text and, past draft, the approval that approved it and the dates it was in force. Read by anyone who can read the document.", vec![uuid_param("pid"), query("version", true, "the version number")], &[("200", "the version"), ("404", "Unknown or hidden")]),
+            "put": op("documents", "Edit a draft", "Only a draft may change; a version past draft is final (409) and its change goes in the next draft, which the database also enforces. Audited.",
+                vec![uuid_param("pid"), query("version", true, "the version number")], &[("200", "the version"), ("403", "Not the creator"), ("409", "Past draft"), ("422", "Invalid")])
+        },
+        "/api/documents/{pid}/versions/{version}/submit": {
+            "post": op("documents", "Send a draft for review", "approver_ref (a person URN) and optional message. Creates a PL-1 approval request on the version (subject_kind document_version) and moves it to in_review. Approved moves it to approved; rejected or withdrawn returns it to draft. A version with no text cannot be submitted. Audited.",
+                vec![uuid_param("pid"), query("version", true, "the version number")], &[("200", "the version"), ("403", "Not the creator"), ("409", "Not a draft"), ("422", "No text, or a bad approver")])
+        },
+        "/api/documents/{pid}/versions/{version}/make-effective": {
+            "post": op("documents", "Bring an approved version into force today", "Only the creator or an admin. The version's approval request must really be approved (a status flag is not an approval: 422 otherwise). The version in force is superseded the same day, naming this one; no back-dating or future-dating. Audited, once for each of the two changes.",
+                vec![uuid_param("pid"), query("version", true, "the version number")], &[("200", "the version"), ("403", "Not the creator"), ("409", "Not approved"), ("422", "No approved approval")])
         }
     })
 }

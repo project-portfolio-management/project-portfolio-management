@@ -167,6 +167,12 @@ macro_rules! scoped_by_nothing {
     )*};
 }
 scoped_by_nothing!(scenarios, ideas);
+impl PlanScoped for crate::models::_entities::controlled_documents::Model {
+    /// A document that belongs to a plan is hidden with it; a free-standing one is public.
+    fn scope_plan(&self) -> Option<Uuid> {
+        self.plan_pid
+    }
+}
 impl PlanScoped for crate::models::_entities::reviews::Model {
     /// A review of a plan is hidden with the plan.
     fn scope_plan(&self) -> Option<Uuid> {
@@ -239,6 +245,7 @@ impl HiddenScope {
     /// milestones, bookings, benefits, time entries, sprints, components, controls,
     /// gate reviews, deployments, alignments, RACI rows, checklists): what an audit or
     /// event row about "an entity" must not be shown for.
+    #[allow(clippy::too_many_lines)]
     pub(crate) async fn owned_pids(&self, ctx: &AppContext) -> Result<HashSet<Uuid>> {
         let mut out: HashSet<Uuid> = self
             .plans
@@ -305,6 +312,33 @@ impl HiddenScope {
                 .into_iter()
                 .map(|r| r.pid),
         );
+        // Documents of a hidden plan, and their versions.
+        let doc_pids: Vec<Uuid> = crate::models::_entities::controlled_documents::Entity::find()
+            .filter(
+                crate::models::_entities::controlled_documents::Column::PlanPid
+                    .is_in(hidden.clone()),
+            )
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|d| d.pid)
+            .collect();
+        if !doc_pids.is_empty() {
+            out.extend(doc_pids.iter().copied());
+            out.extend(
+                crate::models::_entities::document_versions::Entity::find()
+                    .filter(
+                        crate::models::_entities::document_versions::Column::DocumentPid
+                            .is_in(doc_pids),
+                    )
+                    .all(&ctx.db)
+                    .await
+                    .map_err(db_err)?
+                    .into_iter()
+                    .map(|v| v.pid),
+            );
+        }
         // A proposal that became a hidden plan is hidden with it.
         out.extend(
             crate::models::_entities::proposals::Entity::find()

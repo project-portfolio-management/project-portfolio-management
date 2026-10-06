@@ -174,6 +174,30 @@ pub(crate) async fn resolve_subject(
                 owner_ref: None,
             }
         }
+        "document_version" => {
+            // A document version is read through the plan its document belongs to, if any.
+            let version = crate::models::_entities::document_versions::Entity::find()
+                .filter(crate::models::_entities::document_versions::Column::Pid.eq(pid))
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .ok_or(Error::NotFound)?;
+            let doc = crate::models::_entities::controlled_documents::Entity::find()
+                .filter(
+                    crate::models::_entities::controlled_documents::Column::Pid
+                        .eq(version.document_pid),
+                )
+                .filter(crate::models::_entities::controlled_documents::Column::DeletedAt.is_null())
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .ok_or(Error::NotFound)?;
+            Subject {
+                pid,
+                plan_pid: doc.plan_pid,
+                owner_ref: None,
+            }
+        }
         _ => return Err(unprocessable("unknown subject_kind")),
     };
     if let Some(plan_pid) = subject.plan_pid {

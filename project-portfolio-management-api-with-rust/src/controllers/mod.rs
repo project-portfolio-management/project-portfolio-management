@@ -215,6 +215,7 @@ pub mod availability;
 pub mod bulk;
 pub mod calendars;
 pub mod components;
+pub mod controlled_documents;
 pub mod cost_rates;
 pub mod cost_risk;
 pub mod cpm;

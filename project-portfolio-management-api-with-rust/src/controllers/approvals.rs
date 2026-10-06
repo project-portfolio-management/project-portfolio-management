@@ -255,6 +255,7 @@ async fn decide(
     .ok();
     // An approval that belongs to a process moves that process on (or ends it).
     super::processes::on_approval(&ctx, &updated).await?;
+    super::controlled_documents::on_approval(&ctx, &updated).await?;
     if let Some(target) = discussion_rules::sub_as_recipient(&requester) {
         cap_models::notify(
             &ctx.db,
@@ -297,6 +298,7 @@ async fn withdraw(
     .await
     .ok();
     super::processes::on_approval(&ctx, &updated).await?;
+    super::controlled_documents::on_approval(&ctx, &updated).await?;
     format::json(updated)
 }
 

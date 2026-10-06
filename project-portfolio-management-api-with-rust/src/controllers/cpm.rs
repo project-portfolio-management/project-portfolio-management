@@ -13,7 +13,7 @@
 //! answers with **what moved** across the whole network (PJ-8), not just the
 //! task that was edited.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::NaiveDate;
@@ -25,7 +25,7 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Edge, Kind, Node, Options, WorkCalendar};
-use crate::models::_entities::{plan_dependencies, task_relations, tasks};
+use crate::models::_entities::{plan_dependencies, plans, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn unprocessable(message: &str) -> Error {
@@ -52,6 +52,31 @@ pub(crate) struct Network {
     pub own: Vec<WorkCalendar>,
     /// Assignees whose calendar shares no working day with the plan's.
     pub conflicts: Vec<String>,
+    /// Tasks of **other plans** that this plan's tasks depend on or are depended on by
+    /// (PJ-13), keyed by task pid. Their nodes follow the plan's own in `nodes`.
+    pub external: HashMap<Uuid, ExternalTask>,
+    /// Dependencies to a plan the caller may not read: counted and placed, never named.
+    pub restricted: Vec<Restricted>,
+    /// More plans or tasks were linked than are followed.
+    pub truncated: bool,
+}
+
+/// A task of another plan, as the plan's network sees it.
+#[derive(Debug, Clone)]
+pub(crate) struct ExternalTask {
+    pub title: String,
+    pub plan_pid: Uuid,
+    pub plan_name: String,
+}
+
+/// A dependency whose other end the caller may not read.
+#[derive(Debug, Clone)]
+pub(crate) struct Restricted {
+    pub edge_pid: Uuid,
+    /// This plan's own task on the edge.
+    pub task_pid: Uuid,
+    /// Whether the hidden side is the `predecessor` or the `successor`.
+    pub side: &'static str,
 }
 
 impl Network {
@@ -67,6 +92,22 @@ impl Network {
                 ..Options::default()
             },
         )
+    }
+}
+
+fn node_of(t: &tasks::Model, own_calendar: Option<usize>) -> Node {
+    Node {
+        pid: t.pid,
+        duration: t.duration_days.map(i64::from),
+        planned_start: t.start_date,
+        constraint: t
+            .constraint_kind
+            .as_deref()
+            .and_then(cpm::ConstraintKind::parse)
+            .zip(t.constraint_date)
+            .map(|(kind, date)| cpm::Constraint { kind, date }),
+        deadline: t.deadline,
+        own_calendar,
     }
 }
 
@@ -95,21 +136,13 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
     }
     let nodes = rows
         .iter()
-        .map(|t| Node {
-            pid: t.pid,
-            duration: t.duration_days.map(i64::from),
-            planned_start: t.start_date,
-            constraint: t
-                .constraint_kind
-                .as_deref()
-                .and_then(cpm::ConstraintKind::parse)
-                .zip(t.constraint_date)
-                .map(|(kind, date)| cpm::Constraint { kind, date }),
-            deadline: t.deadline,
-            own_calendar: t
-                .assignee_ref
-                .as_ref()
-                .and_then(|r| index_of.get(r).copied()),
+        .map(|t| {
+            node_of(
+                t,
+                t.assignee_ref
+                    .as_ref()
+                    .and_then(|r| index_of.get(r).copied()),
+            )
         })
         .collect();
     let mut edges: Vec<Edge> = Vec::new();
@@ -160,7 +193,310 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
         cal_source,
         own,
         conflicts,
+        external: HashMap::new(),
+        restricted: Vec::new(),
+        truncated: false,
     })
+}
+
+/// The most plans (besides its own) and tasks a cross-plan network follows.
+const MAX_LINKED_PLANS: usize = 8;
+const MAX_LINKED_TASKS: usize = 3000;
+
+/// The plans among `pids` whose tasks the caller may see across a link: readable by
+/// the plan rules, and, for a guest, covered by a live grant.
+async fn linkable_plans(ctx: &AppContext, caller: &MaybeAuthUser, pids: &[Uuid]) -> HashSet<Uuid> {
+    let mut ok = super::plan_access::readable_plans(ctx, caller, pids).await;
+    if super::guests::caller_is_guest(caller) {
+        let mut covered = HashSet::new();
+        for p in &ok {
+            if super::guests::guest_covers_plan(&ctx.db, caller, *p, "read").await {
+                covered.insert(*p);
+            }
+        }
+        ok = covered;
+    }
+    ok
+}
+
+/// A plan's network **with the tasks of other plans it is linked to** (PJ-13).
+///
+/// Dependencies may join tasks of different plans. Those the caller may read on
+/// both ends are part of the network: the linked plans' tasks come in as nodes (on
+/// their own plan's calendar intersected with this plan's, the same rule as an
+/// assignee's calendar), so float is computed across the link. A link to a plan the
+/// caller may **not** read is left out of the calculation and recorded only as a
+/// [`Restricted`] edge: no name, owner or date of the hidden side is read into the
+/// result, so nothing downstream can show it.
+#[allow(clippy::too_many_lines)]
+pub(crate) async fn load_network_cross(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    caller: &MaybeAuthUser,
+) -> Result<Network> {
+    let mut net = load_network(ctx, plan_pid).await?;
+    let own: HashSet<Uuid> = net.rows.iter().map(|t| t.pid).collect();
+    let deps = plan_dependencies::Entity::find()
+        .order_by_asc(plan_dependencies::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    // Discover the plans reachable through links, cap and all (readability comes after).
+    let mut known_tasks: HashMap<Uuid, Uuid> = own.iter().map(|t| (*t, plan_pid)).collect();
+    let mut plans_seen: Vec<Uuid> = vec![plan_pid];
+    let mut truncated = false;
+    for _ in 0..MAX_LINKED_PLANS {
+        let others: Vec<Uuid> = deps
+            .iter()
+            .filter(|d| {
+                known_tasks.contains_key(&d.predecessor_pid)
+                    != known_tasks.contains_key(&d.successor_pid)
+            })
+            .map(|d| {
+                if known_tasks.contains_key(&d.predecessor_pid) {
+                    d.successor_pid
+                } else {
+                    d.predecessor_pid
+                }
+            })
+            .collect();
+        if others.is_empty() {
+            break;
+        }
+        let found: Vec<tasks::Model> = tasks::Entity::find()
+            .filter(tasks::Column::Pid.is_in(others))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .filter(tasks::Column::IsHammock.eq(false))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        let fresh: Vec<Uuid> = found
+            .iter()
+            .map(|t| t.plan_pid)
+            .filter(|p| !plans_seen.contains(p))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        if fresh.is_empty() {
+            for t in &found {
+                known_tasks.insert(t.pid, t.plan_pid);
+            }
+            break;
+        }
+        for p in fresh {
+            if plans_seen.len() > MAX_LINKED_PLANS {
+                truncated = true;
+                break;
+            }
+            plans_seen.push(p);
+        }
+        let all: Vec<tasks::Model> = tasks::Entity::find()
+            .filter(tasks::Column::PlanPid.is_in(plans_seen.clone()))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .filter(tasks::Column::IsHammock.eq(false))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        for t in &all {
+            known_tasks.insert(t.pid, t.plan_pid);
+        }
+        if known_tasks.len() > MAX_LINKED_TASKS {
+            truncated = true;
+            break;
+        }
+    }
+    let candidates: Vec<Uuid> = plans_seen
+        .iter()
+        .copied()
+        .filter(|p| *p != plan_pid)
+        .collect();
+    let readable = linkable_plans(ctx, caller, &candidates).await;
+    // Dependencies from this plan's tasks to a plan the caller may not read: place, never name.
+    for d in &deps {
+        let (ours, other, side) =
+            if own.contains(&d.predecessor_pid) && !own.contains(&d.successor_pid) {
+                (d.predecessor_pid, d.successor_pid, "successor")
+            } else if own.contains(&d.successor_pid) && !own.contains(&d.predecessor_pid) {
+                (d.successor_pid, d.predecessor_pid, "predecessor")
+            } else {
+                continue;
+            };
+        if let Some(other_plan) = known_tasks.get(&other)
+            && candidates.contains(other_plan)
+            && !readable.contains(other_plan)
+        {
+            net.restricted.push(Restricted {
+                edge_pid: d.pid,
+                task_pid: ours,
+                side,
+            });
+        }
+    }
+    let ext_plans: Vec<Uuid> = candidates
+        .iter()
+        .copied()
+        .filter(|p| readable.contains(p))
+        .collect();
+    if ext_plans.is_empty() {
+        net.truncated = truncated;
+        return Ok(net);
+    }
+    let names: HashMap<Uuid, String> = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(ext_plans.clone()))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|p| (p.pid, p.name))
+        .collect();
+    for p in &ext_plans {
+        let (plan_cal, _) = super::calendars::plan_calendar(ctx, *p).await?;
+        let shared = net.plan_cal.intersect(&plan_cal);
+        let idx = if let Ok(c) = shared {
+            net.own.push(c);
+            Some(net.own.len() - 1)
+        } else {
+            net.conflicts.push(format!("plan:{p}"));
+            None
+        };
+        let rows = tasks::Entity::find()
+            .filter(tasks::Column::PlanPid.eq(*p))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .filter(tasks::Column::IsHammock.eq(false))
+            .order_by_asc(tasks::Column::Id)
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        for t in rows {
+            net.nodes.push(node_of(&t, idx));
+            net.external.insert(
+                t.pid,
+                ExternalTask {
+                    title: t.title.clone(),
+                    plan_pid: *p,
+                    plan_name: names.get(p).cloned().unwrap_or_default(),
+                },
+            );
+        }
+    }
+    // Edges among everything in the network that the plan's own loader did not already take.
+    let in_net: HashSet<Uuid> = own
+        .iter()
+        .copied()
+        .chain(net.external.keys().copied())
+        .collect();
+    let have: HashSet<Uuid> = net.edges.iter().map(|e| e.pid).collect();
+    for d in &deps {
+        if in_net.contains(&d.predecessor_pid)
+            && in_net.contains(&d.successor_pid)
+            && !have.contains(&d.pid)
+        {
+            net.edges.push(Edge {
+                pid: d.pid,
+                pred: d.predecessor_pid,
+                succ: d.successor_pid,
+                kind: Kind::parse(&d.kind).unwrap_or(Kind::Fs),
+                lag: i64::from(d.lag_days),
+            });
+        }
+    }
+    net.truncated = truncated;
+    Ok(net)
+}
+
+/// The nodes among `pids` (task or plan pids) the caller may read: a node is readable
+/// when the plan it is, or belongs to, is readable (and, for a guest, granted).
+pub(crate) async fn readable_endpoints(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pids: &[Uuid],
+) -> Result<HashSet<Uuid>> {
+    if pids.is_empty() {
+        return Ok(HashSet::new());
+    }
+    let task_plan: HashMap<Uuid, Uuid> = tasks::Entity::find()
+        .filter(tasks::Column::Pid.is_in(pids.to_vec()))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|t| (t.pid, t.plan_pid))
+        .collect();
+    let mut plan_ids: Vec<Uuid> = pids.to_vec();
+    plan_ids.extend(task_plan.values().copied());
+    plan_ids.sort();
+    plan_ids.dedup();
+    let ok = linkable_plans(ctx, caller, &plan_ids).await;
+    Ok(pids
+        .iter()
+        .copied()
+        .filter(|p| match task_plan.get(p) {
+            Some(plan) => ok.contains(plan),
+            None => ok.contains(p),
+        })
+        .collect())
+}
+
+/// The other plans whose tasks are linked to this plan's, for deciding whether it
+/// can be deleted: `(readable plans with their names, how many the caller may not read)`.
+pub(crate) async fn external_dependants(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    caller: &MaybeAuthUser,
+) -> Result<(Vec<(Uuid, String)>, usize)> {
+    let own: HashSet<Uuid> = tasks::Entity::find()
+        .filter(tasks::Column::PlanPid.eq(plan_pid))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|t| t.pid)
+        .collect();
+    if own.is_empty() {
+        return Ok((Vec::new(), 0));
+    }
+    let others: Vec<Uuid> = plan_dependencies::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .filter_map(|d| {
+            match (
+                own.contains(&d.predecessor_pid),
+                own.contains(&d.successor_pid),
+            ) {
+                (true, false) => Some(d.successor_pid),
+                (false, true) => Some(d.predecessor_pid),
+                _ => None,
+            }
+        })
+        .collect();
+    let other_plans: HashSet<Uuid> = tasks::Entity::find()
+        .filter(tasks::Column::Pid.is_in(others))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .filter(tasks::Column::PlanPid.ne(plan_pid))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|t| t.plan_pid)
+        .collect();
+    let live: Vec<plans::Model> = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(other_plans.into_iter().collect::<Vec<_>>()))
+        .filter(plans::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let pids: Vec<Uuid> = live.iter().map(|p| p.pid).collect();
+    let readable = linkable_plans(ctx, caller, &pids).await;
+    let named: Vec<(Uuid, String)> = live
+        .iter()
+        .filter(|p| readable.contains(&p.pid))
+        .map(|p| (p.pid, p.name.clone()))
+        .collect();
+    Ok((named, live.len() - readable.len().min(live.len())))
 }
 
 fn cycle_error(on: &[Uuid]) -> Error {
@@ -185,11 +521,12 @@ struct CpmParams {
 #[debug_handler]
 async fn plan_cpm(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
     Query(p): Query<CpmParams>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let net = load_network(&ctx, plan.pid).await?;
+    let net = load_network_cross(&ctx, plan.pid, &caller).await?;
     let near = p.near.unwrap_or(5);
     if !(0..=cpm::MAX_DAYS).contains(&near) {
         return Err(unprocessable(&format!(
@@ -201,12 +538,24 @@ async fn plan_cpm(
         .analyze(near)
         .map_err(|cpm::CpmError::Cycle(on)| cycle_error(&on))?;
     let by: HashMap<Uuid, &tasks::Model> = net.rows.iter().map(|t| (t.pid, t)).collect();
-    let name = |pid: Uuid| by.get(&pid).map(|t| t.title.clone());
+    let name = |pid: Uuid| {
+        by.get(&pid)
+            .map(|t| t.title.clone())
+            .or_else(|| net.external.get(&pid).map(|x| x.title.clone()))
+    };
+    // The plan's own finish, and the finish of everything it is linked to.
+    let own_finish = result
+        .nodes
+        .iter()
+        .filter(|n| by.contains_key(&n.pid))
+        .map(|n| n.early_finish)
+        .max();
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
         "calendar": net.cal_source,
         "calendar_conflicts": net.conflicts,
-        "project_finish": result.project_finish,
+        "project_finish": if net.external.is_empty() { result.project_finish } else { own_finish },
+        "network_finish": result.project_finish,
         "nodes": result.nodes.iter().map(|n| {
             let t = by.get(&n.pid);
             let mut v = serde_json::to_value(n).unwrap_or_default();
@@ -223,18 +572,31 @@ async fn plan_cpm(
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
             let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);
             v["calendar"] = serde_json::json!(if own.is_some() { "plan+person" } else { "plan" });
+            match net.external.get(&n.pid) {
+                Some(x) => {
+                    v["external"] = serde_json::json!(true);
+                    v["plan_pid"] = serde_json::json!(x.plan_pid);
+                    v["plan_name"] = serde_json::json!(x.plan_name);
+                }
+                None => v["external"] = serde_json::json!(false),
+            }
             v
         }).collect::<Vec<_>>(),
         "unscheduled": result.unscheduled.iter().map(|u| serde_json::json!({
             "pid": u.pid, "title": name(u.pid), "reason": u.reason })).collect::<Vec<_>>(),
         "edges": net.edges.iter().map(|e| serde_json::json!({
             "pid": e.pid, "predecessor_pid": e.pred, "successor_pid": e.succ,
-            "kind": e.kind, "lag_days": e.lag })).collect::<Vec<_>>(),
+            "kind": e.kind, "lag_days": e.lag,
+            "cross_plan": net.external.contains_key(&e.pred) != net.external.contains_key(&e.succ) })).collect::<Vec<_>>(),
+        "restricted_edges": net.restricted.iter().map(|r| serde_json::json!({
+            "pid": r.edge_pid, "task_pid": r.task_pid, "side": r.side,
+            "label": "external dependency (restricted)" })).collect::<Vec<_>>(),
+        "external_truncated": net.truncated,
         "hammocks": super::hammock::spans_for(&ctx, plan.pid, Some(&result)).await?,
         "ignored_edges": result.ignored_edges,
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,
-        "note": "Float is computed over the plan's tasks only, in working days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
+        "note": "Float is computed over the plan's tasks and the tasks of other plans they are linked to (cross_plan edges, external nodes, each on its own plan's calendar intersected with this one); a link to a plan you cannot read is left out of the calculation and shown only as a restricted edge, with nothing about the other side. Float is computed over the plan's tasks only, in working days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
     }))
 }
 

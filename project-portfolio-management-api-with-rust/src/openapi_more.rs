@@ -121,6 +121,7 @@ pub fn paths() -> Value {
     merge(&mut all, onboarding_paths());
     merge(&mut all, hammock_paths());
     merge(&mut all, job_cancel_paths());
+    merge(&mut all, dependency_paths());
     merge(&mut all, self_service_paths());
     all
 }
@@ -743,7 +744,7 @@ fn cpm_paths() -> Value {
     json!({
         "/api/plans/{pid}/cpm": {
             "get": op("cpm", "Float, critical tasks and critical chains for a plan's tasks",
-                "Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= working days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many working days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Working days use the plan's calendar (all seven days until SC-2).",
+                "Tasks of OTHER plans that this plan's tasks are linked to (a dependency may join tasks of different plans) are part of the network when the caller can read both ends: they appear as nodes with external=true, plan_pid and plan_name, edges carry cross_plan, each external task runs on its own plan's calendar intersected with this plan's, and float is computed across the link (project_finish is the plan's own finish, network_finish the whole linked network's). A link to a plan the caller may NOT read (private and not a member, or not granted) is left out of the calculation and appears only in restricted_edges as an 'external dependency (restricted)' with the edge id and this plan's own task: nothing about the other side. Up to 8 linked plans and 3000 tasks are followed (external_truncated says when more existed). Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= working days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many working days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Working days use the plan's calendar (all seven days until SC-2).",
                 vec![uuid_param("pid"), query("near", false, "Working days of float counted as near-critical, 0 to 3650")],
                 &[("200", "nodes, edges, unscheduled, ignored_edges, critical_chains"), ("404", "Unknown plan"), ("422", "Bad near, or a dependency cycle")])
         },
@@ -1339,6 +1340,25 @@ fn job_cancel_paths() -> Value {
             "post": op("bulk", "Ask a bulk import or export to stop",
                 "Cooperative. A queued job is cancelled at once and never runs. A running job is told to stop, finishes the row it is on (each row is complete before the next begins, so no row is half-written), and ends `cancelled`: what it processed is kept and counted in counts, what it did not reach is in rows_omitted, and progress stays where it was. A cancelled export produces no file (a partial one would pass for a whole one). Cancelling a finished or already-cancelled job is a no-op (changed=false), not an error. Only the requester or an admin may cancel; anyone else gets the 404 an unknown id gets. Audited once (bulk_job_cancel_requested / bulk_job_cancelled). Job views carry progress (0-100, never decreasing; 100 only when finished), cancel_requested and cancelled.",
                 vec![uuid_param("id")], &[("200", "job_id, status, cancel_requested, changed"), ("404", "Unknown job, or not yours")])
+        }
+    })
+}
+
+/// Dependencies between tasks, which may be of different plans (PJ-13).
+fn dependency_paths() -> Value {
+    json!({
+        "/api/dependencies": {
+            "get": op("dependencies", "Dependencies, optionally those touching one item",
+                "An edge is shown in full only when the caller can read BOTH ends (for a plan, a task of it, and for a guest a granted plan); otherwise it is an opaque {pid, restricted: true, label: 'external dependency (restricted)'} with no predecessor, successor, kind or lag. Capped at 500.",
+                vec![query("item", false, "a plan or task pid")], &[("200", "dependencies, restricted ones opaque")]),
+            "post": op("dependencies", "Add a dependency between two plans or two tasks, of the same plan or of different ones",
+                "Both ends must exist and be readable by the caller (otherwise 404, so ids cannot be probed). Self-edges, duplicates and cycles are refused (422), and cycle checks span plans. A hammock is not linked this way (422). Kinds fs, ss, ff, sf; lag_days -3650..3650. Audited.",
+                vec![], &[("200", "pid"), ("404", "An end does not exist or is not readable"), ("422", "Invalid, duplicate, a cycle, or a hammock")])
+        },
+        "/api/dependencies/{pid}": {
+            "delete": op("dependencies", "Remove a dependency",
+                "The caller must be able to read both ends, else 404 as if it did not exist. Audited. A plan that others depend on through task links cannot be deleted (409 naming the dependants the caller can read and counting the rest).",
+                vec![uuid_param("pid")], &[("200", "removed"), ("404", "Unknown, or an end is not readable")])
         }
     })
 }

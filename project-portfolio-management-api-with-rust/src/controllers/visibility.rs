@@ -121,6 +121,16 @@ async fn create_dependency(
             return Err(Error::NotFound);
         }
     }
+    // A plan or task the caller cannot read does not exist for them: no probing for ids.
+    let readable = super::cpm::readable_endpoints(
+        &ctx,
+        &caller,
+        &[payload.predecessor_pid, payload.successor_pid],
+    )
+    .await?;
+    if !readable.contains(&payload.predecessor_pid) || !readable.contains(&payload.successor_pid) {
+        return Err(Error::NotFound);
+    }
     // A hammock is a derived span, not work: it is linked through hammock links, never dependencies.
     if crate::models::_entities::tasks::Entity::find()
         .filter(crate::models::_entities::tasks::Column::IsHammock.eq(true))
@@ -190,6 +200,7 @@ struct DependencyParams {
 #[debug_handler]
 async fn list_dependencies(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<DependencyParams>,
 ) -> Result<Response> {
     let rows = vis_models::all_dependencies(&ctx.db).await?;
@@ -202,7 +213,25 @@ async fn list_dependencies(
         })
         .take(500)
         .collect();
-    format::json(rows)
+    // An edge is shown only when the caller can read **both** ends; otherwise it is
+    // an opaque "external dependency (restricted)" with nothing about the hidden side.
+    let ends: Vec<Uuid> = rows
+        .iter()
+        .flat_map(|e| [e.predecessor_pid, e.successor_pid])
+        .collect();
+    let readable = super::cpm::readable_endpoints(&ctx, &caller, &ends).await?;
+    let out: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|e| {
+            if readable.contains(&e.predecessor_pid) && readable.contains(&e.successor_pid) {
+                serde_json::to_value(&e).unwrap_or_default()
+            } else {
+                serde_json::json!({ "pid": e.pid, "restricted": true,
+                    "label": "external dependency (restricted)" })
+            }
+        })
+        .collect();
+    format::json(out)
 }
 
 /// `DELETE /api/dependencies/{pid}`.
@@ -214,6 +243,13 @@ async fn delete_dependency(
 ) -> Result<Response> {
     let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
     let row = vis_models::find_dependency(&ctx.db, pid).await?;
+    // Removing a link needs to be able to read both ends; otherwise it is as if it were not there.
+    let readable =
+        super::cpm::readable_endpoints(&ctx, &caller, &[row.predecessor_pid, row.successor_pid])
+            .await?;
+    if !readable.contains(&row.predecessor_pid) || !readable.contains(&row.successor_pid) {
+        return Err(Error::NotFound);
+    }
     let row_pid = row.pid;
     plan_dependencies::Entity::delete_by_id(row.id)
         .exec(&ctx.db)

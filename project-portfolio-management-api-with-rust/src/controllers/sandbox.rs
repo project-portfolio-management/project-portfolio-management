@@ -252,6 +252,9 @@ async fn evaluate(
         cal_source: before_net.cal_source,
         own: before_net.own.clone(),
         conflicts: before_net.conflicts.clone(),
+        external: before_net.external.clone(),
+        restricted: before_net.restricted.clone(),
+        truncated: before_net.truncated,
     };
     let after = analyse(&after_net, "the plan with these edits")?;
     let cal = calendars_of(&before_net);

@@ -3198,3 +3198,161 @@ async fn a_hammock_follows_its_links_and_never_touches_the_network() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        use axum::http::StatusCode as S;
+        let mk_plan = |name: &'static str| {
+            let request = &request;
+            async move {
+                let p: Value = request
+                    .post("/api/plans")
+                    .json(&json!({ "kind": "Project", "name": name }))
+                    .await
+                    .json();
+                p["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (pa, pb) = (mk_plan("Alpha").await, mk_plan("Bravo").await);
+        // Bravo works Monday to Friday; Alpha works every day.
+        request
+            .put(&format!("/api/plans/{pb}/calendar"))
+            .json(&json!({ "weekdays": "1111100" }))
+            .await
+            .assert_status_ok();
+        let a1 = task(&request, &pa, "Alpha one", Some("2026-10-05"), Some(2)).await;
+        let b1 = task(&request, &pb, "Bravo one", Some("2026-10-05"), Some(6)).await; // Mon-Fri: ends Mon 12 Oct
+        let b2 = task(&request, &pb, "Bravo two", None, Some(1)).await;
+        let cpm = |p: &str| {
+            let (request, url) = (&request, format!("/api/plans/{p}/cpm"));
+            async move { request.get(&url).await.json::<Value>() }
+        };
+        let node = |c: &Value, pid: &str| {
+            c["nodes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|n| n["pid"] == pid)
+                .cloned()
+        };
+        assert_eq!(
+            node(&cpm(&pa).await, &a1).unwrap()["early_start"],
+            "2026-10-05",
+            "no link yet"
+        );
+
+        // Bravo one → Alpha one, across plans. Alpha's network now includes it.
+        let link: Value = request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": b1, "successor_pid": a1, "lag_days": 0 }))
+            .await
+            .json();
+        let link = link["pid"].as_str().unwrap().to_string();
+        let c = cpm(&pa).await;
+        let ext = node(&c, &b1).expect("the linked task is in the network");
+        assert_eq!(
+            (
+                ext["external"].as_bool(),
+                ext["plan_name"].as_str(),
+                ext["title"].as_str()
+            ),
+            (Some(true), Some("Bravo"), Some("Bravo one"))
+        );
+        assert_eq!(node(&c, &a1).unwrap()["external"], false);
+        assert_eq!(
+            ext["early_finish"], "2026-10-12",
+            "six working days of Bravo's Monday-to-Friday calendar"
+        );
+        assert_eq!(
+            node(&c, &a1).unwrap()["early_start"],
+            "2026-10-13",
+            "Alpha one waits for it"
+        );
+        assert!(
+            c["edges"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["cross_plan"] == true)
+        );
+        assert_eq!(c["project_finish"], "2026-10-14", "the plan's own finish");
+        assert_eq!(c["restricted_edges"].as_array().unwrap().len(), 0);
+        // Bravo's own view is unchanged by Alpha being a successor it does not hold... it sees Alpha one too.
+        let cb = cpm(&pb).await;
+        assert!(node(&cb, &a1).is_some_and(|n| n["external"] == true && n["plan_name"] == "Alpha"));
+
+        // Float across plans: Alpha one feeds Bravo two, so both are on the same chain.
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a1, "successor_pid": b2, "lag_days": 0 }))
+            .await
+            .assert_status_ok();
+        let c = cpm(&pa).await;
+        assert_eq!(node(&c, &a1).unwrap()["critical"], true);
+        assert_eq!(
+            node(&c, &b1).unwrap()["critical"],
+            true,
+            "the chain runs through both plans"
+        );
+        assert!(node(&c, &b2).is_some());
+
+        // A dependency that would close a cycle across the two plans is refused.
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": b2, "successor_pid": b1, "lag_days": 0 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a1, "successor_pid": b1, "lag_days": 0 }))
+            .await
+            .assert_status(S::UNPROCESSABLE_ENTITY);
+
+        // A plan others depend on is not deleted from under them.
+        let r = request.delete(&format!("/api/plans/{pb}")).await;
+        r.assert_status(S::CONFLICT);
+        assert!(
+            r.text().contains("Alpha"),
+            "the readable dependant is named: {}",
+            r.text()
+        );
+        assert_eq!(
+            request
+                .delete(&format!("/api/plans/{pa}"))
+                .await
+                .status_code(),
+            409
+        );
+        let deps: Value = request
+            .get(&format!("/api/dependencies?item={a1}"))
+            .await
+            .json();
+        for d in deps
+            .as_array()
+            .unwrap()
+            .iter()
+            .chain(std::iter::once(&json!({ "pid": link })))
+        {
+            request
+                .delete(&format!("/api/dependencies/{}", d["pid"].as_str().unwrap()))
+                .await;
+        }
+        request
+            .delete(&format!("/api/plans/{pb}"))
+            .await
+            .assert_status_ok();
+        assert!(
+            node(&cpm(&pa).await, &b1).is_none(),
+            "with the links gone (and Bravo deleted), Alpha's network is its own again"
+        );
+        assert_eq!(
+            node(&cpm(&pa).await, &a1).unwrap()["early_start"],
+            "2026-10-05"
+        );
+    })
+    .await;
+}

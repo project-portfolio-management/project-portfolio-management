@@ -558,6 +558,38 @@ async fn remove(
     let model = PlanModel::find_by_pid(&ctx.db, &pid)
         .await
         .map_err(super::model_not_found)?;
+    // A plan with live dependencies to or from tasks of other plans is not deleted from
+    // under them: the dependants are named (those the caller may read) and counted.
+    let (named, restricted) = super::cpm::external_dependants(&ctx, model.pid, &caller).await?;
+    if !named.is_empty() || restricted > 0 {
+        return Err(Error::CustomError(
+            axum::http::StatusCode::CONFLICT,
+            loco_rs::controller::ErrorDetail::new(
+                "conflict",
+                format!(
+                    "other plans depend on this one through task links: {} plan(s) you can read{}{}; remove those links first",
+                    named.len(),
+                    if named.is_empty() {
+                        String::new()
+                    } else {
+                        format!(
+                            " ({})",
+                            named
+                                .iter()
+                                .map(|(_, n)| n.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        )
+                    },
+                    if restricted > 0 {
+                        format!(" and {restricted} you cannot see")
+                    } else {
+                        String::new()
+                    },
+                ),
+            ),
+        ));
+    }
     let (_entity_pid, _name) = streaming::delete_and_emit(&ctx.db, model, caller.actor()).await?;
     // Audit is written inside `delete_and_emit` (see `streaming`).
     Metrics::global().plan_deleted_total.inc();

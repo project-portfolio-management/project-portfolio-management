@@ -37,7 +37,7 @@ function preferredLocale(): Locale {
 
 // The locale is part of the URL (`/cy-001/plans`): read it here, once, for the
 // whole tree. `+layout.svelte` hands it to the i18n store. A client-side
-// navigation to a bare or alias URL (`goto("/plans")`) never reaches the
+// navigation to a bare URL (`goto("/plans")`) never reaches the
 // server's redirect, so it is localized here, the same way.
 // A universal load replaces the server layout's data, so pass it through.
 export const load: LayoutLoad = ({ url, data }) => {

@@ -4,8 +4,8 @@ import { splitPath } from "#lib/locales.js";
 // Locale-prefixed URLs (`/cy-001/plans`) are served by the routes that already
 // exist (`/plans`): strip a supported locale prefix before route matching.
 // Only the *matched route* changes — `url`, links and `page.url` keep the
-// prefix. An alias (`/en/plans`) or an unprefixed path is left alone here; the
-// server's `handle` redirects both before any page is rendered.
+// prefix. An unprefixed path (including a two-letter one such as `/en/plans`, which is
+// not a locale) is left alone here; the server's `handle` redirects it before any page is rendered.
 export const reroute: Reroute = ({ url }) => {
   const { locale, rest } = splitPath(url.pathname);
   return locale ? rest : undefined;

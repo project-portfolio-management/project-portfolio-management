@@ -92,8 +92,8 @@ switcher). The chrome area carries:
 - a **locale selector** (`lily-design-system-svelte-locale-picker`) —
   10 locales (`ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`, `es-001`,
   `fr-001`, `hi-001`, `zh-001`, `zh-cn`; `LOCALES` in `src/lib/locales.ts`).
-  Pages live under a locale prefix (`/cy-001/plans`); a two-letter alias such
-  as `/en/plans` redirects to its canonical address. Only `ar-001` renders
+  Pages live under a locale prefix (`/cy-001/plans`); a two-letter prefix such
+  as `/en/plans` is not a locale and is not forwarded. Only `ar-001` renders
   RTL;
 - a session affordance: **Sign in** leads to this app's own `/signin` +
   `/verify` magic-link pages (BFF), which establish a server-side

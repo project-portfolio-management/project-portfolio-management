@@ -41,14 +41,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   const { pathname, search } = event.url;
   if (!isUnlocalized(pathname)) {
-    const { locale, alias, rest } = splitPath(pathname);
+    const { locale, rest } = splitPath(pathname);
     const reading =
       event.request.method === "GET" || event.request.method === "HEAD";
-    if (alias) {
-      // `/en/plans` is another name for `/en-001/plans`: one canonical address
-      // per page, so redirect rather than serve the same page twice.
-      redirect(301, `${localizePath(rest, alias)}${search}`);
-    }
     if (!locale && reading) {
       // A bare URL (a bookmark, the magic-link email) gains its locale prefix.
       const to = negotiateLocale(

@@ -87,22 +87,14 @@ describe("negotiateLocale", () => {
 });
 
 describe("handle", () => {
-  it("redirects a two-letter alias to its locale, permanently, keeping the rest", async () => {
+  it("does not forward a two-letter prefix to its -001 locale: it is an ordinary bare path", async () => {
     expect(await run("/en/plans?x=1")).toEqual({
-      status: 301,
-      location: "/en-001/plans?x=1",
+      status: 302,
+      location: "/en-001/en/plans?x=1",
     });
-    expect(await run("/cy")).toEqual({ status: 301, location: "/cy-001" });
-    expect(await run("/cy/")).toEqual({ status: 301, location: "/cy-001" });
-    expect(await run("/de/tour")).toEqual({
-      status: 301,
-      location: "/de-001/tour",
-    });
-  });
-
-  it("redirects an alias for any method, so a form post is not served twice", async () => {
-    expect(await run("/en/signin", { method: "POST" })).toMatchObject({
-      status: 301,
+    expect(await run("/cy", { cookies: { locale: "de-de" } })).toEqual({
+      status: 302,
+      location: "/de-de/cy",
     });
   });
 

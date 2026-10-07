@@ -2,11 +2,11 @@
 // is the source of truth) formatted by Sveltia I18n (`@sveltia/i18n`,
 // Unicode MessageFormat 2), behind a reactive `$state` current-locale (Svelte
 // 5 runes) and a `t(key, values?)` accessor. The locale set and its pure
-// helpers (URL prefixes, aliases, Accept-Language) live in `./locales.ts`.
+// helpers (URL prefixes, Accept-Language) live in `./locales.ts`.
 //
 // The locale is **in the URL**: every page is served under `/<locale>/…`
-// (`/en-001/plans`, `/cy-001/plans`) and a bare two-letter alias (`/en/…`)
-// redirects to its locale. The root layout calls `i18n.set(data.locale)` from
+// (`/en-001/plans`, `/cy-001/plans`); a two-letter prefix (`/en/…`) is not a locale and has
+// no forwarding. The root layout calls `i18n.set(data.locale)` from
 // the URL, so the URL, not localStorage, decides what is shown; the choice is
 // still remembered (localStorage here, a cookie set by the server hooks) only
 // to pick the locale for a bare, unprefixed URL.

@@ -112,7 +112,7 @@ src/
 ├── lib/
 │   ├── config.ts                  API_BASE_URL → same-origin BFF proxy (/api/proxy); no browser-held bearer
 │   ├── i18n.svelte.ts             string catalogues for the 10 locales in `locales.ts` (en-001 default, en fallback), formatted by `@sveltia/i18n`; exports `t()` and `localeHref()`; one file, not a directory
-│   ├── locales.ts                 pure locale set, aliases (`/en/…` → `/en-001/…`), RTL flag, `splitPath`; shared by hooks, store and tests
+│   ├── locales.ts                 pure locale set (no two-letter aliases), RTL flag, `splitPath`; shared by hooks, store and tests
 │   ├── *-view.ts, wbs.ts, rbs.ts  pure view modules (no runes, no `$app/*`): ceo-view, ev-view, cpm-view, whatif-view, work-view, onboarding-view, … — tested in `tests/unit/`
 │   ├── glossary.ts                plain-language glosses for acronyms; rendered by `components/Term.svelte`
 │   ├── api/
@@ -203,7 +203,7 @@ A behavioural change is one PR with three parts:
   Every in-app `href` and `goto` goes through `localeHref("/plans")`, which
   prefixes the current locale (`/cy-001/plans`); the universal `reroute` hook
   (`src/hooks.ts`) strips the prefix before route matching, and the server
-  redirects bare or two-letter-alias paths. To add a locale extend `LOCALES`,
+  redirects bare paths (a two-letter prefix like `/en/…` is not a locale and is not forwarded). To add a locale extend `LOCALES`,
   `LOCALE_LABELS` and the catalogues.
 - **One primary action per screen.** At most one visible `button.primary`;
   repeated per-row buttons are never primary; a multi-step page marks the

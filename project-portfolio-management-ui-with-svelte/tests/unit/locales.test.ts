@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   LOCALES,
-  LOCALE_ALIASES,
   isUnlocalized,
   localeFromAcceptLanguage,
   localeRedirect,
@@ -11,33 +10,14 @@ import {
   splitPath,
 } from "../../src/lib/locales";
 
-describe("locale aliases", () => {
-  it("maps a bare language code to its -001 locale", () => {
-    expect(LOCALE_ALIASES.en).toBe("en-001");
-    expect(LOCALE_ALIASES.cy).toBe("cy-001");
-    expect(LOCALE_ALIASES.ar).toBe("ar-001");
-  });
-  it("maps de and zh to their -001 locales, not the regional copies", () => {
-    expect(LOCALE_ALIASES.de).toBe("de-001");
-    expect(LOCALE_ALIASES.zh).toBe("zh-001");
-  });
-  it("never shadows a real locale", () => {
-    for (const alias of Object.keys(LOCALE_ALIASES)) {
-      expect((LOCALES as readonly string[]).includes(alias)).toBe(false);
-    }
-  });
-});
-
 describe("splitPath", () => {
   it("reads a locale prefix", () => {
     expect(splitPath("/cy-001/plans/1")).toEqual({
       locale: "cy-001",
-      alias: null,
       rest: "/plans/1",
     });
     expect(splitPath("/en-001")).toEqual({
       locale: "en-001",
-      alias: null,
       rest: "/",
     });
     expect(splitPath("/en-001/")).toMatchObject({
@@ -45,18 +25,16 @@ describe("splitPath", () => {
       rest: "/",
     });
   });
-  it("reads an alias prefix", () => {
-    expect(splitPath("/en/plans")).toEqual({
-      locale: null,
-      alias: "en-001",
-      rest: "/plans",
-    });
-    expect(splitPath("/cy")).toMatchObject({ alias: "cy-001", rest: "/" });
+  it("does not treat a two-letter code as a locale: there is no alias", () => {
+    for (const path of ["/en/plans", "/cy", "/de/tour", "/zh/"]) {
+      expect(splitPath(path).locale, path).toBeNull();
+      expect(localeOfPath(path), path).toBeNull();
+    }
+    expect(splitPath("/en/plans").rest).toBe("/en/plans");
   });
   it("leaves an unprefixed or unknown path alone", () => {
     expect(splitPath("/plans")).toEqual({
       locale: null,
-      alias: null,
       rest: "/plans",
     });
     expect(splitPath("/xx-yy/plans").rest).toBe("/xx-yy/plans");
@@ -79,7 +57,6 @@ describe("localizePath", () => {
   });
   it("replaces an existing prefix rather than stacking", () => {
     expect(localizePath("/en-001/plans/2", "cy-001")).toBe("/cy-001/plans/2");
-    expect(localizePath("/en/plans", "cy-001")).toBe("/cy-001/plans");
     expect(localizePath(localizePath("/plans", "cy-001"), "cy-001")).toBe(
       "/cy-001/plans",
     );
@@ -142,10 +119,10 @@ describe("localeRedirect", () => {
       location: "/de-de",
     });
   });
-  it("sends an alias to its locale permanently, ignoring the preference", () => {
+  it("gives a two-letter path the reader's locale, like any bare path (no forwarding to -001)", () => {
     expect(localeRedirect(u("/en/plans"), "cy-001")).toEqual({
-      status: 301,
-      location: "/en-001/plans",
+      status: 307,
+      location: "/cy-001/en/plans",
     });
   });
   it("leaves localized and unlocalized URLs alone", () => {

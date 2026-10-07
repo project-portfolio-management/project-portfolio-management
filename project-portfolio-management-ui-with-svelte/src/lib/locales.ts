@@ -5,11 +5,11 @@
 // Locale codes are lowercase and hyphenated ("en-001", "zh-cn"). `-001` is the
 // UN M.49 code for "world": a language with no regional variant.
 //
-// URLs: every app page lives under a locale prefix (`/en-001/plans`). A bare
-// two-letter code is an **alias** for the one locale of that language and
-// redirects to it (`/en/plans` -> `/en-001/plans`), so each page has exactly one
-// canonical address. The routes themselves are not moved: the universal
-// `reroute` hook (`src/hooks.ts`) strips the prefix before route matching.
+// URLs: every app page lives under a locale prefix (`/en-001/plans`), and the prefix is always
+// the full `<language>-<region>` code. There is no two-letter alias: `/en/plans` is not a
+// locale URL, so it is an ordinary unprefixed path and gains the reader's own locale prefix
+// like any other (and then finds no page). The routes themselves are not moved: the
+// universal `reroute` hook (`src/hooks.ts`) strips the prefix before route matching.
 
 /**
  * Locales for which the UI is translated, sorted alphabetically by code
@@ -87,40 +87,13 @@ export function isRtl(locale: string): boolean {
   );
 }
 
-/**
- * Two-letter alias -> the locale it stands for: `en` -> `en-001`, `cy` ->
- * `cy-001`, and likewise for every language that has a `-001` locale; a
- * language with exactly one (regional) locale would alias to it. Never shadows a real locale code.
- */
-export function localeAliases(): Record<string, Locale> {
-  const out: Record<string, Locale> = {};
-  const byLanguage = new Map<string, Locale[]>();
-  for (const l of LOCALES) {
-    const lang = l.split("-")[0] ?? l;
-    byLanguage.set(lang, [...(byLanguage.get(lang) ?? []), l]);
-  }
-  for (const [lang, codes] of byLanguage) {
-    const world = codes.find((c) => c === `${lang}-001`);
-    const target = world ?? (codes.length === 1 ? codes[0] : undefined);
-    if (target && !(LOCALES as readonly string[]).includes(lang)) {
-      out[lang] = target;
-    }
-  }
-  return out;
-}
-
-/** The alias table, built once. */
-export const LOCALE_ALIASES: Readonly<Record<string, Locale>> = localeAliases();
-
-/** The first path segment, if it is shaped like a locale or an alias. */
+/** The first path segment, if it is shaped like a locale. */
 const FIRST_SEGMENT = /^\/([a-z]{2,3}(?:-[a-z0-9]{2,3})?)(?=\/|$)/;
 
 /** What a pathname's locale prefix says. */
 export interface SplitPath {
   /** The supported locale in the prefix, if any. */
   locale: Locale | null;
-  /** The two-letter alias in the prefix, if any (and its target). */
-  alias: Locale | null;
   /** The path without the prefix (always starts with `/`). */
   rest: string;
 }
@@ -128,7 +101,7 @@ export interface SplitPath {
 /**
  * Split a pathname into its locale prefix and the rest.
  * `/cy-001/plans/1` -> `{ locale: "cy-001", rest: "/plans/1" }`;
- * `/en/plans` -> `{ alias: "en-001", rest: "/plans" }`; `/plans` -> neither.
+ * `/en/plans` and `/plans` -> neither (a two-letter code is not a locale).
  */
 export function splitPath(pathname: string): SplitPath {
   const m = FIRST_SEGMENT.exec(pathname);
@@ -136,18 +109,16 @@ export function splitPath(pathname: string): SplitPath {
   if (seg) {
     const rest = pathname.slice(seg.length + 1) || "/";
     if ((LOCALES as readonly string[]).includes(seg)) {
-      return { locale: seg as Locale, alias: null, rest };
+      return { locale: seg as Locale, rest };
     }
-    const target = LOCALE_ALIASES[seg];
-    if (target) return { locale: null, alias: target, rest };
   }
-  return { locale: null, alias: null, rest: pathname || "/" };
+  return { locale: null, rest: pathname || "/" };
 }
 
-/** The locale named by a pathname's prefix (an alias counts), or null. */
+/** The locale named by a pathname's prefix, or null. */
 export function localeOfPath(pathname: string): Locale | null {
   const s = splitPath(pathname);
-  return s.locale ?? s.alias;
+  return s.locale;
 }
 
 /** Paths that are never localized: the BFF API, framework assets, static files. */
@@ -205,8 +176,7 @@ export function localeFromAcceptLanguage(
 
 /**
  * Where a URL that is not in the locale tree should go, or null if it is fine
- * where it is: an alias goes to its locale (permanent), a bare path gains
- * `preferred`'s prefix (temporary). Used by the root layout's `load`, which
+ * where it is: a path with no locale prefix gains `preferred`'s (temporary). Used by the root layout's `load`, which
  * catches client-side navigations the server never sees.
  */
 export function localeRedirect(
@@ -214,10 +184,10 @@ export function localeRedirect(
   preferred: Locale,
 ): { status: 301 | 307; location: string } | null {
   if (isUnlocalized(url.pathname)) return null;
-  const { locale, alias, rest } = splitPath(url.pathname);
+  const { locale, rest } = splitPath(url.pathname);
   if (locale) return null;
   return {
-    status: alias ? 301 : 307,
-    location: `${localizePath(rest, alias ?? preferred)}${url.search}${url.hash}`,
+    status: 307,
+    location: `${localizePath(rest, preferred)}${url.search}${url.hash}`,
   };
 }

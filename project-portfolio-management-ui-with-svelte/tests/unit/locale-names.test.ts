@@ -1,10 +1,13 @@
 // NFR-4a: every locale is named `<language>-<region>` (lowercase, hyphenated); a bare two-letter
-// code is only a URL alias, never a directory or file on disk.
+// code is not a locale at all: no URL prefix, no directory, no file.
 
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { LOCALES, LOCALE_ALIASES } from "../../src/lib/locales";
+import { LOCALES, localeOfPath } from "../../src/lib/locales";
+
+/** The bare language codes of the supported locales (`en`, `cy`, `de`, …). */
+const BARE = [...new Set(LOCALES.map((l) => l.split("-")[0] ?? l))];
 
 const ROOTS = ["src", "static", "tests", "docs", "locales"];
 const SKIP = new Set(["node_modules", ".svelte-kit", "build", "dist"]);
@@ -31,14 +34,15 @@ describe("locale names (NFR-4a)", () => {
     for (const l of LOCALES) expect(l, l).toMatch(/^[a-z]{2,3}-[a-z0-9]{2,3}$/);
   });
 
-  it("a two-letter code is an alias and never a supported locale", () => {
-    for (const alias of Object.keys(LOCALE_ALIASES)) {
-      expect((LOCALES as readonly string[]).includes(alias), alias).toBe(false);
+  it("a two-letter code is never a supported locale and never a URL prefix", () => {
+    for (const bare of BARE) {
+      expect((LOCALES as readonly string[]).includes(bare), bare).toBe(false);
+      expect(localeOfPath(`/${bare}/plans`), bare).toBeNull();
     }
   });
 
   it("no directory or file is named for a bare two-letter locale", () => {
-    const bare = new Set(Object.keys(LOCALE_ALIASES));
+    const bare = new Set(BARE);
     const found = ROOTS.flatMap((r) => walk(r))
       .filter((e) => {
         const stem = (e.path.split("/").pop() ?? "").replace(/\.[^.]+$/, "");

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Removed — two-letter locale forwarding
+
+`/en/…`, `/cy/…`, `/de/…` and the other bare two-letter prefixes no longer redirect (301) to `/en-001/…`, `/cy-001/…`, `/de-001/…`. A two-letter code is not a locale: such a path is an ordinary bare path (it gains the reader's own locale prefix and then finds no page). Only the full `<language>-<region>` codes are URL prefixes (spec NFR-4a). The earlier "Added — localized routes" entry below describes the old behaviour.
+
 ### Added — display preferences and an accessibility audit (LT-12)
 
 `/display`: **simple view** (advanced destinations behind "More"; nothing removed; on by default for the worker role, an opt-in otherwise) and a **dyslexia-friendly font** (OpenDyslexic). Kept on the device and, signed in, on the account. Reduced motion is honoured everywhere. An axe audit now covers every route, and fixed: muted and danger text contrast, and the SVAR grid's invalid `aria-rowindex`.

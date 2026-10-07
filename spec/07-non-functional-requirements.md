@@ -28,6 +28,17 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   per [`agents/share/locales.md`](../../agents/share/locales.md);
   cross-language linkage of the same initiative via `same_as` /
   deterministic identifiers.)*
+- **NFR-4a — Locale directory names.** Every directory (or file stem) named
+  for a locale uses the form `<language>-<region>`, lowercase and hyphenated:
+  `en-001`, `cy-001`, `de-de`, `zh-cn`. `-001` is the UN M.49 code for "world"
+  and stands for a language with no regional variant. **A bare two-letter
+  directory (`locales/en/`) never exists**: a two-letter code is only an
+  *alias* in URLs (`/en/plans` redirects to `/en-001/plans`), never a place on
+  disk, so each locale has exactly one canonical name. The supported set is
+  `LOCALES` in `project-portfolio-management-ui-with-svelte/src/lib/locales.ts`.
+  *(Verified 2026-10-07: the repository has no locale directories at all —
+  strings live in `src/lib/i18n.svelte.ts` keyed by these codes — and a test
+  keeps it so.)*
 - **NFR-5 — Security.** TLS at the edge; SSO via the central
   [authentication entity](../../authentication/) — the service
   verifies PASETO v4 public tokens offline against the auth-service's

@@ -24,9 +24,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 - **NFR-4 — i18n / locales.** Plan names, goal titles, keywords,
   and free-text are Unicode-correct end to end; the matcher folds with
   NFKC and **preserves diacritics** (never strips them). `in_language`
-  records the plan's language. *(roadmap: multilingual operator UI
-  per [`agents/share/locales.md`](../../agents/share/locales.md);
-  cross-language linkage of the same initiative via `same_as` /
+  records the plan's language. The operator UI is multilingual in ten
+  locales ([locales](locales.md)). *(roadmap: cross-language linkage of the same initiative via `same_as` /
   deterministic identifiers.)*
 - **NFR-4a — Locale directory names.** Every directory (or file stem) named
   for a locale uses the form `<language>-<region>`, lowercase and hyphenated:
@@ -35,7 +34,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   directory (`locales/en/`) never exists**: a two-letter code is **not a locale at all**: no URL prefix and no
   forwarding (`/en/plans` is an ordinary unprefixed path, not a redirect to
   `/en-001/plans`), and no place on disk, so each locale has exactly one name. The supported set is
-  `LOCALES` in `project-portfolio-management-ui-with-svelte/src/lib/locales.ts`.
+  `LOCALES` in `project-portfolio-management-ui-with-svelte/src/lib/locales.ts`;
+  see [locales](locales.md).
   *(Verified 2026-10-07: the repository has no locale directories at all —
   strings live in `src/lib/i18n.svelte.ts` keyed by these codes — and a test
   keeps it so.)*

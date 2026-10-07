@@ -62,6 +62,11 @@ reference (subproject map, models, matching, REST, testing), see
 Topics that span several numbered chapters at once and are therefore
 kept whole rather than split across them:
 
+- [Locales](locales.md) — how a locale is named (`<language>-<region>`,
+  never a bare two-letter code), the ten supported locales, the URL
+  prefix, how a locale is chosen for a bare URL (remembered choice,
+  then the browser's language, then `en-001`), and how that differs
+  from a plan's `in_language`. Spans §5, §7 and §9.
 - [Time-based analysis (TBA)](time-based-analysis.md) — the time
   dimension of delivery: the task transition log, cycle versus lead
   time, flow efficiency, rework and first-pass yield, cycle-time

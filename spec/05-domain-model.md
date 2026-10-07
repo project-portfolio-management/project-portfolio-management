@@ -46,7 +46,7 @@ reference: matcher
 | `tags` | Vec\<String\> | Operator-applied labels for grouping / workflow — see below |
 | `identifiers` | Vec\<PlanIdentifier\> | `{ scheme: IdentifierScheme, value: String }` |
 | `same_as` | Vec\<String\> | Canonical URLs (schema.org `sameAs`) |
-| `in_language` | Option\<String\> | ISO 639-1 code — see [`agents/share/locales.md`](../../agents/share/locales.md) |
+| `in_language` | Option\<String\> | The language the content is written in: a free BCP 47 tag (`en`, `en-GB`), validated for shape only. Not a UI locale — see [locales](locales.md) §5 |
 | `relationships` | Vec\<PlanRelationship\> | Typed plan-to-plan links — `{ relation: RelationKind, plan_id: String }` |
 
 **`EntityRef` fields.** `owner_org_id`, `lead_ref` (and the

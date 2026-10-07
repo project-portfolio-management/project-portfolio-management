@@ -14,8 +14,8 @@ posture relative to this landscape is §8.7.
 - [Dublin Core](https://www.dublincore.org/) — `title` / `subject` /
   `identifier` term semantics that `name` / `keywords` / `identifiers`
   echo.
-- ISO 639-1 language codes ([`agents/share/locales.md`](../../agents/share/locales.md))
-  — the `in_language` value set.
+- BCP 47 language tags — the `in_language` value space (shape-validated); and the UN M.49
+  region code `001` ("world") used in UI locale names. See [locales](locales.md).
 - Date / time: ISO 8601 calendar dates for `start_date` /
   `target_date` / goal `target_date` / task `due_date`.
 

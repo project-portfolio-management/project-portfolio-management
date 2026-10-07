@@ -85,9 +85,8 @@ workspace:
   index entity
   ([`agents/share/cross-service-linking.md`](../../agents/share/cross-service-linking.md)).
 - **Multinational by design.** `in_language` on every record;
-  operator surfaces localize to the locales in
-  [`agents/share/locales.md`](../../agents/share/locales.md)
-  (roadmap, §15).
+  the operator UI is localized in the ten locales of
+  [locales](locales.md).
 - **Audit-grade.** Soft delete, full audit logging, and event
   streaming from the family baseline, suitable for
   government-portfolio information governance.

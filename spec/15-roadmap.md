@@ -159,9 +159,8 @@ The items below predate the PPM repositioning and remain valid.
   Linear / GitHub Projects keyed on the deterministic external-id
   identifiers (R-0 schemes), so a registered project stays in step with
   its source-tool twin without becoming a full PM replacement (§8.7).
-- **Localization.** Operator UI in the
-  [`agents/share/locales.md`](../../agents/share/locales.md) locale
-  set; multilingual plan names via `alternate_names` +
+- **Localization.** Operator UI in the ten-locale set of
+  [locales](locales.md) (landed); multilingual plan names via `alternate_names` +
   `in_language`; cross-language duplicate linkage through deterministic
   identifiers / `same_as`.
 - **Scale-out and operations.** Multi-replica deployment, PostgreSQL

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { cellSentence, findingText, normalise, shortRef, toAssignments, toggleLetter, validPersonRef } from "../../src/lib/raci-view";
+import {
+  cellSentence,
+  findingText,
+  normalise,
+  shortRef,
+  toAssignments,
+  toggleLetter,
+  validPersonRef,
+} from "../../src/lib/raci-view";
 
 describe("normalise", () => {
   it("orders letters R-A-C-I, upper-cases and deduplicates", () => {
@@ -27,12 +35,17 @@ describe("toggleLetter", () => {
     expect(t.accountableMovedFrom).toBe("p:a");
   });
   it("does not report a move when nobody had Accountable, or when it is re-toggled off", () => {
-    expect(toggleLetter({ "p:a": "R" }, "p:b", "A").accountableMovedFrom).toBeNull();
-    expect(toggleLetter({ "p:a": "A" }, "p:a", "A").accountableMovedFrom).toBeNull();
+    expect(
+      toggleLetter({ "p:a": "R" }, "p:b", "A").accountableMovedFrom,
+    ).toBeNull();
+    expect(
+      toggleLetter({ "p:a": "A" }, "p:a", "A").accountableMovedFrom,
+    ).toBeNull();
   });
   it("a person may hold R, A, C and I together; other people are untouched", () => {
     let c: Record<string, string> = { "p:z": "I" };
-    for (const l of ["R", "A", "C", "I"] as const) c = toggleLetter(c, "p:a", l).cells;
+    for (const l of ["R", "A", "C", "I"] as const)
+      c = toggleLetter(c, "p:a", l).cells;
     expect(c).toEqual({ "p:z": "I", "p:a": "RACI" });
   });
   it("never mutates its input", () => {
@@ -44,7 +57,9 @@ describe("toggleLetter", () => {
 
 describe("payload and wording", () => {
   it("sends only people who hold a letter, normalised", () => {
-    expect(toAssignments({ "p:a": "ar", "p:b": "" })).toEqual([{ person_ref: "p:a", roles: "RA" }]);
+    expect(toAssignments({ "p:a": "ar", "p:b": "" })).toEqual([
+      { person_ref: "p:a", roles: "RA" },
+    ]);
     expect(toAssignments({})).toEqual([]);
   });
   it("names what a row is missing in words", () => {
@@ -53,14 +68,28 @@ describe("payload and wording", () => {
     expect(findingText("many_accountable")).toMatch(/More than one/);
   });
   it("writes a sentence for each cell", () => {
-    expect(cellSentence("Design", "person:3f2c6b7e-0000-4000-8000-0000000000a1", "RA")).toBe("Design: 3f2c6b7e… is Responsible and Accountable");
-    expect(cellSentence("Design", "person:abc", "")).toBe("Design: abc has no role");
+    expect(
+      cellSentence(
+        "Design",
+        "person:3f2c6b7e-0000-4000-8000-0000000000a1",
+        "RA",
+      ),
+    ).toBe("Design: 3f2c6b7e… is Responsible and Accountable");
+    expect(cellSentence("Design", "person:abc", "")).toBe(
+      "Design: abc has no role",
+    );
   });
   it("shortens a reference and validates a new column", () => {
-    expect(shortRef("person:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe("3f2c6b7e…");
+    expect(shortRef("person:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe(
+      "3f2c6b7e…",
+    );
     expect(shortRef("plain")).toBe("plain");
-    expect(validPersonRef("person:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe(true);
-    expect(validPersonRef("worker:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe(true);
+    expect(validPersonRef("person:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe(
+      true,
+    );
+    expect(validPersonRef("worker:3f2c6b7e-0000-4000-8000-0000000000a1")).toBe(
+      true,
+    );
     expect(validPersonRef("alex")).toBe(false);
     expect(validPersonRef("person:not-a-uuid")).toBe(false);
   });

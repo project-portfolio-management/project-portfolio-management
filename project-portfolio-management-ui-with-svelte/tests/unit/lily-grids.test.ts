@@ -8,7 +8,12 @@ import {
   type GanttItem,
 } from "../../src/lib/lily-grids";
 
-const item = (pid: string, start: string | null, end: string | null, critical = false): GanttItem => ({
+const item = (
+  pid: string,
+  start: string | null,
+  end: string | null,
+  critical = false,
+): GanttItem => ({
   pid,
   name: pid,
   start,
@@ -63,18 +68,28 @@ describe("ganttGrid", () => {
     expect(g.undated.map((u) => u.pid)).toEqual(["none", "half", "back"]);
   });
   it("coarsens the unit instead of drawing hundreds of columns, and says so", () => {
-    const g = ganttGrid([item("long", "2026-01-01", "2026-12-31")], { unit: "day", maxColumns: 60 });
+    const g = ganttGrid([item("long", "2026-01-01", "2026-12-31")], {
+      unit: "day",
+      maxColumns: 60,
+    });
     expect(g.coarsened).toBe(true);
     expect(g.unit).toBe("week");
-    const years = ganttGrid([item("y", "2020-01-01", "2026-12-31")], { unit: "week", maxColumns: 60 });
+    const years = ganttGrid([item("y", "2020-01-01", "2026-12-31")], {
+      unit: "week",
+      maxColumns: 60,
+    });
     expect(years.unit).toBe("month");
     expect(years.columns.length).toBeLessThanOrEqual(84);
-    const fine = ganttGrid([item("s", "2026-10-01", "2026-10-03")], { unit: "day" });
+    const fine = ganttGrid([item("s", "2026-10-01", "2026-10-03")], {
+      unit: "day",
+    });
     expect(fine.coarsened).toBe(false);
     expect(fine.columns).toHaveLength(3);
   });
   it("builds whole calendar months with correct last days", () => {
-    const g = ganttGrid([item("m", "2028-01-15", "2028-03-02")], { unit: "month" });
+    const g = ganttGrid([item("m", "2028-01-15", "2028-03-02")], {
+      unit: "month",
+    });
     expect(g.columns.map((c) => [c.from, c.to])).toEqual([
       ["2028-01-01", "2028-01-31"],
       ["2028-02-01", "2028-02-29"],
@@ -111,7 +126,10 @@ describe("kanbanGrid", () => {
     ]);
   });
   it("keeps a card with an unknown status visible instead of dropping it", () => {
-    const g = kanbanGrid([{ pid: "9", title: "Odd", status: "archived" }], cols);
+    const g = kanbanGrid(
+      [{ pid: "9", title: "Odd", status: "archived" }],
+      cols,
+    );
     expect(g.orphans.map((o) => o.pid)).toEqual(["9"]);
     expect(g.rows).toEqual([]);
   });
@@ -121,8 +139,14 @@ describe("gridKeyTarget (WAI-ARIA grid keys)", () => {
   const at = { row: 1, col: 1 };
   it("steps with the arrows and stops at the edges", () => {
     expect(gridKeyTarget(at, "ArrowRight", 3, 3)).toEqual({ row: 1, col: 2 });
-    expect(gridKeyTarget({ row: 1, col: 2 }, "ArrowRight", 3, 3)).toEqual({ row: 1, col: 2 });
-    expect(gridKeyTarget({ row: 0, col: 0 }, "ArrowUp", 3, 3)).toEqual({ row: 0, col: 0 });
+    expect(gridKeyTarget({ row: 1, col: 2 }, "ArrowRight", 3, 3)).toEqual({
+      row: 1,
+      col: 2,
+    });
+    expect(gridKeyTarget({ row: 0, col: 0 }, "ArrowUp", 3, 3)).toEqual({
+      row: 0,
+      col: 0,
+    });
     expect(gridKeyTarget(at, "ArrowDown", 3, 3)).toEqual({ row: 2, col: 1 });
     expect(gridKeyTarget(at, "ArrowLeft", 3, 3)).toEqual({ row: 1, col: 0 });
   });

@@ -4,7 +4,10 @@ import LilyGanttTable from "../../src/lib/components/LilyGanttTable.svelte";
 import LilyKanbanTable from "../../src/lib/components/LilyKanbanTable.svelte";
 
 /** Mount into jsdom (the suite compiles for the client), return the HTML, clean up. */
-function render(component: unknown, options: { props: Record<string, unknown> }): { body: string } {
+function render(
+  component: unknown,
+  options: { props: Record<string, unknown> },
+): { body: string } {
   const target = document.createElement("div");
   document.body.append(target);
   const instance = mount(component as never, { target, props: options.props });
@@ -17,11 +20,19 @@ function render(component: unknown, options: { props: Record<string, unknown> })
 
 describe("Lily Gantt table", () => {
   const items = [
-    { pid: "a", name: "Design", start: "2026-10-05", end: "2026-10-14", critical: true },
+    {
+      pid: "a",
+      name: "Design",
+      start: "2026-10-05",
+      end: "2026-10-14",
+      critical: true,
+    },
     { pid: "b", name: "Undated", start: null, end: null },
   ];
   it("is a labelled grid whose marked cells name their task and dates", () => {
-    const { body } = render(LilyGanttTable, { props: { items, label: "Schedule" } });
+    const { body } = render(LilyGanttTable, {
+      props: { items, label: "Schedule" },
+    });
     expect(body).toContain('role="grid"');
     expect(body).toContain('aria-label="Schedule"');
     expect(body).toContain("Design: 2026-10-05 to 2026-10-14");

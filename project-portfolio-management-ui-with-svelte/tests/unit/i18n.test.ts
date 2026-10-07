@@ -172,7 +172,9 @@ describe("Sveltia I18n catalog", () => {
     for (const locale of LOCALES) {
       for (const [key, source] of Object.entries(STRINGS_BY_LOCALE[locale])) {
         if (/\{[A-Za-z_]\w*\}/.test(source)) continue;
-        expect(translate(key as never, locale), `${locale} ${key}`).toBe(source);
+        expect(translate(key as never, locale), `${locale} ${key}`).toBe(
+          source,
+        );
       }
     }
   });
@@ -191,6 +193,8 @@ describe("copied locales", () => {
   it("de-001 and zh-001 start as copies of de-de and zh-cn", () => {
     expect(STRINGS_BY_LOCALE["de-001"]).toEqual(STRINGS_BY_LOCALE["de-de"]);
     expect(STRINGS_BY_LOCALE["zh-001"]).toEqual(STRINGS_BY_LOCALE["zh-cn"]);
-    expect(translate("nav.merge", "de-001")).toBe(translate("nav.merge", "de-de"));
+    expect(translate("nav.merge", "de-001")).toBe(
+      translate("nav.merge", "de-de"),
+    );
   });
 });

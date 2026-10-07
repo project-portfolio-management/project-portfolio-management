@@ -16,7 +16,15 @@ import {
 
 describe("weekday masks", () => {
   it("round-trips and treats junk as all-working", () => {
-    expect(maskToWeekdays("1111100")).toEqual([true, true, true, true, true, false, false]);
+    expect(maskToWeekdays("1111100")).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+    ]);
     expect(weekdaysToMask(maskToWeekdays("1010101"))).toBe("1010101");
     expect(maskToWeekdays("nope")).toEqual(Array(7).fill(true));
     expect(maskToWeekdays("111110")).toEqual(Array(7).fill(true));
@@ -42,7 +50,11 @@ describe("monthGrid", () => {
     const g = monthGrid(2026, 10, "1111100", []);
     expect(g.every((r) => r.length === 7)).toBe(true);
     expect(g[0]![0]!.date).toBe("2026-09-28");
-    expect(g[0]![3]).toMatchObject({ date: "2026-10-01", inMonth: true, working: true });
+    expect(g[0]![3]).toMatchObject({
+      date: "2026-10-01",
+      inMonth: true,
+      working: true,
+    });
     expect(g.flat().filter((c) => c.inMonth)).toHaveLength(31);
     expect(g[0]![0]!.inMonth).toBe(false);
     expect(g).toHaveLength(5);
@@ -51,14 +63,26 @@ describe("monthGrid", () => {
     const g = monthGrid(2026, 10, "1111100", ["2026-10-12"], ["2026-10-14"]);
     const cell = (d: string) => g.flat().find((c) => c.date === d)!;
     expect(cell("2026-10-03")).toMatchObject({ offDay: true, working: false });
-    expect(cell("2026-10-12")).toMatchObject({ holiday: true, working: false, offDay: false });
+    expect(cell("2026-10-12")).toMatchObject({
+      holiday: true,
+      working: false,
+      offDay: false,
+    });
     expect(cell("2026-10-14")).toMatchObject({ absent: true, working: false });
     expect(cell("2026-10-13").working).toBe(true);
   });
   it("handles a month that needs six rows, December and leap February", () => {
     expect(monthGrid(2026, 8, "1111111", [])).toHaveLength(6); // Aug 2026 starts on a Saturday
-    expect(monthGrid(2026, 12, "1111100", []).flat().filter((c) => c.inMonth)).toHaveLength(31);
-    expect(monthGrid(2028, 2, "1111100", []).flat().filter((c) => c.inMonth)).toHaveLength(29);
+    expect(
+      monthGrid(2026, 12, "1111100", [])
+        .flat()
+        .filter((c) => c.inMonth),
+    ).toHaveLength(31);
+    expect(
+      monthGrid(2028, 2, "1111100", [])
+        .flat()
+        .filter((c) => c.inMonth),
+    ).toHaveLength(29);
   });
   it("moves between months across a year boundary", () => {
     expect(shiftMonth(2026, 12, 1)).toEqual({ year: 2027, month: 1 });
@@ -68,7 +92,11 @@ describe("monthGrid", () => {
 });
 
 describe("float wording and state", () => {
-  const n = (total_float: number, critical = total_float <= 0, near_critical = false) => ({
+  const n = (
+    total_float: number,
+    critical = total_float <= 0,
+    near_critical = false,
+  ) => ({
     total_float,
     critical,
     near_critical,
@@ -77,19 +105,31 @@ describe("float wording and state", () => {
     expect(floatLabel(n(0))).toMatch(/critical path/);
     expect(floatLabel(n(1))).toBe("1 working day of float");
     expect(floatLabel(n(3))).toBe("3 working days of float");
-    expect(floatLabel(n(2, false, true))).toBe("2 working days of float (near-critical)");
-    expect(floatLabel(n(-1))).toBe("Cannot meet its constraint or deadline: 1 working day short");
+    expect(floatLabel(n(2, false, true))).toBe(
+      "2 working days of float (near-critical)",
+    );
+    expect(floatLabel(n(-1))).toBe(
+      "Cannot meet its constraint or deadline: 1 working day short",
+    );
     expect(floatLabel(n(-4))).toContain("4 working days short");
   });
   it("gives every state a marker besides colour", () => {
-    const markers = [n(-1), n(0), n(2, false, true), n(9, false, false)].map((x) => floatState(x).marker);
+    const markers = [n(-1), n(0), n(2, false, true), n(9, false, false)].map(
+      (x) => floatState(x).marker,
+    );
     expect(new Set(markers).size).toBe(4);
     expect(floatState(n(-1)).key).toBe("late");
   });
 });
 
 describe("cpmBars", () => {
-  const node = (pid: string, es: string, ef: string, lf: string, total_float: number) => ({
+  const node = (
+    pid: string,
+    es: string,
+    ef: string,
+    lf: string,
+    total_float: number,
+  ) => ({
     pid,
     title: pid,
     early_start: es,
@@ -100,31 +140,63 @@ describe("cpmBars", () => {
     near_critical: false,
   });
   it("draws a bar from early start to early finish and the float after it", () => {
-    const c = cpmBars([node("a", "2026-10-05", "2026-10-07", "2026-10-07", 0), node("b", "2026-10-05", "2026-10-06", "2026-10-09", 3)])!;
+    const c = cpmBars([
+      node("a", "2026-10-05", "2026-10-07", "2026-10-07", 0),
+      node("b", "2026-10-05", "2026-10-06", "2026-10-09", 3),
+    ])!;
     expect(c.from).toBe("2026-10-05");
     expect(c.to).toBe("2026-10-09");
     expect(c.days).toBe(5);
     const [a, b] = c.bars;
-    expect(a).toMatchObject({ startPct: 0, widthPct: 60, floatPct: 0, state: "critical" });
-    expect(b).toMatchObject({ startPct: 0, widthPct: 40, floatPct: 60, state: "float" });
+    expect(a).toMatchObject({
+      startPct: 0,
+      widthPct: 60,
+      floatPct: 0,
+      state: "critical",
+    });
+    expect(b).toMatchObject({
+      startPct: 0,
+      widthPct: 40,
+      floatPct: 60,
+      state: "float",
+    });
     expect(a!.label).toContain("critical path");
   });
   it("marks where the latest finish sits when float is negative", () => {
-    const c = cpmBars([node("a", "2026-10-05", "2026-10-09", "2026-10-07", -2), node("b", "2026-10-05", "2026-10-09", "2026-10-09", 0)])!;
+    const c = cpmBars([
+      node("a", "2026-10-05", "2026-10-09", "2026-10-07", -2),
+      node("b", "2026-10-05", "2026-10-09", "2026-10-09", 0),
+    ])!;
     expect(c.bars[0]!.limitPct).toBeCloseTo(60);
     expect(c.bars[0]!.floatPct).toBe(0);
     expect(c.bars[0]!.state).toBe("late");
     expect(c.bars[1]!.limitPct).toBeNull();
   });
   it("uses weekly ticks for short spans and monthly for long ones", () => {
-    const short = cpmBars([node("a", "2026-10-05", "2026-10-30", "2026-10-30", 0)])!;
-    expect(short.ticks.map((t) => t.label)).toEqual(["10-05", "10-12", "10-19", "10-26"]);
-    const long = cpmBars([node("a", "2026-10-05", "2027-02-10", "2027-02-10", 0)])!;
-    expect(long.ticks.map((t) => t.label)).toEqual(["2026-11", "2026-12", "2027-01", "2027-02"]);
+    const short = cpmBars([
+      node("a", "2026-10-05", "2026-10-30", "2026-10-30", 0),
+    ])!;
+    expect(short.ticks.map((t) => t.label)).toEqual([
+      "10-05",
+      "10-12",
+      "10-19",
+      "10-26",
+    ]);
+    const long = cpmBars([
+      node("a", "2026-10-05", "2027-02-10", "2027-02-10", 0),
+    ])!;
+    expect(long.ticks.map((t) => t.label)).toEqual([
+      "2026-11",
+      "2026-12",
+      "2027-01",
+      "2027-02",
+    ]);
   });
   it("is null with nothing to draw and skips malformed dates", () => {
     expect(cpmBars([])).toBeNull();
-    expect(cpmBars([node("a", "bad", "2026-10-05", "2026-10-05", 0)])).toBeNull();
+    expect(
+      cpmBars([node("a", "bad", "2026-10-05", "2026-10-05", 0)]),
+    ).toBeNull();
   });
 });
 
@@ -139,7 +211,9 @@ describe("layoutNetwork", () => {
   it("puts each node one layer after its longest predecessor chain", () => {
     const l = layoutNetwork(ids, edges);
     const layer = (p: string) => l.nodes.find((n) => n.pid === p)!.layer;
-    expect([layer("a"), layer("b"), layer("c"), layer("d")]).toEqual([0, 1, 1, 2]);
+    expect([layer("a"), layer("b"), layer("c"), layer("d")]).toEqual([
+      0, 1, 1, 2,
+    ]);
     expect(l.layers).toBe(3);
   });
   it("keeps rows within a layer distinct", () => {
@@ -149,12 +223,26 @@ describe("layoutNetwork", () => {
   });
   it("flags edges that lie on a critical chain", () => {
     const l = layoutNetwork(ids, edges, [["a", "b", "d"]]);
-    const crit = l.edges.filter((e) => e.critical).map((e) => `${e.from}>${e.to}`);
+    const crit = l.edges
+      .filter((e) => e.critical)
+      .map((e) => `${e.from}>${e.to}`);
     expect(crit.sort()).toEqual(["a>b", "b>d"]);
   });
   it("ignores unknown ends and self-edges, and survives a cycle", () => {
-    const l = layoutNetwork(["a", "b"], [{ from: "a", to: "x" }, { from: "a", to: "a" }, { from: "a", to: "b" }, { from: "b", to: "a" }]);
-    expect(l.edges.every((e) => ["a", "b"].includes(e.from) && ["a", "b"].includes(e.to))).toBe(true);
+    const l = layoutNetwork(
+      ["a", "b"],
+      [
+        { from: "a", to: "x" },
+        { from: "a", to: "a" },
+        { from: "a", to: "b" },
+        { from: "b", to: "a" },
+      ],
+    );
+    expect(
+      l.edges.every(
+        (e) => ["a", "b"].includes(e.from) && ["a", "b"].includes(e.to),
+      ),
+    ).toBe(true);
     expect(l.nodes).toHaveLength(2);
   });
   it("is deterministic", () => {
@@ -185,29 +273,76 @@ describe("baseline ghosts and variance wording (SC-3)", () => {
     near_critical: false,
   });
   it("draws where a task was baselined and widens the span to include it", () => {
-    const base = new Map([["a", { start: "2026-10-05", finish: "2026-10-07" }]]);
-    const c = cpmBars([node("a", "2026-10-08", "2026-10-09", "2026-10-09")], base)!;
+    const base = new Map([
+      ["a", { start: "2026-10-05", finish: "2026-10-07" }],
+    ]);
+    const c = cpmBars(
+      [node("a", "2026-10-08", "2026-10-09", "2026-10-09")],
+      base,
+    )!;
     expect(c.from).toBe("2026-10-05");
     expect(c.bars[0]!.ghost).toMatchObject({ startPct: 0 });
     expect(c.bars[0]!.ghost!.widthPct).toBeCloseTo(60); // 3 of the 5 days drawn
     expect(c.bars[0]!.label).toContain("Baselined 2026-10-05 to 2026-10-07");
   });
   it("has no ghost without a baseline, or for a bad one", () => {
-    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")])!.bars[0]!.ghost).toBeNull();
+    expect(
+      cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")])!.bars[0]!
+        .ghost,
+    ).toBeNull();
     const bad = new Map([["a", { start: "2026-10-09", finish: "2026-10-05" }]]);
-    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], bad)!.bars[0]!.ghost).toBeNull();
+    expect(
+      cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], bad)!
+        .bars[0]!.ghost,
+    ).toBeNull();
     const missing = new Map([["a", { start: null, finish: null }]]);
-    expect(cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], missing)!.bars[0]!.ghost).toBeNull();
+    expect(
+      cpmBars([node("a", "2026-10-05", "2026-10-06", "2026-10-06")], missing)!
+        .bars[0]!.ghost,
+    ).toBeNull();
   });
   it("says slip in words with a marker, pluralised", () => {
-    expect(standingText({ standing: "slipped", finish_variance_days: 3 })).toMatchObject({ marker: "▲", word: "Slipped", detail: "finishes 3 working days later than baselined" });
-    expect(standingText({ standing: "slipped", finish_variance_days: 1 }).detail).toContain("1 working day later");
-    expect(standingText({ standing: "pulled_in", finish_variance_days: -2 }).detail).toContain("2 working days earlier");
-    expect(standingText({ standing: "added", finish_variance_days: null }).detail).toContain("no slip");
-    expect(standingText({ standing: "removed", finish_variance_days: null }).detail).toContain("baselined dates are kept");
-    expect(standingText({ standing: "unmeasurable", finish_variance_days: null, reason: "not_scheduled_then" }).detail).toContain("no schedule when baselined");
-    expect(standingText({ standing: "unmeasurable", finish_variance_days: null, reason: "not_scheduled_now" }).detail).toContain("no schedule now");
-    const markers = ["slipped", "pulled_in", "on_baseline", "added", "removed", "unmeasurable"].map((s) => standingText({ standing: s, finish_variance_days: 0 }).marker);
+    expect(
+      standingText({ standing: "slipped", finish_variance_days: 3 }),
+    ).toMatchObject({
+      marker: "▲",
+      word: "Slipped",
+      detail: "finishes 3 working days later than baselined",
+    });
+    expect(
+      standingText({ standing: "slipped", finish_variance_days: 1 }).detail,
+    ).toContain("1 working day later");
+    expect(
+      standingText({ standing: "pulled_in", finish_variance_days: -2 }).detail,
+    ).toContain("2 working days earlier");
+    expect(
+      standingText({ standing: "added", finish_variance_days: null }).detail,
+    ).toContain("no slip");
+    expect(
+      standingText({ standing: "removed", finish_variance_days: null }).detail,
+    ).toContain("baselined dates are kept");
+    expect(
+      standingText({
+        standing: "unmeasurable",
+        finish_variance_days: null,
+        reason: "not_scheduled_then",
+      }).detail,
+    ).toContain("no schedule when baselined");
+    expect(
+      standingText({
+        standing: "unmeasurable",
+        finish_variance_days: null,
+        reason: "not_scheduled_now",
+      }).detail,
+    ).toContain("no schedule now");
+    const markers = [
+      "slipped",
+      "pulled_in",
+      "on_baseline",
+      "added",
+      "removed",
+      "unmeasurable",
+    ].map((s) => standingText({ standing: s, finish_variance_days: 0 }).marker);
     expect(new Set(markers).size).toBe(6);
   });
 });

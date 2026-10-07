@@ -321,3 +321,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 ## Flaky accessibility audits
 
 Call `settle(page)` (`tests/e2e/fixtures.ts`) before any axe audit. A button that has just flipped from primary to secondary is otherwise measured halfway through its colour transition, and axe reports a false `color-contrast` failure about 1 run in 20. Check a state *before* the click that changes it, never after (an `expect.poll` for the old state after a click races the response).
+
+## Root route and the browser's language
+
+`/` goes to the locale the browser reads best: server `handle` (cookie, then `Accept-Language`) and client `+layout.ts` (remembered choice, then `navigator.languages`, then `navigator.language`, then `en-001`). A region the app has no locale for resolves to the language's own (`cy_GB`/`cy-GB` → `/cy-001`; `de-DE` → `/de-de`, which exists; `ja-JP` → `/en-001`). A remembered choice wins over the browser. Covered by `tests/e2e/root-locale.spec.ts`.

@@ -104,7 +104,11 @@ describe("PlanRepository", () => {
     expect(calls[0]?.url).toContain("/api/plans/merge");
     expect(calls[0]?.url).toBe("http://svc.test/api/plans/merge");
     expect(calls[0]?.init.body).toBe(
-      JSON.stringify({ main_pid: "main-1", duplicate_pid: "dup-2", reason: "confirmed" }),
+      JSON.stringify({
+        main_pid: "main-1",
+        duplicate_pid: "dup-2",
+        reason: "confirmed",
+      }),
     );
   });
 
@@ -144,10 +148,11 @@ describe("PlanRepository.listPage", () => {
   }
 
   it("GETs the collection and reads the pagination headers", async () => {
-    const { repo, calls } = pagedRepo(
-      [{ pid: "p1", name: "Apollo" }],
-      { "x-total-count": "12", "x-limit": "1", "x-offset": "0" },
-    );
+    const { repo, calls } = pagedRepo([{ pid: "p1", name: "Apollo" }], {
+      "x-total-count": "12",
+      "x-limit": "1",
+      "x-offset": "0",
+    });
 
     const page = await repo.listPage();
 

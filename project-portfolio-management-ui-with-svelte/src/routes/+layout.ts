@@ -15,13 +15,22 @@ import {
 export const ssr = false;
 export const prerender = false;
 
+// What the browser says its languages are, most preferred first. `navigator.language`
+// (one tag, maybe `cy_GB`) is the fallback for a browser that leaves `languages` empty.
+function browserLanguages(): string {
+  const list = navigator.languages?.length
+    ? [...navigator.languages]
+    : [navigator.language];
+  return list.filter(Boolean).join(",");
+}
+
 // The reader's own choice for a URL that names none: the remembered locale,
 // else the browser's languages, else English.
 function preferredLocale(): Locale {
   if (typeof localStorage === "undefined") return DEFAULT_LOCALE;
   return (
     normaliseLocale(localStorage.getItem(LOCALE_KEY)) ??
-    localeFromAcceptLanguage(navigator.languages?.join(",")) ??
+    localeFromAcceptLanguage(browserLanguages()) ??
     DEFAULT_LOCALE
   );
 }

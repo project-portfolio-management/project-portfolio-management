@@ -34,29 +34,43 @@ describe("PlanForm assembly", () => {
   });
 
   it("trims the name before building the record", async () => {
-    const { container, submitted } = renderForm({ name: "  Apollo migration  " });
+    const { container, submitted } = renderForm({
+      name: "  Apollo migration  ",
+    });
     await submit(container);
     expect(submitted[0]?.name).toBe("Apollo migration");
   });
 
   it("carries a seeded kind label into the record", async () => {
-    const { container, submitted } = renderForm({ kind: "Program", name: "Delivery" });
+    const { container, submitted } = renderForm({
+      kind: "Program",
+      name: "Delivery",
+    });
     await submit(container);
     expect(submitted[0]?.kind).toBe("Program");
   });
 
   it("offers every kind label, including the newer ones", async () => {
     const { container } = renderForm({ name: "Kind options" });
-    const options = [...container.querySelectorAll("select option")].map(
-      (o) => o.textContent?.trim(),
+    const options = [...container.querySelectorAll("select option")].map((o) =>
+      o.textContent?.trim(),
     );
     for (const kind of ALL_KINDS) expect(options).toContain(kind);
-    for (const kind of ["Practice", "Process", "Purpose", "Pathway", "Proposal"])
+    for (const kind of [
+      "Practice",
+      "Process",
+      "Purpose",
+      "Pathway",
+      "Proposal",
+    ])
       expect(ALL_KINDS).toContain(kind as (typeof ALL_KINDS)[number]);
   });
 
   it("carries a newer kind label into the record", async () => {
-    const { container, submitted } = renderForm({ kind: "Pathway", name: "Route" });
+    const { container, submitted } = renderForm({
+      kind: "Pathway",
+      name: "Route",
+    });
     await submit(container);
     expect(submitted[0]?.kind).toBe("Pathway");
   });
@@ -95,13 +109,18 @@ describe("PlanForm assembly", () => {
   });
 
   it("preserves a selected status value", async () => {
-    const { container, submitted } = renderForm({ name: "Apollo", status: "Active" });
+    const { container, submitted } = renderForm({
+      name: "Apollo",
+      status: "Active",
+    });
     await submit(container);
     expect(submitted[0]?.status).toBe("Active");
   });
 
   it("carries a typed code into the record", async () => {
-    const { container, getByPlaceholderText, submitted } = renderForm({ name: "Apollo" });
+    const { container, getByPlaceholderText, submitted } = renderForm({
+      name: "Apollo",
+    });
     await fireEvent.input(getByPlaceholderText("PROJ-2026"), {
       target: { value: "  PROJ-2026  " },
     });

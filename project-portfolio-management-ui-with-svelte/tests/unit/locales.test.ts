@@ -7,6 +7,7 @@ import {
   localeRedirect,
   localeOfPath,
   localizePath,
+  normaliseLocale,
   splitPath,
 } from "../../src/lib/locales";
 
@@ -151,5 +152,31 @@ describe("localeRedirect", () => {
     expect(localeRedirect(u("/cy-001/plans"), "en-001")).toBeNull();
     expect(localeRedirect(u("/api/proxy/x"), "en-001")).toBeNull();
     expect(localeRedirect(u("/assets/a.css"), "en-001")).toBeNull();
+  });
+});
+
+describe("navigator.language on the root route", () => {
+  it("a region or underscore form resolves to the nearest supported locale", () => {
+    expect(normaliseLocale("cy_GB")).toBe("cy-001");
+    expect(normaliseLocale("cy-GB")).toBe("cy-001");
+    expect(normaliseLocale("de_DE")).toBe("de-de");
+    expect(normaliseLocale("zh_CN")).toBe("zh-cn");
+    expect(normaliseLocale("es-MX")).toBe("es-001");
+  });
+  it("a language the app does not have resolves to nothing, so the default applies", () => {
+    expect(normaliseLocale("ja-JP")).toBeNull();
+    expect(normaliseLocale("")).toBeNull();
+    expect(normaliseLocale(undefined)).toBeNull();
+  });
+  it("the root path gains the locale prefix", () => {
+    const url = { pathname: "/", search: "", hash: "" };
+    expect(localeRedirect(url, "cy-001")).toEqual({
+      status: 307,
+      location: "/cy-001",
+    });
+    expect(localeRedirect({ ...url, search: "?x=1" }, "de-de")).toEqual({
+      status: 307,
+      location: "/de-de?x=1",
+    });
   });
 });

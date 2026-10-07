@@ -27,7 +27,9 @@ function literalPrimaries(src: string): number {
 function primaryInsideEach(src: string): boolean {
   const markup = src.replace(/<style[\s\S]*?<\/style>/g, "");
   let depth = 0;
-  for (const m of markup.matchAll(/\{#each\b|\{\/each\}|class="[^"]*\bprimary\b[^"]*"/g)) {
+  for (const m of markup.matchAll(
+    /\{#each\b|\{\/each\}|class="[^"]*\bprimary\b[^"]*"/g,
+  )) {
     if (m[0].startsWith("{#each")) depth++;
     else if (m[0] === "{/each}") depth = Math.max(0, depth - 1);
     else if (depth > 0) return true;
@@ -42,8 +44,14 @@ describe("one primary action per screen (static)", () => {
   for (const f of files) {
     it(`${f.slice("src/routes".length)} declares at most one primary button, and none in a list`, () => {
       const src = readFileSync(f, "utf8");
-      expect(literalPrimaries(src), "unconditional primary buttons").toBeLessThanOrEqual(1);
-      expect(primaryInsideEach(src), "a primary button repeated by {#each}").toBe(false);
+      expect(
+        literalPrimaries(src),
+        "unconditional primary buttons",
+      ).toBeLessThanOrEqual(1);
+      expect(
+        primaryInsideEach(src),
+        "a primary button repeated by {#each}",
+      ).toBe(false);
     });
   }
 });

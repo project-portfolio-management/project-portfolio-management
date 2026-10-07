@@ -6,16 +6,23 @@ import { ApiClient } from "$lib/api/client";
 import { PpmClient, money } from "$lib/api/ppm";
 
 /** A PpmClient whose fetch records every (url, method) pair. */
-function recordingClient(): { ppm: PpmClient; calls: { url: string; method: string }[] } {
+function recordingClient(): {
+  ppm: PpmClient;
+  calls: { url: string; method: string }[];
+} {
   const calls: { url: string; method: string }[] = [];
-  const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ url: String(input), method: init?.method ?? "GET" });
-    return new Response("{}", {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  }) as unknown as typeof fetch;
-  const ppm = new PpmClient(new ApiClient({ baseUrl: "http://svc", fetch: fetchFn }));
+  const fetchFn = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(input), method: init?.method ?? "GET" });
+      return new Response("{}", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  ) as unknown as typeof fetch;
+  const ppm = new PpmClient(
+    new ApiClient({ baseUrl: "http://svc", fetch: fetchFn }),
+  );
   return { ppm, calls };
 }
 
@@ -24,7 +31,9 @@ describe("PpmClient my-work path (LT-3)", () => {
     const { ppm, calls } = recordingClient();
     await ppm.myTasks("America/Los_Angeles");
     await ppm.myTasks("Europe/London", "2026-10-02T23:30:00Z");
-    expect(calls[0].url).toBe("http://svc/api/me/tasks?tz=America%2FLos_Angeles");
+    expect(calls[0].url).toBe(
+      "http://svc/api/me/tasks?tz=America%2FLos_Angeles",
+    );
     expect(calls[1].url).toBe(
       "http://svc/api/me/tasks?tz=Europe%2FLondon&as_of=2026-10-02T23%3A30%3A00Z",
     );
@@ -46,7 +55,12 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.commitAllocation("p1", "a1", true);
     await ppm.availability();
     await ppm.availability("person:x y");
-    await ppm.setAvailability({ person_ref: "person:x", from: "2026-10-12", to: "2026-10-18", max_percent: 40 });
+    await ppm.setAvailability({
+      person_ref: "person:x",
+      from: "2026-10-12",
+      to: "2026-10-18",
+      max_percent: 40,
+    });
     await ppm.removeAvailability("v1");
     await ppm.scheduleBaselines("p1");
     await ppm.takeScheduleBaseline("p1", "approved");
@@ -56,12 +70,18 @@ describe("PpmClient critical-path and calendar paths (SC-1, SC-2)", () => {
     await ppm.setRaciRow("p1", "t1", [{ person_ref: "person:x", roles: "AR" }]);
     await ppm.earnedValue("p1");
     await ppm.setEarnedValueMethod("p1", "points");
-    await ppm.setTaskPercent("p1", "t1", { method: "manual", percent: 60, note: "why" });
+    await ppm.setTaskPercent("p1", "t1", {
+      method: "manual",
+      percent: 60,
+      note: "why",
+    });
     await ppm.earnedValueForecast("p1");
     await ppm.earnedValueSeries("p1");
     await ppm.snapshotEarnedValue("p1");
     await ppm.earnedValueRollup("p1");
-    expect(calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`)).toEqual([
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
       "GET /api/plans/p1/cpm",
       "GET /api/plans/p1/cpm?near=3",
       "PUT /api/plans/p1/tasks/t1/schedule",
@@ -217,7 +237,9 @@ describe("PpmClient paths", () => {
   it("builds the CSV download URL against the configured base", () => {
     const { ppm } = recordingClient();
     // reportCsvUrl uses the app-wide API_BASE_URL (the BFF proxy).
-    expect(ppm.reportCsvUrl("rep1")).toContain("/api/reports/rep1/run?format=csv");
+    expect(ppm.reportCsvUrl("rep1")).toContain(
+      "/api/reports/rep1/run?format=csv",
+    );
   });
 });
 

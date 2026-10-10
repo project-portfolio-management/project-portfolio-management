@@ -51,6 +51,8 @@ impl ActiveModelBehavior for onboarding_items::ActiveModel {}
 impl ActiveModelBehavior for onboarding_templates::ActiveModel {}
 impl ActiveModelBehavior for announcements::ActiveModel {}
 impl ActiveModelBehavior for issues::ActiveModel {}
+impl ActiveModelBehavior for change_requests::ActiveModel {}
+impl ActiveModelBehavior for change_request_risks::ActiveModel {}
 impl ActiveModelBehavior for plan_handling_marks::ActiveModel {}
 impl ActiveModelBehavior for break_glass_grants::ActiveModel {}
 impl ActiveModelBehavior for cost_rate_tables::ActiveModel {}

@@ -105,29 +105,22 @@ fn view(b: &schedule_baselines::Model) -> serde_json::Value {
     })
 }
 
-/// `POST /api/plans/{pid}/schedule-baselines` — take the next baseline.
-#[debug_handler]
-async fn create(
-    State(ctx): State<AppContext>,
-    caller: MaybeAuthUser,
-    Path(pid): Path<String>,
-    Json(b): Json<BaselineBody>,
-) -> Result<Response> {
-    let plan = super::governance::find_item(&ctx, &pid).await?;
-    let reason = b.reason.trim().to_string();
-    if reason.is_empty() || reason.chars().count() > 500 {
-        return Err(unprocessable(
-            "a baseline needs a reason, up to 500 characters",
-        ));
-    }
-    let (snaps, finish, _, _) = current(&ctx, plan.pid).await?;
+/// Take the next baseline of `plan_pid` with `reason` (already checked). The one place a baseline is made, so
+/// the endpoint and a change request (IR-5) cannot differ.
+pub(crate) async fn take(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan_pid: Uuid,
+    reason: String,
+) -> Result<schedule_baselines::Model> {
+    let (snaps, finish, _, _) = current(ctx, plan_pid).await?;
     if finish.is_none() {
         return Err(unprocessable(
             "nothing is scheduled yet, so there is nothing to baseline: give tasks a duration and a start date",
         ));
     }
     let existing = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan.pid))
+        .filter(schedule_baselines::Column::PlanPid.eq(plan_pid))
         .order_by_desc(schedule_baselines::Column::Version)
         .all(&ctx.db)
         .await
@@ -142,7 +135,7 @@ async fn create(
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = schedule_baselines::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
+        plan_pid: ActiveValue::set(plan_pid),
         version: ActiveValue::set(version),
         reason: ActiveValue::set(reason.clone()),
         created_by: ActiveValue::set(caller.actor().map(str::to_string)),
@@ -184,12 +177,31 @@ async fn create(
         "schedule_baselined",
         caller.actor(),
         Some(
-            serde_json::json!({ "plan_pid": plan.pid, "version": version, "reason": reason,
+            serde_json::json!({ "plan_pid": plan_pid, "version": version, "reason": reason,
                                   "tasks": snaps.len(), "at": Utc::now() }),
         ),
     )
     .await
     .ok();
+    Ok(row)
+}
+
+/// `POST /api/plans/{pid}/schedule-baselines` — take the next baseline.
+#[debug_handler]
+async fn create(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<BaselineBody>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let reason = b.reason.trim().to_string();
+    if reason.is_empty() || reason.chars().count() > 500 {
+        return Err(unprocessable(
+            "a baseline needs a reason, up to 500 characters",
+        ));
+    }
+    let row = take(&ctx, &caller, plan.pid, reason).await?;
     format::json(view(&row))
 }
 

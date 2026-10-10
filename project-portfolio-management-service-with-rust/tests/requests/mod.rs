@@ -9,6 +9,7 @@ mod audit_protection;
 mod bulk;
 mod canvas;
 mod capabilities;
+mod change_requests;
 mod components;
 mod cpm;
 mod cpm_only;

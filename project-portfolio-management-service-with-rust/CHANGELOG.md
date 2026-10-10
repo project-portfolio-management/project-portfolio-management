@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — change requests (IR-4, IR-5, 2026-10-10)
+
+`/api/plans/{pid}/change-requests` with draft, edit, submit, review, decision, implement, withdraw, links, preview and baseline, and `GET /api/change-requests`. One named approver who is not the requester decides, with a reason; the database enforces the same. A request may carry what-if edits whose forecast equals the sandbox's own answer; a baseline because of one is taken by a person, never automatically. Migration 54.
+
 ### Added — handling marks (RG-7, 2026-10-10)
 
 `PROJECT_PORTFOLIO_MANAGEMENT_HANDLING_MARKS` configures an ordered scheme; `GET /api/handling-marks`, `GET`/`PUT /api/plans/{pid}/handling-mark`. A plan above a caller's `clearance` attribute is 404 to them (administrators included) in the guard layer and the shared hidden scope; every plan response carries `X-Handling-Mark`. Migration 53.

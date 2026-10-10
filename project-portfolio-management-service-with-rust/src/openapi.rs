@@ -2169,6 +2169,7 @@ mod tests {
             crate::controllers::access_review::routes(),
             crate::controllers::break_glass::routes(),
             crate::controllers::handling_marks::routes(),
+            crate::controllers::change_requests::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),
@@ -2317,6 +2318,9 @@ mod tests {
     /// CRUD read, an auth/audit/metrics utility, or a newest-first list
     /// of records with nothing computed across them.
     const NON_DERIVED_GET: &[&str] = &[
+        // Change requests (IR-4): plain record reads, stored fields only.
+        "/api/plans/{pid}/change-requests",
+        "/api/plans/{pid}/change-requests/{cr}",
         "/api/processes",
         "/api/plans",
         "/api/plans/search",

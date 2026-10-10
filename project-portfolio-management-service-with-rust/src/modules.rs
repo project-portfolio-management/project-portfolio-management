@@ -77,7 +77,13 @@ pub const MODULES: &[ModuleDef] = &[
     },
     ModuleDef {
         key: "governance",
-        segments: &["gate-reviews", "governance", "tpc", "controls"],
+        segments: &[
+            "gate-reviews",
+            "governance",
+            "tpc",
+            "controls",
+            "change-requests",
+        ],
     },
 ];
 

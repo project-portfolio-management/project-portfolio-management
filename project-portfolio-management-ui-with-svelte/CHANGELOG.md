@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the change requests page (IR-4, 2026-10-10)
+
+`/change-requests` lists change requests across plans with a status summary and filters, in English and Welsh (draft). Read-only: drafting and deciding are through the API.
+
 ### Added — the handling mark banner (RG-7, 2026-10-10)
 
 A plan page shows its effective handling mark as words in a bordered bar (English and Welsh draft) when the deployment has a scheme; nothing otherwise, and nothing when the lookup fails.

@@ -110,6 +110,7 @@ pub fn paths() -> Value {
     merge(&mut all, access_review_paths());
     merge(&mut all, break_glass_paths());
     merge(&mut all, handling_marks_paths());
+    merge(&mut all, change_request_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -867,6 +868,71 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// Change requests (IR-4, IR-5).
+fn change_request_paths() -> Value {
+    let pid = || uuid_param("pid");
+    let cr = || uuid_param("cr");
+    json!({
+        "/api/change-requests": {
+            "get": op("change-requests", "Change requests across the plans you can read",
+                "Newest first, at most 500; ?status and ?open=true filter. summary counts every change request you can see by status, how many await a decision, and the oldest open one. Plans you cannot read are left out. This is what the monthly director pack reads.",
+                vec![query("status", false, "draft, submitted, under_review, approved, rejected, implemented or withdrawn"), query("open", false, "true for draft, submitted, under review and approved")],
+                &[("200", "change_requests, summary, as_of, note"), ("422", "Unknown status")])
+        },
+        "/api/plans/{pid}/change-requests": {
+            "get": op("change-requests", "A plan's change requests", "Newest first, at most 1000.",
+                vec![pid(), query("status", false, "one status"), query("open", false, "true for open ones only")],
+                &[("200", "change_requests, total"), ("404", "Unknown plan"), ("422", "Unknown status")]),
+            "post": op("change-requests", "Draft a change request",
+                "A controlled proposal to change an approved baseline. Send title, description, reason, kind (scope, schedule, cost, quality, other) and optionally impact_schedule_days (business days, negative pulls the finish in), impact_cost_minor with cost_currency (together), impact_summary and edits (the what-if sandbox's edit list, whose forecast GET …/preview shows). The impact is what the requester states; it is never computed into the figure. Starts as a draft.",
+                vec![pid()], &[("200", "The draft"), ("404", "Unknown plan"), ("422", "Refused, all faults named")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}": {
+            "get": op("change-requests", "One change request, with the issues and risks it answers", "",
+                vec![pid(), cr()], &[("200", "The request with issue_pids and risk_pids"), ("404", "Unknown")]),
+            "put": op("change-requests", "Change a draft", "Only a draft, only by its requester (409/403 otherwise). Same fields as drafting.",
+                vec![pid(), cr()], &[("200", "The request"), ("403", "Not the requester"), ("409", "Not a draft"), ("422", "Refused")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/submit": {
+            "post": op("change-requests", "Submit a draft for decision",
+                "Send {approver_ref}: a person: or worker: reference who is not the requester (422). Only the requester submits (403). draft to submitted.",
+                vec![pid(), cr()], &[("200", "The request"), ("403", "Not the requester"), ("409", "Not a draft"), ("422", "A bad or own approver")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/review": {
+            "post": op("change-requests", "The approver starts reviewing", "Only the named approver, not even an administrator (403). submitted to under_review.",
+                vec![pid(), cr()], &[("200", "The request"), ("403", "Not the approver"), ("409", "Not submitted")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/decision": {
+            "post": op("change-requests", "Approve or reject",
+                "Send {decision: approve|reject, reason (at least 10 characters)}. Only the named approver (403). From submitted or under_review. Records who, when and why; the database refuses an approval without them.",
+                vec![pid(), cr()], &[("200", "The request"), ("403", "Not the approver"), ("409", "Not awaiting a decision"), ("422", "A bad decision or reason")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/implement": {
+            "post": op("change-requests", "Mark an approved change as carried out", "approved to implemented; stamps implemented_on.",
+                vec![pid(), cr()], &[("200", "The request"), ("409", "Not approved")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/withdraw": {
+            "post": op("change-requests", "Withdraw a change request", "The requester or an administrator, from draft, submitted, under review or approved.",
+                vec![pid(), cr()], &[("200", "The request"), ("403", "Not the requester"), ("409", "Already final")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/links": {
+            "put": op("change-requests", "Replace the issues and risks this request answers",
+                "Send {issue_pids, risk_pids}: each must belong to this plan; an issue already answered by another request is 409. Replaces the previous sets; issues carry change_request_pid back. Only while the request is open.",
+                vec![pid(), cr()], &[("200", "The request with its links"), ("409", "Closed, or an issue belongs to another request"), ("422", "Not of this plan")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/preview": {
+            "get": op("change-requests", "The forecast of the attached what-if edits",
+                "Labelled a forecast. The same answer POST …/sandbox/preview gives for the same edits, together with the impact the requester stated. Needs edits on the request (422 otherwise). Writes nothing.",
+                vec![pid(), cr()], &[("200", "label, stated_impact, forecast"), ("422", "No edits attached")])
+        },
+        "/api/plans/{pid}/change-requests/{cr}/baseline": {
+            "post": op("change-requests", "Take a schedule baseline because of this approved change",
+                "A person chooses to; nothing is re-baselined automatically. Only an approved or implemented request, once (409). The baseline's reason names the request, and the request keeps baseline_pid.",
+                vec![pid(), cr()], &[("200", "change_request_pid, baseline_pid, baseline_version"), ("409", "Not approved, or already baselined"), ("422", "Nothing is scheduled to baseline")])
         }
     })
 }

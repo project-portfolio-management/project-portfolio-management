@@ -10,6 +10,7 @@ pub mod break_glass;
 pub mod canvas;
 /// Sprint ceremonies and the commitment snapshot.
 pub mod ceremony;
+pub mod change_requests;
 pub mod collaboration;
 /// Integrity-verification endpoints.
 pub mod compliance;

@@ -1378,17 +1378,19 @@ are stated, never guessed.
   **Acceptance:** raising from a risk links both ways; the risk's own status is
   unchanged.
   **Built 2026-10-10:** `POST /api/plans/{pid}/issues/from-risk/{risk_pid}` and `…/from-task/{task_pid}`; `severity_from_exposure` (unit-tested at each boundary); a request test covering conflict, 404, 422 and raising again after closing. **Deviations:** API only, no button on the risk or board pages yet; the daily-standup blocker conversion in the spec is the blocked-task route, not a separate flow; the risk is deliberately not moved to `materialized` by raising an issue (that stays the risk's own *escalate* action).
-- [ ] **IR-4 (L) — Change requests.** Store, API and UI for FR-14a with the
+- [x] **IR-4 (L) — Change requests.** Store, API and UI for FR-14a with the
   status machine Draft → Submitted → UnderReview → Approved|Rejected →
   Implemented (Withdrawn from any open state). **Acceptance:** the requester
   cannot decide their own request (403); a decision records who, when and why;
   linking issues and risks works both ways; an illegal transition is 409.
-- [ ] **IR-5 (M) — Impact and baseline.** For a request with a schedule or cost
+  **Built 2026-10-10.** `/api/plans/{pid}/change-requests` (draft, edit, submit, review, decision, implement, withdraw, links) and `GET /api/change-requests` (across the plans you can read); migration 54; the whole state machine pinned by a unit test; **one named approver who cannot be the requester, not even an administrator can decide for them**, a decision needs a reason of at least 10 characters, and the database refuses an approval without decider, date and reason, a cost without its currency, a submission without an approver. Tests: the full flow with login off, and the separation of duties with real tokens (who may edit, submit, withdraw, review and decide; every form of own-approver; audit actors; five database refusals). A page `/change-requests` lists them with a status summary (English and Welsh draft, axe). Under the `governance` module. **Not done, stated:** drafting, submitting and deciding have **no screens** (API only); one approver, no approval chain; no notification to the approver when a request is submitted; relinking is limited to open requests.
+- [x] **IR-5 (M) — Impact and baseline.** For a request with a schedule or cost
   impact, show a **what-if preview** from the existing scheduler (labelled a
   forecast) and, on a person's choice after approval, take a new baseline
   (never replacing one) with the request as the reason. **Acceptance:** the
   preview matches the what-if endpoint for the same edit; the baseline carries
   the change request's id; nothing re-baselines automatically.
+  **Built 2026-10-10.** A request may carry `edits` (the what-if sandbox's edit list); `GET …/preview` returns the sandbox's own answer for them, labelled a forecast, beside the impact the requester stated, and a test proves it is identical to `POST …/sandbox/preview` for the same edits. `POST …/baseline` (approved or implemented, once) takes a schedule baseline through the same function the baseline endpoint uses, whose reason names the request, and the request keeps `baseline_pid`; nothing is re-baselined automatically. **Not done, stated:** a cost forecast is not computed (only the stated cost is kept); the baseline row itself has no change-request column (the link lives on the request and in the reason text).
 - [ ] **IR-6 (S) — Reports.** Issues and open change requests in the monthly
   director pack (DP) as counts by severity and age, with the oldest named.
   **Acceptance:** the pack lists them, or says "none recorded"; never a zero for
@@ -1400,6 +1402,7 @@ Requested 2026-10-10: "read spec/public* then implement"
 ([`spec/special-files-for-public-repos`](spec/special-files-for-public-repos/index.md),
 requirement NFR-20).
 
+  **Inputs built 2026-10-10; not ticked.** `GET /api/issues` and `GET /api/change-requests` already give counts by severity or status, the oldest open item and the overdue count, for the plans a reader may see. The monthly director pack itself (DP-1 to DP-12) does not exist, so there is nothing yet to list them in.
 - [x] **PF-1 (M) — The special files.** Root `README.md`, `LICENSE.md` (existing),
   and new `CITATION.cff`, `NEWS.md`, `COMPARISONS.md`, `BENCHMARKS.md`,
   `INSTALL.md`, `CONTRIBUTING.md`, `RFC.md`, `CODEOWNERS`, `MAINTAINERS.md`,

@@ -503,6 +503,18 @@ pub(crate) async fn commit(
     })
 }
 
+/// The preview of `edits` on `plan` as JSON (the same answer `POST …/sandbox/preview` gives), for a caller that
+/// holds the edits itself, such as a change request (IR-5). Writes nothing.
+pub(crate) async fn preview_json(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    edits: &[Edit],
+) -> Result<serde_json::Value> {
+    let e = evaluate(ctx, caller, plan, edits).await?;
+    body(ctx, caller, plan, &e).await
+}
+
 #[derive(Debug, Deserialize)]
 struct EditsBody {
     edits: Vec<Edit>,

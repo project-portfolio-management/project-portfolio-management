@@ -15,7 +15,9 @@ export type EnumGroup =
   | "band"
   | "severity"
   | "issue_status"
-  | "issue_kind";
+  | "issue_kind"
+  | "cr_status"
+  | "cr_kind";
 
 /** The label for `value` in `group`, in the current language. */
 export function enumLabel(group: EnumGroup, value: unknown): string {

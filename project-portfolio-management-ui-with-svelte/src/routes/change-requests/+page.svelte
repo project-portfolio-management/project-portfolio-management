@@ -1,0 +1,125 @@
+<!--
+  Change requests (`/change-requests`, IR-4): every change request across the plans you can read, newest
+  first, with the count by status and how many await a decision. Read-only here: drafting, submitting and
+  deciding are done through the API.
+-->
+<script lang="ts">
+  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
+  import { onMount } from "svelte";
+  import { PpmClient, type ChangeRequestList } from "#lib/api/ppm.js";
+
+  const ppm = PpmClient.withFetch();
+  let list = $state<ChangeRequestList | null>(null);
+  let error = $state<string | null>(null);
+  let status = $state("");
+  let openOnly = $state(false);
+
+  async function refresh() {
+    try {
+      list = await ppm.changeRequests({ status: status || undefined, open: openOnly });
+      error = null;
+    } catch (err) {
+      error = err instanceof Error ? err.message : t("p.change_requests.could_not_load");
+    }
+  }
+  onMount(refresh);
+
+  const STATUSES = ["draft", "submitted", "under_review", "approved", "rejected", "implemented", "withdrawn"] as const;
+</script>
+
+<svelte:head><title>{t("p.change_requests.change_requests_ppm")}</title></svelte:head>
+
+<h1>{t("p.change_requests.change_requests")}</h1>
+<p class="small muted">{t("p.change_requests.intro")}</p>
+
+{#if error}<p class="banner" role="alert">{error}</p>{/if}
+
+{#if list}
+  <ul class="summary" aria-label={t("p.change_requests.by_status")}>
+    {#each STATUSES as s (s)}
+      <li>{enumLabel("cr_status", s)}: <strong>{list.summary.by_status[s] ?? 0}</strong></li>
+    {/each}
+    <li>{t("p.change_requests.awaiting")}: <strong>{list.summary.awaiting_decision}</strong></li>
+  </ul>
+  {#if list.summary.oldest_open}
+    <p class="small muted">
+      {t("p.change_requests.oldest_open", { title: list.summary.oldest_open.title, days: list.summary.oldest_open.age_calendar_days })}
+    </p>
+  {/if}
+{/if}
+
+<form class="filter" onsubmit={(e) => { e.preventDefault(); void refresh(); }}>
+  <label>{t("p.change_requests.show")}
+    <select bind:value={status} onchange={refresh}>
+      <option value="">{t("p.change_requests.all_statuses")}</option>
+      {#each STATUSES as s (s)}<option value={s}>{enumLabel("cr_status", s)}</option>{/each}
+    </select>
+  </label>
+  <label>
+    <input type="checkbox" bind:checked={openOnly} onchange={refresh} />
+    {t("p.change_requests.open_only")}
+  </label>
+</form>
+
+{#if list}
+  {#if list.change_requests.length === 0}
+    <p>{!status && !openOnly ? t("p.change_requests.none") : t("p.change_requests.none_match")}</p>
+  {:else}
+    <p class="small muted" aria-live="polite">
+      {list.change_requests.length === 1 ? t("p.change_requests.count_one", { n: 1 }) : t("p.change_requests.count_other", { n: list.change_requests.length })}
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">{t("p.change_requests.title_col")}</th>
+          <th scope="col">{t("p.change_requests.kind_col")}</th>
+          <th scope="col">{t("p.change_requests.status_col")}</th>
+          <th scope="col">{t("p.change_requests.impact_col")}</th>
+          <th scope="col">{t("p.change_requests.approver_col")}</th>
+          <th scope="col">{t("p.change_requests.age_col")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each list.change_requests as cr (cr.pid)}
+          <tr>
+            <th scope="row"><a href={localeHref(`/plans/${cr.plan_pid}/governance`)} aria-label={t("p.change_requests.plan_link")}>{cr.title}</a></th>
+            <td>{enumLabel("cr_kind", cr.kind)}</td>
+            <td>{enumLabel("cr_status", cr.status)}</td>
+            <td>
+              {#if cr.impact.schedule_business_days === null && cr.impact.cost_minor === null}
+                {t("p.change_requests.no_impact")}
+              {:else}
+                {#if cr.impact.schedule_business_days !== null}{t("p.change_requests.impact_days", { days: cr.impact.schedule_business_days })}{/if}
+                {#if cr.impact.cost_minor !== null}
+                  {cr.impact.schedule_business_days !== null ? " · " : ""}{(cr.impact.cost_minor / 100).toFixed(2)} {cr.impact.cost_currency}
+                {/if}
+              {/if}
+            </td>
+            <td>{cr.approver_ref ?? t("p.change_requests.no_approver")}</td>
+            <td>{cr.age_calendar_days}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/if}
+{:else if !error}
+  <p class="muted">{t("p.change_requests.loading")}</p>
+{/if}
+
+<style>
+  .summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    list-style: none;
+    padding: 0;
+  }
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+    margin: 1rem 0;
+  }
+</style>

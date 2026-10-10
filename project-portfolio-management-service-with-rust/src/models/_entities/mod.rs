@@ -22,6 +22,8 @@ pub mod business_case_targets;
 pub mod canvas_items;
 pub mod canvases;
 pub mod ceremonies;
+pub mod change_request_risks;
+pub mod change_requests;
 pub mod comment_edits;
 pub mod comments;
 pub mod components;

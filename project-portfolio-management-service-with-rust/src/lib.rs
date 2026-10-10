@@ -40,6 +40,7 @@ pub mod calendars;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` and nothing else identity-shaped (T-28l).
 pub mod canvas;
+pub mod change_requests;
 /// Pure collaborative-review + assignee-workload rules.
 pub mod collaboration;
 /// Compliance controls: row-level integrity and keyed MACs.

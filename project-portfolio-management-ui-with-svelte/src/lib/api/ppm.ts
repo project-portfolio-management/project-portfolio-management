@@ -586,6 +586,43 @@ export interface IssueRegister {
   note: string;
 }
 
+/** One change request (IR-4). */
+export interface ChangeRequest {
+  pid: string;
+  plan_pid: string;
+  title: string;
+  description: string;
+  reason: string;
+  kind: "scope" | "schedule" | "cost" | "quality" | "other";
+  impact: {
+    schedule_business_days: number | null;
+    cost_minor: number | null;
+    cost_currency: string | null;
+    summary: string | null;
+    has_forecast_edits: boolean;
+  };
+  status: "draft" | "submitted" | "under_review" | "approved" | "rejected" | "implemented" | "withdrawn";
+  requested_by: string;
+  requested_on: string;
+  /** Calendar days since requested. */
+  age_calendar_days: number;
+  approver_ref: string | null;
+  decided_by: string | null;
+  decided_on: string | null;
+  decision_reason: string | null;
+}
+
+/** `GET /api/change-requests`. */
+export interface ChangeRequestList {
+  change_requests: ChangeRequest[];
+  summary: {
+    by_status: Record<string, number>;
+    awaiting_decision: number;
+    oldest_open: ChangeRequest | null;
+  };
+  as_of: string;
+}
+
 /** `GET /api/milestones`. */
 export interface MilestoneList {
   as_of: string;
@@ -2393,6 +2430,14 @@ export class PpmClient {
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
     return this.http.get(`/api/milestones${qs ? `?${qs}` : ""}`);
+  }
+  /** Change requests across the plans the caller can read. */
+  changeRequests(params: { status?: string; open?: boolean } = {}): Promise<ChangeRequestList> {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.open) q.set("open", "true");
+    const qs = q.toString();
+    return this.http.get(`/api/change-requests${qs ? `?${qs}` : ""}`);
   }
   /** The issues register across the plans the caller can read. */
   issues(

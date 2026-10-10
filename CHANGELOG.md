@@ -17,6 +17,10 @@ workflow yet. Dates are 2026.
 
 ### 10 October
 
+- **Change requests** (IR-4, IR-5): drafted, submitted, reviewed and decided by one named approver who is not
+  the requester, with a forecast from the what-if sandbox and a baseline taken by a person; a list page.
+  **Break-glass access** (RG-10), **handling marks** (RG-7) and a **shared session store** (RG-12) also landed.
+
 - **Critical path on a large plan is 2 to 3 times faster** (RG-16, in progress): a quadratic search removed; `?only=critical` added. See [`BENCHMARKS.md`](BENCHMARKS.md).
 - **The plan's task list pages** (RG-15): `limit` and `offset` with the standard headers, counts over every
   task, and a 2,000-task ceiling when no paging is asked for. Found by the new load and soak test

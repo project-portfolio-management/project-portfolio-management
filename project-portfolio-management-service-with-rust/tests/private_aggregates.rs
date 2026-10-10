@@ -92,6 +92,7 @@ const AGGREGATES: &[&str] = &[
     "/api/financials/exposure",
     "/api/financials/variance",
     "/api/issues",
+    "/api/change-requests",
     "/api/financials/forecast?plan={pub}",
     "/api/financials/forecast?plan={hub}",
     "/api/plans/{hub}/flow-distribution?rollup=true",
@@ -401,6 +402,7 @@ async fn seed(
         json!({ "title": format!("{name} policy"), "plan_pid": p, "body": format!("{name} text") }),
     )
     .await;
+    post(format!("/api/plans/{p}/change-requests"), json!({ "title": format!("{name} change"), "description": "d", "reason": "r", "kind": "schedule", "impact_schedule_days": 3 * scale })).await;
     post(format!("/api/plans/{p}/issues"), json!({ "title": format!("{name} issue"), "kind": "blocker", "severity": "high", "owner_ref": PERSON, "raised_on": "2026-10-01" })).await;
     post(format!("/api/plans/{p}/access-records"), json!({ "person_ref": PERSON, "access": format!("{name} repo"), "action": "granted", "recorded_on": "2026-01-05" })).await;
     post(format!("/api/plans/{p}/sprints"), json!({ "name": format!("{name} sprint"), "starts_on": "2026-10-05", "ends_on": "2026-10-19" })).await;

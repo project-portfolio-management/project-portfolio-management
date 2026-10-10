@@ -7,7 +7,7 @@
   people.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
   import { PpmClient, type HandoverPreview } from "#lib/api/ppm.js";
@@ -35,7 +35,7 @@
       status = "";
     } catch (err) {
       preview = null;
-      status = err instanceof ApiError && err.status === 403 ? "Handover is about people, so it needs the permission to manage people." : err instanceof Error ? err.message : "Could not preview";
+      status = err instanceof ApiError && err.status === 403 ? t("p.plans.pid.handover.handover_is_about_people_so") : err instanceof Error ? err.message : t("p.plans.pid.handover.could_not_preview");
     } finally {
       busy = false;
     }
@@ -45,56 +45,56 @@
     busy = true;
     try {
       const r = await ppm.handoverCommit(pid, { from_person: preview.from_person, to_person: preview.to_person, reason: reason || undefined }, preview.handover_etag);
-      status = `Done: ${r.audit_entries} item${r.audit_entries === 1 ? "" : "s"} handed over and recorded.`;
+      status = t(r.audit_entries === 1 ? "p.plans.pid.handover.done_one" : "p.plans.pid.handover.done_other", { count: r.audit_entries });
       preview = null;
       reason = "";
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         preview = null;
-        status = "What this person holds changed since the preview, so nothing was changed. Preview again, then commit.";
-      } else status = err instanceof Error ? err.message : "Could not commit";
+        status = t("p.plans.pid.handover.what_this_person_holds_changed");
+      } else status = err instanceof Error ? err.message : t("p.plans.pid.handover.could_not_commit");
     } finally {
       busy = false;
     }
   }
   function discard() {
     preview = null;
-    status = "Discarded. Nothing was changed.";
+    status = t("p.plans.pid.handover.discarded_nothing_was_changed");
   }
 </script>
 
-<svelte:head><title>Handover — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.handover.handover_ppm")}</title></svelte:head>
 
-<h1>Handover</h1>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/onboarding`)}>Onboarding and offboarding</a></p>
+<h1>{t("p.plans.pid.handover.handover")}</h1>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.handover.plan")}</a> · <a href={localeHref(`/plans/${pid}/onboarding`)}>{t("p.plans.pid.handover.onboarding_and_offboarding")}</a></p>
 
 <form class="surface stack" onsubmit={run} aria-labelledby="hv-h">
-  <h2 id="hv-h">Who is handing over?</h2>
-  <label>From <input bind:value={from} oninput={reset} placeholder="person:…" /></label>
-  <label>To <input bind:value={to} oninput={reset} placeholder="person:… (empty releases the work)" /></label>
-  <button class="button" class:primary={!preview} type="submit" disabled={busy}>Preview</button>
+  <h2 id="hv-h">{t("p.plans.pid.handover.who_is_handing_over")}</h2>
+  <label>{t("p.plans.pid.handover.from")} <input bind:value={from} oninput={reset} placeholder={t("p.plans.pid.handover.person")} /></label>
+  <label>{t("p.plans.pid.handover.to")} <input bind:value={to} oninput={reset} placeholder={t("p.plans.pid.handover.person_empty_releases_the_work")} /></label>
+  <button class="button" class:primary={!preview} type="submit" disabled={busy}>{t("p.plans.pid.handover.preview")}</button>
 </form>
 {#if status}<p role="status" class="small">{status}</p>{/if}
 
 {#if preview}
   <section class="surface stack" aria-labelledby="pv-h" data-testid="preview">
-    <h2 id="pv-h">Preview</h2>
+    <h2 id="pv-h">{t("p.plans.pid.handover.preview")}</h2>
     <p>{handoverText(preview.action, preview.holdings.length, preview.to_person)}</p>
     {#if preview.holdings.length}
       <table>
-        <caption class="small muted">What {preview.from_person} holds that is still live</caption>
-        <thead><tr><th scope="col">Kind</th><th scope="col">What</th></tr></thead>
+        <caption class="small muted">{t("p.plans.pid.handover.what_holds_that_is_still", { from_person: preview.from_person })}</caption>
+        <thead><tr><th scope="col">{t("p.plans.pid.handover.kind")}</th><th scope="col">{t("p.plans.pid.handover.what")}</th></tr></thead>
         <tbody>
           {#each preview.holdings as h (h.pid)}
             <tr><td>{HOLDING_TEXT[h.kind] ?? h.kind}</td><td>{h.label}</td></tr>
           {/each}
         </tbody>
       </table>
-      <p class="small muted">The new person's capacity is not checked here.</p>
-      <label>Reason (recorded with each item) <input bind:value={reason} maxlength="500" /></label>
+      <p class="small muted">{t("p.plans.pid.handover.the_new_person_s_capacity")}</p>
+      <label>{t("p.plans.pid.handover.reason_recorded_with_each_item")} <input bind:value={reason} maxlength="500" /></label>
       <div class="row">
-        <button class="button primary" type="button" onclick={commit} disabled={busy}>{preview.action === "reassign" ? "Hand over" : "Release"}</button>
-        <button class="button" type="button" onclick={discard} disabled={busy}>Discard</button>
+        <button class="button primary" type="button" onclick={commit} disabled={busy}>{preview.action === "reassign" ? t("p.plans.pid.handover.hand_over") : t("p.plans.pid.handover.release")}</button>
+        <button class="button" type="button" onclick={discard} disabled={busy}>{t("p.plans.pid.handover.discard")}</button>
       </div>
     {/if}
   </section>

@@ -5,6 +5,8 @@
   and when `editable`, a day is a button that toggles a holiday.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
+  import { lazyArray } from "#lib/lazy.js";
   import { WEEKDAY_NAMES, monthGrid, shiftMonth } from "#lib/cpm-view.js";
 
   let {
@@ -26,10 +28,11 @@
   } = $props();
 
   const grid = $derived(monthGrid(year, month, mask, holidays, absences));
-  const MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
+  const MONTHS = lazyArray([
+    "c.CalendarMonth.january", "c.CalendarMonth.february", "c.CalendarMonth.march", "c.CalendarMonth.april",
+    "c.CalendarMonth.may", "c.CalendarMonth.june", "c.CalendarMonth.july", "c.CalendarMonth.august",
+    "c.CalendarMonth.september", "c.CalendarMonth.october", "c.CalendarMonth.november", "c.CalendarMonth.december",
+  ]);
 
   function go(by: number) {
     const next = shiftMonth(year, month, by);
@@ -38,16 +41,16 @@
   }
 
   function describe(c: (typeof grid)[number][number], dayName: string): string {
-    const state = c.holiday ? "holiday" : c.absent ? "absent" : c.offDay ? "not a business day" : "business day";
+    const state = c.holiday ? t("c.CalendarMonth.holiday_state") : c.absent ? t("c.CalendarMonth.absent_state") : c.offDay ? t("c.CalendarMonth.not_a_business_day") : t("c.CalendarMonth.business_day");
     return `${c.date}, ${dayName}: ${state}`;
   }
 </script>
 
 <div class="cal" data-testid="calendar-month">
   <div class="head">
-    <button type="button" onclick={() => go(-1)} aria-label="Previous month">‹</button>
+    <button type="button" onclick={() => go(-1)} aria-label={t("c.CalendarMonth.previous_month")}>‹</button>
     <strong aria-live="polite">{MONTHS[month - 1]} {year}</strong>
-    <button type="button" onclick={() => go(1)} aria-label="Next month">›</button>
+    <button type="button" onclick={() => go(1)} aria-label={t("c.CalendarMonth.next_month")}>›</button>
   </div>
   <table>
     <thead>
@@ -82,7 +85,7 @@
       {/each}
     </tbody>
   </table>
-  <p class="small muted">– not a business day &nbsp; ✕ holiday &nbsp; A recorded absence{editable ? " · select a business day to mark or clear a holiday" : ""}</p>
+  <p class="small muted">{t("c.CalendarMonth.legend")}{editable ? t("c.CalendarMonth.legend_editable") : ""}</p>
 </div>
 
 <style>

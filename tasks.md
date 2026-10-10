@@ -1187,7 +1187,7 @@ findings F-14 to F-23 and owner questions in [plan.md §46–§51 and §52a](pla
   `X-Forwarded-For` from an untrusted peer is ignored; the expensive bucket
   trips before the general one; limits reset after the window.
 
-- [ ] **HD-6 (M) — Backup plan.** `spec/` chapter: RPO and RTO, PostgreSQL
+- [x] **HD-6 (M) — Backup plan.** *(Folded into HD-10, 2026-10-09; implement and tick there.)* `spec/` chapter: RPO and RTO, PostgreSQL
   continuous archiving (base backup plus WAL) or managed point-in-time
   recovery, the **artifact store backed up and restored with the database**,
   encryption, off-site copy, retention, and who restores. Scripts in the
@@ -1198,7 +1198,7 @@ findings F-14 to F-23 and owner questions in [plan.md §46–§51 and §52a](pla
   when a backup is missing, older than the RPO, or restores with mismatched
   artifacts; the runbook names every step.
 
-- [ ] **HD-7 (M) — Data protection impact assessment.** `spec/` chapter: the
+- [x] **HD-7 (M) — Data protection impact assessment.** *(Folded into HD-11, 2026-10-09; implement and tick there.)* `spec/` chapter: the
   processing (who, what, why, where, how long), lawful basis per category,
   necessity and proportionality, data-subject rights and how each is met
   (export, masking, rectification, erasure limits given append-only audit),
@@ -1232,6 +1232,66 @@ findings F-14 to F-23 and owner questions in [plan.md §46–§51 and §52a](pla
   **Acceptance:** the link checker passes in CI; a regeneration step produces
   no diff against the committed status file; a test fails when a documented
   route is missing from the OpenAPI document or the reverse.
+
+- [x] **HD-10 (L) — Operations pack (folds in HD-6).** Requested 2026-10-09
+  (second list, item 10). `operations/`: a deployment guide (compose today;
+  Kubernetes/Helm is out of scope until a cluster target is named), backup and
+  restore scripts for the database **and** the artifact store, **stated RPO and
+  RTO per backup mode**, an upgrade and migration guide with rollback, and a
+  runbook. **Acceptance:** `scripts/backup.sh` and `scripts/restore.sh` produce
+  and restore a verified archive (database dump, artifact files, checksums);
+  `scripts/restore-test.sh` restores into a fresh database, proves migrations are
+  current, compares per-table row counts and a content digest with the source,
+  re-verifies sampled artifact checksums, and then the CI job `restore` runs the
+  test suite against the restored database; the targets are written in
+  `operations/recovery-objectives.md` and spec NFR-16; a backup older than the
+  stated RPO fails a check script.
+  **Built 2026-10-10.** `operations/` (deployment, backup-and-restore, recovery-objectives, upgrade-and-migration, runbook), `scripts/{backup,restore,restore-test,check-backup-age}.sh`, CI job `restore`. **Not run here:** the GitHub Actions workflows (the restore job included); the scripts and the drill were run locally against throw-away Podman Postgres.
+
+- [x] **HD-11 (L) — Information governance pack (folds in HD-7).** Requested
+  2026-10-09 (item 11). `governance/`: a DPIA template pre-filled for this
+  service, a data-flow diagram, a record of processing, a retention schedule per
+  kind of record (what the code enforces today, stated separately from what a
+  buyer must decide), an accessibility statement (WCAG 2.2 AA, grounded in the
+  axe tests), a language statement, and a DTAC checklist answered section by
+  section with the evidence for each answer. **Acceptance:**
+  `tests/personal_data_inventory.rs` (DB-free) fails when an entity gains a
+  column that can hold personal data which `governance/personal-data-inventory.csv`
+  does not name, or when the inventory names a column that does not exist; every
+  DPIA risk links to a control that exists; every DTAC answer is `Met`,
+  `Partly` or `Buyer to complete` with a pointer, never blank.
+  **Built 2026-10-10.** `governance/` (DPIA, data-flow, record of processing, retention schedule, accessibility statement, language statement, DTAC checklist, personal-data inventory) and `tests/personal_data_inventory.rs`. **Deviations:** the DPIA, record of processing and DTAC checklist leave buyer decisions marked `‹buyer›` or `Buyer to complete`; the audit trail is documented as digests plus an optional MAC, not a hash chain.
+
+- [x] **HD-12 (L) — Sign-in with Microsoft Entra ID.** Requested 2026-10-09
+  (item 12). The UI's server side runs OpenID Connect (authorization code with
+  PKCE) against a configured provider, directly or via a Keycloak realm that
+  brokers Entra; tokens stay server-side; the API verifies the provider's access
+  token (the `keycloak` feature) and maps roles to ABAC through the explicit
+  role map. Documented in `operations/sign-in-with-entra.md`. **Acceptance:** a
+  Playwright test signs in through an Entra-compatible mock OIDC provider
+  (discovery, JWKS, v2.0 issuer, `tid`/`oid`/`roles` claims, PKCE enforced) and
+  lands signed in; a container test (`keycloak_entra_broker`, Podman) signs in
+  through a real Keycloak that brokers that provider and the API guard accepts
+  the resulting token with the mapped role; a tampered or wrong-audience token
+  is refused. **Not taken:** the API verifying raw Entra tokens without Keycloak
+  (the verifier is realm-shaped); the auth-service federation route is
+  documented, not tested here.
+  **Built 2026-10-10.** `src/lib/server/oidc*.ts`, `/signin/oidc`, `tests/e2e/oidc-signin.spec.ts` against `tests/e2e/support/entra-mock.mjs`, and the Podman test `keycloak_entra_broker`. **Not tested:** a real Microsoft Entra tenant.
+
+- [x] **HD-13 (L) — Every page in every supported locale, Welsh first.**
+  Requested 2026-10-09 (item 13). All visible text moves into the catalogue;
+  a CI test fails on visible English outside it and on any `cy-001` key missing;
+  Welsh is drafted for every key and **marked draft until a professional
+  translator reviews it**, with the review recorded in
+  `governance/welsh-translation-review.md` and an export for the translator.
+  **Acceptance:** `tests/unit/catalogue-coverage.test.ts` scans every template
+  (Svelte AST) and helper for literal visible text and fails on any not
+  allow-listed with a reason; `cy-001` has every `en-001` key; the Welsh e2e
+  tests render the pages in `cy-001` with no English left visible (apart from
+  the allow-list and API-generated sentences); the review status is recorded.
+  **Deviations to state:** other locales fall back to English for new keys;
+  sentences generated by the API are English.
+  **Built 2026-10-10; professional review still open.** 2,327 page and component texts moved into `i18n-pages.ts` with Welsh in `i18n-pages.cy.ts`; `tests/unit/catalogue-coverage.test.ts` and `tests/e2e/welsh.spec.ts` (every route) guard it; code values (statuses, kinds, bands) and common API error codes are shown through the catalogue; a localized `+error.svelte`. The Welsh is **a draft by the assistant, not reviewed by a professional translator**: the review is recorded as *not done* in `governance/welsh-translation-review.md`, with `scripts/export-welsh-review.py` producing the file for the translator. **Deviations:** other locales fall back to English for the new page text; API-generated sentences other than the common error codes are English; compound sentences may need rewording for Welsh mutation.
 
 ## Critical chain buffers (CC-n)
 
@@ -1288,6 +1348,48 @@ printed with every result; durations in **business days**; missing inputs give
   in words and shape, buffers as labelled bars), a fever chart per project and
   feeding buffer with a table twin, the drum pipeline view. **Acceptance:**
   axe passes; every chart has a table twin; colour is never alone.
+
+## Issues register and change requests (IR-n)
+
+Requested 2026-10-10: "an issues register (FR-14), change requests". Specified
+in [spec §6 FR-14 and FR-14a](spec/06-functional-requirements.md); assessment in
+[plan.md §57](plan.md). Doctrine: an issue **has happened** (a risk **might**);
+a change request is **decided by a person other than the requester**; durations
+in **calendar days** (ageing) and **business days** (schedule impact); impacts
+are stated, never guessed.
+
+- [ ] **IR-1 (M) — Issues store and API.** Migration, entity, controller and
+  OpenAPI for `issues` under a plan (`/api/plans/{pid}/issues`) with the FR-14
+  fields; ABAC like tasks; audited. **Acceptance:** CRUD round trip; a `Closed`
+  issue without a resolution is refused (422); an issue of a plan the caller
+  cannot read is not listed; routes appear in `src/openapi.rs` and the generated
+  status block.
+- [ ] **IR-2 (M) — The register.** `GET /api/issues` across plans (filter by
+  plan, severity, status, owner, age in calendar days; paged) and a
+  **Register** page in the UI (every text in the catalogue, `cy-001` included).
+  **Acceptance:** an issue list sorted by severity then age; ageing equals
+  calendar days since `raised_on` (pinned by a unit test); the page passes the
+  axe audit and the Welsh render test.
+- [ ] **IR-3 (S) — Raise an issue from a risk or a blocked task.** Escalation
+  keeps `source_risk_pid` / `source_task_pid`; closing the issue leaves the
+  source untouched. Daily-standup blockers (spec §1.4) can become issues.
+  **Acceptance:** raising from a risk links both ways; the risk's own status is
+  unchanged.
+- [ ] **IR-4 (L) — Change requests.** Store, API and UI for FR-14a with the
+  status machine Draft → Submitted → UnderReview → Approved|Rejected →
+  Implemented (Withdrawn from any open state). **Acceptance:** the requester
+  cannot decide their own request (403); a decision records who, when and why;
+  linking issues and risks works both ways; an illegal transition is 409.
+- [ ] **IR-5 (M) — Impact and baseline.** For a request with a schedule or cost
+  impact, show a **what-if preview** from the existing scheduler (labelled a
+  forecast) and, on a person's choice after approval, take a new baseline
+  (never replacing one) with the request as the reason. **Acceptance:** the
+  preview matches the what-if endpoint for the same edit; the baseline carries
+  the change request's id; nothing re-baselines automatically.
+- [ ] **IR-6 (S) — Reports.** Issues and open change requests in the monthly
+  director pack (DP) as counts by severity and age, with the oldest named.
+  **Acceptance:** the pack lists them, or says "none recorded"; never a zero for
+  an unavailable figure.
 
 ## Not taken (director pack, escalation, production readiness)
 

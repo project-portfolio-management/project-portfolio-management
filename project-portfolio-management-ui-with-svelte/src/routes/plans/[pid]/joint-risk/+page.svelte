@@ -7,7 +7,7 @@
   and the scatter has the same numbers beneath it.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, money, type JointRisk } from "#lib/api/ppm.js";
@@ -49,7 +49,7 @@
       });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not run the simulation";
+      error = err instanceof Error ? err.message : t("p.plans.pid.joint_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }
@@ -59,40 +59,40 @@
   const scatter = $derived(result ? scatterGeometry(result.points, result.cost.budget_minor) : null);
 </script>
 
-<svelte:head><title>Cost and schedule risk — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.joint_risk.cost_and_schedule_risk_ppm")}</title></svelte:head>
 
-<h1>Cost and schedule together</h1>
-<p class="lede">A late project usually costs more too, so this runs cost and schedule together.</p>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/schedule-risk`)}>Schedule risk</a> · <a href={localeHref(`/plans/${pid}/cost-risk`)}>Cost risk</a></p>
+<h1>{t("p.plans.pid.joint_risk.cost_and_schedule_together")}</h1>
+<p class="lede">{t("p.plans.pid.joint_risk.a_late_project_usually_costs")}</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.joint_risk.plan")}</a> · <a href={localeHref(`/plans/${pid}/schedule-risk`)}>{t("p.plans.pid.joint_risk.schedule_risk")}</a> · <a href={localeHref(`/plans/${pid}/cost-risk`)}>{t("p.plans.pid.joint_risk.cost_risk")}</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void run(); }}>
-  <label>Currency (if the plan has several) <input type="text" maxlength="3" bind:value={currency} placeholder="GBP" /></label>
-  <label>Cost of each business day late (major units) <input type="number" min="0" step="0.01" bind:value={delayCost} /></label>
-  <label>Iterations <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
-  <label>Seed <input type="number" min="0" step="1" bind:value={seed} /></label>
-  <label>Distribution
-    <select bind:value={distribution}><option value="triangular">Triangular</option><option value="pert">PERT</option></select>
+  <label>{t("p.plans.pid.joint_risk.currency_if_the_plan_has")} <input type="text" maxlength="3" bind:value={currency} placeholder={t("p.plans.pid.joint_risk.gbp")} /></label>
+  <label>{t("p.plans.pid.joint_risk.cost_of_each_business_day")} <input type="number" min="0" step="0.01" bind:value={delayCost} /></label>
+  <label>{t("p.plans.pid.joint_risk.iterations")} <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
+  <label>{t("p.plans.pid.joint_risk.seed")} <input type="number" min="0" step="1" bind:value={seed} /></label>
+  <label>{t("p.plans.pid.joint_risk.distribution")}
+    <select bind:value={distribution}><option value="triangular">{t("p.plans.pid.joint_risk.triangular")}</option><option value="pert">{t("p.plans.pid.joint_risk.pert")}</option></select>
   </label>
-  <label>Band when there is no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <label>{t("p.plans.pid.joint_risk.band_when_there_is_no")} <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? t("p.plans.pid.joint_risk.running") : t("p.plans.pid.joint_risk.run")}</button>
 </form>
 
 {#if result}
   {@const a = result.assumptions}
   <p class="small muted">
-    {result.currency} · seed {a.seed} · {a.iterations} iterations · {a.distribution === "pert" ? "PERT" : "Triangular"} · calendar {result.calendar}
+    {t("p.plans.pid.joint_risk.run_summary", { currency: result.currency, seed: a.seed, iterations: a.iterations, distribution: a.distribution === "pert" ? t("p.plans.pid.joint_risk.dist_pert") : t("p.plans.pid.joint_risk.dist_triangular"), calendar: result.calendar })}
   </p>
   {#if result.other_currencies_not_simulated.length > 0}
-    <p class="banner" role="note">Budget lines in {result.other_currencies_not_simulated.join(", ")} are not part of this run; currencies are never added.</p>
+    <p class="banner" role="note">{t("p.plans.pid.joint_risk.budget_lines_in_are_not", { join: result.other_currencies_not_simulated.join(", ") })}</p>
   {/if}
 
-  <h2>Both at once</h2>
+  <h2>{t("p.plans.pid.joint_risk.both_at_once")}</h2>
   <p><strong>{jointConfidenceText(result.confidence)}</strong></p>
   <table>
-    <caption class="sr-only">How the simulated outcomes fall around the budget and the critical-path finish</caption>
-    <thead><tr><th scope="col">Outcome</th><th scope="col">Simulations</th><th scope="col">Share</th></tr></thead>
+    <caption class="sr-only">{t("p.plans.pid.joint_risk.how_the_simulated_outcomes_fall")}</caption>
+    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.simulations")}</th><th scope="col">{t("p.plans.pid.joint_risk.share")}</th></tr></thead>
     <tbody>
       {#each quadrantRows(result.quadrants) as q (q.key)}
         <tr><th scope="row"><span aria-hidden="true">{q.symbol}</span> {q.label}</th><td>{q.count}</td><td>{q.share}</td></tr>
@@ -102,50 +102,50 @@
 
   {#if scatter}
     <figure>
-      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label="Scatter of simulated total cost against business days late, with the budget and the on-time line" width="100%" style="max-width: 32rem">
+      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label={t("p.plans.pid.joint_risk.scatter_of_simulated_total_cost")} width="100%" style="max-width: 32rem">
         {#each scatter.dots as d, i (i)}
-          <circle cx={d.x} cy={d.y} r="2.5" class="dot"><title>{d.days} business days late, {money(d.cost, result.currency)}</title></circle>
+          <circle cx={d.x} cy={d.y} r="2.5" class="dot"><title>{t("p.plans.pid.joint_risk.business_days_late", { days: d.days, money: money(d.cost, result.currency) })}</title></circle>
         {/each}
         <line x1={scatter.onTimeX} x2={scatter.onTimeX} y1="16" y2={scatter.height - 32} class="ref" />
-        <text x={scatter.onTimeX} y="12" text-anchor="middle" class="label">on time</text>
+        <text x={scatter.onTimeX} y="12" text-anchor="middle" class="label">{t("p.plans.pid.joint_risk.on_time")}</text>
         <line x1="32" x2={scatter.width - 32} y1={scatter.budgetY} y2={scatter.budgetY} class="ref budget" />
-        <text x={scatter.width - 32} y={scatter.budgetY - 4} text-anchor="end" class="label">budget</text>
-        <text x={scatter.width / 2} y={scatter.height - 6} text-anchor="middle" class="label">business days late →</text>
+        <text x={scatter.width - 32} y={scatter.budgetY - 4} text-anchor="end" class="label">{t("p.plans.pid.joint_risk.budget")}</text>
+        <text x={scatter.width / 2} y={scatter.height - 6} text-anchor="middle" class="label">{t("p.plans.pid.joint_risk.business_days_late_2")}</text>
       </svg>
-      <figcaption class="small muted">Each dot is one simulation (a thinned sample). Right of the on-time line is late; above the budget line is over budget. The table above has the full counts.</figcaption>
+      <figcaption class="small muted">{t("p.plans.pid.joint_risk.each_dot_is_one_simulation")}</figcaption>
     </figure>
   {/if}
 
-  <h2>Cost</h2>
+  <h2>{t("p.plans.pid.joint_risk.cost")}</h2>
   <table>
-    <caption class="sr-only">Total cost, delay cost included</caption>
-    <thead><tr><th scope="col">Outcome</th><th scope="col">Cost</th></tr></thead>
+    <caption class="sr-only">{t("p.plans.pid.joint_risk.total_cost_delay_cost_included")}</caption>
+    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.cost")}</th></tr></thead>
     <tbody>
-      <tr><th scope="row">Budget</th><td>{money(result.cost.budget_minor, result.currency)}</td></tr>
-      <tr><th scope="row">Mean (delay cost included)</th><td>{money(result.cost.mean_minor, result.currency)}</td></tr>
-      <tr><th scope="row">Of which delay cost, on average</th><td>{money(result.cost.mean_delay_cost_minor, result.currency)}</td></tr>
+      <tr><th scope="row">{t("p.plans.pid.joint_risk.budget_2")}</th><td>{money(result.cost.budget_minor, result.currency)}</td></tr>
+      <tr><th scope="row">{t("p.plans.pid.joint_risk.mean_delay_cost_included")}</th><td>{money(result.cost.mean_minor, result.currency)}</td></tr>
+      <tr><th scope="row">{t("p.plans.pid.joint_risk.of_which_delay_cost_on")}</th><td>{money(result.cost.mean_delay_cost_minor, result.currency)}</td></tr>
       {#each result.cost.percentiles as p (p.p)}<tr><th scope="row">P{p.p}</th><td>{money(p.minor, result.currency)}</td></tr>{/each}
     </tbody>
   </table>
   <p>{budgetConfidenceText(result.confidence.budget_bp, money(result.cost.budget_minor, result.currency))}</p>
   <p class="small">{delayCostText(a.delay_cost.per_day_minor, a.delay_cost.currency, money)}</p>
 
-  <h2>Finish</h2>
+  <h2>{t("p.plans.pid.joint_risk.finish")}</h2>
   <table>
-    <caption class="sr-only">Finish date at each percentile</caption>
-    <thead><tr><th scope="col">Outcome</th><th scope="col">Finish</th></tr></thead>
+    <caption class="sr-only">{t("p.plans.pid.joint_risk.finish_date_at_each_percentile")}</caption>
+    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.finish")}</th></tr></thead>
     <tbody>
       {#each result.schedule.percentiles as p (p.p)}<tr><th scope="row">P{p.p}</th><td>{p.finish}</td></tr>{/each}
-      <tr><th scope="row">Critical-path finish (the plan's own date)</th><td>{result.schedule.cpm_finish ?? "not enough data"}</td></tr>
+      <tr><th scope="row">{t("p.plans.pid.joint_risk.critical_path_finish_the_plan")}</th><td>{result.schedule.cpm_finish ?? t("p.plans.pid.joint_risk.not_enough_data")}</td></tr>
     </tbody>
   </table>
   <p>{confidenceText(result.confidence.finish_bp, result.schedule.cpm_finish)}</p>
   <p class="small muted">{result.schedule.percentiles.map(percentileText).join(" · ")}</p>
 
-  <h2>Cost lines</h2>
+  <h2>{t("p.plans.pid.joint_risk.cost_lines")}</h2>
   <table>
-    <caption class="sr-only">Per-line estimate in {result.currency}</caption>
-    <thead><tr><th scope="col">Line</th><th scope="col">Low / planned / high</th><th scope="col">Estimate</th></tr></thead>
+    <caption class="sr-only">{t("p.plans.pid.joint_risk.per_line_estimate_in", { currency: result.currency })}</caption>
+    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.line")}</th><th scope="col">{t("p.plans.pid.joint_risk.low_planned_high")}</th><th scope="col">{t("p.plans.pid.joint_risk.estimate")}</th></tr></thead>
     <tbody>
       {#each result.cost.lines as l (l.pid)}
         <tr class:fallback={l.source === "fallback"}>
@@ -157,31 +157,31 @@
     </tbody>
   </table>
 
-  <h2>Risks</h2>
+  <h2>{t("p.plans.pid.joint_risk.risks")}</h2>
   {#if result.assumptions.shared_events.length > 0}
-    <p class="small">{result.assumptions.shared_events.length} risk{result.assumptions.shared_events.length === 1 ? "" : "s"} affect both the schedule and the cost: each strikes once and drives both.</p>
+    <p class="small">{(result.assumptions.shared_events.length === 1 ? t("p.plans.pid.joint_risk.risk_affect_both_the_schedule_one", { length: result.assumptions.shared_events.length }) : t("p.plans.pid.joint_risk.risk_affect_both_the_schedule_other", { length: result.assumptions.shared_events.length }))}</p>
   {/if}
   {#if result.events.schedule.skipped.length + result.events.cost.skipped.length > 0}
     <ul class="small">
-      {#each result.events.schedule.skipped as e (`s-${e.risk_pid}`)}<li>Schedule — {e.title}: {skippedReasonText(e.reason)}</li>{/each}
-      {#each result.events.cost.skipped as e (`c-${e.risk_pid}`)}<li>Cost — {e.title}: {costSkippedText(e.reason)}</li>{/each}
+      {#each result.events.schedule.skipped as e (`s-${e.risk_pid}`)}<li>{t("p.plans.pid.joint_risk.schedule", { title: e.title, skippedReasonText: skippedReasonText(e.reason) })}</li>{/each}
+      {#each result.events.cost.skipped as e (`c-${e.risk_pid}`)}<li>{t("p.plans.pid.joint_risk.cost_2", { title: e.title, costSkippedText: costSkippedText(e.reason) })}</li>{/each}
     </ul>
   {:else if result.events.schedule.used.length + result.events.cost.used.length === 0}
-    <p class="small muted">No register risk was used in this run.</p>
+    <p class="small muted">{t("p.plans.pid.joint_risk.no_register_risk_was_used")}</p>
   {/if}
 
-  <h2>Assumptions</h2>
+  <h2>{t("p.plans.pid.joint_risk.assumptions")}</h2>
   <ul class="small">
-    <li><strong>Independence.</strong> {a.independence}</li>
+    <li><strong>{t("p.plans.pid.joint_risk.independence")}</strong> {a.independence}</li>
     <li>{a.shared_events_rule}</li>
     <li>{a.delay_cost.rule}</li>
     <li>{a.floor}</li>
     <li>{a.fallback}</li>
-    <li>Seed {a.seed}: the same seed gives the same result.</li>
+    <li>{t("p.plans.pid.joint_risk.seed_the_same_seed_gives", { seed: a.seed })}</li>
   </ul>
   <p class="small muted">{result.note}</p>
 {:else if !error}
-  <p class="muted">Running…</p>
+  <p class="muted">{t("p.plans.pid.joint_risk.running")}</p>
 {/if}
 
 <style>

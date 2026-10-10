@@ -10,3 +10,42 @@ export const PROJECT_PORTFOLIO_MANAGEMENT_API_URL =
 /** Authentication service base URL — for the session→PASETO exchange and
  *  the magic-link login flow. */
 export const AUTH_API_URL = env.AUTH_API_URL || "http://localhost:5150";
+
+import type { OidcConfig } from "./oidc";
+
+/**
+ * Direct OpenID Connect sign-in (HD-12), or `null` when it is not configured
+ * (`OIDC_ISSUER` and `OIDC_CLIENT_ID` both required). Entra: the issuer is
+ * `https://login.microsoftonline.com/<tenant-id>/v2.0`. Keycloak: the realm URL
+ * `https://<host>/realms/<realm>`.
+ */
+export function oidcConfig(): OidcConfig | null {
+  const issuer = (env.OIDC_ISSUER ?? "").trim();
+  const clientId = (env.OIDC_CLIENT_ID ?? "").trim();
+  if (!issuer || !clientId) return null;
+  return {
+    issuer,
+    clientId,
+    clientSecret: (env.OIDC_CLIENT_SECRET ?? "").trim() || undefined,
+    scopes: (env.OIDC_SCOPES ?? "").trim() || "openid profile email offline_access",
+    tenantId: (env.OIDC_TENANT_ID ?? "").trim() || undefined,
+    idpHint: (env.OIDC_IDP_HINT ?? "").trim() || undefined,
+  };
+}
+
+/** Deployment options for the OIDC flow that are not part of the protocol. */
+export function oidcOptions(): {
+  /** Fixed redirect URI; otherwise built from the request's origin. */
+  redirectUri?: string;
+  /** Hard session length in seconds (default 8 hours). */
+  sessionSeconds: number;
+  /** Also end the provider's session on sign-out (RP-initiated logout). */
+  endProviderSession: boolean;
+} {
+  const hours = Number.parseFloat(env.OIDC_SESSION_HOURS ?? "");
+  return {
+    redirectUri: (env.OIDC_REDIRECT_URI ?? "").trim() || undefined,
+    sessionSeconds: Math.round((Number.isFinite(hours) && hours > 0 ? hours : 8) * 3600),
+    endProviderSession: (env.OIDC_END_SESSION ?? "").trim() === "true",
+  };
+}

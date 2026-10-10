@@ -44,7 +44,7 @@
   }
 </script>
 
-<svelte:head><title>Schedule — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.schedule.schedule_ppm")}</title></svelte:head>
 
 <p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>{t("ppm.common.governance")}</a></p>
 <h1>{t("ppm.schedule.title")}</h1>
@@ -55,8 +55,7 @@
     <div class="banner" role="alert" data-testid="violations">
       {#each schedule.violations as violation (violation.edge_pid)}
         <p class="small">
-          Dependency violated: successor starts {violation.actual_start} but may start no
-          earlier than {violation.earliest_start}.
+          {t("p.plans.pid.schedule.dependency_violated_successor_starts", { actual_start: violation.actual_start, earliest_start: violation.earliest_start })}
         </p>
       {/each}
     </div>

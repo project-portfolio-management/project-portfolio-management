@@ -11,7 +11,7 @@
 //!   password-guessing or token-guessing client is slowed before the auth
 //!   guard does any work.
 //!
-//! `/_health` and `/_ping` are exempt. A refused request is `429` with
+//! `/_health`, `/_ping` and `/_readiness` are exempt. A refused request is `429` with
 //! `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` /
 //! `RateLimit-Reset` headers (whole seconds); an allowed one carries the
 //! `RateLimit-*` headers of the tightest bucket it was charged to.
@@ -59,7 +59,7 @@ pub const MAX_KEYS: usize = 100_000;
 const OVERFLOW_KEY: &str = "overflow";
 
 /// Paths that are never limited.
-const EXEMPT: &[&str] = &["/_health", "/_ping"];
+const EXEMPT: &[&str] = &["/_health", "/_ping", "/_readiness"];
 
 /// Path segments that mark a route as expensive.
 const EXPENSIVE_SEGMENTS: &[&str] = &[
@@ -592,6 +592,7 @@ mod tests {
     fn health_and_ping_are_exempt() {
         assert!(is_exempt("/_health"));
         assert!(is_exempt("/_ping"));
+        assert!(is_exempt("/_readiness"));
         assert!(!is_exempt("/api/plans"));
     }
 

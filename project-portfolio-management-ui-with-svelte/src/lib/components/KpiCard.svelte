@@ -5,6 +5,7 @@
   green.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { KpiView, KpiCadence, PpmClient, KpiReading } from "#lib/api/ppm.js";
   import { STATUS_SYMBOL, STATUS_TEXT, staleText, thresholdText, trendText, valueText } from "#lib/kpi-view.js";
 
@@ -27,7 +28,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "That did not work");
+      onerror(err instanceof Error ? err.message : t("c.KpiCard.that_did_not_work"));
     }
   }
 
@@ -54,7 +55,7 @@
     try {
       history = (await ppm.kpi(k.pid)).history ?? [];
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not load the history");
+      onerror(err instanceof Error ? err.message : t("c.KpiCard.could_not_load_the_history"));
     }
   }
 
@@ -86,7 +87,7 @@
     );
   };
   const remove = () => {
-    if (confirm(`Delete the KPI “${k.name}”? Its readings are kept.`)) void run(() => ppm.deleteKpi(k.pid));
+    if (confirm(t("c.KpiCard.delete_the_kpi_its_readings", { name: k.name }))) void run(() => ppm.deleteKpi(k.pid));
   };
 </script>
 
@@ -100,34 +101,34 @@
   </header>
   <p class="small">
     {#if item.latest}
-      {valueText(item.latest.value, k.unit)} on {item.latest.observed_on}
+      {t("c.KpiCard.on", { valueText: valueText(item.latest.value, k.unit), observed_on: item.latest.observed_on })}
       {#if item.latest.note}· “{item.latest.note}”{/if}
     {:else}
-      No reading yet.
+      {t("c.KpiCard.no_reading_yet")}
     {/if}
     {#if trendText(item.trend)}· {trendText(item.trend)}{/if}
   </p>
   {#if staleText(item)}<p class="small stale">{staleText(item)}</p>{/if}
-  <p class="small muted">{thresholdText(k)}{#if k.cadence} · read {k.cadence}{/if}{#if k.owner_ref} · {k.owner_ref}{/if}</p>
+  <p class="small muted">{thresholdText(k)}{#if k.cadence} {t("c.KpiCard.read", { cadence: k.cadence })}{/if}{#if k.owner_ref} · {k.owner_ref}{/if}</p>
 
   <details>
-    <summary>Add a reading</summary>
+    <summary>{t("c.KpiCard.add_a_reading")}</summary>
     <form onsubmit={addReading} class="inline">
-      <label>Value <input type="number" step="1" required bind:value /></label>
-      <label>Observed on <input type="date" bind:value={observedOn} /></label>
-      <label>Note <input type="text" bind:value={note} /></label>
-      <button class="button small" type="submit">Record</button>
+      <label>{t("c.KpiCard.value")} <input type="number" step="1" required bind:value /></label>
+      <label>{t("c.KpiCard.observed_on")} <input type="date" bind:value={observedOn} /></label>
+      <label>{t("c.KpiCard.note")} <input type="text" bind:value={note} /></label>
+      <button class="button small" type="submit">{t("c.KpiCard.record")}</button>
     </form>
   </details>
   <details ontoggle={loadHistory}>
-    <summary>History ({item.readings})</summary>
+    <summary>{t("c.KpiCard.history", { readings: item.readings })}</summary>
     {#if history === null}
-      <p class="small muted">Loading…</p>
+      <p class="small muted">{t("c.KpiCard.loading")}</p>
     {:else if history.length === 0}
-      <p class="small muted">No readings.</p>
+      <p class="small muted">{t("c.KpiCard.no_readings")}</p>
     {:else}
       <table class="small">
-        <thead><tr><th scope="col">Observed</th><th scope="col">Value</th><th scope="col">Note</th></tr></thead>
+        <thead><tr><th scope="col">{t("c.KpiCard.observed")}</th><th scope="col">{t("c.KpiCard.value")}</th><th scope="col">{t("c.KpiCard.note")}</th></tr></thead>
         <tbody>
           {#each history as r (r.pid)}
             <tr><td>{r.observed_on}</td><td>{valueText(r.value, k.unit)}</td><td>{r.note ?? ""}</td></tr>
@@ -137,25 +138,25 @@
     {/if}
   </details>
   <details>
-    <summary>Edit or delete</summary>
+    <summary>{t("c.KpiCard.edit_or_delete")}</summary>
     <form onsubmit={save} class="inline">
-      <label>Name <input type="text" required bind:value={name} /></label>
-      <label>Unit <input type="text" bind:value={unit} /></label>
-      <label>Target <input type="number" step="1" required bind:value={target} /></label>
-      <label>Red line <input type="number" step="1" required bind:value={red} /></label>
-      <label>Cadence
+      <label>{t("c.KpiCard.name")} <input type="text" required bind:value={name} /></label>
+      <label>{t("c.KpiCard.unit")} <input type="text" bind:value={unit} /></label>
+      <label>{t("c.KpiCard.target")} <input type="number" step="1" required bind:value={target} /></label>
+      <label>{t("c.KpiCard.red_line")} <input type="number" step="1" required bind:value={red} /></label>
+      <label>{t("c.KpiCard.cadence")}
         <select bind:value={cadence}>
-          <option value="">None</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="quarterly">Quarterly</option>
+          <option value="">{t("c.KpiCard.none")}</option>
+          <option value="daily">{t("c.KpiCard.daily")}</option>
+          <option value="weekly">{t("c.KpiCard.weekly")}</option>
+          <option value="monthly">{t("c.KpiCard.monthly")}</option>
+          <option value="quarterly">{t("c.KpiCard.quarterly")}</option>
         </select>
       </label>
-      <button class="button small" type="submit">Save</button>
-      <button class="button small" type="button" onclick={remove}>Delete</button>
+      <button class="button small" type="submit">{t("c.KpiCard.save")}</button>
+      <button class="button small" type="button" onclick={remove}>{t("c.KpiCard.delete")}</button>
     </form>
-    <p class="small muted">Which way is good ({k.direction === "higher_better" ? "higher" : "lower"}) cannot be changed: it would re-colour every past reading.</p>
+    <p class="small muted">{t("c.KpiCard.which_way_is_good_cannot", { v: k.direction === "higher_better" ? t("c.KpiCard.direction_higher") : t("c.KpiCard.direction_lower") })}</p>
   </details>
 </article>
 

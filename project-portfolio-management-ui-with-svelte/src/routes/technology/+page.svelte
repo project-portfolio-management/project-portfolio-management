@@ -39,14 +39,14 @@
   const RINGS = ["adopt", "trial", "assess", "hold", "unclassified"] as const;
 </script>
 
-<svelte:head><title>{t("ppm.nav.technology")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.technology.ppm", { t: t("ppm.nav.technology") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.technology")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if radar}
-  <h2>Technology radar</h2>
-  <p class="muted">as of {radar.as_of} · {radar.convention}</p>
+  <h2>{t("p.technology.technology_radar")}</h2>
+  <p class="muted">{t("p.technology.as_of", { as_of: radar.as_of, convention: radar.convention })}</p>
   {#each RINGS as ring (ring)}
     {@const inRing = radar.technologies.filter((tech) => tech.ring === ring)}
     {#if inRing.length > 0}
@@ -59,7 +59,7 @@
               {Object.entries(tech.per_collection)
                 .map(([kind, count]) => `${count} ${kind}`)
                 .join(" · ")}
-              {#if tech.ring_votes > 0}&nbsp;({tech.ring_votes} ring votes){/if}
+              {#if tech.ring_votes > 0}{t("p.technology.ring_votes", { ring_votes: tech.ring_votes })}{/if}
             </span>
           </li>
         {/each}
@@ -67,18 +67,18 @@
     {/if}
   {/each}
   {#if radar.technologies.length === 0}
-    <p class="muted">No `tech:*` tags recorded yet.</p>
+    <p class="muted">{t("p.technology.no_tech_tags_recorded_yet")}</p>
   {/if}
 {/if}
 
 {#if risk}
-  <h2>Dependency risk</h2>
-  <p class="muted">as of {risk.as_of} · {risk.edges} edges</p>
+  <h2>{t("p.technology.dependency_risk")}</h2>
+  <p class="muted">{t("p.technology.as_of_edges", { as_of: risk.as_of, edges: risk.edges })}</p>
 
-  <h3>Most depended-on (single-point-of-failure candidates)</h3>
+  <h3>{t("p.technology.most_depended_on_single_point")}</h3>
   <table data-testid="tech-fan-out">
     <thead>
-      <tr><th>Item</th><th>Kind</th><th>Dependents</th><th>Status (<Term t="RAG" />)</th></tr>
+      <tr><th>{t("p.technology.item")}</th><th>{t("p.technology.kind")}</th><th>{t("p.technology.dependents")}</th><th>{t("p.technology.status")}<Term t="RAG" />)</th></tr>
     </thead>
     <tbody>
       {#each risk.top_fan_out as row (row.item.pid)}
@@ -89,15 +89,15 @@
           <td>{row.rag ?? "—"}</td>
         </tr>
       {:else}
-        <tr><td colspan="4" class="muted">No dependencies recorded yet.</td></tr>
+        <tr><td colspan="4" class="muted">{t("p.technology.no_dependencies_recorded_yet")}</td></tr>
       {/each}
     </tbody>
   </table>
 
-  <h3>Edges importing risk from a red predecessor</h3>
+  <h3>{t("p.technology.edges_importing_risk_from_a")}</h3>
   <table data-testid="tech-red-edges">
     <thead>
-      <tr><th>Predecessor (red)</th><th>Successor at risk</th></tr>
+      <tr><th>{t("p.technology.predecessor_red")}</th><th>{t("p.technology.successor_at_risk")}</th></tr>
     </thead>
     <tbody>
       {#each risk.red_predecessor_edges as edge (edge.edge)}
@@ -106,15 +106,15 @@
           <td>{edge.successor.name}</td>
         </tr>
       {:else}
-        <tr><td colspan="2" class="muted">None — no red predecessors.</td></tr>
+        <tr><td colspan="2" class="muted">{t("p.technology.none_no_red_predecessors")}</td></tr>
       {/each}
     </tbody>
   </table>
 
-  <h3>Cross-portfolio edges</h3>
+  <h3>{t("p.technology.cross_portfolio_edges")}</h3>
   <table data-testid="tech-cross-portfolio">
     <thead>
-      <tr><th>Predecessor</th><th>Successor</th></tr>
+      <tr><th>{t("p.technology.predecessor")}</th><th>{t("p.technology.successor")}</th></tr>
     </thead>
     <tbody>
       {#each risk.cross_portfolio as edge (edge.edge)}
@@ -123,18 +123,18 @@
           <td>{edge.successor.name} <span class="muted">({edge.successor.kind})</span></td>
         </tr>
       {:else}
-        <tr><td colspan="2" class="muted">None — all edges stay within one portfolio.</td></tr>
+        <tr><td colspan="2" class="muted">{t("p.technology.none_all_edges_stay_within")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 {#if debt}
-  <h2>Technical-debt register</h2>
-  <p class="muted">{debt.note} · open exposure {debt.open_exposure}</p>
+  <h2>{t("p.technology.technical_debt_register")}</h2>
+  <p class="muted">{t("p.technology.open_exposure", { note: debt.note, open_exposure: debt.open_exposure })}</p>
   <table data-testid="tech-debt">
     <thead>
-      <tr><th>Risk</th><th>Item</th><th>Status</th><th>Exposure</th><th>Owner</th></tr>
+      <tr><th>{t("p.technology.risk")}</th><th>{t("p.technology.item")}</th><th>{t("p.technology.status_2")}</th><th>{t("p.technology.exposure")}</th><th>{t("p.technology.owner")}</th></tr>
     </thead>
     <tbody>
       {#each debt.register as row (row.pid)}
@@ -146,37 +146,37 @@
           <td>{row.owner_ref ?? "—"}</td>
         </tr>
       {:else}
-        <tr><td colspan="5" class="muted">No tech_debt risks recorded.</td></tr>
+        <tr><td colspan="5" class="muted">{t("p.technology.no_tech_debt_risks_recorded")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 {#if flow}
-  <h2>Delivery flow</h2>
+  <h2>{t("p.technology.delivery_flow")}</h2>
   <p class="muted">{flow.derivation}</p>
   <table data-testid="tech-flow">
     <thead>
-      <tr><th>Month</th><th>Milestones completed</th></tr>
+      <tr><th>{t("p.technology.month")}</th><th>{t("p.technology.milestones_completed")}</th></tr>
     </thead>
     <tbody>
       {#each Object.entries(flow.throughput_by_month) as [month, count] (month)}
         <tr><td>{month}</td><td>{count}</td></tr>
       {:else}
-        <tr><td colspan="2" class="muted">No timed completions in the window.</td></tr>
+        <tr><td colspan="2" class="muted">{t("p.technology.no_timed_completions_in_the")}</td></tr>
       {/each}
     </tbody>
   </table>
   <p>
-    Median lead:
+    {t("p.technology.median_lead")}
     {#if flow.median_lead_days === null}
-      <span class="muted">no timed completions</span>
+      <span class="muted">{t("p.technology.no_timed_completions")}</span>
     {:else}
-      <strong>{flow.median_lead_days} calendar days</strong>
+      <strong>{t("p.technology.calendar_days", { median_lead_days: flow.median_lead_days })}</strong>
     {/if}
-    over {flow.timed_completions} timed completions
+    {t("p.technology.over_timed_completions", { timed_completions: flow.timed_completions })}
     {#if flow.undated_completions > 0}
-      · {flow.undated_completions} completed before timing existed (untimed)
+      {t("p.technology.completed_before_timing_existed_unti", { undated_completions: flow.undated_completions })}
     {/if}
   </p>
 {/if}

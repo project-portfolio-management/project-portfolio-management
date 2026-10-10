@@ -18,7 +18,7 @@
   English-first, like the other PPM views.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
   import {
@@ -57,7 +57,7 @@
         tba.cumulativeFlow(pid, windowDays),
       ]);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load flow data.";
+      error = err instanceof Error ? err.message : t("p.plans.pid.flow.could_not_load_flow_data");
     }
   }
   $effect(() => {
@@ -73,15 +73,12 @@
   const overdue = $derived((aging?.aging ?? []).filter((row) => row.aging.past_sle));
 </script>
 
-<svelte:head><title>Flow — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.flow.flow_ppm")}</title></svelte:head>
 
-<h1>How long work takes</h1>
-<p class="lede">How long work takes to get done, and how much is in progress at once.</p>
+<h1>{t("p.plans.pid.flow.how_long_work_takes")}</h1>
+<p class="lede">{t("p.plans.pid.flow.how_long_work_takes_to")}</p>
 <p class="muted">
-  Of the calendar time these items took, how much of it was somebody
-  working on them? Flow efficiency in knowledge work typically measures
-  5–15%, so a low figure is normal — the queue is the finding, not the
-  effort.
+  {t("p.plans.pid.flow.of_the_calendar_time_these")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -91,93 +88,81 @@
        behind it. Stat tiles rather than charts — each is one number. -->
   <div class="tiles">
     <div class="tile" data-testid="sle-badge">
-      <span class="tile-label">Service level expectation</span>
+      <span class="tile-label">{t("p.plans.pid.flow.service_level_expectation")}</span>
       {#if sle?.within_days !== null && sle?.within_days !== undefined}
         <span class="tile-value">{days(sle.within_days)}</span>
         <span class="tile-note">
-          {percent(sle.percentile)} of items finish within this, from
-          {sle.sample} finished item{sle.sample === 1 ? "" : "s"}
+          {(sle.sample === 1 ? t("p.plans.pid.flow.of_items_finish_within_this_one", { percent: percent(sle.percentile), sample: sle.sample }) : t("p.plans.pid.flow.of_items_finish_within_this_other", { percent: percent(sle.percentile), sample: sle.sample }))}
         </span>
       {:else}
         <span class="tile-value muted">—</span>
-        <span class="tile-note">{sle?.reason ?? "Not enough finished items yet."}</span>
+        <span class="tile-note">{sle?.reason ?? t("p.plans.pid.flow.not_enough_finished_items_yet")}</span>
       {/if}
     </div>
 
     <div class="tile" data-testid="flow-efficiency">
-      <span class="tile-label">Flow efficiency</span>
+      <span class="tile-label">{t("p.plans.pid.flow.flow_efficiency")}</span>
       <span class="tile-value">{percent(efficiency, 1)}</span>
       <span class="tile-note">
         {#if band === "suspicious"}
-          Unusually high — this usually means the board is not being kept
-          up to date rather than that the queue has gone.
+          {t("p.plans.pid.flow.unusually_high_this_usually_means")}
         {:else if band === "strong"}
-          Strong against the 5–15% norm.
+          {t("p.plans.pid.flow.strong_against_the_5_15")}
         {:else if band === "typical"}
-          Typical. Median item: {percent(summary.median_flow_efficiency, 1)}.
+          {t("p.plans.pid.flow.typical_median_item", { percent: percent(summary.median_flow_efficiency, 1) })}
         {:else}
-          No finished work to measure yet.
+          {t("p.plans.pid.flow.no_finished_work_to_measure")}
         {/if}
       </span>
     </div>
 
     <div class="tile">
-      <span class="tile-label">First pass yield</span>
+      <span class="tile-label">{t("p.plans.pid.flow.first_pass_yield")}</span>
       <span class="tile-value">{percent(summary.rolled_first_pass_yield)}</span>
       <span class="tile-note">
-        finished without ever moving backwards ({summary.rework_count}
-        backwards move{summary.rework_count === 1 ? "" : "s"}). Read this
-        beside throughput: rising throughput with falling yield is work
-        being shipped back to itself.
+        {(summary.rework_count === 1 ? t("p.plans.pid.flow.finished_without_ever_moving_backwar_one", { rework_count: summary.rework_count }) : t("p.plans.pid.flow.finished_without_ever_moving_backwar_other", { rework_count: summary.rework_count }))}
       </span>
     </div>
 
     <div class="tile">
-      <span class="tile-label">Work in progress</span>
+      <span class="tile-label">{t("p.plans.pid.flow.work_in_progress")}</span>
       <span class="tile-value">{summary.work_in_progress}</span>
       <span class="tile-note">
-        {summary.not_started} not started · {summary.finished} finished of
-        {summary.tasks}
+        {t("p.plans.pid.flow.not_started_finished_of", { not_started: summary.not_started, finished: summary.finished, tasks: summary.tasks })}
       </span>
     </div>
   </div>
 
   {#if summary.waste_shape === "concentrated"}
     <p class="finding">
-      The waste is <strong>concentrated</strong>: the plan's overall ratio
-      ({percent(efficiency, 1)}) is well away from the typical item's
-      ({percent(summary.median_flow_efficiency, 1)}). Most items flow;
-      a minority are stuck. That is a different fix from uniformly slow
-      delivery — find those items rather than reworking the process.
+      {t("p.plans.pid.flow.the_waste_is")} <strong>{t("p.plans.pid.flow.concentrated")}</strong>{t("p.plans.pid.flow.the_plan_s_overall_ratio", { percent: percent(efficiency, 1), percent2: percent(summary.median_flow_efficiency, 1) })}
     </p>
   {/if}
 
   {#if summary.backfilled_ratio !== null && summary.backfilled_ratio > 0}
     <p class="finding muted">
-      {percent(summary.backfilled_ratio)} of the transitions behind these
-      figures were synthesized when the log was introduced, not observed.
-      They firm up as real board moves accumulate.
+      {t("p.plans.pid.flow.of_the_transitions_behind_these", { percent: percent(summary.backfilled_ratio) })}
     </p>
   {/if}
 {/if}
 
 <!-- Aging WIP: the only view here about work that can still be helped. -->
-<h2>Aging work in progress</h2>
+<h2>{t("p.plans.pid.flow.aging_work_in_progress")}</h2>
 {#if aging}
   <p class="muted">{aging.note}</p>
   {#if aging.aging.length === 0}
-    <p class="muted">Nothing in progress.</p>
+    <p class="muted">{t("p.plans.pid.flow.nothing_in_progress")}</p>
   {:else}
     <table data-testid="aging-wip">
       <thead>
         <tr>
-          <th scope="col">Item</th>
-          <th scope="col">Status</th>
-          <th scope="col">Age</th>
-          <th scope="col">vs expectation</th>
-          <th scope="col">Blocked</th>
-          <th scope="col">Rework</th>
-          <th scope="col">Assignee</th>
+          <th scope="col">{t("p.plans.pid.flow.item")}</th>
+          <th scope="col">{t("p.plans.pid.flow.status")}</th>
+          <th scope="col">{t("p.plans.pid.flow.age")}</th>
+          <th scope="col">{t("p.plans.pid.flow.vs_expectation")}</th>
+          <th scope="col">{t("p.plans.pid.flow.blocked")}</th>
+          <th scope="col">{t("p.plans.pid.flow.rework")}</th>
+          <th scope="col">{t("p.plans.pid.flow.assignee")}</th>
         </tr>
       </thead>
       <tbody>
@@ -190,32 +175,30 @@
             <td>{days(row.aging.age_days)}</td>
             <td>
               {#if row.aging.sle_ratio === null}
-                <span class="muted">no expectation yet</span>
+                <span class="muted">{t("p.plans.pid.flow.no_expectation_yet")}</span>
               {:else}
                 {row.aging.past_sle ? "⚠ " : ""}{percent(row.aging.sle_ratio)}
               {/if}
             </td>
             <td>{msAsDays(row.blocked_time_ms)}</td>
             <td>{row.rework_count}</td>
-            <td class="muted">{row.task.assignee_ref ?? "unassigned"}</td>
+            <td class="muted">{row.task.assignee_ref ?? t("p.plans.pid.flow.unassigned")}</td>
           </tr>
         {/each}
       </tbody>
     </table>
     {#if overdue.length > 0}
       <p class="finding">
-        {overdue.length} item{overdue.length === 1 ? " is" : "s are"} already
-        past the expectation. An aging item is the one thing on this page
-        you can still change the outcome of.
+        {overdue.length === 1 ? t("p.plans.pid.flow.overdue_one", { count: overdue.length }) : t("p.plans.pid.flow.overdue_other", { count: overdue.length })}
       </p>
     {/if}
   {/if}
 {/if}
 
 <!-- The picture. -->
-<h2>Cumulative flow</h2>
+<h2>{t("p.plans.pid.flow.cumulative_flow")}</h2>
 <label class="window">
-  Window
+  {t("p.plans.pid.flow.window")}
   <select
     value={String(windowDays)}
     onchange={(event) => {
@@ -223,10 +206,10 @@
       void load();
     }}
   >
-    <option value="30">30 calendar days</option>
-    <option value="60">60 calendar days</option>
-    <option value="90">90 calendar days</option>
-    <option value="180">180 calendar days</option>
+    <option value="30">{t("p.plans.pid.flow.30_calendar_days")}</option>
+    <option value="60">{t("p.plans.pid.flow.60_calendar_days")}</option>
+    <option value="90">{t("p.plans.pid.flow.90_calendar_days")}</option>
+    <option value="180">{t("p.plans.pid.flow.180_calendar_days")}</option>
   </select>
 </label>
 {#if cfd}
@@ -234,16 +217,16 @@
 {/if}
 
 <!-- Where the time goes. -->
-<h2>Constraints</h2>
+<h2>{t("p.plans.pid.flow.constraints")}</h2>
 {#if constraints}
   <p class="muted">{constraints.note}</p>
   <table data-testid="constraints">
     <thead>
       <tr>
-        <th scope="col">Rule</th>
-        <th scope="col">Subject</th>
-        <th scope="col">Recoverable</th>
-        <th scope="col">Detail</th>
+        <th scope="col">{t("p.plans.pid.flow.rule")}</th>
+        <th scope="col">{t("p.plans.pid.flow.subject")}</th>
+        <th scope="col">{t("p.plans.pid.flow.recoverable")}</th>
+        <th scope="col">{t("p.plans.pid.flow.detail")}</th>
       </tr>
     </thead>
     <tbody>
@@ -255,14 +238,14 @@
           <td class="detail">{finding.detail}</td>
         </tr>
       {:else}
-        <tr><td colspan="4" class="muted">No findings yet.</td></tr>
+        <tr><td colspan="4" class="muted">{t("p.plans.pid.flow.no_findings_yet")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 <!-- Little's Law, and the columns it points at. -->
-<h2>Flow</h2>
+<h2>{t("p.plans.pid.flow.flow")}</h2>
 {#if flow}
   <p class="finding" data-testid="littles-law">
     <strong>{interpretationLabel(flow.flow.interpretation)}.</strong>
@@ -271,39 +254,38 @@
   <table data-testid="flow-rates">
     <tbody>
       <tr>
-        <th scope="row">Arrival rate (λ)</th>
-        <td>{flow.flow.arrival_rate_per_day?.toFixed(2) ?? "—"} / calendar day</td>
-        <th scope="row">Throughput (μ)</th>
-        <td>{flow.flow.throughput_per_day?.toFixed(2) ?? "—"} / calendar day</td>
+        <th scope="row">{t("p.plans.pid.flow.arrival_rate")}</th>
+        <td>{t("p.plans.pid.flow.calendar_day", { v: flow.flow.arrival_rate_per_day?.toFixed(2) ?? "—" })}</td>
+        <th scope="row">{t("p.plans.pid.flow.throughput")}</th>
+        <td>{t("p.plans.pid.flow.calendar_day", { v: flow.flow.throughput_per_day?.toFixed(2) ?? "—" })}</td>
       </tr>
       <tr>
-        <th scope="row">Utilization (ρ)</th>
+        <th scope="row">{t("p.plans.pid.flow.utilization")}</th>
         <td>
           {flow.flow.utilization?.toFixed(2) ?? "—"}
           {#if flow.flow.utilization_reason}
             <span class="muted">— {flow.flow.utilization_reason}</span>
           {/if}
         </td>
-        <th scope="row">Work in progress (κ)</th>
+        <th scope="row">{t("p.plans.pid.flow.work_in_progress_2")}</th>
         <td>{flow.flow.work_in_progress}</td>
       </tr>
       <tr>
-        <th scope="row">Implied cycle time</th>
+        <th scope="row">{t("p.plans.pid.flow.implied_cycle_time")}</th>
         <td>{days(flow.flow.implied_cycle_time_days)}</td>
-        <th scope="row">Observed median</th>
+        <th scope="row">{t("p.plans.pid.flow.observed_median")}</th>
         <td>{days(flow.flow.observed_p50_cycle_time_days)}</td>
       </tr>
     </tbody>
   </table>
 
-  <h3>Columns</h3>
+  <h3>{t("p.plans.pid.flow.columns")}</h3>
   <p class="muted">
-    Cycle time is work in progress divided by throughput, so lowering a
-    cap shortens it without anyone working faster.
+    {t("p.plans.pid.flow.cycle_time_is_work_in")}
   </p>
   <table data-testid="columns">
     <thead>
-      <tr><th scope="col">Column</th><th scope="col">Count</th><th scope="col">Limit</th></tr>
+      <tr><th scope="col">{t("p.plans.pid.flow.column")}</th><th scope="col">{t("p.plans.pid.flow.count")}</th><th scope="col">{t("p.plans.pid.flow.limit")}</th></tr>
     </thead>
     <tbody>
       {#each flow.columns as column (column.status)}
@@ -312,7 +294,7 @@
           <td>{column.count}</td>
           <td>
             {#if column.limit === null}
-              <span class="muted">no cap</span>
+              <span class="muted">{t("p.plans.pid.flow.no_cap")}</span>
             {:else}
               {column.over_limit ? "⚠ " : ""}{column.limit}
             {/if}
@@ -325,18 +307,16 @@
 
 <!-- The distributions last: history, not something to act on today. -->
 {#if summary?.cycle_time && summary?.lead_time}
-  <h2>Distributions</h2>
+  <h2>{t("p.plans.pid.flow.distributions")}</h2>
   <p class="muted">
-    Percentiles are nearest-rank, so every one is a real item. Cycle time
-    is what the team controls; lead time is what the requester waits, and
-    the difference between them is how long work sat in the backlog.
+    {t("p.plans.pid.flow.percentiles_are_nearest_rank_so")}
   </p>
   <table data-testid="distributions">
     <thead>
       <tr>
-        <th scope="col">Measure</th><th scope="col">n</th><th scope="col">min</th>
+        <th scope="col">{t("p.plans.pid.flow.measure")}</th><th scope="col">n</th><th scope="col">{t("p.plans.pid.flow.min")}</th>
         <th scope="col">p50</th><th scope="col">p85</th><th scope="col">p95</th>
-        <th scope="col">max</th><th scope="col">mean</th>
+        <th scope="col">{t("p.plans.pid.flow.max")}</th><th scope="col">{t("p.plans.pid.flow.mean")}</th>
       </tr>
     </thead>
     <tbody>
@@ -355,16 +335,13 @@
     </tbody>
   </table>
   <p class="muted">
-    The mean is shown for completeness and describes no actual item —
-    quote the p85.
+    {t("p.plans.pid.flow.the_mean_is_shown_for")}
   </p>
 {/if}
 
 {#if analysis}
   <p class="muted classes">
-    Classified with {analysis.classification.overridden
-      ? "a deployment override"
-      : "the default map"}:
+    {t("p.plans.pid.flow.classified_with", { map: analysis.classification.overridden ? t("p.plans.pid.flow.map_override") : t("p.plans.pid.flow.map_default") })}
     {#each Object.entries(analysis.classification.classes) as [status, category], i (status)}{i >
       0
         ? " · "

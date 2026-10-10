@@ -1,0 +1,64 @@
+#!/bin/sh
+# Restore a backup made by scripts/backup.sh into a database (and artifact directory).
+#
+#   scripts/restore.sh BACKUP_DIR TARGET_DATABASE_URL [-a ARTIFACT_DIR] [-f]
+#
+# Verifies SHA256SUMS first and refuses to continue on any mismatch. Refuses to
+# restore into a database that already has tables unless -f is given (-f drops
+# the existing objects it replaces: pg_restore --clean --if-exists). The target
+# database must exist (createdb), and the restoring role needs to create tables.
+#
+# Environment: PG_RESTORE, PSQL override the commands (see scripts/backup.sh).
+# ARTIFACT_UNTAR_CMD reads the gzip tar on stdin and unpacks it where the service
+# expects it (compose: "docker compose exec -T api tar -C /app/data/artifacts -xz");
+# it replaces -a. With the compose overrides pg_restore must read the dump from stdin
+# (PG_RESTORE="docker compose exec -T postgres pg_restore" and RESTORE_FROM_STDIN=1).
+# Stop the service before restoring over a live database.
+set -eu
+
+[ $# -ge 2 ] || { echo "usage: $0 BACKUP_DIR TARGET_DATABASE_URL [-a ARTIFACT_DIR] [-f]" >&2; exit 2; }
+DIR="$1"; TARGET="$2"; shift 2
+ARTIFACTS_OUT=""; FORCE=0
+while getopts "a:f" opt; do
+  case "$opt" in
+    a) ARTIFACTS_OUT="$OPTARG" ;;
+    f) FORCE=1 ;;
+    *) exit 2 ;;
+  esac
+done
+PG_RESTORE="${PG_RESTORE:-pg_restore}"
+PSQL="${PSQL:-psql}"
+
+sha256check() { if command -v sha256sum >/dev/null 2>&1; then sha256sum -c "$@"; else shasum -a 256 -c "$@"; fi; }
+
+[ -f "$DIR/SHA256SUMS" ] || { echo "restore: $DIR has no SHA256SUMS; not a backup" >&2; exit 1; }
+echo "verifying checksums ..."
+( cd "$DIR" && sha256check SHA256SUMS ) >/dev/null || { echo "restore: CHECKSUM MISMATCH in $DIR; refusing" >&2; exit 1; }
+
+existing="$($PSQL "$TARGET" -Atc "select count(*) from pg_tables where schemaname='public'")"
+if [ "$existing" != "0" ] && [ "$FORCE" != 1 ]; then
+  echo "restore: target database already has $existing tables; use -f to replace them" >&2
+  exit 1
+fi
+
+echo "restoring the database ..."
+# Single transaction so a failure leaves the target as it was.
+if [ "${RESTORE_FROM_STDIN:-0}" = 1 ]; then
+  $PG_RESTORE --no-owner --no-privileges --clean --if-exists --single-transaction --dbname="$TARGET" < "$DIR/db.dump"
+else
+  $PG_RESTORE --no-owner --no-privileges --clean --if-exists --single-transaction --dbname="$TARGET" "$DIR/db.dump"
+fi
+
+if [ -f "$DIR/artifacts.tar.gz" ]; then
+  if [ -n "${ARTIFACT_UNTAR_CMD:-}" ]; then
+    echo "restoring the artifact store with ARTIFACT_UNTAR_CMD ..."
+    sh -c "$ARTIFACT_UNTAR_CMD" < "$DIR/artifacts.tar.gz"
+  elif [ -n "$ARTIFACTS_OUT" ]; then
+    echo "restoring the artifact store into $ARTIFACTS_OUT ..."
+    mkdir -p "$ARTIFACTS_OUT"
+    tar -xzf "$DIR/artifacts.tar.gz" -C "$ARTIFACTS_OUT"
+  else
+    echo "note: the backup holds an artifact archive; pass -a ARTIFACT_DIR to restore it" >&2
+  fi
+fi
+echo "restore complete"

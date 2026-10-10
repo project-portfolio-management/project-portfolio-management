@@ -9,16 +9,15 @@
  */
 
 import { dateOf, dayNumber } from "./lily-grids";
+import { businessDays } from "./units.js";
+import { t } from "./i18n.svelte.js";
+import { lazyArray } from "./lazy.js";
 
-export const WEEKDAY_NAMES = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-] as const;
+/** Monday first; looked up when read, so it follows the language. */
+export const WEEKDAY_NAMES: readonly string[] = lazyArray([
+  "l.cpm_view.monday", "l.cpm_view.tuesday", "l.cpm_view.wednesday", "l.cpm_view.thursday",
+  "l.cpm_view.friday", "l.cpm_view.saturday", "l.cpm_view.sunday",
+]);
 
 /** `1111100` → `[true, true, true, true, true, false, false]` (Monday first). Anything malformed is all-working. */
 export function maskToWeekdays(mask: string): boolean[] {
@@ -136,11 +135,11 @@ export function floatLabel(n: {
   near_critical: boolean;
 }): string {
   if (n.total_float < 0) {
-    return `Cannot meet its constraint or deadline: ${plural(-n.total_float, "business day", "business days")} short`;
+    return t("l.cpm_view.cannot_meet_its_constraint_or", { plural: plural(-n.total_float, t("l.cpm_view.business_day"), t("p.plans.pid.critical_path.business_days")) });
   }
-  if (n.critical) return "On the critical path: any slip moves the finish";
-  const d = plural(n.total_float, "business day", "business days");
-  return n.near_critical ? `${d} of float (near-critical)` : `${d} of float`;
+  if (n.critical) return t("l.cpm_view.on_the_critical_path_any");
+  const d = plural(n.total_float, t("l.cpm_view.business_day"), t("p.plans.pid.critical_path.business_days"));
+  return n.near_critical ? t("l.cpm_view.of_float_near_critical", { d }) : t("l.cpm_view.of_float", { d });
 }
 
 /** The task's state for a key and a non-colour marker, so colour is never the only signal. */
@@ -253,11 +252,9 @@ export function cpmBars(
       limitPct: lf < ef ? pct(lf + 1) : null,
       state: st.key,
       marker: st.marker,
-      label: `${n.title ?? "(untitled)"}: ${n.early_start} to ${n.early_finish}. ${floatLabel(n)}${
-        ghostDays(n)
-          ? `. Baselined ${baseline.get(n.pid)?.start} to ${baseline.get(n.pid)?.finish}`
-          : ""
-      }`,
+      label: t("l.cpm_view.to", { v: n.title ?? "(untitled)", early_start: n.early_start, early_finish: n.early_finish, floatLabel: floatLabel(n), v2: ghostDays(n)
+          ? t("l.cpm_view.baselined_to", { start: baseline.get(n.pid)?.start, finish: baseline.get(n.pid)?.finish })
+          : "" }),
       ghost: (() => {
         const g = ghostDays(n);
         return g
@@ -380,11 +377,11 @@ export function layoutNetwork(
 export function unscheduledReason(reason: string): string {
   switch (reason) {
     case "no_duration":
-      return "has no duration yet";
+      return t("l.cpm_view.has_no_duration_yet");
     case "no_anchor":
-      return "has no start date and nothing before it is scheduled";
+      return t("l.cpm_view.has_no_start_date_and");
     case "date_out_of_range":
-      return "has a date outside the supported range";
+      return t("l.cpm_view.has_a_date_outside_the");
     default:
       return reason;
   }
@@ -397,47 +394,46 @@ export function standingText(r: {
   finish_variance_days: number | null;
   reason?: string;
 }): { marker: string; word: string; detail: string } {
-  const d = (n: number) =>
-    `${Math.abs(n)} business day${Math.abs(n) === 1 ? "" : "s"}`;
+  const d = (n: number) => businessDays(Math.abs(n));
   switch (r.standing) {
     case "slipped":
       return {
         marker: "▲",
-        word: "Slipped",
-        detail: `finishes ${d(r.finish_variance_days ?? 0)} later than baselined`,
+        word: t("l.cpm_view.slipped"),
+        detail: t("l.cpm_view.finishes_later_than_baselined", { d: d(r.finish_variance_days ?? 0) }),
       };
     case "pulled_in":
       return {
         marker: "▼",
-        word: "Pulled in",
-        detail: `finishes ${d(r.finish_variance_days ?? 0)} earlier than baselined`,
+        word: t("l.cpm_view.pulled_in"),
+        detail: t("l.cpm_view.finishes_earlier_than_baselined", { d: d(r.finish_variance_days ?? 0) }),
       };
     case "on_baseline":
       return {
         marker: "=",
-        word: "On baseline",
-        detail: "finishes when it was baselined to",
+        word: t("l.cpm_view.on_baseline"),
+        detail: t("l.cpm_view.finishes_when_it_was_baselined"),
       };
     case "added":
       return {
         marker: "+",
-        word: "Added",
-        detail: "not in the baseline, so it has no slip",
+        word: t("l.cpm_view.added"),
+        detail: t("l.cpm_view.not_in_the_baseline_so"),
       };
     case "removed":
       return {
         marker: "−",
-        word: "Removed",
-        detail: "was in the baseline and is gone; its baselined dates are kept",
+        word: t("l.cpm_view.removed"),
+        detail: t("l.cpm_view.was_in_the_baseline_and"),
       };
     default:
       return {
         marker: "?",
-        word: "Cannot say",
+        word: t("l.cpm_view.cannot_say"),
         detail:
           r.reason === "not_scheduled_then"
-            ? "it had no schedule when baselined"
-            : "it has no schedule now",
+            ? t("l.cpm_view.it_had_no_schedule_when")
+            : t("l.cpm_view.it_has_no_schedule_now"),
       };
   }
 }
@@ -453,5 +449,5 @@ export function diagramFits(nodeCount: number): boolean {
 /** The sentence for dependencies the reader may not see: how many, never what. */
 export function restrictedText(n: number): string {
   if (n === 0) return "";
-  return `${n} dependenc${n === 1 ? "y" : "ies"} to a plan you cannot see ${n === 1 ? "is" : "are"} left out of these dates.`;
+  return n === 1 ? t("l.cpm_view.restricted_one", { n }) : t("l.cpm_view.restricted_other", { n });
 }

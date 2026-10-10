@@ -83,26 +83,26 @@
     try {
       evaluations = { ...evaluations, [pid]: await ppm.evaluateScenario(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : "evaluate failed";
+      error = err instanceof Error ? err.message : t("p.scenarios.evaluate_failed");
     }
   }
 </script>
 
-<svelte:head><title>Scenarios — PPM</title></svelte:head>
+<svelte:head><title>{t("p.scenarios.scenarios_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.scenarios.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
   <input placeholder={t("ppm.scenarios.name")} bind:value={name} required />
-  <input placeholder="work-item pids (space/comma separated)" bind:value={members} size="50" />
+  <input placeholder={t("p.scenarios.work_item_pids_space_comma")} bind:value={members} size="50" />
   <input placeholder={t("ppm.scenarios.cap")} bind:value={cap} size="12" />
-  <input bind:value={currency} size="4" aria-label="Currency" />
+  <input bind:value={currency} size="4" aria-label={t("p.scenarios.currency")} />
   <button class="button primary" type="submit">{t("ppm.scenarios.create")}</button>
 </form>
 
 <table>
-  <thead><tr><th>Scenario</th><th>Cap</th><th>Status</th><th>Evaluation</th><th></th></tr></thead>
+  <thead><tr><th>{t("p.scenarios.scenario")}</th><th>{t("p.scenarios.cap")}</th><th>{t("p.scenarios.status")}</th><th>{t("p.scenarios.evaluation")}</th><th></th></tr></thead>
   <tbody>
     {#each scenarios as scenario (scenario.pid)}
       <tr>
@@ -143,7 +143,7 @@
 </table>
 
 
-<h2>Compare</h2>
+<h2>{t("p.scenarios.compare")}</h2>
 <form
   class="compare"
   onsubmit={(event) => {
@@ -154,19 +154,19 @@
   <label>
     A
     <select bind:value={compareA}>
-      <option value="" disabled>pick…</option>
+      <option value="" disabled>{t("p.scenarios.pick")}</option>
       {#each scenarios as s (s.pid)}<option value={s.pid}>{s.name}</option>{/each}
     </select>
   </label>
   <label>
     B
     <select bind:value={compareB}>
-      <option value="" disabled>pick…</option>
+      <option value="" disabled>{t("p.scenarios.pick")}</option>
       {#each scenarios as s (s.pid)}<option value={s.pid}>{s.name}</option>{/each}
     </select>
   </label>
   <button type="submit" disabled={!compareA || !compareB || compareA === compareB}>
-    Compare
+    {t("p.scenarios.compare")}
   </button>
 </form>
 
@@ -174,31 +174,31 @@
   <p class="muted">{comparison.note}</p>
   <table data-testid="scenario-compare">
     <thead>
-      <tr><th></th><th>{comparison.a.name}</th><th>{comparison.b.name}</th><th>Delta (b − a)</th></tr>
+      <tr><th></th><th>{comparison.a.name}</th><th>{comparison.b.name}</th><th>{t("p.scenarios.delta_b_a")}</th></tr>
     </thead>
     <tbody>
       <tr>
-        <td>Feasible</td>
-        <td>{comparison.a.feasible ? "yes" : "no"}</td>
-        <td>{comparison.b.feasible ? "yes" : "no"}</td>
+        <td>{t("p.scenarios.feasible")}</td>
+        <td>{comparison.a.feasible ? t("p.scenarios.yes") : t("p.scenarios.no")}</td>
+        <td>{comparison.b.feasible ? t("p.scenarios.yes") : t("p.scenarios.no")}</td>
         <td>—</td>
       </tr>
       {#each comparison.deltas.planned_by_currency as row (row.currency)}
         <tr>
-          <td>Planned {row.currency}</td>
+          <td>{t("p.scenarios.planned", { currency: row.currency })}</td>
           <td>{money(row.a_minor, row.currency)}</td>
           <td>{money(row.b_minor, row.currency)}</td>
           <td>{money(row.delta_minor, row.currency)}</td>
         </tr>
       {/each}
       <tr>
-        <td>Open exposure</td>
+        <td>{t("p.scenarios.open_exposure")}</td>
         <td>{comparison.a.evaluation.total_exposure}</td>
         <td>{comparison.b.evaluation.total_exposure}</td>
         <td>{comparison.deltas.exposure}</td>
       </tr>
       <tr>
-        <td>Alignment</td>
+        <td>{t("p.scenarios.alignment")}</td>
         <td>{comparison.a.evaluation.total_alignment}</td>
         <td>{comparison.b.evaluation.total_alignment}</td>
         <td>{comparison.deltas.alignment}</td>

@@ -112,7 +112,7 @@
   const toMinor = (major: string) => Math.round(Number(major) * 100);
 </script>
 
-<svelte:head><title>Governance — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.governance.governance_ppm")}</title></svelte:head>
 
 <p class="small"><a href={localeHref(`/plans/`)}>{t("ppm.gov.backToItem")}</a></p>
 <h1>{t("ppm.gov.title")}{#if summary} — {summary.name}{/if}</h1>
@@ -120,14 +120,14 @@
 
 {#if summary}
   <section class="strip" data-testid="governance-strip">
-    <span class="chip">stage: {summary.stage ?? "pre-gate"}</span>
-    {#if summary.next_gate}<span class="chip">next: {summary.next_gate}</span>{/if}
-    <span class="chip">open risks: {summary.risks.open}</span>
+    <span class="chip">{t("p.plans.pid.governance.stage", { v: summary.stage ?? t("p.common.pre_gate") })}</span>
+    {#if summary.next_gate}<span class="chip">{t("p.plans.pid.governance.next", { next_gate: summary.next_gate })}</span>{/if}
+    <span class="chip">{t("p.plans.pid.governance.open_risks", { open: summary.risks.open })}</span>
     {#if summary.risks.materialized > 0}
-      <span class="chip red">materialized: {summary.risks.materialized}</span>
+      <span class="chip red">{t("p.plans.pid.governance.materialized", { materialized: summary.risks.materialized })}</span>
     {/if}
     {#if summary.risks.max_exposure !== null}
-      <span class="chip">max exposure: {summary.risks.max_exposure}</span>
+      <span class="chip">{t("p.plans.pid.governance.max_exposure", { max_exposure: summary.risks.max_exposure })}</span>
     {/if}
     {#each summary.budget as total (total.currency)}
       <span class="chip" class:red={total.variance_minor < 0}>
@@ -161,12 +161,12 @@
           );
         }}
       >
-        <span class="small">Review <strong>{journey.next_gate}</strong>:</span>
-        <select bind:value={gateDecision} aria-label="Decision">
-          <option>approved</option>
-          <option>approved_with_conditions</option>
-          <option>hold</option>
-          <option>rejected</option>
+        <span class="small">{t("p.plans.pid.governance.review")} <strong>{journey.next_gate}</strong>:</span>
+        <select bind:value={gateDecision} aria-label={t("p.plans.pid.governance.decision")}>
+          <option>{t("p.plans.pid.governance.approved")}</option>
+          <option>{t("p.plans.pid.governance.approved_with_conditions")}</option>
+          <option>{t("p.plans.pid.governance.hold")}</option>
+          <option>{t("p.plans.pid.governance.rejected")}</option>
         </select>
         <button class="button primary small" type="submit">{t("ppm.gov.recordDecision")}</button>
       </form>
@@ -179,7 +179,7 @@
 <details open>
   <summary><h2>{t("ppm.gov.risks")}</h2></summary>
   <table>
-    <thead><tr><th>Risk</th><th>P×I</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>{t("p.plans.pid.governance.risk")}</th><th>P×I</th><th>{t("p.plans.pid.governance.status")}</th><th></th></tr></thead>
     <tbody>
       {#each risks as risk (risk.pid)}
         <tr>
@@ -213,7 +213,7 @@
       ).then(() => (riskTitle = ""));
     }}
   >
-    <input placeholder="New risk" bind:value={riskTitle} required />
+    <input placeholder={t("p.plans.pid.governance.new_risk")} bind:value={riskTitle} required />
     <label class="small">P <input type="number" min="1" max="5" bind:value={riskProbability} /></label>
     <label class="small">I <input type="number" min="1" max="5" bind:value={riskImpact} /></label>
     <button class="button small" type="submit">{t("ppm.gov.raise")}</button>
@@ -224,7 +224,7 @@
   <summary><h2>{t("ppm.gov.budget")}</h2></summary>
   {#if budget}
     <table>
-      <thead><tr><th>Line</th><th>Planned</th><th>Range for cost risk</th><th>Actual</th><th>Record actual</th></tr></thead>
+      <thead><tr><th>{t("p.plans.pid.governance.line")}</th><th>{t("p.plans.pid.governance.planned")}</th><th>{t("p.plans.pid.governance.range_for_cost_risk")}</th><th>{t("p.plans.pid.governance.actual")}</th><th>{t("p.plans.pid.governance.record_actual")}</th></tr></thead>
       <tbody>
         {#each budget.lines as line (line.pid)}
           <tr>
@@ -257,8 +257,7 @@
     </table>
     {#each budget.totals as total (total.currency)}
       <p class="small">
-        <strong>{total.currency}</strong>: planned {money(total.planned_minor)} · actual
-        {money(total.actual_minor)} · variance {money(total.variance_minor)}
+        <strong>{total.currency}</strong>{t("p.plans.pid.governance.planned_actual_variance", { money: money(total.planned_minor), money2: money(total.actual_minor), money3: money(total.variance_minor) })}
       </p>
     {/each}
   {/if}
@@ -281,10 +280,10 @@
       });
     }}
   >
-    <input placeholder="New budget line" bind:value={lineDescription} required />
-    <select bind:value={lineCategory} aria-label="Category"><option>capex</option><option>opex</option></select>
-    <input bind:value={lineCurrency} size="4" aria-label="Currency" />
-    <input placeholder="Planned (major)" bind:value={linePlanned} size="10" required />
+    <input placeholder={t("p.plans.pid.governance.new_budget_line")} bind:value={lineDescription} required />
+    <select bind:value={lineCategory} aria-label={t("p.plans.pid.governance.category")}><option>{t("p.plans.pid.governance.capex")}</option><option>{t("p.plans.pid.governance.opex")}</option></select>
+    <input bind:value={lineCurrency} size="4" aria-label={t("p.plans.pid.governance.currency")} />
+    <input placeholder={t("p.plans.pid.governance.planned_major")} bind:value={linePlanned} size="10" required />
     <button class="button small" type="submit">{t("ppm.gov.addLine")}</button>
   </form>
 </details>
@@ -293,7 +292,7 @@
   <summary><h2>{t("ppm.gov.benefits")}</h2></summary>
   {#if benefits}
     <table>
-      <thead><tr><th>Benefit</th><th>Target</th><th>Realized</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>{t("p.plans.pid.governance.benefit")}</th><th>{t("p.plans.pid.governance.target")}</th><th>{t("p.plans.pid.governance.realized")}</th><th>{t("p.plans.pid.governance.status")}</th><th></th></tr></thead>
       <tbody>
         {#each benefits.benefits as benefit (benefit.pid)}
           <tr>
@@ -335,10 +334,9 @@
     </table>
     {#each benefits.totals as total (total.currency)}
       <p class="small">
-        <strong>{total.currency}</strong>: target {money(total.target_minor)} · realized
-        {money(total.realized_minor)} · spend {money(total.spend_minor)}
+        <strong>{total.currency}</strong>{t("p.plans.pid.governance.target_realized_spend", { money: money(total.target_minor), money2: money(total.realized_minor), money3: money(total.spend_minor) })}
         {#if total.roi_basis_points !== null}
-          · ROI {(total.roi_basis_points / 100).toFixed(1)}%
+          {t("p.plans.pid.governance.roi", { toFixed: (total.roi_basis_points / 100).toFixed(1) })}
         {/if}
       </p>
     {/each}
@@ -362,12 +360,12 @@
       });
     }}
   >
-    <input placeholder="New benefit" bind:value={benefitTitle} required />
-    <select bind:value={benefitCategory} aria-label="Benefit category">
-      <option>cost_saving</option><option>revenue</option><option>risk_reduction</option>
-      <option>quality</option><option>compliance</option><option>other</option>
+    <input placeholder={t("p.plans.pid.governance.new_benefit")} bind:value={benefitTitle} required />
+    <select bind:value={benefitCategory} aria-label={t("p.plans.pid.governance.benefit_category")}>
+      <option>{t("p.plans.pid.governance.cost_saving")}</option><option>{t("p.plans.pid.governance.revenue")}</option><option>{t("p.plans.pid.governance.risk_reduction")}</option>
+      <option>{t("p.plans.pid.governance.quality")}</option><option>{t("p.plans.pid.governance.compliance")}</option><option>{t("p.plans.pid.governance.other")}</option>
     </select>
-    <input placeholder="Target (major)" bind:value={benefitTarget} size="10" />
+    <input placeholder={t("p.plans.pid.governance.target_major")} bind:value={benefitTarget} size="10" />
     <button class="button small" type="submit">{t("ppm.gov.declare")}</button>
   </form>
 </details>
@@ -387,13 +385,13 @@
       if (mapObjective) act(() => ppm.linkObjective(pid, mapObjective, mapWeight));
     }}
   >
-    <select bind:value={mapObjective} aria-label="Objective">
-      <option value="">choose objective…</option>
+    <select bind:value={mapObjective} aria-label={t("p.plans.pid.governance.objective")}>
+      <option value="">{t("p.plans.pid.governance.choose_objective")}</option>
       {#each objectives as objective (objective.pid)}
         <option value={objective.pid}>{objective.title}</option>
       {/each}
     </select>
-    <label class="small">weight <input type="number" min="1" max="5" bind:value={mapWeight} /></label>
+    <label class="small">{t("p.plans.pid.governance.weight")} <input type="number" min="1" max="5" bind:value={mapWeight} /></label>
     <button class="button small" type="submit">{t("ppm.gov.map")}</button>
   </form>
 </details>
@@ -423,7 +421,7 @@
       );
     }}
   >
-    <input placeholder="New milestone" bind:value={milestoneName} required />
+    <input placeholder={t("p.plans.pid.governance.new_milestone")} bind:value={milestoneName} required />
     <input type="date" bind:value={milestoneDue} required />
     <button class="button small" type="submit">{t("ppm.gov.add")}</button>
   </form>
@@ -437,12 +435,12 @@
         {allocation.person_ref} — {allocation.percent}%
         {#if allocation.role}({allocation.role}){/if}
         {#if allocation.booking === "proposed"}
-          <span class="chip">proposed{allocation.requested ? ", requested" : ""} — not counted</span>
-          <button class="button small" type="button" onclick={() => void commit(allocation.pid, false)}>Commit</button>
+          <span class="chip">{t("p.plans.pid.governance.proposed_not_counted", { requested: allocation.requested ? t("p.plans.pid.governance.requested") : "" })}</span>
+          <button class="button small" type="button" onclick={() => void commit(allocation.pid, false)}>{t("p.plans.pid.governance.commit")}</button>
           {#if overCapacity === allocation.pid}
             <span role="alert">
-              Committing this puts them over capacity.
-              <button class="button small" type="button" onclick={() => void commit(allocation.pid, true)}>Commit anyway</button>
+              {t("p.plans.pid.governance.committing_this_puts_them_over")}
+              <button class="button small" type="button" onclick={() => void commit(allocation.pid, true)}>{t("p.plans.pid.governance.commit_anyway")}</button>
             </span>
           {/if}
         {/if}
@@ -462,9 +460,9 @@
       ).then(() => (allocPerson = ""));
     }}
   >
-    <input placeholder="worker:<uuid>" bind:value={allocPerson} size="42" required />
+    <input placeholder={t("p.plans.pid.governance.worker_uuid")} bind:value={allocPerson} size="42" required />
     <label class="small">% <input type="number" min="1" max="100" bind:value={allocPercent} /></label>
-    <label class="small"><input type="checkbox" bind:checked={allocProposed} /> proposed (does not count until committed)</label>
+    <label class="small"><input type="checkbox" bind:checked={allocProposed} /> {t("p.plans.pid.governance.proposed_does_not_count_until")}</label>
     <button class="button small" type="submit">{t("ppm.gov.allocate")}</button>
   </form>
 </details>

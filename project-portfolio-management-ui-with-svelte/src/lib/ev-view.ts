@@ -13,6 +13,8 @@ import type {
   EvSeries,
   EvTcpi,
 } from "./api/ppm";
+import { t } from "./i18n.svelte.js";
+import { calendarDays } from "./units.js";
 
 /** `8000` → `"0.80"`; `null` → `"—"`. Two decimals, half-up, integer arithmetic. */
 export function ratioText(bp: number | null): string {
@@ -26,13 +28,13 @@ export function ratioText(bp: number | null): string {
 export function absentText(r: EvRatio): string {
   switch (r.absent) {
     case "no_planned_value_yet":
-      return "nothing was planned to be done yet";
+      return t("l.ev_view.nothing_was_planned_to_be");
     case "no_actuals_recorded":
-      return "no cost has been recorded yet";
+      return t("l.ev_view.no_cost_has_been_recorded");
     case "no_planned_value":
-      return "the baseline plans no value";
+      return t("l.ev_view.the_baseline_plans_no_value");
     default:
-      return "not available";
+      return t("l.ev_view.not_available");
   }
 }
 
@@ -72,15 +74,15 @@ export function scheduleSentence(
   money: (minor: number) => string,
 ): string {
   const h = health(b.spi.bp);
-  if (b.spi.bp === null) return `Schedule: no ratio, ${absentText(b.spi)}.`;
-  const gap = `${money(Math.abs(b.sv_minor))} ${b.sv_minor >= 0 ? "more" : "less"} value earned than planned by now`;
+  if (b.spi.bp === null) return t("l.ev_view.schedule_no_ratio", { absentText: absentText(b.spi) });
+  const gap = t(b.sv_minor >= 0 ? "l.ev_view.gap_more" : "l.ev_view.gap_less", { money: money(Math.abs(b.sv_minor)) });
   const word =
     h === "ahead"
-      ? "Ahead of schedule"
+      ? t("l.ev_view.ahead_of_schedule")
       : h === "behind"
-        ? "Behind schedule"
-        : "On schedule";
-  return `${word}: SPI ${ratioText(b.spi.bp)}, ${gap}.`;
+        ? t("l.ev_view.behind_schedule")
+        : t("l.ev_view.on_schedule");
+  return t("l.ev_view.spi", { word, ratioText: ratioText(b.spi.bp), gap });
 }
 
 /** The sentence for cost performance. */
@@ -89,25 +91,25 @@ export function costSentence(
   money: (minor: number) => string,
 ): string {
   if (b.cv_minor === null || b.cpi.bp === null)
-    return `Cost: no ratio, ${absentText(b.cpi)}.`;
+    return t("l.ev_view.cost_no_ratio", { absentText: absentText(b.cpi) });
   const h = health(b.cpi.bp);
   const word =
     h === "ahead"
-      ? "Under budget"
+      ? t("l.ev_view.under_budget")
       : h === "behind"
-        ? "Over budget"
-        : "On budget";
-  return `${word}: CPI ${ratioText(b.cpi.bp)}, ${money(Math.abs(b.cv_minor))} ${b.cv_minor >= 0 ? "less" : "more"} spent than the work earned.`;
+        ? t("l.ev_view.over_budget")
+        : t("l.ev_view.on_budget");
+  return t(b.cv_minor >= 0 ? "l.ev_view.cost_line_less" : "l.ev_view.cost_line_more", { word, ratio: ratioText(b.cpi.bp), money: money(Math.abs(b.cv_minor)) });
 }
 
 /** The sentence for earned schedule, which still says so when a project is late and finished. */
 export function earnedScheduleSentence(b: EvBlock): string {
   if (b.spi_t.bp === null || b.earned_schedule_days === null)
-    return `Earned schedule: no ratio, ${absentText(b.spi_t)}.`;
-  const days = (n: number) => `${n} calendar day${n === 1 ? "" : "s"}`;
+    return t("l.ev_view.earned_schedule_no_ratio", { absentText: absentText(b.spi_t) });
+  const days = calendarDays;
   const h = health(b.spi_t.bp);
-  const word = h === "ahead" ? "ahead" : h === "behind" ? "behind" : "on time";
-  return `By earned schedule the work is ${word}: it has earned in ${days(b.actual_days)} what the plan expected after ${days(b.earned_schedule_days)} (SPI(t) ${ratioText(b.spi_t.bp)}).`;
+  const word = h === "ahead" ? t("l.ev_view.word_ahead") : h === "behind" ? t("l.ev_view.word_behind") : t("p.plans.pid.joint_risk.on_time");
+  return t("l.ev_view.by_earned_schedule_the_work", { word, days: days(b.actual_days), days2: days(b.earned_schedule_days), ratioText: ratioText(b.spi_t.bp) });
 }
 
 /** One bar of the PV / EV / AC chart, as a percent of the budget at completion. */
@@ -129,21 +131,21 @@ export function evBars(b: EvBlock): EvBar[] {
   return [
     {
       key: "pv",
-      label: "Planned value",
+      label: t("p.plans.pid.earned_value.planned_value"),
       minor: b.pv_minor,
       widthPct: pct(b.pv_minor),
       bacPct,
     },
     {
       key: "ev",
-      label: "Earned value",
+      label: t("p.plans.pid.earned_value.earned_value"),
       minor: b.ev_minor,
       widthPct: pct(b.ev_minor),
       bacPct,
     },
     {
       key: "ac",
-      label: "Actual cost",
+      label: t("p.plans.pid.earned_value.actual_cost"),
       minor: b.ac_minor,
       widthPct: b.ac_minor === null ? 0 : pct(b.ac_minor),
       bacPct,
@@ -161,27 +163,27 @@ export function methodSentence(pc: {
 }): string {
   const how =
     pc.default_method === "fifty_fifty"
-      ? "started work counts half"
+      ? t("p.plans.pid.earned_value.started_work_counts_half")
       : pc.default_method === "points"
-        ? "finished work counts for its story points"
-        : "only finished work counts";
+        ? t("l.ev_view.finished_work_counts_for_its")
+        : t("l.ev_view.only_finished_work_counts");
   const parts = [
-    `${pc.tasks_counted} task${pc.tasks_counted === 1 ? "" : "s"} counted, weighted ${pc.weighting === "points" ? "by story points" : "equally"}; ${how}`,
+    t(pc.tasks_counted === 1 ? "l.ev_view.tasks_counted_one" : "l.ev_view.tasks_counted_other", { count: pc.tasks_counted, weighting: pc.weighting === "points" ? t("l.ev_view.by_story_points") : t("l.ev_view.equally"), how }),
   ];
   if (pc.manual_tasks.length > 0)
     parts.push(
-      `${pc.manual_tasks.length} counted by a person-entered percent (manual)`,
+      t("l.ev_view.counted_by_a_person_entered", { length: pc.manual_tasks.length }),
     );
   if (pc.unweighted_tasks.length > 0)
-    parts.push(`${pc.unweighted_tasks.length} with no points carry no weight`);
+    parts.push(t("l.ev_view.with_no_points_carry_no", { length: pc.unweighted_tasks.length }));
   return parts.join("; ");
 }
 
 const RAG: Record<EvRag, { marker: string; word: string }> = {
-  green: { marker: "●", word: "on track" },
-  amber: { marker: "◐", word: "slipping" },
-  red: { marker: "✖", word: "off plan" },
-  unknown: { marker: "?", word: "not yet known" },
+  green: { marker: "●", get word() { return t("l.ev_view.on_track"); } },
+  amber: { marker: "◐", get word() { return t("l.ev_view.slipping"); } },
+  red: { marker: "✖", get word() { return t("l.ev_view.off_plan"); } },
+  unknown: { marker: "?", get word() { return t("l.ev_view.not_yet_known"); } },
 };
 
 /** A marker and a word for a traffic light, so the colour is never the only signal. */
@@ -193,31 +195,31 @@ export function ragText(r: EvRag): { marker: string; word: string } {
 export function amountAbsentText(a: EvAmount): string {
   switch (a.absent) {
     case "no_actual_cost":
-      return "no actual cost is recorded";
+      return t("l.ev_view.no_actual_cost_is_recorded");
     case "undefined_denominator":
-      return "the ratio it divides by is not defined yet";
+      return t("l.ev_view.the_ratio_it_divides_by");
     case "no_bottom_up_estimate":
-      return "no estimate to complete has been entered";
+      return t("l.ev_view.no_estimate_to_complete_has");
     case "budget_exhausted":
-      return "the budget is already spent";
+      return t("l.ev_view.the_budget_is_already_spent");
     case "no_remaining_cost":
-      return "no cost remains";
+      return t("l.ev_view.no_cost_remains");
     default:
-      return "not available";
+      return t("l.ev_view.not_available");
   }
 }
 
 /** The sentence for what the remaining work needs, which says so when it cannot be met. */
-export function tcpiSentence(t: EvTcpi, target: string): string {
-  if (t.bp === null) {
-    return t.absent === "budget_exhausted"
-      ? `Against ${target}: the money is already spent, so no efficiency can deliver the remaining work within it.`
-      : `Against ${target}: ${amountAbsentText({ minor: null, absent: t.absent })}.`;
+export function tcpiSentence(tcpi: EvTcpi, target: string): string {
+  if (tcpi.bp === null) {
+    return tcpi.absent === "budget_exhausted"
+      ? t("l.ev_view.against_the_money_is_already", { target })
+      : t("l.ev_view.against", { target, amountAbsentText: amountAbsentText({ minor: null, absent: tcpi.absent }) });
   }
-  if (t.needs_improved_efficiency) {
-    return `Against ${target}: the remaining work must be done ${ratioText(t.bp)} times as efficiently as the work so far (TCPI ${ratioText(t.bp)}), which needs improved efficiency.`;
+  if (tcpi.needs_improved_efficiency) {
+    return t("l.ev_view.against_the_remaining_work_must", { target, ratioText: ratioText(tcpi.bp), ratioText2: ratioText(tcpi.bp) });
   }
-  return `Against ${target}: the remaining work can be done at ${ratioText(t.bp)} of the cost efficiency of the work so far (TCPI ${ratioText(t.bp)}).`;
+  return t("l.ev_view.against_the_remaining_work_can", { target, ratioText: ratioText(tcpi.bp), ratioText2: ratioText(tcpi.bp) });
 }
 
 /** The S-curve's drawing data for one currency, in SVG user units. */
@@ -273,14 +275,14 @@ export function sCurve(
       .map((p) => ({
         x: x(at(p.date)),
         y: y(p.ev_minor ?? 0),
-        label: `${p.date}: earned ${p.ev_minor}`,
+        label: t("l.ev_view.earned", { date: p.date, ev_minor: p.ev_minor }),
       })),
     ac: curve.points
       .filter((p) => p.ac_minor !== null)
       .map((p) => ({
         x: x(at(p.date)),
         y: y(p.ac_minor ?? 0),
-        label: `${p.date}: spent ${p.ac_minor}`,
+        label: t("l.ev_view.spent", { date: p.date, ac_minor: p.ac_minor }),
       })),
     bacY: y(curve.bac_minor),
     from: curve.points[0]?.date ?? "",

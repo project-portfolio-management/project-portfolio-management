@@ -7,7 +7,7 @@
   about a person needs the permission to manage people; without it the page says so.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -56,7 +56,7 @@
       if (open) open = await ppm.onboardingCase(open.pid);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load";
+      error = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_load");
     }
   }
   onMount(load);
@@ -65,7 +65,7 @@
     try {
       open = await ppm.onboardingCase(c.pid);
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not open the checklist";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_open_the_checklist");
     }
   }
 
@@ -78,11 +78,11 @@
     if ("error" in body) return void (status = body.error);
     try {
       open = await ppm.startOnboarding(pid, body);
-      status = "Checklist started.";
+      status = t("p.plans.pid.onboarding.checklist_started");
       subject = "";
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not start";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_start");
     }
   }
 
@@ -96,30 +96,30 @@
       status = "";
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not save";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_save");
     }
   }
   async function finish() {
     if (!open) return;
     try {
       open = await ppm.completeOnboarding(open.pid);
-      status = "Checklist completed.";
+      status = t("p.plans.pid.onboarding.checklist_completed");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not complete";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_complete");
     }
   }
   let cancelReason = $state("");
   async function cancel() {
     if (!open) return;
-    if (!cancelReason.trim()) return void (status = "Say why you are cancelling.");
+    if (!cancelReason.trim()) return void (status = t("p.plans.pid.onboarding.say_why_you_are_cancelling"));
     try {
       open = await ppm.cancelOnboarding(open.pid, cancelReason);
       cancelReason = "";
-      status = "Checklist cancelled.";
+      status = t("p.plans.pid.onboarding.checklist_cancelled");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not cancel";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_cancel");
     }
   }
 
@@ -133,64 +133,64 @@
     try {
       await ppm.recordAccess(pid, { ...body, case_pid: open?.pid });
       aWhat = "";
-      status = "Recorded.";
+      status = t("p.plans.pid.earned_value.recorded");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not record";
+      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_record");
     }
   }
 </script>
 
-<svelte:head><title>Onboarding and offboarding — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.onboarding.onboarding_and_offboarding_ppm")}</title></svelte:head>
 
-<h1>Onboarding and offboarding</h1>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/handover`)}>Hand over someone's work</a></p>
+<h1>{t("p.plans.pid.onboarding.onboarding_and_offboarding")}</h1>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.onboarding.plan")}</a> · <a href={localeHref(`/plans/${pid}/handover`)}>{t("p.plans.pid.onboarding.hand_over_someone_s_work")}</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 {#if status}<p role="status" class="small">{status}</p>{/if}
 
 {#if closeout}
   <section class="surface" aria-labelledby="co-h" data-testid="closeout">
-    <h2 id="co-h">Ready to close?</h2>
+    <h2 id="co-h">{t("p.plans.pid.onboarding.ready_to_close")}</h2>
     <p>{closeout.ready ? "●" : "▲"} {closeoutText(closeout)}</p>
   </section>
 {/if}
 
-<h2>Checklists</h2>
-{#if cases.length === 0}<p class="muted">None yet.</p>{/if}
+<h2>{t("p.plans.pid.onboarding.checklists")}</h2>
+{#if cases.length === 0}<p class="muted">{t("p.plans.pid.onboarding.none_yet")}</p>{/if}
 <ul class="stack plain" data-testid="cases">
   {#each cases as c (c.pid)}
     <li class="surface">
       <button class="button" type="button" onclick={() => show(c)} aria-label={`Open ${c.title}`}>{c.title}</button>
-      <span class="small muted">{c.status} · from {c.effective_date} · {progressText(c.progress)}</span>
+      <span class="small muted">{t("p.plans.pid.onboarding.from", { status: c.status, effective_date: c.effective_date, progressText: progressText(c.progress) })}</span>
     </li>
   {/each}
 </ul>
-{#if hidden}<p class="small muted">{hidden} checklist{hidden === 1 ? "" : "s"} about people {hidden === 1 ? "is" : "are"} not shown to you.</p>{/if}
+{#if hidden}<p class="small muted">{(hidden === 1 ? t("p.plans.pid.onboarding.checklist_about_people_not_shown_one", { hidden }) : t("p.plans.pid.onboarding.checklist_about_people_not_shown_other", { hidden }))}</p>{/if}
 
 {#if open}
   <section class="surface stack" aria-labelledby="case-h" data-testid="case">
     <h2 id="case-h">{open.title}</h2>
     <p class="small muted">
-      {open.status}{open.subject_ref ? ` · ${open.subject_ref}` : ""} · effective {open.effective_date} · {progressText(open.progress)}
+      {t("p.plans.pid.onboarding.effective", { status: open.status, v: open.subject_ref ? ` · ${open.subject_ref}` : "", effective_date: open.effective_date, progressText: progressText(open.progress) })}
     </p>
     <ol class="plain stack">
       {#each open.items as i (i.pid)}
         {@const st = itemState(i)}
         <li>
           <strong><span aria-hidden="true">{st.symbol}</span> {i.title}</strong>
-          <span class="small"> — {st.word}{i.due_date ? `, due ${i.due_date}` : ""}{i.owner_ref ? `, ${i.owner_ref}` : ""}</span>
+          <span class="small"> — {st.word}{i.due_date ? t("p.plans.pid.onboarding.due", { date: i.due_date }) : ""}{i.owner_ref ? `, ${i.owner_ref}` : ""}</span>
           {#if i.note}<span class="small muted"> ({i.note})</span>{/if}
           {#if open.status === "open"}
             <div class="row">
-              <input aria-label={`Owner of ${i.title}`} placeholder="person:…" value={owners[i.pid] ?? ""} oninput={(e) => (owners[i.pid] = e.currentTarget.value)} />
-              <input type="date" aria-label={`Due date of ${i.title}`} value={dues[i.pid] ?? ""} oninput={(e) => (dues[i.pid] = e.currentTarget.value)} />
-              <button class="button" type="button" onclick={() => update(i.pid, { ...(owners[i.pid] !== undefined ? { owner_ref: owners[i.pid] } : {}), ...(dues[i.pid] ? { due_date: dues[i.pid] } : {}) })}>Save</button>
+              <input aria-label={t("p.plans.pid.onboarding.owner_of", { title: i.title })} placeholder={t("p.plans.pid.onboarding.person")} value={owners[i.pid] ?? ""} oninput={(e) => (owners[i.pid] = e.currentTarget.value)} />
+              <input type="date" aria-label={t("p.plans.pid.onboarding.due_date_of", { title: i.title })} value={dues[i.pid] ?? ""} oninput={(e) => (dues[i.pid] = e.currentTarget.value)} />
+              <button class="button" type="button" onclick={() => update(i.pid, { ...(owners[i.pid] !== undefined ? { owner_ref: owners[i.pid] } : {}), ...(dues[i.pid] ? { due_date: dues[i.pid] } : {}) })}>{t("p.plans.pid.onboarding.save")}</button>
               {#if i.resolution}
-                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "open" })}>Reopen</button>
+                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "open" })}>{t("p.plans.pid.onboarding.reopen")}</button>
               {:else}
-                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "done" })}>Done</button>
-                <input aria-label={`Why skip ${i.title}`} placeholder="Why skip?" value={notes[i.pid] ?? ""} oninput={(e) => (notes[i.pid] = e.currentTarget.value)} />
-                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "skipped", note: notes[i.pid] })}>Skip</button>
+                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "done" })}>{t("p.plans.pid.onboarding.done")}</button>
+                <input aria-label={t("p.plans.pid.onboarding.why_skip_title", { title: i.title })} placeholder={t("p.plans.pid.onboarding.why_skip")} value={notes[i.pid] ?? ""} oninput={(e) => (notes[i.pid] = e.currentTarget.value)} />
+                <button class="button" type="button" onclick={() => update(i.pid, { resolution: "skipped", note: notes[i.pid] })}>{t("p.plans.pid.onboarding.skip")}</button>
               {/if}
             </div>
           {/if}
@@ -199,50 +199,50 @@
     </ol>
     {#if open.status === "open"}
       <div class="row">
-        <button class="button primary" type="button" onclick={finish}>Complete checklist</button>
-        <input aria-label="Reason for cancelling" placeholder="Reason" bind:value={cancelReason} />
-        <button class="button danger" type="button" onclick={cancel}>Cancel checklist</button>
+        <button class="button primary" type="button" onclick={finish}>{t("p.plans.pid.onboarding.complete_checklist")}</button>
+        <input aria-label={t("p.plans.pid.onboarding.reason_for_cancelling")} placeholder={t("p.plans.pid.onboarding.reason")} bind:value={cancelReason} />
+        <button class="button danger" type="button" onclick={cancel}>{t("p.plans.pid.onboarding.cancel_checklist")}</button>
       </div>
     {/if}
   </section>
 {/if}
 
 <form class="surface stack" onsubmit={start} aria-labelledby="start-h">
-  <h2 id="start-h">Start a checklist</h2>
+  <h2 id="start-h">{t("p.plans.pid.onboarding.start_a_checklist")}</h2>
   <label>
-    What
+    {t("p.plans.pid.onboarding.what")}
     <select bind:value={kind}>
       {#each Object.entries(KIND_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
     </select>
   </label>
   {#if isPersonKind(kind)}
-    <label>Person <input bind:value={subject} placeholder="person:…" /></label>
+    <label>{t("p.plans.pid.onboarding.person_2")} <input bind:value={subject} placeholder={t("p.plans.pid.onboarding.person")} /></label>
   {/if}
-  <label>Takes effect <input type="date" bind:value={date} /></label>
-  <button class="button" class:primary={!open} type="submit">Start</button>
+  <label>{t("p.plans.pid.onboarding.takes_effect")} <input type="date" bind:value={date} /></label>
+  <button class="button" class:primary={!open} type="submit">{t("p.plans.pid.onboarding.start")}</button>
 </form>
 
-<h2>Access record</h2>
+<h2>{t("p.plans.pid.onboarding.access_record")}</h2>
 {#if accessDenied}
-  <p class="muted" data-testid="access-denied">Who holds what access is about people, so it needs the permission to manage people.</p>
+  <p class="muted" data-testid="access-denied">{t("p.plans.pid.onboarding.who_holds_what_access_is")}</p>
 {:else if access}
   <p class="small muted">{access.note}</p>
   {#if access.outstanding.length === 0}
-    <p>● No access is outstanding.</p>
+    <p>{t("p.plans.pid.onboarding.no_access_is_outstanding")}</p>
   {:else}
     <ul data-testid="outstanding">
-      {#each access.outstanding as o}<li>▲ {o.person_ref}: {o.access} (since {o.granted_on})</li>{/each}
+      {#each access.outstanding as o}<li>{t("p.plans.pid.onboarding.since", { person_ref: o.person_ref, access: o.access, granted_on: o.granted_on })}</li>{/each}
     </ul>
   {/if}
   <form class="surface stack" onsubmit={recordAccess} aria-labelledby="acc-h">
-    <h3 id="acc-h">Record access</h3>
-    <label>Person <input bind:value={aPerson} placeholder="person:…" /></label>
-    <label>Access <input bind:value={aWhat} placeholder="repo write" /></label>
+    <h3 id="acc-h">{t("p.plans.pid.onboarding.record_access")}</h3>
+    <label>{t("p.plans.pid.onboarding.person_2")} <input bind:value={aPerson} placeholder={t("p.plans.pid.onboarding.person")} /></label>
+    <label>{t("p.plans.pid.onboarding.access")} <input bind:value={aWhat} placeholder={t("p.plans.pid.onboarding.repo_write")} /></label>
     <label>
-      Action
-      <select bind:value={aAction}><option value="revoked">Revoked</option><option value="granted">Granted</option></select>
+      {t("p.plans.pid.onboarding.action")}
+      <select bind:value={aAction}><option value="revoked">{t("p.plans.pid.onboarding.revoked")}</option><option value="granted">{t("p.plans.pid.onboarding.granted")}</option></select>
     </label>
-    <button class="button" type="submit">Record</button>
+    <button class="button" type="submit">{t("p.plans.pid.onboarding.record")}</button>
   </form>
 {/if}
 

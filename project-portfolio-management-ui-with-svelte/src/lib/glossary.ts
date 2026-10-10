@@ -1,26 +1,26 @@
+import { t } from "./i18n.svelte.js";
 // Plain-language glosses for the terms and acronyms the screens cannot avoid
 // (LT-12). An acronym never stands alone in a heading, label, button or table
 // header: it follows plain words ("Key measures (KPIs)") or is a `<Term>` that
 // carries its gloss. Pure data, so the rule can be tested against the sources.
 
 export const GLOSSARY: Record<string, string> = {
-  SPI: "Schedule performance index: work done compared with work planned by now. Above 1.00 is ahead of plan.",
-  CPI: "Cost performance index: value of the work done compared with what it cost. Above 1.00 is under budget.",
-  "SPI(t)":
-    "Schedule index by time: how far along the plan we are in time, which stays truthful even when a project finishes late.",
-  EV: "Earned value: the budget for the work actually finished.",
-  PV: "Planned value: the budget for the work that should be finished by now.",
-  AC: "Actual cost: what has really been spent.",
-  EAC: "Estimate at completion: the expected final cost.",
-  ETC: "Estimate to complete: what is still expected to be spent.",
-  VAC: "Variance at completion: the expected final cost against the budget.",
-  RAG: "Red, amber or green: a status light.",
-  RACI: "Responsible, Accountable, Consulted, Informed: who does the work, who signs it off, who is asked and who is told.",
-  PERT: "A way of weighting the likely estimate more than the best and worst cases.",
-  KPI: "Key performance indicator: a measure tracked over time against a target.",
-  KPIs: "Key performance indicators: measures tracked over time against a target.",
-  OKR: "Objective and key results: a goal with a few measurable results.",
-  OKRs: "Objectives and key results: goals with a few measurable results.",
+  get SPI() { return t("l.glossary.schedule_performance_index_work_done"); },
+  get CPI() { return t("l.glossary.cost_performance_index_value_of"); },
+  get "SPI(t)"() { return t("l.glossary.schedule_index_by_time_how"); },
+  get EV() { return t("l.glossary.earned_value_the_budget_for"); },
+  get PV() { return t("l.glossary.planned_value_the_budget_for"); },
+  get AC() { return t("l.glossary.actual_cost_what_has_really"); },
+  get EAC() { return t("l.glossary.estimate_at_completion_the_expected"); },
+  get ETC() { return t("l.glossary.estimate_to_complete_what_is"); },
+  get VAC() { return t("l.glossary.variance_at_completion_the_expected"); },
+  get RAG() { return t("l.glossary.red_amber_or_green_a"); },
+  get RACI() { return t("l.glossary.responsible_accountable_consulted_in"); },
+  get PERT() { return t("l.glossary.a_way_of_weighting_the"); },
+  get KPI() { return t("l.glossary.key_performance_indicator_a_measure"); },
+  get KPIs() { return t("l.glossary.key_performance_indicators_measures_"); },
+  get OKR() { return t("l.glossary.objective_and_key_results_a"); },
+  get OKRs() { return t("l.glossary.objectives_and_key_results_goals"); },
 };
 
 /** Acronyms that must not stand alone in a heading, label, button or table header. */

@@ -51,6 +51,12 @@ x-api-environment: &api-environment
   PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS: ${PPM_PASETO_KEYS:-}
   PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER: ${PPM_TOKEN_ISSUER:-authentication-service}
   PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE: ${PPM_TOKEN_AUDIENCE:-main-x-service}
+  # Uploaded files and export files live here (a named volume, so they survive a
+  # restart; back them up with the database: operations/backup-and-restore.md).
+  PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR: /app/data/artifacts
+  # The full-text index is derived from the database and rebuilt on demand
+  # (`task search_reindex`); it is kept on a volume only to avoid a rebuild on restart.
+  PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH: /app/data/search-index
 
 x-api-build: &api-build
   context: .
@@ -93,11 +99,14 @@ services:
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "true"
     ports:
       - "5150:5150"
+    volumes:
+      - ppm-artifacts:/app/data/artifacts
+      - ppm-search:/app/data/search-index
     depends_on:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_readiness"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -114,11 +123,14 @@ services:
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
     ports:
       - "127.0.0.1:5150:5150"
+    volumes:
+      - ppm-artifacts:/app/data/artifacts
+      - ppm-search:/app/data/search-index
     depends_on:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_readiness"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -126,3 +138,5 @@ services:
 
 volumes:
   postgres-data:
+  ppm-artifacts:
+  ppm-search:

@@ -9,12 +9,12 @@ import { primaryButtons, settle } from "./fixtures";
 async function audit(page: Page) {
   await settle(page);
   const r = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(
     r.violations
       .filter((v) => v.impact === "serious" || v.impact === "critical")
-      .map((v) => v.id),
+      .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join("; ")}`),
   ).toEqual([]);
 }
 

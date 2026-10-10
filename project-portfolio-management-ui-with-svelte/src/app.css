@@ -71,6 +71,22 @@ body {
   min-height: 100vh;
 }
 
+/* WCAG 2.2 SC 2.5.8 (target size, minimum): a disclosure row is a control, so it is at
+   least 24 by 24 CSS pixels. The e2e axe audits include the wcag22aa rules. */
+summary {
+  min-height: 24px;
+  box-sizing: border-box;
+}
+
+/* Links that stand alone in a table cell are targets, not inline text (which SC 2.5.8
+   exempts), so they get the same minimum. */
+td > a,
+th > a {
+  display: inline-block;
+  min-height: 24px;
+  box-sizing: border-box;
+}
+
 a {
   color: var(--mxi-color-primary);
   text-decoration: none;

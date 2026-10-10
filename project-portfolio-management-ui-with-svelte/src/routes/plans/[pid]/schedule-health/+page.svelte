@@ -7,7 +7,7 @@
   a symbol, never colour alone.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ScheduleHealth } from "#lib/api/ppm.js";
@@ -24,42 +24,41 @@
       report = await ppm.scheduleHealth(pid, asOf || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not run the schedule health checks";
+      error = err instanceof Error ? err.message : t("p.plans.pid.schedule_health.could_not_run_the_schedule");
     }
   }
   onMount(() => void load());
 </script>
 
-<svelte:head><title>Schedule health — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.schedule_health.schedule_health_ppm")}</title></svelte:head>
 
-<h1>Schedule health</h1>
-<p class="lede">Checks the schedule for common problems, such as tasks with no links or no estimate.</p>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
+<h1>{t("p.plans.pid.schedule_health.schedule_health")}</h1>
+<p class="lede">{t("p.plans.pid.schedule_health.checks_the_schedule_for_common")}</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.schedule_health.plan")}</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.plans.pid.schedule_health.critical_path")}</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if report}
   <p class="banner" role="note">{report.disclaimer}</p>
   <p class="small muted">
-    As of {report.as_of} ·
-    {#if report.baseline}baseline version {report.baseline.version}{:else}no baseline taken{/if} ·
-    preset {report.preset} (thresholds: {report.thresholds.source}) · {report.tasks} task{report.tasks === 1 ? "" : "s"}
+    {t("p.plans.pid.schedule_health.as_of", { as_of: report.as_of })}
+    {#if report.baseline}{t("p.plans.pid.schedule_health.baseline_version", { version: report.baseline.version })}{:else}{t("p.plans.pid.schedule_health.no_baseline_taken")}{/if} {(report.tasks === 1 ? t("p.plans.pid.schedule_health.preset_thresholds_task_one", { preset: report.preset, source: report.thresholds.source, tasks: report.tasks }) : t("p.plans.pid.schedule_health.preset_thresholds_task_other", { preset: report.preset, source: report.thresholds.source, tasks: report.tasks }))}
   </p>
   <p aria-live="polite"><strong>{healthSummary(report)}.</strong></p>
   <form class="filter" onsubmit={(e) => { e.preventDefault(); void load(); }}>
-    <label>Status date <input type="date" bind:value={asOf} /></label>
-    <button class="button small" type="submit">Re-run</button>
+    <label>{t("p.plans.pid.schedule_health.status_date")} <input type="date" bind:value={asOf} /></label>
+    <button class="button small" type="submit">{t("p.plans.pid.schedule_health.re_run")}</button>
   </form>
 
   <table>
-    <caption class="sr-only">The fourteen schedule health checks</caption>
+    <caption class="sr-only">{t("p.plans.pid.schedule_health.the_fourteen_schedule_health_checks")}</caption>
     <thead>
       <tr>
-        <th scope="col">Check</th>
-        <th scope="col">Result</th>
-        <th scope="col">What was found</th>
-        <th scope="col">Held to</th>
-        <th scope="col">To fix</th>
+        <th scope="col">{t("p.plans.pid.schedule_health.check")}</th>
+        <th scope="col">{t("p.plans.pid.schedule_health.result")}</th>
+        <th scope="col">{t("p.plans.pid.schedule_health.what_was_found")}</th>
+        <th scope="col">{t("p.plans.pid.schedule_health.held_to")}</th>
+        <th scope="col">{t("p.plans.pid.schedule_health.to_fix")}</th>
       </tr>
     </thead>
     <tbody>
@@ -74,10 +73,10 @@
           <td>{thresholdSentence(c)}</td>
           <td>
             {#if c.offenders.length === 0}
-              {c.pass === false ? "See the note" : "—"}
+              {c.pass === false ? t("p.plans.pid.schedule_health.see_the_note") : "—"}
             {:else}
               <details>
-                <summary>{c.offenders.length} task{c.offenders.length === 1 ? "" : "s"}</summary>
+                <summary>{(c.offenders.length === 1 ? t("p.plans.pid.schedule_health.task_one", { length: c.offenders.length }) : t("p.plans.pid.schedule_health.task_other", { length: c.offenders.length }))}</summary>
                 <ul>
                   {#each c.offenders as o (o.pid)}
                     <li><a href={localeHref(offenderHref(pid, o.pid))}>{o.title ?? o.pid}</a></li>
@@ -93,7 +92,7 @@
   </table>
   <p class="small muted">{report.note}</p>
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.plans.pid.schedule_health.loading")}</p>
 {/if}
 
 <style>

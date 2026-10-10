@@ -5,6 +5,7 @@
   without it sees the feed and a plain note, not a broken form.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Announcement, type AnnouncementSeverity } from "#lib/api/ppm.js";
   import { SEVERITY_SYMBOL, SEVERITY_TEXT, ageText, stateLabel } from "#lib/announcement-view.js";
@@ -27,7 +28,7 @@
       }
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the announcements";
+      error = err instanceof Error ? err.message : t("p.announcements.could_not_load_the_announcements");
     }
   }
   onMount(refresh);
@@ -52,7 +53,7 @@
       pinned = false;
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not publish";
+      error = err instanceof Error ? err.message : t("p.announcements.could_not_publish");
     }
   }
   async function retract(a: Announcement) {
@@ -60,20 +61,20 @@
       await ppm.retractAnnouncement(a.pid);
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not retract";
+      error = err instanceof Error ? err.message : t("p.announcements.could_not_retract");
     }
   }
 </script>
 
-<svelte:head><title>Announcements — PPM</title></svelte:head>
+<svelte:head><title>{t("p.announcements.announcements_ppm")}</title></svelte:head>
 
-<h1>Announcements</h1>
+<h1>{t("p.announcements.announcements")}</h1>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 
 {#if items === null && !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.announcements.loading")}</p>
 {:else if items && items.length === 0}
-  <p class="muted" data-testid="no-announcements">Nothing has been announced.</p>
+  <p class="muted" data-testid="no-announcements">{t("p.announcements.nothing_has_been_announced")}</p>
 {:else if items}
   <ul class="feed stack" data-testid="announcements">
     {#each items as a (a.pid)}
@@ -83,11 +84,11 @@
           {a.title}
         </h2>
         <p class="small muted">
-          {SEVERITY_TEXT[a.severity]}{a.pinned ? " · Pinned" : ""}{stateLabel(a) ? ` · ${stateLabel(a)}` : ""} · {ageText(a.publish_at, now)}
+          {SEVERITY_TEXT[a.severity]}{a.pinned ? t("p.announcements.pinned") : ""}{stateLabel(a) ? ` · ${stateLabel(a)}` : ""} · {ageText(a.publish_at, now)}
         </p>
         <p>{a.body}</p>
         {#if manage}
-          <button type="button" class="button danger" onclick={() => retract(a)} aria-label={`Retract ${a.title}`}>Retract</button>
+          <button type="button" class="button danger" onclick={() => retract(a)} aria-label={`Retract ${a.title}`}>{t("p.announcements.retract")}</button>
         {/if}
       </li>
     {/each}
@@ -96,23 +97,23 @@
 
 {#if manage}
   <form class="surface stack" onsubmit={publish} aria-labelledby="publish-h">
-    <h2 id="publish-h">Publish an announcement</h2>
-    <label>Title <input bind:value={title} required maxlength="120" /></label>
-    <label>Message <textarea bind:value={body} required maxlength="4000" rows="3"></textarea></label>
+    <h2 id="publish-h">{t("p.announcements.publish_an_announcement")}</h2>
+    <label>{t("p.announcements.title")} <input bind:value={title} required maxlength="120" /></label>
+    <label>{t("p.announcements.message")} <textarea bind:value={body} required maxlength="4000" rows="3"></textarea></label>
     <label>
-      Severity
+      {t("p.announcements.severity")}
       <select bind:value={severity}>
-        <option value="info">Info</option>
-        <option value="important">Important</option>
-        <option value="urgent">Urgent</option>
+        <option value="info">{t("p.announcements.info")}</option>
+        <option value="important">{t("p.announcements.important")}</option>
+        <option value="urgent">{t("p.announcements.urgent")}</option>
       </select>
     </label>
-    <label><input type="checkbox" bind:checked={pinned} /> Pin to the top</label>
-    <label>Expires (optional) <input type="datetime-local" bind:value={expires} /></label>
-    <button class="button primary" type="submit">Publish</button>
+    <label><input type="checkbox" bind:checked={pinned} /> {t("p.announcements.pin_to_the_top")}</label>
+    <label>{t("p.announcements.expires_optional")} <input type="datetime-local" bind:value={expires} /></label>
+    <button class="button primary" type="submit">{t("p.announcements.publish")}</button>
   </form>
 {:else if items}
-  <p class="muted small">Publishing needs the announcements permission.</p>
+  <p class="muted small">{t("p.announcements.publishing_needs_the_announcements_p")}</p>
 {/if}
 
 <style>

@@ -6,6 +6,7 @@
   with its baselined dates; one unscheduled on either side has no variance.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { ScheduleVariance } from "#lib/api/ppm.js";
   import { standingText } from "#lib/cpm-view.js";
 
@@ -16,30 +17,29 @@
 
 <div data-testid="variance">
   <p class="small">
-    {s.matched} of {s.baseline_tasks} baselined tasks are still in the plan:
-    {s.slipped} slipped, {s.pulled_in} pulled in, {s.on_baseline} on baseline{s.unmeasurable > 0 ? `, ${s.unmeasurable} cannot be measured` : ""}.
-    {s.added} added and {s.removed} removed since.
+    {t("c.VarianceTable.matched_of_baselined", { matched: s.matched, baseline_tasks: s.baseline_tasks })}
+    {t("c.VarianceTable.slipped_pulled_on", { slipped: s.slipped, pulled_in: s.pulled_in, on_baseline: s.on_baseline, unmeasurable: s.unmeasurable > 0 ? t("c.VarianceTable.cannot_be_measured", { unmeasurable: s.unmeasurable }) : "" })}
+    {t("c.VarianceTable.added_removed", { added: s.added, removed: s.removed })}
     {#if s.plan_finish_slip_days === null}
-      The plan's own finish cannot be compared.
+      {t("c.VarianceTable.the_plan_s_own_finish")}
     {:else if s.plan_finish_slip_days === 0}
-      The plan's finish is unchanged.
+      {t("c.VarianceTable.the_plan_s_finish_is")}
     {:else}
-      The plan's finish is {Math.abs(s.plan_finish_slip_days)} business day{Math.abs(s.plan_finish_slip_days) === 1 ? "" : "s"}
-      {s.plan_finish_slip_days > 0 ? "later" : "earlier"} than baselined{s.removed > 0 && s.plan_finish_slip_days < 0 ? " (check the removed tasks: deleting work is not an improvement)" : ""}.
+      {t(s.plan_finish_slip_days > 0 ? (Math.abs(s.plan_finish_slip_days) === 1 ? "c.VarianceTable.finish_later_one" : "c.VarianceTable.finish_later_other") : (Math.abs(s.plan_finish_slip_days) === 1 ? "c.VarianceTable.finish_earlier_one" : "c.VarianceTable.finish_earlier_other"), { days: Math.abs(s.plan_finish_slip_days), note: s.removed > 0 && s.plan_finish_slip_days < 0 ? t("c.VarianceTable.check_removed") : "" })}
     {/if}
   </p>
   <div class="scroll">
     <table>
-      <caption class="sr-only">Schedule variance against the baseline, in business days</caption>
+      <caption class="sr-only">{t("c.VarianceTable.schedule_variance_against_the_baseli")}</caption>
       <thead>
         <tr>
-          <th scope="col">Task</th>
-          <th scope="col">Standing</th>
-          <th scope="col">Baselined</th>
-          <th scope="col">Now</th>
-          <th scope="col">Start Δ</th>
-          <th scope="col">Finish Δ</th>
-          <th scope="col">Duration Δ</th>
+          <th scope="col">{t("c.VarianceTable.task")}</th>
+          <th scope="col">{t("c.VarianceTable.standing")}</th>
+          <th scope="col">{t("c.VarianceTable.baselined")}</th>
+          <th scope="col">{t("c.VarianceTable.now")}</th>
+          <th scope="col">{t("c.VarianceTable.start")}</th>
+          <th scope="col">{t("c.VarianceTable.finish")}</th>
+          <th scope="col">{t("c.VarianceTable.duration")}</th>
         </tr>
       </thead>
       <tbody>

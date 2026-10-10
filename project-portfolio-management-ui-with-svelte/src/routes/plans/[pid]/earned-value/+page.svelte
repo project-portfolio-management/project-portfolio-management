@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import Term from "#lib/components/Term.svelte";
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import {
@@ -62,7 +62,7 @@
       ]);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load earned value";
+      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_load_earned_value");
     }
   }
   onMount(() => void load());
@@ -75,7 +75,7 @@
       await ppm.setEarnedValueMethod(pid, value);
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not save";
+      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_save");
     }
   }
 
@@ -87,7 +87,7 @@
       recorded = true;
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not record";
+      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_record");
     }
   }
 
@@ -116,20 +116,20 @@
       editing = null;
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not save";
+      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_save");
     }
   }
 </script>
 
-<svelte:head><title>Earned value — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.earned_value.earned_value_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>← Governance</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
-<h1>Progress against budget (earned value)</h1>
-<p class="lede">Is the work finished worth what was planned by now, and what did it cost? An index above 1.00 is better than planned.</p>
+<p class="small"><a href={localeHref(`/plans/${pid}/governance`)}>{t("p.plans.pid.earned_value.governance")}</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.plans.pid.earned_value.critical_path")}</a></p>
+<h1>{t("p.plans.pid.earned_value.progress_against_budget_earned_value")}</h1>
+<p class="lede">{t("p.plans.pid.earned_value.is_the_work_finished_worth")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if ev}
-  <p class="small muted">Measured as of {ev.as_of}. Percent complete is work finished, not time elapsed.</p>
+  <p class="small muted">{t("p.plans.pid.earned_value.measured_as_of_percent_complete", { as_of: ev.as_of })}</p>
 
   {#if ev.blocks === null}
     <p class="banner" role="status" data-testid="ev-absent">{ev.reason}</p>
@@ -137,17 +137,17 @@
     {#if ev.percent_complete}
       {@const pc = ev.percent_complete}
       <section aria-labelledby="pc-h" class="stack">
-        <h2 id="pc-h">{Math.round(pc.percent_bp / 100)}% complete</h2>
+        <h2 id="pc-h">{t("p.plans.pid.earned_value.complete", { round: Math.round(pc.percent_bp / 100) })}</h2>
         <p class="small">{methodSentence(pc)}.</p>
         {#if pc.manual}
-          <p class="banner" role="note">Some of this figure rests on a person-entered percent, not on finished work: {pc.manual_tasks.map((p) => titleOf.get(p) ?? "a task").join(", ")}.</p>
+          <p class="banner" role="note">{t("p.plans.pid.earned_value.manual_percent_banner", { tasks: pc.manual_tasks.map((p) => titleOf.get(p) ?? t("p.plans.pid.earned_value.a_task")).join(", ") })}</p>
         {/if}
         <label>
-          Count tasks
+          {t("p.plans.pid.earned_value.count_tasks")}
           <select value={pc.default_method} onchange={(e) => void setDefault(e.currentTarget.value as "zero_hundred" | "fifty_fifty" | "points")}>
-            <option value="zero_hundred">only when finished</option>
-            <option value="fifty_fifty">started work counts half</option>
-            <option value="points">by story points, when finished</option>
+            <option value="zero_hundred">{t("p.plans.pid.earned_value.only_when_finished")}</option>
+            <option value="fifty_fifty">{t("p.plans.pid.earned_value.started_work_counts_half")}</option>
+            <option value="points">{t("p.plans.pid.earned_value.by_story_points_when_finished")}</option>
           </select>
         </label>
       </section>
@@ -156,23 +156,23 @@
     {#each ev.blocks as b (b.currency)}
       {@const h = marker(health(b.spi.bp))}
       <section class="surface stack" aria-labelledby="blk-{b.currency}">
-        <h2 id="blk-{b.currency}">{b.currency} <span class="small muted">baseline version {b.baseline_version}</span></h2>
+        <h2 id="blk-{b.currency}">{b.currency} <span class="small muted">{t("p.plans.pid.earned_value.baseline_version", { baseline_version: b.baseline_version })}</span></h2>
         <EvBars block={b} />
         <p><span aria-hidden="true">{h}</span> {scheduleSentence(b, (n) => money(n, b.currency))}</p>
         <p><span aria-hidden="true">{marker(health(b.cpi.bp))}</span> {costSentence(b, (n) => money(n, b.currency))}</p>
         <p><span aria-hidden="true">{marker(health(b.spi_t.bp))}</span> {earnedScheduleSentence(b)}</p>
         <table>
-          <caption class="sr-only">{b.currency} earned value figures</caption>
+          <caption class="sr-only">{t("p.plans.pid.earned_value.earned_value_figures", { currency: b.currency })}</caption>
           <tbody>
-            <tr><th scope="row">Budget at completion</th><td>{money(b.bac_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Planned value</th><td>{money(b.pv_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Earned value</th><td>{money(b.ev_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Actual cost</th><td>{b.ac_minor === null ? "unknown" : money(b.ac_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Schedule variance (EV − PV)</th><td>{money(b.sv_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Cost variance (EV − AC)</th><td>{b.cv_minor === null ? "unknown" : money(b.cv_minor, b.currency)}</td></tr>
-            <tr><th scope="row">Schedule index (<Term t="SPI" />)</th><td>{ratioOrReason(b.spi)}</td></tr>
-            <tr><th scope="row">Cost index (<Term t="CPI" />)</th><td>{ratioOrReason(b.cpi)}</td></tr>
-            <tr><th scope="row">Schedule index by time (<Term t="SPI(t)" />)</th><td>{ratioOrReason(b.spi_t)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.budget_at_completion")}</th><td>{money(b.bac_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.planned_value")}</th><td>{money(b.pv_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.earned_value")}</th><td>{money(b.ev_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.actual_cost")}</th><td>{b.ac_minor === null ? t("p.plans.pid.earned_value.unknown") : money(b.ac_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.schedule_variance_ev_pv")}</th><td>{money(b.sv_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.cost_variance_ev_ac")}</th><td>{b.cv_minor === null ? t("p.plans.pid.earned_value.unknown") : money(b.cv_minor, b.currency)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.schedule_index")}<Term t="SPI" />)</th><td>{ratioOrReason(b.spi)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.cost_index")}<Term t="CPI" />)</th><td>{ratioOrReason(b.cpi)}</td></tr>
+            <tr><th scope="row">{t("p.plans.pid.earned_value.schedule_index_by_time")}<Term t="SPI(t)" />)</th><td>{ratioOrReason(b.spi_t)}</td></tr>
           </tbody>
         </table>
       </section>
@@ -180,52 +180,52 @@
 
     {#if ev.unbaselined_currencies && ev.unbaselined_currencies.length > 0}
       <p class="banner" role="note">
-        Budget lines in {ev.unbaselined_currencies.join(", ")} have no baseline, so they are not part of any figure above and are never added to another currency.
+        {t("p.plans.pid.earned_value.budget_lines_in_have_no", { join: ev.unbaselined_currencies.join(", ") })}
       </p>
     {/if}
 
     {#if forecast?.forecasts}
-      <h2>Where it is heading</h2>
+      <h2>{t("p.plans.pid.earned_value.where_it_is_heading")}</h2>
       {#each forecast.forecasts as f (f.currency)}
         {@const c = (n: number) => money(n, f.currency)}
         <section class="surface stack" aria-labelledby="fc-{f.currency}">
           <h3 id="fc-{f.currency}">{f.currency}</h3>
           <p>
-            <span aria-hidden="true">{ragText(f.spi.rag).marker}</span> Schedule is {ragText(f.spi.rag).word}.
-            <span aria-hidden="true">{ragText(f.cpi.rag).marker}</span> Cost is {ragText(f.cpi.rag).word}.
+            <span aria-hidden="true">{ragText(f.spi.rag).marker}</span> {t("p.plans.pid.earned_value.schedule_is", { word: ragText(f.spi.rag).word })}
+            <span aria-hidden="true">{ragText(f.cpi.rag).marker}</span> {t("p.plans.pid.earned_value.cost_is", { word: ragText(f.cpi.rag).word })}
           </p>
           <table>
-            <caption class="sr-only">{f.currency} forecasts of the final cost, each by its own formula</caption>
+            <caption class="sr-only">{t("p.plans.pid.earned_value.forecasts_of_the_final_cost", { currency: f.currency })}</caption>
             <thead>
-              <tr><th scope="col">Forecast</th><th scope="col">Final cost (EAC)</th><th scope="col">Still to spend (ETC)</th><th scope="col">Against the budget (VAC)</th></tr>
+              <tr><th scope="col">{t("p.plans.pid.earned_value.forecast")}</th><th scope="col">{t("p.plans.pid.earned_value.final_cost_eac")}</th><th scope="col">{t("p.plans.pid.earned_value.still_to_spend_etc")}</th><th scope="col">{t("p.plans.pid.earned_value.against_the_budget_vac")}</th></tr>
             </thead>
             <tbody>
               {#each f.variants as v (v.variant)}
                 <tr class:chosen={v.variant === f.recommended.variant}>
                   <th scope="row">
                     {v.formula}
-                    {#if v.variant === f.recommended.variant}<strong> — the one to lead with</strong>{/if}
+                    {#if v.variant === f.recommended.variant}<strong> {t("p.plans.pid.earned_value.the_one_to_lead_with")}</strong>{/if}
                   </th>
                   <td>{v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor)}</td>
                   <td>{v.etc.minor === null ? "—" : c(v.etc.minor)}</td>
-                  <td>{v.vac.minor === null ? "—" : `${c(v.vac.minor)}${v.vac.minor < 0 ? " (overrun)" : ""}`}</td>
+                  <td>{v.vac.minor === null ? "—" : c(v.vac.minor) + (v.vac.minor < 0 ? t("p.plans.pid.earned_value.overrun") : "")}</td>
                 </tr>
               {/each}
             </tbody>
           </table>
-          <p class="small">Leading with that one because {f.recommended.why}. The others are shown beside it: which is right depends on whether past overruns will continue.</p>
-          <p><span aria-hidden="true">{ragText(f.tcpi_to_budget.rag).marker}</span> {tcpiSentence(f.tcpi_to_budget.tcpi, "the budget")}</p>
+          <p class="small">{t("p.plans.pid.earned_value.leading_with_that_one_because", { why: f.recommended.why })}</p>
+          <p><span aria-hidden="true">{ragText(f.tcpi_to_budget.rag).marker}</span> {tcpiSentence(f.tcpi_to_budget.tcpi, t("p.plans.pid.earned_value.target_budget"))}</p>
           {#if f.tcpi_to_recommended_eac}
-            <p><span aria-hidden="true">{ragText(f.tcpi_to_recommended_eac.rag).marker}</span> {tcpiSentence(f.tcpi_to_recommended_eac.tcpi, "the forecast")}</p>
+            <p><span aria-hidden="true">{ragText(f.tcpi_to_recommended_eac.rag).marker}</span> {tcpiSentence(f.tcpi_to_recommended_eac.tcpi, t("p.plans.pid.earned_value.target_forecast"))}</p>
           {/if}
         </section>
       {/each}
       {#if forecast.thresholds}
-        <p class="small muted">Lights use {forecast.thresholds.source === "default" ? "the default thresholds" : "this deployment's thresholds"}: {JSON.stringify(forecast.thresholds.values)} (basis points).</p>
+        <p class="small muted">{t("p.plans.pid.earned_value.lights_use", { which: forecast.thresholds.source === "default" ? t("p.plans.pid.earned_value.thresholds_default") : t("p.plans.pid.earned_value.thresholds_deployment"), values: JSON.stringify(forecast.thresholds.values) })}</p>
       {/if}
     {/if}
 
-    <h2>Over time</h2>
+    <h2>{t("p.plans.pid.earned_value.over_time")}</h2>
     {#if series && series.curves.length > 0}
       {#each series.curves as curve (curve.currency)}
         <h3>{curve.currency}</h3>
@@ -234,66 +234,64 @@
       <p class="small muted">{series.note}</p>
     {/if}
     <p>
-      <button type="button" onclick={() => void snapshotNow()}>Record today's figures now</button>
-      {#if recorded}<span role="status"> Recorded.</span>{/if}
-      <span class="small muted"> The scheduler also records them daily.</span>
+      <button type="button" onclick={() => void snapshotNow()}>{t("p.plans.pid.earned_value.record_today_s_figures_now")}</button>
+      {#if recorded}<span role="status"> {t("p.plans.pid.earned_value.recorded")}</span>{/if}
+      <span class="small muted"> {t("p.plans.pid.earned_value.the_scheduler_also_records_them")}</span>
     </p>
 
     {#if rollup && rollup.currencies.length > 0 && rollup.currencies.some((c) => c.totals.plans > 1)}
-      <h2>This plan and everything beneath it</h2>
+      <h2>{t("p.plans.pid.earned_value.this_plan_and_everything_beneath")}</h2>
       {#each rollup.currencies as r (r.currency)}
         <section class="surface stack" aria-labelledby="ru-{r.currency}">
-          <h3 id="ru-{r.currency}">{r.currency} <span class="small muted">{r.totals.plans} plans</span></h3>
+          <h3 id="ru-{r.currency}">{r.currency} <span class="small muted">{t("p.plans.pid.earned_value.plans", { plans: r.totals.plans })}</span></h3>
           <p>
-            Budget {money(r.totals.bac_minor, r.currency)}; planned {money(r.totals.pv_minor, r.currency)};
-            earned {money(r.totals.ev_minor, r.currency)}; spent {money(r.totals.ac_minor, r.currency)}{r.totals.plans_without_ac > 0 ? ` (cost unknown for ${r.totals.plans_without_ac} plans)` : ""}.
+            {t("p.plans.pid.earned_value.rollup_money", { bac: money(r.totals.bac_minor, r.currency), pv: money(r.totals.pv_minor, r.currency), ev: money(r.totals.ev_minor, r.currency), ac: money(r.totals.ac_minor, r.currency), unknown: r.totals.plans_without_ac > 0 ? t("p.plans.pid.earned_value.cost_unknown_for", { plans: r.totals.plans_without_ac }) : "" })}
           </p>
           <p>
-            <span aria-hidden="true">{ragText(r.spi.rag).marker}</span> SPI {ratioOrReason({ bp: r.spi.bp })}
-            · <span aria-hidden="true">{ragText(r.cpi.rag).marker}</span> CPI {r.cpi.bp === null ? "not stated: cost is unknown for some plans" : ratioOrReason({ bp: r.cpi.bp })}
-            {#if r.eac.minor !== null}· forecast final cost {money(r.eac.minor, r.currency)}{/if}
+            <span aria-hidden="true">{ragText(r.spi.rag).marker}</span> {t("p.plans.pid.earned_value.spi", { ratioOrReason: ratioOrReason({ bp: r.spi.bp }) })} <span aria-hidden="true">{ragText(r.cpi.rag).marker}</span> {t("p.plans.pid.earned_value.cpi_value", { value: r.cpi.bp === null ? t("p.plans.pid.earned_value.cpi_not_stated") : ratioOrReason({ bp: r.cpi.bp }) })}
+            {#if r.eac.minor !== null}{t("p.plans.pid.earned_value.forecast_final_cost", { money: money(r.eac.minor, r.currency) })}{/if}
           </p>
         </section>
       {/each}
       {#if rollup.plans_without_figures > 0}
-        <p class="small muted">{rollup.plans_without_figures} plan{rollup.plans_without_figures === 1 ? "" : "s"} below have no figures yet (no baseline or nothing to measure) and are not guessed at.</p>
+        <p class="small muted">{(rollup.plans_without_figures === 1 ? t("p.plans.pid.earned_value.plan_below_have_no_figures_one", { plans_without_figures: rollup.plans_without_figures }) : t("p.plans.pid.earned_value.plan_below_have_no_figures_other", { plans_without_figures: rollup.plans_without_figures }))}</p>
       {/if}
     {/if}
 
-    <h2>Count a task another way</h2>
+    <h2>{t("p.plans.pid.earned_value.count_a_task_another_way")}</h2>
     <ul class="small">
-      {#each ev.percent_complete?.tasks ?? [] as t (t.pid)}
+      {#each ev.percent_complete?.tasks ?? [] as row (row.pid)}
         <li>
-          {titleOf.get(t.pid) ?? "(task)"}: {Math.round(t.percent_bp / 100)}%
-          ({t.method === "manual" ? "manual" : t.method === "fifty_fifty" ? "half for started" : "finished only"}{ev.percent_complete?.weighting === "points" ? `, ${t.weight} points` : ""})
-          <button type="button" onclick={() => edit(t.pid)}>Change</button>
+          {titleOf.get(row.pid) ?? t("p.plans.pid.earned_value.task")}: {Math.round(row.percent_bp / 100)}%
+          ({row.method === "manual" ? t("p.plans.pid.earned_value.manual") : row.method === "fifty_fifty" ? t("p.plans.pid.earned_value.half_for_started") : t("p.plans.pid.earned_value.finished_only")}{ev.percent_complete?.weighting === "points" ? t("p.plans.pid.earned_value.weight_points", { weight: row.weight }) : ""})
+          <button type="button" onclick={() => edit(row.pid)}>{t("p.plans.pid.earned_value.change")}</button>
         </li>
       {/each}
     </ul>
     {#if editing}
       <form onsubmit={save} class="stack surface">
-        <h3>{titleOf.get(editing) ?? "Task"}</h3>
+        <h3>{titleOf.get(editing) ?? t("p.plans.pid.earned_value.task_2")}</h3>
         <label>
-          Method
+          {t("p.plans.pid.earned_value.method")}
           <select bind:value={method}>
-            <option value="">Use the plan's method</option>
-            <option value="zero_hundred">Only when finished</option>
-            <option value="fifty_fifty">Started work counts half</option>
-            <option value="manual">A percent I enter (flagged)</option>
+            <option value="">{t("p.plans.pid.earned_value.use_the_plan_s_method")}</option>
+            <option value="zero_hundred">{t("p.plans.pid.earned_value.only_when_finished_2")}</option>
+            <option value="fifty_fifty">{t("p.plans.pid.earned_value.started_work_counts_half_2")}</option>
+            <option value="manual">{t("p.plans.pid.earned_value.a_percent_i_enter_flagged")}</option>
           </select>
         </label>
         {#if method === "manual"}
-          <label>Percent complete <input type="number" min="0" max="100" bind:value={percent} required /></label>
-          <label>Why (required) <input type="text" bind:value={note} required /></label>
+          <label>{t("p.plans.pid.earned_value.percent_complete")} <input type="number" min="0" max="100" bind:value={percent} required /></label>
+          <label>{t("p.plans.pid.earned_value.why_required")} <input type="text" bind:value={note} required /></label>
         {/if}
-        <button class="button primary" type="submit">Save</button>
-        <button class="button" type="button" onclick={() => (editing = null)}>Cancel</button>
+        <button class="button primary" type="submit">{t("p.plans.pid.earned_value.save")}</button>
+        <button class="button" type="button" onclick={() => (editing = null)}>{t("p.plans.pid.earned_value.cancel")}</button>
       </form>
     {/if}
     <p class="small muted">{ev.note}</p>
   {/if}
 {:else if !error}
-  <p>Loading…</p>
+  <p>{t("p.plans.pid.earned_value.loading")}</p>
 {/if}
 
 <style>

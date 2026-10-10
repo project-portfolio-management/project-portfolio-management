@@ -4,6 +4,7 @@
   columns the chart cannot show (free float, constraint, deadline, calendar).
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { CpmNode } from "#lib/api/ppm.js";
   import { floatLabel, floatState } from "#lib/cpm-view.js";
 
@@ -12,25 +13,25 @@
 
 <div class="scroll">
   <table data-testid="cpm-table">
-    <caption class="sr-only">Task schedule with float, in the plan's business days</caption>
+    <caption class="sr-only">{t("c.CpmTable.task_schedule_with_float_in")}</caption>
     <thead>
       <tr>
-        <th scope="col">Task</th>
-        <th scope="col">Starts</th>
-        <th scope="col">Finishes</th>
-        <th scope="col">Total float</th>
-        <th scope="col">Free float</th>
-        <th scope="col">State</th>
-        <th scope="col">Constraint</th>
-        <th scope="col">Deadline</th>
-        <th scope="col">Calendar</th>
+        <th scope="col">{t("c.CpmTable.task")}</th>
+        <th scope="col">{t("c.CpmTable.starts")}</th>
+        <th scope="col">{t("c.CpmTable.finishes")}</th>
+        <th scope="col">{t("c.CpmTable.total_float")}</th>
+        <th scope="col">{t("c.CpmTable.free_float")}</th>
+        <th scope="col">{t("c.CpmTable.state")}</th>
+        <th scope="col">{t("c.CpmTable.constraint")}</th>
+        <th scope="col">{t("c.CpmTable.deadline")}</th>
+        <th scope="col">{t("c.CpmTable.calendar")}</th>
       </tr>
     </thead>
     <tbody>
       {#each nodes as n (n.pid)}
         {@const st = floatState(n)}
         <tr class={st.key} id={`task-${n.pid}`}>
-          <th scope="row">{n.title ?? "(untitled)"}</th>
+          <th scope="row">{n.title ?? t("c.CpmTable.untitled")}</th>
           <td>{n.early_start}</td>
           <td>{n.early_finish}</td>
           <td>{n.total_float}</td>
@@ -38,10 +39,10 @@
           <td><span aria-hidden="true">{st.marker}</span> {floatLabel(n)}</td>
           <td>
             {#if n.constraint}{n.constraint.toUpperCase()} {n.constraint_date}{:else}—{/if}
-            {#if n.hard_conflict}<strong> (overrides its predecessors)</strong>{/if}
+            {#if n.hard_conflict}<strong> {t("c.CpmTable.overrides_its_predecessors")}</strong>{/if}
           </td>
           <td>{n.deadline ?? "—"}</td>
-          <td>{n.calendar === "plan+person" ? "plan + assignee" : "plan"}</td>
+          <td>{n.calendar === "plan+person" ? t("c.CpmTable.plan_assignee") : t("c.CpmTable.plan")}</td>
         </tr>
       {/each}
     </tbody>

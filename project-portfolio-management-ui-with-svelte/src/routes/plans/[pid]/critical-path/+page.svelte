@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { taskEstimateProblems, taskRangeText } from "#lib/simulation-inputs.js";
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -62,7 +62,7 @@
       variance = await ppm.scheduleVariance(pid, chosen ?? undefined);
       chosen = variance.baseline?.version ?? null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the baselines";
+      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_load_the_baselines");
     }
   }
 
@@ -75,7 +75,7 @@
       chosen = null;
       await loadBaselines();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not take the baseline";
+      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_take_the_baseline");
     }
   }
 
@@ -85,7 +85,7 @@
       error = null;
       await loadBaselines();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the schedule";
+      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_load_the_schedule");
     }
   }
   onMount(() => void load());
@@ -135,7 +135,7 @@
       estimateSaved = true;
       await load();
     } catch (err) {
-      error = err instanceof ApiError || err instanceof Error ? err.message : "Could not save the estimate";
+      error = err instanceof ApiError || err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_save_the_estimate");
     }
   }
 
@@ -155,26 +155,26 @@
       });
       await load();
     } catch (err) {
-      error = err instanceof ApiError || err instanceof Error ? err.message : "Could not save";
+      error = err instanceof ApiError || err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_save");
     } finally {
       saving = false;
     }
   }
 </script>
 
-<svelte:head><title>Critical path — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.critical_path.critical_path_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/calendar`)}>Working calendar</a></p>
-<h1>Critical path</h1>
-<p class="lede">The longest chain of tasks, which sets the finish date. A delay to any task on it delays the whole plan.</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.critical_path.plan")}</a> · <a href={localeHref(`/plans/${pid}/calendar`)}>{t("p.plans.pid.critical_path.working_calendar")}</a></p>
+<h1>{t("p.plans.pid.critical_path.critical_path")}</h1>
+<p class="lede">{t("p.plans.pid.critical_path.the_longest_chain_of_tasks")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if cpm}
   <p class="small muted">
-    {cpm.project_finish ? `Finishes ${cpm.project_finish}.` : "Nothing is scheduled yet."}
-    Calendar: {cpm.calendar === "plan" ? "this plan's" : "default (every day works)"}.
+    {cpm.project_finish ? t("p.plans.pid.critical_path.finishes", { date: cpm.project_finish }) : t("p.plans.pid.critical_path.nothing_scheduled")}
+    {t("p.plans.pid.critical_path.calendar_label", { calendar: cpm.calendar === "plan" ? t("p.plans.pid.critical_path.calendar_plan") : t("p.plans.pid.critical_path.calendar_default") })}
     {#if cpm.critical_chains.length > 1}
-      {cpm.critical_chains.length} critical chains{cpm.chains_truncated ? " (more not shown)" : ""}.
+      {t("p.plans.pid.critical_path.critical_chains", { count: cpm.critical_chains.length, more: cpm.chains_truncated ? t("p.plans.pid.critical_path.more_not_shown") : "" })}
     {/if}
   </p>
   {#if (cpm.restricted_edges ?? []).length > 0}
@@ -182,28 +182,27 @@
   {/if}
   {#if cpm.calendar_conflicts.length > 0}
     <p class="banner" role="alert">
-      These assignees share no business day with the plan's calendar, so the plan's calendar was used for them:
-      {cpm.calendar_conflicts.join(", ")}.
+      {t("p.plans.pid.critical_path.these_assignees_share_no_business", { join: cpm.calendar_conflicts.join(", ") })}
     </p>
   {/if}
 
   <div class="toolbar">
-    <div role="group" aria-label="View">
-      <button type="button" aria-pressed={view === "gantt"} onclick={() => (view = "gantt")}>Gantt</button>
-      <button type="button" aria-pressed={view === "network"} onclick={() => (view = "network")}>Network</button>
-      <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>Table</button>
+    <div role="group" aria-label={t("p.plans.pid.critical_path.view")}>
+      <button type="button" aria-pressed={view === "gantt"} onclick={() => (view = "gantt")}>{t("p.plans.pid.critical_path.gantt")}</button>
+      <button type="button" aria-pressed={view === "network"} onclick={() => (view = "network")}>{t("p.plans.pid.critical_path.network")}</button>
+      <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>{t("p.plans.pid.critical_path.table")}</button>
     </div>
     <label>
-      Near-critical within
+      {t("p.plans.pid.critical_path.near_critical_within")}
       <input type="number" min="0" max="3650" bind:value={near} onchange={() => void load()} class="short" />
-      business days
+      {t("p.plans.pid.critical_path.business_days")}
     </label>
   </div>
 
   {#if view === "gantt"}
     <CpmGantt nodes={cpm.nodes} baseline={ghosts} {selected} onselect={select} />
   {:else if view === "network" && !diagramFits(cpm.nodes.length)}
-    <p class="banner" role="note">This network has {cpm.nodes.length} tasks, too many to draw usefully. The table below says the same thing.</p>
+    <p class="banner" role="note">{t("p.plans.pid.critical_path.this_network_has_tasks_too", { length: cpm.nodes.length })}</p>
     <CpmTable nodes={cpm.nodes} />
   {:else if view === "network"}
     <NetworkDiagram nodes={cpm.nodes} edges={cpm.edges} chains={cpm.critical_chains} {selected} onselect={select} />
@@ -212,34 +211,34 @@
   {/if}
 
   <section aria-labelledby="bl-h" class="stack">
-    <h2 id="bl-h">Baselines</h2>
+    <h2 id="bl-h">{t("p.plans.pid.critical_path.baselines")}</h2>
     <p class="small muted">
-      A baseline is a numbered snapshot of the schedule, kept for good: re-baselining makes the next version and never replaces one.
+      {t("p.plans.pid.critical_path.a_baseline_is_a_numbered")}
     </p>
     <form onsubmit={takeBaseline} class="row">
-      <label>Why a baseline now? <input type="text" bind:value={baselineReason} required maxlength="500" /></label>
-      <button type="submit">Take baseline</button>
+      <label>{t("p.plans.pid.critical_path.why_a_baseline_now")} <input type="text" bind:value={baselineReason} required maxlength="500" /></label>
+      <button type="submit">{t("p.plans.pid.critical_path.take_baseline")}</button>
     </form>
     {#if baselines.length > 0}
       <label>
-        Compare with
+        {t("p.plans.pid.critical_path.compare_with")}
         <select bind:value={chosen} onchange={() => void loadBaselines()}>
           {#each baselines as b (b.pid)}
-            <option value={b.version}>Version {b.version}: {b.reason} ({b.created_at.slice(0, 10)})</option>
+            <option value={b.version}>{t("p.plans.pid.critical_path.version", { version: b.version, reason: b.reason, slice: b.created_at.slice(0, 10) })}</option>
           {/each}
         </select>
       </label>
-      <label><input type="checkbox" bind:checked={showBaseline} /> Show the baseline under each bar</label>
+      <label><input type="checkbox" bind:checked={showBaseline} /> {t("p.plans.pid.critical_path.show_the_baseline_under_each")}</label>
     {/if}
     {#if variance?.variance}
       <VarianceTable variance={variance.variance} />
     {:else if variance}
-      <p class="muted">No baseline yet, so nothing can be said about slip.</p>
+      <p class="muted">{t("p.plans.pid.critical_path.no_baseline_yet_so_nothing")}</p>
     {/if}
   </section>
 
   {#if cpm.critical_chains.length > 0}
-    <h2>Critical chains</h2>
+    <h2>{t("p.plans.pid.critical_path.critical_chains")}</h2>
     <ol class="small">
       {#each cpm.critical_chains as chain, i (i)}
         <li>{chain.map((p) => titleOf.get(p) ?? "?").join(" → ")}</li>
@@ -248,11 +247,11 @@
   {/if}
 
   {#if cpm.unscheduled.length > 0}
-    <h2>Not scheduled</h2>
+    <h2>{t("p.plans.pid.critical_path.not_scheduled")}</h2>
     <ul class="small">
       {#each cpm.unscheduled as u (u.pid)}
         <li>
-          <button type="button" class="link" onclick={() => select(u.pid)}>{u.title ?? "(untitled)"}</button>
+          <button type="button" class="link" onclick={() => select(u.pid)}>{u.title ?? t("p.plans.pid.critical_path.untitled")}</button>
           {unscheduledReason(u.reason)}
         </li>
       {/each}
@@ -261,57 +260,59 @@
 
   {#if selected}
     <section class="surface stack" aria-labelledby="edit-h">
-      <h2 id="edit-h">{node?.title ?? unscheduledSelected?.title ?? "Task"}</h2>
-      {#if node}<p>{floatLabel(node)}.{node.pushed_days > 0 ? ` Its predecessors push it ${node.pushed_days} business days later than planned.` : ""}</p>{/if}
+      <h2 id="edit-h">{node?.title ?? unscheduledSelected?.title ?? t("p.plans.pid.critical_path.task")}</h2>
+      {#if node}<p>{floatLabel(node)}.{node.pushed_days > 0 ? " " + t("p.plans.pid.critical_path.pushed_later", { days: node.pushed_days }) : ""}</p>{/if}
       <form onsubmit={save} class="stack">
-        <label>Planned start <input type="date" bind:value={start} /></label>
-        <label>Duration (business days; 0 is a milestone) <input type="number" min="0" max="3650" bind:value={duration} /></label>
+        <label>{t("p.plans.pid.critical_path.planned_start")} <input type="date" bind:value={start} /></label>
+        <label>{t("p.plans.pid.critical_path.duration_business_days_0_is")} <input type="number" min="0" max="3650" bind:value={duration} /></label>
         <label>
-          Constraint
+          {t("p.plans.pid.critical_path.constraint")}
           <select bind:value={ckind}>
-            <option value="">None (as soon as possible)</option>
-            <option value="snet">Start no earlier than</option>
-            <option value="snlt">Start no later than</option>
-            <option value="fnet">Finish no earlier than</option>
-            <option value="fnlt">Finish no later than</option>
-            <option value="mso">Must start on (overrides logic)</option>
-            <option value="mfo">Must finish on (overrides logic)</option>
+            <option value="">{t("p.plans.pid.critical_path.none_as_soon_as_possible")}</option>
+            <option value="snet">{t("p.plans.pid.critical_path.start_no_earlier_than")}</option>
+            <option value="snlt">{t("p.plans.pid.critical_path.start_no_later_than")}</option>
+            <option value="fnet">{t("p.plans.pid.critical_path.finish_no_earlier_than")}</option>
+            <option value="fnlt">{t("p.plans.pid.critical_path.finish_no_later_than")}</option>
+            <option value="mso">{t("p.plans.pid.critical_path.must_start_on_overrides_logic")}</option>
+            <option value="mfo">{t("p.plans.pid.critical_path.must_finish_on_overrides_logic")}</option>
           </select>
         </label>
-        {#if ckind}<label>Constraint date <input type="date" bind:value={cdate} required /></label>{/if}
+        {#if ckind}<label>{t("p.plans.pid.critical_path.constraint_date")} <input type="date" bind:value={cdate} required /></label>{/if}
         {#if hard}
           <label>
-            Reason (required: this overrides the schedule's logic)
+            {t("p.plans.pid.critical_path.reason_required_this_overrides_the")}
             <input type="text" bind:value={reason} required />
           </label>
         {/if}
-        <label>Deadline (a goal: it shows as negative float, it never moves the task) <input type="date" bind:value={deadline} /></label>
-        <button class="button primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save schedule"}</button>
+        <label>{t("p.plans.pid.critical_path.deadline_a_goal_it_shows")} <input type="date" bind:value={deadline} /></label>
+        <button class="button primary" type="submit" disabled={saving}>{saving ? t("p.plans.pid.critical_path.saving") : t("p.plans.pid.critical_path.save_schedule")}</button>
       </form>
       <form onsubmit={saveEstimate} class="stack" aria-labelledby="est-h">
-        <h3 id="est-h">Range for schedule risk</h3>
-        <p class="small muted">{taskRangeText(node?.duration_optimistic_days, node?.duration_days ?? null, node?.duration_pessimistic_days)}. The duration above is the likely value.</p>
-        <label>Optimistic (business days) <input type="number" min="0" max="3650" step="1" bind:value={optimistic} /></label>
-        <label>Pessimistic (business days) <input type="number" min="0" max="3650" step="1" bind:value={pessimistic} /></label>
-        <button type="submit">Save range</button>
+        <h3 id="est-h">{t("p.plans.pid.critical_path.range_for_schedule_risk")}</h3>
+        <p class="small muted">{t("p.plans.pid.critical_path.the_duration_above_is_the", { taskRangeText: taskRangeText(node?.duration_optimistic_days, node?.duration_days ?? null, node?.duration_pessimistic_days) })}</p>
+        <label>{t("p.plans.pid.critical_path.optimistic_business_days")} <input type="number" min="0" max="3650" step="1" bind:value={optimistic} /></label>
+        <label>{t("p.plans.pid.critical_path.pessimistic_business_days")} <input type="number" min="0" max="3650" step="1" bind:value={pessimistic} /></label>
+        <button type="submit">{t("p.plans.pid.critical_path.save_range")}</button>
         {#each estimateProblem as p (p)}<p class="banner" role="alert">{p}</p>{/each}
-        {#if estimateSaved}<p role="status" class="small">Range saved.</p>{/if}
+        {#if estimateSaved}<p role="status" class="small">{t("p.plans.pid.critical_path.range_saved")}</p>{/if}
       </form>
       {#if result}
         <div role="status" data-testid="moved">
           {#if result.moved === null}
             <p>{result.note}</p>
           {:else if result.moved.length === 0}
-            <p>Saved. Nothing else moved.</p>
+            <p>{t("p.plans.pid.critical_path.saved_nothing_else_moved")}</p>
           {:else}
-            <p>Saved. Moved:</p>
+            <p>{t("p.plans.pid.critical_path.saved_moved")}</p>
             <ul>
               {#each result.moved as m (m.pid)}
                 <li>
-                  {titleOf.get(m.pid) ?? "?"}:
-                  {m.moved === "both" ? "start and finish" : m.moved}
-                  {m.finish_days !== 0 ? ` finish ${m.finish_days > 0 ? "+" : ""}${m.finish_days}` : ""}
-                  {m.start_days !== 0 ? ` start ${m.start_days > 0 ? "+" : ""}${m.start_days}` : ""} business days
+                  {t("p.plans.pid.critical_path.moved_line", {
+                    title: titleOf.get(m.pid) ?? "?",
+                    moved: m.moved === "both" ? t("p.plans.pid.critical_path.moved_both") : m.moved === "start" ? t("p.plans.pid.critical_path.moved_start") : t("p.plans.pid.critical_path.moved_finish"),
+                    finish: m.finish_days !== 0 ? t("p.plans.pid.critical_path.moved_finish_by", { days: (m.finish_days > 0 ? "+" : "") + m.finish_days }) : "",
+                    start: m.start_days !== 0 ? t("p.plans.pid.critical_path.moved_start_by", { days: (m.start_days > 0 ? "+" : "") + m.start_days }) : "",
+                  })}
                 </li>
               {/each}
             </ul>
@@ -321,7 +322,7 @@
     </section>
   {/if}
 {:else if !error}
-  <p>Loading…</p>
+  <p>{t("p.plans.pid.critical_path.loading")}</p>
 {/if}
 
 <style>

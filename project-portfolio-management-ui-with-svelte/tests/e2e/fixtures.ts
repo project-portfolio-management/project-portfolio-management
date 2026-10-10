@@ -41,7 +41,9 @@ export async function stubPlansApi(page: Page) {
       return route.fulfill({ json: WORK_ITEM });
     }
     if (path === `/api/plans/${PID}/schedule` && method === "GET") {
-      return route.fulfill({ json: { items: [], edges: [] } });
+      return route.fulfill({
+        json: { portfolio_pid: PID, items: [], edges: [], violations: [], critical_path: [], undated: [] },
+      });
     }
     if (path === "/api/me/tasks" && method === "GET") {
       const empty = {

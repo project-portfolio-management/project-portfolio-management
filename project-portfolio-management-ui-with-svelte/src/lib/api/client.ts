@@ -9,6 +9,8 @@
 // an explicit per-request `token` override, if ever passed. See
 // `agents/share/authentication-sessions.md`.
 
+import { t } from "../i18n.svelte.js";
+
 /**
  * Construction-time configuration for {@link ApiClient}.
  */
@@ -266,18 +268,34 @@ export class ApiClient {
         // Non-JSON body: only surface it as an error on a failed
         // response (truncated); a non-JSON 2xx body stays `undefined`.
         if (!response.ok) {
-          throw new ApiError(response.status, text.slice(0, 200));
+          throw new ApiError(response.status, localizeApiMessage(text.slice(0, 200), response.status));
         }
       }
     }
 
     if (!response.ok) {
       // Prefer a server-supplied message; otherwise a generic status line.
-      const message = extractMessage(parsed) ?? `HTTP ${response.status}`;
+      const message = localizeApiMessage(extractMessage(parsed), response.status);
       throw new ApiError(response.status, message, parsed);
     }
     return { data: parsed as T, response };
   }
+}
+
+const API_CODES: Record<string, string> = {
+  unauthorized: "l.enum.api.unauthorized",
+  forbidden: "l.enum.api.forbidden",
+  "not found": "l.enum.api.not_found",
+  not_found: "l.enum.api.not_found",
+  "internal error": "l.enum.api.internal_error",
+  rate_limited: "l.enum.api.rate_limited",
+};
+
+/** A service error code in the reader's language; any other text from the service is shown as sent. */
+function localizeApiMessage(message: string | undefined, status: number): string {
+  if (message === undefined) return t("l.enum.api.http_status" as never, { status });
+  const key = API_CODES[message.trim().toLowerCase()];
+  return key ? t(key as never) : message;
 }
 
 /**

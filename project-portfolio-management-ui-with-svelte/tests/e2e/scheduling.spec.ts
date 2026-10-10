@@ -31,7 +31,7 @@ async function stub(page: Page, routes: Record<string, unknown | Handler>) {
 async function audit(page: Page) {
   await settle(page);
   const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   const bad = results.violations.filter(
     (v) => v.impact === "serious" || v.impact === "critical",

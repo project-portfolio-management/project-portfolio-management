@@ -8,6 +8,7 @@
 
 import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
 import type { PageServerLoad } from "./$types";
+import { pageTitle } from "#lib/i18n.svelte.js";
 import { redirect } from "@sveltejs/kit";
 import {
   SESSION_COOKIE,
@@ -19,12 +20,11 @@ import { verifyMagicLink } from "#lib/server/auth.js";
 // `page.data.title` convention (see `../+layout.svelte`): mirrors this
 // route's own <svelte:head><title> so SharePicker gets the right title
 // without reading the DOM.
-const TITLE = "Sign-in link";
 
 export const load: PageServerLoad = async ({ url, fetch, cookies, locals }) => {
   const token = url.searchParams.get("token");
   if (!token) {
-    return { error: "missingToken" as const, title: TITLE };
+    return { error: "missingToken" as const, title: pageTitle(url, "p.verify.sign_in_link") };
   }
   // A network-level failure (the authentication service unreachable,
   // timed out, DNS failure, connection reset, …) is a different failure
@@ -44,11 +44,11 @@ export const load: PageServerLoad = async ({ url, fetch, cookies, locals }) => {
     return { error: "serviceUnavailable" as const };
   }
   if (!upstream.ok) {
-    return { error: "invalidToken" as const, title: TITLE };
+    return { error: "invalidToken" as const, title: pageTitle(url, "p.verify.sign_in_link") };
   }
   const sid = sessionIdFromResponse(upstream);
   if (!sid) {
-    return { error: "noSession" as const, title: TITLE };
+    return { error: "noSession" as const, title: pageTitle(url, "p.verify.sign_in_link") };
   }
   cookies.set(SESSION_COOKIE, sid, SESSION_COOKIE_OPTIONS);
   redirect(303, localizePath("/", locals.locale ?? DEFAULT_LOCALE));

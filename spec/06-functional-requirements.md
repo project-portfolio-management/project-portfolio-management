@@ -123,12 +123,35 @@ hang off **any** plan.
   Todo|InProgress|InReview|Done|Blocked, goal_id?, parent_task_id?,
   estimate?, remaining?, due_date? }`. A task may attach to a goal and
   nest under a parent task.
-- **FR-14 Issues.** CRUD issues under a plan
-  (`/api/plans/{pid}/issues`). `Issue { pid, parent_pid, title,
-  kind: Bug|Risk|Blocker|Question|Improvement,
-  severity: Low|Med|High|Critical, status:
-  Open|InProgress|Resolved|Closed, assignee_ref? }`. **Not built:** no
-  `issues` route, table or entity exists (§14.2).
+- **FR-14 Issues register.** An issue is something that has **already
+  happened** and needs managing (a risk is something that might). CRUD issues
+  under a plan (`/api/plans/{pid}/issues`) and a portfolio-wide register
+  (`GET /api/issues`, filterable by plan, severity, status, owner and age).
+  `Issue { pid, parent_pid, title, description?, kind:
+  Bug|Risk|Blocker|Question|Improvement|Concern, severity:
+  Low|Med|High|Critical, priority?, status:
+  Open|InProgress|Resolved|Closed, owner_ref? (EntityRef), raised_by,
+  raised_on, due_date?, resolution?, resolved_on?, source_risk_pid?,
+  source_task_pid?, change_request_pid? }`. Rules: a `Closed` issue records a
+  resolution; ageing is counted in **calendar days** since `raised_on`; an
+  issue raised from a risk (escalation) or from a blocked task keeps a link
+  back and the source is never altered by closing the issue; every change is
+  audited (FR-19). Reads obey the same attribute-based policy as tasks.
+  **Not built:** no `issues` route, table or entity exists (§14.2).
+- **FR-14a Change requests.** A change request is a controlled proposal to
+  change an approved baseline: scope, schedule, budget or a deliverable.
+  `ChangeRequest { pid, plan_pid, title, description, reason, kind:
+  Scope|Schedule|Cost|Quality|Other, impact_schedule_days? (**business
+  days**), impact_cost_minor? + currency, impact_summary?, status:
+  Draft|Submitted|UnderReview|Approved|Rejected|Implemented|Withdrawn,
+  requested_by, requested_on, decided_by?, decided_on?, decision_reason?,
+  issue_pids[], risk_pids[] }`. Rules: decision is by a person with the
+  approval permission, never the requester (the same separation as controlled
+  documents); an approved request that moves the finish or the budget can
+  take a new **baseline** (never replacing one) only when a person chooses to;
+  the decision log keeps who decided, when and why; impacts are stated, not
+  guessed (the schedule impact may be shown as a *what-if* preview from the
+  existing scheduler and is labelled a forecast). **Not built.**
 - **FR-15 Timeline (derived).** `GET /api/plans/{pid}/timeline`
   returns a Gantt-style projection: goals with a `target_date` as
   milestones + tasks with `due_date` / date ranges as bars. Read-only;

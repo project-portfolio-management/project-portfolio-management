@@ -21,6 +21,7 @@
   } from "#lib/api/ppm.js";
   import LilyKanbanTable from "#lib/components/LilyKanbanTable.svelte";
   import { t } from "#lib/i18n.svelte.js";
+  import { calendarDays } from "#lib/units.js";
   const pid = page.params.pid ?? "";
   const ppm = PpmClient.withFetch();
 
@@ -74,11 +75,11 @@
   }
 
   const COLUMNS = [
-    { id: "todo", label: "Todo", addCard: false },
-    { id: "in_progress", label: "In progress", addCard: false },
-    { id: "in_review", label: "In review", addCard: false },
-    { id: "done", label: "Done", addCard: false },
-    { id: "blocked", label: "Blocked", addCard: false },
+    { id: "todo", get label() { return t("p.plans.pid.board.todo"); }, addCard: false },
+    { id: "in_progress", get label() { return t("p.plans.pid.board.in_progress"); }, addCard: false },
+    { id: "in_review", get label() { return t("p.plans.pid.board.in_review"); }, addCard: false },
+    { id: "done", get label() { return t("p.plans.pid.onboarding.done"); }, addCard: false },
+    { id: "blocked", get label() { return t("p.plans.pid.flow.blocked"); }, addCard: false },
   ];
 
   const cards = $derived(
@@ -86,9 +87,9 @@
       id: task.pid,
       label: task.title,
       description:
-        (task.assignee_ref ?? "unassigned") +
-        (task.points !== null && task.points !== undefined ? ` · ${task.points}pt` : "") +
-        (task.blocked_days !== null ? ` · blocked ${task.blocked_days} calendar day${task.blocked_days === 1 ? "" : "s"}` : ""),
+        (task.assignee_ref ?? t("p.plans.pid.board.unassigned")) +
+        (task.points !== null && task.points !== undefined ? t("p.plans.pid.board.pt", { points: task.points }) : "") +
+        (task.blocked_days !== null ? t("p.plans.pid.board.blocked_for", { days: calendarDays(task.blocked_days) }) : ""),
       status: task.status,
     })),
   );
@@ -116,7 +117,7 @@
   }
 </script>
 
-<svelte:head><title>{t("ppm.common.board")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.board.ppm", { t: t("ppm.common.board") })}</title></svelte:head>
 
 <h1>{t("ppm.common.board")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -135,22 +136,22 @@
     void act(() => ppm.createTask(pid, body));
   }}
 >
-  <input bind:value={title} placeholder="New task title" aria-label="New task title" />
+  <input bind:value={title} placeholder={t("p.plans.pid.board.new_task_title")} aria-label={t("p.plans.pid.board.new_task_title")} />
   <input
     bind:value={points}
-    placeholder="pts"
-    aria-label="Story points"
+    placeholder={t("p.plans.pid.board.pts")}
+    aria-label={t("p.plans.pid.board.story_points")}
     class="points"
     inputmode="numeric"
   />
-  <button class="button primary" type="submit">Add task</button>
+  <button class="button primary" type="submit">{t("p.plans.pid.board.add_task")}</button>
   <label>
-    Sprint
+    {t("p.plans.pid.board.sprint")}
     <select
       value={selectedSprint}
       onchange={(event) => void selectSprint(event.currentTarget.value)}
     >
-      <option value="">(none)</option>
+      <option value="">{t("p.plans.pid.board.none")}</option>
       {#each sprints as sprint (sprint.pid)}
         <option value={sprint.pid}>{sprint.name}</option>
       {/each}
@@ -159,10 +160,10 @@
 </form>
 
 {#if tasks !== null}
-  <div class="view-toggle" role="group" aria-label="Board view">
-    <button type="button" aria-pressed={view === "board"} onclick={() => (view = "board")}>Board</button>
+  <div class="view-toggle" role="group" aria-label={t("p.plans.pid.board.board_view")}>
+    <button type="button" aria-pressed={view === "board"} onclick={() => (view = "board")}>{t("p.plans.pid.board.board")}</button>
     <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>
-      Accessible table
+      {t("p.plans.pid.board.accessible_table")}
     </button>
   </div>
   {#if view === "table"}
@@ -187,7 +188,7 @@
   {/if}
 {/if}
 
-<h2>Sprints</h2>
+<h2>{t("p.plans.pid.board.sprints")}</h2>
 <form
   class="row"
   onsubmit={(event) => {
@@ -198,17 +199,17 @@
     void act(() => ppm.createSprint(pid, body));
   }}
 >
-  <input bind:value={sprintName} placeholder="Sprint name" aria-label="Sprint name" />
-  <input type="date" bind:value={sprintStart} aria-label="Sprint start" />
-  <input type="date" bind:value={sprintEnd} aria-label="Sprint end" />
-  <button type="submit">Add sprint</button>
+  <input bind:value={sprintName} placeholder={t("p.plans.pid.board.sprint_name")} aria-label={t("p.plans.pid.board.sprint_name")} />
+  <input type="date" bind:value={sprintStart} aria-label={t("p.plans.pid.board.sprint_start")} />
+  <input type="date" bind:value={sprintEnd} aria-label={t("p.plans.pid.board.sprint_end")} />
+  <button type="submit">{t("p.plans.pid.board.add_sprint")}</button>
 </form>
 
 {#if burndown}
-  <h2>Burndown — {burndown.sprint.name}</h2>
+  <h2>{t("p.plans.pid.board.burndown", { name: burndown.sprint.name })}</h2>
   <p class="muted">{burndown.derivation}</p>
   <table data-testid="burndown">
-    <thead><tr><th>Date</th><th>Remaining of {burndown.total_tasks}</th></tr></thead>
+    <thead><tr><th>{t("p.plans.pid.board.date")}</th><th>{t("p.plans.pid.board.remaining_of", { total_tasks: burndown.total_tasks })}</th></tr></thead>
     <tbody>
       {#each burndown.points as point (point.date)}
         <tr><td>{point.date}</td><td>{point.remaining}</td></tr>
@@ -218,17 +219,15 @@
 {/if}
 
 {#if standup}
-  <h2>Standup (last 24h)</h2>
+  <h2>{t("p.plans.pid.board.standup_last_24h")}</h2>
   <div data-testid="standup">
     <p>
-      {standup.tasks_created.length} created ·
-      {standup.tasks_moved.length} moves ·
-      {standup.blocked_now.length} blocked now
+      {t("p.plans.pid.board.created_moves_blocked_now", { length: standup.tasks_created.length, length2: standup.tasks_moved.length, length3: standup.blocked_now.length })}
     </p>
     {#if standup.blocked_now.length > 0}
       <ul>
         {#each standup.blocked_now as task (task.pid)}
-          <li>{task.title} <span class="muted">blocked {task.blocked_days} calendar day{task.blocked_days === 1 ? "" : "s"}</span></li>
+          <li>{task.title} <span class="muted">{(task.blocked_days === 1 ? t("p.plans.pid.board.blocked_calendar_day_one", { blocked_days: task.blocked_days }) : t("p.plans.pid.board.blocked_calendar_day_other", { blocked_days: task.blocked_days }))}</span></li>
         {/each}
       </ul>
     {/if}
@@ -236,7 +235,7 @@
 {/if}
 
 {#if selectedSprint}
-  <h2>Retro / feedback notes</h2>
+  <h2>{t("p.plans.pid.board.retro_feedback_notes")}</h2>
   <form
     class="row"
     onsubmit={(event) => {
@@ -247,41 +246,41 @@
       void act(() => ppm.createNote(pid, selectedSprint, body));
     }}
   >
-    <select bind:value={noteCategory} aria-label="Note category">
-      <option value="went_well">went well</option>
-      <option value="improve">improve</option>
-      <option value="action">action</option>
-      <option value="feedback">feedback</option>
+    <select bind:value={noteCategory} aria-label={t("p.plans.pid.board.note_category")}>
+      <option value="went_well">{t("p.plans.pid.board.went_well")}</option>
+      <option value="improve">{t("p.plans.pid.board.improve")}</option>
+      <option value="action">{t("p.plans.pid.board.action")}</option>
+      <option value="feedback">{t("p.plans.pid.board.feedback")}</option>
     </select>
-    <input bind:value={noteBody} placeholder="Note" aria-label="Note body" />
-    <button type="submit">Add note</button>
+    <input bind:value={noteBody} placeholder={t("p.plans.pid.board.note")} aria-label={t("p.plans.pid.board.note_body")} />
+    <button type="submit">{t("p.plans.pid.board.add_note")}</button>
   </form>
   <ul data-testid="sprint-notes">
     {#each notes as note (note.pid)}
       <li>
         <strong>{note.category}</strong>: {note.body}
         {#if note.task_pid}
-          <span class="muted">→ task created</span>
+          <span class="muted">{t("p.plans.pid.board.task_created")}</span>
         {:else if note.category === "action" || note.category === "feedback"}
           <button
             onclick={() =>
               void act(() => ppm.convertNote(pid, selectedSprint, note.pid))}
           >
-            Convert to task
+            {t("p.plans.pid.board.convert_to_task")}
           </button>
         {/if}
       </li>
     {:else}
-      <li class="muted">No notes for this sprint yet.</li>
+      <li class="muted">{t("p.plans.pid.board.no_notes_for_this_sprint")}</li>
     {/each}
   </ul>
 {/if}
 
 {#if velocity && velocity.sprints.length > 0}
-  <h2>Velocity</h2>
+  <h2>{t("p.plans.pid.board.velocity")}</h2>
   <p class="muted">{velocity.note}</p>
   <table data-testid="velocity">
-    <thead><tr><th>Sprint</th><th>Tasks done</th><th>Points done</th><th>Unpointed</th></tr></thead>
+    <thead><tr><th>{t("p.plans.pid.board.sprint")}</th><th>{t("p.plans.pid.board.tasks_done")}</th><th>{t("p.plans.pid.board.points_done")}</th><th>{t("p.plans.pid.board.unpointed")}</th></tr></thead>
     <tbody>
       {#each velocity.sprints as row (row.sprint.pid)}
         <tr>

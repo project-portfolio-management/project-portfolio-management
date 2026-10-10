@@ -28,32 +28,32 @@
   });
 </script>
 
-<svelte:head><title>{t("ppm.nav.compliance")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.compliance.ppm", { t: t("ppm.nav.compliance") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.compliance")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if findings}
-  <h2>Conformance findings</h2>
-  <p class="muted">gate-review recency threshold: {findings.review_days} calendar days</p>
+  <h2>{t("p.compliance.conformance_findings")}</h2>
+  <p class="muted">{t("p.compliance.gate_review_recency_threshold_calend", { review_days: findings.review_days })}</p>
   <table data-testid="compliance-findings">
-    <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+    <thead><tr><th>{t("p.compliance.rule")}</th><th>{t("p.compliance.detail")}</th></tr></thead>
     <tbody>
       {#each findings.findings as finding, index (index)}
         <tr><td><code>{finding.rule}</code></td><td>{finding.detail}</td></tr>
       {:else}
-        <tr><td colspan="2" class="muted">No conformance findings.</td></tr>
+        <tr><td colspan="2" class="muted">{t("p.compliance.no_conformance_findings")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 {#if register}
-  <h2>Compliance risk register</h2>
-  <p class="muted">{register.note} · open exposure {register.open_exposure}</p>
+  <h2>{t("p.compliance.compliance_risk_register")}</h2>
+  <p class="muted">{t("p.compliance.open_exposure", { note: register.note, open_exposure: register.open_exposure })}</p>
   <table data-testid="compliance-register">
     <thead>
-      <tr><th>Risk</th><th>Item</th><th>Status</th><th>Exposure</th><th>Owner</th></tr>
+      <tr><th>{t("p.compliance.risk")}</th><th>{t("p.compliance.item")}</th><th>{t("p.compliance.status")}</th><th>{t("p.compliance.exposure")}</th><th>{t("p.compliance.owner")}</th></tr>
     </thead>
     <tbody>
       {#each register.register as row (row.pid)}
@@ -65,7 +65,7 @@
           <td>{row.owner_ref ?? "—"}</td>
         </tr>
       {:else}
-        <tr><td colspan="5" class="muted">No compliance risks recorded.</td></tr>
+        <tr><td colspan="5" class="muted">{t("p.compliance.no_compliance_risks_recorded")}</td></tr>
       {/each}
     </tbody>
   </table>

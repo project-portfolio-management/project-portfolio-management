@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type DemandHit, type Proposal, money } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
@@ -65,7 +66,7 @@
     try {
       duplicates = { ...duplicates, [pid]: await ppm.proposalDuplicates(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : "duplicate check failed";
+      error = err instanceof Error ? err.message : t("p.proposals.duplicate_check_failed");
     }
   }
 
@@ -78,7 +79,7 @@
   }
 </script>
 
-<svelte:head><title>Proposals — PPM</title></svelte:head>
+<svelte:head><title>{t("p.proposals.proposals_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.proposals.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -86,27 +87,27 @@
 <form class="row" onsubmit={submitNew}>
   <input placeholder={t("ppm.proposals.formTitle")} bind:value={title} required />
   <input placeholder={t("ppm.proposals.formSummary")} bind:value={summary} />
-  <select bind:value={kindTarget} aria-label="Target collection">
-    {#each COLLECTIONS as target (target)}<option value={target}>{target}</option>{/each}
+  <select bind:value={kindTarget} aria-label={t("p.proposals.target_collection")}>
+    {#each COLLECTIONS as target (target)}<option value={target}>{enumLabel("collection", target)}</option>{/each}
   </select>
   <input placeholder={t("ppm.proposals.requested")} bind:value={requested} size="12" />
-  <input bind:value={currency} size="4" aria-label="Currency" />
+  <input bind:value={currency} size="4" aria-label={t("p.proposals.currency")} />
   <button class="button primary" type="submit">{t("ppm.proposals.open")}</button>
 </form>
 
 <p class="row small">
   {t("ppm.proposals.filter")}
-  <select bind:value={statusFilter} onchange={refresh} aria-label="Status filter">
+  <select bind:value={statusFilter} onchange={refresh} aria-label={t("p.proposals.status_filter")}>
     <option value="">{t("ppm.proposals.allOpen")}</option>
     {#each ["draft", "submitted", "in_review", "approved", "rejected", "promoted"] as status (status)}
-      <option value={status}>{status}</option>
+      <option value={status}>{enumLabel("proposal_status", status)}</option>
     {/each}
   </select>
 </p>
 
 <table>
   <thead>
-    <tr><th>Title</th><th>Target</th><th>Requested</th><th>Status</th><th>Actions</th></tr>
+    <tr><th>{t("p.proposals.title")}</th><th>{t("p.proposals.target")}</th><th>{t("p.proposals.requested")}</th><th>{t("p.proposals.status")}</th><th>{t("p.proposals.actions")}</th></tr>
   </thead>
   <tbody>
     {#each proposals as proposal (proposal.pid)}
@@ -121,7 +122,7 @@
             ? money(proposal.requested_minor, proposal.currency)
             : "—"}
         </td>
-        <td><span class="chip">{proposal.status}</span></td>
+        <td><span class="chip">{enumLabel("proposal_status", proposal.status)}</span></td>
         <td>
           {#each actionsFor(proposal.status) as action (action)}
             <button class="button small" onclick={() => act(() => ppm.proposalAction(proposal.pid, action))}>
@@ -130,7 +131,7 @@
           {/each}
           {#if proposal.status === "approved"}
             <button class="button small" onclick={() => act(() => ppm.promoteProposal(proposal.pid))}>
-              promote
+              {t("p.proposals.promote")}
             </button>
           {/if}
           {#if proposal.status === "promoted" && proposal.promoted_plan_pid}
@@ -150,7 +151,7 @@
             {:else}
               {#each duplicates[proposal.pid] ?? [] as hit (hit.pid)}
                 <span class="chip">
-                  {hit.source === "plan" ? "live:" : "proposal:"}
+                  {hit.source === "plan" ? t("p.proposals.live") : t("p.proposals.proposal")}
                   {hit.name} ({hit.score.toFixed(2)})
                 </span>
               {/each}

@@ -10,6 +10,7 @@
   outsider is a disclosure decision, not an inference.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
     CapabilityClient,
@@ -51,7 +52,7 @@
       reviewsTotal = page.total;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load reviews";
+      error = err instanceof Error ? err.message : t("p.reviews.could_not_load_reviews");
     }
   }
 
@@ -66,14 +67,14 @@
         expertise: expertise.trim() || undefined,
         due_on: dueOn || undefined,
       });
-      notice = "Invitation sent";
+      notice = t("p.reviews.invitation_sent");
       error = null;
       reviewerRef = "";
       expertise = "";
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : "Could not delegate";
+      error = err instanceof Error ? err.message : t("p.reviews.could_not_delegate");
     }
   }
 
@@ -82,10 +83,10 @@
   }
 
   async function submitVerdict(pid: string, recommendation: Recommendation) {
-    const raw = window.prompt("Score 0–100 (leave blank for none)") ?? "";
+    const raw = window.prompt(t("p.reviews.score_0_100_leave_blank")) ?? "";
     const score = raw.trim() === "" ? undefined : Number(raw);
     if (score !== undefined && (Number.isNaN(score) || score < 0 || score > 100)) {
-      error = "Score must be between 0 and 100";
+      error = t("p.reviews.score_must_be_between_0");
       return;
     }
     await act(() => api.submitVerdict(pid, { score, recommendation }));
@@ -102,7 +103,7 @@
       await refresh();
       if (consensusFor) await showConsensus(consensusFor);
     } catch (err) {
-      error = err instanceof Error ? err.message : "That action was refused";
+      error = err instanceof Error ? err.message : t("p.reviews.that_action_was_refused");
     }
   }
 
@@ -111,20 +112,18 @@
     try {
       consensus = await api.consensus(subjectKind, pid);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load consensus";
+      error = err instanceof Error ? err.message : t("p.reviews.could_not_load_consensus");
     }
   }
 
   onMount(refresh);
 </script>
 
-<svelte:head><title>Reviews — PPM</title></svelte:head>
+<svelte:head><title>{t("p.reviews.reviews_ppm")}</title></svelte:head>
 
-<h1>Collaborative review</h1>
+<h1>{t("p.reviews.collaborative_review")}</h1>
 <p class="small muted">
-  Delegate a specific item to the right expert. Only a reviewer who
-  accepted can submit a verdict, so an unanswered invitation never
-  becomes evidence.
+  {t("p.reviews.delegate_a_specific_item_to")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -132,67 +131,63 @@
 
 <form class="grid" onsubmit={delegate}>
   <label class="small">
-    subject
+    {t("p.reviews.subject")}
     <select bind:value={subjectKind}>
-      <option value="plan">plan</option>
-      <option value="proposal">proposal</option>
-      <option value="idea">idea</option>
+      <option value="plan">{t("p.reviews.plan")}</option>
+      <option value="proposal">{t("p.reviews.proposal")}</option>
+      <option value="idea">{t("p.reviews.idea")}</option>
     </select>
   </label>
   <label class="small">
-    subject pid
-    <input bind:value={subjectPid} placeholder="uuid" required />
+    {t("p.reviews.subject_pid")}
+    <input bind:value={subjectPid} placeholder={t("p.reviews.uuid")} required />
   </label>
   <label class="small">
-    reviewer
-    <input bind:value={reviewerRef} placeholder="person:&lt;uuid&gt;" required />
+    {t("p.reviews.reviewer")}
+    <input bind:value={reviewerRef} placeholder={t("p.reviews.person_uuid")} required />
   </label>
   <label class="small">
-    scope
+    {t("p.reviews.scope")}
     <select bind:value={reviewerScope}>
-      <option value="internal">internal</option>
-      <option value="external">external</option>
+      <option value="internal">{t("p.reviews.internal")}</option>
+      <option value="external">{t("p.reviews.external")}</option>
     </select>
   </label>
   <label class="small">
-    expertise
-    <input bind:value={expertise} placeholder="e.g. clinical safety" />
+    {t("p.reviews.expertise")}
+    <input bind:value={expertise} placeholder={t("p.reviews.e_g_clinical_safety")} />
   </label>
-  <label class="small">due <input type="date" bind:value={dueOn} /></label>
-  <button class="button small primary" type="submit">Delegate</button>
+  <label class="small">{t("p.reviews.due")} <input type="date" bind:value={dueOn} /></label>
+  <button class="button small primary" type="submit">{t("p.reviews.delegate")}</button>
 </form>
 
 <div class="row">
   <label class="small">
-    status
+    {t("p.reviews.status")}
     <select bind:value={statusFilter} onchange={refresh}>
-      <option value="">all</option>
-      <option value="invited">invited</option>
-      <option value="accepted">accepted</option>
-      <option value="submitted">submitted</option>
-      <option value="declined">declined</option>
-      <option value="expired">expired</option>
+      <option value="">{t("p.reviews.all")}</option>
+      <option value="invited">{t("p.reviews.invited")}</option>
+      <option value="accepted">{t("p.reviews.accepted")}</option>
+      <option value="submitted">{t("p.reviews.submitted")}</option>
+      <option value="declined">{t("p.reviews.declined")}</option>
+      <option value="expired">{t("p.reviews.expired")}</option>
     </select>
   </label>
   {#if subjectPid}
     <button class="button small" type="button" onclick={() => showConsensus(subjectPid.trim())}>
-      Consensus for this subject
+      {t("p.reviews.consensus_for_this_subject")}
     </button>
   {/if}
 </div>
 
 {#if consensus}
   <div class="panel">
-    <strong>Consensus</strong>
+    <strong>{t("p.reviews.consensus")}</strong>
     <p class="small">
-      {consensus.submitted} submitted · {consensus.outstanding} outstanding ·
-      {consensus.declined} declined ·
-      {consensus.external_submitted} external
+      {t("p.reviews.submitted_outstanding_declined_exter", { submitted: consensus.submitted, outstanding: consensus.outstanding, declined: consensus.declined, external_submitted: consensus.external_submitted })}
     </p>
     <p class="small">
-      mean score: {consensus.mean_score ?? "—"} · majority:
-      {consensus.majority ?? "no majority"} ·
-      {consensus.complete ? "everyone has answered" : "still waiting"}
+      {t("p.reviews.consensus_line", { mean: consensus.mean_score ?? "—", majority: consensus.majority ?? t("p.reviews.no_majority"), state: consensus.complete ? t("p.reviews.everyone_answered") : t("p.reviews.still_waiting") })}
     </p>
   </div>
 {/if}
@@ -207,8 +202,8 @@
 <table>
   <thead>
     <tr>
-      <th>Subject</th><th>Reviewer</th><th>Scope</th><th>Expertise</th>
-      <th>Status</th><th>Verdict</th><th>Actions</th>
+      <th>{t("p.reviews.subject_2")}</th><th>{t("p.reviews.reviewer_2")}</th><th>{t("p.reviews.scope_2")}</th><th>{t("p.reviews.expertise_2")}</th>
+      <th>{t("p.reviews.status_2")}</th><th>{t("p.reviews.verdict")}</th><th>{t("p.reviews.actions")}</th>
     </tr>
   </thead>
   <tbody>
@@ -225,7 +220,7 @@
         <td>{review.status}</td>
         <td class="small">
           {#if review.status === "submitted"}
-            {review.recommendation} · {review.score ?? "no score"}
+            {review.recommendation} · {review.score ?? t("p.reviews.no_score")}
           {:else}
             —
           {/if}
@@ -233,25 +228,25 @@
         <td class="actions">
           {#if review.status === "invited"}
             <button class="button small" type="button" onclick={() => respond(review.pid, "accept")}>
-              Accept
+              {t("p.reviews.accept")}
             </button>
             <button class="button small" type="button" onclick={() => respond(review.pid, "decline")}>
-              Decline
+              {t("p.reviews.decline")}
             </button>
           {:else if review.status === "accepted"}
             <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "advance")}>
-              Advance
+              {t("p.reviews.advance")}
             </button>
             <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "hold")}>
-              Hold
+              {t("p.reviews.hold")}
             </button>
             <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "reject")}>
-              Reject
+              {t("p.reviews.reject")}
             </button>
           {/if}
           {#if review.status === "invited" || review.status === "accepted"}
             <button class="button small" type="button" onclick={() => withdraw(review.pid)}>
-              Withdraw
+              {t("p.reviews.withdraw")}
             </button>
           {/if}
         </td>
@@ -260,7 +255,7 @@
   </tbody>
 </table>
 {#if reviews.length === 0}
-  <p class="small muted">No review invitations yet.</p>
+  <p class="small muted">{t("p.reviews.no_review_invitations_yet")}</p>
 {/if}
 
 <style>

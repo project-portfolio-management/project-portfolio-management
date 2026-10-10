@@ -6,7 +6,7 @@
   Rates are finance data: someone without access sees a plain note, not an error.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -32,7 +32,7 @@
       const m = err instanceof Error ? err.message : "";
       // A 404 is how finance data hides from someone without access.
       if (err instanceof ApiError && err.status === 404) denied = true;
-      else error = m || "Could not load the costs";
+      else error = m || t("p.plans.pid.costs.could_not_load_the_costs");
     }
   }
   onMount(load);
@@ -46,46 +46,46 @@
   async function addExpense(e: SubmitEvent) {
     e.preventDefault();
     const minor = minorFromMajor(amount);
-    if (!taskPid) return void (status = "Choose a task.");
-    if (minor === null) return void (status = "The amount must be above zero.");
-    if (!/^[A-Za-z]{3}$/.test(currency)) return void (status = "The currency must be a 3-letter code such as GBP.");
+    if (!taskPid) return void (status = t("p.plans.pid.costs.choose_a_task"));
+    if (minor === null) return void (status = t("p.plans.pid.costs.the_amount_must_be_above"));
+    if (!/^[A-Za-z]{3}$/.test(currency)) return void (status = t("p.plans.pid.costs.the_currency_must_be_a"));
     try {
       await ppm.addTaskCost(pid, taskPid, { kind, description, amount_minor: minor, currency: currency.toUpperCase(), accrual });
       description = amount = "";
-      status = "Expense added.";
+      status = t("p.plans.pid.costs.expense_added");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not add the expense";
+      status = err instanceof Error ? err.message : t("p.plans.pid.costs.could_not_add_the_expense");
     }
   }
   async function record() {
     try {
       const r = await ppm.recordLabourCosts(pid);
-      status = `Recorded ${r.recorded} time ${r.recorded === 1 ? "entry" : "entries"}; ${r.already_recorded} were already recorded; ${r.no_rate.length} have no rate.`;
+      status = t(r.recorded === 1 ? "p.plans.pid.costs.recorded_one" : "p.plans.pid.costs.recorded_other", { recorded: r.recorded, already_recorded: r.already_recorded, length: r.no_rate.length });
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : "Could not record";
+      status = err instanceof Error ? err.message : t("p.plans.pid.costs.could_not_record");
     }
   }
   const label = (b: { from: string; to: string }) => (b.from === b.to ? b.from : `${b.from.slice(5)}–${b.to.slice(5)}`);
 </script>
 
-<svelte:head><title>Costs — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.costs.costs_ppm")}</title></svelte:head>
 
-<h1>Costs</h1>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/work`)}>Work</a> · <a href={localeHref("/cost-rates")}>Cost rates</a></p>
+<h1>{t("p.plans.pid.costs.costs")}</h1>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.costs.plan")}</a> · <a href={localeHref(`/plans/${pid}/work`)}>{t("p.plans.pid.costs.work")}</a> · <a href={localeHref("/cost-rates")}>{t("p.plans.pid.costs.cost_rates")}</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 {#if denied}
-  <p class="muted" data-testid="denied">Costs and rates are finance data. You do not have access to them.</p>
+  <p class="muted" data-testid="denied">{t("p.plans.pid.costs.costs_and_rates_are_finance")}</p>
 {:else}
-  <h2>Planned cost</h2>
+  <h2>{t("p.plans.pid.costs.planned_cost")}</h2>
   {#if plan?.reason === "no_costs"}
-    <p class="muted">Nothing could be costed yet: add rates for the people doing the work, or add an expense.</p>
+    <p class="muted">{t("p.plans.pid.costs.nothing_could_be_costed_yet")}</p>
   {/if}
   {#each plan?.currencies ?? [] as c (c.currency)}
     <table data-testid="cost-{c.currency}">
-      <caption class="small muted">{c.currency}, per period</caption>
-      <thead><tr><th scope="col"></th>{#each c.total.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">Total</th></tr></thead>
+      <caption class="small muted">{t("p.plans.pid.costs.per_period", { currency: c.currency })}</caption>
+      <thead><tr><th scope="col"></th>{#each c.total.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">{t("p.plans.pid.costs.total")}</th></tr></thead>
       <tbody>
         {#each [["Labour", c.labour], ["Expenses", c.fixed], ["Total", c.total]] as [name, m]}
           <tr>
@@ -98,47 +98,47 @@
     </table>
   {/each}
   {#each [...(plan?.unrated ?? []), ...(plan?.unassigned ?? [])] as u}
-    <p class="small">▲ {u.title} ({hoursText(u.work_minutes)}): {NO_RATE_TEXT[u.reason] ?? u.reason}, so its labour is not costed.</p>
+    <p class="small">{t("p.plans.pid.costs.so_its_labour_is_not", { title: u.title, hoursText: hoursText(u.work_minutes), reason: NO_RATE_TEXT[u.reason] ?? u.reason })}</p>
   {/each}
   {#each plan?.unplaced ?? [] as u}
-    <p class="small">▲ An expense of {money(u.amount_minor, u.currency)} {UNPLACED_TEXT[u.reason] ?? u.reason}, so it is not in the periods.</p>
+    <p class="small">{t("p.plans.pid.costs.an_expense_of_so_it", { money: money(u.amount_minor, u.currency), reason: UNPLACED_TEXT[u.reason] ?? u.reason })}</p>
   {/each}
 
-  <h2>Recorded labour cost</h2>
+  <h2>{t("p.plans.pid.costs.recorded_labour_cost")}</h2>
   {#if actuals}
     {#each actuals.currencies as c (c.currency)}
-      <p>{money(c.cost_minor, c.currency)} for {hoursText(c.minutes)} across {c.entries} {c.entries === 1 ? "entry" : "entries"}.</p>
+      <p>{(c.entries === 1 ? t("p.plans.pid.costs.for_across_one", { money: money(c.cost_minor, c.currency), hoursText: hoursText(c.minutes), entries: c.entries }) : t("p.plans.pid.costs.for_across_other", { money: money(c.cost_minor, c.currency), hoursText: hoursText(c.minutes), entries: c.entries }))}</p>
     {/each}
-    {#if actuals.currencies.length === 0}<p class="muted">No time has been costed yet.</p>{/if}
+    {#if actuals.currencies.length === 0}<p class="muted">{t("p.plans.pid.costs.no_time_has_been_costed")}</p>{/if}
     {#if actuals.unpriced.entries}
-      <p class="small">▲ {actuals.unpriced.entries} time entries ({hoursText(actuals.unpriced.minutes)}) are not costed: not recorded yet, or no rate. Their cost is unknown, not zero.</p>
+      <p class="small">{t("p.plans.pid.costs.time_entries_are_not_costed", { entries: actuals.unpriced.entries, hoursText: hoursText(actuals.unpriced.minutes) })}</p>
     {/if}
   {/if}
-  <button class="button" type="button" onclick={record}>Record labour costs</button>
-  <p class="small muted">A recorded cost keeps the rate it was priced at; a later rate change never rewrites it.</p>
+  <button class="button" type="button" onclick={record}>{t("p.plans.pid.costs.record_labour_costs")}</button>
+  <p class="small muted">{t("p.plans.pid.costs.a_recorded_cost_keeps_the")}</p>
 
-  <h2>Add an expense</h2>
+  <h2>{t("p.plans.pid.costs.add_an_expense")}</h2>
   <form class="surface stack" onsubmit={addExpense}>
-    <label>Task
+    <label>{t("p.plans.pid.costs.task")}
       <select bind:value={taskPid}>
-        <option value="">Choose…</option>
+        <option value="">{t("p.plans.pid.costs.choose")}</option>
         {#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}
       </select>
     </label>
-    <label>Kind
-      <select bind:value={kind}><option value="material">Material</option><option value="fixed">Fixed cost</option></select>
+    <label>{t("p.plans.pid.costs.kind")}
+      <select bind:value={kind}><option value="material">{t("p.plans.pid.costs.material")}</option><option value="fixed">{t("p.plans.pid.costs.fixed_cost")}</option></select>
     </label>
-    <label>Description <input bind:value={description} required maxlength="200" /></label>
-    <label>Amount <input type="number" min="0" step="0.01" bind:value={amount} /></label>
-    <label>Currency <input bind:value={currency} maxlength="3" size="4" /></label>
-    <label>Falls
+    <label>{t("p.plans.pid.costs.description")} <input bind:value={description} required maxlength="200" /></label>
+    <label>{t("p.plans.pid.costs.amount")} <input type="number" min="0" step="0.01" bind:value={amount} /></label>
+    <label>{t("p.plans.pid.costs.currency")} <input bind:value={currency} maxlength="3" size="4" /></label>
+    <label>{t("p.plans.pid.costs.falls")}
       <select bind:value={accrual}>
-        <option value="start">All at the start</option>
-        <option value="prorated">Evenly across the task</option>
-        <option value="end">All at the end</option>
+        <option value="start">{t("p.plans.pid.costs.all_at_the_start")}</option>
+        <option value="prorated">{t("p.plans.pid.costs.evenly_across_the_task")}</option>
+        <option value="end">{t("p.plans.pid.costs.all_at_the_end")}</option>
       </select>
     </label>
-    <button class="button primary" type="submit">Add expense</button>
+    <button class="button primary" type="submit">{t("p.plans.pid.costs.add_expense")}</button>
   </form>
   {#if status}<p role="status" class="small">{status}</p>{/if}
 {/if}

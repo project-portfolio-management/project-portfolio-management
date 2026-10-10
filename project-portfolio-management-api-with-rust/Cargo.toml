@@ -168,6 +168,9 @@ tempfile = { version = "3" }
 # A real Keycloak in a container for tests/keycloak_container.rs (Podman via
 # its Docker-compatible socket; see the test's module docs). `#[ignore]`d.
 testcontainers = { version = "0.28" }
+# RS256 ID tokens from the Entra stand-in in tests/keycloak_entra_broker.rs (already in the tree
+# via the verifier's test-idp feature).
+jsonwebtoken = { version = "9" }
 
 # An in-process OTLP/gRPC collector for `tests/otlp_export.rs` /
 # `tests/otlp_middleware.rs` (PRO-H12, ported from case-service): the

@@ -30,7 +30,7 @@
     worstStatus,
   } from "#lib/ceo-view.js";
   import { SEVERITY_SYMBOL, SEVERITY_TEXT, ageText, excerpt } from "#lib/announcement-view.js";
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
 
   const ppm = PpmClient.withFetch();
   // Each tile loads on its own, so one failure does not blank the screen.
@@ -43,7 +43,7 @@
   const now = new Date();
 
   const fail = (k: string, e: unknown) =>
-    (failed[k] = e instanceof Error ? e.message : "Could not load");
+    (failed[k] = e instanceof Error ? e.message : t("p.ceo.could_not_load"));
   onMount(() => {
     ppm.executiveHealth().then((v) => (health = v), (e) => fail("health", e));
     ppm.portfolioMilestones().then((v) => (milestones = v), (e) => fail("milestones", e));
@@ -52,113 +52,113 @@
     ppm.announcements({ limit: 3 }).then((v) => (news = v), (e) => fail("news", e));
   });
 
-  const RAG_TEXT = { red: "Red", amber: "Amber", green: "Green" } as const;
+  const RAG_TEXT = { get red() { return t("p.ceo.red"); }, get amber() { return t("p.ceo.amber"); }, get green() { return t("p.ceo.green"); } } as const;
   const RAG_SYMBOL = { red: "■", amber: "▲", green: "●" } as const;
-  const MS_TEXT = { achieved: "Achieved", late: "Late", due_soon: "Due soon", upcoming: "Upcoming" } as const;
+  const MS_TEXT = { get achieved() { return t("p.milestones.achieved"); }, get late() { return t("p.milestones.late"); }, get due_soon() { return t("p.milestones.due_soon"); }, get upcoming() { return t("p.milestones.upcoming"); } } as const;
 </script>
 
-<svelte:head><title>CEO dashboard — PPM</title></svelte:head>
+<svelte:head><title>{t("p.ceo.ceo_dashboard_ppm")}</title></svelte:head>
 
 <div class="ceo" data-testid="ceo">
-  <h1>CEO dashboard</h1>
+  <h1>{t("p.ceo.ceo_dashboard")}</h1>
 
   <section class="tile" aria-labelledby="t-health" data-testid="tile-health">
-    <h2 id="t-health">Portfolio health</h2>
+    <h2 id="t-health">{t("p.ceo.portfolio_health")}</h2>
     {#if failed.health}<p class="banner error" role="alert">{failed.health}</p>
-    {:else if !health}<p class="muted">Loading…</p>
+    {:else if !health}<p class="muted">{t("p.ceo.loading")}</p>
     {:else}
       {@const worst = worstStatus(health)}
-      {@const t = ragTotals(health)}
+      {@const totals = ragTotals(health)}
       <p class="big">
-        {#if worst}<span aria-hidden="true">{RAG_SYMBOL[worst]}</span> {RAG_TEXT[worst]}{:else}No data yet{/if}
+        {#if worst}<span aria-hidden="true">{RAG_SYMBOL[worst]}</span> {RAG_TEXT[worst]}{:else}{t("p.ceo.no_data_yet")}{/if}
       </p>
       <p class="small">{healthSentence(health)}</p>
-      <p class="small muted">■ {t.red} red · ▲ {t.amber} amber · ● {t.green} green</p>
+      <p class="small muted">{t("p.ceo.red_amber_green", { red: totals.red, amber: totals.amber, green: totals.green })}</p>
     {/if}
-    <a class="more" href={localeHref("/executive")}>Executive detail</a>
+    <a class="more" href={localeHref("/executive")}>{t("p.ceo.executive_detail")}</a>
   </section>
 
   <section class="tile" aria-labelledby="t-risk" data-testid="tile-risk">
-    <h2 id="t-risk">Risk and money</h2>
+    <h2 id="t-risk">{t("p.ceo.risk_and_money")}</h2>
     {#if failed.health}<p class="banner error" role="alert">{failed.health}</p>
-    {:else if !health}<p class="muted">Loading…</p>
+    {:else if !health}<p class="muted">{t("p.ceo.loading")}</p>
     {:else}
       {@const over = overrunPortfolios(health)}
-      <p class="big">{escalatedRisks(health)} <span class="small">escalated risks</span></p>
-      <p class="small">{overdueMilestones(health)} overdue milestones</p>
+      <p class="big">{escalatedRisks(health)} <span class="small">{t("p.ceo.escalated_risks")}</span></p>
+      <p class="small">{t("p.ceo.overdue_milestones", { overdueMilestones: overdueMilestones(health) })}</p>
       <p class="small">
-        {#if over.length}▲ Over budget: {over.join(", ")}{:else}● No portfolio is over budget{/if}
+        {#if over.length}{t("p.ceo.over_budget", { join: over.join(", ") })}{:else}{t("p.ceo.no_portfolio_is_over_budget")}{/if}
       </p>
     {/if}
-    <a class="more" href={localeHref("/risk")}>Risk register</a>
+    <a class="more" href={localeHref("/risk")}>{t("p.ceo.risk_register")}</a>
   </section>
 
   <section class="tile" aria-labelledby="t-ms" data-testid="tile-milestones">
-    <h2 id="t-ms">Milestones to watch</h2>
+    <h2 id="t-ms">{t("p.ceo.milestones_to_watch")}</h2>
     {#if failed.milestones}<p class="banner error" role="alert">{failed.milestones}</p>
-    {:else if !milestones}<p class="muted">Loading…</p>
+    {:else if !milestones}<p class="muted">{t("p.ceo.loading")}</p>
     {:else}
       {@const w = milestonesToWatch(milestones.milestones, 4)}
       {#if w.shown.length === 0}
-        <p class="small">No open milestones.</p>
+        <p class="small">{t("p.ceo.no_open_milestones")}</p>
       {:else}
         <ul>
           {#each w.shown as m (m.pid)}
             <li><span class="small">{MS_TEXT[m.status]}</span> {m.name} <span class="muted small">{m.due}</span></li>
           {/each}
         </ul>
-        {#if w.more}<p class="small muted">and {w.more} more</p>{/if}
+        {#if w.more}<p class="small muted">{t("p.ceo.and_more", { more: w.more })}</p>{/if}
       {/if}
     {/if}
-    <a class="more" href={localeHref("/milestones")}>All milestones</a>
+    <a class="more" href={localeHref("/milestones")}>{t("p.ceo.all_milestones")}</a>
   </section>
 
   <section class="tile" aria-labelledby="t-kpi" data-testid="tile-kpis">
-    <h2 id="t-kpi">Key measures needing a look</h2>
+    <h2 id="t-kpi">{t("p.ceo.key_measures_needing_a_look")}</h2>
     {#if failed.kpis}<p class="banner error" role="alert">{failed.kpis}</p>
-    {:else if !kpis}<p class="muted">Loading…</p>
+    {:else if !kpis}<p class="muted">{t("p.ceo.loading")}</p>
     {:else}
       {@const a = needsAttention(kpis.kpis, 4)}
       {#if a.shown.length === 0}
-        <p class="small">{kpis.kpis.length === 0 ? "No KPIs defined yet." : "● Every KPI is on target."}</p>
+        <p class="small">{kpis.kpis.length === 0 ? t("p.ceo.no_kpis_defined_yet") : t("p.ceo.every_kpi_is_on_target")}</p>
       {:else}
         <ul>
           {#each a.shown as k (k.kpi.pid)}
             <li><span aria-hidden="true">{STATUS_SYMBOL[k.status]}</span> {k.kpi.name} <span class="muted small">{STATUS_TEXT[k.status]}</span></li>
           {/each}
         </ul>
-        {#if a.more}<p class="small muted">and {a.more} more</p>{/if}
+        {#if a.more}<p class="small muted">{t("p.ceo.and_more", { more: a.more })}</p>{/if}
       {/if}
     {/if}
-    <a class="more" href={localeHref("/kpis")}>All key measures</a>
+    <a class="more" href={localeHref("/kpis")}>{t("p.ceo.all_key_measures")}</a>
   </section>
 
   <section class="tile" aria-labelledby="t-dec" data-testid="tile-decisions">
-    <h2 id="t-dec">Recent decisions</h2>
+    <h2 id="t-dec">{t("p.ceo.recent_decisions")}</h2>
     {#if failed.decisions}<p class="banner error" role="alert">{failed.decisions}</p>
-    {:else if !decisions}<p class="muted">Loading…</p>
+    {:else if !decisions}<p class="muted">{t("p.ceo.loading")}</p>
     {:else}
       {@const d = decisionLines(decisions, 4)}
       {#if d.lines.length === 0}
-        <p class="small">No decisions recorded yet.</p>
+        <p class="small">{t("p.ceo.no_decisions_recorded_yet")}</p>
       {:else}
         <ul>
           {#each d.lines as l (l.key)}
             <li>{l.text} <span class="muted small">{l.at}</span></li>
           {/each}
         </ul>
-        {#if d.more}<p class="small muted">and {d.more} more</p>{/if}
+        {#if d.more}<p class="small muted">{t("p.ceo.and_more", { more: d.more })}</p>{/if}
       {/if}
     {/if}
-    <a class="more" href={localeHref("/executive")}>Decision log</a>
+    <a class="more" href={localeHref("/executive")}>{t("p.ceo.decision_log")}</a>
   </section>
 
   <section class="tile" aria-labelledby="t-news" data-testid="tile-news">
-    <h2 id="t-news">Announcements</h2>
+    <h2 id="t-news">{t("p.ceo.announcements")}</h2>
     {#if failed.news}<p class="banner error" role="alert">{failed.news}</p>
-    {:else if !news}<p class="muted">Loading…</p>
+    {:else if !news}<p class="muted">{t("p.ceo.loading")}</p>
     {:else if news.announcements.length === 0}
-      <p class="small">Nothing has been announced.</p>
+      <p class="small">{t("p.ceo.nothing_has_been_announced")}</p>
     {:else}
       <ul>
         {#each news.announcements as a (a.pid)}
@@ -171,7 +171,7 @@
         {/each}
       </ul>
     {/if}
-    <a class="more" href={localeHref("/announcements")}>All announcements</a>
+    <a class="more" href={localeHref("/announcements")}>{t("p.ceo.all_announcements")}</a>
   </section>
 </div>
 

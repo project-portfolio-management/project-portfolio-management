@@ -4,6 +4,7 @@
   not know supply or people for skills, and says so). Each grouping is a table.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient } from "#lib/api/ppm.js";
   import { buildRbs, roleText, type Rbs } from "#lib/rbs.js";
@@ -20,22 +21,22 @@
       ]);
       rbs = buildRbs(byRole, bySkill);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load resources";
+      error = err instanceof Error ? err.message : t("p.resources.rbs.could_not_load_resources");
     }
   });
 </script>
 
-<svelte:head><title>Resource breakdown — PPM</title></svelte:head>
+<svelte:head><title>{t("p.resources.rbs.resource_breakdown_ppm")}</title></svelte:head>
 
-<h1>Resource breakdown</h1>
+<h1>{t("p.resources.rbs.resource_breakdown")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if rbs}
   <section aria-labelledby="roles-h">
-    <h2 id="roles-h">By role</h2>
-    {#if rbs.masked}<p class="small muted">You can see headcounts only, not names.</p>{/if}
+    <h2 id="roles-h">{t("p.resources.rbs.by_role")}</h2>
+    {#if rbs.masked}<p class="small muted">{t("p.resources.rbs.you_can_see_headcounts_only")}</p>{/if}
     {#if rbs.roles.length === 0}
-      <p>No roles in this window.</p>
+      <p>{t("p.resources.rbs.no_roles_in_this_window")}</p>
     {:else}
       <ul>
         {#each rbs.roles as r (r.role)}
@@ -46,25 +47,25 @@
         {/each}
       </ul>
       <table>
-        <caption class="sr-only">Roles with people, demand and supply</caption>
-        <thead><tr><th scope="col">Role</th><th scope="col">People</th><th scope="col">Demand FTE</th><th scope="col">Supply FTE</th></tr></thead>
+        <caption class="sr-only">{t("p.resources.rbs.roles_with_people_demand_and")}</caption>
+        <thead><tr><th scope="col">{t("p.resources.rbs.role")}</th><th scope="col">{t("p.resources.rbs.people")}</th><th scope="col">{t("p.resources.rbs.demand_fte")}</th><th scope="col">{t("p.resources.rbs.supply_fte")}</th></tr></thead>
         <tbody>
           {#each rbs.roles as r (r.role)}
-            <tr><th scope="row">{r.role}</th><td>{r.headcount}</td><td>{r.demand_fte}</td><td>{r.supply_fte ?? "not known"}</td></tr>
+            <tr><th scope="row">{r.role}</th><td>{r.headcount}</td><td>{r.demand_fte}</td><td>{r.supply_fte ?? t("p.resources.rbs.not_known")}</td></tr>
           {/each}
         </tbody>
       </table>
     {/if}
   </section>
   <section aria-labelledby="skills-h">
-    <h2 id="skills-h">By skill</h2>
+    <h2 id="skills-h">{t("p.resources.rbs.by_skill")}</h2>
     <p class="small muted">{rbs.skillNote}</p>
     {#if rbs.skills.length === 0}
-      <p>No skill demand in this window.</p>
+      <p>{t("p.resources.rbs.no_skill_demand_in_this")}</p>
     {:else}
       <table>
-        <caption class="sr-only">Demand by skill</caption>
-        <thead><tr><th scope="col">Skill</th><th scope="col">Demand FTE</th></tr></thead>
+        <caption class="sr-only">{t("p.resources.rbs.demand_by_skill")}</caption>
+        <thead><tr><th scope="col">{t("p.resources.rbs.skill")}</th><th scope="col">{t("p.resources.rbs.demand_fte")}</th></tr></thead>
         <tbody>{#each rbs.skills as s (s.skill)}<tr><th scope="row">{s.skill}</th><td>{s.demand_fte}</td></tr>{/each}</tbody>
       </table>
     {/if}

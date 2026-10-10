@@ -6,6 +6,8 @@
 // text, so a screen reader reads it with the rest of the row.
 
 import type { MyTaskSchedule } from "#lib/api/ppm.js";
+import { businessDays } from "./units.js";
+import { t } from "./i18n.svelte.js";
 
 export type FloatKind = "late" | "critical" | "float";
 
@@ -15,7 +17,7 @@ export interface FloatText {
   text: string;
 }
 
-const days = (n: number): string => `${n} business day${n === 1 ? "" : "s"}`;
+const days = businessDays;
 
 /**
  * The sentence for a task's schedule, or `null` when there is nothing to say
@@ -29,14 +31,14 @@ export function floatText(
   if (f < 0) {
     return {
       kind: "late",
-      text: `This is already late for the plan (${days(-f)} behind).`,
+      text: t("l.my_work_view.this_is_already_late_for", { days: days(-f) }),
     };
   }
   if (f === 0 || schedule.critical) {
-    return { kind: "critical", text: "On the critical path" };
+    return { kind: "critical", text: t("l.my_work_view.on_the_critical_path") };
   }
   return {
     kind: "float",
-    text: `${days(f)} of float`,
+    text: t("l.my_work_view.of_float", { days: days(f) }),
   };
 }

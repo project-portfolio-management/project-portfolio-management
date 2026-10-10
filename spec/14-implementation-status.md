@@ -31,10 +31,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | Migrations | 83 | files named `m2*.rs` in `migration/src` |
 | Mounted route registrations | 454 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
 | Documented API paths | 303 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1035, plus 181 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1040, plus 182 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
-| Front-end unit tests (vitest) | 402 | `it(` / `test(` lines in `tests/unit` |
-| Front-end end-to-end tests (Playwright) | 83 | `test(` lines in `tests/e2e` |
+| Front-end unit tests (vitest) | 433 | `it(` / `test(` lines in `tests/unit` |
+| Front-end end-to-end tests (Playwright) | 91 | `test(` lines in `tests/e2e` |
 | Locales | 10 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
@@ -51,9 +51,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | CR | 4 | 0 |
 | DP | 0 | 12 |
 | EX | 0 | 14 |
-| HD | 5 | 4 |
+| HD | 11 | 2 |
 | CC | 0 | 6 |
-| **Total** | **76** | **36** |
+| **Total** | **82** | **34** |
 
 <!-- generated:end -->
 

@@ -9,6 +9,7 @@
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient } from "./client";
 import type { Collection } from "./types";
+import { t } from "../i18n.svelte.js";
 
 // ---- wire shapes (mirroring the service responses) ----
 
@@ -889,12 +890,12 @@ export function mspdiReport(r: Record<string, unknown>): TrackerImportReport {
     links_already_present: Number(r.links_already_present ?? 0),
     unmapped: un.map((u) => ({
       what: u.what ?? "field",
-      key: u.uid === null || u.uid === undefined ? null : `task ${u.uid}`,
+      key: u.uid === null || u.uid === undefined ? null : t("l.api_ppm.task", { uid: u.uid }),
       reason: u.reason ?? "",
     })),
     note:
       String(r.note ?? "") +
-      (r.calendar_imported ? " The project calendar comes across." : ""),
+      (r.calendar_imported ? t("l.api_ppm.the_project_calendar_comes_across") : ""),
   };
 }
 

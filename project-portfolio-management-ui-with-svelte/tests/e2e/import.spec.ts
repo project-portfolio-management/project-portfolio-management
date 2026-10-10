@@ -8,7 +8,7 @@ import { PID, primaryButtons, settle } from "./fixtures";
 async function audit(page: Page) {
   await settle(page);
   const r = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(
     r.violations

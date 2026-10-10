@@ -115,6 +115,11 @@ async fn enforcement_on_gates_the_real_router() {
             "a public path stays open with enforcement on"
         );
         assert_eq!(
+            request.get("/_readiness").await.status_code(),
+            200,
+            "readiness (database, queue, cache ping) is public for load balancers"
+        );
+        assert_eq!(
             request.get("/metrics.prom").await.status_code(),
             401,
             "metrics need a token like everything else (HD-4)"

@@ -5,6 +5,7 @@
 // know either, and the view says so rather than inventing a figure.
 
 import type { ResourcePlan } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export interface RbsPerson {
   ref: string;
@@ -80,16 +81,16 @@ export function buildRbs(
     skills,
     masked: byRole.masked,
     skillNote:
-      "A booking that needs several skills counts fully toward each, so skills overlap and do not add up. Supply and people are not known for skills.",
+      t("l.rbs.a_booking_that_needs_several"),
   };
 }
 
 /** A role in words: "Engineer: 3 people, demand 2.5 FTE, supply 3 FTE". */
 export function roleText(r: RbsRole, masked: boolean): string {
   const people = masked
-    ? `${r.headcount} ${r.headcount === 1 ? "person" : "people"}`
-    : `${r.people.length} named`;
+    ? t(r.headcount === 1 ? "l.rbs.headcount_one" : "l.rbs.headcount_other", { headcount: r.headcount })
+    : t("l.rbs.named", { length: r.people.length });
   const supply =
-    r.supply_fte === null ? "supply not known" : `supply ${r.supply_fte} FTE`;
-  return `${r.role}: ${people}, demand ${r.demand_fte} FTE, ${supply}`;
+    r.supply_fte === null ? t("l.rbs.supply_not_known") : t("l.rbs.supply_fte", { supply_fte: r.supply_fte });
+  return t("l.rbs.demand_fte", { role: r.role, people, demand_fte: r.demand_fte, supply });
 }

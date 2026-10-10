@@ -5,12 +5,13 @@
 
 import type { Actions, PageServerLoad } from "./$types";
 import { requestMagicLink } from "#lib/server/auth.js";
+import { pageTitle } from "#lib/i18n.svelte.js";
 
 // `page.data.title` convention (see `../+layout.svelte`): mirrors this
 // route's own <svelte:head><title> so SharePicker gets the right title
 // without reading the DOM.
-export const load: PageServerLoad = () => {
-  return { title: "Sign in" };
+export const load: PageServerLoad = ({ url }) => {
+  return { title: pageTitle(url, "p.signin.sign_in") };
 };
 
 export const actions: Actions = {

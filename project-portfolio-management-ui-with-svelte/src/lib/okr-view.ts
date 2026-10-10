@@ -6,10 +6,11 @@
 // must not read as a failure, nor as a success.
 
 import type { OkrKeyResult } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 /** "40%" for 4000 basis points; "Not measured" for `null`. */
 export function percentText(basisPoints: number | null | undefined): string {
-  if (basisPoints === null || basisPoints === undefined) return "Not measured";
+  if (basisPoints === null || basisPoints === undefined) return t("l.okr_view.not_measured");
   const pct = basisPoints / 100;
   return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
 }
@@ -23,16 +24,15 @@ export function progressValue(
 }
 
 const REASONS: Record<string, string> = {
-  NoRange:
-    "Not measurable: the start and the target are the same, so there is no distance to travel.",
-  NoTolerance: "Not measurable: a maintain key result needs a tolerance band.",
-  Overflow: "Not measurable: the numbers are too large to score.",
+  get NoRange() { return t("l.okr_view.not_measurable_the_start_and"); },
+  get NoTolerance() { return t("l.okr_view.not_measurable_a_maintain_key"); },
+  get Overflow() { return t("l.okr_view.not_measurable_the_numbers_are"); },
 };
 
 /** Why a key result has no progress, in a sentence. */
 export function unmeasurableText(reason: string | null | undefined): string {
-  if (!reason) return "Not measured";
-  return REASONS[reason] ?? `Not measurable (${reason}).`;
+  if (!reason) return t("l.okr_view.not_measured");
+  return REASONS[reason] ?? t("l.okr_view.not_measurable", { reason });
 }
 
 /** The progress text for a key result: a percentage, or the reason it has none. */
@@ -49,7 +49,7 @@ export function valueText(
   unit: string | null,
 ): string {
   const u = unit ? ` ${unit}` : "";
-  return `${current} of ${target}${u}`;
+  return t("l.okr_view.of", { current, target, u });
 }
 
 /**
@@ -60,5 +60,5 @@ export function confidenceText(
   confidence: number | null | undefined,
 ): string | null {
   if (confidence === null || confidence === undefined) return null;
-  return `Confidence ${confidence}% (not part of the score)`;
+  return t("l.okr_view.confidence_not_part_of_the", { confidence });
 }

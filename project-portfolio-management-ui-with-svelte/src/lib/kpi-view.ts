@@ -4,6 +4,7 @@
 // symbol, and "no data" is its own state — not red, not green.
 
 import type { Kpi, KpiStatus, KpiTrend, KpiView } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export const STATUS_ORDER: readonly KpiStatus[] = [
   "red",
@@ -13,10 +14,10 @@ export const STATUS_ORDER: readonly KpiStatus[] = [
 ];
 
 export const STATUS_TEXT: Record<KpiStatus, string> = {
-  green: "On target",
-  amber: "Watch",
-  red: "Off target",
-  no_data: "No data yet",
+  get green() { return t("p.kpis.on_target"); },
+  get amber() { return t("p.kpis.watch"); },
+  get red() { return t("p.kpis.off_target"); },
+  get no_data() { return t("p.kpis.no_data_yet"); },
 };
 
 /** A decorative shape per status (hide it from screen readers; the word is there). */
@@ -41,14 +42,14 @@ export function thresholdText(
 ): string {
   const u = kpi.unit ? ` ${kpi.unit}` : "";
   return kpi.direction === "higher_better"
-    ? `Target ${kpi.target_value} or more; red at ${kpi.red_value} or less${u}`
-    : `Target ${kpi.target_value} or less; red at ${kpi.red_value} or more${u}`;
+    ? t("l.kpi_view.target_or_more_red_at", { target_value: kpi.target_value, red_value: kpi.red_value, u })
+    : t("l.kpi_view.target_or_less_red_at", { target_value: kpi.target_value, red_value: kpi.red_value, u });
 }
 
 const TREND_TEXT: Record<KpiTrend, string> = {
-  improving: "Improving",
-  worsening: "Getting worse",
-  flat: "No change",
+  get improving() { return t("l.kpi_view.improving"); },
+  get worsening() { return t("l.kpi_view.getting_worse"); },
+  get flat() { return t("l.kpi_view.no_change"); },
 };
 
 export function trendText(trend: KpiTrend | null | undefined): string | null {
@@ -58,15 +59,15 @@ export function trendText(trend: KpiTrend | null | undefined): string | null {
 /** Says a cadence KPI is overdue for a reading; nothing when it is not. */
 export function staleText(view: Pick<KpiView, "stale" | "kpi">): string | null {
   return view.stale
-    ? `No reading within twice its ${view.kpi.cadence} cadence`
+    ? t("l.kpi_view.no_reading_within_twice_its", { cadence: view.kpi.cadence })
     : null;
 }
 
 /** The one-line summary for a KPI row, readable aloud. */
 export function summaryText(view: KpiView): string {
   const latest = view.latest
-    ? `${valueText(view.latest.value, view.kpi.unit)} on ${view.latest.observed_on}`
-    : "no reading yet";
+    ? t("c.KpiCard.on", { valueText: valueText(view.latest.value, view.kpi.unit), observed_on: view.latest.observed_on })
+    : t("l.kpi_view.no_reading_yet");
   return `${view.kpi.name}: ${STATUS_TEXT[view.status]}, ${latest}`;
 }
 

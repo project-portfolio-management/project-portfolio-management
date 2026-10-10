@@ -6,6 +6,7 @@
   and every assumption, including that the inputs are independent.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { money, type CostRisk } from "#lib/api/ppm.js";
   import { budgetConfidenceText, costHistogramGeometry, costSkippedText, eventHitText, lineSourceText, sensitivityText } from "#lib/scheduling-view.js";
 
@@ -14,8 +15,8 @@
 </script>
 
 <p class="small muted">
-  {result.scope.kind === "portfolio" ? `All ${result.scope.plans} plan${result.scope.plans === 1 ? "" : "s"} you can read` : "This plan"} ·
-  seed {a.seed} · {a.iterations} iterations · {a.distribution === "pert" ? "PERT" : "Triangular"}
+  {result.scope.kind === "portfolio" ? (result.scope.plans === 1 ? t("c.CostRiskView.scope_all_one", { plans: result.scope.plans }) : t("c.CostRiskView.scope_all_other", { plans: result.scope.plans })) : t("c.CostRiskView.scope_this_plan")} ·
+  {t("c.CostRiskView.run_summary", { seed: a.seed, iterations: a.iterations, distribution: a.distribution === "pert" ? t("c.CostRiskView.dist_pert") : t("c.CostRiskView.dist_triangular") })}
 </p>
 
 {#each result.currencies as c (c.currency)}
@@ -23,12 +24,12 @@
   <section aria-labelledby={`cur-${c.currency}`}>
     <h2 id={`cur-${c.currency}`}>{c.currency}</h2>
     <table>
-      <caption class="sr-only">{c.currency} cost at each percentile</caption>
-      <thead><tr><th scope="col">Outcome</th><th scope="col">Cost</th></tr></thead>
+      <caption class="sr-only">{t("c.CostRiskView.cost_at_each_percentile", { currency: c.currency })}</caption>
+      <thead><tr><th scope="col">{t("c.CostRiskView.outcome")}</th><th scope="col">{t("c.CostRiskView.cost")}</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Budget (sum of planned amounts)</th><td>{money(c.budget_minor, c.currency)}</td></tr>
-        <tr><th scope="row">Already spent</th><td>{money(c.spent_minor, c.currency)}</td></tr>
-        <tr><th scope="row">Mean simulated cost</th><td>{money(c.mean_minor, c.currency)}</td></tr>
+        <tr><th scope="row">{t("c.CostRiskView.budget_sum_of_planned_amounts")}</th><td>{money(c.budget_minor, c.currency)}</td></tr>
+        <tr><th scope="row">{t("c.CostRiskView.already_spent")}</th><td>{money(c.spent_minor, c.currency)}</td></tr>
+        <tr><th scope="row">{t("c.CostRiskView.mean_simulated_cost")}</th><td>{money(c.mean_minor, c.currency)}</td></tr>
         {#each c.percentiles as p (p.p)}
           <tr><th scope="row">P{p.p}</th><td>{money(p.minor, c.currency)}</td></tr>
         {/each}
@@ -38,14 +39,14 @@
 
     {#if g}
       <figure>
-        <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={`Histogram of simulated ${c.currency} cost, with P50, P80, P90 and the budget marked`} width="100%" style="max-width: 44rem">
+        <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("c.CostRiskView.histogram_label", { currency: c.currency })} width="100%" style="max-width: 44rem">
           {#each g.bars as b (b.from)}
-            <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{money(b.from, c.currency)} to {money(b.to, c.currency)}: {b.count} of {a.iterations}</title></rect>
+            <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("c.CostRiskView.to_of", { money: money(b.from, c.currency), money2: money(b.to, c.currency), count: b.count, iterations: a.iterations })}</title></rect>
           {/each}
           <line x1="24" x2={g.width - 24} y1={g.baseline} y2={g.baseline} class="axis" />
           {#if g.budgetX !== null}
             <line x1={g.budgetX} x2={g.budgetX} y1="14" y2={g.baseline} class="budget" />
-            <text x={g.budgetX} y="10" text-anchor="middle" class="label">budget</text>
+            <text x={g.budgetX} y="10" text-anchor="middle" class="label">{t("c.CostRiskView.budget")}</text>
           {/if}
           {#each g.markers as m (m.p)}
             <line x1={m.x} x2={m.x} y1="14" y2={g.baseline} class={`pct p${m.p}`} />
@@ -53,9 +54,9 @@
           {/each}
         </svg>
         <details>
-          <summary>The same figures as a table</summary>
+          <summary>{t("c.CostRiskView.the_same_figures_as_a")}</summary>
           <table>
-            <thead><tr><th scope="col">Cost from</th><th scope="col">to</th><th scope="col">Simulations</th></tr></thead>
+            <thead><tr><th scope="col">{t("c.CostRiskView.cost_from")}</th><th scope="col">{t("c.CostRiskView.to")}</th><th scope="col">{t("c.CostRiskView.simulations")}</th></tr></thead>
             <tbody>
               {#each c.histogram as b (b.from_minor)}
                 <tr><th scope="row">{money(b.from_minor, c.currency)}</th><td>{money(b.to_minor, c.currency)}</td><td>{b.count}</td></tr>
@@ -63,15 +64,15 @@
             </tbody>
           </table>
         </details>
-        <figcaption class="small muted">Each bar is a cost range; taller means more simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the budget.</figcaption>
+        <figcaption class="small muted">{t("c.CostRiskView.each_bar_is_a_cost")}</figcaption>
       </figure>
     {/if}
 
     {#if result.scope.kind === "portfolio"}
-      <h3>By plan</h3>
+      <h3>{t("c.CostRiskView.by_plan")}</h3>
       <table>
-        <caption class="sr-only">Each plan's budget and mean simulated cost in {c.currency}</caption>
-        <thead><tr><th scope="col">Plan</th><th scope="col">Budget</th><th scope="col">Mean simulated cost</th></tr></thead>
+        <caption class="sr-only">{t("c.CostRiskView.each_plan_s_budget_and", { currency: c.currency })}</caption>
+        <thead><tr><th scope="col">{t("c.CostRiskView.plan")}</th><th scope="col">{t("c.CostRiskView.budget_2")}</th><th scope="col">{t("c.CostRiskView.mean_simulated_cost")}</th></tr></thead>
         <tbody>
           {#each c.plans as p (p.plan)}
             <tr><th scope="row">{p.name ?? p.plan}</th><td>{money(p.budget_minor, c.currency)}</td><td>{money(p.mean_minor, c.currency)}</td></tr>
@@ -80,11 +81,11 @@
       </table>
     {/if}
 
-    <h3>What drives it</h3>
+    <h3>{t("c.CostRiskView.what_drives_it")}</h3>
     <table>
-      <caption class="sr-only">Per-line estimate and sensitivity in {c.currency}</caption>
+      <caption class="sr-only">{t("c.CostRiskView.per_line_estimate_and_sensitivity", { currency: c.currency })}</caption>
       <thead>
-        <tr><th scope="col">Line</th><th scope="col">Low / planned / high</th><th scope="col">Estimate</th><th scope="col">Spent</th><th scope="col">Sensitivity</th></tr>
+        <tr><th scope="col">{t("c.CostRiskView.line")}</th><th scope="col">{t("c.CostRiskView.low_planned_high")}</th><th scope="col">{t("c.CostRiskView.estimate")}</th><th scope="col">{t("c.CostRiskView.spent")}</th><th scope="col">{t("c.CostRiskView.sensitivity")}</th></tr>
       </thead>
       <tbody>
         {#each c.lines as l (l.pid)}
@@ -100,10 +101,10 @@
     </table>
 
     {#if c.events.length > 0}
-      <h3>Risks that added cost</h3>
+      <h3>{t("c.CostRiskView.risks_that_added_cost")}</h3>
       <ul>
         {#each c.events as e (e.risk)}
-          <li>{e.title ?? e.risk}: adds {money(e.impact_minor, c.currency)} — {eventHitText(e.probability_bp, e.hit_bp)}</li>
+          <li>{t("c.CostRiskView.adds", { risk: e.title ?? e.risk, money: money(e.impact_minor, c.currency), eventHitText: eventHitText(e.probability_bp, e.hit_bp) })}</li>
         {/each}
       </ul>
     {/if}
@@ -111,26 +112,26 @@
 {/each}
 
 {#if result.events.skipped.length > 0}
-  <p class="small">Left out:</p>
+  <p class="small">{t("c.CostRiskView.left_out")}</p>
   <ul class="small">
     {#each result.events.skipped as e (e.risk_pid)}<li>{e.title}: {costSkippedText(e.reason)}</li>{/each}
   </ul>
 {/if}
 {#if result.events.used.length === 0}
-  <p class="small muted">No register risk was used as a cost event.</p>
+  <p class="small muted">{t("c.CostRiskView.no_register_risk_was_used")}</p>
 {/if}
 {#if result.events.risks_without_cost_fields > 0}
-  <p class="small muted">{result.events.risks_without_cost_fields} register risk{result.events.risks_without_cost_fields === 1 ? " has" : "s have"} no cost fields and {result.events.risks_without_cost_fields === 1 ? "is" : "are"} not part of this.</p>
+  <p class="small muted">{result.events.risks_without_cost_fields === 1 ? t("c.CostRiskView.risks_without_cost_one", { count: result.events.risks_without_cost_fields }) : t("c.CostRiskView.risks_without_cost_other", { count: result.events.risks_without_cost_fields })}</p>
 {/if}
 
-<h2>Assumptions</h2>
+<h2>{t("c.CostRiskView.assumptions")}</h2>
 <ul class="small">
-  <li><strong>Independence.</strong> {a.independence}</li>
+  <li><strong>{t("c.CostRiskView.independence")}</strong> {a.independence}</li>
   <li>{a.floor}</li>
   <li>{a.currencies}</li>
   <li>{a.budget}</li>
   <li>{a.fallback}</li>
-  <li>Seed {a.seed}: the same seed gives the same result. Up to {a.max_iterations} iterations.</li>
+  <li>{t("c.CostRiskView.seed_the_same_seed_gives", { seed: a.seed, max_iterations: a.max_iterations })}</li>
 </ul>
 <p class="small muted">{result.note}</p>
 

@@ -7,6 +7,7 @@ import type { Cookies } from "@sveltejs/kit";
 // `locals`. The browser never reads the cookie (httpOnly); only the
 // SvelteKit server does, and only the server talks to the services.
 import { SESSION_COOKIE } from "#lib/server/session.js";
+import { OIDC_COOKIE, oidcStore } from "#lib/server/oidc-session.js";
 import {
   DEFAULT_LOCALE,
   type Locale,
@@ -54,6 +55,7 @@ export const handle: Handle = async (input) => {
 
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.sessionId = event.cookies.get(SESSION_COOKIE) ?? null;
+  event.locals.oidc = oidcStore.get(event.cookies.get(OIDC_COOKIE));
 
   const { pathname, search } = event.url;
   if (!isUnlocalized(pathname)) {

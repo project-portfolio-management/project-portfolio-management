@@ -34,23 +34,23 @@
   const front = $derived(split.front);
   const more = $derived(split.more);
   const LINK_LABELS: Record<string, string> = {
-    flow: "Flow",
-    "critical-path": "Critical path",
-    "earned-value": "Earned value",
+    get flow() { return t("p.plans.pid.flow.flow"); },
+    get "critical-path"() { return t("p.plans.pid.what_if.critical_path"); },
+    get "earned-value"() { return t("p.plans.pid.earned_value.earned_value"); },
     raci: "RACI",
-    calendar: "Calendar",
-    "schedule-health": "Schedule health",
-    leveling: "Leveling",
-    "schedule-risk": "Schedule risk",
-    "cost-risk": "Cost risk",
-    "joint-risk": "Cost and schedule risk",
-    work: "Work and assignments",
-    "what-if": "What-if",
-    onboarding: "Onboarding and offboarding",
-    handover: "Handover",
-    wbs: "Work breakdown",
-    import: "Import",
-    costs: "Costs",
+    get calendar() { return t("c.CpmTable.calendar"); },
+    get "schedule-health"() { return t("p.plans.pid.schedule_health.schedule_health"); },
+    get leveling() { return t("p.plans.pid.leveling"); },
+    get "schedule-risk"() { return t("p.plans.pid.schedule_risk.schedule_risk"); },
+    get "cost-risk"() { return t("p.plans.pid.joint_risk.cost_risk"); },
+    get "joint-risk"() { return t("p.plans.pid.cost_and_schedule_risk"); },
+    get work() { return t("p.plans.pid.work.work_and_assignments"); },
+    get "what-if"() { return t("p.plans.pid.what_if.what_if"); },
+    get onboarding() { return t("p.plans.pid.onboarding.onboarding_and_offboarding"); },
+    get handover() { return t("p.plans.pid.handover.handover"); },
+    get wbs() { return t("p.plans.pid.wbs.work_breakdown"); },
+    get import() { return t("p.plans.pid.import.import"); },
+    get costs() { return t("p.plans.pid.work.costs"); },
   };
   const linkLabel = (k: string): string =>
     k === "governance" ? t("ppm.common.governance")
@@ -92,7 +92,7 @@
   }
 </script>
 
-<svelte:head><title>{record?.name ?? "Plan"} — Main X</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.page_title", { name: record?.name ?? t("p.plans.pid.plan_fallback") })}</title></svelte:head>
 
 {#if loading}
   <p>{t("detail.loading")}</p>
@@ -106,7 +106,7 @@
     {/each}
     {#if more.length > 0}
       <details class="more-tools">
-        <summary>More tools</summary>
+        <summary>{t("p.plans.pid.more_tools")}</summary>
         {#each more as k (k)}
           <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
         {/each}
@@ -136,7 +136,7 @@
         <ul>
           {#each record.identifiers as id, i (i)}
             <li>
-              {typeof id.scheme === "string" ? id.scheme : `Custom(${id.scheme.Custom})`}:
+              {typeof id.scheme === "string" ? id.scheme : t("p.plans.pid.custom_scheme", { name: id.scheme.Custom })}:
               <code>{id.value}</code>
             </li>
           {/each}

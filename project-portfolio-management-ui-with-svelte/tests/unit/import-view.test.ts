@@ -90,7 +90,7 @@ describe("the client", () => {
 
 import { mspdiReport } from "../../src/lib/api/ppm";
 import {
-  MSPDI_HINT,
+  mspdiHint,
   SOURCE_ACCEPT,
   SOURCE_LABEL,
 } from "../../src/lib/import-view";
@@ -131,7 +131,7 @@ describe("Microsoft Project", () => {
   });
   it("offers XML for it, says how to get the XML, and has a label", () => {
     expect(SOURCE_ACCEPT.mspdi).toContain(".xml");
-    expect(MSPDI_HINT).toMatch(/\.mpp/);
+    expect(mspdiHint()).toMatch(/\.mpp/);
     expect(SOURCE_LABEL.mspdi).toMatch(/Microsoft Project/);
   });
 });

@@ -25,7 +25,7 @@
   onMount(refresh);
 </script>
 
-<svelte:head><title>Capacity — PPM</title></svelte:head>
+<svelte:head><title>{t("p.capacity.capacity_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.capacity.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -37,25 +37,25 @@
     refresh();
   }}
 >
-  <label class="small">from <input type="date" bind:value={from} /></label>
-  <label class="small">to <input type="date" bind:value={to} /></label>
+  <label class="small">{t("p.capacity.from")} <input type="date" bind:value={from} /></label>
+  <label class="small">{t("p.capacity.to")} <input type="date" bind:value={to} /></label>
   <button class="button small primary" type="submit">{t("ppm.capacity.apply")}</button>
 </form>
 
 {#if view}
-  <p class="small muted">window: {view.from} → {view.to}</p>
-  <ul class="legend small" aria-label="Legend">
-    <li><span class="mk">○</span> within capacity</li>
-    <li><span class="mk">◐</span> within capacity, but committing the proposed bookings would exceed it</li>
-    <li><span class="mk">!</span> over capacity (solid bar: firm bookings; line: capacity in force)</li>
-    <li>hatched extension: proposed, not counted</li>
+  <p class="small muted">{t("p.capacity.window", { from: view.from, to: view.to })}</p>
+  <ul class="legend small" aria-label={t("p.capacity.legend")}>
+    <li><span class="mk">○</span> {t("p.capacity.within_capacity")}</li>
+    <li><span class="mk">◐</span> {t("p.capacity.within_capacity_but_committing_the")}</li>
+    <li><span class="mk">!</span> {t("p.capacity.over_capacity_solid_bar_firm")}</li>
+    <li>{t("p.capacity.hatched_extension_proposed_not_count")}</li>
   </ul>
   <table>
     <thead>
       <tr>
         <th>{t("ppm.capacity.person")}</th>
         <th>{t("ppm.capacity.allocated")}</th>
-        <th>Proposed</th>
+        <th>{t("p.capacity.proposed")}</th>
         <th>{t("ppm.capacity.load")}</th>
         <th>{t("ppm.nav.capacity")}</th>
       </tr>
@@ -66,7 +66,7 @@
           <td class="small">{person.person_ref}</td>
           <td class:over={person.over_allocated}>
             {person.allocated_percent}%
-            {#if person.over_allocated}<span class="chip red">over</span>{/if}
+            {#if person.over_allocated}<span class="chip red">{t("p.capacity.over")}</span>{/if}
           </td>
           <td>{person.proposed.allocations > 0 ? `${person.proposed.percent}%` : "—"}</td>
           <td><CapacityMeter {person} from={view.from} to={view.to} /></td>

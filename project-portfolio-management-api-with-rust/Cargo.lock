@@ -5304,6 +5304,7 @@ dependencies = [
  "include_dir",
  "insta",
  "integrity-mac",
+ "jsonwebtoken",
  "loco-rs",
  "migration",
  "mimalloc",

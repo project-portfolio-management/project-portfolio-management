@@ -5,6 +5,7 @@
   below it.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { money, type PpmClient } from "#lib/api/ppm.js";
   import { lineEstimateProblems, rangeMinor, rangeText } from "#lib/simulation-inputs.js";
 
@@ -39,7 +40,7 @@
       await ppm.setLineEstimate(pid, line.pid, { low_minor: rangeMinor(low), high_minor: rangeMinor(high) });
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not save");
+      onerror(err instanceof Error ? err.message : t("c.LineRange.could_not_save"));
     }
   }
 </script>
@@ -47,12 +48,12 @@
 <details class="line-range">
   <summary class="small">{rangeText(line.low_minor ?? null, line.high_minor ?? null, (m) => money(m, line.currency))}</summary>
   <form class="inline" onsubmit={save}>
-    <label>Low <input type="number" min="0" step="0.01" bind:value={low} /></label>
-    <label>High <input type="number" min="0" step="0.01" bind:value={high} /></label>
-    <button class="button small" type="submit">Save range</button>
+    <label>{t("c.LineRange.low")} <input type="number" min="0" step="0.01" bind:value={low} /></label>
+    <label>{t("c.LineRange.high")} <input type="number" min="0" step="0.01" bind:value={high} /></label>
+    <button class="button small" type="submit">{t("c.LineRange.save_range")}</button>
   </form>
   {#each problems as p (p)}<p class="banner" role="alert">{p}</p>{/each}
-  <p class="small muted">Planned is {money(line.planned_minor, line.currency)}, the likely cost. Leave a field empty to clear it.</p>
+  <p class="small muted">{t("c.LineRange.planned_is_the_likely_cost", { money: money(line.planned_minor, line.currency) })}</p>
 </details>
 
 <style>

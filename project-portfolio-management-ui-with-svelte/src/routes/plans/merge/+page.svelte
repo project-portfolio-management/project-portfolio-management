@@ -115,7 +115,7 @@
   onMount(loadRecent);
 </script>
 
-<svelte:head><title>{t("merge.title")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.merge.ppm", { t: t("merge.title") })}</title></svelte:head>
 
 <h1>{t("merge.title")}</h1>
 

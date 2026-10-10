@@ -11,6 +11,8 @@ import type {
   MilestoneStatus,
   MilestoneView,
 } from "#lib/api/ppm.js";
+import { businessDays, calendarDays } from "./units.js";
+import { t } from "./i18n.svelte.js";
 
 export const STATUS_ORDER: readonly MilestoneStatus[] = [
   "late",
@@ -20,10 +22,10 @@ export const STATUS_ORDER: readonly MilestoneStatus[] = [
 ];
 
 export const STATUS_TEXT: Record<MilestoneStatus, string> = {
-  late: "Late",
-  due_soon: "Due soon",
-  upcoming: "Upcoming",
-  achieved: "Achieved",
+  get late() { return t("p.milestones.late"); },
+  get due_soon() { return t("p.milestones.due_soon"); },
+  get upcoming() { return t("p.milestones.upcoming"); },
+  get achieved() { return t("p.milestones.achieved"); },
 };
 
 /** A decorative shape per status (the word carries the meaning). */
@@ -35,24 +37,18 @@ export const STATUS_SYMBOL: Record<MilestoneStatus, string> = {
 };
 
 export const STATE_TEXT: Record<MilestoneScheduleState, string> = {
-  on_track: "On track",
-  at_risk: "At risk",
-  forecast_late: "Forecast late",
-  no_forecast: "No forecast",
+  get on_track() { return t("l.milestone_view.on_track"); },
+  get at_risk() { return t("l.milestone_view.at_risk"); },
+  get forecast_late() { return t("l.milestone_view.forecast_late"); },
+  get no_forecast() { return t("l.milestone_view.no_forecast"); },
 };
 
 const NO_FORECAST_REASON: Record<string, string> = {
-  no_linked_tasks:
-    "It is not linked to any task, so there is nothing to forecast from.",
-  no_scheduled_tasks:
-    "Its open tasks have no dates the schedule can place (give them a duration and a start or a predecessor).",
-  cycle: "The plan's dependencies contain a cycle, so no forecast can be made.",
+  get no_linked_tasks() { return t("l.milestone_view.it_is_not_linked_to"); },
+  get no_scheduled_tasks() { return t("l.milestone_view.its_open_tasks_have_no"); },
+  get cycle() { return t("l.milestone_view.the_plan_s_dependencies_contain"); },
 };
 
-const businessDays = (n: number): string =>
-  `${n} business day${Math.abs(n) === 1 ? "" : "s"}`;
-const calendarDays = (n: number): string =>
-  `${n} calendar day${Math.abs(n) === 1 ? "" : "s"}`;
 
 /** The forecast as a sentence, or `null` when the milestone is achieved. */
 export function forecastText(
@@ -61,33 +57,33 @@ export function forecastText(
 ): string | null {
   if (schedule.state === null) return null;
   if (schedule.state === "no_forecast" || schedule.forecast === null) {
-    return NO_FORECAST_REASON[schedule.reason ?? ""] ?? "There is no forecast.";
+    return NO_FORECAST_REASON[schedule.reason ?? ""] ?? t("l.milestone_view.there_is_no_forecast");
   }
   const slack = schedule.slack_days ?? 0;
   const partial = schedule.partial
-    ? " (some open tasks cannot be placed, so this may be early)"
+    ? t("l.milestone_view.some_open_tasks_cannot_be")
     : "";
   if (slack < 0) {
-    return `Forecast to finish ${schedule.forecast}, ${businessDays(-slack)} after it is due (${due})${partial}.`;
+    return t("l.milestone_view.forecast_to_finish_after_it", { forecast: schedule.forecast, businessDays: businessDays(-slack), due, partial });
   }
   if (slack === 0)
-    return `Forecast to finish on the due date, ${due}${partial}.`;
-  return `Forecast to finish ${schedule.forecast}, ${businessDays(slack)} before it is due (${due})${partial}.`;
+    return t("l.milestone_view.forecast_to_finish_on_the", { due, partial });
+  return t("l.milestone_view.forecast_to_finish_before_it", { forecast: schedule.forecast, businessDays: businessDays(slack), due, partial });
 }
 
 /** How far a milestone has moved, or `null` when it never has. */
 export function slipText(slip: MilestoneSlip): string | null {
   if (slip.reschedules === 0) return null;
-  const times = `rescheduled ${slip.reschedules} time${slip.reschedules === 1 ? "" : "s"}`;
+  const times = slip.reschedules === 1 ? t("l.milestone_view.rescheduled_one", { count: slip.reschedules }) : t("l.milestone_view.rescheduled_other", { count: slip.reschedules });
   const later =
-    slip.later_moves === 0 ? "" : `, ${slip.later_moves} of them later`;
+    slip.later_moves === 0 ? "" : t("l.milestone_view.of_them_later", { later_moves: slip.later_moves });
   const net =
     slip.net_days === 0
-      ? "back on its original date"
+      ? t("l.milestone_view.back_on_its_original_date")
       : slip.net_days > 0
-        ? `${calendarDays(slip.net_days)} later than the original ${slip.original_due}`
-        : `${calendarDays(-slip.net_days)} earlier than the original ${slip.original_due}`;
-  return `Originally due ${slip.original_due}; ${times}${later}; now ${net}.`;
+        ? t("l.milestone_view.later_than_the_original", { calendarDays: calendarDays(slip.net_days), original_due: slip.original_due })
+        : t("l.milestone_view.earlier_than_the_original", { calendarDays: calendarDays(-slip.net_days), original_due: slip.original_due });
+  return t("l.milestone_view.originally_due_now", { original_due: slip.original_due, times, later, net });
 }
 
 /** Says how and when a milestone was achieved; `null` if it was not. */
@@ -98,11 +94,11 @@ export function achievedText(
   >,
 ): string | null {
   if (!m.achieved) return null;
-  const on = m.achieved_on ? ` on ${m.achieved_on}` : "";
+  const on = m.achieved_on ? t("l.milestone_view.on", { achieved_on: m.achieved_on }) : "";
   if (m.achieved_by === "tasks")
-    return `Achieved${on}: every task it waits for is done.`;
-  const why = m.done_reason ? ` Reason: ${m.done_reason}` : "";
-  return `Marked done${on}.${why}`;
+    return t("l.milestone_view.achieved_every_task_it_waits", { on });
+  const why = m.done_reason ? t("l.milestone_view.reason", { done_reason: m.done_reason }) : "";
+  return t("l.milestone_view.marked_done", { on, why });
 }
 
 /** What is still open, for a linked milestone. */
@@ -113,7 +109,7 @@ export function openTasksText(
   >,
 ): string | null {
   if (m.completion_mode !== "linked" || m.achieved) return null;
-  return `${m.open_tasks} of ${m.linked_tasks} task${m.linked_tasks === 1 ? "" : "s"} still open`;
+  return m.linked_tasks === 1 ? t("l.milestone_view.open_of_linked_one", { open_tasks: m.open_tasks, linked_tasks: m.linked_tasks }) : t("l.milestone_view.open_of_linked_other", { open_tasks: m.open_tasks, linked_tasks: m.linked_tasks });
 }
 
 /** One line for a milestone row, readable aloud. */
@@ -121,7 +117,7 @@ export function summaryText(m: MilestoneView): string {
   const state = m.schedule.state
     ? `, ${STATE_TEXT[m.schedule.state].toLowerCase()}`
     : "";
-  return `${m.name}: ${STATUS_TEXT[m.status].toLowerCase()}, due ${m.due}${state}`;
+  return t("l.milestone_view.due", { name: m.name, toLowerCase: STATUS_TEXT[m.status].toLowerCase(), due: m.due, state });
 }
 
 /** Whether completing it needs a reason: linked, with tasks still open. */

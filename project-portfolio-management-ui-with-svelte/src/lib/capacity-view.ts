@@ -9,6 +9,7 @@
 
 import { dayNumber } from "./lily-grids";
 import type { OverCapacitySpan } from "./api/ppm";
+import { t } from "./i18n.svelte.js";
 
 /** The slice of a capacity row the model needs. */
 export interface CapacityPerson {
@@ -57,22 +58,22 @@ export function loadModel(p: CapacityPerson): LoadModel {
   const parts: string[] = [];
   parts.push(
     p.capacity.source === "availability"
-      ? `${committed}% committed against a capacity as low as ${capacity}%`
-      : `${committed}% committed`,
+      ? t("l.capacity_view.committed_against_a_capacity_as", { committed, capacity })
+      : t("l.capacity_view.committed", { committed }),
   );
   if (p.over_capacity.length > 0) {
     const worst = p.over_capacity.reduce((a, b) =>
       b.demand - b.capacity > a.demand - a.capacity ? b : a,
     );
     parts.push(
-      `over capacity from ${worst.from}${worst.to === worst.from ? "" : ` to ${worst.to}`} (${worst.demand}% asked, ${worst.capacity}% available)`,
+      t("l.capacity_view.over_capacity_from_asked_available", { from: worst.from, v: worst.to === worst.from ? "" : t("l.capacity_view.to", { to: worst.to }), demand: worst.demand, capacity: worst.capacity }),
     );
   } else if (p.over_allocated) {
-    parts.push("over capacity");
+    parts.push(t("l.capacity_view.over_capacity"));
   }
   if (p.proposed.allocations > 0) {
     parts.push(
-      `${p.proposed.percent}% proposed, not counted${p.proposed.would_exceed_capacity ? "; committing it would put them over capacity" : ""}`,
+      t("l.capacity_view.proposed_not_counted", { percent: p.proposed.percent, v: p.proposed.would_exceed_capacity ? t("l.capacity_view.committing_it_would_put_them") : "" }),
     );
   }
   return {
@@ -116,7 +117,7 @@ export function spanSegments(
       {
         startPct: ((start - a) / days) * 100,
         widthPct: ((end - start + 1) / days) * 100,
-        label: `${s.from}${s.to === s.from ? "" : ` to ${s.to}`}: ${s.demand}% asked, ${s.capacity}% available`,
+        label: t("l.capacity_view.asked_available", { from: s.from, v: s.to === s.from ? "" : t("l.capacity_view.to", { to: s.to }), demand: s.demand, capacity: s.capacity }),
       },
     ];
   });

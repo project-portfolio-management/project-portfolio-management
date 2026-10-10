@@ -9,8 +9,9 @@
 
 import type { PageLoad } from "./$types";
 import { PlanRepository } from "#lib/api/plans.js";
+import { t, pageTitle } from "#lib/i18n.svelte.js";
 
-export const load: PageLoad = async ({ params, fetch }) => {
+export const load: PageLoad = async ({ params, fetch, url }) => {
   const pid = params.pid ?? "";
   const repo = PlanRepository.withFetch(fetch);
   let name: string | undefined;
@@ -20,5 +21,5 @@ export const load: PageLoad = async ({ params, fetch }) => {
   } catch {
     // ignore — see comment above
   }
-  return { title: `${name ?? "Plan"} — Main X` };
+  return { title: pageTitle(url, "p.plans.pid.main_x", { v: name ?? t("p.plans.pid.plan_fallback") }) };
 };

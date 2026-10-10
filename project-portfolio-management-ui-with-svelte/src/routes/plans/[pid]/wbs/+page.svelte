@@ -6,7 +6,7 @@
   table alone. A task under a parent you may not see sits under "Restricted item".
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type Task } from "#lib/api/ppm.js";
@@ -21,7 +21,7 @@
     try {
       tasks = (await ppm.listTasks(pid)).tasks;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the tasks";
+      error = err instanceof Error ? err.message : t("p.plans.pid.wbs.could_not_load_the_tasks");
     }
   });
 
@@ -29,33 +29,33 @@
   const tooBig = $derived(rows.length > WBS_TREE_LIMIT);
 </script>
 
-<svelte:head><title>Work breakdown — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.wbs.work_breakdown_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a></p>
-<h1>Work breakdown</h1>
-<p class="lede">The plan's tasks, each broken into its sub-tasks. The code on each line is for reading: it changes when work is added or moved.</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.wbs.plan")}</a></p>
+<h1>{t("p.plans.pid.wbs.work_breakdown")}</h1>
+<p class="lede">{t("p.plans.pid.wbs.the_plan_s_tasks_each")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if tasks}
   {#if rows.length === 0}
-    <p>No tasks yet.</p>
+    <p>{t("p.plans.pid.wbs.no_tasks_yet")}</p>
   {:else}
     {#if tooBig}
-      <p class="banner" role="note">{rows.length} tasks is too many to nest usefully; the table shows them all.</p>
+      <p class="banner" role="note">{t("p.plans.pid.wbs.tasks_is_too_many_to", { length: rows.length })}</p>
     {:else}
-      <ul class="wbs" aria-label="Work breakdown tree">
+      <ul class="wbs" aria-label={t("p.plans.pid.wbs.work_breakdown_tree")}>
         {#each rows as r (r.key)}
           <li style={`margin-inline-start:${r.depth * 1.5}rem`}>
             <span class="code">{r.code}</span>
             {#if r.restricted}<em>{r.title}</em>{:else}<a href={localeHref(`/plans/${pid}/tasks/${r.key}`)}>{r.title}</a>{/if}
-            {#if r.children > 0}<span class="small muted"> ({r.children} sub-task{r.children === 1 ? "" : "s"})</span>{/if}
+            {#if r.children > 0}<span class="small muted"> {(r.children === 1 ? t("p.plans.pid.wbs.sub_task_one", { children: r.children }) : t("p.plans.pid.wbs.sub_task_other", { children: r.children }))}</span>{/if}
           </li>
         {/each}
       </ul>
     {/if}
     <table>
-      <caption class="sr-only">Work breakdown as a table</caption>
-      <thead><tr><th scope="col">Code</th><th scope="col">Task</th><th scope="col">Level</th><th scope="col">Sub-tasks</th></tr></thead>
+      <caption class="sr-only">{t("p.plans.pid.wbs.work_breakdown_as_a_table")}</caption>
+      <thead><tr><th scope="col">{t("p.plans.pid.wbs.code")}</th><th scope="col">{t("p.plans.pid.wbs.task")}</th><th scope="col">{t("p.plans.pid.wbs.level")}</th><th scope="col">{t("p.plans.pid.wbs.sub_tasks")}</th></tr></thead>
       <tbody>
         {#each rows as r (r.key)}
           <tr><th scope="row">{r.code}</th><td>{r.title}</td><td>{r.depth + 1}</td><td>{r.children}</td></tr>

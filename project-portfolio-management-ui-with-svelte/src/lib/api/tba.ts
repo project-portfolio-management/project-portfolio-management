@@ -12,6 +12,7 @@
 
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient } from "./client";
+import { t } from "../i18n.svelte.js";
 
 // ---- wire shapes (mirroring the service responses) ----
 
@@ -410,7 +411,7 @@ export function percent(value: number | null | undefined, digits = 0): string {
 export function days(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || !Number.isFinite(value))
     return "—";
-  return `${value.toFixed(digits)} calendar days`;
+  return t("l.api_tba.calendar_days", { toFixed: value.toFixed(digits) });
 }
 
 /** Milliseconds as a calendar-days string. */
@@ -441,12 +442,12 @@ export function interpretationLabel(
 ): string {
   switch (interpretation) {
     case "wip_growing":
-      return "Work in progress is growing";
+      return t("l.api_tba.work_in_progress_is_growing");
     case "steady_state":
-      return "Steady state";
+      return t("l.api_tba.steady_state");
     case "queue_draining":
-      return "Queue draining";
+      return t("l.api_tba.queue_draining");
     default:
-      return "Not enough data";
+      return t("l.api_tba.not_enough_data");
   }
 }

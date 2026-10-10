@@ -6,7 +6,7 @@
   what every plan did before calendars existed.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type WorkCalendarView } from "#lib/api/ppm.js";
@@ -31,7 +31,7 @@
       days = maskToWeekdays(loaded.weekdays);
       holidays = loaded.holidays;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the calendar";
+      error = err instanceof Error ? err.message : t("p.plans.pid.calendar.could_not_load_the_calendar");
     }
   });
 
@@ -45,39 +45,39 @@
       loaded = await ppm.setPlanCalendar(pid, { weekdays: mask, holidays });
       saved = true;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not save";
+      error = err instanceof Error ? err.message : t("p.plans.pid.calendar.could_not_save");
     }
   }
 </script>
 
-<svelte:head><title>Working calendar — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.calendar.working_calendar_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref(`/plans/${pid}/critical-path`)}>← Critical path</a></p>
-<h1>Working calendar</h1>
+<p class="small"><a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.plans.pid.calendar.critical_path")}</a></p>
+<h1>{t("p.plans.pid.calendar.working_calendar")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if loaded}
   <p class="small muted">
-    {loaded.source === "plan" ? "This plan has its own calendar." : "No calendar set: every day works."}
-    Each person can also set their own (<a href={localeHref("/me/calendar")}>My calendar</a>); their work then happens only on days both calendars work.
+    {loaded.source === "plan" ? t("p.plans.pid.calendar.own_calendar") : t("p.plans.pid.calendar.no_calendar")}
+    {t("p.plans.pid.calendar.each_person_can_set")}<a href={localeHref("/me/calendar")}>{t("p.plans.pid.calendar.my_calendar")}</a>{t("p.plans.pid.calendar.their_work_then_happens_only")}
   </p>
   <fieldset>
-    <legend>Working weekdays</legend>
+    <legend>{t("p.plans.pid.calendar.working_weekdays")}</legend>
     {#each WEEKDAY_NAMES as name, i (name)}
       <label class="day"><input type="checkbox" bind:checked={days[i]} /> {name}</label>
     {/each}
   </fieldset>
-  {#if !valid}<p class="banner" role="alert">At least one weekday must work.</p>{/if}
+  {#if !valid}<p class="banner" role="alert">{t("p.plans.pid.calendar.at_least_one_weekday_must")}</p>{/if}
 
-  <h2>Holidays</h2>
+  <h2>{t("p.plans.pid.calendar.holidays")}</h2>
   <CalendarMonth bind:year bind:month {mask} {holidays} editable ontoggle={(d) => (holidays = toggleHoliday(holidays, d))} />
   {#if holidays.length > 0}
-    <p class="small">{holidays.length} holiday{holidays.length === 1 ? "" : "s"}: {holidays.join(", ")}</p>
+    <p class="small">{(holidays.length === 1 ? t("p.plans.pid.calendar.holiday_one", { length: holidays.length, join: holidays.join(", ") }) : t("p.plans.pid.calendar.holiday_other", { length: holidays.length, join: holidays.join(", ") }))}</p>
   {/if}
-  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>Save calendar</button>
-    {#if saved}<span role="status"> Saved.</span>{/if}</p>
+  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>{t("p.plans.pid.calendar.save_calendar")}</button>
+    {#if saved}<span role="status"> {t("p.plans.pid.calendar.saved")}</span>{/if}</p>
 {:else if !error}
-  <p>Loading…</p>
+  <p>{t("p.plans.pid.calendar.loading")}</p>
 {/if}
 
 <style>

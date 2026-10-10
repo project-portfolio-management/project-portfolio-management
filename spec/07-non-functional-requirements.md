@@ -109,6 +109,39 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   the expression, links each text and says how to ask for custom terms; it is
   the only licence-related file outside `LICENSE/`. A test keeps the manifests,
   `LICENSE/` and `LICENSE.md` consistent.
+- **NFR-16 — Operations pack and recovery targets.** The repository ships what
+  an operator needs: a deployment guide (compose today), backup and restore
+  scripts for the database **and** the artifact store, an upgrade and migration
+  guide, and a runbook. **Recovery targets are written down**: recovery point
+  objective (RPO) and recovery time objective (RTO), stated per backup mode,
+  with the scripts' own guarantee distinguished from what point-in-time
+  recovery adds. A restore is **tested automatically**: a CI job restores a
+  `pg_dump` into a fresh database, checks it against the source and runs the
+  test suite against it.
+- **NFR-17 — Information governance pack.** The repository ships documents a
+  buyer's information governance lead can adapt rather than write from scratch:
+  a data protection impact assessment (DPIA) template pre-filled with what this
+  service does, a data-flow diagram, a record of processing, a retention
+  schedule per kind of record, an accessibility statement (WCAG 2.2 AA), a
+  language statement, and answers to the Digital Technology Assessment Criteria
+  (DTAC) as a checklist. A test lists every column that can hold personal data
+  and fails when a migration adds one the pack's inventory does not name.
+- **NFR-18 — Sign-in with an external OIDC provider.** A deployment can offer
+  sign-in through Microsoft Entra ID (or any OpenID Connect provider): the
+  front-end's server side runs the authorization-code flow with PKCE against an
+  OIDC provider (directly, or a Keycloak realm that brokers Entra), keeps tokens
+  server-side, and calls the API with the provider's access token, which the API
+  verifies. Roles or groups reach ABAC only through an explicit map. The path
+  is documented and covered by an end-to-end test that signs in through an
+  Entra-compatible provider.
+- **NFR-19 — Every page in every supported locale.** All text a person reads on
+  a page comes from the locale catalogue (`i18n.svelte.ts`), none is hard-coded
+  in English, and Welsh (`cy-001`) is complete: every English key has a Welsh
+  entry. A CI test fails when a template or helper holds visible English text
+  outside the catalogue, or when `cy-001` lacks a key. Translations are
+  reviewed by a professional translator and the review is recorded; until then
+  they are marked draft. Text that the API itself generates (derived sentences
+  in responses) is not part of the catalogue and is listed as a limitation.
 
 ### 7.x Time and time zones
 

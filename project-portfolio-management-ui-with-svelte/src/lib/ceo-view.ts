@@ -8,6 +8,7 @@ import type {
   KpiView,
   MilestoneView,
 } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export type Rag = "red" | "amber" | "green";
 
@@ -32,11 +33,11 @@ export function worstStatus(health: ExecutiveHealth): Rag | null {
 
 /** One plain sentence for the health tile. */
 export function healthSentence(health: ExecutiveHealth): string {
-  const t = ragTotals(health);
-  const n = t.red + t.amber + t.green;
-  if (health.portfolios.length === 0) return "No portfolios to report on yet.";
-  if (n === 0) return "Portfolios exist but hold no plans yet.";
-  return `${t.red} of ${n} plans are red, ${t.amber} amber, ${t.green} green.`;
+  const totals = ragTotals(health);
+  const n = totals.red + totals.amber + totals.green;
+  if (health.portfolios.length === 0) return t("l.ceo_view.no_portfolios_to_report_on");
+  if (n === 0) return t("l.ceo_view.portfolios_exist_but_hold_no");
+  return t("l.ceo_view.of_plans_are_red_amber", { red: totals.red, n, amber: totals.amber, green: totals.green });
 }
 
 export function escalatedRisks(health: ExecutiveHealth): number {
@@ -100,10 +101,10 @@ export function milestonesToWatch(
 }
 
 const DECISION_TEXT: Record<string, string> = {
-  gate_review: "Gate review",
-  scenario_commit: "Scenario committed",
-  proposal: "Proposal",
-  merge: "Plans merged",
+  get gate_review() { return t("l.ceo_view.gate_review"); },
+  get scenario_commit() { return t("l.ceo_view.scenario_committed"); },
+  get proposal() { return t("l.ceo_view.proposal"); },
+  get merge() { return t("l.ceo_view.plans_merged"); },
 };
 
 /** The `n` newest decisions as one line each ("Gate review: Approved — Apollo"). */

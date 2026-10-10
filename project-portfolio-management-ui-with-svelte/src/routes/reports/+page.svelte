@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { t } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type ReportDefinition, type ReportRun } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
@@ -42,7 +43,7 @@
       nameLike = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "save failed";
+      error = err instanceof Error ? err.message : t("p.reports.save_failed");
     }
   }
 
@@ -50,23 +51,23 @@
     try {
       runs = { ...runs, [pid]: await ppm.runReport(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : "run failed";
+      error = err instanceof Error ? err.message : t("p.reports.run_failed");
     }
   }
 </script>
 
-<svelte:head><title>Reports — PPM</title></svelte:head>
+<svelte:head><title>{t("p.reports.reports_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.reports.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
   <input placeholder={t("ppm.reports.name")} bind:value={name} required />
-  <select bind:value={collection} aria-label="Collection">
-    {#each COLLECTIONS as segment (segment)}<option value={segment}>{segment}</option>{/each}
+  <select bind:value={collection} aria-label={t("p.reports.collection")}>
+    {#each COLLECTIONS as segment (segment)}<option value={segment}>{enumLabel("collection", segment)}</option>{/each}
   </select>
-  <input placeholder="name contains…" bind:value={nameLike} />
-  <input placeholder="fields (comma separated)" bind:value={fields} size="34" />
+  <input placeholder={t("p.reports.name_contains")} bind:value={nameLike} />
+  <input placeholder={t("p.reports.fields_comma_separated")} bind:value={fields} size="34" />
   <button class="button primary" type="submit">{t("ppm.reports.save")}</button>
 </form>
 
@@ -76,7 +77,7 @@
       <strong>{report.name}</strong>
       <span class="chip">{report.collection}</span>
       <button class="button small" onclick={() => run(report.pid)}>{t("ppm.reports.run")}</button>
-      <a class="button small" href={ppm.reportCsvUrl(report.pid)} download>CSV</a>
+      <a class="button small" href={ppm.reportCsvUrl(report.pid)} download>{t("p.reports.csv")}</a>
     </p>
     {#if runs[report.pid]}
       {@const result = runs[report.pid]}

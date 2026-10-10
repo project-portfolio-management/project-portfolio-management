@@ -11,6 +11,7 @@
   Choices are kept on this device and, when you are signed in, on your account.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple } from "#lib/preferences.js";
@@ -22,51 +23,50 @@
 
   const STATUS: Record<string, string> = {
     idle: "",
-    device: "Saved on this device.",
-    account: "Saved to your account, so it follows you to other browsers.",
-    "account-failed": "Could not save to your account just now; it is kept on this device.",
+    get device() { return t("p.display.saved_on_this_device"); },
+    get account() { return t("p.display.saved_to_your_account_so"); },
+    get "account-failed"() { return t("p.display.could_not_save_to_your"); },
   };
 </script>
 
-<svelte:head><title>Display — PPM</title></svelte:head>
+<svelte:head><title>{t("p.display.display_ppm")}</title></svelte:head>
 
-<h1>Display</h1>
-<p class="small muted">How the app looks and reads. These never change what you can do.</p>
+<h1>{t("p.display.display")}</h1>
+<p class="small muted">{t("p.display.how_the_app_looks_and")}</p>
 
 <section class="surface stack" aria-labelledby="simple-h">
-  <h2 id="simple-h">Simple view</h2>
+  <h2 id="simple-h">{t("p.display.simple_view")}</h2>
   <p>
-    Keeps the everyday pages in front (My work, Plans, Board, Calendar, Tour) and puts the rest behind a
-    “More” link. Every page is still there and still works.
+    {t("p.display.keeps_the_everyday_pages_in")}
   </p>
   <label class="check">
     <input type="checkbox" checked={simple} onchange={(e) => void display.set({ simple: e.currentTarget.checked }, signedIn)} />
-    Use simple view
+    {t("p.display.use_simple_view")}
   </label>
   <p class="small muted">
     {#if chosen}
-      You chose this.
+      {t("p.display.you_chose_this")}
       <button type="button" class="linklike" onclick={() => void display.set({ simple: undefined }, signedIn)}>
-        Go back to the default for my role
+        {t("p.display.go_back_to_the_default")}
       </button>
     {:else}
-      This is the default for your role: {simple ? "on" : "off"}.
+      {t("p.display.this_is_the_default_for", { v: simple ? t("p.common.on") : t("p.common.off") })}
     {/if}
   </p>
 </section>
 
 <section class="surface stack" aria-labelledby="font-h">
-  <h2 id="font-h">Dyslexia-friendly font</h2>
-  <p>Uses the OpenDyslexic typeface, with wider spacing between letters, words and lines.</p>
+  <h2 id="font-h">{t("p.display.dyslexia_friendly_font")}</h2>
+  <p>{t("p.display.uses_the_opendyslexic_typeface_with")}</p>
   <label class="check">
     <input type="checkbox" checked={display.dyslexia} onchange={(e) => void display.set({ dyslexia: e.currentTarget.checked }, signedIn)} />
-    Use the dyslexia-friendly font
+    {t("p.display.use_the_dyslexia_friendly_font")}
   </label>
 </section>
 
 <p class="small" role="status" aria-live="polite">{STATUS[display.status]}</p>
 {#if !signedIn}
-  <p class="small muted">Sign in to keep these on your account as well as on this device.</p>
+  <p class="small muted">{t("p.display.sign_in_to_keep_these")}</p>
 {/if}
 
 <style>

@@ -36,7 +36,7 @@
   }
 </script>
 
-<svelte:head><title>{t("edit.title")} — Main X</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.edit.main_x", { t: t("edit.title") })}</title></svelte:head>
 
 <h1>{t("edit.title")}</h1>
 

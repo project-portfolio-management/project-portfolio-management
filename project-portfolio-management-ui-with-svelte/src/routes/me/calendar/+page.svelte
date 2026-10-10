@@ -6,7 +6,7 @@
   critical path honestly, instead of someone promising dates they cannot keep.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type AvailabilityRange, type WorkCalendarView } from "#lib/api/ppm.js";
   import CalendarMonth from "#lib/components/CalendarMonth.svelte";
@@ -35,7 +35,7 @@
       holidays = loaded.holidays;
       ranges = await ppm.availability();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load your calendar";
+      error = err instanceof Error ? err.message : t("p.me.calendar.could_not_load_your_calendar");
     }
   });
 
@@ -49,7 +49,7 @@
       loaded = await ppm.setMeCalendar({ weekdays: mask, holidays });
       saved = true;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not save";
+      error = err instanceof Error ? err.message : t("p.me.calendar.could_not_save");
     }
   }
 
@@ -62,7 +62,7 @@
       ranges = await ppm.availability();
       rFrom = rTo = rNote = "";
     } catch (err) {
-      rError = err instanceof Error ? err.message : "Could not save";
+      rError = err instanceof Error ? err.message : t("p.me.calendar.could_not_save");
     }
   }
 
@@ -72,58 +72,57 @@
       await ppm.removeAvailability(pid);
       ranges = await ppm.availability();
     } catch (err) {
-      rError = err instanceof Error ? err.message : "Could not remove";
+      rError = err instanceof Error ? err.message : t("p.me.calendar.could_not_remove");
     }
   }
 </script>
 
-<svelte:head><title>My calendar — PPM</title></svelte:head>
+<svelte:head><title>{t("p.me.calendar.my_calendar_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref("/me")}>← My work</a></p>
-<h1>My calendar</h1>
+<p class="small"><a href={localeHref("/me")}>{t("p.me.calendar.my_work")}</a></p>
+<h1>{t("p.me.calendar.my_calendar")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if loaded}
   <p class="small muted">
-    {loaded.source === "person" ? "Your own calendar is set." : "No personal calendar: the plan's calendar applies to you."}
-    Leave recorded for you already counts as days off.
+    {loaded.source === "person" ? t("p.me.calendar.own_set") : t("p.me.calendar.plan_applies")}
+    {t("p.me.calendar.leave_counts")}
   </p>
   <fieldset>
-    <legend>The days I work</legend>
+    <legend>{t("p.me.calendar.the_days_i_work")}</legend>
     {#each WEEKDAY_NAMES as name, i (name)}
       <label class="day"><input type="checkbox" bind:checked={days[i]} /> {name}</label>
     {/each}
   </fieldset>
-  {#if !valid}<p class="banner" role="alert">At least one weekday must work.</p>{/if}
-  <h2>My days off</h2>
+  {#if !valid}<p class="banner" role="alert">{t("p.me.calendar.at_least_one_weekday_must")}</p>{/if}
+  <h2>{t("p.me.calendar.my_days_off")}</h2>
   <CalendarMonth bind:year bind:month {mask} {holidays} editable ontoggle={(d) => (holidays = toggleHoliday(holidays, d))} />
-  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>Save</button>
-    {#if saved}<span role="status"> Saved.</span>{/if}</p>
+  <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>{t("p.me.calendar.save")}</button>
+    {#if saved}<span role="status"> {t("p.me.calendar.saved")}</span>{/if}</p>
 
-  <h2>Part-time spells and leave</h2>
+  <h2>{t("p.me.calendar.part_time_spells_and_leave")}</h2>
   <p class="small muted">
-    The most of your time you can commit between two dates: 60 for a part-time spell, 0 for leave. Outside these dates it is 100.
-    Capacity is read day by day, so a short spell is never averaged away.
+    {t("p.me.calendar.the_most_of_your_time")}
   </p>
   {#if rError}<p class="banner" role="alert">{rError}</p>{/if}
   <ul>
     {#each ranges as r (r.pid)}
       <li>
-        {r.from} to {r.to}: {r.max_percent}%{r.note ? ` (${r.note})` : ""}
-        <button type="button" onclick={() => void dropRange(r.pid)}>Remove</button>
+        {t("p.me.calendar.to", { from: r.from, to: r.to, max_percent: r.max_percent, v: r.note ? ` (${r.note})` : "" })}
+        <button type="button" onclick={() => void dropRange(r.pid)}>{t("p.me.calendar.remove")}</button>
       </li>
     {/each}
-    {#if ranges.length === 0}<li class="muted">None set.</li>{/if}
+    {#if ranges.length === 0}<li class="muted">{t("p.me.calendar.none_set")}</li>{/if}
   </ul>
   <form onsubmit={addRange} class="row">
-    <label>From <input type="date" bind:value={rFrom} required /></label>
-    <label>To <input type="date" bind:value={rTo} required /></label>
-    <label>Most I can commit (%) <input type="number" min="0" max="100" bind:value={rPercent} required /></label>
-    <label>Note <input type="text" bind:value={rNote} /></label>
-    <button type="submit">Add</button>
+    <label>{t("p.me.calendar.from")} <input type="date" bind:value={rFrom} required /></label>
+    <label>{t("p.me.calendar.to_2")} <input type="date" bind:value={rTo} required /></label>
+    <label>{t("p.me.calendar.most_i_can_commit")} <input type="number" min="0" max="100" bind:value={rPercent} required /></label>
+    <label>{t("p.me.calendar.note")} <input type="text" bind:value={rNote} /></label>
+    <button type="submit">{t("p.me.calendar.add")}</button>
   </form>
 {:else if !error}
-  <p>Loading…</p>
+  <p>{t("p.me.calendar.loading")}</p>
 {/if}
 
 <style>

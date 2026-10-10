@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type OkrList } from "#lib/api/ppm.js";
   import ObjectiveCard from "#lib/components/ObjectiveCard.svelte";
@@ -21,7 +22,7 @@
       list = await ppm.okrs(period.trim() || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the OKRs";
+      error = err instanceof Error ? err.message : t("p.okrs.could_not_load_the_okrs");
     }
   }
   onMount(refresh);
@@ -35,47 +36,46 @@
       title = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not create the objective";
+      error = err instanceof Error ? err.message : t("p.okrs.could_not_create_the_objective");
     }
   }
 </script>
 
-<svelte:head><title>OKRs — PPM</title></svelte:head>
+<svelte:head><title>{t("p.okrs.okrs_ppm")}</title></svelte:head>
 
-<h1>Goals and key results (OKRs)</h1>
-<p class="lede">A goal, with a few measurable results that show whether you reached it.</p>
+<h1>{t("p.okrs.goals_and_key_results_okrs")}</h1>
+<p class="lede">{t("p.okrs.a_goal_with_a_few")}</p>
 <p class="small muted">
-  Objectives and key results. Scores are worked out from the check-ins every time you look;
-  nothing is stored that could go stale.
+  {t("p.okrs.objectives_and_key_results_scores")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void refresh(); }}>
-  <label>Period <input type="text" bind:value={period} placeholder="2026-Q4 (blank for all)" /></label>
-  <button class="button small" type="submit">Show</button>
+  <label>{t("p.okrs.period")} <input type="text" bind:value={period} placeholder={t("p.okrs.2026_q4_blank_for_all")} /></label>
+  <button class="button small" type="submit">{t("p.okrs.show")}</button>
 </form>
 
 <details class="surface">
-  <summary>New objective</summary>
+  <summary>{t("p.okrs.new_objective")}</summary>
   <form class="filter" onsubmit={addObjective}>
-    <label>Title <input type="text" required bind:value={title} /></label>
-    <label>Period <input type="text" bind:value={newPeriod} placeholder="2026-Q4" /></label>
-    <button class="button small primary" type="submit">Create</button>
+    <label>{t("p.okrs.title")} <input type="text" required bind:value={title} /></label>
+    <label>{t("p.okrs.period")} <input type="text" bind:value={newPeriod} placeholder="2026-Q4" /></label>
+    <button class="button small primary" type="submit">{t("p.okrs.create")}</button>
   </form>
 </details>
 
 {#if list}
   {#if list.objectives.length === 0}
-    <p>No objectives{list.period ? ` for ${list.period}` : ""} yet.</p>
+    <p>{list.period ? t("p.okrs.none_for_period", { period: list.period }) : t("p.okrs.none")}</p>
   {:else}
-    <p class="small muted" aria-live="polite">{list.objectives.length} objective{list.objectives.length === 1 ? "" : "s"}, least progressed first</p>
+    <p class="small muted" aria-live="polite">{(list.objectives.length === 1 ? t("p.okrs.objective_least_progressed_first_one", { length: list.objectives.length }) : t("p.okrs.objective_least_progressed_first_other", { length: list.objectives.length }))}</p>
     {#each list.objectives as item (item.objective.pid)}
       <ObjectiveCard {item} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
     {/each}
   {/if}
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.okrs.loading")}</p>
 {/if}
 
 <style>

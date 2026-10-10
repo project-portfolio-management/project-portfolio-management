@@ -1,3 +1,4 @@
+import { t } from "./i18n.svelte.js";
 // The work breakdown structure (PJ-12): a plan's tasks as a tree, with generated
 // codes (`1`, `1.2`, `1.2.3`). Pure and tested.
 //
@@ -83,7 +84,7 @@ export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
       key: `restricted-${placeholder}`,
       code,
       depth: 0,
-      title: "Restricted item",
+      title: t("l.wbs.restricted_item"),
       children: group.length,
       restricted: true,
     });

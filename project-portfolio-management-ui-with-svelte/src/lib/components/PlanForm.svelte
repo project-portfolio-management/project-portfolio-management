@@ -24,6 +24,7 @@
     PlanStatus,
   } from "#lib/api/types.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
 
   let {
     initial,
@@ -125,7 +126,7 @@
       <select bind:value={kind} data-testid="form-kind">
         <option value="">{t("form.empty")}</option>
         {#each ALL_KINDS as k (k)}
-          <option value={k}>{k}</option>
+          <option value={k}>{enumLabel("kind", k)}</option>
         {/each}
       </select>
     </label>
@@ -134,7 +135,7 @@
       <select bind:value={status}>
         <option value="">{t("form.empty")}</option>
         {#each ALL_STATUSES as s (String(s))}
-          <option value={s as PlanStatus}>{s}</option>
+          <option value={s as PlanStatus}>{enumLabel("plan_status", s)}</option>
         {/each}
       </select>
     </label>
@@ -144,13 +145,13 @@
       >{t("form.caseNumber")}<input
         type="text"
         bind:value={code}
-        placeholder="PROJ-2026"
+        placeholder={t("c.PlanForm.proj_2026")}
       /></label
     >
-    <label>{t("form.openedDate")}<input type="text" bind:value={parentRef} placeholder="parent plan pid (UUID)" /></label>
+    <label>{t("form.openedDate")}<input type="text" bind:value={parentRef} placeholder={t("c.PlanForm.parent_plan_pid_uuid")} /></label>
   </div>
   <div class="row">
-    <label>{t("form.agencyId")}<input type="text" bind:value={ownerOrgId} placeholder="organization:…" /></label>
+    <label>{t("form.agencyId")}<input type="text" bind:value={ownerOrgId} placeholder={t("c.PlanForm.organization")} /></label>
     <label>{t("form.agencyName")}<input type="text" bind:value={ownerOrgName} /></label>
   </div>
   <label

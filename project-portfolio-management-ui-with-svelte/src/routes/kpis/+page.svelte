@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KpiList, type KpiStatus, type KpiDirection, type KpiCadence } from "#lib/api/ppm.js";
   import KpiCard from "#lib/components/KpiCard.svelte";
@@ -22,7 +23,7 @@
       list = await ppm.kpis(status ? { status } : {});
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the KPIs";
+      error = err instanceof Error ? err.message : t("p.kpis.could_not_load_the_kpis");
     }
   }
   onMount(refresh);
@@ -51,24 +52,23 @@
       red = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not define the KPI";
+      error = err instanceof Error ? err.message : t("p.kpis.could_not_define_the_kpi");
     }
   }
 </script>
 
-<svelte:head><title>KPIs — PPM</title></svelte:head>
+<svelte:head><title>{t("p.kpis.kpis_ppm")}</title></svelte:head>
 
-<h1>Key measures (KPIs)</h1>
-<p class="lede">Something you track over time against a target, so you can see early whether you are on course.</p>
+<h1>{t("p.kpis.key_measures_kpis")}</h1>
+<p class="lede">{t("p.kpis.something_you_track_over_time")}</p>
 <p class="small muted">
-  Standing measures. Green is at or better than the target; red is at or worse than the red
-  line; amber is between. A KPI nobody has read yet shows “No data yet”.
+  {t("p.kpis.standing_measures_green_is_at")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if list}
-  <ul class="summary" aria-label="KPIs by status">
+  <ul class="summary" aria-label={t("p.kpis.kpis_by_status")}>
     {#each summaryParts(list.summary) as part (part.status)}
       <li><span aria-hidden="true">{STATUS_SYMBOL[part.status]}</span> {part.label}: <strong>{part.count}</strong></li>
     {/each}
@@ -76,55 +76,55 @@
 {/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void refresh(); }}>
-  <label>Show
+  <label>{t("p.kpis.show")}
     <select bind:value={status} onchange={refresh}>
-      <option value="">All</option>
-      <option value="red">Off target</option>
-      <option value="amber">Watch</option>
-      <option value="no_data">No data yet</option>
-      <option value="green">On target</option>
+      <option value="">{t("p.kpis.all")}</option>
+      <option value="red">{t("p.kpis.off_target")}</option>
+      <option value="amber">{t("p.kpis.watch")}</option>
+      <option value="no_data">{t("p.kpis.no_data_yet")}</option>
+      <option value="green">{t("p.kpis.on_target")}</option>
     </select>
   </label>
 </form>
 
 <details class="surface">
-  <summary>Define a key measure (KPI)</summary>
+  <summary>{t("p.kpis.define_a_key_measure_kpi")}</summary>
   <form class="filter" onsubmit={addKpi}>
-    <label>Name <input type="text" required bind:value={name} /></label>
-    <label>Unit <input type="text" bind:value={unit} placeholder="percent, defects, GBP…" /></label>
-    <label>Which way is good
+    <label>{t("p.kpis.name")} <input type="text" required bind:value={name} /></label>
+    <label>{t("p.kpis.unit")} <input type="text" bind:value={unit} placeholder={t("p.kpis.percent_defects_gbp")} /></label>
+    <label>{t("p.kpis.which_way_is_good")}
       <select bind:value={direction}>
-        <option value="higher_better">Higher is better</option>
-        <option value="lower_better">Lower is better</option>
+        <option value="higher_better">{t("p.kpis.higher_is_better")}</option>
+        <option value="lower_better">{t("p.kpis.lower_is_better")}</option>
       </select>
     </label>
-    <label>Target <input type="number" step="1" required bind:value={target} /></label>
-    <label>Red line <input type="number" step="1" required bind:value={red} /></label>
-    <label>Read how often
+    <label>{t("p.kpis.target")} <input type="number" step="1" required bind:value={target} /></label>
+    <label>{t("p.kpis.red_line")} <input type="number" step="1" required bind:value={red} /></label>
+    <label>{t("p.kpis.read_how_often")}
       <select bind:value={cadence}>
-        <option value="">Not set</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="quarterly">Quarterly</option>
+        <option value="">{t("p.kpis.not_set")}</option>
+        <option value="daily">{t("p.kpis.daily")}</option>
+        <option value="weekly">{t("p.kpis.weekly")}</option>
+        <option value="monthly">{t("p.kpis.monthly")}</option>
+        <option value="quarterly">{t("p.kpis.quarterly")}</option>
       </select>
     </label>
-    <label>Plan (optional pid) <input type="text" bind:value={planPid} placeholder="blank for the whole portfolio" /></label>
-    <button class="button small primary" type="submit">Define</button>
+    <label>{t("p.kpis.plan_optional_pid")} <input type="text" bind:value={planPid} placeholder={t("p.kpis.blank_for_the_whole_portfolio")} /></label>
+    <button class="button small primary" type="submit">{t("p.kpis.define")}</button>
   </form>
-  <p class="small muted">The red line must be on the worse side of the target. Scale values to whole numbers (basis points, pence).</p>
+  <p class="small muted">{t("p.kpis.the_red_line_must_be")}</p>
 </details>
 
 {#if list}
   {#if list.kpis.length === 0}
-    <p>No KPIs{status ? " with that status" : ""} yet.</p>
+    <p>{status ? t("p.kpis.none_with_status") : t("p.kpis.none")}</p>
   {:else}
     {#each list.kpis as item (item.kpi.pid)}
       <KpiCard {item} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
     {/each}
   {/if}
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.kpis.loading")}</p>
 {/if}
 
 <style>

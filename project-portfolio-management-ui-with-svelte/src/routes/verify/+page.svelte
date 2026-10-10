@@ -5,22 +5,22 @@
   never handles an access token.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
     import type { PageData } from "./$types";
 
     let { data }: { data: PageData } = $props();
 
     const message = $derived(
         data.error === "missingToken"
-            ? "This sign-in link is missing its token."
+            ? t("p.verify.this_sign_in_link_is")
             : data.error === "serviceUnavailable"
-              ? "We could not reach the sign-in service. Please try again in a moment."
-              : "This sign-in link is invalid or has expired.",
+              ? t("p.verify.we_could_not_reach_the")
+              : t("p.verify.this_sign_in_link_is_2"),
     );
 </script>
 
-<svelte:head><title>Sign-in link</title></svelte:head>
+<svelte:head><title>{t("p.verify.sign_in_link")}</title></svelte:head>
 
-<h1>Sign-in link</h1>
+<h1>{t("p.verify.sign_in_link")}</h1>
 <p class="banner" role="alert">{message}</p>
-<p><a class="button" href={localeHref("/signin")}>Request a new link</a></p>
+<p><a class="button" href={localeHref("/signin")}>{t("p.verify.request_a_new_link")}</a></p>

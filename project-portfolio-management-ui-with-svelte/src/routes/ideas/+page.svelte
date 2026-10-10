@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { t } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type Idea } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
@@ -44,7 +45,7 @@
   }
 </script>
 
-<svelte:head><title>Ideas — PPM</title></svelte:head>
+<svelte:head><title>{t("p.ideas.ideas_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.ideas.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -57,8 +58,8 @@
 
 <p class="row small">
   {t("ppm.ideas.convertTarget")}
-  <select bind:value={convertTarget} aria-label="Convert target">
-    {#each COLLECTIONS as target (target)}<option value={target}>{target}</option>{/each}
+  <select bind:value={convertTarget} aria-label={t("p.ideas.convert_target")}>
+    {#each COLLECTIONS as target (target)}<option value={target}>{enumLabel("collection", target)}</option>{/each}
   </select>
 </p>
 

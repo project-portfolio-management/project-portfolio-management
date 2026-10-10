@@ -6,7 +6,7 @@
   is listed, never invented onto the timeline. Read-only, like the chart.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import {
     GanttTable,
     GanttTableThead,
@@ -19,7 +19,7 @@
 
   let {
     items,
-    label = "Schedule",
+    label,
   }: { items: GanttItem[]; label?: string } = $props();
 
   let unit = $state<GanttGrid["unit"]>("week");
@@ -44,27 +44,27 @@
 
 <div class="lily-gantt" bind:this={table}>
   <label class="unit">
-    Time scale
+    {t("c.LilyGanttTable.time_scale")}
     <select bind:value={unit}>
-      <option value="day">Day</option>
-      <option value="week">Week</option>
-      <option value="month">Month</option>
+      <option value="day">{t("c.LilyGanttTable.day")}</option>
+      <option value="week">{t("c.LilyGanttTable.week")}</option>
+      <option value="month">{t("c.LilyGanttTable.month")}</option>
     </select>
   </label>
   {#if grid.coarsened}
     <p class="muted small" role="status">
-      That range is too long for one column per {unit}; showing one per {grid.unit}.
+      {t("c.LilyGanttTable.that_range_is_too_long", { unit, unit2: grid.unit })}
     </p>
   {/if}
   {#if grid.rows.length === 0}
-    <p class="muted">No dated tasks to show.</p>
+    <p class="muted">{t("c.LilyGanttTable.no_dated_tasks_to_show")}</p>
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div class="scroll" {onkeydown} role="presentation">
-      <GanttTable {label} class="gantt-table" data-testid="lily-gantt">
+      <GanttTable label={label ?? t("c.LilyGanttTable.schedule")} class="gantt-table" data-testid="lily-gantt">
         <GanttTableThead>
           <GanttTableTr>
-            <GanttTableTH scope="col">Task</GanttTableTH>
+            <GanttTableTH scope="col">{t("c.LilyGanttTable.task")}</GanttTableTH>
             {#each grid.columns as column (column.key)}
               <GanttTableTH scope="col" title="{column.from} – {column.to}">{heading(column.from)}</GanttTableTH>
             {/each}
@@ -75,15 +75,15 @@
             <GanttTableTr>
               <GanttTableTH scope="row">
                 <a href={localeHref(`/plans/${row.pid}`)}>{row.name}</a>{#if row.critical}
-                  <span class="chip">critical path</span>{/if}
+                  <span class="chip">{t("c.LilyGanttTable.critical_path")}</span>{/if}
               </GanttTableTH>
               {#each row.cells as cell, c (c)}
                 <GanttTableTD
                   active={cell.active}
                   class={cell.active ? (row.critical ? "bar critical" : "bar") : ""}
                   aria-label={cell.active
-                    ? `${row.name}: ${row.start} to ${row.end}${cell.ends ? " (ends here)" : ""}`
-                    : `${row.name}: not scheduled`}
+                    ? t("c.LilyGanttTable.cell_active", { name: row.name, start: row.start, end: row.end, ends: cell.ends ? t("c.LilyGanttTable.ends_here") : "" })
+                    : t("c.LilyGanttTable.cell_not_scheduled", { name: row.name })}
                   data-r={r}
                   data-c={c}
                 >
@@ -98,7 +98,7 @@
   {/if}
   {#if grid.undated.length > 0}
     <p class="muted small">
-      No usable dates:
+      {t("c.LilyGanttTable.no_usable_dates")}
       {#each grid.undated as item (item.pid)}<span class="chip">{item.name}</span>{/each}
     </p>
   {/if}

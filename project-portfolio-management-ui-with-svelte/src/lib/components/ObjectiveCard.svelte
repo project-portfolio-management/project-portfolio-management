@@ -5,6 +5,7 @@
   beside a key result and is not part of any score.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection } from "#lib/api/ppm.js";
   import { percentText, progressValue, keyResultProgress, valueText, confidenceText } from "#lib/okr-view.js";
 
@@ -28,7 +29,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "That did not work");
+      onerror(err instanceof Error ? err.message : t("c.ObjectiveCard.that_did_not_work"));
     }
   }
 
@@ -44,7 +45,7 @@
     void run(() => ppm.updateObjective(o.pid, { title, description: o.description, period: period.trim() || null }));
   };
   const removeObjective = () => {
-    if (confirm(`Delete the objective “${o.title}” and its key results?`)) void run(() => ppm.deleteObjective(o.pid));
+    if (confirm(t("c.ObjectiveCard.delete_the_objective_and_its", { title: o.title }))) void run(() => ppm.deleteObjective(o.pid));
   };
 
   // Add a key result.
@@ -118,15 +119,15 @@
     {#if score !== null}
       <progress max="100" value={score} aria-label={`${o.title}: ${percentText(item.score_basis_points)}`}></progress>
     {:else}
-      <span class="muted"> — it has no measurable key result yet, so it has no score (not zero).</span>
+      <span class="muted"> {t("c.ObjectiveCard.it_has_no_measurable_key")}</span>
     {/if}
   </p>
   {#if !item.single_currency}
-    <p class="small muted">Key results in more than one currency are scored separately; currencies are never converted.</p>
+    <p class="small muted">{t("c.ObjectiveCard.key_results_in_more_than")}</p>
   {/if}
 
   {#if item.key_results.length === 0}
-    <p class="small muted">No key results yet.</p>
+    <p class="small muted">{t("c.ObjectiveCard.no_key_results_yet")}</p>
   {:else}
     <ul class="krs">
       {#each item.key_results as kr (kr.key_result.pid)}
@@ -143,31 +144,31 @@
             {/if}
           </p>
           <p class="small muted">
-            {valueText(k.current_value, k.target_value, k.unit)} (from {k.start_value})
-            {#if k.tolerance !== null} · tolerance ±{k.tolerance}{/if}
+            {t("c.ObjectiveCard.from", { valueText: valueText(k.current_value, k.target_value, k.unit), start_value: k.start_value })}
+            {#if k.tolerance !== null} {t("c.ObjectiveCard.tolerance", { tolerance: k.tolerance })}{/if}
             {#if kr.latest_check_in}
-              · last check-in {kr.latest_check_in.observed_at.slice(0, 10)}
+              {t("c.ObjectiveCard.last_check_in", { slice: kr.latest_check_in.observed_at.slice(0, 10) })}
               {#if confidenceText(kr.latest_check_in.confidence)}· {confidenceText(kr.latest_check_in.confidence)}{/if}
               {#if kr.latest_check_in.note}· “{kr.latest_check_in.note}”{/if}
             {/if}
           </p>
           <details>
-            <summary>Check in</summary>
+            <summary>{t("c.ObjectiveCard.check_in")}</summary>
             <form onsubmit={checkIn(k.pid)} class="inline">
-              <label>Value
+              <label>{t("c.ObjectiveCard.value")}
                 <input type="number" step="1" required bind:value={checkValue[k.pid]} />
               </label>
-              <label>Confidence (0–100)
+              <label>{t("c.ObjectiveCard.confidence_0_100")}
                 <input type="number" min="0" max="100" step="1" bind:value={checkConfidence[k.pid]} />
               </label>
-              <label>Note
+              <label>{t("c.ObjectiveCard.note")}
                 <input type="text" bind:value={checkNote[k.pid]} />
               </label>
-              <button class="button small" type="submit">Record</button>
+              <button class="button small" type="submit">{t("c.ObjectiveCard.record")}</button>
             </form>
           </details>
           <details>
-            <summary>Edit or delete</summary>
+            <summary>{t("c.ObjectiveCard.edit_or_delete")}</summary>
             <form
               onsubmit={saveKeyResult(k.pid, k.tolerance, k.unit)}
               class="inline"
@@ -176,16 +177,16 @@
                 editTarget[k.pid] ??= String(k.target_value);
               }}
             >
-              <label>Title
+              <label>{t("c.ObjectiveCard.title")}
                 <input type="text" required bind:value={editTitle[k.pid]} placeholder={k.title} />
               </label>
-              <label>Target
+              <label>{t("c.ObjectiveCard.target")}
                 <input type="number" step="1" required bind:value={editTarget[k.pid]} placeholder={String(k.target_value)} />
               </label>
-              <button class="button small" type="submit">Save</button>
-              <button class="button small" type="button" onclick={() => confirm(`Delete “${k.title}”?`) && void run(() => ppm.deleteKeyResult(k.pid))}>Delete</button>
+              <button class="button small" type="submit">{t("c.ObjectiveCard.save")}</button>
+              <button class="button small" type="button" onclick={() => confirm(`Delete “${k.title}”?`) && void run(() => ppm.deleteKeyResult(k.pid))}>{t("c.ObjectiveCard.delete")}</button>
             </form>
-            <p class="small muted">The baseline, metric and direction cannot be changed: progress from a moving baseline is not progress.</p>
+            <p class="small muted">{t("c.ObjectiveCard.the_baseline_metric_and_direction")}</p>
           </details>
         </li>
       {/each}
@@ -193,44 +194,44 @@
   {/if}
 
   <details>
-    <summary>Add a key result</summary>
+    <summary>{t("c.ObjectiveCard.add_a_key_result")}</summary>
     <form onsubmit={addKeyResult} class="inline">
-      <label>Title <input type="text" required bind:value={krTitle} /></label>
-      <label>Metric
+      <label>{t("c.ObjectiveCard.title")} <input type="text" required bind:value={krTitle} /></label>
+      <label>{t("c.ObjectiveCard.metric")}
         <select bind:value={metric}>
-          <option value="number">Number</option>
-          <option value="percent">Percent</option>
-          <option value="currency">Currency</option>
-          <option value="boolean">Yes / no</option>
+          <option value="number">{t("c.ObjectiveCard.number")}</option>
+          <option value="percent">{t("c.ObjectiveCard.percent")}</option>
+          <option value="currency">{t("c.ObjectiveCard.currency")}</option>
+          <option value="boolean">{t("c.ObjectiveCard.yes_no")}</option>
         </select>
       </label>
-      <label>Direction
+      <label>{t("c.ObjectiveCard.direction")}
         <select bind:value={direction}>
-          <option value="increase">Increase</option>
-          <option value="decrease">Decrease</option>
-          <option value="maintain">Maintain</option>
+          <option value="increase">{t("c.ObjectiveCard.increase")}</option>
+          <option value="decrease">{t("c.ObjectiveCard.decrease")}</option>
+          <option value="maintain">{t("c.ObjectiveCard.maintain")}</option>
         </select>
       </label>
-      <label>Start <input type="number" step="1" required bind:value={start} /></label>
-      <label>Target <input type="number" step="1" required bind:value={target} /></label>
+      <label>{t("c.ObjectiveCard.start")} <input type="number" step="1" required bind:value={start} /></label>
+      <label>{t("c.ObjectiveCard.target")} <input type="number" step="1" required bind:value={target} /></label>
       {#if direction === "maintain"}
-        <label>Tolerance <input type="number" min="0" step="1" required bind:value={tolerance} /></label>
+        <label>{t("c.ObjectiveCard.tolerance_2")} <input type="number" min="0" step="1" required bind:value={tolerance} /></label>
       {/if}
-      <label>Unit <input type="text" bind:value={unit} /></label>
+      <label>{t("c.ObjectiveCard.unit")} <input type="text" bind:value={unit} /></label>
       {#if metric === "currency"}
-        <label>Currency (e.g. GBP) <input type="text" required maxlength="3" bind:value={currency} /></label>
+        <label>{t("c.ObjectiveCard.currency_e_g_gbp")} <input type="text" required maxlength="3" bind:value={currency} /></label>
       {/if}
-      <button class="button small" type="submit">Add key result</button>
+      <button class="button small" type="submit">{t("c.ObjectiveCard.add_key_result")}</button>
     </form>
   </details>
 
   <details>
-    <summary>Edit or delete this objective</summary>
+    <summary>{t("c.ObjectiveCard.edit_or_delete_this_objective")}</summary>
     <form onsubmit={saveObjective} class="inline">
-      <label>Title <input type="text" required bind:value={title} /></label>
-      <label>Period <input type="text" bind:value={period} placeholder="2026-Q4" /></label>
-      <button class="button small" type="submit">Save</button>
-      <button class="button small" type="button" onclick={removeObjective}>Delete</button>
+      <label>{t("c.ObjectiveCard.title")} <input type="text" required bind:value={title} /></label>
+      <label>{t("c.ObjectiveCard.period")} <input type="text" bind:value={period} placeholder="2026-Q4" /></label>
+      <button class="button small" type="submit">{t("c.ObjectiveCard.save")}</button>
+      <button class="button small" type="button" onclick={removeObjective}>{t("c.ObjectiveCard.delete")}</button>
     </form>
   </details>
 </article>

@@ -1,11 +1,12 @@
 // Tracker import (T-28n): the words for a preview and its report. Pure and tested.
 
 import type { ImportUnmapped, TrackerImportReport } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export const SOURCE_LABEL = {
-  jira: "Jira (CSV export)",
-  asana: "Asana (CSV export)",
-  mspdi: "Microsoft Project (XML file)",
+  get jira() { return t("l.import_view.jira_csv_export"); },
+  get asana() { return t("l.import_view.asana_csv_export"); },
+  get mspdi() { return t("l.import_view.microsoft_project_xml_file"); },
 } as const;
 
 export type ImportSource = keyof typeof SOURCE_LABEL;
@@ -18,23 +19,24 @@ export const SOURCE_ACCEPT: Record<ImportSource, string> = {
 };
 
 /** The one thing people get wrong with Microsoft Project: a .mpp file is not the XML export. */
-export const MSPDI_HINT =
-  "In Microsoft Project use File → Save As → XML Format. A .mpp file cannot be read.";
+export function mspdiHint(): string {
+  return t("l.import_view.mspdi_hint");
+}
 
 /** What the unmapped kinds are called to a person. */
 const WHAT: Record<string, string> = {
-  column: "Columns not imported",
-  row: "Rows skipped",
-  link: "Links not imported",
-  parent: "Parents not used",
-  date: "Dates not understood",
-  field: "Fields shortened",
-  status: "Status notes",
-  resource: "Resources not matched to people",
-  cost: "Costs not imported",
-  schedule: "Schedules not imported",
-  constraint: "Constraints not imported",
-  calendar: "Calendar notes",
+  get column() { return t("l.import_view.columns_not_imported"); },
+  get row() { return t("l.import_view.rows_skipped"); },
+  get link() { return t("l.import_view.links_not_imported"); },
+  get parent() { return t("l.import_view.parents_not_used"); },
+  get date() { return t("l.import_view.dates_not_understood"); },
+  get field() { return t("l.import_view.fields_shortened"); },
+  get status() { return t("l.import_view.status_notes"); },
+  get resource() { return t("l.import_view.resources_not_matched_to_people"); },
+  get cost() { return t("l.import_view.costs_not_imported"); },
+  get schedule() { return t("l.import_view.schedules_not_imported"); },
+  get constraint() { return t("l.import_view.constraints_not_imported"); },
+  get calendar() { return t("l.import_view.calendar_notes"); },
 };
 
 /** The unmapped list grouped by kind, kinds in a fixed order, each with its reasons. */
@@ -54,22 +56,24 @@ export function unmappedGroups(
     .map(([what, reasons]) => ({ title: WHAT[what] ?? what, reasons }));
 }
 
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${n === 1 ? one : many}`;
+const taskCount = (n: number): string =>
+  n === 1 ? t("l.import_view.task_one", { n }) : t("l.import_view.task_other", { n });
+const dependencyCount = (n: number): string =>
+  n === 1 ? t("l.import_view.dependency_one", { n }) : t("l.import_view.dependency_other", { n });
 
 /** "Would create 3 tasks and update 2; 1 dependency." — or the same in the past tense. */
 export function summaryText(r: TrackerImportReport): string {
-  const verb = r.dry_run ? "Would create" : "Created";
-  const upd = r.dry_run ? "update" : "updated";
+  const verb = r.dry_run ? t("l.import_view.would_create") : t("l.import_view.created");
+  const upd = r.dry_run ? t("l.import_view.word_update") : t("l.import_view.word_updated");
   const links = r.dry_run ? r.links_in_file : r.links_created;
   const tail =
-    links > 0 ? `; ${plural(links, "dependency", "dependencies")}` : "";
-  return `${verb} ${plural(r.tasks_created, "task", "tasks")} and ${upd} ${r.tasks_updated}${tail}.`;
+    links > 0 ? `; ${dependencyCount(links)}` : "";
+  return t("l.import_view.and", { verb, plural: taskCount(r.tasks_created), upd, tasks_updated: r.tasks_updated, tail });
 }
 
 /** The label of the one primary button: preview first, then the import itself. */
 export function actionLabel(report: TrackerImportReport | null): string {
-  if (!report) return "Preview the import";
+  if (!report) return t("l.import_view.preview_the_import");
   const n = report.tasks_created + report.tasks_updated;
-  return `Import ${plural(n, "task", "tasks")}`;
+  return t("l.import_view.import", { plural: taskCount(n) });
 }

@@ -32,7 +32,7 @@
       period = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "create failed";
+      error = err instanceof Error ? err.message : t("p.objectives.create_failed");
     }
   }
 
@@ -40,19 +40,19 @@
     try {
       alignments = { ...alignments, [pid]: await ppm.alignment(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : "alignment failed";
+      error = err instanceof Error ? err.message : t("p.objectives.alignment_failed");
     }
   }
 </script>
 
-<svelte:head><title>Objectives — PPM</title></svelte:head>
+<svelte:head><title>{t("p.objectives.objectives_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.objectives.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
   <input placeholder={t("ppm.objectives.formTitle")} bind:value={title} required />
-  <input placeholder="Period (e.g. 2026-H2)" bind:value={period} size="12" />
+  <input placeholder={t("p.objectives.period_e_g_2026_h2")} bind:value={period} size="12" />
   <button class="button primary" type="submit">{t("ppm.objectives.register")}</button>
 </form>
 

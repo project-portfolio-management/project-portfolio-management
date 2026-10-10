@@ -10,6 +10,8 @@
 import type { RequestHandler } from "./$types";
 import { PROJECT_PORTFOLIO_MANAGEMENT_API_URL } from "#lib/server/config.js";
 import { exchangeToken } from "#lib/server/auth.js";
+import { oidcConfig } from "#lib/server/config.js";
+import { accessTokenFor, oidcStore, providerMetadata } from "#lib/server/oidc-session.js";
 
 const proxy: RequestHandler = async ({
   request,
@@ -36,6 +38,19 @@ const proxy: RequestHandler = async ({
   if (locals.sessionId) {
     const token = await exchangeToken(fetch, locals.sessionId);
     if (token) headers.set("authorization", `Bearer ${token}`);
+  } else if (locals.oidc) {
+    // A direct OpenID Connect session: the provider's access token (refreshed when it is
+    // about to expire) goes to the API, which verifies it. The BFF never interprets it.
+    const cfg = oidcConfig();
+    if (cfg) {
+      try {
+        const meta = await providerMetadata(fetch, cfg.issuer);
+        const token = await accessTokenFor(oidcStore, locals.oidc, { fetchFn: fetch, cfg, meta });
+        if (token) headers.set("authorization", `Bearer ${token}`);
+      } catch {
+        // Provider unreachable: forward without a token; the API answers 401.
+      }
+    }
   }
 
   const init: RequestInit = { method: request.method, headers };

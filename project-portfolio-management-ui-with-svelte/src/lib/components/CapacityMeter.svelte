@@ -6,6 +6,7 @@
   that are over capacity. State has a marker and a sentence, not just colour.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { CapacityView } from "#lib/api/ppm.js";
   import { loadModel, spanSegments } from "#lib/capacity-view.js";
 
@@ -30,7 +31,7 @@
       <span class="cap" style="left:{model.capacityPct}%"></span>
     </span>
     {#if segments.length > 0}
-      <span class="strip" role="img" aria-label="Days over capacity">
+      <span class="strip" role="img" aria-label={t("c.CapacityMeter.days_over_capacity")}>
         {#each segments as s (s.label)}
           <span class="seg" style="left:{s.startPct}%;width:{s.widthPct}%" title={s.label}></span>
         {/each}

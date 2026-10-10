@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect, vi } from "vitest";
 
 // The i18n store seeds from localStorage behind `$app/environment`'s
@@ -75,15 +77,39 @@ describe("i18n catalog", () => {
     }
   });
 
-  it("every locale covers every key (full 7-locale coverage)", () => {
+  // The catalogue has two tiers (HD-13). The long-standing keys (the chrome, the first screens,
+  // the merge flow, ...) are translated in EVERY locale, and that guarantee is frozen: the list in
+  // fixtures/catalogue-baseline-keys.json may only grow. The page and component keys (`p.*`, `c.*`,
+  // `i18n-pages.ts`) are complete in English and Welsh; the other locales show English for them
+  // until they are translated. Welsh completeness is pinned below and in catalogue-coverage.test.ts.
+  it("every locale covers every long-standing key (frozen baseline), with no extra keys", () => {
+    const baseline = JSON.parse(
+      readFileSync(resolve(process.cwd(), "tests/unit/fixtures/catalogue-baseline-keys.json"), "utf8"),
+    ) as string[];
+    expect(baseline.length).toBeGreaterThan(300);
     for (const locale of LOCALES) {
       const table = STRINGS_BY_LOCALE[locale];
-      for (const key of STRING_KEYS) {
+      for (const key of baseline) {
         expect(table[key], `${locale} missing ${key}`).toBeTruthy();
       }
-      // No extra keys beyond the English source of truth.
-      expect(Object.keys(table).sort()).toEqual([...STRING_KEYS].sort());
+      // Nothing beyond the English source of truth.
+      for (const key of Object.keys(table)) {
+        expect(STRING_KEYS as readonly string[], `${locale} has an extra key ${key}`).toContain(key);
+      }
     }
+  });
+
+  it("Welsh (cy-001) covers every key English has", () => {
+    const cy = STRINGS_BY_LOCALE["cy-001"];
+    const missing = STRING_KEYS.filter((k) => !cy[k]);
+    expect(missing, `cy-001 is missing ${missing.length} keys, e.g. ${missing.slice(0, 5)}`).toEqual([]);
+  });
+
+  it("a locale without a page key shows the English text, with its values filled in", () => {
+    expect(STRINGS_BY_LOCALE["de-de"]["p.cost_rates.a_person" as never]).toBeUndefined();
+    expect(translate("p.cost_rates.a_person" as never, "de-de")).toBe(
+      translate("p.cost_rates.a_person" as never, "en-001"),
+    );
   });
 
   it("default locale is English", () => {

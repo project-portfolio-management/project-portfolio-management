@@ -5,6 +5,7 @@
   is drawn as nothing and called unknown, never zero.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { money, type EvBlock } from "#lib/api/ppm.js";
   import { evBars } from "#lib/ev-view.js";
 
@@ -20,10 +21,10 @@
         <span class="fill {bar.key}" style="width:{bar.widthPct}%"></span>
         <span class="bac" style="left:{bar.bacPct}%"></span>
       </span>
-      <span class="amount">{bar.minor === null ? "unknown" : money(bar.minor, block.currency)}</span>
+      <span class="amount">{bar.minor === null ? t("c.EvBars.unknown") : money(bar.minor, block.currency)}</span>
     </li>
   {/each}
-  <li class="small muted">The double line is the budget at completion: {money(block.bac_minor, block.currency)}.</li>
+  <li class="small muted">{t("c.EvBars.the_double_line_is_the", { money: money(block.bac_minor, block.currency) })}</li>
 </ul>
 
 <style>

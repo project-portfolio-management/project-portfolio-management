@@ -6,7 +6,7 @@
   says so; it is never called "on track" by default.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import type { MilestoneView, MilestoneMode, PpmClient, Task } from "#lib/api/ppm.js";
   import {
     STATE_TEXT,
@@ -36,7 +36,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "That did not work");
+      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.that_did_not_work"));
     }
   }
 
@@ -81,7 +81,7 @@
       chosen = Object.fromEntries(item.links.map((l) => [l.task_pid, true]));
       mode = item.completion_mode;
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not load the plan's tasks");
+      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.could_not_load_the_plan"));
     }
   }
   const saveLinks = (e: SubmitEvent) => {
@@ -96,7 +96,7 @@
     try {
       history = (await ppm.milestone(item.pid)).history ?? [];
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not load the history");
+      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.could_not_load_the_history"));
     }
   }
 </script>
@@ -110,9 +110,9 @@
     </p>
   </header>
   <p class="small">
-    Due {item.due} · {item.kind}
+    {t("c.MilestoneCard.due", { due: item.due, kind: item.kind })}
     {#if item.schedule.state}· <strong>{STATE_TEXT[item.schedule.state]}</strong>{/if}
-    · <a href={localeHref(`/plans/${item.plan_pid}`)}>View plan</a>
+    · <a href={localeHref(`/plans/${item.plan_pid}`)}>{t("c.MilestoneCard.view_plan")}</a>
   </p>
   {#if forecastText(item.schedule, item.due)}<p class="small">{forecastText(item.schedule, item.due)}</p>{/if}
   {#if achievedText(item)}<p class="small">{achievedText(item)}</p>{/if}
@@ -120,11 +120,11 @@
   {#if slipText(item.slip)}<p class="small muted">{slipText(item.slip)}</p>{/if}
 
   {#if item.links.length > 0}
-    <ul class="small links" aria-label="Tasks this milestone waits for">
+    <ul class="small links" aria-label={t("c.MilestoneCard.tasks_this_milestone_waits_for")}>
       {#each item.links as l (l.task_pid)}
         <li>
-          {l.complete ? "Done" : "Open"}: {l.title}
-          {#if !l.complete && l.early_finish}<span class="muted"> · forecast {l.early_finish}</span>{/if}
+          {l.complete ? t("c.MilestoneCard.done") : t("c.MilestoneCard.open")}: {l.title}
+          {#if !l.complete && l.early_finish}<span class="muted"> {t("c.MilestoneCard.forecast", { early_finish: l.early_finish })}</span>{/if}
         </li>
       {/each}
     </ul>
@@ -132,73 +132,73 @@
 
   {#if !item.achieved}
     <details>
-      <summary>Complete</summary>
+      <summary>{t("c.MilestoneCard.complete")}</summary>
       <form class="inline" onsubmit={complete}>
         <label>
-          Reason{needsReason ? " (required: tasks it waits for are still open)" : " (optional)"}
+          {t("c.MilestoneCard.reason")}{needsReason ? t("c.MilestoneCard.reason_required_open") : t("c.MilestoneCard.reason_optional")}
           <input type="text" bind:value={completeReason} required={needsReason} />
         </label>
-        <button class="button small" type="submit">Mark done</button>
+        <button class="button small" type="submit">{t("c.MilestoneCard.mark_done")}</button>
       </form>
     </details>
   {:else if item.achieved_by === "manual"}
     <details>
-      <summary>Reopen</summary>
+      <summary>{t("c.MilestoneCard.reopen")}</summary>
       <form class="inline" onsubmit={reopen}>
-        <label>Reason (required) <input type="text" required bind:value={reopenReason} /></label>
-        <button class="button small" type="submit">Reopen</button>
+        <label>{t("c.MilestoneCard.reason_required")} <input type="text" required bind:value={reopenReason} /></label>
+        <button class="button small" type="submit">{t("c.MilestoneCard.reopen")}</button>
       </form>
     </details>
   {/if}
 
   <details>
-    <summary>Reschedule</summary>
+    <summary>{t("c.MilestoneCard.reschedule")}</summary>
     <form class="inline" onsubmit={reschedule}>
-      <label>New due date <input type="date" required bind:value={newDue} /></label>
-      <label>Why <input type="text" bind:value={moveReason} /></label>
-      <button class="button small" type="submit">Move</button>
+      <label>{t("c.MilestoneCard.new_due_date")} <input type="date" required bind:value={newDue} /></label>
+      <label>{t("c.MilestoneCard.why")} <input type="text" bind:value={moveReason} /></label>
+      <button class="button small" type="submit">{t("c.MilestoneCard.move")}</button>
     </form>
-    <p class="small muted">Every move is kept in the history: the old date, the new one, why, and who.</p>
+    <p class="small muted">{t("c.MilestoneCard.every_move_is_kept_in")}</p>
   </details>
 
   <details ontoggle={openLinks}>
-    <summary>Tasks it waits for</summary>
+    <summary>{t("c.MilestoneCard.tasks_it_waits_for")}</summary>
     {#if planTasks === null}
-      <p class="small muted">Loading…</p>
+      <p class="small muted">{t("c.MilestoneCard.loading")}</p>
     {:else if planTasks.length === 0}
-      <p class="small muted">This plan has no tasks yet.</p>
+      <p class="small muted">{t("c.MilestoneCard.this_plan_has_no_tasks")}</p>
     {:else}
       <form onsubmit={saveLinks}>
         <fieldset>
-          <legend class="small">Pick the tasks that must be done</legend>
+          <legend class="small">{t("c.MilestoneCard.pick_the_tasks_that_must")}</legend>
           {#each planTasks as t (t.pid)}
             <label class="check"><input type="checkbox" bind:checked={chosen[t.pid]} /> {t.title}</label>
           {/each}
         </fieldset>
         <label class="inline-label">
-          Completes
+          {t("c.MilestoneCard.completes")}
           <select bind:value={mode}>
-            <option value="linked">When all those tasks are done</option>
-            <option value="manual">By hand only</option>
+            <option value="linked">{t("c.MilestoneCard.when_all_those_tasks_are")}</option>
+            <option value="manual">{t("c.MilestoneCard.by_hand_only")}</option>
           </select>
         </label>
-        <button class="button small" type="submit">Save</button>
+        <button class="button small" type="submit">{t("c.MilestoneCard.save")}</button>
       </form>
     {/if}
   </details>
 
   <details ontoggle={openHistory}>
-    <summary>Slip history ({item.slip.reschedules})</summary>
+    <summary>{t("c.MilestoneCard.slip_history", { reschedules: item.slip.reschedules })}</summary>
     {#if history === null}
-      <p class="small muted">Loading…</p>
+      <p class="small muted">{t("c.MilestoneCard.loading")}</p>
     {:else if history.length === 0}
-      <p class="small muted">Never rescheduled.</p>
+      <p class="small muted">{t("c.MilestoneCard.never_rescheduled")}</p>
     {:else}
       <table class="small">
-        <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Why</th><th scope="col">By</th></tr></thead>
+        <thead><tr><th scope="col">{t("c.MilestoneCard.from")}</th><th scope="col">{t("c.MilestoneCard.to")}</th><th scope="col">{t("c.MilestoneCard.why")}</th><th scope="col">{t("c.MilestoneCard.by")}</th></tr></thead>
         <tbody>
           {#each history as h (h.at + h.to)}
-            <tr><td>{h.from}</td><td>{h.to}</td><td>{h.reason ?? "no reason given"}</td><td>{h.actor ?? ""}</td></tr>
+            <tr><td>{h.from}</td><td>{h.to}</td><td>{h.reason ?? t("c.MilestoneCard.no_reason_given")}</td><td>{h.actor ?? ""}</td></tr>
           {/each}
         </tbody>
       </table>

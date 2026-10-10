@@ -8,7 +8,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient, type ControlledDocument, type DocumentInForce, type DocumentVersion } from "#lib/api/ppm.js";
   import { ACTION_LABEL, STATUS_SYMBOL, STEP_HELP, STEP_TITLE, approverRef, inFlight, isEditable, nextAction, versionLine } from "#lib/document-view.js";
 
@@ -31,7 +31,7 @@
       if (v) await select(v);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the document";
+      error = err instanceof Error ? err.message : t("p.documents.pid.could_not_load_the_document");
     }
   }
   async function select(v: DocumentVersion) {
@@ -49,7 +49,7 @@
       await load();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : "That did not work";
+      error = err instanceof Error ? err.message : t("p.documents.pid.that_did_not_work");
     }
   }
   const next = $derived(doc ? nextAction(doc) : "none");
@@ -64,40 +64,40 @@
     if (next === "start_next_draft") return nextDraft();
   }
 
-  const save = () => selected && run(() => ppm.editDocumentVersion(pid, selected!.version, { body: text, change_summary: summary }), "Saved.");
+  const save = () => selected && run(() => ppm.editDocumentVersion(pid, selected!.version, { body: text, change_summary: summary }), t("p.plans.pid.calendar.saved"));
   function send() {
     const ref = approverRef(approver);
     if (!ref || !flight) {
-      error = "Enter the approver's id (a person id, not yourself).";
+      error = t("p.documents.pid.enter_the_approver_s_id");
       return;
     }
-    return run(() => ppm.submitDocumentVersion(pid, flight!.version, { approver_ref: ref }), "Sent for review.");
+    return run(() => ppm.submitDocumentVersion(pid, flight!.version, { approver_ref: ref }), t("p.documents.pid.sent_for_review"));
   }
   const decide = (decision: "approved" | "rejected") =>
-    flight?.approval_pid && run(() => ppm.decideApproval(flight!.approval_pid!, { decision, comment: decision === "rejected" ? "Needs changes" : undefined }), decision === "approved" ? "Approved." : "Sent back to draft.");
-  const effective = () => flight && run(() => ppm.makeDocumentVersionEffective(pid, flight!.version), "In force from today.");
-  const nextDraft = () => run(() => ppm.newDocumentVersion(pid), "Next draft started.");
+    flight?.approval_pid && run(() => ppm.decideApproval(flight!.approval_pid!, { decision, comment: decision === "rejected" ? t("p.documents.pid.needs_changes") : undefined }), decision === "approved" ? t("p.documents.pid.approved") : t("p.documents.pid.sent_back_to_draft"));
+  const effective = () => flight && run(() => ppm.makeDocumentVersionEffective(pid, flight!.version), t("p.documents.pid.in_force_from_today"));
+  const nextDraft = () => run(() => ppm.newDocumentVersion(pid), t("p.documents.pid.next_draft_started"));
   async function lookup(e: SubmitEvent) {
     e.preventDefault();
     try {
       inForce = await ppm.documentInForce(pid, asOf || undefined);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not look that up";
+      error = err instanceof Error ? err.message : t("p.documents.pid.could_not_look_that_up");
     }
   }
 </script>
 
-<svelte:head><title>{doc?.title ?? "Document"} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.documents.pid.page_title", { title: doc?.title ?? t("p.documents.pid.document_fallback") })}</title></svelte:head>
 
-<p class="small"><a href={localeHref("/documents")}>← Documents</a></p>
+<p class="small"><a href={localeHref("/documents")}>{t("p.documents.pid.documents")}</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 {#if notice}<p class="banner" role="status">{notice}</p>{/if}
 
-<h1>{doc?.title ?? "Document"}</h1>
+<h1>{doc?.title ?? t("p.documents.pid.document")}</h1>
 {#if doc}
 
   <section aria-labelledby="versions-h">
-    <h2 id="versions-h">Versions</h2>
+    <h2 id="versions-h">{t("p.documents.pid.versions")}</h2>
     <ul class="stack" data-testid="versions">
       {#each doc.versions as v (v.pid)}
         <li>
@@ -113,13 +113,13 @@
 
   {#if selected}
     <section class="surface stack" aria-labelledby="ver-h">
-      <h2 id="ver-h">Version {selected.version}</h2>
+      <h2 id="ver-h">{t("p.documents.pid.version", { version: selected.version })}</h2>
       {#if isEditable(selected)}
-        <label>What changed <input bind:value={summary} maxlength="500" /></label>
-        <label>Text <textarea bind:value={text} rows="10" maxlength="200000"></textarea></label>
-        <button type="button" class="button" onclick={save}>Save draft</button>
+        <label>{t("p.documents.pid.what_changed")} <input bind:value={summary} maxlength="500" /></label>
+        <label>{t("p.documents.pid.text")} <textarea bind:value={text} rows="10" maxlength="200000"></textarea></label>
+        <button type="button" class="button" onclick={save}>{t("p.documents.pid.save_draft")}</button>
       {:else}
-        <p class="small muted">This version's text is final. A change goes in the next draft.</p>
+        <p class="small muted">{t("p.documents.pid.this_version_s_text_is")}</p>
         <pre class="body">{selected.body}</pre>
       {/if}
     </section>
@@ -130,22 +130,22 @@
       <h2 id="next-h">{STEP_TITLE[next]}</h2>
       <p class="small muted">{STEP_HELP[next]}</p>
       {#if next === "send_for_review"}
-        <label>Approver's id <input bind:value={approver} placeholder="person id" /></label>
+        <label>{t("p.documents.pid.approver_s_id")} <input bind:value={approver} placeholder={t("p.documents.pid.person_id")} /></label>
       {/if}
       <button class="button primary" type="submit">{ACTION_LABEL[next]}</button>
       {#if next === "decide"}
-        <button type="button" class="button" onclick={() => decide("rejected")}>Send back</button>
+        <button type="button" class="button" onclick={() => decide("rejected")}>{t("p.documents.pid.send_back")}</button>
       {/if}
     </form>
   {/if}
 
   <form class="surface stack" onsubmit={lookup} aria-labelledby="when-h">
-    <h2 id="when-h">What was in force on a date</h2>
-    <label>Date <input type="date" bind:value={asOf} /></label>
-    <button class="button" type="submit">Look up</button>
+    <h2 id="when-h">{t("p.documents.pid.what_was_in_force_on")}</h2>
+    <label>{t("p.documents.pid.date")} <input type="date" bind:value={asOf} /></label>
+    <button class="button" type="submit">{t("p.documents.pid.look_up")}</button>
     {#if inForce}
       <p data-testid="in-force">
-        {#if inForce.in_force}Version {inForce.in_force.version} was in force on {inForce.on}.{:else}Nothing was in force on {inForce.on}.{/if}
+        {#if inForce.in_force}{t("p.documents.pid.version_was_in_force_on", { version: inForce.in_force.version, on: inForce.on })}{:else}{t("p.documents.pid.nothing_was_in_force_on", { on: inForce.on })}{/if}
       </p>
     {/if}
   </form>

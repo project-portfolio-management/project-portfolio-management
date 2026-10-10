@@ -90,7 +90,7 @@
   );
 </script>
 
-<svelte:head><title>{t("ppm.nav.gantt")} — Main X</title></svelte:head>
+<svelte:head><title>{t("p.gantt.main_x", { t: t("ppm.nav.gantt") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.gantt")}</h1>
 
@@ -119,10 +119,10 @@
        phone viewport (a horizontal-scrolling timeline needs real
        width); `.mobile-list` below is its read-only stand-in,
        switched purely by `@media (max-width: 600px)`. -->
-  <div class="view-toggle" role="group" aria-label="Schedule view">
-    <button type="button" aria-pressed={view === "chart"} onclick={() => (view = "chart")}>Chart</button>
+  <div class="view-toggle" role="group" aria-label={t("p.gantt.schedule_view")}>
+    <button type="button" aria-pressed={view === "chart"} onclick={() => (view = "chart")}>{t("p.gantt.chart")}</button>
     <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>
-      Accessible table
+      {t("p.gantt.accessible_table")}
     </button>
   </div>
   {#if view === "table"}

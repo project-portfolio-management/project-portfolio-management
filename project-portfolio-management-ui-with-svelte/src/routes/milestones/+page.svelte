@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneList, type MilestoneStatus } from "#lib/api/ppm.js";
   import MilestoneCard from "#lib/components/MilestoneCard.svelte";
@@ -23,31 +24,30 @@
       list = await ppm.portfolioMilestones(status ? { status } : {});
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the milestones";
+      error = err instanceof Error ? err.message : t("p.milestones.could_not_load_the_milestones");
     }
   }
   onMount(refresh);
 </script>
 
-<svelte:head><title>Milestones — PPM</title></svelte:head>
+<svelte:head><title>{t("p.milestones.milestones_ppm")}</title></svelte:head>
 
-<h1>Milestones</h1>
+<h1>{t("p.milestones.milestones")}</h1>
 <p class="small muted">
-  A milestone is a dated promise. Tie it to the tasks it waits for and it is achieved when they
-  are done, with a forecast from the schedule; leave it unlinked and a person marks it done.
+  {t("p.milestones.a_milestone_is_a_dated")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if list}
-  <ul class="summary" aria-label="Milestones by status">
+  <ul class="summary" aria-label={t("p.milestones.milestones_by_status")}>
     {#each statusParts(list.summary.by_status) as part (part.status)}
       <li><span aria-hidden="true">{STATUS_SYMBOL[part.status]}</span> {part.label}: <strong>{part.count}</strong></li>
     {/each}
   </ul>
   {#if Object.keys(list.summary.by_schedule_state).length > 0}
     <p class="small muted">
-      Forecast:
+      {t("p.milestones.forecast")}
       {#each Object.entries(list.summary.by_schedule_state) as [state, count] (state)}
         {STATE_TEXT[state as keyof typeof STATE_TEXT]} {count}{" "}
       {/each}
@@ -56,28 +56,28 @@
 {/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void refresh(); }}>
-  <label>Show
+  <label>{t("p.milestones.show")}
     <select bind:value={status} onchange={refresh}>
-      <option value="">All</option>
-      <option value="late">Late</option>
-      <option value="due_soon">Due soon</option>
-      <option value="upcoming">Upcoming</option>
-      <option value="achieved">Achieved</option>
+      <option value="">{t("p.milestones.all")}</option>
+      <option value="late">{t("p.milestones.late")}</option>
+      <option value="due_soon">{t("p.milestones.due_soon")}</option>
+      <option value="upcoming">{t("p.milestones.upcoming")}</option>
+      <option value="achieved">{t("p.milestones.achieved")}</option>
     </select>
   </label>
 </form>
 
 {#if list}
   {#if list.milestones.length === 0}
-    <p>No milestones{status ? " with that status" : ""} yet. Add them from a plan's governance page.</p>
+    <p>{status ? t("p.milestones.none_with_status") : t("p.milestones.none")}</p>
   {:else}
-    <p class="small muted" aria-live="polite">{list.milestones.length} milestone{list.milestones.length === 1 ? "" : "s"}, by due date</p>
+    <p class="small muted" aria-live="polite">{(list.milestones.length === 1 ? t("p.milestones.milestone_by_due_date_one", { length: list.milestones.length }) : t("p.milestones.milestone_by_due_date_other", { length: list.milestones.length }))}</p>
     {#each list.milestones as item (item.pid)}
       <MilestoneCard {item} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
     {/each}
   {/if}
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.milestones.loading")}</p>
 {/if}
 
 <style>

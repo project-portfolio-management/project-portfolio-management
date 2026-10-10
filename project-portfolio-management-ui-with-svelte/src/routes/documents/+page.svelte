@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient, type ControlledDocument } from "#lib/api/ppm.js";
   import { forceText } from "#lib/document-view.js";
 
@@ -20,7 +20,7 @@
     try {
       docs = await ppm.documents();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the documents";
+      error = err instanceof Error ? err.message : t("p.documents.could_not_load_the_documents");
     }
   });
 
@@ -33,27 +33,27 @@
       title = body = "";
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not create the document";
+      error = err instanceof Error ? err.message : t("p.documents.could_not_create_the_document");
     } finally {
       saving = false;
     }
   }
 </script>
 
-<svelte:head><title>Documents — PPM</title></svelte:head>
+<svelte:head><title>{t("p.documents.documents_ppm")}</title></svelte:head>
 
-<h1>Documents</h1>
-<p class="lede">Policies and procedures. A new version is reviewed and approved before it comes into force, and a version in force never changes.</p>
+<h1>{t("p.documents.documents")}</h1>
+<p class="lede">{t("p.documents.policies_and_procedures_a_new")}</p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 
 {#if docs === null && !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.documents.loading")}</p>
 {:else if docs && docs.length === 0}
-  <p class="muted" data-testid="no-documents">No documents yet.</p>
+  <p class="muted" data-testid="no-documents">{t("p.documents.no_documents_yet")}</p>
 {:else if docs}
   <table data-testid="documents">
-    <caption class="sr-only">Controlled documents</caption>
-    <thead><tr><th scope="col">Document</th><th scope="col">In force</th><th scope="col">Versions</th></tr></thead>
+    <caption class="sr-only">{t("p.documents.controlled_documents")}</caption>
+    <thead><tr><th scope="col">{t("p.documents.document")}</th><th scope="col">{t("p.documents.in_force")}</th><th scope="col">{t("p.documents.versions")}</th></tr></thead>
     <tbody>
       {#each docs as d (d.pid)}
         <tr>
@@ -67,8 +67,8 @@
 {/if}
 
 <form class="surface stack" onsubmit={create} aria-labelledby="new-h">
-  <h2 id="new-h">New document</h2>
-  <label>Title <input bind:value={title} required maxlength="200" /></label>
-  <label>First draft <textarea bind:value={body} rows="5" maxlength="200000"></textarea></label>
-  <button class="button primary" type="submit" disabled={saving}>Create document</button>
+  <h2 id="new-h">{t("p.documents.new_document")}</h2>
+  <label>{t("p.documents.title")} <input bind:value={title} required maxlength="200" /></label>
+  <label>{t("p.documents.first_draft")} <textarea bind:value={body} rows="5" maxlength="200000"></textarea></label>
+  <button class="button primary" type="submit" disabled={saving}>{t("p.documents.create_document")}</button>
 </form>

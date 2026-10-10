@@ -10,24 +10,22 @@ import type {
   AssignmentResult,
   SchedulingRule,
 } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export type FieldValue = string | number | null | undefined;
 const str = (v: FieldValue) => (v === null || v === undefined ? "" : String(v));
 const blank = (v: FieldValue) => str(v).trim() === "";
 
 export const RULE_TEXT: Record<SchedulingRule, string> = {
-  fixed_units: "Fixed units",
-  fixed_duration: "Fixed duration",
-  fixed_work: "Fixed work",
+  get fixed_units() { return t("l.work_view.fixed_units"); },
+  get fixed_duration() { return t("l.work_view.fixed_duration"); },
+  get fixed_work() { return t("l.work_view.fixed_work"); },
 };
 
 export const RULE_HELP: Record<SchedulingRule, string> = {
-  fixed_units:
-    "Changing the work changes how long it takes; the share of the day stays.",
-  fixed_duration:
-    "Changing the work changes the share of the day; the duration stays.",
-  fixed_work:
-    "Changing the duration or the share of the day changes the other; the work stays.",
+  get fixed_units() { return t("l.work_view.changing_the_work_changes_how"); },
+  get fixed_duration() { return t("l.work_view.changing_the_work_changes_the"); },
+  get fixed_work() { return t("l.work_view.changing_the_duration_or_the"); },
 };
 
 /** 90 → "1.5 h"; 0 → "0 h". */
@@ -79,46 +77,46 @@ export function assignmentBody(
   if (f.first && f.changing === "work") {
     // first assignment with work: give work and units (duration derived)
     if (work === null)
-      return { error: "Work must be a number of hours above zero." };
+      return { error: t("l.work_view.work_must_be_a_number") };
   }
   if (wantDays && !(f.first && f.changing === "work")) {
     if (blank(f.duration) || !Number.isInteger(days) || days < 1 || days > 3650)
       return {
         error:
-          "Duration must be a whole number of business days from 1 to 3650.",
+          t("l.work_view.duration_must_be_a_whole"),
       };
     body.duration_days = days;
   }
   if (wantUnits) {
     if (blank(f.units) || !Number.isInteger(units) || units < 1 || units > 1000)
       return {
-        error: "Units must be a whole percent of a day from 1 to 1000.",
+        error: t("l.work_view.units_must_be_a_whole"),
       };
     body.units_percent = units;
   }
   if (wantWork) {
     if (work === null)
-      return { error: "Work must be a number of hours above zero." };
+      return { error: t("l.work_view.work_must_be_a_number") };
     body.work_minutes = work;
   }
   if (f.first && f.changing === "duration" && !wantUnits)
-    return { error: "Give the units too." };
+    return { error: t("l.work_view.give_the_units_too") };
   return body;
 }
 
 /** A sentence saying what the rule did. */
 export function resultText(r: AssignmentResult): string {
-  const parts = `${r.duration_days} business days at ${r.units_percent}% is ${hoursText(r.work_minutes)}`;
+  const parts = t("l.work_view.business_days_at_is", { duration_days: r.duration_days, units_percent: r.units_percent, hoursText: hoursText(r.work_minutes) });
   const what =
     r.derived === "duration"
-      ? "The duration was worked out."
+      ? t("l.work_view.the_duration_was_worked_out")
       : r.derived === "units"
-        ? "The share of the day was worked out."
+        ? t("l.work_view.the_share_of_the_day")
         : r.derived === "work"
-          ? "The work was worked out."
+          ? t("l.work_view.the_work_was_worked_out")
           : "";
   const rounded =
-    r.exact === false ? " Rounded: the three do not match to the minute." : "";
+    r.exact === false ? t("l.work_view.rounded_the_three_do_not") : "";
   return `${parts}. ${what}${rounded}`.replace(/\s+/g, " ").trim();
 }
 
@@ -126,20 +124,20 @@ export function resultText(r: AssignmentResult): string {
 export function capacityText(c: AssignmentResult["capacity"]): string {
   if (!c.checked)
     return c.reason === "unscheduled"
-      ? "Capacity not checked: the task has no dates yet."
+      ? t("l.work_view.capacity_not_checked_the_task")
       : "";
   if (c.over_capacity)
-    return `Over capacity on ${c.days_over} calendar day${c.days_over === 1 ? "" : "s"} (${c.from} to ${c.to}): this asks more than the person can give.`;
-  return "Within the person's capacity.";
+    return t(c.days_over === 1 ? "l.work_view.over_capacity_one" : "l.work_view.over_capacity_other", { days_over: c.days_over, from: c.from, to: c.to });
+  return t("l.work_view.within_the_person_s_capacity");
 }
 
 export const CONTOUR_TEXT: Record<string, string> = {
-  flat: "Flat: the same each day",
-  front_loaded: "Front loaded: more at the start",
-  back_loaded: "Back loaded: more at the end",
-  bell: "Bell: most in the middle",
-  turtle: "Turtle: ramps up, holds, ramps down",
-  custom: "Custom percentages",
+  get flat() { return t("l.work_view.flat_the_same_each_day"); },
+  get front_loaded() { return t("l.work_view.front_loaded_more_at_the"); },
+  get back_loaded() { return t("l.work_view.back_loaded_more_at_the"); },
+  get bell() { return t("l.work_view.bell_most_in_the_middle"); },
+  get turtle() { return t("l.work_view.turtle_ramps_up_holds_ramps"); },
+  get custom() { return t("l.work_view.custom_percentages"); },
 };
 
 /** "10, 20, 70" → [10,20,70]; an error when they are not whole percentages summing to 100. */
@@ -151,21 +149,21 @@ export function customWeights(text: string): number[] | { error: string } {
     nums.length > 40 ||
     nums.some((n) => !Number.isInteger(n) || n < 0)
   )
-    return { error: "Give 1 to 40 whole percentages, separated by commas." };
+    return { error: t("l.work_view.give_1_to_40_whole") };
   const sum = nums.reduce((a, b) => a + b, 0);
   if (sum !== 100)
-    return { error: `The percentages add up to ${sum}, not 100.` };
+    return { error: t("l.work_view.the_percentages_add_up_to", { sum }) };
   return nums;
 }
 
 export const UNPLACED_TEXT: Record<string, string> = {
-  unscheduled: "has no dates yet",
-  no_working_days: "has no business day to fall on",
-  no_weight: "has a contour that gives it no weight",
+  get unscheduled() { return t("l.work_view.has_no_dates_yet"); },
+  get no_working_days() { return t("l.work_view.has_no_business_day_to"); },
+  get no_weight() { return t("l.work_view.has_a_contour_that_gives"); },
 };
 
 export const NO_RATE_TEXT: Record<string, string> = {
-  no_rate: "no rate applies",
-  no_rate_on_some_days: "no rate applied on some days",
-  no_assignee: "has nobody assigned",
+  get no_rate() { return t("l.work_view.no_rate_applies"); },
+  get no_rate_on_some_days() { return t("l.work_view.no_rate_applied_on_some"); },
+  get no_assignee() { return t("l.work_view.has_nobody_assigned"); },
 };

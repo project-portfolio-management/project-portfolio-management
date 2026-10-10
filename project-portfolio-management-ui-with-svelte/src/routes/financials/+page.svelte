@@ -31,19 +31,19 @@
   });
 </script>
 
-<svelte:head><title>{t("ppm.nav.financials")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.financials.ppm", { t: t("ppm.nav.financials") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.financials")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if exposure}
-  <h2>Currency exposure</h2>
-  <p class="muted">as of {exposure.as_of} · {exposure.note}</p>
+  <h2>{t("p.financials.currency_exposure")}</h2>
+  <p class="muted">{t("p.financials.as_of", { as_of: exposure.as_of, note: exposure.note })}</p>
   <table data-testid="fin-exposure">
     <thead>
       <tr>
-        <th>Currency</th><th>Planned</th><th>Actual</th><th>Remaining</th>
-        <th>Lines</th><th>Work items</th>
+        <th>{t("p.financials.currency")}</th><th>{t("p.financials.planned")}</th><th>{t("p.financials.actual")}</th><th>{t("p.financials.remaining")}</th>
+        <th>{t("p.financials.lines")}</th><th>{t("p.financials.work_items")}</th>
       </tr>
     </thead>
     <tbody>
@@ -57,7 +57,7 @@
           <td>{row.plans}</td>
         </tr>
       {:else}
-        <tr><td colspan="6" class="muted">No budget lines recorded yet.</td></tr>
+        <tr><td colspan="6" class="muted">{t("p.financials.no_budget_lines_recorded_yet")}</td></tr>
       {/each}
     </tbody>
   </table>
@@ -68,8 +68,8 @@
   <table data-testid={testid}>
     <thead>
       <tr>
-        <th>{label}</th><th>Currency</th><th>Planned</th><th>Actual</th>
-        <th>Remaining</th><th>Lines</th>
+        <th>{label}</th><th>{t("p.financials.currency")}</th><th>{t("p.financials.planned")}</th><th>{t("p.financials.actual")}</th>
+        <th>{t("p.financials.remaining")}</th><th>{t("p.financials.lines")}</th>
       </tr>
     </thead>
     <tbody>
@@ -85,7 +85,7 @@
           </tr>
         {/each}
       {:else}
-        <tr><td colspan="6" class="muted">No budget lines recorded yet.</td></tr>
+        <tr><td colspan="6" class="muted">{t("p.financials.no_budget_lines_recorded_yet")}</td></tr>
       {/each}
     </tbody>
   </table>

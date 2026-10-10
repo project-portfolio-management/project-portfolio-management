@@ -22,7 +22,7 @@
   });
 </script>
 
-<svelte:head><title>{t("ppm.nav.regulator")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.regulator.ppm", { t: t("ppm.nav.regulator") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.regulator")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -31,27 +31,27 @@
   <p class="muted">{extract.note}</p>
   {#if extract.masked}
     <p class="banner" data-testid="regulator-masked">
-      Names withheld (ABAC mask obligation).
+      {t("p.regulator.names_withheld_abac_mask_obligation")}
     </p>
   {/if}
   {#each extract.portfolios as portfolio (portfolio.pid)}
     <section data-testid="regulator-portfolio">
       <h2>{portfolio.name ?? portfolio.pid}</h2>
-      <p class="muted">stage: {portfolio.stage ?? "pre_gate"}</p>
+      <p class="muted">{t("p.regulator.stage", { v: portfolio.stage ?? t("p.common.pre_gate") })}</p>
       <p>
-        Members:
+        {t("p.regulator.members")}
         {#each Object.entries(portfolio.members) as [kind, count] (kind)}
           {count} {kind}&nbsp;
         {/each}
-        · Gate decisions:
+        {t("p.regulator.gate_decisions")}
         {#each Object.entries(portfolio.gate_decisions) as [decision, count] (decision)}
           {count} {decision}&nbsp;
         {:else}
-          <span class="muted">none</span>
+          <span class="muted">{t("p.regulator.none")}</span>
         {/each}
       </p>
       <table>
-        <thead><tr><th>Currency</th><th>Planned</th><th>Actual</th></tr></thead>
+        <thead><tr><th>{t("p.regulator.currency")}</th><th>{t("p.regulator.planned")}</th><th>{t("p.regulator.actual")}</th></tr></thead>
         <tbody>
           {#each portfolio.spend as row (row.currency)}
             <tr>
@@ -60,21 +60,20 @@
               <td>{money(row.actual_minor, row.currency)}</td>
             </tr>
           {:else}
-            <tr><td colspan="3" class="muted">No budget lines.</td></tr>
+            <tr><td colspan="3" class="muted">{t("p.regulator.no_budget_lines")}</td></tr>
           {/each}
         </tbody>
       </table>
       {#if portfolio.benefits.length > 0}
         <p>
-          Benefits:
+          {t("p.regulator.benefits")}
           {#each portfolio.benefits as row (row.currency)}
-            target {money(row.target_minor, row.currency)} /
-            realized {money(row.realized_minor, row.currency)}&nbsp;
+            {t("p.regulator.target_realized", { money: money(row.target_minor, row.currency), money2: money(row.realized_minor, row.currency) })}
           {/each}
         </p>
       {/if}
     </section>
   {:else}
-    <p class="muted">No portfolios recorded.</p>
+    <p class="muted">{t("p.regulator.no_portfolios_recorded")}</p>
   {/each}
 {/if}

@@ -9,6 +9,8 @@
   per-run cap.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import {
     CapabilityClient,
@@ -87,7 +89,7 @@
       scheduledTotal = scheduledPage.total;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load automations";
+      error = err instanceof Error ? err.message : t("p.automations.could_not_load_automations");
     }
   }
 
@@ -103,13 +105,13 @@
         action_kind: actionKind,
         action_value: actionValue(),
       });
-      notice = "Rule saved — it fires from the next matching move";
+      notice = t("p.automations.rule_saved_it_fires_from");
       error = null;
       name = "";
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : "Could not save the rule";
+      error = err instanceof Error ? err.message : t("p.automations.could_not_save_the_rule");
     }
   }
 
@@ -119,119 +121,115 @@
       error = null;
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : "That action was refused";
+      error = err instanceof Error ? err.message : t("p.automations.that_action_was_refused");
     }
   }
 
   async function sweep() {
     try {
       const result = await api.sweep();
-      notice = `Swept: ${result.fired} fired, ${result.skipped_already_claimed} already claimed${
-        result.capped ? ` (capped at ${result.cap} — run again for the rest)` : ""
-      }`;
+      notice = t("p.automations.swept_fired_already_claimed", { fired: result.fired, skipped_already_claimed: result.skipped_already_claimed, v: result.capped ? t("p.automations.capped_at_run_again_for", { cap: result.cap }) : "" });
       error = null;
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : "The sweep failed";
+      error = err instanceof Error ? err.message : t("p.automations.the_sweep_failed");
     }
   }
 
   onMount(refresh);
 </script>
 
-<svelte:head><title>Automations — PPM</title></svelte:head>
+<svelte:head><title>{t("p.automations.automations_ppm")}</title></svelte:head>
 
-<h1>Workflow automation</h1>
+<h1>{t("p.automations.workflow_automation")}</h1>
 <p class="small muted">
-  Configure a rule once; as items move across the board the platform
-  applies it. Rules never block the move that triggered them — a failure
-  is recorded as a failed run, not an undo.
+  {t("p.automations.configure_a_rule_once_as")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if notice}<p class="small">{notice}</p>{/if}
 
 <form class="grid" onsubmit={create}>
-  <label class="small">name <input bind:value={name} required /></label>
+  <label class="small">{t("p.automations.name")} <input bind:value={name} required /></label>
   <label class="small">
-    plan pid
-    <input bind:value={planPid} placeholder="blank = every plan" />
+    {t("p.automations.plan_pid")}
+    <input bind:value={planPid} placeholder={t("p.automations.blank_every_plan")} />
   </label>
   <label class="small">
-    trigger
+    {t("p.automations.trigger")}
     <select bind:value={triggerKind}>
-      <option value="task_moved">task moved</option>
-      <option value="review_submitted">review submitted</option>
-      <option value="plan_stage_changed">plan stage changed</option>
+      <option value="task_moved">{t("p.automations.task_moved")}</option>
+      <option value="review_submitted">{t("p.automations.review_submitted")}</option>
+      <option value="plan_stage_changed">{t("p.automations.plan_stage_changed")}</option>
     </select>
   </label>
   {#if triggerKind === "task_moved"}
     <label class="small">
-      from
+      {t("p.automations.from")}
       <select bind:value={fromStatus}>
-        <option value="">any</option>
-        {#each TASK_STATUSES as status (status)}<option value={status}>{status}</option>{/each}
+        <option value="">{t("p.automations.any")}</option>
+        {#each TASK_STATUSES as status (status)}<option value={status}>{enumLabel("task_status", status)}</option>{/each}
       </select>
     </label>
     <label class="small">
-      to
+      {t("p.automations.to")}
       <select bind:value={toStatus}>
-        <option value="">any</option>
-        {#each TASK_STATUSES as status (status)}<option value={status}>{status}</option>{/each}
+        <option value="">{t("p.automations.any")}</option>
+        {#each TASK_STATUSES as status (status)}<option value={status}>{enumLabel("task_status", status)}</option>{/each}
       </select>
     </label>
   {/if}
   <label class="small">
-    action
+    {t("p.automations.action")}
     <select bind:value={actionKind}>
-      <option value="assign">assign</option>
-      <option value="add_label">add label</option>
-      <option value="notify">notify</option>
-      <option value="schedule_action">schedule action</option>
-      <option value="set_task_status">set task status</option>
+      <option value="assign">{t("p.automations.assign")}</option>
+      <option value="add_label">{t("p.automations.add_label")}</option>
+      <option value="notify">{t("p.automations.notify")}</option>
+      <option value="schedule_action">{t("p.automations.schedule_action")}</option>
+      <option value="set_task_status">{t("p.automations.set_task_status")}</option>
     </select>
   </label>
   {#if actionKind === "assign"}
     <label class="small">
-      assignee
-      <input bind:value={assigneeRef} placeholder="person:&lt;uuid&gt;" required />
+      {t("p.automations.assignee")}
+      <input bind:value={assigneeRef} placeholder={t("p.automations.person_uuid")} required />
     </label>
   {:else if actionKind === "add_label"}
-    <label class="small">label <input bind:value={label} required /></label>
+    <label class="small">{t("p.automations.label")} <input bind:value={label} required /></label>
   {:else if actionKind === "notify"}
     <label class="small">
-      recipient
-      <input bind:value={recipientRef} placeholder="person:&lt;uuid&gt;" required />
+      {t("p.automations.recipient")}
+      <input bind:value={recipientRef} placeholder={t("p.automations.person_uuid")} required />
     </label>
-    <label class="small">message <input bind:value={message} /></label>
+    <label class="small">{t("p.automations.message")} <input bind:value={message} /></label>
   {:else if actionKind === "schedule_action"}
     <label class="small">
-      then
+      {t("p.automations.then")}
       <select bind:value={scheduledKind}>
-        <option value="notify">notify</option>
-        <option value="expire_review">expire review</option>
+        <option value="notify">{t("p.automations.notify")}</option>
+        <option value="expire_review">{t("p.automations.expire_review")}</option>
       </select>
     </label>
     <label class="small">
-      in calendar days <input type="number" min="1" max="365" bind:value={inDays} />
+      {t("p.automations.in_calendar_days")} <input type="number" min="1" max="365" bind:value={inDays} />
     </label>
     <label class="small">
-      recipient
-      <input bind:value={recipientRef} placeholder="person:&lt;uuid&gt;" />
+      {t("p.automations.recipient")}
+      <input bind:value={recipientRef} placeholder={t("p.automations.person_uuid")} />
     </label>
   {:else if actionKind === "set_task_status"}
     <label class="small">
-      status
+      {t("p.automations.status")}
       <select bind:value={taskStatus}>
-        {#each TASK_STATUSES as status (status)}<option value={status}>{status}</option>{/each}
+        {#each TASK_STATUSES as status (status)}<option value={status}>{enumLabel("task_status", status)}</option>{/each}
       </select>
     </label>
   {/if}
-  <button class="button small primary" type="submit">Save rule</button>
+  <button class="button small primary" type="submit">{t("p.automations.save_rule")}</button>
 </form>
 
-<h2>Rules</h2>
+<h2>{t("p.automations.rules")}</h2>
 {#if automations.length > 0}
   <p class="count">
     {automations.length === automationsTotal
@@ -241,49 +239,48 @@
 {/if}
 <table>
   <thead>
-    <tr><th>Name</th><th>Scope</th><th>Trigger</th><th>Action</th><th>State</th><th></th></tr>
+    <tr><th>{t("p.automations.name_2")}</th><th>{t("p.automations.scope")}</th><th>{t("p.automations.trigger_2")}</th><th>{t("p.automations.action_2")}</th><th>{t("p.automations.state")}</th><th></th></tr>
   </thead>
   <tbody>
     {#each automations as rule (rule.pid)}
       <tr>
         <td>{rule.name}</td>
-        <td class="small muted">{rule.plan_pid ? `${rule.plan_pid.slice(0, 8)}…` : "every plan"}</td>
+        <td class="small muted">{rule.plan_pid ? `${rule.plan_pid.slice(0, 8)}…` : t("p.automations.every_plan")}</td>
         <td class="small">
           {rule.trigger_kind}
           {#if rule.from_status || rule.to_status}
-            ({rule.from_status ?? "any"} → {rule.to_status ?? "any"})
+            ({rule.from_status ?? t("p.automations.any")} → {rule.to_status ?? t("p.automations.any")})
           {/if}
         </td>
         <td class="small">{rule.action_kind}</td>
-        <td>{rule.enabled ? "on" : "off"}</td>
+        <td>{rule.enabled ? t("p.automations.on") : t("p.automations.off")}</td>
         <td class="actions">
           <button
             class="button small"
             type="button"
             onclick={() => act(() => api.setAutomationEnabled(rule.pid, !rule.enabled))}
           >
-            {rule.enabled ? "Disable" : "Enable"}
+            {rule.enabled ? t("p.automations.disable") : t("p.automations.enable")}
           </button>
           <button
             class="button small"
             type="button"
             onclick={() => act(() => api.deleteAutomation(rule.pid))}
           >
-            Delete
+            {t("p.automations.delete")}
           </button>
         </td>
       </tr>
     {/each}
   </tbody>
 </table>
-{#if automations.length === 0}<p class="small muted">No rules configured.</p>{/if}
+{#if automations.length === 0}<p class="small muted">{t("p.automations.no_rules_configured")}</p>{/if}
 
-<h2>Set and forget</h2>
+<h2>{t("p.automations.set_and_forget")}</h2>
 <div class="row">
-  <button class="button small" type="button" onclick={sweep}>Sweep due actions</button>
+  <button class="button small" type="button" onclick={sweep}>{t("p.automations.sweep_due_actions")}</button>
   <span class="small muted">
-    Claim-based, so a deadline fires exactly once even if the ticker and a
-    manual sweep race.
+    {t("p.automations.claim_based_so_a_deadline")}
   </span>
 </div>
 {#if scheduled.length > 0}
@@ -294,37 +291,37 @@
   </p>
 {/if}
 <table>
-  <thead><tr><th>Subject</th><th>Action</th><th>Due</th><th>Source</th><th></th></tr></thead>
+  <thead><tr><th>{t("p.automations.subject")}</th><th>{t("p.automations.action_2")}</th><th>{t("p.automations.due")}</th><th>{t("p.automations.source")}</th><th></th></tr></thead>
   <tbody>
     {#each scheduled as action (action.pid)}
       <tr>
         <td class="small">{action.subject_kind} {action.subject_pid.slice(0, 8)}…</td>
         <td>{action.action_kind}</td>
         <td class="small">{action.due_at}</td>
-        <td class="small muted">{action.source_automation_pid ? "automation" : "operator"}</td>
+        <td class="small muted">{action.source_automation_pid ? t("p.automations.automation") : t("p.automations.operator")}</td>
         <td>
           <button
             class="button small"
             type="button"
             onclick={() => act(() => api.cancelScheduled(action.pid))}
           >
-            Cancel
+            {t("p.automations.cancel")}
           </button>
         </td>
       </tr>
     {/each}
   </tbody>
 </table>
-{#if scheduled.length === 0}<p class="small muted">Nothing pending.</p>{/if}
+{#if scheduled.length === 0}<p class="small muted">{t("p.automations.nothing_pending")}</p>{/if}
 
-<h2>Runs</h2>
+<h2>{t("p.automations.runs")}</h2>
 {#if runs.length > 0}
   <p class="count">
     {runs.length === runsTotal ? `${runsTotal}` : `${runs.length} / ${runsTotal}`}
   </p>
 {/if}
 <table>
-  <thead><tr><th>When</th><th>Subject</th><th>Outcome</th><th>Detail</th></tr></thead>
+  <thead><tr><th>{t("p.automations.when")}</th><th>{t("p.automations.subject")}</th><th>{t("p.automations.outcome")}</th><th>{t("p.automations.detail")}</th></tr></thead>
   <tbody>
     {#each runs as run (run.pid)}
       <tr>
@@ -336,7 +333,7 @@
     {/each}
   </tbody>
 </table>
-{#if runs.length === 0}<p class="small muted">Nothing has fired yet.</p>{/if}
+{#if runs.length === 0}<p class="small muted">{t("p.automations.nothing_has_fired_yet")}</p>{/if}
 
 <style>
   .grid {

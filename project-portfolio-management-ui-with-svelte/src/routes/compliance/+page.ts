@@ -3,7 +3,8 @@
 // without reading the DOM.
 
 import type { PageLoad } from "./$types";
+import { pageTitle } from "#lib/i18n.svelte.js";
 
-export const load: PageLoad = () => {
-  return { title: "Compliance — PPM" };
+export const load: PageLoad = ({ url }) => {
+  return { title: pageTitle(url, "p.compliance.compliance_ppm") };
 };

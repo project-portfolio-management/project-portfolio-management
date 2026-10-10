@@ -54,8 +54,13 @@ WORKDIR /app/project-portfolio-management-api-with-rust
 
 # Migrations are compiled into the binary, so the runtime stage needs no loose
 # migration files; the same binary runs them (`... db migrate`). Default
-# features only (the optional `fluvio` and `keycloak` features stay off).
-RUN cargo build --release --locked --bin project-portfolio-management-service
+# features plus CARGO_FEATURES below.
+# Cargo features on top of the default (PASETO) set. `keycloak` is on so one image can verify
+# tokens from a Keycloak realm, including one that brokers Microsoft Entra ID
+# (operations/sign-in-with-entra.md); it is inert unless KEYCLOAK_* is configured. Add more with
+# `--build-arg CARGO_FEATURES="keycloak fluvio"`; empty it to build the default set only.
+ARG CARGO_FEATURES="keycloak"
+RUN cargo build --release --locked --features "${CARGO_FEATURES}" --bin project-portfolio-management-service
 
 # ---- runtime ---------------------------------------------------------------
 FROM docker.io/library/debian:13-slim
@@ -80,8 +85,11 @@ COPY --from=builder --chown=portfolio:portfolio \
 COPY --chown=portfolio:portfolio project-portfolio-management-api-with-rust/config ./config
 
 # Tantivy full-text index (PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH,
-# default `data/search-index` relative to the working directory).
-RUN mkdir -p /app/data/search-index && chown -R portfolio:portfolio /app
+# default `data/search-index` relative to the working directory) and the
+# artifact store (PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR). Both are meant to
+# be mounted volumes (see /compose.yaml); the directories exist so a fresh
+# named volume inherits the non-root ownership.
+RUN mkdir -p /app/data/search-index /app/data/artifacts && chown -R portfolio:portfolio /app
 
 USER portfolio
 

@@ -8,6 +8,7 @@
   separately instead of being quietly folded in somewhere.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { CapabilityClient, type LifecycleFunnel } from "#lib/api/capabilities.js";
 
@@ -24,32 +25,30 @@
       view = await api.lifecycle();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the funnel";
+      error = err instanceof Error ? err.message : t("p.lifecycle.could_not_load_the_funnel");
     }
   }
   onMount(refresh);
 </script>
 
-<svelte:head><title>Lifecycle — PPM</title></svelte:head>
+<svelte:head><title>{t("p.lifecycle.lifecycle_ppm")}</title></svelte:head>
 
-<h1>Lifecycle</h1>
+<h1>{t("p.lifecycle.lifecycle")}</h1>
 <p class="small muted">
-  Where everything sits across the challenge lifecycle, so the next phase
-  is never a surprise. Stalled counts items that have sat in a phase
-  longer than the threshold.
+  {t("p.lifecycle.where_everything_sits_across_the")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if view}
   <p class="small muted">
-    {total} live item(s) · stall threshold {view.stall_days} calendar day(s)
+    {t("p.lifecycle.live_item_s_stall_threshold", { total, stall_days: view.stall_days })}
     {#if view.unknown_phase > 0}
-      · <strong>{view.unknown_phase}</strong> in an unrecognized phase
+      · <strong>{view.unknown_phase}</strong> {t("p.lifecycle.in_an_unrecognized_phase")}
     {/if}
   </p>
   <table>
-    <thead><tr><th>Phase</th><th>Live</th><th>Stalled</th><th>Share</th></tr></thead>
+    <thead><tr><th>{t("p.lifecycle.phase")}</th><th>{t("p.lifecycle.live")}</th><th>{t("p.lifecycle.stalled")}</th><th>{t("p.lifecycle.share")}</th></tr></thead>
     <tbody>
       {#each view.phases as phase (phase.phase)}
         <tr>
@@ -68,7 +67,7 @@
       {/each}
     </tbody>
   </table>
-  <p class="small muted">as of {view.as_of}</p>
+  <p class="small muted">{t("p.lifecycle.as_of", { as_of: view.as_of })}</p>
 {/if}
 
 <style>

@@ -7,17 +7,15 @@
   measured how long a first hour with this guide actually takes.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { ONBOARDING_ROLES } from "#lib/onboarding.js";
 </script>
 
-<svelte:head><title>Onboarding — PPM</title></svelte:head>
+<svelte:head><title>{t("p.onboarding.onboarding_ppm")}</title></svelte:head>
 
-<h1>Operator onboarding</h1>
+<h1>{t("p.onboarding.operator_onboarding")}</h1>
 <p class="small muted">
-  A role-by-role first-hour walkthrough. Each step names the page it
-  lands on. This is a suggested order, not a measured "you'll be
-  productive in N minutes" claim — nobody has timed it.
+  {t("p.onboarding.a_role_by_role_first")}
 </p>
 
 {#each ONBOARDING_ROLES as role (role.id)}

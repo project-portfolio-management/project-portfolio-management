@@ -1255,3 +1255,21 @@ never a guess.
    DP-7's buffer source.
 3. **CC-5 (drum and pipelining)** after DP-10 (skill pools).
 4. **CC-6 (front-end)** as each lands.
+
+## 57. Issues register and change requests (IR-1..IR-6)
+
+Requested 2026-10-10. **What exists (verified):** FR-14 specified an issues
+register, but no migration, entity, controller or route exists
+(`spec/14-implementation-status.md`); blockers, risks and the controlled
+documents' approval flow do exist, as does the what-if scheduler and
+baselines. **Recommendation:** build issues first (IR-1..IR-3) because
+escalating a risk and the standup blocker both need them; then change requests
+(IR-4, IR-5) reusing the controlled-documents separation of requester and
+approver and the what-if scheduler for the impact preview; report in the
+director pack last (IR-6). **Open questions for the owner:** (1) should an
+approved change request be able to re-baseline automatically (recommended: no,
+a person chooses); (2) is a *priority* separate from *severity* needed;
+(3) do change requests need a configurable approval chain (more than one
+approver) or is one approver enough to start; (4) is an external-ticket link
+(Jira) wanted for issues. Not taken: automatic re-planning from a change
+request, and cost-benefit scoring of requests.

@@ -19,6 +19,7 @@
   not optional decoration — it is the relief the palette requires.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { FlowSample } from "#lib/api/tba.js";
 
   interface Props {
@@ -35,11 +36,11 @@
    * along the bottom.
    */
   const BANDS = [
-    { status: "done", label: "Done", slot: 1 },
-    { status: "in_review", label: "In review", slot: 2 },
-    { status: "in_progress", label: "In progress", slot: 3 },
-    { status: "blocked", label: "Blocked", slot: 4 },
-    { status: "todo", label: "Todo", slot: 5 },
+    { status: "done", get label() { return t("p.plans.pid.onboarding.done"); }, slot: 1 },
+    { status: "in_review", get label() { return t("c.CumulativeFlow.in_review"); }, slot: 2 },
+    { status: "in_progress", get label() { return t("c.CumulativeFlow.in_progress"); }, slot: 3 },
+    { status: "blocked", get label() { return t("p.plans.pid.flow.blocked"); }, slot: 4 },
+    { status: "todo", get label() { return t("c.CumulativeFlow.todo"); }, slot: 5 },
   ] as const;
 
   const W = 720;
@@ -132,15 +133,14 @@
 
 <figure class="cfd viz-root">
   <figcaption>
-    <strong>Cumulative flow</strong>
+    <strong>{t("c.CumulativeFlow.cumulative_flow")}</strong>
     <span class="muted">
-      the vertical gap above “Done” is work in progress; the horizontal gap
-      to it is roughly the cycle time
+      {t("c.CumulativeFlow.the_vertical_gap_above_done")}
     </span>
   </figcaption>
 
   {#if samples.length === 0}
-    <p class="muted">No samples in this window.</p>
+    <p class="muted">{t("c.CumulativeFlow.no_samples_in_this_window")}</p>
   {:else}
     <ul class="legend">
       {#each BANDS as band (band.status)}
@@ -157,7 +157,7 @@
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Cumulative flow over ${samples.length} calendar days, peaking at ${peak} tasks`}
+      aria-label={t("c.CumulativeFlow.chart_label", { days: samples.length, peak })}
       onpointermove={onMove}
       onpointerleave={() => (hover = null)}
     >
@@ -219,7 +219,7 @@
       {@const sample = hoveredSample}
       <div class="tooltip" role="status">
         <strong>{dayLabel(sample.at_ms)}</strong>
-        <span>{sample.total} total · {sample.work_in_progress} in progress · {sample.done} done</span>
+        <span>{t("c.CumulativeFlow.total_in_progress_done", { total: sample.total, work_in_progress: sample.work_in_progress, done: sample.done })}</span>
         <ul>
           {#each BANDS as band (band.status)}
             {#if (sample.counts[band.status] ?? 0) > 0}
@@ -242,21 +242,21 @@
       onclick={() => (showTable = !showTable)}
       aria-expanded={showTable}
     >
-      {showTable ? "Hide" : "Show"} the numbers
+      {showTable ? t("c.CumulativeFlow.hide_the_numbers") : t("c.CumulativeFlow.show_the_numbers")}
     </button>
 
     {#if showTable}
       <table data-testid="cfd-table">
         <caption class="muted">
-          Every value in the chart. {note}
+          {t("c.CumulativeFlow.every_value_in_the_chart", { note })}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Day</th>
+            <th scope="col">{t("c.CumulativeFlow.day")}</th>
             {#each BANDS as band (band.status)}
               <th scope="col">{band.label}</th>
             {/each}
-            <th scope="col">Total</th>
+            <th scope="col">{t("c.CumulativeFlow.total")}</th>
           </tr>
         </thead>
         <tbody>

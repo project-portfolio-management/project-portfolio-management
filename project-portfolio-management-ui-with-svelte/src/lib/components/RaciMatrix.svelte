@@ -7,6 +7,7 @@
   A row that is missing an Accountable or a Responsible is named in words.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { RaciMatrix } from "#lib/api/ppm.js";
   import {
     LETTERS,
@@ -31,25 +32,25 @@
   } = $props();
 
   function toggle(taskPid: string, cells: Record<string, string>, person: string, letter: Letter) {
-    const t = toggleLetter(cells, person, letter);
+    const toggled = toggleLetter(cells, person, letter);
     onchange(
       taskPid,
-      t.cells,
-      t.accountableMovedFrom ? `Accountable moved from ${shortRef(t.accountableMovedFrom)} to ${shortRef(person)}: a task has one.` : null,
+      toggled.cells,
+      toggled.accountableMovedFrom ? t("c.RaciMatrix.accountable_moved_from_to_a", { shortRef: shortRef(toggled.accountableMovedFrom), shortRef2: shortRef(person) }) : null,
     );
   }
 </script>
 
 <div class="scroll">
   <table data-testid="raci-matrix">
-    <caption class="sr-only">Who does what (RACI matrix): who is Responsible, Accountable, Consulted and Informed on each task</caption>
+    <caption class="sr-only">{t("c.RaciMatrix.who_does_what_raci_matrix")}</caption>
     <thead>
       <tr>
-        <th scope="col">Task</th>
+        <th scope="col">{t("c.RaciMatrix.task")}</th>
         {#each people as p (p)}
           <th scope="col" title={p}>{shortRef(p)}</th>
         {/each}
-        <th scope="col">Gaps</th>
+        <th scope="col">{t("c.RaciMatrix.gaps")}</th>
       </tr>
     </thead>
     <tbody>
@@ -75,7 +76,7 @@
             </td>
           {/each}
           <td class="small">
-            {#if row.findings.length === 0}<span aria-label="complete">✓</span>{:else}
+            {#if row.findings.length === 0}<span aria-label={t("c.RaciMatrix.complete")}>✓</span>{:else}
               {#each row.findings as f (f)}<span class="gap-text">⚠ {findingText(f)}. </span>{/each}
             {/if}
           </td>

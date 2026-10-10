@@ -33,10 +33,13 @@ import {
   LOCALE_LABELS,
   RTL_LOCALES,
   isRtl,
+  localeOfPath,
   localizePath,
   normalizeLocale,
   type Locale,
 } from "./locales.js";
+import { PAGES_EN, PAGE_KEYS } from "./i18n-pages";
+import { PAGES_CY } from "./i18n-pages.cy";
 
 export { LOCALES, DEFAULT_LOCALE, LOCALE_LABELS, RTL_LOCALES, isRtl };
 export type { Locale };
@@ -419,8 +422,13 @@ const STRINGS = {
     "tour.s6.step.4":
       "أضف معالم وعلّمها مكتملة، واستخدم Allocate لمنح الأشخاص سعة. يرسم رابط الجدول الزمني التواريخ والتبعيات.",
     "signin.sso": "تسجيل الدخول عبر SSO",
+    "signin.oidc": "تسجيل الدخول باستخدام {provider}",
+    "signin.oidcError": "لم يكتمل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+    "signin.oidcDenied": "تم إلغاء تسجيل الدخول أو لم تسمح به مؤسستك.",
+    "signin.oidcUnavailable": "خدمة تسجيل الدخول غير متاحة. يرجى المحاولة لاحقًا.",
   },
   "cy-001": {
+    ...PAGES_CY,
     // Merge page (/plans/merge)
     "nav.merge": "Uno",
     "merge.title": "Uno cynlluniau",
@@ -793,6 +801,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "Ychwanegwch gerrig milltir, marciwch nhw'n gyflawn, a defnyddiwch Allocate i roi capasiti i bobl. Mae'r ddolen Amserlen yn tynnu'r dyddiadau a'r dibyniaethau.",
     "signin.sso": "Mewngofnodi gydag SSO",
+    "signin.oidc": "Mewngofnodi gyda {provider}",
+    "signin.oidcError": "Ni chwblhawyd y mewngofnodi. Rhowch gynnig arall arni.",
+    "signin.oidcDenied": "Cafodd y mewngofnodi ei ganslo, neu nid yw eich sefydliad yn ei ganiatáu.",
+    "signin.oidcUnavailable": "Nid yw'r gwasanaeth mewngofnodi ar gael. Rhowch gynnig arall arni yn nes ymlaen.",
   },
   "de-001": {
     // Merge page (/plans/merge)
@@ -1066,6 +1078,10 @@ const STRINGS = {
     "tour.start.step.4":
       "Mit den Schaltflächen neben Anmelden ändern Sie Thema, Sprache und Textgröße oder teilen die Seite.",
     "signin.sso": "Mit SSO anmelden",
+    "signin.oidc": "Mit {provider} anmelden",
+    "signin.oidcError": "Die Anmeldung wurde nicht abgeschlossen. Bitte versuchen Sie es erneut.",
+    "signin.oidcDenied": "Die Anmeldung wurde abgebrochen oder von Ihrer Organisation nicht erlaubt.",
+    "signin.oidcUnavailable": "Der Anmeldedienst ist nicht erreichbar. Bitte versuchen Sie es später erneut.",
     "splash.hero.title": "Jeder Plan, eine verbundene Sicht",
     "splash.hero.subtitle":
       "Verwalten Sie Portfolios, Projekte und Produkte in einem rekursiven Planbaum, von der ersten Idee bis zur Lieferung, mit integrierter Steuerung, Terminplänen und Audit-Protokoll.",
@@ -1442,6 +1458,10 @@ const STRINGS = {
     "tour.start.step.4":
       "Mit den Schaltflächen neben Anmelden ändern Sie Thema, Sprache und Textgröße oder teilen die Seite.",
     "signin.sso": "Mit SSO anmelden",
+    "signin.oidc": "Mit {provider} anmelden",
+    "signin.oidcError": "Die Anmeldung wurde nicht abgeschlossen. Bitte versuchen Sie es erneut.",
+    "signin.oidcDenied": "Die Anmeldung wurde abgebrochen oder von Ihrer Organisation nicht erlaubt.",
+    "signin.oidcUnavailable": "Der Anmeldedienst ist nicht erreichbar. Bitte versuchen Sie es später erneut.",
     "splash.hero.title": "Jeder Plan, eine verbundene Sicht",
     "splash.hero.subtitle":
       "Verwalten Sie Portfolios, Projekte und Produkte in einem rekursiven Planbaum, von der ersten Idee bis zur Lieferung, mit integrierter Steuerung, Terminplänen und Audit-Protokoll.",
@@ -1547,6 +1567,7 @@ const STRINGS = {
       "Fügen Sie „Meilensteine“ hinzu, schließen Sie sie ab und nutzen Sie „Zuweisen“, um Menschen Kapazität zu geben. Der Link „Zeitplan“ zeichnet Termine und Abhängigkeiten.",
   },
   "en-001": {
+    ...PAGES_EN,
     // Merge page (/plans/merge)
     "nav.merge": "Merge",
     "merge.title": "Merge plans",
@@ -1924,6 +1945,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "Add Milestones, mark them complete, and use Allocate to give people capacity. The Schedule link draws the dates and dependencies.",
     "signin.sso": "Sign in with SSO",
+    "signin.oidc": "Sign in with {provider}",
+    "signin.oidcError": "Sign-in did not complete. Please try again.",
+    "signin.oidcDenied": "Sign-in was cancelled or is not permitted by your organization.",
+    "signin.oidcUnavailable": "The sign-in service cannot be reached. Please try again later.",
   },
   "es-001": {
     // Merge page (/plans/merge)
@@ -2301,6 +2326,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "Añade hitos, márcalos como completos y usa Allocate para dar capacidad a las personas. El enlace Cronograma dibuja las fechas y dependencias.",
     "signin.sso": "Iniciar sesión con SSO",
+    "signin.oidc": "Iniciar sesión con {provider}",
+    "signin.oidcError": "No se completó el inicio de sesión. Inténtelo de nuevo.",
+    "signin.oidcDenied": "El inicio de sesión se canceló o su organización no lo permite.",
+    "signin.oidcUnavailable": "No se puede acceder al servicio de inicio de sesión. Inténtelo más tarde.",
   },
   "fr-001": {
     // Merge page (/plans/merge)
@@ -2677,6 +2706,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "Ajoutez des étapes, marquez-les terminées et utilisez Allocate pour donner de la capacité aux personnes. Le lien Calendrier dessine les dates et dépendances.",
     "signin.sso": "Se connecter avec SSO",
+    "signin.oidc": "Se connecter avec {provider}",
+    "signin.oidcError": "La connexion n’a pas abouti. Veuillez réessayer.",
+    "signin.oidcDenied": "La connexion a été annulée ou n’est pas autorisée par votre organisation.",
+    "signin.oidcUnavailable": "Le service de connexion est injoignable. Veuillez réessayer plus tard.",
   },
   "hi-001": {
     // Merge page (/plans/merge)
@@ -3050,6 +3083,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "मील के पत्थर जोड़ें, उन्हें पूर्ण चिह्नित करें, और लोगों को क्षमता देने के लिए Allocate का उपयोग करें। समय-सारणी लिंक तिथियाँ और निर्भरताएँ दिखाता है।",
     "signin.sso": "SSO से साइन इन करें",
+    "signin.oidc": "{provider} से साइन इन करें",
+    "signin.oidcError": "साइन-इन पूरा नहीं हुआ। कृपया फिर से प्रयास करें।",
+    "signin.oidcDenied": "साइन-इन रद्द कर दिया गया या आपके संगठन द्वारा अनुमत नहीं है।",
+    "signin.oidcUnavailable": "साइन-इन सेवा उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें।",
   },
   "zh-001": {
     // Merge page (/plans/merge)
@@ -3400,6 +3437,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "添加里程碑并标记完成，用 Allocate 给人员分配容量。“进度表”链接会画出日期和依赖关系。",
     "signin.sso": "使用 SSO 登录",
+    "signin.oidc": "使用 {provider} 登录",
+    "signin.oidcError": "登录未完成，请重试。",
+    "signin.oidcDenied": "登录已取消，或您的组织不允许登录。",
+    "signin.oidcUnavailable": "无法访问登录服务，请稍后再试。",
   },
   "zh-cn": {
     // Merge page (/plans/merge)
@@ -3750,6 +3791,10 @@ const STRINGS = {
     "tour.s6.step.4":
       "添加里程碑并标记完成，用 Allocate 给人员分配容量。“进度表”链接会画出日期和依赖关系。",
     "signin.sso": "使用 SSO 登录",
+    "signin.oidc": "使用 {provider} 登录",
+    "signin.oidcError": "登录未完成，请重试。",
+    "signin.oidcDenied": "登录已取消，或您的组织不允许登录。",
+    "signin.oidcUnavailable": "无法访问登录服务，请稍后再试。",
   },
 } as const;
 
@@ -3841,7 +3886,7 @@ export const i18n = {
 };
 
 /** Values for a message's `{name}` placeholders. */
-export type MessageValues = Record<string, string | number>;
+export type MessageValues = Record<string, string | number | boolean | null | undefined>;
 
 /**
  * Translate `key` in `locale` with graceful fallbacks.
@@ -3861,7 +3906,30 @@ export function translate(
   locale: Locale = current,
   values?: MessageValues,
 ): string {
-  return format(key, { locale, values });
+  if (PAGE_KEYS.has(key)) return interpolate(rawString(key, locale), values);
+  return format(key, { locale, values: values as Record<string, string | number> });
+}
+
+/** The catalogue string for `key` in `locale`, falling back to English then to the key. */
+function rawString(key: StringKey, locale: Locale): string {
+  return (
+    (STRINGS[locale] as Record<string, string>)[key] ??
+    (STRINGS[DEFAULT_LOCALE] as Record<string, string>)[key] ??
+    key
+  );
+}
+
+/**
+ * Plain `{name}` interpolation for the page catalogue: a value prints as it would in a Svelte
+ * template (`null` and `undefined` as nothing, everything else as `String(value)`), with no
+ * locale number formatting and no bidi marks, so a page reads exactly as it did before it was
+ * translated. A placeholder with no value is left as written.
+ */
+export function interpolate(template: string, values?: MessageValues): string {
+  if (!values) return template;
+  return template.replace(/\{([A-Za-z_]\w*)\}/g, (whole, name: string) =>
+    name in values ? String(values[name] ?? "") : whole,
+  );
 }
 
 /**
@@ -3885,4 +3953,17 @@ export function t(key: StringKey, values?: MessageValues): string {
  */
 export function localeHref(path: string): string {
   return localizePath(path, current);
+}
+
+/**
+ * A page's `<title>` for the load functions (`page.data.title`). The language comes from the URL,
+ * not from the reactive store: a load runs before the layout has switched the store to a newly
+ * chosen language, and the URL is already right.
+ */
+export function pageTitle(
+  url: { pathname: string },
+  key: StringKey,
+  values?: MessageValues,
+): string {
+  return translate(key, localeOfPath(url.pathname) ?? DEFAULT_LOCALE, values);
 }

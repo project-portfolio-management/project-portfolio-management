@@ -124,24 +124,24 @@
     // PPM catalogue views (fully localized 2026-07-18).
     // LT-3: the individual worker's personal task view. A deployment opts a
     // persona into it as its landing page with `view=me` (T-28f).
-    { href: "/me", label: "My work" },
+    { href: "/me", get label() { return t("p.me.my_work"); } },
     { href: "/dashboard", label: t("ppm.nav.dashboard") },
-    { href: "/prioritization", label: "Prioritization" },
-    { href: "/lifecycle", label: "Lifecycle" },
-    { href: "/reviews", label: "Reviews" },
-    { href: "/automations", label: "Automations" },
+    { href: "/prioritization", get label() { return t("p.prioritization.prioritization"); } },
+    { href: "/lifecycle", get label() { return t("p.lifecycle.lifecycle"); } },
+    { href: "/reviews", get label() { return t("p._layout_svelte.reviews"); } },
+    { href: "/automations", get label() { return t("p._layout_svelte.automations"); } },
     { href: "/proposals", label: t("ppm.nav.proposals") },
     { href: "/ideas", label: t("ppm.nav.ideas") },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
-    { href: "/okrs", label: "Goals (OKRs)" },
-    { href: "/milestones", label: "Milestones" },
-    { href: "/kpis", label: "Key measures (KPIs)" },
+    { href: "/okrs", get label() { return t("p._layout_svelte.goals_okrs"); } },
+    { href: "/milestones", get label() { return t("p.milestones.milestones"); } },
+    { href: "/kpis", get label() { return t("p.kpis.key_measures_kpis"); } },
     { href: "/gantt", label: t("ppm.nav.gantt") },
     { href: "/engineering", label: t("ppm.nav.engineering") },
     { href: "/calendar", label: t("ppm.nav.calendar") },
-    { href: "/ceo", label: "CEO dashboard" },
-    { href: "/announcements", label: "Announcements" },
+    { href: "/ceo", get label() { return t("p.ceo.ceo_dashboard"); } },
+    { href: "/announcements", get label() { return t("p.ceo.announcements"); } },
     { href: "/executive", label: t("ppm.nav.executive") },
     { href: "/financials", label: t("ppm.nav.financials") },
     { href: "/technology", label: t("ppm.nav.technology") },
@@ -152,12 +152,12 @@
     { href: "/security", label: t("ppm.nav.security") },
     { href: "/regulator", label: t("ppm.nav.regulator") },
     { href: "/capacity", label: t("ppm.nav.capacity") },
-    { href: "/resources", label: "Resources" },
-    { href: "/cost-risk", label: "Cost risk" },
-    { href: "/cost-rates", label: "Cost rates" },
+    { href: "/resources", get label() { return t("p.resources.resources"); } },
+    { href: "/cost-risk", get label() { return t("p.plans.pid.joint_risk.cost_risk"); } },
+    { href: "/cost-rates", get label() { return t("p.plans.pid.costs.cost_rates"); } },
     { href: "/reports", label: t("ppm.nav.reports") },
-    { href: "/onboarding", label: "Onboarding" },
-    { href: "/documents", label: "Documents" },
+    { href: "/onboarding", get label() { return t("p._layout_svelte.onboarding"); } },
+    { href: "/documents", get label() { return t("p.documents.documents"); } },
     { href: "/tour", label: t("nav.tour") },
   ];
 
@@ -238,7 +238,7 @@
         {#if nav.more.length > 0}
           <li class="more">
             <details>
-              <summary>More</summary>
+              <summary>{t("p.layout.more")}</summary>
               <ul>
                 {#each nav.more as item (item.href)}
                   <li>
@@ -257,9 +257,9 @@
     </nav>
     <div class="header-end">
       <button type="button" class="session-button" aria-pressed={simple} onclick={toggleSimple}>
-        Simple view: {simple ? "on" : "off"}
+        {t("p.layout.simple_view", { v: simple ? t("p.common.on") : t("p.common.off") })}
       </button>
-      <a class="session-button" href={localeHref("/display")}>Display</a>
+      <a class="session-button" href={localeHref("/display")}>{t("p.layout.display")}</a>
       {#if signedIn}
         <!-- Sign-out posts to the root page's \`signout\` action
              (BFF: revokes server-side + clears the cookie). -->

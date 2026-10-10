@@ -7,7 +7,7 @@
   fallback band; a risk that could not be used is named with the reason.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ScheduleRisk } from "#lib/api/ppm.js";
@@ -40,7 +40,7 @@
       ranOn = new Date().toISOString().slice(0, 10);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not run the simulation";
+      error = err instanceof Error ? err.message : t("p.plans.pid.schedule_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }
@@ -51,57 +51,56 @@
   const pName = (p: number) => `P${p}`;
 </script>
 
-<svelte:head><title>Schedule risk — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.schedule_risk.schedule_risk_ppm")}</title></svelte:head>
 
-<h1>Schedule risk</h1>
-<p class="lede">Many what-if runs of the schedule show the range of finish dates and how likely each one is.</p>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
+<h1>{t("p.plans.pid.schedule_risk.schedule_risk")}</h1>
+<p class="lede">{t("p.plans.pid.schedule_risk.many_what_if_runs_of")}</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.schedule_risk.plan")}</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.plans.pid.schedule_risk.critical_path")}</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void simulate(); }}>
-  <label>Iterations <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
-  <label>Seed <input type="number" min="0" step="1" bind:value={seed} /></label>
-  <label>Distribution
+  <label>{t("p.plans.pid.schedule_risk.iterations")} <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
+  <label>{t("p.plans.pid.schedule_risk.seed")} <input type="number" min="0" step="1" bind:value={seed} /></label>
+  <label>{t("p.plans.pid.schedule_risk.distribution")}
     <select bind:value={distribution}>
-      <option value="triangular">Triangular</option>
-      <option value="pert">Weighted towards the likely value (PERT)</option>
+      <option value="triangular">{t("p.plans.pid.schedule_risk.triangular")}</option>
+      <option value="pert">{t("p.plans.pid.schedule_risk.weighted_towards_the_likely_value")}</option>
     </select>
   </label>
-  <label>Band for tasks with no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <label>{t("p.plans.pid.schedule_risk.band_for_tasks_with_no")} <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? t("p.plans.pid.schedule_risk.running") : t("p.plans.pid.schedule_risk.run")}</button>
 </form>
 
 {#if run}
   <p class="small muted">
-    Run on {ranOn} against the plan as it stands · seed {run.assumptions.seed} · {run.assumptions.iterations} iterations ·
-    {distributionText(run.assumptions)} · calendar {run.calendar}
+    {t("p.plans.pid.schedule_risk.run_on_against_the_plan", { ranOn, seed: run.assumptions.seed, iterations: run.assumptions.iterations, distributionText: distributionText(run.assumptions), calendar: run.calendar })}
   </p>
 
-  <h2>When it finishes</h2>
+  <h2>{t("p.plans.pid.schedule_risk.when_it_finishes")}</h2>
   <table>
-    <caption class="sr-only">Finish date at each percentile</caption>
-    <thead><tr><th scope="col">Outcome</th><th scope="col">Finish</th></tr></thead>
+    <caption class="sr-only">{t("p.plans.pid.schedule_risk.finish_date_at_each_percentile")}</caption>
+    <thead><tr><th scope="col">{t("p.plans.pid.schedule_risk.outcome")}</th><th scope="col">{t("p.plans.pid.schedule_risk.finish")}</th></tr></thead>
     <tbody>
       {#each run.percentiles as p (p.p)}
         <tr><th scope="row">{pName(p.p)}</th><td>{p.finish}</td></tr>
       {/each}
-      <tr><th scope="row">Critical-path finish (the plan's own date)</th><td>{run.cpm_finish ?? "not enough data"}</td></tr>
+      <tr><th scope="row">{t("p.plans.pid.schedule_risk.critical_path_finish_the_plan")}</th><td>{run.cpm_finish ?? t("p.plans.pid.schedule_risk.not_enough_data")}</td></tr>
     </tbody>
   </table>
   <p>{confidenceText(run.cpm_finish_confidence_bp, run.cpm_finish)}</p>
-  <p class="small muted">{run.percentiles.map(percentileText).join(" · ")}. Earliest {run.earliest}, latest {run.latest}.</p>
+  <p class="small muted">{t("p.plans.pid.schedule_risk.earliest_latest", { join: run.percentiles.map(percentileText).join(" · "), earliest: run.earliest, latest: run.latest })}</p>
 
   {#if g}
     <figure>
-      <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label="Histogram of simulated finish dates, with P50, P80 and P90 marked" width="100%" style="max-width: 44rem">
+      <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates")} width="100%" style="max-width: 44rem">
         {#each g.bars as b (b.date)}
-          <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{b.date}: {b.count} of {run.assumptions.iterations}</title></rect>
+          <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("p.plans.pid.schedule_risk.of", { date: b.date, count: b.count, iterations: run.assumptions.iterations })}</title></rect>
         {/each}
         <line x1="24" x2={g.width - 24} y1={g.baseline} y2={g.baseline} class="axis" />
         {#if g.cpmX !== null}
           <line x1={g.cpmX} x2={g.cpmX} y1="14" y2={g.baseline} class="cpm" />
-          <text x={g.cpmX} y="10" text-anchor="middle" class="label">plan</text>
+          <text x={g.cpmX} y="10" text-anchor="middle" class="label">{t("p.plans.pid.schedule_risk.plan_2")}</text>
         {/if}
         {#each g.markers as m (m.p)}
           <line x1={m.x} x2={m.x} y1="14" y2={g.baseline} class={`pct p${m.p}`} />
@@ -109,9 +108,9 @@
         {/each}
       </svg>
       <details>
-        <summary>The same figures as a table</summary>
+        <summary>{t("p.plans.pid.schedule_risk.the_same_figures_as_a")}</summary>
         <table>
-          <thead><tr><th scope="col">Finish date</th><th scope="col">Simulations</th><th scope="col">Share</th></tr></thead>
+          <thead><tr><th scope="col">{t("p.plans.pid.schedule_risk.finish_date")}</th><th scope="col">{t("p.plans.pid.schedule_risk.simulations")}</th><th scope="col">{t("p.plans.pid.schedule_risk.share")}</th></tr></thead>
           <tbody>
             {#each run.histogram as h (h.date)}
               <tr><th scope="row">{h.date}</th><td>{h.count}</td><td>{((h.count / run.assumptions.iterations) * 100).toFixed(1)}%</td></tr>
@@ -119,44 +118,44 @@
           </tbody>
         </table>
       </details>
-      <figcaption class="small muted">Each bar is a finish date; taller means more of the simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the plan's own date.</figcaption>
+      <figcaption class="small muted">{t("p.plans.pid.schedule_risk.each_bar_is_a_finish")}</figcaption>
     </figure>
   {/if}
 
-  <h2>What drives it</h2>
+  <h2>{t("p.plans.pid.schedule_risk.what_drives_it")}</h2>
   <table>
-    <caption class="sr-only">Per-task estimate, criticality and sensitivity</caption>
+    <caption class="sr-only">{t("p.plans.pid.schedule_risk.per_task_estimate_criticality_and")}</caption>
     <thead>
       <tr>
-        <th scope="col">Task</th><th scope="col">Optimistic / likely / pessimistic (business days)</th>
-        <th scope="col">Estimate</th><th scope="col">Critical in</th><th scope="col">Sensitivity</th>
+        <th scope="col">{t("p.plans.pid.schedule_risk.task")}</th><th scope="col">{t("p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine")}</th>
+        <th scope="col">{t("p.plans.pid.schedule_risk.estimate")}</th><th scope="col">{t("p.plans.pid.schedule_risk.critical_in")}</th><th scope="col">{t("p.plans.pid.schedule_risk.sensitivity")}</th>
       </tr>
     </thead>
     <tbody>
-      {#each [...run.tasks].sort((a, b) => b.criticality_bp - a.criticality_bp) as t (t.pid)}
-        <tr class:fallback={t.source === "fallback"}>
-          <th scope="row">{t.title ?? t.pid}</th>
-          <td>{t.optimistic} / {t.likely} / {t.pessimistic}</td>
-          <td>{#if t.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{sourceText(t)}</td>
-          <td>{criticalityText(t.criticality_bp)} of runs</td>
-          <td>{sensitivityText(t.sensitivity)}</td>
+      {#each [...run.tasks].sort((a, b) => b.criticality_bp - a.criticality_bp) as row (row.pid)}
+        <tr class:fallback={row.source === "fallback"}>
+          <th scope="row">{row.title ?? row.pid}</th>
+          <td>{row.optimistic} / {row.likely} / {row.pessimistic}</td>
+          <td>{#if row.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{sourceText(row)}</td>
+          <td>{t("p.plans.pid.schedule_risk.of_runs", { criticalityText: criticalityText(row.criticality_bp) })}</td>
+          <td>{sensitivityText(row.sensitivity)}</td>
         </tr>
       {/each}
     </tbody>
   </table>
 
-  <h2>Risks used</h2>
+  <h2>{t("p.plans.pid.schedule_risk.risks_used")}</h2>
   {#if run.events.used.length === 0}
-    <p>No register risk was used as a schedule event.</p>
+    <p>{t("p.plans.pid.schedule_risk.no_register_risk_was_used")}</p>
   {:else}
     <ul>
       {#each run.events.used as e (e.risk_pid)}
-        <li>{e.title}: {e.probability_percent}% chance of adding {e.impact_days} business day{e.impact_days === 1 ? "" : "s"}</li>
+        <li>{(e.impact_days === 1 ? t("p.plans.pid.schedule_risk.chance_of_adding_business_day_one", { title: e.title, probability_percent: e.probability_percent, impact_days: e.impact_days }) : t("p.plans.pid.schedule_risk.chance_of_adding_business_day_other", { title: e.title, probability_percent: e.probability_percent, impact_days: e.impact_days }))}</li>
       {/each}
     </ul>
   {/if}
   {#if run.events.skipped.length > 0}
-    <p class="small">Left out:</p>
+    <p class="small">{t("p.plans.pid.schedule_risk.left_out")}</p>
     <ul class="small">
       {#each run.events.skipped as e (e.risk_pid)}
         <li>{e.title}: {skippedReasonText(e.reason)}</li>
@@ -164,22 +163,22 @@
     </ul>
   {/if}
   {#if run.events.risks_without_schedule_fields > 0}
-    <p class="small muted">{run.events.risks_without_schedule_fields} register risk{run.events.risks_without_schedule_fields === 1 ? " has" : "s have"} no schedule fields and {run.events.risks_without_schedule_fields === 1 ? "is" : "are"} not part of this.</p>
+    <p class="small muted">{run.events.risks_without_schedule_fields === 1 ? t("p.plans.pid.schedule_risk.risks_without_schedule_one", { count: run.events.risks_without_schedule_fields }) : t("p.plans.pid.schedule_risk.risks_without_schedule_other", { count: run.events.risks_without_schedule_fields })}</p>
   {/if}
   {#if run.unscheduled.length > 0}
-    <p class="small">Not simulated, because the schedule cannot place them: {run.unscheduled.map((u) => `${u.title ?? u.pid} (${u.reason})`).join(", ")}.</p>
+    <p class="small">{t("p.plans.pid.schedule_risk.not_simulated_because_the_schedule", { join: run.unscheduled.map((u) => `${u.title ?? u.pid} (${u.reason})`).join(", ") })}</p>
   {/if}
 
-  <h2>Assumptions</h2>
+  <h2>{t("p.plans.pid.schedule_risk.assumptions")}</h2>
   <ul class="small">
-    <li><strong>Independence.</strong> {run.assumptions.independence}</li>
+    <li><strong>{t("p.plans.pid.schedule_risk.independence")}</strong> {run.assumptions.independence}</li>
     <li>{run.assumptions.durations}</li>
     <li>{run.assumptions.fallback}</li>
-    <li>Seed {run.assumptions.seed}: the same seed gives the same result. Up to {run.assumptions.max_iterations} iterations.</li>
+    <li>{t("p.plans.pid.schedule_risk.seed_the_same_seed_gives", { seed: run.assumptions.seed, max_iterations: run.assumptions.max_iterations })}</li>
   </ul>
   <p class="small muted">{run.note}</p>
 {:else if !error}
-  <p class="muted">Running…</p>
+  <p class="muted">{t("p.plans.pid.schedule_risk.running")}</p>
 {/if}
 
 <style>

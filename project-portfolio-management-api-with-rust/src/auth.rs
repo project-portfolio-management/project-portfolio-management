@@ -664,6 +664,9 @@ pub fn parse_bool(value: &str) -> bool {
 fn is_public_path(path: &str) -> bool {
     path == "/_health"
         || path == "/_ping"
+        // Readiness pings the database, the queue and the cache and answers only
+        // ok / not ok (200 / 503): what a load balancer or orchestrator needs.
+        || path == "/_readiness"
         || path == "/api-docs/openapi.json"
         || path.starts_with("/swagger-ui")
         // Feeds authenticate themselves with a per-user revocable token in the
@@ -1171,6 +1174,7 @@ mod tests {
         for path in [
             "/_health",
             "/_ping",
+            "/_readiness",
             "/api-docs/openapi.json",
             "/swagger-ui",
             "/swagger-ui/index.html",

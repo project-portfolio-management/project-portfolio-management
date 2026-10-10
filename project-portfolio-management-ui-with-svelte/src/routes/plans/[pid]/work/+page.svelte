@@ -7,7 +7,7 @@
   be placed is listed, never dropped.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import {
@@ -56,7 +56,7 @@
       await loadProfile();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the plan";
+      error = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_load_the_plan");
     }
   }
   async function loadProfile() {
@@ -64,7 +64,7 @@
       profile = await ppm.workProfile(pid, { period: grain });
     } catch (err) {
       profile = null;
-      error = err instanceof Error ? err.message : "Could not load the work profile";
+      error = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_load_the_work");
     }
   }
   onMount(load);
@@ -83,7 +83,7 @@
       said[n.pid] = [resultText(r), capacityText(r.capacity)].filter(Boolean).join(" ");
       await load();
     } catch (err) {
-      said[n.pid] = err instanceof Error ? err.message : "Could not save";
+      said[n.pid] = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_save");
     }
   }
   async function saveContour(n: CpmNode) {
@@ -100,26 +100,26 @@
     }
     try {
       await ppm.setContour(pid, n.pid, f.contour, custom);
-      said[n.pid] = "Contour saved.";
+      said[n.pid] = t("p.plans.pid.work.contour_saved");
       await loadProfile();
     } catch (err) {
-      said[n.pid] = err instanceof Error ? err.message : "Could not save";
+      said[n.pid] = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_save");
     }
   }
   const day = (iso: string) => iso.slice(5);
   const label = (b: { from: string; to: string }) => (b.from === b.to ? b.from : `${day(b.from)}–${day(b.to)}`);
 </script>
 
-<svelte:head><title>Work and assignments — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.work.work_and_assignments_ppm")}</title></svelte:head>
 
-<h1>Work and assignments</h1>
-<p class="lede">How long each task takes, how much of a person's day it uses, and how much work that adds up to.</p>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/costs`)}>Costs</a></p>
+<h1>{t("p.plans.pid.work.work_and_assignments")}</h1>
+<p class="lede">{t("p.plans.pid.work.how_long_each_task_takes")}</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.work.plan")}</a> · <a href={localeHref(`/plans/${pid}/costs`)}>{t("p.plans.pid.work.costs")}</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
 
-<h2>Tasks</h2>
+<h2>{t("p.plans.pid.work.tasks")}</h2>
 {#if nodes.length === 0 && !error}
-  <p class="muted">This plan has no scheduled tasks yet.</p>
+  <p class="muted">{t("p.plans.pid.work.this_plan_has_no_scheduled")}</p>
 {/if}
 <ul class="stack tasks">
   {#each nodes as n (n.pid)}
@@ -128,56 +128,56 @@
       <h3>{n.title ?? n.pid}</h3>
       <p class="small">
         {#if n.units_percent != null && n.work_minutes != null}
-          {n.duration_days} business days · {n.units_percent}% of a day · {hoursText(n.work_minutes)} of work · {RULE_TEXT[n.scheduling_rule ?? "fixed_units"]}
+          {t("p.plans.pid.work.business_days_of_a_day", { duration_days: n.duration_days, units_percent: n.units_percent, hoursText: hoursText(n.work_minutes), v: RULE_TEXT[n.scheduling_rule ?? "fixed_units"] })}
         {:else}
-          <span class="muted">No assignment yet. Give a duration and units and the work is worked out.</span>
+          <span class="muted">{t("p.plans.pid.work.no_assignment_yet_give_a")}</span>
         {/if}
       </p>
       {#if f}
         <details>
-          <summary>Edit assignment</summary>
+          <summary>{t("p.plans.pid.work.edit_assignment")}</summary>
           <form class="stack" onsubmit={(e) => save(n, e)}>
             <label>
-              Rule
+              {t("p.plans.pid.work.rule")}
               <select bind:value={f.rule}>
                 {#each Object.entries(RULE_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
               </select>
             </label>
             <p class="small muted">{RULE_HELP[f.rule]}</p>
             {#if n.units_percent == null}
-              <label>Duration (business days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
-              <label>Units (% of the day) <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
+              <label>{t("p.plans.pid.work.duration_business_days")} <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
+              <label>{t("p.plans.pid.work.units_of_the_day")} <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
             {:else}
               <label>
-                Change
+                {t("p.plans.pid.work.change")}
                 <select bind:value={f.changing}>
-                  <option value="work">Work (hours)</option>
-                  <option value="duration">Duration (business days)</option>
-                  <option value="units">Units (%)</option>
+                  <option value="work">{t("p.plans.pid.work.work_hours")}</option>
+                  <option value="duration">{t("p.plans.pid.work.duration_business_days")}</option>
+                  <option value="units">{t("p.plans.pid.work.units")}</option>
                 </select>
               </label>
               {#if f.changing === "work"}
-                <label>Work (hours) <input type="number" min="0" step="0.25" bind:value={f.hours} /></label>
+                <label>{t("p.plans.pid.work.work_hours")} <input type="number" min="0" step="0.25" bind:value={f.hours} /></label>
               {:else if f.changing === "duration"}
-                <label>Duration (business days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
+                <label>{t("p.plans.pid.work.duration_business_days")} <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
               {:else}
-                <label>Units (% of the day) <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
+                <label>{t("p.plans.pid.work.units_of_the_day")} <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
               {/if}
             {/if}
-            <button class="button" type="submit">Save assignment</button>
+            <button class="button" type="submit">{t("p.plans.pid.work.save_assignment")}</button>
           </form>
           {#if n.units_percent != null}
             <div class="row">
               <label>
-                Spread
+                {t("p.plans.pid.work.spread")}
                 <select bind:value={f.contour}>
                   {#each Object.entries(CONTOUR_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
                 </select>
               </label>
               {#if f.contour === "custom"}
-                <label>Percentages <input bind:value={f.custom} placeholder="10, 20, 70" /></label>
+                <label>{t("p.plans.pid.work.percentages")} <input bind:value={f.custom} placeholder="10, 20, 70" /></label>
               {/if}
-              <button class="button" type="button" onclick={() => saveContour(n)}>Save contour</button>
+              <button class="button" type="button" onclick={() => saveContour(n)}>{t("p.plans.pid.work.save_contour")}</button>
             </div>
           {/if}
         </details>
@@ -187,34 +187,34 @@
   {/each}
 </ul>
 
-<h2>Work over time</h2>
-<label>Period
+<h2>{t("p.plans.pid.work.work_over_time")}</h2>
+<label>{t("p.plans.pid.work.period")}
   <select bind:value={grain} onchange={loadProfile}>
-    <option value="day">Day</option>
-    <option value="week">Week</option>
-    <option value="month">Month</option>
+    <option value="day">{t("p.plans.pid.work.day")}</option>
+    <option value="week">{t("p.plans.pid.work.week")}</option>
+    <option value="month">{t("p.plans.pid.work.month")}</option>
   </select>
 </label>
 {#if profile && profile.reason === "no_assignments"}
-  <p class="muted">No task carries work yet, so there is nothing to spread.</p>
+  <p class="muted">{t("p.plans.pid.work.no_task_carries_work_yet")}</p>
 {:else if profile && profile.totals.buckets}
   <table data-testid="work-profile">
-    <caption class="small muted">Hours per {grain}; each row adds up to the task's work, the last row to the plan's.</caption>
+    <caption class="small muted">{t("p.plans.pid.work.hours_per_each_row_adds", { grain })}</caption>
     <thead>
-      <tr><th scope="col">Task</th>{#each profile.totals.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">Total</th></tr>
+      <tr><th scope="col">{t("p.plans.pid.work.task")}</th>{#each profile.totals.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">{t("p.plans.pid.work.total")}</th></tr>
     </thead>
     <tbody>
-      {#each profile.tasks as t (t.pid)}
+      {#each profile.tasks as row (row.pid)}
         <tr>
-          <th scope="row">{t.title} <span class="muted small">({t.contour.replace("_", " ")})</span></th>
-          {#each t.buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
-          <td>{hoursText(t.work_minutes)}{#if !t.placed} <span class="small">(not placed)</span>{/if}</td>
+          <th scope="row">{row.title} <span class="muted small">({row.contour.replace("_", " ")})</span></th>
+          {#each row.buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
+          <td>{hoursText(row.work_minutes)}{#if !row.placed} <span class="small">{t("p.plans.pid.work.not_placed")}</span>{/if}</td>
         </tr>
       {/each}
     </tbody>
     <tfoot>
       <tr>
-        <th scope="row">Plan</th>
+        <th scope="row">{t("p.plans.pid.work.plan_2")}</th>
         {#each profile.totals.buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
         <td>{hoursText(profile.totals.work_minutes)}</td>
       </tr>
@@ -223,12 +223,12 @@
   {#if profile.unplaced.length}
     <ul>
       {#each profile.unplaced as u}
-        <li>▲ {u.title} ({hoursText(u.work_minutes)}) {UNPLACED_TEXT[u.reason] ?? u.reason}, so its work is not in the buckets.</li>
+        <li>{t("p.plans.pid.work.so_its_work_is_not", { title: u.title, hoursText: hoursText(u.work_minutes), reason: UNPLACED_TEXT[u.reason] ?? u.reason })}</li>
       {/each}
     </ul>
   {/if}
   {#if profile.totals.outside_window_minutes}
-    <p class="small muted">{hoursText(profile.totals.outside_window_minutes)} falls outside this window.</p>
+    <p class="small muted">{t("p.plans.pid.work.falls_outside_this_window", { hoursText: hoursText(profile.totals.outside_window_minutes) })}</p>
   {/if}
 {/if}
 

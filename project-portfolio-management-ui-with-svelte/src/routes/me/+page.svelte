@@ -9,7 +9,7 @@
   English-first, like the other recent views; localization follows.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
   import { floatText } from "#lib/my-work-view.js";
@@ -19,11 +19,11 @@
   let error = $state<string | null>(null);
 
   const LABELS: Record<MyWorkBucket, string> = {
-    overdue: "Overdue",
-    today: "Today",
-    this_week: "This week",
-    later: "Later",
-    undated: "No due date",
+    get overdue() { return t("l.onboarding_view.overdue_2"); },
+    get today() { return t("p.me.today"); },
+    get this_week() { return t("p.me.this_week"); },
+    get later() { return t("p.me.later"); },
+    get undated() { return t("p.me.no_due_date"); },
   };
 
   async function refresh() {
@@ -32,34 +32,33 @@
       work = await ppm.myTasks(tz);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load your tasks";
+      error = err instanceof Error ? err.message : t("p.me.could_not_load_your_tasks");
     }
   }
   onMount(refresh);
 </script>
 
-<svelte:head><title>My work — PPM</title></svelte:head>
+<svelte:head><title>{t("p.me.my_work_ppm")}</title></svelte:head>
 
-<h1>My work</h1>
-<p class="small"><a href={localeHref("/me/calendar")}>My calendar</a> — the days you work, so your dates are honest.</p>
+<h1>{t("p.me.my_work")}</h1>
+<p class="small"><a href={localeHref("/me/calendar")}>{t("p.me.my_calendar")}</a> {t("p.me.the_days_you_work_so")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if work}
   <p class="small muted">
-    {work.today} ({work.tz}) · {work.total} open
+    {t("p.me.open", { today: work.today, tz: work.tz, total: work.total })}
     {#if work.omitted_unreadable > 0}
-      · {work.omitted_unreadable} in plans you cannot read
+      {t("p.me.in_plans_you_cannot_read", { omitted_unreadable: work.omitted_unreadable })}
     {/if}
-    {#if work.truncated}· showing the first 500{/if}
+    {#if work.truncated}{t("p.me.showing_the_first_500")}{/if}
   </p>
 
   {#if work.reason === "sub_not_addressable"}
     <p class="banner" role="status">
-      Your sign-in identity cannot be matched to task assignments, so nothing
-      can be listed here yet.
+      {t("p.me.your_sign_in_identity_cannot")}
     </p>
   {:else if work.total === 0}
-    <p>Nothing assigned to you. Enjoy it.</p>
+    <p>{t("p.me.nothing_assigned_to_you_enjoy")}</p>
   {/if}
 
   {#each MY_WORK_BUCKETS as bucket (bucket)}
@@ -73,7 +72,7 @@
             <li>
               <a href={localeHref(`/plans/${task.plan_pid}`)}>{task.title}</a>
               <span class="small muted">
-                — {task.plan_name}{#if task.due_date} · due {task.due_date}{/if}
+                — {task.plan_name}{#if task.due_date} {t("p.me.due", { due_date: task.due_date })}{/if}
               </span>
               <!-- SC-10: the task's own float, in words (never colour alone);
                    nothing at all when there is no schedule data. -->
@@ -92,7 +91,7 @@
     {/if}
   {/each}
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.me.loading")}</p>
 {/if}
 
 <style>

@@ -12,6 +12,16 @@ import { KNOWN_NAV_HREFS, landingRouteForView, viewAttr } from "#lib/nav.js";
 const DEFAULT_LANDING_ROUTE = "/plans";
 
 export const load: LayoutServerLoad = async ({ locals, fetch }) => {
+  if (!locals.sessionId && locals.oidc) {
+    // A direct OpenID Connect sign-in: no authentication-service session to ask
+    // about attributes, so the default landing route applies.
+    return {
+      signedIn: true,
+      view: null,
+      landingRoute: DEFAULT_LANDING_ROUTE,
+      userName: locals.oidc.user.name,
+    };
+  }
   if (!locals.sessionId) {
     return { signedIn: false, view: null, landingRoute: DEFAULT_LANDING_ROUTE };
   }

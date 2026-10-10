@@ -21,7 +21,7 @@
   });
 </script>
 
-<svelte:head><title>Dashboard — PPM</title></svelte:head>
+<svelte:head><title>{t("p.dashboard.dashboard_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.dashboard.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}

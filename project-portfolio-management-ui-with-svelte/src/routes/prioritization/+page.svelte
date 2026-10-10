@@ -8,7 +8,8 @@
   reported as no evidence, never as a low score.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import {
     CapabilityClient,
@@ -28,7 +29,7 @@
       view = await api.prioritization({ band: band || undefined });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the queue";
+      error = err instanceof Error ? err.message : t("p.prioritization.could_not_load_the_queue");
     }
   }
 
@@ -43,21 +44,18 @@
     try {
       detail = await api.smartScore(pid);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the score";
+      error = err instanceof Error ? err.message : t("p.prioritization.could_not_load_the_score");
     }
   }
 
   onMount(refresh);
 </script>
 
-<svelte:head><title>Prioritization — PPM</title></svelte:head>
+<svelte:head><title>{t("p.prioritization.prioritization_ppm")}</title></svelte:head>
 
-<h1>Prioritization</h1>
+<h1>{t("p.prioritization.prioritization")}</h1>
 <p class="small muted">
-  Smart Score over ROI, strategic alignment, expert review, risk, demand,
-  MoSCoW priority, and momentum. Components with no evidence are dropped
-  and the rest renormalized — <em>coverage</em> shows how much of the
-  score was actually backed by data.
+  {t("p.prioritization.smart_score_over_roi_strategic")} <em>{t("p.prioritization.coverage")}</em> {t("p.prioritization.shows_how_much_of_the")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
@@ -70,24 +68,24 @@
   }}
 >
   <label class="small">
-    band
+    {t("p.prioritization.band")}
     <select bind:value={band}>
-      <option value="">all</option>
-      <option value="high">high</option>
-      <option value="medium">medium</option>
-      <option value="low">low</option>
-      <option value="unscored">unscored</option>
+      <option value="">{t("p.prioritization.all")}</option>
+      <option value="high">{t("p.prioritization.high")}</option>
+      <option value="medium">{t("p.prioritization.medium")}</option>
+      <option value="low">{t("p.prioritization.low")}</option>
+      <option value="unscored">{t("p.prioritization.unscored")}</option>
     </select>
   </label>
-  <button class="button small primary" type="submit">Apply</button>
+  <button class="button small primary" type="submit">{t("p.prioritization.apply")}</button>
 </form>
 
 {#if view}
-  <p class="small muted">{view.plans.length} of {view.scored_of} plan(s)</p>
+  <p class="small muted">{t("p.prioritization.of_plan_s", { length: view.plans.length, scored_of: view.scored_of })}</p>
   <table>
     <thead>
       <tr>
-        <th>Plan</th><th>Score</th><th>Band</th><th>Coverage</th><th>Missing evidence</th><th></th>
+        <th>{t("p.prioritization.plan")}</th><th>{t("p.prioritization.score")}</th><th>{t("p.prioritization.band_2")}</th><th>{t("p.prioritization.coverage_2")}</th><th>{t("p.prioritization.missing_evidence")}</th><th></th>
       </tr>
     </thead>
     <tbody>
@@ -95,16 +93,16 @@
         <tr>
           <td><a href={localeHref(`/plans/${plan.pid}`)}>{plan.name}</a></td>
           <td>{plan.score === null ? "—" : plan.score.toFixed(1)}</td>
-          <td><span class={`chip ${plan.band}`}>{plan.band}</span></td>
+          <td><span class={`chip ${plan.band}`}>{enumLabel("band", plan.band)}</span></td>
           <td>{Math.round(plan.coverage * 100)}%</td>
           <td class="small muted">
             {plan.missing_evidence.length === 0
-              ? "none"
+              ? t("p.prioritization.none")
               : plan.missing_evidence.join(", ")}
           </td>
           <td>
             <button class="button small" type="button" onclick={() => toggle(plan.pid)}>
-              {expanded === plan.pid ? "Hide" : "Explain"}
+              {expanded === plan.pid ? t("p.prioritization.hide") : t("p.prioritization.explain")}
             </button>
           </td>
         </tr>
@@ -114,7 +112,7 @@
               {#if detail}
                 <table class="inner">
                   <thead>
-                    <tr><th>Component</th><th>Weight</th><th>Value</th><th>Points</th></tr>
+                    <tr><th>{t("p.prioritization.component")}</th><th>{t("p.prioritization.weight")}</th><th>{t("p.prioritization.value")}</th><th>{t("p.prioritization.points")}</th></tr>
                   </thead>
                   <tbody>
                     {#each detail.smart_score.components as component (component.name)}
@@ -129,11 +127,11 @@
                 </table>
                 {#if detail.smart_score.components.length === 0}
                   <p class="small muted">
-                    No evidence for any component — this plan is unscored.
+                    {t("p.prioritization.no_evidence_for_any_component")}
                   </p>
                 {/if}
               {:else}
-                <p class="small muted">Loading the breakdown…</p>
+                <p class="small muted">{t("p.prioritization.loading_the_breakdown")}</p>
               {/if}
             </td>
           </tr>
@@ -142,7 +140,7 @@
     </tbody>
   </table>
   {#if view.plans.length === 0}
-    <p class="small muted">No plans match that filter.</p>
+    <p class="small muted">{t("p.prioritization.no_plans_match_that_filter")}</p>
   {/if}
 {/if}
 

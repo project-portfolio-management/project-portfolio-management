@@ -6,6 +6,8 @@
   ("SS +1 business day"). The list under the picture says the same thing in words.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
+  import { businessDays } from "#lib/units.js";
   import type { CpmEdge, CpmNode } from "#lib/api/ppm.js";
   import { floatState, layoutNetwork } from "#lib/cpm-view.js";
 
@@ -60,7 +62,7 @@
 
   function label(e: CpmEdge | undefined): string {
     if (!e) return "";
-    const lag = e.lag_days === 0 ? "" : ` ${e.lag_days > 0 ? "+" : "−"}${Math.abs(e.lag_days)} business day${Math.abs(e.lag_days) === 1 ? "" : "s"}`;
+    const lag = e.lag_days === 0 ? "" : ` ${e.lag_days > 0 ? "+" : "−"}${businessDays(Math.abs(e.lag_days))}`;
     return e.kind === "fs" && lag === "" ? "" : `${e.kind.toUpperCase()}${lag}`;
   }
 
@@ -70,7 +72,7 @@
 </script>
 
 {#if nodes.length === 0}
-  <p class="muted">No scheduled tasks to draw yet.</p>
+  <p class="muted">{t("c.NetworkDiagram.no_scheduled_tasks_to_draw")}</p>
 {:else}
   <div class="net">
     <svg
@@ -78,7 +80,7 @@
       {height}
       viewBox="0 0 {width} {height}"
       role="group"
-      aria-label="Task network: boxes are tasks, arrows are dependencies"
+      aria-label={t("c.NetworkDiagram.task_network_boxes_are_tasks")}
       data-testid="network-diagram"
     >
       <defs>
@@ -107,7 +109,7 @@
             transform="translate({p.x},{p.y})"
             tabindex="0"
             role="button"
-            aria-label="{n.title ?? 'task'}, {n.early_start} to {n.early_finish}, {n.total_float} business days of float{st.key === 'critical' ? ', on the critical path' : ''}"
+            aria-label={t(st.key === "critical" ? "c.NetworkDiagram.task_summary_critical" : "c.NetworkDiagram.task_summary", { title: n.title ?? t("c.NetworkDiagram.task_fallback"), early_start: n.early_start, early_finish: n.early_finish, total_float: n.total_float })}
             onclick={() => onselect?.(n.pid)}
             onkeydown={(ev) => {
               if (ev.key === "Enter" || ev.key === " ") {
@@ -119,21 +121,21 @@
             <title>{n.title}</title>
             <rect width={W} height={H} rx="6" />
             <text x="8" y="19" class="t">{st.marker} {trim(n.title ?? "(untitled)")}</text>
-            <text x="8" y="38" class="s">{n.early_start.slice(5)} → {n.early_finish.slice(5)} · float {n.total_float}</text>
+            <text x="8" y="38" class="s">{t("c.NetworkDiagram.float", { slice: n.early_start.slice(5), slice2: n.early_finish.slice(5), total_float: n.total_float })}</text>
           </g>
         {/if}
       {/each}
     </svg>
     <details>
-      <summary>The same network as a list</summary>
+      <summary>{t("c.NetworkDiagram.the_same_network_as_a")}</summary>
       <ul class="small">
         {#each edges as e (e.pid)}
           <li>
             {byPid.get(e.predecessor_pid)?.title ?? "?"} → {byPid.get(e.successor_pid)?.title ?? "?"}
-            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : `, lag ${e.lag_days} business day${Math.abs(e.lag_days) === 1 ? "" : "s"}`})
+            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : Math.abs(e.lag_days) === 1 ? t("c.NetworkDiagram.lag_one", { lag_days: e.lag_days }) : t("c.NetworkDiagram.lag_other", { lag_days: e.lag_days })})
           </li>
         {/each}
-        {#if edges.length === 0}<li>No dependencies.</li>{/if}
+        {#if edges.length === 0}<li>{t("c.NetworkDiagram.no_dependencies")}</li>{/if}
       </ul>
     </details>
   </div>

@@ -7,6 +7,7 @@
   Read-only; selecting a row opens the schedule editor on the page.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { CpmNode } from "#lib/api/ppm.js";
   import { cpmBars } from "#lib/cpm-view.js";
 
@@ -28,12 +29,12 @@
 
 {#if chart}
   <div class="cpm-gantt" data-testid="cpm-gantt">
-    <ul class="legend small" aria-label="Legend">
-      <li><span class="mk">●</span> critical: any slip moves the finish</li>
-      <li><span class="mk">◐</span> near-critical</li>
-      <li><span class="mk">○</span> has float (the hatched tail)</li>
-      <li><span class="mk">!</span> cannot meet a constraint or deadline (the line marks the limit)</li>
-      {#if baseline.size > 0}<li><span class="mk">▭</span> the outline under a bar is where it was baselined</li>{/if}
+    <ul class="legend small" aria-label={t("c.CpmGantt.legend")}>
+      <li><span class="mk">●</span> {t("c.CpmGantt.critical_any_slip_moves_the")}</li>
+      <li><span class="mk">◐</span> {t("c.CpmGantt.near_critical")}</li>
+      <li><span class="mk">○</span> {t("c.CpmGantt.has_float_the_hatched_tail")}</li>
+      <li><span class="mk">!</span> {t("c.CpmGantt.cannot_meet_a_constraint_or")}</li>
+      {#if baseline.size > 0}<li><span class="mk">▭</span> {t("c.CpmGantt.the_outline_under_a_bar")}</li>{/if}
     </ul>
     <div class="axis" aria-hidden="true">
       <span class="name"></span>
@@ -66,10 +67,10 @@
         </li>
       {/each}
     </ol>
-    <p class="small muted">{chart.from} to {chart.to}. Float is counted in the plan's business days; bars are drawn in calendar days.</p>
+    <p class="small muted">{t("c.CpmGantt.to_float_is_counted_in", { from: chart.from, to: chart.to })}</p>
   </div>
 {:else}
-  <p class="muted">No scheduled tasks to draw yet. Give a task a duration (and a start date or a predecessor).</p>
+  <p class="muted">{t("c.CpmGantt.no_scheduled_tasks_to_draw")}</p>
 {/if}
 
 <style>

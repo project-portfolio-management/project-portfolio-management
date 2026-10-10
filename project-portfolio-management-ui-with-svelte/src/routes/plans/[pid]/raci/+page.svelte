@@ -7,7 +7,7 @@
   drop out of the matrix. Export to a spreadsheet from the link.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { API_BASE_URL } from "#lib/config.js";
@@ -31,7 +31,7 @@
       extra = extra.filter((p) => !matrix?.people.includes(p));
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load who does what";
+      error = err instanceof Error ? err.message : t("p.plans.pid.raci.could_not_load_who_does");
     }
   }
   onMount(() => void load());
@@ -45,7 +45,7 @@
       await ppm.setRaciRow(pid, taskPid, toAssignments(cells));
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not save";
+      error = err instanceof Error ? err.message : t("p.plans.pid.raci.could_not_save");
     }
   }
 
@@ -53,7 +53,7 @@
     event.preventDefault();
     const ref = newPerson.trim();
     if (!validPersonRef(ref)) {
-      error = "Use a person: or worker: reference with a UUID.";
+      error = t("p.plans.pid.raci.use_a_person_or_worker");
       return;
     }
     error = null;
@@ -62,45 +62,45 @@
   }
 </script>
 
-<svelte:head><title>RACI — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.raci.raci_ppm")}</title></svelte:head>
 
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a></p>
-<h1>Who does what (RACI matrix)</h1>
-<p class="lede">For each task: who does it, who signs it off, who is asked, and who is told.</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.raci.plan")}</a></p>
+<h1>{t("p.plans.pid.raci.who_does_what_raci_matrix")}</h1>
+<p class="lede">{t("p.plans.pid.raci.for_each_task_who_does")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if notice}<p class="banner" role="status">{notice}</p>{/if}
 
-<ul class="legend small" aria-label="Legend">
+<ul class="legend small" aria-label={t("p.plans.pid.raci.legend")}>
   {#each LETTERS as l (l)}<li><strong>{l}</strong> {LETTER_WORD[l]}: {LETTER_MEANING[l]}</li>{/each}
 </ul>
 
 {#if matrix}
   <p>
-    {matrix.summary.complete} of {matrix.summary.tasks} tasks are complete (one accountable, at least one responsible).
-    {#if matrix.summary.missing_accountable > 0}{matrix.summary.missing_accountable} have nobody accountable. {/if}
-    {#if matrix.summary.missing_responsible > 0}{matrix.summary.missing_responsible} have nobody responsible.{/if}
-    <a href={`${API_BASE_URL}/api/plans/${pid}/raci?format=csv`} download="raci.csv">Export to a spreadsheet</a>
+    {t("p.plans.pid.raci.of_tasks_are_complete_one", { complete: matrix.summary.complete, tasks: matrix.summary.tasks })}
+    {#if matrix.summary.missing_accountable > 0}{t("p.plans.pid.raci.have_nobody_accountable", { missing_accountable: matrix.summary.missing_accountable })} {/if}
+    {#if matrix.summary.missing_responsible > 0}{t("p.plans.pid.raci.have_nobody_responsible", { missing_responsible: matrix.summary.missing_responsible })}{/if}
+    <a href={`${API_BASE_URL}/api/plans/${pid}/raci?format=csv`} download="raci.csv">{t("p.plans.pid.raci.export_to_a_spreadsheet")}</a>
   </p>
 
   <form onsubmit={addPerson} class="row">
-    <label>Add a person (person:… or worker:…) <input type="text" bind:value={newPerson} size="46" /></label>
-    <button class="button primary" type="submit">Add column</button>
+    <label>{t("p.plans.pid.raci.add_a_person_person_or")} <input type="text" bind:value={newPerson} size="46" /></label>
+    <button class="button primary" type="submit">{t("p.plans.pid.raci.add_column")}</button>
   </form>
 
   {#if matrix.rows.length === 0}
-    <p class="muted">This plan has no tasks yet.</p>
+    <p class="muted">{t("p.plans.pid.raci.this_plan_has_no_tasks")}</p>
   {:else if people.length === 0}
-    <p class="muted">Add a person to start assigning letters.</p>
+    <p class="muted">{t("p.plans.pid.raci.add_a_person_to_start")}</p>
   {:else}
     <RaciMatrixTable {matrix} {people} onchange={(t, c, m) => void save(t, c, m)} />
   {/if}
 
   {#if matrix.workload.length > 0}
-    <h2>Load by person</h2>
+    <h2>{t("p.plans.pid.raci.load_by_person")}</h2>
     <table>
-      <caption class="sr-only">How many tasks each person holds each letter on</caption>
+      <caption class="sr-only">{t("p.plans.pid.raci.how_many_tasks_each_person")}</caption>
       <thead>
-        <tr><th scope="col">Person</th>{#each LETTERS as l (l)}<th scope="col">{LETTER_WORD[l]}</th>{/each}</tr>
+        <tr><th scope="col">{t("p.plans.pid.raci.person")}</th>{#each LETTERS as l (l)}<th scope="col">{LETTER_WORD[l]}</th>{/each}</tr>
       </thead>
       <tbody>
         {#each matrix.workload as w (w.person_ref)}
@@ -113,7 +113,7 @@
     </table>
   {/if}
 {:else if !error}
-  <p>Loading…</p>
+  <p>{t("p.plans.pid.raci.loading")}</p>
 {/if}
 
 <style>

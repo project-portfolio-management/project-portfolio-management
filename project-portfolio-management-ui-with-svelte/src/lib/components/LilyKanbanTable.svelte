@@ -7,6 +7,7 @@
   reports `onmove(pid, status)`, so the service stays the one writer.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import {
     KanbanTable,
     KanbanTableHead,
@@ -25,7 +26,7 @@
   let {
     cards,
     columns,
-    label = "Board",
+    label,
     onmove,
   }: {
     cards: KanbanCard[];
@@ -56,11 +57,11 @@
 
 <div class="lily-kanban" bind:this={root}>
   {#if cards.length === 0}
-    <p class="muted">No tasks yet.</p>
+    <p class="muted">{t("c.LilyKanbanTable.no_tasks_yet")}</p>
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div class="scroll" {onkeydown} role="presentation">
-      <KanbanTable {label} class="kanban-table" data-testid="lily-kanban">
+      <KanbanTable label={label ?? t("c.LilyKanbanTable.board")} class="kanban-table" data-testid="lily-kanban">
         <KanbanTableHead>
           <KanbanTableRow>
             {#each grid.columns as column (column.id)}
@@ -80,7 +81,7 @@
                   {#if card}
                     <span class="title">{card.title}</span>
                     <label class="move">
-                      <span class="sr-only">Move {card.title} to</span>
+                      <span class="sr-only">{t("c.LilyKanbanTable.move_to", { title: card.title })}</span>
                       <select
                         value={card.status}
                         onchange={(event) => onmove(card.pid, event.currentTarget.value)}
@@ -100,7 +101,7 @@
     </div>
     {#if grid.orphans.length > 0}
       <p class="muted small">
-        Unknown status:
+        {t("c.LilyKanbanTable.unknown_status")}
         {#each grid.orphans as card (card.pid)}<span class="chip">{card.title} ({card.status})</span>{/each}
       </p>
     {/if}

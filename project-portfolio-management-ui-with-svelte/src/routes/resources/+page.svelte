@@ -7,6 +7,7 @@
   sees roles and totals only. The whole of it is also available as a long table.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type ResourcePlan } from "#lib/api/ppm.js";
   import { gapCell, maxAbsGap, periodLabel } from "#lib/scheduling-view.js";
@@ -24,7 +25,7 @@
       plan = await ppm.resourcePlan({ from: from || undefined, to: to || undefined, period, group_by: groupBy });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the resource plan";
+      error = err instanceof Error ? err.message : t("p.resources.could_not_load_the_resource");
     }
   }
   onMount(() => void load());
@@ -35,51 +36,50 @@
   const maxAbs = $derived(maxAbsGap((plan?.periods ?? []).flatMap((p) => p.rows)));
 </script>
 
-<svelte:head><title>Resources — PPM</title></svelte:head>
+<svelte:head><title>{t("p.resources.resources_ppm")}</title></svelte:head>
 
-<h1>Resources</h1>
+<h1>{t("p.resources.resources")}</h1>
 <p class="small muted">
-  What the plans ask for against what the people in each role can give, in full-time equivalents.
-  Proposed bookings are kept apart and never counted.
+  {t("p.resources.what_the_plans_ask_for")}
 </p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void load(); }}>
-  <label>From <input type="date" bind:value={from} /></label>
-  <label>To <input type="date" bind:value={to} /></label>
-  <label>Per
+  <label>{t("p.resources.from")} <input type="date" bind:value={from} /></label>
+  <label>{t("p.resources.to")} <input type="date" bind:value={to} /></label>
+  <label>{t("p.resources.per")}
     <select bind:value={period}>
-      <option value="month">Month</option>
-      <option value="week">Week</option>
+      <option value="month">{t("p.resources.month")}</option>
+      <option value="week">{t("p.resources.week")}</option>
     </select>
   </label>
-  <label>By
+  <label>{t("p.resources.by")}
     <select bind:value={groupBy}>
-      <option value="role">Role</option>
-      <option value="skill">Skill (demand only)</option>
+      <option value="role">{t("p.resources.role")}</option>
+      <option value="skill">{t("p.resources.skill_demand_only")}</option>
     </select>
   </label>
-  <button class="button small" type="submit">Show</button>
+  <button class="button small" type="submit">{t("p.resources.show")}</button>
 </form>
 
 {#if plan}
   <p class="small muted">
-    {periodLabel(plan.from, plan.to)} · per {plan.period} · by {plan.group_by} · scope: {plan.scope.kind}
-    {#if plan.masked} · <strong>roles and totals only</strong>{/if}
+    {t("p.resources.per_by_scope", { periodLabel: periodLabel(plan.from, plan.to), period: plan.period, group_by: plan.group_by, kind: plan.scope.kind })}
+    {#if plan.masked} · <strong>{t("p.resources.roles_and_totals_only")}</strong>{/if}
   </p>
   {#if plan.overlapping}
-    <p class="banner" role="note">A multi-skill booking counts fully toward each of its skills, so skill rows overlap and do not add up to the total.</p>
+    <p class="banner" role="note">{t("p.resources.a_multi_skill_booking_counts")}</p>
   {/if}
 
   {#if keys.length === 0}
-    <p>No demand or supply in this window.</p>
+    <p>{t("p.resources.no_demand_or_supply_in")}</p>
   {:else}
     <table class="heat">
-      <caption>Gap per {plan.period}, in FTE (supply minus demand)</caption>
+      <caption>{t("p.resources.gap_per_in_fte_supply", { period: plan.period })}</caption>
       <thead>
         <tr>
-          <th scope="col">{plan.group_by === "role" ? "Role" : "Skill"}</th>
+          <th scope="col">{plan.group_by === "role" ? t("p.resources.role") : t("p.resources.skill")}</th>
           {#each plan.periods as p (p.from)}<th scope="col">{periodLabel(p.from, p.to)}</th>{/each}
         </tr>
       </thead>
@@ -97,17 +97,17 @@
         {/each}
       </tbody>
     </table>
-    <p class="small muted">▼ short · ▲ spare · ● balanced · ? supply not known. Shading only shows how large the gap is.</p>
+    <p class="small muted">{t("p.resources.short_spare_balanced_supply_not")}</p>
 
     <details>
-      <summary>Every figure as a table</summary>
+      <summary>{t("p.resources.every_figure_as_a_table")}</summary>
       <table>
-        <caption class="sr-only">Demand, supply and gap by period and {plan.group_by}</caption>
+        <caption class="sr-only">{t("p.resources.demand_supply_and_gap_by", { group_by: plan.group_by })}</caption>
         <thead>
           <tr>
-            <th scope="col">Period</th><th scope="col">{plan.group_by === "role" ? "Role" : "Skill"}</th>
-            <th scope="col">Demand FTE</th><th scope="col">Of which unassigned</th><th scope="col">Proposed FTE</th>
-            <th scope="col">Supply FTE</th><th scope="col">Gap FTE</th><th scope="col">People</th>
+            <th scope="col">{t("p.resources.period")}</th><th scope="col">{plan.group_by === "role" ? t("p.resources.role") : t("p.resources.skill")}</th>
+            <th scope="col">{t("p.resources.demand_fte")}</th><th scope="col">{t("p.resources.of_which_unassigned")}</th><th scope="col">{t("p.resources.proposed_fte")}</th>
+            <th scope="col">{t("p.resources.supply_fte")}</th><th scope="col">{t("p.resources.gap_fte")}</th><th scope="col">{t("p.resources.people")}</th>
           </tr>
         </thead>
         <tbody>
@@ -119,8 +119,8 @@
                 <td>{r.demand_fte}</td>
                 <td>{r.placeholder_fte}</td>
                 <td>{r.proposed_fte}</td>
-                <td>{r.supply_fte ?? "not known"}</td>
-                <td>{r.gap_fte ?? "not known"}</td>
+                <td>{r.supply_fte ?? t("p.resources.not_known")}</td>
+                <td>{r.gap_fte ?? t("p.resources.not_known")}</td>
                 <td>{plan.group_by === "role" ? r.headcount : "—"}</td>
               </tr>
             {/each}
@@ -131,16 +131,16 @@
   {/if}
 
   {#if plan.placeholders.length > 0}
-    <h2>Roles asked for with no person yet</h2>
+    <h2>{t("p.resources.roles_asked_for_with_no")}</h2>
     <ul>
       {#each plan.placeholders as ph (ph.allocation_pid)}
-        <li>{ph.role ?? "unclassified"}: {ph.percent}% {ph.start_date ? `from ${ph.start_date}` : ""} {ph.end_date ? `to ${ph.end_date}` : ""} ({ph.booking})</li>
+        <li>{ph.role ?? t("p.resources.unclassified")}: {ph.percent}% {ph.start_date ? t("p.resources.from_date", { date: ph.start_date }) : ""} {ph.end_date ? t("p.resources.to_date", { date: ph.end_date }) : ""} ({ph.booking})</li>
       {/each}
     </ul>
   {/if}
   <p class="small muted">{plan.note}</p>
 {:else if !error}
-  <p class="muted">Loading…</p>
+  <p class="muted">{t("p.resources.loading")}</p>
 {/if}
 
 <style>

@@ -1,3 +1,4 @@
+import { t } from "./i18n.svelte.js";
 // The inputs the Monte Carlo analyses read (schedule risk, cost risk, joint
 // risk): a task's optimistic / pessimistic duration, a budget line's low / high
 // cost, and a register risk's probability, schedule impact and cost impact.
@@ -94,7 +95,7 @@ export function planRiskCalls(
       probability < 0 ||
       probability > 100
     ) {
-      return { error: "The probability must be a whole number from 0 to 100." };
+      return { error: t("l.simulation_inputs.the_probability_must_be_a") };
     }
   }
 
@@ -103,7 +104,7 @@ export function planRiskCalls(
   if (hasTask !== hasDays) {
     return {
       error:
-        "Name the task and the business days it adds together, or leave both empty.",
+        t("l.simulation_inputs.name_the_task_and_the"),
     };
   }
   let days: number | null = null;
@@ -111,7 +112,7 @@ export function planRiskCalls(
     days = Number(str(form.impactDays));
     if (!Number.isInteger(days) || days < 1 || days > 365) {
       return {
-        error: "The business days a risk adds must be a whole number from 1 to 365.",
+        error: t("l.simulation_inputs.the_business_days_a_risk"),
       };
     }
   }
@@ -120,7 +121,7 @@ export function planRiskCalls(
   const hasCurrency = !blank(form.currency);
   if (hasCost !== hasCurrency) {
     return {
-      error: "Give the cost and its currency together, or leave both empty.",
+      error: t("l.simulation_inputs.give_the_cost_and_its"),
     };
   }
   let minor: number | null = null;
@@ -128,10 +129,10 @@ export function planRiskCalls(
   if (hasCost) {
     minor = toMinorStrict(form.cost);
     if (minor === null)
-      return { error: "The cost must be an amount above zero." };
+      return { error: t("l.simulation_inputs.the_cost_must_be_an") };
     currency = str(form.currency).trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(currency))
-      return { error: "The currency must be a 3-letter code such as GBP." };
+      return { error: t("l.simulation_inputs.the_currency_must_be_a") };
   }
 
   const wantsSchedule = hasTask && hasDays;
@@ -139,7 +140,7 @@ export function planRiskCalls(
   if ((wantsSchedule || wantsCost) && probability === null) {
     return {
       error:
-        "A risk that changes the schedule or the cost needs a probability.",
+        t("l.simulation_inputs.a_risk_that_changes_the"),
     };
   }
 
@@ -188,11 +189,11 @@ export function lineEstimateProblems(
   const lo = parse(lowMajor);
   const hi = parse(highMajor);
   if (lo === "bad" || hi === "bad")
-    return ["Amounts must be numbers, zero or more."];
+    return [t("l.simulation_inputs.amounts_must_be_numbers_zero")];
   if (lo !== null && lo > plannedMinor)
-    out.push("The low amount cannot be above the planned amount.");
+    out.push(t("l.simulation_inputs.the_low_amount_cannot_be"));
   if (hi !== null && hi < plannedMinor)
-    out.push("The high amount cannot be below the planned amount.");
+    out.push(t("l.simulation_inputs.the_high_amount_cannot_be"));
   return out;
 }
 
@@ -216,14 +217,14 @@ export function taskEstimateProblems(
   const o = parse(optimistic);
   const p = parse(pessimistic);
   if (o === "bad" || p === "bad")
-    return ["Business days must be whole numbers from 0 to 3650."];
+    return [t("l.simulation_inputs.business_days_must_be_whole")];
   if ((o !== null || p !== null) && likely === null) {
-    return ["Give the task a duration first: that is its likely value."];
+    return [t("l.simulation_inputs.give_the_task_a_duration")];
   }
   if (likely !== null && o !== null && o > likely)
-    out.push(`Optimistic cannot be above the likely duration (${likely}).`);
+    out.push(t("l.simulation_inputs.optimistic_cannot_be_above_the", { likely }));
   if (likely !== null && p !== null && p < likely)
-    out.push(`Pessimistic cannot be below the likely duration (${likely}).`);
+    out.push(t("l.simulation_inputs.pessimistic_cannot_be_below_the", { likely }));
   return out;
 }
 
@@ -234,8 +235,8 @@ export function rangeText(
   fmt: (m: number) => string,
 ): string {
   if (lowMinor === null && highMinor === null)
-    return "No range: the simulation uses its fallback band";
-  return `${lowMinor === null ? "planned" : fmt(lowMinor)} to ${highMinor === null ? "planned" : fmt(highMinor)}`;
+    return t("l.simulation_inputs.no_range_the_simulation_uses");
+  return t("l.simulation_inputs.to", { fmt: lowMinor === null ? t("l.simulation_inputs.planned_word") : fmt(lowMinor), fmt2: highMinor === null ? t("l.simulation_inputs.planned_word") : fmt(highMinor) });
 }
 
 /** A task's range as words. */
@@ -245,6 +246,6 @@ export function taskRangeText(
   p: number | null | undefined,
 ): string {
   if ((o ?? null) === null && (p ?? null) === null)
-    return "No range: the simulation uses its fallback band";
-  return `${o ?? likely ?? "?"} / ${likely ?? "?"} / ${p ?? likely ?? "?"} business days (optimistic / likely / pessimistic)`;
+    return t("l.simulation_inputs.no_range_the_simulation_uses");
+  return t("l.simulation_inputs.range_business_days", { optimistic: o ?? likely ?? "?", likely: likely ?? "?", pessimistic: p ?? likely ?? "?" });
 }

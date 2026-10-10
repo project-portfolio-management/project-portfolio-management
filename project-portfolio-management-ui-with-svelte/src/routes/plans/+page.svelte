@@ -72,7 +72,7 @@
   }
 </script>
 
-<svelte:head><title>{t("list.title")} — Main X</title></svelte:head>
+<svelte:head><title>{t("p.plans.main_x", { t: t("list.title") })}</title></svelte:head>
 
 <h1>{t("list.title")}</h1>
 <p><a class="button" href={localeHref("/plans/new")}>{t("list.new")}</a></p>

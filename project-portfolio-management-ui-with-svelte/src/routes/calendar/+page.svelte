@@ -53,14 +53,14 @@
   );
 </script>
 
-<svelte:head><title>{t("ppm.nav.calendar")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.calendar.ppm", { t: t("ppm.nav.calendar") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.calendar")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <p>
   <label>
-    Kind
+    {t("p.calendar.kind")}
     <select
       value={kind}
       onchange={(event) => {
@@ -68,7 +68,7 @@
         void load();
       }}
     >
-      <option value="">(all)</option>
+      <option value="">{t("p.calendar.all")}</option>
       {#each calendar?.kinds ?? [] as option (option)}
         <option value={option}>{option}</option>
       {/each}
@@ -86,10 +86,10 @@
     {#each calendar.milestones as milestone (milestone.pid)}
       <li>
         <strong>{milestone.due}</strong> — {milestone.kind}: {milestone.name}
-        <span class="muted">({milestone.item?.name ?? "—"}{milestone.done ? " · done" : ""})</span>
+        <span class="muted">({milestone.item?.name ?? "—"}{milestone.done ? t("p.calendar.done") : ""})</span>
       </li>
     {:else}
-      <li class="muted">No milestones match.</li>
+      <li class="muted">{t("p.calendar.no_milestones_match")}</li>
     {/each}
   </ul>
 {/if}

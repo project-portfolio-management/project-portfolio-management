@@ -2,11 +2,12 @@
 // Severity is a word and a shape, never colour alone.
 
 import type { Announcement, AnnouncementSeverity } from "#lib/api/ppm.js";
+import { t } from "./i18n.svelte.js";
 
 export const SEVERITY_TEXT: Record<AnnouncementSeverity, string> = {
-  info: "Info",
-  important: "Important",
-  urgent: "Urgent",
+  get info() { return t("p.announcements.info"); },
+  get important() { return t("p.announcements.important"); },
+  get urgent() { return t("p.announcements.urgent"); },
 };
 
 /** A decorative shape per severity (hide it from screen readers; the word is there). */
@@ -20,14 +21,14 @@ export const SEVERITY_SYMBOL: Record<AnnouncementSeverity, string> = {
 export function ageText(iso: string, now: Date): string {
   const ms = now.getTime() - new Date(iso).getTime();
   if (Number.isNaN(ms)) return "";
-  if (ms < 0) return "scheduled";
+  if (ms < 0) return t("l.announcement_view.scheduled");
   const minutes = Math.floor(ms / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return t("l.announcement_view.just_now");
+  if (minutes < 60) return t("l.announcement_view.min_ago", { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return t("l.announcement_view.h_ago", { hours });
   const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days} calendar days ago`;
+  return days === 1 ? t("l.announcement_view.yesterday") : t("l.announcement_view.calendar_days_ago", { days });
 }
 
 /** The first `max` characters of a body, cut at a word, with an ellipsis only if cut. */
@@ -44,6 +45,6 @@ export function stateLabel(a: Pick<Announcement, "state">): string {
   return a.state === "live"
     ? ""
     : a.state === "scheduled"
-      ? "Scheduled"
-      : "Expired";
+      ? t("l.announcement_view.scheduled")
+      : t("l.announcement_view.expired");
 }

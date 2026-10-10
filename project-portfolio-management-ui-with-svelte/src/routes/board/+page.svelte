@@ -55,39 +55,39 @@
   };
 </script>
 
-<svelte:head><title>{t("ppm.nav.board")} — PPM</title></svelte:head>
+<svelte:head><title>{t("p.board.ppm", { t: t("ppm.nav.board") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.board")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if pack}
-  <h2>Board pack</h2>
-  <p class="muted">window {pack.window.from} → {pack.window.to}</p>
+  <h2>{t("p.board.board_pack")}</h2>
+  <p class="muted">{t("p.board.window", { from: pack.window.from, to: pack.window.to })}</p>
   <section class="tiles" data-testid="board-tiles">
-    <div class="tile"><strong>{pack.health_now.portfolios["red"] ?? 0}</strong><span>red portfolios</span></div>
-    <div class="tile"><strong>{pack.health_now.portfolios["amber"] ?? 0}</strong><span>amber</span></div>
-    <div class="tile"><strong>{pack.health_now.portfolios["green"] ?? 0}</strong><span>green</span></div>
-    <div class="tile"><strong>{pack.milestones_completed}</strong><span>milestones completed</span></div>
-    <div class="tile"><strong>{pack.tranches_released.count}</strong><span>tranches released</span></div>
-    <div class="tile"><strong>{pack.benefits_realized.events}</strong><span>benefit realizations</span></div>
+    <div class="tile"><strong>{pack.health_now.portfolios["red"] ?? 0}</strong><span>{t("p.board.red_portfolios")}</span></div>
+    <div class="tile"><strong>{pack.health_now.portfolios["amber"] ?? 0}</strong><span>{t("p.board.amber")}</span></div>
+    <div class="tile"><strong>{pack.health_now.portfolios["green"] ?? 0}</strong><span>{t("p.board.green")}</span></div>
+    <div class="tile"><strong>{pack.milestones_completed}</strong><span>{t("p.board.milestones_completed")}</span></div>
+    <div class="tile"><strong>{pack.tranches_released.count}</strong><span>{t("p.board.tranches_released")}</span></div>
+    <div class="tile"><strong>{pack.benefits_realized.events}</strong><span>{t("p.board.benefit_realizations")}</span></div>
   </section>
   <p class="muted">{pack.health_now.note}</p>
 
   {#if Object.keys(pack.benefits_realized.per_currency_minor).length > 0}
     <p data-testid="board-realized">
-      Realized in window:
+      {t("p.board.realized_in_window")}
       {#each Object.entries(pack.benefits_realized.per_currency_minor) as [currency, minor] (currency)}
         <strong>{money(minor, currency)}</strong>&nbsp;
       {/each}
       {#if pack.benefits_realized.unattributed_events > 0}
-        <span class="muted">({pack.benefits_realized.unattributed_events} unattributed events)</span>
+        <span class="muted">{t("p.board.unattributed_events", { unattributed_events: pack.benefits_realized.unattributed_events })}</span>
       {/if}
     </p>
   {/if}
 
-  <h3>Decisions in window</h3>
+  <h3>{t("p.board.decisions_in_window")}</h3>
   <table data-testid="board-decisions">
-    <thead><tr><th>When</th><th>Kind</th><th>Decision</th><th>Subject</th></tr></thead>
+    <thead><tr><th>{t("p.board.when")}</th><th>{t("p.board.kind")}</th><th>{t("p.board.decision")}</th><th>{t("p.board.subject")}</th></tr></thead>
     <tbody>
       {#each pack.decisions as entry (entry.kind + entry.at + entry.subject.pid)}
         <tr>
@@ -97,16 +97,16 @@
           <td>{entry.subject.name ?? entry.subject.pid}</td>
         </tr>
       {:else}
-        <tr><td colspan="4" class="muted">No decisions in the window.</td></tr>
+        <tr><td colspan="4" class="muted">{t("p.board.no_decisions_in_the_window")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 {#if investments}
-  <h2>Investment decisions</h2>
+  <h2>{t("p.board.investment_decisions")}</h2>
   <table data-testid="board-investments">
-    <thead><tr><th>When</th><th>Kind</th><th>What</th><th>Amount</th></tr></thead>
+    <thead><tr><th>{t("p.board.when")}</th><th>{t("p.board.kind")}</th><th>{t("p.board.what")}</th><th>{t("p.board.amount")}</th></tr></thead>
     <tbody>
       {#each investments as entry (entry.kind + entry.at + label(entry))}
         <tr>
@@ -116,18 +116,18 @@
           <td>{amount(entry)}</td>
         </tr>
       {:else}
-        <tr><td colspan="4" class="muted">No investment decisions recorded.</td></tr>
+        <tr><td colspan="4" class="muted">{t("p.board.no_investment_decisions_recorded")}</td></tr>
       {/each}
     </tbody>
   </table>
 {/if}
 
 {#if trends}
-  <h2>Trends</h2>
+  <h2>{t("p.board.trends")}</h2>
   <p class="muted">{trends.note}</p>
-  <p><button onclick={() => void snapshot()}>Take snapshot now</button></p>
+  <p><button onclick={() => void snapshot()}>{t("p.board.take_snapshot_now")}</button></p>
   <table data-testid="board-trends">
-    <thead><tr><th>Taken</th><th>Work items</th><th>Portfolios</th><th>Open exposure</th></tr></thead>
+    <thead><tr><th>{t("p.board.taken")}</th><th>{t("p.board.work_items")}</th><th>{t("p.board.portfolios")}</th><th>{t("p.board.open_exposure")}</th></tr></thead>
     <tbody>
       {#each trends.series as row (row.taken_at)}
         <tr>
@@ -137,7 +137,7 @@
           <td>{String(row.body["open_exposure"] ?? "—")}</td>
         </tr>
       {:else}
-        <tr><td colspan="4" class="muted">No snapshots captured yet.</td></tr>
+        <tr><td colspan="4" class="muted">{t("p.board.no_snapshots_captured_yet")}</td></tr>
       {/each}
     </tbody>
   </table>

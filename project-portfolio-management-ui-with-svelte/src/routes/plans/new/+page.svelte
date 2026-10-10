@@ -20,7 +20,7 @@
   }
 </script>
 
-<svelte:head><title>{t("new.title")} — Main X</title></svelte:head>
+<svelte:head><title>{t("p.plans.new.main_x", { t: t("new.title") })}</title></svelte:head>
 
 <h1>{t("new.title")}</h1>
 <PlanForm {initial} submitLabel={t("new.create")} onsubmit={handleSubmit} />

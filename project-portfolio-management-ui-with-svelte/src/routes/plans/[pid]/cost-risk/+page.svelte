@@ -4,7 +4,7 @@
   `CostRiskView` for what it shows and what it does not claim.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type CostRisk } from "#lib/api/ppm.js";
@@ -26,7 +26,7 @@
       result = await ppm.costRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not run the simulation";
+      error = err instanceof Error ? err.message : t("p.plans.pid.cost_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }
@@ -34,25 +34,25 @@
   onMount(() => void run());
 </script>
 
-<svelte:head><title>Cost risk — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.cost_risk.cost_risk_ppm")}</title></svelte:head>
 
-<h1>Cost risk</h1>
-<p class="lede">Many what-if runs of the budget show the range of final costs and how likely each one is.</p>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/joint-risk`)}>Cost and schedule together</a> · <a href={localeHref("/cost-risk")}>Whole portfolio</a></p>
+<h1>{t("p.plans.pid.cost_risk.cost_risk")}</h1>
+<p class="lede">{t("p.plans.pid.cost_risk.many_what_if_runs_of")}</p>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.cost_risk.plan")}</a> · <a href={localeHref(`/plans/${pid}/joint-risk`)}>{t("p.plans.pid.cost_risk.cost_and_schedule_together")}</a> · <a href={localeHref("/cost-risk")}>{t("p.plans.pid.cost_risk.whole_portfolio")}</a></p>
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void run(); }}>
-  <label>Iterations <input type="number" min="1" max="50000" step="1" bind:value={iterations} /></label>
-  <label>Seed <input type="number" min="0" step="1" bind:value={seed} /></label>
-  <label>Distribution
-    <select bind:value={distribution}><option value="triangular">Triangular</option><option value="pert">PERT</option></select>
+  <label>{t("p.plans.pid.cost_risk.iterations")} <input type="number" min="1" max="50000" step="1" bind:value={iterations} /></label>
+  <label>{t("p.plans.pid.cost_risk.seed")} <input type="number" min="0" step="1" bind:value={seed} /></label>
+  <label>{t("p.plans.pid.cost_risk.distribution")}
+    <select bind:value={distribution}><option value="triangular">{t("p.plans.pid.cost_risk.triangular")}</option><option value="pert">{t("p.plans.pid.cost_risk.pert")}</option></select>
   </label>
-  <label>Band for lines with no estimate (± %) <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
-  <button class="button small primary" type="submit" disabled={busy}>{busy ? "Running…" : "Run"}</button>
+  <label>{t("p.plans.pid.cost_risk.band_for_lines_with_no")} <input type="number" min="0" max="100" step="1" bind:value={band} /></label>
+  <button class="button small primary" type="submit" disabled={busy}>{busy ? t("p.plans.pid.cost_risk.running") : t("p.plans.pid.cost_risk.run")}</button>
 </form>
 
-{#if result}<CostRiskView {result} />{:else if !error}<p class="muted">Running…</p>{/if}
+{#if result}<CostRiskView {result} />{:else if !error}<p class="muted">{t("p.plans.pid.cost_risk.running")}</p>{/if}
 
 <style>
   .filter {

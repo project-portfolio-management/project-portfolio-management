@@ -6,6 +6,7 @@
   leave it out; what the form would send is decided by `planRiskCalls`.
 -->
 <script lang="ts">
+  import { t } from "#lib/i18n.svelte.js";
   import type { PpmClient, Risk, Task } from "#lib/api/ppm.js";
   import { formFrom, planRiskCalls, type RiskInputsForm } from "#lib/simulation-inputs.js";
 
@@ -47,7 +48,7 @@
     try {
       tasks = (await ppm.listTasks(pid)).tasks;
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not load the plan's tasks");
+      onerror(err instanceof Error ? err.message : t("c.RiskInputs.could_not_load_the_plan"));
     }
   }
 
@@ -67,7 +68,7 @@
       if (plan.cost) await ppm.setRiskCostImpact(pid, risk.pid, plan.cost);
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : "Could not save");
+      onerror(err instanceof Error ? err.message : t("c.RiskInputs.could_not_save"));
     } finally {
       saving = false;
     }
@@ -75,30 +76,30 @@
 
   const summary = $derived.by(() => {
     const parts: string[] = [];
-    if (current.probability_percent !== null) parts.push(`${current.probability_percent}% chance`);
-    if (current.task_pid && current.schedule_impact_days) parts.push(`adds ${current.schedule_impact_days} business days to a task`);
-    if (current.cost_impact_minor !== null) parts.push(`adds ${(current.cost_impact_minor / 100).toFixed(2)} ${current.cost_currency}`);
-    return parts.length === 0 ? "Not used in the simulations" : parts.join(" · ");
+    if (current.probability_percent !== null) parts.push(t("c.RiskInputs.chance", { probability_percent: current.probability_percent }));
+    if (current.task_pid && current.schedule_impact_days) parts.push(t("c.RiskInputs.adds_business_days_to_a", { schedule_impact_days: current.schedule_impact_days }));
+    if (current.cost_impact_minor !== null) parts.push(t("c.RiskInputs.adds", { toFixed: (current.cost_impact_minor / 100).toFixed(2), cost_currency: current.cost_currency }));
+    return parts.length === 0 ? t("c.RiskInputs.not_used_in_the_simulations") : parts.join(" · ");
   });
 </script>
 
 <details class="risk-inputs" ontoggle={open}>
-  <summary class="small">Simulation inputs <span class="muted">— {summary}</span></summary>
+  <summary class="small">{t("c.RiskInputs.simulation_inputs")} <span class="muted">— {summary}</span></summary>
   <form class="inline" onsubmit={save}>
-    <label>Probability (%) <input type="number" min="0" max="100" step="1" bind:value={form.probability} /></label>
-    <label>Delays task
+    <label>{t("c.RiskInputs.probability")} <input type="number" min="0" max="100" step="1" bind:value={form.probability} /></label>
+    <label>{t("c.RiskInputs.delays_task")}
       <select bind:value={form.taskPid}>
-        <option value="">None</option>
+        <option value="">{t("c.RiskInputs.none")}</option>
         {#each tasks ?? [] as t (t.pid)}<option value={t.pid}>{t.title}</option>{/each}
       </select>
     </label>
-    <label>by (business days) <input type="number" min="1" max="365" step="1" bind:value={form.impactDays} /></label>
-    <label>Adds cost <input type="number" min="0" step="0.01" bind:value={form.cost} /></label>
-    <label>Currency <input type="text" maxlength="3" size="4" bind:value={form.currency} placeholder="GBP" /></label>
-    <button class="button small" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+    <label>{t("c.RiskInputs.by_business_days")} <input type="number" min="1" max="365" step="1" bind:value={form.impactDays} /></label>
+    <label>{t("c.RiskInputs.adds_cost")} <input type="number" min="0" step="0.01" bind:value={form.cost} /></label>
+    <label>{t("c.RiskInputs.currency")} <input type="text" maxlength="3" size="4" bind:value={form.currency} placeholder={t("c.RiskInputs.gbp")} /></label>
+    <button class="button small" type="submit" disabled={saving}>{saving ? t("c.RiskInputs.saving") : t("c.RiskInputs.save")}</button>
   </form>
   {#if problem}<p class="banner" role="alert">{problem}</p>{/if}
-  <p class="small muted">One probability covers both effects: a risk that delays a task and adds cost strikes once and does both. Leave a part empty to leave it out.</p>
+  <p class="small muted">{t("c.RiskInputs.one_probability_covers_both_effects")}</p>
 </details>
 
 <style>

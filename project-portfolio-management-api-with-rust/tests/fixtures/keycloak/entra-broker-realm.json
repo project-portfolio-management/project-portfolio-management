@@ -1,0 +1,97 @@
+{
+  "realm": "mxi-entra",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      {
+        "name": "editor"
+      },
+      {
+        "name": "root"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "mxi-api",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost/callback"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "mxi-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mxi-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "entra",
+      "displayName": "Microsoft Entra ID (test double)",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "authorizationUrl": "__IDP_AUTHORIZE__",
+        "tokenUrl": "__IDP_TOKEN__",
+        "jwksUrl": "__IDP_JWKS__",
+        "issuer": "__IDP_ISSUER__",
+        "clientId": "mock-client-id",
+        "clientSecret": "mock-secret",
+        "clientAuthMethod": "client_secret_post",
+        "validateSignature": "true",
+        "useJwksUrl": "true",
+        "pkceEnabled": "true",
+        "pkceMethod": "S256",
+        "defaultScope": "openid profile email",
+        "disableUserInfo": "true",
+        "syncMode": "FORCE",
+        "backchannelSupported": "false"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "entra-editor-role",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-role-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claim": "roles",
+        "claim.value": "Portfolio.Editor",
+        "role": "editor"
+      }
+    },
+    {
+      "name": "entra-admin-role",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-role-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claim": "roles",
+        "claim.value": "Portfolio.Admin",
+        "role": "root"
+      }
+    }
+  ]
+}

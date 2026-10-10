@@ -7,7 +7,7 @@
   may manage people.
 -->
 <script lang="ts">
-  import { localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -57,7 +57,7 @@
       edges = c.edges;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : "Could not load the plan";
+      error = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_load_the_plan");
     }
   }
   onMount(load);
@@ -70,12 +70,12 @@
       return;
     }
     if (edits.length >= MAX_EDITS) {
-      status = `At most ${MAX_EDITS} edits at a time.`;
+      status = t("p.plans.pid.what_if.at_most_edits_at_a", { MAX_EDITS });
       return;
     }
     edits = [...edits, edit];
     preview = null; // a preview describes the edits it was made from
-    status = "Edit staged. Preview to see what it does.";
+    status = t("p.plans.pid.what_if.edit_staged_preview_to_see");
   }
   function unstage(i: number) {
     edits = edits.filter((_, j) => j !== i);
@@ -84,7 +84,7 @@
   function discard() {
     edits = [];
     preview = null;
-    status = "Discarded. Nothing was changed.";
+    status = t("p.plans.pid.what_if.discarded_nothing_was_changed");
   }
   async function run() {
     busy = true;
@@ -93,7 +93,7 @@
       status = "";
     } catch (err) {
       preview = null;
-      status = err instanceof Error ? err.message : "Could not preview";
+      status = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_preview");
     } finally {
       busy = false;
     }
@@ -103,7 +103,7 @@
     busy = true;
     try {
       const r = await ppm.sandboxCommit(pid, edits, preview.plan_etag, reason);
-      status = `Committed: ${r.audit_entries} change${r.audit_entries === 1 ? "" : "s"} recorded.`;
+      status = t(r.audit_entries === 1 ? "p.plans.pid.what_if.committed_one" : "p.plans.pid.what_if.committed_other", { count: r.audit_entries });
       edits = [];
       preview = null;
       reason = "";
@@ -111,117 +111,117 @@
     } catch (err) {
       if (err instanceof ApiError && isStale(err.status)) {
         preview = null;
-        status = "The plan changed since this preview, so nothing was applied. Preview again, then commit.";
+        status = t("p.plans.pid.what_if.the_plan_changed_since_this");
         await load();
-      } else status = err instanceof Error ? err.message : "Could not commit";
+      } else status = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_commit");
     } finally {
       busy = false;
     }
   }
   const dates = (d: { early_start: string; early_finish: string; total_float: number; critical: boolean } | null) =>
-    d ? `${d.early_start} to ${d.early_finish}` : "not scheduled";
+    d ? t("p.plans.pid.what_if.to", { early_start: d.early_start, early_finish: d.early_finish }) : t("p.plans.pid.what_if.not_scheduled");
 </script>
 
-<svelte:head><title>What-if — PPM</title></svelte:head>
+<svelte:head><title>{t("p.plans.pid.what_if.what_if_ppm")}</title></svelte:head>
 
-<h1>What-if</h1>
-<p class="small"><a href={localeHref(`/plans/${pid}`)}>← Plan</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>Critical path</a></p>
+<h1>{t("p.plans.pid.what_if.what_if")}</h1>
+<p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.what_if.plan")}</a> · <a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.plans.pid.what_if.critical_path")}</a></p>
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
-<p class="muted small">Try changes on a copy. Nothing is saved until you commit.</p>
+<p class="muted small">{t("p.plans.pid.what_if.try_changes_on_a_copy")}</p>
 
 <form class="surface stack" onsubmit={stage} aria-labelledby="stage-h">
-  <h2 id="stage-h">Stage an edit</h2>
+  <h2 id="stage-h">{t("p.plans.pid.what_if.stage_an_edit")}</h2>
   <label>
-    Edit
+    {t("p.plans.pid.what_if.edit")}
     <select bind:value={form.kind}>
       {#each Object.entries(EDIT_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
     </select>
   </label>
   {#if form.kind === "add_link"}
-    <label>Predecessor
-      <select bind:value={form.from}><option value="">Choose…</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
+    <label>{t("p.plans.pid.what_if.predecessor")}
+      <select bind:value={form.from}><option value="">{t("p.plans.pid.what_if.choose")}</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
     </label>
-    <label>Successor
-      <select bind:value={form.to}><option value="">Choose…</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
+    <label>{t("p.plans.pid.what_if.successor")}
+      <select bind:value={form.to}><option value="">{t("p.plans.pid.what_if.choose")}</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
     </label>
-    <label>Type
+    <label>{t("p.plans.pid.what_if.type")}
       <select bind:value={form.linkKind}>
-        <option value="fs">Finish to start</option><option value="ss">Start to start</option>
-        <option value="ff">Finish to finish</option><option value="sf">Start to finish</option>
+        <option value="fs">{t("p.plans.pid.what_if.finish_to_start")}</option><option value="ss">{t("p.plans.pid.what_if.start_to_start")}</option>
+        <option value="ff">{t("p.plans.pid.what_if.finish_to_finish")}</option><option value="sf">{t("p.plans.pid.what_if.start_to_finish")}</option>
       </select>
     </label>
-    <label>Lag (business days) <input type="number" step="1" bind:value={form.lag} /></label>
+    <label>{t("p.plans.pid.what_if.lag_business_days")} <input type="number" step="1" bind:value={form.lag} /></label>
   {:else if form.kind === "remove_link"}
-    <label>Link
+    <label>{t("p.plans.pid.what_if.link")}
       <select bind:value={form.link}>
-        <option value="">Choose…</option>
-        {#each edges as l (l.pid)}<option value={l.pid}>{name(l.successor_pid)} follows {name(l.predecessor_pid)} ({l.kind.toUpperCase()})</option>{/each}
+        <option value="">{t("p.plans.pid.what_if.choose")}</option>
+        {#each edges as l (l.pid)}<option value={l.pid}>{t("p.plans.pid.what_if.follows", { name: name(l.successor_pid), name2: name(l.predecessor_pid), toUpperCase: l.kind.toUpperCase() })}</option>{/each}
       </select>
     </label>
   {:else}
-    <label>Task
-      <select bind:value={form.task}><option value="">Choose…</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
+    <label>{t("p.plans.pid.what_if.task")}
+      <select bind:value={form.task}><option value="">{t("p.plans.pid.what_if.choose")}</option>{#each nodes as n (n.pid)}<option value={n.pid}>{n.title ?? n.pid}</option>{/each}</select>
     </label>
     {#if form.kind === "move"}
-      <label>New start <input type="date" bind:value={form.start} /></label>
+      <label>{t("p.plans.pid.what_if.new_start")} <input type="date" bind:value={form.start} /></label>
     {:else if form.kind === "duration"}
-      <label>Business days <input type="number" min="0" max="3650" step="1" bind:value={form.days} /></label>
+      <label>{t("p.plans.pid.what_if.business_days")} <input type="number" min="0" max="3650" step="1" bind:value={form.days} /></label>
     {:else}
-      <label>Constraint
+      <label>{t("p.plans.pid.what_if.constraint")}
         <select bind:value={form.constraint}>
-          <option value="">None (clear it)</option>
+          <option value="">{t("p.plans.pid.what_if.none_clear_it")}</option>
           {#each Object.entries(CONSTRAINTS) as [k, v]}<option value={k}>{v}</option>{/each}
         </select>
       </label>
       {#if form.constraint}
-        <label>Date <input type="date" bind:value={form.constraintDate} /></label>
+        <label>{t("p.plans.pid.what_if.date")} <input type="date" bind:value={form.constraintDate} /></label>
         {#if form.constraint === "mso" || form.constraint === "mfo"}
-          <label>Reason <input bind:value={form.reason} /></label>
+          <label>{t("p.plans.pid.what_if.reason")} <input bind:value={form.reason} /></label>
         {/if}
       {/if}
     {/if}
   {/if}
-  <button class="button" type="submit">Stage edit</button>
+  <button class="button" type="submit">{t("p.plans.pid.what_if.stage_edit")}</button>
 </form>
 {#if status}<p role="status" class="small">{status}</p>{/if}
 
-<h2>Staged edits</h2>
+<h2>{t("p.plans.pid.what_if.staged_edits")}</h2>
 {#if edits.length === 0}
-  <p class="muted">None yet.</p>
+  <p class="muted">{t("p.plans.pid.what_if.none_yet")}</p>
 {:else}
   <ol data-testid="staged">
     {#each edits as e, i}
       <li>
         {describeEdit(e, name)}
-        <button class="button" type="button" onclick={() => unstage(i)} aria-label={`Remove edit ${i + 1}`}>Remove</button>
+        <button class="button" type="button" onclick={() => unstage(i)} aria-label={t("p.plans.pid.what_if.remove_edit", { n: i + 1 })}>{t("p.plans.pid.what_if.remove")}</button>
       </li>
     {/each}
   </ol>
   <div class="row">
-    <button class="button" class:primary={!preview} type="button" onclick={run} disabled={busy}>Preview</button>
-    <button class="button" type="button" onclick={discard} disabled={busy}>Discard</button>
+    <button class="button" class:primary={!preview} type="button" onclick={run} disabled={busy}>{t("p.plans.pid.what_if.preview")}</button>
+    <button class="button" type="button" onclick={discard} disabled={busy}>{t("p.plans.pid.what_if.discard")}</button>
   </div>
 {/if}
 
 {#if preview}
   <section class="surface stack" aria-labelledby="pv-h" data-testid="preview">
-    <h2 id="pv-h">Preview</h2>
+    <h2 id="pv-h">{t("p.plans.pid.what_if.preview")}</h2>
     <p>{finishText(preview)}</p>
     {#if preview.tasks.length === 0}
-      <p class="muted">No task's dates or float change.</p>
+      <p class="muted">{t("p.plans.pid.what_if.no_task_s_dates_or")}</p>
     {:else}
       <table>
-        <caption class="small muted">Tasks whose dates, float or critical status change</caption>
-        <thead><tr><th scope="col">Task</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Float</th></tr></thead>
+        <caption class="small muted">{t("p.plans.pid.what_if.tasks_whose_dates_float_or")}</caption>
+        <thead><tr><th scope="col">{t("p.plans.pid.what_if.task")}</th><th scope="col">{t("p.plans.pid.what_if.before")}</th><th scope="col">{t("p.plans.pid.what_if.after")}</th><th scope="col">{t("p.plans.pid.what_if.float")}</th></tr></thead>
         <tbody>
-          {#each preview.tasks as t (t.pid)}
+          {#each preview.tasks as row (row.pid)}
             <tr>
-              <th scope="row">{t.title}{#if t.assignee} <span class="muted small">({t.assignee})</span>{/if}</th>
-              <td>{dates(t.before)}</td>
-              <td>{dates(t.after)}</td>
+              <th scope="row">{row.title}{#if row.assignee} <span class="muted small">({row.assignee})</span>{/if}</th>
+              <td>{dates(row.before)}</td>
+              <td>{dates(row.after)}</td>
               <td>
-                {t.before?.total_float ?? "–"} → {t.after?.total_float ?? "–"}
-                {#if t.after?.critical}<span class="small"> ■ critical</span>{/if}
+                {row.before?.total_float ?? "–"} → {row.after?.total_float ?? "–"}
+                {#if row.after?.critical}<span class="small"> {t("p.plans.pid.what_if.critical")}</span>{/if}
               </td>
             </tr>
           {/each}
@@ -230,27 +230,27 @@
     {/if}
     {#if preview.critical_path.added.length || preview.critical_path.removed.length}
       <p class="small">
-        {#if preview.critical_path.added.length}Joins the critical path: {preview.critical_path.added.map(name).join(", ")}. {/if}
-        {#if preview.critical_path.removed.length}Leaves it: {preview.critical_path.removed.map(name).join(", ")}.{/if}
+        {#if preview.critical_path.added.length}{t("p.plans.pid.what_if.joins_the_critical_path", { join: preview.critical_path.added.map(name).join(", ") })} {/if}
+        {#if preview.critical_path.removed.length}{t("p.plans.pid.what_if.leaves_it", { join: preview.critical_path.removed.map(name).join(", ") })}{/if}
       </p>
     {/if}
     {#each preview.assignments_recomputed as r}
-      <p class="small">“{name(r.task_pid)}” now takes {r.units_percent}% of the day for {hoursText(r.work_minutes)} of work (worked out from its scheduling rule).</p>
+      <p class="small">{t("p.plans.pid.what_if.now_takes_of_the_day", { name: name(r.task_pid), units_percent: r.units_percent, hoursText: hoursText(r.work_minutes) })}</p>
     {/each}
     {#if preview.cost_impact.available}
       {#each preview.cost_impact.labour as c}
-        <p>Planned labour cost: {deltaText(c.delta_minor, c.currency)} ({deltaText(c.before_minor, c.currency)} → {deltaText(c.after_minor, c.currency)}).</p>
+        <p>{t("p.plans.pid.what_if.planned_labour_cost", { deltaText: deltaText(c.delta_minor, c.currency), deltaText2: deltaText(c.before_minor, c.currency), deltaText3: deltaText(c.after_minor, c.currency) })}</p>
       {/each}
       {#if preview.cost_impact.unrated_minutes_after}
-        <p class="small">▲ {hoursText(preview.cost_impact.unrated_minutes_after)} of work has no rate, so it is not costed.</p>
+        <p class="small">{t("p.plans.pid.what_if.of_work_has_no_rate", { hoursText: hoursText(preview.cost_impact.unrated_minutes_after) })}</p>
       {/if}
     {:else}
       <p class="small muted">{costReasonText(preview.cost_impact)}</p>
     {/if}
-    <label>Reason (recorded with each change) <input bind:value={reason} maxlength="500" /></label>
+    <label>{t("p.plans.pid.what_if.reason_recorded_with_each_change")} <input bind:value={reason} maxlength="500" /></label>
     <div class="row">
-      <button class="button primary" type="button" onclick={commit} disabled={busy}>Commit these changes</button>
-      <button class="button" type="button" onclick={discard} disabled={busy}>Discard</button>
+      <button class="button primary" type="button" onclick={commit} disabled={busy}>{t("p.plans.pid.what_if.commit_these_changes")}</button>
+      <button class="button" type="button" onclick={discard} disabled={busy}>{t("p.plans.pid.what_if.discard")}</button>
     </div>
   </section>
 {/if}

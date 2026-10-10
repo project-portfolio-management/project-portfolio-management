@@ -36,6 +36,7 @@ pub mod cost_rates;
 pub mod custom_field_defs;
 pub mod custom_field_values;
 pub mod devops_events;
+pub mod director_packs;
 pub mod document_versions;
 pub mod earned_value_settings;
 pub mod earned_value_snapshots;

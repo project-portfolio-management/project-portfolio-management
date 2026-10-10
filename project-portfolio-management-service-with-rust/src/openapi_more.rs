@@ -112,6 +112,7 @@ pub fn paths() -> Value {
     merge(&mut all, handling_marks_paths());
     merge(&mut all, change_request_paths());
     merge(&mut all, director_summary_paths());
+    merge(&mut all, director_pack_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -874,6 +875,34 @@ fn baseline_paths() -> Value {
 }
 
 /// Change requests (IR-4, IR-5).
+fn director_pack_paths() -> Value {
+    json!({
+        "/api/director-packs": {
+            "get": op("director-pack", "List director packs",
+                "The packs you may read, newest period first, without their bodies. An audience reader (token attribute pack_audience) sees issued packs of their audiences only; people who draft see drafts too. The list is stored records, not a derived figure.",
+                vec![], &[("200", "packs: pid, period, audience, version, status, cut_off, change_note, supersedes_pid, issued_at, issued_by")]),
+            "post": op("director-pack", "Draft a director pack",
+                "Computes the pack once, over live plans that are neither private nor carrying a handling mark, and stores the text. Body: period (YYYY-MM), audience (executive, board, escalation_board or partner), optional cut_off (not future, at most 400 days old). Needs access=admin or directorpack=editor or issuer. One pack per period and audience: a second is 409, saying whether to issue the draft or reissue the issued pack.",
+                vec![], &[("201", "The draft's metadata"), ("403", "Not allowed to draft"), ("409", "That period and audience already has a pack"), ("422", "Bad period, audience or cut_off")])
+        },
+        "/api/director-packs/{pid}": {
+            "get": op("director-pack", "Read a director pack",
+                "The metadata and the stored body. For an issued pack the body is the exact text stored at drafting, byte-identical on every read and after any later change to the data; it lists the plans counted and left out and the sections that are not built yet. Stored text, not recomputed. A pack you may not read is 404.",
+                vec![uuid_param("pid")], &[("200", "pack (metadata) and body"), ("404", "No such pack, or not one you may read")])
+        },
+        "/api/director-packs/{pid}/issue": {
+            "post": op("director-pack", "Issue a director pack",
+                "Freezes a draft; afterwards the database refuses any change or deletion. Needs access=admin or directorpack=issuer. Issuing twice is 409. Audited.",
+                vec![uuid_param("pid")], &[("200", "The issued pack's metadata"), ("403", "Not allowed to issue"), ("409", "Already issued")])
+        },
+        "/api/director-packs/{pid}/reissue": {
+            "post": op("director-pack", "Reissue a director pack",
+                "Drafts the next version of an issued pack with a change note of at least 10 characters; the earlier version stays readable and unchanged and the new one links to it. Only the latest version can be reissued. Needs access=admin or directorpack=editor or issuer.",
+                vec![uuid_param("pid")], &[("201", "The new draft's metadata"), ("403", "Not allowed"), ("409", "Not issued, or not the latest version"), ("422", "Note too short")])
+        }
+    })
+}
+
 fn director_summary_paths() -> Value {
     json!({
         "/api/director-pack/issues-and-changes": {

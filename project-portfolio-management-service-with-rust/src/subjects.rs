@@ -91,6 +91,8 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("value_points", "actor"),
     ("watchers", "sub"),
     ("plan_handling_marks", "set_by"),
+    ("director_packs", "drafted_by"),
+    ("director_packs", "issued_by"),
     ("change_requests", "requested_by"),
     ("change_requests", "approver_ref"),
     ("change_requests", "decided_by"),

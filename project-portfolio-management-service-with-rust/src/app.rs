@@ -216,6 +216,7 @@ impl Hooks for App {
             .add_route(controllers::handling_marks::routes())
             .add_route(controllers::change_requests::routes())
             .add_route(controllers::director_summary::routes())
+            .add_route(controllers::director_packs::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())
             .add_route(controllers::handover::routes())

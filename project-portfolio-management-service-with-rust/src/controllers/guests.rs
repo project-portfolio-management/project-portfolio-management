@@ -106,6 +106,13 @@ pub async fn guest_mw(State(ctx): State<AppContext>, req: Request, next: Next) -
     let Ok(claims) = crate::auth::request_claims(req.headers()).await else {
         return next.run(req).await;
     };
+    // A confined pack reader (the partner case, DP-1) sees the director packs and nothing live.
+    if crate::director_pack::is_confined(&roles_of(&claims)) {
+        if crate::director_pack::confined_allows(req.method().as_str(), req.uri().path()) {
+            return next.run(req).await;
+        }
+        return not_found();
+    }
     if !rules::is_guest(&roles_of(&claims)) {
         return next.run(req).await;
     }

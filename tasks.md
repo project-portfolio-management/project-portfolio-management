@@ -875,7 +875,7 @@ with **the previous issued pack**; absent data is **"not assessed" / null with
 a reason, never green or zero**; money is per currency, never summed across;
 **no person-level data** in the pack; colour is never alone.
 
-- [ ] **DP-1 (L) — Issued pack: frozen, versioned, per audience.**
+- [x] **DP-1 (L) — Issued pack: frozen, versioned, per audience.**
   Draft a pack for a month (`POST /api/director-packs` with `period`, cut-off
   time); every view below is computed once into the pack's stored JSON; a
   person **issues** it (ABAC `director_pack:issue`), after which it is
@@ -891,6 +891,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   pack; the pack body contains no person ref and no cost rate (a test scans
   it); every draft, issue and reissue is audited.
 
+  **Built 2026-10-10, with a body that holds only the sections that exist.** `POST/GET /api/director-packs`, `GET /{pid}`, `POST /{pid}/issue`, `POST /{pid}/reissue`; migration 55. The body is computed once at drafting and stored as exact text; a database trigger refuses any change to, or deletion of, an issued pack (the single exception is a data-subject pseudonymisation blanking `drafted_by`/`issued_by`, with the body proven unchanged). One pack per period and audience (409 otherwise); issuing twice is 409; a reissue needs a note of at least 10 characters, keeps v1 readable and links v1 to v2, and only the latest version can be reissued. Drafting needs `access=admin` or `directorpack=editor|issuer`, issuing needs `access=admin` or `directorpack=issuer`; readers hold `pack_audience=<audience>`; a `role=pack_reader` caller (the partner case) is confined by the guest guard to `GET /api/director-packs…`, every live route answering 404 (or 403 where the policy refuses first). The pack counts only plans that are neither private nor carrying a handling mark and says how many were left out. Cover: pack id, version, period, cut-off, what changed against the previous issued pack for the audience (counts, in words), and a data-quality panel that lists the sections not yet built. Tests: rules, and a real-token end-to-end (who drafts and issues, audience reading, confinement, private plan's issue not counted, no person ref or cost rate, byte-identical after data changes and across versions, audit trail, eight database refusals). **Not done, stated:** the body has only issues and change requests (DP-2 to DP-10 add their sections); the cut-off limits records by date but statuses are those at drafting (there is no status history); the data-quality panel is the small one above, not EX-1; no notification on issue (DP-12); no screen; no discard of a draft; audience subscribers and a per-audience content difference do not exist (every audience gets the same body).
 - [ ] **DP-2 (M) — Delivery confidence: stored, dated, beside the derived RAG.**
   `PUT /api/plans/{pid}/delivery-confidence` with a value on a five-point scale
   (`green`, `amber_green`, `amber`, `amber_red`, `red`; scale configurable,

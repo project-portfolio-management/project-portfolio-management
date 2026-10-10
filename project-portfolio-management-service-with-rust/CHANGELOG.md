@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the monthly director pack, first version (DP-1, 2026-10-10)
+
+`/api/director-packs`: drafted once into stored text, issued by a person, then frozen by the database; reissue with a change note; read by audience; a confined partner reader sees only the packs. Holds issues and change requests so far and lists the sections not yet built. Migration 55.
+
 ### Added — response cache for the critical path (2026-10-10)
 
 `src/response_cache.rs`: entries keyed by caller and a write epoch that any successful non-read request replaces, 30-second lifetime as a backstop; the privacy gates run before it. Used for `GET /api/plans/{pid}/cpm` on plans of up to 5,000 tasks. `config/test.yaml` now has an in-memory cache so the tests exercise it.

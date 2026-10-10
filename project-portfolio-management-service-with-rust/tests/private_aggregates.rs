@@ -176,6 +176,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/director-packs",
+        "the list of stored packs (metadata only); each pack is computed once, at drafting, over plans that are neither private nor marked, and read by audience (tests/director_packs.rs)",
+    ),
+    (
         "/api/handling-marks",
         "the deployment's configured scheme of marks (a list of words); no plan data",
     ),

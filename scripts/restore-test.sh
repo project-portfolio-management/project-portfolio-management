@@ -45,7 +45,7 @@ fail() { echo "RESTORE TEST FAILED: $*" >&2; exit 1; }
 
 echo "1/5 backing up the source ..."
 out="$("$HERE/backup.sh" -o "$WORK/backups" | tail -1)"
-[ -f "$out/db.dump" ] || fail "no db.dump produced"
+[ -f "$out/db.dump" ] || [ -f "$out/db.dump.gpg" ] || fail "no db.dump produced"
 
 echo "2/5 restoring into scratch database $scratch ..."
 $PSQL "$base/postgres" -qc "create database \"$scratch\"" || fail "cannot create the scratch database"

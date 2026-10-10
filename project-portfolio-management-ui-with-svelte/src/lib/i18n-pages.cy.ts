@@ -2427,4 +2427,5 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.issue_kind.question": "cwestiwn",
   "l.enum.issue_kind.improvement": "gwelliant",
   "l.enum.issue_kind.concern": "pryder",
+  "p.signin.oidc_idle": "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
 };

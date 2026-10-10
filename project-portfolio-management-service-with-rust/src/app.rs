@@ -340,6 +340,7 @@ impl Hooks for App {
     #[allow(unused_variables)]
     fn register_tasks(tasks: &mut Tasks) {
         tasks.register(crate::tasks::search::SearchReindex);
+        tasks.register(crate::tasks::retention_purge::RetentionPurge);
         // tasks-inject (do not remove)
     }
     async fn truncate(ctx: &AppContext) -> Result<()> {

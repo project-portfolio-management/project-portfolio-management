@@ -66,6 +66,8 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Events | `EVENT_TRANSPORT` (`memory`), `EVENT_RELAY`, `EVENT_RETENTION_DAYS` (7 calendar days) | the durable outbox relay is opt-in |
 | Mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` | for notifications |
 | Telemetry | `OTLP_ENDPOINT`, `OTLP_SERVICE_NAME`, `RUST_LOG` | **`OTLP_ENDPOINT` unset means export ON to `http://localhost:4317`**; set it to the empty string to disable, or to your collector |
+| Outbound targets | `OUTBOUND_STRICT` | off. `on` applies the same rule user-supplied notification destinations already get (`https`, a public address, no credentials, no `.internal` names) to the **operator-configured** webhook and worker URLs. Leave it off if those legitimately point at internal services |
+| Retention | `cargo loco task retention_purge` | a dry run unless `apply:true`; schedule it daily after reading the dry run. Covers read notifications, delivery logs and trend snapshots; see the [retention schedule](../governance/retention-schedule.md) |
 | Background loops | `SCHEDULER_MINUTES`, `SNAPSHOT_HOURS`, `FLOW_METRICS_SECS`, `SINKS_TICK_SECS` | each is off unless set (sinks tick on by default; `0` turns it off) |
 
 `docker compose run --rm api /app/project-portfolio-management-service doctor --config`

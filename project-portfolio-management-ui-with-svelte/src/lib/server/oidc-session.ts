@@ -58,6 +58,8 @@ export interface OidcSession {
   accessExpiresAt: number;
   /** The session's hard end, in ms since the epoch. */
   expiresAt: number;
+  /** When the session was last used, in ms since the epoch (for the idle timeout). */
+  lastSeenAt: number;
   user: { sub: string; name: string; email?: string; roles: string[] };
 }
 
@@ -69,11 +71,27 @@ export function displayName(c: IdTokenClaims): string {
 export class OidcStore {
   private sessions = new Map<string, OidcSession>();
   private transactions = new Map<string, LoginTransaction>();
+  /** Sessions that ended because they sat idle (remembered briefly, to tell the person why). */
+  private idleEnded = new Set<string>();
+  private idleMs: number;
 
   constructor(
     private readonly now: () => number = Date.now,
     private readonly maxEntries = 10_000,
-  ) {}
+    idleSeconds = 0,
+  ) {
+    this.idleMs = idleSeconds * 1000;
+  }
+
+  /** Sign a session out after this many idle seconds; `0` turns the idle timeout off (RG-2). */
+  setIdleSeconds(seconds: number): void {
+    this.idleMs = Math.max(0, seconds) * 1000;
+  }
+
+  /** Whether this session id ended because it was idle; asking forgets it. */
+  endedIdle(id: string | null | undefined): boolean {
+    return id ? this.idleEnded.delete(id) : false;
+  }
 
   private sweep(): void {
     const t = this.now();
@@ -116,6 +134,7 @@ export class OidcStore {
       idToken: p.idToken,
       accessExpiresAt: t + (p.expiresInSeconds ?? 300) * 1000,
       expiresAt: t + p.sessionSeconds * 1000,
+      lastSeenAt: t,
       user: {
         sub: p.claims.sub,
         name: displayName(p.claims),
@@ -133,10 +152,18 @@ export class OidcStore {
     if (!id) return null;
     const s = this.sessions.get(id);
     if (!s) return null;
-    if (s.expiresAt <= this.now()) {
+    const t = this.now();
+    if (s.expiresAt <= t) {
       this.sessions.delete(id);
       return null;
     }
+    if (this.idleMs > 0 && t - s.lastSeenAt >= this.idleMs) {
+      this.sessions.delete(id);
+      this.idleEnded.add(id);
+      while (this.idleEnded.size > 1000) this.idleEnded.delete(this.idleEnded.values().next().value as string);
+      return null;
+    }
+    s.lastSeenAt = t;
     return s;
   }
 

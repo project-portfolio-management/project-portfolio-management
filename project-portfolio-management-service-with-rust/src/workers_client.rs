@@ -114,8 +114,11 @@ fn worker_pid_of(person_ref: &str) -> Option<Uuid> {
 }
 
 async fn fetch(base_url: &str, worker_pid: Uuid) -> Result<Vec<String>, String> {
-    if !crate::webhooks::url_is_permitted(base_url) {
-        return Err("worker service URL is not https:// (or http:// on loopback)".to_string());
+    if !crate::webhooks::target_allowed(base_url, crate::webhooks::outbound_strict()) {
+        return Err(
+            "worker service URL is not https:// (or http:// on loopback), or is not a public address in strict mode"
+                .to_string(),
+        );
     }
     let url = format!(
         "{}/api/workers/{worker_pid}/skills",

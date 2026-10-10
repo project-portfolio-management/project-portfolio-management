@@ -23,7 +23,22 @@ ARTIFACT_DIR=/var/lib/ppm/artifacts \
 ```
 
 A failed backup removes its partial directory. Copy the directory **off the
-machine** (object storage, another site) and keep it encrypted; the dump
+machine** (object storage, another site) and keep it encrypted. The script can
+do the encrypting (needs `gpg`):
+
+```sh
+# a passphrase kept in a file (mode 0600) OUTSIDE the backup location ...
+BACKUP_PASSPHRASE_FILE=/etc/ppm/backup.pass scripts/backup.sh -o /backups
+# ... or a public key, so the machine that makes backups cannot read them back
+BACKUP_GPG_RECIPIENT=backups@example.org scripts/backup.sh -o /backups
+# -> db.dump.gpg, artifacts.tar.gz.gpg, MANIFEST (readable), SHA256SUMS (over the encrypted files)
+```
+
+`scripts/restore.sh` decrypts into a private temporary directory that is removed
+on exit (set `BACKUP_PASSPHRASE_FILE`, or have the private key in the gpg
+keyring); a wrong key stops before the database is touched, and a changed file
+fails the checksum before any decryption. **Losing the key or passphrase loses
+the backup.** The restore drill also runs encrypted in CI. The dump
 contains personal data (see the [retention schedule](../governance/retention-schedule.md)).
 
 ### With the Compose deployment

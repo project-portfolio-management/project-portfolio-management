@@ -1421,6 +1421,83 @@ requirement NFR-20).
   maintainer should read `AI_STATEMENT.md`, `SECURITY.md` and `GOVERNANCE.md`
   before relying on them: they make commitments in the maintainer's name.
 
+## Readiness for major medical and governmental organizations (RG-n)
+
+Requested 2026-10-10. Verdict and evidence in [plan.md §58–§63](plan.md): **not
+ready for unsupervised production use; ready for a controlled pilot on
+non-clinical data**. These items close the technical findings. Doctrine: state
+what was **not** tested; claim no certification.
+
+- [x] **RG-1 (S) — Strict mode for operator-configured outbound targets.**
+  User-supplied destinations are already guarded (`sinks::destination_url_ok`).
+  Add `PROJECT_PORTFOLIO_MANAGEMENT_OUTBOUND_STRICT=on`, which applies the same
+  public-address rule to operator-configured webhook and worker targets (default
+  off, because internal targets are a legitimate operator choice; stated in the
+  deployment guide). **Acceptance:** unit tests with strict on and off for a
+  public host, a private literal, the metadata address and a `.internal` name;
+  the existing sink tests still pass.
+  **Built 2026-10-10.** `PROJECT_PORTFOLIO_MANAGEMENT_OUTBOUND_STRICT`, `webhooks::target_allowed`, used for webhook and worker targets; unit-tested. **Correction to the first assessment:** user-supplied destinations were already fully guarded; only operator targets lacked a strict mode. **Not tested:** a live request to a metadata address.
+- [x] **RG-2 (S) — Idle session timeout.** OIDC sessions end after a period of
+  inactivity (default 30 minutes, configurable) as well as at the absolute limit.
+  **Acceptance:** unit test with an injected clock; the sign-in page says the
+  session ended because of inactivity; operations guide updated.
+  **Built 2026-10-10.** `OIDC_IDLE_MINUTES` (default 30, `0` off); sliding, capped by the hard limit; a page request after idle lands on the sign-in page with a sentence (`?error=oidc_idle`, catalogue key with Welsh draft). Four unit tests with an injected clock. **Not tested:** the redirect end to end in a browser (it needs the clock to move).
+- [x] **RG-3 (M) — Audit trail protected in the database.** A trigger refuses
+  `UPDATE` on `audit_logs` and refuses `DELETE` unless the retention task has set
+  a transaction-local flag. **Acceptance:** request test that an update and a
+  delete are refused; the guarantee and its limit (a database superuser can
+  disable a trigger) are stated in the DPIA and the data-protection documents.
+  **Built 2026-10-10.** Migration 51: trigger refusing `UPDATE` (unless `ppm.audit_pseudonymise` is set, reserved for RG-6) and `DELETE` (unless `ppm.retention_purge` is set, used by the purge). Request test shows update and delete refused, flagged delete allowed in one transaction, flag not leaking. **Limit, stated:** a database administrator can drop the trigger; `TRUNCATE` is not blocked; there is still no hash chain.
+- [x] **RG-4 (L) — Retention purge task.** `cargo loco task retention_purge`:
+  per class from the retention schedule, **dry run by default**, prints counts per
+  table, deletes only with `apply:true`, writes an audit row per table purged, never
+  touches a class marked "No" for deletion. **Acceptance:** DB test that an old
+  read notification, a delivered outbox row and an expired export are purged and
+  a recent one is kept; dry run changes nothing; the DTAC and DPIA "no purge"
+  statements are corrected. **Not in scope:** purging plans, tasks or documents
+  (the buyer decides).
+  **Built 2026-10-10, partly.** `cargo loco task retention_purge` (`src/retention.rs`): dry run unless `apply:true`; read notifications 90 calendar days, webhook log 30, notification delivery log 30, trend and adoption snapshots 3 years; periods overridable; one audit row per table. Unit and request tests. **Not covered, deliberately:** plans, tasks, time, documents, the audit trail, bulk-job rows and files (the buyer decides; each needs its own rule). The DPIA, DTAC and schedule are corrected.
+- [x] **RG-5 (S) — Encrypted backups.** `scripts/backup.sh` encrypts the archive
+  when `BACKUP_ENCRYPTION_RECIPIENT` (an `age` recipient) or
+  `BACKUP_ENCRYPTION_PASSPHRASE_FILE` is set; `restore.sh` decrypts; the checksum
+  manifest covers the encrypted file. **Acceptance:** a round trip in the restore
+  test with encryption on; a wrong key fails with a clear message.
+  **Built 2026-10-10.** `BACKUP_PASSPHRASE_FILE` or `BACKUP_GPG_RECIPIENT` in `scripts/backup.sh` (gpg); `restore.sh` decrypts into a private temporary directory. Verified by hand with a PostgreSQL 18 server: plain and passphrase drills pass, a wrong passphrase stops before the database is touched, a changed file fails the checksum, both options set is refused; CI runs the encrypted drill too (**not run on GitHub**). **Not tested:** the public-key mode.
+- [ ] **RG-6 (L) — Data-subject requests.** Export everything held about a person
+  reference (`GET /api/admin/subjects/{ref}`), and pseudonymise it across the
+  schema (replace the reference with a stable pseudonym, keep audit rows).
+  **Acceptance:** a person who appears in tasks, risks, time entries and audit
+  rows is exported completely and pseudonymised completely, pinned by a test that
+  walks `governance/personal-data-inventory.csv`.
+- [ ] **RG-7 (M) — Handling marks.** A configurable marking scheme (for example
+  OFFICIAL, OFFICIAL-SENSITIVE; or Public, Internal, Confidential) on plans and
+  controlled documents, shown on every page and in every export, with an ABAC
+  rule by clearance attribute. **Acceptance:** an unmarked export is impossible
+  when a scheme is configured; a caller without clearance gets 404.
+- [ ] **RG-8 (M) — Attachment safety.** Content-type allow-list by sniffing,
+  size limit, and an optional scan hook (ClamAV over a socket) that quarantines.
+  **Acceptance:** a renamed executable is refused; a scan failure quarantines.
+- [ ] **RG-9 (M) — Access review.** A report of who holds what access, when it
+  was last used and who granted it, exportable as CSV for recertification.
+- [ ] **RG-10 (M) — Break-glass access.** Time-limited elevated access with a
+  required reason, a second-person notification and a loud audit entry.
+- [ ] **RG-11 (M) — Load and soak test.** A repeatable script and published
+  results (latency percentiles, error rate, database size sweep) in
+  `BENCHMARKS.md`. **Acceptance:** results recorded with date, machine, command.
+- [ ] **RG-12 (S) — Shared session store.** An optional Redis- or
+  PostgreSQL-backed store for OIDC sessions, so several front-end replicas need
+  no sticky sessions.
+- [x] **RG-13 (outside the software) — Assurance checklist.** Penetration test,
+  manual assistive-technology audit, clinical safety review (if clinical content
+  is ever in scope), disaster-recovery exercise, DPO sign-off, supplier
+  assurance. **Acceptance:** `governance/assurance-checklist.md` lists each, who
+  owns it, what evidence an assessor will ask for and what the project can supply.
+  **Built 2026-10-10 (the checklist only).** `governance/assurance-checklist.md` lists 14 assurance items with owner, what the project supplies, and state; every item is **open**. The software cannot do these.
+- [x] **RG-14 (S) — Readiness document and corrected claims.**
+  `governance/production-readiness.md` (the verdict, honestly) and DTAC/DPIA rows
+  brought into line with the code. **Acceptance:** link checker passes; no row
+  claims a control that the code lacks.
+
 ## Not taken (director pack, escalation, production readiness)
 
 A P3M3 maturity score; an AI register; a live finance-ledger connector;
@@ -1443,6 +1520,7 @@ multi-project pipelining, once listed here, are now taken as CC-n.)
   person's undo of their *own* action is a POST. The older `DELETE /api/saved-views/{pid}` had the same flaw and
   now has the twin `/api/saved-views/{pid}/delete`.
 
+  **Built 2026-10-10.** `governance/production-readiness.md`; DTAC, DPIA and retention rows corrected.
 - [x] **RM-8b (L) — Keep private plans out of the aggregate views.** **Landed 2026-10-06.** One shared query — `plan_access::HiddenScope::of(ctx, caller)` (the private plans the caller is not in, and the tasks inside them) — and every aggregate loads through `scope.keep(rows)` / `keep_edges` (a lookup failure is an error, never an empty scope). Routed through it: at-a-glance, capacity, capacity utilization, executive health / alignment / benefits / decisions, financials variance / exposure / forecast, lifecycle funnel, prioritization and Smart Score, proposals forecast, risk heatmap, security and compliance registers and findings, auditor findings, regulator extract, controls coverage, technology debt / flow / radar / dependency risk, engineering blocked / delivery links / milestone calendar / MoSCoW, DevOps metrics and releases, assignee workload, time reports, saved reports (and scheduled ones, which run as an anonymous reader), the plan roadmap and subtree rollups, scenarios (list, evaluate, compare, create: a member list never names a plan the caller cannot see), the proposal that became a hidden plan, and the audit / event / merge feeds. **Acceptance, as tested** (`tests/private_aggregates.rs`, real tokens, a private plan carrying data of every kind at twice the public plan's size): for a non-member every one of ~55 aggregate routes is **byte-identical before and after the private plan appears** (clocks scrubbed), a member's equal an admin's (except where a person's detail is masked), the private plan really does change the admin's totals, a route that names its plan in the query (`?plan=`) is 404 for a non-member, a scenario naming the private plan evaluates for a non-member as if it did not, and **a test enumerates the mounted GET routes: each parameterless one must be in the compared list, the privileged list or an allowlist with a reason, so a new aggregate cannot skip the decision**. The test found **sixteen** leaking routes before the fix. **Deviations, stated plainly:** the admin-only bulk reads (board pack, investments, auditor trail, evidence pack) stay full by design (403 to everyone else); **board trends is now an admin-only read** because its stored snapshots are totals recorded over every plan and cannot be filtered after the fact; the audit and event feeds filter by what each row is about and by plan ids named in it, so an entry that names a hidden plan only in free text is not caught; the test proves the routes it seeds data for — a field no seed exercises is not proven; contention and ordering are untested; `time-reports`' `omitted` count no longer counts private plans' rows (it counted them before). RM-8
   hides a private plan's *records* but cross-plan aggregates (at-a-glance,
   executive, board, financials, reports, capacity, scenarios, TBA rollups, the

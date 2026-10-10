@@ -44,7 +44,9 @@
 {/if}
 {#if oidcError}
     <p class="banner" role="alert" data-testid="oidc-error">
-        {oidcError === "oidc_denied"
+        {oidcError === "oidc_idle"
+            ? t("p.signin.oidc_idle")
+            : oidcError === "oidc_denied"
             ? t("signin.oidcDenied")
             : oidcError === "oidc_unavailable"
               ? t("signin.oidcUnavailable")

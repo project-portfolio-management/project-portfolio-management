@@ -322,3 +322,48 @@ describe("accessTokenFor", () => {
     expect(s.get(failing.id)).toBeNull();
   });
 });
+
+describe("the idle timeout (RG-2)", () => {
+  const claims = { iss: "i", sub: "s", aud: "a", exp: 9e9, name: "Ada" } as never;
+  const make = (idleSeconds: number) => {
+    let now = 1_000_000;
+    const store = new OidcStore(() => now, 100, idleSeconds);
+    const s = store.createSession({ accessToken: "at", sessionSeconds: 8 * 3600, claims });
+    return { store, s, advance: (seconds: number) => (now += seconds * 1000) };
+  };
+
+  it("ends a session that sat idle, and says it was the idle timeout once", () => {
+    const { store, s, advance } = make(1800);
+    advance(1799);
+    expect(store.get(s.id)).not.toBeNull();
+    advance(1800);
+    expect(store.get(s.id)).toBeNull();
+    expect(store.endedIdle(s.id)).toBe(true);
+    expect(store.endedIdle(s.id)).toBe(false);
+  });
+
+  it("is sliding: each use pushes the idle end back", () => {
+    const { store, s, advance } = make(1800);
+    for (let i = 0; i < 10; i++) {
+      advance(1000);
+      expect(store.get(s.id)).not.toBeNull();
+    }
+  });
+
+  it("does not outlast the hard limit however busy the person is", () => {
+    const { store, s, advance } = make(1800);
+    for (let i = 0; i < 40; i++) {
+      advance(1000);
+      store.get(s.id);
+    }
+    advance(8 * 3600);
+    expect(store.get(s.id)).toBeNull();
+    expect(store.endedIdle(s.id)).toBe(false);
+  });
+
+  it("is off when set to zero", () => {
+    const { store, s, advance } = make(0);
+    advance(7 * 3600);
+    expect(store.get(s.id)).not.toBeNull();
+  });
+});

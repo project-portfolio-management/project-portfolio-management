@@ -116,6 +116,7 @@ stays enforced; a service with enforcement on and no verifier refuses to start.
 | `OIDC_CLIENT_ID` | `mxi-web` |
 | `OIDC_IDP_HINT` | `entra` (skips Keycloak's own chooser and goes straight to Entra) |
 | `OIDC_SESSION_HOURS` | `8` (hard limit; the access token is refreshed inside it) |
+| `OIDC_IDLE_MINUTES` | `30`: sign out after this long without a request (sliding); `0` turns it off. The person lands on the sign-in page with a sentence saying why |
 | `OIDC_END_SESSION` | `true` to also end the Keycloak session on sign-out (register the post-logout address in Keycloak first) |
 | `OIDC_REDIRECT_URI` | only if the public address differs from what the server sees behind a proxy |
 

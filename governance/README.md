@@ -14,6 +14,8 @@ decisions that belong to the buyer clearly marked.
 | [Personal-data inventory](personal-data-inventory.csv) | Every column that can hold personal data, with class, purpose and retention class (kept true to the schema by a test) |
 | [Accessibility statement](accessibility-statement.md) | WCAG 2.2 AA: what is tested, what is not, known gaps, how to ask |
 | [Language statement](language-statement.md) | Which languages the interface is available in and how complete each is |
+| [Production readiness](production-readiness.md) | An honest assessment of readiness for major medical and governmental organizations: what is strong, what is not ready |
+| [Assurance checklist](assurance-checklist.md) | What an assessor will ask for, who owns each item, and what the project can supply |
 | [DTAC checklist](dtac-checklist.md) | Answers to the Digital Technology Assessment Criteria, section by section, with the evidence |
 | [Welsh translation review record](welsh-translation-review.md) | Where the translator's review of the Welsh text is recorded |
 

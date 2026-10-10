@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — controls for regulated buyers (RG-1 to RG-5, 2026-10-10)
+
+Strict outbound mode for operator-configured webhook and worker targets (`OUTBOUND_STRICT`); a database trigger that refuses `UPDATE` and `DELETE` of audit rows outside the retention task (migration 51); `cargo loco task retention_purge` (dry run by default; read notifications, delivery logs, trend snapshots). Backup scripts can encrypt with gpg. See `governance/production-readiness.md`.
+
 ### Added — raise an issue from a risk or a blocked task (IR-3, 2026-10-10)
 
 `POST /api/plans/{pid}/issues/from-risk/{risk_pid}` (kind risk, severity from exposure: 20 or more critical, 12 high, 6 med, else low; owner and text copied) and `POST …/issues/from-task/{task_pid}` (blocked tasks only; kind blocker, owner is the assignee). The source is never changed; one open issue per source, `409` otherwise.

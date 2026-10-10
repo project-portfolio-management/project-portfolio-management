@@ -39,13 +39,17 @@ export function oidcOptions(): {
   redirectUri?: string;
   /** Hard session length in seconds (default 8 hours). */
   sessionSeconds: number;
+  /** Sign out after this many seconds without a request; 0 turns it off (default 30 minutes). */
+  idleSeconds: number;
   /** Also end the provider's session on sign-out (RP-initiated logout). */
   endProviderSession: boolean;
 } {
+  const idleMinutes = Number.parseFloat(env.OIDC_IDLE_MINUTES ?? "");
   const hours = Number.parseFloat(env.OIDC_SESSION_HOURS ?? "");
   return {
     redirectUri: (env.OIDC_REDIRECT_URI ?? "").trim() || undefined,
     sessionSeconds: Math.round((Number.isFinite(hours) && hours > 0 ? hours : 8) * 3600),
+    idleSeconds: Math.round((Number.isFinite(idleMinutes) && idleMinutes >= 0 ? idleMinutes : 30) * 60),
     endProviderSession: (env.OIDC_END_SESSION ?? "").trim() === "true",
   };
 }

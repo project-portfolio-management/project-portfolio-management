@@ -22,6 +22,15 @@
 #                       a store that is not a host directory (compose: a named volume):
 #                         ARTIFACT_TAR_CMD="docker compose exec -T api tar -C /app/data/artifacts -cz ."
 #
+# Encryption (optional, RG-5): the database dump and the artifact archive hold personal data, so
+# encrypt a backup that leaves the machine. Set ONE of
+#   BACKUP_PASSPHRASE_FILE   a file holding a passphrase (mode 0600); symmetric AES-256
+#   BACKUP_GPG_RECIPIENT     a public key id/email in the gpg keyring; only its private key restores
+# and the files become db.dump.gpg / artifacts.tar.gz.gpg; SHA256SUMS covers the encrypted files, so
+# tampering is caught before decryption. MANIFEST stays readable (table names and row counts only).
+# The service-side search index is not backed up. Needs gpg. Keep the key or passphrase OUTSIDE the
+# backup location: a backup you cannot decrypt is not a backup.
+#
 # A backup is only as good as its last restore: run scripts/restore-test.sh on a
 # schedule (the CI job `restore` does) and scripts/check-backup-age.sh in monitoring.
 set -eu
@@ -38,6 +47,33 @@ done
 PG_DUMP="${PG_DUMP:-pg_dump}"
 PSQL="${PSQL:-psql}"
 ARTIFACT_DIR="${ARTIFACT_DIR:-${PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR:-}}"
+
+PASSPHRASE_FILE="${BACKUP_PASSPHRASE_FILE:-}"
+GPG_RECIPIENT="${BACKUP_GPG_RECIPIENT:-}"
+ENCRYPTION="none"
+if [ -n "$PASSPHRASE_FILE" ] && [ -n "$GPG_RECIPIENT" ]; then
+  echo "backup: set BACKUP_PASSPHRASE_FILE or BACKUP_GPG_RECIPIENT, not both" >&2; exit 2
+fi
+if [ -n "$PASSPHRASE_FILE" ]; then
+  [ -s "$PASSPHRASE_FILE" ] || { echo "backup: $PASSPHRASE_FILE is missing or empty" >&2; exit 2; }
+  ENCRYPTION="gpg-symmetric-aes256"
+elif [ -n "$GPG_RECIPIENT" ]; then
+  ENCRYPTION="gpg-public-key"
+fi
+if [ "$ENCRYPTION" != none ]; then
+  command -v gpg >/dev/null 2>&1 || { echo "backup: encryption needs gpg, which is not installed" >&2; exit 2; }
+fi
+# encrypt FILE -> FILE.gpg, removing the plain file; no-op when encryption is off.
+encrypt() {
+  [ "$ENCRYPTION" = none ] && return 0
+  if [ -n "$PASSPHRASE_FILE" ]; then
+    gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-file "$PASSPHRASE_FILE" \
+      --symmetric --cipher-algo AES256 -o "$1.gpg" "$1"
+  else
+    gpg --batch --yes --quiet --trust-model always --encrypt --recipient "$GPG_RECIPIENT" -o "$1.gpg" "$1"
+  fi
+  rm -f "$1"
+}
 
 sha256() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
 
@@ -64,7 +100,11 @@ elif [ -n "$ARTIFACT_DIR" ]; then
   ARTIFACT_NOTE="skipped ($ARTIFACT_DIR does not exist)"
 fi
 
+encrypt "$OUT/db.dump"
+[ -f "$OUT/artifacts.tar.gz" ] && encrypt "$OUT/artifacts.tar.gz"
+
 {
+  echo "encryption=$ENCRYPTION"
   echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "created_epoch=$(date -u +%s)"
   echo "server_version=$($PSQL "$DATABASE_URL" -Atc 'show server_version' 2>/dev/null || echo unknown)"
@@ -79,7 +119,8 @@ fi
       done
 } > "$OUT/MANIFEST"
 
-( cd "$OUT" && sha256 db.dump MANIFEST $( [ -f artifacts.tar.gz ] && echo artifacts.tar.gz ) > SHA256SUMS )
+SUFFIX=""; [ "$ENCRYPTION" != none ] && SUFFIX=".gpg"
+( cd "$OUT" && sha256 "db.dump$SUFFIX" MANIFEST $( [ -f "artifacts.tar.gz$SUFFIX" ] && echo "artifacts.tar.gz$SUFFIX" ) > SHA256SUMS )
 trap - EXIT
 echo "backup complete: $OUT"
 echo "$OUT"

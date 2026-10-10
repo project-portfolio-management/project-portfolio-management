@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 10 October
 
+- **Readiness for major medical and governmental organizations:** an honest
+  assessment ([`governance/production-readiness.md`](governance/production-readiness.md):
+  not ready for unsupervised production, ready for a controlled pilot); an idle
+  session timeout, a database-protected audit trail, a retention purge task,
+  encrypted backups and a strict mode for operator-configured outbound targets;
+  an assurance checklist of what only the deployer can do.
+
 - **Issues register** (IR-1, IR-2): issues under a plan and across plans, with
   age in calendar days and an overdue flag; an `/issues` page. Change requests
   are specified (FR-14a) and planned, not built.

@@ -162,6 +162,26 @@ pub fn url_is_permitted(url: &str) -> bool {
     }
 }
 
+/// The environment variable that turns on strict outbound targets (RG-1).
+pub const OUTBOUND_STRICT_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_OUTBOUND_STRICT";
+
+/// Whether strict outbound mode is on (`on`, `true` or `1`).
+#[must_use]
+pub fn outbound_strict() -> bool {
+    std::env::var(OUTBOUND_STRICT_ENV)
+        .is_ok_and(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "on" | "true" | "1"))
+}
+
+/// Whether an **operator-configured** target may be called. Always the
+/// [`url_is_permitted`] rule; in `strict` mode also the stricter rule user-supplied
+/// destinations already get ([`crate::sinks::destination_url_ok`]: `https` only, a
+/// public address, no credentials, no `.internal` names). Pure, so it is unit-tested
+/// without touching the environment.
+#[must_use]
+pub fn target_allowed(url: &str, strict: bool) -> bool {
+    url_is_permitted(url) && (!strict || crate::sinks::destination_url_ok(url, false))
+}
+
 /// Parse a raw `PROJECT_PORTFOLIO_MANAGEMENT_WEBHOOKS[_FILE]` JSON value
 /// into usable targets: malformed JSON becomes an empty list (logged,
 /// never a panic or a propagated error — an optional feature's config
@@ -187,14 +207,16 @@ pub fn parse_targets(raw: &str) -> Vec<WebhookTarget> {
             return Vec::new();
         }
     };
+    let strict = outbound_strict();
     parsed
         .into_iter()
         .filter(|t| {
-            let ok = url_is_permitted(&t.url);
+            let ok = target_allowed(&t.url, strict);
             if !ok {
                 tracing::warn!(
                     url = %t.url,
-                    "webhook target is not https:// (or http:// on loopback); dropped"
+                    strict,
+                    "webhook target is not https:// (or http:// on loopback), or is not a public address in strict mode; dropped"
                 );
             }
             ok
@@ -432,7 +454,31 @@ impl EventSink for WebhookSink {
 
 #[cfg(test)]
 mod tests {
-    use super::{WebhookTarget, parse_targets, should_retry_status, url_is_permitted};
+    #[test]
+    fn strict_mode_refuses_private_metadata_and_internal_targets() {
+        // Off: the operator's own choice stands.
+        assert!(target_allowed("https://10.0.0.5/hook", false));
+        assert!(target_allowed("https://169.254.169.254/latest", false));
+        assert!(target_allowed("https://billing.internal/hook", false));
+        // On: public only.
+        assert!(target_allowed("https://ops.example.com/hook", true));
+        assert!(!target_allowed("https://10.0.0.5/hook", true));
+        assert!(!target_allowed("https://192.168.1.9/hook", true));
+        assert!(!target_allowed("https://169.254.169.254/latest", true));
+        assert!(!target_allowed("https://[fd00::1]/hook", true));
+        assert!(!target_allowed("https://billing.internal/hook", true));
+        assert!(!target_allowed(
+            "https://user:pw@ops.example.com/hook",
+            true
+        ));
+        // Loopback over http stays a development convenience only when strict is off.
+        assert!(target_allowed("http://127.0.0.1:8080/hook", false));
+        assert!(!target_allowed("http://127.0.0.1:8080/hook", true));
+    }
+
+    use super::{
+        WebhookTarget, parse_targets, should_retry_status, target_allowed, url_is_permitted,
+    };
 
     #[test]
     fn https_to_any_host_is_permitted() {

@@ -127,6 +127,7 @@ pub mod raci;
 pub mod rate_limit;
 pub mod relay;
 pub mod report_schedules;
+pub mod retention;
 pub mod sandbox;
 pub mod saved_views;
 pub mod schedule_health;

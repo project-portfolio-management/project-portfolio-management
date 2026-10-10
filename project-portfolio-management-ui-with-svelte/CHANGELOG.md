@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — idle session timeout (RG-2, 2026-10-10)
+
+`OIDC_IDLE_MINUTES` (default 30; `0` off) ends an OpenID Connect session after that long without a request; a page request afterwards returns to the sign-in page with a sentence saying why.
+
 ### Added — the issues register page (IR-2, 2026-10-10)
 
 `/issues` lists the issues across plans with severity, status, owner, age in calendar days and an overdue flag, and filters by status, severity, open-only and minimum age. All text is in the catalogue with Welsh (draft); codes show as words through `enumLabel()`. The page lists and filters; raising and editing issues from the page is not built.

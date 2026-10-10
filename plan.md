@@ -1273,3 +1273,109 @@ a person chooses); (2) is a *priority* separate from *severity* needed;
 approver) or is one approver enough to start; (4) is an external-ticket link
 (Jira) wanted for issues. Not taken: automatic re-planning from a change
 request, and cost-benefit scoring of requests.
+
+
+# Research: readiness for major medical and governmental organizations (RG-n)
+
+Requested 2026-10-10: "assess readiness for production use at major medical
+governmental organizations". **Evidence base, stated plainly.** Read: the
+governance and operations packs and their recorded gaps, the DTAC checklist, the
+code for the specific controls named below (verified by search, not by running a
+penetration test), the CI and release workflows. **Not done, and not claimed:**
+any penetration test, any load test of the service, any assistive-technology test
+by a person, any clinical safety assessment, any audit by a third party, any
+production deployment. "Medical" here means a health organization using this as
+a **non-clinical** portfolio and project tool (no patient records, no clinical
+decision support); a clinical use would need a clinical safety case this project
+has not written.
+
+## 58. Verdict
+
+**Not ready for unsupervised production use at a major medical or governmental
+organization today. Ready for a controlled pilot** on non-clinical, non-secret
+portfolio data, by an organization that will complete its own assurance. The
+gaps are mostly *assurance and lifecycle* (evidence, retention, erasure, access
+review), plus a few *technical controls* that were found missing and are listed
+below. The foundations are better than a typical young project: secure by
+default, tested restore, a governance pack, accessibility audit on every route,
+supply-chain gates and signed provenance.
+
+| Area | Where it stands | Evidence |
+|---|---|---|
+| Authentication | Strong: enforced by default; OIDC/Entra; Keycloak; MFA via the identity provider | NFR-12, NFR-18; tests |
+| Authorization | Strong: attribute-based policy, private plans kept out of aggregates, finance gate | `auth.rs`, tests |
+| Transport and headers | Good: CSP, HSTS over TLS, CORS allow-list, rate limit | NFR-13, NFR-14 |
+| Supply chain | Good: `cargo deny`, Dependabot, CycloneDX SBOMs, build provenance | `ci.yml`, `release.yml` |
+| Backup and recovery | Good, with one gap: tested restore, stated RPO/RTO; **backups are not encrypted by the script** | operations pack |
+| Accessibility | Partly: automated WCAG 2.2 AA on every route; **no manual or assistive-technology test** | accessibility statement |
+| Audit trail | Partly: audited writes with digests and optional MAC; **rows can be altered or deleted by anyone with database access**, and deletion is undetected | DPIA risk |
+| Retention and erasure | **Gap:** a retention schedule exists but **nothing purges**; no data-subject erasure or export tool | DTAC rows "Partly" |
+| Outbound requests | Good for **user-supplied** destinations (`https` only, public addresses only, checked again when the name is resolved, no redirects). **Gap, smaller than first thought:** **operator-configured** webhook and worker targets accept any `https` host, including private and metadata addresses; that is deliberate for internal services, but there is no strict mode | `sinks.rs`, `webhooks.rs` |
+| Sessions | **Gap:** OIDC sessions have an absolute lifetime but **no idle timeout**; the store is in memory, so several front-end replicas need sticky sessions | `oidc-session.ts` |
+| Handling marks | **Gap:** no security classification or sensitivity label on records or exports (governments and health bodies use them) | none |
+| Attachments | **Gap:** no content allow-list or malware-scan hook | none |
+| Access review | **Gap:** no periodic recertification report; no break-glass procedure | none |
+| Performance | **Unknown:** no load or soak test; the service benchmark has not been run | `BENCHMARKS.md` |
+| Assurance | **None yet:** no penetration test, no third-party audit, no clinical safety review | by design out of the software |
+| Support | One maintainer; no service-level agreement | `GOVERNANCE.md` |
+
+## 59. Recommendations
+
+Build now, because each is small, verifiable and closes a finding above:
+**RG-1** outbound request guard; **RG-2** idle session timeout; **RG-3** audit
+trail protected in the database; **RG-4** retention purge task; **RG-5** encrypted
+backups; **RG-14** a readiness document and the corrected DTAC rows.
+
+Backlog, in this order: **RG-6** data-subject export and pseudonymisation;
+**RG-7** handling marks; **RG-8** attachment safety; **RG-9** access review;
+**RG-10** break-glass; **RG-11** load and soak test; **RG-12** shared session
+store. **RG-13** is not software: penetration test, assistive-technology audit,
+clinical safety review, disaster-recovery exercise, DPO sign-off, supplier
+assurance. A checklist for it goes in the governance pack.
+
+## 60. Deliberately not taken
+
+- Claiming a certification (ISO 27001, Cyber Essentials, SOC 2, DTAC "approved").
+  The project can supply evidence for an assessor; it cannot be certified as
+  software alone.
+- A clinical safety case. If a deployer puts clinical content in it, they need
+  their own.
+- Application-level encryption of fields at rest: disk and database encryption
+  are the deployer's and are far better done there. (Encrypted *backups* are in.)
+- Multi-tenancy inside one database: separate deployments per organization is the
+  supported model.
+
+## 61. Findings (from reading the code against the list)
+
+- The delivery-log and outbox retention periods are stated in the retention
+  schedule but no code enforces them (confirmed by search for any purge path).
+- `webhooks.rs` (operator-configured targets) refuses `http` to non-loopback
+  hosts but accepts any `https` host, including `169.254.169.254` and private
+  ranges. **Correction made while building RG-1:** the first reading of this
+  gap covered all outbound requests; in fact user-supplied notification
+  destinations already have a full guard (`sinks::destination_url_ok`,
+  `ip_is_public`, a re-check at send time). Only operator targets lack a strict
+  mode.
+- The DTAC checklist row "no vulnerability-disclosure policy file yet" is stale:
+  `SECURITY.md` now exists.
+
+## 62. Open questions for the owner (readiness)
+
+1. Which buyers are first: health, central government, local government? Each
+   brings a different marking scheme (RG-7) and assurance route.
+2. Is erasure to be **pseudonymisation** (keep the audit row, replace the person
+   reference) or deletion? Recommended: pseudonymise, because deleting audit rows
+   destroys the evidence the audit exists for.
+3. Retention periods: adopt the schedule's starting periods, or wait for the first
+   buyer's records manager?
+4. Will the project pay for a penetration test and an assistive-technology audit
+   before a first regulated deployment (recommended), or leave that to the buyer?
+5. Is a hosted service ever offered, or only software? A host takes on duties
+   (processor terms, hosting assurance) that a software supplier does not.
+
+## 63. Sequencing
+
+RG-1, RG-2, RG-3, RG-5 and RG-14 first (small, independent); RG-4 after RG-3
+because the purge needs the audit protection's controlled-delete path. RG-6 needs
+RG-4's list of what is personal. RG-7 and RG-8 are independent. RG-11 before any
+claim about capacity.

@@ -54,7 +54,7 @@ data and performs no clinical function.*
 | Record of processing activities | Partly | [Record of processing](record-of-processing.md) |
 | What personal data, and why | Met | [Personal-data inventory](personal-data-inventory.csv), kept true to the schema by a test |
 | Data minimization | Met | People are opaque references; no names, birth dates or special-category fields in the schema |
-| Retention and deletion | Partly | [Retention schedule](retention-schedule.md); **no purge task yet** (stated gap) |
+| Retention and deletion | Partly | [Retention schedule](retention-schedule.md); a purge task covers read notifications, delivery logs and trend snapshots; **plans, tasks, time, documents and the audit trail are not purged** (the buyer decides; stated gap) |
 | Data-subject rights | Partly | Access, rectification, portability, restriction supported; erasure limited by audit design (DPIA risk 7) |
 | Data location and transfers | Buyer to complete | Set by where you host; the software makes no transfers by itself ([data flow](data-flow.md)) |
 | Sub-processors | Buyer to complete | None built in |
@@ -74,7 +74,7 @@ data and performs no clinical function.*
 | Secure configuration | Met | Secure by default; a start-up gate refuses unsafe postures; security headers, strict CSP, CORS allow-list, rate limiting (NFR-12 to NFR-14) |
 | Audit logging | Met | Every change recorded with the actor; per-row integrity digests and an optional keyed MAC; deletion of rows is not detected (stated in the DPIA) |
 | Secure development | Met | Linting at deny-warnings, unit, database and browser tests, accessibility audits on every change; CI at the repository root (`.github/workflows/ci.yml`) |
-| Vulnerability and dependency management | Partly | `cargo deny` (advisories, licences, bans) in CI, dependency updates automated; a software bill of materials with each release; **no vulnerability-disclosure policy file yet** (supplier to publish one) |
+| Vulnerability and dependency management | Partly | `cargo deny` (advisories, licences, bans) in CI, dependency updates automated; a software bill of materials with each release; a vulnerability-disclosure policy ([`SECURITY.md`](../SECURITY.md)) with private reporting and response-time targets (not guarantees) |
 | Penetration testing | Buyer to complete | **None has been done by the project.** Commission one for your deployment. A passive ZAP baseline scan runs in CI |
 | Certifications (Cyber Essentials Plus, ISO/IEC 27001) | Supplier to complete | The software supports the controls; certification is of an organization |
 | Backups and recovery | Met | Scripts, a tested restore drill in CI, stated RPO and RTO ([operations pack](../operations/README.md)) |

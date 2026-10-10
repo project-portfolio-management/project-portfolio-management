@@ -37,11 +37,14 @@ See [Recovery objectives](../operations/recovery-objectives.md).
 These are things the schedule needs and the software does not yet do. Each is a
 decision for the buyer to plan around until it is built:
 
-1. **No retention purge.** There is no scheduled task that hard-deletes records
-   past their period. `OPS`, `PPL`, `COM`, `AUD` and `DOC` records accumulate
-   until an operator removes them. A purge task with a dry-run mode, a
-   configurable period per class and an audit entry for each purge is the
-   missing piece (recorded as a backlog item).
+1. **The retention purge is partial.** `cargo loco task retention_purge` (dry run
+   unless `apply:true`; one audit row per table purged) removes read
+   notifications (90 calendar days), the webhook and notification delivery logs
+   (30 calendar days) and the trend snapshots (3 years); each period can be
+   overridden. `OPS`, `PPL`, the rest of `COM`, `AUD` and `DOC` records still
+   accumulate until an operator removes them: how long to keep a plan, a
+   timesheet or a document is the buyer's decision, and each needs its own rule
+   (RG-4 follow-up).
 2. **Expired generated files are not deleted**, only hidden.
 3. **Soft-deleted rows are never purged**, so "deleted" data still exists in the
    database.

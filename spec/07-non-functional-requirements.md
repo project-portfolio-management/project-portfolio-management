@@ -157,6 +157,17 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   empty, when the maintainer or owner address is absent from the files that need
   it, or when the citation file lacks its required fields.
 
+- **NFR-21 — Controls for regulated buyers.** A deployment can meet the common
+  expectations of a health or government buyer: an **idle session timeout**
+  (default 30 minutes, configurable); an **audit trail the database refuses to
+  change or delete** except through the retention task; a **retention purge**
+  that is a dry run unless told otherwise and audits what it removes; **backups
+  that can be encrypted**, with a restore drill that proves they decrypt; and an
+  optional **strict mode for operator-configured outbound targets**. The limits
+  are stated where the controls are: a database administrator can disable the
+  trigger; the purge covers only the records whose deletion is unambiguous. The
+  honest assessment is [`governance/production-readiness.md`](../governance/production-readiness.md).
+
 ### 7.x Time and time zones
 
 Doctrine (LT-9, `src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);

@@ -147,6 +147,12 @@ jobs:
         run: >-
           scripts/restore-test.sh
           -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
+      - name: The same drill with an encrypted backup (passphrase)
+        working-directory: .
+        run: |
+          umask 077
+          printf '%s' "ci-only-passphrase-$GITHUB_RUN_ID" > "$RUNNER_TEMP/ppm-pass"
+          BACKUP_PASSPHRASE_FILE="$RUNNER_TEMP/ppm-pass" scripts/restore-test.sh
 
   matcher:
     name: Matcher (fmt, clippy, test)

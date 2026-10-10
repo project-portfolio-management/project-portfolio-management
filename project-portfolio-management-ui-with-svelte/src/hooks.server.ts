@@ -7,7 +7,8 @@ import type { Cookies } from "@sveltejs/kit";
 // `locals`. The browser never reads the cookie (httpOnly); only the
 // SvelteKit server does, and only the server talks to the services.
 import { SESSION_COOKIE } from "#lib/server/session.js";
-import { OIDC_COOKIE, oidcStore } from "#lib/server/oidc-session.js";
+import { OIDC_COOKIE, OIDC_COOKIE_OPTIONS, oidcStore } from "#lib/server/oidc-session.js";
+import { oidcOptions } from "#lib/server/config.js";
 import {
   DEFAULT_LOCALE,
   type Locale,
@@ -53,9 +54,26 @@ export const handle: Handle = async (input) => {
   return response;
 };
 
+oidcStore.setIdleSeconds(oidcOptions().idleSeconds);
+
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.sessionId = event.cookies.get(SESSION_COOKIE) ?? null;
-  event.locals.oidc = oidcStore.get(event.cookies.get(OIDC_COOKIE));
+  const oidcCookie = event.cookies.get(OIDC_COOKIE);
+  event.locals.oidc = oidcStore.get(oidcCookie);
+  if (!event.locals.oidc && oidcStore.endedIdle(oidcCookie)) {
+    // The session sat idle too long (RG-2): clear the cookie and, for a page the person
+    // asked for, say why they are back at the sign-in page. API calls just see "signed out".
+    event.cookies.delete(OIDC_COOKIE, OIDC_COOKIE_OPTIONS);
+    const { pathname } = event.url;
+    if (
+      event.request.headers.get("sec-fetch-dest") === "document" &&
+      !pathname.startsWith("/api/") &&
+      !pathname.includes("/signin")
+    ) {
+      const to = negotiateLocale(event.cookies, event.request.headers.get("accept-language"));
+      redirect(303, `${localizePath("/signin", to)}?error=oidc_idle`);
+    }
+  }
 
   const { pathname, search } = event.url;
   if (!isUnlocalized(pathname)) {

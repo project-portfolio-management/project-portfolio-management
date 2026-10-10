@@ -43,6 +43,7 @@ pub mod guest_grants;
 pub mod hammock_links;
 pub mod ideas;
 pub mod insight_snapshots;
+pub mod issues;
 pub mod key_result_check_ins;
 pub mod key_results;
 pub mod kpi_readings;

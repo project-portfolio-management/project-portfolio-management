@@ -105,6 +105,7 @@ pub fn paths() -> Value {
     merge(&mut all, booking_paths());
     merge(&mut all, baseline_paths());
     merge(&mut all, raci_paths());
+    merge(&mut all, issues_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -862,6 +863,34 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// The issues register (IR-1).
+fn issues_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/issues": {
+            "get": op("issues", "The plan's issues register",
+                "Most serious first, then oldest. An issue is something that has happened (a risk is something that might). Each carries age_calendar_days (days since raised, until resolved) and overdue (open and past its due date). ?status, ?severity and ?owner filter; ?open=true lists only open and in-progress ones; an unknown status or severity is 422.",
+                vec![uuid_param("pid"), query("status", false, "open, in_progress, resolved or closed"), query("severity", false, "low, med, high or critical"), query("owner", false, "A person: or worker: reference"), query("open", false, "true for open and in-progress only")],
+                &[("200", "plan_pid, issues, total, open, overdue, as_of"), ("404", "Unknown plan"), ("422", "Unknown status or severity")]),
+            "post": op("issues", "Raise an issue",
+                "Send title (required) and optionally description, kind (bug, risk, blocker, question, improvement or concern), severity (low, med, high, critical), priority, status, owner_ref (person: or worker:), raised_on (default today), due_date (not before raised_on), resolution, source_risk_pid and source_task_pid. A closed issue needs a resolution (422; the database enforces it too). resolved_on is set by the service. Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "The issue"), ("404", "Unknown plan"), ("422", "The issue is refused (see above)")])
+        },
+        "/api/plans/{pid}/issues/{issue_pid}": {
+            "get": op("issues", "One issue", "The issue with its age and overdue flag.",
+                vec![uuid_param("pid"), uuid_param("issue_pid")],
+                &[("200", "The issue"), ("404", "Unknown plan or issue")]),
+            "put": op("issues", "Replace an issue's fields",
+                "Same fields and rules as raising one. resolved_on is set the first time the status becomes resolved or closed, kept after, and cleared if the issue is reopened. Audited with the before and after.",
+                vec![uuid_param("pid"), uuid_param("issue_pid")],
+                &[("200", "The issue"), ("404", "Unknown plan or issue"), ("422", "The issue is refused")]),
+            "delete": op("issues", "Remove an issue", "Soft delete; audited.",
+                vec![uuid_param("pid"), uuid_param("issue_pid")],
+                &[("200", "Empty"), ("404", "Unknown plan or issue")])
         }
     })
 }

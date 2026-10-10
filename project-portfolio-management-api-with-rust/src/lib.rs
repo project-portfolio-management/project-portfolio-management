@@ -81,6 +81,7 @@ pub mod hammock;
 pub mod http_security;
 pub mod initializers;
 pub mod insights;
+pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
 pub mod leveling;

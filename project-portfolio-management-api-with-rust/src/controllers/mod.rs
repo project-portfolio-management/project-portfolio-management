@@ -25,6 +25,7 @@ pub mod engineering;
 pub mod financials;
 pub mod governance;
 pub mod insights;
+pub mod issues;
 pub mod metrics;
 pub mod modules;
 pub mod my_work;

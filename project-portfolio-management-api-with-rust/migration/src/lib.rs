@@ -95,6 +95,7 @@ mod m20261006_000046_processes;
 mod m20261006_000047_controlled_documents;
 mod m20261006_000048_onboarding_one_open;
 mod m20261009_000049_oxford_spelling;
+mod m20261010_000050_issues;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -190,6 +191,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261006_000047_controlled_documents::Migration),
             Box::new(m20261006_000048_onboarding_one_open::Migration),
             Box::new(m20261009_000049_oxford_spelling::Migration),
+            Box::new(m20261010_000050_issues::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -58,7 +58,7 @@ pub const MODULES: &[ModuleDef] = &[
     },
     ModuleDef {
         key: "risks",
-        segments: &["risks"],
+        segments: &["risks", "issues"],
     },
     ModuleDef {
         key: "financials",

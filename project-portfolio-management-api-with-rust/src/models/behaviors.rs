@@ -50,6 +50,7 @@ impl ActiveModelBehavior for onboarding_cases::ActiveModel {}
 impl ActiveModelBehavior for onboarding_items::ActiveModel {}
 impl ActiveModelBehavior for onboarding_templates::ActiveModel {}
 impl ActiveModelBehavior for announcements::ActiveModel {}
+impl ActiveModelBehavior for issues::ActiveModel {}
 impl ActiveModelBehavior for cost_rate_tables::ActiveModel {}
 impl ActiveModelBehavior for cost_rates::ActiveModel {}
 impl ActiveModelBehavior for task_costs::ActiveModel {}

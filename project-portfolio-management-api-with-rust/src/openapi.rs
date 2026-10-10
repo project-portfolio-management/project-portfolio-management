@@ -2158,6 +2158,7 @@ mod tests {
             crate::controllers::sinks::routes(),
             crate::controllers::report_schedules::routes(),
             crate::controllers::announcements::routes(),
+            crate::controllers::issues::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),

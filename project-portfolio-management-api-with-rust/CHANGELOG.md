@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — issues register, plan-scoped (IR-1, 2026-10-10)
+
+`/api/plans/{pid}/issues` (list, raise, read, replace, soft-delete): an issue is something that has happened; kind, severity, status, owner, raised and due dates, a resolution (required to close, enforced by a database check as well), `resolved_on` kept by the service, age in calendar days and an overdue flag. Rules in `src/issues.rs`; migration 50; audited; part of the `risks` module. Request test `tests/requests/issues.rs`; five columns added to `governance/personal-data-inventory.csv`.
+
 ### Changed — secure by default (HD-3, HD-4, HD-5, 2026-10-09)
 
 **Breaking.** Login enforcement is now **on** unless explicitly turned off with `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` or `settings.require_auth: false` in the loco config (the shipped `development.yaml` and `test.yaml` do; the variable wins). The service **refuses to start** when the loco environment is `production` and enforcement is off, and when enforcement is on with no token verifier and no key URL. `GET /metrics.prom` now needs a token. Every response carries `X-Content-Type-Options`, `Content-Security-Policy` (`default-src 'none'; frame-ancestors 'none'`, relaxed for `/swagger-ui`), `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy`, plus `Strict-Transport-Security` only when the request arrived over TLS (`PROJECT_PORTFOLIO_MANAGEMENT_HSTS`, `…_TRUSTED_PROXIES`). CORS is an explicit allow-list (`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`, exact origins; unset means same-origin only) instead of the framework default. Requests are rate limited per caller (a token bucket per bearer credential, else per client address), tighter for expensive routes and for failed authentication; `429` with `Retry-After` and `RateLimit-*` headers (`PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT*`; off in the development and test configs). New modules `http_security`, `rate_limit`, `trusted_proxy`; tests `tests/hardening.rs` (real router) and unit tests in each module.

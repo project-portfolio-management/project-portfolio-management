@@ -137,7 +137,11 @@ hang off **any** plan.
   issue raised from a risk (escalation) or from a blocked task keeps a link
   back and the source is never altered by closing the issue; every change is
   audited (FR-19). Reads obey the same attribute-based policy as tasks.
-  **Not built:** no `issues` route, table or entity exists (§14.2).
+  **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
+  (migration 50, entity, rules in `src/issues.rs`, controller, OpenAPI,
+  audited, soft delete, in the `risks` module). **Not built:** the
+  portfolio-wide `GET /api/issues`, the link from a risk or a blocked task,
+  and `priority` as anything but free text (IR-2, IR-3).
 - **FR-14a Change requests.** A change request is a controlled proposal to
   change an approved baseline: scope, schedule, budget or a deliverable.
   `ChangeRequest { pid, plan_pid, title, description, reason, kind:

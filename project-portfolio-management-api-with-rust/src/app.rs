@@ -209,6 +209,7 @@ impl Hooks for App {
             .add_route(controllers::sinks::routes())
             .add_route(controllers::report_schedules::routes())
             .add_route(controllers::announcements::routes())
+            .add_route(controllers::issues::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())
             .add_route(controllers::handover::routes())

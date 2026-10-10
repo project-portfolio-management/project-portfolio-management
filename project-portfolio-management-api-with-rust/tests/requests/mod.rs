@@ -17,6 +17,7 @@ mod financials;
 mod governance;
 mod includes;
 mod insights;
+mod issues;
 mod live;
 mod metrics_control;
 mod modules;

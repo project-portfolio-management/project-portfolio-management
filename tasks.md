@@ -1358,12 +1358,13 @@ a change request is **decided by a person other than the requester**; durations
 in **calendar days** (ageing) and **business days** (schedule impact); impacts
 are stated, never guessed.
 
-- [ ] **IR-1 (M) — Issues store and API.** Migration, entity, controller and
+- [x] **IR-1 (M) — Issues store and API.** Migration, entity, controller and
   OpenAPI for `issues` under a plan (`/api/plans/{pid}/issues`) with the FR-14
   fields; ABAC like tasks; audited. **Acceptance:** CRUD round trip; a `Closed`
   issue without a resolution is refused (422); an issue of a plan the caller
   cannot read is not listed; routes appear in `src/openapi.rs` and the generated
   status block.
+  **Built 2026-10-10:** migration `m20261010_000050_issues`, `src/issues.rs` (unit-tested rules), `controllers/issues.rs`, OpenAPI paths, `tests/requests/issues.rs` (DB-backed), inventory rows. A plan's issues are in the `risks` module, so switching that module off hides them. **Deviation:** `priority` is free text, and the register list is per plan until IR-2.
 - [ ] **IR-2 (M) — The register.** `GET /api/issues` across plans (filter by
   plan, severity, status, owner, age in calendar days; paged) and a
   **Register** page in the UI (every text in the catalogue, `cy-001` included).

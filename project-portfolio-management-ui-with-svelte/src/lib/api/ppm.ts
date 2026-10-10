@@ -550,6 +550,42 @@ export interface MilestoneView {
   }[];
 }
 
+/** One issue (IR-1/IR-2). */
+export interface Issue {
+  pid: string;
+  plan_pid: string;
+  title: string;
+  description: string | null;
+  kind: "bug" | "risk" | "blocker" | "question" | "improvement" | "concern";
+  severity: "low" | "med" | "high" | "critical";
+  priority: string | null;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  owner_ref: string | null;
+  raised_by: string | null;
+  raised_on: string;
+  due_date: string | null;
+  resolution: string | null;
+  resolved_on: string | null;
+  /** Calendar days since raised, until resolved. */
+  age_calendar_days: number;
+  overdue: boolean;
+}
+
+/** `GET /api/issues`. */
+export interface IssueRegister {
+  issues: Issue[];
+  matching: number;
+  truncated: boolean;
+  summary: {
+    by_severity: Record<string, number>;
+    by_status: Record<string, number>;
+    overdue: number;
+    oldest_open: Issue | null;
+  };
+  as_of: string;
+  note: string;
+}
+
 /** `GET /api/milestones`. */
 export interface MilestoneList {
   as_of: string;
@@ -2357,6 +2393,23 @@ export class PpmClient {
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
     return this.http.get(`/api/milestones${qs ? `?${qs}` : ""}`);
+  }
+  /** The issues register across the plans the caller can read. */
+  issues(
+    params: {
+      plan?: string;
+      status?: string;
+      severity?: string;
+      owner?: string;
+      open?: boolean;
+      min_age_days?: number;
+    } = {},
+  ): Promise<IssueRegister> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params))
+      if (v !== undefined && v !== "" && v !== false) q.set(k, String(v));
+    const qs = q.toString();
+    return this.http.get(`/api/issues${qs ? `?${qs}` : ""}`);
   }
   milestone(pid: string): Promise<MilestoneView> {
     return this.http.get(`/api/milestones/${pid}`);

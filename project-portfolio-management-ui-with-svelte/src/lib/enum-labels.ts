@@ -12,7 +12,10 @@ export type EnumGroup =
   | "plan_status"
   | "collection"
   | "proposal_status"
-  | "band";
+  | "band"
+  | "severity"
+  | "issue_status"
+  | "issue_kind";
 
 /** The label for `value` in `group`, in the current language. */
 export function enumLabel(group: EnumGroup, value: unknown): string {

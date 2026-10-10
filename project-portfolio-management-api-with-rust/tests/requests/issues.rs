@@ -116,12 +116,68 @@ async fn issues_are_raised_ranked_closed_and_kept_in_their_plan() {
             .json();
         assert_eq!(reopened["resolved_on"], Value::Null);
 
+        // The register spans plans, most serious first, with a summary.
+        request
+            .post(&format!("/api/plans/{other}/issues"))
+            .json(
+                &json!({ "title": "Licence expires", "severity": "high", "kind": "concern",
+                           "raised_on": "2026-08-01" }),
+            )
+            .await
+            .assert_status_ok();
+        let all: Value = request.get("/api/issues").await.json();
+        assert!(all["matching"].as_i64().unwrap() >= 3);
+        let titles: Vec<&str> = all["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| i["title"].as_str().unwrap())
+            .collect();
+        let build = titles
+            .iter()
+            .position(|t| *t == "Build server is down")
+            .unwrap();
+        let licence = titles.iter().position(|t| *t == "Licence expires").unwrap();
+        let typo = titles
+            .iter()
+            .position(|t| *t == "Typo in the report")
+            .unwrap();
+        assert!(build < licence && licence < typo, "{titles:?}");
+        assert!(all["summary"]["by_severity"]["critical"].as_i64().unwrap() >= 1);
+        let old: Value = request
+            .get("/api/issues?min_age_days=60&open=true")
+            .await
+            .json();
+        assert!(
+            old["issues"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|i| i["age_calendar_days"].as_i64().unwrap() >= 60)
+        );
+        let scoped: Value = request
+            .get(&format!("/api/issues?plan={other}"))
+            .await
+            .json();
+        assert_eq!(scoped["matching"], 1);
+        assert_eq!(
+            request.get("/api/issues?severity=huge").await.status_code(),
+            422
+        );
+        assert_eq!(
+            request
+                .get("/api/issues?min_age_days=-1")
+                .await
+                .status_code(),
+            422
+        );
+
         // Another plan cannot see or reach it.
         let others: Value = request
             .get(&format!("/api/plans/{other}/issues"))
             .await
             .json();
-        assert_eq!(others["total"], 0);
+        assert_eq!(others["total"], 1);
         assert_eq!(
             request
                 .get(&format!("/api/plans/{other}/issues/{big_pid}"))

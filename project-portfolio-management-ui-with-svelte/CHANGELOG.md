@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the issues register page (IR-2, 2026-10-10)
+
+`/issues` lists the issues across plans with severity, status, owner, age in calendar days and an overdue flag, and filters by status, severity, open-only and minimum age. All text is in the catalogue with Welsh (draft); codes show as words through `enumLabel()`. The page lists and filters; raising and editing issues from the page is not built.
+
 ### Added — every page in Welsh (HD-13, 2026-10-10)
 
 All text that a page or a component prints now comes from a catalogue: 2,327 keys in `src/lib/i18n-pages.ts` (English) and `src/lib/i18n-pages.cy.ts` (Welsh, typed as a complete record, so a missing Welsh string fails the type check). Page keys use plain `{name}` interpolation, not message-format syntax, so a value prints exactly as before; a count that changes the wording is two keys (`…_one`, `…_other`). Code values the service sends (task status, plan kind, proposal status, score band) are shown through `enumLabel()` (`src/lib/enum-labels.ts`), and the common API error codes through `localizeApiMessage()` in the client. New `src/routes/+error.svelte` replaces SvelteKit's English-only error page. Guards: `tests/unit/catalogue-coverage.test.ts` (no literal English in templates; Welsh complete, placeholders kept, not a copy of the English) and `tests/e2e/welsh.spec.ts` (every route rendered in English and Welsh; a line identical in both fails). **The Welsh is a draft: it has not been reviewed by a professional translator**; see `governance/welsh-translation-review.md`. Other locales fall back to English for the new page text.

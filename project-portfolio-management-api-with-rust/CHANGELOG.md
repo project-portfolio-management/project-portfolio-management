@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the issues register across plans (IR-2, 2026-10-10)
+
+`GET /api/issues`: every issue in the plans the caller can read, most serious first then oldest; filters `plan`, `status`, `severity`, `owner`, `open`, `min_age_days` (calendar days); a summary by severity and status, the overdue count and the oldest open issue; capped at 500 rows with `truncated`.
+
 ### Added — issues register, plan-scoped (IR-1, 2026-10-10)
 
 `/api/plans/{pid}/issues` (list, raise, read, replace, soft-delete): an issue is something that has happened; kind, severity, status, owner, raised and due dates, a resolution (required to close, enforced by a database check as well), `resolved_on` kept by the service, age in calendar days and an overdue flag. Rules in `src/issues.rs`; migration 50; audited; part of the `risks` module. Request test `tests/requests/issues.rs`; five columns added to `governance/personal-data-inventory.csv`.

@@ -1365,12 +1365,13 @@ are stated, never guessed.
   cannot read is not listed; routes appear in `src/openapi.rs` and the generated
   status block.
   **Built 2026-10-10:** migration `m20261010_000050_issues`, `src/issues.rs` (unit-tested rules), `controllers/issues.rs`, OpenAPI paths, `tests/requests/issues.rs` (DB-backed), inventory rows. A plan's issues are in the `risks` module, so switching that module off hides them. **Deviation:** `priority` is free text, and the register list is per plan until IR-2.
-- [ ] **IR-2 (M) — The register.** `GET /api/issues` across plans (filter by
+- [x] **IR-2 (M) — The register.** `GET /api/issues` across plans (filter by
   plan, severity, status, owner, age in calendar days; paged) and a
   **Register** page in the UI (every text in the catalogue, `cy-001` included).
   **Acceptance:** an issue list sorted by severity then age; ageing equals
   calendar days since `raised_on` (pinned by a unit test); the page passes the
   axe audit and the Welsh render test.
+  **Built 2026-10-10:** `GET /api/issues` (readable plans only, filters, summary, 500-row cap), `/issues` page with every text in the catalogue and Welsh, enum labels, `tests/e2e/issues.spec.ts` (order, Welsh, filter, axe), `tests/requests/issues.rs`. **Deviations:** the Welsh is the unreviewed draft; the page lists and filters but does not raise or edit issues (that needs a form, not yet built).
 - [ ] **IR-3 (S) — Raise an issue from a risk or a blocked task.** Escalation
   keeps `source_risk_pid` / `source_task_pid`; closing the issue leaves the
   source untouched. Daily-standup blockers (spec §1.4) can become issues.

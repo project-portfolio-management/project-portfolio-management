@@ -329,10 +329,121 @@ async fn remove(
     format::empty_json()
 }
 
+#[derive(Debug, Deserialize)]
+struct RegisterParams {
+    #[serde(default)]
+    plan: Option<Uuid>,
+    #[serde(default)]
+    status: Option<String>,
+    #[serde(default)]
+    severity: Option<String>,
+    #[serde(default)]
+    owner: Option<String>,
+    #[serde(default)]
+    open: Option<bool>,
+    /// Only issues at least this many calendar days old.
+    #[serde(default)]
+    min_age_days: Option<i64>,
+    #[serde(default)]
+    limit: Option<u64>,
+}
+
+/// The most rows the register returns in one answer.
+const REGISTER_MAX: u64 = 500;
+
+/// `GET /api/issues` — the register across every plan the caller can read,
+/// most serious first, then oldest. Plans the caller cannot read are left out
+/// without a trace; the summary counts what the caller can see, whatever the
+/// filters.
+#[debug_handler]
+async fn register(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(q): Query<RegisterParams>,
+) -> Result<Response> {
+    for (name, value, allowed) in [
+        ("status", q.status.as_deref(), rules::STATUSES),
+        ("severity", q.severity.as_deref(), rules::SEVERITIES),
+    ] {
+        if value.is_some_and(|v| !allowed.contains(&v)) {
+            return Err(unprocessable(&format!("{name} must be one of {allowed:?}")));
+        }
+    }
+    if q.min_age_days.is_some_and(|d| d < 0) {
+        return Err(unprocessable("min_age_days cannot be negative"));
+    }
+    let mut find = issues::Entity::find().filter(issues::Column::DeletedAt.is_null());
+    if let Some(p) = q.plan {
+        find = find.filter(issues::Column::PlanPid.eq(p));
+    }
+    if let Some(o) = &q.owner {
+        find = find.filter(issues::Column::OwnerRef.eq(o.as_str()));
+    }
+    let mut rows = find
+        .order_by_asc(issues::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut plan_pids: Vec<Uuid> = rows.iter().map(|i| i.plan_pid).collect();
+    plan_pids.sort();
+    plan_pids.dedup();
+    let readable = super::plan_access::readable_plans(&ctx, &caller, &plan_pids).await;
+    rows.retain(|i| readable.contains(&i.plan_pid));
+
+    let now = today();
+    let mut by_severity: std::collections::BTreeMap<&str, usize> =
+        rules::SEVERITIES.iter().map(|s| (*s, 0)).collect();
+    let mut by_status: std::collections::BTreeMap<&str, usize> =
+        rules::STATUSES.iter().map(|s| (*s, 0)).collect();
+    let mut overdue = 0;
+    for i in &rows {
+        if let Some(c) = by_severity.get_mut(i.severity.as_str()) {
+            *c += 1;
+        }
+        if let Some(c) = by_status.get_mut(i.status.as_str()) {
+            *c += 1;
+        }
+        if rules::is_overdue(&i.status, i.due_date, now) {
+            overdue += 1;
+        }
+    }
+    let oldest_open = rows
+        .iter()
+        .filter(|i| !rules::is_done(&i.status))
+        .max_by_key(|i| rules::age_calendar_days(i.raised_on, i.resolved_on, now))
+        .map(|i| view(i, now));
+
+    rows.retain(|i| {
+        q.status.as_ref().is_none_or(|s| &i.status == s)
+            && q.severity.as_ref().is_none_or(|s| &i.severity == s)
+            && (q.open != Some(true) || !rules::is_done(&i.status))
+            && q.min_age_days
+                .is_none_or(|d| rules::age_calendar_days(i.raised_on, i.resolved_on, now) >= d)
+    });
+    rows.sort_by(|a, b| {
+        rules::severity_rank(&b.severity)
+            .cmp(&rules::severity_rank(&a.severity))
+            .then(a.raised_on.cmp(&b.raised_on))
+            .then(a.id.cmp(&b.id))
+    });
+    let limit = usize::try_from(q.limit.unwrap_or(200).clamp(1, REGISTER_MAX)).unwrap_or(200);
+    let matching = rows.len();
+    format::json(serde_json::json!({
+        "issues": rows.iter().take(limit).map(|i| view(i, now)).collect::<Vec<_>>(),
+        "matching": matching,
+        "truncated": matching > limit,
+        "summary": { "by_severity": by_severity, "by_status": by_status, "overdue": overdue,
+                     "oldest_open": oldest_open },
+        "as_of": now,
+        "note": "Most serious first, then oldest. Age is in calendar days since raised, until resolved. The summary counts every issue visible to the caller, whatever the filters; plans the caller cannot read are left out.",
+    }))
+}
+
 /// The issue routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
+        .add("/issues", get(register))
         .add("/plans/{pid}/issues", get(list))
         .add("/plans/{pid}/issues", post(create))
         .add("/plans/{pid}/issues/{issue_pid}", get(get_one))

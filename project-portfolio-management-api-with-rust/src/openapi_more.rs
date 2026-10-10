@@ -870,6 +870,12 @@ fn baseline_paths() -> Value {
 /// The issues register (IR-1).
 fn issues_paths() -> Value {
     json!({
+        "/api/issues": {
+            "get": op("issues", "The issues register across plans",
+                "Every issue in the plans the caller can read (others are left out without a trace), most serious first, then oldest. Filters: plan, status, severity, owner, open=true (not resolved or closed), min_age_days (calendar days since raised, until resolved). summary counts everything the caller can see whatever the filters: by_severity, by_status, overdue and the oldest open issue. limit defaults to 200, at most 500; truncated says when more match.",
+                vec![query("plan", false, "A plan pid"), query("status", false, "open, in_progress, resolved or closed"), query("severity", false, "low, med, high or critical"), query("owner", false, "A person: or worker: reference"), query("open", false, "true for open and in-progress only"), query("min_age_days", false, "Only issues at least this many calendar days old"), query("limit", false, "Default 200, at most 500")],
+                &[("200", "issues, matching, truncated, summary, as_of, note"), ("422", "Unknown status or severity, or a negative min_age_days")])
+        },
         "/api/plans/{pid}/issues": {
             "get": op("issues", "The plan's issues register",
                 "Most serious first, then oldest. An issue is something that has happened (a risk is something that might). Each carries age_calendar_days (days since raised, until resolved) and overdue (open and past its due date). ?status, ?severity and ?owner filter; ?open=true lists only open and in-progress ones; an unknown status or severity is 422.",

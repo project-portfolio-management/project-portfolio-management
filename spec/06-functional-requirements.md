@@ -139,9 +139,12 @@ hang off **any** plan.
   audited (FR-19). Reads obey the same attribute-based policy as tasks.
   **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
   (migration 50, entity, rules in `src/issues.rs`, controller, OpenAPI,
-  audited, soft delete, in the `risks` module). **Not built:** the
-  portfolio-wide `GET /api/issues`, the link from a risk or a blocked task,
-  and `priority` as anything but free text (IR-2, IR-3).
+  audited, soft delete, in the `risks` module). Also built (IR-2): the
+  portfolio-wide `GET /api/issues` (readable plans only; filters by plan,
+  status, severity, owner, open and `min_age_days`; summary by severity and
+  status, overdue count and the oldest open issue) and the UI page `/issues`.
+  **Not built:** the link from a risk or a blocked task, and `priority` as
+  anything but free text (IR-3).
 - **FR-14a Change requests.** A change request is a controlled proposal to
   change an approved baseline: scope, schedule, budget or a deliverable.
   `ChangeRequest { pid, plan_pid, title, description, reason, kind:

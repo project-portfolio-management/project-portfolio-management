@@ -90,7 +90,7 @@ database:
 # health is part of `/_readiness` (503 when Redis is unreachable or the password is wrong; `/_health` stays 200).
 # PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL is required: `redis://:password@host:6379/0`, or `rediss://` for TLS.
 # Development, tests and the insecure `container-dev` profile keep the in-memory cache and need no Redis.
-# Nothing in the service reads or writes the cache yet; this only changes the provider.
+# Used for the critical-path answer only (src/response_cache.rs).
 cache:
   kind: Redis
   uri: {{ get_env(name="PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL") }}

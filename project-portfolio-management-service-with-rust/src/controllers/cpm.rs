@@ -576,12 +576,25 @@ pub fn full_answer_allowed(tasks: usize, max: usize, full: bool, only_critical: 
 /// `GET /api/plans/{pid}/cpm` — float, critical and near-critical tasks, and
 /// every critical chain.
 #[debug_handler]
+#[allow(clippy::too_many_lines)]
 async fn plan_cpm(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
     Query(p): Query<CpmParams>,
 ) -> Result<Response> {
+    // Read the epoch before any data (response_cache.rs), then try the cache. The privacy gates ran in
+    // middleware, so a hit has passed them; the key carries the caller because the answer depends on
+    // which linked plans they can read.
+    let epoch = crate::response_cache::epoch(&ctx).await;
+    let cache_key = crate::response_cache::key(
+        &epoch,
+        caller.actor(),
+        &format!("cpm:{pid}:{:?}:{:?}:{:?}", p.near, p.only, p.full),
+    );
+    if let Ok(Some(hit)) = ctx.cache.get::<serde_json::Value>(&cache_key).await {
+        return format::json(hit);
+    }
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let net = load_network_cross(&ctx, plan.pid, &caller).await?;
     let near = p.near.unwrap_or(5);
@@ -625,7 +638,7 @@ async fn plan_cpm(
         .filter(|n| by.contains_key(&n.pid))
         .map(|n| n.early_finish)
         .max();
-    format::json(serde_json::json!({
+    let answer = serde_json::json!({
         "plan_pid": plan.pid,
         "calendar": net.cal_source,
         "calendar_conflicts": net.conflicts,
@@ -674,7 +687,15 @@ async fn plan_cpm(
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,
         "note": "Float is computed over the plan's tasks and the tasks of other plans they are linked to (cross_plan edges, external nodes, each on its own plan's calendar intersected with this one); a link to a plan you cannot read is left out of the calculation and shown only as a restricted edge, with nothing about the other side. Float is computed over the plan's tasks only, in business days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
-    }))
+    });
+    // Only worth storing when it is not enormous; a failure to store never fails the request.
+    if net.rows.len() <= 5_000 {
+        let _ = ctx
+            .cache
+            .insert_with_expiry(&cache_key, &answer, crate::response_cache::TTL)
+            .await;
+    }
+    format::json(answer)
 }
 
 /// `PUT …/tasks/{pid}/schedule` body. An absent or `null` field **clears** it.

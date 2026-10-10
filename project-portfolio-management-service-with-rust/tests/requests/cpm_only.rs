@@ -125,3 +125,44 @@ async fn only_critical_keeps_the_critical_tasks_and_their_dependencies() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_cached_critical_path_is_identical_and_any_write_makes_it_fresh() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Cache" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let t: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "A", "duration_days": 3, "start_date": "2026-11-02" }))
+            .await
+            .json();
+        let a = t["pid"].as_str().unwrap().to_string();
+        let url = format!("/api/plans/{p}/cpm");
+        let first: Value = request.get(&url).await.json();
+        let second: Value = request.get(&url).await.json();
+        assert_eq!(first, second, "a hit equals the computed answer");
+        // A write anywhere makes the next answer fresh: the finish moves.
+        request
+            .put(&format!("/api/plans/{p}/tasks/{a}/schedule"))
+            .json(&json!({ "start_date": "2026-11-02", "duration_days": 9 }))
+            .await
+            .assert_status_ok();
+        let third: Value = request.get(&url).await.json();
+        assert_ne!(
+            first["project_finish"], third["project_finish"],
+            "stale answer served after a write"
+        );
+        // A failed write does not matter, and different query strings are different entries.
+        let only: Value = request.get(&format!("{url}?only=critical")).await.json();
+        assert_eq!(only["only"], "critical");
+        assert_eq!(request.get(&url).await.json::<Value>()["only"], "all");
+    })
+    .await;
+}

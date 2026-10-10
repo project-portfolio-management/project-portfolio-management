@@ -133,6 +133,7 @@ pub mod raci;
 pub mod rate_limit;
 pub mod relay;
 pub mod report_schedules;
+pub mod response_cache;
 pub mod retention;
 pub mod sandbox;
 pub mod saved_views;

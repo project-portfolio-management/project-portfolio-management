@@ -107,3 +107,8 @@ settings:
   # Request rate limiting (src/rate_limit.rs) is on by default; off here so test
   # suites and local loops are not throttled. Production leaves it on.
   rate_limit: false
+
+# In-memory cache so the response cache (src/response_cache.rs) is exercised by the tests.
+cache:
+  kind: InMem
+  max_capacity: 33554432

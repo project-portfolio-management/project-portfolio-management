@@ -288,6 +288,11 @@ impl Hooks for App {
             // Every list pages the same way (RM-12b): innermost of all, so what it
             // slices is exactly what the handler answered.
             .layer(axum::middleware::from_fn(controllers::paging::paging_mw))
+            // A successful write anywhere orphans every cached response (response_cache.rs).
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.clone(),
+                crate::response_cache::epoch_mw,
+            ))
             // Runs after the auth guard and versioning, so an
             // unauthenticated caller never learns which modules a plan has.
             .layer(axum::middleware::from_fn_with_state(

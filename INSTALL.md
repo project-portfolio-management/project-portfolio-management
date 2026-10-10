@@ -94,4 +94,6 @@ problem, use [SECURITY.md](SECURITY.md) instead.
 `config/production.yaml` uses Redis as Loco's cache. Set `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`
 (`redis://:password@host:6379/0`, or `rediss://` for TLS); `compose.yaml` starts one and reuses the database
 password unless `PPM_REDIS_PASSWORD` is set. Without a reachable Redis the service starts but `/_readiness`
-answers 503. The cache holds nothing that cannot be rebuilt, and nothing in the service reads or writes it yet.
+answers 503. The cache holds nothing that cannot be rebuilt. It is used for one thing so far: the critical-path
+answer (`GET /api/plans/{pid}/cpm`, plans up to 5,000 tasks), kept 30 seconds, per caller, and orphaned by
+any successful write. A change made outside the API (a database edit, a retention purge) can show for up to 30 seconds.

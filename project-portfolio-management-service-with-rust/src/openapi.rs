@@ -2171,6 +2171,7 @@ mod tests {
             crate::controllers::handling_marks::routes(),
             crate::controllers::change_requests::routes(),
             crate::controllers::director_summary::routes(),
+            crate::controllers::confidence::routes(),
             crate::controllers::director_packs::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),

@@ -78,7 +78,12 @@ fn may_read(caller: &MaybeAuthUser, p: &packs::Model) -> bool {
 async fn inputs(
     ctx: &AppContext,
     cut_off: DateTime<Utc>,
-) -> Result<(Vec<IssueLite>, Vec<ChangeLite>, usize, usize)> {
+) -> Result<(
+    Vec<IssueLite>,
+    Vec<ChangeLite>,
+    std::collections::HashSet<Uuid>,
+    usize,
+)> {
     let day = cut_off.date_naive();
     let all_plans: Vec<Uuid> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
@@ -144,7 +149,7 @@ async fn inputs(
             decided_on: c.decided_on,
         })
         .collect();
-    Ok((issue_rows, change_rows, included.len(), excluded))
+    Ok((issue_rows, change_rows, included, excluded))
 }
 
 /// One count out of an earlier pack's body.
@@ -168,7 +173,8 @@ async fn compute_body(
     cut_off: DateTime<Utc>,
     change_note: Option<&str>,
 ) -> Result<String> {
-    let (issue_rows, change_rows, included, excluded) = inputs(ctx, cut_off).await?;
+    let (issue_rows, change_rows, included_set, excluded) = inputs(ctx, cut_off).await?;
+    let included = included_set.len();
     let today = cut_off.date_naive();
     let i = summary::issues(&issue_rows, today, 31);
     let c = summary::changes(&change_rows, today, 31);
@@ -192,6 +198,9 @@ async fn compute_body(
             c.awaiting_decision as u64,
         ),
     ];
+    let portfolio_map = super::confidence::build_map(ctx, &included_set, period, prev_body).await?;
+    let exceptions =
+        super::confidence::exceptions_section(ctx, &included_set, period, cut_off).await?;
     let body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
@@ -205,14 +214,15 @@ async fn compute_body(
         "data_quality": {
             "plans_included": included,
             "plans_left_out_private_or_marked": excluded,
-            "sections_included": ["issues", "change_requests"],
+            "sections_included": ["portfolio_map", "exceptions", "issues", "change_requests"],
             "sections_not_yet_built": [
-                "delivery confidence and trend", "exceptions", "strategic aims and portfolio map",
                 "gate decisions", "funding and financial-year money", "buffer fever chart",
                 "earned value over the threshold", "validated benefits", "capacity heatmap",
             ],
             "note": "A section that is not built is absent from this pack, not zero or green.",
         },
+        "portfolio_map": portfolio_map,
+        "exceptions": exceptions,
         "issues": i,
         "change_requests": c,
     });

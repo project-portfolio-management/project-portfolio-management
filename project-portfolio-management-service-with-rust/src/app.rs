@@ -216,6 +216,7 @@ impl Hooks for App {
             .add_route(controllers::handling_marks::routes())
             .add_route(controllers::change_requests::routes())
             .add_route(controllers::director_summary::routes())
+            .add_route(controllers::confidence::routes())
             .add_route(controllers::director_packs::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())
@@ -353,6 +354,7 @@ impl Hooks for App {
     fn register_tasks(tasks: &mut Tasks) {
         tasks.register(crate::tasks::search::SearchReindex);
         tasks.register(crate::tasks::retention_purge::RetentionPurge);
+        tasks.register(crate::tasks::exception_breaches::ExceptionBreaches);
         // tasks-inject (do not remove)
     }
     async fn truncate(ctx: &AppContext) -> Result<()> {

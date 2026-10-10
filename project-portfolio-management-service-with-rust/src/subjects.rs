@@ -91,6 +91,11 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("value_points", "actor"),
     ("watchers", "sub"),
     ("plan_handling_marks", "set_by"),
+    ("delivery_confidence_assessments", "assessor"),
+    ("delivery_exceptions", "opened_by"),
+    ("delivery_exceptions", "decided_by"),
+    ("delivery_exceptions", "owner_ref"),
+    ("strategic_aims", "marked_by"),
     ("director_packs", "drafted_by"),
     ("director_packs", "issued_by"),
     ("change_requests", "requested_by"),
@@ -105,6 +110,12 @@ pub const COLUMNS: &[(&str, &str)] = &[
 
 /// Identifier columns in the inventory that are **not** person references, with the reason.
 pub const EXCLUDED: &[(&str, &str, &str)] = &[
+    (
+        "delivery_confidence_assessments",
+        "value",
+        "a point on a five-point scale",
+    ),
+    ("delivery_exceptions", "decide_by", "a date"),
     ("adoption_snapshots", "active_users", "a count"),
     ("adoption_snapshots", "target_users", "a count"),
     ("business_case_targets", "promised_by", "a date"),

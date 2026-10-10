@@ -101,6 +101,7 @@ mod m20261010_000052_break_glass;
 mod m20261010_000053_handling_marks;
 mod m20261010_000054_change_requests;
 mod m20261010_000055_director_packs;
+mod m20261010_000056_delivery_confidence;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -202,6 +203,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000053_handling_marks::Migration),
             Box::new(m20261010_000054_change_requests::Migration),
             Box::new(m20261010_000055_director_packs::Migration),
+            Box::new(m20261010_000056_delivery_confidence::Migration),
             // inject-above (do not remove this comment)
         ]
     }

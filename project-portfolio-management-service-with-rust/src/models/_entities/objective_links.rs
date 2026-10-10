@@ -18,6 +18,8 @@ pub struct Model {
     pub objective_pid: Uuid,
     pub plan_pid: Uuid,
     pub weight: i32,
+    /// A programme's one primary strategic aim (DP-4).
+    pub is_primary: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

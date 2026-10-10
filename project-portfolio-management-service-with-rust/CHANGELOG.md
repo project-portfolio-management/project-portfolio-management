@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — delivery confidence, exceptions and the portfolio map (DP-2, DP-3, DP-4, 2026-10-10)
+
+Stated delivery confidence (append-only, self or independent) beside the derived RAG; exceptions that open at amber-red or red, keep their clock and close only on a decision, with a breach task; strategic aims, primary aims and `GET /api/portfolio-map`. The director pack now carries the map (with trend against the previous issued pack) and the exceptions. Migration 56.
+
 ### Added — the monthly director pack, first version (DP-1, 2026-10-10)
 
 `/api/director-packs`: drafted once into stored text, issued by a person, then frozen by the database; reissue with a change note; read by audience; a confined partner reader sees only the packs. Holds issues and change requests so far and lists the sections not yet built. Migration 55.

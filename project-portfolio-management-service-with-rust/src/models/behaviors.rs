@@ -56,6 +56,9 @@ impl ActiveModelBehavior for change_request_risks::ActiveModel {}
 impl ActiveModelBehavior for plan_handling_marks::ActiveModel {}
 impl ActiveModelBehavior for break_glass_grants::ActiveModel {}
 impl ActiveModelBehavior for director_packs::ActiveModel {}
+impl ActiveModelBehavior for delivery_confidence_assessments::ActiveModel {}
+impl ActiveModelBehavior for delivery_exceptions::ActiveModel {}
+impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for cost_rate_tables::ActiveModel {}
 impl ActiveModelBehavior for cost_rates::ActiveModel {}
 impl ActiveModelBehavior for task_costs::ActiveModel {}

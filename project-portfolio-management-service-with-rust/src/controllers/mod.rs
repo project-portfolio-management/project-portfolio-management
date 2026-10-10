@@ -14,6 +14,7 @@ pub mod change_requests;
 pub mod collaboration;
 /// Integrity-verification endpoints.
 pub mod compliance;
+pub mod confidence;
 /// The Controlling-process register: standards, readings, actions, and
 /// the coverage report of what is **not** being controlled.
 pub mod controls;

@@ -113,6 +113,7 @@ pub fn paths() -> Value {
     merge(&mut all, change_request_paths());
     merge(&mut all, director_summary_paths());
     merge(&mut all, director_pack_paths());
+    merge(&mut all, confidence_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -875,6 +876,52 @@ fn baseline_paths() -> Value {
 }
 
 /// Change requests (IR-4, IR-5).
+fn confidence_paths() -> Value {
+    let pid = || uuid_param("pid");
+    json!({
+        "/api/plans/{pid}/delivery-confidence": {
+            "put": op("delivery-confidence", "Record a delivery confidence assessment",
+                "Appends a stated assessment (green, amber_green, amber, amber_red or red; kind self or independent; a rationale of at least 10 characters; assessed_on defaults to today and cannot be in the future). It never replaces an earlier one. An independent assessment needs access=admin or confidence=independent. Setting amber_red or red opens an exception for the plan, or records a worsening on the open one without restarting its clock; improving never closes it.",
+                vec![pid()], &[("200", "assessment, and exception when one is open"), ("403", "Not allowed to record an independent assessment"), ("422", "Names every fault")]),
+            "get": op("delivery-confidence", "A plan's delivery confidence history",
+                "Oldest first, with what the portfolio map shows: the latest independent assessment, else the latest self one marked as self. No assessment is not_assessed, never green; an assessment older than the current month is stale. Inputs: the stored assessments only, not blended with the derived RAG.",
+                vec![pid()], &[("200", "shown, history, note")])
+        },
+        "/api/exceptions": {
+            "get": op("exceptions", "Delivery exceptions across the plans you can read",
+                "Each with what is missing to make it complete (cause, decision_needed, owner, decide_by), whether it is breached (not complete within the window of hours counted from when it opened; exactly the window is still in time) and the hours open. ?status=open|closed and ?breached=true filter; at most 1000. Inputs: stored exceptions and the window in hours, PROJECT_PORTFOLIO_MANAGEMENT_EXCEPTION_WINDOW_HOURS (default 48).",
+                vec![query("status", false, "open or closed"), query("breached", false, "true or false")],
+                &[("200", "exceptions, window_hours"), ("422", "Unknown status")])
+        },
+        "/api/exceptions/{pid}": {
+            "put": op("exceptions", "Complete a delivery exception",
+                "Sets any of cause, decision_needed, owner_ref, owner_role (the role a pack shows instead of the person) and decide_by; fields left out are kept. It is complete when cause, decision needed, owner and decide-by are all present, and completion is timed. A closed exception is 409; one on a plan you cannot read is 404.",
+                vec![uuid_param("pid")], &[("200", "The exception"), ("404", "No such exception, or not one you may read"), ("409", "Closed")])
+        },
+        "/api/exceptions/{pid}/decision": {
+            "post": op("exceptions", "Record the decision that closes an exception",
+                "Body: decision (at least 10 characters). Closes the exception; improving the confidence never does. Closing twice is 409. Audited.",
+                vec![uuid_param("pid")], &[("200", "The closed exception"), ("404", "No such exception, or not one you may read"), ("409", "Already closed"), ("422", "Decision too short")])
+        },
+        "/api/objectives/{pid}/strategic-aim": {
+            "put": op("strategic-aims", "Mark or unmark a strategic aim",
+                "Body: strategic (true or false). Unmarking clears the primary flag of every programme that pointed at it. Audited.",
+                vec![uuid_param("pid")], &[("200", "objective_pid, strategic"), ("404", "No such objective")])
+        },
+        "/api/plans/{pid}/primary-aim": {
+            "put": op("strategic-aims", "Set a programme's primary strategic aim",
+                "Body: objective_pid, which must be marked as a strategic aim. Links the programme to it if it is not already and makes any earlier primary an ordinary link; a programme has at most one.",
+                vec![pid()], &[("200", "plan_pid, primary_aim"), ("422", "Not a strategic aim")])
+        },
+        "/api/portfolio-map": {
+            "get": op("strategic-aims", "The portfolio map",
+                "Programmes (plans of kind Program) you can read, grouped by primary strategic aim, each with stage, phase, stated delivery confidence beside the derived RAG (never blended), whether the two views disagree by two steps or more, and the other aims it serves. A programme appears once; one with no primary aim is listed under no strategic aim. Inputs: stored assessments, the derived RAG rules and the strategic aims. Trend is computed only in issued packs.",
+                vec![query("period", false, "YYYY-MM, default the current month")],
+                &[("200", "period, programmes_total, groups, note"), ("422", "Bad period")])
+        }
+    })
+}
+
 fn director_pack_paths() -> Value {
     json!({
         "/api/director-packs": {

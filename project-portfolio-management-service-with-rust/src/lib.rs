@@ -58,6 +58,7 @@ pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;
 pub mod data;
+pub mod delivery_confidence;
 pub mod director_pack;
 pub mod director_summary;
 pub mod discussion;

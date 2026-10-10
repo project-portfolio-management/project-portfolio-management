@@ -143,8 +143,11 @@ hang off **any** plan.
   portfolio-wide `GET /api/issues` (readable plans only; filters by plan,
   status, severity, owner, open and `min_age_days`; summary by severity and
   status, overdue count and the oldest open issue) and the UI page `/issues`.
-  **Not built:** the link from a risk or a blocked task, and `priority` as
-  anything but free text (IR-3).
+  Also built (IR-3): `POST …/issues/from-risk/{risk_pid}` (severity from
+  exposure; the risk is untouched) and `POST …/issues/from-task/{task_pid}`
+  (a blocked task only; the task is untouched), one open issue per source
+  (`409` otherwise). **Not built:** a button for either on the pages, and
+  `priority` as anything but free text.
 - **FR-14a Change requests.** A change request is a controlled proposal to
   change an approved baseline: scope, schedule, budget or a deliverable.
   `ChangeRequest { pid, plan_pid, title, description, reason, kind:

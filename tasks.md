@@ -1372,11 +1372,12 @@ are stated, never guessed.
   calendar days since `raised_on` (pinned by a unit test); the page passes the
   axe audit and the Welsh render test.
   **Built 2026-10-10:** `GET /api/issues` (readable plans only, filters, summary, 500-row cap), `/issues` page with every text in the catalogue and Welsh, enum labels, `tests/e2e/issues.spec.ts` (order, Welsh, filter, axe), `tests/requests/issues.rs`. **Deviations:** the Welsh is the unreviewed draft; the page lists and filters but does not raise or edit issues (that needs a form, not yet built).
-- [ ] **IR-3 (S) — Raise an issue from a risk or a blocked task.** Escalation
+- [x] **IR-3 (S) — Raise an issue from a risk or a blocked task.** Escalation
   keeps `source_risk_pid` / `source_task_pid`; closing the issue leaves the
   source untouched. Daily-standup blockers (spec §1.4) can become issues.
   **Acceptance:** raising from a risk links both ways; the risk's own status is
   unchanged.
+  **Built 2026-10-10:** `POST /api/plans/{pid}/issues/from-risk/{risk_pid}` and `…/from-task/{task_pid}`; `severity_from_exposure` (unit-tested at each boundary); a request test covering conflict, 404, 422 and raising again after closing. **Deviations:** API only, no button on the risk or board pages yet; the daily-standup blocker conversion in the spec is the blocked-task route, not a separate flow; the risk is deliberately not moved to `materialized` by raising an issue (that stays the risk's own *escalate* action).
 - [ ] **IR-4 (L) — Change requests.** Store, API and UI for FR-14a with the
   status machine Draft → Submitted → UnderReview → Approved|Rejected →
   Implemented (Withdrawn from any open state). **Acceptance:** the requester

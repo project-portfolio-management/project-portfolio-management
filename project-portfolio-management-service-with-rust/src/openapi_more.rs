@@ -886,6 +886,18 @@ fn issues_paths() -> Value {
                 vec![uuid_param("pid")],
                 &[("200", "The issue"), ("404", "Unknown plan"), ("422", "The issue is refused (see above)")])
         },
+        "/api/plans/{pid}/issues/from-risk/{risk_pid}": {
+            "post": op("issues", "Raise an issue from a risk",
+                "For a risk that has happened. Creates an open issue of kind risk with the risk's title, description and owner, a severity from its exposure (probability times impact: 20 or more critical, 12 or more high, 6 or more med, else low) and source_risk_pid. The risk is never changed. One open issue per risk (409 names the existing one). Audited.",
+                vec![uuid_param("pid"), uuid_param("risk_pid")],
+                &[("200", "The new issue"), ("404", "Unknown plan or risk"), ("409", "An open issue already exists for this risk")])
+        },
+        "/api/plans/{pid}/issues/from-task/{task_pid}": {
+            "post": op("issues", "Raise an issue from a blocked task",
+                "For a task whose status is blocked (422 otherwise). Creates an open blocker issue titled Blocked: plus the task's title, owned by the task's assignee, severity med, with source_task_pid. The task is never changed. One open issue per task (409 names the existing one). Audited.",
+                vec![uuid_param("pid"), uuid_param("task_pid")],
+                &[("200", "The new issue"), ("404", "Unknown plan or task"), ("409", "An open issue already exists for this task"), ("422", "The task is not blocked")])
+        },
         "/api/plans/{pid}/issues/{issue_pid}": {
             "get": op("issues", "One issue", "The issue with its age and overdue flag.",
                 vec![uuid_param("pid"), uuid_param("issue_pid")],

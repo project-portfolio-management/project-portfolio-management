@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
-use crate::models::_entities::{issues, plans};
+use crate::models::_entities::{issues, plans, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn unprocessable(message: &str) -> Error {
@@ -439,10 +439,174 @@ async fn register(
     }))
 }
 
+/// A live, unfinished issue already raised from this source, if any.
+async fn existing_open(
+    ctx: &AppContext,
+    column: issues::Column,
+    source: Uuid,
+) -> Result<Option<issues::Model>> {
+    issues::Entity::find()
+        .filter(column.eq(source))
+        .filter(issues::Column::DeletedAt.is_null())
+        .filter(issues::Column::Status.is_in(["open", "in_progress"]))
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)
+}
+
+fn already(existing: &issues::Model) -> Error {
+    Error::CustomError(
+        StatusCode::CONFLICT,
+        ErrorDetail::new(
+            "conflict",
+            format!(
+                "an open issue already exists for this source: {}",
+                existing.pid
+            ),
+        ),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn insert_from_source(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    title: String,
+    description: Option<String>,
+    kind: &str,
+    severity: &str,
+    owner_ref: Option<String>,
+    source_risk_pid: Option<Uuid>,
+    source_task_pid: Option<Uuid>,
+) -> Result<issues::Model> {
+    let now = today();
+    let row = issues::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        plan_pid: ActiveValue::set(plan),
+        title: ActiveValue::set(title.chars().take(rules::TITLE_MAX).collect()),
+        description: ActiveValue::set(description),
+        kind: ActiveValue::set(kind.to_string()),
+        severity: ActiveValue::set(severity.to_string()),
+        priority: ActiveValue::set(None),
+        status: ActiveValue::set("open".to_string()),
+        owner_ref: ActiveValue::set(owner_ref.filter(|o| rules::is_person_ref(o))),
+        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        raised_on: ActiveValue::set(now),
+        due_date: ActiveValue::set(None),
+        resolution: ActiveValue::set(None),
+        resolved_on: ActiveValue::set(None),
+        source_risk_pid: ActiveValue::set(source_risk_pid),
+        source_task_pid: ActiveValue::set(source_task_pid),
+        change_request_pid: ActiveValue::set(None),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "issue_raised",
+        caller.actor(),
+        Some(serde_json::json!({
+            "plan_pid": plan, "title": row.title, "kind": row.kind, "severity": row.severity,
+            "source_risk_pid": source_risk_pid, "source_task_pid": source_task_pid,
+        })),
+    )
+    .await
+    .ok();
+    Ok(row)
+}
+
+/// `POST /api/plans/{pid}/issues/from-risk/{risk_pid}` — raise an issue from a risk
+/// that has happened. The risk is never changed. One open issue per risk (`409`).
+#[debug_handler]
+async fn from_risk(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((plan, risk_pid)): Path<(String, String)>,
+) -> Result<Response> {
+    let plan = require_plan(&ctx, &plan).await?;
+    let risk_pid = Uuid::parse_str(&risk_pid).map_err(|_| Error::NotFound)?;
+    let risk = risks::Entity::find()
+        .filter(risks::Column::Pid.eq(risk_pid))
+        .filter(risks::Column::PlanPid.eq(plan))
+        .filter(risks::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    if let Some(found) = existing_open(&ctx, issues::Column::SourceRiskPid, risk.pid).await? {
+        return Err(already(&found));
+    }
+    let severity = rules::severity_from_exposure(risk.probability * risk.impact);
+    let row = insert_from_source(
+        &ctx,
+        &caller,
+        plan,
+        risk.title.clone(),
+        risk.description.clone(),
+        "risk",
+        severity,
+        risk.owner_ref.clone(),
+        Some(risk.pid),
+        None,
+    )
+    .await?;
+    format::json(view(&row, today()))
+}
+
+/// `POST /api/plans/{pid}/issues/from-task/{task_pid}` — raise a blocker issue from a
+/// blocked task (`422` if the task is not blocked). The task is never changed. One open
+/// issue per task (`409`).
+#[debug_handler]
+async fn from_task(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((plan, task_pid)): Path<(String, String)>,
+) -> Result<Response> {
+    let plan = require_plan(&ctx, &plan).await?;
+    let task_pid = Uuid::parse_str(&task_pid).map_err(|_| Error::NotFound)?;
+    let task = tasks::Entity::find()
+        .filter(tasks::Column::Pid.eq(task_pid))
+        .filter(tasks::Column::PlanPid.eq(plan))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    if task.status != "blocked" {
+        return Err(unprocessable(
+            "only a blocked task can be raised as an issue",
+        ));
+    }
+    if let Some(found) = existing_open(&ctx, issues::Column::SourceTaskPid, task.pid).await? {
+        return Err(already(&found));
+    }
+    let row = insert_from_source(
+        &ctx,
+        &caller,
+        plan,
+        format!("Blocked: {}", task.title),
+        task.description.clone(),
+        "blocker",
+        "med",
+        task.assignee_ref.clone(),
+        None,
+        Some(task.pid),
+    )
+    .await?;
+    format::json(view(&row, today()))
+}
+
 /// The issue routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
+        .add("/plans/{pid}/issues/from-risk/{risk_pid}", post(from_risk))
+        .add("/plans/{pid}/issues/from-task/{task_pid}", post(from_task))
         .add("/issues", get(register))
         .add("/plans/{pid}/issues", get(list))
         .add("/plans/{pid}/issues", post(create))

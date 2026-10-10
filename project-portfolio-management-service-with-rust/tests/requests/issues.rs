@@ -212,3 +212,106 @@ async fn issues_are_raised_ranked_closed_and_kept_in_their_plan() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn an_issue_can_be_raised_from_a_risk_or_a_blocked_task_once() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let p = plan(&request, "Apollo").await;
+
+        // From a risk: severity follows exposure (4 x 5 = 20 is critical); the risk is untouched.
+        let risk: Value = request
+            .post(&format!("/api/plans/{p}/risks"))
+            .json(
+                &json!({ "title": "Supplier fails", "description": "Single source",
+                           "probability": 4, "impact": 5, "owner_ref": "person:3f2c6b7e-0000-4000-8000-00000000000a" }),
+            )
+            .await
+            .json();
+        let risk_pid = risk["pid"].as_str().unwrap_or_else(|| panic!("{risk}")).to_string();
+        let raised: Value = request
+            .post(&format!("/api/plans/{p}/issues/from-risk/{risk_pid}"))
+            .await
+            .json();
+        assert_eq!(raised["kind"], "risk");
+        assert_eq!(raised["severity"], "critical");
+        assert_eq!(raised["title"], "Supplier fails");
+        assert_eq!(raised["owner_ref"], "person:3f2c6b7e-0000-4000-8000-00000000000a");
+        assert_eq!(raised["source_risk_pid"], risk_pid);
+        let risks: Value = request.get(&format!("/api/plans/{p}/risks")).await.json();
+        assert_eq!(risks[0]["status"], "open", "the risk is not changed");
+
+        // A second attempt while the first is open is a conflict.
+        assert_eq!(
+            request
+                .post(&format!("/api/plans/{p}/issues/from-risk/{risk_pid}"))
+                .await
+                .status_code(),
+            409
+        );
+        // Unknown risk is 404.
+        assert_eq!(
+            request
+                .post(&format!(
+                    "/api/plans/{p}/issues/from-risk/00000000-0000-4000-8000-000000000000"
+                ))
+                .await
+                .status_code(),
+            404
+        );
+
+        // From a task: only a blocked one.
+        let task: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Wire the gateway", "assignee_ref": "person:3f2c6b7e-0000-4000-8000-00000000000b" }))
+            .await
+            .json();
+        let task_pid = task["pid"].as_str().expect("task pid").to_string();
+        assert_eq!(
+            request
+                .post(&format!("/api/plans/{p}/issues/from-task/{task_pid}"))
+                .await
+                .status_code(),
+            422
+        );
+        request
+            .patch(&format!("/api/plans/{p}/tasks/{task_pid}"))
+            .json(&json!({ "status": "blocked" }))
+            .await
+            .assert_status_ok();
+        let blocker: Value = request
+            .post(&format!("/api/plans/{p}/issues/from-task/{task_pid}"))
+            .await
+            .json();
+        assert_eq!(blocker["kind"], "blocker");
+        assert_eq!(blocker["title"], "Blocked: Wire the gateway");
+        assert_eq!(blocker["owner_ref"], "person:3f2c6b7e-0000-4000-8000-00000000000b");
+        assert_eq!(blocker["source_task_pid"], task_pid);
+        assert_eq!(
+            request
+                .post(&format!("/api/plans/{p}/issues/from-task/{task_pid}"))
+                .await
+                .status_code(),
+            409
+        );
+
+        // Once the first is closed, a new one may be raised from the same risk.
+        let first = raised["pid"].as_str().unwrap();
+        request
+            .put(&format!("/api/plans/{p}/issues/{first}"))
+            .json(
+                &json!({ "title": "Supplier fails", "kind": "risk", "severity": "critical",
+                           "status": "closed", "resolution": "Second supplier signed",
+                           "raised_on": raised["raised_on"] }),
+            )
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/plans/{p}/issues/from-risk/{risk_pid}"))
+            .await
+            .assert_status_ok();
+    })
+    .await;
+}

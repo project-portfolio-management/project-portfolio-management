@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — raise an issue from a risk or a blocked task (IR-3, 2026-10-10)
+
+`POST /api/plans/{pid}/issues/from-risk/{risk_pid}` (kind risk, severity from exposure: 20 or more critical, 12 high, 6 med, else low; owner and text copied) and `POST …/issues/from-task/{task_pid}` (blocked tasks only; kind blocker, owner is the assignee). The source is never changed; one open issue per source, `409` otherwise.
+
 ### Added — the issues register across plans (IR-2, 2026-10-10)
 
 `GET /api/issues`: every issue in the plans the caller can read, most serious first then oldest; filters `plan`, `status`, `severity`, `owner`, `open`, `min_age_days` (calendar days); a summary by severity and status, the overdue count and the oldest open issue; capped at 500 rows with `truncated`.

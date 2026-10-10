@@ -139,6 +139,18 @@ pub fn severity_rank(severity: &str) -> usize {
     SEVERITIES.iter().position(|s| *s == severity).unwrap_or(0)
 }
 
+/// The severity of an issue raised from a risk, from its exposure (probability times impact,
+/// each 1 to 5, so 1 to 25): 20 or more critical, 12 or more high, 6 or more med, else low.
+#[must_use]
+pub fn severity_from_exposure(exposure: i32) -> &'static str {
+    match exposure {
+        20.. => "critical",
+        12..=19 => "high",
+        6..=11 => "med",
+        _ => "low",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -218,6 +230,22 @@ mod tests {
         assert!(!is_overdue("open", Some(day(4)), day(4)));
         assert!(!is_overdue("closed", Some(day(3)), day(4)));
         assert!(!is_overdue("open", None, day(4)));
+    }
+
+    #[test]
+    fn exposure_maps_to_a_severity_at_each_boundary() {
+        for (exposure, expected) in [
+            (1, "low"),
+            (5, "low"),
+            (6, "med"),
+            (11, "med"),
+            (12, "high"),
+            (19, "high"),
+            (20, "critical"),
+            (25, "critical"),
+        ] {
+            assert_eq!(severity_from_exposure(exposure), expected, "{exposure}");
+        }
     }
 
     #[test]

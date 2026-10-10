@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the handling mark banner (RG-7, 2026-10-10)
+
+A plan page shows its effective handling mark as words in a bordered bar (English and Welsh draft) when the deployment has a scheme; nothing otherwise, and nothing when the lookup fails.
+
 ### Added — a shared session store (RG-12, 2026-10-10)
 
 `OIDC_SESSION_STORE=redis` with `REDIS_URL` keeps sign-in sessions and login transactions in Redis, so any front-end replica serves any request and a restart signs nobody out. Dependency-free RESP client; atomic single-use login states; idle timeout and refreshed tokens shared; Redis down means signed out. The default stays in-process.

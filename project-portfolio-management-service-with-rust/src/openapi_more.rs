@@ -109,6 +109,7 @@ pub fn paths() -> Value {
     merge(&mut all, subjects_paths());
     merge(&mut all, access_review_paths());
     merge(&mut all, break_glass_paths());
+    merge(&mut all, handling_marks_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -866,6 +867,25 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// Handling marks (RG-7).
+fn handling_marks_paths() -> Value {
+    json!({
+        "/api/handling-marks": {
+            "get": op("handling-marks", "The configured scheme of handling marks, lowest first",
+                "Empty and on=false when the deployment configured none (PROJECT_PORTFOLIO_MANAGEMENT_HANDLING_MARKS). With a scheme, a plan with no mark is at the lowest level.",
+                vec![], &[("200", "scheme, on")])
+        },
+        "/api/plans/{pid}/handling-mark": {
+            "get": op("handling-marks", "A plan's handling mark",
+                "Returns scheme, mark (as stored, null when none) and effective (what applies: the lowest level when none). With a scheme on, every response about a plan carries X-Handling-Mark, and a plan marked above the caller's clearance attribute is 404 to them, administrators included.",
+                vec![uuid_param("pid")], &[("200", "plan_pid, scheme, mark, effective"), ("404", "Unknown plan, or above your clearance")]),
+            "put": op("handling-marks", "Set or reset a plan's handling mark",
+                "Send {mark: code} (one of the scheme) or {mark: null} to reset to the lowest level. You may set a mark only up to your own clearance and only on a plan you can see (403 otherwise, 404 when no scheme is configured). Audited.",
+                vec![uuid_param("pid")], &[("200", "The mark"), ("403", "Above your clearance"), ("404", "Unknown plan, or no scheme")])
         }
     })
 }

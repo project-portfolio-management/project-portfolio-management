@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — handling marks (RG-7, 2026-10-10)
+
+`PROJECT_PORTFOLIO_MANAGEMENT_HANDLING_MARKS` configures an ordered scheme; `GET /api/handling-marks`, `GET`/`PUT /api/plans/{pid}/handling-mark`. A plan above a caller's `clearance` attribute is 404 to them (administrators included) in the guard layer and the shared hidden scope; every plan response carries `X-Handling-Mark`. Migration 53.
+
 ### Added — break-glass access to private plans (RG-10, 2026-10-10)
 
 `/api/break-glass`: an eligible person opens a private plan for up to four hours with a stated reason and a named second person, who is told in the same transaction (no notice, no grant). Visibility only; every request it opens is audited; revocable by the holder or an administrator; five a day at most. Migration 52. Also hardened: the plan's issue list is capped at 5,000, the retention periods have a ceiling (an absurd value used to overflow the date arithmetic), strict outbound mode re-checks the resolved address at send time, spreadsheet exports defuse a leading tab or carriage return, and the content check is fuzzed.

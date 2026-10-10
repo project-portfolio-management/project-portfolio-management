@@ -18,6 +18,7 @@
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { COLLECTIONS } from "#lib/api/types.js";
+  import { PpmClient } from "#lib/api/ppm.js";
   import { orderNavForView } from "#lib/nav.js";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
@@ -29,6 +30,30 @@
   // `page.data.title` convention, set per-route by each route's load
   // function so it stays in sync with that page's own <svelte:head>
   // <title> without SharePicker having to read the DOM).
+  // The handling mark (security classification) of the plan being looked at, when the deployment
+  // has a scheme (RG-7). Nothing is shown otherwise, and a failed lookup shows nothing rather than a guess.
+  const ppmClient = PpmClient.withFetch();
+  let handlingMark = $state<string | null>(null);
+  $effect(() => {
+    const pid = page.params?.pid;
+    if (!browser || !pid) {
+      handlingMark = null;
+      return;
+    }
+    let live = true;
+    ppmClient
+      .planHandlingMark(pid)
+      .then((r) => {
+        if (live) handlingMark = r.scheme.length > 0 ? r.effective : null;
+      })
+      .catch(() => {
+        if (live) handlingMark = null;
+      });
+    return () => {
+      live = false;
+    };
+  });
+
   const SHARE_TARGETS: ShareTarget[] = $derived([
     {
       id: "email",
@@ -310,6 +335,7 @@
       />
     </div>
   </header>
+  {#if handlingMark}<p class="handling-mark" role="note" data-testid="handling-mark">{t("p._layout_svelte.handling_mark", { mark: handlingMark })}</p>{/if}
   <main>{@render children()}</main>
 </div>
 

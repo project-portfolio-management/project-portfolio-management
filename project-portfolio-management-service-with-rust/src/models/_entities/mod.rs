@@ -66,6 +66,7 @@ pub mod person_availabilities;
 pub mod phase_transitions;
 pub mod plan_access_settings;
 pub mod plan_dependencies;
+pub mod plan_handling_marks;
 pub mod plan_links;
 pub mod plan_modules;
 pub mod plan_templates;

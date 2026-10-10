@@ -174,6 +174,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/handling-marks",
+        "the deployment's configured scheme of marks (a list of words); no plan data",
+    ),
+    (
         "/api/break-glass",
         "the caller's own grants (all of them for an administrator): a plan id, a reason and times; no plan data",
     ),

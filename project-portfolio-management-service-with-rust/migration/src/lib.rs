@@ -98,6 +98,7 @@ mod m20261009_000049_oxford_spelling;
 mod m20261010_000050_issues;
 mod m20261010_000051_audit_logs_protected;
 mod m20261010_000052_break_glass;
+mod m20261010_000053_handling_marks;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -196,6 +197,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000050_issues::Migration),
             Box::new(m20261010_000051_audit_logs_protected::Migration),
             Box::new(m20261010_000052_break_glass::Migration),
+            Box::new(m20261010_000053_handling_marks::Migration),
             // inject-above (do not remove this comment)
         ]
     }

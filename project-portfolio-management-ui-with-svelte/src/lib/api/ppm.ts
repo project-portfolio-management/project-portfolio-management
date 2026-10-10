@@ -3227,6 +3227,15 @@ export class PpmClient {
     if (asOf) q.set("as_of", asOf);
     return this.http.get(`/api/me/tasks?${q.toString()}`);
   }
+  /** A plan's handling mark (RG-7). `scheme` is empty when the deployment has none. */
+  planHandlingMark(pid: string): Promise<{
+    plan_pid: string;
+    scheme: string[];
+    mark: string | null;
+    effective: string | null;
+  }> {
+    return this.http.get(`/api/plans/${pid}/handling-mark`);
+  }
   listTasks(
     pid: string,
   ): Promise<{

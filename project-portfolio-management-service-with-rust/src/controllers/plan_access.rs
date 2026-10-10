@@ -59,6 +59,52 @@ pub(crate) fn is_admin(claims: Option<&authentication_verifier::Claims>) -> bool
     })
 }
 
+/// The caller's `clearance` attribute (RG-7): the first value, if any.
+pub(crate) fn clearance_of(claims: Option<&authentication_verifier::Claims>) -> Option<String> {
+    claims
+        .and_then(|c| c.attrs.get("clearance"))
+        .and_then(|v| v.first())
+        .cloned()
+}
+
+/// The stored handling marks of some plans (`None` for all). Empty with no scheme configured.
+async fn stored_marks(
+    ctx: &AppContext,
+    pids: Option<&[Uuid]>,
+) -> std::result::Result<Vec<(Uuid, String)>, sea_orm::DbErr> {
+    use crate::models::_entities::plan_handling_marks as marks;
+    if !crate::handling_marks::scheme().is_on() {
+        return Ok(Vec::new());
+    }
+    let mut find = marks::Entity::find();
+    if let Some(p) = pids {
+        find = find.filter(marks::Column::PlanPid.is_in(p.to_vec()));
+    }
+    Ok(find
+        .all(&ctx.db)
+        .await?
+        .into_iter()
+        .map(|m| (m.plan_pid, m.mark))
+        .collect())
+}
+
+/// The plans among `pids` (all marked plans for `None`) hidden from `caller` by their handling mark
+/// (RG-7). A lookup failure hides every candidate (fail closed).
+pub(crate) async fn mark_hidden(
+    ctx: &AppContext,
+    pids: Option<&[Uuid]>,
+    caller: &MaybeAuthUser,
+) -> std::result::Result<HashSet<Uuid>, sea_orm::DbErr> {
+    let scheme = crate::handling_marks::scheme();
+    let clearance = clearance_of(caller.claims());
+    Ok(stored_marks(ctx, pids)
+        .await?
+        .into_iter()
+        .filter(|(_, m)| !scheme.can_see(Some(m), clearance.as_deref()))
+        .map(|(p, _)| p)
+        .collect())
+}
+
 /// For each of `pids`, the token subjects that hold a **live break-glass grant** on it (RG-10): not
 /// revoked and not expired. A lookup failure gives an empty answer, which means no extra access (fail
 /// closed).
@@ -95,6 +141,10 @@ pub(crate) async fn hidden_plans(
     if pids.is_empty() {
         return HashSet::new();
     }
+    // Hidden by handling mark (RG-7): applies to everyone, administrators included.
+    let Ok(by_mark) = mark_hidden(ctx, Some(pids), caller).await else {
+        return pids.iter().copied().collect();
+    };
     let Ok(rows) = plan_access::Entity::find()
         .filter(plan_access::Column::PlanPid.is_in(pids.to_vec()))
         .filter(plan_access::Column::Private.eq(true))
@@ -107,14 +157,17 @@ pub(crate) async fn hidden_plans(
     let admin = is_admin(caller.claims());
     // A live break-glass grant makes the grantee a temporary member for visibility (RG-10).
     let granted = grant_subs(ctx, pids).await;
-    rows.into_iter()
+    let mut hidden: HashSet<Uuid> = rows
+        .into_iter()
         .filter(|r| {
             let mut members = members_of(r);
             members.extend(granted.get(&r.plan_pid).cloned().unwrap_or_default());
             !rules::can_see(true, &members, caller.actor(), admin)
         })
         .map(|r| r.plan_pid)
-        .collect()
+        .collect();
+    hidden.extend(by_mark);
+    hidden
 }
 
 /// The subset of `pids` whose plan is live and **readable** by `caller`: not
@@ -233,7 +286,7 @@ impl HiddenScope {
     /// private must not turn into showing it.
     pub(crate) async fn of(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<Self> {
         use crate::models::_entities::tasks;
-        let private: Vec<Uuid> = plan_access::Entity::find()
+        let mut private: Vec<Uuid> = plan_access::Entity::find()
             .filter(plan_access::Column::Private.eq(true))
             .all(&ctx.db)
             .await
@@ -241,6 +294,16 @@ impl HiddenScope {
             .into_iter()
             .map(|r| r.plan_pid)
             .collect();
+        // Plans with a handling mark are candidates too (RG-7).
+        private.extend(
+            stored_marks(ctx, None)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|(p, _)| p),
+        );
+        private.sort();
+        private.dedup();
         if private.is_empty() {
             return Ok(Self::default());
         }
@@ -506,7 +569,29 @@ mod path_tests {
 /// `404` (existence is not disclosed). Every other request passes untouched,
 /// and a lookup failure fails **closed** for a private plan only.
 pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next) -> AxumResponse {
+    let mut label: Option<String> = None;
     if let Some(plan_pid) = plan_pid_of(req.uri().path()) {
+        // Handling mark (RG-7): too high for the caller is a 404, whoever the caller is; otherwise the
+        // plan's mark goes out on the response.
+        let scheme = crate::handling_marks::scheme();
+        if scheme.is_on() {
+            let claims = crate::auth::request_claims(req.headers()).await.ok();
+            let clearance = clearance_of(claims.as_ref());
+            let stored = stored_marks(&ctx, Some(&[plan_pid])).await;
+            let mark = match &stored {
+                Ok(v) => v.first().map(|(_, m)| m.clone()),
+                // Could not check: say nothing is there.
+                Err(_) => Some(scheme.levels().last().cloned().unwrap_or_default()),
+            };
+            if stored.is_err() || !scheme.can_see(mark.as_deref(), clearance.as_deref()) {
+                return (
+                    StatusCode::NOT_FOUND,
+                    axum::Json(serde_json::json!({ "error": "not_found" })),
+                )
+                    .into_response();
+            }
+            label = scheme.effective(mark.as_deref()).map(str::to_string);
+        }
         let private = plan_access::Entity::find()
             .filter(plan_access::Column::PlanPid.eq(plan_pid))
             .filter(plan_access::Column::Private.eq(true))
@@ -547,7 +632,13 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
             }
         }
     }
-    next.run(req).await
+    let mut response = next.run(req).await;
+    if let Some(l) = label
+        && let Ok(v) = axum::http::HeaderValue::from_str(&l)
+    {
+        response.headers_mut().insert("x-handling-mark", v);
+    }
+    response
 }
 
 /// `GET /api/plans/{pid}/access`.

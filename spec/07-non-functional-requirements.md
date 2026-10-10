@@ -165,7 +165,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   that can be encrypted**, with a restore drill that proves they decrypt; an
   optional **strict mode for operator-configured outbound targets**; an
   **access review** report for recertification; **break-glass access** to private plans (time-limited, reasoned,
-  witnessed and audited); **attachment content checks** with an
+  witnessed and audited); configurable **handling marks** that hide a plan from
+  anyone below its level; **attachment content checks** with an
   optional virus-scan hook that fails closed; and an
   administrator-only **data-subject tool** that exports everything held about a
   person reference and pseudonymises it (not deletes it) across the schema, audit

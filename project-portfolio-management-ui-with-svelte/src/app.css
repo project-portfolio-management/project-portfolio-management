@@ -268,3 +268,13 @@ html[data-font="dyslexia"] textarea {
   max-width: 60ch;
   color: var(--mxi-color-muted);
 }
+
+/* The handling mark of the plan on screen (RG-7): words in a box, not colour alone. */
+.handling-mark {
+  margin: 0;
+  padding: 0.35rem 1rem;
+  border-block: 2px solid currentColor;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}

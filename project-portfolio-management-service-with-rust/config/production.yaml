@@ -86,7 +86,12 @@ database:
 # a real container against a real Postgres for the T-28o runbook
 # verification, not by reading the file.
 
-# Cache provider: in-memory (loco `cache_inmem`, enabled by default).
+# Cache provider: Redis (loco `cache_redis`). Shared by every replica, survives a restart, and its
+# health is part of `/_readiness` (503 when Redis is unreachable or the password is wrong; `/_health` stays 200).
+# PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL is required: `redis://:password@host:6379/0`, or `rediss://` for TLS.
+# Development, tests and the insecure `container-dev` profile keep the in-memory cache and need no Redis.
+# Nothing in the service reads or writes the cache yet; this only changes the provider.
 cache:
-  kind: InMem
-  max_capacity: 33554432 # 32MiB (default if not specified)
+  kind: Redis
+  uri: {{ get_env(name="PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL") }}
+  max_size: {{ get_env(name="PROJECT_PORTFOLIO_MANAGEMENT_REDIS_POOL", default="10") }}

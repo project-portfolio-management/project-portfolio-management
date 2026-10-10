@@ -47,6 +47,8 @@ x-api-environment: &api-environment
   LOCO_ENV: production
   PORT: "5150"
   DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management
+  # The cache (Redis). The password defaults to the database's so a local stack needs one secret.
+  PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL: redis://:${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}@redis:6379/0
   PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL: ${PPM_PASETO_KEYS_URL:-}
   PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS: ${PPM_PASETO_KEYS:-}
   PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER: ${PPM_TOKEN_ISSUER:-authentication-service}
@@ -79,6 +81,19 @@ services:
       retries: 30
       start_period: 5s
 
+  # The cache. Not published on the host; only the API reaches it. It holds nothing that cannot be rebuilt
+  # (cached reads, each with a short lifetime), so there is no volume.
+  redis:
+    image: docker.io/library/redis:7-alpine
+    command: ["redis-server", "--requirepass", "${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASS\" --no-auth-warning ping | grep -q PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    environment:
+      REDIS_PASS: ${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}
+
   # One-shot: applies the migrations compiled into the binary, then exits.
   # (config/production.yaml sets auto_migrate: false on purpose.)
   migrate:
@@ -88,6 +103,8 @@ services:
     environment: *api-environment
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: "no"
 

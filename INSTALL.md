@@ -88,3 +88,10 @@ publishes. Pin a version in production rather than tracking `main`.
 
 See the [runbook](operations/runbook.md), then open an issue. For a security
 problem, use [SECURITY.md](SECURITY.md) instead.
+
+## Redis (production cache)
+
+`config/production.yaml` uses Redis as Loco's cache. Set `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`
+(`redis://:password@host:6379/0`, or `rediss://` for TLS); `compose.yaml` starts one and reuses the database
+password unless `PPM_REDIS_PASSWORD` is set. Without a reachable Redis the service starts but `/_readiness`
+answers 503. The cache holds nothing that cannot be rebuilt, and nothing in the service reads or writes it yet.

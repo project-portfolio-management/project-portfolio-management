@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the production cache is Redis (2026-10-10)
+
+Loco's `cache_redis` is enabled and `config/production.yaml` uses it (`PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL` required, pool size `..._REDIS_POOL`); `compose.yaml` gains a password-protected `redis` service with no volume. `/_readiness` is 503 when Redis cannot be reached. Development, tests and `container-dev` keep the in-memory cache. Nothing in the service uses the cache yet.
+
 ### Changed — a ceiling on the full critical-path answer (RG-16, 2026-10-10)
 
 `GET /api/plans/{pid}/cpm` for a plan of more than 5,000 tasks (`PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS`) answers `413` unless `?only=critical` or `?full=true` is given. Smaller plans are unchanged.

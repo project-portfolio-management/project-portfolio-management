@@ -58,6 +58,7 @@ pub mod cost_risk;
 pub mod cpm;
 pub mod custom_fields;
 pub mod data;
+pub mod director_summary;
 pub mod discussion;
 /// Pure rules for the engineering-team features (tasks / burndown / MoSCoW).
 /// Flow Distribution: the mix of work types completed — feature,

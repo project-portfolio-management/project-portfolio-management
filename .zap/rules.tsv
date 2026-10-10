@@ -7,3 +7,5 @@
 # (do not enable without a real justification):
 #
 # 10049	IGNORE	(Storable and Cacheable Content) the API sets explicit Cache-Control; ...
+10049	IGNORE	(Non-Storable Content) deliberate: API responses carry Cache-Control: no-store/private because they hold plan data; the rule reports exactly that. Reviewed 2026-10-10.
+90005	IGNORE	(Sec-Fetch-Dest Header is Missing) a request header that browsers send and a scanner does not; nothing for the service to fix. Reviewed 2026-10-10.

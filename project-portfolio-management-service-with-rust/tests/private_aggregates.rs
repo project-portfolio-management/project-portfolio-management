@@ -91,6 +91,7 @@ const AGGREGATES: &[&str] = &[
     "/api/executive/health",
     "/api/financials/exposure",
     "/api/financials/variance",
+    "/api/issues",
     "/api/financials/forecast?plan={pub}",
     "/api/financials/forecast?plan={hub}",
     "/api/plans/{hub}/flow-distribution?rollup=true",
@@ -154,6 +155,9 @@ const PRIVILEGED: &[&str] = &[
     "/api/board/trends",
     "/api/auditor/trail",
     "/api/auditor/evidence-pack",
+    // The access review is administrators only (the `access_review` area), and still leaves out
+    // plans the caller cannot read.
+    "/api/access-review",
 ];
 
 /// Reads where a member and an admin legitimately differ because a person's detail is masked for a
@@ -389,6 +393,8 @@ async fn seed(
         json!({ "title": format!("{name} policy"), "plan_pid": p, "body": format!("{name} text") }),
     )
     .await;
+    post(format!("/api/plans/{p}/issues"), json!({ "title": format!("{name} issue"), "kind": "blocker", "severity": "high", "owner_ref": PERSON, "raised_on": "2026-10-01" })).await;
+    post(format!("/api/plans/{p}/access-records"), json!({ "person_ref": PERSON, "access": format!("{name} repo"), "action": "granted", "recorded_on": "2026-01-05" })).await;
     post(format!("/api/plans/{p}/sprints"), json!({ "name": format!("{name} sprint"), "starts_on": "2026-10-05", "ends_on": "2026-10-19" })).await;
     post("/api/devops/events".into(), json!({ "plan_pid": p, "kind": "deploy", "environment": "prod", "version": format!("{name}-1.0") })).await;
     post(

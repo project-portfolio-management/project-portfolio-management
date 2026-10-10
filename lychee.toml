@@ -3,7 +3,7 @@
 # installed, `python3 scripts/check-links.py` does the same check with the
 # standard library (that is the checker verified in this repository).
 offline = true
-include_fragments = true
+include_fragments = "full"
 no_progress = true
 extensions = ["md"]
 exclude_path = [

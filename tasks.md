@@ -1484,9 +1484,20 @@ what was **not** tested; claim no certification.
   **Built 2026-10-10.** `GET /api/access-review` (JSON or `?format=csv` with a decision column and spreadsheet formula defusing); `src/access_review.rs` (standing grants from the access ledger: latest entry per person, plan and access; age in calendar days; `review_due` at `older_than_days`, default 365); administrators only (an `access_review` area closed to the policy file); readable plans only; audited. Unit and request tests. **Deviation, stated:** it reports what people **recorded** in the access ledger, not what the identity provider enforces (the service cannot read that); it does not record the reviewer's decision back (the CSV is the artefact; recording decisions is a follow-up).
 - [ ] **RG-10 (M) — Break-glass access.** Time-limited elevated access with a
   required reason, a second-person notification and a loud audit entry.
-- [ ] **RG-11 (M) — Load and soak test.** A repeatable script and published
+- [x] **RG-11 (M) — Load and soak test.** A repeatable script and published
   results (latency percentiles, error rate, database size sweep) in
   `BENCHMARKS.md`. **Acceptance:** results recorded with date, machine, command.
+  **Built 2026-10-10.** `scripts/load-test.mjs` (`seed`, `run`, `soak`; Node and `oha`); results, machine and caveats in `BENCHMARKS.md`. **Findings:** ordinary requests on 100-task plans answer in tens of milliseconds at 32 connections; a plan of 12,667 tasks is a cliff (task list ~1.9 s median and ~400 KB, critical path ~2.5 s, memory to ~1.2 GB); bulk writing through the API ran at about 100 rows a second (cause not investigated); a six-minute soak showed 4 errors in about 800,000 requests and flat memory. **Deviations, stated:** client, service and database shared one machine; login and rate limiting were off; run-to-run variation was 2 to 4 times, so the numbers are an order of magnitude, not a capacity plan; no long soak, no larger database, no front-end profile.
+- [ ] **RG-15 (M) — Page a plan's task list.** `GET /api/plans/{pid}/tasks` returns every task (about
+  400 KB for 12,667) and took ~1.9 s at the median under load. Page it the standard way
+  (`limit`, `offset`, `X-Total-Count`) with the counts kept in the body, keep the old shape working for
+  callers that send no paging parameters up to a stated cap, and move the UI to pages. **Acceptance:** the
+  list-paging census names it; the large-plan scenario of `scripts/load-test.mjs` improves and the figures
+  are recorded in `BENCHMARKS.md`.
+- [ ] **RG-16 (M) — Critical path on very large plans.** The calculation took ~2.5 s at the median for
+  12,667 tasks with 99 dependencies, and the process grew to ~1.2 GB. Profile it, remove the avoidable work,
+  and decide a stated cap above which the answer is a clear refusal or a background job, never a timeout.
+  **Acceptance:** a recorded before and after on the large plan; the cap is in the OpenAPI text.
 - [ ] **RG-12 (S) — Shared session store.** An optional Redis- or
   PostgreSQL-backed store for OIDC sessions, so several front-end replicas need
   no sticky sessions.

@@ -25,6 +25,7 @@ ignore = [
     "RUSTSEC-2026-0195", # quick-xml namespace-declaration DoS, transitive (opendal)
     "RUSTSEC-2026-0204", # transitive advisory (loco tree)
     "RUSTSEC-2025-0057", # transitive advisory (loco tree)
+    "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
 ]
 
 [licenses]

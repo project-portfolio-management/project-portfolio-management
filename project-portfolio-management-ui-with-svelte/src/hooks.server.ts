@@ -7,7 +7,8 @@ import type { Cookies } from "@sveltejs/kit";
 // `locals`. The browser never reads the cookie (httpOnly); only the
 // SvelteKit server does, and only the server talks to the services.
 import { SESSION_COOKIE } from "#lib/server/session.js";
-import { OIDC_COOKIE, OIDC_COOKIE_OPTIONS, oidcStore } from "#lib/server/oidc-session.js";
+import { OIDC_COOKIE, OIDC_COOKIE_OPTIONS } from "#lib/server/oidc-session.js";
+import { sessions } from "#lib/server/session-store-instance.js";
 import { oidcOptions } from "#lib/server/config.js";
 import {
   DEFAULT_LOCALE,
@@ -54,13 +55,13 @@ export const handle: Handle = async (input) => {
   return response;
 };
 
-oidcStore.setIdleSeconds(oidcOptions().idleSeconds);
+sessions().setIdleSeconds(oidcOptions().idleSeconds);
 
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.sessionId = event.cookies.get(SESSION_COOKIE) ?? null;
   const oidcCookie = event.cookies.get(OIDC_COOKIE);
-  event.locals.oidc = oidcStore.get(oidcCookie);
-  if (!event.locals.oidc && oidcStore.endedIdle(oidcCookie)) {
+  event.locals.oidc = await sessions().get(oidcCookie);
+  if (!event.locals.oidc && (await sessions().endedIdle(oidcCookie))) {
     // The session sat idle too long (RG-2): clear the cookie and, for a page the person
     // asked for, say why they are back at the sign-in page. API calls just see "signed out".
     event.cookies.delete(OIDC_COOKIE, OIDC_COOKIE_OPTIONS);

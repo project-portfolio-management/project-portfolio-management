@@ -200,6 +200,17 @@ jobs:
     defaults:
       run:
         working-directory: project-portfolio-management-ui-with-svelte
+    # A real Redis, so the shared session store (RG-12) is tested against the real thing and not
+    # only a stand-in, in unit tests and in the browser sign-in flow.
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      REDIS_TEST_URL: redis://127.0.0.1:6379/0
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -219,6 +230,12 @@ jobs:
         run: pnpm exec playwright test
         env:
           CI: "true"
+      - name: The OpenID Connect sign-in again, with sessions in Redis
+        run: pnpm exec playwright test tests/e2e/oidc-signin.spec.ts
+        env:
+          CI: "true"
+          OIDC_SESSION_STORE: redis
+          REDIS_URL: redis://127.0.0.1:6379/0
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

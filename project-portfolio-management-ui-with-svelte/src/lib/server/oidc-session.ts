@@ -19,6 +19,8 @@ import {
   type ProviderMetadata,
 } from "./oidc";
 
+import type { SessionStore } from "./session-store";
+
 type FetchFn = typeof fetch;
 
 /** The httpOnly cookie that names an OIDC session (host-locked via `__Host-`). */
@@ -66,6 +68,35 @@ export interface OidcSession {
 /** The display name of the person behind a set of ID-token claims. */
 export function displayName(c: IdTokenClaims): string {
   return c.name || c.preferred_username || c.email || c.sub;
+}
+
+/** What a new session is made from. */
+export interface NewSession {
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
+  expiresInSeconds?: number;
+  sessionSeconds: number;
+  claims: IdTokenClaims;
+}
+
+/** A new session as of `t` (ms since the epoch): a random id, the tokens, the person. */
+export function buildSession(p: NewSession, t: number): OidcSession {
+  return {
+    id: randomToken(32),
+    accessToken: p.accessToken,
+    refreshToken: p.refreshToken,
+    idToken: p.idToken,
+    accessExpiresAt: t + (p.expiresInSeconds ?? 300) * 1000,
+    expiresAt: t + p.sessionSeconds * 1000,
+    lastSeenAt: t,
+    user: {
+      sub: p.claims.sub,
+      name: displayName(p.claims),
+      email: p.claims.email,
+      roles: Array.isArray(p.claims.roles) ? p.claims.roles : [],
+    },
+  };
 }
 
 export class OidcStore {
@@ -118,30 +149,8 @@ export class OidcStore {
   }
 
   /** Create a session; returns it (its `id` goes in the cookie). */
-  createSession(p: {
-    accessToken: string;
-    refreshToken?: string;
-    idToken?: string;
-    expiresInSeconds?: number;
-    sessionSeconds: number;
-    claims: IdTokenClaims;
-  }): OidcSession {
-    const t = this.now();
-    const session: OidcSession = {
-      id: randomToken(32),
-      accessToken: p.accessToken,
-      refreshToken: p.refreshToken,
-      idToken: p.idToken,
-      accessExpiresAt: t + (p.expiresInSeconds ?? 300) * 1000,
-      expiresAt: t + p.sessionSeconds * 1000,
-      lastSeenAt: t,
-      user: {
-        sub: p.claims.sub,
-        name: displayName(p.claims),
-        email: p.claims.email,
-        roles: Array.isArray(p.claims.roles) ? p.claims.roles : [],
-      },
-    };
+  createSession(p: NewSession): OidcSession {
+    const session = buildSession(p, this.now());
     this.sessions.set(session.id, session);
     this.sweep(); // after the insert, so the cap holds exactly
     return session;
@@ -188,7 +197,7 @@ const REFRESH_MARGIN_MS = 30_000;
  * so the caller treats the person as signed out.
  */
 export async function accessTokenFor(
-  store: OidcStore,
+  store: SessionStore,
   session: OidcSession,
   deps: {
     fetchFn: FetchFn;
@@ -200,7 +209,7 @@ export async function accessTokenFor(
   const now = (deps.now ?? Date.now)();
   if (session.accessExpiresAt - REFRESH_MARGIN_MS > now) return session.accessToken;
   if (!session.refreshToken) {
-    store.delete(session.id);
+    await store.delete(session.id);
     return null;
   }
   try {
@@ -208,9 +217,11 @@ export async function accessTokenFor(
     session.accessToken = t.access_token;
     if (t.refresh_token) session.refreshToken = t.refresh_token;
     session.accessExpiresAt = now + (t.expires_in ?? 300) * 1000;
+    // A shared store holds its own copy: write the refreshed tokens back.
+    await store.save(session);
     return session.accessToken;
   } catch {
-    store.delete(session.id);
+    await store.delete(session.id);
     return null;
   }
 }

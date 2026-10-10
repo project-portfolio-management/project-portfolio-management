@@ -12,10 +12,10 @@ import {
   OIDC_COOKIE,
   OIDC_COOKIE_OPTIONS,
   OIDC_TX_COOKIE,
-  oidcStore,
   providerMetadata,
   signingKeys,
 } from "#lib/server/oidc-session.js";
+import { sessions } from "#lib/server/session-store-instance.js";
 import { DEFAULT_LOCALE, localizePath, normalizeLocale } from "#lib/locales.js";
 
 export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
@@ -33,7 +33,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
   const bound = cookies.get(OIDC_TX_COOKIE) ?? "";
   cookies.delete(OIDC_TX_COOKIE, { path: "/" });
   // The transaction is taken (and so spent) whatever happens next.
-  const tx = state ? oidcStore.takeTransaction(state) : null;
+  const tx = state ? await sessions().takeTransaction(state) : null;
   if (tx) fallbackLocale = normalizeLocale(tx.locale) ?? fallbackLocale;
   if (!tx || !bound || bound !== state) fail("state");
 
@@ -71,7 +71,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
       if (!(e instanceof OidcError) || e.message !== "no matching signing key") throw e;
       claims = verifyIdToken(tokens.id_token, await signingKeys(fetch, meta, true), expect);
     }
-    session = oidcStore.createSession({
+    session = await sessions().createSession({
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
       idToken: tokens.id_token,

@@ -18,5 +18,7 @@ export const variables = defineEnvVars({
   OIDC_REDIRECT_URI: { schema: (input) => input ?? "" },
   OIDC_SESSION_HOURS: { schema: (input) => input ?? "" },
   OIDC_IDLE_MINUTES: { schema: (input) => input ?? "" },
+  OIDC_SESSION_STORE: { schema: (input) => input ?? "" },
+  REDIS_URL: { schema: (input) => input ?? "" },
   OIDC_END_SESSION: { schema: (input) => input ?? "" },
 });

@@ -11,7 +11,8 @@ import type { RequestHandler } from "./$types";
 import { PROJECT_PORTFOLIO_MANAGEMENT_API_URL } from "#lib/server/config.js";
 import { exchangeToken } from "#lib/server/auth.js";
 import { oidcConfig } from "#lib/server/config.js";
-import { accessTokenFor, oidcStore, providerMetadata } from "#lib/server/oidc-session.js";
+import { accessTokenFor, providerMetadata } from "#lib/server/oidc-session.js";
+import { sessions } from "#lib/server/session-store-instance.js";
 
 const proxy: RequestHandler = async ({
   request,
@@ -45,7 +46,7 @@ const proxy: RequestHandler = async ({
     if (cfg) {
       try {
         const meta = await providerMetadata(fetch, cfg.issuer);
-        const token = await accessTokenFor(oidcStore, locals.oidc, { fetchFn: fetch, cfg, meta });
+        const token = await accessTokenFor(sessions(), locals.oidc, { fetchFn: fetch, cfg, meta });
         if (token) headers.set("authorization", `Bearer ${token}`);
       } catch {
         // Provider unreachable: forward without a token; the API answers 401.

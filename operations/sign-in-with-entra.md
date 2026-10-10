@@ -116,6 +116,7 @@ stays enforced; a service with enforcement on and no verifier refuses to start.
 | `OIDC_CLIENT_ID` | `mxi-web` |
 | `OIDC_IDP_HINT` | `entra` (skips Keycloak's own chooser and goes straight to Entra) |
 | `OIDC_SESSION_HOURS` | `8` (hard limit; the access token is refreshed inside it) |
+| `OIDC_SESSION_STORE`, `REDIS_URL` | `memory` (default): sessions live in the front-end process, so run one replica or use sticky sessions, and a restart signs everyone out. `redis`: sessions live in Redis (`REDIS_URL=rediss://:password@host:6379/0`), so any replica serves any request and a restart signs nobody out. **Sessions hold the identity provider's tokens: use `rediss://` and a password, and keep Redis off the public network** (the server warns about a non-local `redis://`). If Redis is unreachable people appear signed out and cannot sign in; it is a dependency of sign-in. Starting a sign-in is capped at 600 a minute for the whole deployment |
 | `OIDC_IDLE_MINUTES` | `30`: sign out after this long without a request (sliding); `0` turns it off. The person lands on the sign-in page with a sentence saying why |
 | `OIDC_END_SESSION` | `true` to also end the Keycloak session on sign-out (register the post-logout address in Keycloak first) |
 | `OIDC_REDIRECT_URI` | only if the public address differs from what the server sees behind a proxy |

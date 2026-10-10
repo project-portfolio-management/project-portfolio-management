@@ -7,7 +7,8 @@ import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
 import { signout } from "#lib/server/auth.js";
 import { SESSION_COOKIE } from "#lib/server/session.js";
 import { oidcConfig, oidcOptions } from "#lib/server/config.js";
-import { OIDC_COOKIE, oidcStore, providerMetadata } from "#lib/server/oidc-session.js";
+import { OIDC_COOKIE, providerMetadata } from "#lib/server/oidc-session.js";
+import { sessions } from "#lib/server/session-store-instance.js";
 import { t, pageTitle } from "#lib/i18n.svelte.js";
 
 // `page.data.title` convention (see `./+layout.svelte`): mirrors this
@@ -29,7 +30,7 @@ export const actions: Actions = {
       // opt-in (OIDC_END_SESSION=true): the provider must have our post-logout address
       // registered, or it shows its own error page.
       const idToken = locals.oidc.idToken;
-      oidcStore.delete(locals.oidc.id);
+      await sessions().delete(locals.oidc.id);
       cookies.delete(OIDC_COOKIE, { path: "/" });
       const cfg = oidcConfig();
       if (cfg && oidcOptions().endProviderSession) {

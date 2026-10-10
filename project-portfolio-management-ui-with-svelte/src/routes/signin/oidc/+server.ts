@@ -17,9 +17,9 @@ import {
   OIDC_COOKIE_OPTIONS,
   OIDC_TX_COOKIE,
   TX_TTL_MS,
-  oidcStore,
   providerMetadata,
 } from "#lib/server/oidc-session.js";
+import { sessions } from "#lib/server/session-store-instance.js";
 import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
 
 export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
@@ -39,7 +39,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
   const { verifier, challenge } = pkcePair();
   const redirectUri = oidcOptions().redirectUri ?? `${url.origin}/signin/oidc/callback`;
   const returnTo = safeReturnPath(url.searchParams.get("return"));
-  oidcStore.startTransaction(state, {
+  await sessions().startTransaction(state, {
     nonce,
     verifier,
     // Remember where to land, in the reader's own language.

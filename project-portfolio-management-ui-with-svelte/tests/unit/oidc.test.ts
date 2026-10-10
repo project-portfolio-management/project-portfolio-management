@@ -17,6 +17,7 @@ import {
   type ProviderMetadata,
 } from "../../src/lib/server/oidc";
 import { OidcStore, accessTokenFor } from "../../src/lib/server/oidc-session";
+import { MemorySessionStore } from "../../src/lib/server/session-store";
 
 const ISSUER = "https://login.example.test/11111111-2222-3333-4444-555555555555/v2.0";
 const CLIENT = "client-123";
@@ -285,7 +286,7 @@ describe("accessTokenFor", () => {
     const { s, now } = store();
     const sess = s.createSession({ accessToken: "fresh", expiresInSeconds: 3600, sessionSeconds: 7200, claims });
     const f = vi.fn() as unknown as typeof fetch;
-    expect(await accessTokenFor(s, sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("fresh");
+    expect(await accessTokenFor(new MemorySessionStore(s), sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("fresh");
     expect(f).not.toHaveBeenCalled();
   });
 
@@ -302,7 +303,7 @@ describe("accessTokenFor", () => {
     const f = vi.fn(async () =>
       new Response(JSON.stringify({ access_token: "new", refresh_token: "r2", expires_in: 3600 })),
     ) as unknown as typeof fetch;
-    expect(await accessTokenFor(s, sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("new");
+    expect(await accessTokenFor(new MemorySessionStore(s), sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("new");
     expect(sess.refreshToken).toBe("r2");
     expect(s.get(sess.id)).not.toBeNull();
   });
@@ -312,13 +313,13 @@ describe("accessTokenFor", () => {
     const noRefresh = s.createSession({ accessToken: "x", expiresInSeconds: 10, sessionSeconds: 7200, claims });
     advance(20_000);
     const f = vi.fn() as unknown as typeof fetch;
-    expect(await accessTokenFor(s, noRefresh, { fetchFn: f, cfg: CFG, meta: META, now })).toBeNull();
+    expect(await accessTokenFor(new MemorySessionStore(s), noRefresh, { fetchFn: f, cfg: CFG, meta: META, now })).toBeNull();
     expect(s.get(noRefresh.id)).toBeNull();
 
     const failing = s.createSession({ accessToken: "x", refreshToken: "r", expiresInSeconds: 10, sessionSeconds: 7200, claims });
     advance(20_000);
     const bad = vi.fn(async () => new Response("no", { status: 400 })) as unknown as typeof fetch;
-    expect(await accessTokenFor(s, failing, { fetchFn: bad, cfg: CFG, meta: META, now })).toBeNull();
+    expect(await accessTokenFor(new MemorySessionStore(s), failing, { fetchFn: bad, cfg: CFG, meta: META, now })).toBeNull();
     expect(s.get(failing.id)).toBeNull();
   });
 });

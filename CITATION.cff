@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: "Project Portfolio Management: plans, schedule, cost, resources and governance"
+message: >-
+  If you use this work and you want to cite it,
+  then you can use the metadata from this file.
+type: software
+authors:
+  - given-names: Joel Parker
+    family-names: Henderson
+    email: joel@joelparkerhenderson.com
+    affiliation: joelparkerhenderson.com
+    orcid: 'https://orcid.org/0009-0000-4681-282X'
+identifiers:
+  - type: url
+    value: 'https://github.com/project-portfolio-management/project-portfolio-management'
+    description: Project Portfolio Management
+repository-code: 'https://github.com/project-portfolio-management/project-portfolio-management'
+abstract: >-
+  A registry of plans (one recursive collection; any plan may contain any other)
+  with explainable duplicate matching, and a project-management workspace: tasks,
+  critical-path schedule, cost and earned value, resources, risk and issues, and
+  governance. A Rust matcher library, a Rust REST service and a SvelteKit
+  front end.
+keywords:
+  - project portfolio management
+  - critical path
+  - earned value
+  - Rust
+  - Svelte
+license:
+  - MIT
+  - Apache-2.0
+  - BSD-3-Clause
+  - GPL-2.0-only
+  - GPL-3.0-only

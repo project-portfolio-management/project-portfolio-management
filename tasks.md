@@ -1393,6 +1393,33 @@ are stated, never guessed.
   **Acceptance:** the pack lists them, or says "none recorded"; never a zero for
   an unavailable figure.
 
+## Public-repository files (PF-n)
+
+Requested 2026-10-10: "read spec/public* then implement"
+([`spec/special-files-for-public-repos`](spec/special-files-for-public-repos/index.md),
+requirement NFR-20).
+
+- [x] **PF-1 (M) — The special files.** Root `README.md`, `LICENSE.md` (existing),
+  and new `CITATION.cff`, `NEWS.md`, `COMPARISONS.md`, `BENCHMARKS.md`,
+  `INSTALL.md`, `CONTRIBUTING.md`, `RFC.md`, `CODEOWNERS`, `MAINTAINERS.md`,
+  `CHANGELOG.md`, `AI_STATEMENT.md`, `GOVERNANCE.md`, `SECURITY.md`.
+  **Acceptance:** `tests/public_files.rs` (database-free) fails when a file is
+  missing or empty, when the maintainer address is absent from `MAINTAINERS.md`,
+  `CODEOWNERS` and `SECURITY.md`, or when `CITATION.cff` lacks its required
+  fields; the link checker reports 0 broken links. **Built 2026-10-10 with these
+  deviations, stated plainly:** `BENCHMARKS.md` holds only the matcher's
+  Criterion run of 2026-10-10 (the service benchmark was not run); `COMPARISONS.md`
+  rests on the plan's research, not on running the other products;
+  `AI_STATEMENT.md` follows the template's structure but is rewritten to this
+  project's facts (the template's claim that tool attribution stays out of
+  commit trailers is false here, so it says the opposite; its openEHR and
+  patient-data text is dropped; the contradictory "AI is enabled to merge" line
+  becomes "AI does not merge on its own initiative"); `SECURITY.md` response
+  times are targets; no donation channel exists, and `CONTRIBUTING.md` says so;
+  the ORCID is the one in the maintainer's other `CITATION.cff`. The
+  maintainer should read `AI_STATEMENT.md`, `SECURITY.md` and `GOVERNANCE.md`
+  before relying on them: they make commitments in the maintainer's name.
+
 ## Not taken (director pack, escalation, production readiness)
 
 A P3M3 maturity score; an AI register; a live finance-ledger connector;

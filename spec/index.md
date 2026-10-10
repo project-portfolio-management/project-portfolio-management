@@ -88,6 +88,12 @@ kept whole rather than split across them:
   vocabulary; **Flow Distribution** — the mix of feature / defect /
   risk / debt work — is the new one. Committed in §1.6.
 
+- [Special files for public repos](special-files-for-public-repos/index.md) —
+  the standard top-level files of a public project (README, LICENSE, CITATION,
+  NEWS, COMPARISONS, BENCHMARKS, INSTALL, CONTRIBUTING, RFC, CODEOWNERS,
+  MAINTAINERS, CHANGELOG, AI_STATEMENT, GOVERNANCE, SECURITY), with a template
+  for the AI statement. Requirement NFR-20.
+
 ## Where to look for what
 
 - **Task status:** the repo-root [`tasks.md`](../tasks.md) is

@@ -10,7 +10,9 @@ Usage: scripts/check-links.py [root]   (exit 1 if any link is broken)
 import os, re, sys, urllib.parse
 
 ROOT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
-SKIP = {"target", "node_modules", ".svelte-kit", "build", "dist", ".git", ".next", "coverage", "playwright-report", "test-results"}
+SKIP = {"target", "node_modules", ".svelte-kit", "build", "dist", ".git", ".next", "coverage", "playwright-report", "test-results",
+        # Templates for the root files; their links are relative to the repository root.
+        "special-files-for-public-repos"}
 LINK = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)|!\[[^\]]*\]\(([^)\s]+)\)")
 FENCE = re.compile(r"^\s*(```|~~~)")
 

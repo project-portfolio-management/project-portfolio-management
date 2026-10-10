@@ -143,6 +143,20 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   they are marked draft. Text that the API itself generates (derived sentences
   in responses) is not part of the catalogue and is listed as a limitation.
 
+- **NFR-20 — Public-repository files.** The repository root carries the
+  standard files of a public project, listed in
+  [`special-files-for-public-repos`](special-files-for-public-repos/index.md):
+  `README.md`, `LICENSE.md` (with SPDX information), `CITATION.cff`, `NEWS.md`,
+  `COMPARISONS.md`, `BENCHMARKS.md`, `INSTALL.md`, `CONTRIBUTING.md`, `RFC.md`,
+  `CODEOWNERS`, `MAINTAINERS.md` (Joel Parker Henderson as sole maintainer),
+  `CHANGELOG.md`, `AI_STATEMENT.md`, `GOVERNANCE.md` and `SECURITY.md`. They
+  state facts the repository can support: a benchmark page holds only numbers
+  from a recorded run; a comparison says what was and was not read; the AI
+  statement describes the practice as it is (including that commits made in AI
+  sessions carry a `Co-Authored-By` trailer). A test fails when one is missing or
+  empty, when the maintainer or owner address is absent from the files that need
+  it, or when the citation file lacks its required fields.
+
 ### 7.x Time and time zones
 
 Doctrine (LT-9, `src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);

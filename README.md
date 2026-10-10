@@ -58,6 +58,13 @@ pushing a `vX.Y.Z` tag (`.github/workflows/release.yml`).
 
 See [`index.md`](index.md) for a link map.
 
+## About the project
+
+[Install](INSTALL.md) · [Contributing](CONTRIBUTING.md) · [Governance](GOVERNANCE.md) ·
+[Maintainers](MAINTAINERS.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) ·
+[News](NEWS.md) · [Comparisons](COMPARISONS.md) · [Benchmarks](BENCHMARKS.md) ·
+[Request for comments](RFC.md) · [AI statement](AI_STATEMENT.md) · [How to cite](CITATION.cff)
+
 ## Licence
 
 Licence is any of these, or contact us for custom licence options. [`LICENSE.md`](LICENSE.md) explains the choice.

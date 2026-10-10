@@ -69,7 +69,7 @@ async fn attachments_are_refused_before_storing_verified_and_served_safely() {
             request
                 .post("/api/attachments?subject_kind=plan&subject_pid=3f2c6b7e-0000-4000-8000-000000000bad&filename=a.pdf")
                 .content_type("application/pdf")
-                .bytes(Bytes::from_static(b"%PDF"))
+                .bytes(Bytes::from_static(b"%PDF-1.7"))
                 .await
                 .status_code(),
             404
@@ -78,7 +78,7 @@ async fn attachments_are_refused_before_storing_verified_and_served_safely() {
             request
                 .post(&format!("/api/attachments?subject_kind=nope&subject_pid={p}&filename=a.pdf"))
                 .content_type("application/pdf")
-                .bytes(Bytes::from_static(b"%PDF"))
+                .bytes(Bytes::from_static(b"%PDF-1.7"))
                 .await
                 .status_code(),
             422
@@ -216,6 +216,126 @@ async fn attachment_text_is_searchable_and_honest_about_what_it_cannot_read() {
             gone["results"].as_array().unwrap().is_empty(),
             "a removed file is not found"
         );
+    })
+    .await;
+}
+
+/// A stand-in for `clamd`: answers FOUND when the payload contains `EICAR`, else OK.
+async fn fake_clamd() -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
+    tokio::spawn(async move {
+        loop {
+            let Ok((mut s, _)) = listener.accept().await else {
+                return;
+            };
+            let mut command = [0_u8; 10];
+            if s.read_exact(&mut command).await.is_err() {
+                continue;
+            }
+            let mut payload = Vec::new();
+            loop {
+                let mut len = [0_u8; 4];
+                if s.read_exact(&mut len).await.is_err() {
+                    break;
+                }
+                let n = u32::from_be_bytes(len) as usize;
+                if n == 0 {
+                    break;
+                }
+                let mut chunk = vec![0_u8; n];
+                if s.read_exact(&mut chunk).await.is_err() {
+                    break;
+                }
+                payload.extend_from_slice(&chunk);
+            }
+            let found = payload.windows(5).any(|w| w == b"EICAR");
+            let _ = s
+                .write_all(if found {
+                    b"stream: Test.EICAR FOUND\0"
+                } else {
+                    b"stream: OK\0"
+                })
+                .await;
+        }
+    });
+    addr
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn content_that_lies_is_refused_and_a_scanner_has_the_last_word() {
+    super::isolate_search_index();
+    let dir = tempfile::tempdir().expect("temp dir");
+    let addr = fake_clamd().await;
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR", dir.path());
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES");
+    }
+    let root = dir.path().to_path_buf();
+    request::<App, _, _>(move |request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let upload = |name: &str, ctype: &str, body: &[u8]| {
+            let url = format!("/api/attachments?subject_kind=plan&subject_pid={p}&filename={name}");
+            let (request, ctype, body) =
+                (&request, ctype.to_string(), Bytes::copy_from_slice(body));
+            async move { request.post(&url).content_type(&ctype).bytes(body).await }
+        };
+
+        // No scanner configured: the content checks alone.
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR") };
+        let program = upload("report.pdf", "application/pdf", b"MZ\x90\0 a program").await;
+        assert_eq!(program.status_code(), 422, "a program renamed report.pdf");
+        assert!(program.text().contains("not accepted"));
+        assert_eq!(
+            upload("a.png", "image/png", b"GIF89a....")
+                .await
+                .status_code(),
+            422,
+            "wrong type"
+        );
+        assert_eq!(
+            upload("a.txt", "text/plain", b"abc\0def")
+                .await
+                .status_code(),
+            422,
+            "binary as text"
+        );
+        assert_eq!(stored_files(&root), 0, "nothing refused was stored");
+        upload("ok.pdf", "application/pdf", b"%PDF-1.7 fine")
+            .await
+            .assert_status_ok();
+        assert_eq!(stored_files(&root), 1);
+
+        // A scanner that says FOUND quarantines (nothing stored); one that says OK lets it through.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR", &addr) };
+        let infected = upload("eicar.txt", "text/plain", b"X5O!P%@AP EICAR test").await;
+        assert_eq!(infected.status_code(), 422);
+        assert!(infected.text().contains("malware scan"));
+        assert_eq!(stored_files(&root), 1, "the infected file was not stored");
+        upload("clean.txt", "text/plain", b"nothing to see")
+            .await
+            .assert_status_ok();
+        assert_eq!(stored_files(&root), 2);
+
+        // A configured scanner that cannot answer fails closed.
+        unsafe {
+            std::env::set_var(
+                "PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR",
+                "127.0.0.1:1",
+            )
+        };
+        let down = upload("later.txt", "text/plain", b"another file").await;
+        assert_eq!(down.status_code(), 503);
+        assert_eq!(stored_files(&root), 2);
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR") };
     })
     .await;
 }

@@ -3,6 +3,7 @@
 //! outbox suite in [`event_outbox`], and the PPM Phase-A governance
 //! suite (intake / gates / risks / budgets) in [`governance`].
 
+mod access_review;
 mod attachments;
 mod audit_protection;
 mod bulk;
@@ -31,6 +32,7 @@ mod plans;
 mod retention;
 mod scale;
 mod strategy;
+mod subjects;
 mod task_bulk;
 mod task_relations;
 mod task_tree;

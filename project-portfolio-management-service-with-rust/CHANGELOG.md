@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — attachment content checks and a virus-scan hook (RG-8, 2026-10-10)
+
+An upload's bytes must match its declared type, and programs and scripts are refused whatever they claim to be. `ATTACHMENT_SCAN_ADDR` (a `clamd` over TCP) streams each file to the scanner before anything is stored; an infected file is refused and audited, and a scanner that cannot answer refuses the upload (503).
+
+### Added — the access review (RG-9, 2026-10-10)
+
+`GET /api/access-review`: the grants that stand today from the access ledger, oldest first, with age in calendar days and a `review_due` flag (default 365 calendar days); `?format=csv` for a spreadsheet with a decision column. Administrators only; plans the caller cannot read are left out.
+
+### Added — data-subject export and pseudonymisation (RG-6, 2026-10-10)
+
+`GET /api/admin/subjects/{ref}` (everything held about a person reference, all three forms: bare subject, `person:`, `worker:`) and `POST …/pseudonymise` (a preview unless `?apply=true`; one transaction; keeps each form's shape; reaches the protected audit trail only inside it). Administrators only; optional secret `PSEUDONYM_SALT`. The column list is kept in step with `governance/personal-data-inventory.csv` by a test.
+
 ### Added — controls for regulated buyers (RG-1 to RG-5, 2026-10-10)
 
 Strict outbound mode for operator-configured webhook and worker targets (`OUTBOUND_STRICT`); a database trigger that refuses `UPDATE` and `DELETE` of audit rows outside the retention task (migration 51); `cargo loco task retention_purge` (dry run by default; read notifications, delivery logs, trend snapshots). Backup scripts can encrypt with gpg. See `governance/production-readiness.md`.

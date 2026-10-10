@@ -1463,22 +1463,25 @@ what was **not** tested; claim no certification.
   manifest covers the encrypted file. **Acceptance:** a round trip in the restore
   test with encryption on; a wrong key fails with a clear message.
   **Built 2026-10-10.** `BACKUP_PASSPHRASE_FILE` or `BACKUP_GPG_RECIPIENT` in `scripts/backup.sh` (gpg); `restore.sh` decrypts into a private temporary directory. Verified by hand with a PostgreSQL 18 server: plain and passphrase drills pass, a wrong passphrase stops before the database is touched, a changed file fails the checksum, both options set is refused; CI runs the encrypted drill too (**not run on GitHub**). **Not tested:** the public-key mode.
-- [ ] **RG-6 (L) — Data-subject requests.** Export everything held about a person
+- [x] **RG-6 (L) — Data-subject requests.** Export everything held about a person
   reference (`GET /api/admin/subjects/{ref}`), and pseudonymise it across the
   schema (replace the reference with a stable pseudonym, keep audit rows).
   **Acceptance:** a person who appears in tasks, risks, time entries and audit
   rows is exported completely and pseudonymised completely, pinned by a test that
   walks `governance/personal-data-inventory.csv`.
+  **Built 2026-10-10, with the plan's recommended policy (pseudonymise, not delete) because the owner has not ruled otherwise (plan §62 q2).** `GET /api/admin/subjects/{ref}` and `POST …/pseudonymise` (preview unless `?apply=true`), `src/subjects.rs` (75 columns), `controllers/subjects.rs`; administrators only (a `subjects` area closed to the policy file); audited without the original reference; the audit trigger is relaxed only inside that transaction. A test walks the inventory so a new identifier column cannot be missed. **Not covered, stated:** free text, uploaded files, audit snapshot JSON, notification destinations (listed, not changed), backups. **Not tested:** a concurrent request during the apply.
 - [ ] **RG-7 (M) — Handling marks.** A configurable marking scheme (for example
   OFFICIAL, OFFICIAL-SENSITIVE; or Public, Internal, Confidential) on plans and
   controlled documents, shown on every page and in every export, with an ABAC
   rule by clearance attribute. **Acceptance:** an unmarked export is impossible
   when a scheme is configured; a caller without clearance gets 404.
-- [ ] **RG-8 (M) — Attachment safety.** Content-type allow-list by sniffing,
+- [x] **RG-8 (M) — Attachment safety.** Content-type allow-list by sniffing,
   size limit, and an optional scan hook (ClamAV over a socket) that quarantines.
   **Acceptance:** a renamed executable is refused; a scan failure quarantines.
-- [ ] **RG-9 (M) — Access review.** A report of who holds what access, when it
+  **Built 2026-10-10.** `src/content_check.rs`: the bytes must match the declared type (PNG, JPEG, GIF, WebP, PDF, Office files by signature; text and JSON by encoding and parse), and a program or script (Windows, Linux, macOS, Java, `#!`) is refused whatever it claims. An optional `ATTACHMENT_SCAN_ADDR` (`clamd` over TCP, `INSTREAM`) has the last word: infected refuses with an audit row, and a configured scanner that cannot answer **fails closed** (503). Unit tests including a fake `clamd`; request tests for both. The existing fixtures `b"%PDF"` became `b"%PDF-1.7"` (a real PDF header). **Not done, stated:** no parsing of PDFs or Office files for macros or exploits (a scanner's job); a file valid as two formats passes as the declared one; a Unix-socket `clamd` and a `quarantine` area for later review are not built (a refused file is never stored); the scanner itself was tested only against a stand-in, not a real `clamd`.
+- [x] **RG-9 (M) — Access review.** A report of who holds what access, when it
   was last used and who granted it, exportable as CSV for recertification.
+  **Built 2026-10-10.** `GET /api/access-review` (JSON or `?format=csv` with a decision column and spreadsheet formula defusing); `src/access_review.rs` (standing grants from the access ledger: latest entry per person, plan and access; age in calendar days; `review_due` at `older_than_days`, default 365); administrators only (an `access_review` area closed to the policy file); readable plans only; audited. Unit and request tests. **Deviation, stated:** it reports what people **recorded** in the access ledger, not what the identity provider enforces (the service cannot read that); it does not record the reviewer's decision back (the CSV is the artefact; recording decisions is a follow-up).
 - [ ] **RG-10 (M) — Break-glass access.** Time-limited elevated access with a
   required reason, a second-person notification and a loud audit entry.
 - [ ] **RG-11 (M) — Load and soak test.** A repeatable script and published

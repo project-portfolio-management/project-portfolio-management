@@ -284,3 +284,46 @@ fn the_retention_schedule_defines_every_class_the_inventory_uses() {
         );
     }
 }
+
+/// Data-subject requests (RG-6) walk `subjects::COLUMNS`. Every identifier column in the inventory
+/// must be there, or be excluded with a reason, so a new column that holds a person reference cannot
+/// be missed by an export or a pseudonymisation.
+#[test]
+fn every_identifier_column_is_covered_by_the_data_subject_tools() {
+    use project_portfolio_management_service::subjects::{COLUMNS, EXCLUDED};
+    let inv = inventory();
+    let covered: BTreeSet<(String, String)> = COLUMNS
+        .iter()
+        .map(|(t, c)| ((*t).to_string(), (*c).to_string()))
+        .chain(
+            EXCLUDED
+                .iter()
+                .map(|(t, c, _)| ((*t).to_string(), (*c).to_string())),
+        )
+        .collect();
+    for ((t, c), (class, _)) in &inv.rows {
+        if class == "identifier" {
+            assert!(
+                covered.contains(&(t.clone(), c.clone())),
+                "{t}.{c} is an identifier in the inventory but is neither in subjects::COLUMNS nor subjects::EXCLUDED"
+            );
+        }
+    }
+    for (t, c) in &covered {
+        let class = inv
+            .rows
+            .get(&(t.clone(), c.clone()))
+            .map(|(class, _)| class.as_str());
+        assert_eq!(
+            class,
+            Some("identifier"),
+            "{t}.{c} is in the data-subject tools but is not an identifier in the inventory"
+        );
+    }
+    for (t, c, why) in EXCLUDED {
+        assert!(
+            !why.trim().is_empty(),
+            "{t}.{c} is excluded without a reason"
+        );
+    }
+}

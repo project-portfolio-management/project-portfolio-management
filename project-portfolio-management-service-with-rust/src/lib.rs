@@ -24,6 +24,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod access_review;
 pub mod announcements;
 pub mod app;
 pub mod approvals;
@@ -43,6 +44,7 @@ pub mod collaboration;
 /// Compliance controls: row-level integrity and keyed MACs.
 pub mod compliance;
 pub mod components;
+pub mod content_check;
 pub mod controllers;
 /// Pure rules for the **Controlling process** — set a standard,
 /// measure, compare, act — and the three control timings
@@ -143,6 +145,7 @@ pub mod snapshots;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).
 pub mod strategy;
 pub mod streaming;
+pub mod subjects;
 pub mod task_bulk;
 pub mod task_relations;
 pub mod task_rollup;

@@ -162,8 +162,13 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   (default 30 minutes, configurable); an **audit trail the database refuses to
   change or delete** except through the retention task; a **retention purge**
   that is a dry run unless told otherwise and audits what it removes; **backups
-  that can be encrypted**, with a restore drill that proves they decrypt; and an
-  optional **strict mode for operator-configured outbound targets**. The limits
+  that can be encrypted**, with a restore drill that proves they decrypt; an
+  optional **strict mode for operator-configured outbound targets**; an
+  **access review** report for recertification; **attachment content checks** with an
+  optional virus-scan hook that fails closed; and an
+  administrator-only **data-subject tool** that exports everything held about a
+  person reference and pseudonymises it (not deletes it) across the schema, audit
+  trail included. The limits
   are stated where the controls are: a database administrator can disable the
   trigger; the purge covers only the records whose deletion is unambiguous. The
   honest assessment is [`governance/production-readiness.md`](../governance/production-readiness.md).

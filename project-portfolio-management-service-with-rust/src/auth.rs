@@ -562,6 +562,10 @@ fn area_rule(
 /// * `resource.area = comms` (announcements): **writes** need `access=admin` or
 ///   `comms=publish`; reads fall through to the policy (the default allows them).
 ///
+/// * `resource.area = subjects` (data-subject export and pseudonymisation) and
+///   `resource.area = access_review` (the recertification report): every action needs
+///   `access=admin`, with no other holder.
+///
 /// A handler asks with [`area_allows`]. A deployment that wants other holders can
 /// widen who carries those attributes in its identity service; it cannot widen
 /// these rules from the policy file, by design.
@@ -586,6 +590,17 @@ pub fn service_rules() -> Vec<Rule> {
         ));
         rules.push(area_rule(Effect::Allow, &actions, area, Some(key)));
         rules.push(area_rule(Effect::Deny, &actions, area, None));
+    }
+    // Data-subject requests (RG-6) and the access review (RG-9): administrators only, whatever the
+    // policy file says.
+    for area in ["subjects", "access_review"] {
+        rules.push(area_rule(
+            Effect::Allow,
+            &[ActionPattern::Any],
+            area,
+            Some(("access", "admin")),
+        ));
+        rules.push(area_rule(Effect::Deny, &[ActionPattern::Any], area, None));
     }
     rules
 }
@@ -1727,6 +1742,34 @@ mod area_tests {
                 "a writer is not finance: {a:?}"
             );
             assert!(!allowed(&p, &claims(&[]), a, "finance"), "{a:?}");
+        }
+    }
+
+    #[test]
+    fn data_subject_requests_are_for_administrators_only() {
+        let p = with_service_rules(Policy::default_policy());
+        for a in [Action::Read, Action::Write, Action::Delete] {
+            assert!(
+                allowed(&p, &claims(&[("access", "admin")]), a, "subjects"),
+                "{a:?}"
+            );
+            assert!(
+                !allowed(&p, &claims(&[("access", "write")]), a, "subjects"),
+                "{a:?}"
+            );
+            assert!(
+                !allowed(&p, &claims(&[("finance", "cost_rates")]), a, "subjects"),
+                "{a:?}"
+            );
+            assert!(!allowed(&p, &claims(&[]), a, "subjects"), "{a:?}");
+            assert!(
+                allowed(&p, &claims(&[("access", "admin")]), a, "access_review"),
+                "{a:?}"
+            );
+            assert!(
+                !allowed(&p, &claims(&[("access", "write")]), a, "access_review"),
+                "{a:?}"
+            );
         }
     }
 

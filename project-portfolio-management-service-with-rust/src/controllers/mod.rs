@@ -1,5 +1,6 @@
 //! HTTP controllers for the portfolio service.
 
+pub mod access_review;
 pub mod announcements;
 pub mod assignments;
 pub mod automation;
@@ -246,6 +247,7 @@ pub mod schedule_baselines;
 pub mod schedule_health;
 pub mod schedule_risk;
 pub mod sinks;
+pub mod subjects;
 pub mod task_bulk;
 pub mod task_get;
 pub mod task_relations;

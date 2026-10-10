@@ -26,6 +26,9 @@ clinical use would need a clinical safety case that this project has not written
 | Idle session timeout (30 minutes by default) and a hard session limit | RG-2; unit tests |
 | User-supplied outbound destinations restricted to public `https` addresses; optional strict mode for operator targets | `sinks.rs`; RG-1 |
 | Audit trail refuses change and deletion in the database | RG-3; request test |
+| Data-subject export and pseudonymisation of a person across the schema (administrators only; preview first) | RG-6; request test; a test keeps the column list in step with the inventory |
+| Access review: the grants that stand, oldest first, as a spreadsheet for recertification (administrators only) | RG-9; request test |
+| Attachments: content must match the declared type, programs refused, optional `clamd` scan that fails closed | RG-8; unit and request tests |
 | Backup with a **tested restore**, stated recovery targets, optional encryption | [operations pack](../operations/README.md); RG-5; CI drill (plain and encrypted) |
 | Retention purge for notifications, delivery logs and trend snapshots (dry run by default) | RG-4; request test |
 | Dependency policy, software bill of materials, build provenance, a security policy | `cargo deny`; `release.yml`; [`SECURITY.md`](../SECURITY.md) |
@@ -38,11 +41,11 @@ clinical use would need a clinical safety case that this project has not written
 |---|---|---|
 | **No penetration test, no third-party audit, no certification** | Assessors will ask | RG-13 (buyer or supplier) |
 | **No manual or assistive-technology accessibility test** | Public-sector accessibility regulations expect it | RG-13 |
-| **No data-subject export or erasure tool** | A subject-access or erasure request is handled by hand | RG-6 |
+| **Data-subject tool covers references, not free text** | Names typed into titles, comments or documents, uploaded files, audit snapshot JSON and backups are not found automatically | RG-6 follow-up |
 | **Retention covers only part of the data** | Plans, tasks, time records and documents are kept until an operator deletes them | RG-4 follow-up; buyer decision |
 | **No handling marks** (security classification or sensitivity labels) | Governments and health bodies label records and exports | RG-7 |
-| **No attachment content checks or malware-scan hook** | Uploaded files are stored as sent | RG-8 |
-| **No access-review report; no break-glass procedure** | Periodic recertification is a common control | RG-9, RG-10 |
+| **Attachment checks are signature-level; no scanner is bundled** | A program renamed `.pdf` is refused and a `clamd` hook exists, but macros and exploits in valid documents need a real scanner, which the deployer must run (the hook was tested only against a stand-in) | RG-8 |
+| **The access review reports what was recorded, not what the identity provider enforces; no break-glass procedure** | Recertification must compare the two; emergency access has no control | RG-10 |
 | **No load or soak test** | Capacity is unknown ([`BENCHMARKS.md`](../BENCHMARKS.md)) | RG-11 |
 | **Sessions are in memory** | Several front-end replicas need sticky sessions | RG-12 |
 | **The audit trail is not tamper-proof against an administrator** | A database administrator can drop the trigger; there is no hash chain | stated in the DPIA |

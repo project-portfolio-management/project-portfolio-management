@@ -17,7 +17,7 @@ done for this project.
 | 8 | Supplier due diligence: who is the supplier, what is the support commitment | Deployer | [`MAINTAINERS.md`](../MAINTAINERS.md), [`GOVERNANCE.md`](../GOVERNANCE.md), [AI statement](../AI_STATEMENT.md), software bill of materials and build provenance with each release | **open** |
 | 9 | Independent code review or security audit of the source | Deployer or funder | The source, the specification, the tests | **open** |
 | 10 | Load and capacity test at your volumes | Deployer, or the project (RG-11) | [`BENCHMARKS.md`](../BENCHMARKS.md) says what has and has not been measured | **open** |
-| 11 | Access recertification process (who reviews who has what, how often) | Deployer | Access records; a review report is RG-9 (not yet built) | **open** |
+| 11 | Access recertification process (who reviews who has what, how often) | Deployer | Access records; `GET /api/access-review` lists the standing grants as a spreadsheet (what people recorded, not what the identity provider enforces) | **open** |
 | 12 | Incident response and breach notification process | Deployer | The [runbook](../operations/runbook.md) gives the technical steps | **open** |
 | 13 | Language-duty review (Welsh or others) by a professional translator | Deployer or supplier | [Review record](welsh-translation-review.md) and a CSV export for the translator | **open** |
 | 14 | Records management: retention periods agreed, purge scheduled, legal hold procedure | Deployer's records manager | Retention schedule; the purge task; no legal-hold feature | **open** |

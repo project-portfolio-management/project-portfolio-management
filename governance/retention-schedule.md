@@ -48,8 +48,10 @@ decision for the buyer to plan around until it is built:
 2. **Expired generated files are not deleted**, only hidden.
 3. **Soft-deleted rows are never purged**, so "deleted" data still exists in the
    database.
-4. **Erasure of one person's references.** People are stored as opaque
-   references. Removing a person's account at the identity provider stops them
-   signing in but leaves their reference in historical records and the audit
-   trail, which is usually the right outcome for accountability records and the
-   wrong one for a wish to be forgotten; decide the policy and see the DPIA.
+4. **Erasure of one person's references is pseudonymisation.** People are stored
+   as opaque references. Removing a person's account at the identity provider
+   stops them signing in but leaves their reference in historical records. An
+   administrator can export everything held about a person and replace the
+   reference with a stable pseudonym everywhere, the audit trail included
+   (`/api/admin/subjects/...`; see the DPIA, risk 7). Free text, uploaded files,
+   audit snapshots and backups are not found automatically.

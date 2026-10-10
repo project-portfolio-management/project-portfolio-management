@@ -106,6 +106,8 @@ pub fn paths() -> Value {
     merge(&mut all, baseline_paths());
     merge(&mut all, raci_paths());
     merge(&mut all, issues_paths());
+    merge(&mut all, subjects_paths());
+    merge(&mut all, access_review_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -863,6 +865,36 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// The access review (RG-9).
+fn access_review_paths() -> Value {
+    json!({
+        "/api/access-review": {
+            "get": op("access-review", "The access grants that stand today, oldest first",
+                "Administrators only (403 otherwise). From the access ledger: a grant stands when the latest entry for the person, plan and access is a grant. Each carries who granted it, when, age_calendar_days and review_due (age at or over older_than_days, default 365 calendar days). ?plan filters; ?format=csv returns a spreadsheet with an empty decision column for the reviewer. Plans the caller cannot read are left out. This is what people recorded, not what the identity provider enforces. Audited.",
+                vec![query("plan", false, "A plan pid"), query("older_than_days", false, "Calendar days after which a grant is flagged (default 365)"), query("format", false, "json (default) or csv")],
+                &[("200", "standing, review_due, grants, note (or CSV)"), ("403", "Not an administrator"), ("422", "A bad parameter")])
+        }
+    })
+}
+
+/// Data-subject requests (RG-6).
+fn subjects_paths() -> Value {
+    json!({
+        "/api/admin/subjects/{subject}": {
+            "get": op("subjects", "Everything held about one person reference",
+                "Administrators only (access=admin; 403 otherwise). {subject} may be a token subject, person:<id> or worker:<id>; all three forms are searched in every column that holds a person reference (the list is kept in step with governance/personal-data-inventory.csv by a test). Returns rows per table and column (at most 1000 each, truncated says when more), with credential and digest fields left out. Not searched: names typed into free text, uploaded file contents, audit snapshot JSON, backups; notification destinations are listed. Audited without the reference.",
+                vec![str_param("subject")],
+                &[("200", "tables, total_rows, not_covered"), ("403", "Not an administrator"), ("422", "Empty reference")])
+        },
+        "/api/admin/subjects/{subject}/pseudonymise": {
+            "post": op("subjects", "Replace a person reference with a stable pseudonym",
+                "Administrators only. A preview (counts only, nothing changed) unless ?apply=true. Applying replaces the reference in every column that holds one, in one transaction (all or nothing; 409 if a uniqueness rule blocks a change), keeping its shape (person:<id> becomes person:<pseudonym>), including the audit trail's actor column (the audit trigger allows this only inside this transaction). The pseudonym is a stable version-8 UUID derived from the identifier and the optional secret PSEUDONYM_SALT, so one person's records stay linked to each other but not to the person. Policy: pseudonymise, do not delete. Audited with the pseudonym, never the original reference.",
+                vec![str_param("subject"), query("apply", false, "true to apply; absent is a preview")],
+                &[("200", "applied, pseudonym, total_rows, changed, note"), ("403", "Not an administrator"), ("409", "A uniqueness rule blocked the change"), ("422", "Empty reference, or already a pseudonym")])
         }
     })
 }

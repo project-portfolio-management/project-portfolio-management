@@ -67,6 +67,8 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` | for notifications |
 | Telemetry | `OTLP_ENDPOINT`, `OTLP_SERVICE_NAME`, `RUST_LOG` | **`OTLP_ENDPOINT` unset means export ON to `http://localhost:4317`**; set it to the empty string to disable, or to your collector |
 | Outbound targets | `OUTBOUND_STRICT` | off. `on` applies the same rule user-supplied notification destinations already get (`https`, a public address, no credentials, no `.internal` names) to the **operator-configured** webhook and worker URLs. Leave it off if those legitimately point at internal services |
+| Data-subject requests | `PSEUDONYM_SALT` | optional secret mixed into pseudonyms; without it anyone who knows a person's identifier can recompute the pseudonym. Keep it unchanged: changing it changes later pseudonyms |
+| Attachment scanning | `ATTACHMENT_SCAN_ADDR` | unset: no scan. `host:port` of a `clamd` (TCP): every upload is streamed to it before anything is stored; infected is refused, and an unreachable scanner **refuses uploads** (fail closed). Content checks (signature must match the declared type; programs refused) always run |
 | Retention | `cargo loco task retention_purge` | a dry run unless `apply:true`; schedule it daily after reading the dry run. Covers read notifications, delivery logs and trend snapshots; see the [retention schedule](../governance/retention-schedule.md) |
 | Background loops | `SCHEDULER_MINUTES`, `SNAPSHOT_HOURS`, `FLOW_METRICS_SECS`, `SINKS_TICK_SECS` | each is off unless set (sinks tick on by default; `0` turns it off) |
 

@@ -22,6 +22,7 @@ use uuid::Uuid;
 use super::discussion::resolve_subject;
 use crate::artifacts::{self, Store};
 use crate::auth::MaybeAuthUser;
+use crate::content_check;
 use crate::discussion as subject_rules;
 use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, attachments};
 use crate::models::audit_logs::Model as AuditModel;
@@ -84,7 +85,39 @@ async fn upload(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    // The content must be what the declared type says, and no program is accepted (RG-8).
+    let content = content_check::content_problems(&artifacts::media_type(declared), &body);
+    if !content.is_empty() {
+        return Err(unprocessable(&content.join("; ")));
+    }
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
+    // An optional virus scanner has the last word, before anything is stored. A configured scanner
+    // that cannot answer refuses the upload (fail closed).
+    match content_check::scan(&body).await {
+        content_check::Verdict::NotConfigured | content_check::Verdict::Clean => {}
+        content_check::Verdict::Infected(name) => {
+            AuditModel::record(
+                &ctx.db,
+                subject.pid,
+                "attachment_refused_by_scan",
+                caller.actor(),
+                Some(serde_json::json!({ "subject_kind": p.subject_kind, "signature": name })),
+            )
+            .await
+            .ok();
+            return Err(unprocessable("the file was refused by the malware scan"));
+        }
+        content_check::Verdict::Unavailable(why) => {
+            tracing::error!(error = %why, "the attachment scanner did not answer; upload refused");
+            return Err(Error::CustomError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                ErrorDetail::new(
+                    "scan_unavailable",
+                    "the malware scanner is not available; try again later",
+                ),
+            ));
+        }
+    }
     let filename = artifacts::sanitize_filename(&p.filename);
     let sha = artifacts::sha256_hex(&body);
     let size = i64::try_from(body.len()).unwrap_or(i64::MAX);

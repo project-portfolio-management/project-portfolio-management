@@ -55,7 +55,7 @@ data and performs no clinical function.*
 | What personal data, and why | Met | [Personal-data inventory](personal-data-inventory.csv), kept true to the schema by a test |
 | Data minimization | Met | People are opaque references; no names, birth dates or special-category fields in the schema |
 | Retention and deletion | Partly | [Retention schedule](retention-schedule.md); a purge task covers read notifications, delivery logs and trend snapshots; **plans, tasks, time, documents and the audit trail are not purged** (the buyer decides; stated gap) |
-| Data-subject rights | Partly | Access, rectification, portability, restriction supported; erasure limited by audit design (DPIA risk 7) |
+| Data-subject rights | Partly | Access and portability: an administrator-only export of everything held about one person reference (`GET /api/admin/subjects/{ref}`), plus the per-plan export; rectification: edit in place with history; restriction: soft delete; erasure: **pseudonymisation** of the reference everywhere it is held, audit trail included (`POST …/pseudonymise`, preview first), because deleting audit rows would destroy the evidence they exist for. Names typed into free text, uploaded files and backups are not found automatically (DPIA risk 7) |
 | Data location and transfers | Buyer to complete | Set by where you host; the software makes no transfers by itself ([data flow](data-flow.md)) |
 | Sub-processors | Buyer to complete | None built in |
 | Breach notification process | Buyer to complete | [Runbook](../operations/runbook.md) §"Investigate an incident" gives the technical steps |

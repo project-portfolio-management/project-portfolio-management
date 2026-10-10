@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — a ceiling on the full critical-path answer (RG-16, 2026-10-10)
+
+`GET /api/plans/{pid}/cpm` for a plan of more than 5,000 tasks (`PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS`) answers `413` unless `?only=critical` or `?full=true` is given. Smaller plans are unchanged.
+
 ### Added — change requests (IR-4, IR-5, 2026-10-10)
 
 `/api/plans/{pid}/change-requests` with draft, edit, submit, review, decision, implement, withdraw, links, preview and baseline, and `GET /api/change-requests`. One named approver who is not the requester decides, with a reason; the database enforces the same. A request may carry what-if edits whose forecast equals the sandbox's own answer; a baseline because of one is taken by a person, never automatically. Migration 54.

@@ -112,7 +112,7 @@ network from the database about 110 ms, the scheduling calculation itself about 
 135 ms, writing it out about 20 ms, for a **10.8 MB** answer. The calculation is not the problem: the pure
 function takes 52 ms for 12,667 tasks and 148 ms for 30,000 (`cargo test --release large_plan_timing --
 --ignored --nocapture`). What was avoidable was a linear search inside the per-task loop (quadratic overall),
-now a map lookup. `GET …/cpm?only=critical` returns only the critical and near-critical tasks, but **in this
+now a map lookup. Above 5,000 tasks the full answer is now refused with a 413 that names the two ways out (`?only=critical`, `?full=true`), so a 10.8 MB answer is never an accident. `GET …/cpm?only=critical` returns only the critical and near-critical tasks, but **in this
 test every task is critical (it is a single chain), so it did not shrink the answer here**; it is covered by a
 request test on a network with float. The earlier "2.5 s" figure for this request was taken at 32 connections on
 a plan whose tasks had no start date, so it mostly measured loading and writing an answer of unplaced tasks;

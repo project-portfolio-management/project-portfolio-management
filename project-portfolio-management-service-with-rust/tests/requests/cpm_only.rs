@@ -92,6 +92,35 @@ async fn only_critical_keeps_the_critical_tasks_and_their_dependencies() {
                 .status_code(),
             422
         );
+
+        // Over the size for a full answer (set low here), the full answer is refused with a way out.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS", "3") };
+        let refused = request.get(&format!("/api/plans/{p}/cpm")).await;
+        assert_eq!(refused.status_code(), 413, "{}", refused.text());
+        assert!(refused.text().contains("only=critical") && refused.text().contains("full=true"));
+        assert_eq!(
+            request
+                .get(&format!("/api/plans/{p}/cpm?only=critical"))
+                .await
+                .status_code(),
+            200
+        );
+        assert_eq!(
+            request
+                .get(&format!("/api/plans/{p}/cpm?full=true"))
+                .await
+                .status_code(),
+            200
+        );
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS") };
+        assert_eq!(
+            request
+                .get(&format!("/api/plans/{p}/cpm"))
+                .await
+                .status_code(),
+            200,
+            "back within the size"
+        );
         let _ = (c, d);
     })
     .await;

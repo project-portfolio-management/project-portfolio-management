@@ -531,6 +531,46 @@ struct CpmParams {
     /// them): the answer for a very large plan, where the full list is megabytes.
     #[serde(default)]
     only: Option<String>,
+    /// `true` asks for the full answer of a plan over [`FULL_MAX_TASKS`] tasks.
+    #[serde(default)]
+    full: Option<bool>,
+}
+
+/// The default size above which the full critical-path answer is refused unless asked for with
+/// `?full=true` (RG-16). At 12,667 tasks the full answer was 10.8 MB; this keeps an everyday request
+/// from becoming that by accident. Override with `PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS`.
+pub const FULL_MAX_TASKS: usize = 5_000;
+
+/// The configured size above which the full answer needs `?full=true`.
+fn full_max_tasks() -> usize {
+    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_CPM_FULL_MAX_TASKS")
+        .ok()
+        .and_then(|v| v.trim().parse().ok())
+        .unwrap_or(FULL_MAX_TASKS)
+}
+
+/// Refuse the full answer for a plan over the size, with the two ways out named.
+fn check_full_size(tasks: usize, full: bool, only_critical: bool) -> Result<()> {
+    let max = full_max_tasks();
+    if full_answer_allowed(tasks, max, full, only_critical) {
+        return Ok(());
+    }
+    Err(Error::CustomError(
+        StatusCode::PAYLOAD_TOO_LARGE,
+        ErrorDetail::new(
+            "too_large",
+            format!(
+                "this plan has {tasks} tasks, over the {max} for which the full critical-path answer is sent by default (it can be megabytes): ask for ?only=critical, or for ?full=true if you really want all of it"
+            ),
+        ),
+    ))
+}
+
+/// Whether a plan of `tasks` tasks may be answered in full now: it is within the size, or the caller
+/// asked for the full answer knowingly, or asked only for the critical part. Pure, so it is unit-tested.
+#[must_use]
+pub fn full_answer_allowed(tasks: usize, max: usize, full: bool, only_critical: bool) -> bool {
+    only_critical || full || tasks <= max
 }
 
 /// `GET /api/plans/{pid}/cpm` — float, critical and near-critical tasks, and
@@ -556,6 +596,7 @@ async fn plan_cpm(
             cpm::MAX_DAYS
         )));
     }
+    check_full_size(net.rows.len(), p.full == Some(true), only_critical)?;
     let result = net
         .analyze(near)
         .map_err(|cpm::CpmError::Cycle(on)| cycle_error(&on))?;
@@ -802,4 +843,28 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/plans/{pid}/cpm", get(plan_cpm))
         .add("/plans/{pid}/tasks/{t_pid}/schedule", put(set_schedule))
+}
+
+#[cfg(test)]
+mod size_tests {
+    use super::{FULL_MAX_TASKS, full_answer_allowed};
+
+    #[test]
+    fn a_big_plan_needs_to_ask_for_all_of_it_or_for_the_critical_part() {
+        let m = FULL_MAX_TASKS;
+        assert!(full_answer_allowed(10, m, false, false));
+        assert!(
+            full_answer_allowed(m, m, false, false),
+            "exactly the size is fine"
+        );
+        assert!(!full_answer_allowed(m + 1, m, false, false));
+        assert!(
+            full_answer_allowed(m + 1, m, true, false),
+            "asked for it knowingly"
+        );
+        assert!(
+            full_answer_allowed(100_000, m, false, true),
+            "the critical part is always allowed"
+        );
+    }
 }

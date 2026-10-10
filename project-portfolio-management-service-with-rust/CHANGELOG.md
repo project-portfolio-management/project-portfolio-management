@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the plan's task list pages (RG-15, 2026-10-10)
+
+`GET /api/plans/{pid}/tasks` takes `limit` (default 100, at most 500) and `offset`, sets `X-Total-Count`, `X-Limit` and `X-Offset`, and adds `total`, `truncated`, `limit`, `offset` to the body. `counts` are computed over every matching task. Without paging parameters the first 2,000 tasks are returned and `truncated` says whether more exist (before, all of them, however many).
+
 ### Added — attachment content checks and a virus-scan hook (RG-8, 2026-10-10)
 
 An upload's bytes must match its declared type, and programs and scripts are refused whatever they claim to be. `ATTACHMENT_SCAN_ADDR` (a `clamd` over TCP) streams each file to the scanner before anything is stored; an infected file is refused and audited, and a scanner that cannot answer refuses the upload (503).

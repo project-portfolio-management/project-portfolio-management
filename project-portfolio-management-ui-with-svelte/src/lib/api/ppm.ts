@@ -3229,7 +3229,14 @@ export class PpmClient {
   }
   listTasks(
     pid: string,
-  ): Promise<{ tasks: Task[]; counts: Record<string, number> }> {
+  ): Promise<{
+    tasks: Task[];
+    counts: Record<string, number>;
+    /** Every task that matches, not just those returned. */
+    total?: number;
+    /** More tasks exist than were returned (a very large plan). */
+    truncated?: boolean;
+  }> {
     return this.http.get(`/api/plans/${pid}/tasks`);
   }
   createTask(pid: string, body: unknown): Promise<Task> {

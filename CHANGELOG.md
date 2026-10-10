@@ -17,6 +17,10 @@ workflow yet. Dates are 2026.
 
 ### 10 October
 
+- **The plan's task list pages** (RG-15): `limit` and `offset` with the standard headers, counts over every
+  task, and a 2,000-task ceiling when no paging is asked for. Found by the new load and soak test
+  (`scripts/load-test.mjs`, RG-11), whose results are in [`BENCHMARKS.md`](BENCHMARKS.md).
+
 - **Readiness for major medical and governmental organizations:** an honest
   assessment ([`governance/production-readiness.md`](governance/production-readiness.md):
   not ready for unsupervised production, ready for a controlled pilot); an idle

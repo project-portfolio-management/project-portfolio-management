@@ -86,8 +86,9 @@ had just served the large plan (it was 265 MB before the run); it did not fall a
 1. **A very large plan is a cliff.** With 12,667 tasks in one plan, listing its tasks returned about 400 KB
    and took roughly 1.9 seconds at the median under load (3.3 s at the 95th percentile), and the critical-path
    calculation took 2.5 seconds at the median and about 5.8 at the 95th percentile. Memory rose from 265 MB to
-   about 1.2 GB. A plan of 100 tasks is two orders of magnitude cheaper. The task list of a plan is not paged.
-   (Follow-ups RG-15 and RG-16 in [`tasks.md`](tasks.md).)
+   about 1.2 GB. A plan of 100 tasks is two orders of magnitude cheaper. The task list of a plan was not paged when this was measured;
+   it now is (RG-15, `limit`/`offset` and a 2,000-task ceiling), but that change was **not re-measured**.
+   The critical-path cost is still open (RG-16 in [`tasks.md`](tasks.md)).
 2. **Writing 60,000 rows through the API (30,000 tasks and 29,700 dependencies, 16 at a time) took 579
    seconds**, about 100 a second, much slower than the 600 to 800 task-creates a second the write scenario
    reaches against a small plan. The slowdown was not investigated.

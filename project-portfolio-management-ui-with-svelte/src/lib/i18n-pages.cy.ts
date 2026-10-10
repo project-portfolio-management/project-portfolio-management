@@ -2428,4 +2428,5 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.issue_kind.improvement": "gwelliant",
   "l.enum.issue_kind.concern": "pryder",
   "p.signin.oidc_idle": "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
+  "p.plans.pid.board.only_first_tasks": "Mae gan y cynllun hwn {total} tasg; mae'r bwrdd yn dangos y {shown} cyntaf. Cyfyngwch yn ôl cydran, neu darllenwch y gweddill drwy'r API.",
 };

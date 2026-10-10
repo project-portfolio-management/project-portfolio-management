@@ -42,9 +42,14 @@
   let sprintStart = $state("");
   let sprintEnd = $state("");
 
+  /** Set when the plan has more tasks than one answer carries (a very large plan). */
+  let shownOf = $state<{ shown: number; total: number } | null>(null);
+
   async function load() {
     try {
-      tasks = (await ppm.listTasks(pid)).tasks;
+      const listed = await ppm.listTasks(pid);
+      tasks = listed.tasks;
+      shownOf = listed.truncated ? { shown: listed.tasks.length, total: listed.total ?? listed.tasks.length } : null;
       sprints = await ppm.listSprints(pid);
       standup = await ppm.standup(pid);
       velocity = await ppm.velocity(pid);
@@ -121,6 +126,7 @@
 
 <h1>{t("ppm.common.board")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
+{#if shownOf}<p class="banner" role="status">{t("p.plans.pid.board.only_first_tasks", { shown: shownOf.shown, total: shownOf.total })}</p>{/if}
 
 <form
   class="row"

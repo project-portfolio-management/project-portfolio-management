@@ -334,6 +334,28 @@ async fn create_task(
 struct TaskListParams {
     #[serde(default)]
     component: Option<String>,
+    /// Page size (at most 500). With `limit` or `offset` the answer is one page.
+    #[serde(default)]
+    limit: Option<u64>,
+    /// Rows to skip.
+    #[serde(default)]
+    offset: Option<u64>,
+}
+
+/// Tasks returned when a caller sends no paging parameters (the old behaviour, now with a ceiling so
+/// one huge plan cannot make one response unbounded). Past it the answer says `truncated: true` and
+/// the caller pages with `limit` and `offset`.
+pub const UNPAGED_TASK_CAP: u64 = 2_000;
+
+/// The `(limit, offset)` for a task list: the standard page when the caller asked for one, else the
+/// first [`UNPAGED_TASK_CAP`] tasks. Pure, so it is unit-tested.
+#[must_use]
+pub fn task_window(limit: Option<u64>, offset: Option<u64>) -> (u64, u64) {
+    if limit.is_some() || offset.is_some() {
+        super::pagination::Page { limit, offset }.resolve(100)
+    } else {
+        (UNPAGED_TASK_CAP, 0)
+    }
 }
 
 /// `GET /api/plans/{pid}/tasks` — the item's live tasks plus
@@ -359,8 +381,20 @@ async fn list_tasks(
             query = query.filter(tasks::Column::ComponentPid.eq(component));
         }
     }
-    let rows = query
-        .order_by_asc(tasks::Column::Id)
+    super::pagination::Page {
+        limit: params.limit,
+        offset: params.offset,
+    }
+    .check_offset()?;
+    let (limit, offset) = task_window(params.limit, params.offset);
+    // The per-status counts cover every task that matches, not just this page (board columns).
+    let by_status: Vec<(String, i64)> = query
+        .clone()
+        .select_only()
+        .column(tasks::Column::Status)
+        .column_as(tasks::Column::Id.count(), "n")
+        .group_by(tasks::Column::Status)
+        .into_tuple()
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
@@ -368,15 +402,35 @@ async fn list_tasks(
         .iter()
         .map(|status| (*status, 0))
         .collect();
-    for task in &rows {
-        if let Some(entry) = counts.get_mut(task.status.as_str()) {
-            *entry += 1;
+    let mut total: u64 = 0;
+    for (status, n) in &by_status {
+        let n = usize::try_from(*n).unwrap_or(0);
+        total += n as u64;
+        if let Some(entry) = counts.get_mut(status.as_str()) {
+            *entry += n;
         }
     }
-    format::json(serde_json::json!({
-        "tasks": rows.iter().map(task_view).collect::<Vec<_>>(),
-        "counts": counts,
-    }))
+    let rows = query
+        .order_by_asc(tasks::Column::Id)
+        .offset(offset)
+        .limit(limit)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let truncated = offset + (rows.len() as u64) < total;
+    Ok(super::pagination::with_page_headers(
+        format::json(serde_json::json!({
+            "tasks": rows.iter().map(task_view).collect::<Vec<_>>(),
+            "counts": counts,
+            "total": total,
+            "truncated": truncated,
+            "limit": limit,
+            "offset": offset,
+        }))?,
+        total,
+        limit,
+        offset,
+    ))
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}` — update fields
@@ -1551,4 +1605,34 @@ pub fn routes() -> Routes {
         .add("/engineering/moscow", get(moscow))
         .add("/engineering/delivery-links", get(delivery_links))
         .add("/engineering/milestone-calendar", get(milestone_calendar))
+}
+
+#[cfg(test)]
+mod task_window_tests {
+    use super::{UNPAGED_TASK_CAP, task_window};
+
+    #[test]
+    fn no_paging_parameters_means_the_first_capped_slice() {
+        assert_eq!(task_window(None, None), (UNPAGED_TASK_CAP, 0));
+    }
+
+    #[test]
+    fn a_limit_or_an_offset_means_a_standard_page() {
+        assert_eq!(task_window(Some(10), None), (10, 0));
+        assert_eq!(
+            task_window(None, Some(40)),
+            (100, 40),
+            "the default page is 100"
+        );
+        assert_eq!(
+            task_window(Some(10_000), Some(5)),
+            (500, 5),
+            "a big limit is clamped to 500"
+        );
+        assert_eq!(
+            task_window(Some(0), None),
+            (100, 0),
+            "zero falls back to the default"
+        );
+    }
 }

@@ -282,7 +282,13 @@ fn insight_paths() -> Value {
         "/api/regulator/extract": get("oversight", "Deliberately coarse per-portfolio aggregates; ABAC mask obligation withholds names"),
         "/api/plans/{pid}/tasks": {
             "parameters": [{ "name": "pid", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-            "get": { "tags": ["engineering"], "summary": "The item's live tasks + per-status board counts", "responses": { "200": { "description": "Tasks + counts" } } },
+            "get": { "tags": ["engineering"], "summary": "The item's live tasks + per-status board counts",
+                "description": "Returns {tasks, counts, total, truncated, limit, offset}. counts and total cover every task that matches (?component narrows), not just the page. With ?limit and/or ?offset the answer is one page (default 100, at most 500; an offset over 10,000 is 400) with X-Total-Count, X-Limit and X-Offset headers. With no paging parameter the first 2,000 tasks are returned and truncated says whether more exist: a plan of 12,667 tasks otherwise made one ~400 KB response that took seconds. Page with offset to read the rest.",
+                "parameters": [
+                    { "name": "component", "in": "query", "required": false, "description": "a component pid, or unassigned", "schema": { "type": "string" } },
+                    { "name": "limit", "in": "query", "required": false, "description": "page size, at most 500", "schema": { "type": "integer" } },
+                    { "name": "offset", "in": "query", "required": false, "description": "rows to skip, at most 10,000", "schema": { "type": "integer" } }],
+                "responses": { "200": { "description": "Tasks, counts, total, truncated" }, "400": { "description": "A bad limit or an offset over the maximum" } } },
             "post": { "tags": ["engineering"], "summary": "Create a task (default status todo; done on create stamps done_at)",
                 "responses": { "200": { "description": "The task" }, "422": { "description": "Validation failure" } } }
         },

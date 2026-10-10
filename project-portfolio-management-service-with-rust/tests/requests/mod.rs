@@ -34,6 +34,7 @@ mod scale;
 mod strategy;
 mod subjects;
 mod task_bulk;
+mod task_paging;
 mod task_relations;
 mod task_tree;
 mod tba;

@@ -47,10 +47,13 @@ says it is **not ready for unsupervised production use** at a large medical or g
 | C4. Interoperability | JSON/OpenAPI API; **no patient-identity exchange** (no NHS number, PDS or NHS login), so the identity questions fall away. |
 | D1. Usability and accessibility | Scored, not pass/fail: an automated WCAG 2.2 AA audit of every page runs on every change; **no manual or assistive-technology audit, no user testing**, no availability figure. |
 
-One further fact a reader should know: **the project's continuous integration runs on GitHub and, at the time of
-writing, five of its jobs fail** (the restore drill, the generated-documents check, `cargo deny` for the service,
-the ZAP baseline scan and the PostgreSQL integration tests; the other jobs pass). That is being investigated and
-is not hidden here; see C3.4.
+One further fact a reader should know: **the project's continuous integration runs on GitHub, and on the morning of
+2026-10-10 five of its jobs were failing** (the restore drill, the generated-documents check, `cargo deny` for the
+service, the ZAP baseline scan and the PostgreSQL integration tests). They were fixed the same day (a
+calendar-dependent test, an unmaintained transitive dependency newly advised against, a scanner version, and
+the wrong `pg_dump` on the runner) and all jobs pass on commit `8a97b19`. It matters because it shows the gates
+catch real problems, and because the fix for the ZAP job was to **ignore two findings with written reasons**, which
+a reviewer should read ([`.zap/rules.tsv`](../../../../../.zap/rules.tsv)).
 
 ## A. Company information (non-assessed)
 
@@ -124,8 +127,8 @@ is not hidden here; see C3.4.
 | --- | --- | --- | --- |
 | C3.1 | **No Cyber Essentials certificate.** The maintainer is an individual and has none | **Not met** | |
 | C3.2 | **No**, the Cyber Security Charter for Suppliers to the NHS is not signed | Not met | So C3.3 to C3.6 are answered below |
-| C3.3 | **Not provided. No independent penetration test has been done.** A passive OWASP ZAP baseline scan is written in CI and **its job currently fails on GitHub**, so there is no clean scan result either. The project's own documents are not a substitute | **Not met** | [governance/assurance-checklist.md](../../../../../governance/assurance-checklist.md) item 1; `.github/workflows/ci.yml` job `zap` |
-| C3.4 | **Unable to confirm.** Practices that map to the Code's four themes exist, and the gaps are named. *Secure design and development:* login enforced by default, attribute-based access, a security-headers and CSP test, `#![forbid(unsafe_code)]`, clippy with warnings denied. *Build environment:* continuous integration on GitHub; actions are pinned by tag, not commit; no secret scanning is configured. *Deployment and maintenance:* the service refuses to start without verification keys and refuses `production` with login off; a tested restore drill; encrypted backups; Dependabot; `cargo deny`; a software bill of materials and build provenance on release. *Communication with customers:* a security policy with a private reporting route, a changelog, a governance and a readiness document. **Gaps:** five CI jobs currently fail (restore drill, docs check, `cargo deny` for the service, ZAP, PostgreSQL integration tests), no release has been cut, and the practice has **not been independently assessed against the Code** | Partly met | [SECURITY.md](../../../../../SECURITY.md), [.github/workflows/ci.yml](../../../../../.github/workflows/ci.yml), [.github/workflows/release.yml](../../../../../.github/workflows/release.yml), [governance/production-readiness.md](../../../../../governance/production-readiness.md) |
+| C3.3 | **Not provided. No independent penetration test has been done.** A passive OWASP ZAP baseline scan runs in CI and passes, **but it is unauthenticated (login is enforced, so the scanner sees only the sign-in wall), passive, and two findings are ignored with reasons**. It is not a penetration test and the project's own documents are not a substitute | **Not met** | [governance/assurance-checklist.md](../../../../../governance/assurance-checklist.md) item 1; `.github/workflows/ci.yml` job `zap` |
+| C3.4 | **Unable to confirm.** Practices that map to the Code's four themes exist, and the gaps are named. *Secure design and development:* login enforced by default, attribute-based access, a security-headers and CSP test, `#![forbid(unsafe_code)]`, clippy with warnings denied. *Build environment:* continuous integration on GitHub; actions are pinned by tag, not commit; no secret scanning is configured. *Deployment and maintenance:* the service refuses to start without verification keys and refuses `production` with login off; a tested restore drill; encrypted backups; Dependabot; `cargo deny`; a software bill of materials and build provenance on release. *Communication with customers:* a security policy with a private reporting route, a changelog, a governance and a readiness document. **Gaps:** no release has been cut yet from the release workflow, the CI gates passed only after a same-day round of fixes (see above), and the practice has **not been independently assessed against the Code** | Partly met | [SECURITY.md](../../../../../SECURITY.md), [.github/workflows/ci.yml](../../../../../.github/workflows/ci.yml), [.github/workflows/release.yml](../../../../../.github/workflows/release.yml), [governance/production-readiness.md](../../../../../governance/production-readiness.md) |
 | C3.5 | **Yes, by identity federation.** PPM implements no passwords or accounts of its own: it verifies tokens issued by the deployer's identity provider (Microsoft Entra ID, directly or through Keycloak, or a PASETO issuer), so multi-factor authentication is enforced there for every account type. The plan is documented | Partly met | [operations/sign-in-with-entra.md](../../../../../operations/sign-in-with-entra.md). MFA itself is the identity provider's and was **not exercised** by this repository's tests; sign-in is tested against a mock provider and a real Keycloak |
 | C3.5.1 | Not applicable: the supplier has no access to any deployment | Not applicable | See C2.1 |
 | C3.6 | **Yes.** Every mutation writes an audit entry naming the actor; each entry carries digests and, when a key is set, a keyed MAC, and the database refuses to change or delete an audit row outside the retention task. **Limits:** it is not a hash chain, so a deleted row would not show in verification, and a database administrator can drop the protection. Reads are audited only for sensitive operations (data-subject export, access review), not every read | Partly met | [governance/dpia.md](../../../../../governance/dpia.md) risk 9; `tests/requests/audit_protection.rs`; `GET /api/compliance/audit/verify` |
@@ -180,8 +183,8 @@ close in code**, and C2 and C1 each depend on a decision for someone else.
 2. **C3.3 Independent penetration test** of a deployed instance covering the OWASP Top 10, with no finding at or
    above CVSS 7.0 ([assurance checklist](../../../../../governance/assurance-checklist.md) item 1). Alternatively
    **C3.2:** sign the Cyber Security Charter for Suppliers to the NHS, which removes C3.3 to C3.6.
-3. **Make the project's own CI green.** Five jobs fail on GitHub today; C3.4 cannot honestly be confirmed while the
-   restore drill, the ZAP scan and the integration tests fail.
+3. **Keep the project's own CI green and cut a release.** The gates now pass; C3.4 also needs a first release with
+   its software bill of materials and build provenance, and an independent look at the practice.
 4. **C2.2.1 and C2.2.3.** ICO registration evidence if the manufacturer is a controller or processor of any
    deployment (not if only the deployer is), and a transparency notice the deployer completes from the record of
    processing.
@@ -206,3 +209,4 @@ says.
 - Where the checklist links to a published standard (DCB0129, the Software Security Code of Practice, DAPB3051, the
   Accessible Information Standard), the standard itself was not read in full for this assessment.
 - The statement about CI is from the GitHub run list on 2026-10-10; it will change.
+- A load and soak test was run on one machine with login off ([BENCHMARKS.md](../../../../../BENCHMARKS.md)); nothing in this assessment depends on those figures.

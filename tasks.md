@@ -1488,12 +1488,13 @@ what was **not** tested; claim no certification.
   results (latency percentiles, error rate, database size sweep) in
   `BENCHMARKS.md`. **Acceptance:** results recorded with date, machine, command.
   **Built 2026-10-10.** `scripts/load-test.mjs` (`seed`, `run`, `soak`; Node and `oha`); results, machine and caveats in `BENCHMARKS.md`. **Findings:** ordinary requests on 100-task plans answer in tens of milliseconds at 32 connections; a plan of 12,667 tasks is a cliff (task list ~1.9 s median and ~400 KB, critical path ~2.5 s, memory to ~1.2 GB); bulk writing through the API ran at about 100 rows a second (cause not investigated); a six-minute soak showed 4 errors in about 800,000 requests and flat memory. **Deviations, stated:** client, service and database shared one machine; login and rate limiting were off; run-to-run variation was 2 to 4 times, so the numbers are an order of magnitude, not a capacity plan; no long soak, no larger database, no front-end profile.
-- [ ] **RG-15 (M) — Page a plan's task list.** `GET /api/plans/{pid}/tasks` returns every task (about
+- [x] **RG-15 (M) — Page a plan's task list.** `GET /api/plans/{pid}/tasks` returns every task (about
   400 KB for 12,667) and took ~1.9 s at the median under load. Page it the standard way
   (`limit`, `offset`, `X-Total-Count`) with the counts kept in the body, keep the old shape working for
   callers that send no paging parameters up to a stated cap, and move the UI to pages. **Acceptance:** the
   list-paging census names it; the large-plan scenario of `scripts/load-test.mjs` improves and the figures
   are recorded in `BENCHMARKS.md`.
+  **Built 2026-10-10.** `GET /api/plans/{pid}/tasks` accepts `limit` (default 100, at most 500) and `offset` (at most 10,000) with `X-Total-Count`, `X-Limit` and `X-Offset`; the body adds `total`, `truncated`, `limit` and `offset`, and `counts` now come from one grouped query over every matching task. With no paging parameters the answer is the old shape capped at 2,000 tasks (`truncated` says if more exist). The board page shows a notice when truncated (catalogue text with Welsh). Unit test of the window rule and a request test that walks the pages. **Not done, stated:** the improvement was **not re-measured** on the 12,667-task plan (the load-test database was gone); the work-breakdown and earned-value pages still read the first 2,000 tasks without saying so; the board does not page, it only warns.
 - [ ] **RG-16 (M) — Critical path on very large plans.** The calculation took ~2.5 s at the median for
   12,667 tasks with 99 dependencies, and the process grew to ~1.2 GB. Profile it, remove the avoidable work,
   and decide a stated cap above which the answer is a clear refusal or a background job, never a timeout.

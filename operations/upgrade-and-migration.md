@@ -4,7 +4,7 @@
 
 - A release is a tag `vX.Y.Z` (the API crate's version) and a container image
   with that tag in the registry; the release notes come from
-  [`CHANGELOG.md`](../project-portfolio-management-api-with-rust/CHANGELOG.md).
+  [`CHANGELOG.md`](../project-portfolio-management-service-with-rust/CHANGELOG.md).
   Deploy a **tag**, never `latest`, so a rollback is "deploy the previous tag".
 - The database schema is changed only by **migrations compiled into the binary**.
   `config/production.yaml` sets `auto_migrate: false` on purpose: the service

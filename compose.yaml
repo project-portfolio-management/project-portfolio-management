@@ -5,7 +5,7 @@
 #   podman compose down -v                     # stop and delete the database volume
 #
 # Build context is this directory (the repository root); the image is built
-# from project-portfolio-management-api-with-rust/Dockerfile.
+# from project-portfolio-management-service-with-rust/Dockerfile.
 #
 # SAFE BY DEFAULT: the API container runs with login enforcement ON
 # (PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=true): every route except
@@ -60,7 +60,7 @@ x-api-environment: &api-environment
 
 x-api-build: &api-build
   context: .
-  dockerfile: project-portfolio-management-api-with-rust/Dockerfile
+  dockerfile: project-portfolio-management-service-with-rust/Dockerfile
 
 services:
   postgres:

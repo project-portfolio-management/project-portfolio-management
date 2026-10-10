@@ -79,7 +79,7 @@ These hang off a `Plan` by `plan_pid`, each in its own table, and are
 **not** part of the matching surface (goal *titles* bridge in through
 `data.goals[]`). `src/models/_entities/` holds the SeaORM entities (about
 100); the route map is in the service
-[AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md).
+[AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md).
 Representative groups:
 
 | Group | Tables (examples) |
@@ -110,8 +110,8 @@ cost plan, time-based flow metrics, Smart Score, lifecycle.
 ## Service persistence model
 
 **Files:**
-[`src/models/`](../project-portfolio-management-api-with-rust/src/models/),
-[`migration/src/`](../project-portfolio-management-api-with-rust/migration/src/)
+[`src/models/`](../project-portfolio-management-service-with-rust/src/models/),
+[`migration/src/`](../project-portfolio-management-service-with-rust/migration/src/)
 
 One core table `plans` — `{id` (PK)`, pid` (public UUID)`, name`
 (denormalized from `data.name`)`, kind` (nullable)`, parent_pid`
@@ -124,7 +124,7 @@ Migrations live in `migration/src/` (latest `…_000048_onboarding_one_open`);
 
 ## Wire DTOs (service controller)
 
-**File:** [`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/)
+**File:** [`src/controllers/`](../project-portfolio-management-service-with-rust/src/controllers/)
 
 | Type | Shape | Used by |
 |---|---|---|

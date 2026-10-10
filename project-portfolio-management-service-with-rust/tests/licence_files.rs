@@ -79,7 +79,7 @@ fn the_licence_directory_holds_only_the_expression_s_licences() {
 #[test]
 fn every_manifest_declares_the_one_expression() {
     for manifest in [
-        "project-portfolio-management-api-with-rust/Cargo.toml",
+        "project-portfolio-management-service-with-rust/Cargo.toml",
         "project-portfolio-management-matcher-with-rust/Cargo.toml",
         "project-portfolio-management-ui-with-svelte/package.json",
     ] {

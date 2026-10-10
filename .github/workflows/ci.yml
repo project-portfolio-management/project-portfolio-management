@@ -24,7 +24,7 @@ env:
   # Must equal `channel` in rust-toolchain.toml (the fresh-clone job checks it).
   RUST_TOOLCHAIN: "1.96.1"
   CARGO_TERM_COLOR: always
-  API: project-portfolio-management-api-with-rust
+  API: project-portfolio-management-service-with-rust
   MATCHER: project-portfolio-management-matcher-with-rust
   UI: project-portfolio-management-ui-with-svelte
 
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: project-portfolio-management-api-with-rust
+        working-directory: project-portfolio-management-service-with-rust
     steps:
       - uses: actions/checkout@v4
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: project-portfolio-management-api-with-rust
+        working-directory: project-portfolio-management-service-with-rust
     services:
       postgres:
         image: postgres:18-alpine
@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: project-portfolio-management-api-with-rust
+        working-directory: project-portfolio-management-service-with-rust
     services:
       postgres:
         image: postgres:18-alpine
@@ -146,7 +146,7 @@ jobs:
         working-directory: .
         run: >-
           scripts/restore-test.sh
-          -t 'cd project-portfolio-management-api-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
+          -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
 
   matcher:
     name: Matcher (fmt, clippy, test)
@@ -174,7 +174,7 @@ jobs:
       fail-fast: false
       matrix:
         crate:
-          - project-portfolio-management-api-with-rust
+          - project-portfolio-management-service-with-rust
           - project-portfolio-management-matcher-with-rust
     steps:
       - uses: actions/checkout@v4

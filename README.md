@@ -9,7 +9,7 @@ resources, governance).
 | Subproject | What it is | Run | Test |
 |---|---|---|---|
 | [`project-portfolio-management-matcher-with-rust`](project-portfolio-management-matcher-with-rust) | Rust library: the `Plan` type and the matching engine, embedded by the API | `cargo run` (demo) | `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo fmt --check` |
-| [`project-portfolio-management-api-with-rust`](project-portfolio-management-api-with-rust) | loco.rs REST service; the API DTO is the matcher's `Plan` | `cargo loco start` (needs Postgres) | `cargo test` (database-free), `cargo test -- --ignored` (request tests, need Postgres) |
+| [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | loco.rs REST service; the API DTO is the matcher's `Plan` | `cargo loco start` (needs Postgres) | `cargo test` (database-free), `cargo test -- --ignored` (request tests, need Postgres) |
 | [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 2 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
 
 The Rust toolchain is pinned in [`rust-toolchain.toml`](rust-toolchain.toml)
@@ -20,7 +20,7 @@ they do not need the service. Run `pkill -f 'vite preview'` before
 ## Run the API from a fresh clone
 
 `compose.yaml` at the repository root runs the API with its database; it
-builds from `project-portfolio-management-api-with-rust/Dockerfile` with the
+builds from `project-portfolio-management-service-with-rust/Dockerfile` with the
 repository root as the build context.
 
 ```sh

@@ -67,8 +67,8 @@ cargo test
 ```sh
 # Matcher and service
 (cd project-portfolio-management-matcher-with-rust && cargo test)
-(cd project-portfolio-management-api-with-rust && cargo test)               # database-free
-(cd project-portfolio-management-api-with-rust && cargo test -- --ignored)  # needs PostgreSQL
+(cd project-portfolio-management-service-with-rust && cargo test)               # database-free
+(cd project-portfolio-management-service-with-rust && cargo test -- --ignored)  # needs PostgreSQL
 
 # Front end
 cd project-portfolio-management-ui-with-svelte

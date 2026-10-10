@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  API: project-portfolio-management-api-with-rust
+  API: project-portfolio-management-service-with-rust
   MATCHER: project-portfolio-management-matcher-with-rust
   UI: project-portfolio-management-ui-with-svelte
 
@@ -58,7 +58,7 @@ jobs:
       fail-fast: true
       matrix:
         crate:
-          - project-portfolio-management-api-with-rust
+          - project-portfolio-management-service-with-rust
           - project-portfolio-management-matcher-with-rust
     steps:
       - uses: actions/checkout@v4

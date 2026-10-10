@@ -67,7 +67,7 @@ data and performs no clinical function.*
 | Topic | Status | Evidence |
 |---|---|---|
 | Authentication | Met | Login enforced on every API route by default; PASETO v4 tokens or a Keycloak/Entra OIDC provider; production refuses to start without it ([`spec/07`](../spec/07-non-functional-requirements.md) NFR-12) |
-| Access control and least privilege | Met | Attribute-based, deny-by-default policy; separate finance and people areas; private plans; guest confinement ([`tests/private_aggregates.rs`](../project-portfolio-management-api-with-rust/tests/private_aggregates.rs), `tests/enforcement.rs`) |
+| Access control and least privilege | Met | Attribute-based, deny-by-default policy; separate finance and people areas; private plans; guest confinement ([`tests/private_aggregates.rs`](../project-portfolio-management-service-with-rust/tests/private_aggregates.rs), `tests/enforcement.rs`) |
 | Multi-factor authentication | Buyer to complete | Provided by your identity provider |
 | Encryption in transit | Buyer to complete | TLS terminates at your proxy; HSTS is sent over TLS ([deployment guide](../operations/deployment.md)) |
 | Encryption at rest | Buyer to complete | Disk, database and backup encryption are your environment's |

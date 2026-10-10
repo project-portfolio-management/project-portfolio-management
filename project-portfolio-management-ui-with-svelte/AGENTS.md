@@ -1,6 +1,6 @@
 # AGENTS.md — Portfolio Front-End
 
-Operator UI for the [Portfolio Service](../project-portfolio-management-api-with-rust):
+Operator UI for the [Portfolio Service](../project-portfolio-management-service-with-rust):
 plan identity CRUD + matching + merge over **one recursive `/api/plans`
 collection**, plus the project-management workspace (Kanban board,
 governance, schedule) and cookie-session / SSO auth (BFF; the browser
@@ -47,7 +47,7 @@ of the matching surface (except goal titles).
 
 ## Single source of truth
 
-- The service's [`spec.md`](../project-portfolio-management-api-with-rust/spec/index.md)
+- The service's [`spec.md`](../project-portfolio-management-service-with-rust/spec/index.md)
   and [`agents/`](../agents/) describe the API contract. If a field
   changes in `Plan` (the matcher type) in the service, fix
   `src/lib/api/types.ts` here in the **same** change cycle — do not let

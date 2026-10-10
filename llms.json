@@ -102,7 +102,7 @@
         },
         {
           "title": "API crate spec",
-          "path": "project-portfolio-management-api-with-rust/spec/index.md",
+          "path": "project-portfolio-management-service-with-rust/spec/index.md",
           "description": "Living spec for the Rust service, including section 9 routes and section 13 tasks"
         },
         {
@@ -122,7 +122,7 @@
       "links": [
         {
           "title": "API service guide",
-          "path": "project-portfolio-management-api-with-rust/AGENTS.md",
+          "path": "project-portfolio-management-service-with-rust/AGENTS.md",
           "description": "Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands"
         },
         {
@@ -192,12 +192,12 @@
       "links": [
         {
           "title": "API README",
-          "path": "project-portfolio-management-api-with-rust/README.md",
+          "path": "project-portfolio-management-service-with-rust/README.md",
           "description": "Overview, quick start and testing for the service"
         },
         {
           "title": "API changelog",
-          "path": "project-portfolio-management-api-with-rust/CHANGELOG.md",
+          "path": "project-portfolio-management-service-with-rust/CHANGELOG.md",
           "description": "Release notes for the service"
         },
         {

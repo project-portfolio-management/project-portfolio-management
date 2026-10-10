@@ -1187,7 +1187,7 @@ described manual check confirms it. Split tasks too big for one PR
 
 - [ ] **T-1 — Scaffold the trio.**
   - [ ] Create `project-portfolio-management-matcher-with-rust/`,
-    `project-portfolio-management-api-with-rust/`, and
+    `project-portfolio-management-service-with-rust/`, and
     `project-portfolio-management-ui-with-svelte/` from the care-pathway / plan
     siblings (copy-adapt; drift accepted — repo decision 2026-06-02).
   - [ ] Each subproject ships its own `spec/` (matcher §1–§25; service

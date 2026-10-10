@@ -65,7 +65,7 @@ This spec owns the **cross-subproject contract**:
 
 ### 2.2 In scope — per subproject
 
-**project-portfolio-management-api-with-rust** owns:
+**project-portfolio-management-service-with-rust** owns:
 
 - Plan CRUD with soft delete (`deleted_at`) over the thin matchable
   record on the single `/api/plans` collection.

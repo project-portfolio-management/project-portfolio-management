@@ -1,7 +1,7 @@
 ## 9. API Surface
 
 Endpoint detail: [`agents/restful.md`](../agents/restful.md); source:
-`project-portfolio-management-api-with-rust/src/controllers/`. The
+`project-portfolio-management-service-with-rust/src/controllers/`. The
 service is implemented (§14); the route inventory in §9.7 is generated
 from the controllers' `routes()` and is the check against drift. The
 tables in §9.2–§9.2c keep their original FR-oriented shape and carry

@@ -894,7 +894,7 @@ each sum to the lead time; work ≤ process ≤ cycle ≤ lead; ratios in
 ## 16. Implementation status
 
 TBA-1 … TBA-8 are **implemented**. In
-`project-portfolio-management-api-with-rust`:
+`project-portfolio-management-service-with-rust`:
 
 | Piece | Location |
 |---|---|

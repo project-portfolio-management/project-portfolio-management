@@ -238,6 +238,6 @@ config/                     development / production / test yaml
 **repository root** as context, because sibling path dependencies
 (`integrity-mac`, `authentication-verifier`,
 `project-portfolio-management-matcher`) live outside this directory:
-`podman build -f project-portfolio-management/project-portfolio-management-api-with-rust/Dockerfile -t project-portfolio-management-service .`
+`podman build -f project-portfolio-management/project-portfolio-management-service-with-rust/Dockerfile -t project-portfolio-management-service .`
 Exclude every `target/` via `.containerignore`. `GET /_health` returns
 `200` once Postgres is reachable.

@@ -3,7 +3,7 @@
 > **Single source of truth.** Code conforms to this spec. Behavioural
 > change = spec + code + test. Live work queue is §13.
 >
-> Sibling service: [project-portfolio-management-api-with-rust](../../project-portfolio-management-api-with-rust/spec/index.md).
+> Sibling service: [project-portfolio-management-service-with-rust](../../project-portfolio-management-service-with-rust/spec/index.md).
 > Entity umbrella: [portfolio/spec](../../spec/index.md).
 
 ## 1. Purpose and vision
@@ -979,7 +979,7 @@ links are **never** a match signal (entity spec §1).
 
 ## 17. References
 
-- Sibling service spec: [project-portfolio-management-api-with-rust/spec](../../project-portfolio-management-api-with-rust/spec/index.md).
+- Sibling service spec: [project-portfolio-management-service-with-rust/spec](../../project-portfolio-management-service-with-rust/spec/index.md).
 - Entity umbrella: [portfolio/spec](../../spec/index.md);
   [models](../../agents/models.md); [matching](../../agents/matching.md).
 - Family layout shell + theming + locale conventions; SvelteKit 2 +

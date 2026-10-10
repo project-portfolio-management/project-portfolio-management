@@ -529,7 +529,7 @@ by computing `spent_on` and the leave period relative to
 `chrono::Utc::now()` (mirroring `tests/requests/insights.rs`'s existing
 pattern) rather than a fixed calendar date. Verified locally against a
 real Postgres: `scripts/ci-check.sh test-db
-project-portfolio-management/project-portfolio-management-api-with-rust`,
+project-portfolio-management/project-portfolio-management-service-with-rust`,
 79/79 passing.
 
 ### Added — explainability pin: every derived GET discloses its inputs (T-28j)

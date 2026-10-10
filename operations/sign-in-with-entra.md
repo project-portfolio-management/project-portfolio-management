@@ -58,7 +58,7 @@ varying issuers.
 
 Create a realm (here `mxi`) and add the Entra identity provider. A complete,
 tested example is
-[`tests/fixtures/keycloak/entra-broker-realm.json`](../project-portfolio-management-api-with-rust/tests/fixtures/keycloak/entra-broker-realm.json).
+[`tests/fixtures/keycloak/entra-broker-realm.json`](../project-portfolio-management-service-with-rust/tests/fixtures/keycloak/entra-broker-realm.json).
 
 **Identity provider** (alias `entra`, provider **OpenID Connect v1.0**):
 

@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: cargo
-    directory: /project-portfolio-management-api-with-rust
+    directory: /project-portfolio-management-service-with-rust
     schedule:
       interval: weekly
     groups:
@@ -29,6 +29,6 @@ updates:
       github-actions:
         patterns: ["*"]
   - package-ecosystem: docker
-    directory: /project-portfolio-management-api-with-rust
+    directory: /project-portfolio-management-service-with-rust
     schedule:
       interval: weekly

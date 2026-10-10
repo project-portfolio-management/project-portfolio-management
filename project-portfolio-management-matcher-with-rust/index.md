@@ -83,4 +83,4 @@ So the pair lands at `~0.79` — `Medium` confidence, below the default
 name-only score down from `~1.0`.
 
 Part of the Main X Index family; embedded by
-[project-portfolio-management-service](../project-portfolio-management-api-with-rust).
+[project-portfolio-management-service](../project-portfolio-management-service-with-rust).

@@ -3,7 +3,7 @@
 The service is loco.rs and returns **raw JSON** — no
 `{success, data, error}` envelope (unlike the pre-loco person service).
 Source:
-[`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/).
+[`src/controllers/`](../project-portfolio-management-service-with-rust/src/controllers/).
 Base URL in development: `http://localhost:5150`.
 
 The service exposes **one matchable collection** — `/api/plans`. Every
@@ -61,13 +61,13 @@ bare array. The service's `openapi::PAGED_LISTS` census is checked by
 
 The service is also a project-management tool. Rather than repeat the full
 route map, see the crate's
-[AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) (one
+[AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) (one
 row per area: governance, visibility, strategy, executive and oversight
 views, engineering and flow, critical path with cross-plan float,
 hammocks, what-if sandbox, assignments and cost rates, onboarding and
 handover, approval processes, controlled documents, announcements, bulk
 import/export, task bulk edit/copy/move, `GET …/tasks/{t_pid}?include=`)
-and [spec §9](../project-portfolio-management-api-with-rust/spec/index.md).
+and [spec §9](../project-portfolio-management-service-with-rust/spec/index.md).
 Two commit endpoints need `If-Match` with the etag from their preview, and
 answer `409` if stale: `POST …/sandbox/commit` and `POST …/handover/commit`.
 

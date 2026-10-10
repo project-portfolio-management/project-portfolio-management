@@ -13,5 +13,5 @@ See also:
 - [`../AGENTS.md`](../AGENTS.md) — agent guide
 - [`../README.md`](../README.md) / [`../AGENTS.md`](../AGENTS.md) — user intro
 - [`../index.md`](../index.md) — worked examples
-- [`../../project-portfolio-management-api-with-rust/`](../../project-portfolio-management-api-with-rust/) — embedding service
+- [`../../project-portfolio-management-service-with-rust/`](../../project-portfolio-management-service-with-rust/) — embedding service
 - [`../../project-portfolio-management-ui-with-svelte/`](../../project-portfolio-management-ui-with-svelte/) — front-end consumer

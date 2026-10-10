@@ -15,7 +15,7 @@
                                | REST (raw loco JSON, no envelope)
                                | PUBLIC_API_BASE_URL (default :5150)
 +------------------------------v-------------------------------+
-|              project-portfolio-management-api-with-rust                     |
+|              project-portfolio-management-service-with-rust                     |
 |  loco.rs 0.16 (Axum 0.8) · port 5150                          |
 |  controllers/plans.rs                                         |
 |     CRUD + /match + /check-duplicates                         |
@@ -73,7 +73,7 @@ payload stays current.
 > than by resource. Drawn from the tree, not from the plan:
 
 ```
-project-portfolio-management-api-with-rust/
+project-portfolio-management-service-with-rust/
 ├── src/
 │   ├── app.rs                       loco Hooks (routes, workers, boot init)
 │   ├── bin/                         loco CLI entrypoint

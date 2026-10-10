@@ -25,7 +25,7 @@ delivered as a trio of subprojects that compose into one capability:
 
 | Subproject | Role |
 |---|---|
-| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | Registry service **and** project-management tool — loco.rs CRUD + matching over REST on one recursive `plans` collection; PostgreSQL persistence; operational sub-resources (goals, tasks, issues, sprints, phases, effort, automations) and derived views (timeline / burndown / flow metrics) |
+| [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | Registry service **and** project-management tool — loco.rs CRUD + matching over REST on one recursive `plans` collection; PostgreSQL persistence; operational sub-resources (goals, tasks, issues, sprints, phases, effort, automations) and derived views (timeline / burndown / flow metrics) |
 | [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | Canonical pairwise matching library — deterministic + probabilistic, kind-agnostic, embedded by the service |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | Operator UI — SvelteKit SPA over the service's REST API |
 

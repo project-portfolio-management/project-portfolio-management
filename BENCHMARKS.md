@@ -40,7 +40,7 @@ the service under load.
 
 ## The service and the interface (not measured)
 
-- `project-portfolio-management-api-with-rust/benches/service_bench.rs` exists
+- `project-portfolio-management-service-with-rust/benches/service_bench.rs` exists
   but its results are **not published here**; it has not been run for this page.
 - No load test of the HTTP service, no database-size sweep and no front-end
   performance profile have been recorded. Do not read the matcher numbers as

@@ -42,7 +42,7 @@ The integration contract this spec owns needs pinning at four seams:
 
 ### 11.2a Real Keycloak via Testcontainers (Podman)
 
-`project-portfolio-management-api-with-rust/tests/keycloak_container.rs`
+`project-portfolio-management-service-with-rust/tests/keycloak_container.rs`
 starts a real Keycloak (`quay.io/keycloak/keycloak:26.0`, fully qualified
 because Podman refuses short names), imports
 `tests/fixtures/keycloak/mxi-realm.json`, mints tokens with the password

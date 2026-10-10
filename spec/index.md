@@ -26,7 +26,7 @@
 
 Subproject specs:
 
-- [project-portfolio-management-api-with-rust/spec](../project-portfolio-management-api-with-rust/spec/index.md) — registry service + project-management tool (§1–§18)
+- [project-portfolio-management-service-with-rust/spec](../project-portfolio-management-service-with-rust/spec/index.md) — registry service + project-management tool (§1–§18)
 - [project-portfolio-management-matcher-with-rust/spec](../project-portfolio-management-matcher-with-rust/spec/index.md) — matching library (§1–§25)
 - [project-portfolio-management-ui-with-svelte/spec](../project-portfolio-management-ui-with-svelte/spec/index.md) — operator UI (§1–§18)
 

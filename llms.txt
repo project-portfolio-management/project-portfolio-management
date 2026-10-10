@@ -23,13 +23,13 @@
 - [Total Project Control](spec/total-project-control/index.md): DIPP, banding and portfolio triage
 - [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics
 - [Keycloak test containers](spec/testcontainers-keycloak/index.md): Testing against a Keycloak container
-- [API crate spec](project-portfolio-management-api-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
+- [API crate spec](project-portfolio-management-service-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
 - [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalization
 - [UI spec](project-portfolio-management-ui-with-svelte/spec/index.md): Living spec for the SvelteKit operator UI
 
 ## Agent guides
 
-- [API service guide](project-portfolio-management-api-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
+- [API service guide](project-portfolio-management-service-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
 - [Matcher guide](project-portfolio-management-matcher-with-rust/AGENTS.md): Matching rules, golden rules and file layout for the library
 - [UI guide](project-portfolio-management-ui-with-svelte/AGENTS.md): Working guide for the SvelteKit UI
 - [Agents index](agents/index.md): Entity-level reference documents
@@ -47,8 +47,8 @@
 
 ## READMEs and changelogs
 
-- [API README](project-portfolio-management-api-with-rust/README.md): Overview, quick start and testing for the service
-- [API changelog](project-portfolio-management-api-with-rust/CHANGELOG.md): Release notes for the service
+- [API README](project-portfolio-management-service-with-rust/README.md): Overview, quick start and testing for the service
+- [API changelog](project-portfolio-management-service-with-rust/CHANGELOG.md): Release notes for the service
 - [Matcher README](project-portfolio-management-matcher-with-rust/README.md): Usage and weights table for the matching library
 - [Matcher changelog](project-portfolio-management-matcher-with-rust/CHANGELOG.md): Release notes for the matcher
 - [UI README](project-portfolio-management-ui-with-svelte/README.md): Overview and run instructions for the UI

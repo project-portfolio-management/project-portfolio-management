@@ -18,7 +18,7 @@ service crate + matcher crate + front-end.
 
 | Subproject | Spec | Agent guide | Detailed guides |
 |---|---|---|---|
-| [project-portfolio-management-api-with-rust](../project-portfolio-management-api-with-rust/) | [spec/index.md](../project-portfolio-management-api-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | — (see the crate's AGENTS.md) |
+| [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | [spec/index.md](../project-portfolio-management-service-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | — (see the crate's AGENTS.md) |
 | [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (algorithm, normalization, SDD, testing) |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) | — (thin) |
 
@@ -27,7 +27,7 @@ service crate + matcher crate + front-end.
 | Document | Description |
 |---|---|
 | [../spec/index.md](../spec/index.md) | Entity-level living spec |
-| [../project-portfolio-management-api-with-rust/AGENTS.md](../project-portfolio-management-api-with-rust/AGENTS.md) | Service guide: route map, middleware, gotchas, testing |
+| [../project-portfolio-management-service-with-rust/AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | Service guide: route map, middleware, gotchas, testing |
 | [../tasks.md](../tasks.md) · [../plan.md](../plan.md) | Leantime-derived `LT-n` work queue and its research |
 | [../spec/13-tasks.md](../spec/13-tasks.md) | Numbered build-out (`T-n`) |
 

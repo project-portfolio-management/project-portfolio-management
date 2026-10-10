@@ -5,9 +5,9 @@
 # (`../project-portfolio-management-matcher-with-rust`), so both must be in
 # the context. Build from the repository root:
 #
-#   podman build -f project-portfolio-management-api-with-rust/Dockerfile \
+#   podman build -f project-portfolio-management-service-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
-#   # or: docker build -f project-portfolio-management-api-with-rust/Dockerfile -t ... .
+#   # or: docker build -f project-portfolio-management-service-with-rust/Dockerfile -t ... .
 #
 # The two pinned git dependencies (`integrity-mac`, `authentication-verifier`
 # from github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) are
@@ -45,12 +45,12 @@ COPY project-portfolio-management-matcher-with-rust project-portfolio-management
 # This crate: manifests first, then the nested `migration` crate, sources,
 # and benches. Cargo parses the whole manifest even for a --bin build, and
 # Cargo.toml declares `[[bench]] name = "service_bench"`, so benches/ must exist.
-COPY project-portfolio-management-api-with-rust/Cargo.toml project-portfolio-management-api-with-rust/Cargo.lock project-portfolio-management-api-with-rust/
-COPY project-portfolio-management-api-with-rust/migration project-portfolio-management-api-with-rust/migration
-COPY project-portfolio-management-api-with-rust/src project-portfolio-management-api-with-rust/src
-COPY project-portfolio-management-api-with-rust/benches project-portfolio-management-api-with-rust/benches
+COPY project-portfolio-management-service-with-rust/Cargo.toml project-portfolio-management-service-with-rust/Cargo.lock project-portfolio-management-service-with-rust/
+COPY project-portfolio-management-service-with-rust/migration project-portfolio-management-service-with-rust/migration
+COPY project-portfolio-management-service-with-rust/src project-portfolio-management-service-with-rust/src
+COPY project-portfolio-management-service-with-rust/benches project-portfolio-management-service-with-rust/benches
 
-WORKDIR /app/project-portfolio-management-api-with-rust
+WORKDIR /app/project-portfolio-management-service-with-rust
 
 # Migrations are compiled into the binary, so the runtime stage needs no loose
 # migration files; the same binary runs them (`... db migrate`). Default
@@ -78,11 +78,11 @@ RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin portfolio
 WORKDIR /app
 
 COPY --from=builder --chown=portfolio:portfolio \
-    /app/project-portfolio-management-api-with-rust/target/release/project-portfolio-management-service \
+    /app/project-portfolio-management-service-with-rust/target/release/project-portfolio-management-service \
     /app/project-portfolio-management-service
 
 # loco reads config/<LOCO_ENV>.yaml at run time (it is not baked into the binary).
-COPY --chown=portfolio:portfolio project-portfolio-management-api-with-rust/config ./config
+COPY --chown=portfolio:portfolio project-portfolio-management-service-with-rust/config ./config
 
 # Tantivy full-text index (PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH,
 # default `data/search-index` relative to the working directory) and the

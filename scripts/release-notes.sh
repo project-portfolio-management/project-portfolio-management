@@ -21,7 +21,7 @@ shift
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ "$#" -eq 0 ]; then
   set -- \
-    "$root/project-portfolio-management-api-with-rust/CHANGELOG.md" \
+    "$root/project-portfolio-management-service-with-rust/CHANGELOG.md" \
     "$root/project-portfolio-management-matcher-with-rust/CHANGELOG.md" \
     "$root/project-portfolio-management-ui-with-svelte/CHANGELOG.md"
 fi

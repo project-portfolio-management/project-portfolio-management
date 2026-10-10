@@ -1,6 +1,6 @@
 # project-portfolio-management-ui-with-svelte
 
-Operator UI for the [Portfolio Service](../project-portfolio-management-api-with-rust):
+Operator UI for the [Portfolio Service](../project-portfolio-management-service-with-rust):
 plan **identity CRUD + matching + merge** over **one recursive
 `/api/plans` collection**, plus the **project-management workspace**
 (Kanban task board, governance, schedule) and a wide set of oversight /
@@ -107,7 +107,7 @@ switcher). The chrome area carries:
 ## Prerequisites
 
 - Node 26 (`engines.node` is `=26`) and pnpm
-- A running [Portfolio Service](../project-portfolio-management-api-with-rust)
+- A running [Portfolio Service](../project-portfolio-management-service-with-rust)
 - The sibling Lily helper repo (theme / locale selectors are `file:`
   dependencies)
 

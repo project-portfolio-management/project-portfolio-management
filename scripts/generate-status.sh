@@ -15,7 +15,7 @@ export LC_ALL
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 STATUS="$ROOT/spec/14-implementation-status.md"
-API="$ROOT/project-portfolio-management-api-with-rust"
+API="$ROOT/project-portfolio-management-service-with-rust"
 MATCHER="$ROOT/project-portfolio-management-matcher-with-rust"
 UI="$ROOT/project-portfolio-management-ui-with-svelte"
 TASKS="$ROOT/tasks.md"

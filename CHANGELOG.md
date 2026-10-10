@@ -5,7 +5,7 @@ keeps its own detailed changelog, and those are the record of what changed in
 the code:
 
 - [`project-portfolio-management-matcher-with-rust/CHANGELOG.md`](project-portfolio-management-matcher-with-rust/CHANGELOG.md)
-- [`project-portfolio-management-api-with-rust/CHANGELOG.md`](project-portfolio-management-api-with-rust/CHANGELOG.md)
+- [`project-portfolio-management-service-with-rust/CHANGELOG.md`](project-portfolio-management-service-with-rust/CHANGELOG.md)
 - [`project-portfolio-management-ui-with-svelte/CHANGELOG.md`](project-portfolio-management-ui-with-svelte/CHANGELOG.md)
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

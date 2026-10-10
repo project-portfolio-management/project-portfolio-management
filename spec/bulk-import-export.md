@@ -7,7 +7,7 @@ in this repository. If that document is later supplied, it wins on
 anything it covers and this file is reconciled to it.
 
 Scope: the one `plans` collection of
-`project-portfolio-management-api-with-rust`. It unblocks T-28e's
+`project-portfolio-management-service-with-rust`. It unblocks T-28e's
 scheduled report runs and T-28n's Jira / Asana import codec.
 
 ## 1. Goals and non-goals

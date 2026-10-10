@@ -17,6 +17,6 @@ governmental system. Stakeholders span the trio:
 | Other Main X Index entities | Cross-references via `EntityRef` (lead, assignees, members → person / worker / authentication; sponsor → organization); cross-service links to any entity | Service REST API + the link aggregator |
 
 Per-subproject stakeholder detail: service
-[spec §3](../project-portfolio-management-api-with-rust/spec/index.md), matcher
+[spec §3](../project-portfolio-management-service-with-rust/spec/index.md), matcher
 [spec §3](../project-portfolio-management-matcher-with-rust/spec/index.md), front-end
 [spec §3](../project-portfolio-management-ui-with-svelte/spec/index.md).

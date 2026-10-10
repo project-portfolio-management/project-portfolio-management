@@ -1,4 +1,4 @@
-# Build context is the repository root (see project-portfolio-management-api-with-rust/Dockerfile).
+# Build context is the repository root (see project-portfolio-management-service-with-rust/Dockerfile).
 # Keep the context small and keep local build output and secrets out of images.
 .git
 **/target

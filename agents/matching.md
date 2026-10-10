@@ -94,7 +94,7 @@ side has no `parent_ref`.
 
 ## Where matching runs in the service
 
-**File:** [`src/controllers/`](../project-portfolio-management-api-with-rust/src/controllers/)
+**File:** [`src/controllers/`](../project-portfolio-management-service-with-rust/src/controllers/)
 — the plan matching endpoints construct
 `MatchingEngine::new(MatchConfig::default())`:
 

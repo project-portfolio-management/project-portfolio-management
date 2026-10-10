@@ -111,6 +111,7 @@ pub fn paths() -> Value {
     merge(&mut all, break_glass_paths());
     merge(&mut all, handling_marks_paths());
     merge(&mut all, change_request_paths());
+    merge(&mut all, director_summary_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -873,6 +874,17 @@ fn baseline_paths() -> Value {
 }
 
 /// Change requests (IR-4, IR-5).
+fn director_summary_paths() -> Value {
+    json!({
+        "/api/director-pack/issues-and-changes": {
+            "get": op("director-pack", "Issues and change requests for the director pack",
+                "Counts of open issues by severity, overdue ones, raised and resolved within the window, the oldest open issue, and change requests by status, those awaiting a decision and the oldest open one, over the plans you can read. Every count is of records you can see; a sentence says in words when nothing is recorded; available is false, with a reason, when you can read no plan. Inputs: the issues register and the change requests, each counted by calendar day.",
+                vec![query("window_days", false, "1 to 366, default 30: how far back the raised, resolved and decided counts look")],
+                &[("200", "available, reason, window_days, as_of, issues, change_requests (each with a statement)"), ("422", "window_days out of range")])
+        }
+    })
+}
+
 fn change_request_paths() -> Value {
     let pid = || uuid_param("pid");
     let cr = || uuid_param("cr");

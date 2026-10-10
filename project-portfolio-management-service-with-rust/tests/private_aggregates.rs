@@ -93,6 +93,7 @@ const AGGREGATES: &[&str] = &[
     "/api/financials/variance",
     "/api/issues",
     "/api/change-requests",
+    "/api/director-pack/issues-and-changes",
     "/api/financials/forecast?plan={pub}",
     "/api/financials/forecast?plan={hub}",
     "/api/plans/{hub}/flow-distribution?rollup=true",

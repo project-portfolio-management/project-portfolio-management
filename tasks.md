@@ -1391,7 +1391,7 @@ are stated, never guessed.
   preview matches the what-if endpoint for the same edit; the baseline carries
   the change request's id; nothing re-baselines automatically.
   **Built 2026-10-10.** A request may carry `edits` (the what-if sandbox's edit list); `GET …/preview` returns the sandbox's own answer for them, labelled a forecast, beside the impact the requester stated, and a test proves it is identical to `POST …/sandbox/preview` for the same edits. `POST …/baseline` (approved or implemented, once) takes a schedule baseline through the same function the baseline endpoint uses, whose reason names the request, and the request keeps `baseline_pid`; nothing is re-baselined automatically. **Not done, stated:** a cost forecast is not computed (only the stated cost is kept); the baseline row itself has no change-request column (the link lives on the request and in the reason text).
-- [ ] **IR-6 (S) — Reports.** Issues and open change requests in the monthly
+- [x] **IR-6 (S) — Reports.** Issues and open change requests in the monthly
   director pack (DP) as counts by severity and age, with the oldest named.
   **Acceptance:** the pack lists them, or says "none recorded"; never a zero for
   an unavailable figure.
@@ -1402,7 +1402,7 @@ Requested 2026-10-10: "read spec/public* then implement"
 ([`spec/special-files-for-public-repos`](spec/special-files-for-public-repos/index.md),
 requirement NFR-20).
 
-  **Inputs built 2026-10-10; not ticked.** `GET /api/issues` and `GET /api/change-requests` already give counts by severity or status, the oldest open item and the overdue count, for the plans a reader may see. The monthly director pack itself (DP-1 to DP-12) does not exist, so there is nothing yet to list them in.
+  **Built 2026-10-10 as an endpoint, ticked for the data; the pack page that shows it does not exist.** `GET /api/director-pack/issues-and-changes?window_days=` (1 to 366, default 30) gives open issues by severity, overdue, raised and resolved in the window, the oldest open issue, change requests by status, those awaiting a decision, approved but not implemented, and the oldest open one, over only the plans the caller may read (same filter as every other cross-plan summary). Nothing recorded is said in words (`No issues recorded.`); when the caller can read no plan, `available: false` with a reason rather than zeros. Unit tests of the rules (window edge, all-closed register, oldest named) and a request test. **Not done, stated:** the director pack itself (DP-1 to DP-12) and its screen, so nothing displays this yet; no cost or schedule impact totals across change requests.
 - [x] **PF-1 (M) — The special files.** Root `README.md`, `LICENSE.md` (existing),
   and new `CITATION.cff`, `NEWS.md`, `COMPARISONS.md`, `BENCHMARKS.md`,
   `INSTALL.md`, `CONTRIBUTING.md`, `RFC.md`, `CODEOWNERS`, `MAINTAINERS.md`,

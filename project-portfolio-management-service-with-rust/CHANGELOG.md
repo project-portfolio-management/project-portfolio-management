@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — issues and change requests for the director pack (IR-6, 2026-10-10)
+
+`GET /api/director-pack/issues-and-changes`: counts over the plans the caller may read, with a sentence when nothing is recorded and `available: false` when no plan is readable.
+
 ### Changed — the production cache is Redis (2026-10-10)
 
 Loco's `cache_redis` is enabled and `config/production.yaml` uses it (`PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL` required, pool size `..._REDIS_POOL`); `compose.yaml` gains a password-protected `redis` service with no volume. `/_readiness` is 503 when Redis cannot be reached. Development, tests and `container-dev` keep the in-memory cache. Nothing in the service uses the cache yet.

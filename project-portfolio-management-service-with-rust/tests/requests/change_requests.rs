@@ -162,3 +162,66 @@ async fn a_change_request_goes_from_draft_to_baseline_and_every_wrong_step_is_re
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_director_pack_summary_says_nothing_in_words_then_counts_what_is_recorded() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let url = "/api/director-pack/issues-and-changes";
+        let empty: Value = request.get(url).await.json();
+        assert_eq!(empty["available"], false);
+        assert!(empty["reason"].as_str().is_some());
+        assert_eq!(empty["issues"]["statement"], "No issues recorded.");
+        assert_eq!(
+            empty["change_requests"]["statement"],
+            "No change requests recorded."
+        );
+        assert_eq!(empty["issues"]["total"], 0);
+
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        request
+            .post(&format!("/api/plans/{p}/issues"))
+            .json(&json!({ "title": "Build down", "severity": "critical", "status": "open" }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/plans/{p}/change-requests"))
+            .json(&json!({ "title": "Move go-live", "description": "d", "reason": "r" }))
+            .await
+            .assert_status_ok();
+
+        let s: Value = request.get(url).await.json();
+        assert_eq!(s["available"], true);
+        assert_eq!(s["issues"]["open"], 1);
+        assert_eq!(s["issues"]["open_by_severity"]["critical"], 1);
+        assert_eq!(s["issues"]["statement"], "1 open, 1 of them critical.");
+        assert_eq!(s["change_requests"]["by_status"]["draft"], 1);
+        assert_eq!(s["change_requests"]["awaiting_decision"], 0);
+
+        for bad in ["0", "367", "x"] {
+            assert_eq!(
+                request
+                    .get(&format!("{url}?window_days={bad}"))
+                    .await
+                    .status_code(),
+                if bad == "x" { 400 } else { 422 },
+                "{bad}"
+            );
+        }
+        assert_eq!(
+            request
+                .get(&format!("{url}?window_days=7"))
+                .await
+                .status_code(),
+            200
+        );
+    })
+    .await;
+}

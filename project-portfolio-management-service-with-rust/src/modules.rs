@@ -83,6 +83,7 @@ pub const MODULES: &[ModuleDef] = &[
             "tpc",
             "controls",
             "change-requests",
+            "director-pack",
         ],
     },
 ];

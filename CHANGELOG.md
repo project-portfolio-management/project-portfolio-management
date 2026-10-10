@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 10 October
 
+- **Critical path on a large plan is 2 to 3 times faster** (RG-16, in progress): a quadratic search removed; `?only=critical` added. See [`BENCHMARKS.md`](BENCHMARKS.md).
 - **The plan's task list pages** (RG-15): `limit` and `offset` with the standard headers, counts over every
   task, and a 2,000-task ceiling when no paging is asked for. Found by the new load and soak test
   (`scripts/load-test.mjs`, RG-11), whose results are in [`BENCHMARKS.md`](BENCHMARKS.md).

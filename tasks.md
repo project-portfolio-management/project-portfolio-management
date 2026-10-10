@@ -1499,6 +1499,7 @@ what was **not** tested; claim no certification.
   12,667 tasks with 99 dependencies, and the process grew to ~1.2 GB. Profile it, remove the avoidable work,
   and decide a stated cap above which the answer is a clear refusal or a background job, never a timeout.
   **Acceptance:** a recorded before and after on the large plan; the cap is in the OpenAPI text.
+  **Progress 2026-10-10 (not ticked: the cap in the acceptance is not built).** A quadratic search in the per-task loop of `GET /plans/{pid}/cpm` is now a map lookup; one request on a 12,667-task chain went from 879 ms to 331 ms (1 connection) and 1,184 ms to 533 ms (4 connections); `?only=critical` keeps only critical and near-critical tasks and the dependencies between them (request test on a network with float). The pure calculation is 52 ms for 12,667 tasks, so the rest is loading (~110 ms), building the answer (~135 ms) and its 10.8 MB size. **Still to do:** decide and state a size above which the full answer is refused or becomes a background job; try loading the network with one query per table instead of an `IN` list of every task id; consider compressing or streaming the answer. The earlier 2.5 s figure was measured on an unplaced network and is withdrawn.
 - [ ] **RG-12 (S) — Shared session store.** An optional Redis- or
   PostgreSQL-backed store for OIDC sessions, so several front-end replicas need
   no sticky sessions.

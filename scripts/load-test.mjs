@@ -90,7 +90,9 @@ async function seed() {
     const plan = await api("POST", "/api/plans", { kind: "Project", name: "Load large plan" });
     const pids = [];
     await pool([...Array(large).keys()], 16, async (t) => {
-      const task = await api("POST", `/api/plans/${plan.pid}/tasks`, { title: `Large ${t}`, duration_days: 1 + (t % 9) });
+      // The first task is anchored to a date, otherwise the schedule has nothing to place and the
+      // critical-path scenario would measure an empty answer.
+      const task = await api("POST", `/api/plans/${plan.pid}/tasks`, { title: `Large ${t}`, duration_days: 1 + (t % 9), start_date: t === 0 ? "2026-11-02" : undefined });
       pids[t] = task.pid;
     });
     await pool([...Array(large - 1).keys()], 16, async (t) => {

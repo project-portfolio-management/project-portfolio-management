@@ -527,6 +527,10 @@ struct CpmParams {
     /// Business days of float that count as near-critical (default 5).
     #[serde(default)]
     near: Option<i64>,
+    /// `critical` keeps only the critical and near-critical tasks (and the dependencies between
+    /// them): the answer for a very large plan, where the full list is megabytes.
+    #[serde(default)]
+    only: Option<String>,
 }
 
 /// `GET /api/plans/{pid}/cpm` — float, critical and near-critical tasks, and
@@ -541,6 +545,11 @@ async fn plan_cpm(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let net = load_network_cross(&ctx, plan.pid, &caller).await?;
     let near = p.near.unwrap_or(5);
+    let only_critical = match p.only.as_deref() {
+        None | Some("all") => false,
+        Some("critical") => true,
+        Some(_) => return Err(unprocessable("only must be `critical` or `all`")),
+    };
     if !(0..=cpm::MAX_DAYS).contains(&near) {
         return Err(unprocessable(&format!(
             "near must be 0 to {}",
@@ -551,6 +560,18 @@ async fn plan_cpm(
         .analyze(near)
         .map_err(|cpm::CpmError::Cycle(on)| cycle_error(&on))?;
     let by: HashMap<Uuid, &tasks::Model> = net.rows.iter().map(|t| (t.pid, t)).collect();
+    // Looked up once per node below; a linear scan here made the answer quadratic in the plan's size.
+    let own_calendar: HashMap<Uuid, bool> = net
+        .nodes
+        .iter()
+        .map(|x| (x.pid, x.own_calendar.is_some()))
+        .collect();
+    let shown: Vec<&cpm::NodeResult> = result
+        .nodes
+        .iter()
+        .filter(|n| !only_critical || n.critical || n.near_critical)
+        .collect();
+    let shown_pids: HashSet<Uuid> = shown.iter().map(|n| n.pid).collect();
     let name = |pid: Uuid| {
         by.get(&pid)
             .map(|t| t.title.clone())
@@ -569,7 +590,9 @@ async fn plan_cpm(
         "calendar_conflicts": net.conflicts,
         "project_finish": if net.external.is_empty() { result.project_finish } else { own_finish },
         "network_finish": result.project_finish,
-        "nodes": result.nodes.iter().map(|n| {
+        "only": if only_critical { "critical" } else { "all" },
+        "nodes_total": result.nodes.len(),
+        "nodes": shown.iter().map(|n| {
             let t = by.get(&n.pid);
             let mut v = serde_json::to_value(n).unwrap_or_default();
             v["title"] = serde_json::json!(name(n.pid));
@@ -583,8 +606,8 @@ async fn plan_cpm(
             v["contour"] = serde_json::json!(t.map(|t| t.contour.clone()));
             v["constraint_date"] = serde_json::json!(t.and_then(|t| t.constraint_date));
             v["deadline"] = serde_json::json!(t.and_then(|t| t.deadline));
-            let own = net.nodes.iter().find(|x| x.pid == n.pid).and_then(|x| x.own_calendar);
-            v["calendar"] = serde_json::json!(if own.is_some() { "plan+person" } else { "plan" });
+            let own = own_calendar.get(&n.pid).copied().unwrap_or(false);
+            v["calendar"] = serde_json::json!(if own { "plan+person" } else { "plan" });
             match net.external.get(&n.pid) {
                 Some(x) => {
                     v["external"] = serde_json::json!(true);
@@ -597,7 +620,7 @@ async fn plan_cpm(
         }).collect::<Vec<_>>(),
         "unscheduled": result.unscheduled.iter().map(|u| serde_json::json!({
             "pid": u.pid, "title": name(u.pid), "reason": u.reason })).collect::<Vec<_>>(),
-        "edges": net.edges.iter().map(|e| serde_json::json!({
+        "edges": net.edges.iter().filter(|e| !only_critical || (shown_pids.contains(&e.pred) && shown_pids.contains(&e.succ))).map(|e| serde_json::json!({
             "pid": e.pid, "predecessor_pid": e.pred, "successor_pid": e.succ,
             "kind": e.kind, "lag_days": e.lag,
             "cross_plan": net.external.contains_key(&e.pred) != net.external.contains_key(&e.succ) })).collect::<Vec<_>>(),

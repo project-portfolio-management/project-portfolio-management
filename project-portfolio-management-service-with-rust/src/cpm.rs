@@ -1600,4 +1600,39 @@ mod tests {
             );
         }
     }
+
+    /// Not a unit test: a timing probe for very large plans (RG-16). Run with
+    /// `cargo test --release large_plan_timing -- --ignored --nocapture`.
+    #[test]
+    #[ignore = "a timing probe; run on demand"]
+    fn large_plan_timing() {
+        for n in [1_000_u128, 4_000, 12_667, 30_000] {
+            let nodes: Vec<Node> = (0..n)
+                .map(|i| {
+                    let dur = 1 + (i % 9) as i64;
+                    if i == 0 {
+                        anchored(1, dur, MON())
+                    } else {
+                        node(i + 1, dur)
+                    }
+                })
+                .collect();
+            // A chain with a skip dependency every fifth task, like the load test's seed.
+            let mut edges = Vec::new();
+            for i in 1..n {
+                edges.push(edge(i, i, i + 1, Kind::Fs, 0));
+                if i % 5 == 0 && i >= 3 {
+                    edges.push(edge(n + i, i - 2, i + 1, Kind::Fs, 0));
+                }
+            }
+            let started = std::time::Instant::now();
+            let r = run(&nodes, &edges);
+            eprintln!(
+                "analyze {n} tasks, {} edges: {:?} ({} results)",
+                edges.len(),
+                started.elapsed(),
+                r.nodes.len()
+            );
+        }
+    }
 }

@@ -83,7 +83,7 @@ had just served the large plan (it was 265 MB before the run); it did not fall a
 
 ### What the test found
 
-1. **A very large plan is a cliff.** With 12,667 tasks in one plan, listing its tasks returned about 400 KB
+1. **A very large plan is a cliff.** (*The critical-path figures in this item and in the two LARGE rows above were taken on a plan whose tasks had no start date, so most of the schedule was unplaced; they are withdrawn. The task-list figures stand. See "Before and after" below for the corrected critical-path numbers.*) With 12,667 tasks in one plan, listing its tasks returned about 400 KB
    and took roughly 1.9 seconds at the median under load (3.3 s at the 95th percentile), and the critical-path
    calculation took 2.5 seconds at the median and about 5.8 at the 95th percentile. Memory rose from 265 MB to
    about 1.2 GB. A plan of 100 tasks is two orders of magnitude cheaper. The task list of a plan was not paged when this was measured;
@@ -95,6 +95,28 @@ had just served the large plan (it was 265 MB before the run); it did not fall a
 3. A spot check that cannot be generalised: the first soak (before the write scenario was given its own plan)
    showed a 3.6-second 95th percentile and 1.7 GB, because the write scenario had grown the plan the reads
    used to 12,667 tasks. The test now keeps them apart.
+
+### Before and after for the large plan (RG-15, RG-16)
+
+Measured on the same machine and set-up as above, a fresh database holding one plan of 12,667 tasks chained
+by 12,666 dependencies with the first task dated (so the schedule really places every task), one connection and
+four connections, ten seconds each, the old build and the new build against the same data:
+
+| Request | Before, 1 connection (p50) | After, 1 connection (p50) | Before, 4 (p50) | After, 4 (p50) |
+|---|---|---|---|---|
+| task list, one page of 100 | 262 ms (the old build ignored `limit` and sent all 475 KB) | **6 ms** | 320 ms | **9 ms** |
+| critical path, whole plan | 879 ms | **331 ms** | 1,184 ms | **533 ms** |
+
+Where the remaining 330 ms of one critical-path request goes (a timing probe, since removed): loading the
+network from the database about 110 ms, the scheduling calculation itself about 55 ms, building the answer about
+135 ms, writing it out about 20 ms, for a **10.8 MB** answer. The calculation is not the problem: the pure
+function takes 52 ms for 12,667 tasks and 148 ms for 30,000 (`cargo test --release large_plan_timing --
+--ignored --nocapture`). What was avoidable was a linear search inside the per-task loop (quadratic overall),
+now a map lookup. `GET …/cpm?only=critical` returns only the critical and near-critical tasks, but **in this
+test every task is critical (it is a single chain), so it did not shrink the answer here**; it is covered by a
+request test on a network with float. The earlier "2.5 s" figure for this request was taken at 32 connections on
+a plan whose tasks had no start date, so it mostly measured loading and writing an answer of unplaced tasks;
+please read this table instead.
 
 ### Not measured
 

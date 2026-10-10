@@ -11,6 +11,7 @@ mod canvas;
 mod capabilities;
 mod components;
 mod cpm;
+mod cpm_only;
 mod custom_fields;
 mod discussion;
 mod effort;

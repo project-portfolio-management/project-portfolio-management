@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — critical path on large plans (RG-16, 2026-10-10)
+
+`GET /api/plans/{pid}/cpm`: the per-task lookup of a person's calendar is a map and not a scan (the answer was quadratic in the plan's size); new `?only=critical` returns the critical and near-critical tasks and the dependencies between them, with `nodes_total` and `only` in the answer.
+
 ### Changed — the plan's task list pages (RG-15, 2026-10-10)
 
 `GET /api/plans/{pid}/tasks` takes `limit` (default 100, at most 500) and `offset`, sets `X-Total-Count`, `X-Limit` and `X-Offset`, and adds `total`, `truncated`, `limit`, `offset` to the body. `counts` are computed over every matching task. Without paging parameters the first 2,000 tasks are returned and `truncated` says whether more exist (before, all of them, however many).

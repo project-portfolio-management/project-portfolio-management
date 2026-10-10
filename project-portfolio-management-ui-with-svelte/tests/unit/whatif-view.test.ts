@@ -117,7 +117,7 @@ describe("words", () => {
   it("describes edits", () => {
     expect(
       describeEdit({ op: "duration", task_pid: "a", duration_days: 1 }, name),
-    ).toBe("Set “Build” to 1 working day");
+    ).toBe("Set “Build” to 1 business day");
     expect(
       describeEdit({ op: "duration", task_pid: "a", duration_days: 0 }, name),
     ).toBe("Make “Build” a milestone");

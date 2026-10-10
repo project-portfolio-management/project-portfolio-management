@@ -3,7 +3,7 @@
 //! is as visible as it always was. Members are token `sub`s (user pids). Its
 //! own table so the plan row and its integrity hash stay untouched.
 //!
-//! (Named in the plural on purpose: loco's `create_table` pluralises table
+//! (Named in the plural on purpose: loco's `create_table` pluralizes table
 //! names, so a singular name creates a different table than the one the SQL
 //! below refers to.)
 

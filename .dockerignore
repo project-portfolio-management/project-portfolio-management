@@ -1,0 +1,13 @@
+# Build context is the repository root (see project-portfolio-management-api-with-rust/Dockerfile).
+# Keep the context small and keep local build output and secrets out of images.
+.git
+**/target
+**/node_modules
+**/.svelte-kit
+**/build
+**/test-results
+**/playwright-report
+**/.env
+**/.env.*
+!**/.env.example
+**/data/search-index

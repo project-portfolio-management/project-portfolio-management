@@ -43,9 +43,9 @@
 
 {#if view}
   <p class="small muted">
-    {total} live item(s) · stall threshold {view.stall_days} day(s)
+    {total} live item(s) · stall threshold {view.stall_days} calendar day(s)
     {#if view.unknown_phase > 0}
-      · <strong>{view.unknown_phase}</strong> in an unrecognised phase
+      · <strong>{view.unknown_phase}</strong> in an unrecognized phase
     {/if}
   </p>
   <table>

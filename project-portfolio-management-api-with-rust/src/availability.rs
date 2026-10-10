@@ -14,7 +14,7 @@ use serde::Serialize;
 
 /// Capacity when no range applies.
 pub const DEFAULT_PERCENT: i32 = 100;
-/// Most days one load computation walks.
+/// Most calendar days one load computation walks.
 pub const MAX_WINDOW_DAYS: i64 = 3_660;
 
 /// One availability range, inclusive on both ends.
@@ -91,7 +91,7 @@ pub struct Load {
     pub peak_demand: i64,
     /// The lowest capacity in force on any day of the window.
     pub min_capacity: i32,
-    /// Days where demand exceeded capacity.
+    /// Calendar days where demand exceeded capacity.
     pub days_over: i64,
     /// Those days, merged into runs.
     pub over: Vec<Over>,
@@ -169,7 +169,7 @@ mod tests {
         assert!(problems(d(2026, 10, 1), d(2026, 10, 31), 60).is_empty());
         assert!(
             problems(d(2026, 10, 1), d(2026, 10, 1), 0).is_empty(),
-            "a one-day, zero-percent leave"
+            "a one-calendar-day, zero-percent leave"
         );
         assert_eq!(problems(d(2026, 10, 5), d(2026, 10, 1), 120).len(), 2);
         assert_eq!(problems(d(2026, 1, 1), d(2037, 1, 1), 50).len(), 1);
@@ -243,7 +243,8 @@ mod tests {
             }]
         );
         assert_eq!(l.min_capacity, 40);
-        // The fortnight's average capacity (70%) would have said 80 > 70 for all fourteen days.
+        // The fortnight's average capacity (70%) would have said 80 > 70 for all
+        // fourteen calendar days.
     }
 
     #[test]

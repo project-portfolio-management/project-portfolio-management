@@ -1,5 +1,5 @@
 //! Migration: **schedule fields** (PJ-1, SC-1). A task gains an optional planned
-//! `start_date` and a working-day `duration_days`, so it can be a node in the
+//! `start_date` and a business-day `duration_days`, so it can be a node in the
 //! critical-path network beside plans; a dependency gains a relationship `kind`
 //! (`fs` default, so every existing edge means what it meant). Both are
 //! nullable or defaulted: no existing row changes meaning.

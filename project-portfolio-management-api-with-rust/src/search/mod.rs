@@ -1,7 +1,7 @@
 //! Tantivy-backed full-text search over stored plans.
 //!
 //! Replaces the earlier Postgres `ILIKE '%q%'` name search (spec §13),
-//! adding tokenised full-text, fuzzy (typo-tolerant), and phonetic
+//! adding tokenized full-text, fuzzy (typo-tolerant), and phonetic
 //! (Soundex) retrieval, plus the **blocking** query that gives
 //! `check-duplicates` a candidate set instead of a capped full scan.
 //!
@@ -74,7 +74,7 @@ const FUZZY_DISTANCE: u8 = 2;
 /// the buffer only has to hold one document plus Tantivy's overhead.
 const WRITER_HEAP_MB: usize = 50;
 
-/// Process-wide engine, initialised on first use.
+/// Process-wide engine, initialized on first use.
 ///
 /// `None` means the index could not be opened; that is recorded once
 /// (not per request) and callers surface it rather than silently
@@ -112,7 +112,7 @@ pub fn engine() -> Option<&'static SearchEngine> {
 /// Which retrieval route a search uses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SearchMode {
-    /// Tokenised full-text over every indexed field.
+    /// Tokenized full-text over every indexed field.
     Exact,
     /// Typo-tolerant term matching (Levenshtein ≤ [`FUZZY_DISTANCE`]).
     Fuzzy,
@@ -280,7 +280,7 @@ impl SearchEngine {
         let s = self.index.schema();
         let mut sub: Vec<(Occur, Box<dyn Query>)> = Vec::new();
 
-        let name_tokens = tokenise(&name_text(plan));
+        let name_tokens = tokenize(&name_text(plan));
         for t in &name_tokens {
             for f in [s.name, s.alternate_names] {
                 sub.push((
@@ -302,7 +302,7 @@ impl SearchEngine {
                 ));
             }
         }
-        for t in tokenise(&identifier_text(plan)) {
+        for t in tokenize(&identifier_text(plan)) {
             sub.push((
                 Occur::Should,
                 Box::new(TermQuery::new(
@@ -391,7 +391,7 @@ impl SearchEngine {
     }
 
     /// Build the query for one retrieval mode, optionally `Must`-combined
-    /// with an exact `kind` filter, or `None` when the input tokenises to
+    /// with an exact `kind` filter, or `None` when the input tokenizes to
     /// nothing (an empty query matches nothing rather than everything).
     fn build_query(
         &self,
@@ -419,7 +419,7 @@ impl SearchEngine {
                     // bare operator) becomes an OR over its tokens rather
                     // than an error — a stray quote in a search box must
                     // not be a 500.
-                    let tokens = tokenise(query_str);
+                    let tokens = tokenize(query_str);
                     if tokens.is_empty() {
                         return None;
                     }
@@ -439,7 +439,7 @@ impl SearchEngine {
                 }
             }
             SearchMode::Fuzzy => {
-                let tokens = tokenise(query_str);
+                let tokens = tokenize(query_str);
                 if tokens.is_empty() {
                     return None;
                 }
@@ -460,7 +460,7 @@ impl SearchEngine {
                 Box::new(BooleanQuery::new(sub))
             }
             SearchMode::Phonetic => {
-                let codes: Vec<String> = tokenise(query_str)
+                let codes: Vec<String> = tokenize(query_str)
                     .iter()
                     .filter_map(|t| soundex(t))
                     .collect();
@@ -558,7 +558,7 @@ fn goal_text(plan: &Plan) -> String {
 /// Soundex code for each token of `text`, space-joined. Tokens with no
 /// ASCII letter (a pure number) encode to nothing and are dropped.
 fn phonetic_codes(text: &str) -> String {
-    tokenise(text)
+    tokenize(text)
         .iter()
         .filter_map(|t| soundex(t))
         .collect::<Vec<_>>()
@@ -568,7 +568,7 @@ fn phonetic_codes(text: &str) -> String {
 /// Split a string into lowercase alphanumeric tokens, dropping empties.
 /// Punctuation and underscores separate, so `"Apollo, Inc."` yields
 /// `["apollo", "inc"]`.
-fn tokenise(s: &str) -> Vec<String> {
+fn tokenize(s: &str) -> Vec<String> {
     s.split(|c: char| !c.is_alphanumeric())
         .filter(|s| !s.is_empty())
         .map(str::to_lowercase)
@@ -813,10 +813,10 @@ mod tests {
         assert_eq!(total, 5, "the total ignores the window");
     }
 
-    /// `tokenise` lowercases and splits on punctuation.
+    /// `tokenize` lowercases and splits on punctuation.
     #[test]
-    fn tokenise_splits_on_punctuation() {
-        assert_eq!(tokenise("Apollo, Inc."), vec!["apollo", "inc"]);
-        assert_eq!(tokenise("   "), Vec::<String>::new());
+    fn tokenize_splits_on_punctuation() {
+        assert_eq!(tokenize("Apollo, Inc."), vec!["apollo", "inc"]);
+        assert_eq!(tokenize("   "), Vec::<String>::new());
     }
 }

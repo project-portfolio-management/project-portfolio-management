@@ -1,6 +1,6 @@
 //! Migration: **allocation booking** (PJ-4). An allocation is `committed`
 //! (firm: the default, so every existing row means what it meant) or `proposed`
-//! (a hoped-for booking that does not count toward committed utilisation), and
+//! (a hoped-for booking that does not count toward committed utilization), and
 //! may be flagged `requested` (asked of the resource manager).
 
 use sea_orm_migration::prelude::*;

@@ -1,4 +1,4 @@
-//! Migration: **assignment fields on tasks** (PJ-5, PJ-6). A task with an assignee may carry the three quantities scheduling tools relate — `duration_days` (already there), `units_percent` (how much of the assignee's day) and `work_minutes` — with a `scheduling_rule` saying which of the three stays fixed when another is edited, and a `contour` saying how its work is spread over its working days (`custom` carries its own weights). All optional; every existing task is unchanged.
+//! Migration: **assignment fields on tasks** (PJ-5, PJ-6). A task with an assignee may carry the three quantities scheduling tools relate — `duration_days` (already there), `units_percent` (how much of the assignee's day) and `work_minutes` — with a `scheduling_rule` saying which of the three stays fixed when another is edited, and a `contour` saying how its work is spread over its business days (`custom` carries its own weights). All optional; every existing task is unchanged.
 
 use sea_orm_migration::prelude::*;
 

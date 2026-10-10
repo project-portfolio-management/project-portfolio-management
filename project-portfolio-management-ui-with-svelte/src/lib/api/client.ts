@@ -23,7 +23,7 @@ export interface ClientOptions {
  * Per-request options shared by every verb on {@link ApiClient}.
  */
 export interface RequestOptions {
-  /** JSON request body; serialised with `JSON.stringify`. Omit for bodyless requests (GET/DELETE). */
+  /** JSON request body; serialized with `JSON.stringify`. Omit for bodyless requests (GET/DELETE). */
   body?: unknown;
   /** A body sent as is (a CSV file, say); wins over `body`. Set the `content-type` header with it. */
   rawBody?: string;
@@ -93,7 +93,7 @@ export interface Page<T> {
  * non-2xx status. Holds no request state, so a single instance is reusable.
  */
 export class ApiClient {
-  /** Normalised base URL (trailing slashes stripped). */
+  /** Normalized base URL (trailing slashes stripped). */
   private readonly baseUrl: string;
   /** The `fetch` implementation to use for every request. */
   private readonly fetchFn: typeof fetch;

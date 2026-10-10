@@ -2,10 +2,10 @@
 //! The writer is [`crate::pdf`] — dependency-free and deterministic.
 //!
 //! **A PDF is never more permissive than its JSON.** The board pack goes
-//! through the same oversight authorisation as `GET /api/board/pack`, built
+//! through the same oversight authorization as `GET /api/board/pack`, built
 //! from the same function; the plan summary is read-checked like the plan, and
 //! is rendered from the **masked** record and counts only: no lead, owner
-//! organisation, assignee or risk owner ever reaches the text layer.
+//! organization, assignee or risk owner ever reaches the text layer.
 //!
 //! **Deterministic when stamped.** The PDF states its `as_of`; pass
 //! `?as_of=<RFC 3339>` and two renders of unchanged data are byte-identical.
@@ -209,7 +209,7 @@ async fn plan_summary_pdf(
     let mut lines = vec![
         format!("PLAN SUMMARY: {}", masked.name),
         format!("As of: {}", as_of.to_rfc3339()),
-        "Masking: masked profile (no lead, owner organisation, assignee or risk owner)."
+        "Masking: masked profile (no lead, owner organization, assignee or risk owner)."
             .to_string(),
         String::new(),
         format!("Kind: {}", field("kind")),

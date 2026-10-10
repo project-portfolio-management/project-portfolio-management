@@ -42,10 +42,10 @@ metadata only and is never compared.
 | Timeframe | 0.07 | Date proximity (Gaussian decay) |
 | Keywords | 0.05 | Jaccard |
 | Relationships | 0.05 | Typed-set Jaccard over `(relation, plan_id)` |
-| Tags | 0.05 | Set Jaccard over normalised tags |
+| Tags | 0.05 | Set Jaccard over normalized tags |
 
 Default threshold 0.85 (`MatchConfig::strict()` 0.95, `lenient()` 0.70).
-Weights renormalise over the components both records carry. `phase` and
+Weights renormalize over the components both records carry. `phase` and
 `status` are never scored.
 
 **Deterministic short-circuit → 1.0** on a shared globally-unique
@@ -69,7 +69,14 @@ cargo fmt --check
 cargo bench               # benches/match_pair.rs
 ```
 
-## License
+## Licence
 
-Dual-licensed under MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR
-GPL-3.0-only.
+Licence is any of these, or contact us for custom licence options.
+
+* [MIT](https://opensource.org/license/mit) ([SPDX: MIT](https://spdx.org/licenses/MIT.html)), text in [`../LICENSE/MIT.txt`](../LICENSE/MIT.txt)
+* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([SPDX: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)), text in [`../LICENSE/Apache-2.0.txt`](../LICENSE/Apache-2.0.txt)
+* [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) ([SPDX: GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)), text in [`../LICENSE/GPL-2.0-only.txt`](../LICENSE/GPL-2.0-only.txt)
+* [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) ([SPDX: GPL-3.0-only](https://spdx.org/licenses/GPL-3.0-only.html)), text in [`../LICENSE/GPL-3.0-only.txt`](../LICENSE/GPL-3.0-only.txt)
+* [BSD 3-Clause License](https://opensource.org/license/bsd-3-clause) ([SPDX: BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)), text in [`../LICENSE/BSD-3-Clause.txt`](../LICENSE/BSD-3-Clause.txt)
+
+SPDX expression: `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`.

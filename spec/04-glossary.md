@@ -11,7 +11,7 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Trio** | The three subprojects: service crate, matcher crate, front-end project |
 | **Entity-level spec** | This document set — source of truth for the cross-subproject contract and the canonical §5 domain model |
 | **Crate spec** | A subproject's own `spec/` — source of truth for that subproject's internals |
-| **Plan** | The canonical matchable type — the unit of work an organisation funds and reports on; it may carry an optional `kind` label (Portfolio, Project, Product, Program, Practice, Process, Purpose, Pathway, or Proposal) |
+| **Plan** | The canonical matchable type — the unit of work an organization funds and reports on; it may carry an optional `kind` label (Portfolio, Project, Product, Program, Practice, Process, Purpose, Pathway, or Proposal) |
 | **PlanKind** | The **optional** descriptive label on a `Plan`: `Portfolio`, `Project`, `Product`, `Program`, `Practice`, `Process`, `Purpose`, `Pathway`, `Proposal`. Used for description / display / grouping — **not** a discriminator, does **not** gate matching or fix a collection |
 | **Collection** | The single REST collection `/api/plans` and its `plans` service table; every plan lives here regardless of its `kind` label |
 | **Parent / child plan** | Any plan may **contain** any other plan via `parent_ref` (a recursive tree); the container is the **parent**, the contained plan a **child** |
@@ -24,7 +24,7 @@ Entity-level terms. Per-subproject vocabularies: service
 | **PlanStatus** | `Proposed`, `Active`, `OnHold`, `Completed`, `Cancelled`, `Custom(String)` — informational-only, not a match signal |
 | **Owner-scoped code** | `code` (e.g. `PROJ-2026`) — unique only within the owning `owner_org_id`; never matched across owners |
 | **Parent plan** | `parent_ref` — the parent plan's `pid`; an exact supporting match signal (§5.5); absent for a root plan |
-| **EntityRef** | An opaque URN naming a record in another service: `<entity_type>:<id>` (e.g. `person:0c4f…`, `organization:9a2f…`) — the one shared cross-service contract ([cross-service-linking.md §3](../../agents/share/cross-service-linking.md)) |
+| **EntityRef** | An opaque URN naming a record in another service: `<entity_type>:<id>` (e.g. `person:0c4f…`, `organization:9a2f…`) — the one shared cross-service contract (cross-service-linking.md §3 (shared family guidance, not in this repository)) |
 | **Deterministic identifier** | Globally unique identifier (URI, UUID, Jira project key, Asana GID, Trello board id, MS Project id, GitHub project id, Linear id); a shared value pins the match score to 1.0 |
 | **pid** | The public UUID of a stored plan record (route param; distinct from the row's internal `id`) |
 | **`data`** | The `plans.data` JSONB column holding the full thin `Plan` payload verbatim |
@@ -35,15 +35,15 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Tag** | A short operator-applied label for grouping / workflow (e.g. `priority-1`, `q3-review`); a **supporting** match signal via set Jaccard; distinct from keywords |
 | **Keyword** | A descriptive / discovery term about *what the plan is*; distinct from operator tags |
 | **Relationship** | A typed plan-to-plan link `{ relation, plan_id }` (ParentOf / DependsOn / Supersedes / SimilarTo / RelatedTo / …) — within-entity; a supporting match signal |
-| **Cross-service link** | An `entity_links` edge from a plan / goal / task / issue to **any** index entity ([cross-service-linking.md](../../agents/share/cross-service-linking.md)) — **never** a match signal |
+| **Cross-service link** | An `entity_links` edge from a plan / goal / task / issue to **any** index entity (cross-service-linking.md) — **never** a match signal |
 | **Soft delete** | Retention with `deleted_at` set; never `DELETE FROM` |
-| **Stable key** | The bulk-import upsert key — a deterministic external PM id, the owner-scoped `(owner_org_id, code)`, or `pid` ([bulk-import-export.md §6, §10](../../agents/share/bulk-import-export.md)) |
-| **SSO** | Single sign-on via the [authentication entity](../../authentication/): magic-link, cookie session + PASETO v4 public token ([authentication-sessions.md](../../agents/share/authentication-sessions.md), supersedes RS256-JWT) |
+| **Stable key** | The bulk-import upsert key — a deterministic external PM id, the owner-scoped `(owner_org_id, code)`, or `pid` ([bulk-import-export.md §6, §10](bulk-import-export.md)) |
+| **SSO** | Single sign-on via the authentication entity: magic-link, cookie session + PASETO v4 public token (authentication-sessions.md, supersedes RS256-JWT) |
 | **Drift policy** | Front-ends keep per-project copies of types/client/forms; no shared package (repo decision 2026-06-02) |
 | **Hammock** | A task whose span is derived from the tasks (or hammocks) it is linked to; carries no duration, work, constraint or dependency and never drives float (§6.4d FR-42) |
 | **What-if sandbox** | `sandbox/preview` applies schedule edits to an in-memory copy and writes nothing; `sandbox/commit` applies them for real under `If-Match` (FR-43) |
 | **Scheduling rule** | Which of units, work and duration stays fixed when an assignment is edited: `fixed_units`, `fixed_duration`, `fixed_work` (FR-40) |
-| **Work contour** | How a task's work is spread over its days: flat, front-loaded, back-loaded, bell, turtle, custom (FR-40) |
+| **Work contour** | How a task's work is spread over its business days: flat, front-loaded, back-loaded, bell, turtle, custom (FR-40) |
 | **Work profile** | A task, plan or portfolio's work as day / week / month buckets, derived on read (FR-40) |
 | **Cost rate** | Minor units per hour for a person or role, effective from a date, append-only; a missing rate is `null`, never zero (FR-41) |
 | **Finance gate** | The policy admission (`access=admin` or `finance=cost_rates`) required for rates and costs; others get `404` (FR-41) |

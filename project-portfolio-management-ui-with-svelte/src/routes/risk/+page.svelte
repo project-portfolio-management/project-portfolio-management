@@ -89,14 +89,14 @@
 
   <h2>Posture by portfolio</h2>
   <table data-testid="risk-posture">
-    <thead><tr><th>Portfolio</th><th>Open exposure</th><th>Escalated</th><th>Materialised</th></tr></thead>
+    <thead><tr><th>Portfolio</th><th>Open exposure</th><th>Escalated</th><th>Materialized</th></tr></thead>
     <tbody>
       {#each heatmap.posture as row (row.portfolio?.pid ?? "unassigned")}
         <tr>
           <td>{row.portfolio?.name ?? "(unassigned)"}</td>
           <td>{row.open_exposure}</td>
           <td>{row.escalated}</td>
-          <td>{row.materialised}</td>
+          <td>{row.materialized}</td>
         </tr>
       {/each}
     </tbody>

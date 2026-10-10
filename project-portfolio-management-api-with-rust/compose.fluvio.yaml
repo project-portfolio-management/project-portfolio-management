@@ -1,10 +1,9 @@
 # A local Fluvio broker for the bus-gated test tier (BUS-3, following
-# BUS-1's case-service reference; agents/share/event-bus.md §10
-# "Fluvio-gated" tests).
+# BUS-1's case-service reference).
 #
 # This is opt-in and separate from compose.test.yaml on purpose: the
-# Postgres compose file is what scripts/test-db.sh drives for every
-# DB-gated run, and this crate's default and DB-gated suites must stay
+# Postgres compose file is what every
+# DB-gated run uses, and this crate's default and DB-gated suites must stay
 # green with no broker present at all (the relay's LoggingSink is the
 # no-broker dev/CI path — see src/relay.rs). Bring this up only when you
 # want to exercise `FluvioSink` (the `fluvio` cargo feature) for real:
@@ -14,7 +13,7 @@
 #     cargo test --features fluvio -- --ignored fluvio_relay
 #   podman compose -f compose.fluvio.yaml down -v
 #
-# Podman, not Docker (agents/share/rust-loco-stack.md). Three services —
+# Podman (Docker works too). Three services —
 # a Stream Controller (sc), a one-shot SPU-registration step (sc-setup),
 # and a Stream Processing Unit (spu) — mirroring Fluvio's own documented
 # Docker Compose layout (fluvio.io/docs/fluvio/installation/docker/),

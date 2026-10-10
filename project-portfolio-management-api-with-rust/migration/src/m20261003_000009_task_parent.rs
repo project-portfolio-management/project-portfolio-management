@@ -1,7 +1,7 @@
 //! Migration: **`tasks.parent_task_pid`** — subtasks (RM-5). A parent's
 //! dates, estimate and progress are **derived on read** from its
 //! descendants, never stored, so they cannot drift from the work they
-//! summarise.
+//! summarize.
 
 use sea_orm_migration::prelude::*;
 

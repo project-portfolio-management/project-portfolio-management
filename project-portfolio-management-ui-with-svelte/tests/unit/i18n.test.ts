@@ -52,7 +52,7 @@ describe("i18n catalog", () => {
     }
   });
 
-  it("normalises legacy and regional codes to the supported locale of that language", () => {
+  it("normalizes legacy and regional codes to the supported locale of that language", () => {
     i18n.set("en_US");
     expect(i18n.locale).toBe("en-001");
     i18n.set("en-US");

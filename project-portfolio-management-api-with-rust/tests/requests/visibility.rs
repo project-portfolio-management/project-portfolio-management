@@ -511,7 +511,7 @@ async fn grouped_report_keeps_currencies_apart() {
 async fn dashboard_rolls_up_and_is_conditional() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
-        // A red item (overdue target), a green one, and a materialised
+        // A red item (overdue target), a green one, and a materialized
         // risk elsewhere.
         let red = item(
             &request,
@@ -577,7 +577,7 @@ async fn dashboard_rolls_up_and_is_conditional() {
         );
         assert!(projects["rag"]["green"].as_u64().unwrap_or(0) >= 1);
         assert!(
-            glance["site_tiles"]["materialised_risks"]
+            glance["site_tiles"]["materialized_risks"]
                 .as_u64()
                 .unwrap_or(0)
                 >= 1

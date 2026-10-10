@@ -81,7 +81,7 @@ pub enum Status {
     Upcoming,
 }
 
-/// The status given today and a "due soon" window in days.
+/// The status given today and a "due soon" window in calendar days.
 #[must_use]
 pub fn status(is_achieved: bool, due: NaiveDate, today: NaiveDate, due_soon_days: i64) -> Status {
     if is_achieved {
@@ -109,7 +109,7 @@ pub enum ScheduleState {
     NoForecast,
 }
 
-/// The state from the forecast finish and the **working days** of slack between
+/// The state from the forecast finish and the **business days** of slack between
 /// it and the due date (`slack_days`, negative when the forecast is after it).
 #[must_use]
 pub fn schedule_state(slack_days: i64, at_risk_days: i64) -> ScheduleState {

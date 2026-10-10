@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use super::governance::valid_ref;
 use super::plans::parse_kind_label;
-use super::prioritisation;
+use super::prioritization;
 use crate::auth::MaybeAuthUser;
 use crate::governance as gov_rules;
 use crate::models::_entities::{
@@ -181,7 +181,7 @@ async fn dismiss_idea(
 #[derive(Debug, Deserialize)]
 struct ConvertPayload {
     /// Optional descriptive kind label for the eventual plan. Blank means
-    /// "no kind"; a non-blank value must be a recognised kind label.
+    /// "no kind"; a non-blank value must be a recognized kind label.
     kind_target: String,
     #[serde(default)]
     sponsor_ref: Option<String>,
@@ -812,7 +812,7 @@ struct GeneratePayload {
 /// carries budget lines but none in `currency` (incomparable —
 /// `foreign_currency`); `Some(0)` when it carries none at all (a free
 /// candidate, ranked on score alone).
-fn cost_of(estate: &prioritisation::Estate, plan_pid: Uuid, currency: &str) -> Option<i64> {
+fn cost_of(estate: &prioritization::Estate, plan_pid: Uuid, currency: &str) -> Option<i64> {
     let lines: Vec<&budget_lines::Model> = estate
         .budget_lines
         .iter()
@@ -863,15 +863,15 @@ async fn generate_scenario(
     }
 
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let estate = prioritisation::Estate::load(&ctx, &fence).await?;
-    let weights = prioritisation::weights();
+    let estate = prioritization::Estate::load(&ctx, &fence).await?;
+    let weights = prioritization::weights();
     let currency = payload.currency.as_deref();
 
     let candidates: Vec<rules::GenerateCandidateFact> = estate
         .plans
         .iter()
         .map(|plan| {
-            let score = crate::prioritisation::smart_score(&estate.facts(plan), &weights).score;
+            let score = crate::prioritization::smart_score(&estate.facts(plan), &weights).score;
             let cost_minor = currency.and_then(|cur| cost_of(&estate, plan.pid, cur));
             rules::GenerateCandidateFact {
                 pid: plan.pid,

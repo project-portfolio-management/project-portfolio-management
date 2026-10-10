@@ -27,7 +27,7 @@ spec §16 once that crate is scaffolded.
   `parent_ref` is an in-entity parent-plan `pid`. Should the service
   soft-validate that the org / parent plan exists (lazy
   verify-on-read for the org, like the link aggregator,
-  [cross-service-linking.md §5.1](../../agents/share/cross-service-linking.md);
+  cross-service-linking.md §5.1 (shared family guidance, not in this repository);
   a local `plans` lookup for the parent), or treat both as opaque
   optimistic references (no target call on the write path)? (Lean:
   opaque + optimistic for the org; soft-validate `parent_ref`

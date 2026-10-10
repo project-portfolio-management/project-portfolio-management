@@ -30,7 +30,7 @@
   <section class="tiles" data-testid="site-tiles">
     <div class="tile"><strong>{board.site_tiles.plans}</strong><span>{t("ppm.dashboard.workItems")}</span></div>
     <div class="tile"><strong>{board.site_tiles.proposals_open}</strong><span>{t("ppm.dashboard.openProposals")}</span></div>
-    <div class="tile"><strong>{board.site_tiles.materialised_risks}</strong><span>{t("ppm.dashboard.materialisedRisks")}</span></div>
+    <div class="tile"><strong>{board.site_tiles.materialized_risks}</strong><span>{t("ppm.dashboard.materializedRisks")}</span></div>
     <div class="tile"><strong>{board.site_tiles.open_risk_exposure}</strong><span>{t("ppm.dashboard.exposure")}</span></div>
     <div class="tile"><strong>{board.site_tiles.schedule_violations}</strong><span>{t("ppm.dashboard.violations")}</span></div>
     <div class="tile"><strong>{board.site_tiles.over_allocated_people}</strong><span>{t("ppm.dashboard.overAllocated")}</span></div>

@@ -5,7 +5,7 @@
 //!
 //! The board, the burndown, the timeline and every time-based-analysis
 //! figure compute from what a state *means*, not from its name. An
-//! uncategorised state is one the flow-efficiency denominator cannot
+//! uncategorized state is one the flow-efficiency denominator cannot
 //! account for and the burndown cannot call finished.
 //!
 //! Enforcing it in the schema rather than only in the handler is the

@@ -87,8 +87,8 @@
   <p class="count">
     {items.length === total ? `${total}` : `${items.length} / ${total}`}
   </p>
-  <GridTheme>
-    <FilterTheme>
+  <GridTheme fonts={false}>
+    <FilterTheme fonts={false}>
       <div class="filter-wrap">
         <FilterBar
           fields={filterFields}

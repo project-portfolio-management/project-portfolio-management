@@ -72,7 +72,7 @@ pub(crate) async fn plan_calendar(
 
 /// For each person ref in `refs` that has a calendar or recorded absences, the
 /// calendar their work runs on: the plan's, intersected with theirs. A person
-/// with nothing recorded, or whose calendar shares no working day with the
+/// with nothing recorded, or whose calendar shares no business day with the
 /// plan's, is **absent from the map** (their tasks use the plan calendar; the
 /// second return lists the latter so it can be reported, not hidden).
 pub(crate) async fn person_calendars(

@@ -88,7 +88,7 @@
       description:
         (task.assignee_ref ?? "unassigned") +
         (task.points !== null && task.points !== undefined ? ` · ${task.points}pt` : "") +
-        (task.blocked_days !== null ? ` · blocked ${task.blocked_days}d` : ""),
+        (task.blocked_days !== null ? ` · blocked ${task.blocked_days} calendar day${task.blocked_days === 1 ? "" : "s"}` : ""),
       status: task.status,
     })),
   );
@@ -174,7 +174,7 @@
     />
   {:else}
     <div class="board-wrap" data-testid="task-board">
-      <Willow>
+      <Willow fonts={false}>
         <Kanban
           {cards}
           columns={COLUMNS}
@@ -228,7 +228,7 @@
     {#if standup.blocked_now.length > 0}
       <ul>
         {#each standup.blocked_now as task (task.pid)}
-          <li>{task.title} <span class="muted">blocked {task.blocked_days}d</span></li>
+          <li>{task.title} <span class="muted">blocked {task.blocked_days} calendar day{task.blocked_days === 1 ? "" : "s"}</span></li>
         {/each}
       </ul>
     {/if}

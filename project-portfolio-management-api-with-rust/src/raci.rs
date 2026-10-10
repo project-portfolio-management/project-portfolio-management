@@ -44,7 +44,7 @@ pub struct Entry {
     pub roles: Vec<char>,
 }
 
-/// Normalise a letters string like `"ar"` to `['A', 'R']`: upper-cased, in
+/// Normalize a letters string like `"ar"` to `['A', 'R']`: upper-cased, in
 /// R-A-C-I order, no duplicates. `None` when any character is not a RACI letter.
 #[must_use]
 pub fn parse_roles(s: &str) -> Option<Vec<char>> {
@@ -283,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn letters_are_normalised_ordered_and_deduplicated() {
+    fn letters_are_normalized_ordered_and_deduplicated() {
         assert_eq!(
             parse_roles("ar"),
             Some(vec!['R', 'A']),

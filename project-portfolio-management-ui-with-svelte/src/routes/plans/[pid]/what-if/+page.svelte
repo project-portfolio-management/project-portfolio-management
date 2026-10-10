@@ -150,7 +150,7 @@
         <option value="ff">Finish to finish</option><option value="sf">Start to finish</option>
       </select>
     </label>
-    <label>Lag (working days) <input type="number" step="1" bind:value={form.lag} /></label>
+    <label>Lag (business days) <input type="number" step="1" bind:value={form.lag} /></label>
   {:else if form.kind === "remove_link"}
     <label>Link
       <select bind:value={form.link}>
@@ -165,7 +165,7 @@
     {#if form.kind === "move"}
       <label>New start <input type="date" bind:value={form.start} /></label>
     {:else if form.kind === "duration"}
-      <label>Working days <input type="number" min="0" max="3650" step="1" bind:value={form.days} /></label>
+      <label>Business days <input type="number" min="0" max="3650" step="1" bind:value={form.days} /></label>
     {:else}
       <label>Constraint
         <select bind:value={form.constraint}>

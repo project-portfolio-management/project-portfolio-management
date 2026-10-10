@@ -1,18 +1,18 @@
-//! Time-phased work (PJ-5): spread a task's work over its working days by a
+//! Time-phased work (PJ-5): spread a task's work over its business days by a
 //! **contour**, and bucket the result into days, weeks or months. DB-free,
 //! deterministic, integer minutes.
 //!
 //! * The spread is **exact**: the minutes of every day sum to the task's work
 //!   with no rounding drift (largest remainder; ties go to the earlier day).
 //! * It is **calendar-aware**: work lands only on the days the caller says are
-//!   working days (the task's own calendar), never on a weekend or holiday.
+//!   business days (the task's own calendar), never on a weekend or holiday.
 //! * Buckets are derived, not stored, so a changed contour, calendar or date
 //!   corrects every figure that rests on it.
 //!
 //! The contour shapes are the usual scheduling-tool set. **The shape names were
 //! inferred from the reference tool's class names and the definitions below are
 //! this project's own — confirm them before treating them as a standard.**
-//! With `d` working days (day index `i` from 0):
+//! With `d` business days (day index `i` from 0):
 //!
 //! * `flat` — every day the same;
 //! * `front_loaded` — weights `d, d-1, … 1` (most work first);
@@ -20,7 +20,7 @@
 //! * `bell` — weights `min(i+1, d-i)`: rising to the middle and falling again;
 //! * `turtle` — weights `min(i+1, q, d-i)` with `q = max(1, d/4)`: a ramp up over
 //!   about a quarter, a plateau, a ramp down over about a quarter;
-//! * `custom` — percentages summing to 100, stretched evenly over the days.
+//! * `custom` — percentages summing to 100, stretched evenly over the business days.
 
 use chrono::{Duration, NaiveDate};
 use serde::Serialize;
@@ -97,7 +97,7 @@ pub fn parse(token: &str, custom: Option<&[i64]>) -> Result<Contour, String> {
     }
 }
 
-/// The relative weight of each of `days` working days.
+/// The relative weight of each of `days` business days.
 #[must_use]
 pub fn weights(contour: &Contour, days: usize) -> Vec<i64> {
     let d = i64::try_from(days).unwrap_or(0);
@@ -147,7 +147,7 @@ pub fn spread(total: i64, weights: &[i64]) -> Vec<i64> {
 /// Why work could not be placed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum Unplaced {
-    /// There is work but no working day to put it on.
+    /// There is work but no business day to put it on.
     NoWorkingDays,
     /// The custom weights over these days are all zero.
     NoWeight,
@@ -219,7 +219,7 @@ pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Perio
             }
             if (to - from).num_days() >= i64::try_from(pr::MAX_PERIODS).unwrap_or(120) {
                 return Err(format!(
-                    "a daily view spans at most {} days",
+                    "a daily view spans at most {} calendar days",
                     pr::MAX_PERIODS
                 ));
             }
@@ -302,7 +302,7 @@ mod tests {
         assert_eq!(
             weights(&c, 2),
             vec![10, 20],
-            "fewer days than weights: the first of each stretch"
+            "fewer business days than weights: the first of each stretch"
         );
     }
 
@@ -348,7 +348,7 @@ mod tests {
                     assert_eq!(
                         parts.iter().sum::<i64>(),
                         total,
-                        "{total} over {days} days by {c:?}"
+                        "{total} over {days} business days by {c:?}"
                     );
                     assert!(parts.iter().all(|p| *p >= 0));
                 }
@@ -358,7 +358,7 @@ mod tests {
 
     #[test]
     fn largest_remainder_gives_the_extra_minute_to_the_biggest_remainder_then_the_earlier_day() {
-        // 10 over three equal days: 3, 3, 3 and one left over goes to the earliest.
+        // 10 over three equal business days: 3, 3, 3 and one left over goes to the earliest.
         assert_eq!(spread(10, &[1, 1, 1]), vec![4, 3, 3]);
         // 100 over 1:2:3 is 16.67, 33.33, 50: the biggest remainder (the first, .67) gets the spare.
         assert_eq!(spread(100, &[1, 2, 3]), vec![17, 33, 50]);
@@ -395,7 +395,8 @@ mod tests {
         );
         let days = week_days();
         let zero = Contour::Custom(vec![0, 100]);
-        // Two days, weights over the first stretch only: [0, 100] stretched over 1 day is [0].
+        // Two business days, weights over the first stretch only: [0, 100] stretched
+        // over 1 business day is [0].
         assert_eq!(distribute(50, &days[..1], &zero), Err(Unplaced::NoWeight));
     }
 

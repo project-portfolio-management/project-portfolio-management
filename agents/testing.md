@@ -8,7 +8,7 @@ Entity-level view; normative inventory in entity spec
 
 | Subproject | Suite | Command | Covers |
 |---|---|---|---|
-| matcher | Unit tests (`#[cfg(test)]` per module) | `cargo test` | Components, normalisation, deterministic rules, kind-agnostic scoring, rank/find_matches |
+| matcher | Unit tests (`#[cfg(test)]` per module) | `cargo test` | Components, normalization, deterministic rules, kind-agnostic scoring, rank/find_matches |
 | matcher | Public-API integration | `cargo test --test public_api` | The `lib.rs` re-export surface |
 | matcher | Doctests | `cargo test` | rustdoc examples |
 | service | DB-free embedding tests | `cargo test --test matching` | Matcher embedding + `Plan` JSON round-trip (the DTO/JSONB contract) |
@@ -73,5 +73,5 @@ Front-end gaps are tracked by the UI project.
   while querying the pool in a test setup either: the test pool has one
   connection.
 - Construct minimal records with `Plan::new("…")` (kind defaults to
-  `None`) and set only the fields under test — renormalisation means
+  `None`) and set only the fields under test — renormalization means
   absent components simply drop out of the score.

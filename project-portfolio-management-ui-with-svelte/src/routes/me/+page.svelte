@@ -6,7 +6,7 @@
   (`?tz=`) because the server never guesses one; a fixed offset would be
   refused.
 
-  English-first, like the other recent views; localisation follows.
+  English-first, like the other recent views; localization follows.
 -->
 <script lang="ts">
   import { localeHref } from "#lib/i18n.svelte.js";

@@ -22,8 +22,9 @@
 //!   different things, and that difference is the whole point of the method.
 //!
 //! **Planned value inside a period is linear** (a period planned at 3 000 over 30
-//! days is 100 a day) — the standard EVM convention, applied here and nowhere
-//! else; the budget-baseline forecast (T-28b) deliberately does *not* pro-rate.
+//! calendar days is 100 a day) — the standard EVM convention, applied here and
+//! nowhere else; the budget-baseline forecast (T-28b) deliberately does *not*
+//! pro-rate.
 
 use chrono::NaiveDate;
 use serde::Serialize;
@@ -243,9 +244,10 @@ pub fn baseline_start(periods: &[Period]) -> Option<NaiveDate> {
     periods.iter().map(|p| p.start).min()
 }
 
-/// Planned value after `t` elapsed days since `start` (t = 0 is before the first
-/// day; t = 1 is the end of the first day). Whole periods count fully, the period
-/// in progress counts linearly (floored to a minor unit), later ones count nothing.
+/// Planned value after `t` elapsed calendar days since `start` (t = 0 is before
+/// the first day; t = 1 is the end of the first day). Whole periods count fully,
+/// the period in progress counts linearly (floored to a minor unit), later ones
+/// count nothing.
 #[must_use]
 pub fn pv_after(periods: &[Period], start: NaiveDate, t: i64) -> i64 {
     let mut total = 0_i128;
@@ -320,10 +322,11 @@ pub struct Block {
     pub spi: Ratio,
     /// EV ÷ AC.
     pub cpi: Ratio,
-    /// Earned schedule: the elapsed days at which the plan *should* have earned
-    /// what has actually been earned.
+    /// Earned schedule: the elapsed calendar days at which the plan *should* have
+    /// earned what has actually been earned.
     pub earned_schedule_days: Option<i64>,
-    /// Elapsed days since the baseline started, as of the date (the "actual time").
+    /// Elapsed calendar days since the baseline started, as of the date (the
+    /// "actual time").
     pub actual_days: i64,
     /// Earned-schedule SPI: earned schedule ÷ actual time.
     pub spi_t: Ratio,
@@ -359,7 +362,7 @@ pub fn block(
     let pv = pv_after(periods, start, actual_days);
     let last = periods.iter().map(|p| p.end).max().unwrap_or(start);
     let total_days = (last - start).num_days() + 1;
-    // Earned schedule: the least elapsed day count whose planned value reaches EV.
+    // Earned schedule: the least elapsed calendar-day count whose planned value reaches EV.
     let earned_schedule_days = if bac_minor == 0 {
         None
     } else if ev <= 0 {
@@ -425,7 +428,7 @@ mod tests {
             manual_bp: None,
         }
     }
-    /// 10 days Jan 1-10 at 1 000, 10 days Jan 11-20 at 3 000: BAC 4 000.
+    /// 10 calendar days Jan 1-10 at 1 000, 10 calendar days Jan 11-20 at 3 000: BAC 4 000.
     fn periods() -> Vec<Period> {
         vec![
             Period {
@@ -645,8 +648,8 @@ mod tests {
 
     #[test]
     fn earned_schedule_stays_meaningful_when_a_late_project_finishes() {
-        // The work is 100% done on day 30 of a 20-day plan. SPI says 1.0 (EV = PV = BAC):
-        // it cannot tell the project was ten days late. SPI(t) can.
+        // The work is 100% done on day 30 of a 20-calendar-day plan. SPI says 1.0 (EV = PV = BAC):
+        // it cannot tell the project was ten calendar days late. SPI(t) can.
         let b = block(&periods(), 10_000, 10_000, Some(4_000), d(2026, 1, 30)).unwrap();
         assert_eq!(
             b.spi.bp,
@@ -658,7 +661,7 @@ mod tests {
         assert_eq!(
             b.spi_t.bp,
             Some(6_667),
-            "20 / 30: it earned in 30 days what was planned for 20"
+            "20 / 30: it earned in 30 calendar days what was planned for 20"
         );
     }
 
@@ -673,7 +676,7 @@ mod tests {
         let ahead = block(&periods(), 6_250, 10_000, None, d(2026, 1, 12)).unwrap();
         assert_eq!(ahead.earned_schedule_days, Some(15));
         assert_eq!(ahead.spi_t.bp, Some(12_500), "15 / 12");
-        // Nothing earned yet: schedule earned is zero days.
+        // Nothing earned yet: schedule earned is zero calendar days.
         let zero = block(&periods(), 0, 10_000, None, d(2026, 1, 12)).unwrap();
         assert_eq!(
             (zero.earned_schedule_days, zero.spi_t.bp),

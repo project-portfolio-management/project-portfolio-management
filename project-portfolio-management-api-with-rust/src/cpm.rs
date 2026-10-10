@@ -6,7 +6,7 @@
 //! long before it delays any successor). All four relationship types (FS, SS,
 //! FF, SF) are supported, each with a **lag or a lead** (negative lag).
 //!
-//! Time is counted in **working days of a [`WorkCalendar`]**: a node of duration
+//! Time is counted in **business days of a [`WorkCalendar`]**: a node of duration
 //! 3 starting on a Friday finishes on the following Tuesday under a Monday–Friday
 //! calendar. A calendar with every weekday working is the pre-calendar
 //! behaviour. Dates are zone-free calendar dates (see [`crate::tz`]); nothing
@@ -33,7 +33,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 /// Monday 1970-01-05: the first Monday on or after the Unix epoch, the origin of
-/// the working-day index.
+/// the business-day index.
 const EPOCH: NaiveDate = match NaiveDate::from_ymd_opt(1970, 1, 5) {
     Some(d) => d,
     None => unreachable!(),
@@ -112,16 +112,16 @@ impl WorkCalendar {
         i64::try_from(self.working.iter().filter(|w| **w).count()).unwrap_or(7)
     }
 
-    /// Whether `date` is a working day.
+    /// Whether `date` is a business day.
     #[must_use]
     pub fn is_working(&self, date: NaiveDate) -> bool {
         self.working[date.weekday().num_days_from_monday() as usize]
             && !self.holidays.contains(&date)
     }
 
-    /// The working-day index of `date`: how many working days lie strictly
+    /// The business-day index of `date`: how many business days lie strictly
     /// before it. For a working date this is its own index; a non-working date
-    /// maps to the index of the **next** working day. `None` before 1970-01-05.
+    /// maps to the index of the **next** business day. `None` before 1970-01-05.
     #[must_use]
     pub fn index_of(&self, date: NaiveDate) -> Option<i64> {
         if date < EPOCH {
@@ -144,7 +144,7 @@ impl WorkCalendar {
         Some(base - i64::try_from(off).unwrap_or(0))
     }
 
-    /// The date of the working day with `index` (the inverse of
+    /// The date of the business day with `index` (the inverse of
     /// [`index_of`](Self::index_of) on working dates).
     #[must_use]
     pub fn date_of(&self, index: i64) -> NaiveDate {
@@ -256,7 +256,7 @@ pub struct Constraint {
 pub struct Node {
     /// Identity.
     pub pid: Uuid,
-    /// Working days; `0` is a milestone; `None` cannot be scheduled.
+    /// Business days; `0` is a milestone; `None` cannot be scheduled.
     pub duration: Option<i64>,
     /// Planned start: a lower bound on the earliest start.
     pub planned_start: Option<NaiveDate>,
@@ -281,7 +281,7 @@ pub struct Edge {
     pub succ: Uuid,
     /// Relationship type.
     pub kind: Kind,
-    /// Working days; negative is a lead.
+    /// Business days; negative is a lead.
     pub lag: i64,
 }
 
@@ -310,15 +310,15 @@ pub struct NodeResult {
     pub pid: Uuid,
     /// Earliest start date.
     pub early_start: NaiveDate,
-    /// Earliest finish date (the last working day; equals the start for a milestone).
+    /// Earliest finish date (the last business day; equals the start for a milestone).
     pub early_finish: NaiveDate,
     /// Latest start date.
     pub late_start: NaiveDate,
     /// Latest finish date.
     pub late_finish: NaiveDate,
-    /// Working days it can slip before the project finish moves.
+    /// Business days it can slip before the project finish moves.
     pub total_float: i64,
-    /// Working days it can slip before any successor is delayed.
+    /// Business days it can slip before any successor is delayed.
     pub free_float: i64,
     /// `total_float <= 0`.
     pub critical: bool,
@@ -326,11 +326,11 @@ pub struct NodeResult {
     pub near_critical: bool,
     /// The planned start as entered, if any.
     pub planned_start: Option<NaiveDate>,
-    /// Working days logic pushes the start **later than planned** (0 if not).
+    /// Business days logic pushes the start **later than planned** (0 if not).
     pub pushed_days: i64,
-    /// Working-day index of the earliest start (for [`diff`]).
+    /// Business-day index of the earliest start (for [`diff`]).
     pub es_index: i64,
-    /// Working-day index one past the last working day of the earliest finish.
+    /// Business-day index one past the last business day of the earliest finish.
     pub ef_index: i64,
     /// The constraint applied, if any.
     pub constraint: Option<ConstraintKind>,
@@ -428,7 +428,8 @@ pub fn analyze(
 /// Run the analysis. `calendar` is the network's (the plan's); a node whose
 /// `own_calendar` indexes into `own_calendars` has its *work* placed on that
 /// calendar (which must work only on days `calendar` works — build it with
-/// [`WorkCalendar::intersect`]), while lag and float stay in `calendar`'s days.
+/// [`WorkCalendar::intersect`]), while lag and float stay in `calendar`'s
+/// business days.
 ///
 /// # Errors
 ///
@@ -468,13 +469,13 @@ pub fn analyze_with(
         .map(|n| n.planned_start.and_then(|d| calendar.index_of(d)))
         .collect();
 
-    // The working-day index of a constraint date, or `None` out of range.
+    // The business-day index of a constraint date, or `None` out of range.
     let w = |d: NaiveDate| calendar.index_of(d);
     // The calendar a node's work runs on, when it has its own.
     let own = |i: usize| -> Option<&WorkCalendar> {
         nodes[i].own_calendar.and_then(|k| own_calendars.get(k))
     };
-    // Place `d` working days of node `i` starting no earlier than plan index
+    // Place `d` business days of node `i` starting no earlier than plan index
     // `start`; returns (start, finish) plan indices (finish exclusive).
     let place_forward = |i: usize, start: i64, d: i64| -> (i64, i64) {
         match own(i) {
@@ -490,7 +491,7 @@ pub fn analyze_with(
             _ => (start, start + d),
         }
     };
-    // The latest placement of `d` working days finishing no later than plan
+    // The latest placement of `d` business days finishing no later than plan
     // index `finish` (exclusive); returns (start, finish).
     let place_backward = |i: usize, finish: i64, d: i64| -> (i64, i64) {
         match own(i) {
@@ -761,7 +762,7 @@ pub fn analyze_with(
     })
 }
 
-/// Most working days a duration or lag may be (about fourteen years).
+/// Most business days a duration or lag may be (about fourteen years).
 pub const MAX_DAYS: i64 = 3650;
 
 /// Everything wrong with a task's schedule fields (all of it, not the first).
@@ -820,9 +821,9 @@ pub struct Moved {
     pub pid: Uuid,
     /// `start`, `finish` or `both`.
     pub moved: &'static str,
-    /// Working days the start moved (positive = later).
+    /// Business days the start moved (positive = later).
     pub start_days: i64,
-    /// Working days the finish moved (positive = later).
+    /// Business days the finish moved (positive = later).
     pub finish_days: i64,
 }
 
@@ -923,7 +924,7 @@ mod tests {
         assert_eq!(
             get(&r, 3).free_float,
             2,
-            "C can slip 2 days before delaying D"
+            "C can slip 2 business days before delaying D"
         );
         assert_eq!(get(&r, 2).free_float, 0);
         assert_eq!(r.chains, vec![vec![id(1), id(2), id(4)]]);
@@ -933,7 +934,7 @@ mod tests {
     #[test]
     fn a_lag_lengthens_the_chain_and_can_change_which_one_is_critical() {
         let (n, mut e) = textbook();
-        // 3 days of lag on C→D: C finishes at 5, D can start at 8 > B's 7.
+        // 3 business days of lag on C→D: C finishes at 5, D can start at 8 > B's 7.
         e[3] = edge(4, 3, 4, Kind::Fs, 3);
         let r = run(&n, &e);
         assert_eq!(
@@ -1091,7 +1092,7 @@ mod tests {
 
     #[test]
     fn working_days_skip_weekends_and_holidays() {
-        // Friday 2026-10-02, 2 working days: Fri and Mon.
+        // Friday 2026-10-02, 2 business days: Fri and Mon.
         let fri = d(2026, 10, 2);
         let cal = WorkCalendar::mon_fri();
         let r = analyze(&[anchored(1, 2, fri)], &[], &cal, Options::default()).unwrap();
@@ -1239,7 +1240,7 @@ mod tests {
 
     #[test]
     fn a_hard_start_overrides_logic_and_says_so() {
-        // B must start on day 1, but A (4 days) forces day 4.
+        // B must start on day 1, but A (4 business days) forces day 4.
         let n = vec![
             anchored(1, 4, MON()),
             constrained(node(2, 2), ConstraintKind::Mso, MON() + Duration::days(1)),
@@ -1303,7 +1304,7 @@ mod tests {
 
     #[test]
     fn a_part_time_assignee_stretches_a_task_across_their_off_days() {
-        // Plan works Mon-Fri; the person works Mon-Wed. 4 days of work from Monday:
+        // Plan works Mon-Fri; the person works Mon-Wed. 4 business days of work from Monday:
         // Mon, Tue, Wed, then NEXT Monday.
         let plan = WorkCalendar::mon_fri();
         let mon_wed =
@@ -1330,7 +1331,7 @@ mod tests {
             0,
             "backward pass is consistent with the forward one"
         );
-        // A task starting on the person's day off waits for their next working day.
+        // A task starting on the person's day off waits for their next business day.
         let mut t = anchored(1, 1, d(2026, 10, 8)); // Thursday
         t.own_calendar = Some(0);
         let r = analyze_with(
@@ -1359,7 +1360,7 @@ mod tests {
             WorkCalendar::new([false, false, false, false, false, true, true], []).unwrap();
         assert!(
             WorkCalendar::mon_fri().intersect(&weekend).is_err(),
-            "no common working day"
+            "no common business day"
         );
     }
 
@@ -1488,7 +1489,7 @@ mod tests {
                 assert_eq!(
                     n.total_float,
                     ls - es,
-                    "float is LS - ES in plan days: {n:?}"
+                    "float is LS - ES in plan business days: {n:?}"
                 );
                 assert!(n.free_float >= 0, "{n:?}");
                 assert!(plan.is_working(n.early_start) && plan.is_working(n.early_finish));

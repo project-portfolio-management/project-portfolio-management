@@ -10,7 +10,7 @@ default-run = "project-portfolio-management-service"
 authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
 description = "Project portfolio management service — plan registry (one recursive plan tree; kind is an optional label, no gate) and full project-management suite: workflows, OKRs, phases, flow, effort, ceremonies, controls, TPC, value realization"
 readme = "README.md"
-repository = "https://github.com/sixarm/main-x-service/project-portfolio-management-api-with-rust"
+repository = "https://github.com/project-portfolio-management/project-portfolio-management"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
 keywords = ["portfolio", "project", "product", "program", "project-management"]
 categories = ["development-tools", "rust-patterns"]
@@ -152,6 +152,9 @@ tokio = { version = "1.53", default-features = false, features = [
   "time",
 ] }
 serial_test = { version = "4.0.1" }
+# `ServiceExt::oneshot` to drive a bare `axum::Router` in the middleware unit
+# tests (security headers, CORS, rate limiting). Already in the tree via axum.
+tower = { version = "0.5", features = ["util"] }
 rstest = { version = "0.25" }
 insta = { version = "1.48", features = ["redactions", "yaml", "filters"] }
 # Mint PASETO v4.public tokens + a matching Ed25519 key set in-process so the extractor.s

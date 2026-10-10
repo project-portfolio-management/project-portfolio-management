@@ -41,12 +41,12 @@ The plan service references other Main X Index services by opaque
 id; it never embeds their data. Resolution is the consuming front-end's /
 link aggregator's job.
 
-| Integration | Direction | Purpose |
+| Integration (sibling repositories, not in this repository) | Direction | Purpose |
 |---|---|---|
-| [authentication-service](../../authentication/authentication-service-with-loco/) | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth.rs` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. RS256/JWKS is not used. |
-| [person-service](../../person/person-service-with-loco/) | portfolio → person `pid` | `lead_ref`, task / issue `assignee_ref` people references |
-| [worker-service](../../worker/worker-service-with-loco/) | portfolio → worker `pid` | `lead_ref`, assignee references on tasks / issues |
-| [organization-service](../../organization/organization-service-with-loco/) | portfolio → org `pid` | `owner_org_id` sponsor, `OwnerOrg` match component |
+| authentication-service | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth.rs` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. RS256/JWKS is not used. |
+| person-service | portfolio → person `pid` | `lead_ref`, task / issue `assignee_ref` people references |
+| worker-service | portfolio → worker `pid` | `lead_ref`, assignee references on tasks / issues |
+| organization-service | portfolio → org `pid` | `owner_org_id` sponsor, `OwnerOrg` match component |
 | cross-service links | portfolio ↔ any | `/api/plans/{pid}/links` link aggregator — typed inbound / outbound links to other plans and entities |
 
 ## How to run each

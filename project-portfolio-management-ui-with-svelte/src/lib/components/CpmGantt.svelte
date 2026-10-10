@@ -66,7 +66,7 @@
         </li>
       {/each}
     </ol>
-    <p class="small muted">{chart.from} to {chart.to}. Float is counted in the plan's working days; bars are drawn in calendar days.</p>
+    <p class="small muted">{chart.from} to {chart.to}. Float is counted in the plan's business days; bars are drawn in calendar days.</p>
   </div>
 {:else}
   <p class="muted">No scheduled tasks to draw yet. Give a task a duration (and a start date or a predecessor).</p>

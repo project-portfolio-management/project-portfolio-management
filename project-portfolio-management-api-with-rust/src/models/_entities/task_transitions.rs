@@ -18,7 +18,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub pid: Uuid,
     pub task_pid: Uuid,
-    /// Denormalised so a whole board is one query.
+    /// Denormalized so a whole board is one query.
     pub plan_pid: Uuid,
     /// `None` marks the task's creation.
     pub from_status: Option<String>,
@@ -26,7 +26,7 @@ pub struct Model {
     pub at: DateTimeWithTimeZone,
     pub actor_ref: Option<String>,
     pub assignee_ref: Option<String>,
-    /// Synthesised by the migration rather than observed — reported by
+    /// Synthesized by the migration rather than observed — reported by
     /// every analysis so thin evidence stays visible.
     pub backfilled: bool,
 }

@@ -51,7 +51,7 @@ The service is **two co-located concerns** behind one app:
 
 - the **identity registry** — CRUD + matching over the thin `Plan`
   on the one `plans` collection (a JSONB `data` column + a nullable
-  denormalised `parent_pid`). Matching is **kind-agnostic**: the
+  denormalized `parent_pid`). Matching is **kind-agnostic**: the
   controller feeds candidate plans without kind filtering and the
   matcher never gates on `kind` (§5.5).
 - the **project-management tool** — the operational sub-resources
@@ -84,7 +84,7 @@ project-portfolio-management-api-with-rust/
 │   │   ├── strategy.rs              ideas, scenarios, objectives
 │   │   ├── collaboration.rs         reviews, assignment, notifications
 │   │   ├── automation.rs            rules, runs, scheduled actions
-│   │   ├── prioritisation.rs        Smart Score + ranked queue
+│   │   ├── prioritization.rs        Smart Score + ranked queue
 │   │   ├── visibility.rs            lifecycle funnel + readiness
 │   │   ├── insights.rs              executive / financial / technology views
 │   │   ├── oversight.rs             auditor, compliance, regulator extracts
@@ -94,7 +94,7 @@ project-portfolio-management-api-with-rust/
 │   ├── models/                      plans + sub-resource CRUD helpers, _entities/
 │   ├── pure rule modules            governance.rs · engineering.rs · strategy.rs ·
 │   │                                collaboration.rs · automation.rs ·
-│   │                                prioritisation.rs · lifecycle.rs · insights.rs ·
+│   │                                prioritization.rs · lifecycle.rs · insights.rs ·
 │   │                                visibility.rs · tba.rs · merge.rs · validation.rs
 │   ├── auth.rs streaming.rs relay.rs search/ privacy.rs compliance/
 │   ├── flow_metrics.rs scheduler.rs snapshots.rs version.rs
@@ -128,7 +128,7 @@ development). The front-end runs with `pnpm dev` against
   returns the scored pairs. No database access. `kind` labels do not
   affect scoring (§5.5).
 - **`/plans/check-duplicates`** — request carries a `Plan`;
-  the controller loads up to a capped set of active rows, deserialises
+  the controller loads up to a capped set of active rows, deserializes
   each payload, calls `match_plans` per candidate, and returns hits
   with `is_match == true`, sorted by score.
   *(roadmap: replace the full scan with search-based candidate blocking
@@ -141,7 +141,7 @@ development). The front-end runs with `pnpm dev` against
 A plan references other entities by `EntityRef` (sponsor org,
 lead, assignees) and a parent plan by `parent_ref`, and may
 carry `entity_links` to **any** entity, per
-[`agents/share/cross-service-linking.md`](../../agents/share/cross-service-linking.md).
+`agents/share/cross-service-linking.md` (shared family guidance, not in this repository).
 The portfolio service is a **write-side** participant: it stores
 outbound edges locally and emits `linked` / `unlinked` events on the
 bus; it does **not** call the target service on the write path
@@ -154,15 +154,15 @@ reference and **is** a (supporting) match signal (§5.5).
 ### 8.6 Deployment topology (government-portfolio scale)
 
 Target shape *(roadmap, §15)*, consistent with
-[`agents/share/architecture.md`](../../agents/share/architecture.md)
-and [`agents/share/availability.md`](../../agents/share/availability.md):
+`agents/share/architecture.md`
+and `agents/share/availability.md`:
 
 - N stateless service replicas behind a load balancer; PostgreSQL
   primary + replicas; connection pooling.
 - PASETO v4 public token verification at the service edge against the
   central auth-service's published Ed25519 key (offline, no per-request
   auth-service call;
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md),
+  `agents/share/authentication-sessions.md`,
   supersedes the RS256-JWT model).
 - Durable event bus for CRUD + sub-resource + link events; OTLP
   observability pipeline.
@@ -178,7 +178,7 @@ and [`agents/share/availability.md`](../../agents/share/availability.md):
 > They no longer do — §1.4 makes custom workflows, automation rules,
 > time tracking, and sprint ceremonies capabilities this entity owns.
 
-This entity is a **registry of plan identities (organised into recursive
+This entity is a **registry of plan identities (organized into recursive
 containment trees) that is also a full project-management suite**. Both
 faces are first-class (§1.1), and the second is no longer scoped to
 charter level: the operational record covers goals, tasks, issues,

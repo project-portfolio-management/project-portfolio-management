@@ -83,7 +83,7 @@ pub struct MsTask {
     pub outline_level: i64,
     /// `Start` date (time dropped).
     pub start: Option<NaiveDate>,
-    /// Working days (`Duration` over minutes per day, rounded up).
+    /// Business days (`Duration` over minutes per day, rounded up).
     pub duration_days: Option<i64>,
     /// `Summary`: a roll-up row.
     pub summary: bool,
@@ -108,7 +108,7 @@ pub struct MsLink {
     pub predecessor: i64,
     /// Our kind.
     pub kind: Kind,
-    /// Working days of lag (negative is a lead).
+    /// Business days of lag (negative is a lead).
     pub lag_days: i64,
 }
 
@@ -137,7 +137,7 @@ pub struct MsCalendar {
 pub struct Parsed {
     /// Project `Name` or `Title`.
     pub name: Option<String>,
-    /// Minutes in a working day.
+    /// Minutes in a business day.
     pub minutes_per_day: i64,
     /// Tasks in file order (the project summary task, UID 0, is excluded).
     pub tasks: Vec<MsTask>,
@@ -239,7 +239,7 @@ pub fn duration_minutes(s: &str) -> Option<i64> {
     Some(minutes)
 }
 
-/// Whole working days for `minutes`, rounded **up**; and whether it was rounded.
+/// Whole business days for `minutes`, rounded **up**; and whether it was rounded.
 #[must_use]
 pub fn days_of(minutes: i64, minutes_per_day: i64) -> (i64, bool) {
     let per = minutes_per_day.max(1);
@@ -370,7 +370,9 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                     unmapped.push(Unmapped {
                         what: "duration",
                         uid: Some(uid),
-                        reason: format!("a part-day duration was rounded up to {d} working day(s)"),
+                        reason: format!(
+                            "a part-day duration was rounded up to {d} business day(s)"
+                        ),
                     });
                 }
                 d
@@ -437,7 +439,7 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                     unmapped.push(Unmapped {
                         what: "link",
                         uid: Some(uid),
-                        reason: format!("a part-day lag was rounded to {lag_days} working day(s)"),
+                        reason: format!("a part-day lag was rounded to {lag_days} business day(s)"),
                     });
                 }
                 if int(l, "LagFormat")
@@ -638,7 +640,7 @@ mod tests {
         assert_eq!(t(3).deadline, Some(d(2026, 10, 30)));
         assert!(t(4).milestone && t(4).duration_days == Some(0));
         assert_eq!(t(4).constraint, Some((MsConstraint::Mso, d(2026, 11, 2))));
-        // Links; LinkLag is tenths of a minute (4800 = 480 minutes = one working day).
+        // Links; LinkLag is tenths of a minute (4800 = 480 minutes = one business day).
         let link = |s: i64, pr: i64| {
             p.links
                 .iter()
@@ -648,7 +650,7 @@ mod tests {
         assert_eq!(
             link(3, 2).map(|l| (l.kind, l.lag_days)),
             Some((Kind::Fs, 1)),
-            "LinkLag 4800 tenths = 480 min = 1 working day"
+            "LinkLag 4800 tenths = 480 min = 1 business day"
         );
         assert_eq!(link(4, 3).map(|l| l.kind), Some(Kind::Ss));
         assert_eq!(

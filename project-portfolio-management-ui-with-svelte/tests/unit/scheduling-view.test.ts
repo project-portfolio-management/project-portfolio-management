@@ -109,7 +109,7 @@ describe("schedule health words", () => {
       ),
     ).toBe("0.75 (15 of 20)");
   });
-  it("summarises and links offenders to the task on the critical-path page", () => {
+  it("summarizes and links offenders to the task on the critical-path page", () => {
     expect(healthSummary({ passed: 12, failed: 1, not_computable: 1 })).toBe(
       "12 passed, 1 failed, 1 not computable",
     );
@@ -137,7 +137,7 @@ const move: LevelingMove = {
 describe("leveling words", () => {
   it("writes a move, naming the person only when not masked", () => {
     expect(moveText(move)).toBe(
-      "Build (person:abc) starts 2026-10-05 → 2026-10-07, 2 working days later; finishes 2026-10-08 instead of 2026-10-06.",
+      "Build (person:abc) starts 2026-10-05 → 2026-10-07, 2 business days later; finishes 2026-10-08 instead of 2026-10-06.",
     );
     expect(moveText({ ...move, masked: true, person_ref: null })).toContain(
       "(person-1)",
@@ -146,7 +146,7 @@ describe("leveling words", () => {
       "project finish moves",
     );
     expect(moveText({ ...move, delay_days: 1 })).toContain(
-      "1 working day later",
+      "1 business day later",
     );
   });
   it("writes a run without numbers for a masked caller", () => {
@@ -181,7 +181,7 @@ describe("leveling words", () => {
       "The project finish stays 2026-10-09.",
     );
     expect(finishEffectText("2026-10-09", "2026-10-16", 5)).toBe(
-      "The project finish moves from 2026-10-09 to 2026-10-16 (5 working days later).",
+      "The project finish moves from 2026-10-09 to 2026-10-16 (5 business days later).",
     );
     expect(finishEffectText(null, null, 0)).toBe(
       "No project finish can be computed.",
@@ -401,7 +401,7 @@ describe("joint risk words and geometry", () => {
     const f = (m: number, c: string) => `${m / 100} ${c}`;
     expect(delayCostText(0, "GBP", f)).toContain("costs nothing extra");
     expect(delayCostText(50_000, "GBP", f)).toBe(
-      "Each working day late adds 500 GBP; finishing early earns nothing back.",
+      "Each business day late adds 500 GBP; finishing early earns nothing back.",
     );
   });
 });

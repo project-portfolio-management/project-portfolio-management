@@ -9,7 +9,7 @@
 //!
 //! The snapshot is the **critical-path engine's early dates** (SC-1) at that
 //! moment, so a baseline and the variance against it are measured on the same
-//! footing, in working days of the plan's calendar.
+//! footing, in business days of the plan's calendar.
 
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -261,7 +261,7 @@ async fn variance(
         "baseline": view(&base),
         "calendar": source,
         "variance": v,
-        "note": "Variance is in working days of the plan's calendar, measured on the critical-path engine's early dates. A task added since the baseline is `added` (not slip); one removed since stays listed with its baselined dates; a task unscheduled on either side has no variance (null, with the reason), never zero.",
+        "note": "Variance is in business days of the plan's calendar, measured on the critical-path engine's early dates. A task added since the baseline is `added` (not slip); one removed since stays listed with its baselined dates; a task unscheduled on either side has no variance (null, with the reason), never zero.",
     }))
 }
 

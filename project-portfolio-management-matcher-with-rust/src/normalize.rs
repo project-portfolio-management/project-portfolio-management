@@ -1,25 +1,25 @@
-//! Normalisation helpers — case-fold + trim + Unicode-NFKC, plus the
+//! Normalization helpers — case-fold + trim + Unicode-NFKC, plus the
 //! owner-scoped code form, URL form, set folding, and ISO-date parsing
 //! used by the timeframe component. Pure library code.
 
 use unicode_normalization::UnicodeNormalization;
 
-/// Lowercase + trim + NFKC-normalise a string. Empty input returns an
+/// Lowercase + trim + NFKC-normalize a string. Empty input returns an
 /// empty string (never `None`).
 ///
-/// The canonical text normaliser used before every fuzzy or exact text
+/// The canonical text normalizer used before every fuzzy or exact text
 /// comparison in the crate, so that case, leading/trailing whitespace,
 /// and Unicode compatibility variants (e.g. the `ﬁ` ligature → `fi`) do
 /// not produce spurious mismatches. Diacritics are *preserved* (NFKC,
-/// not a stripping normaliser) because they carry meaning in names.
+/// not a stripping normalizer) because they carry meaning in names.
 ///
-/// `s` is the raw input. Returns the normalised owned `String`.
+/// `s` is the raw input. Returns the normalized owned `String`.
 #[must_use]
 pub fn fold(s: &str) -> String {
     s.trim().nfkc().collect::<String>().to_lowercase()
 }
 
-/// Normalise an owner-scoped `code`: keep only alphanumerics, uppercased.
+/// Normalize an owner-scoped `code`: keep only alphanumerics, uppercased.
 /// Drops whitespace, hyphens, and other punctuation so `"PROJ-2026"` and
 /// `"proj 2026"` compare equal.
 ///
@@ -38,7 +38,7 @@ pub fn code(s: &str) -> String {
         .to_uppercase()
 }
 
-/// Normalise a `same_as` URL for the deterministic overlap rule: trim +
+/// Normalize a `same_as` URL for the deterministic overlap rule: trim +
 /// NFKC + lowercase, then drop a trailing slash so trivial formatting
 /// differences do not defeat the comparison.
 ///
@@ -57,7 +57,7 @@ pub fn url(s: &str) -> String {
 /// Lower-case + trim + dedupe a `Vec<String>`, dropping empty entries.
 ///
 /// Turns a raw list (`keywords` / `tags` / folded goal titles) into the
-/// canonical set the Jaccard components compare: folding normalises each
+/// canonical set the Jaccard components compare: folding normalizes each
 /// element, empties are discarded, and sort-then-dedupe yields a stable,
 /// duplicate-free set so ordering and repeats do not affect the
 /// similarity.
@@ -77,9 +77,9 @@ pub fn fold_set(items: &[String]) -> Vec<String> {
 }
 
 /// Parse an ISO-8601 calendar date (`YYYY`, `YYYY-MM`, or `YYYY-MM-DD`)
-/// to a signed day count relative to the Unix epoch (1970-01-01 = 0).
+/// to a signed calendar-day count relative to the Unix epoch (1970-01-01 = 0).
 ///
-/// The timeframe component compares `start_date` / `target_date` by day
+/// The timeframe component compares `start_date` / `target_date` by calendar-day
 /// gap, so each date is reduced to a single ordinal. A bare `YYYY`
 /// defaults to January 1st and `YYYY-MM` to the 1st of the month. Parsing
 /// is strict: non-numeric parts, out-of-range months/days, and trailing
@@ -120,10 +120,10 @@ pub fn iso_date_to_days(s: &str) -> Option<i64> {
     Some(days_from_civil(year, month, day))
 }
 
-/// Days from the Unix epoch for a proleptic-Gregorian `(y, m, d)`, via
+/// Calendar days from the Unix epoch for a proleptic-Gregorian `(y, m, d)`, via
 /// Howard Hinnant's `days_from_civil` algorithm (exact integer math,
 /// valid for the full `i64` year range). `m` is `1..=12`, `d` is
-/// `1..=31`; callers validate ranges. Returns the signed day count
+/// `1..=31`; callers validate ranges. Returns the signed calendar-day count
 /// (1970-01-01 → 0).
 fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
     // Shift so the year starts in March: leap day lands at the year's end.
@@ -183,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    fn fold_nfkc_normalises_compatibility_forms() {
+    fn fold_nfkc_normalizes_compatibility_forms() {
         assert_eq!(fold("ﬁle"), "file");
     }
 
@@ -201,7 +201,7 @@ mod tests {
         assert_eq!(iso_date_to_days("1970-01-01"), Some(0));
         assert_eq!(iso_date_to_days("1970-01-02"), Some(1));
         assert_eq!(iso_date_to_days("1969-12-31"), Some(-1));
-        // 2000-01-01 is 10957 days after the epoch.
+        // 2000-01-01 is 10957 calendar days after the epoch.
         assert_eq!(iso_date_to_days("2000-01-01"), Some(10_957));
     }
 
@@ -212,12 +212,12 @@ mod tests {
         assert_eq!(iso_date_to_days("2000-03"), iso_date_to_days("2000-03-01"));
     }
 
-    // The day gap between two dates is exact (leap year included).
+    // The calendar-day gap between two dates is exact (leap year included).
     #[test]
     fn iso_date_gap_is_exact() {
         let a = iso_date_to_days("2024-01-01").unwrap();
         let b = iso_date_to_days("2024-03-01").unwrap();
-        // Jan (31) + Feb (29, leap) = 60 days.
+        // Jan (31) + Feb (29, leap) = 60 calendar days.
         assert_eq!(b - a, 60);
     }
 

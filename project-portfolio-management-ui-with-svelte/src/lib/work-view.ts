@@ -85,7 +85,7 @@ export function assignmentBody(
     if (blank(f.duration) || !Number.isInteger(days) || days < 1 || days > 3650)
       return {
         error:
-          "Duration must be a whole number of working days from 1 to 3650.",
+          "Duration must be a whole number of business days from 1 to 3650.",
       };
     body.duration_days = days;
   }
@@ -108,7 +108,7 @@ export function assignmentBody(
 
 /** A sentence saying what the rule did. */
 export function resultText(r: AssignmentResult): string {
-  const parts = `${r.duration_days} working days at ${r.units_percent}% is ${hoursText(r.work_minutes)}`;
+  const parts = `${r.duration_days} business days at ${r.units_percent}% is ${hoursText(r.work_minutes)}`;
   const what =
     r.derived === "duration"
       ? "The duration was worked out."
@@ -129,7 +129,7 @@ export function capacityText(c: AssignmentResult["capacity"]): string {
       ? "Capacity not checked: the task has no dates yet."
       : "";
   if (c.over_capacity)
-    return `Over capacity on ${c.days_over} day${c.days_over === 1 ? "" : "s"} (${c.from} to ${c.to}): this asks more than the person can give.`;
+    return `Over capacity on ${c.days_over} calendar day${c.days_over === 1 ? "" : "s"} (${c.from} to ${c.to}): this asks more than the person can give.`;
   return "Within the person's capacity.";
 }
 
@@ -160,7 +160,7 @@ export function customWeights(text: string): number[] | { error: string } {
 
 export const UNPLACED_TEXT: Record<string, string> = {
   unscheduled: "has no dates yet",
-  no_working_days: "has no working day to fall on",
+  no_working_days: "has no business day to fall on",
   no_weight: "has a contour that gives it no weight",
 };
 

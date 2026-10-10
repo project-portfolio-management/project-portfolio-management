@@ -289,7 +289,7 @@ async fn create(
         }
     }
 
-    // An unrecognised category is refused **by name**, so an operator
+    // An unrecognized category is refused **by name**, so an operator
     // sees which state is wrong rather than that something is.
     let mut states = Vec::with_capacity(payload.states.len());
     for state in &payload.states {
@@ -369,7 +369,7 @@ async fn list(State(ctx): State<AppContext>) -> Result<Response> {
 ///
 /// Refused while any live task sits in a state only this workflow
 /// declares: withdrawing it would leave that work in a state no
-/// vocabulary explains, which is exactly the uncategorised-state
+/// vocabulary explains, which is exactly the uncategorized-state
 /// problem the category column exists to prevent.
 #[debug_handler]
 async fn remove(

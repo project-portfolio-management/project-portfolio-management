@@ -3,7 +3,7 @@
 //!
 //! Each due run executes the report through the **same code** as the on-demand
 //! run ([`super::visibility::execute_report`]), stores the output as an
-//! expiring artifact (30 days by default,
+//! expiring artifact (30 calendar days by default,
 //! `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS`), and is **audited like an
 //! export — even at zero rows**. The sweep is claim-based (the next date is
 //! moved with a conditional update before the work), so a ticker and an

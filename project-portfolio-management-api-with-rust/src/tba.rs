@@ -8,8 +8,8 @@
 //! quietly destroy:
 //!
 //! 1. **Cycle time and lead time are different numbers** (§6.1). An
-//!    item that sat in `todo` for three weeks and was built in two days
-//!    has a cycle time of 2 days and a lead time of 23. Reporting the
+//!    item that sat in `todo` for three weeks and was built in two calendar days
+//!    has a cycle time of 2 calendar days and a lead time of 23. Reporting the
 //!    first as "our delivery time" is a tenfold flattering misreport,
 //!    and it is the commonest error in the field — so both are always
 //!    returned, and never one labelled as the other.
@@ -179,7 +179,7 @@ pub struct Transition {
     pub at_ms: i64,
     /// Who it was assigned to at that moment.
     pub assignee_ref: Option<String>,
-    /// Synthesised by the migration rather than observed.
+    /// Synthesized by the migration rather than observed.
     pub backfilled: bool,
 }
 
@@ -233,7 +233,7 @@ pub struct StatusShare {
     pub waste: Option<String>,
     /// Milliseconds spent there.
     pub ms: i64,
-    /// The same in days, for display.
+    /// The same in calendar days, for display.
     pub days: f64,
     /// Share of lead time — the span the statuses partition.
     pub share: Option<f64>,
@@ -248,7 +248,7 @@ pub struct CategoryShare {
     pub category: String,
     /// Milliseconds.
     pub ms: i64,
-    /// The same in days, for display.
+    /// The same in calendar days, for display.
     pub days: f64,
     /// Share of lead time.
     pub share: Option<f64>,
@@ -259,12 +259,12 @@ pub struct CategoryShare {
 pub struct TaskAnalysis {
     /// Created → finished (or `as_of`). What the requester waits.
     pub lead_time_ms: i64,
-    /// The same in days.
+    /// The same in calendar days.
     pub lead_time_days: f64,
     /// First started → finished (or `as_of`). What the team controls.
     /// `None` when the item never left the backlog.
     pub cycle_time_ms: Option<i64>,
-    /// The same in days.
+    /// The same in calendar days.
     pub cycle_time_days: Option<f64>,
     /// Why the cycle time is null, when it is.
     pub cycle_time_reason: Option<String>,
@@ -287,7 +287,7 @@ pub struct TaskAnalysis {
     pub by_category: Vec<CategoryShare>,
     /// Transitions considered.
     pub transitions: usize,
-    /// How many of them were synthesised by the migration (§5.4).
+    /// How many of them were synthesized by the migration (§5.4).
     pub backfilled: usize,
     /// Backwards moves on the board.
     pub rework_count: usize,
@@ -302,11 +302,11 @@ pub struct TaskAnalysis {
     /// For an open item: how long since it started. The only figure
     /// here that is actionable today.
     pub age_ms: Option<i64>,
-    /// The same in days.
+    /// The same in calendar days.
     pub age_days: Option<f64>,
 }
 
-/// Milliseconds as days, rounded to three places for display.
+/// Milliseconds as calendar days, rounded to three places for display.
 #[must_use]
 #[allow(clippy::cast_precision_loss)] // display only
 pub fn as_days(ms: i64) -> f64 {
@@ -620,9 +620,9 @@ pub struct Distribution {
     /// Arithmetic mean — reported, but skew-sensitive and describing no
     /// actual item.
     pub mean_ms: i64,
-    /// The median in days, for display.
+    /// The median in calendar days, for display.
     pub p50_days: f64,
-    /// The 85th percentile in days, for display.
+    /// The 85th percentile in calendar days, for display.
     pub p85_days: f64,
     /// The percentile method in use.
     pub method: &'static str,
@@ -661,7 +661,7 @@ pub fn distribution(values: &[i64]) -> Option<Distribution> {
 /// expectation is refused rather than computed from noise (spec §7.3).
 pub const MIN_SLE_SAMPLE: usize = 10;
 
-/// A service level expectation: "p% of items finish within N days",
+/// A service level expectation: "p% of items finish within N calendar days",
 /// derived from the team's own history (spec §7.3).
 #[derive(Clone, Debug, Serialize)]
 pub struct ServiceLevelExpectation {
@@ -669,13 +669,13 @@ pub struct ServiceLevelExpectation {
     pub percentile: f64,
     /// The cycle time at that percentile, milliseconds.
     pub within_ms: Option<i64>,
-    /// The same in days — the number a team actually quotes.
+    /// The same in calendar days — the number a team actually quotes.
     pub within_days: Option<f64>,
     /// Finished items the expectation was computed from.
     pub sample: usize,
     /// Why the expectation is null, when it is.
     pub reason: Option<String>,
-    /// A caller-supplied commitment to score against, in days.
+    /// A caller-supplied commitment to score against, in calendar days.
     pub target_days: Option<f64>,
     /// The share of items that met that commitment.
     pub target_achieved_ratio: Option<f64>,
@@ -759,7 +759,7 @@ pub struct PlanAnalysis {
     pub rework_count: usize,
     /// Per-status time across the plan.
     pub by_status: Vec<StatusShare>,
-    /// Share of transitions synthesised by the migration (§5.4).
+    /// Share of transitions synthesized by the migration (§5.4).
     pub backfilled_ratio: Option<f64>,
 }
 
@@ -879,7 +879,7 @@ pub struct Finding {
     pub detail: String,
     /// Time this finding accounts for, milliseconds.
     pub recoverable_ms: i64,
-    /// The same in days.
+    /// The same in calendar days.
     pub recoverable_days: f64,
 }
 
@@ -999,7 +999,7 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
         findings.push(Finding {
             rule: "backfilled_history",
             subject: format!("{:.0}% of transitions", ratio * 100.0),
-            detail: "synthesised by the migration rather than observed, because \
+            detail: "synthesized by the migration rather than observed, because \
                      the board kept no history before it. These figures firm up \
                      as real moves accumulate"
                 .to_string(),
@@ -1019,7 +1019,7 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
 pub struct AgingItem {
     /// How long since the item started, milliseconds.
     pub age_ms: i64,
-    /// The same in days.
+    /// The same in calendar days.
     pub age_days: f64,
     /// Whether it is already past the expectation.
     pub past_sle: bool,
@@ -1049,7 +1049,7 @@ pub fn aging(age_ms: i64, sle_ms: Option<i64>) -> AgingItem {
 /// Queueing-theory flow over a window (spec §9).
 #[derive(Clone, Debug, Serialize)]
 pub struct Flow {
-    /// The window measured, days.
+    /// The window measured, calendar days.
     pub window_days: i64,
     /// Tasks created in the window.
     pub arrivals: usize,
@@ -1060,10 +1060,10 @@ pub struct Flow {
     /// μ — completions per day (throughput).
     pub throughput_per_day: Option<f64>,
     /// ρ = λ/μ. Near 1, expected wait grows without bound — a team at
-    /// 95% utilisation is not 5% from trouble, it is already in it.
-    pub utilisation: Option<f64>,
+    /// 95% utilization is not 5% from trouble, it is already in it.
+    pub utilization: Option<f64>,
     /// Why ρ is null, when it is.
-    pub utilisation_reason: Option<String>,
+    pub utilization_reason: Option<String>,
     /// κ — items started and not finished.
     pub work_in_progress: usize,
     /// τ̂ = κ/μ — the cycle time Little's Law implies for an item
@@ -1098,12 +1098,15 @@ pub fn flow(
             None,
             Some(
                 "nothing finished in the window, so throughput is zero and \
-                 utilisation is undefined — not infinite, and not zero"
+                 utilization is undefined — not infinite, and not zero"
                     .to_string(),
             ),
         ),
         (Some(l), Some(m)) => (Some(l / m), None),
-        _ => (None, Some("window must be at least one day".to_string())),
+        _ => (
+            None,
+            Some("window must be at least one calendar day".to_string()),
+        ),
     };
 
     // Little's Law rearranged: cycle time = WIP / throughput.
@@ -1120,19 +1123,19 @@ pub fn flow(
                 (
                     "wip_growing",
                     format!(
-                        "Little's Law implies {implied_days:.1} days for an item \
-                         starting now, against {obs:.1} days observed for those \
-                         just finished. Work in progress is growing faster than \
-                         it clears, so recent completions flatter the board. \
-                         Lowering the WIP limit shortens cycle time without \
-                         anyone working faster."
+                        "Little's Law implies {implied_days:.1} calendar days for \
+                         an item starting now, against {obs:.1} calendar days \
+                         observed for those just finished. Work in progress is \
+                         growing faster than it clears, so recent completions \
+                         flatter the board. Lowering the WIP limit shortens cycle \
+                         time without anyone working faster."
                     ),
                 )
             } else if ratio < 0.80 {
                 (
                     "queue_draining",
                     format!(
-                        "Little's Law implies {implied_days:.1} days against \
+                        "Little's Law implies {implied_days:.1} calendar days against \
                          {obs:.1} observed. Either work in progress is draining, \
                          or this window's completions were disproportionately \
                          old items being cleared."
@@ -1142,7 +1145,7 @@ pub fn flow(
                 (
                     "steady_state",
                     format!(
-                        "Little's Law implies {implied_days:.1} days against \
+                        "Little's Law implies {implied_days:.1} calendar days against \
                          {obs:.1} observed. Arrivals and departures are close to \
                          balanced, so the observed cycle time is predictive."
                     ),
@@ -1163,8 +1166,8 @@ pub fn flow(
         completions,
         arrival_rate_per_day: lambda,
         throughput_per_day: mu,
-        utilisation: rho,
-        utilisation_reason: rho_reason,
+        utilization: rho,
+        utilization_reason: rho_reason,
         work_in_progress,
         implied_cycle_time_days: implied,
         observed_p50_cycle_time_days: observed_days,
@@ -1554,7 +1557,7 @@ pub fn rollup_attrition_trail(inputs: &RollupAttritionInputs) -> Vec<AttritionSt
 // Monte-Carlo delivery forecasting (spec §15 TBA-11)
 // ---------------------------------------------------------------------
 
-/// Days in a forecasting period. A week is the conventional unit:
+/// Calendar days in a forecasting period. A week is the conventional unit:
 /// shorter buckets are dominated by weekday effects, longer ones give
 /// too few samples to draw from.
 pub const DEFAULT_PERIOD_DAYS: i64 = 7;
@@ -1679,7 +1682,7 @@ pub struct BatchForecast {
     pub trials: usize,
     /// Periods of history drawn from.
     pub history_periods: usize,
-    /// Days per period.
+    /// Calendar days per period.
     pub period_days: i64,
     /// The typical outcome — a coin-flip, not a commitment.
     pub p50_days: Option<f64>,
@@ -1702,7 +1705,7 @@ pub struct BatchForecast {
 ///
 /// **Throughput, not cycle time — and the difference is the whole
 /// point.** The cycle-time distribution answers a question about *one
-/// item* ("this will finish within 11 days at 85% confidence"), which
+/// item* ("this will finish within 11 calendar days at 85% confidence"), which
 /// is what the service level expectation already reports. Using it for
 /// a batch means implicitly assuming items are worked one at a time:
 /// sum twenty cycle times for a team running five in parallel and the
@@ -1800,7 +1803,7 @@ pub fn forecast_batch(
 pub struct ItemsForecast {
     /// Periods asked about.
     pub periods: usize,
-    /// The same as days.
+    /// The same as calendar days.
     pub days: i64,
     /// Simulation trials run.
     pub trials: usize,
@@ -1927,7 +1930,7 @@ pub struct FlowMetricRow {
     pub work_in_progress: usize,
     /// Aggregate work-over-cycle ratio.
     pub flow_efficiency: Option<f64>,
-    /// p85 cycle time in days. `None` below the SLE's own minimum
+    /// p85 cycle time in calendar days. `None` below the SLE's own minimum
     /// sample, so the gauge inherits the refusal to forecast from noise
     /// rather than re-deciding it.
     pub cycle_time_p85_days: Option<f64>,
@@ -2106,7 +2109,7 @@ mod tests {
 
     #[test]
     fn cycle_time_and_lead_time_are_different_numbers() {
-        // Created day 0, sat in `todo` for 21 days, built in 2.
+        // Created day 0, sat in `todo` for 21 calendar days, built in 2.
         // Cycle 2, lead 23. Quoting the cycle time as the delivery time
         // is a tenfold flattering misreport — this is the regression
         // test against ever conflating them.
@@ -2143,7 +2146,7 @@ mod tests {
         assert_eq!(
             a.lead_time_ms,
             10 * DAY_MS,
-            "but it has been waiting 10 days"
+            "but it has been waiting 10 calendar days"
         );
         assert_eq!(
             a.age_ms, None,
@@ -2173,14 +2176,14 @@ mod tests {
         assert_eq!(cycle, 11 * DAY_MS, "day 10 → 21");
         assert_eq!(a.lead_time_ms, 21 * DAY_MS, "creation → done");
         // The statuses partition the **lead** time, not the cycle time:
-        // the 10 days in the backlog are real time the requester waited
+        // the 10 calendar days in the backlog are real time the requester waited
         // and have to land somewhere (§6.3).
         let status_total: i64 = a.by_status.iter().map(|s| s.ms).sum();
         assert_eq!(status_total, a.lead_time_ms, "statuses sum to lead time");
         let category_total: i64 = a.by_category.iter().map(|c| c.ms).sum();
         assert_eq!(category_total, a.lead_time_ms, "categories sum too");
         assert_eq!(a.queue_time_ms, 10 * DAY_MS, "and the dwell is named");
-        // in_progress: day 10-12 and 20-21 = 3 days of the 11.
+        // in_progress: day 10-12 and 20-21 = 3 calendar days of the 11.
         assert_eq!(a.work_time_ms, 3 * DAY_MS);
         assert_eq!(a.blocked_time_ms, 5 * DAY_MS, "day 15 → 20");
         let efficiency = a.flow_efficiency.value.expect("efficiency");
@@ -2199,7 +2202,7 @@ mod tests {
             created_ms: at(0),
             done_ms: Some(at(3)),
         };
-        // Analysed a hundred days later: the clock must not have run on.
+        // Analysed a hundred calendar days later: the clock must not have run on.
         let a = analyze(&transitions, clock, &classes(), at(103));
         assert_eq!(a.cycle_time_ms, Some(2 * DAY_MS));
         assert!(
@@ -2335,7 +2338,7 @@ mod tests {
             created_ms: at(0),
             done_ms: None,
         };
-        // No transitions at all: five days of unknown history, charged
+        // No transitions at all: five calendar days of unknown history, charged
         // to `todo` rather than left unattributed, so it cannot be lost
         // from a report.
         let empty = analyze(&[], clock, &classes(), at(5));
@@ -2485,7 +2488,7 @@ mod tests {
     }
 
     /// One item that started, blocked for nearly a year, and finished:
-    /// a 300-day cycle with 2 days of work in it.
+    /// a 300-calendar-day cycle with 2 calendar days of work in it.
     fn long_stalled_task() -> TaskAnalysis {
         let transitions = vec![
             tr(None, "todo", 0),
@@ -2560,7 +2563,7 @@ mod tests {
 
     #[test]
     fn littles_law_labels_the_three_regimes() {
-        // κ=100, μ=1/day ⇒ τ̂=100 days, against 10 observed.
+        // κ=100, μ=1/day ⇒ τ̂=100 calendar days, against 10 observed.
         let growing = flow(100, 200, 100, 100, Some(10 * DAY_MS));
         assert_eq!(growing.interpretation, "wip_growing");
         assert!((growing.implied_cycle_time_days.unwrap_or(0.0) - 100.0).abs() < 1e-9);
@@ -2575,23 +2578,23 @@ mod tests {
     #[test]
     fn flow_refuses_to_invent_numbers_it_cannot_have() {
         let nothing_done = flow(30, 10, 0, 10, None);
-        assert_eq!(nothing_done.utilisation, None);
-        assert!(nothing_done.utilisation_reason.is_some());
+        assert_eq!(nothing_done.utilization, None);
+        assert!(nothing_done.utilization_reason.is_some());
         assert_eq!(nothing_done.implied_cycle_time_days, None);
         assert_eq!(nothing_done.interpretation, "insufficient_data");
 
         let zero_window = flow(0, 5, 5, 5, Some(DAY_MS));
         assert_eq!(zero_window.arrival_rate_per_day, None);
-        assert_eq!(zero_window.utilisation, None);
+        assert_eq!(zero_window.utilization, None);
     }
 
     #[test]
-    fn utilisation_is_demand_over_capacity() {
+    fn utilization_is_demand_over_capacity() {
         let f = flow(10, 20, 10, 5, Some(DAY_MS));
         assert_eq!(f.arrival_rate_per_day, Some(2.0));
         assert_eq!(f.throughput_per_day, Some(1.0));
         assert_eq!(
-            f.utilisation,
+            f.utilization,
             Some(2.0),
             "twice as much arriving as leaving"
         );
@@ -2970,7 +2973,7 @@ mod tests {
     #[test]
     fn throughput_history_ignores_a_partial_trailing_period() {
         let week = 7 * DAY_MS;
-        // Ten days of window is one whole week plus a stub. Counting the
+        // Ten calendar days of window is one whole week plus a stub. Counting the
         // stub as a period would understate throughput.
         let history = throughput_history(&[at(1), at(8)], at(0), at(10), week);
         assert_eq!(history, vec![1], "only whole periods count");
@@ -3014,7 +3017,7 @@ mod tests {
         );
         assert!(p50 <= p85 && p85 <= p95, "{p50} {p85} {p95}");
         // Roughly 4 items a week, so 40 items is about ten weeks.
-        assert!((49.0..=105.0).contains(&p50), "p50 was {p50} days");
+        assert!((49.0..=105.0).contains(&p50), "p50 was {p50} calendar days");
         // A bigger batch cannot finish sooner.
         let bigger = forecast_batch(&history, 80, 4000, 7, 1);
         assert!(bigger.p85_days.expect("p85") >= p85);
@@ -3035,7 +3038,7 @@ mod tests {
         assert_eq!(dead.p85_days, None);
         assert!(dead.reason.is_some_and(|r| r.contains("never")));
 
-        // Zero items is zero days, not a refusal.
+        // Zero items is zero calendar days, not a refusal.
         let none = forecast_batch(&[3, 4, 5, 2, 3, 4], 0, 100, 7, 1);
         assert_eq!(none.p85_days, Some(0.0));
         assert_eq!(none.reason, None);

@@ -69,7 +69,7 @@
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void run(); }}>
   <label>Currency (if the plan has several) <input type="text" maxlength="3" bind:value={currency} placeholder="GBP" /></label>
-  <label>Cost of each working day late (major units) <input type="number" min="0" step="0.01" bind:value={delayCost} /></label>
+  <label>Cost of each business day late (major units) <input type="number" min="0" step="0.01" bind:value={delayCost} /></label>
   <label>Iterations <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
   <label>Seed <input type="number" min="0" step="1" bind:value={seed} /></label>
   <label>Distribution
@@ -102,15 +102,15 @@
 
   {#if scatter}
     <figure>
-      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label="Scatter of simulated total cost against working days late, with the budget and the on-time line" width="100%" style="max-width: 32rem">
+      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label="Scatter of simulated total cost against business days late, with the budget and the on-time line" width="100%" style="max-width: 32rem">
         {#each scatter.dots as d, i (i)}
-          <circle cx={d.x} cy={d.y} r="2.5" class="dot"><title>{d.days} working days late, {money(d.cost, result.currency)}</title></circle>
+          <circle cx={d.x} cy={d.y} r="2.5" class="dot"><title>{d.days} business days late, {money(d.cost, result.currency)}</title></circle>
         {/each}
         <line x1={scatter.onTimeX} x2={scatter.onTimeX} y1="16" y2={scatter.height - 32} class="ref" />
         <text x={scatter.onTimeX} y="12" text-anchor="middle" class="label">on time</text>
         <line x1="32" x2={scatter.width - 32} y1={scatter.budgetY} y2={scatter.budgetY} class="ref budget" />
         <text x={scatter.width - 32} y={scatter.budgetY - 4} text-anchor="end" class="label">budget</text>
-        <text x={scatter.width / 2} y={scatter.height - 6} text-anchor="middle" class="label">working days late →</text>
+        <text x={scatter.width / 2} y={scatter.height - 6} text-anchor="middle" class="label">business days late →</text>
       </svg>
       <figcaption class="small muted">Each dot is one simulation (a thinned sample). Right of the on-time line is late; above the budget line is over budget. The table above has the full counts.</figcaption>
     </figure>

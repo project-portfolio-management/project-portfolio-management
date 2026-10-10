@@ -33,6 +33,7 @@ export interface StatusShare {
   /** The VSM waste type, where the status represents one. */
   waste: string | null;
   ms: number;
+  /** Calendar days (`ms` ÷ 86 400 000). */
   days: number;
   /** Share of lead time. */
   share: number | null;
@@ -44,6 +45,7 @@ export interface StatusShare {
 export interface CategoryShare {
   category: string;
   ms: number;
+  /** Calendar days (`ms` ÷ 86 400 000). */
   days: number;
   share: number | null;
 }
@@ -68,9 +70,11 @@ export interface Distribution {
 export interface TaskAnalysis {
   /** Created → finished. What the requester waits. */
   lead_time_ms: number;
+  /** Lead time in calendar days. */
   lead_time_days: number;
   /** First started → finished. What the team controls. `null` until it starts. */
   cycle_time_ms: number | null;
+  /** Cycle time in calendar days. */
   cycle_time_days: number | null;
   cycle_time_reason: string | null;
   work_time_ms: number;
@@ -84,7 +88,7 @@ export interface TaskAnalysis {
   by_status: StatusShare[];
   by_category: CategoryShare[];
   transitions: number;
-  /** How many transitions were synthesised by the migration rather than observed. */
+  /** How many transitions were synthesized by the migration rather than observed. */
   backfilled: number;
   rework_count: number;
   first_pass: boolean;
@@ -93,6 +97,7 @@ export interface TaskAnalysis {
   finished: boolean;
   /** For an open item: how long since it started. The actionable one. */
   age_ms: number | null;
+  /** Age in calendar days. */
   age_days: number | null;
 }
 
@@ -103,15 +108,17 @@ export interface Classification {
   source: string;
 }
 
-/** "p% of items finish within N days", derived from the plan's own history. */
+/** "p% of items finish within N calendar days", derived from the plan's own history. */
 export interface ServiceLevelExpectation {
   percentile: number;
   within_ms: number | null;
+  /** The expectation in calendar days. */
   within_days: number | null;
   /** Finished items it was computed from. */
   sample: number;
   /** Why it is null — below the minimum sample, it is refused rather than computed from noise. */
   reason: string | null;
+  /** The target in calendar days. */
   target_days: number | null;
   target_achieved_ratio: number | null;
   target_met: boolean | null;
@@ -143,6 +150,7 @@ export interface Finding {
   subject: string;
   detail: string;
   recoverable_ms: number;
+  /** Recoverable time in calendar days. */
   recoverable_days: number;
 }
 
@@ -157,6 +165,7 @@ export interface AgingRow {
   status: string;
   aging: {
     age_ms: number;
+    /** Age in calendar days. */
     age_days: number;
     past_sle: boolean;
     /** Age as a fraction of the expectation; `null` when there is no expectation yet. */
@@ -168,15 +177,18 @@ export interface AgingRow {
 
 /** Queueing-theory flow over a window. */
 export interface Flow {
+  /** The window in calendar days. */
   window_days: number;
   arrivals: number;
   completions: number;
   arrival_rate_per_day: number | null;
   throughput_per_day: number | null;
-  utilisation: number | null;
-  utilisation_reason: string | null;
+  utilization: number | null;
+  utilization_reason: string | null;
   work_in_progress: number;
+  /** Little's Law cycle time in calendar days. */
   implied_cycle_time_days: number | null;
+  /** Observed median cycle time in calendar days. */
   observed_p50_cycle_time_days: number | null;
   interpretation:
     "wip_growing" | "steady_state" | "queue_draining" | "insufficient_data";
@@ -261,6 +273,7 @@ export interface PlanFlow {
 export interface CumulativeFlow {
   as_of: string;
   plan: { pid: string; name: string };
+  /** The window in calendar days. */
   days: number;
   note: string;
   classification: Classification;
@@ -276,7 +289,7 @@ export interface TransitionRow {
   at: string;
   actor_ref: string | null;
   assignee_ref: string | null;
-  /** Synthesised by the migration rather than observed. */
+  /** Synthesized by the migration rather than observed. */
   backfilled: boolean;
 }
 
@@ -393,14 +406,14 @@ export function percent(value: number | null | undefined, digits = 0): string {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-/** A duration in days, or an em-dash when there is none. */
+/** A duration in calendar days ("2.3 calendar days"), or an em-dash when there is none. */
 export function days(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || !Number.isFinite(value))
     return "—";
-  return `${value.toFixed(digits)}d`;
+  return `${value.toFixed(digits)} calendar days`;
 }
 
-/** Milliseconds as a days string. */
+/** Milliseconds as a calendar-days string. */
 export function msAsDays(ms: number | null | undefined, digits = 1): string {
   if (ms === null || ms === undefined || !Number.isFinite(ms)) return "—";
   return days(ms / 86_400_000, digits);

@@ -62,9 +62,9 @@ tasks / goals / issues as sub-resources — see entity spec §5; posts /
 comments / members are roadmap-only). There is **no password /
 credential form** — sign-on is passwordless magic-link, run through this
 app's own `/signin` + `/verify` BFF routes against the central
-[authentication-service](../../../authentication/authentication-service-with-loco/).
+authentication-service (sibling repository, not in this repository).
 Per the BFF + httpOnly-cookie model
-([`../../../agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md))
+(`../../../agents/share/authentication-sessions.md` (shared family guidance, not in this repository))
 the browser holds only the `__Host-mxi_session` cookie and the SvelteKit
 server attaches a short-lived PASETO server-side (calling the portfolio
 service through the same-origin `/api/proxy` route) — no token in JS, no
@@ -298,8 +298,8 @@ keys fall back to `en`.
     directly. Mutating browser→BFF calls carry a CSRF token; **Sign out**
     revokes the session. This lets operator traffic through once the
     service turns on blanket enforcement
-    (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, off by default). Per
-    [`../../../agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md).
+    (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, on by default since HD-3). Per
+    `../../../agents/share/authentication-sessions.md`.
 16. **Layout shell**: global navigation is a full-width **top bar**
     (header) with a **leftmost hamburger** toggle — NOT a left sidebar —
     the main content area is **full-width**, the nav has a single **Plans**
@@ -635,7 +635,7 @@ links are **never** a match signal (entity spec §1).
 
 - [x] **2026-07-22 — Capability views (service spec §9.4a).**
   `CapabilityClient` + wire types in `src/lib/api/capabilities.ts`, and
-  four pages: `/prioritisation` (Smart Score queue + per-component
+  four pages: `/prioritization` (Smart Score queue + per-component
   explanation), `/lifecycle` (the phase funnel), `/reviews`
   (delegation, verdicts, consensus), `/automations` (rules, the
   deadline queue + manual sweep, and the run log). Nav entries added;
@@ -690,7 +690,7 @@ links are **never** a match signal (entity spec §1).
   Sign-in is this app's own `signin/` + `verify/` routes, not a redirect
   to a central authentication front-end. No `mxi_access_token` /
   `localStorage` bearer, no fragment handoff (per
-  [`../../../agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md)).
+  `../../../agents/share/authentication-sessions.md`).
 - [x] `src/lib/config.ts` — `API_BASE_URL` (same-origin `/api/proxy`,
   hardcoded, not env-driven). There is no client-side `signInUrl()`; the
   Sign in link is a plain `href="/signin"`.
@@ -773,7 +773,7 @@ links are **never** a match signal (entity spec §1).
     `src/routes/onboarding/+page.svelte` — a static page rendering it,
     no API call, so nothing here can fail to load; a plain-English
     `/onboarding` entry added to `navItems` in `+layout.svelte`
-    (unlocalized, matching the existing `/prioritisation` and
+    (unlocalized, matching the existing `/prioritization` and
     `/lifecycle` nav entries' precedent — not every nav item goes
     through the 13-locale i18n catalogue).
   - **Deliberately makes no time-to-productivity claim** — nobody has
@@ -817,7 +817,7 @@ links are **never** a match signal (entity spec §1).
       `src/lib/nav.ts` (new, pure, DB-free): `viewAttr(attrs)` reads the
       deployment-declared `view` attribute's first value (a vocabulary
       the deployment declares, **not** an enum this code owns — an
-      unrecognised value is simply ignored, never an error);
+      unrecognized value is simply ignored, never an error);
       `orderNavForView(items, view)` moves the nav item whose `href` is
       `/${view}` to right after the brand/home link, leaving everything
       else in original order, and is a no-op when `view` is
@@ -837,7 +837,7 @@ links are **never** a match signal (entity spec §1).
       `navItems` itself, and every existing label/i18n lookup inside
       it, is completely untouched. Root `+page.svelte` redirects to
       `data.landingRoute` instead of the hardcoded `"/plans"`.
-      This is **presentation only**: authorisation stays entirely with
+      This is **presentation only**: authorization stays entirely with
       the service's ABAC (`agents/share/authorization-attributes.md`);
       every route stays reachable by direct URL navigation regardless
       of `view`, since `orderNavForView` reorders, it never removes.
@@ -956,7 +956,7 @@ links are **never** a match signal (entity spec §1).
 - **v0.2**: scaffold + plan identity routes (list / create / detail /
   edit) + lean client + repository + BFF auth (own `/signin`+`/verify`,
   httpOnly cookie + CSRF, per
-  [`../../../agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md))
+  `../../../agents/share/authentication-sessions.md`)
   + layout shell (top-bar hamburger, theme + locale
   selectors) + vitest + Playwright smoke.
 - **v0.3**: duplicate-check (done) + merge (done, as the standalone
@@ -985,9 +985,9 @@ links are **never** a match signal (entity spec §1).
 - Family layout shell + theming + locale conventions; SvelteKit 2 +
   Svelte 5 runes docs; SVAR Svelte DataGrid; Lily Design System Svelte
   Headless.
-- Auth / sessions (source of truth): [`agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md);
-  blanket enforcement: [`agents/share/jwt-enforcement.md`](../../../agents/share/jwt-enforcement.md);
-  locales: [`agents/share/locales.md`](../../../agents/share/locales.md).
+- Auth / sessions (source of truth): `agents/share/authentication-sessions.md`;
+  blanket enforcement: `agents/share/jwt-enforcement.md`;
+  locales: [`agents/share/locales.md`](../../spec/locales.md).
 
 ## 18. Change control
 
@@ -1025,25 +1025,25 @@ come from `GET /api/plans/{pid}/cpm`; the pure helpers are `src/lib/cpm-view.ts`
   early finish, then the task's **float as a hatched tail**, and a limit marker
   when float is negative), a precedence **network diagram** (`NetworkDiagram`:
   columns by longest predecessor chain, critical chains drawn heavier, non-trivial
-  links labelled `SS +2d`), and a **table** (`CpmTable`, with free float,
+  links labelled `SS +2 business days`), and a **table** (`CpmTable`, with free float,
   constraint, deadline and calendar).
 - **State is never colour alone.** Every task has a marker (● critical, ◐
   near-critical, ○ float, ! cannot meet a constraint or deadline) *and* a
-  sentence ("3 working days of float", "Cannot meet its constraint or deadline: 2
-  working days short"). Negative float is said in words, never a bare minus.
+  sentence ("3 business days of float", "Cannot meet its constraint or deadline: 2
+  business days short"). Negative float is said in words, never a bare minus.
   The diagram has a list twin; the Gantt has the table.
 - **Honest about what is missing.** Tasks with no duration, or no start and no
   scheduled predecessor, are listed under *Not scheduled* with the reason.
-  Assignees whose calendar shares no working day with the plan are named in a
-  banner. Float is in working days; bars are drawn in calendar days (a weekend
+  Assignees whose calendar shares no business day with the plan are named in a
+  banner. Float is in business days; bars are drawn in calendar days (a weekend
   inside a bar is drawn, not counted).
 - **The editor** sets start, duration (0 = milestone), a constraint and a
   deadline, and shows **what moved** across the network. A hard constraint
   (`mso`, `mfo`) asks for a reason; the service refuses it without the
   `scheduling=hard_constraints` (or admin) permission and the page shows that
   message. `alap` is not offered (the service does not support it).
-- **Calendars:** `CalendarMonth` shows working days, off days (–), holidays (✕)
-  and recorded absences (A) with a symbol each; editable, a working day is a
+- **Calendars:** `CalendarMonth` shows business days, off days (–), holidays (✕)
+  and recorded absences (A) with a symbol each; editable, a business day is a
   button that toggles a holiday. A plan with no calendar says "every day works".
   A person's calendar narrows the plan's for their own tasks.
 - **Not built:** a WBS tree with generated codes and an RBS (PJ-12's other
@@ -1083,7 +1083,7 @@ a version picker, a *show the baseline under each bar* toggle (an outline under
 the Gantt bar where the task was baselined to sit; `cpmBars` widens the span to
 include it) and the **variance table** (`VarianceTable`). Rules the page keeps:
 a baseline is **append-only** (the page offers no edit or delete, re-baselining
-is the next version); variance is in **working days**; every row has a marker
+is the next version); variance is in **business days**; every row has a marker
 and a sentence (▲ slipped, ▼ pulled in, = on baseline, + **added — no slip**, −
 **removed — kept with its baselined dates**, ? cannot say); the summary states
 the plan's own finish movement and warns when it improved only because tasks

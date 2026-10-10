@@ -2,7 +2,7 @@
 
 PostgreSQL via SeaORM 1.1 + `sea-orm-migration`, owned entirely by the
 service crate. Family conventions:
-[`agents/share/postgresql.md`](../../agents/share/postgresql.md).
+`agents/share/postgresql.md` (shared family guidance, not in this repository).
 
 > **Corrected 2026-08-25.** This paragraph read *"All tables below are
 > **planned** — the entity is spec-only (§14)"*, which §14 contradicts:
@@ -22,21 +22,21 @@ partition, §5.6).
 |---|---|---|
 | `id` | `PkAuto` | Internal row id |
 | `pid` | `UuidUniq` | Public id (route param) |
-| `name` | `String` | Denormalised `data.name` for listing |
+| `name` | `String` | Denormalized `data.name` for listing |
 | `data` | `JsonBinary` (JSONB) | Full thin `Plan` payload (incl. optional `kind`, `goals[]`) |
-| `kind` | `StringNull` | Denormalised optional `data.kind` label (`Portfolio`\|`Project`\|`Product`\|`Program`\|`Practice`\|`Process`\|`Purpose`\|`Pathway`\|`Proposal`); nullable — descriptive only, not a discriminator |
-| `parent_pid` | `UuidNull` | Denormalised `data.parent_ref` for cheap roll-up of a plan's children (indexed); NULL for a root plan |
+| `kind` | `StringNull` | Denormalized optional `data.kind` label (`Portfolio`\|`Project`\|`Product`\|`Program`\|`Practice`\|`Process`\|`Purpose`\|`Pathway`\|`Proposal`); nullable — descriptive only, not a discriminator |
+| `parent_pid` | `UuidNull` | Denormalized `data.parent_ref` for cheap roll-up of a plan's children (indexed); NULL for a root plan |
 | `active` | `BooleanWithDefault(true)` | Registry flag |
 | `deleted_at` | `TimestampWithTimeZoneNull` | Soft delete |
 
 The optional `kind` label rides in the payload verbatim; when present
-the denormalised `kind` column mirrors it. `kind` does **not** map to a
+the denormalized `kind` column mirrors it. `kind` does **not** map to a
 table or gate matching — every plan lives in the one `plans` table and
 matching is **kind-agnostic** (§5.5): any two plan rows may be compared.
 
 **Operational sub-resources** — one table each, every row carrying
 `parent_pid UUID` (indexed) + `pid UUID unique` + `deleted_at` for soft
-delete. None is serialised into any `data` column; none reaches the
+delete. None is serialized into any `data` column; none reaches the
 matcher.
 
 | Table | Key columns (beyond `id`, `pid`, `parent_pid`, `deleted_at`) |
@@ -66,12 +66,12 @@ mutation (§10.2).
   `m20261003_000020`).
 - **`entity_links`** — **not built (T-7).** No migration, entity or
   route exists. The cross-service write-side table in
-  [`agents/share/cross-service-linking.md` §4.1](../../agents/share/cross-service-linking.md)
+  `agents/share/cross-service-linking.md` §4.1
   (`from_pid`, `kind`, `to_ref`, `role?`, `confidence`, `provenance`,
   `valid_from?`, `valid_to?`, `UNIQUE (from_pid, kind, to_ref,
   valid_from)`) remains a target.
 - **`bulk_jobs`** — the bulk import/export job table per
-  [`agents/share/bulk-import-export.md` §3](../../agents/share/bulk-import-export.md),
+  [`agents/share/bulk-import-export.md` §3](bulk-import-export.md),
   with `UNIQUE (entity, kind, idempotency_key)`. Canonical column list
   lives there; not restated (§10.4).
 
@@ -120,7 +120,7 @@ severity, etc. is relational), which is why they are *not* in the JSONB
 
 Async bulk operations (§9.6) add one table, `bulk_jobs`, per the
 family-wide schema in
-[bulk import/export §3](../../agents/share/bulk-import-export.md) — the
+[bulk import/export §3](bulk-import-export.md) — the
 canonical column list lives there and is **not** restated. It tracks
 each import/export job (`kind`, `format`, `status`, `params`, the
 `rows_total`/`rows_created`/`rows_upserted`/`rows_to_review`/`rows_errored`
@@ -159,7 +159,7 @@ Five tables behind §6.4a, none of them part of the matcher payload:
 
 **No Smart Score table.** The score (§6.4e) is derived on read from rows
 the service already stores, so it can never drift from the evidence it
-claims to summarise.
+claims to summarize.
 
 
 ### 10.6 Full-suite tables (§1.4–§1.6, §6.4c)
@@ -169,7 +169,7 @@ The column lists below are the original design; the migrations are
 authoritative and the column-level match was **unverified** in this
 pass (table names were verified). Every table carries `pid UUID unique` and
 `deleted_at` for soft delete; every plan-scoped table carries an indexed
-`plan_pid UUID`. **None is serialised into any `data` column and none
+`plan_pid UUID`. **None is serialized into any `data` column and none
 reaches the matcher** (§5.6).
 
 | Table | Holds | FR |
@@ -200,7 +200,7 @@ Schema-level constraints that enforce spec rules rather than trusting
 the handlers:
 
 - `workflow_states.category` is `NOT NULL` with a CHECK on the four
-  values, so an uncategorised state cannot exist even by direct SQL
+  values, so an uncategorized state cannot exist even by direct SQL
   (§5.9.1). A partial unique index enforces one `is_initial` state per
   workflow.
 - `phase_transitions` is **append-only** — no update or delete path,

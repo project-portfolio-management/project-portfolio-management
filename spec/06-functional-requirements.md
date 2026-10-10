@@ -31,7 +31,7 @@ gates nor scores.
 - **FR-3** Read: `GET /api/plans/{pid}` returns the stored thin
   `Plan`; `404` for unknown or soft-deleted `pid`.
 - **FR-4** Update: `PUT /api/plans/{pid}` replaces the whole
-  thin payload (and the denormalised `name` / `parent_pid`); same
+  thin payload (and the denormalized `name` / `parent_pid`); same
   validation as FR-1a.
 - **FR-5** Soft delete: `DELETE /api/plans/{pid}` sets
   `deleted_at`; the record and its sub-resources disappear from list /
@@ -40,7 +40,7 @@ gates nor scores.
 ### 6.2 Name search — service
 
 - **FR-5a** `GET /api/plans/search?q=` — case-insensitive name
-  search (Postgres `ILIKE` on the denormalised `name`, cap 50,
+  search (Postgres `ILIKE` on the denormalized `name`, cap 50,
   wildcards escaped); blank `q` → `400`. Tantivy full-text over the
   payload is roadmap (§15).
 
@@ -58,9 +58,9 @@ the matcher [spec §5–§18](../project-portfolio-management-matcher-with-rust/
     (`Uri`, `Uuid`, `JiraProjectKey`, `AsanaGid`, `TrelloBoardId`,
     `MsProjectId`, `GitHubProjectId`, `LinearId`); the owner-scoped
     `Code` / `LocalId` and `Custom` are **excluded**;
-  - **R-1**: same non-empty `owner_org_id` + equal normalised `code`;
+  - **R-1**: same non-empty `owner_org_id` + equal normalized `code`;
   - **R-2**: any case-folded `same_as` URL overlap.
-- **FR-8** Probabilistic components (matcher), renormalised weighted
+- **FR-8** Probabilistic components (matcher), renormalized weighted
   average over the components both records carry:
 
   | Component | Weight | Algorithm |
@@ -93,7 +93,7 @@ the matcher [spec §5–§18](../project-portfolio-management-matcher-with-rust/
 - **FR-11a** Real-time duplicate detection on create (service):
   `POST /api/plans` returns `409 Conflict` with candidate
   matches when a likely duplicate is detected (family baseline,
-  [`agents/share/match-search-merge.md`](../../agents/share/match-search-merge.md));
+  `agents/share/match-search-merge.md` (shared family guidance, not in this repository));
   a `force` flag bypasses for deliberate near-duplicates.
 - **FR-11b** Record merge (service): `POST /api/plans/merge`
   folds a confirmed-duplicate plan into a surviving one (any two plans;
@@ -137,7 +137,7 @@ hang off **any** plan.
   returns remaining-vs-estimate over time, from periodic snapshots of
   task `estimate` / `remaining`. Read-only; computed from snapshots.
 
-### 6.4a Collaboration, automation, and prioritisation — service
+### 6.4a Collaboration, automation, and prioritization — service
 
 Delivered 2026-07-22 (service spec §9.4a). None of this enters the
 matcher payload (§5.6); every mutation audits (§6.6).
@@ -171,8 +171,8 @@ matcher payload (§5.6); every mutation audits (§6.6).
   once**: the sweep claims each row with a conditional update, so the
   optional in-process ticker and a manual sweep cannot double-fire.
   Notifications are **in-app only** — no email, no push.
-- **FR-16e Smart Score (data-driven prioritisation).** A derived,
-  renormalised weighted average over ROI, strategic alignment, expert
+- **FR-16e Smart Score (data-driven prioritization).** A derived,
+  renormalized weighted average over ROI, strategic alignment, expert
   review, risk (inverted), demand, MoSCoW priority, and momentum, with a
   full per-component breakdown. **Absent evidence is dropped and
   disclosed** (`missing` + `coverage`), never scored zero; no evidence at
@@ -223,12 +223,12 @@ matcher payload (§5.6); every mutation audits and emits its event
   substituted for elapsed time in a flow ratio, and is **never** an
   input to Smart Score (FR-16e) or to any Flow Framework metric
   (FR-31). Per-assignee roll-ups serve capacity, cost, "who should be
-  asked about this", and **per-person utilisation** (FR-35). Every
+  asked about this", and **per-person utilization** (FR-35). Every
   roll-up is labelled as **asserted**, distinguishing it from the
   observed transition log — which matters more now that a per-person
   figure is published from it.
 - **FR-29 Sprint ceremonies.** CRUD sprints and the four ceremonies
-  (planning / daily / review / retrospective) with categorised notes.
+  (planning / daily / review / retrospective) with categorized notes.
   Planning writes a **commitment snapshot** of the task set at sprint
   start, so later scope change reads as change rather than as a moved
   goalpost. Daily blockers convert into issues (FR-14); `action` and
@@ -273,7 +273,7 @@ matcher payload (§5.6); every mutation audits and emits its event
 The realized-gains and strategic-performance metric set. Types in
 §5.9.6, endpoints in §9.2c, tables in §10.6. **Every figure is derived
 on read, never stored**, so it cannot drift from the evidence it claims
-to summarise (the Smart Score rule, §6.4a).
+to summarize (the Smart Score rule, §6.4a).
 
 Honest starting position: `benefits`, `budget_lines`, `risks`,
 `allocations` and a basis-point ROI helper already exist (PPM-10/11/12,
@@ -312,7 +312,7 @@ sentiment.
   already carries.
 
 - **FR-34 Strategic performance metrics.** `GET /api/plans/{pid}/performance`
-  and the portfolio-wide `GET /api/performance`, organised in the six
+  and the portfolio-wide `GET /api/performance`, organized in the six
   dimensions the source framework uses:
 
   | Dimension | Metric | Formula | State |
@@ -344,9 +344,9 @@ sentiment.
 
   **This reverses a standing refusal, deliberately.**
   [time-based-analysis.md](time-based-analysis.md) §12.4 refused
-  per-person measurement and §2.4 declined utilisation; both were
+  per-person measurement and §2.4 declined utilization; both were
   amended on 2026-08-25 to record this decision (§12.4a). The reversal
-  is **scoped to utilisation**: per-assignee **cycle time, throughput,
+  is **scoped to utilization**: per-assignee **cycle time, throughput,
   and flow efficiency remain refused**, and no endpoint returns them.
 
   Five obligations make the figure honest rather than merely available,
@@ -555,11 +555,11 @@ across currencies.
   link to **any** index entity. The service ships the **write-side**:
   `POST`/`GET`/`DELETE /api/plans/{pid}/links` over an `entity_links`
   table and `linked` / `unlinked` events, per
-  [`agents/share/cross-service-linking.md` §4](../../agents/share/cross-service-linking.md).
+  `agents/share/cross-service-linking.md` §4.
   Links are **never** a match signal (§7 there). The read-model
   aggregator (`link-graph-service`) is out of scope here (§2.3).
 - **FR-18 Bulk import / export.** Async, job-based bulk per
-  [`agents/share/bulk-import-export.md`](../../agents/share/bulk-import-export.md):
+  [`agents/share/bulk-import-export.md`](bulk-import-export.md):
   the five endpoints on `bg_pg`, JSONL / CSV / Parquet codecs,
   upsert-by-stable-key + dedupe-to-review, per-row error report, and
   export masking + audit, on the one plans collection.
@@ -572,12 +572,12 @@ across currencies.
   write** (action + JSON snapshot + actor + timestamp), durable in
   Postgres; read at `/api/plans/audit/recent` and
   `/api/plans/{pid}/audit`. Per
-  [`agents/share/auditability.md`](../../agents/share/auditability.md).
+  `agents/share/auditability.md`.
 - **FR-20** Event streaming: a `PlanEvent`
   (`created`/`updated`/`deleted`/`merged`, plus sub-resource and
   `linked`/`unlinked` events) per write to an in-memory stream (MVP),
   read at `/api/plans/events/recent`; the durable bus
-  ([`agents/share/event-bus.md`](../../agents/share/event-bus.md)) is
+  (`agents/share/event-bus.md`) is
   roadmap (§15).
 
 ### 6.7 Security — service
@@ -589,7 +589,7 @@ across currencies.
   present. Blanket `/api/*` enforcement and paseto-keys-over-HTTP fetch are
   follow-ups (§13, awaiting the coordinated family SSO rollout). Auth
   source of truth (supersedes the RS256-JWT model):
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md).
+  `agents/share/authentication-sessions.md`.
 
 ### 6.8 Operator UI — front-end
 

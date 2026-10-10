@@ -65,7 +65,7 @@ Every plan route lives under the static `plans/` directory.
 | `/plans/[pid]/wbs` | Work breakdown tree with generated codes (table twin past 500 rows) |
 | `/plans/[pid]/onboarding`, `/plans/[pid]/handover` | Onboarding and offboarding checklists; handover of work |
 | `/plans/[pid]/{critical-path,earned-value,raci,leveling,schedule-health,schedule-risk,cost-risk,joint-risk,flow,calendar}` | Scheduling canon: critical path network, earned value, RACI, leveling, schedule health, schedule and cost risk, flow metrics, working calendar |
-| `/auditor`, `/compliance`, `/regulator`, `/risk`, `/security`, `/engineering`, `/board`, `/calendar`, `/automations`, `/reviews`, `/prioritisation`, `/lifecycle` | Oversight, governance and workflow views (see `src/routes`) |
+| `/auditor`, `/compliance`, `/regulator`, `/risk`, `/security`, `/engineering`, `/board`, `/calendar`, `/automations`, `/reviews`, `/prioritization`, `/lifecycle` | Oversight, governance and workflow views (see `src/routes`) |
 | `/executive` | CEO area: portfolio-health briefing (server-derived RAG), decision log, benefits realization |
 | `/financials` | CFO area: budget variance (category / kind / plan) + per-currency exposure — minor units, no FX |
 | `/technology` | CTO area: technology radar (`tech:` tags) + dependency-risk lens (fan-out, red predecessors) |
@@ -101,7 +101,7 @@ switcher). The chrome area carries:
   holds no token — this app's SvelteKit server acts as a BFF, exchanging
   the session for a short-lived PASETO v4.public token and calling the
   service through the same-origin `/api/proxy` route. See
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+  `agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
   (RS256/JWKS not used).
 
 ## Prerequisites
@@ -174,6 +174,14 @@ needed. `tests/e2e/a11y.spec.ts` runs an axe audit over every page route
 (enumerated from `src/routes`); `tests/e2e/ceo.spec.ts` checks the CEO
 dashboard at 1080x810 and 810x1080.
 
-## License
+## Licence
 
-Dual-licensed under MIT OR Apache-2.0.
+Licence is any of these, or contact us for custom licence options.
+
+* [MIT](https://opensource.org/license/mit) ([SPDX: MIT](https://spdx.org/licenses/MIT.html)), text in [`../LICENSE/MIT.txt`](../LICENSE/MIT.txt)
+* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([SPDX: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)), text in [`../LICENSE/Apache-2.0.txt`](../LICENSE/Apache-2.0.txt)
+* [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) ([SPDX: GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)), text in [`../LICENSE/GPL-2.0-only.txt`](../LICENSE/GPL-2.0-only.txt)
+* [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) ([SPDX: GPL-3.0-only](https://spdx.org/licenses/GPL-3.0-only.html)), text in [`../LICENSE/GPL-3.0-only.txt`](../LICENSE/GPL-3.0-only.txt)
+* [BSD 3-Clause License](https://opensource.org/license/bsd-3-clause) ([SPDX: BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)), text in [`../LICENSE/BSD-3-Clause.txt`](../LICENSE/BSD-3-Clause.txt)
+
+SPDX expression: `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`.

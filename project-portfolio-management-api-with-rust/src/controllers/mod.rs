@@ -18,7 +18,7 @@ pub mod discussion;
 /// Flow Distribution: the feature / defect / risk / debt mix.
 pub mod distribution;
 pub mod docs;
-/// Recorded effort and utilisation, including per person.
+/// Recorded effort and utilization, including per person.
 pub mod effort;
 pub mod engineering;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).
@@ -38,7 +38,7 @@ pub mod oversight;
 /// reasoned regression, and per-phase durations.
 pub mod phase;
 pub mod plans;
-pub mod prioritisation;
+pub mod prioritization;
 pub mod sandbox;
 pub mod saved_views;
 pub mod strategy;
@@ -138,7 +138,7 @@ pub mod pagination {
     pub const MAX_LIMIT: u64 = 500;
 
     /// Largest accepted `offset`; past this a request is a `400` (SEC-G7)
-    /// rather than a query that makes the database materialise
+    /// rather than a query that makes the database materialize
     /// arbitrarily many rows just to discard them.
     pub const MAX_OFFSET: u64 = 10_000;
 

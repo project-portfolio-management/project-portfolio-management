@@ -9,7 +9,7 @@ governmental system. Stakeholders span the trio:
 | Programme / portfolio managers (PMO) | Register plans and roll up their child plans; see parent/child hierarchy; spot duplicate or dependent initiatives | Front-end routes + check-duplicates + `parent_ref` roll-up |
 | Project / product / program leads | Own a plan's goals, tasks, issues; assign work; track timeline / burndown | Front-end sub-resource workspaces |
 | Team members / contributors | Pick up tasks, raise issues, track goals | Front-end sub-resource workspaces |
-| Sponsoring organisations | Their plans registered once, linked to the owning org (`owner_org_id` → [organization entity](../../organization/)) | Service create + identifiers + cross-service links |
+| Sponsoring organizations | Their plans registered once, linked to the owning org (`owner_org_id` → organization entity (sibling repository, not in this repository)) | Service create + identifiers + cross-service links |
 | Integrators (Jira / Asana / MS Project / Linear / GitHub Projects) | Register / sync a project via its external id; stable REST surface; deterministic-id linkage | Service `/api/*` + bulk import/export |
 | Auditors / information-governance officers | Who changed what, when; explainable match decisions; who was on which plan | Audit endpoints + event stream + soft-delete timestamps |
 | Operations / DBA / SRE | Schema + migration discipline, backups, health checks, scaling | Service deployment artefacts, `/_health` |

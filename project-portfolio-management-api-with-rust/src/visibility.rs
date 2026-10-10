@@ -100,7 +100,7 @@ pub struct ScheduleEdge {
     pub predecessor: Uuid,
     /// May start `lag_days` after the predecessor finishes.
     pub successor: Uuid,
-    /// Working lag in days (may be 0, or negative for a lead).
+    /// Lag in calendar days (may be 0, or negative for a lead).
     pub lag_days: i32,
     /// Relationship type. [`violations`] judges finish-to-start edges only.
     pub kind: crate::cpm::Kind,
@@ -156,12 +156,12 @@ pub fn violations(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Violati
 }
 
 /// The **critical path**: the chain of dependent items with the
-/// largest total duration (days, inclusive; undated items count 0).
+/// largest total duration (calendar days, inclusive; undated items count 0).
 /// Edges are cycle-free by construction (insert-time check), so a
-/// memoised longest-path walk terminates.
+/// memoized longest-path walk terminates.
 #[must_use]
 pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid> {
-    // Memoised best (total, path) starting at each node.
+    // Memoized best (total, path) starting at each node.
     fn best(
         node: Uuid,
         duration: &HashMap<Uuid, i64>,
@@ -217,7 +217,7 @@ pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid
 }
 
 /// RAG health for one plan — a documented heuristic, not a
-/// score: **red** when a risk has materialised, the target date has
+/// score: **red** when a risk has materialized, the target date has
 /// passed on an unfinished item, or the budget is overrun; **amber**
 /// when any open risk has exposure ≥ 15 or a schedule dependency is
 /// violated; else **green**.
@@ -226,12 +226,12 @@ pub fn rag(
     finished: bool,
     target: Option<NaiveDate>,
     today: NaiveDate,
-    materialised_risks: usize,
+    materialized_risks: usize,
     max_open_exposure: i32,
     budget_overrun: bool,
     has_violation: bool,
 ) -> &'static str {
-    if materialised_risks > 0 || budget_overrun || (!finished && target.is_some_and(|t| t < today))
+    if materialized_risks > 0 || budget_overrun || (!finished && target.is_some_and(|t| t < today))
     {
         "red"
     } else if max_open_exposure >= 15 || has_violation {

@@ -5,5 +5,5 @@
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = () => {
-  return { title: "Prioritisation — PPM" };
+  return { title: "Prioritization — PPM" };
 };

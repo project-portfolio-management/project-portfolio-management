@@ -4,10 +4,10 @@
 //! The three are tied by one relation, for one assignee:
 //!
 //! ```text
-//! work (minutes) = duration (working days) × units (% of a day) × 480 / 100
+//! work (minutes) = duration (business days) × units (% of a day) × 480 / 100
 //! ```
 //!
-//! (a full working day is [`MINUTES_PER_DAY`] = 480 minutes). Given two, the third
+//! (a full business day is [`MINUTES_PER_DAY`] = 480 minutes). Given two, the third
 //! follows. When a person edits one, a **rule** says which of the others moves:
 //!
 //! | edited ↓ / rule → | fixed units | fixed duration | fixed work |
@@ -21,17 +21,17 @@
 //! taken at its word (the other one is recomputed around it).
 //!
 //! Rounding is stated, never silent: a **duration** derived from work and units
-//! rounds *up* to whole days (a part day still takes a day); **units** derived from
-//! work and duration round to the nearest whole percent; **work** derived from the
-//! other two rounds to the nearest minute. The edited and the kept quantities are
+//! rounds *up* to whole business days (a part day still takes a whole one);
+//! **units** derived from work and duration round to the nearest whole percent;
+//! **work** derived from the other two rounds to the nearest minute. The edited and the kept quantities are
 //! never changed by the rounding, and `exact` says whether the relation then holds
 //! to the minute.
 
 use serde::Serialize;
 
-/// Minutes in a full working day at 100% units.
+/// Minutes in a full business day at 100% units.
 pub const MINUTES_PER_DAY: i64 = 480;
-/// Most working days a task may last (as the schedule fields).
+/// Most business days a task may last (as the schedule fields).
 pub const MAX_DAYS: i64 = 3_650;
 /// Most units, percent (ten full-time people's worth is the ceiling for one assignee).
 pub const MAX_UNITS: i64 = 1_000;
@@ -77,7 +77,7 @@ impl Rule {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Field {
-    /// Working days.
+    /// Business days.
     Duration,
     /// Percent of the assignee's day.
     Units,
@@ -88,7 +88,7 @@ pub enum Field {
 /// The three quantities together.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct Triple {
-    /// Working days.
+    /// Business days.
     pub duration_days: i64,
     /// Percent of a day.
     pub units_percent: i64,
@@ -146,7 +146,7 @@ pub fn is_exact(t: Triple) -> bool {
 fn check(t: Triple) -> Result<(), Problem> {
     if !(0..=MAX_DAYS).contains(&t.duration_days) {
         return Err(Problem::OutOfRange(
-            "duration must be 0 to 3650 working days",
+            "duration must be 0 to 3650 business days",
         ));
     }
     if !(1..=MAX_UNITS).contains(&t.units_percent) {
@@ -185,7 +185,7 @@ pub fn recompute(rule: Rule, changed: Field, edited: Triple) -> Result<Recompute
     match derived {
         Field::Work => t.work_minutes = work_for(t.duration_days, t.units_percent),
         Field::Duration => {
-            // Whole days, rounded up: a part day still takes a day.
+            // Whole business days, rounded up: a part day still takes a whole one.
             let per_day = t.units_percent * MINUTES_PER_DAY;
             t.duration_days = (t.work_minutes * 100 + per_day - 1) / per_day;
         }
@@ -291,12 +291,13 @@ mod tests {
 
     #[test]
     fn fixed_units_worked_example_changing_work_moves_duration() {
-        // 5 days at 100% is 2 400 minutes. Raise work to 3 600: 7.5 days at 100%,
-        // which takes 8 whole days. Units and the new work are kept.
+        // 5 business days at 100% is 2 400 minutes. Raise work to 3 600: 7.5
+        // business days at 100%, which takes 8 whole business days. Units and the
+        // new work are kept.
         let r = recompute(Rule::FixedUnits, Field::Work, t(5, 100, 3_600)).unwrap();
         assert_eq!(r.derived, Field::Duration);
         assert_eq!(r.triple, t(8, 100, 3_600));
-        assert!(!r.exact, "7.5 days was rounded up to 8");
+        assert!(!r.exact, "7.5 business days was rounded up to 8");
         // Changing duration moves work.
         let r = recompute(Rule::FixedUnits, Field::Duration, t(10, 100, 2_400)).unwrap();
         assert_eq!((r.derived, r.triple), (Field::Work, t(10, 100, 4_800)));
@@ -305,7 +306,7 @@ mod tests {
 
     #[test]
     fn fixed_duration_worked_example_changing_work_moves_units_never_duration() {
-        // 5 days, 100%, 2 400 minutes. Halve the work: units fall to 50%.
+        // 5 business days, 100%, 2 400 minutes. Halve the work: units fall to 50%.
         let r = recompute(Rule::FixedDuration, Field::Work, t(5, 100, 1_200)).unwrap();
         assert_eq!(r.derived, Field::Units);
         assert_eq!(r.triple, t(5, 50, 1_200));
@@ -326,14 +327,14 @@ mod tests {
 
     #[test]
     fn fixed_work_worked_example_changing_duration_moves_units() {
-        // 2 400 minutes of work over 5 days is 100%. Stretch to 10 days: 50%.
+        // 2 400 minutes of work over 5 business days is 100%. Stretch to 10 business days: 50%.
         let r = recompute(Rule::FixedWork, Field::Duration, t(10, 100, 2_400)).unwrap();
         assert_eq!((r.derived, r.triple), (Field::Units, t(10, 50, 2_400)));
         assert!(r.exact);
-        // Editing units moves duration: double the units, half the days.
+        // Editing units moves duration: double the units, half the business days.
         let r = recompute(Rule::FixedWork, Field::Units, t(5, 200, 2_400)).unwrap();
         assert_eq!((r.derived, r.triple), (Field::Duration, t(3, 200, 2_400)));
-        assert!(!r.exact, "2.5 days rounds up to 3");
+        assert!(!r.exact, "2.5 business days rounds up to 3");
         // Work is the kept quantity in every one of those.
         assert_eq!(r.triple.work_minutes, 2_400);
     }

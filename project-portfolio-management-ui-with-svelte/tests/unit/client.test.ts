@@ -55,7 +55,7 @@ describe("ApiClient", () => {
   });
 
   // Pins: POST stringifies the body and sets the JSON content-type header.
-  it("POST serialises the body and sets JSON content-type", async () => {
+  it("POST serializes the body and sets JSON content-type", async () => {
     const f = fakeFetch(200, { pid: "p1", title: "Housing benefit appeal" });
     await client(f).post("/api/cases", {
       body: { title: "Housing benefit appeal" },

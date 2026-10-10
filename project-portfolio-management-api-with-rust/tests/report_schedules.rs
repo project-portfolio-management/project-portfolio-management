@@ -109,7 +109,7 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
         }
         assert_eq!(schedule(ak.clone(), av.clone(), "3f2c6b7e-0000-4000-8000-000000000bad", json!({ "cadence": "daily" })).await.status_code(), 404);
 
-        // Daily, due since 20 days ago; a weekly one in the future; a zero-row one.
+        // Daily, due since 20 calendar days ago; a weekly one in the future; a zero-row one.
         let missed: Value = schedule(ak.clone(), av.clone(), &some, json!({ "cadence": "daily", "start": "2026-09-01" })).await.json();
         let future: Value = schedule(ak.clone(), av.clone(), &some, json!({ "cadence": "weekly", "start": "2999-01-01" })).await.json();
         let empty: Value = schedule(ak.clone(), av.clone(), &none, json!({ "cadence": "daily" })).await.json();

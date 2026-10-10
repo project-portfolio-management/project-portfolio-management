@@ -38,8 +38,8 @@ the service crate spec; a change to them updates the service spec, this
 spec's §5.7 / §6.4 / §9.2 / §10.1, and the front-end types together.
 
 The adopted family designs
-([cross-service-linking.md](../../agents/share/cross-service-linking.md),
-[bulk-import-export.md](../../agents/share/bulk-import-export.md)) are
+(cross-service-linking.md (shared family guidance, not in this repository),
+[bulk-import-export.md](bulk-import-export.md)) are
 the source of truth for their own contracts; this spec restates only
 the portfolio-specific bits (§9.5, §9.6, §10.4) and tracks the rest by
 reference — a change to those shared docs flows in without re-stating

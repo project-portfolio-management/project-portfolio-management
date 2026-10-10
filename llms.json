@@ -108,7 +108,7 @@
         {
           "title": "Matcher crate spec",
           "path": "project-portfolio-management-matcher-with-rust/spec/index.md",
-          "description": "Living spec for the matching library: weights, rules, normalisation"
+          "description": "Living spec for the matching library: weights, rules, normalization"
         },
         {
           "title": "UI spec",

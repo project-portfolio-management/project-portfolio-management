@@ -26,8 +26,8 @@ export const LETTER_MEANING: Record<Letter, string> = {
   I: "is told after",
 };
 
-/** The letters of a cell, normalised to R-A-C-I order. */
-export function normalise(letters: string): string {
+/** The letters of a cell, normalized to R-A-C-I order. */
+export function normalize(letters: string): string {
   return LETTERS.filter((l) => letters.toUpperCase().includes(l)).join("");
 }
 
@@ -58,17 +58,17 @@ export function toggleLetter(
   const has = (next[person] ?? "").includes(letter);
   let movedFrom: string | null = null;
   if (has) {
-    next[person] = normalise((next[person] ?? "").replace(letter, ""));
+    next[person] = normalize((next[person] ?? "").replace(letter, ""));
   } else {
     if (letter === "A") {
       for (const [p, l] of Object.entries(next)) {
         if (p !== person && l.includes("A")) {
-          next[p] = normalise(l.replace("A", ""));
+          next[p] = normalize(l.replace("A", ""));
           movedFrom = p;
         }
       }
     }
-    next[person] = normalise((next[person] ?? "") + letter);
+    next[person] = normalize((next[person] ?? "") + letter);
   }
   for (const [p, l] of Object.entries(next)) if (l === "") delete next[p];
   return { cells: next, accountableMovedFrom: movedFrom };
@@ -80,7 +80,7 @@ export function toAssignments(
 ): { person_ref: string; roles: string }[] {
   return Object.entries(cells)
     .filter(([, l]) => l !== "")
-    .map(([person_ref, roles]) => ({ person_ref, roles: normalise(roles) }));
+    .map(([person_ref, roles]) => ({ person_ref, roles: normalize(roles) }));
 }
 
 /** What a row is missing, in words. */

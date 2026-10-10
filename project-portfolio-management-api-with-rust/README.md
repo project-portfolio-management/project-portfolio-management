@@ -11,7 +11,7 @@ A *plan* is a matchable identity in one recursive collection. Its `kind`
 required discriminator and not a separate collection. The service has
 two faces that share one record: a deduplicated, matchable identity
 registry (the thin `Plan` payload) and a project workspace — each plan
-*owns* operational sub-resources (goals, tasks, issues) plus derived
+*owns* operational sub-resources (tasks, sprints and more; the goals and issues stores are specified but not yet built) plus derived
 timeline / burndown views. Any plan may contain any other plan via a
 `parent_ref` to its parent (a recursive tree); a `parent_ref` that
 points a plan at itself or at one of its descendants is rejected (`422`,
@@ -57,13 +57,13 @@ sub-resources hang off `/api/plans/{pid}/...`.
 | GET | `/api/notifications` (+ `/{pid}/read`) | In-app inbox (no email / push transport) |
 | POST·GET | `/api/automations` (+ `/{pid}/enable`·`/disable`, `/runs`) | Workflow automation: rules fired by board moves |
 | POST·GET | `/api/scheduled-actions` (+ `/sweep`) | Set and forget: the deadline queue |
-| GET | `/api/plans/{pid}/smart-score` · `/api/prioritisation` | Smart Score + the ranked queue (with the full breakdown) |
+| GET | `/api/plans/{pid}/smart-score` · `/api/prioritization` | Smart Score + the ranked queue (with the full breakdown) |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Bird's-eye funnel + next-phase readiness checklist |
 | GET | `/api/plans/audit/recent` · `/{pid}/audit` | Audit-log query |
 | GET | `/api/plans/events/recent` | In-memory event stream |
 | GET | `/api/plans/whoami` | Verified PASETO-token claims (`401` without one) |
 | GET | `/api-docs/openapi.json` · `/swagger-ui` | OpenAPI 3 doc + Swagger UI |
-| GET | `/metrics.prom` | Prometheus metrics (root path, public under auth enforcement) |
+| GET | `/metrics.prom` | Prometheus metrics (root path; needs a token like every route except health, ping and the docs) |
 
 The table above is the identity-registry core. The service is also a
 full **project-management tool**; one controller per area in
@@ -73,7 +73,7 @@ in [spec §9](./spec/index.md):
 - Governance, visibility, strategy, executive insights, oversight, and
   row-level integrity verification (`/api/compliance/*/verify`).
 - Engineering and flow: task board, sprints, ceremonies, burndown,
-  time-based analysis, OKRs, effort and utilisation, Total Project Control,
+  time-based analysis, OKRs, effort and utilization, Total Project Control,
   controls, value realization.
 - Scheduling: critical path with float across cross-plan links, hammock
   activities, a what-if sandbox (preview writes nothing; commit needs
@@ -116,7 +116,7 @@ cargo loco start        # migrations auto-run in development
 # Create a plan labelled as a portfolio (the umbrella kind)
 curl -s localhost:5150/api/plans -H 'content-type: application/json' \
   -d '{"name":"Digital Transformation Portfolio","kind":"portfolio",
-       "goals":[{"title":"Modernise core systems","target_date":"2026-12-01"}]}'
+       "goals":[{"title":"Modernize core systems","target_date":"2026-12-01"}]}'
 
 # Create a plan under that one (carries parent_ref; kind label optional)
 curl -s localhost:5150/api/plans -H 'content-type: application/json' \
@@ -175,13 +175,24 @@ listed above; migrations run `m20260…` through
 default, a durable outbox relay when
 `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`, a Fluvio sink behind
 the `fluvio` feature, and optional signed webhooks. Blanket `/api/*` auth
-enforcement is off unless `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is
-set. Deferred ([spec §13](./spec/index.md)): `/plans/deduplicate`,
+enforcement is **on by default** (turned off only explicitly with
+`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` or `settings.require_auth:
+false`; production refuses to start that way, and so does enforcement on with
+no token verifier). Security headers, an explicit CORS allow-list
+(`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`) and per-caller rate limiting
+(`PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT*`) are built in. Deferred ([spec §13](./spec/index.md)): `/plans/deduplicate`,
 `/goals`, `/issues`, `/timeline`, gRPC. Credentials are issued by the
 central authentication-service (offline PASETO v4.public verification).
 
-## License
+## Licence
 
-Dual-licensed under MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR
-GPL-3.0-only.
+Licence is any of these, or contact us for custom licence options.
+
+* [MIT](https://opensource.org/license/mit) ([SPDX: MIT](https://spdx.org/licenses/MIT.html)), text in [`../LICENSE/MIT.txt`](../LICENSE/MIT.txt)
+* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([SPDX: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)), text in [`../LICENSE/Apache-2.0.txt`](../LICENSE/Apache-2.0.txt)
+* [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) ([SPDX: GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)), text in [`../LICENSE/GPL-2.0-only.txt`](../LICENSE/GPL-2.0-only.txt)
+* [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) ([SPDX: GPL-3.0-only](https://spdx.org/licenses/GPL-3.0-only.html)), text in [`../LICENSE/GPL-3.0-only.txt`](../LICENSE/GPL-3.0-only.txt)
+* [BSD 3-Clause License](https://opensource.org/license/bsd-3-clause) ([SPDX: BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)), text in [`../LICENSE/BSD-3-Clause.txt`](../LICENSE/BSD-3-Clause.txt)
+
+SPDX expression: `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`.
 </content>

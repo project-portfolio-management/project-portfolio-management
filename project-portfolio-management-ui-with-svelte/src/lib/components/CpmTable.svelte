@@ -12,7 +12,7 @@
 
 <div class="scroll">
   <table data-testid="cpm-table">
-    <caption class="sr-only">Task schedule with float, in the plan's working days</caption>
+    <caption class="sr-only">Task schedule with float, in the plan's business days</caption>
     <thead>
       <tr>
         <th scope="col">Task</th>

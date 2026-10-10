@@ -35,7 +35,7 @@ cross-service entity links (write side) + collaborative review +
 workflow automation + the set-and-forget scheduler + the Smart Score /
 bird's-eye lifecycle views (§9.4a) + OpenAPI/Swagger + Prometheus
 metrics + offline PASETO v4 public token verification (Ed25519,
-published key) + blanket `/api/*` auth enforcement (off by default) +
+published key) + blanket `/api/*` auth enforcement (on by default) +
 payload validation. Matching is **kind-agnostic** — any two plans may
 match; the `kind` label does not gate matching (§5/§9.2). `kind` is an
 optional Portfolio / Project / Product / Program / Practice / Process /
@@ -66,7 +66,7 @@ paseto-keys-over-HTTP fetch at boot landed
 Token **issuance** is out of scope — provided by the central
 authentication-service. Auth source of truth (supersedes the RS256-JWT
 model):
-[`agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md).
+`agents/share/authentication-sessions.md` (shared family guidance, not in this repository).
 
 ## 3. Stakeholders and users
 
@@ -126,7 +126,7 @@ titles feed matching via `data.goals[]`).
 > (§9.7) live only in `entity_links`, the `linked`/`unlinked` events, and
 > the aggregator — they are **never** stored in the payload and **never**
 > fed to the matcher. See
-> [cross-service linking §7](../../../agents/share/cross-service-linking.md).
+> cross-service linking §7.
 
 ## 6. Functional requirements
 
@@ -152,7 +152,7 @@ is expressed by `parent_ref`, never by a collection boundary.
    are found. Rules in [`src/validation.rs`](../src/validation.rs).
 2. `GET /api/plans` — list active (cap 100), `{pid, name}`. `GET
    /api/plans?parent={pid}` — roll up a plan's **direct children** (by
-   denormalised `parent_pid`). `GET /api/plans/search?q=` —
+   denormalized `parent_pid`). `GET /api/plans/search?q=` —
    Tantivy full-text search over name, alternate names, owner org name,
    identifiers, keywords, tags, and goal titles (`?fuzzy=true` for typo
    tolerance, `?phonetic=true` for Soundex, `?kind=` to narrow to one
@@ -216,7 +216,7 @@ is expressed by `parent_ref`, never by a collection boundary.
    The uniform family contract (execution model, JSONL/CSV/Parquet
    codecs, upsert-by-stable-key + dedupe-to-review, per-row error
    report, export masking + audit) is fixed in
-   [`agents/share/bulk-import-export.md`](../../../agents/share/bulk-import-export.md);
+   [`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md);
    portfolio-specific bits are in §9.8 / §10.
 
 ## 7. Non-functional requirements
@@ -236,15 +236,15 @@ scan ranges over the plans collection's active rows with no kind gate.
 
 loco `App` (`src/app.rs`) registers the single plan-collection controller
 (one shared core) and the sub-resource controllers. One `plans` table
-stores `pid` + denormalised `name` + the full `Plan` JSONB `data` + a
-**nullable** `kind` column (the optional label) + a denormalised
+stores `pid` + denormalized `name` + the full `Plan` JSONB `data` + a
+**nullable** `kind` column (the optional label) + a denormalized
 `parent_pid` UUID (from `data.parent_ref`, for child roll-up queries);
 the operational sub-resources live in their own tables keyed by the
 parent plan `pid` (§10). Matching calls `project-portfolio-management-matcher` directly
-on the deserialised payloads — **no adapter**, mirroring care-pathway —
+on the deserialized payloads — **no adapter**, mirroring care-pathway —
 with **no kind gate**, so any two plans may match. Cross-service
 links use the hybrid topology
-([cross-service linking §4](../../../agents/share/cross-service-linking.md)):
+(cross-service linking §4):
 the service writes its outbound edges locally and emits events; a
 standalone aggregator builds the queryable graph.
 
@@ -252,7 +252,7 @@ standalone aggregator builds the queryable graph.
 
 API URLs are version-free; a client selects the representation version
 with the `Accepts-version` request header (default `1.0`) — see
-[`agents/share/api-versioning.md`](../../../agents/share/api-versioning.md).
+`agents/share/api-versioning.md`.
 
 Raw loco JSON under `/api/`. All plans live at `/api/plans`. `404` for
 unknown `pid`; `422` for a validation failure (blank `name`, a malformed
@@ -276,7 +276,7 @@ for a malformed body; `409 Conflict` for a real-time create duplicate
 | DELETE | `/api/plans/{pid}` | Soft-delete |
 
 `kind` is an optional descriptive label carried in the payload, never a
-path segment; `parent_ref` (containment) is a payload field, denormalised
+path segment; `parent_ref` (containment) is a payload field, denormalized
 to `parent_pid` for the `?parent=` roll-up.
 
 ### 9.2 Match / dedupe / merge
@@ -313,7 +313,7 @@ deferred roadmap (§13), same as `posts` / `comments` / `members`.
 | GET | `/api/plans/{pid}/timeline` | Goals-milestone + task date ranges → Gantt — **deferred, §13** |
 | GET | `/api/plans/{pid}/burndown?sprint=` | Remaining-per-day from real `done_at` stamps only, no ideal line — **landed 2026-07-20**, §9.14 |
 
-### 9.4a Collaboration, automation, and prioritisation
+### 9.4a Collaboration, automation, and prioritization
 
 **Collaborative review** — delegate one idea / proposal / plan to the
 right internal or external expert:
@@ -386,24 +386,24 @@ concurrent sweeps — or the optional in-process ticker
 the endpoint — cannot double-fire a deadline. Each sweep is capped and
 reports whether it hit the cap.
 
-**Data-driven prioritisation + bird's-eye visibility** (derived; no new
+**Data-driven prioritization + bird's-eye visibility** (derived; no new
 tables):
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/plans/{pid}/smart-score` | One plan's Smart Score **with its full breakdown** |
-| GET | `/api/prioritisation` | Ranked queue, highest first (`?limit=&band=`) |
+| GET | `/api/prioritization` | Ranked queue, highest first (`?limit=&band=`) |
 | GET | `/api/lifecycle` | The challenge funnel: live + stalled per phase |
 | GET | `/api/plans/{pid}/lifecycle` | Phase, next gate, readiness checklist, review consensus |
 
-The **Smart Score** is a renormalised weighted average over seven
+The **Smart Score** is a renormalized weighted average over seven
 components — `roi` (25 %), `strategic_alignment` (20 %),
 `expert_review` (15 %), `risk` (15 %, inverted), `demand` (10 %),
 `priority` (10 %, from the `moscow:<band>` tag), `momentum` (5 %) —
 tunable via `PROJECT_PORTFOLIO_MANAGEMENT_SMART_SCORE_WEIGHTS` (a
 complete map summing to 10 000 basis points; anything else is warned
 about and ignored wholesale). **Absent evidence is absent, not zero**:
-a missing component is dropped, the rest renormalise, every gap is
+a missing component is dropped, the rest renormalize, every gap is
 named in `missing`, and `coverage` reports how much of the weight had
 data behind it. No evidence at all ⇒ `score: null` and band `unscored`,
 which sorts **last** in the ranked queue rather than as a zero. ROI is
@@ -426,7 +426,7 @@ resolved are counted separately rather than absorbed.
 | GET | `/api/plans/events/recent` | In-memory event stream |
 | GET | `/api/plans/whoami` | Verified bearer-token claims (`401` without one) |
 | GET | `/api-docs/openapi.json` · `/swagger-ui` | OpenAPI 3 doc + Swagger UI |
-| GET | `/metrics.prom` | Prometheus metrics (root path, public under auth enforcement) |
+| GET | `/metrics.prom` | Prometheus metrics (root path; needs a token) |
 
 ### 9.6 Auth
 
@@ -435,12 +435,16 @@ token, verified offline against the auth-service's published Ed25519 key);
 handlers take `MaybeAuthUser` to stamp the audit `actor`. Leads,
 assignees, and owners are user / org identities from the
 authentication-service and the index. Blanket `/api/*` enforcement is
-wired (an `after_routes` middleware calling `auth::enforce`) but **off by
-default** — gated by `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` (`1`/`true`/`yes`/`on` ⇒
-on). When on, any `/api/*` route without a valid token is `401`; the
-public paths `/_health`, `/_ping`, `/api-docs/openapi.json`,
-`/swagger-ui*`, and `/metrics.prom` stay open (via
-`src/auth.rs::is_public_path`). Keys/issuer/audience come from
+wired (an `after_routes` middleware calling `auth::enforce`) and **on by
+default**: only an explicit `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
+(`0`/`no`/`off`) or `settings.require_auth: false` in the loco config turns it
+off (`development.yaml` and `test.yaml` do; the environment variable wins). The
+service **refuses to start** when the loco environment is `production` and
+enforcement is off, and when enforcement is on with no token verifier. When
+on, any `/api/*` route without a valid token is `401`; the public paths
+`/_health`, `/_ping`, `/api-docs/openapi.json`, `/swagger-ui*` and the calendar
+feeds stay open (via `src/auth.rs::is_public_path`); `/metrics.prom` needs a
+token. Keys/issuer/audience come from
 `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` (optional URL of the auth-service's published
 key set, e.g. `https://auth…/.well-known/paseto-keys`; set ⇒ fetched over
 HTTP **once at boot** in `App::after_routes` via `auth::init` /
@@ -452,13 +456,13 @@ rotation-triggered refetch is a future item, §16) /
 set; absent ⇒ empty key set, all tokens rejected) / `PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER`
 (default `authentication-service`) / `PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE` (default
 `main-x-service`). Auth source of truth (supersedes the RS256-JWT model):
-[`agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md);
-blanket-enforcement contract: [`agents/share/jwt-enforcement.md`](../../../agents/share/jwt-enforcement.md).
+`agents/share/authentication-sessions.md`;
+blanket-enforcement contract: `agents/share/jwt-enforcement.md`.
 
 **Authorization (ABAC).** Inside the same guard — so only when
 `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is on — a verified token is authorized by
 **attribute-based access control** per
-[`agents/share/authorization-attributes.md`](../../../agents/share/authorization-attributes.md):
+`agents/share/authorization-attributes.md`:
 the request's action is derived from the HTTP method plus this crate's
 destructive named POSTs (`auth::DESTRUCTIVE_POST_SUFFIXES` — `/merge`,
 `/deduplicate`, `/import`), matched on path suffix so the corresponding
@@ -476,7 +480,7 @@ sketch.
 
 ### 9.7 Cross-service entity links (write side)
 
-Per [cross-service linking](../../../agents/share/cross-service-linking.md),
+Per cross-service linking,
 the Portfolio Service originates outbound cross-service edges from a plan
 (or a goal / task / issue) to records in **any** index entity (case /
 course / place / person / worker / organization / …). Edges are stored in
@@ -496,11 +500,11 @@ aggregator's concern (it sees both ends).
 
 ### 9.8 Bulk import/export (deferred, §13)
 
-Design drafted in [`spec/bulk-import-export.md`](../spec/bulk-import-export.md)
+Design drafted in [`spec/bulk-import-export.md`](../../spec/bulk-import-export.md)
 (awaiting approval); the endpoint list below is the intended surface.
 
 The five uniform endpoints on the plans collection
-([`agents/share/bulk-import-export.md`](../../../agents/share/bulk-import-export.md) §4):
+([`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md) §4):
 
 ```
 POST /api/plans/import         202 {job_id}
@@ -546,7 +550,7 @@ code. Landed 2026-07-18 (T-PPM-A, §13).
 |---|---|---|
 | POST / GET | `/api/dependencies` | Plan-to-plan dependencies (self/duplicate/cycle refused) |
 | DELETE | `/api/dependencies/{pid}` | Remove a dependency |
-| GET | `/api/plans/{pid}/schedule` | Violations + critical path (memoised longest-duration DFS) + undated members |
+| GET | `/api/plans/{pid}/schedule` | Violations + critical path (memoized longest-duration DFS) + undated members |
 | POST / GET | `/api/plans/{pid}/milestones` | Milestones with overdue flags |
 | POST | `/api/plans/{pid}/milestones/{m_pid}/complete` | Mark complete (`done_at` stamped) |
 | POST / GET | `/api/plans/{pid}/allocations` | Per-person allocation |
@@ -595,7 +599,7 @@ Seven ETag-conditional views (`as_of` watermark, mirroring
 | GET | `/api/technology/dependency-risk` | Top fan-out, cross-portfolio edges, RAG-red-predecessor edges |
 | GET | `/api/technology/radar` | `tech:<name>[:<ring>]` tag convention, majority-ring vote |
 | GET | `/api/technology/debt` | `risks.category` exposure-sorted register |
-| GET | `/api/technology/flow` | Delivery-flow throughput/month + median lead days |
+| GET | `/api/technology/flow` | Delivery-flow throughput/month + median lead time in calendar days |
 
 Landed 2026-07-19 (§13). Currencies are never summed across lines.
 
@@ -676,9 +680,9 @@ PostgreSQL via SeaORM + `sea-orm-migration`. `auto_migrate` on in
 development. Tables / migrations:
 
 - `m20220101_000001_plans` — the single plan row table: `id` serial PK,
-  `pid` UUID unique, `name` (denormalised from `data.name`), `data`
+  `pid` UUID unique, `name` (denormalized from `data.name`), `data`
   JSONB (full `Plan`), a **nullable** `kind` column (the optional
-  label), a denormalised `parent_pid` UUID column (from
+  label), a denormalized `parent_pid` UUID column (from
   `data.parent_ref`, for parent roll-up queries; nullable), `active`
   bool, `deleted_at` timestamptz null.
 - `m20220101_000002_audit_logs` — the CRUD audit trail (carries the
@@ -691,8 +695,8 @@ development. Tables / migrations:
   on the parent row).
 - `m20220101_000005_entity_links` — the cross-service link write side
   (§9.7), separate from the within-payload `relationships`, per
-  [cross-service linking
-  §4.1](../../../agents/share/cross-service-linking.md).
+  cross-service linking
+  §4.1.
 - `m20260722_000001_capabilities` — the collaboration / automation
   tables: `reviews` (one subject delegated to one expert; partial
   unique index keeps one **live** invitation per subject+reviewer),
@@ -701,9 +705,9 @@ development. Tables / migrations:
   queue, claimed atomically so a deadline fires exactly once), and
   `notifications` (the in-app inbox those two write into). **No Smart
   Score table**: the score is derived on read from rows the service
-  already stores, so it cannot drift from the evidence it summarises.
+  already stores, so it cannot drift from the evidence it summarizes.
 - `bulk_jobs` (deferred, §13) — the shared bulk-job table
-  ([`agents/share/bulk-import-export.md`](../../../agents/share/bulk-import-export.md)
+  ([`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md)
   §3, `UNIQUE (entity, kind, idempotency_key)`).
 - `review_queue` — duplicate-review items (`Pending` / `Confirmed` /
   `Rejected` / `AutoMerged`, `provenance`) over the plans collection.
@@ -748,7 +752,7 @@ default posture is light masking. However, **lead / assignee / member /
 person refs are personal data** — leads, assignees, and owners are user
 identities — so any read or export that surfaces them is audited, and
 GDPR data-subject obligations apply to those people. The `entity_links`
-edges follow the [cross-service linking §10](../../../agents/share/cross-service-linking.md)
+edges follow the cross-service linking §10
 governance for whatever target entity they reference. Honour the family
 HIPAA/NHS/GDPR posture for audit and access controls.
 
@@ -795,7 +799,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   no caller/auth parameter before this change) gained a `MaybeAuthUser`
   extractor and applies the identical per-candidate filter before
   scoring a hit into the response. With
-  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` off (the default) or no
+  enforcement explicitly off (development and tests) or no
   configured deny rule, `authorize_record` never denies, so this is a
   no-op — unchanged behaviour for every existing deployment.
   **Acceptance (met):** a DB-gated test
@@ -818,7 +822,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `GET /api/auditor/evidence-pack` bundles a period's decisions plus up
   to 2000 audit rows (JSON or CSV) — a bulk export of governance/audit
   content structurally identical to the class `case-service`'s SEC-G1
-  ("authorise + audit the governed bulk-links read") and
+  ("authorize + audit the governed bulk-links read") and
   `agents/share/bulk-import-export.md` §8 ("Every export is audited")
   both close — but the handler never writes an `audit_logs` row for
   the act of exporting it; it only **reads** the existing audit table
@@ -909,7 +913,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   this crate carries no IEC 62304 SOUP register, so no
   `compliance/soup.tsv` bookkeeping was needed either: the simplest of
   the four loco-idiomatic ports. See
-  [`agents/share/rust-tracing-opentelemetry-stack.md`](../../../agents/share/rust-tracing-opentelemetry-stack.md)
+  `agents/share/rust-tracing-opentelemetry-stack.md`
   for the full rollout status. Verified: `cargo fmt --check`, `cargo
   clippy --all-targets -D warnings`, `cargo deny check`, `cargo bench
   --no-run`, and the MSRV check (`cargo +1.96 check --all-targets`)
@@ -928,7 +932,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   than having to learn JSON first), and `merge_plans` (the merge fold over
   two arbitrary payloads). Invariants pinned: never-panic; validation is
   deterministic and its **problem report is bounded** independent of
-  payload size (the generalisation of SEC-M8, which the unit tests pin
+  payload size (the generalization of SEC-M8, which the unit tests pin
   only for one hand-written payload); merge keeps the survivor's
   `name` and is **absorbing**, so a retried merge cannot inflate
   the record. The sub-crate declares an empty `[workspace]` table
@@ -1005,9 +1009,9 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   personal data. Two things are: `lead_ref` (the plan lead, a
   `person:`/`worker:` `EntityRef` — the most directly personal field on
   a `Plan`, so **dropped entirely** rather than partially shown — a
-  partial UUID has no "still recognisable" value when the plan is
+  partial UUID has no "still recognizable" value when the plan is
   already identified by `name`/`code`) and `owner_org_id` /
-  `owner_org_name` (the sponsoring organisation — institutional,
+  `owner_org_name` (the sponsoring organization — institutional,
   masked to its tail like organization's `telephone`/`email` and
   care-pathway's `provider_name`/`provider_id`). `src/privacy.rs`:
   `mask_plan` + `export_plan`. `GET /{pid}` (previously **unguarded** —
@@ -1049,13 +1053,13 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   *Verified:* 38 DB-gated + 1 enforcement + 1 outbox-audit green vs
   Postgres 18; 199 lib tests; fmt + clippy clean.
 
-- [x] **2026-07-22 — Collaboration / automation / prioritisation
+- [x] **2026-07-22 — Collaboration / automation / prioritization
   capabilities (§9.4a).** Migration `m20260722_000001_capabilities`
   (`reviews`, `automations`, `automation_runs`, `scheduled_actions`,
   `notifications`); four pure rule modules (`collaboration.rs`,
-  `automation.rs`, `prioritisation.rs`, `lifecycle.rs`) with 56 DB-free
+  `automation.rs`, `prioritization.rs`, `lifecycle.rs`) with 56 DB-free
   unit tests; three controllers (`collaboration`, `automation`,
-  `prioritisation`); the engine fires from `move_task` and from a
+  `prioritization`); the engine fires from `move_task` and from a
   submitted plan review; the optional sweep ticker
   (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`, default off) in
   `src/scheduler.rs`; OpenAPI + a doc test; six `#[ignore]`d request
@@ -1088,10 +1092,10 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `/api/plans/{pid}/…`); `GET /api/plans?parent={pid}` rolls up a plan's
   direct children (was the per-portfolio roll-up), and `GET
   /api/plans/{pid}/schedule` is no longer restricted to a Portfolio-kind
-  plan. Containment generalises from `portfolio_ref` (portfolio→child
+  plan. Containment generalizes from `portfolio_ref` (portfolio→child
   only) to `parent_ref` (any plan may contain any other, a recursive
   tree); the service adds a containment **cycle check** returning `422`.
-  The denormalised column is `parent_pid` (was `portfolio_pid`) and the
+  The denormalized column is `parent_pid` (was `portfolio_pid`) and the
   `kind` column is nullable. Merge proposals carry an optional
   `kind_target` label (blank = none). Builds and tests green.
 - [x] loco boot + the single `plans` table/migration + a shared CRUD
@@ -1142,7 +1146,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `EventView` projection); Phase 2 (transactional outbox) + Phase 3
   (relay + retention) are landed below; the Fluvio broker sink is the
   remaining infra-gated follow-up, designed in
-  [`agents/share/event-bus.md`](../../../agents/share/event-bus.md). -
+  `agents/share/event-bus.md`. -
   [x] **Durable event bus — Phase 3 (relay + retention).**
   `src/relay.rs`: the `EventSink` trait (the bus seam), a working
   no-broker **`LoggingSink`** default, `drain_once` (`unpublished` →
@@ -1198,13 +1202,13 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   update was needed. BUS-2 (link-graph Fluvio consumer) and the
   remaining BUS-3 legs (rolling `FluvioSink` to the other entity
   services) remain.
-  ([`agents/share/event-bus.md`](../../../agents/share/event-bus.md) §5,
+  (`agents/share/event-bus.md` §5,
   §7, §8).
 - [ ] Cross-service links — `m20220101_000005_entity_links` migration +
   `POST`/`GET`/`DELETE /api/plans/{pid}/links`; emit `linked` /
   `unlinked`; optimistic write (no cross-service call); never a matcher
   signal. Contract:
-  [`agents/share/cross-service-linking.md`](../../../agents/share/cross-service-linking.md).
+  `agents/share/cross-service-linking.md`.
 - [x] OpenAPI/Swagger — `src/openapi.rs` (utoipa) served at
   `/api-docs/openapi.json` + `/swagger-ui` by `controllers/docs.rs`
   (covers the full surface, incl. the PPM phases / insights / oversight
@@ -1215,7 +1219,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   blanket auth enforcement.
 - [x] Offline PASETO v4 public verification (`authentication-verifier`);
   `src/auth.rs` per
-  [`agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md)
+  `agents/share/authentication-sessions.md`
   (supersedes the RS256-JWT model). `src/auth.rs` embeds
   `authentication-verifier` (a PASETO v4.public verifier); offline
   Ed25519 verification via a process-wide `Verifier` (env-configured
@@ -1223,10 +1227,10 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `/whoami` protected; audit `actor` from the token.
 - [x] Blanket `/api/*` enforcement — `auth::enforce(require_auth, path,
   headers, verifier)` + an `after_routes` layer, gated per-request by
-  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`. Wired and tested; **off by
-  default** per the family's activation-gate convention
-  (`agents/share/security.md` §4) — a deployment opts in. Public
-  paths stay open. Family contract: `agents/share/jwt-enforcement.md`. -
+  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`. Wired and tested; **on by
+  default** since 2026-10-09 (HD-3; it was off under the family's
+  activation-gate convention) — a deployment opts OUT explicitly, and
+  production refuses to. Public paths stay open. Family contract: `agents/share/jwt-enforcement.md`. -
   [x] paseto-keys-over-HTTP fetch at boot — done 2026-07-04.
   `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` set (non-blank) ⇒
   `auth::init` (called from `App::after_routes`, before serving) fetches
@@ -1264,10 +1268,10 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   review, `provenance = import`, kind-agnostic); per-row error report;
   export masking + audit (lead/person refs personal data). Uniform
   contract:
-  [`agents/share/bulk-import-export.md`](../../../agents/share/bulk-import-export.md).
+  [`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md).
 - [ ] Collaboration sub-resources (deferred) — `posts` / `comments` /
   `members` tables + CRUD, mirroring the plan template's collaboration
-  tier, if/when prioritised.
+  tier, if/when prioritized.
 - [x] Tantivy full-text/fuzzy/phonetic search over the JSONB payload
   (§13 2026-08-02).
 
@@ -1313,7 +1317,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `allocations`, `report_definitions`); pure rules in
   `src/visibility.rs` (flexible-date parsing `YYYY[-MM[-DD]]`,
   DFS cycle detection, finish-start violation checks with lag, a
-  memoised longest-duration critical path, the documented RAG
+  memoized longest-duration critical path, the documented RAG
   heuristic, window-overlap capacity sums, RFC-4180 CSV escaping —
   7 DB-free unit tests); `controllers/visibility.rs` (dependencies
   with self/duplicate/cycle refusal; `GET
@@ -1382,7 +1386,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   absent reads `delivery`) + `GET /api/technology/debt`
   (exposure-sorted register); **delivery-flow metrics** —
   `milestones.done_at` stamped on complete + `GET /api/technology/flow`
-  (throughput/month, median lead days; pre-stamp completions counted
+  (throughput/month, median lead time in calendar days; pre-stamp completions counted
   but never timed); **strategic-alignment coverage** — `GET
   /api/executive/alignment` (per-kind aligned/unaligned via
   `objective_links`, unaligned spend per currency, plans ranked by
@@ -1502,7 +1506,7 @@ incl. `parent_ref` containment-cycle check) + audit log +
 durable-outbox events (Phase 2 outbox + Phase 3 relay/retention,
 default-off via `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=memory`)
 + offline PASETO v4.public verification with the blanket ABAC guard
-(default-off via `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`) + OpenAPI
+(on by default; opt out via `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`) + OpenAPI
 / Swagger + Prometheus, plus the three PPM phases (Governance:
 proposals / gate reviews / risks / budget lines; Visibility:
 dependencies / schedule / milestones / allocations / capacity / reports
@@ -1510,7 +1514,7 @@ dependencies / schedule / milestones / allocations / capacity / reports
 the engineering core (tasks / sprints / burndown / standup / DevOps),
 plus the executive insight areas (§9.12), the oversight areas — board /
 auditor / compliance-register / risk-heatmap / security / regulator
-(§9.13) — collaboration / automation / prioritisation (§9.4a), field
+(§9.13) — collaboration / automation / prioritization (§9.4a), field
 masking + audited GDPR export wired to the ABAC `mask` obligation
 (§13, 2026-08-02), and row-level integrity verification (§9.15,
 2026-07-27/28, default off without a configured MAC key).
@@ -1533,7 +1537,7 @@ the operational sub-resources (goals / tasks / issues) + derived views +
 record merge + cross-service links + OpenAPI/Swagger + Prometheus +
 offline PASETO v4 public verification + blanket `/api/*` enforcement (auth
 source of truth, superseding the RS256-JWT model:
-[`agents/share/authentication-sessions.md`](../../../agents/share/authentication-sessions.md)),
+`agents/share/authentication-sessions.md`),
 then field masking + audited GDPR export wired to the ABAC `mask`
 obligation (2026-08-02; §13).
 Next (deferred, §13):
@@ -1547,7 +1551,7 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 
 ## 16. Open questions
 
-- ~~Normalise goals / tasks into a search index once Tantivy lands, or
+- ~~Normalize goals / tasks into a search index once Tantivy lands, or
   keep ILIKE-on-name only?~~ RESOLVED (2026-08-02): landed — goal titles
   are indexed (§13); tasks are not (a plan's tasks are operational detail,
   not identity signal, and are not part of the matcher payload either).
@@ -1567,9 +1571,9 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 
 - The [portfolio entity spec](../../spec/index.md) (canonical model §5);
   the [project-portfolio-management-matcher spec](../../project-portfolio-management-matcher-with-rust/spec/index.md);
-  loco.rs; [cross-service linking](../../../agents/share/cross-service-linking.md);
-  [bulk import/export](../../../agents/share/bulk-import-export.md);
-  [event bus](../../../agents/share/event-bus.md).
+  loco.rs; cross-service linking;
+  [bulk import/export](../../spec/bulk-import-export.md);
+  event bus.
 
 ## 18. Change control
 

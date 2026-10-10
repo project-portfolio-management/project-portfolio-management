@@ -43,11 +43,11 @@ use crate::{
 static TELEMETRY: OnceLock<Telemetry> = OnceLock::new();
 
 /// Blanket auth-enforcement middleware: PASETO and/or Keycloak authentication then ABAC
-/// authorization. Reads the `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` flag, the verifier,
+/// authorization. Reads the enforcement posture (on unless explicitly off), the verifier,
 /// and the ABAC policy per request (all cached `OnceLock`s) and delegates
 /// to the pure [`auth::enforce_request`]: public paths and the disabled flag pass
 /// through; otherwise a valid bearer token is required (`401`) and the
-/// derived action is checked against the policy (`403`). Off by default
+/// derived action is checked against the policy (`403`). On by default
 /// (see `auth.rs`).
 async fn require_auth_mw(req: Request, next: Next) -> Response {
     let decision = auth::enforce_request(
@@ -180,7 +180,7 @@ impl Hooks for App {
             .add_route(controllers::strategy::routes())
             .add_route(controllers::collaboration::routes())
             .add_route(controllers::automation::routes())
-            .add_route(controllers::prioritisation::routes())
+            .add_route(controllers::prioritization::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())
             .add_route(controllers::modules::routes())
@@ -243,6 +243,14 @@ impl Hooks for App {
         // back to the `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS` env path — the service
         // always boots).
         auth::init().await;
+        // Secure by default: fix the enforcement posture from the environment and the
+        // config's `settings.require_auth`, and refuse to start when it is off in
+        // production or on with no token verifier (see `auth::check_startup`).
+        auth::check_startup(
+            ctx.environment == Environment::Production,
+            ctx.config.settings.as_ref(),
+        )
+        .map_err(loco_rs::Error::Message)?;
         // Key rotation and policy edits without a restart: both loops are
         // no-ops unless their source is configured.
         auth::spawn_key_refresh();
@@ -266,9 +274,9 @@ impl Hooks for App {
         // index, and the recovery path for an index directory that did
         // not survive a restart. A no-op on a normal boot.
         crate::tasks::search::spawn_reindex_if_empty(ctx.db.clone());
-        // Blanket JWT enforcement layer. Added unconditionally; the
-        // `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` flag is read per request and the layer is a
-        // near-noop when the flag is off (the default).
+        // Blanket JWT enforcement layer. Added unconditionally; enforcement is on
+        // unless explicitly turned off (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
+        // or `settings.require_auth: false`), and the layer is a near-noop then.
         Ok(router
             // Every list pages the same way (RM-12b): innermost of all, so what it
             // slices is exactly what the handler answered.
@@ -292,6 +300,28 @@ impl Hooks for App {
             .layer(axum::middleware::from_fn(require_auth_mw))
             .layer(axum::middleware::from_fn(
                 crate::version::require_version_mw,
+            ))
+            // Rate limiting sits outside the auth guard so failed logins are counted
+            // and refused before the guard does any work (HD-5).
+            .layer(axum::middleware::from_fn_with_state(
+                std::sync::Arc::new(crate::rate_limit::RateLimiter::from_env(
+                    ctx.config
+                        .settings
+                        .as_ref()
+                        .and_then(|s| s.get("rate_limit"))
+                        .and_then(serde_json::Value::as_bool),
+                )),
+                crate::rate_limit::rate_limit_mw,
+            ))
+            // CORS is an explicit allow-list (none by default) and the security headers
+            // go on every response including the 401/403/429 above (HD-4).
+            .layer(axum::middleware::from_fn_with_state(
+                std::sync::Arc::new(crate::http_security::CorsConfig::from_env()),
+                crate::http_security::cors_mw,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                std::sync::Arc::new(crate::http_security::SecurityConfig::from_env()),
+                crate::http_security::security_headers_mw,
             ))
             // Outermost layer runs first, so the request span wraps
             // versioning and the auth guard too — a 401/403 is part of the

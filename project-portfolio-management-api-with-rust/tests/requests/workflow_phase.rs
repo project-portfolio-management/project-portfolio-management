@@ -72,7 +72,7 @@ async fn phase_advances_one_step_and_names_a_skip() {
         assert_eq!(body["phase"], "initiating");
         assert_eq!(body["next_phase"], "planning");
 
-        // An unrecognised token is refused, never coerced to a default:
+        // An unrecognized token is refused, never coerced to a default:
         // a typo must not silently place a plan in `initiating`.
         let typo = request
             .put(&format!("/api/plans/{plan}/phase"))
@@ -202,7 +202,7 @@ async fn a_plan_with_no_workflow_keeps_the_built_in_vocabulary() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-// A state with no recognised category is refused **at registration**,
+// A state with no recognized category is refused **at registration**,
 // and the refusal names the offending state. Left registered, it would
 // read `unmeasured` forever — and every derived view computes from what
 // a state means, not from its name.

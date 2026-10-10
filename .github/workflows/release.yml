@@ -1,0 +1,181 @@
+name: Release
+
+# Push a tag `vX.Y.Z` to publish a release. The tag must equal the API crate's
+# version; the matcher and UI versions are reported (they version independently).
+# Action pinning: major-version tags; full-SHA pinning is the stricter option.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  API: project-portfolio-management-api-with-rust
+  MATCHER: project-portfolio-management-matcher-with-rust
+  UI: project-portfolio-management-ui-with-svelte
+
+jobs:
+  verify:
+    name: Verify tag and versions
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      major_minor: ${{ steps.v.outputs.major_minor }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          crate_version() { sed -n 's/^version *= *"\(.*\)"/\1/p' "$1" | head -1; }
+          api="$(crate_version "$API/Cargo.toml")"
+          matcher="$(crate_version "$MATCHER/Cargo.toml")"
+          ui="$(sed -n 's/^ *"version": *"\(.*\)",*/\1/p' "$UI/package.json" | head -1)"
+          echo "tag=$version api=$api matcher=$matcher ui=$ui"
+          if [ "$version" != "$api" ]; then
+            echo "::error::tag $tag does not match the API crate version $api"
+            exit 1
+          fi
+          # The matcher and UI are versioned independently; surface the values.
+          echo "::notice::matcher crate $matcher, UI package $ui"
+          # Release notes must exist (also proves the CHANGELOG has the section).
+          scripts/release-notes.sh "$tag" "$API/CHANGELOG.md" >/dev/null
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "major_minor=${version%.*}" >> "$GITHUB_OUTPUT"
+
+  deny:
+    name: cargo deny
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        crate:
+          - project-portfolio-management-api-with-rust
+          - project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: ${{ matrix.crate }}/Cargo.toml
+          arguments: --all-features
+          command: check
+
+  image:
+    name: Build and push the container image
+    needs: [verify, deny]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write       # provenance / attestation signing
+      attestations: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long,prefix=sha-
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.API }}/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+      - run: echo "Pushed ghcr.io/${{ github.repository }}@${{ steps.push.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+
+  sbom:
+    name: CycloneDX SBOMs
+    needs: [verify, deny]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            ${{ env.API }}
+            ${{ env.MATCHER }}
+      - run: cargo install cargo-cyclonedx --locked
+      - name: Rust SBOMs
+        run: |
+          set -euo pipefail
+          mkdir -p sbom
+          for crate in "$API" "$MATCHER"; do
+            (cd "$crate" && cargo cyclonedx --format json --override-filename "$crate.cdx")
+            mv "$crate/$crate.cdx.json" "sbom/$crate.cdx.json"
+          done
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: UI SBOM
+        working-directory: ${{ env.UI }}
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          pnpm dlx @cyclonedx/cyclonedx-npm --output-format JSON --output-file "$GITHUB_WORKSPACE/sbom/$UI.cdx.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+
+  release:
+    name: Create the GitHub release
+    needs: [verify, image, sbom]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: sbom
+      - name: Extract notes from CHANGELOG.md
+        run: scripts/release-notes.sh "$GITHUB_REF_NAME" "$API/CHANGELOG.md" > release-notes.md
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo
+            echo "Container image: \`ghcr.io/${{ github.repository }}:${{ needs.verify.outputs.version }}\` (digest \`${{ needs.image.outputs.digest }}\`)"
+          } >> release-notes.md
+          gh release create "$GITHUB_REF_NAME" sbom/*.cdx.json \
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag

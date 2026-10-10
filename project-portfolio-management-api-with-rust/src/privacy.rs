@@ -16,11 +16,11 @@
 //!   [`EntityRef`]-shaped reference to a named individual. The most
 //!   directly personal field on a `Plan`, so it is **dropped entirely**
 //!   rather than partially shown: unlike a phone number or a provider
-//!   name, a partial UUID has no legitimate "still recognisable" value
+//!   name, a partial UUID has no legitimate "still recognizable" value
 //!   to an operator — the plan is already identified by its `name` and
 //!   `code`.
 //! - **`owner_org_id` / `owner_org_name`** — the sponsoring
-//!   organisation. Institutional rather than personal, but still worth
+//!   organization. Institutional rather than personal, but still worth
 //!   an obligation-driven redaction from a caller who should see that a
 //!   plan exists (and what it is) without learning who sponsors it —
 //!   tail-preserving, so a review screen can still tell two records
@@ -28,7 +28,7 @@
 //!   and care-pathway gives `provider_name`/`provider_id`.
 //!
 //! Lower sensitivity than organization/case/care-pathway overall — a
-//! plan names an organisation and (optionally) a lead, not a data
+//! plan names an organization and (optionally) a lead, not a data
 //! subject with contact details or a clinical/governmental history —
 //! which is why this module is the thinnest of the four.
 //!

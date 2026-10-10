@@ -39,7 +39,7 @@ describe("milestone words", () => {
 
   it("states the forecast against the due date", () => {
     expect(forecastText(sched(), "2026-10-20")).toBe(
-      "Forecast to finish 2026-10-12, 8 days before it is due (2026-10-20).",
+      "Forecast to finish 2026-10-12, 8 business days before it is due (2026-10-20).",
     );
     expect(
       forecastText(sched({ slack_days: 0, state: "at_risk" }), "2026-10-12"),
@@ -50,7 +50,7 @@ describe("milestone words", () => {
         "2026-10-11",
       ),
     ).toBe(
-      "Forecast to finish 2026-10-12, 1 day after it is due (2026-10-11).",
+      "Forecast to finish 2026-10-12, 1 business day after it is due (2026-10-11).",
     );
     expect(forecastText(sched({ partial: true }), "2026-10-20")).toContain(
       "may be early",
@@ -103,7 +103,7 @@ describe("milestone words", () => {
         net_days: 19,
       }),
     ).toBe(
-      "Originally due 2026-11-01; rescheduled 3 times, 2 of them later; now 19 days later than the original 2026-11-01.",
+      "Originally due 2026-11-01; rescheduled 3 times, 2 of them later; now 19 calendar days later than the original 2026-11-01.",
     );
     expect(
       slipText({
@@ -112,7 +112,7 @@ describe("milestone words", () => {
         later_moves: 0,
         net_days: -10,
       }),
-    ).toContain("10 days earlier");
+    ).toContain("10 calendar days earlier");
     expect(
       slipText({
         original_due: "2026-11-01",
@@ -128,7 +128,7 @@ describe("milestone words", () => {
         later_moves: 1,
         net_days: 1,
       }),
-    ).toContain("1 day later");
+    ).toContain("1 calendar day later");
   });
 
   it("says how a milestone was achieved", () => {
@@ -205,7 +205,7 @@ describe("milestone words", () => {
     ).toBeNull();
   });
 
-  it("summarises a row and the counts", () => {
+  it("summarizes a row and the counts", () => {
     const m = {
       name: "Beta",
       status: "due_soon",

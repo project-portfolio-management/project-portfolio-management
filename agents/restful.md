@@ -87,8 +87,9 @@ Short-lived **PASETO v4.public** tokens are verified offline against the
 auth-service's published **Ed25519 key** via the embedded
 `authentication-verifier` (`src/auth.rs`). The `AuthUser` extractor
 requires a token; `MaybeAuthUser` is optional and feeds the audit
-`actor`. Blanket `/api/*` auth enforcement is off by default
-(`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`); the published-key fetch at boot
+`actor`. Blanket `/api/*` auth enforcement is **on by default** (only an explicit
+`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` turns it off, and the service
+refuses to start in production that way); the published-key fetch at boot
 is `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`. (Front-ends use a BFF + cookie
 session, so the browser holds no token; the BFF supplies this bearer
 server-side.) Credentials come from

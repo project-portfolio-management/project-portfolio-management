@@ -1,4 +1,4 @@
-//! Request tests for **recorded effort** (FR-28) and **utilisation**
+//! Request tests for **recorded effort** (FR-28) and **utilization**
 //! (FR-35), including per person.
 //!
 //! The load-bearing test here is
@@ -10,7 +10,7 @@
 //!
 //! There is deliberately **no test asserting a per-person cycle time**,
 //! because no endpoint serves one: the 2026-08-25 decision narrowed the
-//! family refusal to utilisation alone.
+//! family refusal to utilization alone.
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
@@ -35,8 +35,8 @@ macro_rules! create_plan {
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 // Effort rolls up per plan, task and assignee, and every roll-up is
 // labelled **asserted** — it is typed by a person, unlike a transition
-// timestamp. Uncategorised effort stays visible rather than being
-// folded into `opex`, which would flatter the capitalisable share.
+// timestamp. Uncategorized effort stays visible rather than being
+// folded into `opex`, which would flatter the capitalizable share.
 async fn effort_rolls_up_and_is_labelled_asserted() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -77,7 +77,7 @@ async fn effort_rolls_up_and_is_labelled_asserted() {
         assert_eq!(rollup["plan"]["opex_minutes"], 60);
         assert_eq!(
             rollup["plan"]["unclassified_minutes"], 30,
-            "uncategorised effort must stay visible"
+            "uncategorized effort must stay visible"
         );
         assert_eq!(rollup["plan"]["asserted"], true);
         assert_eq!(
@@ -130,14 +130,14 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
     // Relative to "now", not a fixed calendar date: the read side is
     // `window_days=28` from the moment of the request, so a hardcoded
     // `spent_on` ages out of the window and the test starts failing on
-    // whatever date is more than 28 days past it — found 2026-09-18,
+    // whatever date is more than 28 calendar days past it — found 2026-09-18,
     // when a `spent_on` written for an August run finally aged out.
     let today = chrono::Utc::now().date_naive();
     let spent_on = (today - chrono::Duration::days(5)).to_string();
     let leave_starts_on = (today - chrono::Duration::days(90)).to_string();
     let leave_ends_on = (today + chrono::Duration::days(90)).to_string();
     request::<App, _, _>(|request, _ctx| async move {
-        let plan = create_plan!(request, "Utilisation plan");
+        let plan = create_plan!(request, "Utilization plan");
         let worker = "person:bbbbbbbb-0000-0000-0000-000000000001";
         let absent = "person:bbbbbbbb-0000-0000-0000-000000000002";
 
@@ -170,7 +170,7 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
             .get("/api/capacity/utilization?by=person&window_days=28")
             .await
             .json();
-        let rows = view["utilisation"].as_array().expect("utilisation rows");
+        let rows = view["utilization"].as_array().expect("utilization rows");
 
         let absentee = rows
             .iter()
@@ -178,7 +178,7 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
             .expect("a person on leave must still be reported, not silently absent");
         assert!(
             absentee["basis_points"].is_null(),
-            "leave must never read as 0% utilisation"
+            "leave must never read as 0% utilization"
         );
         assert_eq!(absentee["unavailable"], "all_non_working");
         assert_eq!(
@@ -205,18 +205,18 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
 // With no declared capacity at all the denominator is **unknown**, which
 // is a different answer from zero and from being on leave — so it has
 // its own reason.
-async fn no_declared_capacity_is_not_zero_utilisation() {
+async fn no_declared_capacity_is_not_zero_utilization() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
         let view: Value = request
             .get("/api/capacity/utilization?by=team&window_days=28")
             .await
             .json();
-        let utilisation = &view["utilisation"];
-        assert!(utilisation["basis_points"].is_null());
+        let utilization = &view["utilization"];
+        assert!(utilization["basis_points"].is_null());
         assert!(
-            utilisation["unavailable"] == "no_declared_capacity"
-                || utilisation["unavailable"] == "all_non_working",
+            utilization["unavailable"] == "no_declared_capacity"
+                || utilization["unavailable"] == "all_non_working",
             "an unknown denominator is never reported as 0%"
         );
     })

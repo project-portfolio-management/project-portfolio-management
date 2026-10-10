@@ -42,7 +42,7 @@ match_plans(
 match_plans(
   { name: "Q3 Plan v1", owner_org_id: "org-1", code: "PROJ-01" },
   { name: "Q3 Plan v2", owner_org_id: "org-1", code: "proj 01" },
-) -> score 1.0  (R-1 same-owner code; codes normalise equal,
+) -> score 1.0  (R-1 same-owner code; codes normalize equal,
                  so differing names are irrelevant)
 
 match_plans(
@@ -51,7 +51,7 @@ match_plans(
 ) -> score 1.0  (R-2 same_as URL overlap; folding trims the whitespace)
 ```
 
-### Renormalised partial score (numeric)
+### Renormalized partial score (numeric)
 
 When a present component scores `0.0` it *does* pull the average down —
 unlike an absent (`None`) component, which is dropped from the divisor.
@@ -72,7 +72,7 @@ Only two components are present:
 | name      | 1.00  | 0.30   |
 | parent    | 0.00  | 0.08   |
 
-Renormalised over the present weights (§17):
+Renormalized over the present weights (§17):
 
 ```text
 (1.00·0.30 + 0.00·0.08) / (0.30 + 0.08) = 0.30 / 0.38 ≈ 0.789

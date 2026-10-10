@@ -9,7 +9,7 @@
 //!    `same_as`, owner-scoped codes and alternate names are **dropped** — an
 //!    instantiated plan must not pose as the plan it came from (an identifier
 //!    would make it a duplicate of its source) or inherit its people.
-//! 2. **Dates are offsets.** Every date is stored as whole days from a base
+//! 2. **Dates are offsets.** Every date is stored as whole calendar days from a base
 //!    date and re-derived from the start date given at instantiation.
 //! 3. **Shape, not history.** Tasks come back at the workflow's initial
 //!    state, with no transitions, comments or time.
@@ -40,7 +40,7 @@ pub struct TplTask {
     pub points: Option<i32>,
     /// Flow type.
     pub flow_type: Option<String>,
-    /// Due date as days from the base date.
+    /// Due date as calendar days from the base date.
     pub due_offset_days: Option<i64>,
     /// Component name (within the node).
     pub component: Option<String>,
@@ -55,7 +55,7 @@ pub struct TplMilestone {
     pub name: String,
     /// Kind label.
     pub kind: Option<String>,
-    /// Due date as days from the base date.
+    /// Due date as calendar days from the base date.
     pub offset_days: i64,
 }
 
@@ -68,9 +68,9 @@ pub struct TplNode {
     pub parent: Option<usize>,
     /// The scrubbed plan record.
     pub plan: Plan,
-    /// Plan start as days from the base date.
+    /// Plan start as calendar days from the base date.
     pub start_offset_days: Option<i64>,
-    /// Plan target as days from the base date.
+    /// Plan target as calendar days from the base date.
     pub target_offset_days: Option<i64>,
     /// Component names.
     pub components: Vec<String>,
@@ -110,7 +110,7 @@ pub fn choose_base(root_start: Option<&str>, other_dates: &[NaiveDate]) -> Optio
         .or_else(|| other_dates.iter().copied().min())
 }
 
-/// Days from `base` to `date` (negative if before).
+/// Calendar days from `base` to `date` (negative if before).
 #[must_use]
 pub fn offset(base: NaiveDate, date: NaiveDate) -> i64 {
     (date - base).num_days()

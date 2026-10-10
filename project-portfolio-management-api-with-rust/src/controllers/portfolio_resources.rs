@@ -561,7 +561,7 @@ async fn resolve_placeholder(
                 ErrorDetail::new(
                     "over_capacity",
                     format!(
-                        "giving this placeholder to that person would put them over capacity on {} day(s) (peak {}% against a capacity of {}%); repeat the request with confirm=true to do it anyway",
+                        "giving this placeholder to that person would put them over capacity on {} calendar day(s) (peak {}% against a capacity of {}%); repeat the request with confirm=true to do it anyway",
                         load.days_over, load.peak_demand, load.min_capacity
                     ),
                 ),

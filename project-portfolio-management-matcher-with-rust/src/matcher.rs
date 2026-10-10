@@ -6,7 +6,7 @@
 //!
 //! 1. **Deterministic short-circuit.** If both records share a value on a
 //!    deterministic identifier scheme (the tool/registry ids plus URI /
-//!    UUID) OR share `owner_org_id` + normalised `code` OR overlap on a
+//!    UUID) OR share `owner_org_id` + normalized `code` OR overlap on a
 //!    `same_as` URL, return score `1.0`.
 //! 2. **Probabilistic scoring.** Per-component scores, then a weighted
 //!    average over the *present* components.
@@ -116,7 +116,7 @@ impl MatchingEngine {
 
         // Phase 2: probabilistic scoring. `name` is always present (name
         // is required); every other component returns `None` when one or
-        // both records lack the data, so it drops out of the renormalised
+        // both records lack the data, so it drops out of the renormalized
         // average rather than scoring 0.
         let name_score = Some(name_score(a, b));
         let goals_score = set_jaccard(&goal_titles(a), &goal_titles(b));
@@ -210,7 +210,7 @@ impl MatchingEngine {
 /// The owner key both records must share for the owner-scoped rules:
 /// the opaque `owner_org_id`. `owner_org_name` is deliberately NOT a
 /// fallback — the owner scope keys solely on the id, never on a fuzzy
-/// organisation-name comparison.
+/// organization-name comparison.
 ///
 /// `w` is the record to key. Returns the borrowed key, or `None` when
 /// `owner_org_id` is unset or empty.
@@ -222,7 +222,7 @@ fn owner_key(w: &Plan) -> Option<&str> {
 /// (already known to be the same kind). Any single rule is conclusive:
 ///
 /// - `R-0` — a shared value on the same globally-unique identifier scheme.
-/// - `R-1` — the same `owner_org_id` and the same normalised `code`.
+/// - `R-1` — the same `owner_org_id` and the same normalized `code`.
 /// - `R-2` — an overlapping `same_as` identity URL.
 fn deterministic_match(a: &Plan, b: &Plan) -> bool {
     // R-0 — any pair of deterministic identifiers shares a value. Owner-
@@ -242,7 +242,7 @@ fn deterministic_match(a: &Plan, b: &Plan) -> bool {
         }
     }
 
-    // R-1 — same owner + same normalised code. Requires all four of
+    // R-1 — same owner + same normalized code. Requires all four of
     // {owner key, code} on both sides; the non-empty guard stops two
     // records with blank codes matching spuriously.
     if let (Some(ak), Some(bk), Some(ac), Some(bc)) = (
@@ -310,11 +310,11 @@ fn goal_titles(w: &Plan) -> Vec<String> {
 
 /// Score the owner-scoped code component for `a` vs `b`.
 ///
-/// A code only identifies a plan *within* its owning organisation,
+/// A code only identifies a plan *within* its owning organization,
 /// so this is a binary, owner-gated comparison. Both records must carry a
 /// non-empty code AND share an `owner_org_id`; otherwise the component is
 /// skipped (`None`) so a local code cannot match across owners. Returns
-/// `Some(1.0)` for equal normalised codes under the same owner,
+/// `Some(1.0)` for equal normalized codes under the same owner,
 /// `Some(0.0)` for differing codes under the same owner, else `None`.
 fn code_score(a: &Plan, b: &Plan) -> Option<f64> {
     let (ac, bc) = match (a.code.as_deref(), b.code.as_deref()) {
@@ -376,12 +376,12 @@ fn parent_score(a: &Plan, b: &Plan) -> Option<f64> {
 /// Compares the records' `start_date` ↔ `start_date` and `target_date` ↔
 /// `target_date` where both sides carry a parseable date, applying a
 /// Gaussian decay `exp(-(Δdays / σ)² / 2)` to each available pair and
-/// averaging. A zero day gap scores 1.0; the score degrades smoothly with
+/// averaging. A zero calendar-day gap scores 1.0; the score degrades smoothly with
 /// distance (near-misses are not snapped to 0). Returns `None` when no
 /// date pair is comparable on both sides. `sigma` is the decay width in
-/// days (guarded to a positive value).
+/// calendar days (guarded to a positive value).
 fn timeframe_score(a: &Plan, b: &Plan, sigma: f64) -> Option<f64> {
-    // Guard against a non-positive σ: fall back to a 1-day width.
+    // Guard against a non-positive σ: fall back to a 1-calendar-day width.
     let sigma_eff = if sigma > 0.0 { sigma } else { 1.0 };
     let pairs = [
         (a.start_date.as_deref(), b.start_date.as_deref()),
@@ -396,7 +396,7 @@ fn timeframe_score(a: &Plan, b: &Plan, sigma: f64) -> Option<f64> {
                 normalize::iso_date_to_days(right),
             )
         {
-            // Day gap fits losslessly in `i32` for any realistic date pair;
+            // The calendar-day gap fits losslessly in `i32` for any realistic date pair;
             // saturate the absurd case, and `f64::from(i32)` is exact (no
             // precision-loss cast).
             let delta = i32::try_from((left_day - right_day).abs()).unwrap_or(i32::MAX);
@@ -673,8 +673,8 @@ mod tests {
         a.start_date = Some("2026-01-01".into());
         b.start_date = Some("2026-01-01".into());
         assert!((timeframe_score(&a, &b, 90.0).unwrap() - 1.0).abs() < 1e-9);
-        // A 90-day gap at σ=90 → exp(-0.5) ≈ 0.6065.
-        b.start_date = Some("2026-04-01".into()); // +90 days
+        // A 90-calendar-day gap at σ=90 → exp(-0.5) ≈ 0.6065.
+        b.start_date = Some("2026-04-01".into()); // +90 calendar days
         let s = timeframe_score(&a, &b, 90.0).unwrap();
         assert!((s - (-0.5_f64).exp()).abs() < 1e-6, "got {s}");
         // No comparable date pair → None.

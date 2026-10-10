@@ -209,7 +209,7 @@ struct RunParams {
     /// Joint run only: the currency (needed when the plan budgets in several).
     #[serde(default)]
     currency: Option<String>,
-    /// Joint run only: cost of each working day the finish is late, minor units.
+    /// Joint run only: cost of each business day the finish is late, minor units.
     #[serde(default)]
     delay_cost_per_day_minor: Option<i64>,
 }
@@ -589,7 +589,7 @@ async fn joint_risk(
     a["delay_cost"] = serde_json::json!({
         "per_day_minor": rate,
         "currency": currency,
-        "rule": "Each working day the finish is later than the critical-path finish adds this much; finishing early earns nothing back. At zero the cost and the schedule are simulated together but the delay costs nothing.",
+        "rule": "Each business day the finish is later than the critical-path finish adds this much; finishing early earns nothing back. At zero the cost and the schedule are simulated together but the delay costs nothing.",
     });
     a["shared_events"] = serde_json::json!(shared);
     a["shared_events_rule"] = serde_json::json!(
@@ -637,7 +637,7 @@ async fn joint_risk(
             "schedule": { "used": sched_used, "skipped": sched_skipped, "risks_without_schedule_fields": not_sched },
             "cost": { "used": cost_used, "skipped": cost_skipped, "risks_without_cost_fields": not_cost },
         },
-        "note": "Joint confidence is the share of iterations both within budget and not later than the critical-path finish; it is never above the smaller of the two on their own. Cost includes delay cost. Points are a thinned sample for a scatter: working days late (negative is early) against total cost.",
+        "note": "Joint confidence is the share of iterations both within budget and not later than the critical-path finish; it is never above the smaller of the two on their own. Cost includes delay cost. Points are a thinned sample for a scatter: business days late (negative is early) against total cost.",
     }))
 }
 

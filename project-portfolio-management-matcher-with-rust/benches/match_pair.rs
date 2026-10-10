@@ -41,7 +41,7 @@ fn goal(title: &str) -> Goal {
 /// owner, parent, timeframe, goals, keywords, tags, relationships) so a
 /// benchmark exercises the whole pipeline.
 fn build_reference() -> Plan {
-    let mut p = Plan::new("Patient Records Modernisation");
+    let mut p = Plan::new("Patient Records Modernization");
     p.kind = Some(PlanKind::Program);
     p.alternate_names = vec!["PRM".into()];
     p.code = Some("PRM-2024".into());
@@ -56,7 +56,7 @@ fn build_reference() -> Plan {
     ];
     p.start_date = Some("2024-01-08".into());
     p.target_date = Some("2026-03-31".into());
-    p.keywords = vec!["records".into(), "modernisation".into(), "nhs".into()];
+    p.keywords = vec!["records".into(), "modernization".into(), "nhs".into()];
     p.tags = vec!["strategic".into(), "digital".into()];
     p.relationships = vec![PlanRelationship {
         relation: RelationKind::DependsOn,
@@ -100,7 +100,7 @@ fn build_unrelated() -> Plan {
     p
 }
 
-/// Deterministically synthesise the `idx`-th candidate, so a candidate
+/// Deterministically synthesize the `idx`-th candidate, so a candidate
 /// list of any size is reproducible without randomness. `kind` cycles
 /// through the whole enum on purpose (see the module docs).
 fn make_candidate(idx: usize) -> Plan {
@@ -113,7 +113,7 @@ fn make_candidate(idx: usize) -> Plan {
         PlanKind::Practice,
     ];
     let mut p = Plan::new(format!(
-        "{} Modernisation {}",
+        "{} Modernization {}",
         stems[idx % stems.len()],
         idx % 400
     ));

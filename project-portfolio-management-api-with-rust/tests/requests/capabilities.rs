@@ -1,4 +1,4 @@
-//! Request tests for the collaboration / automation / prioritisation
+//! Request tests for the collaboration / automation / prioritization
 //! capabilities: collaborative review end-to-end, assignee management,
 //! workflow automation firing on a board move, the set-and-forget
 //! sweep, the Smart Score breakdown, and bird's-eye lifecycle
@@ -585,7 +585,7 @@ async fn plan_timeframe_changed_proposes_a_shift_via_notification() {
             .await
             .assert_status_ok();
 
-        // Shift the predecessor's end by 5 days.
+        // Shift the predecessor's end by 5 calendar days.
         request
             .put(&format!("/api/plans/{predecessor_pid}"))
             .json(&json!({ "name": "Predecessor", "target_date": "2026-02-06" }))
@@ -672,7 +672,7 @@ async fn shift_dependents_applies_the_shift_without_cascading() {
             .json();
         let watchdog_pid = watchdog["pid"].as_str().expect("pid").to_string();
 
-        // Shift the predecessor's end by 5 days.
+        // Shift the predecessor's end by 5 calendar days.
         request
             .put(&format!("/api/plans/{predecessor_pid}"))
             .json(&json!({ "name": "Predecessor2", "target_date": "2026-03-06" }))
@@ -685,7 +685,7 @@ async fn shift_dependents_applies_the_shift_without_cascading() {
             .json();
         assert_eq!(
             successor_after["target_date"], "2026-03-25",
-            "the successor's own end shifted by the same 5 days"
+            "the successor's own end shifted by the same 5 calendar days"
         );
         assert_eq!(successor_after["start_date"], "2026-03-10");
 
@@ -1145,7 +1145,7 @@ async fn smart_score_explains_itself_and_never_fakes_evidence() {
         );
 
         // The ranked queue includes it and carries the band.
-        let ranked: Value = request.get("/api/prioritisation").await.json();
+        let ranked: Value = request.get("/api/prioritization").await.json();
         let plans = ranked["plans"].as_array().expect("plans");
         assert!(plans.iter().any(|p| p["pid"] == plan_pid.as_str()));
         assert!(plans[0]["band"].is_string());

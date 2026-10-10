@@ -150,7 +150,7 @@ fn document_paging(paths: &mut Value) {
     }
 }
 
-/// The collaboration / automation / prioritisation capability paths:
+/// The collaboration / automation / prioritization capability paths:
 /// collaborative review, assignee management, workflow automation, the
 /// set-and-forget scheduler, the Smart Score, and bird's-eye lifecycle
 /// visibility.
@@ -241,11 +241,11 @@ fn capability_paths() -> Value {
             "summary": "Cancel a pending deadline; an action that already fired cannot be cancelled",
             "responses": { "204": { "description": "Cancelled" },
                            "422": { "description": "Not pending" } } } },
-        // --- data-driven prioritisation + bird's-eye visibility ----------
-        "/api/plans/{pid}/smart-score": derived("prioritisation", "One plan's Smart Score with the full breakdown: per-component weight/raw/contribution, the components with no evidence, and the coverage those gaps leave. No evidence scores null, never zero"),
-        "/api/prioritisation": derived("prioritisation", "Ranked queue, highest Smart Score first (?limit=&band=high|medium|low|unscored); unscored plans sort last rather than as zeros"),
-        "/api/lifecycle": derived("prioritisation", "Bird's-eye challenge funnel: live and stalled counts for every lifecycle phase, plus any items in an unknown phase"),
-        "/api/plans/{pid}/lifecycle": derived("prioritisation", "One plan's phase, its next gate, the readiness checklist with each blocker named, and its review consensus"),
+        // --- data-driven prioritization + bird's-eye visibility ----------
+        "/api/plans/{pid}/smart-score": derived("prioritization", "One plan's Smart Score with the full breakdown: per-component weight/raw/contribution, the components with no evidence, and the coverage those gaps leave. No evidence scores null, never zero"),
+        "/api/prioritization": derived("prioritization", "Ranked queue, highest Smart Score first (?limit=&band=high|medium|low|unscored); unscored plans sort last rather than as zeros"),
+        "/api/lifecycle": derived("prioritization", "Bird's-eye challenge funnel: live and stalled counts for every lifecycle phase, plus any items in an unknown phase"),
+        "/api/plans/{pid}/lifecycle": derived("prioritization", "One plan's phase, its next gate, the readiness checklist with each blocker named, and its review consensus"),
     })
 }
 
@@ -266,8 +266,8 @@ fn insight_paths() -> Value {
         "/api/technology/dependency-risk": get("technology", "Dependency lens: top fan-out items, cross-portfolio edges, edges with a RAG-red predecessor"),
         "/api/technology/radar": get("technology", "Technology radar from tech:<name>[:<ring>] tags; majority ring vote, ties break cautious"),
         "/api/executive/alignment": get("executive", "Strategic-alignment coverage: per-collection aligned/unaligned counts, unaligned spend per currency, ranked unaligned items"),
-        "/api/technology/debt": get("technology", "Technical-debt register: risks categorised tech_debt, exposure-sorted, with status counts"),
-        "/api/technology/flow": get("technology", "Delivery-flow metrics: milestone throughput per month + median lead days (?months=, cap 24)"),
+        "/api/technology/debt": get("technology", "Technical-debt register: risks categorized tech_debt, exposure-sorted, with status counts"),
+        "/api/technology/flow": get("technology", "Delivery-flow metrics: milestone throughput per month + median lead time in calendar days (?months=, cap 24)"),
         "/api/scenarios/compare": get("executive", "Side-by-side scenario comparison (?a=&b=): live evaluations + per-currency planned deltas, exposure/alignment deltas"),
         "/api/board/pack": get("oversight", "Board pack (?from=&to=): window decisions, benefits realized, milestones completed, tranches released + as-of-now health"),
         "/api/board/investments": get("oversight", "Money-moving decisions: scenario commits, tranche releases, approved proposals (newest first, cap 100)"),
@@ -318,7 +318,7 @@ fn insight_paths() -> Value {
             "responses": { "200": { "description": "The stored event" }, "422": { "description": "Validation failure" } } } },
         "/api/devops/metrics": get("devops", "DORA-style metrics from ingested events only (?months=): deploys, incidents, MTTR over linked pairs, declared-cause change failure"),
         "/api/devops/releases": get("devops", "Release register: ingested deploy events, newest first (cap 200)"),
-        "/api/engineering/blocked": get("engineering", "Estate blocked-work aging (days since entering blocked)"),
+        "/api/engineering/blocked": get("engineering", "Estate blocked-work aging (calendar days since entering blocked)"),
         "/api/engineering/moscow": get("engineering", "MoSCoW scope cut from moscow:<band> tags (untagged counted, never guessed)"),
         "/api/engineering/delivery-links": get("engineering", "External delivery-tracker identifiers per item + the untracked list"),
         "/api/engineering/milestone-calendar": get("engineering", "Estate milestone calendar (?kind=milestone|demo|release|checkpoint)"),
@@ -544,7 +544,7 @@ fn tba_paths() -> Value {
             "get": {
                 "tags": ["time-based-analysis"],
                 "summary": "The append-only status-transition log for one task",
-                "description": "Read-only: there is no edit or delete route. Correcting history means moving the card, which is itself recorded. `backfilled` marks a transition synthesised by the migration rather than observed.",
+                "description": "Read-only: there is no edit or delete route. Correcting history means moving the card, which is itself recorded. `backfilled` marks a transition synthesized by the migration rather than observed.",
                 "parameters": [plan, task],
                 "responses": { "200": { "description": "Transitions in time order" },
                                "404": { "description": "Unknown plan or task" } }
@@ -583,7 +583,7 @@ fn tba_plan_paths() -> Value {
             "get": {
                 "tags": ["time-based-analysis"],
                 "summary": "Plan-level flow: cycle/lead distributions, flow efficiency, first-pass yield, and the service level expectation",
-                "description": "Percentiles are nearest-rank, so every one is an observed item. The SLE — 'p% of items finish within N days' — is derived from the plan's own history and is refused below a minimum sample rather than computed from noise. Throughput is reported beside rolled_first_pass_yield: throughput rising while yield falls is not going faster, it is shipping work back to yourself.",
+                "description": "Percentiles are nearest-rank, so every one is an observed item. The SLE — 'p% of items finish within N calendar days' — is derived from the plan's own history and is refused below a minimum sample rather than computed from noise. Throughput is reported beside rolled_first_pass_yield: throughput rising while yield falls is not going faster, it is shipping work back to yourself.",
                 "parameters": [
                     plan,
                     { "name": "sle_percentile", "in": "query", "schema": { "type": "number", "default": 0.85, "minimum": 0, "maximum": 1 } },
@@ -628,7 +628,7 @@ fn tba_plan_paths() -> Value {
                 "description": "Every status band is present at every sample, including at zero, so a stacked chart never has to decide whether a missing band means zero. A task does not appear before it was created, and one whose history predates its first recorded transition reads as `todo` rather than vanishing and reappearing mid-chart. The vertical gap between the total and the done band is work in progress, and its width is approximately the cycle time — Little's Law read straight off the chart. Served here rather than assembled in the browser because it needs every task's whole history at once.",
                 "parameters": [
                     plan_for_cfd,
-                    { "name": "days", "in": "query", "schema": { "type": "integer", "default": 60, "minimum": 1, "maximum": 365 } }
+                    { "name": "days", "in": "query", "description": "The window in calendar days", "schema": { "type": "integer", "default": 60, "minimum": 1, "maximum": 365 } }
                 ],
                 "responses": {
                     "200": { "description": "Daily samples" },
@@ -640,7 +640,7 @@ fn tba_plan_paths() -> Value {
         "/api/plans/{pid}/flow": {
             "get": {
                 "tags": ["time-based-analysis"],
-                "summary": "Queueing-theory flow: arrival rate, throughput, utilisation, WIP, and Little's Law",
+                "summary": "Queueing-theory flow: arrival rate, throughput, utilization, WIP, and Little's Law",
                 "description": "Little's Law κ = λτ used as a consistency check on observed figures, not as a forecast — it assumes arrivals and departures balance over the window. Column occupancy against the configured WIP limits is reported alongside, because lowering a cap shortens cycle time without anyone working faster.",
                 "parameters": [
                     plan,
@@ -861,7 +861,7 @@ fn control_register_paths() -> Value {
             "post": {
                 "tags": ["controls"],
                 "summary": "Opt this plan into the four controls this service already knows how to evaluate but registers for no plan automatically (PRO-P33)",
-                "description": "gate_readiness (feedforward, fixed at 100%), work_in_progress (concurrent, caller-supplied limit), cycle_time_p85 (concurrent, caller-supplied SLE days), and budget_variance (feedback, defaults to a 10% tolerance). Opt-in and per-plan, never automatic: a feedforward control's whole design intent is to be able to block a write once something enforces that, so silently registering one on every plan would be an unrequested behavioural change. work_in_progress_limit and cycle_time_p85_days have no default (both are plan-specific; inventing one would be the exact risk this endpoint exists to avoid) and are required. Idempotent per metric: one already registered and enabled is reported already_registered rather than duplicated. Retrospectives are deliberately not included — no metric exists for 'a retrospective happened' and this endpoint does not invent one.",
+                "description": "gate_readiness (feedforward, fixed at 100%), work_in_progress (concurrent, caller-supplied limit), cycle_time_p85 (concurrent, caller-supplied SLE calendar days), and budget_variance (feedback, defaults to a 10% tolerance). Opt-in and per-plan, never automatic: a feedforward control's whole design intent is to be able to block a write once something enforces that, so silently registering one on every plan would be an unrequested behavioural change. work_in_progress_limit and cycle_time_p85_days have no default (both are plan-specific; inventing one would be the exact risk this endpoint exists to avoid) and are required. Idempotent per metric: one already registered and enabled is reported already_registered rather than duplicated. Retrospectives are deliberately not included — no metric exists for 'a retrospective happened' and this endpoint does not invent one.",
                 "parameters": [plan],
                 "responses": {
                     "200": { "description": "Per-metric outcome: registered (with pid) or already_registered" },
@@ -960,7 +960,7 @@ fn phase_paths() -> Value {
             "put": {
                 "tags": ["phase"],
                 "summary": "Advance one step, or move back with a stated reason",
-                "description": "Advancement is one step at a time and a skip is refused, naming the phase that would have been jumped. A backward move is permitted but must carry a reason: re-planning is normal, an unexplained regression is not. The phase never gates an operational write — tasks may be created in initiating and issues raised in closing, because refusing writes on that basis teaches operators to misreport the phase. An unrecognised token is refused, never coerced to a default.",
+                "description": "Advancement is one step at a time and a skip is refused, naming the phase that would have been jumped. A backward move is permitted but must carry a reason: re-planning is normal, an unexplained regression is not. The phase never gates an operational write — tasks may be created in initiating and issues raised in closing, because refusing writes on that basis teaches operators to misreport the phase. An unrecognized token is refused, never coerced to a default.",
                 "parameters": [plan],
                 "responses": {
                     "200": { "description": "New phase, and the next one available" },
@@ -1073,7 +1073,7 @@ fn workflow_paths() -> Value {
                 "responses": {
                     "200": { "description": "Registered" },
                     "404": { "description": "plan_pid names no live plan" },
-                    "422": { "description": "applies_to not task or issue, a blank or over-long name, a state without a recognised category, or a workflow that fails validation" }
+                    "422": { "description": "applies_to not task or issue, a blank or over-long name, a state without a recognized category, or a workflow that fails validation" }
                 }
             },
             "get": {
@@ -1086,7 +1086,7 @@ fn workflow_paths() -> Value {
             "delete": {
                 "tags": ["workflow"],
                 "summary": "Withdraw a workflow",
-                "description": "Refused while any live task sits in a state only this workflow declares: withdrawing it would leave that work in a state no vocabulary explains — exactly the uncategorised-state problem the category column exists to prevent.",
+                "description": "Refused while any live task sits in a state only this workflow declares: withdrawing it would leave that work in a state no vocabulary explains — exactly the uncategorized-state problem the category column exists to prevent.",
                 "parameters": [plan],
                 "responses": {
                     "200": { "description": "Withdrawn (soft-delete)" },
@@ -1116,7 +1116,7 @@ fn workflow_paths() -> Value {
     })
 }
 
-/// The recorded-effort and utilisation paths (entity spec §9.2c /
+/// The recorded-effort and utilization paths (entity spec §9.2c /
 /// FR-28, FR-35; `agents/share/time-based-analysis.md` §7.1).
 fn effort_paths() -> Value {
     let plan = json!({
@@ -1159,8 +1159,8 @@ fn effort_paths() -> Value {
         "/api/working-time": {
             "post": {
                 "tags": ["effort"],
-                "summary": "Declare the capacity basis: minutes per day and working days per week",
-                "description": "The denominator every utilisation figure divides by. Declared, not inferred — a capacity basis reverse-engineered from effort entries would make 100% true by construction.",
+                "summary": "Declare the capacity basis: minutes per day and business days per week",
+                "description": "The denominator every utilization figure divides by. Declared, not inferred — a capacity basis reverse-engineered from effort entries would make 100% true by construction.",
                 "responses": {
                     "200": { "description": "Declared" },
                     "422": { "description": "minutes_per_day outside 1..=1440, or working_days_per_week outside 1..=7" }
@@ -1171,7 +1171,7 @@ fn effort_paths() -> Value {
             "post": {
                 "tags": ["effort"],
                 "summary": "Record leave, holiday, study leave or non-project duty",
-                "description": "This is what stops somebody on leave reporting 0% utilisation, which would read as measured idleness. The period's minutes are deducted from the person's denominator, and a person entirely absent still appears in the utilisation view — precisely so the answer is 'on leave' rather than a silent absence.",
+                "description": "This is what stops somebody on leave reporting 0% utilization, which would read as measured idleness. The period's minutes are deducted from the person's denominator, and a person entirely absent still appears in the utilization view — precisely so the answer is 'on leave' rather than a silent absence.",
                 "responses": {
                     "200": { "description": "Recorded" },
                     "422": { "description": "kind not leave, holiday, study_leave or non_project_duty, or ends_on precedes starts_on" }
@@ -1182,7 +1182,7 @@ fn effort_paths() -> Value {
             "get": {
                 "tags": ["effort"],
                 "summary": "Recorded effort against declared capacity, by plan, team or person",
-                "description": "Per-person utilisation is served under the five stated obligations (time-based-analysis §7.1): each figure ships beside its numerator, its denominator and the non-working deduction that produced the denominator; the per-person view returns in stable actor order, never sorted by utilisation; a person under the suppression floor is withheld rather than reported on noise; and utilisation near or above 100% is a warning about the queue, not an achievement. No per-person cycle time, throughput or flow efficiency is served here or derivable from what it returns — that refusal was narrowed, not repealed.",
+                "description": "Per-person utilization is served under the five stated obligations (time-based-analysis §7.1): each figure ships beside its numerator, its denominator and the non-working deduction that produced the denominator; the per-person view returns in stable actor order, never sorted by utilization; a person under the suppression floor is withheld rather than reported on noise; and utilization near or above 100% is a warning about the queue, not an achievement. No per-person cycle time, throughput or flow efficiency is served here or derivable from what it returns — that refusal was narrowed, not repealed.",
                 "parameters": [
                     { "name": "by", "in": "query",
                       "schema": { "type": "string", "enum": ["plan", "team", "person"], "default": "team" } },
@@ -1535,7 +1535,7 @@ fn personal_paths() -> Value {
             "get": {
                 "tags": ["me"],
                 "summary": "The caller's open tasks by due date, in the caller's own zone",
-                "description": "Five buckets, always all present: overdue, today, this_week (the next six days), later, undated. An undated task is a finding, never treated as due. 'Today' is the caller's local date in tz, so one due date can be today in one zone and overdue in another at the same instant. Tasks in plans the caller cannot read are omitted and counted in omitted_unreadable. A token whose sub is not a UUID cannot be matched to assignments and gets empty buckets with reason sub_not_addressable. Each task also carries schedule (SC-10): its own critical-path total_float in working days with critical and late flags, or null with schedule_reason when there is no schedule data (never a zero); only the caller's own tasks' figures are read, none about anyone else's.",
+                "description": "Five buckets, always all present: overdue, today, this_week (the next six calendar days), later, undated. An undated task is a finding, never treated as due. 'Today' is the caller's local date in tz, so one due date can be today in one zone and overdue in another at the same instant. Tasks in plans the caller cannot read are omitted and counted in omitted_unreadable. A token whose sub is not a UUID cannot be matched to assignments and gets empty buckets with reason sub_not_addressable. Each task also carries schedule (SC-10): its own critical-path total_float in business days with critical and late flags, or null with schedule_reason when there is no schedule data (never a zero); only the caller's own tasks' figures are read, none about anyone else's.",
                 "security": [{ "bearer": [] }],
                 "parameters": [
                     tz,
@@ -1772,7 +1772,7 @@ mod tests {
             "/api/scheduled-actions",
             "/api/scheduled-actions/sweep",
             "/api/automations/milestones/sweep",
-            "/api/prioritisation",
+            "/api/prioritization",
             "/api/lifecycle",
             "/api/plans/{pid}/smart-score",
             "/api/plans/{pid}/lifecycle",
@@ -1949,7 +1949,7 @@ mod tests {
         );
     }
 
-    /// The workflow, effort/utilisation, ceremony and value surfaces are
+    /// The workflow, effort/utilization, ceremony and value surfaces are
     /// documented, and each states the rule a reader would otherwise
     /// have to discover: every state declares a category, per-person
     /// flow figures are refused, the commitment is written once, and
@@ -2002,8 +2002,8 @@ mod tests {
             "the §7.1 refusal was narrowed, not repealed — the doc must say so"
         );
         assert!(
-            utilization.contains("never sorted by utilisation"),
-            "obligation 4: utilisation is never the sole ranking key"
+            utilization.contains("never sorted by utilization"),
+            "obligation 4: utilization is never the sole ranking key"
         );
 
         let commit = paths["/api/sprints/{pid}/commit"]["post"]["description"]
@@ -2129,7 +2129,7 @@ mod tests {
             crate::controllers::strategy::routes(),
             crate::controllers::collaboration::routes(),
             crate::controllers::automation::routes(),
-            crate::controllers::prioritisation::routes(),
+            crate::controllers::prioritization::routes(),
             crate::controllers::saved_views::routes(),
             crate::controllers::canvas::routes(),
             crate::controllers::modules::routes(),

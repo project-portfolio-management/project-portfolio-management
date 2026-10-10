@@ -4,7 +4,7 @@
 //! * `PUT …/tasks/{pid}/estimate` — a task's optimistic and pessimistic
 //!   duration (its likely one is `duration_days`);
 //! * `PUT …/risks/{pid}/schedule-impact` — the task a register risk threatens,
-//!   the working days it adds, and its probability in percent;
+//!   the business days it adds, and its probability in percent;
 //! * `GET …/schedule-risk` — the seeded simulation. Every assumption is echoed
 //!   in the response, including that inputs are treated as independent.
 
@@ -35,10 +35,10 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 
 #[derive(Debug, Deserialize)]
 struct EstimateBody {
-    /// Optimistic working days; `null` clears.
+    /// Optimistic business days; `null` clears.
     #[serde(default)]
     optimistic_days: Option<i32>,
-    /// Pessimistic working days; `null` clears.
+    /// Pessimistic business days; `null` clears.
     #[serde(default)]
     pessimistic_days: Option<i32>,
 }
@@ -125,7 +125,7 @@ struct ImpactBody {
     /// The task it threatens; `null` clears the schedule fields.
     #[serde(default)]
     task_pid: Option<Uuid>,
-    /// Working days it adds if it happens (1-365).
+    /// Business days it adds if it happens (1-365).
     #[serde(default)]
     impact_days: Option<i32>,
     /// Chance it happens, in percent (0-100).
@@ -134,7 +134,7 @@ struct ImpactBody {
 }
 
 /// `PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact` — make a register risk a
-/// schedule event: which task, how many days, how likely. Any field left out
+/// schedule event: which task, how many business days, how likely. Any field left out
 /// stays unset, and a risk missing one is skipped (and named) by the simulation.
 #[debug_handler]
 async fn set_impact(
@@ -391,7 +391,7 @@ async fn schedule_risk(
             "fallback_band_percent": band,
             "correlation": "none",
             "independence": "Every task duration and every risk event is drawn independently: there is no correlation between them, so a shared cause (one team slipping everything at once) is not modelled and the spread is narrower than a correlated one would be.",
-            "durations": "Whole working days of the plan calendar; each iteration re-runs the critical-path analysis (constraints, calendars and relationship types included).",
+            "durations": "Whole business days of the plan calendar; each iteration re-runs the critical-path analysis (constraints, calendars and relationship types included).",
             "tasks_using_fallback": fallback_tasks,
             "fallback": "A task with a likely duration but no optimistic or pessimistic estimate is simulated at its likely duration plus and minus fallback_band_percent, and is marked source=fallback; it is never treated as certain.",
         },

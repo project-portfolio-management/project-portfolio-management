@@ -6,7 +6,7 @@
 //! `non_working_periods` exists so that leave, study leave, holiday and
 //! non-project duty **subtract from the denominator** rather than
 //! counting as idle capacity. Without it, somebody on leave for a
-//! fortnight reports 0% utilisation, which reads as measured idleness
+//! fortnight reports 0% utilization, which reads as measured idleness
 //! and is the single most defamatory number this service could publish.
 //!
 //! ## Effort is an assertion
@@ -17,7 +17,7 @@
 //!
 //! ## What this deliberately does not enable
 //!
-//! Per-person **utilisation** is permitted by the 2026-08-25 decision
+//! Per-person **utilization** is permitted by the 2026-08-25 decision
 //! (`agents/share/time-based-analysis.md` §7.1). Per-person **cycle
 //! time, throughput and flow efficiency** remain refused, and nothing
 //! in this schema or its read paths computes them.

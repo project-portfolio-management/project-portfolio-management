@@ -17,7 +17,7 @@
 //! synthetic transition per live task** (`NULL → current status` at
 //! `status_changed_at`) and flags it `backfilled = true`. That makes an
 //! existing board analysable immediately, and every analysis reports
-//! how many of its transitions were synthesised — so a figure resting
+//! how many of its transitions were synthesized — so a figure resting
 //! on invented history is visibly weaker than one resting on observed
 //! moves. Writing the backfill without the flag would have been the
 //! same code and a lie.
@@ -55,7 +55,7 @@ impl MigrationTrait for Migration {
                  -- The per-task read: derive one item's intervals in order.
                  CREATE INDEX IF NOT EXISTS task_transitions_task
                      ON task_transitions (task_pid, at);
-                 -- The plan-wide read: `plan_pid` is denormalised so a
+                 -- The plan-wide read: `plan_pid` is denormalized so a
                  -- whole board is one query rather than a join per task.
                  CREATE INDEX IF NOT EXISTS task_transitions_plan
                      ON task_transitions (plan_pid, at);

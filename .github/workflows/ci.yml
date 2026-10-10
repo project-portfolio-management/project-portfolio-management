@@ -1,0 +1,293 @@
+name: CI
+
+# One workflow for the whole repository (GitHub only reads the repository-root
+# .github). Branch protection should require the single aggregate check `ci-ok`.
+#
+# Action pinning: third-party actions are pinned to a full major version tag.
+# Pinning to a full commit SHA is the stricter option (a tag can be moved);
+# Dependabot (.github/dependabot.yml) keeps these up to date either way.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Must equal `channel` in rust-toolchain.toml (the fresh-clone job checks it).
+  RUST_TOOLCHAIN: "1.96.1"
+  CARGO_TERM_COLOR: always
+  API: project-portfolio-management-api-with-rust
+  MATCHER: project-portfolio-management-matcher-with-rust
+  UI: project-portfolio-management-ui-with-svelte
+
+jobs:
+  api:
+    name: API (fmt, clippy, unit and DB-free tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management-api-with-rust
+    steps:
+      - uses: actions/checkout@v4
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.96.1
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.API }}
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --lib
+      - run: >-
+          cargo test --test matching --test otlp_export --test otlp_middleware
+          --test licence_files
+
+  api-db:
+    name: API (Postgres 18 integration tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management-api-with-rust
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: loco
+          POSTGRES_PASSWORD: loco
+          POSTGRES_DB: project_portfolio_management_service_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U loco -d project_portfolio_management_service_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_service_test
+    steps:
+      - uses: actions/checkout@v4
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.API }}
+      - name: Request-level suite (tests/mod.rs)
+        run: cargo test --test mod -- --ignored --test-threads=1
+      - name: Real-token test binaries
+        # Every tests/*.rs binary except: mod (above), the DB-free ones (run
+        # in the `api` job), and the feature-gated keycloak_container and
+        # fluvio_relay (they need a container runtime / broker).
+        run: |
+          set -euo pipefail
+          skip=" mod matching otlp_export otlp_middleware licence_files keycloak_container fluvio_relay "
+          for f in tests/*.rs; do
+            name="$(basename "$f" .rs)"
+            case "$skip" in *" $name "*) continue ;; esac
+            echo "::group::cargo test --test $name -- --ignored"
+            cargo test --test "$name" -- --ignored --test-threads=1
+            echo "::endgroup::"
+          done
+
+  matcher:
+    name: Matcher (fmt, clippy, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@v4
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.96.1
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.MATCHER }}
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test
+
+  deny:
+    name: cargo deny (advisories, licenses, bans, sources)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - project-portfolio-management-api-with-rust
+          - project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: ${{ matrix.crate }}/Cargo.toml
+          arguments: --all-features
+          command: check
+          # deny.toml sits next to each Cargo.toml.
+
+  ui:
+    name: UI (check, unit, build, Playwright and axe)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management-ui-with-svelte
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+          cache-dependency-path: ${{ env.UI }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm exec vitest run
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright (includes the axe accessibility tests)
+        run: pnpm exec playwright test
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            ${{ env.UI }}/playwright-report
+            ${{ env.UI }}/test-results
+          if-no-files-found: ignore
+
+  docs:
+    name: Docs (generated status, links)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generated status is current
+        run: scripts/generate-status.sh --check
+      - name: Link check (offline)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --config lychee.toml .
+          fail: true
+
+  container:
+    name: Container (build and compose smoke)
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.API }}/Dockerfile
+          load: true
+          tags: project-portfolio-management-service:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Public-only test key set (so the secure stack can boot)
+        run: echo "PPM_PASETO_KEYS=$(scripts/smoke-keys.sh)" >> "$GITHUB_ENV"
+      - name: Start the stack
+        # The image is already built and tagged; do not rebuild.
+        run: docker compose up -d --no-build --wait --wait-timeout 180
+      - name: /_health answers
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 2 http://localhost:5150/_health
+      - name: Login enforcement is on (anonymous API call is refused)
+        run: |
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5150/api/plans)"
+          echo "anonymous GET /api/plans -> $code"
+          test "$code" = 401
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
+
+  zap:
+    name: ZAP baseline scan
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Public-only test key set (so the secure stack can boot)
+        run: echo "PPM_PASETO_KEYS=$(scripts/smoke-keys.sh)" >> "$GITHUB_ENV"
+      - name: Start the stack
+        run: docker compose up -d --build --wait --wait-timeout 600
+      - name: ZAP baseline (passive) scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: http://localhost:5150
+          rules_file_name: .zap/rules.tsv
+          fail_action: true
+          # Needs `issues: write`, which this workflow does not grant.
+          allow_issue_writing: false
+          cmd_options: -a
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
+
+  fresh-clone:
+    name: Fresh clone builds with the documented commands
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain pin matches this workflow
+        run: |
+          pinned="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          echo "rust-toolchain.toml: $pinned; workflow: $RUST_TOOLCHAIN"
+          test "$pinned" = "$RUST_TOOLCHAIN"
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.96.1
+      - name: Build the matcher
+        run: cargo build --locked
+        working-directory: ${{ env.MATCHER }}
+      - name: Build the API
+        run: cargo build --locked
+        working-directory: ${{ env.API }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: Build the UI
+        working-directory: ${{ env.UI }}
+        run: pnpm install --frozen-lockfile && pnpm build
+
+  # Single required check for branch protection.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs:
+      - api
+      - api-db
+      - matcher
+      - deny
+      - ui
+      - docs
+      - container
+      - zap
+      - fresh-clone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job succeeded
+        run: |
+          echo '${{ toJSON(needs) }}'
+          test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false"

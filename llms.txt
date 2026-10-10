@@ -24,7 +24,7 @@
 - [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics
 - [Keycloak test containers](spec/testcontainers-keycloak/index.md): Testing against a Keycloak container
 - [API crate spec](project-portfolio-management-api-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
-- [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalisation
+- [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalization
 - [UI spec](project-portfolio-management-ui-with-svelte/spec/index.md): Living spec for the SvelteKit operator UI
 
 ## Agent guides

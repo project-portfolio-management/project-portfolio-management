@@ -1,4 +1,4 @@
-# Normalisation — project-portfolio-management-matcher
+# Normalization — project-portfolio-management-matcher
 
 All in `src/normalize.rs`. Pure, deterministic, diacritic-preserving.
 
@@ -21,7 +21,7 @@ keywords, and tags Jaccards.
 ## Timeframe dates
 
 Built in `matcher.rs` (not a public normalize fn): `start_date` /
-`target_date` are compared pairwise by day gap, fed through the Gaussian
+`target_date` are compared pairwise by calendar-day gap, fed through the Gaussian
 decay `exp(-(Δdays/σ)²/2)`. No string folding applies — dates are
 compared as calendar values.
 
@@ -33,6 +33,6 @@ stripping applies.
 
 ## Rule of thumb
 
-New normalisation behaviour lives **here**, documented, with a unit
+New normalization behaviour lives **here**, documented, with a unit
 test — never inlined into `matcher.rs` (the timeframe date helper is the
 one documented exception, kept local to the scorer).

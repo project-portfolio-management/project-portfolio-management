@@ -33,9 +33,9 @@ use crate::workflow::{Category, category_of};
 
 /// Most tasks one milestone may wait for.
 const MAX_LINKS: usize = 100;
-/// Default "due soon" window, in days.
+/// Default "due soon" window, in calendar days.
 const DUE_SOON_DAYS: i64 = 14;
-/// Default risk window, in working days between the forecast and the due date.
+/// Default risk window, in business days between the forecast and the due date.
 const AT_RISK_DAYS: i64 = 5;
 
 fn unprocessable(message: &str) -> Error {
@@ -319,10 +319,10 @@ struct ListParams {
     /// Due on or before.
     #[serde(default)]
     to: Option<NaiveDate>,
-    /// "Due soon" window in days (default 14).
+    /// "Due soon" window in calendar days (default 14).
     #[serde(default)]
     due_soon_days: Option<i64>,
-    /// Working days of slack under which a forecast is at risk (default 5).
+    /// Business days of slack under which a forecast is at risk (default 5).
     #[serde(default)]
     at_risk_days: Option<i64>,
     /// The date "today" means (default today).
@@ -417,7 +417,7 @@ async fn list(
         "at_risk_days": at_risk,
         "milestones": shown,
         "summary": { "by_status": by_status, "by_schedule_state": by_state },
-        "note": "Status is against the calendar: achieved, late (past due and not achieved), due_soon (within due_soon_days) or upcoming. A linked milestone is achieved when every task it waits for is done; a manual one when marked. schedule.state comes from the critical-path forecast of the tasks still open: forecast_late when they finish after the due date, at_risk when they finish within at_risk_days working days before it, on_track otherwise; a milestone with nothing to forecast from is no_forecast with a reason, never on_track. slip reads the append-only reschedule history. The summary counts every milestone visible to the caller, whatever the status filter.",
+        "note": "Status is against the calendar: achieved, late (past due and not achieved), due_soon (within due_soon_days) or upcoming. A linked milestone is achieved when every task it waits for is done; a manual one when marked. schedule.state comes from the critical-path forecast of the tasks still open: forecast_late when they finish after the due date, at_risk when they finish within at_risk_days business days before it, on_track otherwise; a milestone with nothing to forecast from is no_forecast with a reason, never on_track. slip reads the append-only reschedule history. The summary counts every milestone visible to the caller, whatever the status filter.",
     }))
 }
 

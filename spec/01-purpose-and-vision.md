@@ -5,7 +5,7 @@
 The **portfolio entity** is the portfolio / project / product /
 program registry of the Main X Index — a federated identity index
 serving a worldwide public governmental system with millions of users.
-It models the unit of work an organisation funds, staffs, and reports
+It models the unit of work an organization funds, staffs, and reports
 on as a single recursive record type — a **plan** — carrying an
 **optional** descriptive `kind` label:
 
@@ -31,17 +31,17 @@ delivered as a trio of subprojects that compose into one capability:
 
 The entity has **two faces that share one record**:
 
-- **A matchable identity registry.** It gives an organisation one
+- **A matchable identity registry.** It gives an organization one
   canonical record per plan — deduplication: "is
   this migration project the same initiative the other department
   already chartered?" The **thin** `Plan` record (the matcher
   type) is deduplicated and matchable on the attributes that identify a
   plan (name, goal titles, owner-scoped code, sponsoring
-  organisation, parent plan, timeframe, keywords, identifiers).
+  organization, parent plan, timeframe, keywords, identifiers).
   Matching is **kind-agnostic** (§5.5): any two plans may match
   regardless of their optional `kind` label.
 - **A full project-management suite.** A `Plan` also *owns* the
-  operational record — goals, tasks, issues, sprints, workflow states,
+  operational record — tasks (goals and issues are specified but not yet built, §14.2), sprints, workflow states,
   effort, automations, and the **project phase** it is being managed
   through (§1.5) — plus the derived views over that record (timeline /
   Gantt, burndown, flow analytics). The ambition is **completeness, not
@@ -53,7 +53,7 @@ The entity has **two faces that share one record**:
 
 ### 1.2 Vision
 
-One canonical record per real-world plan, organised into recursive
+One canonical record per real-world plan, organized into recursive
 containment trees, usable both for dedup and as the live project
 workspace:
 
@@ -62,7 +62,7 @@ workspace:
   identified — not (for matching purposes) the day-to-day task churn.
   Identifiers (external PM-tool ids such as Jira project keys, Asana
   GIDs, Trello board ids, plus URIs / UUIDs) make it the linkage hub
-  between PM tools, sponsoring organisations, and the people who lead
+  between PM tools, sponsoring organizations, and the people who lead
   and staff the work.
 - **A workspace, not a shadow of one.** The operational surface is a
   first-class deliverable in its own right, not a stub that defers to a
@@ -79,11 +79,11 @@ workspace:
   can inspect — no black boxes.
 - **Federated by reference.** A plan's lead, assignees, and
   members are **`EntityRef`s** into the person / worker / authentication
-  entities; its sponsoring organisation is an `EntityRef` into the
+  entities; its sponsoring organization is an `EntityRef` into the
   organization entity; its parent plan is a `parent_ref`; and
   any goal / task / issue can carry a cross-service link to **any**
   index entity
-  ([`agents/share/cross-service-linking.md`](../../agents/share/cross-service-linking.md)).
+  (`agents/share/cross-service-linking.md` (shared family guidance, not in this repository)).
 - **Multinational by design.** `in_language` on every record;
   the operator UI is localized in the ten locales of
   [locales](locales.md).
@@ -110,15 +110,15 @@ workspace:
   membership management are **out of scope** (deferred, §15). Sprint
   notes (§1.4.4) and review verdicts (FR-16a) are structured records
   against a ceremony or a decision, not a general discussion thread.
-- **Not** an authentication / authorisation provider. Sign-on for the
-  whole index is the [authentication entity](../../authentication/)
+- **Not** an authentication / authorization provider. Sign-on for the
+  whole index is the authentication entity (sibling repository, not in this repository)
   (passwordless magic-link, cookie session + PASETO v4 public token); this
   entity is a token *verifier* and references user identities by `EntityRef`.
   Auth source of truth (supersedes the RS256-JWT model):
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md).
+  `agents/share/authentication-sessions.md`.
 - **Cross-service links are never a match signal** — a plan that
   *links to* a person or org is not thereby the *same* as another plan
-  ([`agents/share/cross-service-linking.md` §7](../../agents/share/cross-service-linking.md)).
+  (`agents/share/cross-service-linking.md` §7).
 
 ### 1.4 Deep project-management capabilities
 
@@ -181,7 +181,7 @@ with each action's outcome logged separately.
 
 Recorded effort against a work item: who (an `EntityRef`), against
 which task, how long, on what date, optionally against a billable or
-capitalisable category so the existing capex / opex budget lines have a
+capitalizable category so the existing capex / opex budget lines have a
 real denominator. Roll-ups per task, per plan, and per assignee.
 
 **The rule this must not break: effort is a property of the work, not a
@@ -192,7 +192,7 @@ easiest way to reintroduce exactly that by the back door. So:
 
 - Per-assignee roll-ups exist for **capacity, cost, and "who should be
   asked about this"**, and — by the owner decision of 2026-08-25 —
-  **per-person utilisation is computed** (FR-35), under the five
+  **per-person utilization is computed** (FR-35), under the five
   obligations in
   [time-based-analysis.md](time-based-analysis.md) §12.4a: declared
   denominator, non-working time excluded, small denominators
@@ -221,7 +221,7 @@ The four ceremonies as first-class records against the existing
 - **Daily** — optional; blockers raised become issues (FR-14) rather
   than a second parallel store.
 - **Review** — what was accepted, and by whom.
-- **Retrospective** — delivered: categorised notes, with `action` and
+- **Retrospective** — delivered: categorized notes, with `action` and
   `feedback` notes convertible into tasks so an improvement has an
   owner.
 
@@ -307,7 +307,7 @@ the same number is not built twice under two names:
 | **Flow Velocity** | How much work gets completed over time | **Delivered** — throughput (μ), items finished per unit time (TBA §9) |
 | **Flow Efficiency** | Active work as a percentage of elapsed time | **Delivered** — flow efficiency over *calendar* time, the headline 5–15% ratio (TBA §6.3, §7.2) |
 | **Flow Load** | Work in progress at any moment | **Delivered** — WIP (κ), reported against the configured WIP limits (TBA §9, §9.3), plus aging WIP (§8) |
-| **Flow Distribution** | The mix of work types being prioritised | **New** — see below |
+| **Flow Distribution** | The mix of work types being prioritized | **New** — see below |
 
 **Flow Distribution is the genuinely missing one**, and it is the one
 that makes the other four legible: a rising Flow Velocity means
@@ -327,7 +327,7 @@ figures worth having:
   the people in it (`time-based-analysis.md` §12.4). There is no
   per-assignee Flow Time, Velocity, Efficiency or Load, and time
   tracking (§1.4.3) does not create one. **This survives the 2026-08-25
-  utilisation decision intact** (§12.4a, FR-35): utilisation is a
+  utilization decision intact** (§12.4a, FR-35): utilization is a
   capacity measure, not a flow metric, and no per-person figure feeds
   any of the five.
 - **Velocity here means items finished, not story points.** TBA

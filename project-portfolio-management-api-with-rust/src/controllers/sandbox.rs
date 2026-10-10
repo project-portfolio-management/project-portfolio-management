@@ -337,7 +337,7 @@ async fn body(
                 }).collect::<Vec<_>>(),
                 "unrated_minutes_before": before.unrated_minutes,
                 "unrated_minutes_after": after.unrated_minutes,
-                "note": "Planned labour cost: each task's work spread over its working days and priced day by day at the rate in force, per currency. A shift across a rate change, or a duration change on a task with work, changes it. Work with no rate is counted apart (unknown, never zero); expenses are unchanged by edits and not shown.",
+                "note": "Planned labour cost: each task's work spread over its business days and priced day by day at the rate in force, per currency. A shift across a rate change, or a duration change on a task with work, changes it. Work with no rate is counted apart (unknown, never zero); expenses are unchanged by edits and not shown.",
             })
         }
     } else {

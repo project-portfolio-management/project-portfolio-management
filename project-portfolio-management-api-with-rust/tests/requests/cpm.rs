@@ -105,7 +105,7 @@ async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
         );
         assert_eq!(
             cpm["project_finish"], "2026-10-16",
-            "12 days from the 5th, seven-day calendar"
+            "12 business days from the 5th, seven-day calendar"
         );
         // A task with no duration is listed with why, not given a float of zero.
         assert_eq!(cpm["unscheduled"][0]["pid"], loose.as_str());
@@ -167,7 +167,7 @@ async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
             404
         );
 
-        // Relationship kinds and a lead. E starts 2 working days after A starts (SS lag 2),
+        // Relationship kinds and a lead. E starts 2 business days after A starts (SS lag 2),
         // F finishes when A finishes (FF), G leads D's finish by 1 (FS lag -1).
         let e = task(&request, &p, "E", None, Some(3)).await;
         let f = task(&request, &p, "F", None, Some(2)).await;
@@ -199,12 +199,12 @@ async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
         assert_eq!(
             node(&f)["early_finish"],
             "2026-10-07",
-            "F finishes when A (3 days) does"
+            "F finishes when A (3 business days) does"
         );
         assert_eq!(
             node(&g)["early_start"],
             node(&d)["early_finish"],
-            "a one-day lead: G starts on D's last day"
+            "a one-business-day lead: G starts on D's last day"
         );
 
         // A cycle through a task relation is refused too.
@@ -254,7 +254,7 @@ async fn calendars_constraints_deadlines_and_a_persons_absence() {
             .await
             .assert_status_ok();
 
-        // A Friday start of 2 working days ends the following Monday; across the holiday it ends Tuesday.
+        // A Friday start of 2 business days ends the following Monday; across the holiday it ends Tuesday.
         let a = task(&request, &p, "A", Some("2026-10-02"), Some(2)).await;
         let c = task(&request, &p, "C", Some("2026-10-09"), Some(2)).await;
         let cpm: Value = request.get(&format!("/api/plans/{p}/cpm")).await.json();
@@ -467,7 +467,7 @@ async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_droppe
         assert!(kinds.contains(&("fs".to_string(), 0)), "{kinds:?}");
         assert!(
             kinds.contains(&("ss".to_string(), 1)),
-            "Review→Sign-off SS with 1 day lag: {kinds:?}"
+            "Review→Sign-off SS with 1 business day lag: {kinds:?}"
         );
         assert!(
             kinds.contains(&("ff".to_string(), 0)),
@@ -720,7 +720,11 @@ async fn baselines_are_append_only_and_variance_separates_slip_added_and_removed
         let rows = var["variance"]["rows"].as_array().unwrap();
         let row = |pid: &str| rows.iter().find(|r| r["task_pid"] == pid).cloned().unwrap();
         assert_eq!(row(&a)["standing"], "slipped");
-        assert_eq!(row(&a)["finish_variance_days"], 2, "3 days became 5");
+        assert_eq!(
+            row(&a)["finish_variance_days"],
+            2,
+            "3 business days became 5"
+        );
         assert_eq!(row(&a)["duration_variance_days"], 2);
         assert_eq!(row(&b)["standing"], "slipped", "B follows A");
         assert_eq!(row(&added)["standing"], "added");
@@ -749,7 +753,7 @@ async fn baselines_are_append_only_and_variance_separates_slip_added_and_removed
             (Some(2), Some(1), Some(1), Some(2))
         );
         // The longest baselined task was deleted, so the plan's own finish moved EARLIER by a
-        // day: the report says so, and the removed row above shows why that is no improvement.
+        // business day: the report says so, and the removed row above shows why that is no improvement.
         assert_eq!(s["plan_finish_slip_days"], -1);
 
         // A re-baseline is version 2 with its reason; version 1 is untouched and still comparable.
@@ -895,7 +899,7 @@ async fn the_raci_matrix_refuses_two_accountable_and_reports_gaps() {
 
         // A good row: A/R on one person, a consulted, an informed.
         let ok: Value = put(&design, json!({ "assignments": [{ "person_ref": ann, "roles": "ar" }, { "person_ref": bob, "roles": "C" }, { "person_ref": cy, "roles": "I" }] })).await.json();
-        assert_eq!(ok["cells"][ann], "RA", "normalised to R-A-C-I order");
+        assert_eq!(ok["cells"][ann], "RA", "normalized to R-A-C-I order");
         assert_eq!(ok["findings"], json!([]));
         // An incomplete row is allowed, and says what is missing.
         let partial: Value = put(&build, json!({ "assignments": [{ "person_ref": bob, "roles": "R" }] })).await.json();
@@ -954,7 +958,7 @@ async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
         assert_eq!((none["absent"].as_str(), none["blocks"].is_null()), (Some("no_baseline"), true));
         let today = chrono::Utc::now().date_naive();
         let day = |n: i64| (today + chrono::Duration::days(n)).to_string();
-        // GBP: 10 days ending today at 1 000, then the next 10 days at 3 000. BAC 4 000, PV today 1 000.
+        // GBP: 10 calendar days ending today at 1 000, then the next 10 calendar days at 3 000. BAC 4 000, PV today 1 000.
         request
             .post(&format!("/api/plans/{p}/budget-baselines"))
             .json(&json!({ "currency": "GBP", "periods": [
@@ -1098,7 +1102,7 @@ async fn ev_plan(
 async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
-        // BAC 4 000 (10 days ending today at 1 000, 10 more at 3 000); 2 of 4 done: EV 2 000; AC 2 500;
+        // BAC 4 000 (10 calendar days ending today at 1 000, 10 more at 3 000); 2 of 4 done: EV 2 000; AC 2 500;
         // PV today 1 000, so SPI 2.00 and CPI 0.80.
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();
@@ -1514,7 +1518,7 @@ async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() 
         assert_eq!(ev["events"]["risks_without_schedule_fields"], 1);
         assert_eq!(
             ev["cpm_finish_confidence_bp"], 0,
-            "a certain 10-day slip never meets the CPM date"
+            "a certain 10-business-day slip never meets the CPM date"
         );
 
         // Caps are refused, not truncated.
@@ -1573,7 +1577,7 @@ async fn schedule_health_runs_fourteen_checks_and_never_passes_what_it_cannot_co
             assert_eq!(by(k)["reason"], "no_baseline");
         }
         assert_eq!(h["all_pass"], false);
-        // C is 50 working days: the one high-duration offender, named by pid.
+        // C is 50 business days: the one high-duration offender, named by pid.
         let hd = by("high_duration");
         assert_eq!(hd["pass"], false);
         assert_eq!(hd["offenders"][0]["pid"], c.as_str());
@@ -1818,7 +1822,7 @@ async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
             .assert_status_ok();
 
         // Forecast on the default seven-day calendar: A runs 5-9 Oct, B 10-12 Oct;
-        // the due date, 20 Oct, is 8 days later.
+        // the due date, 20 Oct, is 8 business days later.
         let v = get("as_of=2026-10-05").await;
         let m = find(&v, &m1);
         assert_eq!(m["completion_mode"], "linked");
@@ -1826,14 +1830,14 @@ async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
         assert_eq!(m["schedule"]["slack_days"], 8);
         assert_eq!(
             m["schedule"]["state"], "on_track",
-            "more than 5 days of slack"
+            "more than 5 business days of slack"
         );
         assert_eq!(m["open_tasks"], 2);
         let tight = get("as_of=2026-10-05&at_risk_days=8").await;
         assert_eq!(
             find(&tight, &m1)["schedule"]["state"],
             "at_risk",
-            "8 days of slack is inside an 8-day window"
+            "8 business days of slack is inside an 8-business-day window"
         );
         // Move the due date before the forecast: forecast late.
         request
@@ -2062,7 +2066,7 @@ async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
         assert_eq!(j["currency"], "GBP");
         assert_eq!(j["other_currencies_not_simulated"][0], "USD");
         assert_eq!(j["assumptions"]["shared_events"].as_array().unwrap().len(), 1);
-        // Certain: 4 days late at 500 a day, plus the 4 000 risk, on 15 000.
+        // Certain: 4 business days late at 500 a business day, plus the 4 000 risk, on 15 000.
         assert!(j["cost"]["percentiles"].as_array().unwrap().iter().all(|x| x["minor"] == 21_000));
         assert_eq!(j["confidence"]["joint_bp"], 0);
         assert_eq!(j["cost"]["mean_delay_cost_minor"], 2_000);
@@ -2092,7 +2096,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
             .await
             .json();
         let p = plan["pid"].as_str().unwrap().to_string();
-        // A Monday-to-Friday calendar, so weekends are not working days.
+        // A Monday-to-Friday calendar, so weekends are not business days.
         request
             .put(&format!("/api/plans/{p}/calendar"))
             .json(&json!({ "weekdays": "1111100" }))
@@ -2140,7 +2144,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
                 r["exact"].as_bool()
             ),
             (Some(3840), Some("work"), Some(true)),
-            "8 days at 100%"
+            "8 business days at 100%"
         );
         put_asg(&a, json!({ "units_percent": 50, "work_minutes": 100 }))
             .await
@@ -2209,7 +2213,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
         );
         assert_eq!(
             edited["assignment"]["units_percent"], 150,
-            "14 400 minutes over 20 days is 150%"
+            "14 400 minutes over 20 business days is 150%"
         );
         // A task that carries work cannot become a milestone.
         request
@@ -2222,7 +2226,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
         let b = mk("Test", Some(who), Some("2026-10-05"), 8).await;
         put_asg(&b, json!({ "units_percent": 100 }))
             .await
-            .assert_status_ok(); // 3 840 minutes over 8 working days
+            .assert_status_ok(); // 3 840 minutes over 8 business days
         let put_contour = |t: &str, body: Value| {
             let request = &request;
             let url = format!("/api/plans/{p}/tasks/{t}/contour");
@@ -2254,7 +2258,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
         let days = task_b["buckets"].as_array().unwrap();
         let sum: i64 = days.iter().map(|d| d["minutes"].as_i64().unwrap()).sum();
         assert_eq!(sum, 3840, "the buckets sum to the work exactly");
-        // 5-9 and 12-14 Oct are the eight working days; the weekend between them carries nothing.
+        // 5-9 and 12-14 Oct are the eight business days; the weekend between them carries nothing.
         let on = |date: &str| {
             days.iter()
                 .find(|d| d["from"] == date)
@@ -2448,7 +2452,7 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
         assert!(before["rate"].is_null());
         assert_eq!(before["reason"], "no_rate");
 
-        // Planned labour: 3 days at 100% from Mon 5 Oct; Wed 7 Oct is at the new rate.
+        // Planned labour: 3 business days at 100% from Mon 5 Oct; Wed 7 Oct is at the new rate.
         let task: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({
             "title": "Build", "assignee_ref": who, "start_date": "2026-10-05", "duration_days": 3 })).await.json();
         let tp = task["pid"].as_str().unwrap().to_string();
@@ -2460,7 +2464,7 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
         let plan_cost: Value = request.get(&format!("/api/plans/{p}/cost-plan?period=day")).await.json();
         let gbp = &plan_cost["currencies"][0];
         assert_eq!(gbp["currency"], "GBP");
-        assert_eq!(gbp["labour"]["total_minor"], 2 * 40_000 + 48_000, "two days at 50.00, one at 60.00");
+        assert_eq!(gbp["labour"]["total_minor"], 2 * 40_000 + 48_000, "two business days at 50.00, one at 60.00");
         assert_eq!(gbp["fixed"]["total_minor"], 100, "the prorated expense sums exactly");
         assert_eq!(gbp["total"]["total_minor"], 128_100);
         assert!(plan_cost["unrated"].as_array().unwrap().is_empty());
@@ -3265,7 +3269,7 @@ async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
         assert_eq!(node(&c, &a1).unwrap()["external"], false);
         assert_eq!(
             ext["early_finish"], "2026-10-12",
-            "six working days of Bravo's Monday-to-Friday calendar"
+            "six business days of Bravo's Monday-to-Friday calendar"
         );
         assert_eq!(
             node(&c, &a1).unwrap()["early_start"],

@@ -23,6 +23,7 @@ export interface RiskInputsForm {
 /** What is stored on the risk now. */
 export interface RiskInputsCurrent {
   task_pid: string | null;
+  /** Business days the risk adds to its task. */
   schedule_impact_days: number | null;
   probability_percent: number | null;
   cost_impact_minor: number | null;
@@ -31,6 +32,7 @@ export interface RiskInputsCurrent {
 
 export interface ScheduleCall {
   task_pid: string | null;
+  /** Business days the risk adds to its task. */
   impact_days: number | null;
   probability_percent: number | null;
 }
@@ -101,7 +103,7 @@ export function planRiskCalls(
   if (hasTask !== hasDays) {
     return {
       error:
-        "Name the task and the days it adds together, or leave both empty.",
+        "Name the task and the business days it adds together, or leave both empty.",
     };
   }
   let days: number | null = null;
@@ -109,7 +111,7 @@ export function planRiskCalls(
     days = Number(str(form.impactDays));
     if (!Number.isInteger(days) || days < 1 || days > 365) {
       return {
-        error: "The days a risk adds must be a whole number from 1 to 365.",
+        error: "The business days a risk adds must be a whole number from 1 to 365.",
       };
     }
   }
@@ -199,7 +201,7 @@ export function rangeMinor(major: FieldValue): number | null {
   return blank(major) ? null : Math.round(Number(str(major)) * 100);
 }
 
-/** Problems with a task's optimistic / pessimistic days against its likely duration. */
+/** Problems with a task's optimistic / pessimistic business days against its likely duration. */
 export function taskEstimateProblems(
   optimistic: string,
   pessimistic: string,
@@ -214,7 +216,7 @@ export function taskEstimateProblems(
   const o = parse(optimistic);
   const p = parse(pessimistic);
   if (o === "bad" || p === "bad")
-    return ["Days must be whole numbers from 0 to 3650."];
+    return ["Business days must be whole numbers from 0 to 3650."];
   if ((o !== null || p !== null) && likely === null) {
     return ["Give the task a duration first: that is its likely value."];
   }
@@ -244,5 +246,5 @@ export function taskRangeText(
 ): string {
   if ((o ?? null) === null && (p ?? null) === null)
     return "No range: the simulation uses its fallback band";
-  return `${o ?? likely ?? "?"} / ${likely ?? "?"} / ${p ?? likely ?? "?"} working days (optimistic / likely / pessimistic)`;
+  return `${o ?? likely ?? "?"} / ${likely ?? "?"} / ${p ?? likely ?? "?"} business days (optimistic / likely / pessimistic)`;
 }

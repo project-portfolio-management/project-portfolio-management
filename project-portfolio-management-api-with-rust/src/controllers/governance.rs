@@ -96,7 +96,7 @@ fn validate_proposal(p: &ProposalPayload) -> Vec<String> {
     );
     // `kind_target` is now an optional descriptive label for the plan a
     // promoted proposal mints. Blank means "no kind"; a non-blank value
-    // must be a recognised kind label.
+    // must be a recognized kind label.
     if !p.kind_target.trim().is_empty() && parse_kind_label(&p.kind_target).is_none() {
         problems.push(format!(
             "kind_target, when set, must be one of portfolio/project/product/program/practice/process/purpose/pathway/proposal, got {:?}",
@@ -325,7 +325,7 @@ struct IntakeForecastQuery {
     /// Periods of history to sample (default 12).
     #[serde(default)]
     history_periods: Option<usize>,
-    /// Days per period (default 7).
+    /// Calendar days per period (default 7).
     #[serde(default)]
     period_days: Option<i64>,
     /// Simulation trials (default 10 000, capped).
@@ -779,7 +779,7 @@ async fn update_risk(
 }
 
 /// `POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a
-/// materialised risk: status → `materialised`, stamped. (Conversion
+/// materialized risk: status → `materialized`, stamped. (Conversion
 /// into a tracked issue arrives with the issues sub-resource.)
 #[debug_handler]
 async fn escalate_risk(
@@ -797,7 +797,7 @@ async fn escalate_risk(
     }
     let risk_row_pid = risk.pid;
     let mut active: risks::ActiveModel = risk.into();
-    active.status = ActiveValue::set("materialised".to_string());
+    active.status = ActiveValue::set("materialized".to_string());
     active.escalated_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     let row = active
         .update(&ctx.db)
@@ -1075,7 +1075,7 @@ async fn governance_summary(
         })),
         "risks": {
             "open": open_risks.len(),
-            "materialised": risks.iter().filter(|r| r.status == "materialised").count(),
+            "materialized": risks.iter().filter(|r| r.status == "materialized").count(),
             "max_exposure": open_risks.iter().map(|r| r.probability * r.impact).max(),
             "total_exposure": open_risks.iter().map(|r| r.probability * r.impact).sum::<i32>(),
         },

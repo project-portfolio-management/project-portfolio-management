@@ -75,5 +75,5 @@ through the same-origin `/api/proxy` route; mutating browser→BFF calls
 carry a CSRF token. Configure the BFF's upstream URLs with
 `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` and `AUTH_API_URL` (both default
 to `http://localhost:5150`; see `.env.example`). Source of truth:
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+`agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
 (RS256/JWKS not used).

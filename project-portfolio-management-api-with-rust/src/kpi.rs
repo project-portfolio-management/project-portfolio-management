@@ -124,7 +124,7 @@ pub fn trend(direction: Direction, previous: Option<i64>, latest: Option<i64>) -
     })
 }
 
-/// Days in a cadence interval.
+/// Calendar days in a cadence interval.
 #[must_use]
 pub fn cadence_days(cadence: &str) -> Option<i64> {
     match cadence {
@@ -270,7 +270,7 @@ mod tests {
         assert_eq!(
             stale(Some("weekly"), Some(d(2026, 9, 25)), today),
             Some(false),
-            "10 days, within 14"
+            "10 calendar days, within 14"
         );
         assert_eq!(
             stale(Some("weekly"), Some(d(2026, 9, 21)), today),

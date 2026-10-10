@@ -32,7 +32,7 @@ Evaluated for any pair (kind is never consulted):
 | Rule | Condition |
 |---|---|
 | R-0 | Any shared value on a deterministic identifier scheme: `Uri`, `Uuid`, `JiraProjectKey`, `AsanaGid`, `TrelloBoardId`, `MsProjectId`, `GitHubProjectId`, `LinearId` (empty values ignored) |
-| R-1 | Same non-empty `owner_org_id` AND equal normalised `code` |
+| R-1 | Same non-empty `owner_org_id` AND equal normalized `code` |
 | R-2 | Any case-folded `same_as` URL overlap |
 
 `Code` / `LocalId` / `Custom` schemes are **excluded** from R-0 —
@@ -40,17 +40,17 @@ owner-scoped codes are not globally unique.
 
 ## Probabilistic components
 
-Renormalised weighted average over the components both records carry
+Renormalized weighted average over the components both records carry
 (divisor = sum of contributing weights):
 
 | Component | Weight | Algorithm | Skipped when |
 |---|---:|---|---|
 | Name | 0.30 | Best Jaro-Winkler over `name` + `alternate_names` (folded); Soundex +0.05 bonus on primary names, capped at 0.95 | never (name required) |
 | Goals | 0.15 | Jaccard over `fold_set` of goal titles | both sides empty |
-| Code | 0.15 | Same owner: 1.0 if normalised codes equal, else 0.0 | differing / missing owner |
+| Code | 0.15 | Same owner: 1.0 if normalized codes equal, else 0.0 | differing / missing owner |
 | OwnerOrg | 0.10 | Exact `owner_org_id` match: 1.0 / 0.0 | either side unset |
 | Parent | 0.08 | Same parent `parent_ref` exact 1.0 / 0.0 | either side unset |
-| Timeframe | 0.07 | Date proximity over `[start_date, target_date]` (Gaussian decay on day gap, σ default 90) | either side lacks dates |
+| Timeframe | 0.07 | Date proximity over `[start_date, target_date]` (Gaussian decay on the calendar-day gap, σ default 90 calendar days) | either side lacks dates |
 | Keywords | 0.05 | Jaccard over `fold_set` | both sides empty (0.0 if exactly one populated) |
 | Relationships | 0.05 | Jaccard over typed `"relation:plan_id"` token set | **either** side empty (strict — supporting signal) |
 | Tags | 0.05 | Jaccard over `fold_set` | **either** side empty (strict — supporting signal) |
@@ -59,7 +59,7 @@ Weights sum to 1.00. The `Parent` (0.08) component corroborates two
 plans that share the same parent plan; it contributes nothing when either
 side has no `parent_ref`.
 
-## Normalisation
+## Normalization
 
 | Function | Rule |
 |---|---|

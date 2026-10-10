@@ -272,7 +272,7 @@ async fn gate_journey_advances_stage_in_order() {
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 // Risks: scoring bounds enforce 1–5, the list derives exposure
-// (highest first), and escalation materialises an open risk.
+// (highest first), and escalation materializes an open risk.
 async fn risks_score_and_escalate() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -313,8 +313,8 @@ async fn risks_score_and_escalate() {
             "/api/plans/{pid}/risks/{}/escalate",
             high["pid"].as_str().unwrap()
         );
-        let materialised: Value = request.post(&escalate).await.json();
-        assert_eq!(materialised["status"], "materialised");
+        let materialized: Value = request.post(&escalate).await.json();
+        assert_eq!(materialized["status"], "materialized");
         assert_eq!(request.post(&escalate).await.status_code(), 422);
         let low_pid = low["pid"].as_str().unwrap();
         let closed: Value = request

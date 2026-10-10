@@ -118,7 +118,7 @@ async function stub(
 
 async function stageDuration(page: Page) {
   await page.getByRole("combobox", { name: /^Task/ }).selectOption("t1");
-  await page.getByLabel("Working days").fill("6");
+  await page.getByLabel("Business days").fill("6");
   await page.getByRole("button", { name: "Stage edit" }).click();
 }
 
@@ -139,7 +139,7 @@ test("stage, preview, then commit sends exactly the staged edits with the previe
   await page.goto(`/en-001/plans/${PID}/what-if`);
   await stageDuration(page);
   await expect(page.getByTestId("staged")).toContainText(
-    "Set “Build” to 6 working days",
+    "Set “Build” to 6 business days",
   );
   await expect(page.getByTestId("preview")).toHaveCount(0);
   await expect
@@ -182,7 +182,7 @@ test("a changed staged list drops the preview, so you never commit what you did 
   await page.getByRole("button", { name: "Preview" }).click();
   await expect(page.getByTestId("preview")).toBeVisible();
   await page.getByRole("combobox", { name: /^Task/ }).selectOption("t2");
-  await page.getByLabel("Working days").fill("1");
+  await page.getByLabel("Business days").fill("1");
   await page.getByRole("button", { name: "Stage edit" }).click();
   await expect(page.getByTestId("preview")).toHaveCount(0);
   await page.getByRole("button", { name: "Remove edit 2" }).click();

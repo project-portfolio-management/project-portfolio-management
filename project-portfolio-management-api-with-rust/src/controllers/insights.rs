@@ -45,7 +45,7 @@ macro_rules! live {
 }
 
 /// The RAG colour of every live item, keyed by pid — the same
-/// derivation `/api/at-a-glance` uses (materialised risks, budget
+/// derivation `/api/at-a-glance` uses (materialized risks, budget
 /// overrun, missed target, exposure, schedule violations).
 pub(crate) fn rag_by_pid(
     items: &[plans::Model],
@@ -76,9 +76,9 @@ pub(crate) fn rag_by_pid(
                 .iter()
                 .filter(|r| r.plan_pid == item.pid)
                 .collect();
-            let materialised = member_risks
+            let materialized = member_risks
                 .iter()
-                .filter(|r| r.status == "materialised")
+                .filter(|r| r.status == "materialized")
                 .count();
             let max_exposure = member_risks
                 .iter()
@@ -107,7 +107,7 @@ pub(crate) fn rag_by_pid(
                 is_finished(item),
                 target,
                 today,
-                materialised,
+                materialized,
                 max_exposure,
                 overrun,
                 violated.contains(&item.pid),
@@ -222,7 +222,7 @@ async fn executive_health(
             .filter(|row| row.overrun)
             .map(|row| row.currency)
             .collect();
-        // Staleness: days since the newest member update (audit-visible
+        // Staleness: calendar days since the newest member update (audit-visible
         // activity would be finer; member `updated_at` is the honest
         // floor the row store carries).
         let stale_days = members
@@ -245,7 +245,7 @@ async fn executive_health(
     let body = serde_json::json!({
         "as_of": chrono::Utc::now(),
         "derivation": "status = worst member RAG (at-a-glance rules); \
-                       staleness = days since newest member update",
+                       staleness = calendar days since newest member update",
         "portfolios": portfolios,
     });
     conditional(&headers, &body)
@@ -876,9 +876,9 @@ async fn executive_alignment(
 }
 
 /// `GET /api/technology/debt` — the technical-debt register: risks
-/// categorised `tech_debt`, exposure-sorted, with item refs and
+/// categorized `tech_debt`, exposure-sorted, with item refs and
 /// status counts. Rides the risk lifecycle (raise / mitigate /
-/// escalate / close) — an uncategorised risk reads as `delivery` and
+/// escalate / close) — an uncategorized risk reads as `delivery` and
 /// stays off this view.
 #[debug_handler]
 async fn technology_debt(

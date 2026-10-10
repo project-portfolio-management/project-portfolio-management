@@ -1,16 +1,16 @@
-//! **Recorded effort** and **utilisation** — the surface over
+//! **Recorded effort** and **utilization** — the surface over
 //! [`crate::effort`] (entity spec §9.2c / FR-28, FR-35).
 //!
 //! # What this deliberately does not serve
 //!
-//! Per-person **utilisation** is here, by the owner decision of
+//! Per-person **utilization** is here, by the owner decision of
 //! 2026-08-25. Per-person **cycle time, throughput and flow
 //! efficiency** are not, and there is no endpoint from which they could
 //! be derived by arithmetic — that refusal
 //! (`agents/share/time-based-analysis.md` §7.1) was narrowed, not
 //! repealed.
 //!
-//! # Why the roll-ups are not sorted by utilisation
+//! # Why the roll-ups are not sorted by utilization
 //!
 //! Obligation 4: it is never the sole ranking key. The per-person view
 //! returns in a stable `actor_ref` order and ships each figure beside
@@ -33,7 +33,7 @@ use crate::models::audit_logs::Model as AuditModel;
 /// Rows scanned per read.
 const MAX_ROWS: u64 = 5000;
 
-/// Default window for a utilisation read.
+/// Default window for a utilization read.
 const DEFAULT_WINDOW_DAYS: i64 = 28;
 
 fn unprocessable(message: &str) -> Error {
@@ -270,7 +270,7 @@ struct NonWorkingPayload {
 
 /// `POST /api/non-working` — record leave or other non-working time.
 ///
-/// This is what stops somebody on leave reporting 0% utilisation, which
+/// This is what stops somebody on leave reporting 0% utilization, which
 /// would read as measured idleness.
 #[debug_handler]
 async fn create_non_working(
@@ -422,16 +422,16 @@ async fn utilization(
         "person" => serde_json::json!({
             "by": "person",
             "window_days": window_days,
-            // Stable order by actor, **not** sorted by utilisation.
-            "utilisation": facts.iter().map(|f| rules::utilisation(f, floor)).collect::<Vec<_>>(),
-            "note": "Utilisation near or above 100% is a warning about the queue, \
+            // Stable order by actor, **not** sorted by utilization.
+            "utilization": facts.iter().map(|f| rules::utilization(f, floor)).collect::<Vec<_>>(),
+            "note": "Utilization near or above 100% is a warning about the queue, \
                      not an achievement. No per-person cycle time, throughput or \
                      flow efficiency is served here or derivable from it.",
         }),
         _ => serde_json::json!({
             "by": by,
             "window_days": window_days,
-            "utilisation": rules::team_utilisation(&facts, floor),
+            "utilization": rules::team_utilization(&facts, floor),
             "people_counted": facts.len(),
         }),
     };
@@ -439,7 +439,7 @@ async fn utilization(
     super::conditional_json(&headers, &etag, &body)
 }
 
-/// The effort and utilisation routes.
+/// The effort and utilization routes.
 #[must_use]
 pub fn routes() -> Routes {
     Routes::new()

@@ -1,4 +1,4 @@
-//! Match-result shape + the renormalised weighted-sum helper.
+//! Match-result shape + the renormalized weighted-sum helper.
 
 use serde::{Deserialize, Serialize};
 
@@ -99,13 +99,13 @@ pub struct MatchBreakdown {
     pub kind_gate_blocked: bool,
 }
 
-/// Compute a renormalised weighted average over `Some` components only.
+/// Compute a renormalized weighted average over `Some` components only.
 /// Skipped (`None`) components don't pull the score down: the divisor is
 /// the sum of the weights that actually contributed. Returns `0.0` when
 /// no component is present.
 ///
 /// `components` pairs each component's optional score with its weight.
-/// Returns the renormalised average, or `0.0` when every component is
+/// Returns the renormalized average, or `0.0` when every component is
 /// `None` (avoiding a divide-by-zero).
 #[must_use]
 pub fn weighted_average(components: &[(Option<f64>, f64)]) -> f64 {
@@ -166,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn weighted_average_renormalises_over_present_weights() {
+    fn weighted_average_renormalizes_over_present_weights() {
         // name 1.0 @ 0.30 and code 0.0 @ 0.15; others absent.
         // (1.0*0.30 + 0.0*0.15) / (0.30+0.15) = 0.666….
         let score = weighted_average(&[(Some(1.0), 0.30), (Some(0.0), 0.15), (None, 0.10)]);

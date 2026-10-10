@@ -34,7 +34,7 @@ import {
   RTL_LOCALES,
   isRtl,
   localizePath,
-  normaliseLocale,
+  normalizeLocale,
   type Locale,
 } from "./locales.js";
 
@@ -185,7 +185,7 @@ const STRINGS = {
     "ppm.dashboard.title": "لوحة متابعة المحفظة",
     "ppm.dashboard.workItems": "عناصر العمل",
     "ppm.dashboard.openProposals": "مقترحات مفتوحة",
-    "ppm.dashboard.materialisedRisks": "مخاطر متحققة",
+    "ppm.dashboard.materializedRisks": "مخاطر متحققة",
     "ppm.dashboard.exposure": "إجمالي التعرض للمخاطر المفتوحة",
     "ppm.dashboard.violations": "انتهاكات الجدول",
     "ppm.dashboard.overAllocated": "أشخاص محمّلون فوق طاقتهم",
@@ -554,7 +554,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Dangosfwrdd portffolio",
     "ppm.dashboard.workItems": "eitemau gwaith",
     "ppm.dashboard.openProposals": "cynigion agored",
-    "ppm.dashboard.materialisedRisks": "risgiau a wireddwyd",
+    "ppm.dashboard.materializedRisks": "risgiau a wireddwyd",
     "ppm.dashboard.exposure": "cyfanswm risg agored",
     "ppm.dashboard.violations": "toriadau amserlen",
     "ppm.dashboard.overAllocated": "pobl a orddyrannwyd",
@@ -930,7 +930,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Portfolio-Dashboard",
     "ppm.dashboard.workItems": "Arbeitselemente",
     "ppm.dashboard.openProposals": "offene Vorschläge",
-    "ppm.dashboard.materialisedRisks": "eingetretene Risiken",
+    "ppm.dashboard.materializedRisks": "eingetretene Risiken",
     "ppm.dashboard.exposure": "offene Risikoexposition",
     "ppm.dashboard.violations": "Zeitplanverstöße",
     "ppm.dashboard.overAllocated": "überlastete Personen",
@@ -1306,7 +1306,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Portfolio-Dashboard",
     "ppm.dashboard.workItems": "Arbeitselemente",
     "ppm.dashboard.openProposals": "offene Vorschläge",
-    "ppm.dashboard.materialisedRisks": "eingetretene Risiken",
+    "ppm.dashboard.materializedRisks": "eingetretene Risiken",
     "ppm.dashboard.exposure": "offene Risikoexposition",
     "ppm.dashboard.violations": "Zeitplanverstöße",
     "ppm.dashboard.overAllocated": "überlastete Personen",
@@ -1685,7 +1685,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Portfolio dashboard",
     "ppm.dashboard.workItems": "work items",
     "ppm.dashboard.openProposals": "open proposals",
-    "ppm.dashboard.materialisedRisks": "materialised risks",
+    "ppm.dashboard.materializedRisks": "materialized risks",
     "ppm.dashboard.exposure": "open risk exposure",
     "ppm.dashboard.violations": "schedule violations",
     "ppm.dashboard.overAllocated": "over-allocated people",
@@ -2062,7 +2062,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Panel de cartera",
     "ppm.dashboard.workItems": "elementos de trabajo",
     "ppm.dashboard.openProposals": "propuestas abiertas",
-    "ppm.dashboard.materialisedRisks": "riesgos materializados",
+    "ppm.dashboard.materializedRisks": "riesgos materializados",
     "ppm.dashboard.exposure": "exposición a riesgos abiertos",
     "ppm.dashboard.violations": "violaciones de cronograma",
     "ppm.dashboard.overAllocated": "personas sobreasignadas",
@@ -2438,7 +2438,7 @@ const STRINGS = {
     "ppm.dashboard.title": "Tableau de bord du portefeuille",
     "ppm.dashboard.workItems": "éléments de travail",
     "ppm.dashboard.openProposals": "propositions ouvertes",
-    "ppm.dashboard.materialisedRisks": "risques matérialisés",
+    "ppm.dashboard.materializedRisks": "risques matérialisés",
     "ppm.dashboard.exposure": "exposition aux risques ouverts",
     "ppm.dashboard.violations": "violations de calendrier",
     "ppm.dashboard.overAllocated": "personnes surallouées",
@@ -2811,7 +2811,7 @@ const STRINGS = {
     "ppm.dashboard.title": "पोर्टफोलियो डैशबोर्ड",
     "ppm.dashboard.workItems": "कार्य मद",
     "ppm.dashboard.openProposals": "खुले प्रस्ताव",
-    "ppm.dashboard.materialisedRisks": "साकार जोखिम",
+    "ppm.dashboard.materializedRisks": "साकार जोखिम",
     "ppm.dashboard.exposure": "खुला जोखिम एक्सपोज़र",
     "ppm.dashboard.violations": "समय-सारणी उल्लंघन",
     "ppm.dashboard.overAllocated": "अधिक आवंटित लोग",
@@ -3183,7 +3183,7 @@ const STRINGS = {
     "ppm.dashboard.title": "组合仪表盘",
     "ppm.dashboard.workItems": "工作项",
     "ppm.dashboard.openProposals": "开放提案",
-    "ppm.dashboard.materialisedRisks": "已发生风险",
+    "ppm.dashboard.materializedRisks": "已发生风险",
     "ppm.dashboard.exposure": "未决风险敞口",
     "ppm.dashboard.violations": "进度冲突",
     "ppm.dashboard.overAllocated": "超负荷人员",
@@ -3533,7 +3533,7 @@ const STRINGS = {
     "ppm.dashboard.title": "组合仪表盘",
     "ppm.dashboard.workItems": "工作项",
     "ppm.dashboard.openProposals": "开放提案",
-    "ppm.dashboard.materialisedRisks": "已发生风险",
+    "ppm.dashboard.materializedRisks": "已发生风险",
     "ppm.dashboard.exposure": "未决风险敞口",
     "ppm.dashboard.violations": "进度冲突",
     "ppm.dashboard.overAllocated": "超负荷人员",
@@ -3803,7 +3803,7 @@ function readStoredLocale(): Locale {
   // run can set the browser resolve condition while leaving `localStorage`
   // undefined.
   if (!browser || typeof localStorage === "undefined") return DEFAULT_LOCALE;
-  return normaliseLocale(localStorage.getItem(LOCALE_KEY)) ?? DEFAULT_LOCALE;
+  return normalizeLocale(localStorage.getItem(LOCALE_KEY)) ?? DEFAULT_LOCALE;
 }
 
 // Reactive current-locale state; mutating it re-renders every `t(...)` call.
@@ -3828,7 +3828,7 @@ export const i18n = {
    *   accepted); unsupported input falls back to {@link DEFAULT_LOCALE}.
    */
   set(next: string): void {
-    const locale = normaliseLocale(next) ?? DEFAULT_LOCALE;
+    const locale = normalizeLocale(next) ?? DEFAULT_LOCALE;
     current = locale;
     void sveltiaLocale.set(locale);
     if (browser && typeof localStorage !== "undefined")

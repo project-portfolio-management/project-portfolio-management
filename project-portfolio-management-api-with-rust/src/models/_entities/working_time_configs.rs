@@ -1,5 +1,5 @@
 //! `SeaORM` Entity — `working_time_configs`. The declared capacity
-//! basis, so a utilisation denominator is never assumed. See entity
+//! basis, so a utilization denominator is never assumed. See entity
 //! spec §5.9.6 / FR-35.
 
 // SeaORM-generated entity shape: documented by the migration.

@@ -1,77 +1,65 @@
-# Multi-stage Containerfile for Project Portfolio Management Service.
+# Multi-stage container build for Project Portfolio Management Service.
 #
-# Container runtime: Podman (Docker-compatible — `docker build` still
-# works if a user has Docker installed instead).
-# Base image:        debian:13-slim (Trixie, current Debian stable).
+# BUILD CONTEXT IS THE REPOSITORY ROOT. This crate depends on its sibling
+# crate `project-portfolio-management-matcher-with-rust` by relative path
+# (`../project-portfolio-management-matcher-with-rust`), so both must be in
+# the context. Build from the repository root:
 #
-# IMPORTANT — build context must be the REPOSITORY ROOT, not this
-# crate's own directory. This crate's Cargo.toml (like every crate in
-# the family — there is no root Cargo.toml, so no shared vendor/lock
-# step) depends on sibling crates by path: `integrity-mac`,
-# `authentication-verifier`, `project-portfolio-management-matcher`.
-# Build with:
-#
-#   podman build \
-#     -f project-portfolio-management/project-portfolio-management-api-with-rust/Dockerfile \
+#   podman build -f project-portfolio-management-api-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
+#   # or: docker build -f project-portfolio-management-api-with-rust/Dockerfile -t ... .
 #
-# run from the repository root (see examples/compose/ for the wired
-# multi-service stacks that build every image this way).
+# The two pinned git dependencies (`integrity-mac`, `authentication-verifier`
+# from github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) are
+# fetched by cargo during the build, which is why the builder needs `git` and
+# `ca-certificates` and network access.
+#
+# Toolchain: the base image tag below must equal `channel` in the root
+# rust-toolchain.toml; the first RUN step fails the build if they drift.
 
-FROM rust:1.96-slim AS builder
+FROM docker.io/library/rust:1.96.1-slim AS builder
 
-# Build dependencies — `libssl-dev` for openssl-sys, `libpq-dev` for
-# the PostgreSQL C client headers SeaORM links against via sqlx.
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        ca-certificates \
         pkg-config \
         libssl-dev \
         libpq-dev \
-        ca-certificates \
         perl \
         make \
         gcc \
-        curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Keep the builder in lock-step with the repository toolchain pin.
+COPY rust-toolchain.toml /tmp/rust-toolchain.toml
+RUN want="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
+    && have="$(rustc --version | cut -d' ' -f2)" \
+    && echo "pinned toolchain ${want}, builder rustc ${have}" \
+    && test "${want}" = "${have}"
 
 WORKDIR /app
 
-# Sibling path dependencies, copied in before this crate's own sources
-# so they layer-cache independently of day-to-day edits here.
-COPY integrity/integrity-mac-rust-crate integrity/integrity-mac-rust-crate
-COPY authentication/authentication-verifier-rust-crate authentication/authentication-verifier-rust-crate
-COPY project-portfolio-management/project-portfolio-management-matcher-with-rust project-portfolio-management/project-portfolio-management-matcher-with-rust
+# Sibling path dependency (sources only; target/ is excluded by .dockerignore).
+COPY project-portfolio-management-matcher-with-rust project-portfolio-management-matcher-with-rust
 
-# This crate itself: manifests first (better layer caching), then the
-# nested `migration` sub-crate (loco's sea-orm-migration bridge — a
-# same-directory path dependency, so it travels with the COPY below
-# regardless), then sources.
-COPY project-portfolio-management/project-portfolio-management-api-with-rust/Cargo.toml project-portfolio-management/project-portfolio-management-api-with-rust/Cargo.lock project-portfolio-management/project-portfolio-management-api-with-rust/
-COPY project-portfolio-management/project-portfolio-management-api-with-rust/migration project-portfolio-management/project-portfolio-management-api-with-rust/migration
-COPY project-portfolio-management/project-portfolio-management-api-with-rust/src project-portfolio-management/project-portfolio-management-api-with-rust/src
-# Cargo parses the whole manifest even for a --bin-only build, and this
-# crate's Cargo.toml declares `[[bench]] name = "service_bench"` — the
-# same trap place-service's own container fix already documented for
-# its `bridge_bench`. Without this, cargo refuses to parse the
-# manifest at all ("can't find `service_bench` bench at
-# `benches/service_bench.rs`").
-COPY project-portfolio-management/project-portfolio-management-api-with-rust/benches project-portfolio-management/project-portfolio-management-api-with-rust/benches
+# This crate: manifests first, then the nested `migration` crate, sources,
+# and benches. Cargo parses the whole manifest even for a --bin build, and
+# Cargo.toml declares `[[bench]] name = "service_bench"`, so benches/ must exist.
+COPY project-portfolio-management-api-with-rust/Cargo.toml project-portfolio-management-api-with-rust/Cargo.lock project-portfolio-management-api-with-rust/
+COPY project-portfolio-management-api-with-rust/migration project-portfolio-management-api-with-rust/migration
+COPY project-portfolio-management-api-with-rust/src project-portfolio-management-api-with-rust/src
+COPY project-portfolio-management-api-with-rust/benches project-portfolio-management-api-with-rust/benches
 
-WORKDIR /app/project-portfolio-management/project-portfolio-management-api-with-rust
+WORKDIR /app/project-portfolio-management-api-with-rust
 
-# Build the binary target declared by src/bin/main.rs. Migration SQL
-# is embedded into the binary at compile time via `include_str!`
-# (agents/share/architecture.md), so the runtime stage below needs no
-# loose migration files. Default features only — this crate's optional
-# `fluvio` (BUS-3 relay sink) feature stays off in the reference
-# image; enable at build time if a deployment needs a real broker.
-RUN cargo build --release --bin project-portfolio-management-service
+# Migrations are compiled into the binary, so the runtime stage needs no loose
+# migration files; the same binary runs them (`... db migrate`). Default
+# features only (the optional `fluvio` and `keycloak` features stay off).
+RUN cargo build --release --locked --bin project-portfolio-management-service
 
-# Stage 2: runtime — minimal Debian 13 slim base.
-FROM debian:13-slim
+# ---- runtime ---------------------------------------------------------------
+FROM docker.io/library/debian:13-slim
 
-# Runtime libraries. libpq5 for the SeaORM PostgreSQL connector,
-# libssl3 for openssl, ca-certificates for HTTPS chains (PASETO
-# key-set fetch), curl for the HEALTHCHECK below.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq5 \
         libssl3 \
@@ -79,46 +67,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Non-root user. Podman maps host UID 1000 to the container UID 1000
-# by default when running rootless, so bind-mounted volumes stay
-# accessible without `:Z` relabel headaches.
-RUN useradd --create-home --uid 1000 --shell /bin/bash portfolio
+# Non-root user.
+RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin portfolio
 
 WORKDIR /app
 
 COPY --from=builder --chown=portfolio:portfolio \
-    /app/project-portfolio-management/project-portfolio-management-api-with-rust/target/release/project-portfolio-management-service \
+    /app/project-portfolio-management-api-with-rust/target/release/project-portfolio-management-service \
     /app/project-portfolio-management-service
 
-# loco reads config/<environment>.yaml at runtime (not baked into the
-# binary); LOCO_ENV below selects `production.yaml`.
-COPY --chown=portfolio:portfolio project-portfolio-management/project-portfolio-management-api-with-rust/config ./config
+# loco reads config/<LOCO_ENV>.yaml at run time (it is not baked into the binary).
+COPY --chown=portfolio:portfolio project-portfolio-management-api-with-rust/config ./config
 
 # Tantivy full-text index (PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH,
-# default `data/search-index` relative to CWD — see src/search/mod.rs).
+# default `data/search-index` relative to the working directory).
 RUN mkdir -p /app/data/search-index && chown -R portfolio:portfolio /app
 
 USER portfolio
 
 EXPOSE 5150
 
-# Loco's default `/_health` (this crate mounts no bespoke health route
-# — see spec/index.md §9). NOTE: Podman's default OCI image format
-# silently drops HEALTHCHECK ("HEALTHCHECK is not supported for OCI
-# image format and will be ignored" — build with `--format docker` to
-# bake it in). The examples/compose/ stacks set an equivalent
-# compose-level `healthcheck:`, which works under either image format,
-# so this instruction is kept for direct `docker build`/`docker run`
-# users rather than relied on as the only health signal.
+# Loco's built-in /_health. Podman's default OCI image format drops
+# HEALTHCHECK (build with `--format docker` to keep it); compose.yaml
+# repeats an equivalent healthcheck so either format works.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl --silent --fail http://localhost:5150/_health || exit 1
 
-# Runtime defaults; override at `podman run -e …`. LOCO_ENV selects
-# config/production.yaml — a container with no override boots safely
-# in production mode rather than defaulting to loco's own "development".
+# config/production.yaml; requires DATABASE_URL. See /compose.yaml for the
+# environment a real deployment needs (token-verifier keys, login enforcement).
 ENV LOCO_ENV=production \
     PORT=5150
 
-# loco's CLI entry point: `<bin> start` runs the server (see
-# src/bin/main.rs — `loco_rs::cli::main`).
 CMD ["/app/project-portfolio-management-service", "start"]

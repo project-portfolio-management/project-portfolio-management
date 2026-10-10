@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — security headers and a strict Content Security Policy (HD-4, 2026-10-09)
+
+Every response carries `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` and (over HTTPS only) `Strict-Transport-Security` (`src/lib/security-headers.ts`, applied in `hooks.server.ts`). `kit.csp` in `vite.config.ts` sets `script-src 'self'` with SvelteKit nonces and hashes and no `'unsafe-inline'` for scripts or `<style>` elements; inline style *attributes* are allowed because the SVAR widgets set computed `style="…"`. SVAR's icon font is now self-hosted under `static/svar/` and its themes are mounted with `fonts={false}`, so no third-party stylesheet loads. `tests/e2e/security-headers.spec.ts` fails on any CSP violation across representative routes in three locales; the e2e `settle()` helper uses a constructed stylesheet because an injected `<style>` tag is now (rightly) blocked.
+
+### Changed — Oxford spelling and explicit day units (NFR-10, NFR-11, 2026-10-09)
+
+English text and identifiers use Oxford (`-ize`) spelling (`normalizeLocale`, the `/prioritization` page); durations in days say "calendar days" or "business days" (the compact `2.3d` forms are spelled out). The package licence matches the Rust crates (`MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`).
+
 ### Removed — two-letter locale forwarding
 
 `/en/…`, `/cy/…`, `/de/…` and the other bare two-letter prefixes no longer redirect (301) to `/en-001/…`, `/cy-001/…`, `/de-001/…`. A two-letter code is not a locale: such a path is an ordinary bare path (it gains the reader's own locale prefix and then finds no page). Only the full `<language>-<region>` codes are URL prefixes (spec NFR-4a). The earlier "Added — localized routes" entry below describes the old behaviour.
@@ -39,7 +47,7 @@ On the governance page: a risk's simulation inputs (one probability, the task it
 
 ### Added — float on My work (SC-10)
 
-Each task on `/me` says "On the critical path", "N days of float", or, for negative float, "This is already late for the plan"; a task with no schedule data shows nothing. Plain text, not colour alone.
+Each task on `/me` says "On the critical path", "N business days of float", or, for negative float, "This is already late for the plan"; a task with no schedule data shows nothing. Plain text, not colour alone.
 
 ### Added — localized routes and Sveltia I18n
 
@@ -59,7 +67,7 @@ On the earned-value page: EAC variants each named by formula with a stated recom
 
 ### Added — schedule baselines and variance (SC-3)
 
-Take a numbered, append-only baseline on the critical-path page; the Gantt shows an outline where each task was baselined; a variance table separates slipped, pulled in, added and removed in working days.
+Take a numbered, append-only baseline on the critical-path page; the Gantt shows an outline where each task was baselined; a variance table separates slipped, pulled in, added and removed in business days.
 
 ### Added — availability and proposed bookings (PJ-3, PJ-4)
 
@@ -81,7 +89,7 @@ lands `/` on `/executive`), read via a new `currentUser()` BFF call to
 the auth service's `GET /api/auth/me` — which itself needed a small
 upstream fix (`authentication-service-with-loco`'s `CurrentResponse`
 carried no `attrs` field at all; see that crate's own `CHANGELOG.md`).
-Presentation only: authorisation stays with the service's ABAC, and
+Presentation only: authorization stays with the service's ABAC, and
 every route stays reachable by direct URL regardless of `view`.
 Absent/unmatched `view` ⇒ today's nav, unchanged. New pure module
 `src/lib/nav.ts`. See `spec/index.md` §13 T-28f.
@@ -165,7 +173,7 @@ sibling Lily checkout, same pattern as the existing four).
 
 Also added `en_US` ("English (United States)") to
 `src/lib/i18n.svelte.ts`'s `LOCALES`/`LOCALE_LABELS`/`STRINGS` (a
-verbatim duplicate of `en`'s copy) and taught `normaliseLocale` to
+verbatim duplicate of `en`'s copy) and taught `normalizeLocale` to
 match a region variant like `en_US`/`en-US` exactly before falling
 back to stripping to its primary subtag (previously `en_US` would have
 silently collapsed to `en`, since only the primary subtag was ever
@@ -208,7 +216,7 @@ it stays inside the widget's default "today's month" view.
 board read through the lens of time rather than of activity.
 
 - **The service level expectation first.** "85% of items finish within
-  11 days", with the sample size beside it — the number a team can
+  11 calendar days", with the sample size beside it — the number a team can
   actually quote. Below the service's minimum sample it renders the
   refusal, not a figure computed from noise.
 - **Aging work in progress** next, because it is the only thing on the
@@ -375,20 +383,20 @@ left open on 2026-08-01. This wires the two consuming routes to it.
 ### Added
 
 - 2026-07-22 — **Capability views for collaborative review, workflow
-  automation, prioritisation, and bird's-eye visibility**, consuming
+  automation, prioritization, and bird's-eye visibility**, consuming
   the service's new endpoints (service spec §9.4a):
   - `src/lib/api/capabilities.ts` — `CapabilityClient` plus the wire
     types (`Review`, `Consensus`, `Automation`, `AutomationRun`,
     `ScheduledAction`, `Notification`, `SmartScore`, `RankedPlan`,
     `LifecycleFunnel`, `PlanLifecycle`, `AssigneeLoad`). One method per
     endpoint; unset query parameters are omitted rather than sent blank.
-  - `/prioritisation` — the Smart Score queue with an **Explain**
+  - `/prioritization` — the Smart Score queue with an **Explain**
     toggle showing each component's weight, value, and points, plus the
     per-plan evidence coverage. Unscored plans read as `unscored`, never
     as a low score.
   - `/lifecycle` — the challenge funnel: live and stalled counts for
     every phase (empty phases included) and any items in an
-    unrecognised phase.
+    unrecognized phase.
   - `/reviews` — delegate an item to an internal or external expert,
     accept/decline, submit a verdict, withdraw, and read the consensus
     (which shows outstanding invitations and reports a tie as a tie).

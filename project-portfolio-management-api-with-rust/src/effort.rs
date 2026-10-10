@@ -1,4 +1,4 @@
-//! Pure rules for **recorded effort** and **utilisation** (entity spec
+//! Pure rules for **recorded effort** and **utilization** (entity spec
 //! §5.9.3 / §5.9.6, FR-28 / FR-35). DB-free and exhaustively
 //! unit-tested.
 //!
@@ -10,9 +10,9 @@
 //! because anti-gaming rests on incidental collection, and a timesheet
 //! never had that protection.
 //!
-//! # Utilisation, and the five obligations
+//! # Utilization, and the five obligations
 //!
-//! Per-person utilisation is computed here by owner decision of
+//! Per-person utilization is computed here by owner decision of
 //! 2026-08-25, which **narrowed** the family refusal in
 //! `agents/share/time-based-analysis.md` §7.1 rather than repealing it.
 //! Per-person cycle time, throughput and flow efficiency stay refused,
@@ -36,20 +36,20 @@ use serde::{Deserialize, Serialize};
 /// Basis-point scale.
 pub const BASIS_POINTS: i64 = 10_000;
 
-/// Minutes of declared capacity below which a utilisation figure is
+/// Minutes of declared capacity below which a utilization figure is
 /// suppressed. One nominal working week.
 pub const DEFAULT_SUPPRESSION_FLOOR_MINUTES: i64 = 2_400;
 
-/// How effort is categorised for the capex / opex split the budget
+/// How effort is categorized for the capex / opex split the budget
 /// lines already use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EffortCategory {
-    /// Capitalisable.
+    /// Capitalizable.
     Capex,
     /// Operating.
     Opex,
-    /// Not categorised.
+    /// Not categorized.
     Unclassified,
 }
 
@@ -64,7 +64,7 @@ impl EffortCategory {
         }
     }
 
-    /// Parse a declared category; anything unrecognised is
+    /// Parse a declared category; anything unrecognized is
     /// `Unclassified` rather than silently one of the other two.
     #[must_use]
     pub fn parse(raw: Option<&str>) -> Self {
@@ -94,12 +94,12 @@ pub struct EffortFact {
 pub struct EffortTotals {
     /// Total minutes.
     pub minutes: i64,
-    /// Of which capitalisable.
+    /// Of which capitalizable.
     pub capex_minutes: i64,
     /// Of which operating.
     pub opex_minutes: i64,
-    /// Of which categorised as neither — reported rather than folded
-    /// into `opex`, which would flatter the capitalisable share.
+    /// Of which categorized as neither — reported rather than folded
+    /// into `opex`, which would flatter the capitalizable share.
     pub unclassified_minutes: i64,
     /// Of which billable.
     pub billable_minutes: i64,
@@ -138,7 +138,7 @@ pub fn totals(entries: &[EffortFact]) -> EffortTotals {
     out
 }
 
-/// Why a utilisation figure is absent. Reported beside the `None`, so
+/// Why a utilization figure is absent. Reported beside the `None`, so
 /// nobody has to guess whether it is zero, missing, or withheld.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -167,9 +167,9 @@ pub struct CapacityFact {
     pub effort_minutes: i64,
 }
 
-/// One person's utilisation, with everything needed to check it.
+/// One person's utilization, with everything needed to check it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Utilisation {
+pub struct Utilization {
     /// The person.
     pub actor_ref: String,
     /// Effort ÷ available capacity, in basis points. `None` when the
@@ -193,9 +193,9 @@ pub struct Utilisation {
     pub at_or_over_capacity: bool,
 }
 
-/// Compute one person's utilisation under the five obligations.
+/// Compute one person's utilization under the five obligations.
 #[must_use]
-pub fn utilisation(fact: &CapacityFact, floor_minutes: i64) -> Utilisation {
+pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
     let available = fact
         .declared_minutes
         .saturating_sub(fact.non_working_minutes)
@@ -219,7 +219,7 @@ pub fn utilisation(fact: &CapacityFact, floor_minutes: i64) -> Utilisation {
         None
     };
 
-    Utilisation {
+    Utilization {
         actor_ref: fact.actor_ref.clone(),
         basis_points,
         unavailable,
@@ -232,13 +232,13 @@ pub fn utilisation(fact: &CapacityFact, floor_minutes: i64) -> Utilisation {
     }
 }
 
-/// Team-level utilisation: effort over capacity across a group.
+/// Team-level utilization: effort over capacity across a group.
 ///
 /// Computed from the **summed** numerator and denominator, never as a
 /// mean of individual ratios — averaging ratios over unequal
 /// denominators is a different (and wrong) number.
 #[must_use]
-pub fn team_utilisation(facts: &[CapacityFact], floor_minutes: i64) -> Utilisation {
+pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilization {
     let combined = CapacityFact {
         actor_ref: "team".to_string(),
         declared_minutes: facts
@@ -251,7 +251,7 @@ pub fn team_utilisation(facts: &[CapacityFact], floor_minutes: i64) -> Utilisati
             .iter()
             .fold(0_i64, |a, f| a.saturating_add(f.effort_minutes)),
     };
-    utilisation(&combined, floor_minutes)
+    utilization(&combined, floor_minutes)
 }
 
 #[cfg(test)]
@@ -267,11 +267,11 @@ mod tests {
         }
     }
 
-    /// Effort rolls up, and uncategorised effort is reported separately
+    /// Effort rolls up, and uncategorized effort is reported separately
     /// rather than folded into `opex` — which would flatter the
-    /// capitalisable share.
+    /// capitalizable share.
     #[test]
-    fn effort_totals_keep_uncategorised_visible() {
+    fn effort_totals_keep_uncategorized_visible() {
         let t = totals(&[
             entry("person:a", 120, EffortCategory::Capex, true),
             entry("person:a", 60, EffortCategory::Opex, false),
@@ -285,7 +285,7 @@ mod tests {
         assert!(t.asserted, "effort is always labelled asserted");
     }
 
-    /// An unrecognised category is `Unclassified`, never silently one of
+    /// An unrecognized category is `Unclassified`, never silently one of
     /// the real two.
     #[test]
     fn an_unknown_category_is_unclassified() {
@@ -306,11 +306,11 @@ mod tests {
         }
     }
 
-    /// Utilisation is effort over **available** capacity, and always
+    /// Utilization is effort over **available** capacity, and always
     /// ships its numerator and denominator.
     #[test]
-    fn utilisation_returns_its_own_denominator() {
-        let u = utilisation(&capacity(2_400, 0, 1_200), 0);
+    fn utilization_returns_its_own_denominator() {
+        let u = utilization(&capacity(2_400, 0, 1_200), 0);
         assert_eq!(u.basis_points, Some(5_000));
         assert_eq!(u.available_minutes, 2_400);
         assert_eq!(u.declared_minutes, 2_400);
@@ -325,14 +325,14 @@ mod tests {
     /// would read as measured idleness.
     #[test]
     fn leave_leaves_the_denominator_and_never_reads_as_zero() {
-        let all_leave = utilisation(&capacity(2_400, 2_400, 0), 0);
+        let all_leave = utilization(&capacity(2_400, 2_400, 0), 0);
         assert_eq!(all_leave.basis_points, None);
         assert_eq!(all_leave.unavailable, Some(Unavailable::AllNonWorking));
         assert_eq!(all_leave.available_minutes, 0);
 
-        // Half the window on leave doubles the utilisation of the same
+        // Half the window on leave doubles the utilization of the same
         // effort, because only half the capacity was ever available.
-        let half = utilisation(&capacity(2_400, 1_200, 600), 0);
+        let half = utilization(&capacity(2_400, 1_200, 600), 0);
         assert_eq!(half.basis_points, Some(5_000));
         assert_eq!(half.non_working_minutes, 1_200);
     }
@@ -341,7 +341,7 @@ mod tests {
     /// leave — the denominator is unknown, not zero.
     #[test]
     fn no_declared_capacity_is_its_own_reason() {
-        let u = utilisation(&capacity(0, 0, 500), 0);
+        let u = utilization(&capacity(0, 0, 500), 0);
         assert_eq!(u.basis_points, None);
         assert_eq!(u.unavailable, Some(Unavailable::NoDeclaredCapacity));
     }
@@ -350,7 +350,7 @@ mod tests {
     /// clinical setting this is a re-identification control.
     #[test]
     fn a_small_denominator_is_suppressed() {
-        let u = utilisation(&capacity(60, 0, 30), DEFAULT_SUPPRESSION_FLOOR_MINUTES);
+        let u = utilization(&capacity(60, 0, 30), DEFAULT_SUPPRESSION_FLOOR_MINUTES);
         assert_eq!(u.basis_points, None);
         assert_eq!(u.unavailable, Some(Unavailable::BelowFloor));
         // The inputs are still returned, so the suppression is visible
@@ -363,20 +363,20 @@ mod tests {
     /// an achievement.
     #[test]
     fn at_capacity_is_flagged_as_a_warning() {
-        let at = utilisation(&capacity(2_400, 0, 2_400), 0);
+        let at = utilization(&capacity(2_400, 0, 2_400), 0);
         assert_eq!(at.basis_points, Some(10_000));
         assert!(at.at_or_over_capacity);
 
-        let over = utilisation(&capacity(2_400, 0, 3_600), 0);
+        let over = utilization(&capacity(2_400, 0, 3_600), 0);
         assert_eq!(over.basis_points, Some(15_000), "over 100% is not clamped");
         assert!(over.at_or_over_capacity);
     }
 
-    /// Team utilisation sums the numerator and denominator; it is **not**
+    /// Team utilization sums the numerator and denominator; it is **not**
     /// a mean of individual ratios, which over unequal denominators is a
     /// different and wrong number.
     #[test]
-    fn team_utilisation_sums_rather_than_averaging_ratios() {
+    fn team_utilization_sums_rather_than_averaging_ratios() {
         let facts = vec![
             CapacityFact {
                 actor_ref: "person:a".to_string(),
@@ -391,7 +391,7 @@ mod tests {
                 effort_minutes: 0, // 0%
             },
         ];
-        let team = team_utilisation(&facts, 0);
+        let team = team_utilization(&facts, 0);
         // Summed: 2400 / 2640 ≈ 90.9%. A mean of the two ratios would
         // have said 50%.
         assert_eq!(team.basis_points, Some(9_090));
@@ -401,13 +401,13 @@ mod tests {
     /// Untrusted stored values must not panic.
     #[test]
     fn extreme_values_are_total() {
-        let u = utilisation(&capacity(i64::MAX, i64::MIN, i64::MAX), 0);
+        let u = utilization(&capacity(i64::MAX, i64::MIN, i64::MAX), 0);
         assert!(u.available_minutes >= 0);
-        let _ = utilisation(&capacity(1, 0, i64::MAX), 0);
+        let _ = utilization(&capacity(1, 0, i64::MAX), 0);
         let huge: Vec<EffortFact> = (0..3)
             .map(|_| entry("person:a", i64::MAX, EffortCategory::Capex, true))
             .collect();
         assert_eq!(totals(&huge).minutes, i64::MAX, "saturating, not wrapping");
-        let _ = team_utilisation(&[], 0);
+        let _ = team_utilization(&[], 0);
     }
 }

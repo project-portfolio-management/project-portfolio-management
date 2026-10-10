@@ -1,0 +1,128 @@
+# Run the Project Portfolio Management API with its database.
+#
+#   podman compose up -d --build --wait        # or: docker compose up -d --build --wait
+#   curl -fsS http://localhost:5150/_health
+#   podman compose down -v                     # stop and delete the database volume
+#
+# Build context is this directory (the repository root); the image is built
+# from project-portfolio-management-api-with-rust/Dockerfile.
+#
+# SAFE BY DEFAULT: the API container runs with login enforcement ON
+# (PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=true): every route except
+# /_health, /_ping, the OpenAPI documents and metrics demands a valid PASETO
+# bearer token. To verify tokens it needs the public keys of whatever service
+# issues them. MINIMAL ENVIRONMENT for a usable stack (put in a `.env` file
+# next to this file, or export before `compose up`):
+#
+#   POSTGRES_PASSWORD=<a long random password>             # required
+#   PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys
+#       # fetched at boot and refreshed; or, instead, inline the key set:
+#   PPM_PASETO_KEYS='{"keys":[...]}'                        # Ed25519 JWK set
+#   PPM_TOKEN_ISSUER=authentication-service                 # expected `iss` (default shown)
+#   PPM_TOKEN_AUDIENCE=main-x-service                       # expected `aud` (default shown)
+#
+# With neither keys variable set the service REFUSES TO START (login is on and
+# nothing could verify a token), which is the safe failure. For a throwaway
+# stack that proves the secure defaults boot, `scripts/smoke-keys.sh` prints a
+# public-only key set (it can verify tokens but mint none).
+#
+# DEVELOPMENT OVERRIDE (UNSAFE, NEVER FOR A SHARED NETWORK): the compose
+# profile `dev-insecure` starts `api-dev-insecure` instead, with login
+# enforcement and rate limiting OFF (config/container-dev.yaml; the service
+# refuses to run that way in the `production` environment), so you can poke
+# the API with curl and no token issuer:
+#
+#   podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
+#
+# Do not run both `api` and `api-dev-insecure` at once (they share host port 5150).
+#
+# The UI (project-portfolio-management-ui-with-svelte) is not containerized
+# here: it builds with @sveltejs/adapter-auto, which produces no runnable
+# server outside a supported host. Run it with `pnpm dev` / `pnpm preview`
+# against http://localhost:5150 (see the UI's .env.example).
+
+name: project-portfolio-management
+
+x-api-environment: &api-environment
+  LOCO_ENV: production
+  PORT: "5150"
+  DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management
+  PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL: ${PPM_PASETO_KEYS_URL:-}
+  PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS: ${PPM_PASETO_KEYS:-}
+  PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER: ${PPM_TOKEN_ISSUER:-authentication-service}
+  PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE: ${PPM_TOKEN_AUDIENCE:-main-x-service}
+
+x-api-build: &api-build
+  context: .
+  dockerfile: project-portfolio-management-api-with-rust/Dockerfile
+
+services:
+  postgres:
+    image: docker.io/library/postgres:18-alpine
+    environment:
+      POSTGRES_USER: ppm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}
+      POSTGRES_DB: project_portfolio_management
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./ci/postgres-init:/docker-entrypoint-initdb.d:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ppm -d project_portfolio_management"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  # One-shot: applies the migrations compiled into the binary, then exits.
+  # (config/production.yaml sets auto_migrate: false on purpose.)
+  migrate:
+    build: *api-build
+    image: project-portfolio-management-service:local
+    command: ["/app/project-portfolio-management-service", "db", "migrate"]
+    environment: *api-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: *api-build
+    image: project-portfolio-management-service:local
+    environment:
+      <<: *api-environment
+      PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "true"
+    ports:
+      - "5150:5150"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  # UNSAFE development override; see the header. Login enforcement is OFF.
+  api-dev-insecure:
+    profiles: ["dev-insecure"]
+    build: *api-build
+    image: project-portfolio-management-service:local
+    environment:
+      <<: *api-environment
+      LOCO_ENV: container-dev
+      PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
+    ports:
+      - "127.0.0.1:5150:5150"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  postgres-data:

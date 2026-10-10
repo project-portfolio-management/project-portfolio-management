@@ -404,14 +404,14 @@ pub enum Key {
     Pid(Uuid),
     /// A globally-unique external identifier (`scheme` as its JSON name).
     Identifier {
-        /// The scheme, as serialised (e.g. `JiraProjectKey`).
+        /// The scheme, as serialized (e.g. `JiraProjectKey`).
         scheme: String,
         /// The value.
         value: String,
     },
     /// An owner-scoped code — only meaningful with its owner.
     OwnerCode {
-        /// The owning organisation id.
+        /// The owning organization id.
         owner: String,
         /// The code.
         code: String,

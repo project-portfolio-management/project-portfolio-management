@@ -101,7 +101,7 @@ of the matching surface (except goal titles).
 The oversight / executive dashboard route directories (`auditor/`,
 `automations/`, `board/`, `calendar/`, `capacity/`, `compliance/`,
 `dashboard/`, `engineering/`, `executive/`, `financials/`, `gantt/`,
-`ideas/`, `lifecycle/`, `objectives/`, `prioritisation/`, `proposals/`,
+`ideas/`, `lifecycle/`, `objectives/`, `prioritization/`, `proposals/`,
 `regulator/`, `reports/`, `reviews/`, `risk/`, `scenarios/`,
 `security/`, `technology/`) are listed in [README.md](README.md)'s
 routes table, not repeated here.
@@ -168,7 +168,7 @@ the Status note above).
 | Collaborative review (`/reviews`) | `POST / GET /api/reviews` · `/{pid}/respond` · `/{pid}/submit` · `GET /api/reviews/consensus` |
 | Automations (`/automations`) | `POST / GET /api/automations` · `/{pid}/enable`·`/disable` · `GET /api/automations/runs` |
 | Scheduled actions (`/automations`) | `POST / GET /api/scheduled-actions` · `POST /api/scheduled-actions/sweep` |
-| Smart Score (`/prioritisation`) | `GET /api/plans/{pid}/smart-score` · `GET /api/prioritisation` |
+| Smart Score (`/prioritization`) | `GET /api/plans/{pid}/smart-score` · `GET /api/prioritization` |
 | Lifecycle (`/lifecycle`) | `GET /api/lifecycle` · `GET /api/plans/{pid}/lifecycle` |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign
@@ -259,7 +259,19 @@ the BFF exchanges the session for a short-lived **PASETO v4.public**
 token and calls the portfolio service server-side. Mutating requests are
 CSRF-protected; there is no `localStorage` and no `mxi_access_token`.
 Service-side enforcement (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`) is
-off by default.
+on by default, so the BFF must send the operator bearer on every call.
+
+**Security headers and CSP (HD-4).** `src/hooks.server.ts` adds the headers in
+`src/lib/security-headers.ts` to every response (HSTS only over HTTPS), and
+`kit.csp` in `vite.config.ts` sets a strict policy: `script-src 'self'` with
+SvelteKit's nonces/hashes, no `'unsafe-inline'` for scripts or `<style>`
+elements, and `'unsafe-inline'` for style *attributes* only (the SVAR widgets
+set computed `style="…"`). SVAR's icon font is self-hosted in `static/svar/`
+and its themes are mounted with `fonts={false}`, so no third-party stylesheet
+loads. `tests/e2e/security-headers.spec.ts` fails on any CSP violation across
+representative routes; a test helper that needs CSS must use a constructed
+stylesheet (see `settle()` in `tests/e2e/fixtures.ts`), not an injected
+`<style>` tag.
 
 - **Sign in** — the top bar's **Sign in** leads to this app's own
   `signin/` route (not a redirect to a central authentication front-end);
@@ -283,7 +295,7 @@ off by default.
   only, never an authorization decision.
 
 Source of truth:
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+`agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
 (RS256 JWT + JWKS and any cross-origin `#access_token` fragment handoff
 are decommissioned).
 
@@ -308,7 +320,7 @@ both default to `http://localhost:5150` (see `.env.example`).
 
 ## Sitemap
 
-`/sitemap.xml` and `/robots.txt` are generated (`src/lib/sitemap.ts`, routes `src/routes/sitemap.xml`, `src/routes/robots.txt`). The page list comes from `import.meta.glob` over `+page.svelte`, so a new static page appears automatically, once per locale with `hreflang` alternates. Parameterised pages (`[pid]`), `/signin`, `/verify`, `/display` and `/api` are never listed. Set `PUBLIC_SITE_URL` (process env) to the public origin behind a proxy; otherwise the request's origin is used. Both paths are unlocalized (`isUnlocalized`).
+`/sitemap.xml` and `/robots.txt` are generated (`src/lib/sitemap.ts`, routes `src/routes/sitemap.xml`, `src/routes/robots.txt`). The page list comes from `import.meta.glob` over `+page.svelte`, so a new static page appears automatically, once per locale with `hreflang` alternates. Parameterized pages (`[pid]`), `/signin`, `/verify`, `/display` and `/api` are never listed. Set `PUBLIC_SITE_URL` (process env) to the public origin behind a proxy; otherwise the request's origin is used. Both paths are unlocalized (`isUnlocalized`).
 
 ## Documents (PL-6)
 

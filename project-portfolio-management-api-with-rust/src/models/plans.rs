@@ -14,7 +14,7 @@ pub use super::_entities::plans::{self, ActiveModel, Entity, Model};
 
 impl ActiveModelBehavior for super::_entities::plans::ActiveModel {}
 
-/// Parse a `parent_ref` payload string into the denormalised
+/// Parse a `parent_ref` payload string into the denormalized
 /// `parent_pid` column value: `Some(uuid)` when it is a valid UUID,
 /// `None` otherwise (or when absent — e.g. a root plan).
 fn parent_pid_of(pl: &MatchPlan) -> Option<Uuid> {
@@ -27,7 +27,7 @@ fn parent_pid_of(pl: &MatchPlan) -> Option<Uuid> {
 /// (optional) `kind` label, or `None`.
 fn kind_of(pl: &MatchPlan) -> Option<String> {
     pl.kind.map(|k| {
-        // `PlanKind` serialises as its variant name (e.g. "Project").
+        // `PlanKind` serializes as its variant name (e.g. "Project").
         serde_json::to_value(k)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
@@ -199,7 +199,7 @@ impl Model {
         Ok(query.count(db).await?)
     }
 
-    /// List active child plans whose denormalised `parent_pid` equals
+    /// List active child plans whose denormalized `parent_pid` equals
     /// `parent` — the containment roll-up.
     ///
     /// # Errors
@@ -253,7 +253,7 @@ impl Model {
         Ok(chain)
     }
 
-    /// Case-insensitive substring search on the denormalised `name`, over
+    /// Case-insensitive substring search on the denormalized `name`, over
     /// active rows (Postgres `ILIKE '%q%'`, wildcards escaped). Full-text
     /// / fuzzy search over the JSONB payload via Tantivy is deferred
     /// (spec §13).
@@ -312,7 +312,7 @@ fn escape_like(q: &str) -> String {
 }
 
 impl ActiveModel {
-    /// Replace the payload of an existing plan (and the denormalised
+    /// Replace the payload of an existing plan (and the denormalized
     /// `name`, `kind`, and `parent_pid`).
     ///
     /// Generic over [`ConnectionTrait`] so the update can run on a
@@ -399,7 +399,7 @@ mod tests {
     /// Pins the `LIKE` escaping: literal text is unchanged, `%` and `_`
     /// are escaped, and the backslash is escaped first.
     #[test]
-    fn escape_like_neutralises_wildcards() {
+    fn escape_like_neutralizes_wildcards() {
         assert_eq!(escape_like("apollo"), "apollo");
         assert_eq!(escape_like("100%"), "100\\%");
         assert_eq!(escape_like("a_b"), "a\\_b");

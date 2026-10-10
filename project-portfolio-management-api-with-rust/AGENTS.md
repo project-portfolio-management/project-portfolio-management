@@ -34,10 +34,10 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 |---|---|
 | Run | `cargo loco start` (needs Postgres; port 5150; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
-| DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`) |
+| DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DATABASE_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
-| Migrations | `migration/src/` — 82 files `m2026…`, latest `m20261006_000048_onboarding_one_open` |
+| Migrations | `migration/src/` — 83 files `m2026…`, latest `m20261009_000049_oxford_spelling` |
 
 ## API surface
 
@@ -88,9 +88,13 @@ as that sub-resource).
 
 - **Middleware order** (`src/app.rs::after_routes`, innermost first):
   `paging_mw` → `modules_mw` → `privacy_mw` → `guest_mw` →
-  `require_auth_mw` (flag `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, off
-  by default) → `require_version_mw` → `observability::trace_mw`
-  (outermost; its span wraps auth failures).
+  `require_auth_mw` (**on by default**; opt out with
+  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` or `settings.require_auth:
+  false` in a non-production config, which `development.yaml`/`test.yaml` do;
+  production refuses to start with it off) → `require_version_mw` →
+  `rate_limit_mw` → `cors_mw` → `security_headers_mw` →
+  `observability::trace_mw` (outermost; its span wraps auth failures and
+  `429`s). See spec NFR-12 to NFR-14.
 - **Paging** (`controllers/paging.rs`): any `GET` answering `200` with a
   bare JSON array is a list: `?limit=` (default and ceiling 500),
   `?offset=` (> 10 000 is `400`), headers `X-Total-Count`/`X-Limit`/
@@ -104,7 +108,7 @@ as that sub-resource).
   returns `404` (existence not disclosed) for any `/api/plans/{pid}/…` of a
   private plan to a non-member/non-admin, failing closed on lookup error
   for private plans only. Aggregate views (`insights`, `oversight`,
-  `strategy`, `distribution`, `financials`, `prioritisation`, `tba`,
+  `strategy`, `distribution`, `financials`, `prioritization`, `tba`,
   `visibility`, …) must route their rows through `HiddenScope`
   (`keep`/`plan`/`node`) so a private plan contributes to **no** total,
   list or count. `tests/private_aggregates.rs` is differential (non-member
@@ -176,14 +180,14 @@ as that sub-resource).
   UUID) bypassed a guard that parsed raw text. Any new path-parsing
   middleware must do the same (and fail closed).
 - **Migrations**: use `CREATE OR REPLACE FUNCTION` for trigger functions
-  (re-runnable; see migrations 45–47); `create_table` pluralises names, so
+  (re-runnable; see migrations 45–47); `create_table` pluralizes names, so
   reference the plural table name in later migrations and entities;
   register each file in `migration/src/lib.rs`. Append-only and immutability
   rules (processes, document versions) are database triggers, not just
   handler checks.
 - **Optimistic commits**: sandbox and handover commits require `If-Match`
   with the preview's etag; stale is `409`. Hammock links and schedule
-  edits are serialised (commit `cf55b22`).
+  edits are serialized (commit `cf55b22`).
 - **Network loaders are bounded** (cross-plan caps above); keep new
   loaders bounded the same way.
 - loco 0.16+ does not map `ModelError::EntityNotFound` to `404`; route
@@ -197,7 +201,7 @@ as that sub-resource).
 | Layer | Command |
 |---|---|
 | Unit | `cargo test --lib` (DB-free) |
-| DB-free binaries | `cargo test --test matching --test otlp_export --test otlp_middleware` |
+| DB-free binaries | `cargo test --test matching --test otlp_export --test otlp_middleware --test licence_files` |
 | Request suites (`tests/mod.rs` → `tests/requests/*`) | `cargo test --test mod -- --ignored --test-threads=1` (shared database; serial) |
 | Real-token binaries | `cargo test --test <name> -- --ignored` for e.g. `private_aggregates`, `list_paging`, `approvals`, `processes`, `controlled_documents`, `cross_plan` |
 | Keycloak | `cargo test --features keycloak --test keycloak_guard` (in-process test IdP); `--features keycloak --test keycloak_container -- --ignored` needs Podman |

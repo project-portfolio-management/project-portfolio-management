@@ -181,7 +181,7 @@ impl TelemetryConfig {
     /// since Rust 2024 `env::set_var` is `unsafe`, so a test that reached
     /// for the environment could not compile here at all. That is a better
     /// constraint than it sounds: the rules are now testable in parallel,
-    /// with no shared global to serialise on.
+    /// with no shared global to serialize on.
     #[must_use]
     pub fn resolve(service_name: Option<&str>, endpoint: Option<&str>) -> Self {
         let service_name = service_name

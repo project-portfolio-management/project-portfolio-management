@@ -7,7 +7,7 @@
 //! the name, declared content type, size and **SHA-256 of the bytes**.
 //!
 //! Everything here that can be decided without I/O is pure and tested: the
-//! content-type allow-list, the size cap, filename sanitising, and the
+//! content-type allow-list, the size cap, filename sanitizing, and the
 //! RFC 6266 / 5987 `Content-Disposition` that keeps UTF-8 names intact.
 //!
 //! A single node is assumed: the directory must be shared storage (or the
@@ -52,7 +52,7 @@ pub fn max_bytes() -> usize {
         .unwrap_or(DEFAULT_MAX_BYTES)
 }
 
-/// Normalise a declared `Content-Type` header to its bare media type
+/// Normalize a declared `Content-Type` header to its bare media type
 /// (lowercase, parameters dropped).
 #[must_use]
 pub fn media_type(declared: &str) -> String {
@@ -232,7 +232,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn declared_types_normalise_and_unsafe_ones_are_refused() {
+    fn declared_types_normalize_and_unsafe_ones_are_refused() {
         assert_eq!(
             media_type("Application/PDF; charset=binary"),
             "application/pdf"

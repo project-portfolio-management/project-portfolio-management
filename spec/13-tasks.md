@@ -29,14 +29,14 @@ acceptance criterion; tick the box when an automated test or clearly
 described manual check confirms it. Split tasks too big for one PR
 (`T-2a`, `T-2b`).
 
-- [x] **2026-07-22 — Collaboration, automation, and prioritisation
+- [x] **2026-07-22 — Collaboration, automation, and prioritization
   capabilities (§6.4a / §9.2a / §10.5).** Service: migration
   `m20260722_000001_capabilities`, four pure rule modules
-  (`collaboration` / `automation` / `prioritisation` / `lifecycle`,
+  (`collaboration` / `automation` / `prioritization` / `lifecycle`,
   56 unit tests), three controllers, the automation engine firing from
   a board move and a submitted plan review, the claim-based
   set-and-forget sweep + optional ticker, OpenAPI, six `#[ignore]`d
-  request tests. Front-end: `CapabilityClient` + the `/prioritisation`,
+  request tests. Front-end: `CapabilityClient` + the `/prioritization`,
   `/lifecycle`, `/reviews`, and `/automations` pages (English-first).
   Not built: email / push transport, a `votes` Smart Score component,
   record-level ABAC on the new endpoints, and a notifications page.
@@ -54,7 +54,7 @@ described manual check confirms it. Split tasks too big for one PR
   - **An empty transition set means unconstrained**, preserving today's
     open board. Constraint is opt-in.
   - **Schema-enforced, verified against raw SQL:** `category` is
-    `NOT NULL` + CHECK (an uncategorised state is impossible even by
+    `NOT NULL` + CHECK (an uncategorized state is impossible even by
     direct insert), an invented category is refused, and a partial
     unique index makes two initial states impossible.
   - **Verified end to end:** a custom vocabulary takes force
@@ -134,9 +134,9 @@ described manual check confirms it. Split tasks too big for one PR
 - [x] **T-17 — Time tracking (§5.9.3 / FR-28).** **Landed 2026-08-26.**
   Pure `src/effort.rs` (9 tests), migration `m20260826_000001_effort`,
   three entities, `src/controllers/effort.rs`. Roll-ups per plan, task
-  and assignee, every one labelled **asserted**; uncategorised effort
+  and assignee, every one labelled **asserted**; uncategorized effort
   reported separately rather than folded into `opex`, which would
-  flatter the capitalisable share. An entry over 1440 minutes for one
+  flatter the capitalizable share. An entry over 1440 minutes for one
   date is refused — a day cannot hold more. Verified in
   `tests/requests/effort.rs`.
 
@@ -162,7 +162,7 @@ described manual check confirms it. Split tasks too big for one PR
   - Service: pure `src/phase.rs` (8 tests) — one-step advancement,
     explicitly-reasoned regression, per-phase durations that partition
     the elapsed time exactly and survive unsorted input and clock skew;
-    migration `m20260825_000003_phase_transitions` (denormalised
+    migration `m20260825_000003_phase_transitions` (denormalized
     `plans.phase` with a CHECK, append-only log, **no backfill**);
     entity; `src/controllers/phase.rs`; OpenAPI + pinning test.
   - **Verified end to end** against Postgres 18: a skip is `422` **and
@@ -352,7 +352,7 @@ described manual check confirms it. Split tasks too big for one PR
     defect density. Each needs an input the service does not hold, and
     reporting them from absent inputs is what this row refuses to do.
 
-- [x] **T-24 — Per-person utilisation (FR-35).** **Landed 2026-08-26.**
+- [x] **T-24 — Per-person utilization (FR-35).** **Landed 2026-08-26.**
   `working_time_configs` + `non_working_periods`;
   `GET /api/capacity/utilization?by=plan|team|person`.
   - **The obligation-2 test is the load-bearing one:** somebody on leave
@@ -366,7 +366,7 @@ described manual check confirms it. Split tasks too big for one PR
   - Below the suppression floor the figure is withheld **with its inputs
     still returned**, so suppression is visible rather than looking like
     missing data.
-  - Team utilisation **sums** the numerator and denominator; it is not a
+  - Team utilization **sums** the numerator and denominator; it is not a
     mean of individual ratios, which over unequal denominators is a
     different and wrong number.
   - At or over 100% is flagged as a **warning** — what a queueing system
@@ -504,7 +504,7 @@ described manual check confirms it. Split tasks too big for one PR
       (`work_in_progress_limit`, `cycle_time_p85_days`), refused (`422`)
       when missing or non-positive. Verified there is no crate-wide
       convention to borrow either: `src/tba.rs`'s own
-      `service_level_expectation` takes its day target as a
+      `service_level_expectation` takes its calendar-day target as a
       **caller-supplied parameter**, never a constant, for the identical
       reason — a cycle-time SLE (and a WIP limit) is a per-plan
       commitment, not a fact about the software, so this task does not
@@ -580,20 +580,20 @@ described manual check confirms it. Split tasks too big for one PR
   disposition. Sub-tasks follow; the cross-subproject consequences
   (an enterprise IdP at the auth service, a webhook relay sink, a
   family go-live runbook) are in the repo root
-  [`tasks.md`](../../tasks.md) Phase 10 and only pointed at from here.
+  [`tasks.md`](../tasks.md) Phase 10 and only pointed at from here.
 
   | Criterion | Already carried (route / module) | Not carried | Disposition |
   |---|---|---|---|
-  | Strategic alignment | Smart Score with a disclosed per-component breakdown, `strategic_alignment` one of six weighted components (`src/prioritisation.rs`; `GET /prioritisation`, `GET /plans/{pid}/smart-score`); objectives registry + weighted `objective_links` + the OKR engine (T-16); gate reviews, lifecycle funnel, plan reviews with consensus | The Strategic Alignment Index (T-23: needs an input the service does not hold) | **Carried.** The buyer's question — "score and rank against custom objectives without a spreadsheet" — is answered by the objectives registry plus the env-tunable weights. Nothing new. |
+  | Strategic alignment | Smart Score with a disclosed per-component breakdown, `strategic_alignment` one of six weighted components (`src/prioritization.rs`; `GET /prioritization`, `GET /plans/{pid}/smart-score`); objectives registry + weighted `objective_links` + the OKR engine (T-16); gate reviews, lifecycle funnel, plan reviews with consensus | The Strategic Alignment Index (T-23: needs an input the service does not hold) | **Carried.** The buyer's question — "score and rank against custom objectives without a spreadsheet" — is answered by the objectives registry plus the env-tunable weights. Nothing new. |
   | Scenario modelling | `scenarios` are separate records; `GET /scenarios/{pid}/evaluate` reads live data without writing it; `GET /scenarios/compare` is the side-by-side; `POST …/commit` stamps funding | **Rollback** — a commit is one-way (`committed_at` only); an evaluation names no `as_of`, so two reads of one scenario a week apart differ silently | T-28a |
   | Resource management | `allocations` (person ref + role + percent + window); `GET /capacity` with `over_allocated`; `GET /capacity/utilization` (T-24); `GET /assignees/workload`; reassignment by largest slack | **Skill-based** allocation — an allocation carries a `role` string, no skills; no scale evidence for the "50+ concurrent projects" question | T-28c, T-28d |
   | Reporting and analytics | Persona surfaces already exist — `at-a-glance`, `executive/*`, `board/*`, `financials/*`, `technology/*`, `auditor/*`, `compliance/*`, `regulator/*`, `risk/heatmap`; saved `report_definitions` (filter + field projection) run on demand; Monte-Carlo delivery forecast; **role-tailored nav/landing view now ties a persona surface to the caller** (T-28f, landed 2026-09-19, driven by a deployment-declared `view` ABAC attribute) | `report_definitions` has no `group_by` (PPM-9 promised one) and no scheduled run (PPM-9 says synchronous only, awaiting T-8) | T-28e |
   | Financial management | `budget_lines` per plan; variance per currency (`insights::variance_by_currency`, `GET /financials/variance`); exposure; TPC with cost-estimate-to-complete; value realization with ROI (T-22) | **Cost forecasting** — no phased baseline, so SPI/CPI are permanently `no_baseline` (T-23) and there is no EAC/ETC or portfolio-level overrun forecast; actuals arrive by hand until T-8 lands | **T-28b** — the single highest-leverage gap in the table |
   | Integrations | Open API: hand-written OpenAPI 3 + Swagger UI, pinned two-way against mounted routes; inbound `POST /devops/events`; the durable outbox → relay (event bus); deterministic external ids for Jira / Asana / Trello / MS Project / GitHub / Linear; **outbound signed webhooks** (`src/webhooks.rs`, T-28m, landed 2026-09-08 — family-shaped, root `tasks.md` EV-3 carries the contract) | The in-app `notify` action is still not email/push; no PM-tool import path (T-8 open, and no source-tool codec); two-way sync is roadmap only | T-28n (import codec). **Refused:** a native-connector catalogue / no-code integration builder — the open API, bulk, and signed webhooks *are* the integration surface of a service like this one. |
-  | Task management | Gantt (`/gantt`, `/plans/[pid]/schedule`); `plan_dependencies` with cycle refusal, critical path, and slipping-dependency violations (`src/visibility.rs`); the append-only transition log; multi-plan reviews + rollup | **Automatic reprioritisation when a deadline shifts** — exactly the field-change trigger T-21 deferred for want of a declared field set. This checklist supplies it: the plan timeframe and a milestone's due date are the two dates a shift is asked about | T-28g |
-  | AI capabilities | Every derived figure here is deterministic and discloses its inputs: Smart Score components, forecast by seed, constraint ranking, aging WIP, the controls verdicts. The buyer's question — "which outputs are explainable and auditable vs black-box" — is answered *all of them, none* | No portfolio-**optimisation** recommendation (the evaluator scores a scenario a planner wrote; it proposes none); no **demand** forecast (the intake pipeline has arrival history nobody forecasts from); no assistant | T-28h, T-28i, T-28j. **Refused:** an LLM assistant *inside the service* — it would be the one output that could not disclose its inputs, in a service whose every other number does. If one is ever wanted it sits at the front-end BFF over the open API and cites the endpoint it read. |
+  | Task management | Gantt (`/gantt`, `/plans/[pid]/schedule`); `plan_dependencies` with cycle refusal, critical path, and slipping-dependency violations (`src/visibility.rs`); the append-only transition log; multi-plan reviews + rollup | **Automatic reprioritization when a deadline shifts** — exactly the field-change trigger T-21 deferred for want of a declared field set. This checklist supplies it: the plan timeframe and a milestone's due date are the two dates a shift is asked about | T-28g |
+  | AI capabilities | Every derived figure here is deterministic and discloses its inputs: Smart Score components, forecast by seed, constraint ranking, aging WIP, the controls verdicts. The buyer's question — "which outputs are explainable and auditable vs black-box" — is answered *all of them, none* | No portfolio-**optimization** recommendation (the evaluator scores a scenario a planner wrote; it proposes none); no **demand** forecast (the intake pipeline has arrival history nobody forecasts from); no assistant | T-28h, T-28i, T-28j. **Refused:** an LLM assistant *inside the service* — it would be the one output that could not disclose its inputs, in a service whose every other number does. If one is ever wanted it sits at the front-end BFF over the open API and cites the endpoint it read. |
   | Usability | Hamburger top-nav, 10 locales with parity tests, SVAR grid / Kanban / Gantt, Lily headless; `viewport` meta present; **mobile is now verified**, not merely present — a 35-route phone-viewport (390×844) Playwright audit (T-28k, landed 2026-09-19) found and fixed four real horizontal-scroll sources, with the two SVAR surfaces (grid, Gantt) degrading to a read-only list under a CSS breakpoint; **per-user saved views** (T-28l); **role-specific UX** (see reporting, T-28f); **an onboarding path** (`/onboarding`, T-28p) | Nothing outstanding from this row's original four items | *(closed — see reporting for T-28f)* |
-  | Deployment effort | Containerised (Podman, Debian slim, MUSL static), `compose.*.yaml`; SSO through the central auth service (magic link + PASETO v4.public, BFF so no token reaches the browser); every knob an env var, documented family-wide in `configuration.md` | **SAML / OIDC** federation to an enterprise IdP — mentioned nowhere in the family, and it belongs to the auth service, not here; data migration waits on T-8 + T-28n; no go-live runbook, and the one that matters most is the activation gate: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` **defaults off** | T-28o; SAML/OIDC → root `tasks.md` EV-2 |
+  | Deployment effort | Containerized (Podman, Debian slim, MUSL static), `compose.*.yaml`; SSO through the central auth service (magic link + PASETO v4.public, BFF so no token reaches the browser); every knob an env var, documented family-wide in `configuration.md` | **SAML / OIDC** federation to an enterprise IdP — mentioned nowhere in the family, and it belongs to the auth service, not here; data migration waits on T-8 + T-28n; no go-live runbook, and the one that matters most is the activation gate: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` **defaults off** | T-28o; SAML/OIDC → root `tasks.md` EV-2 |
 
   Two things the triage did **not** change: the matchable / operational
   partition (nothing below is a matcher signal), and the measurement
@@ -804,7 +804,7 @@ described manual check confirms it. Split tasks too big for one PR
     twin), owner-only `…/latest` download, and an admin `POST
     /api/report-schedules/sweep` that the scheduler ticker also calls.
     Runs go through the **same `execute_report`** as the on-demand run;
-    output is an artifact that expires (30 days,
+    output is an artifact that expires (30 calendar days,
     `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS`); **every run is audited
     like an export, even at zero rows** (`last_rows: 0` is a real zero).
     The sweep is claim-based (no double run with ticker + cron), a missed
@@ -826,7 +826,7 @@ described manual check confirms it. Split tasks too big for one PR
     attribute (e.g. `view=executive|pmo|resource_manager`) — a
     vocabulary the deployment declares, not an enum this code owns.
     **Default is today's full nav**, so a token with no such attribute
-    changes nothing. This is presentation only; authorisation stays
+    changes nothing. This is presentation only; authorization stays
     with the service's ABAC. **Acceptance:** attrs absent ⇒ identical
     nav; `view=executive` lands on `/executive`; every route stays
     reachable by URL regardless of the attribute.
@@ -851,7 +851,7 @@ described manual check confirms it. Split tasks too big for one PR
     `automation_runs` row per task moved. The FR-32 invariants hold:
     a failing action never undoes the deadline edit, applied shifts do
     not re-enter the engine (no cascade), every firing is logged.
-    **Acceptance:** shifting a plan's end by 5 days proposes +5 on a
+    **Acceptance:** shifting a plan's end by 5 calendar days proposes +5 on a
     finish-start successor and +5 − lag where a lag exists; a
     successor whose dependency is already violated is proposed with the
     violation named; the shifted successors fire no further rule.
@@ -874,8 +874,8 @@ described manual check confirms it. Split tasks too big for one PR
     - [x] **The acceptance text's "+5 − lag where a lag exists" was not
       implemented literally — decided rather than guessed.** A
       finish-start lag is a *fixed* gap (`earliest_start = predecessor
-      end + lag`); shifting the predecessor's end by N days shifts the
-      implied earliest-start by the same N days regardless of what the
+      end + lag`); shifting the predecessor's end by N calendar days shifts the
+      implied earliest-start by the same N calendar days regardless of what the
       lag's value is, so subtracting the lag from the *shift amount*
       would be dimensionally wrong (it would make the proposed shift
       depend on an unrelated constant). `propose_shifts()` always
@@ -890,7 +890,7 @@ described manual check confirms it. Split tasks too big for one PR
       and the base engine's existing "one row per action" (unchanged
       for every other action kind) both hold simultaneously rather than
       one being sacrificed for the other: `apply_rule_actions` still
-      logs its usual one row summarising the action itself (subject =
+      logs its usual one row summarizing the action itself (subject =
       the plan whose deadline moved), and `act_shift_dependents`
       additionally logs one row per successor it actually moved
       (subject = that successor) — distinguishable by `subject_pid`,
@@ -923,9 +923,9 @@ described manual check confirms it. Split tasks too big for one PR
     selection, unit-tested for determinism directly (same facts in
     reversed input order ⇒ byte-identical serialized output);
     `src/controllers/strategy.rs::generate_scenario` — the impure
-    edge, reusing `controllers::prioritisation::Estate` (widened to
+    edge, reusing `controllers::prioritization::Estate` (widened to
     `pub(crate)`) so the generator scores candidates with the *exact*
-    same evidence-gathering `GET /prioritisation` and
+    same evidence-gathering `GET /prioritization` and
     `GET /plans/{pid}/smart-score` already use, not a second, drifting
     copy of it;
     `tests/requests/strategy.rs::
@@ -939,7 +939,7 @@ described manual check confirms it. Split tasks too big for one PR
     a proposal, only to a plan), so scoring one would mean inventing a
     parallel, undocumented scoring path rather than reusing the real
     one. The generator draws its candidate pool from every active
-    plan, exactly as `GET /prioritisation` already does.
+    plan, exactly as `GET /prioritization` already does.
     (2) **a must-include candidate is force-included even over cap,
     and `must_include_conflict` is reserved for a `must_include` pid
     that names no real candidate at all** — not for the "alone over
@@ -1203,7 +1203,7 @@ described manual check confirms it. Split tasks too big for one PR
 - [ ] **T-2 — Matcher crate: domain model + matching.**
   - [ ] The canonical `Plan` type + optional `PlanKind` label +
     `Goal` + all enums (§5.1–§5.4), serde round-trip, NFKC-folding
-    diacritic-preserving normalisation.
+    diacritic-preserving normalization.
   - [ ] **Kind-agnostic matching**: `kind` is an optional descriptive
     label that neither gates nor scores; any two plans may match
     regardless of their labels (`MatchBreakdown.kind_gate_blocked` is a
@@ -1212,12 +1212,12 @@ described manual check confirms it. Split tasks too big for one PR
     identifier scheme — `Uri`, `Uuid`, `JiraProjectKey`, `AsanaGid`,
     `TrelloBoardId`, `MsProjectId`, `GitHubProjectId`, `LinearId`;
     owner-scoped `Code`/`LocalId`/`Custom` excluded), R-1 (same
-    `owner_org_id` + equal normalised `code`), R-2 (`same_as`
+    `owner_org_id` + equal normalized `code`), R-2 (`same_as`
     overlap) → 1.0.
   - [ ] Probabilistic components + weights per §6.8 (name JW + Soundex
     bonus, goal-title Jaccard, code, owner org, parent-plan exact,
     timeframe date-proximity, keywords, relationships typed-set
-    Jaccard, tags), renormalised over present components; `status`
+    Jaccard, tags), renormalized over present components; `status`
     and the optional `kind` label never scored; presets
     strict/default/lenient.
   - **Acceptance:** `cargo test` green; the FR-8 weight table sums to
@@ -1252,16 +1252,16 @@ described manual check confirms it. Split tasks too big for one PR
     in-memory `PlanEvent` stream + `…/events/recent`.
   - [ ] Offline PASETO v4 public verification (`authentication-verifier`);
     switch `src/auth.rs` per
-    [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+    `agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
     (supersedes the RS256-JWT model). `AuthUser`/`MaybeAuthUser`; `whoami`
     protected; audit / merge `actor` stamped from the token.
   - **Acceptance:** create + update + delete a plan and a task →
     audit rows + events read back; no token → `401`, valid token →
     `2xx`.
   - [x] *Follow-up (delivered):* blanket `/api/*` enforcement +
-    paseto-keys-over-HTTP fetch + **ABAC** write authorisation over
+    paseto-keys-over-HTTP fetch + **ABAC** write authorization over
     the token's `attrs` claim (per
-    [`agents/share/authorization-attributes.md`](../../agents/share/authorization-attributes.md);
+    `agents/share/authorization-attributes.md`;
     supersedes the earlier role-based sketch). Default-off via
     `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`; activation awaits the coordinated family
     SSO rollout (the front-end must attach the bearer token first).
@@ -1276,7 +1276,7 @@ described manual check confirms it. Split tasks too big for one PR
     endpoint path fails a test.
 - [ ] **T-7 — Cross-service links (write-side).**
   See §9.5 and
-  [cross-service-linking.md](../../agents/share/cross-service-linking.md).
+  cross-service-linking.md.
   - [ ] `entity_links` migration (`UNIQUE (from_pid, kind, to_ref,
     valid_from)`); `POST`/`GET`/`DELETE …/{pid}/links`; `linked` /
     `unlinked` events; the `EntityRef` value type (copied per project).
@@ -1288,7 +1288,7 @@ described manual check confirms it. Split tasks too big for one PR
   [bulk-import-export.md](bulk-import-export.md) (*Implementation notes* lists the
   departures). Unblocks T-28e's scheduled runs and T-28n's import codec.
   See §9.6, §10.4 and
-  [bulk import/export](../../agents/share/bulk-import-export.md).
+  [bulk import/export](bulk-import-export.md).
   **Design drafted 2026-10-02 in
   [bulk-import-export.md](bulk-import-export.md)** (the family doc is not
   in this repo): schema, endpoints, worker, per-row pipeline, the

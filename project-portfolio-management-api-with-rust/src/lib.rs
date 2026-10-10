@@ -59,7 +59,7 @@ pub mod discussion;
 /// Flow Distribution: the mix of work types completed — feature,
 /// defect, risk, debt, and the honest fifth, `unclassified`.
 pub mod distribution;
-/// Recorded effort and utilisation — including per person, under the
+/// Recorded effort and utilization — including per person, under the
 /// five obligations in `agents/share/time-based-analysis.md` §7.1.
 pub mod documents;
 pub mod earned_value;
@@ -78,6 +78,7 @@ pub mod governance;
 pub mod guests;
 /// Pure derivations for the executive insight areas (CEO / CFO / CTO).
 pub mod hammock;
+pub mod http_security;
 pub mod initializers;
 pub mod insights;
 pub mod joint_risk;
@@ -102,7 +103,7 @@ pub mod observability;
 /// The OKR engine: key-result progress, objective scores, and the
 /// alignment-weighted plan score — all derived on read.
 pub mod okr;
-/// The pure, explainable Smart Score behind data-driven prioritisation.
+/// The pure, explainable Smart Score behind data-driven prioritization.
 /// Pure rules for the sequential project phase — Initiating through
 /// Closing: one-step advancement, explicitly-reasoned regression, and
 /// per-phase durations from the transition log.
@@ -116,12 +117,13 @@ pub mod plan_links;
 pub mod plan_templates;
 pub mod planner;
 pub mod portfolio_resources;
-pub mod prioritisation;
+pub mod prioritization;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;
 pub mod processes;
 pub mod raci;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
+pub mod rate_limit;
 pub mod relay;
 pub mod report_schedules;
 pub mod sandbox;
@@ -155,6 +157,7 @@ pub mod timesheets;
 /// still to spend?
 pub mod tpc;
 pub mod tracker_import;
+pub mod trusted_proxy;
 pub mod tz;
 pub mod validation;
 /// Realized gains and strategic performance: transformation ROI, value

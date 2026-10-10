@@ -189,7 +189,7 @@ fn custom_field_paths() -> Value {
         },
         "/api/custom-fields/search": {
             "get": op("custom-fields", "Subjects whose custom field equals a value",
-                "Equality after the same normalisation a write gets (multi_list matches when the list contains the value). Subjects whose owning plan the caller cannot read are omitted. At most 5000 stored values are scanned and the response says truncated if more exist.",
+                "Equality after the same normalization a write gets (multi_list matches when the list contains the value). Subjects whose owning plan the caller cannot read are omitted. At most 5000 stored values are scanned and the response says truncated if more exist.",
                 vec![query("applies_to", true, "plan or task"), query("key", true, "The field key"), query("value", true, "The value to match")],
                 &[("200", "count, pids, truncated"), ("422", "Unknown field")])
         }
@@ -403,7 +403,7 @@ fn timesheet_paths() -> Value {
         },
         "/api/time-reports": {
             "get": op("timesheets", "Time grouped by person, plan, category, billable or month",
-                &format!("{units} Dates are calendar dates (no zone); the default window is the last 90 days. JSON, or CSV with format=csv. Plans the caller cannot read are omitted and counted; at most 20000 entries are read and the response says truncated if more exist."),
+                &format!("{units} Dates are calendar dates (no zone); the default window is the last 90 calendar days. JSON, or CSV with format=csv. Plans the caller cannot read are omitted and counted; at most 20000 entries are read and the response says truncated if more exist."),
                 vec![query("group_by", true, "person, plan, category, billable or month"), query("from", false, "YYYY-MM-DD"), query("to", false, "YYYY-MM-DD"), query("plan", false, "Narrow to one plan"), query("person", false, "Narrow to one person URN"), query("format", false, "json (default) or csv")],
                 &[("200", "groups, split, total_minutes, reason, omitted_unreadable, truncated (or text/csv)"), ("422", "Unknown group_by, or from after to")])
         }
@@ -504,7 +504,7 @@ fn attachment_paths() -> Value {
         },
         "/api/attachments/{pid}/download": {
             "get": op("attachments", "Download an attachment",
-                "Re-authorised against the SUBJECT's policy, not just the attachment's own row, so losing access to the plan loses the file. The bytes are re-verified against the stored SHA-256 and never served if they differ. Served with X-Content-Type-Options: nosniff, Cache-Control: private, no-store and Content-Disposition: attachment carrying both an ASCII fallback and the RFC 5987 UTF-8 name, so a non-Latin filename survives and is never doubled.",
+                "Re-authorized against the SUBJECT's policy, not just the attachment's own row, so losing access to the plan loses the file. The bytes are re-verified against the stored SHA-256 and never served if they differ. Served with X-Content-Type-Options: nosniff, Cache-Control: private, no-store and Content-Disposition: attachment carrying both an ASCII fallback and the RFC 5987 UTF-8 name, so a non-Latin filename survives and is never doubled.",
                 vec![uuid_param("pid")], &[("200", "The file"), ("404", "Unknown attachment, or its subject is not visible"), ("500", "The stored file failed its integrity check")])
         },
         "/api/attachments/{pid}": {
@@ -538,7 +538,7 @@ fn bulk_paths() -> Value {
         },
         "/api/plans/export": {
             "post": op("bulk", "Queue an export of the plans the caller may read (202 with a job id)",
-                &format!("{formats} Authorisation is evaluated now, with the caller's identity: the job carries only the plans the caller may read (record-level policy and private plans applied), and rows_omitted reports how many were left out. masking_profile masked (default) hides people references (the lead is dropped, owner organisation fields are partly hidden); full carries them and, like include_soft_deleted, needs the destructive right (403 otherwise). Optional filters: kind and name_like. Rows are ordered by id, so two exports of unchanged data are byte-identical. EVERY export is audited, including one that matches zero rows."),
+                &format!("{formats} Authorization is evaluated now, with the caller's identity: the job carries only the plans the caller may read (record-level policy and private plans applied), and rows_omitted reports how many were left out. masking_profile masked (default) hides people references (the lead is dropped, owner organization fields are partly hidden); full carries them and, like include_soft_deleted, needs the destructive right (403 otherwise). Optional filters: kind and name_like. Rows are ordered by id, so two exports of unchanged data are byte-identical. EVERY export is audited, including one that matches zero rows."),
                 vec![], &[("202", "{ job_id, status }"), ("403", "full masking or soft-deleted rows without the destructive right"), ("422", "Unknown format or masking_profile, or more than 100000 plans")])
         },
         "/api/plans/export/{id}": {
@@ -646,13 +646,13 @@ fn pdf_paths() -> Value {
     json!({
         "/api/board/pack.pdf": {
             "get": op("pdf", "The board pack as a PDF document",
-                &format!("Built from the same function as GET /api/board/pack, behind the same oversight authorisation, so a caller denied the JSON is denied the PDF. The pack carries no people references. {rules}"),
+                &format!("Built from the same function as GET /api/board/pack, behind the same oversight authorization, so a caller denied the JSON is denied the PDF. The pack carries no people references. {rules}"),
                 vec![query("from", false, "Window start"), query("to", false, "Window end"), as_of.clone()],
-                &[("200", "application/pdf"), ("403", "Not authorised for oversight reads"), ("422", "Malformed as_of")])
+                &[("200", "application/pdf"), ("403", "Not authorized for oversight reads"), ("422", "Malformed as_of")])
         },
         "/api/plans/{pid}/summary.pdf": {
             "get": op("pdf", "A one-plan summary as a PDF document",
-                &format!("Read-checked like the plan itself (record-level policy, private plans). Rendered from the MASKED record and counts only: no lead, owner organisation, assignee or risk owner ever reaches the text layer. Shows kind, status, phase, stage, dates, keywords, goals, task counts by status, the number of risks recorded and the milestones. {rules}"),
+                &format!("Read-checked like the plan itself (record-level policy, private plans). Rendered from the MASKED record and counts only: no lead, owner organization, assignee or risk owner ever reaches the text layer. Shows kind, status, phase, stage, dates, keywords, goals, task counts by status, the number of risks recorded and the milestones. {rules}"),
                 vec![uuid_param("pid"), as_of],
                 &[("200", "application/pdf"), ("404", "Unknown plan, or one the caller cannot see"), ("422", "Malformed as_of")])
         }
@@ -713,7 +713,7 @@ fn report_schedule_paths() -> Value {
     json!({
         "/api/reports/{pid}/schedule": {
             "post": op("reports", "Run a saved report on a cadence",
-                "cadence is daily, weekly or monthly (monthly keeps the day, clamped in short months); format is csv (default) or json; start is the first UTC date (default today). Each due run goes through the same code as GET /api/reports/{pid}/run, is stored as an artifact that expires (30 days by default) and is audited like an export, even at zero rows. A missed run runs once and then moves to the next future date; a failure is recorded on the schedule and the date still advances. At most 20 per person.", pid.clone(),
+                "cadence is daily, weekly or monthly (monthly keeps the day, clamped in short months); format is csv (default) or json; start is the first UTC date (default today). Each due run goes through the same code as GET /api/reports/{pid}/run, is stored as an artifact that expires (30 calendar days by default) and is audited like an export, even at zero rows. A missed run runs once and then moves to the next future date; a failure is recorded on the schedule and the date still advances. At most 20 per person.", pid.clone(),
                 &[("200", "The schedule"), ("401", "Missing or invalid bearer token"), ("404", "Unknown report"), ("422", "Bad cadence, format or start, or too many schedules")])
         },
         "/api/report-schedules": {
@@ -747,13 +747,13 @@ fn cpm_paths() -> Value {
     json!({
         "/api/plans/{pid}/cpm": {
             "get": op("cpm", "Float, critical tasks and critical chains for a plan's tasks",
-                "Tasks of OTHER plans that this plan's tasks are linked to (a dependency may join tasks of different plans) are part of the network when the caller can read both ends: they appear as nodes with external=true, plan_pid and plan_name, edges carry cross_plan, each external task runs on its own plan's calendar intersected with this plan's, and float is computed across the link (project_finish is the plan's own finish, network_finish the whole linked network's). A link to a plan the caller may NOT read (private and not a member, or not granted) is left out of the calculation and appears only in restricted_edges as an 'external dependency (restricted)' with the edge id and this plan's own task: nothing about the other side. Up to 8 linked plans and 3000 tasks are followed (external_truncated says when more existed). Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= working days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many working days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Working days use the plan's calendar (all seven days until SC-2).",
-                vec![uuid_param("pid"), query("near", false, "Working days of float counted as near-critical, 0 to 3650")],
+                "Tasks of OTHER plans that this plan's tasks are linked to (a dependency may join tasks of different plans) are part of the network when the caller can read both ends: they appear as nodes with external=true, plan_pid and plan_name, edges carry cross_plan, each external task runs on its own plan's calendar intersected with this plan's, and float is computed across the link (project_finish is the plan's own finish, network_finish the whole linked network's). A link to a plan the caller may NOT read (private and not a member, or not granted) is left out of the calculation and appears only in restricted_edges as an 'external dependency (restricted)' with the edge id and this plan's own task: nothing about the other side. Up to 8 linked plans and 3000 tasks are followed (external_truncated says when more existed). Forward and backward pass over the plan's task network: early and late start and finish, total float (how long before the project finish moves), free float (how long before a successor is delayed), critical (float 0) and near-critical (?near= business days, default 5), and every critical chain along driving edges. All four relationship types (fs, ss, ff, sf) with a lag or lead. Edges are the dependencies between the plan's tasks plus task precedes relations. A task's planned start is a lower bound: pushed_days says by how many business days its predecessors force it later than planned. A task with no duration, or with no start and no scheduled predecessor, is listed unscheduled with the reason, never given a float of zero. A dependency cycle is a 422. Business days use the plan's calendar (all seven days until SC-2).",
+                vec![uuid_param("pid"), query("near", false, "Business days of float counted as near-critical, 0 to 3650")],
                 &[("200", "nodes, edges, unscheduled, ignored_edges, critical_chains"), ("404", "Unknown plan"), ("422", "Bad near, or a dependency cycle")])
         },
         "/api/plans/{pid}/tasks/{t_pid}/schedule": {
             "put": op("cpm", "Set a task's planned start and working duration",
-                "start_date is a calendar date and duration_days a number of working days (0 is a milestone); an absent or null field clears it. constraint_kind (snet, snlt, fnet, fnlt, mso, mfo) goes with constraint_date; deadline is a soft date that bounds the LATE dates only, so a threatened deadline gives negative float and never moves an early date. A HARD constraint (mso, mfo) overrides the schedule's logic: it needs a reason and, when authentication is on, access=admin or scheduling=hard_constraints (403 otherwise). alap is not supported yet. The answer carries what moved across the whole network (start, finish or both, in working days), not only the edited task: an empty list when nothing moved. Audited with the old and new values and the reason.",
+                "start_date is a calendar date and duration_days a number of business days (0 is a milestone); an absent or null field clears it. constraint_kind (snet, snlt, fnet, fnlt, mso, mfo) goes with constraint_date; deadline is a soft date that bounds the LATE dates only, so a threatened deadline gives negative float and never moves an early date. A HARD constraint (mso, mfo) overrides the schedule's logic: it needs a reason and, when authentication is on, access=admin or scheduling=hard_constraints (403 otherwise). alap is not supported yet. The answer carries what moved across the whole network (start, finish or both, in business days), not only the edited task: an empty list when nothing moved. Audited with the old and new values and the reason.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "task and moved"), ("403", "A hard constraint without the permission"), ("404", "Unknown plan or task"), ("422", "Out-of-range values, an unknown constraint kind, a kind without a date, or a hard constraint without a reason")])
         }
@@ -762,13 +762,13 @@ fn cpm_paths() -> Value {
 
 /// Working calendars (SC-2).
 fn calendar_paths() -> Value {
-    let body = "weekdays is seven 0/1 characters, Monday first, with at least one working day (1111100 is Monday to Friday); holidays is a list of dates (at most 400). A plan with no calendar works all seven days, so nothing stored before calendars existed changes.";
+    let body = "weekdays is seven 0/1 characters, Monday first, with at least one business day (1111100 is Monday to Friday); holidays is a list of dates (at most 400). A plan with no calendar works all seven days, so nothing stored before calendars existed changes.";
     json!({
         "/api/plans/{pid}/calendar": {
             "get": op("cpm", "The plan's working calendar", "All seven days when none was set (source default).", vec![uuid_param("pid")],
                 &[("200", "weekdays, holidays and source"), ("404", "Unknown plan")]),
             "put": op("cpm", "Set the plan's working calendar", body, vec![uuid_param("pid")],
-                &[("200", "The calendar"), ("404", "Unknown plan"), ("422", "A malformed mask, no working day, duplicate or out-of-range holidays")])
+                &[("200", "The calendar"), ("404", "Unknown plan"), ("422", "A malformed mask, no business day, duplicate or out-of-range holidays")])
         },
         "/api/me/calendar": {
             "get": op("cpm", "Your own working calendar", "Your weekly pattern and holidays. Recorded absences (POST /api/non-working) count as your holidays automatically. A task is scheduled on its plan's calendar and yours narrows it: your work happens only on days both work.", vec![],
@@ -784,7 +784,7 @@ fn mspdi_paths() -> Value {
     json!({
         "/api/plans/{pid}/import/mspdi": {
             "post": op("cpm", "Import an MS Project XML (MSPDI) file into this plan",
-                "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, working-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",
+                "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, business-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",
                 vec![uuid_param("pid"), query("dry_run", false, "true (default) reports only")],
                 &[("200", "Counts and the unmapped list"), ("404", "Unknown plan"), ("422", "Not MSPDI, not UTF-8 XML, a DTD, too large or too many tasks")])
         }
@@ -839,7 +839,7 @@ fn booking_paths() -> Value {
     json!({
         "/api/plans/{pid}/allocations/{a_pid}/commit": {
             "post": op("availability", "Commit a proposed booking",
-                "POST /api/plans/{pid}/allocations takes booking (proposed or committed, default committed) and requested. A proposed booking is hoped for: it never counts toward committed utilisation or over-allocation, and GET /api/capacity reports it as its own series (proposed.percent, proposed.allocations, proposed.would_exceed_capacity), never merged into the firm figures. Committing it is allowed to the named person, a resource manager or an admin (others 404). If, with it firm, the person would be over their per-day capacity (availability, PJ-3) the answer is 409 over_capacity with the numbers, and only ?confirm=true commits it anyway (audited as an over-commitment). Committing an already committed booking is 409.",
+                "POST /api/plans/{pid}/allocations takes booking (proposed or committed, default committed) and requested. A proposed booking is hoped for: it never counts toward committed utilization or over-allocation, and GET /api/capacity reports it as its own series (proposed.percent, proposed.allocations, proposed.would_exceed_capacity), never merged into the firm figures. Committing it is allowed to the named person, a resource manager or an admin (others 404). If, with it firm, the person would be over their per-day capacity (availability, PJ-3) the answer is 409 over_capacity with the numbers, and only ?confirm=true commits it anyway (audited as an over-commitment). Committing an already committed booking is 409.",
                 vec![uuid_param("pid"), uuid_param("a_pid"), query("confirm", false, "true to commit despite being over capacity")],
                 &[("200", "pid, booking and whether it is over capacity"), ("404", "Unknown, or not yours to commit"), ("409", "Already committed, or over capacity without ?confirm=true")])
         }
@@ -859,7 +859,7 @@ fn baseline_paths() -> Value {
         },
         "/api/plans/{pid}/schedule-variance": {
             "get": op("cpm", "How the schedule differs from a baseline",
-                "Per task: start, finish and duration variance in working days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
+                "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
         }
@@ -939,7 +939,7 @@ fn leveling_paths() -> Value {
     json!({
         "/api/plans/{pid}/leveling": {
             "get": op("scheduling", "Propose a resource leveling (advice only; changes nothing)",
-                "Finds the days a person's unfinished, assigned, scheduled tasks ask for more than their capacity (availability, 100% when none; plus their committed bookings in other plans) and proposes start delays. The first over-allocated day is resolved by keeping tasks in priority order (cannot-move first, then least total float, then earliest start, then input order) and delaying the lowest-priority task left over; a delay is accepted only if the network re-run shows no negative float, no hard-constraint conflict, nothing newly unscheduled and, unless allow_critical=true, an unchanged project finish. A task already started or with a hard constraint is never moved; a critical task is never moved without allow_critical, and then it is marked and the finish impact shown. What cannot be fixed is listed under unresolved with a reason (fixed_tasks, critical_task, no_float, hard_constraint, did_not_move, limit). The same input always gives the same proposal. Each moved task is for a person: a caller who may not manage that person sees person-N labels, no person_ref and no percentages. load_percent (default 100) is what one task asks of its assignee per working day.",
+                "Finds the days a person's unfinished, assigned, scheduled tasks ask for more than their capacity (availability, 100% when none; plus their committed bookings in other plans) and proposes start delays. The first over-allocated day is resolved by keeping tasks in priority order (cannot-move first, then least total float, then earliest start, then input order) and delaying the lowest-priority task left over; a delay is accepted only if the network re-run shows no negative float, no hard-constraint conflict, nothing newly unscheduled and, unless allow_critical=true, an unchanged project finish. A task already started or with a hard constraint is never moved; a critical task is never moved without allow_critical, and then it is marked and the finish impact shown. What cannot be fixed is listed under unresolved with a reason (fixed_tasks, critical_task, no_float, hard_constraint, did_not_move, limit). The same input always gives the same proposal. Each moved task is for a person: a caller who may not manage that person sees person-N labels, no person_ref and no percentages. load_percent (default 100) is what one task asks of its assignee per business day.",
                 vec![uuid_param("pid"), query("allow_critical", false, "true to let a critical task move"), query("load_percent", false, "1-100, default 100")],
                 &[("200", "moves, effects, over_allocated, unresolved, finish_before/after, finish_delay_days"), ("404", "Unknown plan"), ("422", "A dependency cycle, or a bad load_percent")])
         },
@@ -957,14 +957,14 @@ fn portfolio_resource_paths() -> Value {
     json!({
         "/api/resource-plan": {
             "get": op("resources", "Demand against supply by role or skill and period, in FTE",
-                "Across every plan the caller can read. Demand is committed allocations (percent x days, summed as percent-days, then turned into FTE = percent-days / (100 x days in the period)); placeholders (role-only demand, no person yet) count toward their role and are shown apart as placeholder_fte; proposed bookings are a separate series and never enter demand or the gap. Supply is the people whose primary role it is (PUT /api/resource-roles), read per day from their availability. gap_fte is supply minus demand (negative is a shortage); headcount is a separate field and never mixed with FTE. Demand with no role, and people with no role, are the `unclassified` row, never dropped. group_by=skill is demand-only (a person's skills are resolved live from the worker service) and its rows overlap. ?scenario=<pid> limits demand to that scenario's plans (what-if). A caller without access=admin or role=resource_manager gets roles and totals only (masked: true, no people_by_role). The per-plan series sums to the per-period totals.",
-                vec![query("from", false, "YYYY-MM-DD, default today"), query("to", false, "default from + 89 days"), query("period", false, "week or month (default)"), query("group_by", false, "role (default) or skill"), query("scenario", false, "a scenario pid")],
+                "Across every plan the caller can read. Demand is committed allocations (percent x calendar days, summed as percent-days, then turned into FTE = percent-days / (100 x calendar days in the period)); placeholders (role-only demand, no person yet) count toward their role and are shown apart as placeholder_fte; proposed bookings are a separate series and never enter demand or the gap. Supply is the people whose primary role it is (PUT /api/resource-roles), read per day from their availability. gap_fte is supply minus demand (negative is a shortage); headcount is a separate field and never mixed with FTE. Demand with no role, and people with no role, are the `unclassified` row, never dropped. group_by=skill is demand-only (a person's skills are resolved live from the worker service) and its rows overlap. ?scenario=<pid> limits demand to that scenario's plans (what-if). A caller without access=admin or role=resource_manager gets roles and totals only (masked: true, no people_by_role). The per-plan series sums to the per-period totals.",
+                vec![query("from", false, "YYYY-MM-DD, default today"), query("to", false, "default from + 89 calendar days"), query("period", false, "week or month (default)"), query("group_by", false, "role (default) or skill"), query("scenario", false, "a scenario pid")],
                 &[("200", "periods with rows, by_plan, placeholders, people_by_role"), ("404", "Unknown scenario"), ("422", "A bad window, period or group_by")])
         },
         "/api/resource-plan/hours": {
             "get": op("resources", "Planned against actual hours per plan and person",
                 "Planned is a named, committed allocation's percent of an 8-hour day on each Monday to Friday of the window (placeholder demand is reported apart); actual is recorded time entries, whether or not the week is approved. A plan with nothing recorded is null with actual_reason no_actuals, never zero hours. Time recorded by someone with no allocation on that plan in the window is listed under unplanned_actuals (per person for a manager, per plan with a count for anyone else). Plans the caller cannot read are left out.",
-                vec![query("from", false, "default to - 27 days"), query("to", false, "default today")],
+                vec![query("from", false, "default to - 27 calendar days"), query("to", false, "default today")],
                 &[("200", "plans, unplanned_actuals, totals"), ("422", "A bad window")])
         },
         "/api/resource-roles": {
@@ -989,19 +989,19 @@ fn schedule_risk_paths() -> Value {
     json!({
         "/api/plans/{pid}/schedule-risk": {
             "get": op("scheduling", "Seeded schedule-risk simulation: P50 / P80 / P90 finish, criticality and sensitivity",
-                "Each iteration draws a whole-working-day duration for every task from its optimistic / likely (duration_days) / pessimistic estimate (triangular, or PERT), lets each register risk with a task, an impact and a probability strike with that probability, and re-runs the critical-path analysis. Reports the finish percentiles (nearest rank), the share of iterations finishing by the deterministic CPM finish (cpm_finish_confidence_bp), a criticality index per task (share of iterations with no float), a sensitivity correlation per task, and a finish histogram. Seeded: the same seed gives the identical result. With no uncertainty every percentile equals the CPM finish. Every assumption is echoed, including that inputs are treated as independent (no correlation). A task with a likely duration but no estimate is simulated at that duration +/- fallback_band_percent (default 20) and marked source=fallback, never treated as certain; a risk missing a probability, task or impact is skipped and named under events.skipped. Iterations are capped (20 000, and iterations x tasks 5 000 000).",
+                "Each iteration draws a whole-business-day duration for every task from its optimistic / likely (duration_days) / pessimistic estimate (triangular, or PERT), lets each register risk with a task, an impact and a probability strike with that probability, and re-runs the critical-path analysis. Reports the finish percentiles (nearest rank), the share of iterations finishing by the deterministic CPM finish (cpm_finish_confidence_bp), a criticality index per task (share of iterations with no float), a sensitivity correlation per task, and a finish histogram. Seeded: the same seed gives the identical result. With no uncertainty every percentile equals the CPM finish. Every assumption is echoed, including that inputs are treated as independent (no correlation). A task with a likely duration but no estimate is simulated at that duration +/- fallback_band_percent (default 20) and marked source=fallback, never treated as certain; a risk missing a probability, task or impact is skipped and named under events.skipped. Iterations are capped (20 000, and iterations x tasks 5 000 000).",
                 vec![uuid_param("pid"), query("iterations", false, "default 2000, max 20000"), query("seed", false, "default 1"), query("distribution", false, "triangular (default) or pert"), query("fallback_band_percent", false, "0-100, default 20")],
                 &[("200", "assumptions, percentiles, histogram, tasks, events, unscheduled"), ("404", "Unknown plan"), ("422", "A cycle, nothing schedulable, or over the caps")])
         },
         "/api/plans/{pid}/tasks/{t_pid}/estimate": {
             "put": op("scheduling", "Set a task's optimistic and pessimistic duration",
-                "Working days; the likely duration is the task's duration_days, which must be set first, and optimistic <= likely <= pessimistic. A field left out or null clears it. Audited with old and new.",
+                "Business days; the likely duration is the task's duration_days, which must be set first, and optimistic <= likely <= pessimistic. A field left out or null clears it. Audited with old and new.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
-                &[("200", "optimistic, likely and pessimistic days"), ("404", "Unknown plan or task"), ("422", "Out of order, out of range, or no likely duration")])
+                &[("200", "optimistic, likely and pessimistic business days"), ("404", "Unknown plan or task"), ("422", "Out of order, out of range, or no likely duration")])
         },
         "/api/plans/{pid}/risks/{r_pid}/schedule-impact": {
             "put": op("scheduling", "Make a register risk a schedule event",
-                "Names the task it threatens (a task of this plan), the working days it adds if it happens (1-365) and its probability in percent (0-100). All optional; the simulation skips, and names, a risk that has some of these but not all, or is not open or mitigating. Audited with old and new.",
+                "Names the task it threatens (a task of this plan), the business days it adds if it happens (1-365) and its probability in percent (0-100). All optional; the simulation skips, and names, a risk that has some of these but not all, or is not open or mitigating. Audited with old and new.",
                 vec![uuid_param("pid"), uuid_param("r_pid")],
                 &[("200", "the risk's schedule fields"), ("404", "Unknown plan or risk"), ("422", "A bad value or a task of another plan")])
         }
@@ -1074,7 +1074,7 @@ fn milestone_paths() -> Value {
     json!({
         "/api/milestones": {
             "get": op("milestones", "Milestones across the portfolio, with derived status, forecast and slip",
-                "Every milestone in the plans the caller can read (others are left out without a trace). status is against the calendar: achieved, late (past due and not achieved), due_soon (within due_soon_days, default 14) or upcoming. A linked milestone is achieved when every task it waits for is done (and it waits for at least one); a manual one when marked done. schedule.state comes from the critical-path forecast of the tasks still open: forecast_late when they finish after the due date, at_risk when they finish within at_risk_days working days before it (default 5), on_track otherwise; a milestone with nothing to forecast from is no_forecast with a reason (no_linked_tasks, no_scheduled_tasks, cycle) and is never on_track. slip reads the append-only reschedule history: original_due, reschedules, later_moves and net_days. The summary counts every visible milestone whatever the status filter. Ordered by due date.",
+                "Every milestone in the plans the caller can read (others are left out without a trace). status is against the calendar: achieved, late (past due and not achieved), due_soon (within due_soon_days, default 14) or upcoming. A linked milestone is achieved when every task it waits for is done (and it waits for at least one); a manual one when marked done. schedule.state comes from the critical-path forecast of the tasks still open: forecast_late when they finish after the due date, at_risk when they finish within at_risk_days business days before it (default 5), on_track otherwise; a milestone with nothing to forecast from is no_forecast with a reason (no_linked_tasks, no_scheduled_tasks, cycle) and is never on_track. slip reads the append-only reschedule history: original_due, reschedules, later_moves and net_days. The summary counts every visible milestone whatever the status filter. Ordered by due date.",
                 vec![query("plan", false, "a plan pid"), query("status", false, "achieved, late, due_soon or upcoming"), query("kind", false, "a milestone kind"), query("from", false, "due on or after"), query("to", false, "due on or before"), query("due_soon_days", false, "default 14"), query("at_risk_days", false, "default 5"), query("as_of", false, "the date today means (default today)")],
                 &[("200", "milestones and a summary"), ("422", "A bad status, window or range")])
         },
@@ -1124,8 +1124,8 @@ fn cost_risk_paths() -> Value {
         },
         "/api/plans/{pid}/joint-risk": {
             "get": op("risk", "Cost and schedule simulated together, with the joint confidence",
-                "One simulation in which the schedule (as in schedule-risk) and the cost of one currency move together, drawn from one random stream. A register risk with both a schedule impact and a cost impact is a single event with one probability: it strikes once and drives both. Each working day the finish is later than the critical-path finish adds delay_cost_per_day_minor (default 0; finishing early earns nothing back). Reports the cost percentiles including delay cost, the share within budget, the share on time, the joint share (both) — never above the smaller of the two — the four quadrant counts, and a thinned sample of (days late, cost) points for a scatter. Needs currency= when the plan budgets in several.",
-                { let mut v = vec![uuid_param("pid"), query("currency", false, "required when the plan has lines in several currencies"), query("delay_cost_per_day_minor", false, "cost of each working day late, default 0")]; v.extend(sim_params()); v },
+                "One simulation in which the schedule (as in schedule-risk) and the cost of one currency move together, drawn from one random stream. A register risk with both a schedule impact and a cost impact is a single event with one probability: it strikes once and drives both. Each business day the finish is later than the critical-path finish adds delay_cost_per_day_minor (default 0; finishing early earns nothing back). Reports the cost percentiles including delay cost, the share within budget, the share on time, the joint share (both) — never above the smaller of the two — the four quadrant counts, and a thinned sample of (business days late, cost) points for a scatter. Needs currency= when the plan budgets in several.",
+                { let mut v = vec![uuid_param("pid"), query("currency", false, "required when the plan has lines in several currencies"), query("delay_cost_per_day_minor", false, "cost of each business day late, default 0")]; v.extend(sim_params()); v },
                 &[("200", "schedule, cost, confidence, quadrants, points, events"), ("404", "Unknown plan"), ("422", "No budget lines, several currencies without currency=, a cycle, or over the caps")])
         },
         "/api/plans/{pid}/budget-lines/{l_pid}/estimate": {
@@ -1146,19 +1146,19 @@ fn assignment_paths() -> Value {
     json!({
         "/api/plans/{pid}/tasks/{t_pid}/assignment": {
             "put": op("scheduling", "Set a task's units, work and duration under a scheduling rule",
-                "The task needs an assignee (units are a share of their day). Work (minutes) = duration (working days) x units (% of a day) x 480 / 100. Give ONE of duration_days, units_percent, work_minutes to change it and the rule decides which of the other two moves: fixed_units (default): work edits move duration, duration/units edits move work; fixed_duration: work edits move UNITS (never duration), duration/units edits move work; fixed_work: duration/units edits move the other, work edits move duration. The first time, give two and the third is derived. A duration derived from work rounds up to whole days, units to the nearest percent, work to the nearest minute; the edited quantity is never changed by rounding and `exact` says whether the relation then holds to the minute. Units above the assignee's availability on a day of the task are flagged under capacity, never clamped. Audited with old and new. Changing the duration through PUT …/tasks/{pid}/schedule recomputes the same way (a task that carries work cannot become a milestone).",
+                "The task needs an assignee (units are a share of their day). Work (minutes) = duration (business days) x units (% of a day) x 480 / 100. Give ONE of duration_days, units_percent, work_minutes to change it and the rule decides which of the other two moves: fixed_units (default): work edits move duration, duration/units edits move work; fixed_duration: work edits move UNITS (never duration), duration/units edits move work; fixed_work: duration/units edits move the other, work edits move duration. The first time, give two and the third is derived. A duration derived from work rounds up to whole business days, units to the nearest percent, work to the nearest minute; the edited quantity is never changed by rounding and `exact` says whether the relation then holds to the minute. Units above the assignee's availability on a day of the task are flagged under capacity, never clamped. Audited with old and new. Changing the duration through PUT …/tasks/{pid}/schedule recomputes the same way (a task that carries work cannot become a milestone).",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "rule, the three quantities, which was derived, exact, capacity"), ("404", "Unknown plan or task"), ("422", "No assignee, more than one change, out of range, or work on a milestone")])
         },
         "/api/plans/{pid}/tasks/{t_pid}/contour": {
-            "put": op("scheduling", "Set how a task's work is spread over its working days",
-                "contour: flat (default), front_loaded, back_loaded, bell, turtle or custom (custom: percentages summing to exactly 100, 1-40 of them, stretched over the days). The shape names are inferred from the reference tool's and their definitions are this project's own (confirm before treating them as a standard). The total work is unchanged; audited with old and new.",
+            "put": op("scheduling", "Set how a task's work is spread over its business days",
+                "contour: flat (default), front_loaded, back_loaded, bell, turtle or custom (custom: percentages summing to exactly 100, 1-40 of them, stretched over the business days). The shape names are inferred from the reference tool's and their definitions are this project's own (confirm before treating them as a standard). The total work is unchanged; audited with old and new.",
                 vec![uuid_param("pid"), uuid_param("t_pid")],
                 &[("200", "the contour"), ("404", "Unknown plan or task"), ("422", "An unknown contour or custom weights that do not sum to 100")])
         },
         "/api/plans/{pid}/work-profile": {
             "get": op("scheduling", "A plan's work as buckets of days, weeks or months",
-                "Each task's work is spread over the working days of its own calendar between its earliest start and finish, by its contour, in whole minutes that sum to its work exactly (largest remainder) and never on a non-working day; buckets are derived on read. The plan's totals are the sum of its tasks'. Work that cannot be placed (the task is unscheduled, or has no working day) is listed under unplaced and counted, never dropped; work outside the window is counted. With no task carrying work: buckets null with reason no_assignments. Who does the work is shown only to a caller who may manage people.",
+                "Each task's work is spread over the business days of its own calendar between its earliest start and finish, by its contour, in whole minutes that sum to its work exactly (largest remainder) and never on a non-business day; buckets are derived on read. The plan's totals are the sum of its tasks'. Work that cannot be placed (the task is unscheduled, or has no business day) is listed under unplaced and counted, never dropped; work outside the window is counted. With no task carrying work: buckets null with reason no_assignments. Who does the work is shown only to a caller who may manage people.",
                 vec![uuid_param("pid"), query("from", false, "default: the first placed day"), query("to", false, "default: the last placed day"), query("period", false, "day, week (default) or month")],
                 &[("200", "tasks, totals, unplaced, people"), ("404", "Unknown plan"), ("422", "A bad window or period")])
         },
@@ -1196,7 +1196,7 @@ fn cost_rate_paths() -> Value {
         },
         "/api/plans/{pid}/tasks/{t_pid}/costs": {
             "post": op("costs", "Add a material or fixed-cost expense to a task",
-                &format!("kind material or fixed; amount_minor above zero; currency; accrual start (first working day), prorated (evenly, whole minor units summing to the amount) or end (last working day). {gate}"),
+                &format!("kind material or fixed; amount_minor above zero; currency; accrual start (first business day), prorated (evenly, whole minor units summing to the amount) or end (last business day). {gate}"),
                 vec![uuid_param("pid"), uuid_param("t_pid")], &[("200", "pid"), ("404", "Unknown or not permitted"), ("422", "Invalid")]),
             "get": op("costs", "A task's expenses", gate, vec![uuid_param("pid"), uuid_param("t_pid")], &[("200", "costs"), ("404", "Unknown or not permitted")])
         },
@@ -1270,7 +1270,7 @@ fn onboarding_paths() -> Value {
     json!({
         "/api/onboarding/templates": {
             "get": op("onboarding", "The checklist for each kind of onboarding or offboarding",
-                "Four kinds: person_join, person_leave, plan_intake, plan_closeout. Each has a built-in checklist (items with an offset in days from the effective date, negative being before it); a custom template replaces it (custom=true).",
+                "Four kinds: person_join, person_leave, plan_intake, plan_closeout. Each has a built-in checklist (items with an offset in calendar days from the effective date, negative being before it); a custom template replaces it (custom=true).",
                 vec![], &[("200", "templates")])
         },
         "/api/onboarding/templates/{kind}": {

@@ -32,7 +32,7 @@ plans may match regardless of their (optional) `kind`.
 ## 2. Scope
 
 In scope: the attributes that distinguish one plan from another —
-name, goals, owner-scoped code, owning organisation, parent plan,
+name, goals, owner-scoped code, owning organization, parent plan,
 timeframe, keywords, tags, relationships, and tool/registry
 identifiers. Out of scope: the full plan content (task breakdown,
 resourcing, Gantt scheduling, status history, issues), person-level
@@ -54,7 +54,7 @@ their titles) belong to the service, not the matcher.
   project key, Asana GID, Trello board id, MS Project id, GitHub
   project id, Linear id). A match pins the score to `1.0`.
 - **Owner-scoped code** — `code`/`Code`/`LocalId`; only unique within
-  the issuing organisation.
+  the issuing organization.
 - **Goal** — a discrete intended outcome of the plan; its
   **title** is the matchable surface.
 
@@ -62,7 +62,7 @@ their titles) belong to the service, not the matcher.
 
 Plans are largely identified by the tool that tracks them (Jira,
 Asana, Trello, MS Project, GitHub Projects, Linear) and by their owning
-organisation, name, and goals. The same initiative is frequently
+organization, name, and goals. The same initiative is frequently
 re-entered across tools or teams, so matching combines deterministic
 linkage on the tool/registry identifiers with fuzzy comparison of the
 name and overlap of the goal titles, owner, parent plan, timeframe,
@@ -86,8 +86,8 @@ Input: Plan A, Plan B, MatchConfig
   ├─ timeframe_score     (dates set) date proximity (Gaussian decay)
   ├─ keywords_score      (≥1 set)   Jaccard
   ├─ relationships_score (≥1 set)   typed-set Jaccard over (relation, plan_id)
-  ├─ tags_score          (both set) set Jaccard over normalised tags
-  └─ renormalised weighted average over present components
+  ├─ tags_score          (both set) set Jaccard over normalized tags
+  └─ renormalized weighted average over present components
 ```
 
 **There is no kind gate.** The four kinds were unified into one
@@ -168,16 +168,16 @@ signal, not an identifying field on its own.
 but never read for the owner gate. The code gate (§11, R-1) and the
 owner-org component (§11a) key solely on `owner_org_id`, so two records
 can only share an owner scope via that opaque id, not via a fuzzy
-organisation-name comparison. `lead_ref` is likewise informational-only.
+organization-name comparison. `lead_ref` is likewise informational-only.
 
 ## 7. Configuration
 
 `MatchConfig` weights (default, sum 1.0): name 0.30, goals 0.15,
 code 0.15, owner_org 0.10, **parent 0.08**, timeframe 0.07, keywords
 0.05, `relationships_weight` 0.05 (§13.1), `tags_weight` 0.05 (§13.2).
-The weighted average is renormalised over the components actually
+The weighted average is renormalized over the components actually
 present (§17), so the supporting weights never break the
-renormalisation. Threshold 0.85. Presets: `strict()` 0.95, `lenient()`
+renormalization. Threshold 0.85. Presets: `strict()` 0.95, `lenient()`
 0.70.
 
 The `parent` weight (0.08) **replaces** the `plan_type` weight the
@@ -197,9 +197,9 @@ negative, `NaN`, or infinite weight on any of the nine fields or on
 `timeframe_sigma_days`, or a threshold outside `[0.0, 1.0]`, returning
 `Error::InvalidConfig` naming the first offending field. The nine
 weights need this because an unchecked value reaching §17's
-renormaliser can push the returned score outside `[0.0, 1.0]` or
+renormalizer can push the returned score outside `[0.0, 1.0]` or
 produce `NaN`, breaking the bounded-and-finite invariant §19/§24
-documents. `timeframe_score` (§12) already falls back to a 1-day
+documents. `timeframe_score` (§12) already falls back to a 1-calendar-day
 width for a non-positive/`NaN` `timeframe_sigma_days`, so a bad value
 there cannot itself unbound the score — `validated` still rejects it,
 because otherwise the caller's mistake would be silently substituted
@@ -207,7 +207,7 @@ rather than reported. Same shape as the sibling
 `organization-matcher`/`care-pathway-matcher`/`case-matcher` crates'
 identical `MatchConfig`.
 
-## 8. Normalisation
+## 8. Normalization
 
 `fold` (trim + NFKC + lowercase, diacritic-preserving); `code`
 (alphanumeric-only, uppercased — so `"PROJ-01"` ≡ `"proj 01"`);
@@ -229,7 +229,7 @@ carries goals.
 
 ## 11. Code
 
-Within the same non-empty `owner_org_id`: 1.0 if normalised codes equal,
+Within the same non-empty `owner_org_id`: 1.0 if normalized codes equal,
 else 0.0. Across owners (or missing owner): `None` (a local code like
 `PROJ-01` is not globally unique).
 
@@ -261,9 +261,9 @@ ancestor's `plan_type` exact-enum component, which is gone.
 
 `timeframe_score`: **date proximity** over `start_date` / `target_date`.
 The two records' available dates are compared pairwise (start↔start,
-target↔target) by a **Gaussian decay** on the day gap — `exp(-(Δdays /
+target↔target) by a **Gaussian decay** on the calendar-day gap — `exp(-(Δdays /
 σ)² / 2)` — averaged over the date pairs both sides carry, with a
-configurable `σ` (default 90 days). `None` when neither side carries a
+configurable `σ` (default 90 calendar days). `None` when neither side carries a
 date that the other side also carries (no comparable pair). Gaussian
 decay is chosen over hard window-overlap so that near-miss dates degrade
 smoothly rather than snapping to 0.
@@ -289,9 +289,9 @@ references never single-handedly establish a match.
 
 ### 13.2 Tags — `tags_score`
 
-Plain set **Jaccard** over the case-insensitively normalised tag sets:
+Plain set **Jaccard** over the case-insensitively normalized tag sets:
 `tags_score = |A ∩ B| / |A ∪ B|`, where each side's set is the
-`fold`-normalised, de-duplicated `tags`. `None` (does not participate)
+`fold`-normalized, de-duplicated `tags`. `None` (does not participate)
 when **either** side has an empty tag set; otherwise a value in `[0.0,
 1.0]`. Identical in shape to `keywords_score` (§13) — a **supporting**
 signal weighted `tags_weight` (§7, default `0.05`); shared tags never
@@ -310,17 +310,17 @@ globally unique).
 
 ## 16. Owner+code, same_as, and open questions
 
-R-1: shared non-empty `owner_org_id` + equal normalised `code` → 1.0.
+R-1: shared non-empty `owner_org_id` + equal normalized `code` → 1.0.
 R-2: any case-folded `same_as` URL overlap → 1.0. Both apply regardless
 of the two records' (optional) `kind`.
 
 Open questions: should a goal-title exact overlap alone be a strong pin
 (currently probabilistic — many plans share a headline goal)?
-Should a `parent_ref` mismatch between two plans *penalise* rather
+Should a `parent_ref` mismatch between two plans *penalize* rather
 than just not corroborate? Should the timeframe `σ` differ by `kind` (a
 project's months vs. a portfolio's years)?
 
-## 17. Renormalisation
+## 17. Renormalization
 
 Weighted average over `Some` components only; divisor is the sum of
 contributing weights.
@@ -426,7 +426,7 @@ this crate has no cap of its own (§23).
 - [x] Implement the probabilistic components: name (Jaro-Winkler +
       Soundex), goals (Jaccard over folded titles, §10), code (§11),
       owner_org (§11a), parent (§11b), timeframe (Gaussian decay,
-      §12), keywords (§13), with the weighted average renormalised over
+      §12), keywords (§13), with the weighted average renormalized over
       present components (§17).
 - [x] Implement `relationships` (§13.1): the typed-set Jaccard component,
       the `relationships_score` field on `MatchBreakdown`, and
@@ -520,7 +520,7 @@ this crate has no cap of its own (§23).
     keeps working for the common case. Seven new unit tests
     (`src/config.rs`) pin the accept/reject boundary, including a
     dedicated pair for `timeframe_sigma_days` (§12's `timeframe_score`
-    already falls back to a 1-day width for a bad sigma, so `validated`
+    already falls back to a 1-calendar-day width for a bad sigma, so `validated`
     rejecting it anyway is about surfacing the mistake, not preventing
     an unbounded score). A new proptest
     (`validated_config_never_produces_an_unbounded_score`,

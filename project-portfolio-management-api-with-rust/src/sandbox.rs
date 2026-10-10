@@ -11,7 +11,7 @@
 //! * A link may not be a self-link, a duplicate, or close a cycle (counting links
 //!   from other plans, which the caller passes as `outside`); only a stored
 //!   dependency may be removed, not a task relation.
-//! * [`fingerprint`] summarises a state so a commit can tell the plan changed
+//! * [`fingerprint`] summarizes a state so a commit can tell the plan changed
 //!   since the preview.
 
 use std::collections::{HashMap, HashSet};
@@ -36,7 +36,7 @@ pub enum Edit {
         /// Its new planned start.
         start_date: NaiveDate,
     },
-    /// Set a task's working-day duration (0 makes it a milestone).
+    /// Set a task's business-day duration (0 makes it a milestone).
     Duration {
         /// The task.
         task_pid: Uuid,
@@ -64,7 +64,7 @@ pub enum Edit {
         /// `fs` (default), `ss`, `ff` or `sf`.
         #[serde(default)]
         kind: Option<String>,
-        /// Lag in working days (negative is a lead).
+        /// Lag in business days (negative is a lead).
         #[serde(default)]
         lag_days: Option<i32>,
     },
@@ -154,7 +154,7 @@ pub fn needs_hard_permission(edits: &[Edit]) -> bool {
 pub struct TaskFields {
     /// Planned start.
     pub start_date: Option<NaiveDate>,
-    /// Working days.
+    /// Business days.
     pub duration_days: Option<i64>,
     /// Constraint token.
     pub constraint_kind: Option<&'static str>,
@@ -218,7 +218,7 @@ pub enum Change {
         successor_pid: Uuid,
         /// `fs` / `ss` / `ff` / `sf`.
         kind: &'static str,
-        /// Lag in working days.
+        /// Lag in business days.
         lag_days: i64,
     },
     /// A link was removed.
@@ -231,7 +231,7 @@ pub enum Change {
         successor_pid: Uuid,
         /// `fs` / `ss` / `ff` / `sf`.
         kind: &'static str,
-        /// Lag in working days.
+        /// Lag in business days.
         lag_days: i64,
     },
 }
@@ -403,7 +403,7 @@ pub struct Dates {
     pub early_finish: NaiveDate,
     /// Latest finish.
     pub late_finish: NaiveDate,
-    /// Total float in working days.
+    /// Total float in business days.
     pub total_float: i64,
     /// On the critical path.
     pub critical: bool,

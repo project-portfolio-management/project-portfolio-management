@@ -14,9 +14,11 @@ import {
   isUnlocalized,
   localeFromAcceptLanguage,
   localizePath,
-  normaliseLocale,
+  normalizeLocale,
   splitPath,
 } from "#lib/locales.js";
+
+import { applySecurityHeaders, isHttps } from "#lib/security-headers.js";
 
 /** Remembers the reader's locale, to choose one for a bare, unprefixed URL. */
 export const LOCALE_COOKIE = "locale";
@@ -30,13 +32,27 @@ export function negotiateLocale(
   acceptLanguage: string | null,
 ): Locale {
   return (
-    normaliseLocale(cookies.get(LOCALE_COOKIE)) ??
+    normalizeLocale(cookies.get(LOCALE_COOKIE)) ??
     localeFromAcceptLanguage(acceptLanguage) ??
     DEFAULT_LOCALE
   );
 }
 
-export const handle: Handle = async ({ event, resolve }) => {
+export const handle: Handle = async (input) => {
+  const response = await localeHandle(input);
+  const { event } = input;
+  try {
+    applySecurityHeaders(
+      response.headers,
+      isHttps(event.url, event.request.headers.get("x-forwarded-proto")),
+    );
+  } catch {
+    // Immutable headers (e.g. a redirect response from `fetch`): leave as is.
+  }
+  return response;
+};
+
+const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.sessionId = event.cookies.get(SESSION_COOKIE) ?? null;
 
   const { pathname, search } = event.url;

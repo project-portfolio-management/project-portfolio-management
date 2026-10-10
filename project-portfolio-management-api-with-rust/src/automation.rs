@@ -97,7 +97,7 @@ pub const SCHEDULED_ACTION_STATUSES: &[&str] = &["pending", "fired", "cancelled"
 /// `failed` records a refusal. Both are logged rather than swallowed.
 pub const RUN_OUTCOMES: &[&str] = &["applied", "skipped", "failed"];
 
-/// Longest deadline a `schedule_action` may set, in days. A year is
+/// Longest deadline a `schedule_action` may set, in calendar days. A year is
 /// already beyond any board cadence; beyond it the rule is more likely
 /// a typo than an intention.
 pub const MAX_SCHEDULE_DAYS: i64 = 365;
@@ -403,7 +403,7 @@ pub struct SuccessorFact {
     pub edge_pid: Uuid,
     /// The successor plan.
     pub successor_pid: Uuid,
-    /// May start this many days after the predecessor finishes.
+    /// May start this many calendar days after the predecessor finishes.
     pub lag_days: i32,
     /// The successor's own current start, when it has one.
     pub current_start: Option<chrono::NaiveDate>,
@@ -420,8 +420,8 @@ pub struct ProposedShift {
     pub successor_pid: Uuid,
     /// Same sign and magnitude as the predecessor's own move — a
     /// finish-start lag is a fixed gap, so shifting the predecessor's
-    /// end by N days shifts the successor's implied dates by the same
-    /// N days, whatever the lag is. `+5` is +5 regardless of lag; lag
+    /// end by N calendar days shifts the successor's implied dates by the same
+    /// N calendar days, whatever the lag is. `+5` is +5 regardless of lag; lag
     /// only ever appears in the **violation** check below, not in the
     /// shift amount itself.
     pub delta_days: i64,
@@ -737,7 +737,7 @@ mod tests {
     }
 
     #[test]
-    fn milestone_due_is_a_recognised_statusless_trigger() {
+    fn milestone_due_is_a_recognized_statusless_trigger() {
         assert!(is_token(TRIGGER_KINDS, "milestone_due"));
         assert!(validate_trigger("milestone_due", None, None, STATUSES).is_ok());
         // A date arriving has no from/to status of any kind — neither a
@@ -808,7 +808,7 @@ mod tests {
         chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
     }
 
-    /// **Shifting a plan's end by 5 days proposes +5 on a finish-start
+    /// **Shifting a plan's end by 5 calendar days proposes +5 on a finish-start
     /// successor** — the exact acceptance wording — whatever the lag
     /// is, because a fixed lag does not change how a delta propagates
     /// through it.

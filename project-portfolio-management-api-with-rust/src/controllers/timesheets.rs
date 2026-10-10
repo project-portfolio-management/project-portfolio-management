@@ -357,7 +357,7 @@ struct ReportParams {
 
 /// `GET /api/time-reports?group_by=&from=&to=&plan=&person=&format=` — time
 /// grouped by `person` / `plan` / `category` / `billable` / `month`. Dates are
-/// calendar dates; default window is the last 90 days. Plans the caller cannot
+/// calendar dates; default window is the last 90 calendar days. Plans the caller cannot
 /// read are omitted and counted.
 #[debug_handler]
 async fn time_report(

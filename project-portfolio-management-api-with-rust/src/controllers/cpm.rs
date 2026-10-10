@@ -51,7 +51,7 @@ pub(crate) struct Network {
     /// Per-assignee calendars (the plan's intersected with theirs); a node's
     /// `own_calendar` indexes into it.
     pub own: Vec<WorkCalendar>,
-    /// Assignees whose calendar shares no working day with the plan's.
+    /// Assignees whose calendar shares no business day with the plan's.
     pub conflicts: Vec<String>,
     /// Tasks of **other plans** that this plan's tasks depend on or are depended on by
     /// (PJ-13), keyed by task pid. Their nodes follow the plan's own in `nodes`.
@@ -524,7 +524,7 @@ fn cycle_error(on: &[Uuid]) -> Error {
 
 #[derive(Debug, Deserialize)]
 struct CpmParams {
-    /// Working days of float that count as near-critical (default 5).
+    /// Business days of float that count as near-critical (default 5).
     #[serde(default)]
     near: Option<i64>,
 }
@@ -609,7 +609,7 @@ async fn plan_cpm(
         "ignored_edges": result.ignored_edges,
         "critical_chains": result.chains,
         "chains_truncated": result.chains_truncated,
-        "note": "Float is computed over the plan's tasks and the tasks of other plans they are linked to (cross_plan edges, external nodes, each on its own plan's calendar intersected with this one); a link to a plan you cannot read is left out of the calculation and shown only as a restricted edge, with nothing about the other side. Float is computed over the plan's tasks only, in working days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
+        "note": "Float is computed over the plan's tasks and the tasks of other plans they are linked to (cross_plan edges, external nodes, each on its own plan's calendar intersected with this one); a link to a plan you cannot read is left out of the calculation and shown only as a restricted edge, with nothing about the other side. Float is computed over the plan's tasks only, in business days of the plan calendar named above (a task whose assignee has their own calendar or recorded absences runs its work on the days both work). Negative float means a constraint or deadline cannot be met; a hard constraint (mso, mfo) overrides logic and a node it pins earlier than its predecessors allow is flagged hard_conflict. A task with no duration, or with no start and no scheduled predecessor, is unscheduled; completed tasks are included and carry their status.",
     }))
 }
 

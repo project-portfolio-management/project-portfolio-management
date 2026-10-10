@@ -3,7 +3,7 @@
 //!
 //! * `PUT …/tasks/{pid}/assignment` — set a task's units / work / duration under a
 //!   rule (which of the three stays fixed), the third being recomputed;
-//! * `PUT …/tasks/{pid}/contour` — how the task's work is spread over its days;
+//! * `PUT …/tasks/{pid}/contour` — how the task's work is spread over its business days;
 //! * `GET …/work-profile` and `GET /api/work-profile` — the work as buckets of days,
 //!   weeks or months, task → plan → portfolio, **derived on read**.
 //!
@@ -245,7 +245,7 @@ async fn set_assignment(
         "derived": outcome.map(|r| r.derived),
         "exact": outcome.map(|r| r.exact),
         "capacity": capacity,
-        "note": "Work = duration x units x 480 / 100 minutes. A duration derived from work rounds up to whole days, units derived from work round to the nearest percent, and the quantity you edited is never changed by the rounding; exact says whether the relation then holds to the minute. Units above the assignee's availability on a day are flagged in capacity, never clamped.",
+        "note": "Work = duration x units x 480 / 100 minutes. A duration derived from work rounds up to whole business days, units derived from work round to the nearest percent, and the quantity you edited is never changed by the rounding; exact says whether the relation then holds to the minute. Units above the assignee's availability on a day are flagged in capacity, never clamped.",
     }))
 }
 
@@ -298,7 +298,7 @@ struct ContourBody {
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/contour` — how the task's work is spread
-/// over its working days. The total work is unchanged; audited.
+/// over its business days. The total work is unchanged; audited.
 #[debug_handler]
 async fn set_contour(
     State(ctx): State<AppContext>,
@@ -358,13 +358,13 @@ pub(crate) struct TaskWork {
     pub assignee: Option<String>,
     pub contour: &'static str,
     pub work_minutes: i64,
-    /// Minutes on each working day (empty when it could not be placed).
+    /// Minutes on each business day (empty when it could not be placed).
     pub per_day: Vec<(NaiveDate, i64)>,
     /// Why it could not be placed.
     pub unplaced: Option<String>,
 }
 
-/// The working days of task `i` of the network, between its earliest start and
+/// The business days of task `i` of the network, between its earliest start and
 /// finish on **its own calendar**; `None` when the engine could not place it.
 pub(crate) fn working_days_of(
     net: &super::cpm::Network,
@@ -388,7 +388,7 @@ pub(crate) fn working_days_of(
     Some(days)
 }
 
-/// Place every task's work with a stated amount of it, on the working days of
+/// Place every task's work with a stated amount of it, on the business days of
 /// its own calendar between its earliest start and finish.
 pub(crate) async fn plan_work(ctx: &AppContext, plan: Uuid) -> Result<Vec<TaskWork>> {
     let net = super::cpm::load_network(ctx, plan).await?;
@@ -553,7 +553,7 @@ async fn plan_profile(
         "unplaced": unplaced,
         "people": if see { serde_json::json!(by_person.iter().map(|(p, parts)| (p.clone(), buckets_json(&sum_buckets(parts, &periods)))).collect::<BTreeMap<_, _>>()) } else { serde_json::Value::Null },
         "masked": !see,
-        "note": "Work is spread over each task's working days (its own calendar) between its earliest start and finish, by its contour, in whole minutes that sum to its work exactly. Work that cannot be placed (the task is unscheduled, or has no working day) is listed under unplaced and counted, never dropped; work outside the window is counted in outside_window_minutes. Derived on read.",
+        "note": "Work is spread over each task's business days (its own calendar) between its earliest start and finish, by its contour, in whole minutes that sum to its work exactly. Work that cannot be placed (the task is unscheduled, or has no business day) is listed under unplaced and counted, never dropped; work outside the window is counted in outside_window_minutes. Derived on read.",
     }))
 }
 

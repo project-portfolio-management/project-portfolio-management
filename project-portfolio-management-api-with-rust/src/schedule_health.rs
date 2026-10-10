@@ -20,7 +20,7 @@
 //! Where the published descriptions disagree, the choice made is stated in the
 //! check's `note`: *hard constraints* here are must-start-on, must-finish-on,
 //! start-no-later-than and finish-no-later-than; the *critical path test* adds a
-//! large delay (default 600 working days) to a critical task and expects the
+//! large delay (default 600 business days) to a critical task and expects the
 //! finish to move by at least that; *resources* has no prescribed threshold in
 //! the DCMA description, so zero unresourced tasks is this preset's own rule.
 
@@ -51,11 +51,11 @@ pub struct Thresholds {
     pub finish_to_start_min_pct: i64,
     /// Most hard-constrained incomplete tasks, percent.
     pub hard_constraints_pct: i64,
-    /// Total float above this many working days is "high".
+    /// Total float above this many business days is "high".
     pub high_float_days: i64,
     /// Most incomplete tasks with high float, percent.
     pub high_float_pct: i64,
-    /// A duration above this many working days is "high".
+    /// A duration above this many business days is "high".
     pub high_duration_days: i64,
     /// Most incomplete tasks with high duration, percent.
     pub high_duration_pct: i64,
@@ -65,7 +65,7 @@ pub struct Thresholds {
     pub cpli_min_milli: i64,
     /// Lowest baseline execution index, in thousandths.
     pub bei_min_milli: i64,
-    /// Working days added to a critical task by the critical path test.
+    /// Business days added to a critical task by the critical path test.
     pub critical_path_test_days: i64,
 }
 
@@ -177,7 +177,7 @@ pub struct Input<'a> {
 pub struct Threshold {
     /// `<=`, `>=`, `==` or `pass`.
     pub op: &'static str,
-    /// The limit (percent, thousandths or days — see `unit`); `None` for a
+    /// The limit (percent, thousandths or business days — see `unit`); `None` for a
     /// pass/fail test.
     pub limit: Option<i64>,
     /// `percent`, `milli` (thousandths of a ratio), `days` or `result`.
@@ -751,7 +751,7 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
                 unit: "days",
             },
             Some(
-                "Adds the threshold's working days to the critical task that finishes last and expects the project finish to move by at least that. The published descriptions give the injected delay as a large number of days; this preset uses 600.",
+                "Adds the threshold's business days to the critical task that finishes last and expects the project finish to move by at least that. The published descriptions give the injected delay as a large number of business days; this preset uses 600.",
             ),
         );
         c = match &cpm {
@@ -815,7 +815,7 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
             13,
             "cpli",
             "Critical path length index",
-            "working days to the finish",
+            "business days to the finish",
             Threshold {
                 op: ">=",
                 limit: Some(t.cpli_min_milli),
@@ -976,7 +976,7 @@ mod tests {
             )
         }
     }
-    /// 1 -> 2 -> 3 -> 4, all finish-to-start, no lag, 5 days each: a clean chain.
+    /// 1 -> 2 -> 3 -> 4, all finish-to-start, no lag, 5 business days each: a clean chain.
     fn chain() -> Net {
         Net {
             tasks: (1..=4).map(task).collect(),
@@ -1104,7 +1104,8 @@ mod tests {
 
     #[test]
     fn high_float_and_negative_float_use_incomplete_scheduled_tasks() {
-        // A long chain (60 days) and a short parallel task (5 days): 55 days of float.
+        // A long chain (60 business days) and a short parallel task (5 business
+        // days): 55 business days of float.
         let n = Net {
             tasks: vec![task(1), task(2)],
             nodes: vec![node(1, 60, true), node(2, 5, true)],
@@ -1244,7 +1245,7 @@ mod tests {
         assert_eq!(c.value, Some(1.0));
         assert_eq!((c.count, c.of), (20, 20));
         let mut n = chain();
-        n.nodes[3].deadline = Some(d(2026, 10, 16)); // the chain finishes on the 30th: 10 working days too late
+        n.nodes[3].deadline = Some(d(2026, 10, 16)); // the chain finishes on the 30th: 10 business days too late
         let r = n.run();
         let c = get(&r, "cpli");
         assert_eq!((c.count, c.of), (10, 20), "(20 - 10) / 20");

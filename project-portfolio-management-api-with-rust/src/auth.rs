@@ -35,17 +35,18 @@
 //!
 //! ## Blanket enforcement
 //!
-//! When `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is truthy (`1`/`true`/`yes`/`on`,
-//! case-insensitive), the [`enforce`] decision — wired as an Axum
-//! middleware layer in `src/app.rs` — requires a valid bearer token on
-//! every route except the public health/ping, OpenAPI/Swagger, and
-//! Prometheus metrics paths (see [`is_public_path`]). It is **off by
-//! default**: unset/blank/junk
-//! ⇒ today's behaviour, where the extractor is opt-in per handler and
-//! `GET /api/projects/whoami` proves end-to-end verification.
-//! Activation is an operations decision once the SSO token flow is live;
-//! see `agents/share/authentication-sessions.md` and
-//! `agents/share/jwt-enforcement.md` for the family-wide contract.
+//! Enforcement is **on by default** ([`resolve_require_auth`]): the [`enforce`]
+//! decision — wired as an Axum middleware layer in `src/app.rs` — requires a
+//! valid bearer token on every route except the public health/ping,
+//! OpenAPI/Swagger and calendar-feed paths (see [`is_public_path`]; the
+//! Prometheus endpoint needs a token like everything else). It is turned
+//! off only explicitly: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
+//! (`0`/`false`/`no`/`off`), or `settings.require_auth: false` in the active
+//! `config/<env>.yaml` (the shipped `development.yaml` and `test.yaml` do
+//! this; `production.yaml` never does). The environment variable wins over
+//! the file. [`check_startup`] logs a loud warning when it is off, and the
+//! service **refuses to start** when the loco environment is `production`
+//! and it is off, or when it is on and no token verifier has keys.
 //!
 //! ## Authorization (ABAC)
 //!
@@ -293,16 +294,145 @@ pub async fn fetch_or(url: &str, issuer: &str, audience: &str, fallback: Verifie
     }
 }
 
-/// Whether blanket `/api/*` enforcement is on, read once from
-/// `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` and cached. Off by default — see the
-/// module docs and `agents/share/jwt-enforcement.md`. Mirrors
-/// [`verifier`]: a process-wide `OnceLock` built from the environment.
+/// The cached enforcement posture (see [`require_auth`]).
+static REQUIRE_AUTH: OnceLock<bool> = OnceLock::new();
+
+/// Resolve the enforcement posture from the two explicit sources. Pure.
+///
+/// **Secure by default**: enforcement is on unless somebody explicitly
+/// turned it off. The environment variable
+/// `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` wins when set and non-blank
+/// (`0`/`false`/`no`/`off`, case-insensitive, is off; anything else,
+/// including a typo, is on); otherwise the `configured` value (the loco
+/// `settings.require_auth` key of the active `config/<env>.yaml`) applies;
+/// otherwise it is on.
+#[must_use]
+pub fn resolve_require_auth(env: Option<&str>, configured: Option<bool>) -> bool {
+    match env.map(str::trim).filter(|v| !v.is_empty()) {
+        Some(value) => !is_falsy(value),
+        None => configured.unwrap_or(true),
+    }
+}
+
+/// `0`/`false`/`no`/`off` (case-insensitive, surrounding whitespace ignored).
+fn is_falsy(value: &str) -> bool {
+    matches!(
+        value.trim().to_ascii_lowercase().as_str(),
+        "0" | "false" | "no" | "off"
+    )
+}
+
+/// Read `settings.require_auth` from a loco config `settings` block.
+#[must_use]
+pub fn configured_require_auth(settings: Option<&serde_json::Value>) -> Option<bool> {
+    settings?.get("require_auth")?.as_bool()
+}
+
+/// Fix the process-wide enforcement posture from the environment plus the
+/// config file's `settings.require_auth` (called once at boot, from
+/// `App::after_routes`). First caller wins: the value is cached for the life
+/// of the process, and every later call just reports it. Returns the
+/// effective posture.
+pub fn configure_require_auth(configured: Option<bool>) -> bool {
+    *REQUIRE_AUTH.get_or_init(|| {
+        resolve_require_auth(
+            std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH")
+                .ok()
+                .as_deref(),
+            configured,
+        )
+    })
+}
+
+/// Whether blanket `/api/*` enforcement is on, cached for the process. On
+/// by default — see [`resolve_require_auth`] and the module docs. When
+/// nothing has called [`configure_require_auth`] yet (a unit test, a CLI
+/// task) it is resolved from the environment alone, so the answer is still
+/// "on" unless explicitly turned off.
 #[must_use]
 pub fn require_auth() -> bool {
-    static REQUIRE_AUTH: OnceLock<bool> = OnceLock::new();
-    *REQUIRE_AUTH.get_or_init(|| {
-        parse_bool(&std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH").unwrap_or_default())
-    })
+    configure_require_auth(None)
+}
+
+/// Whether any token verifier this build accepts has keys to verify with.
+fn verifier_configured() -> bool {
+    #[cfg(feature = "paseto")]
+    if verifier().current().key_count() > 0 {
+        return true;
+    }
+    #[cfg(feature = "keycloak")]
+    if keycloak_verifier().is_some() {
+        return true;
+    }
+    false
+}
+
+/// The startup gate, pure. `Err(message)` means the service must refuse to
+/// start:
+///
+/// - the loco environment is `production` and enforcement is off;
+/// - enforcement is on but no token verifier has keys, *and* no
+///   `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` is set that the rotation
+///   loop could still fill in (with a URL configured the service boots and
+///   answers `401` until the key set arrives, rather than crash-looping while
+///   the auth service is briefly down).
+///
+/// # Errors
+///
+/// See above; the message names the variable to fix.
+#[allow(clippy::fn_params_excessive_bools)] // four independent facts, named at every call
+pub fn startup_verdict(
+    production: bool,
+    require: bool,
+    verifier_has_keys: bool,
+    keys_url_configured: bool,
+) -> Result<(), String> {
+    if !require && production {
+        return Err(
+            "refusing to start: authentication enforcement is off in the production \
+             environment. Remove PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false (or the \
+             config's settings.require_auth: false); production never runs anonymously."
+                .to_string(),
+        );
+    }
+    if require && !verifier_has_keys && !keys_url_configured {
+        return Err(
+            "refusing to start: authentication enforcement is on but no token verifier is \
+             configured, so every request would be 401. Set \
+             PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS (or ..._PASETO_KEYS_URL, or the \
+             Keycloak settings), or explicitly opt out for development with \
+             PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false."
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+/// Fix the enforcement posture and apply [`startup_verdict`] (called from
+/// `App::after_routes` after [`init`] seeded the verifiers). Logs a loud
+/// warning when enforcement is off.
+///
+/// # Errors
+///
+/// The refusal message from [`startup_verdict`].
+pub fn check_startup(production: bool, settings: Option<&serde_json::Value>) -> Result<(), String> {
+    let require = configure_require_auth(configured_require_auth(settings));
+    let keys_url = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL")
+        .is_ok_and(|u| !u.trim().is_empty());
+    startup_verdict(production, require, verifier_configured(), keys_url)?;
+    if !require {
+        tracing::warn!(
+            "AUTHENTICATION ENFORCEMENT IS OFF: every route is open to anonymous callers and \
+             every ABAC check is skipped. This is for local development and tests only; never \
+             expose this process to a network you do not control."
+        );
+    } else if !verifier_configured() {
+        tracing::warn!(
+            "authentication enforcement is on and no token key set is loaded yet; requests \
+             answer 401 until PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL delivers keys"
+        );
+    }
+    Ok(())
 }
 
 /// The process-wide ABAC policy, read once from
@@ -491,12 +621,12 @@ pub fn area_allows(caller: &MaybeAuthUser, area: &str, action: Action) -> bool {
 /// `authorization-attributes.md` §2): `GET`/`HEAD`/`OPTIONS` ⇒ `Read`;
 /// `DELETE` ⇒ `Delete`; a `POST` whose path ends with a
 /// [`DESTRUCTIVE_POST_SUFFIXES`] entry ⇒ `Destructive`; every other
-/// `POST`/`PUT`/`PATCH` (and any unrecognised method) ⇒ `Write`.
+/// `POST`/`PUT`/`PATCH` (and any unrecognized method) ⇒ `Write`.
 /// (`DELETE /…/links/{id}` needs no suffix entry — the DELETE method
 /// rule already covers it.)
 #[must_use]
 pub fn derive_action(method: &Method, path: &str) -> Action {
-    // SEC-G6: normalise a trailing slash before the destructive-suffix
+    // SEC-G6: normalize a trailing slash before the destructive-suffix
     // check, so `POST …/merge/` stays `Destructive` rather than being
     // downgraded to `Write` (which an `access=write` non-admin caller
     // could exploit to reach a destructive op).
@@ -527,15 +657,15 @@ pub fn parse_bool(value: &str) -> bool {
 }
 
 /// Paths that stay public even when enforcement is on: health/ping, the
-/// `OpenAPI` doc + Swagger UI, and the Prometheus metrics endpoint (so a
-/// scraper needs no bearer token). Everything else requires a valid bearer
-/// token.
+/// `OpenAPI` doc + Swagger UI, and the calendar feeds (which carry their own
+/// token). The Prometheus endpoint is deliberately **not** here: it exposes
+/// route and traffic shape, so a scraper presents a bearer token like any
+/// other client. Everything else requires a valid bearer token.
 fn is_public_path(path: &str) -> bool {
     path == "/_health"
         || path == "/_ping"
         || path == "/api-docs/openapi.json"
         || path.starts_with("/swagger-ui")
-        || path == "/metrics.prom"
         // Feeds authenticate themselves with a per-user revocable token in the
         // query string (a calendar app cannot send a bearer header); see
         // `controllers::feeds`.
@@ -1032,7 +1162,7 @@ mod tests {
     }
 
     /// Enforcement on ⇒ the public paths (health/ping, `OpenAPI`,
-    /// Swagger UI, Prometheus metrics) still pass without a token.
+    /// Swagger UI, calendar feeds) still pass without a token.
     #[test]
     fn enforce_on_allows_public_paths() {
         let (keys, _) = test_keys_and_kid();
@@ -1044,7 +1174,6 @@ mod tests {
             "/api-docs/openapi.json",
             "/swagger-ui",
             "/swagger-ui/index.html",
-            "/metrics.prom",
             "/api/feeds/calendar.ics",
             "/api/feeds/me.atom",
         ] {
@@ -1061,6 +1190,69 @@ mod tests {
                 "{path} should be public"
             );
         }
+    }
+
+    /// The Prometheus endpoint is behind login: with enforcement on and no
+    /// token it is `401`, like any other route.
+    #[test]
+    fn metrics_requires_a_token() {
+        let (keys, _) = test_keys_and_kid();
+        let verifier = Verifier::from_paseto_keys_value(&keys, ISSUER, AUDIENCE).unwrap();
+        let err = enforce(
+            true,
+            &Method::GET,
+            "/metrics.prom",
+            &HeaderMap::new(),
+            &verifier,
+            &policy(),
+        )
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::UNAUTHORIZED);
+    }
+
+    /// Secure by default: only an explicit false-like value turns it off; a
+    /// typo keeps it on; the environment beats the config file.
+    #[test]
+    fn resolve_require_auth_is_on_unless_explicitly_off() {
+        assert!(resolve_require_auth(None, None));
+        assert!(resolve_require_auth(Some(""), None));
+        assert!(resolve_require_auth(Some("  "), None));
+        assert!(resolve_require_auth(Some("1"), None));
+        assert!(resolve_require_auth(Some("true"), None));
+        assert!(resolve_require_auth(Some("flase"), None), "a typo stays on");
+        for off in ["0", "false", "FALSE", "no", "Off", " off "] {
+            assert!(!resolve_require_auth(Some(off), None), "{off}");
+        }
+        assert!(!resolve_require_auth(None, Some(false)), "config opt-out");
+        assert!(resolve_require_auth(None, Some(true)));
+        assert!(resolve_require_auth(Some("1"), Some(false)), "env wins");
+        assert!(!resolve_require_auth(Some("false"), Some(true)), "env wins");
+    }
+
+    #[test]
+    fn configured_require_auth_reads_the_settings_block() {
+        let on = serde_json::json!({ "require_auth": true });
+        let off = serde_json::json!({ "require_auth": false });
+        let other = serde_json::json!({ "x": 1 });
+        assert_eq!(configured_require_auth(Some(&on)), Some(true));
+        assert_eq!(configured_require_auth(Some(&off)), Some(false));
+        assert_eq!(configured_require_auth(Some(&other)), None);
+        assert_eq!(configured_require_auth(None), None);
+    }
+
+    /// The startup gate: production never runs anonymously, and enforcement
+    /// with nothing to verify against fails fast (unless a key URL may still
+    /// deliver keys).
+    #[test]
+    fn startup_verdict_refuses_the_unsafe_postures() {
+        assert!(startup_verdict(true, false, true, false).is_err());
+        assert!(startup_verdict(true, false, false, false).is_err());
+        assert!(startup_verdict(false, false, false, false).is_ok());
+        assert!(startup_verdict(false, true, true, false).is_ok());
+        assert!(startup_verdict(true, true, true, false).is_ok());
+        let err = startup_verdict(false, true, false, false).unwrap_err();
+        assert!(err.contains("PASETO_KEYS"), "{err}");
+        assert!(startup_verdict(false, true, false, true).is_ok());
     }
 
     /// Enforcement on, protected path, no token ⇒ `401`.

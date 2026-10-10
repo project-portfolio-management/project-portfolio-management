@@ -5,7 +5,7 @@
 //! # Nothing here is stored
 //!
 //! Progress, objective score and plan score are computed on read. A
-//! stored score can drift from the evidence it claims to summarise, and
+//! stored score can drift from the evidence it claims to summarize, and
 //! nothing downstream can tell — the rule Smart Score already follows.
 //!
 //! # Four rules, each guarding a specific way of lying

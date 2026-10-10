@@ -73,7 +73,7 @@
 //! "Domain separation") and hands to the receiver as *their* configured
 //! verification secret. The receiver computes HMAC-SHA256(subkey, raw
 //! body bytes) and compares the hex after `d1.<key id>:`; a mismatch or
-//! an unrecognised key id is a forged or corrupted delivery. Publishing
+//! an unrecognized key id is a forged or corrupted delivery. Publishing
 //! this pre-image format here is what makes the signature checkable at
 //! all outside this codebase (repo `tasks.md` EV-3's own condition).
 //!

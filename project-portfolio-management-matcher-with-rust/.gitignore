@@ -1,0 +1,7 @@
+# Cargo build output (was once committed by mistake; never track it).
+target/
+debug/
+**/*.rs.bk
+*.pdb
+# Libraries do not pin; this crate keeps Cargo.lock tracked for reproducible CI.
+!Cargo.lock

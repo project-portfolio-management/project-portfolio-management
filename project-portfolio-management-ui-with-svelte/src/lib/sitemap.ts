@@ -19,7 +19,7 @@ const EXCLUDED = ["/signin", "/verify", "/api", "/display"];
 
 /**
  * The public URL path of each page file (`/src/routes/plans/+page.svelte` ->
- * `/plans`, the home page -> `/`). Parameterised, grouped-only-segment and
+ * `/plans`, the home page -> `/`). Parameterized, grouped-only-segment and
  * excluded pages are dropped; the result is sorted and has no duplicates.
  */
 export function pagePaths(files: readonly string[]): string[] {

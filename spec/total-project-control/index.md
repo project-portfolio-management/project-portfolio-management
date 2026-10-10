@@ -132,7 +132,7 @@ to prevent.
 - **DRED.** Needs a second duration estimate per task; no task carries
   even a first.
 - **CLUB.** Needs resource-leveling over declared resource pools. The
-  capacity/utilisation machinery (FR-35) reports load against declared
+  capacity/utilization machinery (FR-35) reports load against declared
   working time, but nothing here levels a schedule against it.
 - **VBS.** Needs per-activity value attribution. The nearest existing
   surfaces — `benefits`, `business_case_targets`, and the OKR alignment

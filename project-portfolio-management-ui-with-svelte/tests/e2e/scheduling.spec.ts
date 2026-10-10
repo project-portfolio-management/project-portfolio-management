@@ -269,7 +269,7 @@ const RESOURCES = {
   ],
   people_by_role: null,
   masked: true,
-  note: "FTE is percent-days divided by 100 times the days in the period.",
+  note: "FTE is percent-days divided by 100 times the calendar days in the period.",
 };
 
 test("resources: a shortage is said in words and FTE, with a table twin", async ({
@@ -300,7 +300,7 @@ const RISK = {
     correlation: "none",
     independence:
       "Every task duration and every risk event is drawn independently: there is no correlation between them.",
-    durations: "Whole working days of the plan calendar.",
+    durations: "Whole business days of the plan calendar.",
     tasks_using_fallback: [T2],
     fallback:
       "A task with no estimate is simulated at its likely duration plus and minus the band.",
@@ -676,7 +676,7 @@ const JOINT = {
     delay_cost: {
       per_day_minor: 50_000,
       currency: "GBP",
-      rule: "Each working day the finish is later than the critical-path finish adds this much.",
+      rule: "Each business day the finish is later than the critical-path finish adds this much.",
     },
     shared_events: ["r1"],
     shared_events_rule:
@@ -764,7 +764,7 @@ test("joint risk: the joint confidence sits beside both marginals, with a quadra
   ).toBeVisible();
   await expect(
     page.getByText(
-      /Each working day late adds 500\.00 GBP; finishing early earns nothing back\./,
+      /Each business day late adds 500\.00 GBP; finishing early earns nothing back\./,
     ),
   ).toBeVisible();
   await expect(
@@ -794,7 +794,7 @@ async function stubGovernance(
       next_gate: null,
       gate_reviews: 0,
       latest_review: null,
-      risks: { open: 1, materialised: 0, max_exposure: 9, total_exposure: 9 },
+      risks: { open: 1, materialized: 0, max_exposure: 9, total_exposure: 9 },
       budget: [],
     },
     [`GET /api/plans/${PLAN}/gate-reviews`]: {
@@ -900,14 +900,14 @@ test("risk inputs: a risk that delays a task and adds cost makes both calls, and
   await page.goto(`/en-001/plans/${PLAN}/governance`);
   const risk = page.locator("details.risk-inputs");
   await risk.locator("summary").click();
-  // Days without a task: refused in words, nothing sent.
+  // Business days without a task: refused in words, nothing sent.
   await risk.getByLabel("Probability (%)").fill("100");
-  await risk.getByLabel("by (working days)").fill("4");
+  await risk.getByLabel("by (business days)").fill("4");
   await risk.getByRole("button", { name: "Save", exact: true }).click();
   await expect(
     risk
       .getByRole("alert")
-      .filter({ hasText: "task and the days it adds together" }),
+      .filter({ hasText: "task and the business days it adds together" }),
   ).toBeVisible();
   expect(sent).toHaveLength(0);
   // Fix it and add a cost.

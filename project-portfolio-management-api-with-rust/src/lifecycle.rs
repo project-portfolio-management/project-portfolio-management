@@ -37,7 +37,7 @@ pub struct PhaseRow {
     pub stalled: usize,
 }
 
-/// The funnel's inputs: one entry per live item, with how many days it
+/// The funnel's inputs: one entry per live item, with how many calendar days it
 /// has been in its current phase (`None` when unknown — such an item
 /// counts as live but never as stalled, because we cannot show our
 /// working).
@@ -45,7 +45,7 @@ pub struct PhaseRow {
 pub struct PhaseItem {
     /// The phase the item is in.
     pub phase: String,
-    /// Days in that phase.
+    /// Calendar days in that phase.
     pub days_in_phase: Option<i64>,
 }
 
@@ -231,7 +231,7 @@ mod tests {
         assert_eq!(ideas.live, 3);
         assert_eq!(
             ideas.stalled, 1,
-            "30 days is not yet past a 30-day threshold"
+            "30 calendar days is not yet past a 30-calendar-day threshold"
         );
         let proposals = rows
             .iter()

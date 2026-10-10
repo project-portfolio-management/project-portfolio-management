@@ -284,7 +284,7 @@ code change; see spec/index.md §23.
     (same parent `portfolio_ref`, child kinds), timeframe 0.07 (date
     proximity, Gaussian decay), keywords 0.05 (Jaccard), relationships
     0.05 (typed-set Jaccard over `(relation, plan_id)` pairs), tags
-    0.05 (set Jaccard); renormalised over present components.
-  - Normalisation: `fold`, `code` (alphanumeric-only), `fold_set`.
+    0.05 (set Jaccard); renormalized over present components.
+  - Normalization: `fold`, `code` (alphanumeric-only), `fold_set`.
   - Classification: `High` ≥ 0.95, `Medium` ≥ 0.70, else `Low`; default
     threshold 0.85 (`strict()` 0.95, `lenient()` 0.70).

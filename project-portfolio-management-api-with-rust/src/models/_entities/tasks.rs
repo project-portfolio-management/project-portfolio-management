@@ -30,11 +30,11 @@ pub struct Model {
     pub due_date: Option<Date>,
     /// Planned start (PJ-1); a lower bound for the critical-path engine.
     pub start_date: Option<Date>,
-    /// Working-day duration (PJ-1); `0` is a milestone.
+    /// Business-day duration (PJ-1); `0` is a milestone.
     pub duration_days: Option<i32>,
-    /// Optimistic working-day duration (SC-8); the likely one is `duration_days`.
+    /// Optimistic business-day duration (SC-8); the likely one is `duration_days`.
     pub duration_optimistic_days: Option<i32>,
-    /// Pessimistic working-day duration (SC-8).
+    /// Pessimistic business-day duration (SC-8).
     pub duration_pessimistic_days: Option<i32>,
     /// Work, in minutes (PJ-6): with `units_percent` and the duration, one of three related quantities.
     pub work_minutes: Option<i64>,
@@ -42,7 +42,7 @@ pub struct Model {
     pub units_percent: Option<i32>,
     /// Which quantity stays fixed when another is edited: `fixed_units`, `fixed_duration`, `fixed_work`.
     pub scheduling_rule: Option<String>,
-    /// How the work is spread over the working days (PJ-5): `flat`, `front_loaded`, `back_loaded`, `bell`, `turtle`, `custom`.
+    /// How the work is spread over the business days (PJ-5): `flat`, `front_loaded`, `back_loaded`, `bell`, `turtle`, `custom`.
     pub contour: String,
     /// The weights of a `custom` contour (percent, summing to 100).
     pub contour_custom: Option<Json>,

@@ -1,7 +1,7 @@
 // My work (LT-3) + float for the worker (SC-10): the plain sentence shown under
 // a task about its schedule. Pure, so it is unit-testable without a component.
 //
-// A task with no schedule data shows nothing at all — never "0 days of float".
+// A task with no schedule data shows nothing at all — never "0 business days of float".
 // Negative float is said in words, not just colour, and the text is ordinary
 // text, so a screen reader reads it with the rest of the row.
 
@@ -15,7 +15,7 @@ export interface FloatText {
   text: string;
 }
 
-const days = (n: number): string => `${n} working day${n === 1 ? "" : "s"}`;
+const days = (n: number): string => `${n} business day${n === 1 ? "" : "s"}`;
 
 /**
  * The sentence for a task's schedule, or `null` when there is nothing to say
@@ -37,6 +37,6 @@ export function floatText(
   }
   return {
     kind: "float",
-    text: `${f} day${f === 1 ? "" : "s"} of float`,
+    text: `${days(f)} of float`,
   };
 }

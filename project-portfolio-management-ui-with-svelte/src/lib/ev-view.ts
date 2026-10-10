@@ -104,7 +104,7 @@ export function costSentence(
 export function earnedScheduleSentence(b: EvBlock): string {
   if (b.spi_t.bp === null || b.earned_schedule_days === null)
     return `Earned schedule: no ratio, ${absentText(b.spi_t)}.`;
-  const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+  const days = (n: number) => `${n} calendar day${n === 1 ? "" : "s"}`;
   const h = health(b.spi_t.bp);
   const word = h === "ahead" ? "ahead" : h === "behind" ? "behind" : "on time";
   return `By earned schedule the work is ${word}: it has earned in ${days(b.actual_days)} what the plan expected after ${days(b.earned_schedule_days)} (SPI(t) ${ratioText(b.spi_t.bp)}).`;

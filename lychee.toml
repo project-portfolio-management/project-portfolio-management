@@ -1,0 +1,19 @@
+# Offline link check: `lychee --offline --config lychee.toml .`
+# Checks relative file links in Markdown only; no network. If lychee is not
+# installed, `python3 scripts/check-links.py` does the same check with the
+# standard library (that is the checker verified in this repository).
+offline = true
+include_fragments = true
+no_progress = true
+extensions = ["md"]
+exclude_path = [
+  "target",
+  "node_modules",
+  ".svelte-kit",
+  "build",
+  "dist",
+  "coverage",
+  "playwright-report",
+  "test-results",
+  ".git",
+]

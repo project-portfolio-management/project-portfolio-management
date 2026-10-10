@@ -216,7 +216,7 @@ pub fn compare(standard: &Standard, value: Option<i64>) -> (Verdict, Option<i64>
 /// One reading as stored, reduced to what coverage needs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ReadingFact {
-    /// Days since the reading was taken.
+    /// Calendar days since the reading was taken.
     pub age_days: i64,
     /// Its verdict.
     pub verdict: Verdict,
@@ -230,7 +230,7 @@ pub struct ReadingFact {
 pub struct ControlFact {
     /// When it acts.
     pub timing: Timing,
-    /// How often a reading is expected, in days. `None` means no
+    /// How often a reading is expected, in calendar days. `None` means no
     /// cadence is declared, so a reading can never be *overdue*.
     pub cadence_days: Option<i64>,
     /// Its readings, newest first.

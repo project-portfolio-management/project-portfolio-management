@@ -10,7 +10,7 @@ delivered suites.
 | Subproject | Layer | Plan |
 |---|---|---|
 | matcher | Unit tests embedded per module (`#[cfg(test)]`); integration suite `tests/public_api.rs` over the re-exported surface; rustdoc examples as doctests | Build T-2 |
-| matcher | Kind-agnostic tests (two plans with differing `kind` labels still match on their other signals; a vestigial always-`false` `kind_gate_blocked`), deterministic-rule tests (R-0 each scheme, R-1 owner+code, R-2 `same_as`) and probabilistic-component tests (name, goal-title Jaccard, code, owner org, parent plan, timeframe, keywords, relationships, tags); renormalisation; presets | Build T-2 |
+| matcher | Kind-agnostic tests (two plans with differing `kind` labels still match on their other signals; a vestigial always-`false` `kind_gate_blocked`), deterministic-rule tests (R-0 each scheme, R-1 owner+code, R-2 `same_as`) and probabilistic-component tests (name, goal-title Jaccard, code, owner org, parent plan, timeframe, keywords, relationships, tags); renormalization; presets | Build T-2 |
 | service | DB-free tests: matcher embedding + JSON round-trip of the thin DTO (incl. optional `kind`) | Build T-3 |
 | service | Controller validation unit tests: blank-name → `422`, malformed `EntityRef` / `parent_ref` / containment cycle / deterministic identifier / relationship / `in_language` → `422` (DB-free) | Build T-3 |
 | service | Request-level integration tests against PostgreSQL (loco harness): CRUD on the one plans collection, 422s, 404, `/match`, `/check-duplicates`, `409` on create, merge (any two plans) with sub-resource re-homing; sub-resource CRUD; derived timeline / burndown; the parent child roll-up filter; `#[ignore]`-gated, run with a Postgres URL | Build T-4 |

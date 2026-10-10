@@ -6,7 +6,7 @@
 //!
 //! - `overdue`  — due before today;
 //! - `today`    — due today;
-//! - `this_week` — due in the next six days (today + 1 ..= today + 6),
+//! - `this_week` — due in the next six calendar days (today + 1 ..= today + 6),
 //!   so `today` + `this_week` together span one rolling week;
 //! - `later`    — due after that;
 //! - `undated`  — no due date. **Never** treated as due today or as "later":
@@ -27,7 +27,7 @@ pub enum Bucket {
     Overdue,
     /// Due today.
     Today,
-    /// Due in the next six days.
+    /// Due in the next six calendar days.
     ThisWeek,
     /// Due later than that.
     Later,
@@ -112,12 +112,12 @@ mod tests {
         assert_eq!(
             bucket(Some(d(2026, 10, 8)), today),
             Bucket::ThisWeek,
-            "+6 days"
+            "+6 calendar days"
         );
         assert_eq!(
             bucket(Some(d(2026, 10, 9)), today),
             Bucket::Later,
-            "+7 days"
+            "+7 calendar days"
         );
         assert_eq!(bucket(None, today), Bucket::Undated);
     }

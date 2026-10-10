@@ -1,0 +1,9 @@
+# ZAP baseline rules (zaproxy/action-baseline, `-c .zap/rules.tsv`).
+# Columns, tab-separated:  <rule id>  <IGNORE|WARN|FAIL>  <justification>
+#
+# Empty on purpose: every baseline finding fails the job (fail_action: true).
+# Add a line ONLY for a documented, justified false positive, with the reason
+# in the third column, and review it whenever the stack changes. Example
+# (do not enable without a real justification):
+#
+# 10049	IGNORE	(Storable and Cacheable Content) the API sets explicit Cache-Control; ...

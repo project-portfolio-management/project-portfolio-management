@@ -61,12 +61,12 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 export const RTL_LOCALES = ["ar-001"] as const satisfies readonly Locale[];
 
 /**
- * Normalise raw input to a supported locale, or null if unsupported.
+ * Normalize raw input to a supported locale, or null if unsupported.
  * Case-insensitive and hyphen/underscore-insensitive. A region or legacy
  * code resolves by primary language (`es-MX`, `en_US`, `zh`, `en` all map
  * to the one supported locale of that language).
  */
-export function normaliseLocale(raw: string | null | undefined): Locale | null {
+export function normalizeLocale(raw: string | null | undefined): Locale | null {
   if (!raw) return null;
   const normalized = raw.trim().replace(/_/g, "-").toLowerCase();
   const exact = LOCALES.find((l) => l === normalized);
@@ -77,10 +77,10 @@ export function normaliseLocale(raw: string | null | undefined): Locale | null {
 
 /**
  * Whether `locale` is written right-to-left. Tolerant of region subtags via
- * {@link normaliseLocale}.
+ * {@link normalizeLocale}.
  */
 export function isRtl(locale: string): boolean {
-  const primary = normaliseLocale(locale);
+  const primary = normalizeLocale(locale);
 
   return (
     primary !== null && (RTL_LOCALES as readonly string[]).includes(primary)
@@ -168,7 +168,7 @@ export function localeFromAcceptLanguage(
     .filter((x) => x.tag && x.tag !== "*" && x.q > 0)
     .sort((a, b) => b.q - a.q || a.i - b.i);
   for (const { tag } of tags) {
-    const l = normaliseLocale(tag);
+    const l = normalizeLocale(tag);
     if (l) return l;
   }
   return null;

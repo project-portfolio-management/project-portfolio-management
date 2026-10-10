@@ -113,10 +113,10 @@ describe("presentation helpers", () => {
 
   it("renders durations, and a missing one as an em-dash", () => {
     expect(days(null)).toBe("—");
-    expect(days(2.345)).toBe("2.3d");
-    expect(msAsDays(86_400_000)).toBe("1.0d");
+    expect(days(2.345)).toBe("2.3 calendar days");
+    expect(msAsDays(86_400_000)).toBe("1.0 calendar days");
     expect(msAsDays(null)).toBe("—");
-    expect(msAsDays(0)).toBe("0.0d");
+    expect(msAsDays(0)).toBe("0.0 calendar days");
   });
 
   it("bands flow efficiency against the field's own norm", () => {

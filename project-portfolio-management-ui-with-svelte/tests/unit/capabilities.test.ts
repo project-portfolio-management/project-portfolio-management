@@ -1,5 +1,5 @@
 // CapabilityClient path mapping: the client is the single source of the
-// collaboration / automation / prioritisation endpoint paths, so a wrong
+// collaboration / automation / prioritization endpoint paths, so a wrong
 // path or a dropped query parameter fails here first.
 
 import { describe, expect, it, vi } from "vitest";
@@ -84,16 +84,16 @@ describe("CapabilityClient paths", () => {
     ]);
   });
 
-  it("maps the prioritisation + lifecycle endpoints", async () => {
+  it("maps the prioritization + lifecycle endpoints", async () => {
     const { api, calls } = recordingClient();
-    await api.prioritisation({ limit: 10, band: "high" });
+    await api.prioritization({ limit: 10, band: "high" });
     await api.smartScore("p1");
     await api.lifecycle();
     await api.planLifecycle("p1");
     await api.workload("p1");
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://svc/api/prioritisation?limit=10&band=high",
+      "http://svc/api/prioritization?limit=10&band=high",
       "http://svc/api/plans/p1/smart-score",
       "http://svc/api/lifecycle",
       "http://svc/api/plans/p1/lifecycle",
@@ -103,14 +103,14 @@ describe("CapabilityClient paths", () => {
 
   it("omits unset query parameters rather than sending blanks", async () => {
     const { api, calls } = recordingClient();
-    await api.prioritisation();
+    await api.prioritization();
     await api.listReviews();
     await api.listAutomations();
     await api.workload();
     await api.inbox("person:u1");
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://svc/api/prioritisation",
+      "http://svc/api/prioritization",
       "http://svc/api/reviews",
       "http://svc/api/automations",
       "http://svc/api/assignees/workload",

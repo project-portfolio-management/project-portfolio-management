@@ -5,7 +5,7 @@
 //!
 //! - **The payload and the column agree.** `phase` is a field on the
 //!   matcher's `Plan` (informational-only, never scored) *and* a
-//!   denormalised column, and both are written together — the same
+//!   denormalized column, and both are written together — the same
 //!   contract `name` and `parent_pid` already carry.
 //! - **The log is append-only.** There is no edit or delete route: a
 //!   phase history that can be rewritten cannot support a duration
@@ -82,7 +82,7 @@ async fn set_phase(
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
 
-    // An unrecognised token is refused, never coerced to a default: a
+    // An unrecognized token is refused, never coerced to a default: a
     // typo must not silently place a plan in Initiating.
     let Some(to) = PlanPhase::parse(&payload.phase) else {
         return Err(Error::CustomError(

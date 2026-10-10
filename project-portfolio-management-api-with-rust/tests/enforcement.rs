@@ -116,8 +116,8 @@ async fn enforcement_on_gates_the_real_router() {
         );
         assert_eq!(
             request.get("/metrics.prom").await.status_code(),
-            200,
-            "metrics stay scrapeable without a token"
+            401,
+            "metrics need a token like everything else (HD-4)"
         );
 
         assert_eq!(
@@ -185,6 +185,15 @@ async fn enforcement_on_gates_the_real_router() {
                 .status_code(),
             200,
             "any authenticated caller may read"
+        );
+        assert_eq!(
+            request
+                .get("/metrics.prom")
+                .add_header(rk.clone(), rv.clone())
+                .await
+                .status_code(),
+            200,
+            "an authenticated scraper reads the metrics"
         );
         assert_eq!(
             request

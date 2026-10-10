@@ -120,17 +120,17 @@ test("the assignment form sends one change, says what the rule did, and the tabl
   });
   await page.goto(`/en-001/plans/${PID}/work`);
   await expect(
-    page.getByText("5 working days · 100% of a day · 40 h of work"),
+    page.getByText("5 business days · 100% of a day · 40 h of work"),
   ).toBeVisible();
   await expect(page.getByText("No assignment yet")).toBeVisible();
   await page.getByText("Edit assignment").first().click();
   await page.getByRole("spinbutton", { name: "Work (hours)" }).fill("80");
   await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("status")).toContainText(
-    "10 working days at 100% is 80 h. The duration was worked out.",
+    "10 business days at 100% is 80 h. The duration was worked out.",
   );
   await expect(page.getByRole("status")).toContainText(
-    "Over capacity on 2 days",
+    "Over capacity on 2 calendar days",
   );
   expect(sent).toEqual({ rule: "fixed_units", work_minutes: 4800 });
   // The profile: the plan's total, and the unplaced work named rather than dropped.

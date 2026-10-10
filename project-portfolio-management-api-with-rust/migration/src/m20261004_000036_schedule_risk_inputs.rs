@@ -1,4 +1,4 @@
-//! Migration: **schedule-risk inputs** (SC-8). A task may carry an optimistic and a pessimistic duration (its likely one is `duration_days`); a risk may name the task it threatens, how many working days it adds if it happens, and its probability as a percent. All optional; none changes any existing behaviour.
+//! Migration: **schedule-risk inputs** (SC-8). A task may carry an optimistic and a pessimistic duration (its likely one is `duration_days`); a risk may name the task it threatens, how many business days it adds if it happens, and its probability as a percent. All optional; none changes any existing behaviour.
 
 use sea_orm_migration::prelude::*;
 

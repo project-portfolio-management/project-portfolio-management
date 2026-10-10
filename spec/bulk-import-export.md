@@ -163,7 +163,7 @@ Params: `masking_profile` (`masked` default | `full`), `include_soft_deleted`
 reports filter on: `kind`, `stage`, `status`, `name_like`).
 
 - **Masked** (default) applies `privacy::mask_plan`: `lead_ref` dropped,
-  owner organisation fields partially hidden. Operational content is never
+  owner organization fields partially hidden. Operational content is never
   masked.
 - **`full`** requires `Action::Destructive` on the caller, because it
   carries people references (personal data).
@@ -234,9 +234,9 @@ Integration tests (Postgres, in the existing DB-gated suite):
 
 ## Implementation notes (what differs from the design above)
 
-- **`review_queue` is `review_queue_items`.** loco's `create_table` pluralises
+- **`review_queue` is `review_queue_items`.** loco's `create_table` pluralizes
   table names; a singular name creates a different table than the SQL refers to.
-- **Authorisation is evaluated when the job is requested**, not in the worker
+- **Authorization is evaluated when the job is requested**, not in the worker
   (a background worker holds no claims). An export stores the plans the caller
   may read; `full` masking and soft-deleted rows need the destructive right.
 - **Record-level stage policy is not applied per imported row** — an import is a

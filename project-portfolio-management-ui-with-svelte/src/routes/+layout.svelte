@@ -14,7 +14,7 @@
     LOCALES,
     LOCALE_LABELS,
   } from "#lib/i18n.svelte.js";
-  import { localizePath, normaliseLocale, splitPath } from "#lib/locales.js";
+  import { localizePath, normalizeLocale, splitPath } from "#lib/locales.js";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { COLLECTIONS } from "#lib/api/types.js";
@@ -80,7 +80,7 @@
 
   // Picking a language goes to the same page under that language's prefix.
   function switchLocale(code: string): void {
-    const next = normaliseLocale(code);
+    const next = normalizeLocale(code);
     if (!next || next === i18n.locale) return;
     void goto(
       localizePath(`${here}${page.url.search}${page.url.hash}`, next),
@@ -126,7 +126,7 @@
     // persona into it as its landing page with `view=me` (T-28f).
     { href: "/me", label: "My work" },
     { href: "/dashboard", label: t("ppm.nav.dashboard") },
-    { href: "/prioritisation", label: "Prioritisation" },
+    { href: "/prioritization", label: "Prioritization" },
     { href: "/lifecycle", label: "Lifecycle" },
     { href: "/reviews", label: "Reviews" },
     { href: "/automations", label: "Automations" },
@@ -313,6 +313,10 @@
 </div>
 
 <style>
+  /* The wrapper div in app.html: a class, not an inline style, for the CSP. */
+  :global(.app-root) {
+    display: contents;
+  }
   .layout {
     display: flex;
     flex-direction: column;

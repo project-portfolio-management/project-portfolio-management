@@ -42,7 +42,7 @@ sub-resource) writes a best-effort `audit_logs` row and publishes a
 durable broker is roadmap (§15). Bearer-token verification (a PASETO v4
 public token, verified offline against the auth-service's published
 Ed25519 key;
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md),
+`agents/share/authentication-sessions.md` (shared family guidance, not in this repository),
 supersedes the RS256-JWT model) is via the `AuthUser` / `MaybeAuthUser`
 extractors; `whoami` is protected; writes stamp the audit `actor` from
 the token when present. Blanket `/api/*` enforcement + paseto-keys-over-HTTP
@@ -68,7 +68,7 @@ payload (§5.6); all writes emit events + audit rows.
 | GET | `/api/plans/{pid}/timeline` | Derived Gantt projection (read-only) |
 | GET | `/api/plans/{pid}/burndown` | Derived remaining-vs-estimate (read-only) |
 
-### 9.2a Service REST API — collaboration / automation / prioritisation
+### 9.2a Service REST API — collaboration / automation / prioritization
 
 Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 `as_of` and are ETag-conditional.
@@ -83,7 +83,7 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | POST/GET | `/api/automations` · POST `…/{pid}/enable`·`/disable` · DELETE `…/{pid}` | Workflow-automation rules |
 | GET | `/api/automations/runs` | What fired: applied / skipped / failed |
 | POST/GET | `/api/scheduled-actions` · POST `…/sweep` · DELETE `…/{pid}` | Set-and-forget deadline queue |
-| GET | `/api/plans/{pid}/smart-score` · `/api/prioritisation` | Smart Score + ranked queue (with breakdown) |
+| GET | `/api/plans/{pid}/smart-score` · `/api/prioritization` | Smart Score + ranked queue (with breakdown) |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 
 ### 9.2b Service REST API — full-suite capabilities (§1.4–§1.6)
@@ -297,7 +297,7 @@ re-verified against it: **unverified**).
 | `/plans/[pid]/edit` | Edit form | `GET`, `PUT /api/plans/{pid}` |
 | `/plans/[pid]/goals` · `/tasks` · `/issues` | Sub-resource workspaces | the §9.2 sub-resource endpoints |
 | `/plans/[pid]/timeline` · `/[pid]/burndown` | Derived views | `GET …/timeline`, `GET …/burndown` |
-| `/prioritisation` | Smart Score queue + per-component explanation | `GET /api/prioritisation`, `…/smart-score` |
+| `/prioritization` | Smart Score queue + per-component explanation | `GET /api/prioritization`, `…/smart-score` |
 | `/lifecycle` | Bird's-eye phase funnel | `GET /api/lifecycle` |
 | `/reviews` | Delegate, respond, submit a verdict, consensus | the §9.2a review endpoints |
 | `/automations` | Rules, deadline queue + sweep, run log | the §9.2a automation endpoints |
@@ -345,7 +345,7 @@ and returns it; it never fetches or renders one.
 **Not built: the cross-service write-side (T-7).** There is no
 `entity_links` entity, table or route and no `linked` / `unlinked`
 events; the design in
-[`agents/share/cross-service-linking.md` §4](../../agents/share/cross-service-linking.md)
+`agents/share/cross-service-linking.md` §4
 (`{kind, to_ref, role?, valid_from?, valid_to?}` edges to any index
 entity, optimistic writes, never a match signal) remains a target. The
 aggregator and graph-query API are out of scope (§2.3).
@@ -353,7 +353,7 @@ aggregator and graph-query API are out of scope (§2.3).
 ### 9.6 Bulk import / export
 
 The async, job-based bulk contract is fixed family-wide in
-[bulk import/export](../../agents/share/bulk-import-export.md)
+[bulk import/export](bulk-import-export.md)
 (execution model on `bg_pg`, the five endpoints, JSONL/CSV/Parquet
 codecs, upsert-by-stable-key + dedupe-to-review, the per-row error
 report, and export masking + audit). This section declares only the
@@ -414,7 +414,7 @@ business data**; the **personal-data** angle is the `EntityRef`s to
 people — `lead_ref`, task assignees (§12). Export defaults to
 **masked** per the shared contract; full / unmasked output (which
 reveals the people references) requires a `masking_profile` selecting
-elevated authorisation and must never reveal more than the caller could
+elevated authorization and must never reveal more than the caller could
 read one record at a time. `include_soft_deleted` defaults `false` and
 is gated. **Every export is audited** (actor, filter, format, row
 count, masking profile, timestamp — written even for a zero-row
@@ -483,7 +483,7 @@ plan_templates.rs: POST /plans/{pid}/save-as-template; POST /plans/from-template
 planner.rs: POST /me/planned-slots; DELETE /me/planned-slots/{pid}; POST /me/planned-slots/{pid}/delete; GET /me/plan
 plans.rs: POST /; GET /; GET /search; POST /match; POST /check-duplicates; POST /merge; GET /merges/recent; GET /whoami; GET /audit/recent; GET /events/recent; GET /{pid}; PUT /{pid}; DELETE /{pid}; GET /{pid}/masked; GET /{pid}/export; GET /{pid}/audit
 portfolio_resources.rs: GET /resource-plan; GET /resource-plan/hours; GET /resource-roles; PUT /resource-roles; POST /plans/{pid}/allocations/{a_pid}/resolve
-prioritisation.rs: GET /prioritisation; GET /lifecycle; GET /plans/{pid}/smart-score; GET /plans/{pid}/lifecycle
+prioritization.rs: GET /prioritization; GET /lifecycle; GET /plans/{pid}/smart-score; GET /plans/{pid}/lifecycle
 processes.rs: POST /processes; GET /processes; GET /processes/{pid}; PUT /processes/{pid}; DELETE /processes/{pid}; POST /processes/{pid}/start; GET /process-executions; GET /process-executions/{pid}; POST /process-executions/{pid}/steps/{index}/complete; POST /process-executions/{pid}/cancel; POST /process-executions/{pid}/resume
 raci.rs: GET /plans/{pid}/raci; PUT /plans/{pid}/tasks/{t_pid}/raci
 report_schedules.rs: POST /reports/{pid}/schedule; GET /report-schedules; POST /report-schedules/sweep; DELETE /report-schedules/{pid}; POST /report-schedules/{pid}/delete; GET /report-schedules/{pid}/latest

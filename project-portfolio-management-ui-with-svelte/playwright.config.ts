@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   // Test the production build via `vite preview`: it serves static,
   // correctly-typed ES modules, avoiding the `vite dev` cold-start
-  // dependency-optimisation race that flakes module loading.
+  // dependency-optimization race that flakes module loading.
   webServer: {
     command: "npm run build && npm run preview -- --port 4173 --strictPort",
     url: "http://localhost:4173",

@@ -1,5 +1,5 @@
 // The what-if page: building edits from what the form holds, saying each in
-// words, and summarising a preview. Pure and tested.
+// words, and summarizing a preview. Pure and tested.
 
 import type { SandboxEdit, SandboxPreview } from "#lib/api/ppm.js";
 
@@ -34,6 +34,7 @@ export interface EditForm {
   kind: EditKind;
   task: FieldValue;
   start: FieldValue;
+  /** Duration in business days (for a duration edit). */
   days: FieldValue;
   constraint: FieldValue;
   constraintDate: FieldValue;
@@ -60,7 +61,7 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
       if (blank(f.days) || !Number.isInteger(n) || n < 0 || n > 3650)
         return {
           error:
-            "Duration must be a whole number of working days from 0 to 3650.",
+            "Duration must be a whole number of business days from 0 to 3650.",
         };
       return { op: "duration", task_pid: str(f.task), duration_days: n };
     }
@@ -96,7 +97,7 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
       if (!Number.isInteger(lag) || lag < -3650 || lag > 3650)
         return {
           error:
-            "Lag must be a whole number of working days (negative is a lead).",
+            "Lag must be a whole number of business days (negative is a lead).",
         };
       return {
         op: "add_link",
@@ -123,7 +124,7 @@ export function describeEdit(
     case "duration":
       return e.duration_days === 0
         ? `Make “${name(e.task_pid)}” a milestone`
-        : `Set “${name(e.task_pid)}” to ${e.duration_days} working day${e.duration_days === 1 ? "" : "s"}`;
+        : `Set “${name(e.task_pid)}” to ${e.duration_days} business day${e.duration_days === 1 ? "" : "s"}`;
     case "constraint":
       return e.constraint_kind
         ? `${CONSTRAINTS[e.constraint_kind] ?? e.constraint_kind} ${e.constraint_date} for “${name(e.task_pid)}”`

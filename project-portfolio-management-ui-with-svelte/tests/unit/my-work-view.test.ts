@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { floatText } from "../../src/lib/my-work-view";
 
 describe("floatText (SC-10)", () => {
-  it("shows nothing for a task with no schedule data, never 0 days", () => {
+  it("shows nothing for a task with no schedule data, never 0 business days", () => {
     expect(floatText(null)).toBeNull();
     expect(floatText(undefined)).toBeNull();
     expect(
@@ -17,27 +17,27 @@ describe("floatText (SC-10)", () => {
     });
   });
 
-  it("says N days of float, singular for one", () => {
+  it("says N business days of float, singular for one", () => {
     expect(floatText({ total_float: 3, critical: false, late: false })).toEqual(
       {
         kind: "float",
-        text: "3 days of float",
+        text: "3 business days of float",
       },
     );
     expect(
       floatText({ total_float: 1, critical: false, late: false })?.text,
-    ).toBe("1 day of float");
+    ).toBe("1 business day of float");
   });
 
   it("puts negative float in a plain sentence", () => {
     const r = floatText({ total_float: -3, critical: true, late: true });
     expect(r?.kind).toBe("late");
     expect(r?.text).toBe(
-      "This is already late for the plan (3 working days behind).",
+      "This is already late for the plan (3 business days behind).",
     );
     expect(
       floatText({ total_float: -1, critical: true, late: true })?.text,
-    ).toContain("1 working day behind");
+    ).toContain("1 business day behind");
   });
 
   it("never shows a bare number: every kind is a sentence", () => {

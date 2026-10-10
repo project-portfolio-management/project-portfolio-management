@@ -6,7 +6,7 @@ import {
   localeRedirect,
   localeOfPath,
   localizePath,
-  normaliseLocale,
+  normalizeLocale,
   splitPath,
 } from "../../src/lib/locales";
 
@@ -134,16 +134,16 @@ describe("localeRedirect", () => {
 
 describe("navigator.language on the root route", () => {
   it("a region or underscore form resolves to the nearest supported locale", () => {
-    expect(normaliseLocale("cy_GB")).toBe("cy-001");
-    expect(normaliseLocale("cy-GB")).toBe("cy-001");
-    expect(normaliseLocale("de_DE")).toBe("de-de");
-    expect(normaliseLocale("zh_CN")).toBe("zh-cn");
-    expect(normaliseLocale("es-MX")).toBe("es-001");
+    expect(normalizeLocale("cy_GB")).toBe("cy-001");
+    expect(normalizeLocale("cy-GB")).toBe("cy-001");
+    expect(normalizeLocale("de_DE")).toBe("de-de");
+    expect(normalizeLocale("zh_CN")).toBe("zh-cn");
+    expect(normalizeLocale("es-MX")).toBe("es-001");
   });
   it("a language the app does not have resolves to nothing, so the default applies", () => {
-    expect(normaliseLocale("ja-JP")).toBeNull();
-    expect(normaliseLocale("")).toBeNull();
-    expect(normaliseLocale(undefined)).toBeNull();
+    expect(normalizeLocale("ja-JP")).toBeNull();
+    expect(normalizeLocale("")).toBeNull();
+    expect(normalizeLocale(undefined)).toBeNull();
   });
   it("the root path gains the locale prefix", () => {
     const url = { pathname: "/", search: "", hash: "" };

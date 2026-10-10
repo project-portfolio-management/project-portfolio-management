@@ -7,7 +7,7 @@
 //!   cumulatively and rounded once per day boundary, so the daily costs **sum
 //!   exactly to the rounded total** with no drift, whichever rates applied on
 //!   which days (a rate change part-way uses each day's own rate).
-//! * An **accrual rule** spreads a fixed or material cost over a task's working
+//! * An **accrual rule** spreads a fixed or material cost over a task's business
 //!   days: all on the first day (`start`), all on the last (`end`), or evenly
 //!   (`prorated`) in whole minor units that sum to the amount exactly.
 //! * Currencies are never summed here: every function works in one currency.
@@ -85,11 +85,11 @@ pub fn price_days<F: Fn(NaiveDate) -> Option<i64>>(
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Accrual {
-    /// All on the first working day.
+    /// All on the first business day.
     Start,
-    /// Evenly across the working days.
+    /// Evenly across the business days.
     Prorated,
-    /// All on the last working day.
+    /// All on the last business day.
     End,
 }
 

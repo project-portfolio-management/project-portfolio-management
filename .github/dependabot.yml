@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /project-portfolio-management-api-with-rust
+    schedule:
+      interval: weekly
+    groups:
+      cargo-api:
+        patterns: ["*"]
+  - package-ecosystem: cargo
+    directory: /project-portfolio-management-matcher-with-rust
+    schedule:
+      interval: weekly
+    groups:
+      cargo-matcher:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /project-portfolio-management-ui-with-svelte
+    schedule:
+      interval: weekly
+    groups:
+      npm-ui:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /project-portfolio-management-api-with-rust
+    schedule:
+      interval: weekly

@@ -9,7 +9,7 @@
 //! check. A member (or an `access=admin` caller) sees the plan everywhere.
 //!
 //! **Aggregates (RM-8b).** Every cross-plan view — at-a-glance, executive, board,
-//! financials, capacity, risk, compliance, engineering, scenarios, prioritisation,
+//! financials, capacity, risk, compliance, engineering, scenarios, prioritization,
 //! rollups, the audit and event feeds, and the rest — loads its rows through one
 //! shared [`HiddenScope`], so a private plan contributes to **no** total, list,
 //! ranking or count for someone outside it. A private-plan test compares every
@@ -352,7 +352,7 @@ impl HiddenScope {
         Ok(out)
     }
 
-    /// Whether `text` (a serialised snapshot or event) names a hidden plan.
+    /// Whether `text` (a serialized snapshot or event) names a hidden plan.
     pub(crate) fn mentions(&self, text: &str) -> bool {
         self.plans.iter().any(|p| text.contains(&p.to_string()))
     }
@@ -530,7 +530,7 @@ async fn put_access(
     Json(p): Json<AccessPayload>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let mut members = rules::normalise_members(&p.members).map_err(|m| unprocessable(&m))?;
+    let mut members = rules::normalize_members(&p.members).map_err(|m| unprocessable(&m))?;
     if p.private {
         let me = Uuid::parse_str(&claims.sub)
             .map_err(|_| {

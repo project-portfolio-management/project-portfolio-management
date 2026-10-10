@@ -3,7 +3,7 @@
 //! * A **case** is one onboarding or offboarding: a person joining or leaving a
 //!   plan, or a plan being taken in (intake) or closed out. Each kind has a
 //!   built-in checklist ([`builtin`]) that a custom template can replace.
-//! * An item's due date is the case's effective date plus an offset in days
+//! * An item's due date is the case's effective date plus an offset in calendar days
 //!   (negative is before it) — [`due_date`].
 //! * An item is open, `done`, or `skipped` (with a note: skipping is a decision,
 //!   not a way to lose an item). A case can complete only when none is open.
@@ -66,7 +66,7 @@ impl Kind {
 pub struct Seed {
     /// What to do.
     pub title: String,
-    /// Days from the effective date (negative is before).
+    /// Calendar days from the effective date (negative is before).
     pub offset_days: i64,
 }
 

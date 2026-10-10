@@ -10,13 +10,13 @@
 > persistence (§10) and compliance (§12) at once.
 >
 > **Family contract.** The measurement model is fixed in
-> [`agents/share/time-based-analysis.md`](../../agents/share/time-based-analysis.md);
+> `agents/share/time-based-analysis.md`;
 > this document is the portfolio *adoption* of it. Where the two
 > disagree, the family contract wins on the model and this spec wins on
 > anything portfolio-specific.
 >
-> **Sibling.** The [care-pathway trio carries the same
-> section](../../care-pathway/spec/time-based-analysis.md), tuned to a
+> **Sibling.** The care-pathway trio carries the same
+> section (sibling repository, not in this repository), tuned to a
 > patient journey. The measurement model is deliberately the same — a
 > work item queueing between the hands that touch it is one problem —
 > and the differences are stated in §2.5 rather than left implicit.
@@ -51,7 +51,7 @@
 ## 1. Purpose and vision
 
 Time-based analysis evaluates delivery by measuring **elapsed calendar
-time through the board**, rather than by activity, utilisation, or
+time through the board**, rather than by activity, utilization, or
 points completed. It asks one question of every work item: *of the time
 this took, how much was somebody actually working on it?*
 
@@ -64,7 +64,7 @@ waiting for review, blocked on someone else, waiting for a decision.
 This matters because it inverts the usual improvement instinct. If an
 item is worked on for 6% of its life, then **making the work 20% faster
 improves delivery by about 1%**, while removing half the waiting
-improves it by nearly half. Teams that measure only velocity, utilisation
+improves it by nearly half. Teams that measure only velocity, utilization
 or story points cannot see this, because all three measure the 6%.
 
 The portfolio service is unusually well placed to carry the measurement.
@@ -76,7 +76,7 @@ TBA adds the missing primitive — a durable **transition** log — and
 derives everything else from it.
 
 **Vision.** A team lead opens the plan and sees: flow efficiency 7%, the
-p85 cycle time (so "we usually finish within 11 days" becomes a number
+p85 cycle time (so "we usually finish within 11 calendar days" becomes a number
 with a confidence attached), the three items aging past it right now,
 which column the time actually accumulates in, and how often work moves
 *backwards*. No extra data entry: moving a card on the board is already
@@ -89,7 +89,7 @@ an API call, so the measurement is a by-product of the work.
 | **Free at the point of collection** | Transitions are recorded by the existing status-change endpoint. A method that asks engineers to log hours will get logged hours, not true ones. |
 | **Calendar time is the denominator** | Flow efficiency is work time over elapsed time, never over the sum of recorded activity (§6.3). |
 | **Cycle and lead time are different numbers** | Conflating them is the most common measurement error in the field, and it always flatters (§6.1). |
-| **Percentiles, not averages** | Cycle-time distributions are long-tailed. "Average 5 days" is a promise nobody can keep; "85% within 11 days" is one you can (§7.1). |
+| **Percentiles, not averages** | Cycle-time distributions are long-tailed. "Average 5 calendar days" is a promise nobody can keep; "85% within 11 calendar days" is one you can (§7.1). |
 | **Names the constraint** | Output ranks *where the time goes*, ordered by time recoverable, not a score. |
 | **Never a person metric** | Flow is a property of the system. §12.4 states why turning it on individuals destroys the data. |
 | **Standard vocabulary** | VSM terms (VA / NNVA / UNVA, LT, PT, %A, #HO, RFPY) and queueing symbols (λ, μ, ρ, τ, ω, φ, κ) as defined upstream. |
@@ -104,7 +104,7 @@ end to end and records, for every phase, whether it was value-adding
 **under 15%** of elapsed calendar time. The method commitments that
 carry across to a delivery board:
 
-- **The whole journey, or nothing.** Optimising a step that is 3% of the
+- **The whole journey, or nothing.** Optimizing a step that is 3% of the
   elapsed time cannot move the elapsed time. Barker calls the
   alternative *islands of efficiency* — and a Kanban board with a fast
   `in_progress` column and a two-week `in_review` queue is exactly one.
@@ -119,7 +119,7 @@ carry across to a delivery board:
 VSM supplies the **classification and the metric names**. See
 [value-stream-mapping](https://github.com/joelparkerhenderson/value-stream-mapping).
 
-- **VA — value adding**: the customer would recognise it as the product
+- **VA — value adding**: the customer would recognize it as the product
   being built.
 - **NNVA — necessary non-value adding**: required but not building —
   review, sign-off, compliance evidence, release process.
@@ -128,7 +128,7 @@ VSM supplies the **classification and the metric names**. See
   Percentage Activity (%A = PT/LT), Number of Handoffs (#HO), **Rolled
   First Pass Yield (RFPY)**, Percent Complete & Accurate (%C&A).
 - **The eight wastes**: waiting, transportation, motion, over-processing,
-  defects, inventory, overproduction, underutilised people.
+  defects, inventory, overproduction, underutilized people.
 
 Two of these earn their keep here in a way they do not on a clinical
 pathway. **RFPY** — the share of items that reached `done` without ever
@@ -147,7 +147,7 @@ that is genuinely recoverable.
 Queueing theory supplies the **flow mathematics**. See
 [queueing-theory](https://github.com/joelparkerhenderson/queueing-theory).
 
-- λ arrival rate, μ service rate, ρ = λ/μ utilisation
+- λ arrival rate, μ service rate, ρ = λ/μ utilization
 - τ lead time, ω wait time, φ work time, θ step time, κ item count
 - **Little's Law**: κ = λτ — average items in the system equals arrival
   rate × time in system. On a board: **WIP = throughput × cycle time**.
@@ -159,8 +159,8 @@ Three consequences shape this spec:
    is why the service already enforces WIP limits, and why §9 reports
    WIP against those limits.
 2. **Wait time explodes near saturation.** As ρ → 1, expected wait grows
-   without bound. A team at 95% utilisation is not "5% from trouble"; it
-   is already in it, which is why full utilisation and long queues are
+   without bound. A team at 95% utilization is not "5% from trouble"; it
+   is already in it, which is why full utilization and long queues are
    the same observation.
 3. **Little's Law needs a stable system.** It holds over a period long
    enough for arrivals and departures to balance. §9.4 uses it as a
@@ -179,23 +179,23 @@ out of the transition log:
 | **Work item age** | For an item still open: how long since it started. The only one of the four that is *actionable today* — the other three are history. |
 
 Plus the **service level expectation (SLE)**: a forecast of the form
-"85% of items finish within N days", where N is the p85 of the team's own
+"85% of items finish within N calendar days", where N is the p85 of the team's own
 cycle-time history. This is the portfolio analogue of a clinical access
 standard, and it is strictly better in one respect: it is **derived from
 the team's own data** rather than imposed, so it cannot be argued with on
 grounds of local difficulty (§7.3).
 
-Deliberately *not* adopted: velocity and utilisation as improvement
+Deliberately *not* adopted: velocity and utilization as improvement
 **targets**. Both measure the 6% (§1), both are trivially inflated, and
 neither is a time.
 
-> **Amended 2026-08-25.** Utilisation is now *measured*, including per
+> **Amended 2026-08-25.** Utilization is now *measured*, including per
 > person (§12.4a, entity spec FR-35). The sentence above still stands as
 > written: measuring it is not the same as adopting it as an improvement
-> target, and this document continues to decline the latter. Utilisation
+> target, and this document continues to decline the latter. Utilization
 > is reported beside the wait and queue figures precisely because a
 > reading near 100% is a warning about the queue (§2.3), not a score to
-> maximise.
+> maximize.
 
 ### 2.5 What differs from the care-pathway sibling
 
@@ -231,7 +231,7 @@ keeps the two from being wrongly unified later:
 |---|---|
 | Time tracking / timesheets | Self-reported effort is the data quality problem this design exists to avoid. Transitions are observed, not attested. |
 | Estimation, velocity forecasting, Monte Carlo | Worth having, a different feature, and dependent on this one landing first (§17). |
-| Per-person throughput or cycle time | §12.4. Not an oversight. (Per-person **utilisation** *is* computed — §12.4a.) |
+| Per-person throughput or cycle time | §12.4. Not an oversight. (Per-person **utilization** *is* computed — §12.4a.) |
 | Backfilling history before the transition log | There is nothing to backfill from: `tasks` kept only the *current* status's start. The migration seeds one synthetic transition per live task and labels it `backfilled` so nobody reads an invented history as observed (§5.4). |
 | DORA metrics | Already served by `/api/devops/metrics` from `devops_events`. TBA cross-references it rather than recomputing it. |
 | Calendar/working-hours arithmetic | An item that sits over a weekend really did sit over a weekend. Business-hours discounting is exactly the kind of adjustment that makes queues invisible (§12.3). |
@@ -253,8 +253,8 @@ keeps the two from being wrongly unified later:
 | Throughput | μ | Items finished per day over a window. |
 | Work in progress | κ | Items started and not finished. |
 | Arrival rate | λ | Items created per day over a window. |
-| Utilisation | ρ | λ / μ; also WIP against the configured WIP limit. |
-| SLE | — | Service level expectation: "p% of items finish within N days", N from the team's own history. |
+| Utilization | ρ | λ / μ; also WIP against the configured WIP limit. |
+| SLE | — | Service level expectation: "p% of items finish within N calendar days", N from the team's own history. |
 | Rework | — | A backwards transition — toward the start of the board. |
 | RFPY | — | Rolled first pass yield: the share of finished items with no backwards transition. |
 | Handoff | #HO | A change of `assignee_ref` across a task's life. |
@@ -267,13 +267,13 @@ keeps the two from being wrongly unified later:
 task_transitions
   pid           UUID        public identifier
   task_pid      UUID        the task
-  plan_pid      UUID        denormalised, so a plan-wide read is one query
+  plan_pid      UUID        denormalized, so a plan-wide read is one query
   from_status   TEXT NULL   NULL = the task's creation
   to_status     TEXT        one of the Kanban statuses
   at            TIMESTAMPTZ when it happened
   actor_ref     TEXT NULL   who moved it (audit actor)
   assignee_ref  TEXT NULL   who it was assigned to at that moment
-  backfilled    BOOLEAN     synthesised by the migration, not observed (§5.4)
+  backfilled    BOOLEAN     synthesized by the migration, not observed (§5.4)
 ```
 
 Invariants:
@@ -355,7 +355,7 @@ recover. The migration writes **one synthetic transition per live task**
 `backfilled = true`, so an existing board is analysable immediately.
 
 Every analysis reports how many of its transitions were backfilled. A
-figure resting on synthesised history is thereby visibly weaker than one
+figure resting on synthesized history is thereby visibly weaker than one
 resting on observed moves — which is the difference between a useful
 default and a lie.
 
@@ -383,8 +383,8 @@ cycle_time = finished_at − first_started_at    (what the team controls)
 
 Both are reported, always, and never one labelled as the other. The
 error is worth spelling out because it only ever runs one way: an item
-that sat in `todo` for three weeks and was built in two days has a cycle
-time of 2 days and a lead time of 23. Quoting the cycle time as "our
+that sat in `todo` for three weeks and was built in two calendar days has a cycle
+time of 2 calendar days and a lead time of 23. Quoting the cycle time as "our
 delivery time" is a **10× flattering** misreport, and it is the single
 most common mistake in flow reporting.
 
@@ -479,7 +479,7 @@ flow.
 ### 7.3 The service level expectation
 
 From the finished items' cycle times: **"p% of items finish within N
-days"**, default p = 0.85, N the nearest-rank percentile.
+calendar days"**, default p = 0.85, N the nearest-rank percentile.
 
 The SLE is reported with its **sample size** and the **date range** it
 was computed over, because a forecast from six items last quarter is not
@@ -495,8 +495,8 @@ whether the target was met are reported alongside.
 ### 7.4 Breach attribution
 
 For items that exceeded the SLE, the analysis reports which **status**
-contributed the most non-value-adding time — turning "we missed 11 days"
-into "we missed 11 days and 8 of them were in review".
+contributed the most non-value-adding time — turning "we missed 11 calendar days"
+into "we missed 11 calendar days and 8 of them were in review".
 
 ### 7.5 Cross-plan rollup
 
@@ -557,15 +557,15 @@ produced it. No composite score.
   finding about work that can still be helped.
 - **`handoff_heavy`** — items whose assignee changed three or more
   times.
-- **`backfilled_history`** — the share of transitions synthesised by the
+- **`backfilled_history`** — the share of transitions synthesized by the
   migration rather than observed, so a thin-evidence analysis says so.
 
 ## 9. Flow analysis (queueing theory)
 
-Over a window (default 90 days):
+Over a window (default 90 calendar days):
 
-- **λ** = tasks created / window days
-- **μ** = tasks finished / window days (throughput)
+- **λ** = tasks created / calendar days in the window
+- **μ** = tasks finished / calendar days in the window (throughput)
 - **ρ** = λ / μ — demand against capacity
 - **κ** = tasks started and not finished (WIP), now
 - **τ̂** = κ / μ — the cycle time Little's Law implies for an item
@@ -641,7 +641,7 @@ capacity view, because ρ near 1 and long queues are the same observation
 Read endpoints are `GET`, return `as_of`, and carry a `note` describing
 the derivation — the convention the existing insight views follow. All
 sit under `/api/*` and therefore behind the blanket guard
-(`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, default off).
+(`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, on by default).
 
 ### 10.1 Recording
 
@@ -666,7 +666,7 @@ inspection. It is read-only: there is deliberately no edit or delete
 | `GET /api/plans/{pid}/constraints` | §8 ranked constraints |
 | `GET /api/plans/{pid}/aging-wip` | §8 open items ranked by age against the SLE |
 | `GET /api/plans/{pid}/flow` | §9 flow analysis. Query: `?window_days=` |
-| `GET /api/plans/{pid}/cumulative-flow` | The board's composition sampled daily — the cumulative flow diagram. Query: `?days=` (default 60, max 365) |
+| `GET /api/plans/{pid}/cumulative-flow` | The board's composition sampled daily — the cumulative flow diagram. Query: `?days=` (calendar days; default 60, max 365) |
 | `GET /api/plans/{pid}/rollup` | §7.5 flow across a plan and everything it contains: the union plus the per-plan comparison. Query: `?depth=` |
 | `GET /api/plans/{pid}/forecast` | §9.2 Monte-Carlo delivery forecast, both directions. Query: `?items=`, `?periods=`, `?history_periods=`, `?period_days=`, `?trials=`, `?seed=` |
 | `GET /api/flow-classes` | The status → category map in force, plus the vocabularies |
@@ -721,13 +721,13 @@ structural:
 3. **No status is excluded.** Every millisecond from creation to finish
    lands in exactly one status and one category, and they sum to the
    lead time by construction — a property test, not a promise. There is
-   no "on hold" state that stops the clock, and an unrecognised column
+   no "on hold" state that stops the clock, and an unrecognized column
    counts against you rather than falling through a gap.
 4. **Lead time is always reported next to cycle time** (§6.1), so the
    flattering number cannot travel alone.
 5. **Throughput is always reported next to RFPY** (§6.5), so shipping
    work back to yourself cannot read as going faster.
-6. **The backfill is labelled** (§5.4), so synthesised history is never
+6. **The backfill is labelled** (§5.4), so synthesized history is never
    mistaken for observed history.
 
 ### 12.4 Not a person metric — a stated refusal
@@ -752,20 +752,20 @@ Handoff *counts* are reported as a property of the item's journey.
 Assignee identity is available for audit and for the aging-WIP view
 ("who should be asked about this").
 
-#### 12.4a Per-person utilisation — the one carve-out (2026-08-25)
+#### 12.4a Per-person utilization — the one carve-out (2026-08-25)
 
-**Per-person utilisation is now computed** (entity spec FR-35): recorded
+**Per-person utilization is now computed** (entity spec FR-35): recorded
 effort against declared available capacity, per person. This is a
 deliberate owner decision, taken after the conflict with this section
 was raised, and it narrows the refusal rather than repealing it.
 
-**What is now permitted:** a per-person utilisation figure — effort
+**What is now permitted:** a per-person utilization figure — effort
 against capacity, from `time_entries` over `allocations`.
 
 **What stays refused:** per-assignee **cycle time, throughput, and flow
 efficiency**. The three reasons above are unchanged for those, and the
-carve-out does not reach them, because utilisation and flow are
-different measurements: utilisation asks how full someone's declared
+carve-out does not reach them, because utilization and flow are
+different measurements: utilization asks how full someone's declared
 capacity is, which is a **capacity-planning input the roster already
 implies**, while cycle time asks how fast work moved, which is a
 property of the queue rather than of whoever held the card.
@@ -775,14 +775,14 @@ records only the decision and not its cost is the thing §12.3 exists to
 prevent:
 
 - The third reason above — *it destroys the data* — applies to
-  utilisation too, in its own currency. A person measured on utilisation
+  utilization too, in its own currency. A person measured on utilization
   can raise the number by logging more hours or by declaring less
   capacity. Recorded effort is an **assertion**, not a by-product of the
   work (entity spec §5.9.3), so unlike the transition log it was never
   protected by being collected incidentally.
-- A high-utilisation reading is **also** what a queueing system looks
+- A high-utilization reading is **also** what a queueing system looks
   like just before it stops coping (§2.3: ρ near 1 and long queues are
-  the same observation). Utilisation near 100% is therefore a warning,
+  the same observation). Utilization near 100% is therefore a warning,
   not an achievement, and the service reports it beside the wait figures
   for that reason.
 
@@ -830,7 +830,7 @@ exists.
 - Interval derivation: none, one, many transitions; out-of-order input;
   open versus finished.
 - Cycle versus lead time: an item that sat in `todo` for three weeks
-  reports 2 days cycle and 23 lead — **the regression test against the
+  reports 2 calendar days cycle and 23 lead — **the regression test against the
   flattering conflation** (§6.1).
 - The denominator rule: statuses and categories each sum to the lead
   time exactly, including the pre-first-transition span and an empty
@@ -925,7 +925,7 @@ In `project-portfolio-management-ui-with-svelte`:
 TBA-10 (flow gauges) landed 2026-08-23: `src/flow_metrics.rs` (a
 default-off refresh loop) plus the `ppm_flow_*` family in
 `src/metrics.rs`. Per-plan series are **capped** and small boards are
-**suppressed**, because `/metrics.prom` is on the public allow-list and
+**suppressed**, because `/metrics.prom` is exposed to every scraper and
 a flow efficiency over two tasks describes two people's week — which
 §12.4 refuses to measure, and reaching it by arithmetic is the same
 thing. Per-column occupancy is deliberately **not** exported: it would
@@ -967,8 +967,8 @@ questions, which are decisions rather than unbuilt work.
   board alone; revisit if the constraint ranking keeps naming
   `in_review` and nobody can act on it.*
 - **Blocked-reason vocabulary.** `blocked` is the most actionable waste
-  and currently carries no reason, so the finding stops at "8 days
-  blocked" rather than "8 days blocked on external dependency". A
+  and currently carries no reason, so the finding stops at "8 calendar days
+  blocked" rather than "8 calendar days blocked on external dependency". A
   disclosed reason vocabulary would fix that. *Lean: add it with TBA-8,
   when a UI exists to capture it.*
 - ~~**Monte-Carlo forecasting.** The cycle-time distribution is exactly
@@ -976,7 +976,7 @@ questions, which are decisions rather than unbuilt work.
   needs~~ — **RESOLVED, and the sentence above was wrong.** It is the
   standard error in the field and worth leaving struck through rather
   than quietly deleting. The cycle-time distribution answers a question
-  about **one item** ("this will finish within 11 days at 85%"), which
+  about **one item** ("this will finish within 11 calendar days at 85%"), which
   is exactly what the service level expectation already reports (§7.3).
   A **batch** forecast needs the **throughput** distribution — how many
   items the team actually finished per period. Using cycle times for a
@@ -1020,12 +1020,12 @@ questions, which are decisions rather than unbuilt work.
 
 - Little, J. D. C. — *A Proof for the Queuing Formula L = λW*.
 - Reinertsen, D. — *The Principles of Product Development Flow* (queueing
-  cost, WIP, and why utilisation is not the goal).
+  cost, WIP, and why utilization is not the goal).
 - The Kanban flow-metric quartet — cycle time, throughput, WIP, work
   item age — and the service level expectation.
 
 ### Family cross-references
 
-- [care-pathway time-based analysis](../../care-pathway/spec/time-based-analysis.md) — the sibling section (§2.5 states the differences).
-- [`agents/share/security.md`](../../agents/share/security.md) — the invariants cited in §12–§13.
+- care-pathway time-based analysis (sibling repository, not in this repository) — the sibling section (§2.5 states the differences).
+- `agents/share/security.md` (shared family guidance, not in this repository) — the invariants cited in §12–§13.
 - [`06-functional-requirements.md`](06-functional-requirements.md), [`09-api-surface.md`](09-api-surface.md), [`10-persistence.md`](10-persistence.md), [`12-compliance.md`](12-compliance.md).

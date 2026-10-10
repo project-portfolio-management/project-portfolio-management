@@ -3,7 +3,7 @@
 //!
 //! Each iteration draws a duration for every task from its optimistic / likely /
 //! pessimistic estimate (triangular or PERT), lets each **risk event** strike with
-//! its probability (adding its working days to the task it names), and re-runs the
+//! its probability (adding its business days to the task it names), and re-runs the
 //! critical-path analysis ([`crate::cpm`]) on those durations. Across iterations
 //! it reports the finish-date percentiles, how often each task was critical (its
 //! **criticality index**), and how closely each task's duration tracks the finish
@@ -69,7 +69,7 @@ impl Distribution {
     }
 }
 
-/// One task's three-point estimate, in working days.
+/// One task's three-point estimate, in business days.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Estimate {
     /// Optimistic.
@@ -87,7 +87,7 @@ pub struct Event {
     pub task: Uuid,
     /// Chance it happens, in basis points (0–10 000).
     pub probability_bp: i64,
-    /// Working days it adds.
+    /// Business days it adds.
     pub impact_days: i64,
 }
 
@@ -198,7 +198,7 @@ pub struct Rng(u64);
 
 impl Rng {
     pub(crate) fn new(seed: u64) -> Self {
-        // SplitMix64 finaliser; never zero.
+        // SplitMix64 finalizer; never zero.
         let mut z = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
         z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
@@ -349,7 +349,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
 }
 
 /// [`simulate`], calling `hook(iteration, finish, delay_days, struck, rng)` after each
-/// iteration's schedule is drawn and analysed. `delay_days` is how many working
+/// iteration's schedule is drawn and analysed. `delay_days` is how many business
 /// days later than the critical-path finish this iteration finished (negative if
 /// earlier) and `struck` the risks that struck in it. The hook draws from the **same** random stream, so a second model
 /// (cost) rides along deterministically with the first.

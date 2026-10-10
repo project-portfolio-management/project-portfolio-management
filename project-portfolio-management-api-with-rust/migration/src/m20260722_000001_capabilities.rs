@@ -7,8 +7,8 @@
 //! inbox those two write into — there is no email transport here).
 //!
 //! No Smart Score table: the score is **derived** on read from facts
-//! the service already stores (see `src/prioritisation.rs`), so it can
-//! never drift from the data it claims to summarise.
+//! the service already stores (see `src/prioritization.rs`), so it can
+//! never drift from the data it claims to summarize.
 
 use sea_orm_migration::prelude::*;
 

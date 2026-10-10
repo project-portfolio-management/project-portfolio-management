@@ -99,7 +99,7 @@ pub fn def_problems(
     out
 }
 
-/// Validate (and normalise) one value against its definition.
+/// Validate (and normalize) one value against its definition.
 ///
 /// # Errors
 ///
@@ -164,7 +164,7 @@ pub fn kind_applies(kinds: &[String], plan_kind: Option<&str>) -> bool {
 
 /// Whether a stored value matches a wanted one given as a query string.
 /// `multi_list` matches when the stored list **contains** it; every other
-/// type is equality after the same normalisation a write gets.
+/// type is equality after the same normalization a write gets.
 #[must_use]
 pub fn matches(def: &Def, stored: &Value, wanted: &str) -> bool {
     let parsed = match def.field_type.as_str() {
@@ -283,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn matching_normalises_like_a_write_and_multi_list_means_contains() {
+    fn matching_normalizes_like_a_write_and_multi_list_means_contains() {
         assert!(matches(&def("integer", &[]), &json!(7), "7"));
         assert!(!matches(&def("integer", &[]), &json!(7), "seven"));
         assert!(matches(&def("bool", &[]), &json!(true), "true"));

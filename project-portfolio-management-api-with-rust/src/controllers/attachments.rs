@@ -4,7 +4,7 @@
 //! &subject_pid=&filename=` with its `Content-Type`), refused **before
 //! anything is stored** when the type is not on the allow-list or the size is
 //! over the cap. The stored bytes carry a SHA-256 that is re-checked on every
-//! download. A download is re-authorised against the **subject's** record-level
+//! download. A download is re-authorized against the **subject's** record-level
 //! policy (and private-plan membership), not just the attachment's own row,
 //! and is served with `nosniff` and `Content-Disposition: attachment` so a
 //! file can never be rendered as a page.
@@ -291,7 +291,7 @@ async fn find_attachment(ctx: &AppContext, pid: &str) -> Result<attachments::Mod
         .ok_or(Error::NotFound)
 }
 
-/// `GET /api/attachments/{pid}/download` — the bytes, re-authorised against
+/// `GET /api/attachments/{pid}/download` — the bytes, re-authorized against
 /// the subject and re-verified against the stored SHA-256.
 #[debug_handler]
 async fn download(
@@ -300,7 +300,7 @@ async fn download(
     Path(pid): Path<String>,
 ) -> Result<axum::response::Response> {
     let att = find_attachment(&ctx, &pid).await?;
-    // Authorised on the SUBJECT, so losing access to the plan loses the file.
+    // Authorized on the SUBJECT, so losing access to the plan loses the file.
     resolve_subject(
         &ctx,
         &caller,

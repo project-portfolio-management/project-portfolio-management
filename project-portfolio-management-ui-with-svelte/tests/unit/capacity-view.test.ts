@@ -140,7 +140,7 @@ describe("spanSegments", () => {
 });
 
 describe("isOverCapacityConflict", () => {
-  it("recognises the confirmable 409 only", () => {
+  it("recognizes the confirmable 409 only", () => {
     expect(
       isOverCapacityConflict(409, { error: "over_capacity", description: "x" }),
     ).toBe(true);

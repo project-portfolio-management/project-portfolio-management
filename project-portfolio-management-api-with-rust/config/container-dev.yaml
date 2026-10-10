@@ -1,0 +1,95 @@
+# Loco configuration file — project-portfolio-management-service (container-dev).
+#
+# For `docker compose --profile dev-insecure` ONLY (see /compose.yaml): the
+# production shape (listens on 0.0.0.0, DATABASE_URL from the environment,
+# JSON logs) with login enforcement and rate limiting explicitly OFF, so the
+# stack can be poked with curl and no token issuer. It exists because the
+# service refuses to start in the `production` environment with enforcement
+# off, which is the point of that refusal. NEVER expose a container using
+# this config to a network you do not control.
+
+logger:
+  enable: true
+  pretty_backtrace: false
+  level: debug
+  format: json
+
+server:
+  port: {{ get_env(name="PORT", default="5150") }}
+  binding: 0.0.0.0
+  host: {{ get_env(name="HOST", default="http://localhost") }}
+  middlewares:
+    compression:
+      enable: true
+    etag:
+      enable: true
+    # Explicit backstop (SEC-M1): 2mb covers CRUD-shaped JSON. File
+    # uploads and bulk imports do not go through this limit's default; they
+    # carry their own, larger, per-feature limits (attachments, bulk jobs).
+    limit_payload:
+      enable: true
+      body_limit: 2mb
+    # CORS is NOT enabled here: the service applies its own explicit allow-list
+    # (PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS, comma-separated exact origins;
+    # unset = same-origin only; src/http_security.rs).
+    cors:
+      enable: false
+
+workers:
+  mode: BackgroundQueue
+
+queue:
+  kind: Postgres
+  uri: {{ get_env(name="DATABASE_URL") }}
+  dangerously_flush: false
+
+mailer:
+  smtp:
+    enable: true
+    host: {{ get_env(name="SMTP_HOST", default="localhost") }}
+    port: {{ get_env(name="SMTP_PORT", default="587") }}
+    secure: true
+    auth:
+      # Quoted: an unset SMTP_USER/SMTP_PASSWORD renders the Tera call
+      # to an empty string, and an *unquoted* empty value after `key: `
+      # is YAML null, not "" — loco's SmtpAuth fields are String, not
+      # Option<String>, so an unquoted empty default fails config
+      # parsing at boot ("invalid type: unit value, expected a
+      # string"). Quoting keeps it a real (possibly empty) string.
+      user: "{{ get_env(name="SMTP_USER", default="") }}"
+      password: "{{ get_env(name="SMTP_PASSWORD", default="") }}"
+
+database:
+  uri: {{ get_env(name="DATABASE_URL") }}
+  enable_logging: false
+  connect_timeout: {{ get_env(name="DB_CONNECT_TIMEOUT", default="500") }}
+  idle_timeout: {{ get_env(name="DB_IDLE_TIMEOUT", default="500") }}
+  min_connections: {{ get_env(name="DB_MIN_CONNECTIONS", default="2") }}
+  max_connections: {{ get_env(name="DB_MAX_CONNECTIONS", default="20") }}
+  auto_migrate: false
+  dangerously_truncate: false
+  dangerously_recreate: false
+
+# No `auth:` block: loco's own top-level `Config.auth` field is
+# `Option<Auth>` (confirmed in loco-rs 1.1.0's config/mod.rs) — safe to
+# omit entirely, and this crate's `loco-rs` dependency already takes
+# `default-features = false` without `auth` (agents/share/jwt.md;
+# security.md §7 — the family issues PASETO v4.public, never JWT). The
+# block used to render a JWT_SECRET env-var lookup with no default —
+# note: even inside a YAML comment, Tera still expands a literal
+# double-brace template expression, so do not requote the old line
+# here to explain it — so a fresh container with no JWT_SECRET set (a
+# variable nothing in this crate reads, ever) failed at boot with a
+# Tera rendering error before the server ever started. Found running
+# a real container against a real Postgres for the T-28o runbook
+# verification, not by reading the file.
+
+# Cache provider: in-memory (loco `cache_inmem`, enabled by default).
+cache:
+  kind: InMem
+  max_capacity: 33554432 # 32MiB (default if not specified)
+
+# Explicit opt-out (src/auth.rs, src/rate_limit.rs). Production never sets these.
+settings:
+  require_auth: false
+  rate_limit: false

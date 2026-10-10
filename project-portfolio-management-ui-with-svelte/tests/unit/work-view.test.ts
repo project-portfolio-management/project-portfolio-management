@@ -90,7 +90,7 @@ describe("words", () => {
       capacity: { checked: false },
     } as never;
     expect(resultText(r)).toBe(
-      "5 working days at 50% is 20 h. The work was worked out.",
+      "5 business days at 50% is 20 h. The work was worked out.",
     );
     expect(resultText({ ...(r as object), exact: false } as never)).toMatch(
       /Rounded/,
@@ -105,7 +105,7 @@ describe("words", () => {
         from: "a",
         to: "b",
       }),
-    ).toMatch(/Over capacity on 1 day /);
+    ).toMatch(/Over capacity on 1 calendar day /);
     expect(capacityText({ checked: true, over_capacity: false })).toMatch(
       /Within/,
     );

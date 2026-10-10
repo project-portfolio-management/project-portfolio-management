@@ -2,18 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   cellSentence,
   findingText,
-  normalise,
+  normalize,
   shortRef,
   toAssignments,
   toggleLetter,
   validPersonRef,
 } from "../../src/lib/raci-view";
 
-describe("normalise", () => {
+describe("normalize", () => {
   it("orders letters R-A-C-I, upper-cases and deduplicates", () => {
-    expect(normalise("ar")).toBe("RA");
-    expect(normalise("iica")).toBe("ACI");
-    expect(normalise("xyz")).toBe("");
+    expect(normalize("ar")).toBe("RA");
+    expect(normalize("iica")).toBe("ACI");
+    expect(normalize("xyz")).toBe("");
   });
 });
 
@@ -56,7 +56,7 @@ describe("toggleLetter", () => {
 });
 
 describe("payload and wording", () => {
-  it("sends only people who hold a letter, normalised", () => {
+  it("sends only people who hold a letter, normalized", () => {
     expect(toAssignments({ "p:a": "ar", "p:b": "" })).toEqual([
       { person_ref: "p:a", roles: "RA" },
     ]);

@@ -1,5 +1,5 @@
 //! `SeaORM` Entity — `non_working_periods`. Leave, holiday, study leave
-//! and non-project duty, which **subtract from the utilisation
+//! and non-project duty, which **subtract from the utilization
 //! denominator** rather than counting as idle capacity. See entity spec
 //! §5.9.6 / FR-35.
 

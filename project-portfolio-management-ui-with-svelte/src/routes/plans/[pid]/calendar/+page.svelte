@@ -1,7 +1,7 @@
 <!--
   A plan's working calendar (`/plans/[pid]/calendar`, SC-2): which weekdays
   work and which dates are holidays. Float and finish dates on the critical path
-  are counted in these working days, so a Friday task of two days ends on Monday
+  are counted in these business days, so a Friday task of two business days ends on Monday
   and a Monday holiday is skipped. With no calendar every day works, which is
   what every plan did before calendars existed.
 -->

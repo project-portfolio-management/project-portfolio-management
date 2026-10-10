@@ -67,7 +67,7 @@ pub(crate) fn is_finished(model: &plans::Model) -> bool {
 
 /// `POST /api/dependencies` body: a dependency between two plans, two tasks,
 /// or one of each (SC-1): a relationship `kind` (`fs` default, `ss`, `ff`,
-/// `sf`) and a lag in working days, **negative for a lead**.
+/// `sf`) and a lag in business days, **negative for a lead**.
 #[derive(Debug, Deserialize)]
 struct DependencyPayload {
     predecessor_pid: Uuid,
@@ -343,7 +343,7 @@ async fn portfolio_schedule(
 }
 
 /// The float-based critical path over a plan's **children** (the container is a
-/// summary, not work, so it is not a node). Plan durations are the working days
+/// summary, not work, so it is not a node). Plan durations are the business days
 /// between the parsed start and target (all seven days work until calendars,
 /// SC-2); lag and kind come from the dependency. `critical_path` above stays the
 /// longest dependent chain (now lag-aware); this block is the float-based answer
@@ -668,7 +668,7 @@ struct AllocationPayload {
     #[serde(default)]
     skills_required: Vec<String>,
     /// `committed` (default, firm) or `proposed` (hoped for; PJ-4). A proposal
-    /// never counts toward committed utilisation or over-allocation.
+    /// never counts toward committed utilization or over-allocation.
     #[serde(default)]
     booking: Option<String>,
     /// Asked of the resource manager (PJ-4).
@@ -868,7 +868,7 @@ async fn commit_allocation(
             loco_rs::controller::ErrorDetail::new(
                 "over_capacity",
                 format!(
-                    "committing this would put the person over capacity on {} day(s) (peak {}% against a capacity of {}%); repeat the request with ?confirm=true to commit anyway. Over: {}",
+                    "committing this would put the person over capacity on {} calendar day(s) (peak {}% against a capacity of {}%); repeat the request with ?confirm=true to commit anyway. Over: {}",
                     load.days_over,
                     load.peak_demand,
                     load.min_capacity,
@@ -928,7 +928,7 @@ async fn delete_allocation(
 }
 
 /// `GET /api/capacity?from=&to=` — the per-person capacity rollup
-/// over a window (default: today → today + 30 days). Summed percent
+/// over a window (default: today → today + 30 calendar days). Summed percent
 /// over 100 ⇒ over-allocated (PPM-8).
 #[derive(Debug, Deserialize)]
 struct CapacityParams {
@@ -1222,7 +1222,7 @@ pub(crate) async fn execute_report(
         format: format.map(str::to_string),
     };
     // The report's legacy `collection` is now an optional kind filter over
-    // the single recursive `plans` collection: blank (or unrecognised) ⇒
+    // the single recursive `plans` collection: blank (or unrecognized) ⇒
     // all plans; a kind label ⇒ that kind only (filtered in-memory below).
     let kind_filter = parse_kind_label(&def.collection);
     let fields: Vec<String> = serde_json::from_value(def.fields.clone()).unwrap_or_default();
@@ -1468,9 +1468,9 @@ async fn at_a_glance(
                 .iter()
                 .filter(|r| r.plan_pid == member.pid)
                 .collect();
-            let materialised = member_risks
+            let materialized = member_risks
                 .iter()
-                .filter(|r| r.status == "materialised")
+                .filter(|r| r.status == "materialized")
                 .count();
             let max_exposure = member_risks
                 .iter()
@@ -1510,7 +1510,7 @@ async fn at_a_glance(
                 is_finished(member),
                 target,
                 today,
-                materialised,
+                materialized,
                 max_exposure,
                 overrun,
                 violated.contains(&member.pid),
@@ -1568,7 +1568,7 @@ async fn at_a_glance(
         "site_tiles": {
             "plans": items.len(),
             "proposals_open": proposals_open,
-            "materialised_risks": risk_rows.iter().filter(|r| r.status == "materialised").count(),
+            "materialized_risks": risk_rows.iter().filter(|r| r.status == "materialized").count(),
             "open_risk_exposure": open_risk_exposure,
             "schedule_violations": all_violations.len(),
             "over_allocated_people": over_allocated,

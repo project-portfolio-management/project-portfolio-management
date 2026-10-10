@@ -122,7 +122,7 @@ pub async fn all_allocations(db: &DatabaseConnection) -> Result<Vec<allocations:
 }
 
 /// Every live allocation, **proposed ones included** (PJ-4). The committed view
-/// above is what utilisation and over-allocation use: a proposal never counts.
+/// above is what utilization and over-allocation use: a proposal never counts.
 ///
 /// # Errors
 ///

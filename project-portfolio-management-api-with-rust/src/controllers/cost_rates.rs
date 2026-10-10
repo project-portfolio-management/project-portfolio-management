@@ -604,7 +604,7 @@ async fn cost_plan(
         .map(|w| serde_json::json!({ "pid": w.pid, "title": w.title, "work_minutes": w.work_minutes, "reason": "no_assignee" }))
         .collect();
 
-    // Expenses, accrued over each task's working days.
+    // Expenses, accrued over each task's business days.
     let costs = task_costs::Entity::find()
         .filter(task_costs::Column::DeletedAt.is_null())
         .filter(
@@ -707,7 +707,7 @@ async fn cost_plan(
         "currencies": currencies,
         "tasks": task_rows.into_values().collect::<Vec<_>>(),
         "unrated": unrated, "unassigned": unassigned, "unplaced": unplaced,
-        "note": "Labour is each task's work (spread by its contour over its working days) priced day by day at the rate in force that day, from the assignee's own rate table or their role's; daily costs sum exactly to the rounded total. Expenses accrue over the task's working days by their rule (start, prorated, end) in whole minor units that sum to the amount. Work with no rate (or on days before the first rate) is listed under unrated and costs nothing here — unknown, never zero. Each currency stands alone and is never added to another. Derived on read.",
+        "note": "Labour is each task's work (spread by its contour over its business days) priced day by day at the rate in force that day, from the assignee's own rate table or their role's; daily costs sum exactly to the rounded total. Expenses accrue over the task's business days by their rule (start, prorated, end) in whole minor units that sum to the amount. Work with no rate (or on days before the first rate) is listed under unrated and costs nothing here — unknown, never zero. Each currency stands alone and is never added to another. Derived on read.",
     }))
 }
 

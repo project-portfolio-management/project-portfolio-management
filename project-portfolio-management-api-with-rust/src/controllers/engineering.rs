@@ -70,7 +70,7 @@ pub(crate) async fn find_task(
         .ok_or(Error::NotFound)
 }
 
-/// The task wire view (adds blocked-age days to the stored row).
+/// The task wire view (adds blocked-age calendar days to the stored row).
 pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
     let blocked_days = (task.status == "blocked")
         .then(|| (chrono::Utc::now() - task.status_changed_at.to_utc()).num_days());
@@ -121,7 +121,7 @@ struct TaskPayload {
     /// reports what moved.
     #[serde(default)]
     start_date: Option<chrono::NaiveDate>,
-    /// Optional working-day duration (PJ-1; `0` is a milestone), on create only.
+    /// Optional business-day duration (PJ-1; `0` is a milestone), on create only.
     #[serde(default)]
     duration_days: Option<i32>,
     /// Optional component (grouping) of this plan.
@@ -1313,7 +1313,7 @@ async fn devops_releases(
 // ─── Estate views ───────────────────────────────────────────────────────────
 
 /// `GET /api/engineering/blocked` — every blocked task estate-wide,
-/// oldest blockage first, with age in days (from `status_changed_at`).
+/// oldest blockage first, with age in calendar days (from `status_changed_at`).
 #[debug_handler]
 async fn blocked(
     State(ctx): State<AppContext>,
@@ -1354,7 +1354,7 @@ async fn blocked(
         .collect();
     let body = serde_json::json!({
         "as_of": chrono::Utc::now(),
-        "derivation": "age = days since the task entered blocked (status_changed_at)",
+        "derivation": "age = calendar days since the task entered blocked (status_changed_at)",
         "blocked": blocked,
     });
     conditional(&headers, &body)

@@ -35,11 +35,11 @@ pub struct Plan {
     /// same `owner_org_id`.
     #[serde(default)]
     pub code: Option<String>,
-    /// Sponsoring / owning organisation identifier (opaque `EntityRef`).
+    /// Sponsoring / owning organization identifier (opaque `EntityRef`).
     /// Gates the `code` short-circuit and component; scored exactly.
     #[serde(default)]
     pub owner_org_id: Option<String>,
-    /// Owning organisation display name. Informational-only — never
+    /// Owning organization display name. Informational-only — never
     /// scored, never gates anything.
     #[serde(default)]
     pub owner_org_name: Option<String>,
@@ -319,7 +319,7 @@ pub struct PlanIdentifier {
 /// Schemes marked **deterministic** (the tool/registry ids plus `Uri` /
 /// `Uuid`) are globally unique — a match pins the score to `1.0` via the
 /// R-0 short-circuit. **Owner-scoped** schemes (`Code`, `LocalId`) only
-/// make sense within their owning organisation and are intentionally NOT
+/// make sense within their owning organization and are intentionally NOT
 /// deterministic.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IdentifierScheme {
@@ -365,7 +365,7 @@ impl IdentifierScheme {
     pub fn is_deterministic(&self) -> bool {
         // Only globally-unique schemes are listed. Owner-scoped schemes
         // (Code / LocalId) and Custom are intentionally excluded — their
-        // values collide across organisations, so a bare value match
+        // values collide across organizations, so a bare value match
         // cannot prove identity.
         matches!(
             self,
@@ -428,7 +428,7 @@ mod tests {
         }
     }
 
-    // The `kind` field is optional on deserialisation (serde default None).
+    // The `kind` field is optional on deserialization (serde default None).
     #[test]
     fn deserialize_kind_is_optional() {
         let with: Result<Plan, _> = serde_json::from_str(r#"{"kind":"Project","name":"X"}"#);

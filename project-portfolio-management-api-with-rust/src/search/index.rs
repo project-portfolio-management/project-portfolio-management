@@ -7,7 +7,7 @@
 //! `active` (exact-match).
 //!
 //! STRING fields are indexed verbatim so the duplicate detector can
-//! filter on an exact value; TEXT fields are tokenised so fuzzy and
+//! filter on an exact value; TEXT fields are tokenized so fuzzy and
 //! multi-token queries work over them.
 //!
 //! `kind` is indexed as an exact-match field so a caller **may** narrow
@@ -56,12 +56,12 @@ pub struct PlanIndexSchema {
     /// Goal titles, space-joined (TEXT) — the defining attribute of a
     /// plan, so searchable by what it is trying to achieve.
     pub goals: Field,
-    /// Owning organisation's display name (TEXT).
+    /// Owning organization's display name (TEXT).
     pub owner_org_name: Field,
     /// Owner-scoped code (STRING) — exact-match filter; the value is
     /// owner-scoped, matched alongside `owner_org_id`.
     pub code: Field,
-    /// Owning organisation id (STRING) — exact-match filter.
+    /// Owning organization id (STRING) — exact-match filter.
     pub owner_org_id: Field,
     /// Descriptive kind label, lowercased (STRING) — an optional exact
     /// filter on search, never a duplicate-detection gate (see the

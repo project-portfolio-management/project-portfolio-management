@@ -56,7 +56,7 @@ export const ONBOARDING_ROLES: OnboardingRole[] = [
         note: "What-if scenarios side by side, before committing funding to either.",
       },
       {
-        route: "/prioritisation",
+        route: "/prioritization",
         label: "See what's ranked highest, and why",
         note: "The Smart Score queue — every score shows the evidence behind it, or says it has none.",
       },

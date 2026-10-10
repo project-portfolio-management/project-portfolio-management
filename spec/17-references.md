@@ -73,13 +73,13 @@ useful when judging whether two records describe the same plan:
   [front-end](../project-portfolio-management-ui-with-svelte/spec/index.md).
 - Entity AGENTS reference set: [`agents/index.md`](../agents/index.md).
 - Adopted family designs:
-  [cross-service-linking.md](../../agents/share/cross-service-linking.md),
-  [bulk-import-export.md](../../agents/share/bulk-import-export.md),
-  [event-bus.md](../../agents/share/event-bus.md),
-  [match-search-merge.md](../../agents/share/match-search-merge.md),
-  [auditability.md](../../agents/share/auditability.md),
-  [privacy.md](../../agents/share/privacy.md).
-- Shared docs index: [`agents/share/index.md`](../../agents/share/index.md);
+  cross-service-linking.md (shared family guidance, not in this repository),
+  [bulk-import-export.md](bulk-import-export.md),
+  event-bus.md,
+  match-search-merge.md,
+  auditability.md,
+  privacy.md.
+- Shared docs index: `agents/share/index.md`;
   sibling entity-level spec exemplar:
-  [care-pathway/spec](../../care-pathway/spec/index.md).
+  care-pathway/spec (sibling repository, not in this repository).
 - loco.rs: [loco.rs](https://loco.rs/) — the service framework.

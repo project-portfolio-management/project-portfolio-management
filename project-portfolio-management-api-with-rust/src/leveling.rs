@@ -41,7 +41,7 @@ use crate::cpm::{
 
 /// Most re-analyses one proposal performs before it stops and says so.
 pub const MAX_ITERATIONS: usize = 3_000;
-/// Most days one person's load is walked.
+/// Most calendar days one person's load is walked.
 pub const MAX_SPAN_DAYS: i64 = 3_660;
 
 /// What one task asks of one person.
@@ -51,7 +51,7 @@ pub struct Demand {
     pub pid: Uuid,
     /// Who is doing it.
     pub person: String,
-    /// Percent of their capacity it takes on each working day (1–100).
+    /// Percent of their capacity it takes on each business day (1–100).
     pub percent: i32,
     /// `false` for a task already started: it keeps its date.
     pub movable: bool,
@@ -126,7 +126,7 @@ pub struct Move {
     pub from_finish: NaiveDate,
     /// Its earliest finish afterwards.
     pub to_finish: NaiveDate,
-    /// Working days later it starts.
+    /// Business days later it starts.
     pub delay_days: i64,
     /// It had no float: moving it moves the project finish.
     pub critical: bool,
@@ -153,7 +153,7 @@ pub struct Proposal {
     pub finish_before: Option<NaiveDate>,
     /// Project finish with the proposal applied.
     pub finish_after: Option<NaiveDate>,
-    /// Working days the finish moves (0 unless a critical task was allowed to move).
+    /// Business days the finish moves (0 unless a critical task was allowed to move).
     pub finish_delay_days: i64,
     /// A critical task is among the moves.
     pub critical_moved: bool,
@@ -602,7 +602,7 @@ mod tests {
 
     #[test]
     fn delays_the_task_with_float_and_keeps_the_finish() {
-        // A is the 5-day critical task; B and C (2 days, float 3) share a person.
+        // A is the 5-business-day critical task; B and C (2 business days, float 3) share a person.
         let nodes = [node(1, 5), node(2, 2), node(3, 2)];
         let demands = [demand(2, "x", true), demand(3, "x", true)];
         let p = go(&nodes, &[], &demands, &HashMap::new(), Params::default());
@@ -674,7 +674,7 @@ mod tests {
 
     #[test]
     fn leave_is_capacity_zero_and_the_task_moves_past_it() {
-        // A is 5 days, B is 1 day (float 4); the person is on leave on Monday.
+        // A is 5 business days, B is 1 business day (float 4); the person is on leave on Monday.
         let nodes = [node(1, 5), node(2, 1)];
         let demands = [demand(2, "x", true)];
         let mut r = HashMap::new();
@@ -720,7 +720,7 @@ mod tests {
 
     #[test]
     fn float_exhausted_is_reported_not_forced() {
-        // B has one day of float and must be delayed two to clear the conflict.
+        // B has one business day of float and must be delayed two to clear the conflict.
         let nodes = [node(1, 3), node(2, 2), node(3, 2)];
         let edges = [Edge {
             pid: id(100),
@@ -729,13 +729,14 @@ mod tests {
             kind: Kind::Fs,
             lag: 0,
         }];
-        // Network: B(2d) -> A(3d) is the critical chain (5 days); C is 2 days, float 3.
+        // Network: B(2d) -> A(3d) is the critical chain (5 business days); C is 2
+        // business days, float 3.
         // Make C's person also do B, so B/C overlap; B is critical so C moves.
         let demands = [demand(2, "x", true), demand(3, "x", true)];
         let p = go(&nodes, &edges, &demands, &HashMap::new(), Params::default());
         assert_eq!(p.finish_before, p.finish_after);
         assert!(p.moves.iter().all(|m| !m.critical));
-        // Now give C no float (a 5-day task): the conflict cannot be removed.
+        // Now give C no float (a 5-business-day task): the conflict cannot be removed.
         let nodes = [node(1, 3), node(2, 2), node(3, 5)];
         let p = go(&nodes, &edges, &demands, &HashMap::new(), Params::default());
         assert!(p.moves.is_empty());
@@ -761,9 +762,10 @@ mod tests {
 
     #[test]
     fn a_dependent_is_pushed_and_the_effect_is_listed() {
-        // A is 8 days (critical). B is 3 days (float 5); C (2 days) -> D (1 day)
-        // also has float 5. B and C share a person; the tie goes to input order,
-        // so C slides past B and D, which follows C, is pushed with it.
+        // A is 8 business days (critical). B is 3 business days (float 5); C (2
+        // business days) -> D (1 business day) also has float 5. B and C share a
+        // person; the tie goes to input order, so C slides past B and D, which
+        // follows C, is pushed with it.
         let mut nodes = vec![node(1, 8), node(2, 3), node(3, 2)];
         nodes.push(Node {
             planned_start: None,

@@ -155,7 +155,7 @@
   {#if summary.backfilled_ratio !== null && summary.backfilled_ratio > 0}
     <p class="finding muted">
       {percent(summary.backfilled_ratio)} of the transitions behind these
-      figures were synthesised when the log was introduced, not observed.
+      figures were synthesized when the log was introduced, not observed.
       They firm up as real board moves accumulate.
     </p>
   {/if}
@@ -223,10 +223,10 @@
       void load();
     }}
   >
-    <option value="30">30 days</option>
-    <option value="60">60 days</option>
-    <option value="90">90 days</option>
-    <option value="180">180 days</option>
+    <option value="30">30 calendar days</option>
+    <option value="60">60 calendar days</option>
+    <option value="90">90 calendar days</option>
+    <option value="180">180 calendar days</option>
   </select>
 </label>
 {#if cfd}
@@ -272,16 +272,16 @@
     <tbody>
       <tr>
         <th scope="row">Arrival rate (λ)</th>
-        <td>{flow.flow.arrival_rate_per_day?.toFixed(2) ?? "—"} / day</td>
+        <td>{flow.flow.arrival_rate_per_day?.toFixed(2) ?? "—"} / calendar day</td>
         <th scope="row">Throughput (μ)</th>
-        <td>{flow.flow.throughput_per_day?.toFixed(2) ?? "—"} / day</td>
+        <td>{flow.flow.throughput_per_day?.toFixed(2) ?? "—"} / calendar day</td>
       </tr>
       <tr>
-        <th scope="row">Utilisation (ρ)</th>
+        <th scope="row">Utilization (ρ)</th>
         <td>
-          {flow.flow.utilisation?.toFixed(2) ?? "—"}
-          {#if flow.flow.utilisation_reason}
-            <span class="muted">— {flow.flow.utilisation_reason}</span>
+          {flow.flow.utilization?.toFixed(2) ?? "—"}
+          {#if flow.flow.utilization_reason}
+            <span class="muted">— {flow.flow.utilization_reason}</span>
           {/if}
         </td>
         <th scope="row">Work in progress (κ)</th>

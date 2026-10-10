@@ -128,7 +128,7 @@
               <td>{m.masked ? m.person : (m.person_ref ?? m.person)}</td>
               <td>{m.from_start} → {m.scheduled_start}</td>
               <td>{m.from_finish} → {m.to_finish}</td>
-              <td>{m.delay_days} working day{m.delay_days === 1 ? "" : "s"}</td>
+              <td>{m.delay_days} business day{m.delay_days === 1 ? "" : "s"}</td>
               <td>{m.float_before} → {m.float_after}</td>
             </tr>
           {/each}
@@ -139,7 +139,7 @@
           <summary>{proposal.effects.length} other task{proposal.effects.length === 1 ? "" : "s"} would be pushed as a result</summary>
           <ul>
             {#each proposal.effects as e (e.pid)}
-              <li>{e.title ?? e.pid}: start {e.start_days >= 0 ? "+" : ""}{e.start_days}, finish {e.finish_days >= 0 ? "+" : ""}{e.finish_days} working days</li>
+              <li>{e.title ?? e.pid}: start {e.start_days >= 0 ? "+" : ""}{e.start_days}, finish {e.finish_days >= 0 ? "+" : ""}{e.finish_days} business days</li>
             {/each}
           </ul>
         </details>

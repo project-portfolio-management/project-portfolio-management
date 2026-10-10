@@ -54,7 +54,7 @@
         <th>Portfolio</th><th>Status</th><th>Members</th>
         <th>{t("ppm.dashboard.red")}</th><th>{t("ppm.dashboard.amber")}</th><th>{t("ppm.dashboard.green")}</th>
         <th>Overdue milestones</th><th>Escalated risks</th><th>Open exposure</th>
-        <th>Overrun currencies</th><th>Days since update</th>
+        <th>Overrun currencies</th><th>Calendar days since update</th>
       </tr>
     </thead>
     <tbody>

@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — secure by default (HD-3, HD-4, HD-5, 2026-10-09)
+
+**Breaking.** Login enforcement is now **on** unless explicitly turned off with `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` or `settings.require_auth: false` in the loco config (the shipped `development.yaml` and `test.yaml` do; the variable wins). The service **refuses to start** when the loco environment is `production` and enforcement is off, and when enforcement is on with no token verifier and no key URL. `GET /metrics.prom` now needs a token. Every response carries `X-Content-Type-Options`, `Content-Security-Policy` (`default-src 'none'; frame-ancestors 'none'`, relaxed for `/swagger-ui`), `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy`, plus `Strict-Transport-Security` only when the request arrived over TLS (`PROJECT_PORTFOLIO_MANAGEMENT_HSTS`, `…_TRUSTED_PROXIES`). CORS is an explicit allow-list (`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`, exact origins; unset means same-origin only) instead of the framework default. Requests are rate limited per caller (a token bucket per bearer credential, else per client address), tighter for expensive routes and for failed authentication; `429` with `Retry-After` and `RateLimit-*` headers (`PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT*`; off in the development and test configs). New modules `http_security`, `rate_limit`, `trusted_proxy`; tests `tests/hardening.rs` (real router) and unit tests in each module.
+
+### Changed — Oxford spelling and explicit day units (NFR-10, NFR-11, 2026-10-09)
+
+Spelling is Oxford (`-ize`) everywhere, including identifiers, routes and stored values: `GET /api/prioritization` (was `/api/prioritisation`), the risk status `materialized` (migration `m20261009_000049_oxford_spelling` rewrites stored rows), `materialized_risks`, `utilization`. Every duration in days now says "calendar days" or "business days" ("working days" became "business days").
+
+### Added — licence files (HD-1)
+
+The licence texts live in the root `LICENSE/` directory; `tests/licence_files.rs` keeps the manifests and the files in step.
+
 ### Fixed — a forecast could miss what had just happened
 
 The throughput forecasts (`GET /api/proposals/forecast`, `GET /api/plans/{pid}/forecast`) bucket history over a half-open window ending at "now", so an event stamped in the same millisecond as the request was dropped — intermittently, and only when the request followed the event closely. The window now ends one millisecond after "now" (`tba::history_window`), so everything recorded up to and including it is counted; the number of periods is unchanged.
@@ -39,7 +51,7 @@ The throughput forecasts (`GET /api/proposals/forecast`, `GET /api/plans/{pid}/f
 
 ### Added — schedule-risk Monte Carlo (SC-8, 2026-10-04)
 
-`GET /api/plans/{pid}/schedule-risk` runs a seeded simulation over the task network: P10/P50/P80/P90 finish, the chance of meeting the CPM date, a criticality index and a sensitivity per task, and a finish histogram. Inputs: `PUT …/tasks/{pid}/estimate` (optimistic and pessimistic days) and `PUT …/risks/{pid}/schedule-impact` (task, days, probability). Inputs are treated as independent, and the response says so.
+`GET /api/plans/{pid}/schedule-risk` runs a seeded simulation over the task network: P10/P50/P80/P90 finish, the chance of meeting the CPM date, a criticality index and a sensitivity per task, and a finish histogram. Inputs: `PUT …/tasks/{pid}/estimate` (optimistic and pessimistic business days) and `PUT …/risks/{pid}/schedule-impact` (task, business days, probability). Inputs are treated as independent, and the response says so.
 
 ### Added — portfolio resource management (SC-7, 2026-10-04)
 
@@ -63,11 +75,11 @@ The throughput forecasts (`GET /api/proposals/forecast`, `GET /api/plans/{pid}/f
 
 ### Added — schedule baselines and variance (SC-3, 2026-10-03)
 
-`/api/plans/{pid}/schedule-baselines` takes numbered, append-only snapshots of a plan's task schedule (a reason is required); `/schedule-variance` shows, in working days, what slipped, was pulled in, was added or was removed since. Added tasks are not slip and removed tasks stay listed.
+`/api/plans/{pid}/schedule-baselines` takes numbered, append-only snapshots of a plan's task schedule (a reason is required); `/schedule-variance` shows, in business days, what slipped, was pulled in, was added or was removed since. Added tasks are not slip and removed tasks stay listed.
 
 ### Added — proposed vs committed bookings (PJ-4, 2026-10-03)
 
-Allocations can be proposed (hoped for) or committed (firm, the default). A proposal never counts toward utilisation; `GET /api/capacity` reports it as its own series. Committing one that would put the person over their per-day capacity needs `?confirm=true`.
+Allocations can be proposed (hoped for) or committed (firm, the default). A proposal never counts toward utilization; `GET /api/capacity` reports it as its own series. Committing one that would put the person over their per-day capacity needs `?confirm=true`.
 
 ### Added — availability over time (PJ-3, 2026-10-03)
 
@@ -103,7 +115,7 @@ Tasks gain `start_date` and `duration_days`; dependencies gain a relationship ki
 
 ### Added — PDF board pack and plan summary (PL-10, 2026-10-03)
 
-`GET /api/board/pack.pdf` and `GET /api/plans/{pid}/summary.pdf`: server-rendered documents. The board pack uses the same data function and authorisation as the JSON; the summary is masked and carries no people references; both are byte-identical for fixed data when stamped with `as_of`. Unsigned.
+`GET /api/board/pack.pdf` and `GET /api/plans/{pid}/summary.pdf`: server-rendered documents. The board pack uses the same data function and authorization as the JSON; the summary is masked and carries no people references; both are byte-identical for fixed data when stamped with `as_of`. Unsigned.
 
 ### Added — plan links (LT-8, 2026-10-03)
 
@@ -129,7 +141,7 @@ need the destructive right), are byte-stable, and are audited even at zero rows.
 
 ### Added — file attachments and the artifact store (LT-5, 2026-10-03)
 
-`artifacts`, `attachments`, `/api/attachments`: attach a file (raw body) to a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Type allow-list and size cap enforced before storage; SHA-256 re-verified on download; downloads re-authorised on the subject and served with `nosniff` and a UTF-8-safe `Content-Disposition`.
+`artifacts`, `attachments`, `/api/attachments`: attach a file (raw body) to a plan, task, risk, proposal, idea, canvas item, budget line or scenario. Type allow-list and size cap enforced before storage; SHA-256 re-verified on download; downloads re-authorized on the subject and served with `nosniff` and a UTF-8-safe `Content-Disposition`.
 
 ### Added — personal planner (PL-4, 2026-10-03)
 
@@ -347,7 +359,7 @@ comes from the audit trail (`audit_logs` rows with action
 
 `POST /api/scenarios/generate` builds a **draft scenario** by scoring
 every active plan (Smart Score, reusing the exact `Estate` evidence
-gathering `GET /prioritisation` already uses) and pricing it (budget
+gathering `GET /prioritization` already uses) and pricing it (budget
 lines summed in the cap's currency), then greedily selecting by score
 per unit cost within an optional budget cap. Every candidate gets a
 rationale row: included with its score and cost, or excluded with
@@ -379,7 +391,7 @@ test pattern existed anywhere in this repo and `pg_stat_statements` is
 deliberately off on the family's test Postgres. Plus
 `benches/service_bench.rs::bench_capacity_rollups`, a Criterion bench
 over the pure rollup arithmetic (`visibility::summed_percent`,
-`effort::utilisation`) at the same scale.
+`effort::utilization`) at the same scale.
 
 This is a **regression guard, not a fix**: all three endpoints were
 already query-bounded (confirmed by reading them directly) — the test
@@ -502,8 +514,8 @@ Migration `m20260918_000001_budget_baselines`: `budget_baselines` +
 `tests/requests/effort.rs::someone_on_leave_reports_null_not_zero_percent`
 recorded a time entry at a fixed `"2026-08-20"` and read it back through
 `GET /api/capacity/utilization?window_days=28`. That passed for exactly
-28 days after the date was written and then failed on every date after
-— caught by this PR's own `db` CI job on 2026-09-18, 29 days past the
+28 calendar days after the date was written and then failed on every date after
+— caught by this PR's own `db` CI job on 2026-09-18, 29 calendar days past the
 hardcoded date, unrelated to anything this PR actually changed. Fixed
 by computing `spent_on` and the leave period relative to
 `chrono::Utc::now()` (mirroring `tests/requests/insights.rs`'s existing
@@ -585,7 +597,7 @@ root `tasks.md` EV-3 for the full record.
 
 ### Fixed — two container-boot defects, found via the T-28o runbook exercise (2026-09-07)
 
-Writing [`agents/share/runbooks/first-deployment.md`](../../agents/share/runbooks/first-deployment.md)'s
+Writing `agents/share/runbooks/first-deployment.md` (shared family guidance, not in this repository)'s
 family go-live runbook (root `tasks.md` EV-4) meant actually building
 and booting this crate from a fresh container against a real Postgres,
 not reading the prior 2026-08-03 "verified end-to-end" claim as still
@@ -800,7 +812,7 @@ See spec/index.md SEC-PPM-2.
 
 The project-management suite (entity spec §13 T-15 … T-27, landed
 2026-08-25/26): custom workflows, the OKR engine, effort and time
-tracking with per-person utilisation, sprint ceremonies, project
+tracking with per-person utilization, sprint ceremonies, project
 phases, Flow Distribution, Total Project Control, the controls
 register, and value realization / strategic performance — plus the
 time-based-analysis completions (TBA-9/10/11) and the earlier
@@ -822,7 +834,7 @@ force rather than a compile-time constant.
   configured behaves exactly as before. **An empty transition set means
   unconstrained**; constraint is opt-in.
 - **Schema-enforced:** every state's `category` is `NOT NULL` + CHECK
-  (an uncategorised state is impossible even by direct insert), and a
+  (an uncategorized state is impossible even by direct insert), and a
   partial unique index makes two initial states impossible.
 - **Two defects found by testing, both fixed:** `done_at` was stamped
   on the literal string `"done"`, so a board whose final column was
@@ -866,12 +878,12 @@ Pure `src/effort.rs`; migration `m20260826_000001_effort`
 /api/plans/{pid}/time-entries`, `GET /api/plans/{pid}/effort`,
 `POST /api/working-time`, `POST /api/non-working`,
 `GET /api/capacity/utilization`. Roll-ups per plan, task and assignee,
-every one labelled **asserted**; uncategorised effort is reported
+every one labelled **asserted**; uncategorized effort is reported
 separately rather than folded into `opex` (which would flatter the
-capitalisable share); an entry over 1440 minutes for one date is
+capitalizable share); an entry over 1440 minutes for one date is
 refused — a day cannot hold more.
 
-### Added — per-person utilisation (T-24 / FR-35)
+### Added — per-person utilization (T-24 / FR-35)
 
 `GET /api/capacity/utilization?by=plan|team|person`, under the five
 stated obligations of `agents/share/time-based-analysis.md` §7.1.
@@ -881,7 +893,7 @@ stated obligations of `agents/share/time-based-analysis.md` §7.1.
   0% would read as measured idleness. No declared capacity is its own
   reason (`no_declared_capacity`): an unknown denominator, not zero.
 - Below the suppression floor the figure is withheld with its inputs
-  still returned; team utilisation sums numerator and denominator
+  still returned; team utilization sums numerator and denominator
   (never a mean of ratios); at or over 100% is flagged, not clamped.
 - Per-person cycle time, throughput and flow efficiency remain
   **absent from every endpoint** — the family-wide refusal stands.
@@ -903,7 +915,7 @@ that never retrospected is a finding, not a missing row.
 ### Added — project phases (T-19 / FR-30)
 
 Pure `src/phase.rs`; migration `m20260825_000003_phase_transitions`
-(denormalised `plans.phase` with a CHECK, an append-only
+(denormalized `plans.phase` with a CHECK, an append-only
 `phase_transitions` log, no backfill); `src/controllers/phase.rs` —
 `PUT /api/plans/{pid}/phase`, `GET /api/plans/{pid}/phase-history`.
 
@@ -1169,7 +1181,7 @@ order as Dr. R. C. Barker's finding that value-adding time is **8–14%**
 of an NHS patient journey. That figure inverts the usual improvement
 instinct: if an item is worked on 6% of its life, making the work 20%
 faster improves delivery by about 1%, while removing half the waiting
-improves it by nearly half. Velocity, utilisation and story points all
+improves it by nearly half. Velocity, utilization and story points all
 measure the 6%. Full contract:
 [`spec/time-based-analysis.md`](../spec/time-based-analysis.md).
 
@@ -1209,7 +1221,7 @@ comments:
 
 1. **Cycle time and lead time are different numbers, and both are always
    returned.** An item that sat in `todo` for three weeks and was built
-   in two days has a cycle time of 2 days and a lead time of 23. Quoting
+   in two calendar days has a cycle time of 2 calendar days and a lead time of 23. Quoting
    the first as "our delivery time" is a tenfold flattering misreport
    and the commonest error in flow reporting, so the API returns them
    together and the response says why.
@@ -1409,9 +1421,9 @@ data.
   lead, a `person:`/`worker:` `EntityRef` — the most directly personal
   field on a `Plan`) is **dropped entirely** rather than partially
   shown: unlike a phone number or a provider name, a partial UUID has
-  no "still recognisable" value when the plan is already identified by
+  no "still recognizable" value when the plan is already identified by
   its `name`/`code`. `owner_org_id`/`owner_org_name` (the sponsoring
-  organisation — institutional, not personal, but still worth an
+  organization — institutional, not personal, but still worth an
   obligation-driven redaction) are masked to their tail, the same
   treatment organization gives `telephone`/`email` and care-pathway
   gives `provider_name`/`provider_id`.
@@ -1574,15 +1586,15 @@ case.
   in the window; the test completes a task *now*, and once "now" passed
   the fixed `ends_on` (2026-07-26) the completion stopped counting — the
   final point read 2 remaining instead of 1. The window is now relative
-  to today (−6 / +7 days), keeping today inside a 14-day sprint.
+  to today (−6 / +7 calendar days), keeping today inside a sprint of 14 calendar days.
 
   Suite: 36/36 green vs Postgres 18; crate enrolled in
-  [`ci/db-suites.txt`](../../ci/db-suites.txt).
+  `ci/db-suites.txt` (family CI list, not in this repository).
 
 
 ### Added
 
-- 2026-07-22 — **Collaboration, automation, and prioritisation
+- 2026-07-22 — **Collaboration, automation, and prioritization
   capabilities** (spec §9.4a). Migration
   `m20260722_000001_capabilities` adds `reviews`, `automations`,
   `automation_runs`, `scheduled_actions`, and `notifications`.
@@ -1609,8 +1621,8 @@ case.
     conditional update, so a deadline fires exactly once even if the
     optional ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`,
     default off) races a manual sweep. Sweeps are capped and say so.
-  - **Data-driven prioritisation** — `GET /api/plans/{pid}/smart-score`
-    and `/api/prioritisation`. The Smart Score is a renormalised
+  - **Data-driven prioritization** — `GET /api/plans/{pid}/smart-score`
+    and `/api/prioritization`. The Smart Score is a renormalized
     weighted average over seven components with a full per-component
     breakdown; absent evidence is **dropped and disclosed** (`missing`
     + `coverage`), not scored zero, and a plan with no evidence scores
@@ -1623,7 +1635,7 @@ case.
     items in an unresolvable phase are counted separately, and
     readiness is a five-check checklist that names each blocker.
   - Every mutation writes an `audit_logs` row; all four rule modules
-    (`collaboration`, `automation`, `prioritisation`, `lifecycle`) are
+    (`collaboration`, `automation`, `prioritization`, `lifecycle`) are
     pure and DB-free with 56 unit tests, plus six `#[ignore]`d request
     tests and OpenAPI coverage.
   - **Not built:** email / push transport (notifications are in-app
@@ -1721,7 +1733,7 @@ case.
 - **Technical-debt register**: `risks.category` (validated closed set)
   + `GET /api/technology/debt` — `tech_debt` risks, exposure-sorted.
 - **Delivery-flow metrics**: `milestones.done_at` stamped on complete +
-  `GET /api/technology/flow` — throughput/month + median lead days;
+  `GET /api/technology/flow` — throughput/month + median lead time in calendar days;
   pre-stamp completions counted but never timed.
 - **Strategic-alignment coverage**: `GET /api/executive/alignment` —
   aligned/unaligned per collection, unaligned spend per currency,
@@ -1764,14 +1776,14 @@ case.
 
 - 2026-07-18 — **PPM Phase B: visibility** (T-PPM-B; PPM-6/7/8/9).
   Cross-item finish-start dependencies (cycle-refusing) + the
-  portfolio schedule view (violations, memoised critical path,
+  portfolio schedule view (violations, memoized critical path,
   undated members); milestones with overdue flags; resource
   allocations over `person:`/`worker:` URNs + the per-person
   capacity rollup (summed percent over a window, > 100 % flagged);
   saved report definitions run synchronously as JSON or CSV
   (RFC-4180 escaping, row cap 1000); the ETag-conditional
   `/api/at-a-glance` dashboard (per-collection RAG — documented
-  heuristic over materialised risks / overdue targets / budget
+  heuristic over materialized risks / overdue targets / budget
   overrun / exposure / schedule violations — stage distributions,
   and site tiles). Pure rules in `src/visibility.rs`; 7 unit + 5
   DB-gated request tests vs Postgres 18.
@@ -1834,7 +1846,7 @@ case.
   `derive_action` classified `/merge` / `/deduplicate` / `/import` via
   `path.ends_with`, so a trailing slash (`POST …/merge/`) fell through to
   `Write` — a non-admin `access=write` caller could reach a destructive op.
-  The path is now `trim_end_matches('/')`-normalised first. Test extended.
+  The path is now `trim_end_matches('/')`-normalized first. Test extended.
 
 - **SEC-B6: relay claims outbox rows with `FOR UPDATE SKIP LOCKED`.** The
   Phase-3 relay drained via a plain unlocked `SELECT … WHERE published_at IS
@@ -1935,7 +1947,7 @@ case.
   - `spec/index.md` — the §1–§18 single-source-of-truth service spec,
     mirroring the care-pathway service shape. Defines the **four matchable
     collections** (`portfolios`, `projects`, `products`, `programs`) — one
-    JSONB row table per kind, sharing one parameterised controller core
+    JSONB row table per kind, sharing one parameterized controller core
     (the API DTO **is** `project_portfolio_management_matcher::WorkItem`, persisted verbatim,
     matched with no adapter); **within-kind matching only** (the matcher's
     R-GATE makes a project never match a product); the umbrella hierarchy
@@ -1966,7 +1978,7 @@ case.
   **BFF** for the front-end so the browser holds no token. The
   `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` flag + enforcement semantics follow the family
   contract. Source of truth:
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+  `agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
   (RS256/JWKS not used).
 - **Adopts the cross-service-linking contract.** Portfolio is a
   participating service with an `entity_links` write-side table and
@@ -1974,7 +1986,7 @@ case.
   / `unlinked`; a work item / goal / task / issue can link to **any** index
   entity. Cross-service links are **not** a matcher signal (separate from
   within-payload `relationships`). Contract:
-  [`agents/share/cross-service-linking.md`](../../agents/share/cross-service-linking.md).
+  `agents/share/cross-service-linking.md`.
 - **Adopts the bulk-import/export contract** (deferred §13). Async
   `bg_pg` jobs, JSONL/CSV/Parquet, the five endpoints under
   `/api/{collection}/*`; stable upsert key = a deterministic external PM
@@ -1982,7 +1994,7 @@ case.
   URI / UUID) or owner-scoped `code` or `pid`; keyless rows → dedupe →
   review queue (within-collection). Lead / person refs are personal data →
   export audited. Contract:
-  [`agents/share/bulk-import-export.md`](../../agents/share/bulk-import-export.md).
+  [`agents/share/bulk-import-export.md`](../spec/bulk-import-export.md).
 
 ### Notes
 

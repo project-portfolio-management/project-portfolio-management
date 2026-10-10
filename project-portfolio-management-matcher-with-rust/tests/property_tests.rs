@@ -212,7 +212,7 @@ proptest! {
         );
     }
 
-    /// The pure normalisation + phonetic helpers MUST NOT panic on arbitrary
+    /// The pure normalization + phonetic helpers MUST NOT panic on arbitrary
     /// input. `iso_date_to_days` is the focus: a prior bug overflowed on a
     /// crafted long-year string (SEC-M4).
     #[test]
@@ -227,11 +227,11 @@ proptest! {
 
     /// `iso_date_to_days` MUST NOT panic (or overflow) on adversarial
     /// date-shaped strings with very long numeric year segments; any
-    /// parsed day count must fit the well-behaved `i64` range.
+    /// parsed calendar-day count must fit the well-behaved `i64` range.
     #[test]
     fn iso_date_never_overflows(s in dateish_string()) {
         if let Some(days) = normalize::iso_date_to_days(&s) {
-            // 0000-01-01 .. 9999-12-31 in days-since-epoch, generously bounded.
+            // 0000-01-01 .. 9999-12-31 in calendar days since the epoch, generously bounded.
             prop_assert!(
                 (-800_000..=3_000_000).contains(&days),
                 "day count out of sane range for {s:?}: {days}"

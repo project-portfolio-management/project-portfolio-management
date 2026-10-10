@@ -2,12 +2,12 @@
 //! plan records across the four collections (portfolio / project /
 //! product / program). The full `project_portfolio_management_matcher::Plan` payload is
 //! stored as JSONB in `data`; `pid`, `kind`, `name`, and `parent_pid`
-//! are denormalised for scoping, lookup, and listing.
+//! are denormalized for scoping, lookup, and listing.
 //!
 //! The four REST collections share this one table; a row's `kind` column
 //! is the collection it belongs to, and matching/dedup/merge are always
 //! scoped to a single `kind` (the matcher's kind gate is the underlying
-//! guarantee). `parent_pid` is the denormalised parent link for the
+//! guarantee). `parent_pid` is the denormalized parent link for the
 //! child kinds (project / product / program), enabling cheap roll-up of
 //! a portfolio's children.
 
@@ -40,11 +40,11 @@ impl MigrationTrait for Migration {
                 // unified into one recursive plan tree, `kind` no longer
                 // scopes queries — it is metadata only.
                 ("kind", ColType::StringNull),
-                // Denormalised name, for lookup / listing / ILIKE search.
+                // Denormalized name, for lookup / listing / ILIKE search.
                 ("name", ColType::String),
                 // Full `project_portfolio_management_matcher::Plan` payload as JSON.
                 ("data", ColType::JsonBinary),
-                // Denormalised parent plan pid (any plan may contain any
+                // Denormalized parent plan pid (any plan may contain any
                 // other), for child roll-up; null for a root plan.
                 ("parent_pid", ColType::UuidNull),
                 // Active flag; cleared on soft-delete.

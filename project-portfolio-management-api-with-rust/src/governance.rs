@@ -28,13 +28,13 @@ pub const GATES: &[&str] = &[
 pub const DECISIONS: &[&str] = &["approved", "approved_with_conditions", "hold", "rejected"];
 
 /// Risk statuses (PPM-12).
-pub const RISK_STATUSES: &[&str] = &["open", "mitigating", "closed", "materialised"];
+pub const RISK_STATUSES: &[&str] = &["open", "mitigating", "closed", "materialized"];
 
 /// Budget-line categories (PPM-10).
 pub const BUDGET_CATEGORIES: &[&str] = &["capex", "opex"];
 
 /// Risk categories — the technical-debt register rides on the risk
-/// lifecycle (an uncategorised stored risk reads as `delivery`).
+/// lifecycle (an uncategorized stored risk reads as `delivery`).
 pub const RISK_CATEGORIES: &[&str] = &["delivery", "tech_debt", "compliance", "security", "other"];
 
 /// Whether a plan whose current `stage` (the last approved gate)

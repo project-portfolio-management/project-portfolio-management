@@ -31,7 +31,7 @@ A project is only PRINCE2 if it follows all seven.
 | Principle | Where this entity already stands |
 |---|---|
 | **Continued business justification** | `benefits`, `budget_lines`, business-case targets (§5.9.6), and DIPP (§5.9.7) — *is the value still to come worth the money still to spend?* is the same question, arithmetically |
-| **Learn from experience** | Retrospective ceremonies with categorised notes convertible into tasks (§5.9.3). **Gap:** no cross-project lessons log — lessons die with the plan |
+| **Learn from experience** | Retrospective ceremonies with categorized notes convertible into tasks (§5.9.3). **Gap:** no cross-project lessons log — lessons die with the plan |
 | **Defined roles and responsibilities** | ABAC attributes and `EntityRef` leads / assignees / owners. **Gap:** no PRINCE2 role model (see §Organizing below) |
 | **Manage by stages** | The gate stage vocabulary `g0_concept` … `g5_benefits` with gate reviews. **This is the closest existing fit, and the trap — see §4** |
 | **Manage by exception** | **The controls register (FR-38) is this principle, built.** See §5 |
@@ -71,8 +71,8 @@ says they are deliberately uncoupled: the lifecycle funnel
 
 **PRINCE2 stages are a fourth, and they are not any of the three.**
 
-- A PRINCE2 **management stage** is a *funding and authorisation
-  increment* — the unit the board authorises, with its own stage plan
+- A PRINCE2 **management stage** is a *funding and authorization
+  increment* — the unit the board authorizes, with its own stage plan
   and its own tolerances. A project has as many as it needs, named by
   the project, and they are **not a fixed enumeration**.
 - The **gate stage** is a fixed ladder of governance decisions.
@@ -133,7 +133,7 @@ question, not a reporting one.
 | Business case | `benefits` + `budget_lines` + `business_case_targets` |
 | Project brief / PID | The `Plan` payload plus its goals |
 | Stage plan | **Absent** (see §4) |
-| Work package | `tasks`, loosely — a work package is authorised and has tolerances; a task has neither |
+| Work package | `tasks`, loosely — a work package is authorized and has tolerances; a task has neither |
 | Risk register | `risks` ✅ |
 | Issue register | **Absent** (FR-14 unbuilt) |
 | Quality register / product descriptions | **Absent** |
@@ -166,8 +166,8 @@ In dependency order, honestly sized:
 - **Certification content.** Foundation / Practitioner / PRINCE2 Agile
   are training products; this is a registry and a PM suite. Where a
   certification pathway matters to a person's record, that is the
-  [course](../../../course/) and
-  [worker](../../../worker/) entities' business, not this one.
+  course and
+  worker entities' business, not this one.
 - **Claiming PRINCE2 conformance.** Supporting the vocabulary is not
   being certified against the method, and the distinction is the same
   one [conformance levels](../14-implementation-status.md) draws

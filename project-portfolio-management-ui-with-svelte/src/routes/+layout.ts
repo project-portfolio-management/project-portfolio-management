@@ -7,7 +7,7 @@ import {
   localeFromAcceptLanguage,
   localeOfPath,
   localeRedirect,
-  normaliseLocale,
+  normalizeLocale,
 } from "#lib/locales.js";
 
 // SPA mode: no SSR, no prerender. The session lives in the browser
@@ -29,7 +29,7 @@ function browserLanguages(): string {
 function preferredLocale(): Locale {
   if (typeof localStorage === "undefined") return DEFAULT_LOCALE;
   return (
-    normaliseLocale(localStorage.getItem(LOCALE_KEY)) ??
+    normalizeLocale(localStorage.getItem(LOCALE_KEY)) ??
     localeFromAcceptLanguage(browserLanguages()) ??
     DEFAULT_LOCALE
   );

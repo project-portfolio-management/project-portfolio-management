@@ -39,7 +39,7 @@ pub struct BurndownPoint {
 /// the completions stamped **on or before** that day. Only real
 /// `done_at` stamps count — no ideal line, no interpolation (a
 /// front-end may draw an ideal line, labelled as such). Windows longer
-/// than 366 days are truncated (a sprint is not a year).
+/// than 366 calendar days are truncated (a sprint is not a year).
 #[must_use]
 pub fn burndown(
     total: usize,

@@ -26,13 +26,13 @@ pub fn can_see(private: bool, members: &[String], sub: Option<&str>, is_admin: b
     is_admin || sub.is_some_and(|s| members.iter().any(|m| m.eq_ignore_ascii_case(s)))
 }
 
-/// Normalise a requested member list (lowercase UUIDs, deduplicated, in
+/// Normalize a requested member list (lowercase UUIDs, deduplicated, in
 /// order) and report every problem.
 ///
 /// # Errors
 ///
 /// A message naming each invalid entry, or an over-long list.
-pub fn normalise_members(requested: &[String]) -> Result<Vec<String>, String> {
+pub fn normalize_members(requested: &[String]) -> Result<Vec<String>, String> {
     let mut out: Vec<String> = Vec::new();
     let mut bad: Vec<&str> = Vec::new();
     for m in requested {
@@ -92,14 +92,14 @@ mod tests {
     }
 
     #[test]
-    fn members_are_normalised_deduplicated_and_validated() {
-        let m = normalise_members(&[U1.to_uppercase(), U1.to_string(), U2.to_string()]).unwrap();
+    fn members_are_normalized_deduplicated_and_validated() {
+        let m = normalize_members(&[U1.to_uppercase(), U1.to_string(), U2.to_string()]).unwrap();
         assert_eq!(m, [U1, U2]);
-        let err = normalise_members(&["alice".to_string(), U1.to_string()]).unwrap_err();
+        let err = normalize_members(&["alice".to_string(), U1.to_string()]).unwrap_err();
         assert!(err.contains("alice"));
         let many: Vec<String> = (0..=MAX_MEMBERS as u128)
             .map(|n| Uuid::from_u128(n).to_string())
             .collect();
-        assert!(normalise_members(&many).is_err());
+        assert!(normalize_members(&many).is_err());
     }
 }

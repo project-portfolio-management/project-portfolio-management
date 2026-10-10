@@ -69,7 +69,7 @@ const SEP: char = '\u{1f}';
 pub struct RecordInput<'a> {
     /// The record's public id.
     pub pid: Uuid,
-    /// The denormalised display name.
+    /// The denormalized display name.
     pub name: &'a str,
     /// The optional descriptive kind label (portfolio / project /
     /// product / programme). In the pre-image because relabelling a plan
@@ -88,7 +88,7 @@ pub struct RecordInput<'a> {
     // `data` field below.
     //
     // The residual gap, stated rather than left for a reader to
-    // discover: a raw-SQL edit of the denormalised `plans.phase` column
+    // discover: a raw-SQL edit of the denormalized `plans.phase` column
     // that leaves `data.phase` untouched would not break the digest. It
     // would instead break the payload-equals-column invariant (entity
     // spec §5.8), which is the check that catches it.
@@ -530,7 +530,7 @@ mod tests {
         assert_eq!(report.intact, 1);
     }
 
-    /// Renaming a row out of band is detected too — the denormalised
+    /// Renaming a row out of band is detected too — the denormalized
     /// `name` is bound, so it cannot drift from the payload unnoticed.
     #[test]
     fn out_of_band_rename_is_detected() {

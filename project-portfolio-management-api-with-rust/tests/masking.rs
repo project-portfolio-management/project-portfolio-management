@@ -181,7 +181,7 @@ async fn mask_obligation_redacts_reads_and_exports() {
         assert_ne!(masked["owner_org_id"], "organization:9a2f1e2a-0000");
         assert!(masked["owner_org_id"].as_str().unwrap().contains('*'));
         assert_ne!(masked["owner_org_name"], "Acme Astronautics");
-        // The record stays recognisable, or masking has cost more than
+        // The record stays recognizable, or masking has cost more than
         // it bought.
         assert_eq!(masked["name"], "Apollo platform migration");
         assert_eq!(masked["code"], "PROJ-2026");

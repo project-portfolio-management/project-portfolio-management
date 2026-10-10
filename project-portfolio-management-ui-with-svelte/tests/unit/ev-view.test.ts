@@ -128,7 +128,7 @@ describe("sentences", () => {
     });
     expect(scheduleSentence(late, money)).toMatch(/On schedule: SPI 1.00/);
     expect(earnedScheduleSentence(late)).toBe(
-      "By earned schedule the work is behind: it has earned in 30 days what the plan expected after 20 days (SPI(t) 0.67).",
+      "By earned schedule the work is behind: it has earned in 30 calendar days what the plan expected after 20 calendar days (SPI(t) 0.67).",
     );
     expect(
       earnedScheduleSentence(
@@ -138,7 +138,7 @@ describe("sentences", () => {
           spi_t: { bp: 10_000 },
         }),
       ),
-    ).toContain("1 day what the plan expected after 1 day");
+    ).toContain("1 calendar day what the plan expected after 1 calendar day");
     expect(
       earnedScheduleSentence(
         block({ spi_t: { bp: null, absent: "no_planned_value_yet" } }),

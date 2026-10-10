@@ -1,5 +1,5 @@
 <!--
-  Engineering estate area (`/engineering`): blocked-work aging (days
+  Engineering estate area (`/engineering`): blocked-work aging (calendar days
   since entering blocked), the MoSCoW scope cut from `moscow:<band>`
   tags (convention shown verbatim; untagged counted, never guessed),
   and the delivery-links panel (which items are tracked in which
@@ -48,7 +48,7 @@
   <h2>Blocked work</h2>
   <p class="muted">{blocked.derivation}</p>
   <table data-testid="eng-blocked">
-    <thead><tr><th>Task</th><th>Item</th><th>Assignee</th><th>Blocked (days)</th></tr></thead>
+    <thead><tr><th>Task</th><th>Item</th><th>Assignee</th><th>Blocked (calendar days)</th></tr></thead>
     <tbody>
       {#each blocked.blocked as task (task.pid)}
         <tr>

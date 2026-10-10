@@ -10,7 +10,7 @@
 //!
 //! The default [`LoggingSink`] ships every event to the tracing log: it is
 //! the **no-broker** dev/CI sink and a useful observability aid — the drain
-//! + retention machinery runs and is fully exercised without Fluvio.
+//! plus retention machinery runs and is fully exercised without Fluvio.
 //! `FluvioSink` (BUS-3, following BUS-1's case-service reference; only
 //! compiled under this crate's `fluvio` cargo feature, off by default, so
 //! a default build's dependency tree and behaviour are unchanged) is the
@@ -261,7 +261,8 @@ pub fn interval_secs() -> u64 {
         .max(1)
 }
 
-/// Outbox retention in days (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS`, default 7).
+/// Outbox retention in calendar days
+/// (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS`, default 7).
 #[must_use]
 pub fn retention_days() -> i64 {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS")

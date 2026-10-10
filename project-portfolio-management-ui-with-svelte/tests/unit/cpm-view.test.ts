@@ -29,7 +29,7 @@ describe("weekday masks", () => {
     expect(maskToWeekdays("nope")).toEqual(Array(7).fill(true));
     expect(maskToWeekdays("111110")).toEqual(Array(7).fill(true));
   });
-  it("needs at least one working day to be savable", () => {
+  it("needs at least one business day to be savable", () => {
     expect(weekdaysValid(maskToWeekdays("0000000"))).toBe(false);
     expect(weekdaysValid(maskToWeekdays("0000010"))).toBe(true);
   });
@@ -103,15 +103,15 @@ describe("float wording and state", () => {
   });
   it("says it in words, and never leaves a bare minus sign", () => {
     expect(floatLabel(n(0))).toMatch(/critical path/);
-    expect(floatLabel(n(1))).toBe("1 working day of float");
-    expect(floatLabel(n(3))).toBe("3 working days of float");
+    expect(floatLabel(n(1))).toBe("1 business day of float");
+    expect(floatLabel(n(3))).toBe("3 business days of float");
     expect(floatLabel(n(2, false, true))).toBe(
-      "2 working days of float (near-critical)",
+      "2 business days of float (near-critical)",
     );
     expect(floatLabel(n(-1))).toBe(
-      "Cannot meet its constraint or deadline: 1 working day short",
+      "Cannot meet its constraint or deadline: 1 business day short",
     );
-    expect(floatLabel(n(-4))).toContain("4 working days short");
+    expect(floatLabel(n(-4))).toContain("4 business days short");
   });
   it("gives every state a marker besides colour", () => {
     const markers = [n(-1), n(0), n(2, false, true), n(9, false, false)].map(
@@ -301,20 +301,20 @@ describe("baseline ghosts and variance wording (SC-3)", () => {
         .bars[0]!.ghost,
     ).toBeNull();
   });
-  it("says slip in words with a marker, pluralised", () => {
+  it("says slip in words with a marker, pluralized", () => {
     expect(
       standingText({ standing: "slipped", finish_variance_days: 3 }),
     ).toMatchObject({
       marker: "▲",
       word: "Slipped",
-      detail: "finishes 3 working days later than baselined",
+      detail: "finishes 3 business days later than baselined",
     });
     expect(
       standingText({ standing: "slipped", finish_variance_days: 1 }).detail,
-    ).toContain("1 working day later");
+    ).toContain("1 business day later");
     expect(
       standingText({ standing: "pulled_in", finish_variance_days: -2 }).detail,
-    ).toContain("2 working days earlier");
+    ).toContain("2 business days earlier");
     expect(
       standingText({ standing: "added", finish_variance_days: null }).detail,
     ).toContain("no slip");

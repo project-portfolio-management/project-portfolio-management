@@ -22,7 +22,7 @@
 //!   here and nowhere near the matcher.
 //! - **`capacity_rollups`** (T-28d) — the pure arithmetic behind
 //!   `GET /capacity` (`visibility::summed_percent`) and `GET
-//!   /capacity/utilization` (`effort::utilisation`), scaled over the
+//!   /capacity/utilization` (`effort::utilization`), scaled over the
 //!   input sizes the DB-gated `tests/requests/scale.rs` seeds. This is
 //!   the CPU half; that test proves the *I/O* half (the query count
 //!   feeding these) does not grow with plan/people count.
@@ -52,7 +52,7 @@ fn goal(title: &str) -> Goal {
 /// A fully populated plan — every validated field present, so validation
 /// runs its whole rule set.
 fn populated() -> Plan {
-    let mut p = Plan::new("Patient Records Modernisation");
+    let mut p = Plan::new("Patient Records Modernization");
     p.kind = Some(PlanKind::Program);
     p.alternate_names = vec!["PRM".into()];
     p.code = Some("PRM-2024".into());
@@ -66,7 +66,7 @@ fn populated() -> Plan {
     ];
     p.start_date = Some("2024-01-08".into());
     p.target_date = Some("2026-03-31".into());
-    p.keywords = vec!["records".into(), "modernisation".into()];
+    p.keywords = vec!["records".into(), "modernization".into()];
     p.tags = vec!["strategic".into(), "digital".into()];
     p.identifiers = vec![PlanIdentifier {
         scheme: IdentifierScheme::JiraProjectKey,
@@ -111,7 +111,7 @@ fn variant(idx: usize) -> Plan {
         PlanKind::Program,
         PlanKind::Practice,
     ];
-    let mut p = Plan::new(format!("{} Modernisation {idx}", stems[idx % stems.len()]));
+    let mut p = Plan::new(format!("{} Modernization {idx}", stems[idx % stems.len()]));
     p.kind = Some(kinds[idx % kinds.len()]);
     p.code = Some(format!("PRM-{:04}", idx % 500));
     p.owner_org_id = Some(format!("org-{}", idx % 20));
@@ -192,7 +192,7 @@ fn bench_search(c: &mut Criterion) {
         group.bench_function(label, |b| {
             b.iter(|| {
                 engine
-                    .search_page(black_box("Records Modernisation"), mode, None, 20, 0)
+                    .search_page(black_box("Records Modernization"), mode, None, 20, 0)
                     .expect("search")
             });
         });
@@ -203,7 +203,7 @@ fn bench_search(c: &mut Criterion) {
         b.iter(|| {
             engine
                 .search_page(
-                    black_box("Records Modernisation"),
+                    black_box("Records Modernization"),
                     SearchMode::Exact,
                     Some("project"),
                     20,
@@ -231,7 +231,7 @@ fn bench_search(c: &mut Criterion) {
     group.finish();
 }
 
-/// Capacity/utilisation rollups (T-28d): the pure arithmetic scales
+/// Capacity/utilization rollups (T-28d): the pure arithmetic scales
 /// with the number of *allocations* / *people* summed, not with plan
 /// count directly, but plan count is what drives that in practice
 /// (roughly one allocation per plan per person). 40/400 brackets the
@@ -273,13 +273,13 @@ fn bench_capacity_rollups(c: &mut Criterion) {
             .collect();
         group.throughput(Throughput::Elements(people as u64));
         group.bench_with_input(
-            BenchmarkId::new("utilisation", people),
+            BenchmarkId::new("utilization", people),
             &facts,
             |b, facts| {
                 b.iter(|| {
                     facts
                         .iter()
-                        .map(|f| effort::utilisation(black_box(f), 60))
+                        .map(|f| effort::utilization(black_box(f), 60))
                         .collect::<Vec<_>>()
                 });
             },

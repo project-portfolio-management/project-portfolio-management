@@ -32,7 +32,7 @@ const DASHBOARD = {
   site_tiles: {
     work_items: 5,
     proposals_open: 2,
-    materialised_risks: 1,
+    materialized_risks: 1,
     open_risk_exposure: 34,
     schedule_violations: 1,
     over_allocated_people: 1,
@@ -43,7 +43,7 @@ const PROPOSALS = [
   {
     pid: PROPOSAL,
     title: "Website replatform",
-    summary: "Modernise the stack",
+    summary: "Modernize the stack",
     kind_target: "projects",
     sponsor_ref: null,
     strategic_rationale: null,
@@ -519,7 +519,7 @@ async function stubPpm(page: Page) {
               },
               open_exposure: 45,
               escalated: 1,
-              materialised: 0,
+              materialized: 0,
             },
           ],
           concentration: [
@@ -714,7 +714,7 @@ async function stubPpm(page: Page) {
       return route.fulfill({
         json: {
           as_of: "2026-07-19T00:00:00Z",
-          derivation: "age = days since the task entered blocked",
+          derivation: "age = calendar days since the task entered blocked",
           blocked: [
             {
               pid: "t-2",
@@ -990,7 +990,7 @@ test("technology area renders the radar rings and dependency lens", async ({
   await expect(
     page.getByTestId("tech-flow").getByText("2026-07"),
   ).toBeVisible();
-  await expect(page.getByText("12 days")).toBeVisible();
+  await expect(page.getByText("12 calendar days")).toBeVisible();
 });
 
 test("scenario compare renders side-by-side deltas", async ({ page }) => {
@@ -1096,7 +1096,7 @@ test("task board renders columns, burndown, and the standup digest", async ({
     page.getByTestId("task-board").getByText("Wire the API"),
   ).toBeVisible();
   await expect(
-    page.getByTestId("task-board").getByText("blocked 2d"),
+    page.getByTestId("task-board").getByText("blocked 2 calendar days"),
   ).toBeVisible();
   await expect(page.getByText("no ideal line, no interpolation")).toBeVisible();
   await expect(page.getByTestId("burndown")).toBeVisible();

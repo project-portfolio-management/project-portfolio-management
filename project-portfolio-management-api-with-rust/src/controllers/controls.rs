@@ -157,7 +157,7 @@ fn parse_verdict(raw: &str) -> rules::Verdict {
     match raw {
         "pass" => rules::Verdict::Pass,
         "fail" => rules::Verdict::Fail,
-        // Anything unrecognised reads as unmeasured rather than as a
+        // Anything unrecognized reads as unmeasured rather than as a
         // pass: a typo must never become a green control.
         _ => rules::Verdict::Unmeasured,
     }
@@ -335,7 +335,7 @@ struct RegisterStandardPayload {
     work_in_progress_limit: i64,
     /// Required, no default, for the identical reason as
     /// `work_in_progress_limit`: `src/tba.rs`'s own
-    /// `service_level_expectation` takes its day target as a
+    /// `service_level_expectation` takes its calendar-day target as a
     /// caller-supplied parameter rather than a crate-wide constant,
     /// because a cycle-time SLE is a per-plan commitment, not a fact
     /// about the software.

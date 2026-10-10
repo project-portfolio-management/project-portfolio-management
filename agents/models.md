@@ -114,12 +114,12 @@ cost plan, time-based flow metrics, Smart Score, lifecycle.
 [`migration/src/`](../project-portfolio-management-api-with-rust/migration/src/)
 
 One core table `plans` — `{id` (PK)`, pid` (public UUID)`, name`
-(denormalised from `data.name`)`, kind` (nullable)`, parent_pid`
+(denormalized from `data.name`)`, kind` (nullable)`, parent_pid`
 (nullable, the recursive containment link)`, data` (JSONB `Plan`)`,
 active, deleted_at` (soft delete)`, phase}`. Model helpers: `create`,
 `find_by_pid`, `list_paged`, `to_plan()`, `update_data`, `soft_delete`.
 Migrations live in `migration/src/` (latest `…_000048_onboarding_one_open`);
-`create_table` pluralises names, and trigger functions use
+`create_table` pluralizes names, and trigger functions use
 `CREATE OR REPLACE FUNCTION`.
 
 ## Wire DTOs (service controller)

@@ -376,7 +376,7 @@ async fn generate_scenario_scores_prices_and_never_silently_drops_must_include()
     request::<App, _, _>(|request, _ctx| async move {
         let objective: Value = request
             .post("/api/objectives")
-            .json(&json!({ "title": "Modernise records" }))
+            .json(&json!({ "title": "Modernize records" }))
             .await
             .json();
         let objective_pid = objective["pid"].as_str().expect("pid").to_string();

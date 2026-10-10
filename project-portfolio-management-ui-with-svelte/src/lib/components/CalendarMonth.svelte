@@ -38,7 +38,7 @@
   }
 
   function describe(c: (typeof grid)[number][number], dayName: string): string {
-    const state = c.holiday ? "holiday" : c.absent ? "absent" : c.offDay ? "not a working day" : "working day";
+    const state = c.holiday ? "holiday" : c.absent ? "absent" : c.offDay ? "not a business day" : "business day";
     return `${c.date}, ${dayName}: ${state}`;
   }
 </script>
@@ -82,7 +82,7 @@
       {/each}
     </tbody>
   </table>
-  <p class="small muted">– not a working day &nbsp; ✕ holiday &nbsp; A recorded absence{editable ? " · select a working day to mark or clear a holiday" : ""}</p>
+  <p class="small muted">– not a business day &nbsp; ✕ holiday &nbsp; A recorded absence{editable ? " · select a business day to mark or clear a holiday" : ""}</p>
 </div>
 
 <style>

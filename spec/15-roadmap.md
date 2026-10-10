@@ -10,7 +10,7 @@ repositions this trio as a **project portfolio management product**,
 not just a matchable registry of plan identities. The catalogue
 below maps the standard PPM capability set onto what the trio already
 ships (registry CRUD + kind-agnostic matching/merge over the one
-`plans` collection; goals / tasks / issues sub-resources; timeline + burndown
+`plans` collection; goals / tasks / issues sub-resources (**the `goals` and `issues` stores are specified but not built**, §14.2); timeline + burndown
 views; audit + events; bulk import/export; cross-service people/org
 links; ABAC). Design doctrine for every item: new capabilities are
 **operational sub-resources** (tables keyed `parent_pid`, like
@@ -62,7 +62,7 @@ sameness evidence and operational state stay separate).
 - **PPM-7 Portfolio dashboards.** ✅ *Delivered 2026-07-18 (service T-PPM-B).* A portfolio-level at-a-glance
   endpoint (the patient-flow pattern, ETag-conditional): per-parent-plan
   rollups of RAG health, schedule variance (timeframe vs today), open
-  risks/issues by severity, budget variance (PPM-10), capacity
+  risks (and, once FR-14 lands, issues) by severity, budget variance (PPM-10), capacity
   hot-spots (PPM-8), gate-stage distribution — plus site-tile
   headlines for the executive view.
 - **PPM-8 Resource capacity planning.** ✅ *Delivered 2026-07-18 (service T-PPM-B).* `allocations`: person/worker
@@ -85,7 +85,7 @@ sameness evidence and operational state stay separate).
   (capex/opex, currency amount via `bigdecimal`, period) + recorded
   actuals (manual or bulk-imported from finance) ⇒ projected-vs-actual
   variance in the dashboards, rolled up the parent-plan containment
-  hierarchy. Centralises financial oversight without becoming a
+  hierarchy. Centralizes financial oversight without becoming a
   ledger — actuals are imported facts, not double-entry bookkeeping.
 - **PPM-11 Benefits tracking.** ✅ *Delivered 2026-07-18 (service T-PPM-C).* `benefits` per plan: category,
   metric, baseline, target, expected realization date — then recorded
@@ -93,8 +93,11 @@ sameness evidence and operational state stay separate).
   (with PPM-10 costs). Benefits are reviewed at phase gates (PPM-3),
   closing the loop between the funding case and delivery.
 - **PPM-12 Risk management.** ✅ *Delivered 2026-07-18 (service T-PPM-A).* `risks` (probability × impact scoring,
-  owner, mitigation, review date) alongside the existing issues;
-  escalation converts a materialised risk into an issue with lineage.
+  owner, mitigation, review date). *Correction (2026-10-09):* the "existing
+  issues" this item assumed do not exist: there is no `issues` migration,
+  entity, controller or `/issues` route, and `src/openapi.rs` documents none
+  (FR-14, §14.2), so escalating a risk into an issue is **not built**; only the
+  action-to-task conversion exists (`controllers/controls.rs`).
   Portfolio-level rollup (exposure by severity, overdue reviews) in
   PPM-7; cross-project dependency risks ride the PPM-6 edges.
 
@@ -121,23 +124,23 @@ The items below predate the PPM repositioning and remain valid.
   goals / tasks / issues only (§2.3). Add posts / comments (Markdown
   update threads on a plan / task / issue) and members (a user's
   membership of a plan with a role) when collaboration becomes a
-  requirement — each a new sub-resource table keyed by `parent_pid`, with membership-scoped write authorisation.
+  requirement — each a new sub-resource table keyed by `parent_pid`, with membership-scoped write authorization.
 - **Family parity — match / search / merge.** Beyond the MVP
   baseline, reach the mature-sibling shape
-  ([`agents/share/match-search-merge.md`](../../agents/share/match-search-merge.md)):
+  (`agents/share/match-search-merge.md` (shared family guidance, not in this repository)):
   Tantivy full-text + fuzzy search over the JSONB payload of the
   `plans` collection, search-blocked duplicate candidates (replacing the
   in-memory scan, OQ-2), batch deduplicate scan, and a front-end merge
   action.
 - **Auditability — durable event bus.** The MVP ships an in-memory
   `PlanEvent` stream (T-5); replace it with the durable event bus
-  ([`agents/share/event-bus.md`](../../agents/share/event-bus.md)) so
+  (`agents/share/event-bus.md`) so
   peer registries, analytics, and the cross-service link aggregator
   can subscribe across replicas. Plan events are high-volume
   (every task write), so batched outbox emission matters.
 - **Cross-service link aggregator.** Stand up (or join) the
   `link-graph-service`
-  ([`agents/share/cross-service-linking.md` §4.3](../../agents/share/cross-service-linking.md))
+  (`agents/share/cross-service-linking.md` §4.3)
   so a plan's `EntityRef`s and `entity_links` become a traversable
   graph (a plan's people → their orgs, related plans across
   departments). The portfolio trio ships only the write-side (T-7); the
@@ -147,10 +150,10 @@ The items below predate the PPM repositioning and remain valid.
   from a source PM tool; link a task to a `case` or a `thing`).
 - **Security.** Blanket auth enforcement on `/api/*` (PASETO v4 public
   token / cookie session per
-  [`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md),
-  superseding the RS256-JWT model) with **ABAC** authorisation over
+  `agents/share/authentication-sessions.md`,
+  superseding the RS256-JWT model) with **ABAC** authorization over
   the token's `attrs` claim (per
-  [`agents/share/authorization-attributes.md`](../../agents/share/authorization-attributes.md);
+  `agents/share/authorization-attributes.md`;
   delivered, supersedes the earlier role-based sketch) — deployments
   express read/write/destructive tiers and any read-integrator vs
   plan-operator split as policy attributes, not fixed roles;
@@ -180,17 +183,52 @@ rewritten.
   (`event_outbox`, `src/relay.rs`; §14.1); bulk import / export with a
   duplicate review queue (T-8, `controllers/bulk.rs`); Tantivy search
   (`src/search/`); blanket auth enforcement behind
-  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` (still **default off**)
+  `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` (**on by default** since HD-3)
   with ABAC; comments and reactions (LT-4) and watchers (RM-3); an MS
-  Project (MSPDI) import and export (PJ-10).
+  Project (MSPDI) **import** (PJ-10, `POST /api/plans/{pid}/import/mspdi` in
+  `controllers/mspdi_import.rs`) and the Jira and Asana import codecs (T-28n,
+  `POST /api/plans/{pid}/import/jira` and `…/asana` in
+  `controllers/tracker_import.rs`); approval processes (PL-2,
+  `controllers/processes.rs`) and controlled documents (PL-6,
+  `controllers/controlled_documents.rs`, front-end `/documents`).
 - **Still open:** the cross-service link write-side (T-7, no
-  `entity_links`), the Jira and Asana import codecs (T-28n), a members
-  sub-resource, gRPC, and two-way PM-tool sync. A link aggregator stays
+  `entity_links`), a members sub-resource, gRPC, two-way PM-tool sync, MS
+  Project (MSPDI) **export** (there is no export route: the only `…/export`
+  routes are the plan JSON export `GET /api/plans/{pid}/export` and the bulk
+  export jobs `POST /api/plans/export`; `tasks.md` PJ-10 itself records "no
+  export"), and the **`goals` and `issues` sub-resources**, so there is no
+  issues register (no `/issues` route, table or controller; earlier roadmap
+  and status wording that treated issues as shipped was wrong). A link aggregator stays
   out of this trio's scope.
 - **The 2026-10 catalogue is in `tasks.md`, not here:** Leantime
   (LT-n), Redmine (RM-n), Huly (PL-n), the scheduling and cost canon
-  (SC-n, KO-n, MS-n, CR-n) and ProjectLibre (PJ-n) items. All 71 listed
-  items are ticked at this revision, including hammocks (PJ-7), the
+  (SC-n, KO-n, MS-n, CR-n) and ProjectLibre (PJ-n) items. Every
+  item in those series is ticked at this revision (counts per prefix are
+  generated in [§14.0](14-implementation-status.md#140-generated-facts)),
+  including hammocks (PJ-7), the
   what-if sandbox (PJ-9), cross-plan links (PJ-13), approval processes
   (PL-2) and controlled documents (PL-6). Items recorded there under
   "Not taken" are deliberate non-goals, not roadmap.
+
+### Planned, not built
+
+Open in [`tasks.md`](../tasks.md) and absent from the code (no route,
+migration or page yet); each group is planned work, not delivered capability.
+
+- **Monthly director pack (DP-1 … DP-12):** the issued, versioned pack per audience, delivery confidence, exceptions and the 48-hour red rule, gate decisions, funding sources, buffer fever chart, validated benefits, capacity heatmap by skill pool, rendering and the monthly rhythm.
+- **Escalation-driven capabilities (EX-1 … EX-14):** register completeness, delivery-model typology, partner organizations and sign-off, deployment-date change control, go / no-go, triage thresholds, start control, the outcome scorecard, key-person register and portfolio ledger.
+- **Critical chain buffers (CC-1 … CC-6):** the critical chain, aggressive and safe estimates, project / feeding / resource buffers, buffer management, drum and pipelining, and the front-end.
+
+### Release and operations
+
+**In progress** (the HD series in [`tasks.md`](../tasks.md), HD-1 … HD-9).
+Landed: the licence files (HD-1, `LICENSE/`); login enforcement **on by
+default**, refused off in production (HD-3); security headers, a strict CSP and
+an explicit CORS allow-list on the API and the front-end (HD-4); per-caller
+rate limiting (HD-5); and documents that match the code (HD-9: the generated
+block in [§14.0](14-implementation-status.md#140-generated-facts), the link
+checker `scripts/check-links.py` with `lychee.toml`, and this reconciliation).
+Built but not yet proven on GitHub: CI at the repository root (HD-2) and the
+release pipeline with pinnable version tags (HD-8). Open: a backup plan with
+stated RPO and RTO (HD-6) and a data protection impact assessment (HD-7).
+Until those close, treat a deployment as not yet fully production-hardened.

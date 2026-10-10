@@ -1,14 +1,14 @@
-//! Data-driven prioritisation (**Smart Score**) and bird's-eye
+//! Data-driven prioritization (**Smart Score**) and bird's-eye
 //! **lifecycle visibility** — read-only derived views over rows the
 //! service already stores. No new tables: a score that ranks somebody's
 //! work must never be able to drift from the evidence behind it.
 //!
 //! - `GET /api/plans/{pid}/smart-score` — one plan's score **with its
-//!   full breakdown**: every component's weight, normalised value, and
+//!   full breakdown**: every component's weight, normalized value, and
 //!   points, plus the components that had no evidence and the
 //!   `coverage` those gaps leave. A plan with no evidence scores
 //!   `null`, never a confident-looking zero.
-//! - `GET /api/prioritisation` — the ranked list: what deserves
+//! - `GET /api/prioritization` — the ranked list: what deserves
 //!   attention first, highest score first.
 //! - `GET /api/lifecycle` — the challenge funnel across every phase,
 //!   with the stalled counts.
@@ -36,13 +36,13 @@ use crate::models::_entities::{
     benefits, budget_lines, ideas, objective_links, plans, proposals, reviews, risks,
     scheduled_actions, tasks,
 };
-use crate::prioritisation as rules;
+use crate::prioritization as rules;
 use crate::strategy::roi_basis_points;
 
 /// Highest number of plans the ranked list scores in one request.
 pub const RANK_CAP: usize = 500;
 
-/// Days in a phase after which an item counts as stalled, unless
+/// Calendar days in a phase after which an item counts as stalled, unless
 /// `PROJECT_PORTFOLIO_MANAGEMENT_STALL_DAYS` says otherwise.
 pub const DEFAULT_STALL_DAYS: i64 = 30;
 
@@ -86,7 +86,7 @@ pub(crate) fn weights() -> rules::Weights {
     }
 }
 
-/// The stall threshold in days.
+/// The stall threshold in calendar days.
 fn stall_days() -> i64 {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_STALL_DAYS")
         .ok()
@@ -95,7 +95,7 @@ fn stall_days() -> i64 {
         .unwrap_or(DEFAULT_STALL_DAYS)
 }
 
-/// Whole days between `then` and now, never negative.
+/// Whole calendar days between `then` and now, never negative.
 fn days_since(then: chrono::DateTime<chrono::FixedOffset>) -> i64 {
     (chrono::Utc::now() - then.with_timezone(&chrono::Utc))
         .num_days()
@@ -249,7 +249,7 @@ async fn plan_smart_score(
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 
-/// `GET /api/prioritisation` filter.
+/// `GET /api/prioritization` filter.
 #[derive(Debug, Deserialize)]
 struct RankParams {
     /// How many rows to return (default 50, capped at [`RANK_CAP`]).
@@ -260,13 +260,13 @@ struct RankParams {
     band: Option<String>,
 }
 
-/// `GET /api/prioritisation?limit=&band=` — the ranked queue: what
+/// `GET /api/prioritization?limit=&band=` — the ranked queue: what
 /// deserves attention first.
 ///
 /// Unscored plans sort last and keep their `unscored` band, so "we have
 /// no evidence about this" never reads as "this is low value".
 #[debug_handler]
-async fn prioritisation(
+async fn prioritization(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,
@@ -441,11 +441,11 @@ async fn plan_lifecycle(
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 
-/// The prioritisation + lifecycle routes.
+/// The prioritization + lifecycle routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
-        .add("/prioritisation", get(prioritisation))
+        .add("/prioritization", get(prioritization))
         .add("/lifecycle", get(lifecycle))
         .add("/plans/{pid}/smart-score", get(plan_smart_score))
         .add("/plans/{pid}/lifecycle", get(plan_lifecycle))

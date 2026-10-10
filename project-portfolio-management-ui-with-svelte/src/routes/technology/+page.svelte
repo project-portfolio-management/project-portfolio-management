@@ -172,7 +172,7 @@
     {#if flow.median_lead_days === null}
       <span class="muted">no timed completions</span>
     {:else}
-      <strong>{flow.median_lead_days} days</strong>
+      <strong>{flow.median_lead_days} calendar days</strong>
     {/if}
     over {flow.timed_completions} timed completions
     {#if flow.undated_completions > 0}

@@ -123,8 +123,8 @@
     <span class="chip">stage: {summary.stage ?? "pre-gate"}</span>
     {#if summary.next_gate}<span class="chip">next: {summary.next_gate}</span>{/if}
     <span class="chip">open risks: {summary.risks.open}</span>
-    {#if summary.risks.materialised > 0}
-      <span class="chip red">materialised: {summary.risks.materialised}</span>
+    {#if summary.risks.materialized > 0}
+      <span class="chip red">materialized: {summary.risks.materialized}</span>
     {/if}
     {#if summary.risks.max_exposure !== null}
       <span class="chip">max exposure: {summary.risks.max_exposure}</span>
@@ -188,7 +188,7 @@
             <RiskInputs {risk} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
           </td>
           <td>{risk.probability}×{risk.impact} = <strong>{risk.exposure}</strong></td>
-          <td><span class="chip" class:red={risk.status === "materialised"}>{risk.status}</span></td>
+          <td><span class="chip" class:red={risk.status === "materialized"}>{risk.status}</span></td>
           <td>
             {#if risk.status === "open" || risk.status === "mitigating"}
               <button class="button danger small" onclick={() => act(() => ppm.escalateRisk(pid, risk.pid))}>

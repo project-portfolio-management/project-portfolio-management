@@ -46,7 +46,7 @@ with `cargo +nightly fuzz run <target> fuzz/artifacts/<target>/<file>`.
 
 `target/`, `corpus/`, `artifacts/`, and `coverage/` are git-ignored, so
 nothing carries between runs — CI's
-[`fuzz` stage](../../../scripts/ci-check.sh) is a short smoke run
+`fuzz` stage (family CI script, not in this repository) is a short smoke run
 (`FUZZ_SECONDS`, default 30, per target), not exhaustive fuzzing.
 
 ## Why this sub-crate declares `[workspace]`
@@ -59,4 +59,4 @@ such table — their parents are not workspace roots.)
 
 It declares no `rust-version`: cargo-fuzz is nightly-only, so the repo
 MSRV does not apply (see
-[`spec/rust-msrv-n-minus-2/index.md`](../../../spec/rust-msrv-n-minus-2/index.md) §2).
+`spec/rust-msrv-n-minus-2/index.md` (shared family guidance, not in this repository) §2).

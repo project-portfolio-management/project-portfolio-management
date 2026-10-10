@@ -61,7 +61,7 @@ async fn time_based_analysis_round_trip() {
         assert_eq!(entries.len(), 1, "creation writes the opening transition");
         assert_eq!(entries[0]["from_status"], Value::Null);
         assert_eq!(entries[0]["to_status"], "todo");
-        assert_eq!(entries[0]["backfilled"], false, "observed, not synthesised");
+        assert_eq!(entries[0]["backfilled"], false, "observed, not synthesized");
 
         // ── Each accepted move appends one transition.
         move_task(&request, &plan, &task, "in_progress").await;
@@ -435,7 +435,7 @@ async fn the_forecast_samples_throughput_and_refuses_a_thin_history() {
         assert!(forecast["horizon"]["at_least_items"].is_number());
 
         // Nothing is open, so the default batch is zero items — which
-        // takes zero days rather than being a refusal.
+        // takes zero calendar days rather than being a refusal.
         let empty_batch: Value = request
             .get(&format!("/api/plans/{plan}/forecast"))
             .await

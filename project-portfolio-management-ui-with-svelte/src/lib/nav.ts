@@ -9,7 +9,7 @@
 // owns (T-28f's own wording): there is no fixed list of valid values here.
 // Instead, a `view` matches when `/${view}` is already one of the app's
 // own nav hrefs (e.g. `/executive`, `/financials`, `/risk`, …) — an
-// unrecognised value is simply ignored, never an error. Absent/unmatched
+// unrecognized value is simply ignored, never an error. Absent/unmatched
 // `view` ⇒ today's behaviour, byte-for-byte: this is the "default is
 // today's full nav" contract T-28f states explicitly.
 
@@ -35,7 +35,7 @@ export const KNOWN_NAV_HREFS = [
   "/plans",
   "/plans/merge",
   "/dashboard",
-  "/prioritisation",
+  "/prioritization",
   "/lifecycle",
   "/reviews",
   "/automations",

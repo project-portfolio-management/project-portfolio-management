@@ -169,7 +169,7 @@ mod tests {
         assert!(!is_approver(&format!("person:{U1}"), None), "no identity");
         assert!(
             !is_approver(&format!("organization:{U1}"), Some(U1)),
-            "an organisation never decides"
+            "an organization never decides"
         );
         assert!(!is_approver("person:not-a-uuid", Some("not-a-uuid")));
     }

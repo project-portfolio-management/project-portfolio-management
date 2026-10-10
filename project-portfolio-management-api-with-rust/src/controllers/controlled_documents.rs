@@ -382,7 +382,7 @@ async fn new_version(
         return Err(unprocessable(&problems.join("; ")));
     }
     let txn = ctx.db.begin().await.map_err(db_err)?;
-    // Serialise per document so two people cannot both open "the next draft".
+    // Serialize per document so two people cannot both open "the next draft".
     txn.execute_unprepared(&format!(
         "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
         doc.pid
@@ -500,7 +500,7 @@ async fn submit(
         ));
     }
     let txn = ctx.db.begin().await.map_err(db_err)?;
-    // Serialise per document, then re-read: two submits cannot both pass the draft check.
+    // Serialize per document, then re-read: two submits cannot both pass the draft check.
     txn.execute_unprepared(&format!(
         "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
         doc.pid

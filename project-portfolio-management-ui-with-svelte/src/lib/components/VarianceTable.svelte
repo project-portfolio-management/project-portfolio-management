@@ -24,13 +24,13 @@
     {:else if s.plan_finish_slip_days === 0}
       The plan's finish is unchanged.
     {:else}
-      The plan's finish is {Math.abs(s.plan_finish_slip_days)} working day{Math.abs(s.plan_finish_slip_days) === 1 ? "" : "s"}
+      The plan's finish is {Math.abs(s.plan_finish_slip_days)} business day{Math.abs(s.plan_finish_slip_days) === 1 ? "" : "s"}
       {s.plan_finish_slip_days > 0 ? "later" : "earlier"} than baselined{s.removed > 0 && s.plan_finish_slip_days < 0 ? " (check the removed tasks: deleting work is not an improvement)" : ""}.
     {/if}
   </p>
   <div class="scroll">
     <table>
-      <caption class="sr-only">Schedule variance against the baseline, in working days</caption>
+      <caption class="sr-only">Schedule variance against the baseline, in business days</caption>
       <thead>
         <tr>
           <th scope="col">Task</th>

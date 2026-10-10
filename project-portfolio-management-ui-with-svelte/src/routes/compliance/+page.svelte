@@ -35,7 +35,7 @@
 
 {#if findings}
   <h2>Conformance findings</h2>
-  <p class="muted">gate-review recency threshold: {findings.review_days} days</p>
+  <p class="muted">gate-review recency threshold: {findings.review_days} calendar days</p>
   <table data-testid="compliance-findings">
     <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
     <tbody>

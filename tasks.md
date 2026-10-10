@@ -7,7 +7,8 @@ every checkbox below is ticked, and the "Not built" notes inside an entry are
 the remaining gaps. IDs are `LT-n` so they
 do not collide with the numbered build-out in
 [spec/13-tasks.md](spec/13-tasks.md); promote an item there (as `T-29…`) when
-it is scheduled. Sizes: S ≈ a day, M ≈ a few days, L ≈ a week+. A box is ticked
+it is scheduled. Sizes: S ≈ one business day, M ≈ a few business days, L ≈ a business week
+or more. A box is ticked
 only when an automated test or a clearly described manual check confirms the
 acceptance criterion.
 
@@ -88,13 +89,13 @@ audited; people stay references.
   edit history is kept; a notification fires once per recipient.
   *Reconcile with* the deferred `posts / comments` item in the API spec §9.
 
-- [x] **LT-5 (M) — File attachments.** **Landed 2026-10-03.** Service: the **artifact store** (`src/artifacts.rs`, 5 unit tests; local directory `PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR`, sharded random keys, a key can never escape the root) with its `artifacts` index (SHA-256, size, declared type, optional `expires_at`) and `attachments` (migrations `…_000015_artifacts`, `…_000016_attachments`); `POST /api/attachments` (the **raw body** + `Content-Type`, `?subject_kind=&subject_pid=&filename=`), list, **download**, remove (DELETE + POST twin). **Refused before anything is stored:** a type outside the allow-list (pdf, png, jpeg, gif, webp, txt, csv, markdown, json, docx, xlsx, pptx — never html, svg, archives, executables), an empty file, a file over the cap (10 MiB default) — the test asserts **zero bytes on disk** after each refusal. The stored SHA-256 equals the bytes' hash and is **re-checked on every download** (a tampered file is 500, never served). A download is **re-authorised on the subject** (ABAC + private plan), served `nosniff`, `private, no-store`, `attachment`, with an ASCII fallback **and** the RFC 5987 UTF-8 name — a non-Latin filename survives and is never doubled. Subjects: plan, task, risk, proposal, idea, canvas item, budget line, scenario. 1 DB-gated test. **Not built:** an expiry sweep (this is T-8's); front-end; multipart upload; the gate-review subject kind. `attachments` table
+- [x] **LT-5 (M) — File attachments.** **Landed 2026-10-03.** Service: the **artifact store** (`src/artifacts.rs`, 5 unit tests; local directory `PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR`, sharded random keys, a key can never escape the root) with its `artifacts` index (SHA-256, size, declared type, optional `expires_at`) and `attachments` (migrations `…_000015_artifacts`, `…_000016_attachments`); `POST /api/attachments` (the **raw body** + `Content-Type`, `?subject_kind=&subject_pid=&filename=`), list, **download**, remove (DELETE + POST twin). **Refused before anything is stored:** a type outside the allow-list (pdf, png, jpeg, gif, webp, txt, csv, markdown, json, docx, xlsx, pptx — never html, svg, archives, executables), an empty file, a file over the cap (10 MiB default) — the test asserts **zero bytes on disk** after each refusal. The stored SHA-256 equals the bytes' hash and is **re-checked on every download** (a tampered file is 500, never served). A download is **re-authorized on the subject** (ABAC + private plan), served `nosniff`, `private, no-store`, `attachment`, with an ASCII fallback **and** the RFC 5987 UTF-8 name — a non-Latin filename survives and is never doubled. Subjects: plan, task, risk, proposal, idea, canvas item, budget line, scenario. 1 DB-gated test. **Not built:** an expiry sweep (this is T-8's); front-end; multipart upload; the gate-review subject kind. `attachments` table
   (`subject_kind`, `subject_pid`, `artifact_id`, `filename`, `content_type`,
   `bytes`, `sha256`, `uploaded_by`) over the **artifact store from T-8 §7**.
   Upload, list, download, soft-delete; size and content-type allow-list.
   **Acceptance:** an upload outside the allow-list or over the cap is refused
   before it is stored; the stored `sha256` matches the bytes; a download is
-  re-authorised against the *subject's* ABAC, not just the attachment's;
+  re-authorized against the *subject's* ABAC, not just the attachment's;
   UTF-8 filenames survive upload and download (Leantime shipped a bug here).
   *Blocked on:* T-8 step 1–2 (artifact store). Gate-review and risk evidence
   are the first consumers.
@@ -120,7 +121,7 @@ audited; people stay references.
 - [x] **LT-8 (M) — Wiki / documents** **Landed 2026-10-03.** **Decision taken (the recommended option (b)): typed links, not a wiki.** `plan_links` (migration `m20261003_000020_plan_links`), `POST/GET /api/plans/{pid}/links`, remove (DELETE + POST twin); `src/plan_links.rs` (2 unit tests) + 1 DB-gated test. A plan links to where its real documents live (docs, repo, ticket, design, chat, other); the service stores the link and **never fetches or renders it**. **Only absolute http(s) URLs with a host** — never `javascript:`, `data:`, `file:`, a protocol-relative URL, or one with embedded credentials (asserted). One link per URL per plan; ≤100 per plan; audited. **Not built:** a wiki or controlled documents (PL-6 stays a separate, undecided item); front-end. — **decide first.** Options:
   (a) build `pages` + `page_versions` with templates; (b) a `links` field that
   points plans at an external doc system; (c) refuse. Recommendation: **(b)**
-  first. A registry that stores prose competes with the organisation's real
+  first. A registry that stores prose competes with the organization's real
   docs tool, and links are cheap. Revisit (a) only if LT-1/LT-4 usage shows
   people pasting long text into descriptions.
   **Acceptance (for (b)):** a plan carries typed links (`kind`, `url`, label);
@@ -191,7 +192,7 @@ Derived from [plan.md](plan.md) "Second source: Redmine" (research 2026-10-02).
 IDs are `RM-n`; same sizes, tick rule and conventions as above. Nothing here is
 started.
 
-- [x] **RM-1 (L) — Typed custom fields.** **Landed 2026-10-02.** Service: `custom_field_defs` + `custom_field_values` (a separate table, so a value can **never** reach the matcher), six routes under `/api/custom-fields`, six types validated and normalised (`src/custom_fields.rs`, 6 unit tests), kind scoping, atomic writes, equality/contains search, withdrawn definitions keep readable values. **Deviation:** a **required** field blocks **task** create (the `custom` map on the task body); plan create takes the bare matcher `Plan`, so a required plan field is reported as `missing_required` on read rather than blocking create. **Not built:** list-endpoint filtering inside `GET /api/plans` (use `/custom-fields/search`), saved-report projection, front-end. `custom_field_defs` (`key`,
+- [x] **RM-1 (L) — Typed custom fields.** **Landed 2026-10-02.** Service: `custom_field_defs` + `custom_field_values` (a separate table, so a value can **never** reach the matcher), six routes under `/api/custom-fields`, six types validated and normalized (`src/custom_fields.rs`, 6 unit tests), kind scoping, atomic writes, equality/contains search, withdrawn definitions keep readable values. **Deviation:** a **required** field blocks **task** create (the `custom` map on the task body); plan create takes the bare matcher `Plan`, so a required plan field is reported as `missing_required` on read rather than blocking create. **Not built:** list-endpoint filtering inside `GET /api/plans` (use `/custom-fields/search`), saved-report projection, front-end. `custom_field_defs` (`key`,
   `label`, `type` ∈ `text | date | bool | integer | list | multi_list`,
   `applies_to` ∈ `plan | task`, optional `kinds[]`, `required`, `options[]`)
   and values stored on the record's `data` JSON under a `custom` key, validated
@@ -266,7 +267,7 @@ started.
   set; the toggle is audited; a plan created from the personal preset exposes
   only its modules. *Pairs with LT-12 simple mode.*
 
-- [x] **RM-8 (S) — Private plans and tasks.** **Landed 2026-10-02.** Service: `plan_access_settings` (migration `m20261003_000011_plan_access_settings`), `GET/PUT /api/plans/{pid}/access`; `src/plan_access.rs` (4 unit tests) + `tests/plan_access.rs` end to end with real tokens. A guard layer answers **404, never 403** to a non-member for `/api/plans/{pid}` and everything beneath it; plan **lists, duplicate checks**, discussion/watchers/approvals/custom fields (via the shared resolver), task relations and **My work** all omit or 404 a private plan for a non-member (My work counts it in `omitted_unreadable`); members and `access=admin` callers see it; making a plan private always adds the caller as a member; a private plan is **hidden from an anonymous caller (fail closed)**; changes are audited. **NOT COVERED — important:** cross-plan **aggregate views** (at-a-glance, executive, board, financials, reports, capacity, scenarios) still include a private plan's figures, so "private" hides a plan's *records*, not its contribution to portfolio totals (see **RM-8b**). **Search results** are filtered by the same hidden set but were not separately tested. **Lesson:** loco's `create_table` pluralises table names — a singular name creates a different table than the SQL refers to; the scaffolder now asserts a plural name. A `visibility` of `private`
+- [x] **RM-8 (S) — Private plans and tasks.** **Landed 2026-10-02.** Service: `plan_access_settings` (migration `m20261003_000011_plan_access_settings`), `GET/PUT /api/plans/{pid}/access`; `src/plan_access.rs` (4 unit tests) + `tests/plan_access.rs` end to end with real tokens. A guard layer answers **404, never 403** to a non-member for `/api/plans/{pid}` and everything beneath it; plan **lists, duplicate checks**, discussion/watchers/approvals/custom fields (via the shared resolver), task relations and **My work** all omit or 404 a private plan for a non-member (My work counts it in `omitted_unreadable`); members and `access=admin` callers see it; making a plan private always adds the caller as a member; a private plan is **hidden from an anonymous caller (fail closed)**; changes are audited. **NOT COVERED — important:** cross-plan **aggregate views** (at-a-glance, executive, board, financials, reports, capacity, scenarios) still include a private plan's figures, so "private" hides a plan's *records*, not its contribution to portfolio totals (see **RM-8b**). **Search results** are filtered by the same hidden set but were not separately tested. **Lesson:** loco's `create_table` pluralizes table names — a singular name creates a different table than the SQL refers to; the scaffolder now asserts a plural name. A `visibility` of `private`
   limits a plan (and its tasks) to its members and admins, via the existing
   record-level ABAC rather than a second mechanism.
   **Acceptance:** a non-member gets 404, not 403, so existence is not
@@ -289,7 +290,7 @@ started.
   billable and non-billable never merge without both shown; a person with no
   entries in range reports `null`, not zero.
 
-- [x] **RM-11 (S) — Outbound email sink** **Landed 2026-10-03.** Delivered with LT-6 (one sink framework): an `email` sink — **outbound only, inbound email stays refused** — sent through loco's mailer (`ctx.mailer`; the test profile's stub, asserted), from `PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM` (unset ⇒ the delivery fails with that reason and is never retried). The subject and body carry **only the notification's text** (a header-injection attempt in the address or text is neutralised, unit-tested), the channel is `email` in preferences so a user can switch it off per kind, and a person with no sink or no address receives nothing by email while the notification still lands in-app. **Decision taken:** built (the in-app-only stance is unchanged for anyone who registers no email sink). **Not built:** digest emails; a verified-address handshake (an address is trusted as given by its owner). — **decide first.** In-app only is a
+- [x] **RM-11 (S) — Outbound email sink** **Landed 2026-10-03.** Delivered with LT-6 (one sink framework): an `email` sink — **outbound only, inbound email stays refused** — sent through loco's mailer (`ctx.mailer`; the test profile's stub, asserted), from `PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM` (unset ⇒ the delivery fails with that reason and is never retried). The subject and body carry **only the notification's text** (a header-injection attempt in the address or text is neutralized, unit-tested), the channel is `email` in preferences so a user can switch it off per kind, and a person with no sink or no address receives nothing by email while the notification still lands in-app. **Decision taken:** built (the in-app-only stance is unchanged for anyone who registers no email sink). **Not built:** digest emails; a verified-address handshake (an address is trusted as given by its owner). — **decide first.** In-app only is a
   stated stance. If email is wanted: a sink in LT-6's framework (templates, a
   per-user opt-in, a digest option, no tracking pixels). Inbound email is
   refused (plan.md §10).
@@ -347,7 +348,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   database, not memory); the log is append-only; a process definition edited
   mid-run does not change a running execution (it is pinned by version).
 
-- [x] **PL-3 (M) — Live board updates (SSE).** **Landed 2026-10-03.** Service: `GET /api/plans/{pid}/live` (`text/event-stream`); `src/live.rs` (3 unit tests) + 1 DB-gated test using the `limit`/`idle_ms` parameters to make the infinite stream finite. Events `task_created`, `task_moved`, `task_updated`, `comment_added` (identifiers and the changed fact only). Read-checked **once at connect** (ABAC + private plans; unknown plan 404 before any event). Resume with `Last-Event-ID` from a **bounded ring**; a gap larger than the ring ⇒ a `resync` event, never silence; a slow subscriber is told to `resync` and **disconnected** (bounded channel, no unbounded buffer); another plan's events are not delivered. **Limits, stated plainly:** the hub is **per process** (with several replicas an event reaches only clients on the replica that handled the write — the outbox relay is the extension); authorisation is checked at connect, not per event; a soft-deleted plan is refused at connect but an open stream is not actively closed. New deps: `async-stream`, `futures-util`, tokio `sync`+`time`. **Not built:** front-end subscription. `GET
+- [x] **PL-3 (M) — Live board updates (SSE).** **Landed 2026-10-03.** Service: `GET /api/plans/{pid}/live` (`text/event-stream`); `src/live.rs` (3 unit tests) + 1 DB-gated test using the `limit`/`idle_ms` parameters to make the infinite stream finite. Events `task_created`, `task_moved`, `task_updated`, `comment_added` (identifiers and the changed fact only). Read-checked **once at connect** (ABAC + private plans; unknown plan 404 before any event). Resume with `Last-Event-ID` from a **bounded ring**; a gap larger than the ring ⇒ a `resync` event, never silence; a slow subscriber is told to `resync` and **disconnected** (bounded channel, no unbounded buffer); another plan's events are not delivered. **Limits, stated plainly:** the hub is **per process** (with several replicas an event reaches only clients on the replica that handled the write — the outbox relay is the extension); authorization is checked at connect, not per event; a soft-deleted plan is refused at connect but an open stream is not actively closed. New deps: `async-stream`, `futures-util`, tokio `sync`+`time`. **Not built:** front-end subscription. `GET
   /api/plans/{pid}/live` as `text/event-stream`: task created / moved / edited,
   comment added, with the same record-level read check as the plan.
   **Acceptance:** a task move by one client appears on a second open stream;
@@ -412,7 +413,7 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   index. *Privacy:* extracted text is personal data if the file is; it
   inherits the attachment's masking.
 
-- [x] **PL-10 (S) — Printable output.** **Landed 2026-10-03.** Service: `GET /api/board/pack.pdf?from=&to=&as_of=` and `GET /api/plans/{pid}/summary.pdf?as_of=`; a dependency-free PDF writer (`src/pdf.rs`, 5 unit tests: valid xref offsets, determinism, escaping so a plan name cannot inject PDF syntax, WinAnsi fallback, wrapping/pagination) + 1 DB-gated test. The board PDF is built from the **same function** as the JSON pack (`oversight::board_pack_body`, extracted) **behind the same oversight authorisation** — a caller denied one is denied the other. The plan summary is rendered from the **masked** record and counts only: the test asserts the lead, assignee and risk-owner ids and the owner organisation name **never appear in the text layer**. **Deterministic when stamped**: with `?as_of=` two renders are byte-identical (asserted); without it `as_of` is the render time. **Not signed** — signing needs a named signer and key policy (still an open question in `plan.md`). Text outside WinAnsi is written as `?`, not guessed. **Not built:** signing; a front-end link. `GET …/pack.pdf` for the board pack
+- [x] **PL-10 (S) — Printable output.** **Landed 2026-10-03.** Service: `GET /api/board/pack.pdf?from=&to=&as_of=` and `GET /api/plans/{pid}/summary.pdf?as_of=`; a dependency-free PDF writer (`src/pdf.rs`, 5 unit tests: valid xref offsets, determinism, escaping so a plan name cannot inject PDF syntax, WinAnsi fallback, wrapping/pagination) + 1 DB-gated test. The board PDF is built from the **same function** as the JSON pack (`oversight::board_pack_body`, extracted) **behind the same oversight authorization** — a caller denied one is denied the other. The plan summary is rendered from the **masked** record and counts only: the test asserts the lead, assignee and risk-owner ids and the owner organization name **never appear in the text layer**. **Deterministic when stamped**: with `?as_of=` two renders are byte-identical (asserted); without it `as_of` is the render time. **Not signed** — signing needs a named signer and key policy (still an open question in `plan.md`). Text outside WinAnsi is written as `?`, not guessed. **Not built:** signing; a front-end link. `GET …/pack.pdf` for the board pack
   and a plan summary, server-rendered, deterministic for fixed data, carrying
   its `as_of`. Signing is **out of scope** until a signer is named (plan.md
   open question).
@@ -458,7 +459,7 @@ evidence is `null` with a reason, never zero; every derived figure names the
 formula and the baseline version it used; no claim of ANSI/EIA-748 or DCMA
 compliance is made anywhere.
 
-- [x] **SC-1 (L) — CPM engine: float, all relationship types, multiple paths.** **Landed 2026-10-03.** Pure engine `src/cpm.rs` (15 unit tests incl. the textbook network worked by hand, lag changing which chain is critical, each of FS/SS/FF/SF, a lead, equal chains both critical, near-critical, cycles, unscheduled reasons, DST-free dates, and a 200-network randomised property test that **found and fixed a real bug**: free float exceeding total float under a lead). `GET /api/plans/{pid}/cpm?near=`: early/late start and finish, **total and free float**, critical and near-critical, **every** critical chain, `pushed_days` (logic forcing a start later than planned), `unscheduled` with a reason, ignored edges listed, cycle ⇒ 422. **Fixes F-6**: the plan-level `critical_path` now counts lag (regression test `critical_path_counts_lag`), and `/schedule` gains a float-based `cpm` block over a plan's children. **Deviations, stated plainly:** the old `critical_path` field and `on_critical_path` flag **remain the longest dependent chain** (so the existing Gantt highlight and test are unchanged) — the `cpm` block is the float-based answer and **the one to trust when they differ** (they do differ whenever a successor has slack); the calendar is **seven-day** until SC-2, so durations are not yet working-day-aware; the container plan is a summary and is not a node; completed tasks are included and carry their status; `violations()` judges FS edges only. **Not built:** constraints and negative float (SC-2), the front-end Gantt highlight switch, a unified plan+task run.
+- [x] **SC-1 (L) — CPM engine: float, all relationship types, multiple paths.** **Landed 2026-10-03.** Pure engine `src/cpm.rs` (15 unit tests incl. the textbook network worked by hand, lag changing which chain is critical, each of FS/SS/FF/SF, a lead, equal chains both critical, near-critical, cycles, unscheduled reasons, DST-free dates, and a 200-network randomized property test that **found and fixed a real bug**: free float exceeding total float under a lead). `GET /api/plans/{pid}/cpm?near=`: early/late start and finish, **total and free float**, critical and near-critical, **every** critical chain, `pushed_days` (logic forcing a start later than planned), `unscheduled` with a reason, ignored edges listed, cycle ⇒ 422. **Fixes F-6**: the plan-level `critical_path` now counts lag (regression test `critical_path_counts_lag`), and `/schedule` gains a float-based `cpm` block over a plan's children. **Deviations, stated plainly:** the old `critical_path` field and `on_critical_path` flag **remain the longest dependent chain** (so the existing Gantt highlight and test are unchanged) — the `cpm` block is the float-based answer and **the one to trust when they differ** (they do differ whenever a successor has slack); the calendar is **seven-day** until SC-2, so durations are not yet business-day-aware; the container plan is a summary and is not a node; completed tasks are included and carry their status; `violations()` judges FS edges only. **Not built:** constraints and negative float (SC-2), the front-end Gantt highlight switch, a unified plan+task run.
   A pure module (`src/cpm.rs`): forward pass (early start / finish), backward
   pass (late start / finish), **total float** (LS − ES) and **free float**,
   relationship types **FS, SS, FF, SF** each with **lag and lead** (negative
@@ -472,7 +473,7 @@ compliance is made anywhere.
   `unscheduled` with a reason, never given a float of zero. **Fixes F-6**
   (lag was ignored by the critical path).
   **Acceptance:** a textbook network (golden test, numbers worked by hand in
-  the test) gives the published ES/EF/LS/LF and floats; a 10-day lag lengthens
+  the test) gives the published ES/EF/LS/LF and floats; a 10-calendar-day lag lengthens
   the chain and can change which chain is critical (a test that fails on the
   old code); SS, FF and SF each behave per definition; two equal chains are
   both critical; total float ≥ free float ≥ 0 unless a constraint makes it
@@ -480,16 +481,16 @@ compliance is made anywhere.
   input from import yields an error, not a hang; items without dates are
   `unscheduled`, not `float: 0`; the Gantt's critical highlight reads from this.
 
-- [x] **SC-2 (M) — Working calendars and constraints.** **Landed 2026-10-03.** Migration `…_000026_work_calendars` (`work_calendars` + `tasks.constraint_kind`, `constraint_date`, `deadline`). **Calendars, per plan and per person (owner decision):** `GET/PUT /api/plans/{pid}/calendar` and `GET/PUT /api/me/calendar` (weekday mask `1111100` + holidays, validated, audited); a plan with none works seven days, so every stored plan is unchanged. The engine counts **working days** (Fri + 2 = Mon; a Monday holiday is skipped). **Per-person:** a task is scheduled on its plan's calendar and the assignee's **narrows it** (their weekly pattern, holidays and recorded absences from `non_working_periods`, intersected) — a 4-day task for a Mon–Wed person runs Mon, Tue, Wed, next Mon; lag and float stay in plan days; an assignee sharing no working day with the plan is listed under `calendar_conflicts`, not hidden. **Constraints:** `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo` plus a soft `deadline`; `snlt`/`fnlt`/deadline bound the **late** dates so an unmeetable one gives **negative float** and never moves an early date (tested); `mso`/`mfo` are **hard**, override logic and a node pinned earlier than its predecessors allow is flagged `hard_conflict`. **Setting a hard constraint needs a reason and, with auth on, `access=admin` or `scheduling=hard_constraints`** (403 otherwise, tested end to end with real tokens); every change is audited with old, new and the reason. Engine tests: 14 new, incl. a 200-network property test over per-node calendars and constraints. **Deviations:** **`alap` is not supported** (it needs a shift-late pass and is refused with a message); the permission is a token-attribute check in the handler, **not a policy-file entry** — moving it into the ABAC policy is a follow-up; constraints are on tasks only (a plan node has none); the new calendars do not yet feed the capacity rollup (PJ-3); `/schedule`'s plan-level float block uses the plan calendar. **Not built:** the front-end calendar editor, `alap`. A plan **working
+- [x] **SC-2 (M) — Working calendars and constraints.** **Landed 2026-10-03.** Migration `…_000026_work_calendars` (`work_calendars` + `tasks.constraint_kind`, `constraint_date`, `deadline`). **Calendars, per plan and per person (owner decision):** `GET/PUT /api/plans/{pid}/calendar` and `GET/PUT /api/me/calendar` (weekday mask `1111100` + holidays, validated, audited); a plan with none works seven days, so every stored plan is unchanged. The engine counts **business days** (Fri + 2 = Mon; a Monday holiday is skipped). **Per-person:** a task is scheduled on its plan's calendar and the assignee's **narrows it** (their weekly pattern, holidays and recorded absences from `non_working_periods`, intersected) — a 4-business-day task for a Mon–Wed person runs Mon, Tue, Wed, next Mon; lag and float stay in the plan's business days; an assignee sharing no business day with the plan is listed under `calendar_conflicts`, not hidden. **Constraints:** `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo` plus a soft `deadline`; `snlt`/`fnlt`/deadline bound the **late** dates so an unmeetable one gives **negative float** and never moves an early date (tested); `mso`/`mfo` are **hard**, override logic and a node pinned earlier than its predecessors allow is flagged `hard_conflict`. **Setting a hard constraint needs a reason and, with auth on, `access=admin` or `scheduling=hard_constraints`** (403 otherwise, tested end to end with real tokens); every change is audited with old, new and the reason. Engine tests: 14 new, incl. a 200-network property test over per-node calendars and constraints. **Deviations:** **`alap` is not supported** (it needs a shift-late pass and is refused with a message); the permission is a token-attribute check in the handler, **not a policy-file entry** — moving it into the ABAC policy is a follow-up; constraints are on tasks only (a plan node has none); the new calendars do not yet feed the capacity rollup (PJ-3); `/schedule`'s plan-level float block uses the plan calendar. **Not built:** the front-end calendar editor, `alap`. A plan **working
   calendar** (working weekdays, plus holidays; reuse `non_working_periods`
-  where they apply), durations measured in **working days** by the engine
+  where they apply), durations measured in **business days** by the engine
   (fixes F-7), and a per-task **constraint**: `asap` (default), `alap`,
   `snet`, `snlt`, `fnet`, `fnlt`, `mso`, `mfo`, with a separate soft
   **deadline** that **never moves an early date** but bounds the late dates,
   so a threatened deadline produces negative float (corrected 2026-10-03: the
   first wording said it changed no date, which cannot give negative float). `mso` / `mfo` are flagged **hard**. Setting a hard
   constraint needs a role (see plan.md Q) and is audited with a reason.
-  **Acceptance:** a Friday-to-Monday task is 2 working days; a holiday inside
+  **Acceptance:** a Friday-to-Monday task is 2 business days; a holiday inside
   a span is skipped; `fnlt` earlier than the early finish yields **negative
   total float** rather than silently shifting the date; `mso` overrides logic
   and is reported as a hard constraint on that item; a deadline never changes
@@ -497,7 +498,7 @@ compliance is made anywhere.
   plan is unchanged (an existing test passes untouched); constraint and
   calendar changes are audited.
 
-- [x] **SC-3 (M) — Schedule baselines.** **Landed 2026-10-03.** Migrations `…_000030_schedule_baselines` and `…_000031_schedule_baseline_tasks` (no `deleted_at`, no update path); `POST/GET /api/plans/{pid}/schedule-baselines` and `GET …/schedule-variance?baseline=`; `src/baselines.rs` (8 unit tests) + 2 DB tests. **Append-only:** no update or delete route exists (tested: PUT/DELETE are 404/405); a re-baseline is the next version with a **required reason** (≤500 chars) and who took it, and the earlier version stays comparable (tested: against v1 it still says 2 slipped, against v2 none); **bounded per plan** (11, `PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES`) — at the limit it is **409 "never overwritten"**, not a silent overwrite; refused 422 with nothing scheduled or a cycle. The snapshot is the **critical-path engine's early dates** at that moment, so baseline and variance share a footing; variance is in **working days of the plan's calendar**. **Standing is explicit:** slipped / pulled_in / on_baseline, **added — not slip**, **removed — kept with its baselined dates**, **unmeasurable — null with the reason, never zero** (tested, and the counts reconcile: matched+removed = baseline tasks, matched+added = current tasks). The plan's own finish movement is stated and can be **negative because a long task was deleted** (tested), which the page flags. With no baseline: `baseline: null, variance: null, reason: no_baseline`. Front-end: take a baseline, pick a version, an outline under each Gantt bar where it was baselined, a variance table with a marker and a sentence per row. **Deviations:** the baseline covers **tasks** (the plan-level network of children is not baselined); two baselines cannot be compared with each other, only each with now; the snapshot has no per-task actuals (SC-4). `schedule_baselines` (+ per-task rows),
+- [x] **SC-3 (M) — Schedule baselines.** **Landed 2026-10-03.** Migrations `…_000030_schedule_baselines` and `…_000031_schedule_baseline_tasks` (no `deleted_at`, no update path); `POST/GET /api/plans/{pid}/schedule-baselines` and `GET …/schedule-variance?baseline=`; `src/baselines.rs` (8 unit tests) + 2 DB tests. **Append-only:** no update or delete route exists (tested: PUT/DELETE are 404/405); a re-baseline is the next version with a **required reason** (≤500 chars) and who took it, and the earlier version stays comparable (tested: against v1 it still says 2 slipped, against v2 none); **bounded per plan** (11, `PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES`) — at the limit it is **409 "never overwritten"**, not a silent overwrite; refused 422 with nothing scheduled or a cycle. The snapshot is the **critical-path engine's early dates** at that moment, so baseline and variance share a footing; variance is in **business days of the plan's calendar**. **Standing is explicit:** slipped / pulled_in / on_baseline, **added — not slip**, **removed — kept with its baselined dates**, **unmeasurable — null with the reason, never zero** (tested, and the counts reconcile: matched+removed = baseline tasks, matched+added = current tasks). The plan's own finish movement is stated and can be **negative because a long task was deleted** (tested), which the page flags. With no baseline: `baseline: null, variance: null, reason: no_baseline`. Front-end: take a baseline, pick a version, an outline under each Gantt bar where it was baselined, a variance table with a marker and a sentence per row. **Deviations:** the baseline covers **tasks** (the plan-level network of children is not baselined); two baselines cannot be compared with each other, only each with now; the snapshot has no per-task actuals (SC-4). `schedule_baselines` (+ per-task rows),
   **append-only and versioned**, mirroring T-28b: snapshot every task's planned
   start, finish and working duration; a re-baseline is a new version **with a
   reason**; a bounded number kept per plan (default 11, as scheduling tools do).
@@ -537,7 +538,7 @@ compliance is made anywhere.
   hidden; the series sums to the totals; the roll-up never adds two currencies;
   RAG thresholds are per deployment and shown in the response.
 
-- [x] **SC-6 (M) — Resource leveling (advisory).** **Landed 2026-10-04 (API).** `src/leveling.rs` (11 unit tests incl. a 150-network property test: finish never moves, no dependency broken, no negative float) + `GET /api/plans/{pid}/leveling[?allow_critical=&load_percent=]` and `POST …/leveling/apply` + a DB test. Advice only: the first over-allocated day is resolved by keeping tasks in priority order (cannot-move, then least float, then earliest start, then input order) and delaying the lowest-priority one left; a delay is accepted only if the re-run network has no new negative float or hard-constraint conflict and the finish is unchanged (unless `allow_critical`, which marks the move and states the finish impact). Started tasks and hard-constrained tasks never move; what cannot be fixed is listed with a reason, never forced. Apply needs `confirm=true`, recomputes and refuses (409) any move not in the current proposal, sets `start_date` through the bulk edit (which gained `start_date`) and writes one `task_leveled` audit entry per task. Callers who may not manage a person see `person-N`, no ref, no percentages. **Deviations, stated plainly:** a task has no per-task effort, so each unfinished assigned task asks `load_percent` (default 100) of its assignee per working day; this plan's own allocations are not counted (they describe the same work), other plans' committed ones are fixed background; only this plan's tasks move; delays are by one working day per step (greedy, deterministic, capped at 3 000 iterations, `truncated` says so); a delayed task's stored `start_date` is a lower bound. **Not built:** the front-end leveling diff (SC-11). Original spec: Detect over-allocation by
+- [x] **SC-6 (M) — Resource leveling (advisory).** **Landed 2026-10-04 (API).** `src/leveling.rs` (11 unit tests incl. a 150-network property test: finish never moves, no dependency broken, no negative float) + `GET /api/plans/{pid}/leveling[?allow_critical=&load_percent=]` and `POST …/leveling/apply` + a DB test. Advice only: the first over-allocated day is resolved by keeping tasks in priority order (cannot-move, then least float, then earliest start, then input order) and delaying the lowest-priority one left; a delay is accepted only if the re-run network has no new negative float or hard-constraint conflict and the finish is unchanged (unless `allow_critical`, which marks the move and states the finish impact). Started tasks and hard-constrained tasks never move; what cannot be fixed is listed with a reason, never forced. Apply needs `confirm=true`, recomputes and refuses (409) any move not in the current proposal, sets `start_date` through the bulk edit (which gained `start_date`) and writes one `task_leveled` audit entry per task. Callers who may not manage a person see `person-N`, no ref, no percentages. **Deviations, stated plainly:** a task has no per-task effort, so each unfinished assigned task asks `load_percent` (default 100) of its assignee per business day; this plan's own allocations are not counted (they describe the same work), other plans' committed ones are fixed background; only this plan's tasks move; delays are by one business day per step (greedy, deterministic, capped at 3 000 iterations, `truncated` says so); a delayed task's stored `start_date` is a lower bound. **Not built:** the front-end leveling diff (SC-11). Original spec: Detect over-allocation by
   period (day or week) from allocations and dated tasks, then **propose** a
   deterministic set of delays that stay **within total float** (SC-1), respect
   hard constraints (SC-2) and priority (higher priority keeps its date).
@@ -551,7 +552,7 @@ compliance is made anywhere.
   moved task; a person's allocation detail is masked for a caller who may not
   see people (the same masking as `/capacity`).
 
-- [x] **SC-7 (M) — Portfolio resource management.** **Landed 2026-10-04 (API).** Migration `…_000035_resource_roles`; `src/portfolio_resources.rs` (8 unit tests) + `GET /api/resource-plan[?from&to&period=week|month&group_by=role|skill&scenario=]`, `GET …/resource-plan/hours`, `GET/PUT /api/resource-roles`, `POST /api/plans/{pid}/allocations/{a_pid}/resolve` + a DB test. Demand and supply are summed as integer **percent-days** and only then turned into **FTE** (percent-days / (100 × days)); the gap is supply minus demand in FTE with **headcount a separate field**. A **placeholder** is `POST …/allocations {placeholder: true, role, percent}` (stored as `person_ref = placeholder:<uuid>`; role mandatory, no person), counts toward its role and is reported apart (`placeholder_fte`, plus a `placeholders` list to resolve); it **never enters per-person capacity** (`/capacity`, commit, leveling exclude it) or the skill-gap lookup. **Resolve** is a manager's call, 409 `over_capacity` with the numbers unless `confirm=true`, audited. **Demand with no role and people with no role are the `unclassified` row, never dropped**; a role nobody supplies has supply 0 and a negative gap. **Proposed bookings are a separate series** (PJ-4) and never enter demand, gap or totals. The per-plan series sums to the per-period totals (tested). **What-if:** `?scenario=` limits demand to a scenario's plans. **Hours:** planned = a named committed allocation's percent of 8 h on each Mon–Fri; actual = recorded time entries; a plan with none is `null` + `no_actuals`, never zero; time by someone with no allocation on that plan is **`unplanned_actuals`**, per person for a manager and per plan with a count for anyone else. A caller without `access=admin`/`role=resource_manager` sees **roles and totals only** (`masked: true`, no person refs). **Deviations, stated plainly:** there was no person→role registry, so supply needs `resource_roles` (one primary role per person; a person with several roles counts once, under the primary); days are **calendar days** on both sides (working calendars, SC-2, are not applied to supply); skills are **demand-only** and overlap (skills are resolved live from the worker service, never stored); the 8-hour day is a constant (`working_time_configs` is not consulted); actuals count recorded entries **whether or not the timesheet week is approved**; the scenario filter is by plan membership only (scenario proposals are not demand). **Not built:** the heatmap front-end (SC-11). Original spec: Demand vs capacity **by role
+- [x] **SC-7 (M) — Portfolio resource management.** **Landed 2026-10-04 (API).** Migration `…_000035_resource_roles`; `src/portfolio_resources.rs` (8 unit tests) + `GET /api/resource-plan[?from&to&period=week|month&group_by=role|skill&scenario=]`, `GET …/resource-plan/hours`, `GET/PUT /api/resource-roles`, `POST /api/plans/{pid}/allocations/{a_pid}/resolve` + a DB test. Demand and supply are summed as integer **percent-days** and only then turned into **FTE** (percent-days / (100 × calendar days)); the gap is supply minus demand in FTE with **headcount a separate field**. A **placeholder** is `POST …/allocations {placeholder: true, role, percent}` (stored as `person_ref = placeholder:<uuid>`; role mandatory, no person), counts toward its role and is reported apart (`placeholder_fte`, plus a `placeholders` list to resolve); it **never enters per-person capacity** (`/capacity`, commit, leveling exclude it) or the skill-gap lookup. **Resolve** is a manager's call, 409 `over_capacity` with the numbers unless `confirm=true`, audited. **Demand with no role and people with no role are the `unclassified` row, never dropped**; a role nobody supplies has supply 0 and a negative gap. **Proposed bookings are a separate series** (PJ-4) and never enter demand, gap or totals. The per-plan series sums to the per-period totals (tested). **What-if:** `?scenario=` limits demand to a scenario's plans. **Hours:** planned = a named committed allocation's percent of 8 h on each Mon–Fri; actual = recorded time entries; a plan with none is `null` + `no_actuals`, never zero; time by someone with no allocation on that plan is **`unplanned_actuals`**, per person for a manager and per plan with a count for anyone else. A caller without `access=admin`/`role=resource_manager` sees **roles and totals only** (`masked: true`, no person refs). **Deviations, stated plainly:** there was no person→role registry, so supply needs `resource_roles` (one primary role per person; a person with several roles counts once, under the primary); days are **calendar days** on both sides (working calendars, SC-2, are not applied to supply); skills are **demand-only** and overlap (skills are resolved live from the worker service, never stored); the 8-hour day is a constant (`working_time_configs` is not consulted); actuals count recorded entries **whether or not the timesheet week is approved**; the scenario filter is by plan membership only (scenario proposals are not demand). **Not built:** the heatmap front-end (SC-11). Original spec: Demand vs capacity **by role
   or skill and period** across plans (a heatmap's data), **generic
   placeholders** (role-only demand with no person yet) that can be resolved to a
   named person, and a **planned vs actual hours** report from timesheets
@@ -563,7 +564,7 @@ compliance is made anywhere.
   not see people sees roles and totals only; absent timesheets give `null` +
   `no_actuals`, not zero hours.
 
-- [x] **SC-8 (L) — Schedule-risk Monte Carlo.** **Landed 2026-10-04 (API).** Migration `…_000036_schedule_risk_inputs` (`tasks.duration_optimistic_days`/`duration_pessimistic_days`; `risks.task_pid`/`schedule_impact_days`/`schedule_probability_percent`); `src/schedule_risk.rs` (10 unit tests) + `GET /api/plans/{pid}/schedule-risk[?iterations&seed&distribution=triangular|pert&fallback_band_percent]`, `PUT …/tasks/{pid}/estimate`, `PUT …/risks/{pid}/schedule-impact` + a DB test. Each iteration draws whole working-day durations (triangular, or Beta-PERT weight 4), lets each register event strike with its probability, and **re-runs the full CPM analysis** (calendars, constraints and relationship types included). Output: **P10/P50/P80/P90 finish** (nearest rank), `cpm_finish_confidence_bp` (share finishing by the deterministic date), a **criticality index** per task (share of iterations with no float), a **sensitivity** correlation per task (null when either did not vary), a finish histogram. **Seeded** (default 1, echoed; SplitMix-scrambled xorshift64*): same seed ⇒ identical result (tested at unit and request level); with zero uncertainty **every percentile equals the CPM finish exactly** (tested, both distributions); percentiles are ordered; **iterations capped** (20 000; iterations × tasks ≤ 5 000 000) and refused, not truncated. **Assumptions echoed**, including `correlation: none` and the independence statement. A task with a likely duration but **no estimate uses the stated fallback** (± `fallback_band_percent`, default 20) and is marked `source=fallback` and listed — never treated as certain; an estimate not around the likely value is widened and flagged. A **risk event** needs a task, an impact and a probability and be open/mitigating; one missing a probability (or task, or impact, or closed, or on an unscheduled task) is **skipped and named with a reason**; risks with no schedule fields are only counted. **Deviations, stated plainly:** the register's 1–5 ordinal probability is **not** converted to a percent (that would be invented precision), so a schedule event needs its own `schedule_probability_percent`; a task's likely duration is its `duration_days`; durations are whole days, so a sub-day spread rounds; correlation between tasks is not modelled (the response says the spread is therefore narrower than a correlated one); the simulation covers one plan's tasks (not the portfolio); events add working days to a task, they do not move a start. **Not built:** the risk histogram front-end (SC-11). Original spec: Optimistic / likely / pessimistic
+- [x] **SC-8 (L) — Schedule-risk Monte Carlo.** **Landed 2026-10-04 (API).** Migration `…_000036_schedule_risk_inputs` (`tasks.duration_optimistic_days`/`duration_pessimistic_days`; `risks.task_pid`/`schedule_impact_days`/`schedule_probability_percent`); `src/schedule_risk.rs` (10 unit tests) + `GET /api/plans/{pid}/schedule-risk[?iterations&seed&distribution=triangular|pert&fallback_band_percent]`, `PUT …/tasks/{pid}/estimate`, `PUT …/risks/{pid}/schedule-impact` + a DB test. Each iteration draws whole business-day durations (triangular, or Beta-PERT weight 4), lets each register event strike with its probability, and **re-runs the full CPM analysis** (calendars, constraints and relationship types included). Output: **P10/P50/P80/P90 finish** (nearest rank), `cpm_finish_confidence_bp` (share finishing by the deterministic date), a **criticality index** per task (share of iterations with no float), a **sensitivity** correlation per task (null when either did not vary), a finish histogram. **Seeded** (default 1, echoed; SplitMix-scrambled xorshift64*): same seed ⇒ identical result (tested at unit and request level); with zero uncertainty **every percentile equals the CPM finish exactly** (tested, both distributions); percentiles are ordered; **iterations capped** (20 000; iterations × tasks ≤ 5 000 000) and refused, not truncated. **Assumptions echoed**, including `correlation: none` and the independence statement. A task with a likely duration but **no estimate uses the stated fallback** (± `fallback_band_percent`, default 20) and is marked `source=fallback` and listed — never treated as certain; an estimate not around the likely value is widened and flagged. A **risk event** needs a task, an impact and a probability and be open/mitigating; one missing a probability (or task, or impact, or closed, or on an unscheduled task) is **skipped and named with a reason**; risks with no schedule fields are only counted. **Deviations, stated plainly:** the register's 1–5 ordinal probability is **not** converted to a percent (that would be invented precision), so a schedule event needs its own `schedule_probability_percent`; a task's likely duration is its `duration_days`; durations are whole business days, so a sub-day spread rounds; correlation between tasks is not modelled (the response says the spread is therefore narrower than a correlated one); the simulation covers one plan's tasks (not the portfolio); events add business days to a task, they do not move a start. **Not built:** the risk histogram front-end (SC-11). Original spec: Optimistic / likely / pessimistic
   duration per task (triangular or PERT; or a single estimate plus a per-plan
   uncertainty band, **labelled as such**), the existing **risk register** as
   discrete events (probability × schedule impact on a named task), a seeded
@@ -577,7 +578,7 @@ compliance is made anywhere.
   with no estimate is listed and uses the stated fallback, never silently zero;
   a risk event with no probability is skipped and named.
 
-- [x] **SC-9 (M) — DCMA-style schedule health (14 checks).** **Landed 2026-10-05 (API).** `src/schedule_health.rs` (15 unit tests: a golden test per check on a small crafted network, plus cycle, nothing-incomplete and threshold-config cases) + `GET /api/plans/{pid}/schedule-health[?as_of=]` + a DB test. Fourteen pure checks, each `{count, of, value, threshold, pass, reason, offenders[], of_what, note}` with offenders listed by pid; named a **self-check** with a disclaimer in the response; preset `dcma-default` echoed with its thresholds; `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS` (JSON) overrides any, a malformed or out-of-range value falls back to the whole preset and the response says the source. **A check that cannot be computed is `pass: null` + a reason and never a pass** (no baseline, a dependency cycle, nothing incomplete or due to measure); `all_pass` is true only when all fourteen were computed and passed. **Denominators are stated per check** (`of_what`): incomplete tasks; relationships into incomplete tasks; incomplete scheduled tasks (float); tasks baselined due by the status date (missed tasks, BEI). **Thresholds checked 2026-10-05** against two secondary descriptions ([schedulelens](https://schedulelens.com/blog/dcma-14-point-assessment/), [projectsanalytics](https://projectsanalytics.com/dcma-14-point-assessment/)) — **not the DCMA Program Analysis Pamphlet itself, which was not fetched**: missing logic ≤5%, leads 0%, lags ≤5%, FS ≥90%, hard constraints ≤5%, high float (>44 working days) ≤5%, negative float 0%, high duration (>44) ≤5%, invalid dates 0%, missed tasks ≤5%, CPLI ≥0.95, BEI ≥0.95 all agree. **Where the sources are silent or differ, the choice is in the check's `note`:** *resources* has no prescribed threshold, so zero unassigned tasks is this preset's own rule (a resource is an assignee); the *critical path test* adds 600 working days (the sources say only "a large duration"; one blog says one day) to the last-finishing critical task and expects the finish to move at least that; *hard constraints* are must-start-on, must-finish-on, start-no-later-than and finish-no-later-than; the BEI denominator is tasks baselined due, not "plus tasks missing baseline dates" as one source words it. **Deviations:** missing logic exempts only the project's own start and finish; CPLI uses the least total float of incomplete tasks and counts from the status date; baseline checks use the plan's latest schedule baseline (SC-3) and tasks only; the status date defaults to today, and `as_of` makes a run reproducible. **Not built:** the scorecard front-end (SC-11). Original spec: `GET
+- [x] **SC-9 (M) — DCMA-style schedule health (14 checks).** **Landed 2026-10-05 (API).** `src/schedule_health.rs` (15 unit tests: a golden test per check on a small crafted network, plus cycle, nothing-incomplete and threshold-config cases) + `GET /api/plans/{pid}/schedule-health[?as_of=]` + a DB test. Fourteen pure checks, each `{count, of, value, threshold, pass, reason, offenders[], of_what, note}` with offenders listed by pid; named a **self-check** with a disclaimer in the response; preset `dcma-default` echoed with its thresholds; `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS` (JSON) overrides any, a malformed or out-of-range value falls back to the whole preset and the response says the source. **A check that cannot be computed is `pass: null` + a reason and never a pass** (no baseline, a dependency cycle, nothing incomplete or due to measure); `all_pass` is true only when all fourteen were computed and passed. **Denominators are stated per check** (`of_what`): incomplete tasks; relationships into incomplete tasks; incomplete scheduled tasks (float); tasks baselined due by the status date (missed tasks, BEI). **Thresholds checked 2026-10-05** against two secondary descriptions ([schedulelens](https://schedulelens.com/blog/dcma-14-point-assessment/), [projectsanalytics](https://projectsanalytics.com/dcma-14-point-assessment/)) — **not the DCMA Program Analysis Pamphlet itself, which was not fetched**: missing logic ≤5%, leads 0%, lags ≤5%, FS ≥90%, hard constraints ≤5%, high float (>44 business days) ≤5%, negative float 0%, high duration (>44) ≤5%, invalid dates 0%, missed tasks ≤5%, CPLI ≥0.95, BEI ≥0.95 all agree. **Where the sources are silent or differ, the choice is in the check's `note`:** *resources* has no prescribed threshold, so zero unassigned tasks is this preset's own rule (a resource is an assignee); the *critical path test* adds 600 business days (the sources say only "a large duration"; one blog says one business day) to the last-finishing critical task and expects the finish to move at least that; *hard constraints* are must-start-on, must-finish-on, start-no-later-than and finish-no-later-than; the BEI denominator is tasks baselined due, not "plus tasks missing baseline dates" as one source words it. **Deviations:** missing logic exempts only the project's own start and finish; CPLI uses the least total float of incomplete tasks and counts from the status date; baseline checks use the plan's latest schedule baseline (SC-3) and tasks only; the status date defaults to today, and `as_of` makes a run reproducible. **Not built:** the scorecard front-end (SC-11). Original spec: `GET
   /api/plans/{pid}/schedule-health` runs the 14 checks as **pure functions**,
   each returning `{value, threshold, pass, offenders[]}` so a scheduler can fix
   what failed: missing logic, leads, lags, relationship-type mix (FS share),
@@ -594,11 +595,11 @@ compliance is made anywhere.
   against the current DCMA guide** (they were not fetched when this was
   written); the preset name appears in the response.
 
-- [x] **SC-10 (S) — Float for the worker.** **Landed 2026-10-05.** `GET /api/me/tasks` adds, per task, `schedule: {total_float, critical, late}` (the CPM total float of **that task** in working days) or `null` + `schedule_reason` (`no_duration`, `no_anchor`, `cycle`, `no_schedule_data`) — **never a zero for a task with no schedule data**. Only the caller's own tasks' figures are read out of each plan's analysis (no chain, nothing about anyone else's task, tested), and it uses the plans the caller can already read, so **a worker with no plan-level view still sees their own float**. Front-end: `/me` shows "On the critical path", "N days of float", or "This is already late for the plan (N working days behind)." — ordinary text a screen reader reads with the row, with a decorative ⚠ (aria-hidden) and colour as extras, and **nothing at all** when there is no schedule data (`src/lib/my-work-view.ts`, 5 unit tests). Extended `tests/my_work.rs` end to end with real tokens (critical, float, negative float, unscheduled, another person's task absent). **Deviations:** float is relative to the plan's own project finish, so in a plan with several independent chains every task finishing with the project reads as critical; the sentence is English (the page's other labels are English-first); one critical-path analysis per readable plan per request (no cache). Original spec: In *My work* (LT-3), a task shows
-  "on the critical path" or "N days of float", with a plain sentence for a
+- [x] **SC-10 (S) — Float for the worker.** **Landed 2026-10-05.** `GET /api/me/tasks` adds, per task, `schedule: {total_float, critical, late}` (the CPM total float of **that task** in business days) or `null` + `schedule_reason` (`no_duration`, `no_anchor`, `cycle`, `no_schedule_data`) — **never a zero for a task with no schedule data**. Only the caller's own tasks' figures are read out of each plan's analysis (no chain, nothing about anyone else's task, tested), and it uses the plans the caller can already read, so **a worker with no plan-level view still sees their own float**. Front-end: `/me` shows "On the critical path", "N business days of float", or "This is already late for the plan (N business days behind)." — ordinary text a screen reader reads with the row, with a decorative ⚠ (aria-hidden) and colour as extras, and **nothing at all** when there is no schedule data (`src/lib/my-work-view.ts`, 5 unit tests). Extended `tests/my_work.rs` end to end with real tokens (critical, float, negative float, unscheduled, another person's task absent). **Deviations:** float is relative to the plan's own project finish, so in a plan with several independent chains every task finishing with the project reads as critical; the sentence is English (the page's other labels are English-first); one critical-path analysis per readable plan per request (no cache). Original spec: In *My work* (LT-3), a task shows
+  "on the critical path" or "N business days of float", with a plain sentence for a
   negative float ("this is already late for the plan"). Dependent on SC-1.
   **Acceptance:** a task with no schedule data shows nothing rather than "0
-  days"; the figure is the CPM total float for the caller's task and nothing
+  business days"; the figure is the CPM total float for the caller's task and nothing
   about other people's; a worker with no plan-level view still sees their own
   tasks' float; text is reachable by screen reader.
 
@@ -616,7 +617,7 @@ compliance is made anywhere.
 
 Requested 2026-10-05: "add kpis and okrs". The OKR engine (objectives, key results, check-ins, `/plans/{pid}/okr`) already existed with no front-end and no portfolio view, edit or delete; KPIs did not exist.
 
-- [x] **KO-1 (M) — KPIs: standing measures with dated readings.** **Landed 2026-10-05.** Migration `…_000037_kpis` (`kpis`, `kpi_readings`); `src/kpi.rs` (7 unit tests) + `POST/GET /api/kpis`, `GET/PUT/DELETE /api/kpis/{pid}`, `POST/GET /api/kpis/{pid}/readings` + a DB test. A KPI has a name, unit, direction (`higher_better`/`lower_better`), `target_value`, `red_value` (the line beyond which it is red; **refused 422 unless strictly on the worse side of the target**, also by a database check), optional cadence, owner, plan (none = portfolio) and objective. **Status is derived on read, never stored:** green at or better than the target, red at or worse than the red line, amber between, **`no_data` with no reading — not red and not green**; a real zero is a reading. Also derived: a direction-aware `trend` (last two readings), `stale` (a cadence KPI with no reading within twice its interval; null with no cadence), and a `summary` over every visible KPI whatever the status filter. Readings are **append-only**; a correction is a newer reading for the same day (the earlier is marked `superseded`); a future date is refused. The direction and the plan are **not editable** (it would re-colour history) and sending one is refused. KPIs on plans the caller cannot read are left out. Values are integers (scale them). **Deviations:** no per-reading edit or delete; stale uses fixed interval lengths (monthly 31 days, quarterly 92); a KPI belongs to one plan or none.
+- [x] **KO-1 (M) — KPIs: standing measures with dated readings.** **Landed 2026-10-05.** Migration `…_000037_kpis` (`kpis`, `kpi_readings`); `src/kpi.rs` (7 unit tests) + `POST/GET /api/kpis`, `GET/PUT/DELETE /api/kpis/{pid}`, `POST/GET /api/kpis/{pid}/readings` + a DB test. A KPI has a name, unit, direction (`higher_better`/`lower_better`), `target_value`, `red_value` (the line beyond which it is red; **refused 422 unless strictly on the worse side of the target**, also by a database check), optional cadence, owner, plan (none = portfolio) and objective. **Status is derived on read, never stored:** green at or better than the target, red at or worse than the red line, amber between, **`no_data` with no reading — not red and not green**; a real zero is a reading. Also derived: a direction-aware `trend` (last two readings), `stale` (a cadence KPI with no reading within twice its interval; null with no cadence), and a `summary` over every visible KPI whatever the status filter. Readings are **append-only**; a correction is a newer reading for the same day (the earlier is marked `superseded`); a future date is refused. The direction and the plan are **not editable** (it would re-colour history) and sending one is refused. KPIs on plans the caller cannot read are left out. Values are integers (scale them). **Deviations:** no per-reading edit or delete; stale uses fixed interval lengths (monthly 31 calendar days, quarterly 92); a KPI belongs to one plan or none.
 - [x] **KO-2 (S) — OKR gaps in the API.** **Landed 2026-10-05.** `GET /api/okrs[?period=]` (every objective with each key result's derived progress or the reason it has none, its latest check-in with confidence, and the objective score; **least progressed first, unmeasured last and never zero**); `PUT/DELETE /api/objectives/{pid}`; `PUT/DELETE /api/key-results/{pid}` — the baseline (`start_value`), metric, direction and currency are **not editable** and sending one is refused; the target may not equal the baseline; every change audited with old and new. A deleted objective no longer counts toward a plan's `/okr` score. Confidence is still never blended into a score.
 - [x] **KO-3 (M) — Front-end for KPIs and OKRs.** **Landed 2026-10-05.** `/okrs` (objectives with score and progress bars, key results with progress or the reason, check-ins with confidence marked "not part of the score", add / edit / delete) and `/kpis` (summary by status, status filter, define a KPI, add a reading, history, edit, delete); nav entries; `src/lib/okr-view.ts` and `kpi-view.ts` (unit-tested). Status is a **word and a shape, never colour alone**; "Not measured" and "No data yet" are their own states. English-first like the other recent pages. **Not built:** a browser (axe/Playwright) audit, KPI sparklines, linking a KPI from a plan page, and a KPI roll-up per plan.
 
@@ -624,7 +625,7 @@ Requested 2026-10-05: "add kpis and okrs". The OKR engine (objectives, key resul
 
 Requested 2026-10-05: "add concept: milestones". Plans already had milestone records (name, due, done, kind) with create, list, reschedule and complete, but no portfolio view, no link to the schedule, no completion rules and no slip history. All four were asked for.
 
-- [x] **MS-1 (M) — Portfolio view and link to the schedule.** **Landed 2026-10-05.** Migration `…_000038_milestone_links` (`milestones.completion_mode`/`done_reason`; `milestone_tasks`; `milestone_slips`); `src/milestones.rs` (6 unit tests); `GET /api/milestones[?plan&status&kind&from&to&due_soon_days&at_risk_days&as_of]`, `GET /api/milestones/{pid}`, `PUT /api/plans/{pid}/milestones/{m_pid}/tasks`. Across the plans the caller can read (others left out without a trace): **status** against the calendar (achieved / late / due soon / upcoming — due today is not late); **schedule state** from the critical-path forecast of the linked tasks still open (`forecast_late` when they finish after the due date, `at_risk` within `at_risk_days` working days before it — default 5 — else `on_track`); **`no_forecast` with a reason** (`no_linked_tasks`, `no_scheduled_tasks`, `cycle`) when there is nothing to forecast from — **never "on track" by default**; a forecast from only some of the open tasks is marked `partial`. One critical-path analysis per plan per request. Linking: the tasks must be live tasks of the milestone's plan (≤100, no repeats); a linked milestone must wait for at least one task; the set is replaced in one transaction and audited.
+- [x] **MS-1 (M) — Portfolio view and link to the schedule.** **Landed 2026-10-05.** Migration `…_000038_milestone_links` (`milestones.completion_mode`/`done_reason`; `milestone_tasks`; `milestone_slips`); `src/milestones.rs` (6 unit tests); `GET /api/milestones[?plan&status&kind&from&to&due_soon_days&at_risk_days&as_of]`, `GET /api/milestones/{pid}`, `PUT /api/plans/{pid}/milestones/{m_pid}/tasks`. Across the plans the caller can read (others left out without a trace): **status** against the calendar (achieved / late / due soon / upcoming — due today is not late); **schedule state** from the critical-path forecast of the linked tasks still open (`forecast_late` when they finish after the due date, `at_risk` within `at_risk_days` business days before it — default 5 — else `on_track`); **`no_forecast` with a reason** (`no_linked_tasks`, `no_scheduled_tasks`, `cycle`) when there is nothing to forecast from — **never "on track" by default**; a forecast from only some of the open tasks is marked `partial`. One critical-path analysis per plan per request. Linking: the tasks must be live tasks of the milestone's plan (≤100, no repeats); a linked milestone must wait for at least one task; the set is replaced in one transaction and audited.
 - [x] **MS-2 (S) — Completion rules.** **Landed 2026-10-05.** A `linked` milestone is **achieved when every task it waits for is done** (and it waits for at least one), derived on read with the tasks' latest completion date as `achieved_on`; a `manual` one when marked done. **Completing a linked milestone over open tasks needs a reason** (422 otherwise), stored as `done_reason` and audited with the number of open tasks; `POST …/milestones/{m_pid}/reopen` needs a reason, clears the manual completion and is audited; **a milestone achieved only by its tasks cannot be reopened (409): reopen a task.** `complete` still takes no body for a manual milestone, keeps the first completion stamp on a repeat, and the due-date automation sweep now skips linked milestones already achieved by their tasks.
 - [x] **MS-3 (S) — Slip history.** **Landed 2026-10-05.** `PUT …/milestones/{m_pid}` still takes `{due}` and now an optional `reason` (≤500 characters); **every real move appends one `milestone_slips` row** (from, to, reason, who) — re-sending the same date records nothing. The view derives `original_due` (the first move's *from*), `reschedules`, `later_moves` and `net_days` (calendar days, negative if pulled in); `GET /api/milestones/{pid}` returns the full history.
 - [x] **MS-4 (M) — Front-end.** **Landed 2026-10-05.** `/milestones` (summary by status, status filter, late first) with a card per milestone: status as a **word and a shape, never colour alone**, the forecast and slip as plain sentences, achieved-how, open tasks, and the forms to complete (reason required when it must be), reopen, reschedule with a reason, pick the tasks it waits for, and the slip history; `src/lib/milestone-view.ts` (7 unit tests); nav entry. **Deviations, stated plainly:** the reschedule reason is **optional** (a required one would break existing callers) and shown as "no reason given" when absent; the older `GET /api/plans/{pid}/milestones` list and the iCalendar and PDF outputs still show the stored `done` flag, not the derived achievement; a milestone is a record, not a zero-duration task (those, from PJ-1, stay in the schedule network); the forecast uses the plan's working calendar; milestones of one plan only link to that plan's tasks. **Not built:** a milestone on the Gantt, per-milestone notifications, a browser accessibility audit.
@@ -634,12 +635,12 @@ Requested 2026-10-05: "add concept: milestones". Plans already had milestone rec
 Requested 2026-10-05: "add Monte Carlo risk analysis". The schedule simulation already existed (SC-8). Asked for and built: a cost-risk simulation, a joint cost-and-schedule simulation, and a portfolio-level simulation.
 
 - [x] **CR-1 (M) — Cost-risk Monte Carlo, per plan and across the portfolio.** **Landed 2026-10-05.** Migration `…_000039_cost_risk_inputs` (`budget_lines.low_minor`/`high_minor`, checked against the planned amount; `risks.cost_impact_minor`/`cost_currency`); `src/cost_risk.rs` (11 unit tests); `GET /api/plans/{pid}/cost-risk`, `GET /api/cost-risk`, `PUT …/budget-lines/{l_pid}/estimate`, `PUT …/risks/{r_pid}/cost-impact` + a DB test. Each iteration draws a final cost for every budget line from its low / likely (**the planned amount**) / high (triangular, or PERT), **never below the recorded actual — what is spent is spent** — then lets each open or mitigating register risk with a cost impact, a currency and a probability strike. **Per currency, never added across.** Reports the budget (sum of planned amounts), mean, cost at P10/P50/P80/P90, **the share at or under the budget**, a 20-bin histogram, a sensitivity correlation per line, how often each event struck against its stated probability, and each plan's mean beside its budget. **Seeded** (same seed ⇒ identical result; iterations capped at 50 000 and iterations × (lines + events) ≤ 5 000 000, refused not truncated); **with no uncertainty every percentile is the budget exactly**. Assumptions echoed, including `correlation: none` and the independence statement. **A line with no estimate uses the stated fallback band (±20%) and is marked `source=fallback`**; an estimate not around the planned amount is widened and flagged; a risk with no probability, closed, or in a currency with no budget line is **skipped and named**. **Portfolio scope** = every plan the caller can read (others left out without a trace).
-- [x] **CR-2 (M) — Joint cost and schedule.** **Landed 2026-10-05.** `src/joint_risk.rs` (7 unit tests) + `GET /api/plans/{pid}/joint-risk[?currency&delay_cost_per_day_minor&…]`; `schedule_risk::simulate` is now `simulate_with` plus a per-iteration hook (same results, covered by its unchanged tests). One simulation drawn from **one random stream**: the schedule (as SC-8) and the cost of one currency together. **A risk with both a schedule impact and a cost impact is one event with one probability: it strikes once and drives both** (tested: every late run is also over budget). **A late finish adds a delay cost per working day (default 0; finishing early earns nothing back).** Reports the cost percentiles including delay cost, the share within budget, the share on time, **the joint share (both) — never above the smaller of the two** — the four quadrant counts, and a thinned sample (≤300) of (days late, cost) points. Needs `currency=` when the plan budgets in several (422 otherwise); other currencies are listed as not simulated.
+- [x] **CR-2 (M) — Joint cost and schedule.** **Landed 2026-10-05.** `src/joint_risk.rs` (7 unit tests) + `GET /api/plans/{pid}/joint-risk[?currency&delay_cost_per_day_minor&…]`; `schedule_risk::simulate` is now `simulate_with` plus a per-iteration hook (same results, covered by its unchanged tests). One simulation drawn from **one random stream**: the schedule (as SC-8) and the cost of one currency together. **A risk with both a schedule impact and a cost impact is one event with one probability: it strikes once and drives both** (tested: every late run is also over budget). **A late finish adds a delay cost per business day (default 0; finishing early earns nothing back).** Reports the cost percentiles including delay cost, the share within budget, the share on time, **the joint share (both) — never above the smaller of the two** — the four quadrant counts, and a thinned sample (≤300) of (business days late, cost) points. Needs `currency=` when the plan budgets in several (422 otherwise); other currencies are listed as not simulated.
 - [x] **CR-3 (M) — Front-end.** **Landed 2026-10-05.** `/plans/{pid}/cost-risk`, `/cost-risk` (portfolio, with each plan's mean beside its budget) and `/plans/{pid}/joint-risk`: histograms with **P50 / P80 / P90 and the budget marked by labelled, differently dashed lines** and a table twin; a quadrant table and a scatter whose numbers are in the table above it; the fallback lines flagged in words and with a symbol; risks used and skipped with reasons; every assumption stated. Plan page links and a nav entry; helpers in `src/lib/scheduling-view.ts` (+9 unit tests); the e2e spec runs axe over all three and checks the labels, table twins and the shared-event rule.
 
-**Deviations, stated plainly:** **one probability per risk** — the cost fields reuse `risks.schedule_probability_percent` (named for the schedule simulation) as *the event's probability*, and each `PUT` of the schedule or cost fields replaces its own fields only (the cost endpoint changes the probability only when it is given); the ordinal 1–5 register probability is **still not converted** to a percent; **no per-line correlation or inflation** (inputs are independent, said in every response, and the spread is therefore narrower than a correlated one); a line's likely cost is its **planned amount**, not the phased baseline; the budget is the sum of lines, not the T-28b baseline; the joint run is **one plan and one currency**; the portfolio run does not model schedule (days do not add across plans); delay cost is a rate you supply, not derived from resources; **the estimate inputs (line low/high, risk cost impact and probability, task optimistic/pessimistic) are set through the API — there is no form for them yet**; the front-end is English-first.
+**Deviations, stated plainly:** **one probability per risk** — the cost fields reuse `risks.schedule_probability_percent` (named for the schedule simulation) as *the event's probability*, and each `PUT` of the schedule or cost fields replaces its own fields only (the cost endpoint changes the probability only when it is given); the ordinal 1–5 register probability is **still not converted** to a percent; **no per-line correlation or inflation** (inputs are independent, said in every response, and the spread is therefore narrower than a correlated one); a line's likely cost is its **planned amount**, not the phased baseline; the budget is the sum of lines, not the T-28b baseline; the joint run is **one plan and one currency**; the portfolio run does not model schedule (business days do not add across plans); delay cost is a rate you supply, not derived from resources; **the estimate inputs (line low/high, risk cost impact and probability, task optimistic/pessimistic) are set through the API — there is no form for them yet**; the front-end is English-first.
 
-- [x] **CR-4 (M) — Forms for the simulation inputs.** **Landed 2026-10-05.** The estimates the simulations read can now be set in the app. On a plan's governance page: each **risk** has a "Simulation inputs" section (one probability; the task it delays and by how many days; the cost it adds and its currency) and each **budget line** a range (low and high; the planned amount is the likely cost); on the critical-path page each task has a "Range for schedule risk" (optimistic and pessimistic; the duration is the likely value). Each says plainly when there is no range ("the simulation uses its fallback band"). The API lists now return the stored values (`GET …/risks`, `…/tasks`, `…/cpm` nodes; budget lines already did). What a risk form sends is decided by a pure, unit-tested planner (`src/lib/simulation-inputs.ts`, 13 tests): a cost-only risk never calls the schedule endpoint (so it is not named as a half-set schedule risk); a risk with both effects makes both calls in the order that keeps the **one shared probability** consistent; clearing the probability goes through the schedule endpoint, the only one that can; a task without its days (or days without a task), a cost without a currency, an effect without a probability, a high below the planned amount, and an optimistic above the likely duration are all refused in words **before any call**. **Two real bugs the browser tests found, fixed:** a number input binds a number, not a string (the helpers threw on `.trim()`), and a section's `toggle` event fired after the user had started typing and reset the form (the form now follows what is stored and is never reset by opening). The browser audit also caught the **Escalate button's 2.7:1 contrast** (the theme's error colour is a light tint), fixed in the shared danger colour, and the mobile audit's route list now includes every new page. **Not covered by a browser test:** the critical-path task-range form (its helper is unit-tested).
+- [x] **CR-4 (M) — Forms for the simulation inputs.** **Landed 2026-10-05.** The estimates the simulations read can now be set in the app. On a plan's governance page: each **risk** has a "Simulation inputs" section (one probability; the task it delays and by how many business days; the cost it adds and its currency) and each **budget line** a range (low and high; the planned amount is the likely cost); on the critical-path page each task has a "Range for schedule risk" (optimistic and pessimistic; the duration is the likely value). Each says plainly when there is no range ("the simulation uses its fallback band"). The API lists now return the stored values (`GET …/risks`, `…/tasks`, `…/cpm` nodes; budget lines already did). What a risk form sends is decided by a pure, unit-tested planner (`src/lib/simulation-inputs.ts`, 13 tests): a cost-only risk never calls the schedule endpoint (so it is not named as a half-set schedule risk); a risk with both effects makes both calls in the order that keeps the **one shared probability** consistent; clearing the probability goes through the schedule endpoint, the only one that can; a task without its business days (or business days without a task), a cost without a currency, an effect without a probability, a high below the planned amount, and an optimistic above the likely duration are all refused in words **before any call**. **Two real bugs the browser tests found, fixed:** a number input binds a number, not a string (the helpers threw on `.trim()`), and a section's `toggle` event fired after the user had started typing and reset the form (the form now follows what is stored and is never reset by opening). The browser audit also caught the **Escalate button's 2.7:1 contrast** (the theme's error colour is a light tint), fixed in the shared danger colour, and the mobile audit's route list now includes every new page. **Not covered by a browser test:** the critical-path task-range form (its helper is unit-tested).
 
 ## Amendments (scheduling and cost canon)
 
@@ -654,7 +655,8 @@ Requested 2026-10-05: "add Monte Carlo risk analysis". The schedule simulation a
 ## Not taken (scheduling and cost canon)
 
 A claim of ANSI/EIA-748 or DCMA compliance; an automatic resource-constrained
-optimiser; silent auto-rescheduling; critical-chain buffers and crashing advice;
+optimizer; silent auto-rescheduling; crashing advice (critical-chain buffers,
+once listed here, are now taken as CC-n);
 correlated risk models; binary `.mpp` / `.xer` round trips; free-text percent
 complete. Reasons in [plan.md §21](plan.md).
 
@@ -667,7 +669,7 @@ be decided before SC-1**, because the schedule network is plan-level today
 (finding F-9). Money stays integer minor units and per currency; absent evidence
 is `null` with a reason, never zero.
 
-- [x] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** **Landed 2026-10-03.** Migration `…_000025_schedule_fields`: `tasks.start_date` + `tasks.duration_days` (0–3650 working days, 0 = milestone), and `plan_dependencies.kind` (`fs` default). `POST /api/plans/{pid}/tasks` takes both on create; **`PUT …/tasks/{pid}/schedule`** changes them (absent or null clears) and is audited with old and new. A dependency may now join **two tasks, two plans, or one of each**; kind `fs|ss|ff|sf`; lag `-3650..3650` (**negative = a lead**); cycle checks include task `precedes` relations. Every existing row and route is unchanged (the full suite passes untouched). **Decision taken (owner, 2026-10-03): one network of both.** **Deviations:** the plan-level and task-level networks are analysed separately (`/schedule` over a plan's children, `/cpm` over a plan's tasks) — a plan's own tasks do **not** roll up into the plan's dates, and an edge between a task and a plan is accepted but not yet analysed (PJ-13 / a unified run); only `precedes` relations (not `blocks`, which is about status) are schedule edges. **Not built:** a front-end. —
+- [x] **PJ-1 (M) — Task-level schedule fields and the schedule's unit** **Landed 2026-10-03.** Migration `…_000025_schedule_fields`: `tasks.start_date` + `tasks.duration_days` (0–3650 business days, 0 = milestone), and `plan_dependencies.kind` (`fs` default). `POST /api/plans/{pid}/tasks` takes both on create; **`PUT …/tasks/{pid}/schedule`** changes them (absent or null clears) and is audited with old and new. A dependency may now join **two tasks, two plans, or one of each**; kind `fs|ss|ff|sf`; lag `-3650..3650` (**negative = a lead**); cycle checks include task `precedes` relations. Every existing row and route is unchanged (the full suite passes untouched). **Decision taken (owner, 2026-10-03): one network of both.** **Deviations:** the plan-level and task-level networks are analysed separately (`/schedule` over a plan's children, `/cpm` over a plan's tasks) — a plan's own tasks do **not** roll up into the plan's dates, and an edge between a task and a plan is accepted but not yet analysed (PJ-13 / a unified run); only `precedes` relations (not `blocks`, which is about status) are schedule edges. **Not built:** a front-end. —
   **decided 2026-10-03: one network of both plans and tasks.** Add to a task an optional `start_date`, a working
   `duration_days` (or an end date), and a `constraint` (SC-2's set), so a task
   can be a node in the network. A **schedule node** is either a plan with a
@@ -697,29 +699,29 @@ is `null` with a reason, never zero.
   change is audited with its effective date; accrual rules are pinned by tests
   (prorated across a 3-period task sums exactly to the cost).
 
-- [x] **PJ-3 (M) — Resource availability over time.** **Landed 2026-10-03.** Migration `…_000028_person_availabilities`; `POST/GET /api/availability`, `DELETE` + `POST …/{pid}/delete`; `src/availability.rs` (8 unit tests) + a DB test + `tests/availability_acl.rs` with real tokens. A range is `from`..`to` inclusive and `max_percent` 0–100 (60 part-time, 0 leave, 50 ramp-up); **overlapping ranges for one person are refused 409**. **Capacity is read per day, never averaged** (tested: 80% demand over a fortnight whose second week is 40% is over for exactly that week, a window before the range is untouched), and `GET /api/capacity` gains `capacity {source, min_percent}`, `peak_percent` and `over_capacity` (runs of days with demand and capacity). **With no range in the window the answer is exactly what it was** (`over_allocated` = summed demand > 100; `allocated_percent` is unchanged either way). **Access:** a person reads and sets their **own**; a resource manager (`role=resource_manager`) or an admin any; another person's is **404, not 403**. **Deviations:** overlap is checked in the service, not by a database exclusion constraint (two simultaneous requests could both pass; both then cover the same days, and capacity reads the first range found); `/capacity/utilization` (hours-based, `working_time_configs`) is **not** yet folded in; availability is not combined with the person's weekly calendar (SC-2) — they are separate ideas (a calendar says which days work, availability how much of a working day); SC-6/SC-7 do not exist yet to consume it. **Not built:** a front-end editor. `availability` ranges per
+- [x] **PJ-3 (M) — Resource availability over time.** **Landed 2026-10-03.** Migration `…_000028_person_availabilities`; `POST/GET /api/availability`, `DELETE` + `POST …/{pid}/delete`; `src/availability.rs` (8 unit tests) + a DB test + `tests/availability_acl.rs` with real tokens. A range is `from`..`to` inclusive and `max_percent` 0–100 (60 part-time, 0 leave, 50 ramp-up); **overlapping ranges for one person are refused 409**. **Capacity is read per day, never averaged** (tested: 80% demand over a fortnight whose second week is 40% is over for exactly that week, a window before the range is untouched), and `GET /api/capacity` gains `capacity {source, min_percent}`, `peak_percent` and `over_capacity` (runs of calendar days with demand and capacity). **With no range in the window the answer is exactly what it was** (`over_allocated` = summed demand > 100; `allocated_percent` is unchanged either way). **Access:** a person reads and sets their **own**; a resource manager (`role=resource_manager`) or an admin any; another person's is **404, not 403**. **Deviations:** overlap is checked in the service, not by a database exclusion constraint (two simultaneous requests could both pass; both then cover the same calendar days, and capacity reads the first range found); `/capacity/utilization` (hours-based, `working_time_configs`) is **not** yet folded in; availability is not combined with the person's weekly calendar (SC-2) — they are separate ideas (a calendar says which days work, availability how much of a business day); SC-6/SC-7 do not exist yet to consume it. **Not built:** a front-end editor. `availability` ranges per
   person (`from`, `to`, `max_percent`), so part-time, leave and ramp-up change
   capacity by date; folded into `/capacity`, `/capacity/utilization`, SC-6 and
   SC-7 as the denominator. Existing `non_working_periods` stay.
   **Acceptance:** with no ranges, capacity is exactly what it is today; ranges
-  may not overlap for one person (409); utilisation uses the availability in
+  may not overlap for one person (409); utilization uses the availability in
   force each day, not an average; a person on 0% shows as unavailable, not as
   an error; a worker may see their own ranges only; changes audited.
   **Front-end landed 2026-10-03:** `/capacity` draws firm load vs the capacity in force with the proposed series hatched and apart and a strip of over-capacity days (`CapacityMeter`, pure `capacity-view.ts`); `/me/calendar` edits availability ranges; the plan's allocations list shows proposals with Commit and, on a 409, Commit anyway. The service now defaults `person_ref` to the caller on `POST /api/availability`.
 
-- [x] **PJ-4 (M) — Proposed vs committed bookings.** **Landed 2026-10-03.** Migration `…_000029_allocation_booking` (`allocations.booking` default `committed`, `requested` default false). `POST /api/plans/{pid}/allocations` takes `booking` (`proposed`|`committed`) and `requested`; **`POST …/allocations/{a}/commit[?confirm=true]`**. **Existing allocations are `committed` and every figure is unchanged** (the full suite passes untouched). **A proposal never counts** toward utilisation, over-allocation or at-a-glance (`all_allocations` is now committed-only; tested: 70% firm + 50% proposed reads 70, not over). `GET /api/capacity` reports it as its **own series** — `proposed {percent, allocations, would_exceed_capacity}` — never merged, and a person with only proposals still appears (allocated 0). **Committing** is allowed to the named person, a resource manager or an admin (others 404, tested with real tokens); if with it firm the person would be over their **per-day** capacity (PJ-3 availability) the answer is **409 over_capacity with the numbers** and only `?confirm=true` commits it (audited as an over-commitment); an already-committed booking is 409. **Decision applied (owner, 2026-10-03):** a proposal is visible to the person it names. **Deviations:** approval through PL-1 when a plan is governed is **not** wired (the commit endpoint is the gate for now); plan allocation lists are as visible as before, so a proposal is visible to anyone who could already list the plan's allocations — the decision added a right (the named person sees it), it did not hide it from others; `requested` is a flag with no inbox yet; the commit window for an open-ended booking is capped at one year. **Not built:** a front-end, a requests inbox for resource managers. An allocation gains
+- [x] **PJ-4 (M) — Proposed vs committed bookings.** **Landed 2026-10-03.** Migration `…_000029_allocation_booking` (`allocations.booking` default `committed`, `requested` default false). `POST /api/plans/{pid}/allocations` takes `booking` (`proposed`|`committed`) and `requested`; **`POST …/allocations/{a}/commit[?confirm=true]`**. **Existing allocations are `committed` and every figure is unchanged** (the full suite passes untouched). **A proposal never counts** toward utilization, over-allocation or at-a-glance (`all_allocations` is now committed-only; tested: 70% firm + 50% proposed reads 70, not over). `GET /api/capacity` reports it as its **own series** — `proposed {percent, allocations, would_exceed_capacity}` — never merged, and a person with only proposals still appears (allocated 0). **Committing** is allowed to the named person, a resource manager or an admin (others 404, tested with real tokens); if with it firm the person would be over their **per-day** capacity (PJ-3 availability) the answer is **409 over_capacity with the numbers** and only `?confirm=true` commits it (audited as an over-commitment); an already-committed booking is 409. **Decision applied (owner, 2026-10-03):** a proposal is visible to the person it names. **Deviations:** approval through PL-1 when a plan is governed is **not** wired (the commit endpoint is the gate for now); plan allocation lists are as visible as before, so a proposal is visible to anyone who could already list the plan's allocations — the decision added a right (the named person sees it), it did not hide it from others; `requested` is a flag with no inbox yet; the commit window for an open-ended booking is capped at one year. **Not built:** a front-end, a requests inbox for resource managers. An allocation gains
   `booking: proposed | committed` (default `committed`, so nothing changes) and
   an optional `request` flag for "asked of the resource manager". Capacity and
-  utilisation report the two **as separate series**; committing a proposal goes
+  utilization report the two **as separate series**; committing a proposal goes
   through approval (PL-1) when the plan is governed.
   **Acceptance:** existing allocations are `committed` and every figure is
-  unchanged; **proposed never counts toward committed utilisation**; both are
+  unchanged; **proposed never counts toward committed utilization**; both are
   shown, never merged; committing an allocation that would push a person over
   100% warns with the number and requires an explicit confirm; a person sees
   proposals naming them only per the owner's answer (plan.md Q); changes audited.
   **Front-end landed 2026-10-03:** `/capacity` draws firm load vs the capacity in force with the proposed series hatched and apart and a strip of over-capacity days (`CapacityMeter`, pure `capacity-view.ts`); `/me/calendar` edits availability ranges; the plan's allocations list shows proposals with Commit and, on a 409, Commit anyway. The service now defaults `person_ref` to the caller on `POST /api/availability`.
 
-- [x] **PJ-5 (M) — Time-phased assignments and work contours.** **Landed 2026-10-05.** `src/work_profile.rs` (9 unit tests), `PUT …/tasks/{pid}/contour`, `GET …/work-profile`, `GET /api/work-profile`; largest-remainder spread so buckets sum to the work exactly, never on non-working days; task→plan→portfolio totals reconcile; unplaceable work is listed and counted. **Deviations:** contour shape definitions (`front_loaded`, `back_loaded`, `bell`, `turtle`) are this project's own, names unconfirmed against the reference tool. **Front-end:** `/plans/{pid}/work` (assignment form, contour, work table). Spread an
+- [x] **PJ-5 (M) — Time-phased assignments and work contours.** **Landed 2026-10-05.** `src/work_profile.rs` (9 unit tests), `PUT …/tasks/{pid}/contour`, `GET …/work-profile`, `GET /api/work-profile`; largest-remainder spread so buckets sum to the work exactly, never on non-business days; task→plan→portfolio totals reconcile; unplaceable work is listed and counted. **Deviations:** contour shape definitions (`front_loaded`, `back_loaded`, `bell`, `turtle`) are this project's own, names unconfirmed against the reference tool. **Front-end:** `/plans/{pid}/work` (assignment form, contour, work table). Spread an
   assignment's work across periods by a **contour** — `flat` (default),
   `front_loaded`, `back_loaded`, `bell`, `turtle`, or `custom` (named per
   assignment) — into stored or derived **buckets**, with a consolidator that
@@ -727,7 +729,7 @@ is `null` with a reason, never zero.
   S-curve PV and leveling. (Shape names are **inferred from class names** and
   are the usual scheduling-tool set; confirm before pinning.)
   **Acceptance:** buckets **sum to the assignment's work exactly** (largest
-  remainder, no rounding drift); calendar-aware (no work on non-working days);
+  remainder, no rounding drift); calendar-aware (no work on non-business days);
   `custom` must sum to 100%; the roll-up equals the sum of its children at every
   level; no assignment ⇒ `null` + `no_assignments`; a contour change keeps total
   work unchanged and is audited.
@@ -751,9 +753,9 @@ is `null` with a reason, never zero.
   link target's float (it is a derived span, not work); removing a link
   recomputes; a hammock can't link to itself or create a cycle.
 
-- [x] **PJ-8 (S) — Recalculation change set.** **Landed 2026-10-03.** Returned by `PUT …/tasks/{pid}/schedule` as `moved`: per task `start`, `finish` or `both`, with the working days each moved, across the **whole network** (not only the edited task); empty when nothing moved (tested). `cpm::diff` is pure. **Not built:** feeding watchers (RM-3) and the *My work* line; a cycle yields `moved: null` with a note. Every CPM recalculation (SC-1)
+- [x] **PJ-8 (S) — Recalculation change set.** **Landed 2026-10-03.** Returned by `PUT …/tasks/{pid}/schedule` as `moved`: per task `start`, `finish` or `both`, with the business days each moved, across the **whole network** (not only the edited task); empty when nothing moved (tested). `cpm::diff` is pure. **Not built:** feeding watchers (RM-3) and the *My work* line; a cycle yields `moved: null` with a note. Every CPM recalculation (SC-1)
   returns **what moved**: per item `start_moved`, `finish_moved` or `both`,
-  by how many working days, and what triggered it — ProjectLibre's
+  by how many business days, and what triggered it — ProjectLibre's
   `DateChangeStatus` idea. Feeds watchers (RM-3), the audit log and a "why did my
   date move?" line in *My work* (LT-3).
   **Acceptance:** a recalculation that changes nothing returns an empty set (not
@@ -772,7 +774,7 @@ is `null` with a reason, never zero.
   commit made against a plan that changed since the preview is refused 409
   (ETag), not merged; masked fields stay masked in the preview.
 
-- [x] **PJ-10 (M) — MS Project interchange (MSPDI XML) — the T-28n codec.** **Landed 2026-10-03.** Migration `…_000027_task_external_ref` (`tasks.external_ref`, unique per plan). `src/mspdi.rs` (6 unit tests; parsed with `roxmltree`: **DTDs refused**, node cap, 5 MiB / 5000-task caps) and `POST /api/plans/{pid}/import/mspdi?dry_run=` (default **true**). **Id tables pinned (F-11):** dependency FF 0, FS 1, SF 2, SS 3; constraint ASAP 0 … FNLT 7 (an end-to-end test fails if FS and FF are swapped). Imports tasks, outline parents (subtasks), start, working-day duration (part days **round up and say so**), milestones, constraints, deadlines, % complete → workflow state, dependencies with lag **or lead** (LinkLag is tenths of a minute), and the base calendar (only if the plan has none). **Idempotent:** UID → `external_ref=mspdi:<UID>`; a re-import updates in place, creates nothing, adds no duplicate dependencies, never changes status. **Nothing silently dropped:** the `unmapped` list names every inactive task, cross-project link, baseline, `alap`, resource, cost rate and unusable date with its reason. **A hard constraint (mso, mfo) obeys the same permission as setting one by hand** — without it the task imports *without* the constraint and the report says so (tested with real tokens). Summary tasks import without schedule fields so they cannot double-count in the critical path. **XML only; `.mpp` is refused with a message to export XML (owner, 2026-10-03).** **Deviations:** imports into an **existing plan** rather than creating one; **synchronous**, not a T-8 bulk job (no matching/review queue is needed for a new set of tasks — that stays a follow-up if matching to existing tasks is wanted); **resources are not matched to people** (names kept in the description, listed); baselines and cost rates not imported until SC-3 / PJ-2 exist; **no export** (the task text said import and export). **Not built:** MSPDI export, hammock tasks.
+- [x] **PJ-10 (M) — MS Project interchange (MSPDI XML) — the T-28n codec.** **Landed 2026-10-03.** Migration `…_000027_task_external_ref` (`tasks.external_ref`, unique per plan). `src/mspdi.rs` (6 unit tests; parsed with `roxmltree`: **DTDs refused**, node cap, 5 MiB / 5000-task caps) and `POST /api/plans/{pid}/import/mspdi?dry_run=` (default **true**). **Id tables pinned (F-11):** dependency FF 0, FS 1, SF 2, SS 3; constraint ASAP 0 … FNLT 7 (an end-to-end test fails if FS and FF are swapped). Imports tasks, outline parents (subtasks), start, business-day duration (part business days **round up and say so**), milestones, constraints, deadlines, % complete → workflow state, dependencies with lag **or lead** (LinkLag is tenths of a minute), and the base calendar (only if the plan has none). **Idempotent:** UID → `external_ref=mspdi:<UID>`; a re-import updates in place, creates nothing, adds no duplicate dependencies, never changes status. **Nothing silently dropped:** the `unmapped` list names every inactive task, cross-project link, baseline, `alap`, resource, cost rate and unusable date with its reason. **A hard constraint (mso, mfo) obeys the same permission as setting one by hand** — without it the task imports *without* the constraint and the report says so (tested with real tokens). Summary tasks import without schedule fields so they cannot double-count in the critical path. **XML only; `.mpp` is refused with a message to export XML (owner, 2026-10-03).** **Deviations:** imports into an **existing plan** rather than creating one; **synchronous**, not a T-8 bulk job (no matching/review queue is needed for a new set of tasks — that stays a follow-up if matching to existing tasks is wanted); **resources are not matched to people** (names kept in the description, listed); baselines and cost rates not imported until SC-3 / PJ-2 exist; **no export** (the task text said import and export). **Not built:** MSPDI export, hammock tasks.
   Import (and export) tasks, WBS, outline levels, dependencies, constraints,
   calendars, resources, assignments, baselines and percent complete through the
   existing bulk machinery (T-8; review queue for ambiguous matches). **Id tables
@@ -799,7 +801,7 @@ is `null` with a reason, never zero.
 - [x] **PJ-12 (M) — Network diagram, WBS tree and RBS views.** **Landed 2026-10-06** (network diagram earlier; WBS tree and RBS now, front-end only). `/plans/{pid}/wbs`: tasks as a tree with generated codes (`1`, `1.2`, `1.2.3`; `src/lib/wbs.ts`) — codes are display only, recomputed from the tree each time, every link and key uses the task pid, and nothing sends a code to the API; a task under a parent the reader cannot see sits under a nameless "Restricted item"; cycles in data never loop or lose a task; the same rows are a table twin, and past 500 rows only the table shows. `/resources/rbs`: roles with the people in them (headcount only when masked) and skills as demand only, with the service's own caveat that skills overlap and supply is unknown; tables for both. Critical-path network: past 150 tasks it degrades to the table with a note, and dependencies to unreadable plans are counted, never named. Critical status was already never colour alone. Tests: 11 unit, 2 e2e with axe. **Not done:** no WBS reordering (siblings order by age, since the API has no sibling position), no RBS-to-task drill-down.
   (original spec follows) Front-end: a
   precedence **network diagram** (nodes = schedule nodes, edges = links,
-  critical and near-critical emphasised), a **WBS tree** with **generated WBS
+  critical and near-critical emphasized), a **WBS tree** with **generated WBS
   codes** (`1`, `1.2`, `1.2.3`) derived from the plan / task hierarchy, and an
   **RBS** grouping of resources by role and skill. WBS codes are **display only —
   never an identifier**, because they change when siblings are reordered.
@@ -863,6 +865,438 @@ scripting engine; the single-user local-file desktop model; a global undo stack;
 the MS Project numeric ids as our own enums. Reasons in
 [plan.md §27](plan.md).
 
+## Monthly director pack (DP-n)
+
+Requested 2026-10-09: "What directors should see each month" — one pack, the
+same for the organization's executive, its board, an escalation board, and the
+chief executives of partner organizations. Assessment, gaps and owner questions in [plan.md §32–§38](plan.md).
+Doctrine for every item: the pack is **frozen and versioned**; trends compare
+with **the previous issued pack**; absent data is **"not assessed" / null with
+a reason, never green or zero**; money is per currency, never summed across;
+**no person-level data** in the pack; colour is never alone.
+
+- [ ] **DP-1 (L) — Issued pack: frozen, versioned, per audience.**
+  Draft a pack for a month (`POST /api/director-packs` with `period`, cut-off
+  time); every view below is computed once into the pack's stored JSON; a
+  person **issues** it (ABAC `director_pack:issue`), after which it is
+  immutable; a correction is a **reissue (v2) with a change note** and the old
+  version stays readable. Readers are granted by **audience** (`executive`,
+  `board`, `escalation_board`, `partner`) via ABAC `director_pack:read`;
+  a reader of an issued pack needs no access to the live estate. Cover page:
+  pack id, version, period, cut-off, what changed since the last pack, and a
+  data-quality panel (EX-1). **Acceptance:** an issued pack's body is
+  byte-identical on every read and after any later data change; issuing twice
+  is 409; a reissue keeps v1 readable and links v1↔v2 with the note; a
+  `partner` reader gets 404 on every live aggregate and 200 on the issued
+  pack; the pack body contains no person ref and no cost rate (a test scans
+  it); every draft, issue and reissue is audited.
+
+- [ ] **DP-2 (M) — Delivery confidence: stored, dated, beside the derived RAG.**
+  `PUT /api/plans/{pid}/delivery-confidence` with a value on a five-point scale
+  (`green`, `amber_green`, `amber`, `amber_red`, `red`; scale configurable,
+  §37), `kind` (`self` or `independent`), rationale (required), assessor and
+  date; append-only history. The portfolio map shows the latest independent
+  value (else self, marked so), the derived RAG beside it (never blended), and
+  a **trend arrow against the previous issued pack** (`up`, `down`, `same`,
+  `new`). **Acceptance:** no assessment ⇒ `not_assessed`, never green; an
+  assessment older than the pack period is marked `stale`; a two-step
+  disagreement between independent and self (or derived) is flagged; history is
+  never rewritten; who may set `independent` is an ABAC action.
+
+- [ ] **DP-3 (M) — Exceptions and the 48-hour red rule.**
+  Setting confidence to `amber_red` or `red` (or worsening within them) opens an
+  **exception** for the programme and starts a clock; the exception is
+  *complete* when it holds a cause, the decision needed, a named owner and a
+  decide-by date, and *closed* when the decision is recorded. Not complete
+  within the configured window (default 48 elapsed hours, §37) is a **breach**,
+  notified through the existing notification sinks and shown in the pack.
+  `GET /api/exceptions[?status&breached]`. **Acceptance:** the clock is tested
+  with a fixed clock at 47h59 / 48h00 / 48h01; a second worsening while open
+  does not restart the clock but is recorded; improving to amber does not close
+  the exception (a decision does); the pack lists open, breached and closed-in-
+  period exceptions with owner and decide-by; every change audited.
+
+- [ ] **DP-4 (S) — Strategic aims and the portfolio map.**
+  Mark top-tier objectives as **strategic aims**; each programme has one
+  **primary aim** (others are cross-references). The map groups programmes by
+  primary aim, then stage (gate) and phase, with delivery confidence and trend.
+  **Acceptance:** a programme linked to two aims appears once, under its
+  primary, with the other named; a programme with no aim is listed under
+  "no strategic aim", not dropped; totals never double-count.
+
+- [ ] **DP-5 (M) — Gate decisions in the period; paused and stopped.**
+  Add a **planned gate date** per programme and gate; a gate whose planned date
+  passed without a review, or reviewed as `hold`, is **deferred**. Map
+  `approved` / `approved_with_conditions` → passed, `rejected` → failed. Add a
+  programme **status** `active | paused | stopped` set only through a recorded
+  decision (reason, decider, date, link to gate review or exception);
+  `stopped` is terminal and keeps the record (finding F-12). **Acceptance:**
+  the pack's gate view lists passed, failed, deferred, paused and stopped in
+  the period; pausing and resuming are audited with reasons; a stopped
+  programme's money and benefits stay reportable; a paused programme's
+  allocations are flagged, not deleted.
+
+- [ ] **DP-6 (M) — Funding sources and financial-year money.**
+  A `funding_sources` reference list (owner-supplied, §37) and on each budget
+  line a funding source and `capital | revenue`; periods by a configurable **financial
+  year** (e.g. April–March). Pack view per programme × source: budget, spend to date,
+  full-year forecast (existing forecast), variance. **Acceptance:** a line with
+  no funding source is counted under "no funding source" and listed in the
+  data-quality panel; capital and revenue are never summed unless asked; a
+  financial-year boundary test (31 March / 1 April); currencies never summed.
+
+- [ ] **DP-7 (M) — Buffer fever chart.** Reverses the §21 "not taken" narrowly
+  (plan.md §34). A **project buffer** in business days per programme, declared
+  at baseline or by a stated rule; **chain completed %** from the baselined
+  critical chain's done work; **buffer consumed %** from the CPM forecast finish
+  against the baselined chain finish; zones from two configurable sloped lines,
+  printed in the pack; the trail is last pack → this pack. **Acceptance:** no
+  buffer, no baseline or no forecast ⇒ "no fever-chart point" with the reason;
+  recovery below 0% and overrun above 100% are plotted at the edge with the
+  true number; zone boundaries are pinned by unit tests at the line; a table
+  twin carries every point. Feeding and resource buffers and multi-project
+  pipelining are CC-3 and CC-5; once CC-4 lands it supplies this chart's
+  buffer.
+
+- [ ] **DP-8 (S) — Portfolio earned value over the threshold.**
+  A BAC **inclusion threshold** (configuration, printed in the pack); for each
+  programme above it: CPI, SPI, EAC (the variant used is named) and the AC
+  source (`budget_lines` or `labour`). **Acceptance:** a programme below the
+  threshold shows "below EVM threshold"; one with no baseline shows
+  `no_baseline`; an EX-14 *product* programme shows its product measures, not
+  an EVM blank; figures equal `/earned-value/rollup` for the same as-of.
+
+- [ ] **DP-9 (M) — Validated benefits: per year and non-financial.**
+  On a benefit: `recurring | one_off`, annualized amount, classification
+  (`cash_releasing | non_cash_releasing | societal`, §37), and **validations**
+  (amount, validator, evidence attachment, date) — the validator may not be a
+  member of the programme (ABAC). Non-financial benefits link to a KPI (KO-1)
+  and report its status. Pack: planned against validated per programme and in
+  total, per currency. **Acceptance:** realized-but-unvalidated is shown as
+  *claimed*, never as validated; a validator on the programme is refused 403;
+  one-off and recurring are never summed into "per year"; a non-financial
+  benefit without a KPI is "not measured".
+
+- [ ] **DP-10 (L) — Capacity heatmap by skill pool and month, with partner
+  commitments.** Needs EX-3. A `skill_pools` taxonomy mapping roles and skills
+  to pools; SC-7's resource plan at **month** grain grouped by pool;
+  **commitments** — an organization commits N FTE of a pool for a month to a
+  programme (supply) or owes work (demand), with committed and delivered.
+  **Acceptance:** demand, supply and the gap per pool and month, each cell with
+  a word and a shape as well as colour and a table twin; partner supply
+  shown separately from the organization's own supply and then combined; no person ref in the
+  pack; a pool with no supply is "no supply recorded", not zero capacity;
+  whether partners see each other's commitments follows the §37 answer.
+
+- [ ] **DP-11 (M) — Rendering: HTML, PDF and every locale.**
+  An accessible HTML page and a PDF, both from the **same issued JSON** (the
+  PL-10 rule). All fixed text through the locale catalogue, so every
+  supported locale renders it; free text shown as entered. **Acceptance:** the PDF and HTML show
+  the same figures as the JSON (a test compares them); axe passes on the HTML
+  in every locale; every chart has a table twin; no string in the pack view is
+  missing from any locale's catalogue (catalogue test).
+
+- [ ] **DP-12 (S) — Monthly rhythm: draft on schedule, review, issue by a person.**
+  A monthly schedule (existing `report_schedules` cadence) drafts the pack; the
+  portfolio office reviews; a person issues. **Acceptance:** the schedule never
+  issues; a draft older than its period's cut-off is marked stale; issuing
+  notifies each audience's subscribers with a link, never the body.
+
+## Escalation-driven capabilities (EX-n)
+
+Requested 2026-10-09: research what an organization under escalation (external
+oversight by its sponsor) needs from a portfolio tool, generalized from the
+owner's private notes. Assessment, gaps, findings F-10 to F-13 and owner
+questions in [plan.md §39–§45](plan.md).
+
+- [ ] **EX-1 (M) — Register completeness; optional "no register, no money".**
+  A completeness score per programme over SRO, partners, stage, baseline and
+  forecast dates, budget, funding source, confidence, top risks and
+  dependencies, each missing field named. A deployment switch (off by default)
+  refuses a budget-line release or a firm allocation on an incomplete
+  programme, naming what is missing. **Acceptance:** the data-quality panel
+  (DP-1) lists every incomplete programme; with the switch on, the refusal is
+  422 listing fields; with it off, the action succeeds and the warning is
+  audited.
+
+- [ ] **EX-2 (S) — Delivery-model typology.** `central_product |
+  central_platform_local_deployment | local_programme_central_standards` on a
+  programme, with the **delivery owner** organization. **Acceptance:** the pack
+  shows the type and owner; a local programme is shown as not delivered by the
+  organization;
+  EX-5's date-change rule reads the type.
+
+- [ ] **EX-3 (L) — Partner organizations.** An `organizations` entity (the
+  delivery organization, partner body, government sponsor, supplier) and optional organization on
+  people, allocations, milestone sign-offs, approvals and SRO roles (a joint
+  SRO is two). Finding F-10. **Acceptance:** existing records with no
+  organization behave as today; an organization can be an audience (DP-1); a
+  user's organization is an ABAC attribute, so "a partner sees its own
+  commitments" is a policy, not code.
+
+- [ ] **EX-4 (M) — Milestones met only with partner sign-off.** A milestone may
+  require sign-off from named organizations; *delivered* (the organization) and *met* (all
+  sign-offs) are separate dates. **Acceptance:** a milestone with an
+  outstanding sign-off is delivered-not-met; withdrawing a sign-off is audited
+  with a reason; the pack reports the met share and the delivered-not-met gap.
+
+- [ ] **EX-5 (M) — Deployment-date change control.** For a
+  `central_platform_local_deployment` programme, a partner's move of its
+  go-live is a change request: the schedule network computes the knock-on to
+  other deployments, the request names an approver (configurable, e.g. an
+  escalation board) and the knock-on cost is recorded against the requester.
+  **Acceptance:** an unapproved move does not change the schedule; the knock-on
+  list equals a CPM run with the moved date; approval and refusal are audited.
+
+- [ ] **EX-6 (M) — Go / no-go for safety-critical cutovers.** A cutover decision with
+  **stop criteria published before the decision**, each marked met or not, and
+  **co-signatures** (partner's accountable professional lead and the delivery
+  organization, roles configurable).
+  **Acceptance:** criteria cannot be edited after the decision opens (a new
+  version is); "go" needs every co-signature; "no-go" or "delay for safety" is
+  recorded as a decision and shown as such in the pack, not as slippage.
+
+- [ ] **EX-7 (M) — Triage and pause / reset / stop thresholds.** A dated
+  **triage** (Finish, Fix, Pause, Stop per programme, with reasons); per
+  programme **thresholds** (confidence red for N packs; forecast past a date;
+  cost-risk P80 past a cap). Crossing one opens an exception (DP-3) that needs
+  a pause, reset, stop or recorded override. **Never auto-pauses.**
+  **Acceptance:** each threshold kind tested at the line; the pack counts
+  pause, reset and stop decisions in the period; an override names its
+  decider and expiry.
+
+- [ ] **EX-8 (M) — Start control: capacity check and WIP limit.** Needs DP-10.
+  A configurable limit on programmes in active delivery; promoting a proposal
+  or moving a programme into delivery shows its demand per skill pool against
+  free supply and is refused (or needs an override with reason) at the limit or
+  when a constraint pool is over. Waiting starts queue in order. **Acceptance:**
+  the limit counts only `active` (not paused) programmes; an override is
+  audited; the queue order is stable.
+
+- [ ] **EX-9 (S) — Watermelon measures.** Per pack: self-vs-independent
+  confidence gap per programme, **late discovery** (first report at amber-red or
+  red with no amber in the previous pack), milestones met with sign-off as a
+  share (EX-4), red without an approved recovery or stop decision. **Acceptance:**
+  computed only from issued packs (never re-derived); each measure null with a
+  reason when its inputs are missing.
+
+- [ ] **EX-10 (M) — Outcome scorecard and de-escalation tracker.** A named set
+  of KPIs (KO-1) with targets, read by quarter; a tracker of the escalation
+  level (recorded as set by the sponsor, never computed), the criteria, evidence links per
+  criterion, and **consecutive quarters met**; the rule (default two quarters)
+  is configuration. **Acceptance:** a quarter with a missing reading breaks the
+  run and says why; a starter set of measures ships as an optional
+  template, not as defaults (§45).
+
+- [ ] **EX-11 (S) — Key-person register.** Single points of failure (person or
+  role), successor and readiness; contingent share per skill pool. Resource
+  managers only; the pack shows counts. **Acceptance:** a non-manager gets 404
+  on the register; the pack contains no names (scan test).
+
+- [ ] **EX-12 (M) — Portfolio ledger: "what did this allocation buy?"** A
+  funding allocation (source, amount, date) traced through budget lines, gates,
+  milestones met and benefits validated in one query; finance cost codes map to
+  a register id for reconciling ledger exports. **Acceptance:** untraced money
+  is reported as untraced with its amount; the trace for a seeded allocation is
+  complete and per currency; a CSV ledger import reconciles or lists unmatched
+  codes.
+
+- [ ] **EX-13 (S) — New asks need a named trade-off.** A proposal tagged as an
+  external ask from the sponsor must name what it displaces before approval.
+  **Acceptance:** approval without a trade-off is 422; the pack lists asks and
+  their trade-offs in the period.
+
+- [ ] **EX-14 (S) — Method per programme: EVM or product.** A programme is
+  `evm` or `product`; product programmes report burn-up and flow (TBA) in the
+  pack's EVM view. **Acceptance:** no EVM blank for a product programme; the
+  method change is audited.
+
+## Production readiness (HD-n)
+
+Requested 2026-10-09 (two lists; HD-8 and HD-9 come from the second). Gaps,
+findings F-14 to F-23 and owner questions in [plan.md §46–§51 and §52a](plan.md).
+
+- [x] **HD-1 (S) — Licence files.** **Landed 2026-10-09.** `LICENSE/` holds `MIT.txt`, `Apache-2.0.txt`, `BSD-3-Clause.txt`, `GPL-2.0-only.txt` and `GPL-3.0-only.txt` (the SPDX licence-list texts; MIT and BSD carry `Copyright (c) 2026 Joel Parker Henderson`); the expression `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only` is now in all three manifests (the UI said `MIT OR Apache-2.0`, F-14); the root and subproject READMEs state it, link each file, and offer custom licences on request. **Acceptance, as tested** (`tests/licence_files.rs` in the API crate, DB-free): every licence in the expression has its file in `LICENSE/` and nothing else is there; MIT and BSD have no template placeholder left; every manifest declares the expression; no `LICENSE*` / `LICENCE*` / `COPYING*` file exists outside `LICENSE/` except the root `LICENSE.md` (a stray `LICENSE-MIT` in the UI was caught); and `LICENSE.md` states the expression and links every text (added 2026-10-09 at the owner's request: it explains the choice and the custom-terms contact; spec NFR-15). **Deviations, stated plainly:** a crate published on its own cannot `include` files outside its directory, so a published crate would need copies (not done; nothing is published); forges that detect a licence from a root `LICENSE` file will not detect this directory, so the README carries the statement. Owner's choice (§51):
+  one SPDX expression for the whole repository. **All licence files live in a `LICENSE/`
+  directory at the root** (owner decision, 2026-10-09), one file per licence
+  in the expression (e.g. `LICENSE/MIT.txt`, `LICENSE/Apache-2.0.txt`); no
+  licence file anywhere else, including the crate and UI sub-directories.
+  Every `Cargo.toml` and `package.json` `license` field is set to the
+  expression; the README states it and links the directory. **Acceptance:** a
+  test (or CI step) reads every manifest and fails if any `license` differs
+  from the root expression, if a licence named in it has no file in
+  `LICENSE/`, or if a licence file exists outside `LICENSE/`; `cargo deny
+  check licenses` still passes; a crate published on its own includes the
+  licence files (`include` in its manifest).
+
+- [ ] **HD-2 (M) — Buildable from its own repository, with automated checks.**
+  Root `.github/workflows/ci.yml` (the sub-directory workflows are inert,
+  F-15): Rust jobs for both crates on the pinned toolchain (`fmt --check`,
+  `clippy -D warnings`, unit tests, DB request suites against a Postgres
+  service container, real-token binaries), `cargo deny`, and a UI job (`pnpm
+  install --frozen-lockfile`, `check`, unit tests, production build, e2e with
+  axe). Remove `actions-rs`; fix `repository` URLs and "Main X Index"
+  mentions (F-16); untrack and ignore `matcher/target/` (F-17). Decide the
+  canonical forge and give mirrors a matching pipeline or document them as
+  mirrors. **Amended 2026-10-09 (second list):** add a root `dependabot.yml`
+  (cargo, npm, github-actions); replace `actions-rs` with plain `cargo`
+  steps; run the DB suites with `--include-ignored` against a Postgres
+  service; remove the monorepo-path `Dockerfile` copies and the
+  `../../ci/postgres-init` mount from `compose.test.yaml` (F-21), and
+  settle how `integrity-mac` and `authentication-verifier` are obtained
+  (crates.io, vendored, or git dependencies on their own repositories;
+  plan.md §52a). **Acceptance:** `git clone && docker compose up` gives
+  a working app on a clean machine and CI proves it; a job clones fresh
+  and runs the documented build with only the documented prerequisites; a deliberately broken commit fails
+  each job; `git status` is clean after running every test.
+  **Status 2026-10-09 (built; stays open until the first green GitHub run):** root `.github/workflows/ci.yml` (jobs `api`, `api-db` with Postgres 18, `matcher`, `deny`, `ui` including Playwright and axe, `docs`, `container`, `zap`, `fresh-clone`, and the single aggregate check `ci-ok`) and `.github/dependabot.yml`; the three inert sub-directory workflows were removed; `matcher/target/` is untracked and ignored; every `Cargo.toml` `repository` names this repository. The `Dockerfile` now builds from this repository's layout, and `ci/postgres-init` plus a root `compose.yaml` exist. **Verified locally (podman):** the image builds from a clean context; `podman compose up --wait` boots the secure stack — `/_health` 200, anonymous `GET /api/plans` and `/metrics.prom` 401, security headers present; production with login off, and production with no key set, both refuse to start with a message naming the fix; the `dev-insecure` profile (config `container-dev`) serves anonymous calls with the loud warning. **Not verified:** any workflow on GitHub (no `actionlint` here; the YAML parses), the ZAP baseline, the `lychee` action, Codeberg/GitLab mirrors (no pipeline for them yet; owner's canonical-forge answer, plan.md §51), and the UI container (the UI builds with `adapter-auto`, which yields no runnable server, so compose runs the API and database only).
+
+- [x] **HD-3 (M) — Login enforcement on by default.** **Landed 2026-10-09.** `auth::resolve_require_auth`: on unless `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is `false`/`0`/`no`/`off` or the loco config's `settings.require_auth` is `false` (the variable wins; a typo stays ON). `auth::check_startup` (called from `App::after_routes`) logs a loud warning when it is off, **refuses to start** in the `production` environment with it off, and refuses to start with it on, no key set and no `PASETO_KEYS_URL` (with a URL the service boots and answers 401 until the keys arrive). `config/development.yaml` and `config/test.yaml` opt out explicitly via `settings:`; `production.yaml` never does; `config/container-dev.yaml` (a non-production environment name) serves the compose `dev-insecure` profile. `/metrics.prom` left the public path list. **Acceptance, as tested:** unit tests pin the resolver, the settings reader and the startup verdict; `tests/enforcement.rs` proves anonymous `GET /api/plans` and `POST` are 401, metrics are 401 without and 200 with a token, and health/ping stay open; the full suite (153 request tests, every real-token binary) passes with the defaults flipped. **Deviations, stated plainly:** the flag is still a process-wide `OnceLock` (first reader wins), so a test binary decides once; the production refusal keys on the loco environment name, so a deployment that runs the production shape under another name (as `container-dev` does on purpose) is not refused; the compose smoke boots the secure stack with a public-only test key set (`scripts/smoke-keys.sh`), which a real deployment replaces with its issuer's keys. Original brief: `require_auth()` is true
+  unless `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is explicitly false;
+  turning it off logs a startup warning and is **refused in production**
+  (§51); enforcement on with no token verifier configured **refuses to
+  start**. Development and test configs opt out explicitly, and the test
+  harnesses that rely on anonymous writes set the opt-out themselves (F-18).
+  **Acceptance:** with no variable set, an anonymous `POST` is 401 and an
+  anonymous `GET /api/plans` is 401; `/_health`, `/_ping` and the documented
+  public paths still answer; production with the opt-out does not start; the
+  full test suite passes with the defaults flipped.
+
+- [x] **HD-4 (S) — Security headers.** **Landed 2026-10-09.** API: `src/http_security.rs` (`security_headers_mw`, `cors_mw`): `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (a relaxed policy for `/swagger-ui` only), `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy` denying the powerful features, `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy: same-origin`, and `Strict-Transport-Security` only when a trusted proxy says the request was HTTPS (`…_HSTS=proxy|always|off`, `…_TRUSTED_PROXIES`); a header a handler already set (file downloads) is never overwritten. CORS is an explicit allow-list (`…_CORS_ORIGINS`, exact origins, no wildcard; unset = none) and loco's framework CORS is disabled in production. UI: `src/lib/security-headers.ts` applied in `hooks.server.ts`, and `kit.csp` in `vite.config.ts` (`script-src 'self'` with SvelteKit nonces/hashes; no `'unsafe-inline'` for scripts or style elements); SVAR's icon font is self-hosted (`static/svar/`) and its themes mounted with `fonts={false}`. **Acceptance, as tested:** unit tests per module; `tests/hardening.rs` drives the real router (headers on a 200 and on a 429, allowed and denied origin, HSTS absent over HTTP); `tests/e2e/security-headers.spec.ts` asserts the header set and **no CSP violation** on representative routes in `en-001`, `cy-001` and `ar-001` (30 tests); the whole UI suite (316 Playwright tests including axe) passes under the CSP. **Deviations, stated plainly:** `style-src-attr 'unsafe-inline'` is allowed because the SVAR grid, Gantt, calendar and Kanban set computed `style="…"` attributes that cannot be hashed (scripts and `<style>` elements stay strict); `/swagger-ui` loads its bundle from a CDN under its own relaxed CSP; `/metrics.prom` is behind login (HD-3) rather than on a separate port; the ZAP baseline job is written (`ci.yml`, `.zap/rules.tsv`) but has not run, because it needs GitHub. Original brief: One API middleware and one UI hook:
+  HSTS (TLS only), `X-Content-Type-Options: nosniff`, `frame-ancestors 'none'`
+  (and `X-Frame-Options: DENY`), `Referrer-Policy:
+  strict-origin-when-cross-origin`, a minimal `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy: same-origin`; a strict CSP for the UI (no
+  inline script; nonces where SvelteKit needs them). **CORS becomes an
+  explicit allow-list** from configuration (F-19). **Acceptance:** a request
+  test asserts every header on an API route, an error response and a file
+  download; an e2e test asserts the UI headers and that the app still runs
+  under the CSP (no console violations); a disallowed origin gets no CORS
+  grant. **Amended 2026-10-09:** `/metrics.prom` leaves the public path
+  list (behind login, or on a separate internal port, plan.md §52a, F-22);
+  a CI job runs an OWASP ZAP baseline scan against the running service and
+  UI with the default configuration and fails on new findings.
+
+- [x] **HD-5 (M) — Rate limiting.** **Landed 2026-10-09.** `src/rate_limit.rs` (+ `src/trusted_proxy.rs`): in-process token buckets in three families — general (keyed by a hash of the bearer credential, else the client address), expensive (CPM, levelling, schedule/cost/joint risk, forecasts, imports, exports, bulk jobs, evidence pack, PDF, scenario compare/generate/evaluate) and authentication failures (per client address, charged on each `401` and checked before the guard runs). `/_health` and `/_ping` are exempt. `429` carries `Retry-After` and `RateLimit-Limit` / `-Remaining` / `-Reset`; allowed responses carry the headers of the tightest bucket charged. The client address is the socket peer, or the rightmost untrusted `X-Forwarded-For` hop only when the peer is in `…_TRUSTED_PROXIES`. Defaults: general 600/min with burst 200, expensive 30/min with burst 10, failures 6/min with burst 20 (`…_RATE_LIMIT_GENERAL_PER_MINUTE`, `…_BURST`, `…_EXPENSIVE_*`, `…_FAILURES_*`; `…_RATE_LIMIT=off` or `settings.rate_limit: false` disables, as the development and test configs do). Memory is bounded (100 000 keys per family, idle buckets shed, then one shared overflow bucket). **Acceptance, as tested:** unit tests with a hand-driven clock (burst, refill, no over-fill, independent keys, bounded memory); middleware tests (one subject limited while another is not, the expensive bucket trips first, a spoofed `X-Forwarded-For` from an untrusted peer is ignored while a trusted proxy tells clients apart, repeated failures cut a client off, health never limited, disabled passes everything); `tests/hardening.rs` proves it on the real router with the security headers on the `429`. **Deviations, stated plainly:** state is per process, so with several replicas each enforces its own share (a shared store is a later step); the credential key is a non-cryptographic hash of the bearer string, so a rotated token starts a fresh bucket; failures are counted per client address, so many users behind one untrusted NAT share a failure budget; the numbers are starting points awaiting the owner's answer (plan.md §51). Original brief: Token buckets per authenticated subject
+  (else per client IP, honouring a configured trusted proxy only); a tighter
+  bucket for expensive routes (simulations, CPM, levelling, imports, exports,
+  PDF) and for failed authentication; health and metrics exempt; `429` with
+  `Retry-After` and `RateLimit` headers; numbers from configuration (§51).
+  **Acceptance:** a test drives one subject past its limit and gets 429 with
+  the headers while another subject is unaffected; a spoofed
+  `X-Forwarded-For` from an untrusted peer is ignored; the expensive bucket
+  trips before the general one; limits reset after the window.
+
+- [ ] **HD-6 (M) — Backup plan.** `spec/` chapter: RPO and RTO, PostgreSQL
+  continuous archiving (base backup plus WAL) or managed point-in-time
+  recovery, the **artifact store backed up and restored with the database**,
+  encryption, off-site copy, retention, and who restores. Scripts in the
+  repository; a **scheduled restore test** restores into a scratch database,
+  runs migrations, re-verifies a sample of artifact SHA-256 checksums and runs
+  a smoke suite. Fix the stale production config comment (F-20).
+  **Acceptance:** the restore test runs in CI (or on a schedule) and fails
+  when a backup is missing, older than the RPO, or restores with mismatched
+  artifacts; the runbook names every step.
+
+- [ ] **HD-7 (M) — Data protection impact assessment.** `spec/` chapter: the
+  processing (who, what, why, where, how long), lawful basis per category,
+  necessity and proportionality, data-subject rights and how each is met
+  (export, masking, rectification, erasure limits given append-only audit),
+  risks with likelihood, severity and the control that answers each,
+  retention per table, processors and transfers, review date and sign-off
+  (§51). **Acceptance:** a test lists every column that can hold personal
+  data (people refs, free text, timesheets, cost rates, availability, tokens)
+  and fails when a migration adds one the DPIA inventory does not name; every
+  risk in the DPIA links to a control that exists in the code or the
+  deployment guide.
+
+- [ ] **HD-8 (M) — A release people can pin.** Version tags for this product
+  (`v<major>.<minor>.<patch>`), a container image published to the chosen
+  registry on each tag (plan.md §52a), a CycloneDX software bill of materials
+  for the service (`cargo cyclonedx`) and the UI (npm), attached to the release
+  with release notes drawn from `CHANGELOG.md`; optionally signed images and
+  build provenance. **Acceptance:** a named tag deploys to the same image digest
+  every time; the SBOM lists every dependency in `Cargo.lock` and
+  `pnpm-lock.yaml` (a test compares counts); the release job fails when the
+  tag, the crate version and the UI version disagree; `cargo deny` and the ZAP
+  baseline (HD-4) run before publication.
+  **Status 2026-10-09 (built; stays open until a tag has been released):** `.github/workflows/release.yml` on tags `v*.*.*` verifies the tag equals the API crate version, runs `cargo deny`, builds and pushes a multi-arch image to GHCR (`ghcr.io/<owner>/<repo>`; tags version, major.minor, sha) with provenance and an SBOM attestation, produces CycloneDX SBOMs for both crates and the UI, and creates the release with notes from `CHANGELOG.md` and the SBOMs attached. `scripts/release-notes.sh` is tested locally (prints the `[0.3.0]` section; exits non-zero for a missing version). **Not verified:** the workflow itself (it needs GitHub), the SBOM tools, and signing (provenance only). Registry choice and signing are owner questions (plan.md §52a).
+
+- [x] **HD-9 (M) — Documents that match the code.** **Landed 2026-10-09.** `scripts/generate-status.sh` rewrites the `<!-- generated:start -->` block in `spec/14-implementation-status.md` (migrations, mounted and documented routes, test counts, versions, ticked and open tasks per prefix, locales) and `--check` fails on drift; `scripts/check-links.py` (stdlib) resolves every relative Markdown link and `#anchor`, with `lychee.toml` for the equivalent `lychee --offline` run. The roughly 108 links into the non-existent `agents/share` were re-pointed at files in this repository or replaced by plain-text citations marked "shared family guidance, not in this repository"; the roadmap and status files were reconciled against the code (Jira, Asana and MSPDI **import** exist, MSPDI **export** and the **issues register** do not, controlled documents and approval processes are built), each correction citing its file or route. **Acceptance, as tested:** the link checker reports 0 broken links; `generate-status.sh --check` passes; the `docs` CI job runs both. **Deviations, stated plainly:** the checker covers Markdown links only (not links in code comments or JSON); the `lychee` CI step has not run on GitHub (the stdlib checker is the one verified here); the route counts are derived by counting `.add(` and quoted path keys, not by booting the service, so a route registered another way would be missed; the test-function counts are line counts of `#[test]`-style attributes. Original brief: Generate
+  `spec/14-implementation-status.md` from commands (route count from the
+  OpenAPI document, migration count, test counts, ticked tasks) instead of
+  writing it by hand; fix or remove the **108** links into the non-existent
+  `agents/share` (F-23, plan.md §52a); add a link checker (for example
+  `lychee`) to CI; reconcile `spec/15-roadmap.md` with the status file (Jira
+  and Asana import, MSPDI import and export, controlled documents are built).
+  **Acceptance:** the link checker passes in CI; a regeneration step produces
+  no diff against the committed status file; a test fails when a documented
+  route is missing from the OpenAPI document or the reverse.
+
+## Critical chain buffers (CC-n)
+
+Requested 2026-10-09: "critical chain buffers". Takes the method §21 declined
+and DP-7 narrowed; assessment and owner questions in
+[plan.md §52–§56](plan.md). Doctrine: **report, a person decides** (no
+automatic re-planning); buffer rules and zone boundaries are configuration
+printed with every result; durations in **business days**; missing inputs give
+"no critical chain" with a reason, never a guess.
+
+- [ ] **CC-1 (L) — The critical chain.** From the levelled schedule (SC-6),
+  add **resource links** (a task waiting for a person is linked to the task
+  that person was on) and compute the longest chain through dependencies and
+  resource links. `GET /api/plans/{pid}/critical-chain`, shown beside the CPM
+  critical path, never blended. **Acceptance:** a two-path network whose paths
+  share one person yields a chain that crosses paths (pinned by a unit test);
+  with no resource contention the chain equals the CPM critical path; a plan
+  with no assignments returns `no_critical_chain` with the reason.
+
+- [ ] **CC-2 (S) — Aggressive and safe estimates.** Per task, an aggressive
+  (about 50% confidence) and a safe estimate in business days, or a stated rule
+  deriving one from the other (§55); reuse CR-4's optimistic / pessimistic
+  where set, and say so. **Acceptance:** the rule in force is echoed; a task
+  with neither estimate is listed as missing, not defaulted silently; changes
+  are audited.
+
+- [ ] **CC-3 (M) — Project, feeding and resource buffers.** Schedule tasks at
+  their aggressive estimates; size a **project buffer** at the end of the
+  chain and a **feeding buffer** where each non-critical chain joins it, by
+  the configured rule (cut-and-paste 50% of removed safety, or root sum of
+  squares); list **resource buffers** as readiness alerts on critical-chain
+  tasks. **Acceptance:** both sizing rules pinned by unit tests on a known
+  network; a feeding buffer that would push the chain is reported, not
+  silently absorbed; buffers are business days on the plan's calendar.
+
+- [ ] **CC-4 (M) — Buffer management.** For each project and feeding buffer:
+  chain completed %, buffer consumed %, zone (configurable sloped
+  boundaries), history per snapshot, and recorded **recovery actions** when a
+  buffer enters red. Supersedes DP-7's buffer source; DP-7 keeps the fever
+  chart. **Acceptance:** consumption equals the forecast slip of the chain end
+  over the buffer; zone boundaries pinned at the line; a red feeding buffer
+  raises an alert naming its chain; recovery actions are audited.
+
+- [ ] **CC-5 (L) — Drum, pipelining and capacity buffers.** A portfolio
+  **drum** (named, or the most overloaded skill pool from DP-10, §55); a
+  proposed **staggered start** for each project against the drum's capacity,
+  with a **capacity buffer** between drum tasks of successive projects; EX-8
+  can use the drum schedule for start control. **Acceptance:** two projects
+  needing the drum at once are staggered and the stagger is explained; the
+  service proposes, never moves, start dates; a portfolio with no drum named
+  and no skill pools says so.
+
+- [ ] **CC-6 (M) — Front-end.** Chain and buffers on the Gantt (chain marked
+  in words and shape, buffers as labelled bars), a fever chart per project and
+  feeding buffer with a table twin, the drum pipeline view. **Acceptance:**
+  axe passes; every chart has a table twin; colour is never alone.
+
+## Not taken (director pack, escalation, production readiness)
+
+A P3M3 maturity score; an AI register; a live finance-ledger connector;
+computing escalation levels; auto-pausing a programme; a web application
+firewall in the service; writing the DPIA's legal conclusions. Reasons in
+[plan.md §42 and §49](plan.md). (CCPM feeding and resource buffers and
+multi-project pipelining, once listed here, are now taken as CC-n.)
+
 ## Findings (surfaced while building the backlog)
 
 - **DELETE is admin-only under the default ABAC policy** (`access=admin` ⇒
@@ -877,7 +1311,7 @@ the MS Project numeric ids as our own enums. Reasons in
   person's undo of their *own* action is a POST. The older `DELETE /api/saved-views/{pid}` had the same flaw and
   now has the twin `/api/saved-views/{pid}/delete`.
 
-- [x] **RM-8b (L) — Keep private plans out of the aggregate views.** **Landed 2026-10-06.** One shared query — `plan_access::HiddenScope::of(ctx, caller)` (the private plans the caller is not in, and the tasks inside them) — and every aggregate loads through `scope.keep(rows)` / `keep_edges` (a lookup failure is an error, never an empty scope). Routed through it: at-a-glance, capacity, capacity utilization, executive health / alignment / benefits / decisions, financials variance / exposure / forecast, lifecycle funnel, prioritisation and Smart Score, proposals forecast, risk heatmap, security and compliance registers and findings, auditor findings, regulator extract, controls coverage, technology debt / flow / radar / dependency risk, engineering blocked / delivery links / milestone calendar / MoSCoW, DevOps metrics and releases, assignee workload, time reports, saved reports (and scheduled ones, which run as an anonymous reader), the plan roadmap and subtree rollups, scenarios (list, evaluate, compare, create: a member list never names a plan the caller cannot see), the proposal that became a hidden plan, and the audit / event / merge feeds. **Acceptance, as tested** (`tests/private_aggregates.rs`, real tokens, a private plan carrying data of every kind at twice the public plan's size): for a non-member every one of ~55 aggregate routes is **byte-identical before and after the private plan appears** (clocks scrubbed), a member's equal an admin's (except where a person's detail is masked), the private plan really does change the admin's totals, a route that names its plan in the query (`?plan=`) is 404 for a non-member, a scenario naming the private plan evaluates for a non-member as if it did not, and **a test enumerates the mounted GET routes: each parameterless one must be in the compared list, the privileged list or an allowlist with a reason, so a new aggregate cannot skip the decision**. The test found **sixteen** leaking routes before the fix. **Deviations, stated plainly:** the admin-only bulk reads (board pack, investments, auditor trail, evidence pack) stay full by design (403 to everyone else); **board trends is now an admin-only read** because its stored snapshots are totals recorded over every plan and cannot be filtered after the fact; the audit and event feeds filter by what each row is about and by plan ids named in it, so an entry that names a hidden plan only in free text is not caught; the test proves the routes it seeds data for — a field no seed exercises is not proven; contention and ordering are untested; `time-reports`' `omitted` count no longer counts private plans' rows (it counted them before). RM-8
+- [x] **RM-8b (L) — Keep private plans out of the aggregate views.** **Landed 2026-10-06.** One shared query — `plan_access::HiddenScope::of(ctx, caller)` (the private plans the caller is not in, and the tasks inside them) — and every aggregate loads through `scope.keep(rows)` / `keep_edges` (a lookup failure is an error, never an empty scope). Routed through it: at-a-glance, capacity, capacity utilization, executive health / alignment / benefits / decisions, financials variance / exposure / forecast, lifecycle funnel, prioritization and Smart Score, proposals forecast, risk heatmap, security and compliance registers and findings, auditor findings, regulator extract, controls coverage, technology debt / flow / radar / dependency risk, engineering blocked / delivery links / milestone calendar / MoSCoW, DevOps metrics and releases, assignee workload, time reports, saved reports (and scheduled ones, which run as an anonymous reader), the plan roadmap and subtree rollups, scenarios (list, evaluate, compare, create: a member list never names a plan the caller cannot see), the proposal that became a hidden plan, and the audit / event / merge feeds. **Acceptance, as tested** (`tests/private_aggregates.rs`, real tokens, a private plan carrying data of every kind at twice the public plan's size): for a non-member every one of ~55 aggregate routes is **byte-identical before and after the private plan appears** (clocks scrubbed), a member's equal an admin's (except where a person's detail is masked), the private plan really does change the admin's totals, a route that names its plan in the query (`?plan=`) is 404 for a non-member, a scenario naming the private plan evaluates for a non-member as if it did not, and **a test enumerates the mounted GET routes: each parameterless one must be in the compared list, the privileged list or an allowlist with a reason, so a new aggregate cannot skip the decision**. The test found **sixteen** leaking routes before the fix. **Deviations, stated plainly:** the admin-only bulk reads (board pack, investments, auditor trail, evidence pack) stay full by design (403 to everyone else); **board trends is now an admin-only read** because its stored snapshots are totals recorded over every plan and cannot be filtered after the fact; the audit and event feeds filter by what each row is about and by plan ids named in it, so an entry that names a hidden plan only in free text is not caught; the test proves the routes it seeds data for — a field no seed exercises is not proven; contention and ordering are untested; `time-reports`' `omitted` count no longer counts private plans' rows (it counted them before). RM-8
   hides a private plan's *records* but cross-plan aggregates (at-a-glance,
   executive, board, financials, reports, capacity, scenarios, TBA rollups, the
   Smart Score ranking) are computed over every plan and still count it.

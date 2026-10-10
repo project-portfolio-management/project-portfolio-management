@@ -3,7 +3,7 @@
 //! `released_at`), the risk `category` (technical-debt register), and
 //! the milestone completion timestamp `done_at` (delivery-flow
 //! metrics). All nullable, so existing rows keep their behaviour:
-//! an ungated line is never held, an uncategorised risk reads as
+//! an ungated line is never held, an uncategorized risk reads as
 //! `delivery`, and a milestone completed before this migration counts
 //! but is not timed.
 

@@ -3,10 +3,14 @@
 > **Status (2026-10-06).** This file is research and decision history, not a
 > live queue: its ideas became the `LT-`, `RM-`, `PL-`, `SC-`, `PJ-` and related
 > items in [tasks.md](tasks.md), all of which are ticked there (each entry says
-> what is built and what is "Not built"). Sections are numbered §1–§31 across
-> six research passes (Leantime, Redmine, Platform Collective, scheduling and
-> cost canon, ProjectLibre, owner decisions); the "Where we already match"
-> tables are as of each pass's date and are not re-verified.
+> what is built and what is "Not built"), except the `DP-` (§32–§38, the monthly
+> director pack), `EX-` (§39–§45, a delivery organization under escalation),
+> `HD-` (§46–§51, production readiness) and `CC-` (§52–§56, critical chain
+> buffers) items, added 2026-10-09, which are open. Sections are numbered §1–§56
+> across ten research passes (Leantime, Redmine, Platform Collective, scheduling
+> and cost canon, ProjectLibre, owner decisions, director pack, escalation,
+> production readiness, critical chain); the "Where we already match" tables are
+> as of each pass's date and are not re-verified.
 
 Research date: 2026-10-02. Subject: [leantime/leantime](https://github.com/leantime/leantime)
 (v3.10.1; PHP / MySQL; AGPLv3; ~11.7k stars).
@@ -131,7 +135,7 @@ LT-2 and LT-5 are blocked on, or shaped by, the T-8 design awaiting approval
 - With two audiences, should the signed-in landing page differ by role
   (T-28f's `view` attribute already exists), with workers defaulting to
   `/me`?
-- Wiki: build, or link out to the organisation's existing docs system?
+- Wiki: build, or link out to the organization's existing docs system?
 - Canvases: generic engine (one table, typed templates) or a bespoke table per
   canvas? The task assumes generic.
 - Should comments / reactions be on *every* entity or only plans, tasks, risks
@@ -155,7 +159,7 @@ workflow rule exists today).
 ## 7. What Redmine is, and how it differs from Leantime
 
 Redmine is the configurable generalist: **its core idea is that the
-organisation defines its own vocabulary**: issue types, statuses, custom
+organization defines its own vocabulary**: issue types, statuses, custom
 fields, roles, and a transition matrix per type and role. It is
 administrator-centric and sits at the opposite pole from Leantime's
 "simple for non-project-managers". For this product that is useful as the
@@ -368,7 +372,7 @@ inside that feature. The cheapest honest order is therefore the engine first.
 | 7 | **Portfolio resource management**: demand vs capacity by role and period, generic placeholders, planned vs actual hours | The resource manager's real question: "can we staff Q1?" | Medium-high | SC-7 |
 | 8 | **Schedule-risk Monte Carlo**: three-point durations, register risks as events, P50/P80/P90 finish, criticality index | The honest answer to "when will it finish" is a distribution, and we already do this for throughput | Medium; after SC-1/2 | SC-8 |
 | 9 | **DCMA-style 14-point schedule health** with offender lists | A checklist people already know; each check is a pure function. Named a *self-check*, not a compliance claim | Medium-high | SC-9 |
-| 10 | **Worker view of float**: "this task has 3 days of float" / "on the critical path" in *My work* | Half our users are workers; the one schedule fact that changes their day | High; small | SC-10 |
+| 10 | **Worker view of float**: "this task has 3 business days of float" / "on the critical path" in *My work* | Half our users are workers; the one schedule fact that changes their day | High; small | SC-10 |
 | 11 | **Front-end**: schedule-health scorecard, float column in the Lily Gantt table, S-curve, leveling diff, resource heatmap, risk histogram | None of it is usable as JSON alone | Medium | SC-11 |
 
 ## 21. Deliberately not taken (scheduling and cost canon)
@@ -377,14 +381,17 @@ inside that feature. The cheapest honest order is therefore the engine first.
   accredited-system certification about process and people, not a feature. We
   compute EVM figures with disclosed formulas; we do not say the system is
   "EIA-748 compliant", and neither do the DCMA-style checks say "DCMA compliant".
-- **Automatic resource-constrained scheduling (an RCPSP optimiser that rewrites
+- **Automatic resource-constrained scheduling (an RCPSP optimizer that rewrites
   dates).** Leveling is advisory and deterministic; it never silently moves a
-  critical task. An optimiser is a different product and an unexplainable one.
+  critical task. An optimizer is a different product and an unexplainable one.
 - **Silent auto-reschedule when a predecessor slips.** The engine *reports*
   float and violations; a person decides. (Same stance as the automation work.)
 - **Critical-chain buffers (CCPM)** and **crashing / fast-tracking advice.**
   Related, but the Theory-of-Constraints analysis already in `tba.rs` is the
   flow-side answer; a schedule-side one needs a real user asking.
+  *(Superseded 2026-10-09 for CCPM: the owner asked, and critical-chain
+  buffers are taken in §52–§56. Crashing and fast-tracking advice stays not
+  taken.)*
 - **Correlated risk (copula) models and cost-risk correlation matrices.**
   SC-8 states "inputs are independent" as a limitation rather than fake the
   rigour.
@@ -411,12 +418,12 @@ inside that feature. The cheapest honest order is therefore the engine first.
 
 - **F-6: `critical_path()` ignores lag.** `src/visibility.rs` sums item
   durations along edges and never adds `ScheduleEdge.lag_days`, while
-  `violations()` does honour it. A chain with a 10-day lag can be reported as
+  `violations()` does honour it. A chain with a 10-calendar-day lag can be reported as
   *shorter* than an unlagged one, so the wrong chain can be called critical.
   Fixed by SC-1; until then the "critical path" label on the Gantt is
   duration-only and should be read that way.
 - **F-7: every duration is calendar days.** `(end - start).num_days() + 1` and
-  `Days::new(lag)`: a Friday-to-Monday task is four days long. The doctrine for
+  `Days::new(lag)`: a Friday-to-Monday task is four calendar days long. The doctrine for
   *dates* is zone-free, which is right; the missing piece is a **working
   calendar** (SC-2), not a time zone.
 - **F-8: SPI and CPI cannot exist yet, and the message is accurate.** After
@@ -428,7 +435,7 @@ inside that feature. The cheapest honest order is therefore the engine first.
 - **Working time:** one working calendar per plan, or per resource (a part-time
   contractor, a regional holiday)? Per plan is far simpler and covers most uses.
 - **Duration unit:** keep calendar days and add a calendar, or move durations to
-  working days throughout? The second is more correct and touches every date.
+  business days throughout? The second is more correct and touches every date.
 - **Percent complete:** which method is the default — 0/100 (done or not),
   50/50, or points-based physical percent (derivable today)? And may a manager
   type a percent by hand (flagged `manual`)?
@@ -596,3 +603,655 @@ Answers to §24 and §30, recorded so they are not re-asked:
 - **Still open:** default percent-complete method, who may set a hard constraint
   (now an ABAC action too), DCMA wording, three-point estimates, and the money
   source for EVM (§24).
+
+---
+
+# Research: the monthly director pack
+
+Source of this section: the owner's brief of 2026-10-09, "What directors should
+see each month" — **one pack, the same for the organization's executive, its
+board, an escalation board, and the chief executives of partner
+organizations**, with eight views: portfolio map, exceptions (the 48-hour red
+rule), gate decisions, capacity heatmap, money, buffer fever chart, earned
+value, and benefits.
+
+**Evidence base, stated plainly.** Read: `src/controllers/oversight.rs`
+(`board_pack_body`, `/board/trends`, `/board/snapshots`), `insights::rag_by_pid`
+and `visibility::rag`, `governance.rs` (`GATES`, `DECISIONS`, gate reviews),
+`lifecycle.rs` (`PHASES`), `strategy.rs` (`BENEFIT_STATUSES`, objectives and
+`objective_links.weight`), the `budget_lines`, `benefits`, `allocations`,
+`earned_value_snapshots` and `insight_snapshots` entities, `portfolio_resources`
+(SC-7), `earned_value.rs` (thresholds, EAC variants), `report_schedules.rs`
+(monthly cadence) and `spec/locales.md`. **Not read:** any published
+delivery-confidence guidance, language regulation or public funding rules; what
+this section says about them is general knowledge and is marked as an owner
+question where it matters.
+
+## 32. Assessment of the brief
+
+The brief is sound and close to good public-sector portfolio practice
+(**exception-led**, and **one pack for every audience** so no board sees a
+friendlier story), and it joins delivery, money, people and benefits — the four
+things usually reported by four teams in four spreadsheets. Five things in it
+need sharpening before it can be built honestly:
+
+1. **"The same pack" must mean the same frozen data, not the same live screen.**
+   Partner chief executives and an escalation board are outside the
+   organization; today the board pack is an admin-only privileged read (RM-8b)
+   and cost rates are finance-only (PJ-2). The answer is an **issued pack**: one
+   snapshot per month, cut off at a stated time, with an identifier and version,
+   distributed to named audiences. Everyone reads the identical object; nobody
+   needs access to the live estate. A correction after issue is a **reissue
+   (v2) with a change note**, never a silent edit. Trend arrows compare with
+   **the previous issued pack**, never a re-derivation of last month (the
+   `/board/trends` doctrine).
+2. **"Delivery confidence" is a judgement, and the code only has a derived
+   three-colour RAG.** The five-point scale the brief implies (green,
+   amber-green, amber, amber-red, red) is an assessment made by the senior
+   responsible owner or an independent assurance reviewer, with a rationale and
+   a date. It should be **stored as such, beside the derived RAG, and never
+   blended with it**; when the two disagree by two or more steps the pack says
+   so. A programme with no current assessment shows **"not assessed"**, never
+   green.
+3. **The 48-hour red rule needs a clock and a definition of done.** Proposed:
+   the clock starts when a programme's confidence is *set* to amber-red or red
+   (or worsens within them); it stops when an exception record holds a **cause,
+   the decision needed, a named owner and a decide-by date**. Missing that in 48
+   elapsed hours is a **breach, shown in the pack** and notified. Exceptions
+   then stay open until the decision is recorded and closed.
+4. **The gate vocabulary does not match.** Stored decisions are `approved`,
+   `approved_with_conditions`, `hold`, `rejected`. "Passed / failed / deferred"
+   map to approved (either form) / rejected / *a gate that was due and not
+   held or was held over*, which needs a **planned gate date** we do not store.
+   "Paused" and "stopped" are not lifecycle states at all (`PHASES` runs idea →
+   closed); they need a programme status with a reason and the decision that set
+   it.
+5. **"Over threshold" for earned value is ambiguous.** The service already has
+   CPI/SPI *alert* thresholds (`PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS`).
+   The brief most likely means a **size** threshold (programmes whose budget at
+   completion is above a set amount are EVM-reported). Recommended: an inclusion
+   threshold on BAC, set by configuration and printed in the pack, and a
+   programme below it shows "below EVM threshold", not a blank.
+
+## 33. View by view: what exists, what is missing
+
+| View | Already here | Missing |
+|---|---|---|
+| Portfolio map | Plans with `kind`, `stage` (last approved gate) and `phase`; objectives with weighted `objective_links`; derived RAG | **Strategic aims** as the top tier of objectives (or a flag on an objective); a **primary aim** per programme so a programme linked to two aims appears once and is cross-referenced, never double-counted; **stored delivery confidence** (§32.2); **trend arrows** from the previous issued pack |
+| Exceptions | Risks and the risk-raise action, notifications and sinks | An **exception record** (programme, confidence change, cause, decision needed, owner, decide-by, outcome); the **48-hour clock** and breach flag; routing to a named decision forum |
+| Gate decisions | `gate_reviews` (gate, decision, conditions, approver, date); stage advance on approval; tranche release on gate | **Planned gate dates** (to see *deferred*); **paused / stopped** status with reason and decision reference; a window query "decisions this month" across programmes |
+| Capacity heatmap | SC-7 `/resource-plan` (demand against supply by role or skill and period, placeholders, masking of people for non-managers); availability (PJ-3) | **Skill pools** as a named taxonomy (roles and skills map to a pool); **month** grain fixed for the pack; **partner commitments** — supply (and demand) *committed by another organization*, which needs an **organization** on an allocation or a commitment record (none exists); committed-against-delivered for those commitments |
+| Money | Budget lines (planned, actual, low/high, gate, release), budget baselines, forecast (`/financials/forecast`), variance per currency | A **funding source** on each budget line (reference data: e.g. a government allocation, a named investment fund, core budget, a partner contribution) and **capital / revenue**; a configurable **financial year** (e.g. April to March); per programme × source: budget, spend to date, full-year forecast, variance |
+| Buffer fever chart | CPM with critical chains (SC-1), leveling (SC-6), schedule baselines (SC-3), schedule risk (SC-8) | **A project buffer** per programme and the two fever-chart measures: **chain completed %** and **buffer consumed %**, with zone boundaries — critical-chain buffers were *not taken* in §21 for want of a real user; this brief is that user (§34) |
+| Earned value | Per plan EV, CPI, SPI, EAC variants, series, rollup, snapshots, thresholds | A **portfolio** EVM view filtered by the BAC inclusion threshold; the **AC source** stated in the pack (budget-line actuals or recorded labour — still open, §24) |
+| Benefits | Benefits with category, target, realized, expected date, status (`planned`, `on_track`, `realized`, `missed`); realized events in the board pack | **Validated** as distinct from *claimed*: amount, validator (not the programme's own team), evidence, date; **per year** (recurring, annualized) versus one-off; **cash-releasing / non-cash-releasing / societal** classification; **non-financial benefits** measured through a linked KPI (KO-1) |
+
+## 34. Reversing a "not taken": the buffer fever chart
+
+§21 declined critical-chain buffers "until a real user asks". This brief asks,
+so the item is taken — **narrowly**. Full CCPM (cut estimates by half, resource
+buffers, feeding buffers, pacing by buffer only) is a method change for every
+team; the fever chart needs much less:
+
+- a **project buffer in business days** declared at baseline for each programme
+  (explicitly, or as a stated rule such as 50% of the critical chain, or the
+  square root of the sum of squared task contingencies — the rule is printed);
+- **chain completed %** = the share of the baselined critical chain's working
+  duration whose tasks are done (physical, not elapsed);
+- **buffer consumed %** = business days between the baselined chain finish and
+  the current CPM forecast finish, over the buffer (negative is "recovered" and
+  shown as 0 with the true figure beside it; over 100% is off the chart and
+  plotted at the edge with the number);
+- **zones** (green, amber, red) bounded by two sloped straight lines over
+  (chain completed, buffer consumed); the lines are configuration, printed in
+  the pack, and not pinned here until the owner picks them (§37);
+- one point per programme per pack, so the pack's **trail is last month to this
+  month**, from issued packs only.
+
+A programme with no buffer declared, no baseline or no forecast is listed as
+**"no fever-chart point"** with the reason. The feeding-buffer and resource-
+buffer parts of CCPM, and multi-project pipelining, were left out here and
+**are now taken in §52–§56 (CC-n)**, which supersede this section's buffer
+source.
+
+## 35. Further views worth adding (owner to decide)
+
+The brief is close to complete; these fill gaps a board will ask about:
+
+- **Cover page:** as-of time, data cut-off, pack id and version, what changed
+  since the last pack (new exceptions, closed exceptions, confidence moves), and
+  a **data-quality panel** — programmes with no confidence assessment, stale
+  assessments (older than the pack period), no baseline, budget lines with no
+  funding source, benefits with no validator. Absence is listed, never shown as
+  green or zero.
+- **Decisions requested last month and what happened** — closes the loop on the
+  exceptions view, which otherwise only shows new asks.
+- **Top risks and issues above tolerance**, against the declared risk appetite
+  (`/risk/heatmap` already has it).
+- **Cross-programme and cross-organization dependencies at risk** (the
+  dependency network already exists; a late predecessor in another organization
+  is the commonest cause of red in a shared-services body).
+
+## 36. Delivery, language and access
+
+- **Formats:** an accessible HTML page and a PDF from the **same frozen JSON**
+  (the PL-10 rule: a PDF is never more permissive than its JSON). Every chart
+  has a table twin; colour is never alone (word and shape, as elsewhere).
+- **Language:** an organization under a language obligation may need board
+  papers in more than one language. The pack's fixed text (headings, labels,
+  zone names, data-quality messages) goes through the locale catalogue, so
+  every supported locale renders it; free text (causes, decisions) is shown as
+  entered and its language recorded. Whether the pack is published publicly is
+  an owner question (§37).
+- **Access:** issuing a pack is an ABAC action (`director_pack:issue`); reading
+  an issued pack is granted per audience (`director_pack:read` with an
+  `audience` attribute), so a partner chief executive reads issued packs and
+  nothing live. The pack contains **no person-level data**: capacity is by skill
+  pool, money by programme and source, cost rates never appear.
+- **Schedule:** a monthly cadence exists (`report_schedules`); the pack is
+  *drafted* on schedule, *reviewed* by the portfolio office, and *issued* by a
+  person — never auto-issued.
+
+## 37. Open questions for the owner (director pack)
+
+- **Confidence scale:** a recognized five-point delivery confidence scale, or
+  the organization's own? Who sets it — the senior responsible owner, the
+  portfolio office, or independent assurance? Can the owner's view be
+  overridden, and is the override shown?
+- **48 hours:** elapsed hours, or working hours (a red on Friday evening)? Does
+  the rule apply to amber-red as well as red (the brief says both)?
+- **Strategic aims:** which list — the organization's own strategy, a
+  government's priorities, or both? One primary aim per programme?
+- **Partner commitments:** are they people a partner lends to a programme
+  (supply), work a partner must do for it (demand, e.g. local implementation),
+  or both? Per partner by name, and do partners see each other's?
+- **Funding sources:** the reference list, the financial-year start, and
+  whether capital and revenue are reported separately in the pack.
+- **EVM threshold:** the BAC above which a programme is EVM-reported; and the
+  AC source (still open from §24).
+- **Benefits:** who may validate, what evidence counts, and whether the
+  cash-releasing / non-cash-releasing / societal classification is wanted.
+- **Buffers:** declared per programme, or a portfolio rule? Fever-chart zone
+  boundaries?
+- **Publication:** is the pack a public board paper (possibly in more than one
+  language, sensitive content redacted or held in private session), or
+  internal only?
+- **The four optional views in §35:** which to add.
+
+## 38. Sequencing
+
+1. **DP-1 (issued pack)** first: every view rides on the frozen, versioned
+   snapshot and its access rules.
+2. **DP-2 (delivery confidence)** and **DP-3 (exceptions and the 48-hour
+   rule)** next — they are the pack's headline and the only new *process*.
+3. **DP-4 (strategic aims and portfolio map)** and **DP-5 (gate decisions,
+   paused and stopped)** — small schema changes on existing entities.
+4. **DP-6 (funding sources)** and **DP-9 (validated benefits)** — reference
+   data plus fields; can run in parallel.
+5. **DP-8 (portfolio EVM)** is mostly a query over what exists.
+6. **DP-7 (buffer fever chart)** needs SC-1 / SC-3, which have landed.
+7. **DP-10 (skill pools and partner commitments)** needs the organization
+   decision and is the largest schema change.
+8. **DP-11 (rendering and languages)** and **DP-12 (schedule, review and
+   issue)** last, as each view lands.
+
+---
+
+# Research: a delivery organization under escalation
+
+Source of this section: the owner's private research notes (2026-10-09, not in
+this repository) on a public-sector delivery organization placed under escalation
+(external oversight and intervention) by its sponsoring government, whose directors had no portfolio tool
+and could not see across the organization which projects were running, their
+status, earned value, total project control, critical chain or resource
+levelling. The notes' §"what directors should see each month" is the director
+pack in §32–§38 above.
+
+**Evidence base, stated plainly.** The notes are secondary — written from
+public sources with stated judgements and estimates — and are not reproduced
+here. Requirements below are **generalized** from them so they fit any
+organization that delivers programmes with and for partner organizations under
+a board and a sponsor. Facts about *this repository* were checked in the code.
+The notes' timelines, costs and tool market survey are advice to that
+organization, not requirements on us, and are not carried into the backlog.
+
+## 39. What an organization under escalation needs a portfolio tool to make true
+
+Read as requirements, the notes ask for seven capabilities. Each answers a
+failure pattern common to large public-sector delivery bodies:
+
+| # | Capability | Why |
+|---|---|---|
+| 1 | **One register; unregistered work gets no money and no people** | Money cannot be traced to outcomes ("what did this allocation buy?" takes calendar days of manual search); work starts without a decision |
+| 2 | **Independent delivery confidence beside self-reported RAG, and the gap measured** | "Green reports, red delivery": milestone counts look healthy while major programmes fail |
+| 3 | **Early warning: the 48-hour red rule and "late discovery" counted** | Risks and missed milestones not reported in a timely and transparent way |
+| 4 | **Pause, reset, stop as real, visible controls with pre-agreed thresholds** | Sponsors increasingly ask for evidence they are used; programmes otherwise drift for years |
+| 5 | **Capacity before commitment: no start without named, funded people; a WIP limit** | Over-commitment against capacity; several large replacements in one window |
+| 6 | **Partner organizations inside the system**: their people, sign-offs, readiness and dates | Accountability without authority; partners moving go-live dates unilaterally |
+| 7 | **Validated benefits and a measurable route to de-escalation** | Sponsors ask for programmes with *validated* benefits and sustained progress over consecutive quarters |
+
+## 40. Where we already match
+
+- **Register, stages, gates, tranche release:** plans with kind, stage, phase;
+  gate reviews; budget lines released only when their gate is reached.
+- **Proposals and intake:** `/proposals` with submit, review, approve, reject,
+  promote, duplicates, and an intake forecast.
+- **Capacity and levelling:** SC-7 resource plan (role or skill per period,
+  placeholders), PJ-3 availability, SC-6 levelling, PJ-4 proposed bookings.
+- **CPM, baselines, schedule risk, EVM, cost risk:** SC-1 to SC-9, CR-1 to CR-4.
+- **Exit path from retired desktop and online scheduling tools:** PJ-10's MSPDI
+  (XML) import reads what Microsoft Project exports.
+- **Approvals, risk raising, KPIs, OKRs, satisfaction surveys** (the last
+  usable for a partner pulse).
+- **Private plans kept out of aggregates** (RM-8b), **ABAC with deny by
+  default**, **audit of every change** — the trust base an issued pack needs.
+
+## 41. Gaps worth considering (EX-n)
+
+Beyond the director pack (DP-n), the notes imply these:
+
+1. **Register completeness and the "no register, no money" rule (EX-1).** A
+   completeness score per programme (SRO, partners, stage, baseline and
+   forecast dates, budget, funding source, confidence, top risks,
+   dependencies). Optionally *enforced*: a budget-line release or a firm
+   allocation on a programme whose record is incomplete is refused with the
+   missing fields named (a deployment switch, off by default).
+2. **Delivery-model typology (EX-2).** Each programme is one of *central
+   product* (the organization builds and runs it), *central platform with local
+   deployment* (one contract and master schedule, partners deploy), or *local
+   programme with central standards* (a partner leads). The type decides who the
+   **delivery owner** is, who may move a deployment date, and whether the pack
+   counts it against the organization. The pack shows the type so "not ours to
+   deliver" is visible.
+3. **Partner organizations as first-class records (EX-3).** An organization
+   (the delivery organization, a partner body, a government sponsor, a
+   supplier) can be a joint SRO, a supplier of people, a party to a milestone
+   and an audience for the pack. This is the foundation for DP-10 and EX-4 to
+   EX-6.
+4. **Milestones "met" only when the partner signs off (EX-4).** A milestone may
+   require sign-off from named organizations; it is *delivered* when the
+   delivery organization says so and *met* when every required partner has
+   signed. The pack reports both and the gap between them.
+5. **Deployment-date change control (EX-5).** For a *central platform, local
+   deployment* programme, a partner's request to move its go-live is a change
+   request: the knock-on effect on other deployments (from the schedule network)
+   is computed and shown, and the move needs the named approver (e.g. an
+   escalation board). The cost of the knock-on is recorded against the requester.
+6. **Go / no-go for safety-critical cutovers (EX-6).** A cutover decision with
+   **pre-agreed stop criteria published in advance**, each criterion marked met
+   or not at decision time, and **co-signatures** from the partner's accountable
+   professional lead and the delivery organization. A "no-go" or "delay for
+   safety" is recorded as a decision, not a slip, and the pack says so.
+7. **Finish / Fix / Pause / Stop triage and stop thresholds (EX-7).** A
+   portfolio triage is a dated decision set; each programme carries **explicit
+   pause, reset and stop thresholds** (e.g. confidence red for two packs; a
+   forecast past a date; cost risk P80 past a cap). Crossing a threshold opens
+   an exception that **requires** a pause, reset, stop or recorded override. The
+   count of pause/reset/stop decisions is itself evidence of grip for a sponsor.
+8. **Start control: capacity check and WIP limit (EX-8).** A configurable limit
+   on programmes in active delivery; a promotion from proposal, or a move into
+   delivery, shows the capacity it needs per skill pool against what is free
+   (SC-7) and is refused (or needs an override with reason) when the limit is
+   reached or a constraint pool is over. New starts queue in order.
+9. **Watermelon measures (EX-9).** Computed each pack: the gap between
+   self-reported RAG and independent confidence per programme; **late
+   discovery** (a programme first reported at amber-red or red with no earlier
+   amber); milestones met with partner sign-off as a share; red without an
+   approved recovery or stop decision.
+10. **Outcome scorecard and de-escalation tracker (EX-10).** A named set of
+    10–12 KPIs (KO-1) with targets, read by quarter; the tracker records the
+    escalation level as set by the sponsor, its de-escalation criteria, the evidence
+    linked to each, and **how many consecutive quarters** each has been met.
+    The rule (e.g. "two consecutive quarters") is configuration, not code.
+11. **Key-person register (EX-11).** People (or roles) who are single points of
+    failure, with named successors and readiness; the contingent-workforce
+    share of each skill pool. Visible to resource managers only; the pack shows
+    counts, never names.
+12. **Portfolio ledger: "what did this allocation buy?" (EX-12).** A funding
+    allocation (DP-6's funding source plus an amount and a date) traced through
+    budget lines, gates passed, milestones met and benefits validated, in one
+    query, with **untraced money shown as untraced**. Finance cost codes map to
+    a register id so ledger exports can be reconciled.
+13. **New asks need a named trade-off (EX-13).** A proposal tagged as an
+    external ask from the sponsor must name what it displaces (a programme
+    slowed, paused or descoped) before it can be approved; the trade-off is
+    shown in the pack.
+14. **Method per programme: EVM or agile measures (EX-14).** A programme is
+    flagged *EVM* (defined scope, contract-heavy, over the BAC threshold) or
+    *product* (agile); product programmes report burn-up, release outcomes and
+    service measures (the TBA flow metrics already exist), and the pack never
+    shows an EVM blank for them — it shows the measure that applies.
+
+## 42. Deliberately not taken (escalation)
+
+- **A P3M3 maturity score in the tool.** It is an external assessment, not a
+  metric the software can compute.
+- **An AI register.** Valid governance, but a separate register product; a
+  plan with a tag covers the portfolio view of AI pilots.
+- **A live connector to a finance ledger.** EX-12 maps cost codes and
+  reconciles exports; a live connector waits for a named ledger and an owner.
+- **Scoring an organization's performance for its sponsor.** The tool reports
+  facts and decisions; escalation levels are recorded as given, never computed.
+- **Auto-pausing a programme.** Thresholds open an exception and require a
+  person's decision (the same stance as §21: report, a person decides).
+
+## 43. Sequencing with the DP items
+
+1. **EX-3 (organizations)** early — DP-10, EX-4, EX-5 and EX-6 all need it.
+2. **EX-1 (register completeness)** with DP-1, so the first pack has a
+   data-quality panel.
+3. **EX-9 (watermelon measures)** with DP-2 and DP-3: they read the same data.
+4. **EX-7 (triage and thresholds)** after DP-3 (thresholds open exceptions).
+5. **EX-4, EX-5, EX-6** after EX-3; **EX-2 (typology)** before EX-5 (it decides
+   who may move a date).
+6. **EX-8 (start control)** after DP-10 (skill pools).
+7. **EX-10, EX-11, EX-12, EX-13, EX-14** independently, as asked.
+
+## 44. Findings (from reading the notes against our code)
+
+- **F-10: no organization concept.** Allocations, people, approvals and
+  milestones have no organization; a partner's commitment cannot be stored
+  today. EX-3 is the prerequisite.
+- **F-11: confidence is derived only.** `rag_by_pid` colours a plan from
+  dates, risks, budget overrun and dependency violations; no person's judgement
+  of delivery confidence is stored. A self-reported status and an independent
+  assessment both need a home (DP-2).
+- **F-12: no paused or stopped state.** `PHASES` has no pause or stop and
+  `DECISIONS` has `hold` but no *stop*; a stopped programme can only be
+  deactivated or deleted, which loses the decision. DP-5 / EX-7.
+- **F-13: benefits have no validation.** `BENEFIT_STATUSES` jumps from
+  `on_track` to `realized` with no validator or evidence; sponsors ask for
+  *validated* benefits. DP-9.
+
+## 45. Open questions for the owner (escalation)
+
+- **Who is the user?** The delivery organization's portfolio office, the
+  sponsor's team, the partner organizations, or all three in one deployment? It
+  decides multi-organization tenancy versus one estate with audiences.
+- **Enforcement:** should EX-1 ("no register, no money") and EX-8 (WIP limit)
+  *refuse* actions, or warn and record an override?
+- **Typology:** the three models above, or an organization-defined list?
+- **Go / no-go:** which roles must co-sign, and is the decision record shared
+  with the partner organization's own governance?
+- **Scorecard:** ship a seeded template of measures, or leave the set empty for
+  each organization to define?
+- **Key-person register:** named people (sensitive) or roles only?
+
+---
+
+# Research: production readiness (HD-n)
+
+Source of this section: the owner's list of 2026-10-09 — licence file; buildable
+from its own repository with automated checks; login enforcement on by default;
+security headers; rate limiting; backup plan; data protection impact
+assessment (DPIA).
+
+**Evidence base, stated plainly.** Read: the repository root listing, every
+`Cargo.toml` and `package.json` licence and repository field, the three
+`.github/workflows` files, `rust-toolchain.toml`, `git remote -v`, the tracked
+file list, `src/auth.rs` (`require_auth`, `area_allows`, `is_public_path`),
+`src/app.rs` (the enforcement middleware), `config/{development,production,test}.yaml`,
+`src/hooks.server.ts` in the UI, and `spec/12-compliance.md`. Not read: the
+hosting environment, any deployment manifests outside this repository, or
+legal advice on the licence or the DPIA.
+
+## 46. What exists, and the gaps (verified)
+
+| Item | Already here | Gap |
+|---|---|---|
+| Licence | `license` fields: both Rust crates `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`; the UI `MIT OR Apache-2.0` | **No licence file anywhere** (no `LICENSE*`, `COPYING`); **the three manifests disagree** (finding F-14); no SPDX headers; `cargo deny` licence checks exist (`deny.toml`) but govern dependencies, not us |
+| Own repository, automated checks | `rust-toolchain.toml` pins 1.96.1 at the root; `api/.github/workflows/ci.yaml` and `security.yml`, `matcher/.github/workflows/security.yml` | **No workflow runs**: GitHub only reads `.github/workflows` at the repository root, so the three files in sub-directories are inert (F-15). The CI file floats `stable` against the pinned toolchain, uses the archived `actions-rs/cargo`, and has no UI job. **`repository` URLs point at an old monorepo** (`sixarm/main-x-service`), and comments still say "Main X Index repository" (F-16). **`project-portfolio-management-matcher-with-rust/target/` is committed** (822 build files, F-17). Pushes go to three forges (GitHub, Codeberg, GitLab), so checks must not depend on one forge only |
+| Login enforcement | Blanket `/api/*` enforcement (PASETO and/or Keycloak, then ABAC) exists and is tested | **Off by default**: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` unset ⇒ every request is anonymous **and every write is allowed** (`area_allows` returns true), including finance areas (F-18). A deployment that forgets one variable is wide open |
+| Security headers | `nosniff`, `no-store` and attachment disposition on file downloads only | No HSTS, CSP, frame-ancestors / `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` or COOP/CORP on API or UI responses; the UI sets no headers in `hooks.server.ts`; **CORS is enabled with the framework default in production** (F-19) |
+| Rate limiting | `limit_payload` body limit (2 MB); scenario and simulation iteration caps; list paging ceiling (RM-12b) | **No request rate limiting** anywhere — not per caller, not per IP, not on token-bearing feeds, not on expensive endpoints (Monte Carlo, CPM, levelling, bulk export) |
+| Backup plan | Soft delete everywhere; audit log; append-only histories; `compose.test.yaml` | **No backup or restore plan**: no RPO/RTO, no schedule, no restore test, nothing for the artifact store (attachments, exports) which lives outside the database; the production config comment says "no bulk/upload feature in this crate", which is no longer true (F-20) |
+| DPIA | `spec/12-compliance.md` names GDPR / UK GDPR as engaged via people references; masking obligation; audited right-of-access export | **No DPIA**: no description of processing, necessity and proportionality, risk register for data subjects, or sign-off; personal data has grown since §12 was written (timesheets, cost rates, availability and leave, key-person register proposed in EX-11, comments, feed tokens) |
+
+## 47. Recommendations
+
+1. **Licence.** One licence set for the whole repository, chosen by the owner
+   (§51). **All licence files live in a `LICENSE/` directory at the root**
+   (owner decision, 2026-10-09), one file per licence in the expression;
+   none elsewhere. Make every manifest's `license` field the same SPDX
+   expression, and add a test that keeps them equal and finds a file in
+   `LICENSE/` for each. (Forge licence detection usually looks for a root
+   `LICENSE` *file*; with a directory the README carries the statement.)
+2. **Its own repository.** Move CI to the root `.github/workflows`, one job per
+   crate and one for the UI, on the pinned toolchain; fix the `repository`
+   URLs; untrack `target/` and ignore it. A fresh clone must build and test
+   with only the documented prerequisites, and a job proves it on every push.
+   Mirrors on Codeberg and GitLab get a matching pipeline or are documented as
+   mirrors only.
+3. **Secure by default.** Enforcement **on unless explicitly turned off**:
+   `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` becomes the only way to
+   disable it, logged at startup as a warning, and **refused when the
+   environment is `production`**. With enforcement on and no verifier
+   configured, the service refuses to start rather than reject every request
+   silently. Development and test configs opt out explicitly.
+4. **Headers.** One middleware on the API and one hook in the UI: HSTS (only
+   over TLS), a strict CSP for the UI (no inline script; nonces if needed),
+   `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy:
+   strict-origin-when-cross-origin`, a minimal `Permissions-Policy`, and
+   `Cross-Origin-Opener-Policy: same-origin`. **CORS becomes an explicit
+   allow-list** from configuration; none in production means same-origin only.
+5. **Rate limits.** A token-bucket limit per authenticated subject (else per
+   client IP, honouring a configured trusted proxy), a tighter bucket for
+   expensive routes (simulations, CPM, levelling, exports, imports) and for
+   authentication failures; `429` with `Retry-After` and the standard
+   `RateLimit` headers; limits from configuration; the health and metrics
+   routes exempt. In-process first; a shared store only when there are
+   several replicas.
+6. **Backups.** A written plan with RPO and RTO stated; PostgreSQL continuous
+   archiving (base backup plus WAL) or managed point-in-time recovery; the
+   artifact store backed up on the same schedule and **restored together**
+   (a database restore with mismatched files breaks the SHA-256 checks);
+   encrypted, off-site, with retention; **a scheduled restore test** that
+   restores into a scratch database, runs migrations and a smoke suite, and
+   reports. The plan lives in the spec; the scripts live in the repository.
+7. **DPIA.** A DPIA document in the spec, kept with the code: the processing
+   (who, what, why, where, how long), lawful basis per category, necessity and
+   proportionality, data-subject rights and how each is met (export, masking,
+   rectification, erasure limits given append-only audit), risks with
+   likelihood and severity and the control that answers each, retention per
+   table, international transfers, processors, and sign-off. **A test lists
+   every column that can hold personal data** and fails when a migration adds
+   one that the DPIA's inventory does not name.
+
+## 48. Findings (production readiness)
+
+- **F-14: three licence declarations, no licence text.** The crates and the UI
+  declare different SPDX expressions and no file carries the terms.
+- **F-15: CI never runs.** The workflows are under sub-directories that GitHub
+  does not read.
+- **F-16: stale repository identity.** `repository` URLs and comments name an
+  earlier monorepo.
+- **F-17: build output is committed.** `matcher/target/` is tracked (822
+  files); a test run dirties the tree.
+- **F-18: open by default.** Without one environment variable, every request
+  is anonymous and allowed, including writes and finance areas.
+- **F-19: CORS default in production.** Enabled with no allow-list.
+- **F-20: stale production config comment.** It says there is no upload
+  feature; attachments and bulk export exist.
+
+**Status, 2026-10-09 (evening).** F-14 resolved (HD-1: one expression in all
+three manifests, texts in `LICENSE/`, a test keeps them equal). F-15 and F-17
+resolved in the tree: one workflow at the root, `matcher/target/` untracked and
+ignored — but the workflows have **not yet run on GitHub**, so HD-2 stays open
+until the first green run. F-16: the `repository` URLs name this repository.
+F-18 resolved (HD-3), F-19 resolved (HD-4: no framework CORS, an explicit
+allow-list), F-20 resolved (the config comment is true), F-21: the Dockerfile
+and compose files use this repository's layout and a `ci/postgres-init`
+exists, **with the image build verified locally** (see tasks.md HD-2). F-22
+resolved (metrics need a token). F-23 resolved (HD-9). HD-6 (backups) and HD-7
+(DPIA) are untouched.
+
+## 49. Deliberately not taken (production readiness)
+
+- **A web application firewall or DDoS protection in the service.** These
+  belong at the edge; the in-process limits are a backstop, not a shield.
+- **Writing the DPIA's legal conclusions.** The repository holds the template,
+  the inventory and the controls; a data protection officer signs it.
+- **Choosing the licence.** The owner chooses (§51).
+
+## 50. Sequencing
+
+1. **HD-2 (own repository and CI)** first, so every later item is checked on
+   every push.
+2. **HD-3 (secure by default)** next — the largest risk (F-18). It changes
+   every test harness that relies on enforcement being off.
+3. **HD-4 (headers)** and **HD-5 (rate limits)** together (one middleware
+   layer).
+4. **HD-1 (licence)** as soon as the owner chooses.
+5. **HD-6 (backups)** and **HD-7 (DPIA)** in parallel; HD-7's personal-data
+   inventory test lands with the code.
+
+## 51. Open questions for the owner (production readiness)
+
+- ~~**Licence:**~~ **Decided 2026-10-09:** any of MIT, Apache-2.0,
+  GPL-2.0-only, GPL-3.0-only or BSD-3-Clause, or a custom licence by
+  arrangement; texts in `LICENSE/` (HD-1, landed).
+- **Canonical forge:** GitHub, Codeberg or GitLab — which runs the required
+  checks?
+- **Enforcement off in production:** forbidden outright, or allowed with a
+  loud warning?
+- **RPO / RTO targets** and where backups are stored.
+- **Rate limits:** starting numbers per subject and for expensive routes.
+- **DPIA owner:** who signs it.
+
+## 52a. Second list of 2026-10-09: release hygiene (HD-8, HD-9, HD-2 to HD-4 amended)
+
+The owner pasted a six-point list (licence; builds from a fresh clone; CI at
+the repository root; secure by default; a release people can pin; documents
+that match the code). It is written for a pair of products (this one and a
+workforce planner); only this repository was checked. Against the code:
+
+| Point | Verdict here |
+|---|---|
+| 1. Licence | **Done differently on purpose.** Texts are in `LICENSE/` (owner decision, HD-1), not `LICENSE-MIT` / `LICENSE-APACHE` at the root, so "GitHub detects a licence" is **not** a goal here; the README states the licence. The UI manifest now matches the crates. `"private": true` is still in the UI `package.json` (open question below) |
+| 2. Fresh clone | **Confirmed, with a different cause.** The portfolio crates do not use `../../link` path dependencies: `integrity-mac` and `authentication-verifier` are **git dependencies pinned to the old monorepo** (`SixArm/main-x-service`, a revision). The `Dockerfile` copies monorepo paths that do not exist here (`integrity/…`, `authentication/…`, `project-portfolio-management/…`), and `compose.test.yaml` mounts `../../ci/postgres-init`, which is absent (F-21) |
+| 3. CI at the root | **Confirmed** (already F-15, HD-2); also no `dependabot.yml` anywhere, and the CI uses archived `actions-rs` actions |
+| 4. Secure by default | **Confirmed** (F-18, F-19); also **`/metrics.prom` is a deliberately public path** in `is_public_path`, so anything that can reach the service reads its metrics (F-22) |
+| 5. Pinnable release | **Confirmed gap.** No release tags for this product (the tags in the repository belong to other services), no container image publication, no SBOM (the spec asks for a CycloneDX SBOM, §12, but none is produced), no release notes beyond `CHANGELOG.md` |
+| 6. Documents match code | **Partly confirmed.** `agents/share` does not exist in this repository, and **108** markdown links point into it (more than the list's "about 20", F-23); `spec/14-implementation-status.md` is hand-written; the roadmap and status files disagree on what Jira, Asana and MSPDI import cover and no longer need the corrections the list names for controlled documents (built, PL-6). The "issues register" claim was not found in the roadmap |
+
+Recommendations are HD-8 (releases) and HD-9 (documents), and amendments to HD-2,
+HD-3 and HD-4 in tasks.md. The ZAP baseline scan the list asks for is added to
+HD-4's acceptance as a CI job against the running service.
+
+### Findings (second list)
+
+- **F-21: the container and test database cannot be built from this
+  repository.** `Dockerfile` and `compose.test.yaml` reference monorepo paths;
+  two dependencies are pinned git revisions of a repository this one no longer
+  lives in.
+- **F-22: metrics are public.** `/metrics.prom` is exempt from login
+  enforcement.
+- **F-23: 108 dead documentation links** into a non-existent `agents/share`.
+
+### Open questions (second list)
+
+- **Dependencies:** publish `integrity-mac` and `authentication-verifier` to
+  crates.io, vendor them into this repository, or keep git dependencies on
+  their own repositories (and which ones)?
+- **`"private": true`:** remove it, or keep it to block accidental npm
+  publication?
+- **Registry and signing:** GHCR (as the list suggests) or the canonical
+  forge's registry; are signed images and provenance (SLSA) wanted?
+- **Metrics:** behind login, or a separate internal port?
+- **Dead links:** restore the shared guidance files or rewrite the links to
+  the specs that now carry that content?
+
+---
+
+# Research: critical chain buffers (CC-n)
+
+Source of this section: the owner's request of 2026-10-09, "critical chain
+buffers". §21 declined critical-chain buffers until a real user asked, and
+§34 (DP-7) took only the fever chart, keeping feeding buffers, resource
+buffers and multi-project pipelining "not taken". **This request takes the
+method itself**, so those exclusions are withdrawn here.
+
+**Where it lives.** Critical chain, critical path and similar
+schedule-control capabilities belong to project-portfolio-management, not to
+workforce-planning-management (owner decision, 2026-10-09; `spec/02-scope.md`
+§2.1). A workforce service may supply people, skills and availability as
+inputs; it does not compute chains or buffers.
+
+**Evidence base, stated plainly.** Read: `src/cpm.rs` (critical chains along
+driving edges), `src/leveling.rs` (resource levelling, SC-6), schedule
+baselines (SC-3), schedule risk (SC-8), three-point task estimates (CR-4's
+optimistic / pessimistic fields), the portfolio resource plan (SC-7) and
+availability (PJ-3). Not read: Goldratt's *Critical Chain* or any CCPM product;
+the method below is the commonly published one and is marked where a choice is
+the owner's.
+
+## 52. The method, and what it needs from us
+
+Critical chain project management (CCPM) differs from CPM in three ways:
+
+1. **The critical chain is resource-constrained.** It is the longest chain of
+   dependent tasks *after* resource contention is resolved, so it can cross
+   between paths. We have both halves — CPM (SC-1) and levelling (SC-6) — but
+   not the chain that results from running them together.
+2. **Safety moves out of tasks into buffers.** Each task is scheduled at an
+   aggressive (about 50% confidence) estimate; the removed safety is pooled
+   into a **project buffer** at the end of the critical chain and **feeding
+   buffers** where non-critical chains join it. **Resource buffers** are
+   warnings, not time: a flag that a critical-chain resource must be ready.
+3. **Execution is managed by buffer consumption**, not by task dates:
+   relay-race working (start when the predecessor finishes), and a fever chart
+   per project and per feeding buffer.
+
+Multi-project CCPM adds a **drum**: the constrained resource across the
+portfolio. Projects are **staggered** against the drum's capacity, with a
+**capacity buffer** between them.
+
+## 53. What exists, and the gaps (verified)
+
+| Need | Already here | Gap |
+|---|---|---|
+| Resource-constrained chain | CPM chains (driving edges); levelling delays tasks to remove overloads | A **critical chain**: the longest path through the *levelled* schedule, including resource links (a task waiting for a person is linked to the task that person was on) |
+| Two estimates per task | Optimistic / pessimistic (CR-4) beside the duration | An explicit **aggressive** and **safe** estimate (or a rule deriving one from the other), so safety can be pooled |
+| Buffers | — | **Project, feeding and resource buffers** as schedule objects, sized by a stated rule (cut-and-paste 50%, or root sum of squares), in business days |
+| Buffer management | DP-7 (project buffer and fever chart, narrow) | **Feeding-buffer** consumption, zone alerts per buffer, **buffer recovery** actions recorded |
+| Multi-project | SC-7 demand and supply by role or skill | A **drum** resource, **pipelining** (staggered starts), and **capacity buffers** |
+
+## 54. Recommendations
+
+- **CC-1** computes the critical chain from the levelled schedule and shows it
+  next to the CPM critical path; the two are never blended.
+- **CC-2** stores two estimates per task, or derives the aggressive one by a
+  stated rule.
+- **CC-3** sizes and inserts project and feeding buffers (rule configurable,
+  printed in every response), and lists resource buffers as alerts.
+- **CC-4** measures each buffer's consumption against its chain's completion
+  and replaces DP-7's narrow buffer with the real one; DP-7 keeps its
+  fever-chart presentation.
+- **CC-5** adds a drum and pipelining for a portfolio, with capacity buffers;
+  proposals and starts (EX-8) can use the drum schedule.
+- **CC-6** front-end: chain, buffers, fever charts, with table twins.
+
+Doctrine, as for the rest of scheduling: **report, a person decides** — the
+service never re-plans or re-sequences on its own; buffer sizes and zone
+boundaries are configuration printed with every result; a plan without two
+estimates or a levelled schedule gets "no critical chain" with the reason,
+never a guess.
+
+## 55. Open questions for the owner (critical chain)
+
+- **Buffer sizing:** cut-and-paste (50% of the removed safety) or root sum of
+  squares? Per plan or portfolio-wide?
+- **Estimates:** will teams give an aggressive and a safe estimate, or derive
+  one from the other (e.g. aggressive = 50% of safe)?
+- **Multitasking rule:** should the levelled schedule forbid a person being on
+  two critical-chain tasks at once (strict CCPM), or only warn?
+- **Drum:** named by the portfolio office, or chosen as the most overloaded
+  skill pool (DP-10)?
+
+## 56. Sequencing (critical chain)
+
+1. **CC-2 (estimates)** and **CC-1 (chain)** first.
+2. **CC-3 (buffers)**, then **CC-4 (buffer management)**, which supersedes
+   DP-7's buffer source.
+3. **CC-5 (drum and pipelining)** after DP-10 (skill pools).
+4. **CC-6 (front-end)** as each lands.

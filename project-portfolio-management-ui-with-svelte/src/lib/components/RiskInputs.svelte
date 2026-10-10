@@ -1,6 +1,6 @@
 <!--
   A register risk's inputs to the Monte Carlo analyses: its probability, the task
-  it delays and by how many days (schedule risk), and the cost it adds (cost
+  it delays and by how many business days (schedule risk), and the cost it adds (cost
   risk). One risk has ONE probability, shared by both: a risk with both effects
   is a single event that strikes once and drives both. Leave a part empty to
   leave it out; what the form would send is decided by `planRiskCalls`.
@@ -76,7 +76,7 @@
   const summary = $derived.by(() => {
     const parts: string[] = [];
     if (current.probability_percent !== null) parts.push(`${current.probability_percent}% chance`);
-    if (current.task_pid && current.schedule_impact_days) parts.push(`adds ${current.schedule_impact_days} days to a task`);
+    if (current.task_pid && current.schedule_impact_days) parts.push(`adds ${current.schedule_impact_days} business days to a task`);
     if (current.cost_impact_minor !== null) parts.push(`adds ${(current.cost_impact_minor / 100).toFixed(2)} ${current.cost_currency}`);
     return parts.length === 0 ? "Not used in the simulations" : parts.join(" · ");
   });
@@ -92,7 +92,7 @@
         {#each tasks ?? [] as t (t.pid)}<option value={t.pid}>{t.title}</option>{/each}
       </select>
     </label>
-    <label>by (working days) <input type="number" min="1" max="365" step="1" bind:value={form.impactDays} /></label>
+    <label>by (business days) <input type="number" min="1" max="365" step="1" bind:value={form.impactDays} /></label>
     <label>Adds cost <input type="number" min="0" step="0.01" bind:value={form.cost} /></label>
     <label>Currency <input type="text" maxlength="3" size="4" bind:value={form.currency} placeholder="GBP" /></label>
     <button class="button small" type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>

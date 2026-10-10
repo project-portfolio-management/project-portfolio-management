@@ -49,7 +49,10 @@ const NO_FORECAST_REASON: Record<string, string> = {
   cycle: "The plan's dependencies contain a cycle, so no forecast can be made.",
 };
 
-const days = (n: number): string => `${n} day${Math.abs(n) === 1 ? "" : "s"}`;
+const businessDays = (n: number): string =>
+  `${n} business day${Math.abs(n) === 1 ? "" : "s"}`;
+const calendarDays = (n: number): string =>
+  `${n} calendar day${Math.abs(n) === 1 ? "" : "s"}`;
 
 /** The forecast as a sentence, or `null` when the milestone is achieved. */
 export function forecastText(
@@ -65,11 +68,11 @@ export function forecastText(
     ? " (some open tasks cannot be placed, so this may be early)"
     : "";
   if (slack < 0) {
-    return `Forecast to finish ${schedule.forecast}, ${days(-slack)} after it is due (${due})${partial}.`;
+    return `Forecast to finish ${schedule.forecast}, ${businessDays(-slack)} after it is due (${due})${partial}.`;
   }
   if (slack === 0)
     return `Forecast to finish on the due date, ${due}${partial}.`;
-  return `Forecast to finish ${schedule.forecast}, ${days(slack)} before it is due (${due})${partial}.`;
+  return `Forecast to finish ${schedule.forecast}, ${businessDays(slack)} before it is due (${due})${partial}.`;
 }
 
 /** How far a milestone has moved, or `null` when it never has. */
@@ -82,8 +85,8 @@ export function slipText(slip: MilestoneSlip): string | null {
     slip.net_days === 0
       ? "back on its original date"
       : slip.net_days > 0
-        ? `${days(slip.net_days)} later than the original ${slip.original_due}`
-        : `${days(-slip.net_days)} earlier than the original ${slip.original_due}`;
+        ? `${calendarDays(slip.net_days)} later than the original ${slip.original_due}`
+        : `${calendarDays(-slip.net_days)} earlier than the original ${slip.original_due}`;
   return `Originally due ${slip.original_due}; ${times}${later}; now ${net}.`;
 }
 

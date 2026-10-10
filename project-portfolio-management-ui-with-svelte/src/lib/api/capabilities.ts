@@ -2,7 +2,7 @@
 // workflow automation, the set-and-forget scheduler, the Smart Score,
 // and bird's-eye lifecycle visibility. One class, one method per
 // endpoint — the single source of these paths for the UI, mirroring
-// the service's `collaboration` / `automation` / `prioritisation`
+// the service's `collaboration` / `automation` / `prioritization`
 // controllers.
 //
 // These views ship English-first, like the rest of the PPM catalogue;
@@ -20,7 +20,7 @@ export type ReviewSubjectKind = "idea" | "proposal" | "plan";
 export type ReviewStatus =
   "invited" | "accepted" | "declined" | "submitted" | "expired" | "withdrawn";
 
-/** Inside the organisation, or an outside expert. */
+/** Inside the organization, or an outside expert. */
 export type ReviewerScope = "internal" | "external";
 
 /** The verdict a submitted review carries. */
@@ -151,9 +151,9 @@ export interface SweepResult {
 /** One component's contribution to a Smart Score. */
 export interface ScoreComponent {
   name: string;
-  /** Renormalised share of the score, 0–1. */
+  /** Renormalized share of the score, 0–1. */
   weight: number;
-  /** Normalised component value, 0–1. */
+  /** Normalized component value, 0–1. */
   raw: number;
   /** Points of the final score. */
   contribution: number;
@@ -185,8 +185,8 @@ export interface RankedPlan {
   missing_evidence: string[];
 }
 
-/** The ranked prioritisation queue. */
-export interface Prioritisation {
+/** The ranked prioritization queue. */
+export interface Prioritization {
   plans: RankedPlan[];
   scored_of: number;
   as_of: string;
@@ -213,6 +213,7 @@ export interface PhaseRow {
 export interface LifecycleFunnel {
   phases: PhaseRow[];
   unknown_phase: number;
+  /** Calendar days in one phase before an item counts as stalled. */
   stall_days: number;
   as_of: string;
 }
@@ -445,6 +446,7 @@ export class CapabilityClient {
     subject_kind: string;
     subject_pid: string;
     action_kind: "notify" | "expire_review";
+    /** Calendar days from the trigger until the action runs. */
     in_days: number;
     recipient_ref?: string;
     message?: string;
@@ -458,11 +460,11 @@ export class CapabilityClient {
     return this.http.post("/api/scheduled-actions/sweep", { body: {} });
   }
 
-  // ---- prioritisation + lifecycle ----
-  prioritisation(
+  // ---- prioritization + lifecycle ----
+  prioritization(
     params: { limit?: number; band?: string } = {},
-  ): Promise<Prioritisation> {
-    return this.http.get(`/api/prioritisation${query(params)}`);
+  ): Promise<Prioritization> {
+    return this.http.get(`/api/prioritization${query(params)}`);
   }
   smartScore(planPid: string): Promise<PlanSmartScore> {
     return this.http.get(`/api/plans/${planPid}/smart-score`);

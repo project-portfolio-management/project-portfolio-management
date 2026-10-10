@@ -44,7 +44,7 @@ pub const CHECK_DUPLICATES_CANDIDATE_LIMIT: usize = 200;
 /// Parse an optional descriptive `kind` label from a string, accepting
 /// both the singular `PlanKind` variant name (`"Project"`) and the legacy
 /// plural collection segment (`"projects"`). `None` for anything else —
-/// `kind` is optional metadata, so an unrecognised value simply means "no
+/// `kind` is optional metadata, so an unrecognized value simply means "no
 /// kind".
 #[must_use]
 pub fn parse_kind_label(s: &str) -> Option<PlanKind> {
@@ -134,7 +134,7 @@ fn cycle_error() -> Result<()> {
 struct PlanRef {
     /// The plan's public id (UUID v4), as a string.
     pid: String,
-    /// The plan's denormalised name.
+    /// The plan's denormalized name.
     name: String,
 }
 
@@ -286,7 +286,7 @@ struct MergeRequest {
 struct ScoredRef {
     /// The matched plan's public id (UUID v4), as a string.
     pid: String,
-    /// The matched plan's denormalised name.
+    /// The matched plan's denormalized name.
     name: String,
     /// The match score in `[0.0, 1.0]`.
     score: f64,

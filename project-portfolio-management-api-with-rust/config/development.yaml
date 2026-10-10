@@ -109,3 +109,13 @@ auth:
 cache:
   kind: InMem
   max_capacity: 33554432 # 32MiB (default if not specified)
+
+# Application settings read by this service.
+settings:
+  # Secure by default: login enforcement is ON unless a deployment says otherwise
+  # (src/auth.rs). This development config opts OUT explicitly so local work and the
+  # test suites run without minting tokens. Production never sets this key.
+  require_auth: false
+  # Request rate limiting (src/rate_limit.rs) is on by default; off here so test
+  # suites and local loops are not throttled. Production leaves it on.
+  rate_limit: false

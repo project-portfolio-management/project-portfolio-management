@@ -1,8 +1,8 @@
-//! **Smart Score** — the pure, explainable prioritisation score behind
-//! the data-driven prioritisation views. DB-free and exhaustively
+//! **Smart Score** — the pure, explainable prioritization score behind
+//! the data-driven prioritization views. DB-free and exhaustively
 //! unit-tested.
 //!
-//! The score is a renormalised weighted average over the components a
+//! The score is a renormalized weighted average over the components a
 //! plan actually has evidence for, in `0..=100`, with a full
 //! per-component breakdown — deliberately the same shape as the
 //! matcher's `MatchBreakdown`, for the same reason: a number that
@@ -12,7 +12,7 @@
 //!
 //! - **Absent evidence is absent, not zero.** A plan with no benefit
 //!   line does not score 0 for ROI; the ROI component is dropped and
-//!   the remaining weights renormalise. Every dropped component is
+//!   the remaining weights renormalize. Every dropped component is
 //!   named in `missing`, and `coverage` reports how much of the weight
 //!   was actually backed by data.
 //! - **A score with no evidence is `None`.** No components ⇒ no score,
@@ -73,7 +73,7 @@ pub const MEDIUM_BAND: f64 = 40.0;
 pub const ROI_FULL_MARKS_BP: i64 = 20_000;
 /// Votes treated as full-marks demand.
 pub const VOTES_FULL_MARKS: i64 = 20;
-/// Days of silence after which momentum has fully decayed.
+/// Calendar days of silence after which momentum has fully decayed.
 pub const STALE_DAYS: i64 = 90;
 /// Highest possible risk exposure (probability × impact, 5 × 5).
 pub const MAX_RISK_EXPOSURE: i64 = 25;
@@ -95,7 +95,7 @@ pub struct ScoreFacts {
     pub votes: Option<i64>,
     /// `MoSCoW` band from the plan's `moscow:<band>` tag.
     pub moscow_band: Option<String>,
-    /// Days since the plan last changed.
+    /// Calendar days since the plan last changed.
     pub days_since_update: Option<i64>,
 }
 
@@ -104,9 +104,9 @@ pub struct ScoreFacts {
 pub struct ScoreComponent {
     /// The component name.
     pub name: &'static str,
-    /// Its renormalised share of the score, `0.0..=1.0`.
+    /// Its renormalized share of the score, `0.0..=1.0`.
     pub weight: f64,
-    /// The normalised component value, `0.0..=1.0`.
+    /// The normalized component value, `0.0..=1.0`.
     pub raw: f64,
     /// `weight × raw × 100` — its points of the final score.
     pub contribution: f64,
@@ -188,9 +188,9 @@ fn clamp01(value: f64) -> f64 {
     value.clamp(0.0, 1.0)
 }
 
-/// Normalise one fact into `0.0..=1.0`, or `None` when absent.
+/// Normalize one fact into `0.0..=1.0`, or `None` when absent.
 #[allow(clippy::cast_precision_loss)]
-fn normalise(name: &str, facts: &ScoreFacts) -> Option<f64> {
+fn normalize(name: &str, facts: &ScoreFacts) -> Option<f64> {
     match name {
         // More return is better; losses (negative bp) floor at 0.
         "roi" => facts
@@ -246,7 +246,7 @@ pub fn smart_score(facts: &ScoreFacts, weights: &Weights) -> SmartScore {
         if weight_bp == 0 {
             continue;
         }
-        match normalise(spec.name, facts) {
+        match normalize(spec.name, facts) {
             Some(raw) => present.push((spec.name, weight_bp, raw)),
             None => missing.push(spec.name),
         }
@@ -366,7 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_components_renormalise_rather_than_scoring_zero() {
+    fn missing_components_renormalize_rather_than_scoring_zero() {
         // Only ROI has evidence, and it is perfect: the score is 100,
         // not 25 (its default share of the whole).
         let facts = ScoreFacts {

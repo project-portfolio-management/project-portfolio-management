@@ -154,14 +154,14 @@ const FLOW = {
     completions: 14,
     arrival_rate_per_day: 0.37,
     throughput_per_day: 0.23,
-    utilisation: 1.61,
-    utilisation_reason: null,
+    utilization: 1.61,
+    utilization_reason: null,
     work_in_progress: 4,
     implied_cycle_time_days: 17.4,
     observed_p50_cycle_time_days: 4,
     interpretation: "wip_growing",
     detail:
-      "Little's Law implies 17.4 days for an item starting now, against 4.0 days observed.",
+      "Little's Law implies 17.4 calendar days for an item starting now, against 4.0 calendar days observed.",
   },
   columns: [
     { status: "todo", count: 2, limit: null, over_limit: false },
@@ -237,7 +237,7 @@ test.describe("time-based analysis", () => {
     await page.goto(`/plans/${PLAN}/flow`);
 
     // The expectation is the number a team can actually quote.
-    await expect(page.getByTestId("sle-badge")).toContainText("11.0d");
+    await expect(page.getByTestId("sle-badge")).toContainText("11.0 calendar days");
     await expect(page.getByTestId("sle-badge")).toContainText(
       "14 finished items",
     );
@@ -254,7 +254,7 @@ test.describe("time-based analysis", () => {
     // Aging WIP flags the item past the expectation.
     const aging = page.getByTestId("aging-wip");
     await expect(aging).toContainText("Migrate the auth adapter");
-    await expect(aging).toContainText("31.0d");
+    await expect(aging).toContainText("31.0 calendar days");
     await expect(aging).toContainText("280%");
 
     // Little's Law is stated in words, not just as a ratio.

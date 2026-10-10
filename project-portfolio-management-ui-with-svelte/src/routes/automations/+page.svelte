@@ -214,7 +214,7 @@
       </select>
     </label>
     <label class="small">
-      in days <input type="number" min="1" max="365" bind:value={inDays} />
+      in calendar days <input type="number" min="1" max="365" bind:value={inDays} />
     </label>
     <label class="small">
       recipient

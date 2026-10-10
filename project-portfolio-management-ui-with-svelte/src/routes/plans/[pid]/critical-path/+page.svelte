@@ -182,7 +182,7 @@
   {/if}
   {#if cpm.calendar_conflicts.length > 0}
     <p class="banner" role="alert">
-      These assignees share no working day with the plan's calendar, so the plan's calendar was used for them:
+      These assignees share no business day with the plan's calendar, so the plan's calendar was used for them:
       {cpm.calendar_conflicts.join(", ")}.
     </p>
   {/if}
@@ -196,7 +196,7 @@
     <label>
       Near-critical within
       <input type="number" min="0" max="3650" bind:value={near} onchange={() => void load()} class="short" />
-      working days
+      business days
     </label>
   </div>
 
@@ -262,10 +262,10 @@
   {#if selected}
     <section class="surface stack" aria-labelledby="edit-h">
       <h2 id="edit-h">{node?.title ?? unscheduledSelected?.title ?? "Task"}</h2>
-      {#if node}<p>{floatLabel(node)}.{node.pushed_days > 0 ? ` Its predecessors push it ${node.pushed_days} working days later than planned.` : ""}</p>{/if}
+      {#if node}<p>{floatLabel(node)}.{node.pushed_days > 0 ? ` Its predecessors push it ${node.pushed_days} business days later than planned.` : ""}</p>{/if}
       <form onsubmit={save} class="stack">
         <label>Planned start <input type="date" bind:value={start} /></label>
-        <label>Duration (working days; 0 is a milestone) <input type="number" min="0" max="3650" bind:value={duration} /></label>
+        <label>Duration (business days; 0 is a milestone) <input type="number" min="0" max="3650" bind:value={duration} /></label>
         <label>
           Constraint
           <select bind:value={ckind}>
@@ -291,8 +291,8 @@
       <form onsubmit={saveEstimate} class="stack" aria-labelledby="est-h">
         <h3 id="est-h">Range for schedule risk</h3>
         <p class="small muted">{taskRangeText(node?.duration_optimistic_days, node?.duration_days ?? null, node?.duration_pessimistic_days)}. The duration above is the likely value.</p>
-        <label>Optimistic (working days) <input type="number" min="0" max="3650" step="1" bind:value={optimistic} /></label>
-        <label>Pessimistic (working days) <input type="number" min="0" max="3650" step="1" bind:value={pessimistic} /></label>
+        <label>Optimistic (business days) <input type="number" min="0" max="3650" step="1" bind:value={optimistic} /></label>
+        <label>Pessimistic (business days) <input type="number" min="0" max="3650" step="1" bind:value={pessimistic} /></label>
         <button type="submit">Save range</button>
         {#each estimateProblem as p (p)}<p class="banner" role="alert">{p}</p>{/each}
         {#if estimateSaved}<p role="status" class="small">Range saved.</p>{/if}
@@ -311,7 +311,7 @@
                   {titleOf.get(m.pid) ?? "?"}:
                   {m.moved === "both" ? "start and finish" : m.moved}
                   {m.finish_days !== 0 ? ` finish ${m.finish_days > 0 ? "+" : ""}${m.finish_days}` : ""}
-                  {m.start_days !== 0 ? ` start ${m.start_days > 0 ? "+" : ""}${m.start_days}` : ""} working days
+                  {m.start_days !== 0 ? ` start ${m.start_days > 0 ? "+" : ""}${m.start_days}` : ""} business days
                 </li>
               {/each}
             </ul>

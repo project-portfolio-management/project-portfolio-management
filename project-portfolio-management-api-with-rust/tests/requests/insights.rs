@@ -284,8 +284,8 @@ async fn moderate_fits_tranches_debt_flow_alignment_compare() {
         let exposure: Value = request.get("/api/financials/exposure").await.json();
         assert_eq!(exposure["currencies"][0]["held_minor"], 0);
 
-        // ── Tech-debt register: a categorised risk appears; an
-        // uncategorised one stays off the view.
+        // ── Tech-debt register: a categorized risk appears; an
+        // uncategorized one stays off the view.
         request
             .post(&format!("/api/plans/{pid}/risks"))
             .json(&json!({ "title": "Legacy adapter unmaintained",
@@ -345,7 +345,7 @@ async fn moderate_fits_tranches_debt_flow_alignment_compare() {
 
         let objective: Value = request
             .post("/api/objectives")
-            .json(&json!({ "title": "Modernise the estate", "period": "2026-H2" }))
+            .json(&json!({ "title": "Modernize the estate", "period": "2026-H2" }))
             .await
             .json();
         let objective_pid = objective["pid"].as_str().expect("objective pid");
@@ -405,7 +405,7 @@ async fn moderate_fits_tranches_debt_flow_alignment_compare() {
 async fn oversight_areas_round_trip() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
-        // ── Seed: portfolio + project, gated tranche, categorised
+        // ── Seed: portfolio + project, gated tranche, categorized
         // risks, milestone, benefit, scenario commit.
         let portfolio: Value = request
             .post("/api/plans")
@@ -415,7 +415,7 @@ async fn oversight_areas_round_trip() {
         let pf_pid = portfolio["pid"].as_str().expect("pid").to_string();
         let project: Value = request
             .post("/api/plans")
-            .json(&json!({ "kind": "Project", "name": "Casework digitisation",
+            .json(&json!({ "kind": "Project", "name": "Casework digitization",
                             "parent_ref": pf_pid }))
             .await
             .json();
@@ -645,9 +645,10 @@ async fn engineering_tasks_sprints_and_views() {
         // counts `done_at` stamps that fall on or before each day in the
         // window, the test completes a task *now*, and once "now" drifted
         // past `ends_on` that completion stopped being counted — the
-        // final point read 2 remaining instead of 1. Six days back and
-        // seven forward keeps today inside a 14-day window, with room
-        // before it for the "before any completion" assertion.
+        // final point read 2 remaining instead of 1. Six calendar days
+        // back and seven forward keeps today inside a 14-calendar-day
+        // window, with room before it for the "before any completion"
+        // assertion.
         let today = chrono::Utc::now().date_naive();
         let starts_on = (today - chrono::Duration::days(6)).to_string();
         let ends_on = (today + chrono::Duration::days(7)).to_string();

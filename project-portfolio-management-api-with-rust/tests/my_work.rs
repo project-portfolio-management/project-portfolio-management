@@ -251,7 +251,7 @@ async fn my_work_buckets_by_due_date_in_the_callers_zone() {
                 .json();
             pids.insert(title, t["pid"].as_str().expect("task pid").to_string());
         }
-        // A deadline two days into a five-day task: negative float.
+        // A deadline two business days into a five-business-day task: negative float.
         request
             .put(&format!("/api/plans/{p2}/tasks/{}/schedule", pids["late"]))
             .json(&json!({ "start_date": "2026-10-05", "duration_days": 5, "deadline": "2026-10-07" }))

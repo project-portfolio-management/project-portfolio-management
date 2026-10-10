@@ -3,7 +3,7 @@
   many tasks must come before them, dependencies as arrows, **critical chains
   drawn heavier with a ● marker** (never colour alone). A relationship that is
   not plain finish-to-start, or has a lag or a lead, is labelled on its arrow
-  ("SS +1d"). The list under the picture says the same thing in words.
+  ("SS +1 business day"). The list under the picture says the same thing in words.
 -->
 <script lang="ts">
   import type { CpmEdge, CpmNode } from "#lib/api/ppm.js";
@@ -60,7 +60,7 @@
 
   function label(e: CpmEdge | undefined): string {
     if (!e) return "";
-    const lag = e.lag_days === 0 ? "" : ` ${e.lag_days > 0 ? "+" : "−"}${Math.abs(e.lag_days)}d`;
+    const lag = e.lag_days === 0 ? "" : ` ${e.lag_days > 0 ? "+" : "−"}${Math.abs(e.lag_days)} business day${Math.abs(e.lag_days) === 1 ? "" : "s"}`;
     return e.kind === "fs" && lag === "" ? "" : `${e.kind.toUpperCase()}${lag}`;
   }
 
@@ -107,7 +107,7 @@
             transform="translate({p.x},{p.y})"
             tabindex="0"
             role="button"
-            aria-label="{n.title ?? 'task'}, {n.early_start} to {n.early_finish}, {n.total_float} working days of float{st.key === 'critical' ? ', on the critical path' : ''}"
+            aria-label="{n.title ?? 'task'}, {n.early_start} to {n.early_finish}, {n.total_float} business days of float{st.key === 'critical' ? ', on the critical path' : ''}"
             onclick={() => onselect?.(n.pid)}
             onkeydown={(ev) => {
               if (ev.key === "Enter" || ev.key === " ") {
@@ -130,7 +130,7 @@
         {#each edges as e (e.pid)}
           <li>
             {byPid.get(e.predecessor_pid)?.title ?? "?"} → {byPid.get(e.successor_pid)?.title ?? "?"}
-            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : `, lag ${e.lag_days}`})
+            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : `, lag ${e.lag_days} business day${Math.abs(e.lag_days) === 1 ? "" : "s"}`})
           </li>
         {/each}
         {#if edges.length === 0}<li>No dependencies.</li>{/if}

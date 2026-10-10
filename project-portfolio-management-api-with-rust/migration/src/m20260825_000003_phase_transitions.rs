@@ -1,4 +1,4 @@
-//! Migration: the **project phase** — a denormalised `plans.phase`
+//! Migration: the **project phase** — a denormalized `plans.phase`
 //! column plus the append-only `phase_transitions` log (entity spec
 //! §5.9.4 / FR-30).
 //!
@@ -6,7 +6,7 @@
 //!
 //! The phase itself rides in the JSONB payload (it is a field on the
 //! matcher's `Plan`, informational-only and never scored — the same
-//! posture as `status`). The **column** is a denormalised projection so
+//! posture as `status`). The **column** is a denormalized projection so
 //! a list or funnel read does not have to open every payload, exactly
 //! as `name` and `parent_pid` already are.
 //!
@@ -23,7 +23,7 @@
 //!
 //! ## No backfill
 //!
-//! Unlike the time-based-analysis migration, nothing is synthesised
+//! Unlike the time-based-analysis migration, nothing is synthesized
 //! here. Every existing plan has **no** phase, which is the truth —
 //! inventing `initiating` for a plan already in delivery would be a
 //! fabricated history, and a labelled backfill would still be a

@@ -7,7 +7,7 @@
   their (optional) `kind`, which is never compared.
 - **Deterministic** — three short-circuit rules pin the score to 1.0.
 - **Probabilistic** — weighted average over the components both records
-  carry; absent fields don't penalise.
+  carry; absent fields don't penalize.
 
 ## Kind — no gate
 
@@ -27,7 +27,7 @@ gate nor a weight.
 | Rule | Condition |
 |---|---|
 | **R-0** | Both records share a value on a *deterministic* identifier scheme. |
-| **R-1** | Both share `owner_org_id` AND normalised `code`. |
+| **R-1** | Both share `owner_org_id` AND normalized `code`. |
 | **R-2** | A `same_as` URL overlaps (case-folded). |
 
 Deterministic schemes (`IdentifierScheme::is_deterministic`): `Uri`,
@@ -41,15 +41,15 @@ Deterministic schemes (`IdentifierScheme::is_deterministic`): `Uri`,
 |---|---|---|
 | Name | 0.30 | Best Jaro-Winkler over `name` + `alternate_names`, + Soundex +0.05 bonus capped at 0.95. |
 | Goals | 0.15 | Jaccard over `fold_set` of goal **titles**. Skipped if both empty. |
-| Code | 0.15 | Within same `owner_org_id`: 1.0 if normalised codes equal else 0.0. Across owners: `None`. |
+| Code | 0.15 | Within same `owner_org_id`: 1.0 if normalized codes equal else 0.0. Across owners: `None`. |
 | Owner org | 0.10 | `owner_org_id` case-folded exact → 1.0 else 0.0. `None` if either unset. |
 | Parent | 0.08 | Any plan with a containment link: same parent `parent_ref` (case-folded) → 1.0 else 0.0. `None` if either unset (e.g. a root plan). |
-| Timeframe | 0.07 | Date proximity over `start_date` / `target_date` by Gaussian decay `exp(-(Δdays/σ)²/2)`, σ default 90 days, averaged over comparable date pairs. `None` if no comparable pair. |
+| Timeframe | 0.07 | Date proximity over `start_date` / `target_date` by Gaussian decay `exp(-(Δdays/σ)²/2)`, σ default 90 calendar days, averaged over comparable date pairs. `None` if no comparable pair. |
 | Keywords | 0.05 | Jaccard on `fold_set(keywords)`. |
 | Relationships | 0.05 | Typed-set Jaccard over `(relation, plan_id)` pairs. `None` if either side empty. Supporting signal. |
-| Tags | 0.05 | Set Jaccard over `fold`-normalised tags. `None` if either side empty. Supporting signal. |
+| Tags | 0.05 | Set Jaccard over `fold`-normalized tags. `None` if either side empty. Supporting signal. |
 
-Weights sum to 1.0; the weighted average is renormalised over the
+Weights sum to 1.0; the weighted average is renormalized over the
 `Some` components only. `kind` is optional descriptive metadata (never
 scored, never a gate). `status`, `owner_org_name`, `lead_ref`, and
 per-goal `description` / `target_date` / `status` are informational-only

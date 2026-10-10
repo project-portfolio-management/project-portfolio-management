@@ -93,7 +93,7 @@ describe("CpmGantt", () => {
     const text = root.textContent ?? "";
     expect(root.querySelectorAll("li.row")).toHaveLength(3);
     expect(text).toContain("On the critical path");
-    expect(text).toContain("2 working days of float");
+    expect(text).toContain("2 business days of float");
     expect(text).toContain("short");
     for (const m of ["●", "○", "!"]) expect(text).toContain(m);
     expect(root.querySelector(".float")).not.toBeNull();
@@ -157,7 +157,7 @@ describe("NetworkDiagram", () => {
           b.getAttribute("role") === "button",
       ),
     ).toBe(true);
-    expect(root.textContent).toContain("SS +2d");
+    expect(root.textContent).toContain("SS +2 business days");
     expect(root.querySelectorAll("path.edge.critical")).toHaveLength(1);
     expect(boxes[0]?.getAttribute("aria-label")).toContain(
       "on the critical path",
@@ -208,11 +208,11 @@ describe("CalendarMonth", () => {
         .find((e) => e.getAttribute("aria-label")?.startsWith(d))
         ?.getAttribute("aria-label");
     expect(label("2026-10-12")).toBe("2026-10-12, Monday: holiday");
-    expect(label("2026-10-03")).toBe("2026-10-03, Saturday: not a working day");
-    expect(label("2026-10-13")).toBe("2026-10-13, Tuesday: working day");
+    expect(label("2026-10-03")).toBe("2026-10-03, Saturday: not a business day");
+    expect(label("2026-10-13")).toBe("2026-10-13, Tuesday: business day");
     done();
   });
-  it("toggles a holiday only on a working day of this month when editable", () => {
+  it("toggles a holiday only on a business day of this month when editable", () => {
     const ontoggle = vi.fn();
     const { root, done } = render(CalendarMonth, {
       year: 2026,
@@ -371,9 +371,9 @@ describe("VarianceTable", () => {
     const text = (root.textContent ?? "").replace(/\s+/g, " ");
     expect(text).toContain("1 of 2 baselined tasks are still in the plan");
     expect(text).toContain("1 added and 1 removed since");
-    expect(text).toContain("3 working days earlier than baselined");
+    expect(text).toContain("3 business days earlier than baselined");
     expect(text).toContain("deleting work is not an improvement");
-    expect(text).toContain("Slipped: finishes 2 working days later");
+    expect(text).toContain("Slipped: finishes 2 business days later");
     expect(text).toContain("Added: not in the baseline, so it has no slip");
     expect(text).toContain("Removed: was in the baseline and is gone");
     expect(root.querySelector("caption")).not.toBeNull();

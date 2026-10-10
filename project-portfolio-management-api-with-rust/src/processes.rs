@@ -172,7 +172,7 @@ mod tests {
         assert_eq!(problems(&[bad]).len(), 2);
         let mut org = step(Kind::Todo, "a");
         org.person_ref = "organization:x".into();
-        assert_eq!(problems(&[org]).len(), 1, "a person, not an organisation");
+        assert_eq!(problems(&[org]).len(), 1, "a person, not an organization");
     }
 
     #[test]

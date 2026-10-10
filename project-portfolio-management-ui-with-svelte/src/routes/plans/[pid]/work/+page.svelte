@@ -128,7 +128,7 @@
       <h3>{n.title ?? n.pid}</h3>
       <p class="small">
         {#if n.units_percent != null && n.work_minutes != null}
-          {n.duration_days} working days · {n.units_percent}% of a day · {hoursText(n.work_minutes)} of work · {RULE_TEXT[n.scheduling_rule ?? "fixed_units"]}
+          {n.duration_days} business days · {n.units_percent}% of a day · {hoursText(n.work_minutes)} of work · {RULE_TEXT[n.scheduling_rule ?? "fixed_units"]}
         {:else}
           <span class="muted">No assignment yet. Give a duration and units and the work is worked out.</span>
         {/if}
@@ -145,21 +145,21 @@
             </label>
             <p class="small muted">{RULE_HELP[f.rule]}</p>
             {#if n.units_percent == null}
-              <label>Duration (working days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
+              <label>Duration (business days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
               <label>Units (% of the day) <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
             {:else}
               <label>
                 Change
                 <select bind:value={f.changing}>
                   <option value="work">Work (hours)</option>
-                  <option value="duration">Duration (days)</option>
+                  <option value="duration">Duration (business days)</option>
                   <option value="units">Units (%)</option>
                 </select>
               </label>
               {#if f.changing === "work"}
                 <label>Work (hours) <input type="number" min="0" step="0.25" bind:value={f.hours} /></label>
               {:else if f.changing === "duration"}
-                <label>Duration (working days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
+                <label>Duration (business days) <input type="number" min="1" max="3650" step="1" bind:value={f.duration} /></label>
               {:else}
                 <label>Units (% of the day) <input type="number" min="1" max="1000" step="1" bind:value={f.units} /></label>
               {/if}

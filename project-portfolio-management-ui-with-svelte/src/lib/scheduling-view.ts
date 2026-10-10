@@ -53,8 +53,8 @@ export function healthReason(reason: string | null | undefined): string {
 export function thresholdSentence(c: Pick<HealthCheck, "threshold">): string {
   const { op, limit, unit } = c.threshold;
   if (unit === "result")
-    return `Must pass: a ${limit ?? 0}-day delay has to move the finish`;
-  if (unit === "days") return `At least ${limit} working days`;
+    return `Must pass: a ${limit ?? 0}-business-day delay has to move the finish`;
+  if (unit === "days") return `At least ${limit} business days`;
   const word = op === "<=" ? "at most" : op === ">=" ? "at least" : "exactly";
   if (unit === "milli")
     return `${word[0]?.toUpperCase()}${word.slice(1)} ${((limit ?? 0) / 1000).toFixed(2)}`;
@@ -65,7 +65,7 @@ export function thresholdSentence(c: Pick<HealthCheck, "threshold">): string {
 export function healthValue(c: HealthCheck): string {
   if (c.value === null) return "No figure";
   if (c.threshold.unit === "result")
-    return `Finish moved ${c.count} of ${c.of} working days`;
+    return `Finish moved ${c.count} of ${c.of} business days`;
   if (c.threshold.unit === "milli")
     return `${c.value.toFixed(2)} (${c.count} of ${c.of})`;
   return `${c.value}% (${c.count} of ${c.of} ${c.of_what})`;
@@ -102,7 +102,7 @@ export function levelingReason(reason: string | null | undefined): string {
 }
 
 const days = (n: number): string =>
-  `${n} working day${Math.abs(n) === 1 ? "" : "s"}`;
+  `${n} business day${Math.abs(n) === 1 ? "" : "s"}`;
 
 /** One proposed move, as a sentence. */
 export function moveText(m: LevelingMove): string {
@@ -306,7 +306,7 @@ export function sourceText(t: Pick<RiskTask, "source" | "widened">): string {
 const EVENT_REASON: Record<string, string> = {
   no_probability: "no probability",
   no_task: "no task named",
-  no_impact: "no impact in days",
+  no_impact: "no impact in business days",
   closed: "the risk is not open",
   task_not_scheduled: "its task is not on the schedule",
   incomplete: "incomplete",
@@ -490,13 +490,13 @@ export interface Scatter {
   width: number;
   height: number;
   dots: { x: number; y: number; days: number; cost: number }[];
-  /** The "on time" line (zero days late). */
+  /** The "on time" line (zero business days late). */
   onTimeX: number;
   /** The budget line. */
   budgetY: number;
 }
 
-/** Cost against days late, with the on-time and budget lines. */
+/** Cost against business days late, with the on-time and budget lines. */
 export function scatterGeometry(
   points: { days_late: number; cost_minor: number }[],
   budgetMinor: number,
@@ -537,6 +537,6 @@ export function delayCostText(
   format: (minor: number, currency: string) => string,
 ): string {
   return perDayMinor === 0
-    ? "A late finish costs nothing extra in this run (delay cost per day is 0)."
-    : `Each working day late adds ${format(perDayMinor, currency)}; finishing early earns nothing back.`;
+    ? "A late finish costs nothing extra in this run (delay cost per business day is 0)."
+    : `Each business day late adds ${format(perDayMinor, currency)}; finishing early earns nothing back.`;
 }

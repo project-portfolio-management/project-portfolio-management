@@ -4,7 +4,7 @@
 //! Decision 2026-10-03: calendars are **per plan and per person**. A task is
 //! scheduled on its plan's calendar; an assignee's own weekly pattern, holidays
 //! and **recorded absences** narrow it (their work happens only where both
-//! work). Lag and float stay in the plan's days.
+//! work). Lag and float stay in the plan's business days.
 
 use chrono::{Datelike, Duration, NaiveDate};
 
@@ -12,7 +12,7 @@ use crate::cpm::{CalendarError, WorkCalendar};
 
 /// Holidays one calendar may list.
 pub const MAX_HOLIDAYS: usize = 400;
-/// Days one recorded absence may span when expanded into holidays.
+/// Calendar days one recorded absence may span when expanded into holidays.
 pub const MAX_ABSENCE_DAYS: i64 = 3650;
 
 /// Parse a weekday mask: seven `0` / `1` characters, Monday first. At least one
@@ -20,7 +20,7 @@ pub const MAX_ABSENCE_DAYS: i64 = 3650;
 ///
 /// # Errors
 ///
-/// A message when the mask is malformed or has no working day.
+/// A message when the mask is malformed or has no business day.
 pub fn parse_weekdays(mask: &str) -> Result<[bool; 7], String> {
     if mask.len() != 7 || !mask.bytes().all(|b| b == b'0' || b == b'1') {
         return Err(
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(
             problems("0000000", &[d(2026, 12, 25), d(2026, 12, 25)]).len(),
             2,
-            "no working day and duplicate holiday"
+            "no business day and duplicate holiday"
         );
         assert_eq!(problems("1111100", &[d(1960, 1, 1)]).len(), 1);
         let many: Vec<NaiveDate> = (0..=i64::try_from(MAX_HOLIDAYS).unwrap())

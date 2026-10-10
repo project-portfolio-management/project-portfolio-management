@@ -129,7 +129,7 @@
     <LilyGanttTable items={lilyItems} label={t("ppm.nav.gantt")} />
   {:else}
   <div class="gantt-wrap" data-testid="ppm-gantt">
-    <Willow>
+    <Willow fonts={false}>
       <Gantt {tasks} {links} readonly />
     </Willow>
   </div>

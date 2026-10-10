@@ -46,7 +46,7 @@ pub enum Method {
 }
 
 impl Method {
-    /// Parse; anything unrecognised is the weakest reading, `Asserted`,
+    /// Parse; anything unrecognized is the weakest reading, `Asserted`,
     /// rather than the strongest.
     #[must_use]
     pub fn parse(raw: Option<&str>) -> Self {
@@ -77,7 +77,7 @@ pub struct ValueFact {
     pub method: Method,
     /// Whether this is the first measurable value for its plan.
     pub is_first_measurable: bool,
-    /// Days from approval to observation, when both are known.
+    /// Calendar days from approval to observation, when both are known.
     pub days_from_approval: Option<i64>,
 }
 
@@ -209,9 +209,9 @@ pub fn percentile(values: &[i64], percentile_basis_points: i64) -> Option<i64> {
 pub struct TimeToValue {
     /// Plans contributing an observation.
     pub observations: usize,
-    /// Median days.
+    /// Median, in calendar days.
     pub p50_days: Option<i64>,
-    /// 85th-percentile days — the one a commitment is made on.
+    /// 85th-percentile calendar days — the one a commitment is made on.
     pub p85_days: Option<i64>,
     /// Why absent.
     pub absent: Option<Absent>,
@@ -367,7 +367,7 @@ mod tests {
         assert_eq!(r.absent, Some(Absent::NoDenominator));
     }
 
-    /// An unrecognised method reads as the **weakest** evidence, not the
+    /// An unrecognized method reads as the **weakest** evidence, not the
     /// strongest.
     #[test]
     fn an_unknown_method_is_asserted_not_measured() {

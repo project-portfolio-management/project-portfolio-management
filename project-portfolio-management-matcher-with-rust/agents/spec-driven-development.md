@@ -34,7 +34,7 @@ from the §1–§18 shape used by the service crates).
 | The pipeline at a glance | §5 Algorithm overview |
 | The list of `Plan` fields | §6 Domain model |
 | Default weights or threshold | §7 Configuration |
-| Normalisation behaviour | §8 Normalisation |
+| Normalization behaviour | §8 Normalization |
 | Name-similarity algorithm | §9 Name similarity |
 | Goal-title overlap (Jaccard) | §10 Goals |
 | Code rule (same-owner gate, shape) | §11 Code |
@@ -47,7 +47,7 @@ from the §1–§18 shape used by the service crates).
 | (reserved) | §14 |
 | Identifier short-circuit scheme list | §15 Deterministic identifier short-circuits |
 | Owner+code (R-1) / same_as (R-2) short-circuit | §16 Owner+code, same_as, open questions |
-| Renormalisation arithmetic | §17 |
+| Renormalization arithmetic | §17 |
 | Confidence-band thresholds | §18 |
 | Quality goals (precision / recall targets) | §19 |
 | How `project-portfolio-management-service` consumes the crate | §20 |
@@ -63,7 +63,7 @@ from the §1–§18 shape used by the service crates).
 
 - **Precise language.** Use RFC 2119 keywords (MUST / SHOULD / MAY)
   for normative statements.
-- **Examples for normalisation, tables for weights, prose for
+- **Examples for normalization, tables for weights, prose for
   algorithms.** Mix forms only when the data calls for it.
 - **No code in the spec beyond minimal type signatures.** The spec is
   what, not how.
@@ -94,11 +94,11 @@ bigger, split it (`T-12a`, `T-12b`).
 | §5 Algorithm overview | `src/matcher.rs` |
 | §6 Domain model | `src/plan.rs` |
 | §7 Configuration | `src/config.rs` (`MatchConfig`) |
-| §8 Normalisation | `src/normalize.rs`, `agents/normalization.md` |
+| §8 Normalization | `src/normalize.rs`, `agents/normalization.md` |
 | §9–§13 per-component scoring | `src/matcher.rs` component fns |
 | §12 Kind (no gate — optional metadata) | `src/plan.rs` (`Plan::kind`), `src/matcher.rs` |
 | §15–§16 short-circuits | `src/matcher.rs` deterministic gate |
-| §17 Renormalisation | `src/scoring.rs` weighted-sum helper |
+| §17 Renormalization | `src/scoring.rs` weighted-sum helper |
 | §18 Confidence classification | `src/scoring.rs` `Confidence` |
 | §19–§21 quality / consumption / compat | top-level docs, integration with `project-portfolio-management-service` |
 | §22 Anti-patterns | this file + AGENTS.md |
@@ -132,7 +132,7 @@ When you finish a task:
 - **Adding a deterministic-identifier scheme without bridge-test
   coverage** in `project-portfolio-management-service`. A false positive at score 1.0 is
   the worst-case bug.
-- **Sneaking normalisation behaviour into `matcher.rs`.** Push it
+- **Sneaking normalization behaviour into `matcher.rs`.** Push it
   into `normalize::` and document the rule under §8.
 - **Using `unwrap` / `expect` in library code.** Total functions
   only.

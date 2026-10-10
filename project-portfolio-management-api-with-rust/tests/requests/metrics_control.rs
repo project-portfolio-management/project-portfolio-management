@@ -770,7 +770,7 @@ async fn register_standard_creates_the_four_known_controls() {
             .expect("sle control");
         assert_eq!(
             sle["target_value"], 10,
-            "the caller's own SLE days, not a guessed one"
+            "the caller's own SLE calendar days, not a guessed one"
         );
         let gate = rows
             .iter()

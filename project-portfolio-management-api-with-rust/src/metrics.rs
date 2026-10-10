@@ -69,7 +69,7 @@ pub const CONTENT_TYPE: &str = "text/plain; version=0.0.4";
 ///
 /// Construct once via [`Metrics::global`]; the counters are `Arc`-backed,
 /// so the struct is cheap to hold by shared reference and each `.inc()`
-/// updates the shared registry that [`Metrics::render`] serialises.
+/// updates the shared registry that [`Metrics::render`] serializes.
 pub struct Metrics {
     /// The underlying registry. Exposed for callers that want to register
     /// service-specific metrics beyond this default set.
@@ -89,7 +89,7 @@ pub struct Metrics {
 
     /// Aggregate work-over-cycle ratio per plan (`plan` = pid).
     pub flow_efficiency: GaugeVec,
-    /// p85 cycle time in days per plan — the service level expectation.
+    /// p85 cycle time in calendar days per plan — the service level expectation.
     pub flow_cycle_time_p85_days: GaugeVec,
     /// Started-and-unfinished tasks per plan (κ).
     pub flow_work_in_progress: GaugeVec,
@@ -145,7 +145,7 @@ impl FlowGauges {
             ),
             cycle_time_p85_days: gauge_vec(
                 "ppm_flow_cycle_time_p85_days",
-                "85th-percentile cycle time in days (nearest-rank), per plan.",
+                "85th-percentile cycle time in calendar days (nearest-rank), per plan.",
             ),
             work_in_progress: gauge_vec(
                 "ppm_flow_work_in_progress",
@@ -268,7 +268,7 @@ impl Metrics {
         }
     }
 
-    /// The process-wide project-portfolio-management-service metrics, initialised on first access.
+    /// The process-wide project-portfolio-management-service metrics, initialized on first access.
     ///
     /// Backed by a private [`OnceLock`], so every caller shares the one
     /// registry that `GET /metrics.prom` renders.

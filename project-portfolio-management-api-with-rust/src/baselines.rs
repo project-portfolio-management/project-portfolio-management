@@ -2,7 +2,7 @@
 //!
 //! A baseline is a numbered, append-only snapshot of each task's early start,
 //! early finish and working duration. Variance is always **against a named
-//! version**, in **working days of the plan's calendar** (so a weekend inside a
+//! version**, in **business days of the plan's calendar** (so a weekend inside a
 //! slip is not counted).
 //!
 //! Three things are kept apart on purpose, because merging them is how a status
@@ -77,9 +77,9 @@ pub struct Row {
     pub start: Option<NaiveDate>,
     /// Current finish.
     pub finish: Option<NaiveDate>,
-    /// Working days the start moved (positive = later); `None` when unmeasurable.
+    /// Business days the start moved (positive = later); `None` when unmeasurable.
     pub start_variance_days: Option<i64>,
-    /// Working days the finish moved (positive = later); `None` when unmeasurable.
+    /// Business days the finish moved (positive = later); `None` when unmeasurable.
     pub finish_variance_days: Option<i64>,
     /// Change in working duration; `None` when unmeasurable.
     pub duration_variance_days: Option<i64>,
@@ -109,7 +109,7 @@ pub struct Summary {
     pub added: usize,
     /// In the baseline only.
     pub removed: usize,
-    /// Working days the plan's finish moved (positive = later); `None` when either side has no finish.
+    /// Business days the plan's finish moved (positive = later); `None` when either side has no finish.
     pub plan_finish_slip_days: Option<i64>,
 }
 
@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn a_task_that_finishes_later_has_slipped_in_working_days() {
-        // Baselined to finish Friday 2026-10-09; now Wednesday 2026-10-14: 3 working days.
+        // Baselined to finish Friday 2026-10-09; now Wednesday 2026-10-14: 3 business days.
         let then = [snap(1, Some(d(2026, 10, 5)), Some(d(2026, 10, 9)), Some(5))];
         let now = [snap(
             1,

@@ -5,7 +5,7 @@
     Redirects to the caller's landing route: `/plans` by default (the four
     collections were unified into one recursive plans collection), or a
     deployment-declared `view` ABAC attribute's route (T-28f, repo
-    `tasks.md` EV-1) when one is set and recognised, e.g.
+    `tasks.md` EV-1) when one is set and recognized, e.g.
     `view=executive` -> `/executive`. Rendered only when signed in.
 
   $props:

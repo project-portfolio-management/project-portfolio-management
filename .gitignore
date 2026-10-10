@@ -1,0 +1,20 @@
+# Build output and local state that must never be tracked, anywhere in the tree.
+target/
+node_modules/
+.svelte-kit/
+test-results/
+playwright-report/
+build/
+dist/
+.vite/
+
+# Local environment and secrets (examples stay tracked).
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Local config overrides.
+**/config/local.yaml
+**/config/*.local.yaml

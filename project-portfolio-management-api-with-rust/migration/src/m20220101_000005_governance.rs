@@ -78,7 +78,7 @@ impl MigrationTrait for Migration {
                 // 1–5 each; exposure = probability × impact (derived).
                 ("probability", ColType::Integer),
                 ("impact", ColType::Integer),
-                // open | mitigating | closed | materialised.
+                // open | mitigating | closed | materialized.
                 ("status", ColType::String),
                 ("owner_ref", ColType::StringNull),
                 ("mitigation", ColType::TextNull),

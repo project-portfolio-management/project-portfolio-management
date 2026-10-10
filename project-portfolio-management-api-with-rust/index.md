@@ -59,7 +59,7 @@ events   ──>  GET    /api/plans/events/recent                            -> 
 whoami   ──>  GET    /api/plans/whoami          (Bearer PASETO)           -> verified claims (401 without)
 verify   ──>  GET    /api/compliance/records/verify  ·  /audit/verify     -> row-level integrity check
 docs     ──>  GET    /api-docs/openapi.json  ·  /swagger-ui                  -> OpenAPI 3 + Swagger UI
-metrics  ──>  GET    /metrics.prom                                           -> Prometheus text (public)
+metrics  ──>  GET    /metrics.prom                                           -> Prometheus text (token required)
 ```
 
 The PPM governance / visibility / strategy phases, the executive insight
@@ -88,14 +88,16 @@ the matching Prometheus counter.
 
 Auth is optional per route by default: send `Authorization: Bearer
 <paseto>` — a short-lived PASETO v4.public token minted by the
-[authentication-service](../../authentication/authentication-service-with-loco)
+authentication-service
 and verified offline against its published Ed25519 key (front-ends use a
 BFF + cookie session, so the browser holds no token). `whoami` echoes the
 verified claims (`401` without one), while every other handler stamps the
 token `sub` as the audit `actor`. Leads, assignees, and owners are user /
-org identities. Flip `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=1` to require that token on
-every `/api/*` route (`/metrics.prom`, `/api-docs/openapi.json`,
-`/swagger-ui`, `/_health`, `/_ping` stay public). Source of truth:
-[`agents/share/authentication-sessions.md`](../../agents/share/authentication-sessions.md)
+org identities. That token is required on
+every `/api/*` route by default (`/api-docs/openapi.json`, `/swagger-ui`,
+`/_health`, `/_ping` and the calendar feeds stay public; `/metrics.prom` needs
+a token); only an explicit `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
+turns enforcement off, and never in production. Source of truth:
+`agents/share/authentication-sessions.md` (shared family guidance, not in this repository)
 (RS256/JWKS not used).
 </content>

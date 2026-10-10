@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `plans`. The full `project_portfolio_management_matcher::Plan`
 //! payload is stored in `data` (JSONB); `pid`, `kind`, `name`, and
-//! `parent_pid` are denormalised for lookup, listing, and roll-up.
+//! `parent_pid` are denormalized for lookup, listing, and roll-up.
 //!
 //! All plans live in this one table as a single recursive collection.
 //! `kind` is an optional descriptive label (metadata only — it no longer
@@ -24,14 +24,14 @@ pub struct Model {
     #[sea_orm(unique)]
     pub pid: Uuid,
     /// Optional descriptive kind label (`Portfolio` / `Project` /
-    /// `Product` / `Program`), denormalised from the payload; `None` when
+    /// `Product` / `Program`), denormalized from the payload; `None` when
     /// unset. Metadata only — it does not scope queries.
     pub kind: Option<String>,
-    /// Denormalised plan name, for lookup and listing.
+    /// Denormalized plan name, for lookup and listing.
     pub name: String,
     /// The full `project_portfolio_management_matcher::Plan` payload (JSONB).
     pub data: Json,
-    /// Denormalised parent plan pid (any plan may contain any other), for
+    /// Denormalized parent plan pid (any plan may contain any other), for
     /// cheap roll-up of a plan's children; `None` for a root plan.
     pub parent_pid: Option<Uuid>,
     /// Whether the row is active (cleared on soft-delete).
@@ -41,7 +41,7 @@ pub struct Model {
     /// approved gate review. Governance state, not matcher payload.
     pub stage: Option<String>,
     /// The sequential project phase (`initiating` … `closing`),
-    /// denormalised from the payload so a list or funnel read need not
+    /// denormalized from the payload so a list or funnel read need not
     /// open every JSONB blob. `None` until an operator sets one — never
     /// back-filled, because inventing `initiating` for a plan already in
     /// delivery would be a fabricated history.

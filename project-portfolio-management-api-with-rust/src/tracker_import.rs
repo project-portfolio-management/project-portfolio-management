@@ -1,7 +1,7 @@
 //! Jira and Asana CSV import (T-28n): the pure reader. DB-free and deterministic.
 //!
 //! Both trackers export a table of work items. This module reads the CSV (RFC 4180:
-//! quoted fields, doubled quotes, newlines inside quotes, BOM, CRLF), recognises the
+//! quoted fields, doubled quotes, newlines inside quotes, BOM, CRLF), recognizes the
 //! columns of each tracker by name, and turns every row into an [`Item`] — a key,
 //! a title, a status bucket, optional dates, a parent and the items it blocks.
 //!
@@ -253,7 +253,7 @@ pub fn parse_date(s: &str) -> Option<NaiveDate> {
 }
 
 /// Where a Jira status text belongs. Words, not a fixed list, because statuses are
-/// per-project: anything not recognised starts in the initial state.
+/// per-project: anything not recognized starts in the initial state.
 #[must_use]
 pub fn jira_bucket(status: &str) -> Bucket {
     let s = status.trim().to_ascii_lowercase();

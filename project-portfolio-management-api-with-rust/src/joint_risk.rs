@@ -5,14 +5,15 @@
 //! random stream**, the cost of each budget line ([`crate::cost_risk`]); a
 //! register risk that has both a schedule impact and a cost impact is **one
 //! event that strikes once and drives both**. A finish later than the
-//! critical-path finish adds a **delay cost** per working day, at a rate the
+//! critical-path finish adds a **delay cost** per business day, at a rate the
 //! caller supplies (zero by default, and then the two outcomes are independent).
 //!
 //! What it adds over the two separate analyses is the **joint** confidence: how
 //! often the plan is *both* within budget *and* on time, which is never more than
 //! the smaller of the two on their own. It is single-currency (the delay cost has
 //! one currency), and inputs are treated as independent, as in both parents.
-//! Finishing early gives no credit: delay cost is only charged for days late.
+//! Finishing early gives no credit: delay cost is only charged for business days
+//! late.
 
 use std::collections::HashMap;
 
@@ -51,7 +52,7 @@ pub struct Outcome {
     pub budget_minor: i64,
     /// Already spent.
     pub spent_minor: i64,
-    /// Delay cost per working day late.
+    /// Delay cost per business day late.
     pub delay_cost_per_day_minor: i64,
     /// Mean total cost, delay cost included.
     pub mean_cost_minor: i64,
@@ -67,7 +68,7 @@ pub struct Outcome {
     pub joint_confidence_bp: i64,
     /// Iteration counts in each quadrant.
     pub quadrants: Quadrants,
-    /// A thinned sample of `(working days late, total cost)` for a scatter.
+    /// A thinned sample of `(business days late, total cost)` for a scatter.
     pub points: Vec<(i64, i64)>,
     /// Per-line results (as in the cost simulation).
     pub lines: Vec<cost_risk::LineResult>,
@@ -397,7 +398,8 @@ mod tests {
 
     #[test]
     fn a_delay_costs_money_only_when_late() {
-        // Certain 4-day slip on the first task, cost certain: every run is 4 days late.
+        // Certain 4-business-day slip on the first task, cost certain: every run is
+        // 4 business days late.
         let e = est(&[(1, 5, 5), (2, 3, 3)]);
         let l = [line(10, 10_000, 10_000, 10_000)];
         let sev = [Event {

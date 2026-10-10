@@ -98,7 +98,7 @@ describe("announcement words", () => {
     expect(ageText("2026-10-05T11:30:00Z", now)).toBe("30 min ago");
     expect(ageText("2026-10-05T09:00:00Z", now)).toBe("3 h ago");
     expect(ageText("2026-10-04T10:00:00Z", now)).toBe("yesterday");
-    expect(ageText("2026-10-01T10:00:00Z", now)).toBe("4 days ago");
+    expect(ageText("2026-10-01T10:00:00Z", now)).toBe("4 calendar days ago");
     expect(ageText("2026-10-06T10:00:00Z", now)).toBe("scheduled");
   });
   it("cuts an excerpt at a word and only marks a cut", () => {

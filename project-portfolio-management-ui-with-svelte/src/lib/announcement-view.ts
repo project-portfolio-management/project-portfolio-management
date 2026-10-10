@@ -27,7 +27,7 @@ export function ageText(iso: string, now: Date): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} h ago`;
   const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
+  return days === 1 ? "yesterday" : `${days} calendar days ago`;
 }
 
 /** The first `max` characters of a body, cut at a word, with an ellipsis only if cut. */

@@ -104,8 +104,13 @@ export async function primaryButtons(page: Page): Promise<string[]> {
  * through its fade, which axe reports as a (false) colour-contrast failure about 1 run in 20.
  */
 export async function settle(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content:
+  // A constructed stylesheet, not an injected <style> tag: the app's CSP (HD-4) forbids
+  // inline style elements, and adopted stylesheets are exempt from it.
+  await page.evaluate(() => {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(
       "*, *::before, *::after { transition: none !important; animation: none !important; }",
+    );
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
   });
 }

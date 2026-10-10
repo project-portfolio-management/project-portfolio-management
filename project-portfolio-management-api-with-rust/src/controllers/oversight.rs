@@ -62,7 +62,7 @@ fn privileged_scope() -> super::plan_access::HiddenScope {
     super::plan_access::HiddenScope::default()
 }
 
-/// Authorise one of the oversight bulk-read endpoints (SEC-PPM-3) as a
+/// Authorize one of the oversight bulk-read endpoints (SEC-PPM-3) as a
 /// privileged read: [`Action::Destructive`], which the built-in default
 /// policy grants only to a machine peer (`svc=true`) or an `admin`
 /// caller — mirroring case-service's `authorize_bulk` for its analogous
@@ -75,7 +75,7 @@ fn privileged_scope() -> super::plan_access::HiddenScope {
 /// every authenticated caller can read, which would let any signed-in
 /// caller pull the whole estate. A no-op when
 /// `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` is off, matching every
-/// other authorisation in this service.
+/// other authorization in this service.
 fn authorize_oversight_read(caller: &MaybeAuthUser) -> Result<()> {
     authorize_record(
         caller,
@@ -92,7 +92,7 @@ fn authorize_oversight_read(caller: &MaybeAuthUser) -> Result<()> {
 }
 
 /// A `?from=&to=` window (dates or RFC 3339 instants); defaults to the
-/// trailing 90 days.
+/// trailing 90 calendar days.
 #[derive(Debug, Deserialize)]
 struct WindowQuery {
     from: Option<String>,
@@ -113,7 +113,7 @@ fn parse_instant(raw: &str, end_of_day: bool) -> Option<chrono::DateTime<chrono:
     Some(date.and_time(time).and_utc())
 }
 
-/// Resolve the window (default: trailing 90 days ending now).
+/// Resolve the window (default: trailing 90 calendar days ending now).
 fn window(query: &WindowQuery) -> (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>) {
     let now = chrono::Utc::now();
     let to = query
@@ -159,7 +159,7 @@ async fn board_pack(
 }
 
 /// The board pack's data for the PDF route, **after the same oversight
-/// authorisation as the JSON route** — a caller denied one is denied the other.
+/// authorization as the JSON route** — a caller denied one is denied the other.
 ///
 /// # Errors
 ///
@@ -726,7 +726,7 @@ async fn evidence_pack(
 
 // ─── Compliance ─────────────────────────────────────────────────────────────
 
-/// `GET /api/compliance/register` — risks categorised `compliance`,
+/// `GET /api/compliance/register` — risks categorized `compliance`,
 /// exposure-sorted, mirroring the technical-debt register.
 #[debug_handler]
 async fn compliance_register(
@@ -742,7 +742,7 @@ async fn compliance_register(
 /// Query for conformance findings: the gate-recency threshold.
 #[derive(Debug, Deserialize)]
 struct ConformanceQuery {
-    /// Days an unfinished, target-dated item may go without a gate
+    /// Calendar days an unfinished, target-dated item may go without a gate
     /// review before it is a finding (default 90, cap 365).
     review_days: Option<u32>,
 }
@@ -772,7 +772,7 @@ async fn compliance_findings(
     let mut findings: Vec<serde_json::Value> = Vec::new();
 
     // Rule 1: unfinished item past its target date with no gate review
-    // in the last `review_days` days.
+    // in the last `review_days` calendar days.
     let last_review: std::collections::BTreeMap<Uuid, chrono::DateTime<chrono::Utc>> = review_rows
         .iter()
         .fold(std::collections::BTreeMap::new(), |mut acc, review| {
@@ -797,7 +797,7 @@ async fn compliance_findings(
             if stale {
                 findings.push(serde_json::json!({
                     "rule": "overdue_item_without_recent_gate_review",
-                    "detail": format!("past target with no gate review in {review_days} days"),
+                    "detail": format!("past target with no gate review in {review_days} calendar days"),
                     "item": item_ref(item),
                 }));
             }
@@ -918,18 +918,18 @@ async fn risk_heatmap(
         if risk.escalated_at.is_some() {
             entry.1 += 1;
         }
-        if risk.status == "materialised" {
+        if risk.status == "materialized" {
             entry.2 += 1;
         }
     }
     let posture: Vec<serde_json::Value> = posture
         .iter()
-        .map(|(bucket, (exposure, escalated, materialised))| {
+        .map(|(bucket, (exposure, escalated, materialized))| {
             serde_json::json!({
                 "portfolio": bucket.and_then(|pid| by_pid.get(&pid)).map(|i| item_ref(i)),
                 "open_exposure": exposure,
                 "escalated": escalated,
-                "materialised": materialised,
+                "materialized": materialized,
             })
         })
         .collect();
@@ -1013,7 +1013,7 @@ async fn risk_heatmap(
 
 // ─── CISO ───────────────────────────────────────────────────────────────────
 
-/// `GET /api/security/register` — risks categorised `security`, plus
+/// `GET /api/security/register` — risks categorized `security`, plus
 /// the disclosed heuristic: items at `g3_delivery` or later with no
 /// security-category risk ever recorded (a proxy for "no security
 /// review happened", stated as such).

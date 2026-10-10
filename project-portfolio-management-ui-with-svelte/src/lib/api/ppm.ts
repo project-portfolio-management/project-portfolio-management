@@ -69,6 +69,7 @@ export interface Risk {
   escalated_at: string | null;
   /** Simulation inputs (schedule risk and cost risk); one probability is shared. */
   task_pid?: string | null;
+  /** Business days the risk adds to its task. */
   schedule_impact_days?: number | null;
   probability_percent?: number | null;
   cost_impact_minor?: number | null;
@@ -104,7 +105,7 @@ export interface GovernanceSummary {
   latest_review: { gate: string; decision: string; decided_at: string } | null;
   risks: {
     open: number;
-    materialised: number;
+    materialized: number;
     max_exposure: number | null;
     total_exposure: number;
   };
@@ -126,6 +127,7 @@ export interface ScheduleView {
     pid: string;
     predecessor_pid: string;
     successor_pid: string;
+    /** Business days; negative is a lead. */
     lag_days: number;
   }[];
   violations: {
@@ -212,6 +214,7 @@ export interface LevelingMove {
   scheduled_start: string;
   from_finish: string;
   to_finish: string;
+  /** Business days the start moves later. */
   delay_days: number;
   critical: boolean;
   float_before: number;
@@ -230,13 +233,16 @@ export interface LevelingProposal {
     pid: string;
     title: string | null;
     moved: string;
+    /** Business days the start moved; positive is later. */
     start_days: number;
+    /** Business days the finish moved; positive is later. */
     finish_days: number;
   }[];
   over_allocated: LevelingRun[];
   unresolved: LevelingRun[];
   finish_before: string | null;
   finish_after: string | null;
+  /** Business days the project finish moves. */
   finish_delay_days: number;
   critical_moved: boolean;
   truncated: boolean;
@@ -250,6 +256,7 @@ export interface LevelingApplyResult {
   results: { pid: string; result: "ok" | "refused"; note: string | null }[];
   finish_before: string | null;
   finish_after: string | null;
+  /** Business days the project finish moved. */
   finish_delay_days: number;
 }
 
@@ -268,6 +275,7 @@ export interface ResourceRow {
 export interface ResourcePeriod {
   from: string;
   to: string;
+  /** Calendar days in the period, both ends included. */
   days: number;
   rows: ResourceRow[];
   total_demand_fte: number;
@@ -339,6 +347,7 @@ export interface ScheduleRisk {
       title: string;
       task_pid: string;
       probability_percent: number;
+      /** Business days it adds. */
       impact_days: number;
     }[];
     skipped: { risk_pid: string; title: string; reason: string }[];
@@ -488,7 +497,7 @@ export interface MilestoneSchedule {
   /** Null once achieved. */
   state: MilestoneScheduleState | null;
   forecast: string | null;
-  /** Working days between the forecast and the due date; negative is late. */
+  /** Business days between the forecast and the due date; negative is late. */
   slack_days: number | null;
   /** Why there is no forecast (or `achieved`). */
   reason: string | null;
@@ -543,7 +552,9 @@ export interface MilestoneView {
 /** `GET /api/milestones`. */
 export interface MilestoneList {
   as_of: string;
+  /** The "due soon" window, in calendar days. */
   due_soon_days: number;
+  /** Business days of slack under which a forecast is at risk. */
   at_risk_days: number;
   milestones: MilestoneView[];
   summary: {
@@ -560,13 +571,13 @@ export interface Allocation {
   percent: number;
   start_date: string | null;
   end_date: string | null;
-  /** `committed` (firm) or `proposed` (hoped for; never counts toward utilisation). PJ-4. */
+  /** `committed` (firm) or `proposed` (hoped for; never counts toward utilization). PJ-4. */
   booking: "committed" | "proposed";
   /** Asked of the resource manager. */
   requested: boolean;
 }
 
-/** A run of days where demand exceeded the capacity in force (PJ-3). */
+/** A run of calendar days where demand exceeded the capacity in force (PJ-3). */
 export interface OverCapacitySpan {
   from: string;
   to: string;
@@ -634,7 +645,7 @@ export interface Dashboard {
   site_tiles: {
     plans: number;
     proposals_open: number;
-    materialised_risks: number;
+    materialized_risks: number;
     open_risk_exposure: number;
     schedule_violations: number;
     over_allocated_people: number;
@@ -959,6 +970,7 @@ export type Grain = "day" | "week" | "month";
 
 export interface AssignmentBody {
   rule?: SchedulingRule;
+  /** Duration in business days. */
   duration_days?: number;
   units_percent?: number;
   work_minutes?: number;
@@ -967,6 +979,7 @@ export interface AssignmentBody {
 export interface AssignmentResult {
   task_pid: string;
   rule: SchedulingRule;
+  /** Duration in business days. */
   duration_days: number;
   units_percent: number;
   work_minutes: number;
@@ -976,6 +989,7 @@ export interface AssignmentResult {
     checked: boolean;
     reason?: string;
     over_capacity?: boolean;
+    /** Calendar days on which demand exceeds capacity. */
     days_over?: number;
     from?: string;
     to?: string;
@@ -1102,6 +1116,7 @@ export type SandboxEdit =
       predecessor_pid: string;
       successor_pid: string;
       kind?: string;
+      /** Business days; negative is a lead. */
       lag_days?: number;
     }
   | { op: "remove_link"; link_pid: string };
@@ -1130,7 +1145,9 @@ export interface SandboxPreview {
   moved: Array<{
     pid: string;
     moved: string;
+    /** Business days the start moved; positive is later. */
     start_days: number;
+    /** Business days the finish moved; positive is later. */
     finish_days: number;
   }>;
   critical_path: {
@@ -1274,6 +1291,7 @@ export interface ExecutiveHealth {
     escalated_risks: number;
     open_risk_exposure: number;
     overrun_currencies: string[];
+    /** Calendar days since the last update. */
     days_since_last_update: number;
   }>;
 }
@@ -1404,6 +1422,7 @@ export interface FlowMetrics {
   derivation: string;
   throughput_by_month: Record<string, number>;
   timed_completions: number;
+  /** Median lead time in calendar days; null with no timed completions. */
   median_lead_days: number | null;
   undated_completions: number;
 }
@@ -1529,6 +1548,7 @@ export interface AuditorFindings {
 /** `GET /api/compliance/findings` response. */
 export interface ConformanceFindings {
   as_of: string;
+  /** Gate-review recency threshold, in calendar days. */
   review_days: number;
   findings: Array<Record<string, unknown> & { rule: string; detail: string }>;
 }
@@ -1550,7 +1570,7 @@ export interface RiskHeatmap {
     portfolio: InsightItemRef | null;
     open_exposure: number;
     escalated: number;
-    materialised: number;
+    materialized: number;
   }>;
   concentration: Array<{ pid: string; title: string; exposure: number }>;
   overdue_reviews: Array<{
@@ -1604,6 +1624,7 @@ export interface Task {
   created_at: string;
   status_changed_at: string;
   done_at: string | null;
+  /** Calendar days since the task entered blocked; null when not blocked. */
   blocked_days: number | null;
   /** The parent task (a sub-task's), or null for a top-level task. */
   parent_task_pid?: string | null;
@@ -1619,19 +1640,20 @@ export interface CpmNode {
   early_finish: string;
   late_start: string;
   late_finish: string;
-  /** Working days it can slip before the project finish moves; negative = cannot meet a constraint or deadline. */
+  /** Business days it can slip before the project finish moves; negative = cannot meet a constraint or deadline. */
   total_float: number;
-  /** Working days before any successor is delayed. */
+  /** Business days before any successor is delayed. */
   free_float: number;
   critical: boolean;
   near_critical: boolean;
   planned_start: string | null;
-  /** The stored working-day duration (0 = milestone). */
+  /** The stored business-day duration (0 = milestone). */
   duration_days: number | null;
-  /** Optimistic and pessimistic duration for schedule risk; the likely one is `duration_days`. */
+  /** Optimistic duration in business days for schedule risk; the likely one is `duration_days`. */
   duration_optimistic_days?: number | null;
+  /** Pessimistic duration in business days. */
   duration_pessimistic_days?: number | null;
-  /** Working days logic forces the start later than planned. */
+  /** Business-day logic forces the start later than planned. */
   pushed_days: number;
   constraint: "snet" | "snlt" | "fnet" | "fnlt" | "mso" | "mfo" | null;
   /** PJ-5 / PJ-6: work in minutes, units as a percent of the assignee's day, and the rule and contour. */
@@ -1657,7 +1679,7 @@ export interface CpmEdge {
   predecessor_pid: string;
   successor_pid: string;
   kind: "fs" | "ss" | "ff" | "sf";
-  /** Working days; negative is a lead. */
+  /** Business days; negative is a lead. */
   lag_days: number;
 }
 
@@ -1720,7 +1742,7 @@ export interface VarianceRow {
   baseline_finish: string | null;
   start: string | null;
   finish: string | null;
-  /** Working days; positive is later; null when no variance can be stated. */
+  /** Business days; positive is later; null when no variance can be stated. */
   start_variance_days: number | null;
   finish_variance_days: number | null;
   duration_variance_days: number | null;
@@ -1745,7 +1767,7 @@ export interface ScheduleVariance {
       unmeasurable: number;
       added: number;
       removed: number;
-      /** Working days the plan's own finish moved; null when either side has no finish. */
+      /** Business days the plan's own finish moved; null when either side has no finish. */
       plan_finish_slip_days: number | null;
     };
   } | null;
@@ -1801,7 +1823,9 @@ export interface EvBlock {
   cv_minor: number | null;
   spi: EvRatio;
   cpi: EvRatio;
+  /** Earned schedule: the calendar days elapsed at which the plan should have earned what has been earned. */
   earned_schedule_days: number | null;
+  /** Calendar days elapsed since the baseline started (the actual time). */
   actual_days: number;
   spi_t: EvRatio;
 }
@@ -1936,6 +1960,7 @@ export interface EvRollup {
 /** `PUT …/tasks/{pid}/schedule` body; an absent field clears it. */
 export interface TaskScheduleBody {
   start_date?: string | null;
+  /** Duration in business days. */
   duration_days?: number | null;
   constraint_kind?: string | null;
   constraint_date?: string | null;
@@ -1951,7 +1976,9 @@ export interface ScheduleMoved {
     | {
         pid: string;
         moved: "start" | "finish" | "both";
+        /** Business days the start moved; positive is later. */
         start_days: number;
+        /** Business days the finish moved; positive is later. */
         finish_days: number;
       }[]
     | null;
@@ -1990,7 +2017,7 @@ export type MyWorkBucket = (typeof MY_WORK_BUCKETS)[number];
 
 /**
  * A task's own schedule figure (SC-10): the critical-path total float in
- * working days. Only ever the caller's own task; absent (`null` on the task)
+ * business days. Only ever the caller's own task; absent (`null` on the task)
  * when the engine has no schedule data for it.
  */
 export interface MyTaskSchedule {
@@ -2543,6 +2570,7 @@ export class PpmClient {
     riskPid: string,
     body: {
       task_pid: string | null;
+      /** Business days it adds. */
       impact_days: number | null;
       probability_percent: number | null;
     },

@@ -1,5 +1,5 @@
 <!--
-  Data-driven prioritisation (`/prioritisation`): the Smart Score queue.
+  Data-driven prioritization (`/prioritization`): the Smart Score queue.
   Highest score first, with each plan's evidence coverage on show, and
   an expandable per-component breakdown — a score that ranks somebody's
   work has to be able to explain itself.
@@ -12,12 +12,12 @@
   import { onMount } from "svelte";
   import {
     CapabilityClient,
-    type Prioritisation,
+    type Prioritization,
     type PlanSmartScore,
   } from "#lib/api/capabilities.js";
 
   const api = CapabilityClient.withFetch();
-  let view = $state<Prioritisation | null>(null);
+  let view = $state<Prioritization | null>(null);
   let error = $state<string | null>(null);
   let band = $state("");
   let expanded = $state<string | null>(null);
@@ -25,7 +25,7 @@
 
   async function refresh() {
     try {
-      view = await api.prioritisation({ band: band || undefined });
+      view = await api.prioritization({ band: band || undefined });
       error = null;
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not load the queue";
@@ -50,13 +50,13 @@
   onMount(refresh);
 </script>
 
-<svelte:head><title>Prioritisation — PPM</title></svelte:head>
+<svelte:head><title>Prioritization — PPM</title></svelte:head>
 
-<h1>Prioritisation</h1>
+<h1>Prioritization</h1>
 <p class="small muted">
   Smart Score over ROI, strategic alignment, expert review, risk, demand,
   MoSCoW priority, and momentum. Components with no evidence are dropped
-  and the rest renormalised — <em>coverage</em> shows how much of the
+  and the rest renormalized — <em>coverage</em> shows how much of the
   score was actually backed by data.
 </p>
 

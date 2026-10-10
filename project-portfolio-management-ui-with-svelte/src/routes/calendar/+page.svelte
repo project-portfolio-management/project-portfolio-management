@@ -78,7 +78,7 @@
 
 {#if calendar}
   <div class="calendar-wrap" data-testid="milestone-calendar">
-    <Willow>
+    <Willow fonts={false}>
       <Calendar {events} view="month" readonly />
     </Willow>
   </div>

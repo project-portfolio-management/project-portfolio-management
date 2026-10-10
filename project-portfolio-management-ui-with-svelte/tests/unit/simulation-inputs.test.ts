@@ -272,10 +272,10 @@ describe("estimate ranges", () => {
     expect(rangeText(null, 16000, f)).toBe("planned to 160");
     expect(taskRangeText(null, 5, null)).toContain("fallback band");
     expect(taskRangeText(3, 5, 9)).toBe(
-      "3 / 5 / 9 working days (optimistic / likely / pessimistic)",
+      "3 / 5 / 9 business days (optimistic / likely / pessimistic)",
     );
     expect(taskRangeText(3, 5, null)).toBe(
-      "3 / 5 / 5 working days (optimistic / likely / pessimistic)",
+      "3 / 5 / 5 business days (optimistic / likely / pessimistic)",
     );
   });
 });

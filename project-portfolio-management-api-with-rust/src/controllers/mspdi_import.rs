@@ -428,7 +428,7 @@ async fn import(
                 .await?;
                 calendar_imported = true;
             } else {
-                report.note("calendar", None, "the project calendar could not be imported (no working day, or dates out of range)");
+                report.note("calendar", None, "the project calendar could not be imported (no business day, or dates out of range)");
             }
         }
         AuditModel::record(

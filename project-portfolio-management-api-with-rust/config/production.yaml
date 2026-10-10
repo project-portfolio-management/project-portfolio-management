@@ -25,15 +25,17 @@ server:
       enable: true
     etag:
       enable: true
-    # Explicit backstop (SEC-M1) — no bulk/upload feature in this
-    # crate, so loco's own 2mb default is plenty for CRUD-shaped JSON;
-    # made explicit rather than implicit so it is visible in the file
-    # a deployer actually reads.
+    # Explicit backstop (SEC-M1): 2mb covers CRUD-shaped JSON. File
+    # uploads and bulk imports do not go through this limit's default; they
+    # carry their own, larger, per-feature limits (attachments, bulk jobs).
     limit_payload:
       enable: true
       body_limit: 2mb
+    # CORS is NOT enabled here: the service applies its own explicit allow-list
+    # (PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS, comma-separated exact origins;
+    # unset = same-origin only; src/http_security.rs).
     cors:
-      enable: true
+      enable: false
 
 workers:
   mode: BackgroundQueue

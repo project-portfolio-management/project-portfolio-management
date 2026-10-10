@@ -3,10 +3,11 @@
 //! Demand is what the plans' **committed** allocations ask for, by role (or by
 //! skill tag) and period; supply is what the people whose primary role it is can
 //! give, read **per day** from their availability ([`crate::availability`]).
-//! Both are summed as **percent-days** (an integer: percent × days) and only then
-//! turned into **FTE** (`percent_days / (100 × days in the period)`), so a role
-//! gap is always stated in full-time equivalents, never as a percentage and never
-//! mixed with headcount (which is its own field).
+//! Both are summed as **percent-days** (an integer: percent × calendar days) and
+//! only then turned into **FTE**
+//! (`percent_days / (100 × calendar days in the period)`), so a role gap is
+//! always stated in full-time equivalents, never as a percentage and never mixed
+//! with headcount (which is its own field).
 //!
 //! * A **placeholder** is demand with a role and no person yet; it counts toward
 //!   its role's demand and is reported apart (`placeholder_*`) so it can be seen
@@ -31,7 +32,7 @@ use crate::availability::{Range, capacity_on};
 
 /// Most periods one read returns.
 pub const MAX_PERIODS: usize = 120;
-/// Longest window, in days.
+/// Longest window, in calendar days.
 pub const MAX_DAYS: i64 = 3_660;
 /// Minutes a full-time person works on a weekday, for planned hours.
 pub const MINUTES_PER_DAY: i64 = 480;
@@ -90,7 +91,7 @@ pub struct Period {
 }
 
 impl Period {
-    /// Days in the period.
+    /// Calendar days in the period.
     #[must_use]
     pub fn days(&self) -> i64 {
         (self.to - self.from).num_days() + 1
@@ -159,7 +160,7 @@ pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Perio
     Ok(out)
 }
 
-/// Days of `[start, end]` (either open) inside `p`.
+/// Calendar days of `[start, end]` (either open) inside `p`.
 fn overlap(start: Option<NaiveDate>, end: Option<NaiveDate>, p: Period) -> i64 {
     let s = start.map_or(p.from, |s| s.max(p.from));
     let e = end.map_or(p.to, |e| e.min(p.to));
@@ -475,7 +476,7 @@ mod tests {
         }
     }
     fn week() -> Vec<Period> {
-        // Mon 2026-10-05 .. Sun 2026-10-11: one full week, seven days.
+        // Mon 2026-10-05 .. Sun 2026-10-11: one full week, seven calendar days.
         periods(d(2026, 10, 5), d(2026, 10, 11), Grain::Week).unwrap()
     }
 
@@ -604,7 +605,7 @@ mod tests {
                 "plans sum to the total"
             );
         }
-        // October: a is 17 days at 60, b nothing yet, c is 31 days at 25.
+        // October: a is 17 calendar days at 60, b nothing yet, c is 31 calendar days at 25.
         assert_eq!(p.periods[0].total_demand_percent_days, 17 * 60 + 31 * 25);
     }
 

@@ -708,7 +708,7 @@ async fn act_propose_reschedule(
     }
     let shifts = rules::propose_shifts(old_end, new_end, &successors);
     let message = format!(
-        "Automation proposes rescheduling {} dependent plan(s) following a {}-day shift to this plan's end date",
+        "Automation proposes rescheduling {} dependent plan(s) following a {}-calendar-day shift to this plan's end date",
         shifts.len(),
         (new_end - old_end).num_days(),
     );
@@ -1060,7 +1060,7 @@ struct SchedulePayload {
     subject_kind: String,
     subject_pid: Uuid,
     action_kind: String,
-    /// Deadline in days from now (1..=[`crate::automation::MAX_SCHEDULE_DAYS`]).
+    /// Deadline in calendar days from now (1..=[`crate::automation::MAX_SCHEDULE_DAYS`]).
     in_days: i64,
     #[serde(default)]
     recipient_ref: Option<String>,

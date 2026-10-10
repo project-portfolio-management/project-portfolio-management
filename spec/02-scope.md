@@ -32,6 +32,17 @@ This spec owns the **cross-subproject contract**:
   absent, so the derived views cannot silently break); recorded effort
   never becomes a per-person productivity metric and never replaces
   calendar time in a flow ratio.
+- **Scheduling methods live here** (owner decision, 2026-10-09). Critical
+  chain capabilities (the resource-constrained chain, project, feeding,
+  resource and capacity buffers, buffer management and fever charts, drum
+  pipelining), critical path capabilities (CPM, float, constraints,
+  calendars, schedule baselines, schedule health) and similar
+  schedule-control capabilities (resource levelling of a schedule, schedule
+  risk, earned value and earned schedule) belong to
+  **project-portfolio-management**, not to workforce-planning-management. A
+  workforce service may supply inputs such as people, skills and
+  availability; it does not compute schedules, chains or buffers, and this
+  entity does not delegate them to it.
 - **The three ordered vocabularies** (§1.5.1): the lifecycle funnel
   (`idea` … `closed`), the gate stage (`g0` … `g5`), and the sequential
   project phase (`initiating` … `closing`) are three uncoupled axes.
@@ -46,9 +57,9 @@ This spec owns the **cross-subproject contract**:
 - Shared invariants that more than one subproject must uphold (§5.8).
 - The family integrations this entity adopts wholesale: cross-service
   entity linking
-  ([`agents/share/cross-service-linking.md`](../../agents/share/cross-service-linking.md))
+  (`agents/share/cross-service-linking.md` (shared family guidance, not in this repository))
   and bulk import / export
-  ([`agents/share/bulk-import-export.md`](../../agents/share/bulk-import-export.md)).
+  ([`agents/share/bulk-import-export.md`](bulk-import-export.md)).
 - Entity-wide goals: government-portfolio scale, multi-locale,
   auditability, technology-compliance posture (§7, §12).
 
@@ -58,7 +69,7 @@ This spec owns the **cross-subproject contract**:
 
 - Plan CRUD with soft delete (`deleted_at`) over the thin matchable
   record on the single `/api/plans` collection.
-- The operational sub-resource CRUD: goals, tasks, issues, sprints and
+- The operational sub-resource CRUD: tasks, sprints (goals and issues are specified but not yet built, §14.2) and
   their ceremonies (§1.4.4), time entries (§1.4.3), and automation rules
   — each a child resource of a plan, keyed by `parent_pid`, in its own
   Postgres table (§10).
@@ -82,8 +93,8 @@ This spec owns the **cross-subproject contract**:
   collection.
 - Audit log + event streaming, PASETO v4 public token verification,
   cross-service links, bulk import / export, OpenAPI / Swagger.
-- One `plans` table: `pid` + denormalised `name` + the full `Plan` JSONB
-  `data` + a nullable denormalised `parent_pid` column; plus the
+- One `plans` table: `pid` + denormalized `name` + the full `Plan` JSONB
+  `data` + a nullable denormalized `parent_pid` column; plus the
   sub-resource and family-baseline tables (§10).
 - loco.rs app structure, migrations, configuration.
 
@@ -98,7 +109,7 @@ This spec owns the **cross-subproject contract**:
   supporting enums — the entity's canonical DTO — **including the `Goal`
   shape** (goals are part of the matchable payload; their titles are a
   match signal).
-- Normalisation (`fold`, code, set folding), Soundex bonus,
+- Normalization (`fold`, code, set folding), Soundex bonus,
   date-proximity scoring, config presets (`strict` / `default` /
   `lenient`).
 
@@ -135,7 +146,7 @@ out of scope, tracked in §13 / §15 and the crate specs' §13:
 - **Time tracking** (§1.4.3). Nothing exists — `estimate` / `remaining`
   on a task are forecasts, not recorded effort.
 - **Sprint planning / daily / review ceremonies** (§1.4.4). The
-  `sprints` + `sprint_notes` tables and the categorised retrospective
+  `sprints` + `sprint_notes` tables and the categorized retrospective
   notes are delivered; the other three ceremonies are not.
 - **Automation breadth** (§1.4.2). The engine is delivered (FR-16c);
   additional triggers — a field change, a phase transition, a date
@@ -167,7 +178,7 @@ out of scope, tracked in §13 / §15 and the crate specs' §13:
 - gRPC, Parquet import (export-only first), terminology / IANA registry
   existence checks.
 - **No FHIR surface** — deliberate, not a gap: no FHIR resource models a
-  plan ([`fhir.md`](../../agents/share/fhir.md) §3 puts portfolio out of
+  plan (`fhir.md` §3 puts portfolio out of
   scope).
 - **No model-driven assistant inside the service** — refused, not
   deferred (T-28j, spec `13-tasks.md`). Every derived figure this

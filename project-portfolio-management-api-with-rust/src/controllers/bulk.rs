@@ -2,10 +2,10 @@
 //! pure codecs and rules in [`crate::bulk`].
 //!
 //! A `POST` returns **202 with a job id** after storing the source (import) or
-//! the authorised plan list (export) and queueing a [`BulkWorker`]; the work
+//! the authorized plan list (export) and queueing a [`BulkWorker`]; the work
 //! runs there, reading and writing artifacts ([`crate::artifacts`]).
 //!
-//! **Authorisation happens when the job is requested**, with the caller's real
+//! **Authorization happens when the job is requested**, with the caller's real
 //! identity, because a worker has no claims: an export stores the list of
 //! plans the caller may read (private plans and record-level policy applied);
 //! `full` masking and soft-deleted rows need the *destructive* right. An

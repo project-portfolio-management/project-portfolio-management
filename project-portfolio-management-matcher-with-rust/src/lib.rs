@@ -25,7 +25,7 @@
 //! - **Probabilistic** — a weighted fuzzy score over name (Jaro-Winkler +
 //!   Soundex), goal titles (Jaccard), owner-scoped code, owner org,
 //!   parent plan (`parent_ref`), timeframe (Gaussian date proximity),
-//!   keywords, relationships (typed-set Jaccard), and tags; renormalised
+//!   keywords, relationships (typed-set Jaccard), and tags; renormalized
 //!   over the components both records carry.
 //!
 //! ## Usage
@@ -81,13 +81,13 @@ pub mod config;
 pub mod error;
 /// The [`MatchingEngine`] entry point and the matching algorithm.
 pub mod matcher;
-/// Input normalisation helpers (fold / code / URL / set / ISO date).
+/// Input normalization helpers (fold / code / URL / set / ISO date).
 pub mod normalize;
 /// Soundex phonetic encoder backing the name-component bonus.
 pub mod phonetic;
 /// Domain model: the [`Plan`] record and its categorical enums.
 pub mod plan;
-/// Match-result shape and the renormalised weighted-average helper.
+/// Match-result shape and the renormalized weighted-average helper.
 pub mod scoring;
 
 // ─── Public re-exports ───────────────────────────────────────────────

@@ -4,7 +4,7 @@
  *
  * Dates are zone-free `YYYY-MM-DD` strings, handled as UTC day numbers (see
  * `lily-grids.ts`), so a daylight-saving change can never move a bar or a
- * calendar cell. Float is in the **plan's working days**; bars are drawn in
+ * calendar cell. Float is in the **plan's business days**; bars are drawn in
  * calendar days, so a weekend inside a bar is simply drawn, not counted.
  */
 
@@ -136,10 +136,10 @@ export function floatLabel(n: {
   near_critical: boolean;
 }): string {
   if (n.total_float < 0) {
-    return `Cannot meet its constraint or deadline: ${plural(-n.total_float, "working day", "working days")} short`;
+    return `Cannot meet its constraint or deadline: ${plural(-n.total_float, "business day", "business days")} short`;
   }
   if (n.critical) return "On the critical path: any slip moves the finish";
-  const d = plural(n.total_float, "working day", "working days");
+  const d = plural(n.total_float, "business day", "business days");
   return n.near_critical ? `${d} of float (near-critical)` : `${d} of float`;
 }
 
@@ -182,6 +182,7 @@ export interface Tick {
 export interface CpmChart {
   from: string;
   to: string;
+  /** Calendar days the chart spans. */
   days: number;
   ticks: Tick[];
   bars: CpmBar[];
@@ -392,11 +393,12 @@ export function unscheduledReason(reason: string): string {
 /** The word, marker and sentence for a variance row, so slip is never colour or a bare number alone. */
 export function standingText(r: {
   standing: string;
+  /** Business days; positive is later. */
   finish_variance_days: number | null;
   reason?: string;
 }): { marker: string; word: string; detail: string } {
   const d = (n: number) =>
-    `${Math.abs(n)} working day${Math.abs(n) === 1 ? "" : "s"}`;
+    `${Math.abs(n)} business day${Math.abs(n) === 1 ? "" : "s"}`;
   switch (r.standing) {
     case "slipped":
       return {

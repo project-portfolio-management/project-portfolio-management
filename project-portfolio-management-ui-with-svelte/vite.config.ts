@@ -12,7 +12,32 @@ export default defineConfig({
         sveltekit({
             preprocess: vitePreprocess(),
             adapter: adapter(),
-            alias: { $lib: "src/lib" }
+            alias: { $lib: "src/lib" },
+            csp: {
+                // Nonces for dynamically rendered pages, hashes for prerendered
+                // ones; SvelteKit adds them to script-src and style-src.
+                mode: "auto",
+                directives: {
+                    "default-src": ["self"],
+                    "script-src": ["self"],
+                    "style-src": ["self"],
+                    // Style ATTRIBUTES only. The SVAR grid, Gantt, calendar and
+                    // Kanban set a computed `style="…"` on rows, cells and bars
+                    // (virtual-scroll offsets, row heights, bar positions), and
+                    // SvelteKit's route announcer carries one too; none of those
+                    // can be hashed or given a nonce. Scripts and <style>
+                    // elements stay strict ('self' + kit nonces/hashes), so
+                    // this does not let injected markup run code or load CSS.
+                    "style-src-attr": ["unsafe-inline"],
+                    "img-src": ["self", "data:"],
+                    "font-src": ["self"],
+                    "connect-src": ["self"],
+                    "object-src": ["none"],
+                    "base-uri": ["self"],
+                    "form-action": ["self"],
+                    "frame-ancestors": ["none"]
+                }
+            }
         }),
         svelteTesting()
     ],

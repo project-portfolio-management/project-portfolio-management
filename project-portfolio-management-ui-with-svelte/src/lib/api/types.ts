@@ -171,9 +171,9 @@ export interface Plan {
   alternate_names?: string[];
   /** Owner-scoped code (e.g. `PROJ-2026`). */
   code?: string | null;
-  /** Sponsoring/owning organisation id — scopes `code` matching. */
+  /** Sponsoring/owning organization id — scopes `code` matching. */
   owner_org_id?: string | null;
-  /** Human-readable owning organisation name. */
+  /** Human-readable owning organization name. */
   owner_org_name?: string | null;
   /** Lead reference (`person:<id>` / `worker:<id>` EntityRef). */
   lead_ref?: string | null;
@@ -243,7 +243,7 @@ export interface MergeResponse {
 
 /**
  * One row of `GET /api/plans/merges/recent` — the `merge_records` table
- * as SeaORM serialises it (`src/models/_entities/merge_records.rs`).
+ * as SeaORM serializes it (`src/models/_entities/merge_records.rs`).
  */
 export interface MergeRecordRow {
   /** When the merge was recorded (RFC 3339 with offset). */

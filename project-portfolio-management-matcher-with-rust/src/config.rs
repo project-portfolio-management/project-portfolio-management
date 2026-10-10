@@ -35,14 +35,14 @@ pub struct MatchConfig {
     /// Weight of the tags (Jaccard) component. Default 0.05.
     pub tags_weight: f64,
 
-    /// Gaussian decay width (σ, in days) for the timeframe component: a
-    /// day gap of σ scores ≈0.61, 2σ ≈0.14. Default 90.0.
+    /// Gaussian decay width (σ, in calendar days) for the timeframe component: a
+    /// calendar-day gap of σ scores ≈0.61, 2σ ≈0.14. Default 90.0.
     pub timeframe_sigma_days: f64,
 }
 
 impl Default for MatchConfig {
     /// The canonical configuration. The nine component weights sum to
-    /// `1.0` (so the renormalised average lands in `[0.0, 1.0]` even when
+    /// `1.0` (so the renormalized average lands in `[0.0, 1.0]` even when
     /// every component is present) and are ordered by identity strength:
     /// name dominates; tags / relationships are the weakest standalone
     /// signals.
@@ -58,12 +58,12 @@ impl Default for MatchConfig {
             goals_weight: 0.15,
             // Owner-scoped code: precise but only within the same owner.
             code_weight: 0.15,
-            // Same sponsoring organisation: useful exact signal.
+            // Same sponsoring organization: useful exact signal.
             owner_org_weight: 0.10,
             // Same parent plan (`parent_ref`): a corroborating
             // containment signal in the unified recursive tree.
             parent_weight: 0.08,
-            // Timeframe proximity: corroborating, decays with the day gap.
+            // Timeframe proximity: corroborating, decays with the calendar-day gap.
             timeframe_weight: 0.07,
             // Free-form keywords: moderate corroboration.
             keywords_weight: 0.05,
@@ -121,7 +121,7 @@ impl MatchConfig {
     /// deserialized config) can call this additive, opt-in check.
     ///
     /// `timeframe_score`'s own Gaussian decay already falls back to a
-    /// 1-day width for a non-positive `timeframe_sigma_days` (including
+    /// 1-calendar-day width for a non-positive `timeframe_sigma_days` (including
     /// `NaN`, since `sigma > 0.0` is `false` for `NaN`), so a bad sigma
     /// can never itself produce an unbounded or `NaN` score — but it
     /// would otherwise be **silently ignored** rather than reported.
@@ -251,7 +251,7 @@ mod tests {
 
     /// A negative or non-finite `timeframe_sigma_days` is rejected too,
     /// even though `timeframe_score` would otherwise silently substitute
-    /// a 1-day fallback rather than propagate it into an unbounded score.
+    /// a 1-calendar-day fallback rather than propagate it into an unbounded score.
     #[test]
     fn validated_rejects_a_bad_timeframe_sigma() {
         let c = MatchConfig {

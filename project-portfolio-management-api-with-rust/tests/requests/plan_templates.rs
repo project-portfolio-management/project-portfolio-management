@@ -108,7 +108,7 @@ async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
             422,
             "a dated template needs a start date"
         );
-        // 2027-01-11 is 98 days after the source start (2026-10-05).
+        // 2027-01-11 is 98 calendar days after the source start (2026-10-05).
         let made: Value = request
             .post(&format!("/api/plans/from-template/{tpl}"))
             .json(&json!({ "name": "Gemini", "start_date": "2027-01-11" }))
@@ -124,7 +124,7 @@ async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
         let r: Value = request.get(&format!("/api/plans/{new_root}")).await.json();
         assert_eq!(r["name"], "Gemini");
         assert_eq!(r["start_date"], "2027-01-11");
-        assert_eq!(r["target_date"], "2027-03-22", "start + the captured 70-day offset");
+        assert_eq!(r["target_date"], "2027-03-22", "start + the captured 70-calendar-day offset");
         assert!(r["lead_ref"].is_null(), "no person is copied");
         assert!(r["code"].is_null(), "no owner-scoped code is copied");
         assert_eq!(r["alternate_names"], json!([]), "no former names are copied");
@@ -136,14 +136,14 @@ async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
         let nt = nt["tasks"].as_array().unwrap();
         assert_eq!(nt.len(), 2);
         let epic_new = nt.iter().find(|t| t["title"] == "Epic").expect("the template kept the original title");
-        assert_eq!(epic_new["due_date"], "2027-01-25", "start + the task's offset (14 days)");
+        assert_eq!(epic_new["due_date"], "2027-01-25", "start + the task's offset (14 calendar days)");
         assert!(epic_new["assignee_ref"].is_null(), "no assignee is copied");
         assert_eq!(epic_new["status"], "backlog", "the workflow's initial state");
         assert!(epic_new["component_pid"].is_string(), "its component came along");
         let story = nt.iter().find(|t| t["title"] == "Story").unwrap();
         assert_eq!(story["parent_task_pid"], epic_new["pid"], "subtask nesting is preserved");
         let ms: Value = request.get(&format!("/api/plans/{new_root}/milestones")).await.json();
-        assert_eq!(ms[0]["due"], "2027-01-26", "start + 15 days");
+        assert_eq!(ms[0]["due"], "2027-01-26", "start + 15 calendar days");
         let wf: Value = request.get(&format!("/api/plans/{new_root}/workflow")).await.json();
         assert_eq!(wf["source"], "plan", "the root's own workflow travelled");
 

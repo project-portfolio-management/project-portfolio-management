@@ -65,7 +65,7 @@ impl Category {
         }
     }
 
-    /// Parse a declared category. **`None` for anything unrecognised**
+    /// Parse a declared category. **`None` for anything unrecognized**
     /// — never a default, because a defaulted category is precisely the
     /// silent misclassification this whole module exists to prevent.
     #[must_use]
@@ -129,7 +129,7 @@ pub enum Invalid {
     BadKey(String),
     /// Two states share a key.
     DuplicateKey(String),
-    /// A state declared no recognised category.
+    /// A state declared no recognized category.
     MissingCategory(String),
     /// Not exactly one initial state. Carries how many were found.
     InitialStateCount(usize),
@@ -372,7 +372,7 @@ pub fn default_flow_classes(def: &WorkflowDef) -> std::collections::BTreeMap<Str
 mod tests {
     use super::*;
 
-    /// An unrecognised category is `None`, never a default — the
+    /// An unrecognized category is `None`, never a default — the
     /// regression test against a silently misclassified state.
     #[test]
     fn an_unknown_category_is_refused_not_defaulted() {

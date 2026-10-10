@@ -1,8 +1,9 @@
-# Pin the Rust toolchain for the whole Main X Index repository.
+# Pin the Rust toolchain for the whole Project Portfolio Management repository.
 #
-# Every crate in this tree (services, matchers, libraries, migrations)
+# Every crate in this tree (the API service, the matcher, the migrations)
 # inherits this pin, so `cargo build`, `cargo clippy`, and especially
-# `cargo fmt` produce identical results on every machine and in CI. It
+# `cargo fmt` produce identical results on every machine and in CI (the CI workflow and the
+# API Dockerfile check that their toolchain matches this pin). It
 # exists because a rustfmt version drift caused repo-wide formatting churn;
 # pinning the exact toolchain prevents that from recurring.
 #

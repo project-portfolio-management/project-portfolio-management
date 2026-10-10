@@ -45,7 +45,7 @@ pub struct Bucket {
     pub total: usize,
 }
 
-/// Summarise `(component_pid, done)` task facts over a plan's live
+/// Summarize `(component_pid, done)` task facts over a plan's live
 /// components. **Every component is reported, empty ones at zero**, plus an
 /// `unassigned` bucket last; a task naming a component that no longer exists
 /// is counted as `unassigned` rather than dropped. The bucket totals always

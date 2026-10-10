@@ -157,7 +157,7 @@
     <svg
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Cumulative flow over ${samples.length} days, peaking at ${peak} tasks`}
+      aria-label={`Cumulative flow over ${samples.length} calendar days, peaking at ${peak} tasks`}
       onpointermove={onMove}
       onpointerleave={() => (hover = null)}
     >

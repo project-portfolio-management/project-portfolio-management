@@ -99,7 +99,7 @@ fn owner_scoped_and_custom_schemes_do_not_short_circuit() {
     }
 }
 
-// Pins R-1: same owner_org_id + equal (after normalisation) code
+// Pins R-1: same owner_org_id + equal (after normalization) code
 // short-circuits to 1.0, despite differing names.
 #[test]
 fn same_owner_code_short_circuits() {
@@ -219,7 +219,7 @@ fn breakdown_is_populated_and_in_range() {
 fn presets_only_change_is_match() {
     // Construct a deterministic medium-band score independent of the
     // Jaro-Winkler internals: identical name (1.0 @ 0.30) plus a differing
-    // owner org (0.0 @ 0.10) renormalises to (0.30)/(0.40) = 0.75 — above
+    // owner org (0.0 @ 0.10) renormalizes to (0.30)/(0.40) = 0.75 — above
     // the lenient threshold (0.70) but below strict (0.95).
     let mut a = project("Apollo platform migration");
     let mut b = project("Apollo platform migration");

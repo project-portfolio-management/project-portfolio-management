@@ -128,7 +128,7 @@
     <caption class="sr-only">Per-task estimate, criticality and sensitivity</caption>
     <thead>
       <tr>
-        <th scope="col">Task</th><th scope="col">Optimistic / likely / pessimistic (days)</th>
+        <th scope="col">Task</th><th scope="col">Optimistic / likely / pessimistic (business days)</th>
         <th scope="col">Estimate</th><th scope="col">Critical in</th><th scope="col">Sensitivity</th>
       </tr>
     </thead>
@@ -151,7 +151,7 @@
   {:else}
     <ul>
       {#each run.events.used as e (e.risk_pid)}
-        <li>{e.title}: {e.probability_percent}% chance of adding {e.impact_days} working day{e.impact_days === 1 ? "" : "s"}</li>
+        <li>{e.title}: {e.probability_percent}% chance of adding {e.impact_days} business day{e.impact_days === 1 ? "" : "s"}</li>
       {/each}
     </ul>
   {/if}

@@ -29,7 +29,7 @@ pub const REVIEW_STATUSES: &[&str] = &[
     "withdrawn",
 ];
 
-/// Whether the reviewer is inside the organisation or an outside
+/// Whether the reviewer is inside the organization or an outside
 /// expert. External reviewers are a disclosure decision, so the scope
 /// is stored explicitly rather than guessed from the reference.
 pub const REVIEWER_SCOPES: &[&str] = &["internal", "external"];
@@ -48,7 +48,7 @@ pub fn is_token(set: &[&str], value: &str) -> bool {
 
 /// Whether a review score is in range. Scores are `0..=100` so they
 /// compose with the Smart Score's expert-review component
-/// ([`crate::prioritisation`]) without rescaling.
+/// ([`crate::prioritization`]) without rescaling.
 #[must_use]
 pub const fn valid_review_score(score: i32) -> bool {
     score >= 0 && score <= 100

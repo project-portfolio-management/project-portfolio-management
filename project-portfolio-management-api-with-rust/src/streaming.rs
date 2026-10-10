@@ -23,7 +23,7 @@
 //! [`recent_events`], identically.
 //!
 //! In loco there is no per-request shared state for this, so the buffer
-//! is a `OnceLock`-initialised global.
+//! is a `OnceLock`-initialized global.
 
 use std::collections::VecDeque;
 use std::sync::{Mutex, OnceLock};
@@ -92,7 +92,7 @@ pub struct Envelope {
     pub seq: u64,
     /// The user pid from the bearer token, when known.
     pub actor: Option<String>,
-    /// The record's denormalised label at the time of the event.
+    /// The record's denormalized label at the time of the event.
     pub name: String,
 }
 
@@ -108,7 +108,7 @@ pub struct EventView {
     pub kind: EventKind,
     /// The record's public id.
     pub pid: String,
-    /// The record's denormalised label at the time of the event.
+    /// The record's denormalized label at the time of the event.
     pub name: String,
     /// Per-process monotonic sequence number.
     pub seq: u64,
@@ -247,7 +247,7 @@ pub enum EventTransport {
 
 impl EventTransport {
     /// Parse the `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT` value. `outbox` selects the
-    /// outbox; `memory` and **any unrecognised value** fall back to
+    /// outbox; `memory` and **any unrecognized value** fall back to
     /// `memory` (fail-safe to today's behaviour), case-insensitively.
     #[must_use]
     pub fn parse(s: &str) -> Self {
@@ -266,7 +266,7 @@ impl EventTransport {
 
 /// The process-wide transport, read once from `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT`
 /// and cached (mirrors the auth `REQUIRE_AUTH` env pattern). Unset or
-/// unrecognised ⇒ [`EventTransport::Memory`].
+/// unrecognized ⇒ [`EventTransport::Memory`].
 #[must_use]
 pub fn transport() -> EventTransport {
     static TRANSPORT: OnceLock<EventTransport> = OnceLock::new();
@@ -672,7 +672,7 @@ mod tests {
 
     /// Pins the transport selector: `outbox` (case-insensitively, with
     /// surrounding whitespace) selects the outbox; `memory`, the empty
-    /// string, and any unrecognised value fall back to `memory` (fail-safe
+    /// string, and any unrecognized value fall back to `memory` (fail-safe
     /// to today's behaviour). The `is_outbox` helper agrees.
     #[test]
     fn transport_parse_defaults_to_memory() {

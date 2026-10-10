@@ -2,7 +2,7 @@
 
 Coverage-guided [`cargo-fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html)
 harness for the matcher, adopting the
-[`person-matcher` reference scaffolding](../../../person/person-matcher-rust-crate/fuzz/README.md)
+`person-matcher` reference scaffolding (sibling repository, not in this repository)
 (SEC-I2). It complements the crate's `proptest` properties (random-value
 generation) with **libFuzzer**'s coverage-guided input search over the same
 load-bearing invariants:

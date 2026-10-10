@@ -35,7 +35,7 @@ reference: matcher
 | `alternate_names` | Vec\<String\> | Aliases, former titles, codenames |
 | `code` | Option\<String\> | Owner-scoped code, e.g. `PROJ-2026` |
 | `owner_org_id` | Option\<String\> | `EntityRef` `organization:<id>` — sponsoring / owning org (scopes `code`) |
-| `owner_org_name` | Option\<String\> | Owning organisation display name (informational-only) |
+| `owner_org_name` | Option\<String\> | Owning organization display name (informational-only) |
 | `lead_ref` | Option\<String\> | `EntityRef` `person:<id>` \| `worker:<id>` — the lead |
 | `parent_ref` | Option\<String\> | Parent plan `pid` (the containment link); an exact supporting match signal (§5.5); absent for a root plan |
 | `status` | Option\<PlanStatus\> | See enum below — **informational-only**, not a match signal |
@@ -52,7 +52,7 @@ reference: matcher
 **`EntityRef` fields.** `owner_org_id`, `lead_ref` (and the
 sub-resources' `assignee_ref`) hold an **`EntityRef` URN** —
 `<entity_type>:<id>` — per
-[`agents/share/cross-service-linking.md` §3](../../agents/share/cross-service-linking.md).
+`agents/share/cross-service-linking.md` §3 (shared family guidance, not in this repository).
 They are references, not matching strings: `owner_org_id` is an exact
 match signal (§5.5), `lead_ref` is **not** scored (federation
 boundary). They are stored as plain strings; the service does not call
@@ -133,7 +133,7 @@ operational labels**. The two coexist; neither replaces the other.
 Both `keywords` and `tags` **are** supporting match signals: they
 round-trip through the JSONB payload (§5.6) and reach the matcher
 unchanged, scored as plain set Jaccard over the case-insensitively
-normalised sets (`score = |A ∩ B| / |A ∪ B|`), each weighted (§6.3, FR-8).
+normalized sets (`score = |A ∩ B| / |A ∪ B|`), each weighted (§6.3, FR-8).
 Like `relationships`, they are **supporting** signals, never
 identifying on their own; each contributes `None` (does not
 participate) when either side's set is empty.
@@ -161,7 +161,7 @@ descriptive label and carries no weight — it neither gates nor scores
 (the old plan-family `plan_type` weight is gone). `lead_ref` and the
 sub-resource `EntityRef`s are **not** scored: "same lead" is not
 sameness evidence, and cross-service references are never a match signal
-([`agents/share/cross-service-linking.md` §7](../../agents/share/cross-service-linking.md)).
+(`agents/share/cross-service-linking.md` §7).
 
 ### 5.6 Persistence model (JSONB) and the partition
 
@@ -171,14 +171,14 @@ The thin record is stored verbatim in one row of the `plans` table:
 |---|---|---|
 | `id` | serial PK | Internal row id |
 | `pid` | UUID unique | Public id (route param) |
-| `name` | string | Denormalised from the payload for cheap listing |
+| `name` | string | Denormalized from the payload for cheap listing |
 | `data` | JSONB | The full thin `Plan` payload (incl. optional `kind`, `goals[]`) |
-| `parent_pid` | UUID null | Denormalised `data.parent_ref` for cheap roll-up of a plan's children |
+| `parent_pid` | UUID null | Denormalized `data.parent_ref` for cheap roll-up of a plan's children |
 | `active` | boolean (default true) | Registry flag |
 | `deleted_at` | timestamptz null | Soft delete |
 
-`Model::to_plan()` deserialises `data` into the matcher type;
-`Model::create()` / `update_data()` serialise it in. The `name` column
+`Model::to_plan()` deserializes `data` into the matcher type;
+`Model::create()` / `update_data()` serialize it in. The `name` column
 MUST equal `data.name`, and the `parent_pid` column MUST equal
 `data.parent_ref` (the model layer writes them together).
 
@@ -188,7 +188,7 @@ matching input (no adapter), every field — including the optional
 — round-trips verbatim through `data` and reaches the matcher
 unchanged. There is **no lossy-drop list**; the only fields outside the
 JSONB payload are the registry-plumbing columns (`id`, `pid`, `active`,
-`deleted_at`) and the two denormalised projections (`name`,
+`deleted_at`) and the two denormalized projections (`name`,
 `parent_pid`).
 
 **The partition.** The operational sub-resources — **tasks, issues,
@@ -220,7 +220,7 @@ The front-end mirrors the wire shape in `src/lib/api/types.ts`
 `Burndown` / `FlowDistribution` shapes). The
 matcher type is upstream for the thin record: if a `Plan` field
 changes in the matcher crate, the service inherits it automatically
-(re-serialisation) and the front-end types MUST be fixed in the same
+(re-serialization) and the front-end types MUST be fixed in the same
 change cycle. The sub-resource types are owned by the service crate
 spec (they have no matcher counterpart).
 
@@ -235,7 +235,7 @@ All subprojects MUST uphold:
   optional `kind` labels (§5.5 / §6.3) — end to end, in the matcher and
   in every service endpoint.
 - `name` is non-empty; the stored `name` column equals `data.name`.
-- When `parent_ref` is set the denormalised `parent_pid` column equals
+- When `parent_ref` is set the denormalized `parent_pid` column equals
   it; a `parent_ref` may point at any other plan but never forms a
   containment cycle (points a plan at itself or a descendant → `422`,
   §6.1).
@@ -247,8 +247,8 @@ All subprojects MUST uphold:
   `owner_org_id`.
 - `EntityRef` fields hold a valid `<entity_type>:<id>` URN or are
   absent; the service does not call the target service on the write path
-  (optimistic, per [`agents/share/cross-service-linking.md`
-  §5](../../agents/share/cross-service-linking.md)).
+  (optimistic, per `agents/share/cross-service-linking.md`
+  §5).
 - A `PlanRelationship` references an **existing** `Plan`; **no plan
   relates to itself**. `ParentOf`/`ChildOf`, `DependsOn`/`BlockedBy`,
   and `Supersedes`/`SupersededBy` stay **acyclic** (no plan is its own
@@ -257,15 +257,15 @@ All subprojects MUST uphold:
   other two pairs); `SimilarTo` and `RelatedTo` are **symmetric**.
 - Each `tags` entry is short, trimmed, and non-empty; the list is
   de-duplicated case-insensitively and defaults to empty.
-- Operational sub-resources (tasks, issues) are **never** serialised
+- Operational sub-resources (tasks, issues) are **never** serialized
   into `data` and **never** reach the matcher; `goals[]` is the only
   payload-and-sub-resource field, and goal writes mutate `data.goals[]`.
 - A sub-resource always belongs to exactly one live (non-soft-deleted)
   plan; soft-deleting a plan hides its sub-resources from read paths.
 - Cross-service links (`entity_links`) are never stored in
   `relationships` and never fed to any matcher
-  ([cross-service-linking.md
-  §7](../../agents/share/cross-service-linking.md)).
+  (cross-service-linking.md
+  §7).
 - Match scores are in `[0.00, 1.00]` and always travel with a
   per-component breakdown and `Confidence` band.
 - Soft delete (`deleted_at`) is the only delete: the service never
@@ -333,7 +333,7 @@ before.
 
 - **`goals[]` in the payload** stays the plan's own objective list. Its
   *titles* are identity-bearing and feed the matcher (§5.3). Unchanged.
-- **`objectives` + `objective_links`** are the organisation-level OKR
+- **`objectives` + `objective_links`** are the organization-level OKR
   structure: an objective exists once, and aligns to many plans with a
   **weight**.
 - **Key results and check-ins** hang off an objective, live in their own
@@ -411,7 +411,7 @@ requirements, not preferences (§1.4.3):
 - Recorded effort is **never** substituted for elapsed time in a flow
   ratio.
 - Per-`actor_ref` roll-ups serve capacity, cost, and "who should be
-  asked about this", and feed **per-person utilisation** (FR-35) under
+  asked about this", and feed **per-person utilization** (FR-35) under
   the obligations in
   [time-based-analysis.md](time-based-analysis.md) §12.4a. They are
   **never** an input to Smart Score or to any Flow Framework metric, and
@@ -467,8 +467,8 @@ structure.
 |---|---|
 | `feature` | A task declared `feature` — work that adds value a customer asked for |
 | `defect` | A task declared `defect` |
-| `risk` | A task declared `risk`, **plus** risk-register rows categorised `compliance` or `security` |
-| `debt` | A task declared `debt`, **plus** risk-register rows categorised `tech_debt` |
+| `risk` | A task declared `risk`, **plus** risk-register rows categorized `compliance` or `security` |
+| `debt` | A task declared `debt`, **plus** risk-register rows categorized `tech_debt` |
 
 The risk register genuinely does carry a usable category
 (`delivery` / `tech_debt` / `compliance` / `security` / `other`), so
@@ -554,7 +554,7 @@ NonWorkingPeriod { pid, person_ref, starts_on, ends_on,
 
 `NonWorkingPeriod` **subtracts from the denominator**; it does not count
 as idle capacity. That distinction is the difference between "this
-person was on leave" and "this person was underused", and a utilisation
+person was on leave" and "this person was underused", and a utilization
 figure that cannot tell them apart is not reportable
 ([time-based-analysis.md](time-based-analysis.md) §12.4a).
 
@@ -655,7 +655,7 @@ ControlAction { pid, reading_pid, kind: Correct|Adjust|Retrain|Accept|Escalate,
 
 | Timing | Acts | Example here |
 |---|---|---|
-| **Feedforward** | **Before** the work, to stop a problem occurring | A gate-review readiness check (FR-16f); a workflow refusing an uncategorised state (§5.9.1); a `parent_ref` cycle rejected at write |
+| **Feedforward** | **Before** the work, to stop a problem occurring | A gate-review readiness check (FR-16f); a workflow refusing an uncategorized state (§5.9.1); a `parent_ref` cycle rejected at write |
 | **Concurrent** | **During** the work, while it can still be steered | A WIP limit refusing a move; an SLE breach firing an automation (FR-32); aging-WIP surfacing an item before it is late |
 | **Feedback** | **After**, to inform the next cycle | A retrospective (§5.9.3); a gate review's benefits check; the variance and value-realization views (§6.4c) |
 

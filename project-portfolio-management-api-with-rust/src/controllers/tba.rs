@@ -214,7 +214,7 @@ async fn list_transitions(
     format::json(serde_json::json!({
         "task": task_ref(&task),
         "note": "append-only; there is no edit or delete. `backfilled` marks a \
-                 transition synthesised by the migration rather than observed",
+                 transition synthesized by the migration rather than observed",
         "transitions": rows,
     }))
 }
@@ -265,7 +265,7 @@ struct PlanQuery {
     /// The service-level-expectation percentile (default 0.85).
     #[serde(default)]
     sle_percentile: Option<f64>,
-    /// A commitment to score against, in days.
+    /// A commitment to score against, in calendar days.
     #[serde(default)]
     target_days: Option<f64>,
     /// Restrict to one sprint.
@@ -505,7 +505,7 @@ async fn plan_flow(
                  departures balance over the window, so a short window on a \
                  volatile board should not be quoted. Column occupancy is \
                  reported here rather than in a separate capacity view because \
-                 utilisation near 1 and long queues are the same observation: \
+                 utilization near 1 and long queues are the same observation: \
                  lowering a WIP cap shortens cycle time without anyone working \
                  faster.",
         "flow": analysis,
@@ -516,7 +516,7 @@ async fn plan_flow(
 /// Cumulative-flow query parameters.
 #[derive(Debug, serde::Deserialize)]
 struct CumulativeFlowQuery {
-    /// How far back to sample (default 60).
+    /// How far back to sample, in calendar days (default 60).
     #[serde(default)]
     days: Option<i64>,
 }
@@ -537,7 +537,7 @@ async fn cumulative_flow(
     let now = chrono::Utc::now();
     let days = query.days.unwrap_or(60);
     if days <= 0 || days > 365 {
-        return Err(refuse("days must be between 1 and 365"));
+        return Err(refuse("days must be between 1 and 365 calendar days"));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, None).await?;
@@ -746,7 +746,7 @@ struct ForecastQuery {
     /// Periods of history to sample (default 12).
     #[serde(default)]
     history_periods: Option<usize>,
-    /// Days per period (default 7).
+    /// Calendar days per period (default 7).
     #[serde(default)]
     period_days: Option<i64>,
     /// Simulation trials (default 10 000, capped).

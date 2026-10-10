@@ -34,6 +34,7 @@ pub mod auth;
 pub mod automation;
 pub mod availability;
 pub mod baselines;
+pub mod break_glass;
 pub mod bulk;
 pub mod calendars;
 /// Per-user saved views: route-scoped filter/sort/column presets,

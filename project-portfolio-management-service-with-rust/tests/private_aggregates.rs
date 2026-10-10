@@ -174,6 +174,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/break-glass",
+        "the caller's own grants (all of them for an administrator): a plan id, a reason and times; no plan data",
+    ),
+    (
         "/api/processes",
         "process definitions: steps and people, no plan data",
     ),

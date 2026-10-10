@@ -289,4 +289,70 @@ mod tests {
             Verdict::Unavailable(_)
         ));
     }
+
+    /// Hostile input must be refused or accepted, never a panic or a hang: every declared type, many
+    /// short byte strings that start like the real signatures and then go wrong.
+    #[test]
+    fn arbitrary_bytes_never_panic() {
+        let types = [
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "image/webp",
+            "application/pdf",
+            "text/plain",
+            "text/csv",
+            "text/markdown",
+            "application/json",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/zip",
+            "",
+            "garbage/\u{1F600}",
+        ];
+        let prefixes: [&[u8]; 14] = [
+            b"",
+            b"M",
+            b"MZ",
+            b"\x7fEL",
+            b"\x89PNG\r\n\x1a",
+            b"\xff\xd8",
+            b"GIF8",
+            b"RIFF",
+            b"RIFF\0\0\0\0WEB",
+            b"%PDF",
+            b"PK\x03",
+            b"#",
+            b"{",
+            b"\xca\xfe\xba",
+        ];
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        for _ in 0..20_000 {
+            let mut bytes = prefixes[(next() % 14) as usize].to_vec();
+            for _ in 0..(next() % 120) {
+                bytes.push((next() & 0xff) as u8);
+            }
+            for t in &types {
+                let _ = content_problems(t, &bytes);
+            }
+        }
+        // And one big input, to be sure nothing is quadratic in the size.
+        let big = vec![b'a'; 20 * 1024 * 1024];
+        let started = std::time::Instant::now();
+        for t in &types {
+            let _ = content_problems(t, &big);
+        }
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(20),
+            "{:?}",
+            started.elapsed()
+        );
+    }
 }

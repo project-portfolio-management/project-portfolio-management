@@ -2167,6 +2167,7 @@ mod tests {
             crate::controllers::issues::routes(),
             crate::controllers::subjects::routes(),
             crate::controllers::access_review::routes(),
+            crate::controllers::break_glass::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),
             crate::controllers::handover::routes(),

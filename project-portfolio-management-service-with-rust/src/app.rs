@@ -212,6 +212,7 @@ impl Hooks for App {
             .add_route(controllers::issues::routes())
             .add_route(controllers::subjects::routes())
             .add_route(controllers::access_review::routes())
+            .add_route(controllers::break_glass::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())
             .add_route(controllers::handover::routes())

@@ -90,6 +90,9 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("timesheet_weeks", "person_ref"),
     ("value_points", "actor"),
     ("watchers", "sub"),
+    ("break_glass_grants", "sub"),
+    ("break_glass_grants", "notify_ref"),
+    ("break_glass_grants", "revoked_by"),
     ("issues", "owner_ref"),
     ("issues", "raised_by"),
 ];

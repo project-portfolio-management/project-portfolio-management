@@ -591,6 +591,26 @@ pub fn service_rules() -> Vec<Rule> {
         rules.push(area_rule(Effect::Allow, &actions, area, Some(key)));
         rules.push(area_rule(Effect::Deny, &actions, area, None));
     }
+    // Break-glass access (RG-10): an administrator, or a person the identity provider has marked
+    // `breakglass=eligible`; nobody else, whatever the policy file says.
+    rules.push(area_rule(
+        Effect::Allow,
+        &[ActionPattern::Any],
+        "break_glass",
+        Some(("access", "admin")),
+    ));
+    rules.push(area_rule(
+        Effect::Allow,
+        &[ActionPattern::Any],
+        "break_glass",
+        Some(("breakglass", "eligible")),
+    ));
+    rules.push(area_rule(
+        Effect::Deny,
+        &[ActionPattern::Any],
+        "break_glass",
+        None,
+    ));
     // Data-subject requests (RG-6) and the access review (RG-9): administrators only, whatever the
     // policy file says.
     for area in ["subjects", "access_review"] {
@@ -1742,6 +1762,46 @@ mod area_tests {
                 "a writer is not finance: {a:?}"
             );
             assert!(!allowed(&p, &claims(&[]), a, "finance"), "{a:?}");
+        }
+    }
+
+    #[test]
+    fn break_glass_is_for_the_eligible_and_administrators_only() {
+        let open_policy = Policy {
+            rules: vec![Rule {
+                effect: Effect::Allow,
+                actions: vec![ActionPattern::Any],
+                when: std::collections::BTreeMap::default(),
+                obligations: vec![],
+            }],
+        };
+        for p in [
+            with_service_rules(Policy::default_policy()),
+            with_service_rules(open_policy),
+        ] {
+            for a in [Action::Read, Action::Write, Action::Delete] {
+                assert!(
+                    allowed(&p, &claims(&[("breakglass", "eligible")]), a, "break_glass"),
+                    "{a:?}"
+                );
+                assert!(
+                    allowed(&p, &claims(&[("access", "admin")]), a, "break_glass"),
+                    "{a:?}"
+                );
+                assert!(
+                    !allowed(&p, &claims(&[("access", "write")]), a, "break_glass"),
+                    "{a:?}"
+                );
+                assert!(
+                    !allowed(&p, &claims(&[("breakglass", "no")]), a, "break_glass"),
+                    "{a:?}"
+                );
+                assert!(
+                    !allowed(&p, &claims(&[("breakglass", "Eligible")]), a, "break_glass"),
+                    "case matters: {a:?}"
+                );
+                assert!(!allowed(&p, &claims(&[]), a, "break_glass"), "{a:?}");
+            }
         }
     }
 

@@ -30,6 +30,30 @@ describe("RESP", () => {
     expect(() => new RespParser().feed(Buffer.from("?x\r\n"))).toThrow();
   });
 
+  it("refuses absurd lengths instead of waiting for them", () => {
+    expect(() => new RespParser().feed(Buffer.from("$99999999999\r\n"))).toThrow();
+    expect(() => new RespParser().feed(Buffer.from("*99999999999\r\n"))).toThrow();
+    expect(() => new RespParser().feed(Buffer.from("$abc\r\n"))).toThrow();
+  });
+
+  it("never loops or crashes on random bytes: it answers or throws", () => {
+    let x = 123456789;
+    const rnd = () => ((x = (x * 1103515245 + 12345) & 0x7fffffff) >>> 0);
+    const starts = ["+", "-", ":", "$", "*", "?", ""];
+    for (let i = 0; i < 3000; i++) {
+      const len = rnd() % 60;
+      const body = Buffer.from(Array.from({ length: len }, () => rnd() % 256));
+      const wire = Buffer.concat([Buffer.from(starts[rnd() % starts.length]!), body]);
+      const p = new RespParser();
+      try {
+        p.feed(wire);
+        p.feed(Buffer.from("\r\n"));
+      } catch {
+        // refusing is fine
+      }
+    }
+  });
+
   it("refuses a URL that is not redis:// or rediss://", () => {
     expect(() => new RedisClient({ url: "http://x" })).toThrow();
   });

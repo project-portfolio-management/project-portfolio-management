@@ -121,6 +121,30 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
         assert_eq!(with!(request.delete(&format!("/api/announcements/{pid}")), writer).await.status_code(), 403);
         with!(request.delete(&format!("/api/announcements/{pid}")), admin).await.assert_status_ok();
 
+        // Data-subject requests and the access review are for administrators only, whatever the
+        // deployment's own policy says (it allows every writer here). RG-6, RG-9.
+        let who = "person:00000000-0000-4000-8000-0000000000f3";
+        for (method, url) in [
+            ("GET", format!("/api/admin/subjects/{who}")),
+            ("POST", format!("/api/admin/subjects/{who}/pseudonymise")),
+            ("POST", format!("/api/admin/subjects/{who}/pseudonymise?apply=true")),
+            ("GET", "/api/access-review".to_string()),
+            ("GET", "/api/access-review?format=csv".to_string()),
+        ] {
+            for (name, bearer) in [("a writer", &writer), ("finance", &fin), ("a publisher", &publisher)] {
+                let rb = if method == "GET" { request.get(&url) } else { request.post(&url) };
+                assert_eq!(with!(rb, bearer).await.status_code(), 403, "{method} {url} for {name}");
+            }
+            let rb = if method == "GET" { request.get(&url) } else { request.post(&url) };
+            assert_eq!(rb.await.status_code(), 401, "{method} {url} with no token");
+            let rb = if method == "GET" { request.get(&url) } else { request.post(&url) };
+            let status = with!(rb, admin).await.status_code();
+            assert!(status == 200, "{method} {url} for an admin answered {status}");
+        }
+        // And the attribute really is access=admin: a near miss is not enough.
+        let near = bearer(&kid, "near", &[("access", "write"), ("subjects", "admin"), ("role", "admin")]);
+        assert_eq!(with!(request.get("/api/access-review"), near).await.status_code(), 403);
+
         // Earned value from labour cost is finance data; the default is not.
         let plan: Value = with!(request.post("/api/plans"), writer).json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();

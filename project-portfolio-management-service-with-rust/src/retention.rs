@@ -91,12 +91,16 @@ pub fn cutoff(now: DateTime<Utc>, days: i64) -> DateTime<Utc> {
 /// A message naming the argument when it is not a positive whole number.
 pub fn parse_days(name: &str, raw: &str) -> Result<i64, String> {
     match raw.trim().parse::<i64>() {
-        Ok(d) if d >= 1 => Ok(d),
+        Ok(d) if (1..=MAX_DAYS).contains(&d) => Ok(d),
         _ => Err(format!(
-            "{name}_days must be a whole number of calendar days, at least 1 (got {raw:?})"
+            "{name}_days must be a whole number of calendar days from 1 to {MAX_DAYS} (got {raw:?})"
         )),
     }
 }
+
+/// The longest period accepted (one hundred years). Without a ceiling an absurd value overflows the
+/// date arithmetic and aborts the task.
+pub const MAX_DAYS: i64 = 36_500;
 
 impl Rule {
     /// The `WHERE` clause for rows past `cutoff`.
@@ -219,7 +223,19 @@ mod tests {
     #[test]
     fn periods_must_be_whole_calendar_days_of_at_least_one() {
         assert_eq!(parse_days("notifications", " 45 "), Ok(45));
-        for bad in ["0", "-3", "1.5", "abc", ""] {
+        assert_eq!(parse_days("notifications", "36500"), Ok(MAX_DAYS));
+        // The ceiling is safe to subtract from a real date.
+        assert!(cutoff(at(10), MAX_DAYS) < at(10));
+        for bad in [
+            "0",
+            "-3",
+            "1.5",
+            "abc",
+            "",
+            "36501",
+            "9223372036854775807",
+            "99999999999999999999",
+        ] {
             let e = parse_days("notifications", bad).unwrap_err();
             assert!(e.contains("notifications_days"), "{e}");
         }

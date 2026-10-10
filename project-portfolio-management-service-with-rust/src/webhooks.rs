@@ -288,9 +288,68 @@ pub(crate) fn client() -> &'static reqwest::Client {
     })
 }
 
+/// In strict outbound mode, resolve the target's name now and refuse it if **any** address it
+/// resolves to is not public (a name that points inside the network). `Ok(())` when strict mode is off,
+/// the host is an address literal (already judged by [`target_allowed`]), or every address is public;
+/// `Err(true)` when it must not be called, `Err(false)` when the name could not be resolved (retry).
+///
+/// Limit, stated: this checks and then the HTTP client resolves again to connect, so a name that
+/// changes its answer between the two (DNS rebinding) is not caught. Pair strict mode with an egress
+/// policy at the network edge for anything that matters.
+///
+/// # Errors
+///
+/// See above.
+pub async fn check_resolution(url: &str) -> Result<(), bool> {
+    if !outbound_strict() {
+        return Ok(());
+    }
+    let Ok(parsed) = reqwest::Url::parse(url.trim()) else {
+        return Err(true);
+    };
+    let Some(host) = parsed.host_str() else {
+        return Err(true);
+    };
+    if host
+        .trim_matches(['[', ']'])
+        .parse::<std::net::IpAddr>()
+        .is_ok()
+    {
+        return Ok(());
+    }
+    let port = parsed.port_or_known_default().unwrap_or(443);
+    match tokio::net::lookup_host((host.to_string(), port)).await {
+        Ok(addrs) => {
+            let ips: Vec<std::net::IpAddr> = addrs.map(|a| a.ip()).collect();
+            if crate::sinks::resolved_ok(&ips, false) {
+                Ok(())
+            } else {
+                Err(true)
+            }
+        }
+        Err(_) => Err(false),
+    }
+}
+
 /// One HTTP attempt: send `body` (already the signed bytes) to `url`
 /// with the given headers.
 async fn attempt_once(url: &str, event_id: &str, signature: &str, body: &[u8]) -> AttemptResult {
+    match check_resolution(url).await {
+        Ok(()) => {}
+        Err(true) => {
+            return AttemptResult::Rejected {
+                status: 0,
+                error: "the target resolves to a non-public address (strict outbound mode)"
+                    .to_string(),
+            };
+        }
+        Err(false) => {
+            return AttemptResult::Retryable {
+                status: None,
+                error: "the target's name could not be resolved".to_string(),
+            };
+        }
+    }
     let result = client()
         .post(url)
         .header("content-type", "application/json")

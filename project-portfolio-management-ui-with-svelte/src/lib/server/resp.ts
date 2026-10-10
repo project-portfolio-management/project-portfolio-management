@@ -12,6 +12,10 @@ import tls from "node:tls";
 
 export type Resp = string | number | null | Resp[] | Error;
 
+/** A reply claiming a bulk string or array bigger than this is refused, not buffered. */
+const MAX_BULK = 64 * 1024 * 1024;
+const MAX_ARRAY = 1_000_000;
+
 /** An incremental RESP2 parser: feed bytes, take complete replies. */
 export class RespParser {
   private buf = Buffer.alloc(0);
@@ -47,12 +51,14 @@ export class RespParser {
         return { value: Number(l.text), end: l.end };
       case "$": {
         const n = Number(l.text);
+        if (!Number.isInteger(n) || n > MAX_BULK) throw new Error("unreasonable bulk length");
         if (n < 0) return { value: null, end: l.end };
         if (this.buf.length < l.end + n + 2) return null;
         return { value: this.buf.toString("utf8", l.end, l.end + n), end: l.end + n + 2 };
       }
       case "*": {
         const n = Number(l.text);
+        if (!Number.isInteger(n) || n > MAX_ARRAY) throw new Error("unreasonable array length");
         if (n < 0) return { value: null, end: l.end };
         const items: Resp[] = [];
         let p = l.end;

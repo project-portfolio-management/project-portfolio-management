@@ -29,6 +29,7 @@ clinical use would need a clinical safety case that this project has not written
 | Data-subject export and pseudonymisation of a person across the schema (administrators only; preview first) | RG-6; request test; a test keeps the column list in step with the inventory |
 | Access review: the grants that stand, oldest first, as a spreadsheet for recertification (administrators only) | RG-9; request test |
 | Attachments: content must match the declared type, programs refused, optional `clamd` scan that fails closed | RG-8; unit and request tests |
+| Break-glass access to private plans: eligible people only, a stated reason, at most four hours, a second person told or no grant, every request audited | RG-10; end-to-end test with real tokens |
 | Backup with a **tested restore**, stated recovery targets, optional encryption | [operations pack](../operations/README.md); RG-5; CI drill (plain and encrypted) |
 | Retention purge for notifications, delivery logs and trend snapshots (dry run by default) | RG-4; request test |
 | Dependency policy, software bill of materials, build provenance, a security policy | `cargo deny`; `release.yml`; [`SECURITY.md`](../SECURITY.md) |
@@ -45,7 +46,7 @@ clinical use would need a clinical safety case that this project has not written
 | **Retention covers only part of the data** | Plans, tasks, time records and documents are kept until an operator deletes them | RG-4 follow-up; buyer decision |
 | **No handling marks** (security classification or sensitivity labels) | Governments and health bodies label records and exports | RG-7 |
 | **Attachment checks are signature-level; no scanner is bundled** | A program renamed `.pdf` is refused and a `clamd` hook exists, but macros and exploits in valid documents need a real scanner, which the deployer must run (the hook was tested only against a stand-in) | RG-8 |
-| **The access review reports what was recorded, not what the identity provider enforces; no break-glass procedure** | Recertification must compare the two; emergency access has no control | RG-10 |
+| **The access review reports what was recorded, not what the identity provider enforces** | Recertification must compare the two | RG-9 |
 | **Performance is known only roughly, and a very large plan is slow** | A load and soak test exists and its results are in [`BENCHMARKS.md`](../BENCHMARKS.md): ordinary requests answer in tens of milliseconds, but a plan of 12,667 tasks is slow to schedule (about 0.3 s alone, about 0.5 s with four at once, for a 10.8 MB answer; the task list now pages and answers a page in about 6 ms) and the process grows to ~1 GB. No capacity plan exists; run the script on your own hardware | RG-15, RG-16 |
 | **Sessions are in memory unless Redis is configured** | The default needs one front-end replica or sticky sessions; `OIDC_SESSION_STORE=redis` removes that, and makes Redis a dependency of sign-in | RG-12 |
 | **The audit trail is not tamper-proof against an administrator** | A database administrator can drop the trigger; there is no hash chain | stated in the DPIA |

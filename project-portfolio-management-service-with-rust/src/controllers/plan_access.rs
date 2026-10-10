@@ -51,12 +51,39 @@ fn members_of(row: &plan_access::Model) -> Vec<String> {
 }
 
 /// Whether a set of claims holds `access=admin`.
-fn is_admin(claims: Option<&authentication_verifier::Claims>) -> bool {
+pub(crate) fn is_admin(claims: Option<&authentication_verifier::Claims>) -> bool {
     claims.is_some_and(|c| {
         c.attrs
             .get("access")
             .is_some_and(|v| v.iter().any(|a| a == "admin"))
     })
+}
+
+/// For each of `pids`, the token subjects that hold a **live break-glass grant** on it (RG-10): not
+/// revoked and not expired. A lookup failure gives an empty answer, which means no extra access (fail
+/// closed).
+pub(crate) async fn grant_subs(
+    ctx: &AppContext,
+    pids: &[Uuid],
+) -> std::collections::HashMap<Uuid, Vec<String>> {
+    use crate::models::_entities::break_glass_grants as grants;
+    let mut out: std::collections::HashMap<Uuid, Vec<String>> = std::collections::HashMap::new();
+    if pids.is_empty() {
+        return out;
+    }
+    let Ok(rows) = grants::Entity::find()
+        .filter(grants::Column::PlanPid.is_in(pids.to_vec()))
+        .filter(grants::Column::RevokedAt.is_null())
+        .filter(grants::Column::ExpiresAt.gt(chrono::Utc::now()))
+        .all(&ctx.db)
+        .await
+    else {
+        return out;
+    };
+    for g in rows {
+        out.entry(g.plan_pid).or_default().push(g.sub);
+    }
+    out
 }
 
 /// The plan pids among `pids` that are private **and** hidden from `caller`.
@@ -78,8 +105,14 @@ pub(crate) async fn hidden_plans(
         return pids.iter().copied().collect();
     };
     let admin = is_admin(caller.claims());
+    // A live break-glass grant makes the grantee a temporary member for visibility (RG-10).
+    let granted = grant_subs(ctx, pids).await;
     rows.into_iter()
-        .filter(|r| !rules::can_see(true, &members_of(r), caller.actor(), admin))
+        .filter(|r| {
+            let mut members = members_of(r);
+            members.extend(granted.get(&r.plan_pid).cloned().unwrap_or_default());
+            !rules::can_see(true, &members, caller.actor(), admin)
+        })
         .map(|r| r.plan_pid)
         .collect()
 }
@@ -482,12 +515,35 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
         if let Ok(Some(row)) = private {
             let claims = crate::auth::request_claims(req.headers()).await.ok();
             let sub = claims.as_ref().map(|c| c.sub.as_str());
-            if !rules::can_see(true, &members_of(&row), sub, is_admin(claims.as_ref())) {
-                return (
-                    StatusCode::NOT_FOUND,
-                    axum::Json(serde_json::json!({ "error": "not_found" })),
+            let members = members_of(&row);
+            let admin = is_admin(claims.as_ref());
+            if !rules::can_see(true, &members, sub, admin) {
+                // Not a member. A live break-glass grant (RG-10) opens it, and every request it
+                // opens is audited, so the use of the grant is as visible as its opening.
+                let granted = grant_subs(&ctx, &[plan_pid]).await;
+                let via_grant = sub.is_some_and(|s| {
+                    granted
+                        .get(&plan_pid)
+                        .is_some_and(|v| v.iter().any(|g| g == s))
+                });
+                if !via_grant {
+                    return (
+                        StatusCode::NOT_FOUND,
+                        axum::Json(serde_json::json!({ "error": "not_found" })),
+                    )
+                        .into_response();
+                }
+                AuditModel::record(
+                    &ctx.db,
+                    plan_pid,
+                    "break_glass_access",
+                    sub,
+                    Some(serde_json::json!({
+                        "method": req.method().as_str(), "path": req.uri().path(),
+                    })),
                 )
-                    .into_response();
+                .await
+                .ok();
             }
         }
     }

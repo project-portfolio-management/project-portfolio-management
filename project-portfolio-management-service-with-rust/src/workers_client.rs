@@ -120,6 +120,16 @@ async fn fetch(base_url: &str, worker_pid: Uuid) -> Result<Vec<String>, String> 
                 .to_string(),
         );
     }
+    match crate::webhooks::check_resolution(base_url).await {
+        Ok(()) => {}
+        Err(true) => {
+            return Err(
+                "worker service resolves to a non-public address (strict outbound mode)"
+                    .to_string(),
+            );
+        }
+        Err(false) => return Err("worker service name could not be resolved".to_string()),
+    }
     let url = format!(
         "{}/api/workers/{worker_pid}/skills",
         base_url.trim_end_matches('/')

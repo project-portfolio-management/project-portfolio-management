@@ -108,6 +108,7 @@ pub fn paths() -> Value {
     merge(&mut all, issues_paths());
     merge(&mut all, subjects_paths());
     merge(&mut all, access_review_paths());
+    merge(&mut all, break_glass_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -865,6 +866,26 @@ fn baseline_paths() -> Value {
                 "Per task: start, finish and duration variance in business days of the plan's calendar (positive is later), measured against ?baseline=<version> (the latest by default). Standing is slipped, pulled_in, on_baseline, added, removed or unmeasurable. A task added since the baseline is `added`, not slip; one removed since stays listed with its baselined dates; a task unscheduled on either side has null variance with the reason, never zero. The summary counts reconcile (matched + removed = baseline tasks; matched + added = current tasks) and states the plan's own finish slip. With no baseline at all the answer is baseline null, variance null, reason no_baseline.",
                 vec![uuid_param("pid"), query("baseline", false, "A baseline version (default: the latest)")],
                 &[("200", "baseline, variance and note"), ("404", "Unknown plan, or no such baseline version")])
+        }
+    })
+}
+
+/// Break-glass access (RG-10).
+fn break_glass_paths() -> Value {
+    json!({
+        "/api/break-glass": {
+            "post": op("break-glass", "Open a private plan for a limited time",
+                "For a person with breakglass=eligible, or an administrator (403 otherwise). Send {plan_pid, reason (at least 20 characters), minutes (1 to 240, default 60), notify_ref (a person: or worker: reference, not yourself)}. The plan must be private (422 otherwise). While the grant lives the plan is not hidden from the grantee: this is visibility only, what they may do still follows their attributes. The person named is notified in the same transaction, and if they cannot be notified (they switched the notice off) no grant is made (422). At most 5 grants a person a day (429); one live grant per plan and person (409). Every request that is let through only by the grant is audited as break_glass_access. Ends by itself at expiry, or on revoke.",
+                vec![],
+                &[("200", "pid, plan_pid, expires_at, notified"), ("403", "Not eligible"), ("404", "Unknown plan"), ("409", "A live grant exists"), ("422", "A bad request, a non-private plan, or the person cannot be told"), ("429", "The day's limit")]),
+            "get": op("break-glass", "Your break-glass grants (all of them for an administrator)",
+                "Newest first, at most 500, each with live (true while in force). A grant is never deleted.",
+                vec![], &[("200", "grants, live"), ("401", "Not signed in")])
+        },
+        "/api/break-glass/{pid}/revoke": {
+            "post": op("break-glass", "End a grant now",
+                "Its holder or an administrator; anyone else gets 404. Revoking an ended grant answers it unchanged. Audited.",
+                vec![uuid_param("pid")], &[("200", "The grant"), ("404", "Unknown grant")])
         }
     })
 }

@@ -9,7 +9,7 @@ use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
-use sea_orm::QueryOrder;
+use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -71,6 +71,9 @@ async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> 
         .ok_or(Error::NotFound)
 }
 
+/// The most issues one plan's list returns; `truncated` says when there were more.
+const PLAN_LIST_MAX: u64 = 5_000;
+
 #[derive(Debug, Deserialize)]
 struct ListParams {
     #[serde(default)]
@@ -115,11 +118,15 @@ async fn list(
     if q.open == Some(true) {
         find = find.filter(issues::Column::Status.is_in(["open", "in_progress"]));
     }
+    // At most PLAN_LIST_MAX + 1 rows are read, so one huge plan cannot make one answer unbounded.
     let mut rows = find
         .order_by_asc(issues::Column::Id)
+        .limit(PLAN_LIST_MAX + 1)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let truncated = rows.len() as u64 > PLAN_LIST_MAX;
+    rows.truncate(usize::try_from(PLAN_LIST_MAX).unwrap_or(5000));
     rows.sort_by(|a, b| {
         rules::severity_rank(&b.severity)
             .cmp(&rules::severity_rank(&a.severity))
@@ -136,6 +143,7 @@ async fn list(
         "plan_pid": plan,
         "issues": rows.iter().map(|i| view(i, now)).collect::<Vec<_>>(),
         "total": rows.len(), "open": open, "overdue": overdue,
+        "truncated": truncated,
         "as_of": now,
     }))
 }

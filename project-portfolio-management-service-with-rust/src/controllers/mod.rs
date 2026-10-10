@@ -4,6 +4,7 @@ pub mod access_review;
 pub mod announcements;
 pub mod assignments;
 pub mod automation;
+pub mod break_glass;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` (T-28l).
 pub mod canvas;

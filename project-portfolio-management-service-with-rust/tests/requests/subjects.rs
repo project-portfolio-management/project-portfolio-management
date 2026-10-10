@@ -139,3 +139,67 @@ async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_to
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_blocked_change_rolls_back_everything_and_says_so() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let db = &ctx.db;
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        // Ada is assigned a task, and holds "R" on another task in a RACI row.
+        let assigned: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Assigned", "assignee_ref": format!("person:{ADA}") }))
+            .await
+            .json();
+        let assigned = assigned["pid"].as_str().unwrap().to_string();
+        let shared: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Shared" }))
+            .await
+            .json();
+        let shared = shared["pid"].as_str().unwrap().to_string();
+        // Someone already holds the pseudonym Ada would become, with the same letter on the same task:
+        // the change would break the one-row-per-person-and-letter rule.
+        let preview: Value = request
+            .post(&format!("/api/admin/subjects/{ADA}/pseudonymise"))
+            .await
+            .json();
+        let pseudonym = preview["pseudonym"].as_str().unwrap().to_string();
+        request
+            .put(&format!("/api/plans/{p}/tasks/{shared}/raci"))
+            .json(&json!({ "assignments": [
+                { "person_ref": format!("person:{ADA}"), "roles": "R" },
+                { "person_ref": format!("person:{pseudonym}"), "roles": "R" },
+            ] }))
+            .await
+            .assert_status_ok();
+
+        let refused = request
+            .post(&format!("/api/admin/subjects/{ADA}/pseudonymise?apply=true"))
+            .await;
+        assert_eq!(refused.status_code(), 409, "{}", refused.text());
+
+        // All or nothing: Ada's other rows were not changed either, and no audit row says it happened.
+        assert_eq!(
+            count(db, &format!("SELECT COUNT(*) AS n FROM tasks WHERE pid = '{assigned}' AND assignee_ref = 'person:{ADA}'")).await,
+            1
+        );
+        assert_eq!(
+            count(db, &format!("SELECT COUNT(*) AS n FROM raci_assignments WHERE person_ref = 'person:{ADA}' AND deleted_at IS NULL")).await,
+            1
+        );
+        assert_eq!(
+            count(db, "SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'subject_pseudonymised'").await,
+            0
+        );
+    })
+    .await;
+}

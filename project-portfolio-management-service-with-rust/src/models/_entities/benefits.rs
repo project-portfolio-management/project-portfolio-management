@@ -25,6 +25,14 @@ pub struct Model {
     pub realized_note: Option<String>,
     pub expected_on: Option<Date>,
     pub status: String,
+    /// `recurring` or `one_off` (DP-9); none when not stated.
+    pub recurrence: Option<String>,
+    /// The yearly amount of a recurring benefit, in minor units.
+    pub annualized_minor: Option<i64>,
+    /// `cash_releasing`, `non_cash_releasing` or `societal`.
+    pub classification: Option<String>,
+    /// The KPI that measures a non-financial benefit.
+    pub kpi_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

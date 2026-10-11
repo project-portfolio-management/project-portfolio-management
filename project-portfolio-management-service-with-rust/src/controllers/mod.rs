@@ -4,6 +4,8 @@ pub mod access_review;
 pub mod announcements;
 pub mod assignments;
 pub mod automation;
+/// Validated benefits (DP-9).
+pub mod benefit_validation;
 pub mod break_glass;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` (T-28l).

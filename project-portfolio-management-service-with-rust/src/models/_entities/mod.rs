@@ -12,6 +12,7 @@ pub mod audit_logs;
 pub mod automation_milestone_fires;
 pub mod automation_runs;
 pub mod automations;
+pub mod benefit_validations;
 pub mod benefits;
 pub mod break_glass_grants;
 pub mod budget_baseline_periods;

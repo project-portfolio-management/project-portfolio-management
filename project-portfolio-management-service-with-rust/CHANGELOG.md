@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — validated benefits, per year and non-financial (DP-9, 2026-10-11)
+
+Benefits gain a recurrence, a yearly amount, a classification and a KPI; independent validations (append-only, with evidence) turn a claim into a validated figure, and a validator who is a member of the programme is refused. `GET /api/portfolio-benefits` and the pack's `benefits` section show planned, claimed and validated per programme and in total without adding recurring to one-off, and non-financial benefits by KPI status or "not measured". Migration 60.
+
 ### Added — portfolio earned value over the threshold (DP-8, 2026-10-11)
 
 `GET /api/portfolio-earned-value` and the pack's `earned_value` section: each programme's roll-up per currency, from the same code as the plan roll-up, with a configurable BAC inclusion threshold (printed), "below EVM threshold" and `no_baseline` stated rather than blank, and the AC source and EAC variants named. The roll-up endpoint's rows gain `ac_source`, `state` and `eac.variants_used`.

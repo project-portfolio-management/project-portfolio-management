@@ -212,6 +212,7 @@ async fn compute_body(
         super::earned_value::pack_ac_source(),
     )
     .await?;
+    let benefits_view = super::benefit_validation::benefits_section(ctx, &included_set).await?;
     let body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
@@ -225,9 +226,9 @@ async fn compute_body(
         "data_quality": {
             "plans_included": included,
             "plans_left_out_private_or_marked": excluded,
-            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "issues", "change_requests"],
+            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "issues", "change_requests"],
             "sections_not_yet_built": [
-                "validated benefits", "capacity heatmap",
+                "capacity heatmap",
             ],
             "note": "A section that is not built is absent from this pack, not zero or green.",
         },
@@ -237,6 +238,7 @@ async fn compute_body(
         "funding": money,
         "buffer_fever": fever,
         "earned_value": evm_section,
+        "benefits": benefits_view,
         "issues": i,
         "change_requests": c,
     });

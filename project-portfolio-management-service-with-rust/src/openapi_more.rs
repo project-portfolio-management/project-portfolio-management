@@ -118,6 +118,7 @@ pub fn paths() -> Value {
     merge(&mut all, funding_paths());
     merge(&mut all, fever_paths());
     merge(&mut all, portfolio_evm_paths());
+    merge(&mut all, benefit_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -1008,6 +1009,32 @@ fn portfolio_evm_paths() -> Value {
                 "For each programme you can read: the roll-up of the plans beneath it per currency, exactly as GET /api/plans/{pid}/earned-value/rollup computes it for the same date (BAC, PV, EV, AC, SPI, CPI, the EAC and the variants used, VAC). A currency whose summed BAC is under its threshold (PROJECT_PORTFOLIO_MANAGEMENT_EVM_BAC_THRESHOLDS, JSON by currency in minor units; equal to the threshold is in) is shown as below EVM threshold with no ratios; a programme with no phased budget baseline is no_baseline. ?ac= is budget_lines (default), labour or both and is stated in each row. Currencies are never summed. Inputs: budget baselines, task percent complete, budget-line actuals or recorded labour, the thresholds.",
                 vec![query("ac", false, "budget_lines, labour or both")],
                 &[("200", "as_of, ac_source, bac_inclusion_threshold, ratio_thresholds, programmes, note"), ("422", "Unknown ac")])
+        }
+    })
+}
+
+/// Validated benefits (DP-9).
+fn benefit_paths() -> Value {
+    let pid = || uuid_param("pid");
+    let benefit = || uuid_param("benefit");
+    json!({
+        "/api/plans/{pid}/benefits/{benefit}/classification": {
+            "put": op("benefits", "Classify a benefit",
+                "Body: recurrence (recurring or one_off), annualized_minor (a recurring, financial benefit's yearly amount), classification (cash_releasing, non_cash_releasing or societal) and kpi_pid (the KPI that measures a non-financial benefit). Fields left out are cleared. Audited.",
+                vec![pid(), benefit()], &[("200", "The classification"), ("404", "No such benefit, or not a plan you can read"), ("422", "Every fault named")])
+        },
+        "/api/plans/{pid}/benefits/{benefit}/validations": {
+            "post": op("benefits", "Validate a benefit",
+                "Body: amount_minor (the amount validated to date, in the benefit's currency), optional evidence_attachment_pid (an attachment of the benefit or its plan) and note. The validator is the caller and may not be a member of the programme: anyone named as its lead, on an allocation, a RACI assignment, a task assignee or a private-plan member anywhere in it is refused 403. Only a financial benefit is validated as an amount; a non-financial one is measured by its KPI (422). Append-only: the latest validation counts. Audited.",
+                vec![pid(), benefit()], &[("200", "validation, amount_minor, currency, validated_on"), ("403", "The caller is a member of the programme"), ("404", "No such benefit"), ("422", "Not financial, a bad amount or evidence")]),
+            "get": op("benefits", "A benefit's validations and where it stands",
+                "Oldest first, with claimed (realized) and validated (the latest validation) and the standing: not_claimed, claimed (realized and not validated), partly_validated or validated. Inputs: the stored validations only.",
+                vec![pid(), benefit()], &[("200", "benefit, claimed_minor, validated_minor, standing, history, note")])
+        },
+        "/api/portfolio-benefits": {
+            "get": op("benefits", "Planned against validated benefits for the programmes you can read",
+                "Per programme and in total, one row per currency, recurrence and classification: planned (the yearly amount of a recurring benefit, the target of a one-off one), claimed, validated and the unvalidated part of the claim. Recurring and one-off are never added together. A non-financial benefit shows its KPI's status, or not measured when it has no KPI. Inputs: benefits, validations, KPIs and their latest readings.",
+                vec![], &[("200", "programmes, not_under_a_programme, totals, note")])
         }
     })
 }

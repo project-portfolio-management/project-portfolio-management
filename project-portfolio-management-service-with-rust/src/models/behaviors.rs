@@ -62,6 +62,7 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for benefit_validations::ActiveModel {}
 impl ActiveModelBehavior for programme_status_decisions::ActiveModel {}
 impl ActiveModelBehavior for cost_rate_tables::ActiveModel {}
 impl ActiveModelBehavior for cost_rates::ActiveModel {}

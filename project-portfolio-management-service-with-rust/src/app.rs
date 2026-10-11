@@ -220,6 +220,7 @@ impl Hooks for App {
             .add_route(controllers::programme_gates::routes())
             .add_route(controllers::funding::routes())
             .add_route(controllers::fever::routes())
+            .add_route(controllers::benefit_validation::routes())
             .add_route(controllers::director_packs::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())

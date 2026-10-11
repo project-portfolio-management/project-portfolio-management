@@ -138,7 +138,7 @@ pub fn schemas() -> Value {
                 "sections_included": list(s()), "sections_not_yet_built": list(s()), "note": s() })),
             "portfolio_map": r("PortfolioMap"), "exceptions": any_object(),
             "gate_decisions": r("GateDecisions"), "funding": r("PortfolioMoney"),
-            "buffer_fever": r("BufferFever"), "earned_value": r("PortfolioEarnedValue"), "issues": any_object(), "change_requests": any_object() })),
+            "buffer_fever": r("BufferFever"), "earned_value": r("PortfolioEarnedValue"), "benefits": r("PortfolioBenefits"), "issues": any_object(), "change_requests": any_object() })),
         "DirectorPackList": obj(&["packs"], json!({ "packs": list(r("DirectorPackMeta")) })),
 
         // ── delivery confidence, exceptions, aims, the map ──
@@ -245,6 +245,42 @@ pub fn schemas() -> Value {
                 "lines_with_no_funding_source": int(), "listed_lines_with_no_funding_source": list(any_object()),
                 "lines_with_no_dates": int(), "lines_in_other_financial_years": int(), "lines_running_past_the_year_end": int() })),
             "note": s() })),
+
+        // ── validated benefits ──
+        "BenefitClassificationInput": obj(&[], json!({
+            "recurrence": { "type": "string", "enum": ["recurring", "one_off"], "nullable": true },
+            "annualized_minor": { "type": "integer", "format": "int64", "nullable": true, "description": "Yearly amount of a recurring, financial benefit." },
+            "classification": { "type": "string", "enum": ["cash_releasing", "non_cash_releasing", "societal"], "nullable": true },
+            "kpi_pid": uuid_null() })),
+        "BenefitClassification": obj(&["benefit"], json!({
+            "benefit": uuid(), "recurrence": s_null(), "annualized_minor": int_null(),
+            "classification": s_null(), "kpi_pid": uuid_null() })),
+        "BenefitValidationInput": obj(&["amount_minor"], json!({
+            "amount_minor": { "type": "integer", "format": "int64", "minimum": 0, "description": "Validated to date, in the benefit's currency." },
+            "evidence_attachment_pid": uuid_null(), "note": s_null() })),
+        "BenefitValidated": obj(&["validation", "benefit", "amount_minor", "currency"], json!({
+            "validation": uuid(), "benefit": uuid(), "amount_minor": int(), "currency": s(), "validated_on": date() })),
+        "BenefitValidations": obj(&["benefit", "claimed_minor", "standing", "history"], json!({
+            "benefit": uuid(), "claimed_minor": int(), "validated_minor": int_null(),
+            "standing": en(&["not_claimed", "claimed", "partly_validated", "validated"]),
+            "history": list(obj(&["amount_minor", "currency"], json!({
+                "amount_minor": int(), "currency": s(), "validator": s_null(), "validated_on": date(),
+                "evidence_attachment_pid": uuid_null(), "note": s_null() }))),
+            "note": s() })),
+        "BenefitRow": obj(&["currency", "recurrence", "classification", "planned_minor", "claimed_minor", "validated_minor"], json!({
+            "currency": s(), "recurrence": en(&["recurring", "one_off", "not_stated"]),
+            "classification": s(), "planned_minor": int(), "claimed_minor": int(), "validated_minor": int(),
+            "unvalidated_claim_minor": int(), "benefits": int(), "with_no_planned_amount": int(), "claimed_only": int() })),
+        "NonFinancialBenefit": obj(&["title", "kpi"], json!({
+            "plan": s_null(), "title": s(), "classification": s_null(),
+            "kpi": obj(&["state"], json!({ "state": s(), "kpi": s(), "latest": int_null(), "reason": s() })) })),
+        "PortfolioBenefits": obj(&["programmes", "totals"], json!({
+            "programmes": list(obj(&["plan_pid", "name", "financial", "non_financial"], json!({
+                "plan_pid": uuid(), "name": s(), "financial": list(r("BenefitRow")),
+                "non_financial": list(r("NonFinancialBenefit")) }))),
+            "not_under_a_programme": obj(&[], json!({
+                "financial": list(r("BenefitRow")), "non_financial": list(r("NonFinancialBenefit")) })),
+            "totals": list(r("BenefitRow")), "note": s() })),
 
         // ── portfolio earned value ──
         "EarnedValueCurrency": obj(&["currency", "state"], json!({
@@ -535,6 +571,30 @@ pub const ATTACH: &[Attach] = &[
         "/api/portfolio-earned-value",
         None,
         &[("200", "PortfolioEarnedValue")],
+    ),
+    (
+        "put",
+        "/api/plans/{pid}/benefits/{benefit}/classification",
+        Some("BenefitClassificationInput"),
+        &[("200", "BenefitClassification")],
+    ),
+    (
+        "post",
+        "/api/plans/{pid}/benefits/{benefit}/validations",
+        Some("BenefitValidationInput"),
+        &[("200", "BenefitValidated")],
+    ),
+    (
+        "get",
+        "/api/plans/{pid}/benefits/{benefit}/validations",
+        None,
+        &[("200", "BenefitValidations")],
+    ),
+    (
+        "get",
+        "/api/portfolio-benefits",
+        None,
+        &[("200", "PortfolioBenefits")],
     ),
 ];
 

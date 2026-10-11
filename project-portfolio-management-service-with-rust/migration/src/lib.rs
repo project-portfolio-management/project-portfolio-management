@@ -105,6 +105,7 @@ mod m20261010_000056_delivery_confidence;
 mod m20261010_000057_programme_gates;
 mod m20261010_000058_funding_sources;
 mod m20261010_000059_programme_buffers;
+mod m20261010_000060_benefit_validation;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -210,6 +211,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000057_programme_gates::Migration),
             Box::new(m20261010_000058_funding_sources::Migration),
             Box::new(m20261010_000059_programme_buffers::Migration),
+            Box::new(m20261010_000060_benefit_validation::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -294,3 +294,7 @@ criterion_evidence,note,free_text,anyone a user mentions or describes in text,de
 criterion_evidence,link,free_text,anyone a user mentions or describes in text,de-escalation evidence,AUD,"A link to the evidence, typed by a user."
 deescalation_criteria,criterion,free_text,anyone a user mentions or describes in text,de-escalation criteria,OPS,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
 scorecards,name,free_text,anyone a user mentions or describes in text,scorecards,OPS,Free text typed by a user.
+funding_allocations,created_by,identifier,"people named in the record (staff, contractors, stakeholders, the signed-in user who acted)",funding allocations,AUD,"An opaque reference to the person who recorded the allocation."
+funding_allocations,reference,free_text,anyone a user mentions or describes in text,funding allocations,AUD,"The funder's reference for the allocation, typed by a user."
+cost_code_maps,created_by,identifier,"people named in the record (staff, contractors, stakeholders, the signed-in user who acted)",cost code map,OPS,"An opaque reference to the person who mapped the cost code."
+cost_code_maps,cost_code,free_text,anyone a user mentions or describes in text,cost code map,OPS,"A finance cost code, typed by a user."

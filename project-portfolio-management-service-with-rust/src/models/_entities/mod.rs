@@ -93,6 +93,8 @@ pub mod process_executions;
 pub mod process_versions;
 pub mod processes;
 pub mod programme_buffers;
+pub mod funding_allocations;
+pub mod cost_code_maps;
 pub mod scorecards;
 pub mod scorecard_kpis;
 pub mod escalation_levels;

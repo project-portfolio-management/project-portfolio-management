@@ -62,6 +62,8 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for funding_allocations::ActiveModel {}
+impl ActiveModelBehavior for cost_code_maps::ActiveModel {}
 impl ActiveModelBehavior for scorecards::ActiveModel {}
 impl ActiveModelBehavior for scorecard_kpis::ActiveModel {}
 impl ActiveModelBehavior for escalation_levels::ActiveModel {}

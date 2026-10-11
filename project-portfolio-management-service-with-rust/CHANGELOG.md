@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the portfolio ledger (EX-12, 2026-10-11)
+
+A funding allocation (source, amount, date) that budget lines draw on, traced in one query to the lines, gates, milestones met and benefits validated, with untraced money stated with its amount; a map from finance cost codes to budget lines; and a read-only reconciliation of a CSV ledger export that lists unmatched codes. Migration 77.
+
 ### Added — the outcome scorecard and the de-escalation tracker (EX-10, 2026-10-11)
 
 A named set of KPIs read by finished quarter, an optional starter set of measures with no targets, and a de-escalation tracker: the escalation level as the sponsor set it, criteria with evidence per quarter, and the consecutive quarters met. A quarter with a missing reading breaks the run and says why; nothing ever changes the level. Migration 76.

@@ -140,6 +140,7 @@ pub fn paths() -> Value {
     merge(&mut all, deployment_move_paths());
     merge(&mut all, cutover_paths());
     merge(&mut all, scorecard_paths());
+    merge(&mut all, ledger_paths());
     merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
@@ -1409,6 +1410,43 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The portfolio ledger (EX-12).
+fn ledger_paths() -> Value {
+    json!({
+        "/api/funding-allocations": {
+            "post": op("financials", "Record money a funding source allocated",
+                "Body: funding_source_pid, amount_minor (above 0), currency (ISO 4217), allocated_on (not in the future) and an optional reference. Append-only; audited.",
+                vec![], &[("200", "The allocation"), ("422", "A bad source, amount, currency or date")]),
+            "get": op("financials", "Every allocation, with the money not traced to any budget line",
+                "Inputs: the allocations and the budget lines drawing on each, restricted to plans the caller may read (a private plan's lines are nowhere, so to a non-member the money on them shows as untraced). Each carries planned_on_lines_minor and untraced_minor (allocated less planned on lines; negative means lines plan beyond it).",
+                vec![], &[("200", "allocations")])
+        },
+        "/api/funding-allocations/{pid}/trace": {
+            "get": op("financials", "What an allocation bought: lines, gates, milestones met and benefits validated, per currency",
+                "Inputs: the budget lines that draw on the allocation (plans the caller may read), their gates and whether each is released, the milestones of those plans and whether each is met, and the benefits of those plans with the amounts validated by someone outside the programme, per currency. money.untraced_minor is the allocation less what the lines plan, with the reason: money allocated but not on any line is untraced and its amount is stated, never dropped.",
+                vec![uuid_param("pid")], &[("200", "allocation, lines, money, gates, milestones, benefits"), ("404", "Unknown allocation")])
+        },
+        "/api/plans/{pid}/budget-lines/{line}/funding-allocation": {
+            "put": op("financials", "Say which allocation a budget line draws on",
+                "Body: funding_allocation_pid, or null to detach. The line's funding source must be the allocation's source and its currency the allocation's. Audited.",
+                vec![uuid_param("pid"), uuid_param("line")], &[("200", "line, funding_allocation_pid"), ("404", "Unknown plan or line"), ("422", "Not an allocation, a different source or a different currency")])
+        },
+        "/api/cost-codes": {
+            "put": op("financials", "Map a finance cost code to a budget line (the register's identifier)",
+                "Body: cost_code (1 to 60 characters, unique ignoring case) and budget_line_pid. Mapping an existing code again moves it to the new line. Audited.",
+                vec![], &[("200", "cost_code, budget_line_pid"), ("422", "A bad code, or a line the caller cannot read")]),
+            "get": op("financials", "The mapped cost codes whose line is on a plan you may read",
+                "Inputs: the cost-code map, restricted to lines on plans the caller may read.",
+                vec![], &[("200", "cost_codes")])
+        },
+        "/api/ledger/reconcile": {
+            "post": op("financials", "Set a CSV ledger export beside the register (writes nothing)",
+                "Body: CSV text with a header naming cost_code, amount_minor and currency (other columns are ignored; up to 5,000 rows and 1 MB). Each row's code is looked up in the cost-code map; the rows for a code are summed and set beside what the register holds as spent on the line. Unmatched codes (not mapped, or mapped to a line the caller may not read) are listed with their amount and row count, a row in another currency than its line is a mismatch, and reconciled is true only when every row matched with no difference. Every malformed row is reported with its line number.",
+                vec![], &[("200", "rows, report"), ("422", "A bad header or malformed rows")])
         }
     })
 }

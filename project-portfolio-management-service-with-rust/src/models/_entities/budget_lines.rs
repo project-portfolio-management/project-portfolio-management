@@ -32,6 +32,8 @@ pub struct Model {
     pub released_at: Option<DateTimeWithTimeZone>,
     /// Where the money comes from (DP-6); none is reported as "no funding source".
     pub funding_source_pid: Option<Uuid>,
+    /// The allocation this line is paid from (EX-12).
+    pub funding_allocation_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

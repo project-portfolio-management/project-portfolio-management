@@ -711,6 +711,71 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(pack10["body"]["outcomes"]["level"]["level"], "Level 2");
         assert!(pack10["body"]["outcomes"]["criteria"][0]["quarters"][0]["link"].is_null(), "the pack carries no evidence link");
 
+        // ── EX-12: the portfolio ledger: what did this allocation buy? ──
+        let fs: Value = with!(request.post("/api/funding-sources"), writer).json(&json!({ "name": "Treasury grant" })).await.json();
+        let fsp = fs["pid"].as_str().unwrap().to_string();
+        assert_eq!(with!(request.post("/api/funding-allocations"), writer).json(&json!({ "funding_source_pid": fsp, "amount_minor": 0, "currency": "GBP", "allocated_on": "2026-04-01" })).await.status_code(), 422);
+        let al: Value = with!(request.post("/api/funding-allocations"), writer).json(&json!({ "funding_source_pid": fsp, "amount_minor": 1_000_000, "currency": "GBP", "allocated_on": "2026-04-01", "reference": "GR-2026-17" })).await.json();
+        let alp = al["pid"].as_str().unwrap().to_string();
+        let line = |desc: &'static str, planned: i64, gate: Option<&'static str>, cur: &'static str| {
+            let (request, writer, proj) = (&request, writer.clone(), proj.clone());
+            async move {
+                let mut body = json!({ "category": "capex", "description": desc, "currency": cur, "planned_minor": planned });
+                if let Some(g) = gate { body["gate"] = json!(g); }
+                let v: Value = request.post(&format!("/api/plans/{proj}/budget-lines")).add_header(writer.0, writer.1).json(&body).await.json();
+                v["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (l1, l2, l3) = (line("Build", 600_000, Some("g1_feasibility"), "GBP").await, line("Train", 150_000, None, "GBP").await, line("Euro licence", 10_000, None, "EUR").await);
+        let attach = |l: &str, a: Option<&str>| {
+            let (request, writer, proj, l) = (&request, writer.clone(), proj.clone(), l.to_string());
+            let body = json!({ "funding_allocation_pid": a });
+            async move { request.put(&format!("/api/plans/{proj}/budget-lines/{l}/funding-allocation")).add_header(writer.0, writer.1).json(&body).await.status_code() }
+        };
+        assert_eq!(attach(&l1, Some(&alp)).await, 422, "the line has no funding source yet");
+        for l in [&l1, &l2, &l3] {
+            with!(request.put(&format!("/api/plans/{proj}/budget-lines/{l}/funding-source")), writer).json(&json!({ "funding_source_pid": fsp })).await.assert_status_ok();
+        }
+        assert_eq!(attach(&l3, Some(&alp)).await, 422, "a euro line cannot draw on a sterling allocation");
+        assert_eq!(attach(&l1, Some(&alp)).await, 200);
+        assert_eq!(attach(&l2, Some(&alp)).await, 200);
+        // A benefit on the plan, validated by someone outside it.
+        let ben: Value = with!(request.post(&format!("/api/plans/{proj}/benefits")), writer).json(&json!({ "title": "Fewer manual reports", "category": "cost_saving", "currency": "GBP", "target_minor": 200_000 })).await.json();
+        let bp = ben["pid"].as_str().unwrap().to_string();
+        let outsider = bearer(&kid, "3f2c6b7e-0000-4000-8000-0000000000f7", &[("access", "write"), ("role", "benefit_validator")]);
+        let vcode = with!(request.post(&format!("/api/plans/{proj}/benefits/{bp}/validations")), outsider).json(&json!({ "amount_minor": 80_000, "note": "Checked the report counts" })).await.status_code();
+        let tr: Value = with!(request.get(&format!("/api/funding-allocations/{alp}/trace")), writer).await.json();
+        assert_eq!(tr["lines"].as_array().unwrap().len(), 2, "{tr}");
+        assert_eq!(tr["money"]["allocated_minor"], 1_000_000);
+        assert_eq!(tr["money"]["planned_on_lines_minor"], 750_000);
+        assert_eq!(tr["money"]["untraced_minor"], 250_000, "allocated but on no line: untraced, with its amount");
+        assert!(tr["money"]["untraced_reason"].is_string());
+        assert_eq!((tr["gates"]["lines_with_a_gate"].as_u64(), tr["gates"]["released"].as_u64()), (Some(1), Some(0)));
+        assert_eq!((tr["milestones"]["total"].as_u64(), tr["milestones"]["met"].as_u64()), (Some(1), Some(1)), "the Cutover milestone was delivered: {tr}");
+        assert_eq!(tr["currency"], "GBP");
+        assert_eq!(vcode, 200, "the benefit is validated by someone outside the plan");
+        assert_eq!(tr["benefits"]["validated_by_currency"][0]["validated_minor"], 80_000, "{tr}");
+        let all: Value = with!(request.get("/api/funding-allocations"), writer).await.json();
+        assert_eq!(all["allocations"][0]["untraced_minor"], 250_000);
+        assert!(_ctx.db.execute_unprepared("DELETE FROM funding_allocations").await.is_err(), "append-only");
+        // Cost codes and a ledger export.
+        with!(request.post(&format!("/api/plans/{proj}/budget-lines/{l2}/actual")), writer).json(&json!({ "amount_minor": 40_000 })).await.assert_status_success();
+        for (code, l) in [("CC-100", &l2), ("cc-200", &l1)] {
+            with!(request.put("/api/cost-codes"), writer).json(&json!({ "cost_code": code, "budget_line_pid": l })).await.assert_status_ok();
+        }
+        let csv = "period,cost_code,amount_minor,currency\n2026-09,CC-100,25000,GBP\n2026-10,cc-100,15000,GBP\n2026-10,CC-200,5,GBP\n2026-10,CC-999,700,GBP\n";
+        let rep: Value = with!(request.post("/api/ledger/reconcile"), writer).text(csv).await.json();
+        assert_eq!(rep["report"]["reconciled"], false, "{rep}");
+        assert_eq!(rep["report"]["unmatched"][0]["cost_code"], "CC-999");
+        assert_eq!(rep["report"]["unmatched"][0]["amount_minor"], 700, "unmatched money is listed with its amount");
+        let m1 = rep["report"]["matched"].as_array().unwrap().iter().find(|m| m["cost_code"] == "CC-100").unwrap();
+        assert_eq!((m1["ledger_minor"].as_i64(), m1["register_minor"].as_i64(), m1["difference_minor"].as_i64()), (Some(40_000), Some(40_000), Some(0)));
+        let m2 = rep["report"]["matched"].as_array().unwrap().iter().find(|m| m["cost_code"] == "CC-200").unwrap();
+        assert_eq!(m2["difference_minor"], 5);
+        let ok: Value = with!(request.post("/api/ledger/reconcile"), writer).text("cost_code,amount_minor,currency\nCC-100,40000,GBP\n").await.json();
+        assert_eq!(ok["report"]["reconciled"], true, "{ok}");
+        assert_eq!(with!(request.post("/api/ledger/reconcile"), writer).text("cost_code,amount_minor\nCC-1,5\n").await.status_code(), 422, "a bad header");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

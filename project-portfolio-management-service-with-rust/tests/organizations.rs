@@ -12,6 +12,7 @@ use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
 use project_portfolio_management_service::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
+use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -70,6 +71,7 @@ fn bearer(
 const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
 const ISSUER_SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000e2";
 const ACME_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b1";
+const MANAGER: &str = "3f2c6b7e-0000-4000-8000-0000000000c1";
 const OTHER_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 
 #[tokio::test]
@@ -350,6 +352,34 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(w["late_discovery"]["programmes"], json!(["Care"]), "green last pack, red now: {w}");
         assert_eq!(w["red_without_decision"]["programmes"], json!(["Care"]), "red, and no decision recorded");
         assert!(w["self_vs_independent"].is_null(), "no independent assessment anywhere");
+
+        // ── EX-11: the key-person register is for resource managers; the pack holds counts ──
+        let manager = bearer(&kid, MANAGER, &[("access", "write"), ("role", "resource_manager")]);
+        assert_eq!(with!(request.get("/api/key-persons"), writer).await.status_code(), 404, "a non-manager sees no register");
+        assert_eq!(with!(request.put("/api/key-persons"), writer).json(&json!({ "subject_kind": "role", "subject": "Release manager", "readiness": "none" })).await.status_code(), 404);
+        assert_eq!(with!(request.put("/api/key-persons"), manager).json(&json!({ "subject_kind": "role", "subject": "x", "readiness": "maybe" })).await.status_code(), 422);
+        assert_eq!(with!(request.put("/api/key-persons"), manager).json(&json!({ "subject_kind": "person", "subject": "Ada", "readiness": "none" })).await.status_code(), 422, "a person is a reference, not a name");
+        let (ada, bob) = ("person:3f2c6b7e-0000-4000-8000-00000000f0f1", "person:3f2c6b7e-0000-4000-8000-00000000f0f2");
+        with!(request.put("/api/key-persons"), manager).json(&json!({ "subject_kind": "person", "subject": ada, "readiness": "none", "skill_pool_pid": pool, "note": "Only one who knows the interface" })).await.assert_status_ok();
+        with!(request.put("/api/key-persons"), manager).json(&json!({ "subject_kind": "role", "subject": "Release manager", "readiness": "ready", "successor_ref": bob })).await.assert_status_ok();
+        with!(request.put("/api/key-persons"), manager).json(&json!({ "subject_kind": "role", "subject": "release MANAGER", "readiness": "partly", "successor_ref": bob })).await.assert_status_ok();
+        let reg: Value = with!(request.get("/api/key-persons"), manager).await.json();
+        assert_eq!(reg["entries"].as_array().unwrap().len(), 2, "one entry per subject, ignoring case: {reg}");
+        for who in [ada, bob] {
+            _ctx.db.execute_unprepared(&format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', 'Developer', now(), now())")).await.unwrap();
+        }
+        with!(request.put("/api/key-persons/contingent"), manager).json(&json!({ "person_ref": bob, "contingent": true })).await.assert_status_ok();
+        let d6: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "board" })).await.json();
+        let pk6 = d6["pid"].as_str().unwrap().to_string();
+        let pack6: Value = with!(request.get(&format!("/api/director-packs/{pk6}")), issuer).await.json();
+        let kp = &pack6["body"]["key_persons"];
+        assert_eq!((kp["single_points"].as_u64(), kp["people"].as_u64(), kp["roles"].as_u64(), kp["without_successor"].as_u64()), (Some(2), Some(1), Some(1), Some(1)), "{kp}");
+        assert_eq!(kp["readiness"]["partly"], 1);
+        let eng = kp["contingent_share_by_pool"].as_array().unwrap().iter().find(|p| p["pool"] == "Engineering").unwrap();
+        assert_eq!((eng["headcount"].as_u64(), eng["contingent"].as_u64(), eng["contingent_share_bp"].as_u64()), (Some(2), Some(1), Some(5000)));
+        let text = pack6.to_string();
+        assert!(!text.contains(ada) && !text.contains(bob) && !text.contains("Only one who knows") && !text.contains("Release manager"), "the pack names no one and no role");
+        with!(request.delete(&format!("/api/key-persons/{}", reg["entries"][0]["pid"].as_str().unwrap())), manager).await.assert_status_ok();
 
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();

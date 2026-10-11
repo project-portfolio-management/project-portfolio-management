@@ -62,6 +62,8 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for key_person_entries::ActiveModel {}
+impl ActiveModelBehavior for contingent_workers::ActiveModel {}
 impl ActiveModelBehavior for programme_profiles::ActiveModel {}
 impl ActiveModelBehavior for milestone_signoff_requirements::ActiveModel {}
 impl ActiveModelBehavior for milestone_signoffs::ActiveModel {}

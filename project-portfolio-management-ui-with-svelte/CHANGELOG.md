@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — key people in the director pack page (EX-11, 2026-10-11)
+
+A section with the counts of single points of failure and a table of the contingent share per skill pool. English and Welsh.
+
 ### Added — watermelon measures in the director pack page (EX-9, 2026-10-11)
 
 A table of the four measures with a word and a shape for each, or why one is not measured. English and Welsh.

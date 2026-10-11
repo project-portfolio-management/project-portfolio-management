@@ -157,6 +157,7 @@ impl Hooks for App {
         Ok(vec![])
     }
 
+    #[allow(clippy::too_many_lines)]
     fn routes(_ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::plans::routes())
@@ -242,6 +243,7 @@ impl Hooks for App {
             .add_route(controllers::buffer_management::routes())
             .add_route(controllers::drum::routes())
             .add_route(controllers::organizations::routes())
+            .add_route(controllers::key_persons::routes())
             .add_route(controllers::register::routes())
             .add_route(controllers::programme_profile::routes())
             .add_route(controllers::milestone_signoffs::routes())

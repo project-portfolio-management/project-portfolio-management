@@ -2847,4 +2847,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_measure": "Mesur",
   "p.director_pack.c_programmes": "Rhaglenni, neu pam na fesurwyd",
   "p.director_pack.wm_count": "Rhaglenni: {n}",
+  "p.director_pack.s_keypeople": "Pobl allweddol a llafur wrth gefn",
+  "p.director_pack.kp_note": "Cyfrifir pwyntiau methiant sengl yma ac ni chânt eu henwi byth; mae'r gofrestr ei hun ar gyfer rheolwyr adnoddau.",
+  "p.director_pack.kp_counts": "Pwyntiau methiant sengl: {n} ({people} o bobl, {roles} o rolau). Heb olynydd: {nosucc}. Olynydd yn barod: {ready}; yn rhannol barod: {partly}; ddim yn barod: {none}.",
+  "p.director_pack.kp_no_people": "neb yn y gronfa hon",
+  "p.director_pack.c_headcount": "Pobl",
+  "p.director_pack.c_contingent": "Wrth gefn",
+  "p.director_pack.c_contingent_share": "Cyfran wrth gefn",
 };

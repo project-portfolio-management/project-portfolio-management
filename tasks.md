@@ -1118,10 +1118,12 @@ questions in [plan.md §39–§45](plan.md).
   run and says why; a starter set of measures ships as an optional
   template, not as defaults (§45).
 
-- [ ] **EX-11 (S) — Key-person register.** Single points of failure (person or
+- [x] **EX-11 (S) — Key-person register.** Single points of failure (person or
   role), successor and readiness; contingent share per skill pool. Resource
   managers only; the pack shows counts. **Acceptance:** a non-manager gets 404
   on the register; the pack contains no names (scan test).
+
+  **Built 2026-10-11.** Migration 70 (`key_person_entries`, `contingent_workers`), `controllers/key_persons.rs`: `GET`/`PUT /api/key-persons`, `DELETE /api/key-persons/{pid}`, `PUT /api/key-persons/contingent`. A single point of failure is a person (a reference, never a name) or a role, with a successor, readiness (ready, partly, none), an optional skill pool and a note; one entry per subject. **Resource managers only** (`access=admin` or `role=resource_manager`): anyone else gets 404 on every route. The pack's `key_persons` section holds counts only: single points (people and roles), without a successor, readiness counts, and the contingent share of each skill pool (contingent people over those whose primary role is one of the pool's roles; none for a pool with nobody). Pack page in English and Welsh. Tested in `tests/organizations.rs`, which also scans the whole pack for the references, the note and the role name and finds none (the scan test). **Not done, stated:** a person is marked contingent by a manager in this register (there is no contingent flag on the role or the worker service); the share counts primary roles only; a successor is a reference with no check that the person exists; no screen; the data-subject tools cover the new reference columns (subjects table) but the register keeps a role entry if its name equals a pseudonymised reference only by chance.
 
 - [ ] **EX-12 (M) — Portfolio ledger: "what did this allocation buy?"** A
   funding allocation (source, amount, date) traced through budget lines, gates,

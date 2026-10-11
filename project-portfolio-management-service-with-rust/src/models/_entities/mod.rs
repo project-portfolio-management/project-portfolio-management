@@ -93,6 +93,8 @@ pub mod process_executions;
 pub mod process_versions;
 pub mod processes;
 pub mod programme_buffers;
+pub mod key_person_entries;
+pub mod contingent_workers;
 pub mod programme_profiles;
 pub mod milestone_signoff_requirements;
 pub mod milestone_signoffs;

@@ -2209,6 +2209,7 @@ mod tests {
             crate::controllers::buffer_management::routes(),
             crate::controllers::drum::routes(),
             crate::controllers::organizations::routes(),
+            crate::controllers::key_persons::routes(),
             crate::controllers::register::routes(),
             crate::controllers::programme_profile::routes(),
             crate::controllers::milestone_signoffs::routes(),

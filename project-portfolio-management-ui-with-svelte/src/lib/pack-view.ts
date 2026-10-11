@@ -475,6 +475,34 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }] : [],
   );
 
+  // Key people: counts only, and the contingent share of each skill pool (EX-11).
+  const kp = obj(body.key_persons);
+  const kpRows: Cell[][] = arr(kp.contingent_share_by_pool).map((r) => [
+    plain(str(r.pool)),
+    plain(fixed(numOrNull(r.headcount), 0, d.locale)),
+    plain(fixed(numOrNull(r.contingent), 0, d.locale)),
+    numOrNull(r.contingent_share_bp) === null
+      ? { text: d.t(`${K}kp_no_people`), symbol: dash, tone: "grey" as Tone }
+      : plain(`${fixed((numOrNull(r.contingent_share_bp) as number) / 100, 0, d.locale)}%`),
+  ]);
+  const rd = obj(kp.readiness);
+  add("keypeople", [
+    d.t(`${K}kp_note`),
+    d.t(`${K}kp_counts`, {
+      n: numOrNull(kp.single_points) ?? 0,
+      people: numOrNull(kp.people) ?? 0,
+      roles: numOrNull(kp.roles) ?? 0,
+      nosucc: numOrNull(kp.without_successor) ?? 0,
+      ready: numOrNull(rd.ready) ?? 0,
+      partly: numOrNull(rd.partly) ?? 0,
+      none: numOrNull(rd.none) ?? 0,
+    }),
+  ], kpRows.length ? [{
+    caption: d.t(`${K}s_keypeople`),
+    columns: ["c_pool", "c_headcount", "c_contingent", "c_contingent_share"].map((k) => d.t(`${K}${k}`)),
+    rows: kpRows,
+  }] : []);
+
   // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
   const wm = obj(body.watermelon);
   const why = obj(wm.reasons_null);

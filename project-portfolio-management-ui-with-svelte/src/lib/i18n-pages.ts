@@ -2851,6 +2851,13 @@ export const PAGES_EN = {
   "p.director_pack.c_measure": "Measure",
   "p.director_pack.c_programmes": "Programmes, or why not measured",
   "p.director_pack.wm_count": "Programmes: {n}",
+  "p.director_pack.s_keypeople": "Key people and contingent labour",
+  "p.director_pack.kp_note": "Single points of failure are counted here and never named; the register itself is for resource managers.",
+  "p.director_pack.kp_counts": "Single points of failure: {n} ({people} people, {roles} roles). Without a successor: {nosucc}. Successor ready: {ready}; partly ready: {partly}; not ready: {none}.",
+  "p.director_pack.kp_no_people": "nobody in this pool",
+  "p.director_pack.c_headcount": "People",
+  "p.director_pack.c_contingent": "Contingent",
+  "p.director_pack.c_contingent_share": "Contingent share",
 } as const;
 
 /** A key in the page and component catalogue. */

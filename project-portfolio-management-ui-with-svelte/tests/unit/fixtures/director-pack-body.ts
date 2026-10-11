@@ -82,6 +82,8 @@ export const BODY = {
     { title: "A new portal", status: "approved", tradeoff: "Displaces the records migration", named_tradeoff: true },
     { title: "Faster reports", status: "in_review", tradeoff: null, named_tradeoff: false },
   ] },
+  key_persons: { single_points: 3, people: 2, roles: 1, without_successor: 1, readiness: { ready: 1, partly: 1, none: 1 },
+    contingent_share_by_pool: [{ pool: "Engineering", headcount: 4, contingent: 1, contingent_share_bp: 2500 }, { pool: "Data", headcount: 0, contingent: 0, contingent_share_bp: null }] },
   watermelon: {
     self_vs_independent: null,
     late_discovery: { count: 1, programmes: ["Care"] },

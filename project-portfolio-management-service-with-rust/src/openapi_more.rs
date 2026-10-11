@@ -134,6 +134,7 @@ pub fn paths() -> Value {
     merge(&mut all, programme_profile_paths());
     merge(&mut all, external_ask_paths());
     merge(&mut all, register_paths());
+    merge(&mut all, key_person_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1402,6 +1403,30 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The key-person register (EX-11).
+fn key_person_paths() -> Value {
+    json!({
+        "/api/key-persons": {
+            "get": op("resources", "The key-person register: single points of failure, successors and readiness",
+                "Inputs: the register entries and the people marked contingent. For resource managers only (access=admin or role=resource_manager); anyone else gets 404, as if the register did not exist. The director pack carries counts only, never a person, successor or note.",
+                vec![], &[("200", "entries, contingent"), ("404", "Not a resource manager")]),
+            "put": op("resources", "Record a single point of failure, a person or a role",
+                "Body: subject_kind (person or role), subject (a person: or worker: reference, or a role name), readiness (ready, partly or none), optional successor_ref, skill_pool_pid and note. One entry per subject; recording again updates it. Resource managers only (404 otherwise). Audited.",
+                vec![], &[("200", "The entry"), ("404", "Not a resource manager"), ("422", "A bad kind, readiness or reference")])
+        },
+        "/api/key-persons/{pid}": {
+            "delete": op("resources", "Remove a key-person entry",
+                "The subject is no longer a single point of failure. Resource managers only (404 otherwise). Audited.",
+                vec![uuid_param("pid")], &[("200", "removed"), ("404", "Unknown, or not a resource manager")])
+        },
+        "/api/key-persons/contingent": {
+            "put": op("resources", "Mark a person as contingent labour, or not",
+                "Body: person_ref and contingent. The contingent share of each skill pool in the director pack is these people over those whose primary role is one of the pool's roles. Resource managers only (404 otherwise). Audited.",
+                vec![], &[("200", "person_ref, contingent"), ("404", "Not a resource manager"), ("422", "A bad reference")])
         }
     })
 }

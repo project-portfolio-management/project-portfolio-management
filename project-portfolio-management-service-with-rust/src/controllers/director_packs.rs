@@ -227,6 +227,7 @@ async fn compute_body(
     let signoffs = super::milestone_signoffs::pack_section(ctx, &included_set).await?;
     let asks = super::governance::asks_section(ctx, period).await?;
     let register = super::register::pack_section(ctx, &included_set).await?;
+    let key_persons = super::key_persons::pack_section(ctx).await?;
     let mut body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
@@ -240,7 +241,7 @@ async fn compute_body(
         "data_quality": {
             "plans_included": included,
             "plans_left_out_private_or_marked": excluded,
-            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "capacity_heatmap", "milestone_signoffs", "external_asks", "watermelon", "issues", "change_requests"],
+            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "capacity_heatmap", "milestone_signoffs", "external_asks", "key_persons", "watermelon", "issues", "change_requests"],
             "sections_not_yet_built": [],
             "register_completeness": register,
             "note": "A section that is not built is absent from this pack, not zero or green.",
@@ -255,6 +256,7 @@ async fn compute_body(
         "capacity_heatmap": heatmap,
         "milestone_signoffs": signoffs,
         "external_asks": asks,
+        "key_persons": key_persons,
         "issues": i,
         "change_requests": c,
     });

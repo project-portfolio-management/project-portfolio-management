@@ -252,6 +252,7 @@ pub mod hammock;
 pub mod handover;
 pub mod includes;
 pub mod kpis;
+pub mod key_persons;
 pub mod leveling;
 pub mod register;
 pub mod programme_profile;

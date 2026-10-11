@@ -157,30 +157,14 @@ async fn send_email(
     ctx: &AppContext,
     sink: &notification_sinks::Model,
     note: &Note<'_>,
+    delivery: Uuid,
 ) -> Outcome {
-    let Some(mailer) = ctx.mailer.as_ref() else {
-        return Outcome::Failed("no mailer is configured".to_string());
-    };
-    let Ok(from) = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM") else {
-        return Outcome::Failed("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM is not set".to_string());
-    };
-    if !rules::email_shaped(&sink.destination) || !rules::email_shaped(&from) {
-        return Outcome::Failed("an email address is malformed".to_string());
-    }
     let (subject, text) = rules::render_email(note);
-    let email = loco_rs::mailer::Email {
-        from: Some(from),
-        to: sink.destination.clone(),
-        reply_to: None,
-        subject,
-        text,
-        html: String::new(),
-        bcc: None,
-        cc: None,
-        headers: None,
-    };
-    match mailer.mail(&email).await {
-        Ok(()) => Outcome::Sent,
+    // Through the sender in force, one row per recipient (email_deliveries); the sink keeps its own schedule.
+    match super::email_deliveries::deliver(ctx, "sink", delivery, &sink.destination, &subject, &text).await {
+        Ok(super::email_deliveries::Delivered::Sent) => Outcome::Sent,
+        Ok(super::email_deliveries::Delivered::Retry(why)) => Outcome::Retry(why),
+        Ok(super::email_deliveries::Delivered::Failed(why)) => Outcome::Failed(why),
         Err(e) => Outcome::Retry(e.to_string()),
     }
 }
@@ -241,7 +225,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Dispatched> {
             created_at: n.created_at.to_utc(),
         };
         let outcome = if sink.kind == "email" {
-            send_email(ctx, &sink, &note).await
+            send_email(ctx, &sink, &note, d.pid).await
         } else {
             send_http(&sink, &note).await
         };
@@ -308,6 +292,9 @@ pub fn spawn(ctx: &AppContext) {
             tokio::time::sleep(Duration::from_secs(secs)).await;
             if let Err(e) = run_due(&ctx, 100).await {
                 tracing::warn!(error = %e, "sink dispatch pass failed");
+            }
+            if let Err(e) = super::email_deliveries::run_due(&ctx, 100).await {
+                tracing::warn!(error = %e, "email retry pass failed");
             }
         }
     });

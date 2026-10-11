@@ -38,12 +38,24 @@ Stalwart starts in **bootstrap mode**: only the administration page is open, unt
 5. Check in the service: add an email sink and send a test notification
    (`/api/sinks`); the outcome is recorded with the delivery.
 
+## How the service sends
+
+Every email goes through a **sender** (`src/email.rs`, the `Sender` trait): the SMTP mailer the settings above
+configure, or none (then each attempt fails for good and says "no mailer is configured"). Each message goes
+to **one recipient at a time**, and each recipient has a row in `email_deliveries`: `queued`, `retry`, `sent`
+or `failed`, the attempts, the last error and which sender tried. A transient failure (a connection refused)
+is retried after 1, 5, 25 and 125 minutes, five attempts in all; a permanent one ends at once. Asking again
+for the same message and recipient never sends twice. Administrators read the list at
+`GET /api/email-deliveries`; nobody else can (404), because it holds addresses. Today the notification sinks
+of kind `email` use it; other callers (for example, mailing a pack's subscribers) would use the same
+`deliver` function.
+
 ## What is and is not verified
 
-- **Verified here:** the profile starts the pinned image, it reports healthy, the pinned administrator
+- **Verified here:** the sender, the per-recipient rows, retry and no-duplicate behaviour against a recording sender and the test mailer (`tests/requests/email.rs`, `tests/sinks.rs`); the profile starts the pinned image, it reports healthy, the pinned administrator
   password is accepted by the administration API, and the compose file parses with and without the profile.
 - **Not verified:** the setup steps above (they use Stalwart's administration page, whose screens change
-  between releases), a message actually delivered from the service to a mailbox, DNS (MX, SPF, DKIM, DMARC)
+  between releases), a message actually delivered from the service through Stalwart to a mailbox (the service has been tested against a recording sender and the test stub, not against this server), DNS (MX, SPF, DKIM, DMARC)
   and any delivery to the outside world. Public mail needs DNS records and a reputation that a container
   cannot give you.
 - **The API's mailer expects a trusted TLS certificate** (`secure: true` in `config/production.yaml`). A

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a sender trait and a delivery row per recipient for email (2026-10-11)
+
+`src/email.rs` defines `Sender` (SMTP via the configured mailer, none, or a recording sender for tests) and the retry rules; `email_deliveries` (migration 72) holds one row per message per recipient with status, attempts, last error and sender; `controllers::email_deliveries::deliver` sends through the sender in force and never sends the same message to the same recipient twice; `GET /api/email-deliveries` lists them for administrators. The notification sinks of kind `email` now send through it. The service was not tested against the bundled Stalwart server.
+
 ### Added — triage and pause, reset and stop thresholds (EX-7, 2026-10-11)
 
 Programmes can carry a dated triage and up to three thresholds (red confidence for N issued packs, forecast past a date, P80 cost over a cap). A sweep opens an exception for each crossing; a person records pause, reset, stop or an override with an expiry. Nothing is ever paused automatically; the director pack counts the decisions. Migration 71.

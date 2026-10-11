@@ -188,6 +188,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/email-deliveries",
+        "per-recipient email deliveries: administrators only (404 for anyone else), no plan, no amount",
+    ),
+    (
         "/api/key-persons",
         "the key-person register: resource managers only (404 for anyone else), holds no plan, and the pack carries counts only (tests/organizations.rs)",
     ),

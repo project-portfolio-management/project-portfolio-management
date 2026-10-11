@@ -16,6 +16,7 @@ mod cpm_only;
 mod custom_fields;
 mod discussion;
 mod effort;
+mod email;
 mod event_outbox;
 mod financials;
 mod governance;

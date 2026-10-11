@@ -136,6 +136,7 @@ pub fn paths() -> Value {
     merge(&mut all, register_paths());
     merge(&mut all, key_person_paths());
     merge(&mut all, threshold_paths());
+    merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1404,6 +1405,18 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Email deliveries, one row per recipient.
+fn email_delivery_paths() -> Value {
+    json!({
+        "/api/email-deliveries": {
+            "get": op("notifications", "Every email to every recipient, and how it ended",
+                "Inputs: the per-recipient delivery records. Each email goes to one recipient at a time through the sender in force (the configured SMTP mailer, or none) and leaves one row: status queued, retry, sent or failed, the number of attempts, the last error and which sender tried. A transient failure is retried with backoff up to five attempts; a permanent one ends at once. Administrators only: anyone else gets 404, since the list holds addresses. status filters; limit is 1 to 500, default 100.",
+                vec![query("status", false, "queued, retry, sent or failed"), query("limit", false, "1 to 500, default 100")],
+                &[("200", "deliveries, counts"), ("404", "Not an administrator"), ("422", "A bad status")])
         }
     })
 }

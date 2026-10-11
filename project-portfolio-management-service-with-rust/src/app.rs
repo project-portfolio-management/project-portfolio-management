@@ -243,6 +243,7 @@ impl Hooks for App {
             .add_route(controllers::buffer_management::routes())
             .add_route(controllers::drum::routes())
             .add_route(controllers::organizations::routes())
+            .add_route(controllers::email_deliveries::routes())
             .add_route(controllers::thresholds::routes())
             .add_route(controllers::key_persons::routes())
             .add_route(controllers::register::routes())

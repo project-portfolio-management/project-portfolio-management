@@ -104,6 +104,7 @@ pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
 pub mod delivery_model;
+pub mod email;
 pub mod leveling;
 pub mod thresholds;
 pub mod watermelon;

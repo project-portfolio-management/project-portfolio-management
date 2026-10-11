@@ -99,6 +99,7 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("planned_gates", "set_by"),
     ("funding_sources", "created_by"),
     ("programme_buffers", "declared_by"),
+    ("email_deliveries", "recipient"),
     ("programme_triages", "decided_by"),
     ("threshold_decisions", "decided_by"),
     ("key_person_entries", "subject"),
@@ -126,6 +127,11 @@ pub const COLUMNS: &[(&str, &str)] = &[
 
 /// Identifier columns in the inventory that are **not** person references, with the reason.
 pub const EXCLUDED: &[(&str, &str, &str)] = &[
+    (
+        "email_deliveries",
+        "subject_ref",
+        "the pid of the record the email is about (a sink delivery), not a person",
+    ),
     (
         "delivery_confidence_assessments",
         "value",

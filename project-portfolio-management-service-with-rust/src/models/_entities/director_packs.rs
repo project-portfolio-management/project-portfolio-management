@@ -30,6 +30,10 @@ pub struct Model {
     pub drafted_by: Option<String>,
     pub issued_by: Option<String>,
     pub issued_at: Option<DateTimeWithTimeZone>,
+    /// `manual` or `scheduled` (drafted by the monthly schedule).
+    pub origin: String,
+    pub reviewed_by: Option<String>,
+    pub reviewed_at: Option<DateTimeWithTimeZone>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

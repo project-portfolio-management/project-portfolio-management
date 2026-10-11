@@ -58,6 +58,39 @@ pub fn valid_period(p: &str) -> bool {
             .is_ok_and(|y| (2000..=2100).contains(&y))
 }
 
+/// The last day of a `YYYY-MM` period.
+#[must_use]
+pub fn period_end(period: &str) -> Option<chrono::NaiveDate> {
+    if !valid_period(period) {
+        return None;
+    }
+    let first = chrono::NaiveDate::parse_from_str(&format!("{period}-01"), "%Y-%m-%d").ok()?;
+    first.checked_add_months(chrono::Months::new(1))?.pred_opt()
+}
+
+/// The period before the month `today` is in: what a monthly run on `today` drafts.
+#[must_use]
+pub fn previous_period(today: chrono::NaiveDate) -> String {
+    use chrono::Datelike;
+    let first = today.with_day(1).unwrap_or(today);
+    let prev = first.pred_opt().unwrap_or(first);
+    format!("{:04}-{:02}", prev.year(), prev.month())
+}
+
+/// Whether the pack's data runs to the end of its period. A draft whose cut-off is before the period
+/// ended was drafted too early, and is **stale**: it cannot say how the period finished.
+#[must_use]
+pub fn covers_whole_period(period: &str, cut_off: chrono::NaiveDate) -> bool {
+    period_end(period).is_some_and(|end| cut_off >= end)
+}
+
+/// A draft is stale when it does not cover its whole period. An issued pack is not called stale: it is
+/// what was issued, and `covers_whole_period` says what it covers.
+#[must_use]
+pub fn is_stale(status: &str, period: &str, cut_off: chrono::NaiveDate) -> bool {
+    status == "draft" && !covers_whole_period(period, cut_off)
+}
+
 /// Why a reissue note is not acceptable, if it is not.
 #[must_use]
 pub fn note_problem(note: &str) -> Option<String> {
@@ -90,6 +123,39 @@ pub fn changed(label: &str, before: Option<u64>, now: u64) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_draft_before_the_end_of_its_period_is_stale() {
+        let d = |x: &str| chrono::NaiveDate::parse_from_str(x, "%Y-%m-%d").unwrap();
+        assert_eq!(period_end("2026-02"), Some(d("2026-02-28")));
+        assert_eq!(period_end("2028-02"), Some(d("2028-02-29")));
+        assert_eq!(period_end("2026-12"), Some(d("2026-12-31")));
+        assert_eq!(period_end("2026-13"), None);
+        assert!(
+            is_stale("draft", "2026-10", d("2026-10-30")),
+            "a day short is stale"
+        );
+        assert!(
+            !is_stale("draft", "2026-10", d("2026-10-31")),
+            "the last day covers the period"
+        );
+        assert!(!is_stale("draft", "2026-10", d("2026-11-05")));
+        assert!(
+            !is_stale("issued", "2026-10", d("2026-10-15")),
+            "an issued pack is not called stale"
+        );
+        assert!(covers_whole_period("2026-10", d("2026-10-31")));
+        assert!(!covers_whole_period("nonsense", d("2026-10-31")));
+    }
+
+    #[test]
+    fn a_monthly_run_drafts_the_month_that_just_ended() {
+        let d = |x: &str| chrono::NaiveDate::parse_from_str(x, "%Y-%m-%d").unwrap();
+        assert_eq!(previous_period(d("2026-11-03")), "2026-10");
+        assert_eq!(previous_period(d("2026-11-01")), "2026-10");
+        assert_eq!(previous_period(d("2027-01-15")), "2026-12");
+        assert_eq!(previous_period(d("2026-03-31")), "2026-02");
+    }
+
     use super::*;
 
     fn v(s: &[&str]) -> Vec<String> {

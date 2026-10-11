@@ -120,6 +120,7 @@ pub fn paths() -> Value {
     merge(&mut all, portfolio_evm_paths());
     merge(&mut all, benefit_paths());
     merge(&mut all, capacity_paths());
+    merge(&mut all, pack_rhythm_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -1065,6 +1066,41 @@ fn capacity_paths() -> Value {
                 "For each active pool and each month (?from=YYYY-MM, default this month; ?months=1 to 24, default 6): demand (committed allocations on plans you may read, by role, plus work partners owe), supply (the organization's own people with the pool's roles, from their availability, plus partners' commitments), the gap, and a word, a shape and a colour. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is under 110 % of demand. Partner supply is shown apart from the organization's own and combined; partner names only when the deployment shows them. Roles in no pool are under no pool assigned. A flat table twin is included. No person appears.",
                 vec![query("from", false, "YYYY-MM"), query("months", false, "1 to 24")],
                 &[("200", "months, pools, table, partner_names_shown, note"), ("422", "Bad window")])
+        }
+    })
+}
+
+/// The monthly rhythm of the director pack (DP-12).
+fn pack_rhythm_paths() -> Value {
+    json!({
+        "/api/director-pack-schedules": {
+            "get": op("director-packs", "The monthly pack schedules",
+                "One per audience: its day of the month, the next run date, whether it is on, and what the last run did. Needs directorpack=editor or issuer, or access=admin. Inputs: stored schedules only.",
+                vec![], &[("200", "schedules"), ("403", "Not allowed")]),
+            "post": op("director-packs", "Schedule the monthly pack for an audience",
+                "Body: audience, day_of_month (1 to 28). On that day each month the schedule drafts the pack for the month that just ended, with the cut-off at that month's last day. **It only drafts**: it cannot issue. One schedule per audience (409). Needs editor or issuer. Audited.",
+                vec![], &[("200", "The schedule"), ("403", "Not allowed"), ("409", "That audience has a schedule"), ("422", "Bad audience or day")])
+        },
+        "/api/director-pack-schedules/{pid}": {
+            "put": op("director-packs", "Switch a pack schedule off or on, or move its day",
+                "Body: enabled and/or day_of_month (1 to 28). Audited.",
+                vec![uuid_param("pid")], &[("200", "The schedule"), ("404", "No such schedule"), ("422", "Bad day")])
+        },
+        "/api/director-pack-schedules/sweep": {
+            "post": op("director-packs", "Draft the packs that are due now",
+                "Drafts, for every enabled schedule whose date has come, the pack for the month that just ended (unless a pack for it already exists, which is skipped). The next date moves first, so two sweeps never draft one pack twice and a missed run drafts once. The answer says how many were drafted and always issued: 0. The same work is the director_pack_schedule task and part of the optional ticker.",
+                vec![], &[("200", "drafted, skipped, issued"), ("403", "Not allowed")])
+        },
+        "/api/director-packs/{pid}/review": {
+            "post": op("director-packs", "Record that the portfolio office has reviewed a draft",
+                "Needs directorpack=editor or issuer, or access=admin. A draft only, once (409 otherwise). A draft made by the schedule cannot be issued until it has been reviewed (409). Audited with who.",
+                vec![uuid_param("pid")], &[("200", "pid, reviewed"), ("403", "Not allowed"), ("404", "No such pack"), ("409", "Not a draft, or already reviewed")])
+        },
+        "/api/director-pack-subscriptions": {
+            "get": op("director-packs", "Your pack subscriptions", "The audiences you are subscribed to. Inputs: stored subscriptions only.", vec![], &[("200", "subscribed_to")]),
+            "put": op("director-packs", "Subscribe to, or leave, an audience",
+                "Body: audience, subscribed (true or false), and optionally person (an editor or issuer may subscribe someone else, such as a confined partner reader). You may subscribe yourself to the audiences whose packs you may read. When a pack for the audience is issued each subscriber is notified with the period, the audience, the version and a link, never the body. Audited.",
+                vec![], &[("200", "audience, subscribed"), ("403", "Not an audience you may read, or not an editor"), ("422", "Bad audience")])
         }
     })
 }

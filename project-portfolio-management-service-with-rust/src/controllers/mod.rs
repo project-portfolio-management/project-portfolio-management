@@ -50,6 +50,8 @@ pub mod notification_prefs;
 pub mod okr;
 pub mod onboarding;
 pub mod oversight;
+/// The monthly rhythm of the director pack: schedule, review, issue, notify (DP-12).
+pub mod pack_rhythm;
 /// The sequential project phase: one-step advancement, explicitly
 /// reasoned regression, and per-phase durations.
 pub mod phase;

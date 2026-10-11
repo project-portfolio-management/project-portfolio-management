@@ -184,6 +184,14 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/director-pack-schedules",
+        "the monthly schedules (an audience and a day); they hold no plan, person or amount",
+    ),
+    (
+        "/api/director-pack-subscriptions",
+        "your own subscriptions to audiences; they hold no plan or amount",
+    ),
+    (
         "/api/director-packs/{pid}/pdf",
         "one stored pack as a PDF, made from the stored JSON alone; computed once at drafting over plans that are neither private nor marked, and read by audience (tests/capacity_heatmap.rs)",
     ),

@@ -128,6 +128,8 @@ pub fn schemas() -> Value {
         "DirectorPackMeta": obj(&["pid", "period", "audience", "version", "status"], json!({
             "pid": uuid(), "period": s(), "audience": s(), "version": int(),
             "status": en(&["draft", "issued"]), "cut_off": time(), "change_note": s_null(),
+            "origin": en(&["manual", "scheduled"]), "reviewed": boolean(),
+            "covers_whole_period": boolean(), "stale": boolean(),
             "supersedes_pid": uuid_null(), "issued_at": time_null(), "issued_by": s_null() })),
         "DirectorPack": obj(&["pack", "body"], json!({ "pack": r("DirectorPackMeta"), "body": r("DirectorPackBody") })),
         "DirectorPackBody": obj(&["cover", "data_quality"], json!({
@@ -244,6 +246,24 @@ pub fn schemas() -> Value {
                 "lines_with_no_funding_source": int(), "listed_lines_with_no_funding_source": list(any_object()),
                 "lines_with_no_dates": int(), "lines_in_other_financial_years": int(), "lines_running_past_the_year_end": int() })),
             "note": s() })),
+
+        // ── the monthly rhythm ──
+        "DirectorPackScheduleInput": obj(&["audience", "day_of_month"], json!({
+            "audience": en(&["executive", "board", "escalation_board", "partner"]),
+            "day_of_month": { "type": "integer", "minimum": 1, "maximum": 28 } })),
+        "DirectorPackScheduleUpdate": obj(&[], json!({ "enabled": boolean(), "day_of_month": { "type": "integer", "minimum": 1, "maximum": 28 } })),
+        "DirectorPackSchedule": obj(&["pid", "audience", "day_of_month", "next_run_date", "enabled"], json!({
+            "pid": uuid(), "audience": s(), "day_of_month": int(), "next_run_date": date(), "enabled": boolean(),
+            "last_run_on": date_null(), "last_result": s_null() })),
+        "DirectorPackScheduleList": obj(&["schedules"], json!({ "schedules": list(r("DirectorPackSchedule")) })),
+        "DirectorPackSweep": obj(&["drafted", "skipped", "issued"], json!({
+            "drafted": list(uuid()), "skipped": int(), "issued": { "type": "integer", "enum": [0], "description": "Always 0: a schedule never issues." } })),
+        "DirectorPackReviewed": obj(&["pid", "reviewed"], json!({ "pid": uuid(), "reviewed": boolean() })),
+        "DirectorPackSubscriptionInput": obj(&["audience", "subscribed"], json!({
+            "audience": en(&["executive", "board", "escalation_board", "partner"]), "subscribed": boolean(),
+            "person": { "type": "string", "nullable": true, "description": "An editor may subscribe someone else." } })),
+        "DirectorPackSubscription": obj(&["audience", "subscribed"], json!({ "audience": s(), "subscribed": boolean() })),
+        "DirectorPackSubscriptions": obj(&["subscribed_to"], json!({ "subscribed_to": list(s()) })),
 
         // ── skill pools, commitments, heatmap ──
         "SkillPoolInput": obj(&["name"], json!({ "name": { "type": "string", "minLength": 2, "maxLength": 120 }, "roles": list(s()), "skills": list(s()) })),
@@ -655,6 +675,48 @@ pub const ATTACH: &[Attach] = &[
         "/api/capacity-heatmap",
         None,
         &[("200", "CapacityHeatmap")],
+    ),
+    (
+        "get",
+        "/api/director-pack-schedules",
+        None,
+        &[("200", "DirectorPackScheduleList")],
+    ),
+    (
+        "post",
+        "/api/director-pack-schedules",
+        Some("DirectorPackScheduleInput"),
+        &[("200", "DirectorPackSchedule")],
+    ),
+    (
+        "put",
+        "/api/director-pack-schedules/{pid}",
+        Some("DirectorPackScheduleUpdate"),
+        &[("200", "DirectorPackSchedule")],
+    ),
+    (
+        "post",
+        "/api/director-pack-schedules/sweep",
+        None,
+        &[("200", "DirectorPackSweep")],
+    ),
+    (
+        "post",
+        "/api/director-packs/{pid}/review",
+        None,
+        &[("200", "DirectorPackReviewed")],
+    ),
+    (
+        "get",
+        "/api/director-pack-subscriptions",
+        None,
+        &[("200", "DirectorPackSubscriptions")],
+    ),
+    (
+        "put",
+        "/api/director-pack-subscriptions",
+        Some("DirectorPackSubscriptionInput"),
+        &[("200", "DirectorPackSubscription")],
     ),
 ];
 

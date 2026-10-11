@@ -33,7 +33,7 @@ fn db_err(e: &sea_orm::DbErr) -> Error {
 }
 
 /// What the caller may do. With login off everyone is trusted, as for every other write.
-fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
+pub(crate) fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
     if !require_auth() {
         return Some(Power::Issuer);
     }
@@ -45,7 +45,7 @@ fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
     )
 }
 
-fn caller_audiences(caller: &MaybeAuthUser) -> Vec<String> {
+pub(crate) fn caller_audiences(caller: &MaybeAuthUser) -> Vec<String> {
     caller
         .claims()
         .and_then(|c| c.attrs.get("pack_audience").cloned())
@@ -58,6 +58,9 @@ fn meta(p: &packs::Model) -> serde_json::Value {
         "pid": p.pid, "period": p.period, "audience": p.audience, "version": p.version,
         "status": p.status, "cut_off": p.cut_off, "change_note": p.change_note,
         "supersedes_pid": p.supersedes_pid, "issued_at": p.issued_at, "issued_by": p.issued_by,
+        "origin": p.origin, "reviewed": p.reviewed_at.is_some(),
+        "covers_whole_period": rules::covers_whole_period(&p.period, DateTime::<Utc>::from(p.cut_off).date_naive()),
+        "stale": rules::is_stale(&p.status, &p.period, DateTime::<Utc>::from(p.cut_off).date_naive()),
     })
 }
 
@@ -254,7 +257,7 @@ struct DraftBody {
     cut_off: Option<DateTime<Utc>>,
 }
 
-fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
+pub(crate) fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
     match caller_power(caller) {
         Some(p) if p >= at_least => Ok(caller.actor().unwrap_or("system").to_string()),
         _ => Err(refuse(
@@ -270,7 +273,7 @@ fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn insert_draft(
+pub(crate) async fn insert_draft(
     ctx: &AppContext,
     actor: &str,
     period: &str,
@@ -401,7 +404,7 @@ async fn draft(
     Ok(resp)
 }
 
-async fn find(ctx: &AppContext, pid: &str) -> Result<packs::Model> {
+pub(crate) async fn find(ctx: &AppContext, pid: &str) -> Result<packs::Model> {
     let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
     packs::Entity::find()
         .filter(packs::Column::Pid.eq(pid))
@@ -421,6 +424,14 @@ async fn issue(
 ) -> Result<Response> {
     let actor = need(&caller, Power::Issuer)?;
     let row = find(&ctx, &pid).await?;
+    // A pack the schedule drafted is looked over by the portfolio office before anyone issues it.
+    if row.status == "draft" && row.origin == "scheduled" && row.reviewed_at.is_none() {
+        return Err(refuse(
+            StatusCode::CONFLICT,
+            "conflict",
+            "this draft was made by the monthly schedule; the portfolio office must review it before it is issued",
+        ));
+    }
     let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
     let done = packs::Entity::update_many()
         .col_expr(packs::Column::Status, Expr::value("issued"))
@@ -449,6 +460,14 @@ async fn issue(
     .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await.map_err(|e| db_err(&e))?;
     let now = find(&ctx, &pid).await?;
+    // Tell the audience's subscribers, with a link and never the body. A notice that cannot be made does
+    // not undo the issue: the pack is issued either way.
+    if let Err(e) = super::pack_rhythm::notify_issued(&ctx, &now).await {
+        tracing::warn!(
+            "director pack {} issued but its notices failed: {e}",
+            now.pid
+        );
+    }
     format::json(meta(&now))
 }
 

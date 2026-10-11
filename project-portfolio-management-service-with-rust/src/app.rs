@@ -220,6 +220,7 @@ impl Hooks for App {
             .add_route(controllers::programme_gates::routes())
             .add_route(controllers::funding::routes())
             .add_route(controllers::fever::routes())
+            .add_route(controllers::pack_rhythm::routes())
             .add_route(controllers::capacity_heatmap::routes())
             .add_route(controllers::benefit_validation::routes())
             .add_route(controllers::director_packs::routes())
@@ -360,6 +361,7 @@ impl Hooks for App {
         tasks.register(crate::tasks::search::SearchReindex);
         tasks.register(crate::tasks::retention_purge::RetentionPurge);
         tasks.register(crate::tasks::exception_breaches::ExceptionBreaches);
+        tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
         // tasks-inject (do not remove)
     }
     async fn truncate(ctx: &AppContext) -> Result<()> {

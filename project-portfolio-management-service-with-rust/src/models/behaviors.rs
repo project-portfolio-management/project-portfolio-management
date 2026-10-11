@@ -64,6 +64,8 @@ impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
 impl ActiveModelBehavior for benefit_validations::ActiveModel {}
 impl ActiveModelBehavior for skill_pools::ActiveModel {}
+impl ActiveModelBehavior for director_pack_schedules::ActiveModel {}
+impl ActiveModelBehavior for director_pack_subscriptions::ActiveModel {}
 impl ActiveModelBehavior for skill_pool_members::ActiveModel {}
 impl ActiveModelBehavior for capacity_commitments::ActiveModel {}
 impl ActiveModelBehavior for programme_status_decisions::ActiveModel {}

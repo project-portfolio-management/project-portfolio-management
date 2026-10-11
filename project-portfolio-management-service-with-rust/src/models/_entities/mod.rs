@@ -40,6 +40,8 @@ pub mod custom_field_values;
 pub mod delivery_confidence_assessments;
 pub mod delivery_exceptions;
 pub mod devops_events;
+pub mod director_pack_schedules;
+pub mod director_pack_subscriptions;
 pub mod director_packs;
 pub mod document_versions;
 pub mod earned_value_settings;

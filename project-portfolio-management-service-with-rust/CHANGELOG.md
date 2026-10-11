@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — gate decisions, planned gate dates and programme status (DP-5, 2026-10-11)
+
+Planned gate dates per plan and gate; the pack's `gate_decisions` lists gates passed, failed and deferred (a hold, or a planned date that passed with no review) and programmes paused and stopped. Programme status changes only by a recorded decision (reason, decider, date, link to a gate review or exception); stopped is terminal, enforced by the service and by a database trigger; a pause counts the programme's allocations and deletes none. The map shows each programme's status. Migration 57.
+
 ### Added — delivery confidence, exceptions and the portfolio map (DP-2, DP-3, DP-4, 2026-10-10)
 
 Stated delivery confidence (append-only, self or independent) beside the derived RAG; exceptions that open at amber-red or red, keep their clock and close only on a decision, with a breach task; strategic aims, primary aims and `GET /api/portfolio-map`. The director pack now carries the map (with trend against the previous issued pack) and the exceptions. Migration 56.

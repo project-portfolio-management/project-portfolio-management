@@ -928,7 +928,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   "no strategic aim", not dropped; totals never double-count.
 
   **Built 2026-10-10.** `PUT /api/objectives/{pid}/strategic-aim` marks an objective as a strategic aim (unmarking clears programmes' primary flags); `PUT /api/plans/{pid}/primary-aim` sets a programme's one primary aim (the database allows only one; any earlier primary becomes an ordinary link). `GET /api/portfolio-map` and the pack's `portfolio_map` group programmes by primary aim with stage, phase, confidence, derived RAG and trend; a programme appears once with its other aims named; one with no aim, or with aims but none primary, is under "no strategic aim" with the reason; totals do not double-count. **Not done, stated:** "programme" means a plan whose kind is `Program` (there is no other definition in the data); the objectives registry has no hierarchy, so "top-tier" is whatever you mark; the map's rows are not grouped by gate beyond showing stage and phase.
-- [ ] **DP-5 (M) — Gate decisions in the period; paused and stopped.**
+- [x] **DP-5 (M) — Gate decisions in the period; paused and stopped.**
   Add a **planned gate date** per programme and gate; a gate whose planned date
   passed without a review, or reviewed as `hold`, is **deferred**. Map
   `approved` / `approved_with_conditions` → passed, `rejected` → failed. Add a
@@ -939,6 +939,8 @@ a reason, never green or zero**; money is per currency, never summed across;
   the period; pausing and resuming are audited with reasons; a stopped
   programme's money and benefits stay reportable; a paused programme's
   allocations are flagged, not deleted.
+
+  **Built 2026-10-11.** `PUT /api/plans/{pid}/planned-gates/{gate}` and `GET .../planned-gates` (one date per plan and gate); `POST /api/plans/{pid}/programme-status` and `GET` (migration 57). Status changes only by a recorded decision: reason of at least 10 characters, the decider, the date, and optionally the gate review or exception it follows from (it must be this programme's own); it needs `access=admin` or the token attribute `programme=decider`, and only a plan of kind `Program` has one. `stopped` is terminal in the service and in a database trigger, a repeat of the current status is refused (409), the history is append-only (a data-subject pseudonymisation may blank the decider), and every step is audited. The pack's `gate_decisions` lists gates **passed** and **failed** (reviews decided in the period; `approved` and `approved_with_conditions` are passed, `rejected` is failed), **deferred** (the latest review is `hold`, or the planned date passed with no passing or failing review, with days late), and the programmes **paused** and **stopped**, each with what it still holds: allocations counted, never deleted; money per currency; benefits. The map shows each programme's status (as at today, while the pack section uses the cut-off). **Not done, stated:** the gate view covers programmes only (plans of kind `Program`), not every plan with a stage; a paused programme's allocations are counted, not marked on the allocation rows themselves, and nothing stops new allocations being added to it; the stopped programme's money and benefits are listed in the pack but no other report is changed to treat it specially; no screen; the reason is free text and can name a person.
 
 - [ ] **DP-6 (M) — Funding sources and financial-year money.**
   A `funding_sources` reference list (owner-supplied, §37) and on each budget

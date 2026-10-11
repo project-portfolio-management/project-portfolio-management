@@ -47,6 +47,8 @@ pub mod oversight;
 pub mod phase;
 pub mod plans;
 pub mod prioritization;
+/// Planned gate dates, gate decisions in a period and programme status (DP-5).
+pub mod programme_gates;
 pub mod sandbox;
 pub mod saved_views;
 pub mod strategy;

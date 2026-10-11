@@ -693,6 +693,7 @@ pub(crate) async fn build_map(
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
+    let statuses = super::programme_gates::status_map(ctx, today).await?;
     let history = assessments::Entity::find()
         .order_by_asc(assessments::Column::Id)
         .all(&ctx.db)
@@ -748,6 +749,7 @@ pub(crate) async fn build_map(
         };
         groups.entry(primary).or_default().push(serde_json::json!({
             "plan_pid": p.pid, "name": p.name, "stage": p.stage, "phase": p.phase,
+            "programme_status": statuses.get(&p.pid).copied().unwrap_or("active"),
             "confidence": confidence, "derived_rag": derived,
             "trend": trend,
             "disagreement": { "with_derived": disagreement.is_some(), "independent_vs_self": self_gap },

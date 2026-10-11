@@ -2112,6 +2112,7 @@ mod tests {
     /// is kept in step with `App::routes`. (Loco's default `/_health`
     /// and `/_ping` are added by `AppRoutes`, not a controller, and are
     /// out of scope here.)
+    #[allow(clippy::too_many_lines)]
     fn mounted_routes() -> std::collections::BTreeSet<(String, String)> {
         let groups = [
             crate::controllers::plans::routes(),
@@ -2172,6 +2173,7 @@ mod tests {
             crate::controllers::change_requests::routes(),
             crate::controllers::director_summary::routes(),
             crate::controllers::confidence::routes(),
+            crate::controllers::programme_gates::routes(),
             crate::controllers::director_packs::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),

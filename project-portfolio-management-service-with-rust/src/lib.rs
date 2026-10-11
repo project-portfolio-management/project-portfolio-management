@@ -80,6 +80,7 @@ pub mod financials;
 /// The time-based-analysis flow-gauge refresh loop: default-off,
 /// bounded by a series cap, and suppressed below a board-size floor.
 pub mod flow_metrics;
+pub mod gate_decisions;
 /// Pure PPM governance rules (proposal pipeline, phase gates, risks, money).
 pub mod governance;
 pub mod guests;

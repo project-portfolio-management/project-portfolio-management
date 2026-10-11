@@ -114,6 +114,7 @@ pub fn paths() -> Value {
     merge(&mut all, director_summary_paths());
     merge(&mut all, director_pack_paths());
     merge(&mut all, confidence_paths());
+    merge(&mut all, programme_gate_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -918,6 +919,31 @@ fn confidence_paths() -> Value {
                 "Programmes (plans of kind Program) you can read, grouped by primary strategic aim, each with stage, phase, stated delivery confidence beside the derived RAG (never blended), whether the two views disagree by two steps or more, and the other aims it serves. A programme appears once; one with no primary aim is listed under no strategic aim. Inputs: stored assessments, the derived RAG rules and the strategic aims. Trend is computed only in issued packs.",
                 vec![query("period", false, "YYYY-MM, default the current month")],
                 &[("200", "period, programmes_total, groups, note"), ("422", "Bad period")])
+        }
+    })
+}
+
+/// Planned gate dates and programme status (DP-5).
+fn programme_gate_paths() -> Value {
+    let pid = || uuid_param("pid");
+    json!({
+        "/api/plans/{pid}/planned-gates": {
+            "get": op("gates", "A plan's planned gate dates",
+                "The date the plan expects its review at each gate, by gate. Inputs: stored planned dates only.",
+                vec![pid()], &[("200", "planned_gates")])
+        },
+        "/api/plans/{pid}/planned-gates/{gate}": {
+            "put": op("gates", "Plan a gate review date",
+                "Body: planned_on (a date). The gate is one of g0_concept to g5_benefits. A planned date that passes with no passing or failing review makes the gate deferred in the director pack. Audited.",
+                vec![pid(), uuid_param("gate")], &[("200", "plan_pid, gate, planned_on"), ("422", "Unknown gate")])
+        },
+        "/api/plans/{pid}/programme-status": {
+            "get": op("gates", "A programme's status and the decisions behind it",
+                "Active unless a recorded decision paused or stopped it; the decision history oldest first; and, for a paused or stopped programme, what it still holds (allocations counted not deleted, money per currency, benefits). Inputs: stored decisions only.",
+                vec![pid()], &[("200", "status, history, still_held, note")]),
+            "post": op("gates", "Pause, resume or stop a programme by a recorded decision",
+                "Body: status (active, paused or stopped), reason (at least 10 characters), and optionally gate_review_pid or exception_pid of this programme. Needs access=admin or programme=decider. Only a plan of kind Program. Stopped is terminal; repeating the current status is 409. The decider and the date are recorded and the history cannot be edited. Audited.",
+                vec![pid()], &[("200", "plan_pid, status, decision"), ("403", "Not a decider"), ("409", "Stopped, or already that status"), ("422", "Not a programme, thin reason, or a link that is not this programme's")])
         }
     })
 }

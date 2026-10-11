@@ -15,7 +15,7 @@ Test the deployment as it will run, with login enforced and your identity provid
 | Area | What the software claims | What a tester should try |
 |---|---|---|
 | Authentication | Login is on by default; the service will not start without verification keys or, in production, with login off; tokens are verified offline against published keys | Forged, expired, replayed and wrongly signed tokens; wrong issuer or audience; key rotation; a missing key set |
-| Authorisation | Attribute-based policy; record-level rules | Horizontal and vertical privilege escalation on every route; changing identifiers in paths and bodies; attributes a caller should not be able to add |
+| Authorization | Attribute-based policy; record-level rules | Horizontal and vertical privilege escalation on every route; changing identifiers in paths and bodies; attributes a caller should not be able to add |
 | Private plans and handling marks | A private plan, and a plan above a caller's clearance, is in no list, count, total, search result, feed or export for that caller, administrators included | Any route that leaks existence, a name, a count or a total of a plan the caller cannot read; error messages and timing that differ between "hidden" and "absent" |
 | Break-glass | Eligible people only, a stated reason, at most four hours, a second person told | Use without eligibility; extending a grant; acting without the second person being told |
 | Frozen and append-only records | The audit trail, issued director packs, delivery-confidence history, programme status history and project buffers refuse change and deletion in the database | Updating or deleting through the API, through bulk import, and through any route that touches the same rows |
@@ -24,7 +24,7 @@ Test the deployment as it will run, with login enforced and your identity provid
 | Outbound requests | User-supplied destinations are limited to public `https` addresses | Server-side request forgery to private, link-local and metadata addresses, redirects, DNS rebinding |
 | Sessions and the browser | Idle timeout, a hard limit, an `httpOnly` cookie, a strict Content Security Policy, a CORS allow-list | Session fixation and reuse, cross-site request forgery, injection into the interface, clickjacking |
 | Rate limiting | Per-caller limits | Bypass by changing identity, header or path; whether limits survive your proxy |
-| Data-subject tools | Export and pseudonymisation, administrators only, preview first | Use by a non-administrator; completeness against the [personal-data inventory](../../../../governance/personal-data-inventory.csv) |
+| Data-subject tools | Export and pseudonymization, administrators only, preview first | Use by a non-administrator; completeness against the [personal-data inventory](../../../../governance/personal-data-inventory.csv) |
 | Backups | Optional encryption, a tested restore | Access to backup files and keys; restore into a clean environment |
 
 ## What the project supplies
@@ -40,7 +40,7 @@ Test the deployment as it will run, with login enforced and your identity provid
 Agree these in writing before any test; the project cannot set them for your environment.
 
 - **Environment.** Test a copy with realistic but not real data. Do not test production unless you have decided to, in writing.
-- **Authorisation.** The tester has your written permission, a named contact, and a stated time window.
+- **Authorization.** The tester has your written permission, a named contact, and a stated time window.
 - **Out of bounds.** Denial of service by volume, social engineering of staff, and third-party services (your identity provider, your host) are out of scope unless the owner of each agrees. The project's own scope is in [SECURITY](../../../../SECURITY.md).
 - **Data.** Real personal data is not used, not copied out, and not put in the report.
 - **Keys.** Test keys are separate from production keys and are destroyed afterwards.

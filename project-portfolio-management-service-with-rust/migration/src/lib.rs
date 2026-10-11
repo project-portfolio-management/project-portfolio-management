@@ -108,6 +108,7 @@ mod m20261010_000059_programme_buffers;
 mod m20261010_000060_benefit_validation;
 mod m20261010_000061_capacity_heatmap;
 mod m20261010_000062_pack_rhythm;
+mod m20261010_000063_ccpm_estimates;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -216,6 +217,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000060_benefit_validation::Migration),
             Box::new(m20261010_000061_capacity_heatmap::Migration),
             Box::new(m20261010_000062_pack_rhythm::Migration),
+            Box::new(m20261010_000063_ccpm_estimates::Migration),
             // inject-above (do not remove this comment)
         ]
     }

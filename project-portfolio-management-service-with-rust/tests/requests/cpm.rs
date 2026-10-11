@@ -1340,6 +1340,69 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted() {
+    use project_portfolio_management_service::models::_entities::audit_logs;
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let mut ids = Vec::new();
+        for (title, days) in [("Recorded", 10), ("From range", 10), ("Nothing", 10), ("Milestone", 0)] {
+            let t: Value = request
+                .post(&format!("/api/plans/{p}/tasks"))
+                .json(&json!({ "title": title, "start_date": "2026-10-05", "duration_days": days }))
+                .await
+                .json();
+            ids.push(t["pid"].as_str().unwrap().to_string());
+        }
+        let est = |t: &str| format!("/api/plans/{p}/tasks/{t}/ccpm-estimate");
+        // The schedule-risk range (CR-4) is reused where set, and says so.
+        request.put(&format!("/api/plans/{p}/tasks/{}/estimate", ids[1]))
+            .json(&json!({ "optimistic_days": 6, "pessimistic_days": 14 })).await.assert_status_success();
+        request.put(&est(&ids[0])).json(&json!({ "aggressive_days": 5, "safe_days": 9 })).await.assert_status_success();
+
+        let r: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        assert_eq!(r["rule"], "explicit_only", "{r}");
+        let by = |title: &str| r["tasks"].as_array().unwrap().iter().find(|t| t["title"] == title).cloned().unwrap();
+        assert_eq!(by("Recorded")["state"], "complete");
+        assert_eq!(by("Recorded")["aggressive"], json!({ "days": 5, "source": "recorded" }));
+        assert_eq!(by("From range")["aggressive"], json!({ "days": 6, "source": "risk_range" }));
+        assert_eq!(by("From range")["safe"], json!({ "days": 14, "source": "risk_range" }));
+        assert_eq!(by("Nothing")["state"], "missing");
+        assert!(by("Nothing")["aggressive"].is_null() && by("Nothing")["safe"].is_null(), "no figure is invented");
+        assert_eq!(by("Milestone")["state"], "milestone");
+        assert_eq!(r["counts"]["complete"], 2);
+        assert_eq!(r["needing_attention"], json!([ids[2]]));
+
+        // Refused in words, and nothing is stored.
+        // (aggressive above safe, then zero)
+        for body in [json!({ "aggressive_days": 9, "safe_days": 5 }), json!({ "aggressive_days": 0 })] {
+            request.put(&est(&ids[2])).json(&body).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        }
+        request.put(&est(&ids[3])).json(&json!({ "safe_days": 2 })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        let again: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        assert_eq!(again["counts"]["missing"], 1);
+
+        // Clearing removes the record, and each change is audited.
+        request.put(&est(&ids[0])).json(&json!({})).await.assert_status_success();
+        let r: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        assert_eq!(r["counts"]["missing"], 2);
+        let n = audit_logs::Entity::find()
+            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&ids[0]).unwrap()))
+            .filter(audit_logs::Column::Action.eq("task_ccpm_estimate_set"))
+            .count(&ctx.db)
+            .await
+            .unwrap();
+        assert_eq!(n, 2, "set, then cleared");
+        request.get("/api/plans/00000000-0000-0000-0000-000000000000/ccpm-estimates").await.assert_status(axum::http::StatusCode::NOT_FOUND);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

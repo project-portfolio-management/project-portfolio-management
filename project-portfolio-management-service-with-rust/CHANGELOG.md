@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — aggressive and safe estimates (CC-2, 2026-10-11)
+
+`PUT /api/plans/{pid}/tasks/{t_pid}/ccpm-estimate` and `GET /api/plans/{pid}/ccpm-estimates`: each task's aggressive and safe figure, taken from what was recorded, else the schedule-risk range, else (only under the chosen rule) a derivation, with the source printed. A task with a figure missing is listed, never given one. Migration 63.
+
 ### Added — the critical chain (CC-1, 2026-10-11)
 
 `GET /api/plans/{pid}/critical-chain`: the longest chain through dependencies and resource links on a schedule levelled for people's time (critical tasks may move, so the finish may), returned beside the critical path and never blended with it. `no_critical_chain` with a reason when nobody is assigned. Advice only; nothing is stored.

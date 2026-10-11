@@ -125,6 +125,7 @@ pub fn paths() -> Value {
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
     merge(&mut all, critical_chain_paths());
+    merge(&mut all, ccpm_estimate_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1393,6 +1394,24 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Aggressive and safe estimates (CC-2).
+fn ccpm_estimate_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/ccpm-estimates": {
+            "get": op("scheduling", "Every task's aggressive and safe estimate, and where each came from",
+                "Inputs: each task's duration (the likely one), the aggressive and safe figures recorded for it, its optimistic and pessimistic estimate from the schedule-risk inputs, and the rule in force (PROJECT_PORTFOLIO_MANAGEMENT_CCPM_ESTIMATE_RULE: explicit_only by default, or half_of_safe; echoed as rule, with rule_setting_unusable when a value was set but not understood). Each figure is the one recorded, else the risk range, else (only under the rule) a derivation, and carries its source (recorded, risk_range, rule). A task with a figure missing is state missing and listed under needing_attention, never given a figure silently; aggressive above safe is inconsistent; a milestone and a task with no duration are not estimated. counts cover every task; limit (1 to 1000, default 200) and offset page the tasks list.",
+                vec![uuid_param("pid"), query("limit", false, "1 to 1000, default 200"), query("offset", false, "default 0")],
+                &[("200", "rule, counts, needing_attention, tasks with aggressive, safe and state"), ("404", "Unknown plan"), ("422", "A bad limit")])
+        },
+        "/api/plans/{pid}/tasks/{t_pid}/ccpm-estimate": {
+            "put": op("scheduling", "Record or clear a task's aggressive and safe estimate",
+                "Body: aggressive_days and safe_days, business days, 1 to 3650, aggressive not above safe; null clears one, and both null removes the record. The task needs a duration first and a milestone cannot be estimated (422). Writes one task_ccpm_estimate_set audit entry with the previous and new figures.",
+                vec![uuid_param("pid"), uuid_param("t_pid")],
+                &[("200", "task_pid, aggressive_days, safe_days, likely_days"), ("404", "Unknown plan or task"), ("422", "A figure out of range, aggressive above safe, or no duration")])
         }
     })
 }

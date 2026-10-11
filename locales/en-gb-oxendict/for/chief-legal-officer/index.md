@@ -15,7 +15,7 @@ Pre-filled documents you adapt; every `‹buyer›` marker is a decision that is
 - [Retention schedule](../../../../governance/retention-schedule.md): proposals, with what the code enforces today
 - [Data-flow diagram](../../../../governance/data-flow.md)
 
-The software holds people as opaque references plus recorded time, availability and cost rates, which is monitoring-adjacent and so warrants a DPIA. It offers a data-subject export and pseudonymisation (administrators only, preview first). Frozen director packs and append-only confidence history are blanked of the person who drafted or assessed, never deleted, so an erasure request can be met without breaking the record. It does **not** find names typed into free text, and backups hold records the application has deleted.
+The software holds people as opaque references plus recorded time, availability and cost rates, which is monitoring-adjacent and so warrants a DPIA. It offers a data-subject export and pseudonymization (administrators only, preview first). Frozen director packs and append-only confidence history are blanked of the person who drafted or assessed, never deleted, so an erasure request can be met without breaking the record. It does **not** find names typed into free text, and backups hold records the application has deleted.
 
 ## Frameworks
 

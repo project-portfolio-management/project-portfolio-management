@@ -8,7 +8,7 @@
 - Sign-in through an identity provider (including Microsoft Entra ID); multi-factor authentication stays with the provider ([sign-in guide](../../../../operations/sign-in-with-entra.md)).
 - Authorization uses token attributes (for example `access`, `directorpack`, `confidence`) with an attribute policy. Private plans are hidden from every aggregate; handling marks hide plans above a caller's clearance, administrators included.
 - Break-glass access to private plans needs eligibility, a stated reason, at most four hours, and a second person told.
-- Administrators can list standing access grants (a recertification aid) and export or pseudonymise one person's data.
+- Administrators can list standing access grants (a recertification aid) and export or pseudonymize one person's data.
 
 ## Data and integration
 

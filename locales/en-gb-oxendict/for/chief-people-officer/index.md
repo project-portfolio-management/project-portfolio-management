@@ -13,7 +13,7 @@ Because it combines assignments, time, availability and cost, it is **monitoring
 - **Cost rates** are visible only to finance-restricted roles.
 - **The director pack shows owners by role, never by person,** and carries no person references.
 - **Capacity and workload** are derived from records people or managers enter; they are not a performance score.
-- **Erasure and access:** an administrator can export or pseudonymise one person's data after a preview. Pseudonymisation blanks who drafted or assessed a frozen record; it does not delete the record.
+- **Erasure and access:** an administrator can export or pseudonymize one person's data after a preview. Pseudonymization blanks who drafted or assessed a frozen record; it does not delete the record.
 - **Separation of duties:** nobody approves their own change request.
 - **Retention:** proposed periods for people-linked records are in the [retention schedule](../../../../governance/retention-schedule.md); only part is enforced automatically.
 

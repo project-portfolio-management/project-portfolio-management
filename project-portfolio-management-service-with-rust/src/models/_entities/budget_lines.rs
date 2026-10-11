@@ -30,6 +30,8 @@ pub struct Model {
     pub period_end: Option<Date>,
     pub gate: Option<String>,
     pub released_at: Option<DateTimeWithTimeZone>,
+    /// Where the money comes from (DP-6); none is reported as "no funding source".
+    pub funding_source_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

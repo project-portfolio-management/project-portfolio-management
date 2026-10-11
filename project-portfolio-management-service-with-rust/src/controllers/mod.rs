@@ -27,8 +27,12 @@ pub mod docs;
 /// Recorded effort and utilization, including per person.
 pub mod effort;
 pub mod engineering;
+/// The buffer fever chart (DP-7).
+pub mod fever;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).
 pub mod financials;
+/// Funding sources and financial-year money (DP-6).
+pub mod funding;
 pub mod governance;
 pub mod handling_marks;
 pub mod insights;

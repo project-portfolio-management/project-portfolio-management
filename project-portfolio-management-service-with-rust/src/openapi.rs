@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 /// The full `OpenAPI` document, served at `/api-docs/openapi.json`.
 #[must_use]
 pub fn spec() -> Value {
-    json!({
+    let mut doc = json!({
         "openapi": "3.0.3",
         "info": {
             "title": "Project Portfolio Management Service API",
@@ -21,7 +21,17 @@ pub fn spec() -> Value {
         },
         "paths": paths(),
         "components": components(),
-    })
+    });
+    // The request and response schemas of the director-pack work live beside their attachments.
+    if let (Some(dst), Some(src)) = (
+        doc["components"]["schemas"].as_object_mut(),
+        crate::openapi_schemas::schemas().as_object(),
+    ) {
+        for (k, v) in src {
+            dst.insert(k.clone(), v.clone());
+        }
+    }
+    doc
 }
 
 /// The `paths` object, composed from the CRUD/matching paths and the
@@ -51,6 +61,7 @@ fn paths() -> Value {
     merge_object(&mut paths, module_paths());
     merge_object(&mut paths, crate::openapi_more::paths());
     document_paging(&mut paths);
+    crate::openapi_schemas::attach(&mut paths);
     paths
 }
 
@@ -458,7 +469,7 @@ fn aux_paths() -> Value {
 }
 
 /// The `components` object of the `OpenAPI` document.
-fn components() -> Value {
+pub(crate) fn components() -> Value {
     json!({
             "securitySchemes": {
                 "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "PASETO",
@@ -2174,6 +2185,8 @@ mod tests {
             crate::controllers::director_summary::routes(),
             crate::controllers::confidence::routes(),
             crate::controllers::programme_gates::routes(),
+            crate::controllers::funding::routes(),
+            crate::controllers::fever::routes(),
             crate::controllers::director_packs::routes(),
             crate::controllers::sandbox::routes(),
             crate::controllers::onboarding::routes(),

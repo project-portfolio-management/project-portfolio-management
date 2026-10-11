@@ -203,6 +203,8 @@ async fn compute_body(
         super::confidence::exceptions_section(ctx, &included_set, period, cut_off).await?;
     let gate_decisions =
         super::programme_gates::gates_section(ctx, &included_set, period, cut_off).await?;
+    let money = super::funding::pack_section(ctx, &included_set, cut_off).await?;
+    let fever = super::fever::fever_section(ctx, &included_set, prev_body).await?;
     let body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
@@ -216,9 +218,8 @@ async fn compute_body(
         "data_quality": {
             "plans_included": included,
             "plans_left_out_private_or_marked": excluded,
-            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "issues", "change_requests"],
+            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "issues", "change_requests"],
             "sections_not_yet_built": [
-                "funding and financial-year money", "buffer fever chart",
                 "earned value over the threshold", "validated benefits", "capacity heatmap",
             ],
             "note": "A section that is not built is absent from this pack, not zero or green.",
@@ -226,6 +227,8 @@ async fn compute_body(
         "portfolio_map": portfolio_map,
         "exceptions": exceptions,
         "gate_decisions": gate_decisions,
+        "funding": money,
+        "buffer_fever": fever,
         "issues": i,
         "change_requests": c,
     });

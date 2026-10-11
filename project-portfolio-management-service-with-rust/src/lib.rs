@@ -75,6 +75,8 @@ pub mod engineering;
 pub mod evm;
 pub mod extract;
 pub mod feeds;
+pub mod fever;
+pub mod financial_year;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).
 pub mod financials;
 /// The time-based-analysis flow-gauge refresh loop: default-off,
@@ -120,6 +122,7 @@ pub mod okr;
 pub mod onboarding;
 pub mod openapi;
 pub mod openapi_more;
+pub mod openapi_schemas;
 pub mod pdf;
 pub mod phase;
 pub mod plan_access;

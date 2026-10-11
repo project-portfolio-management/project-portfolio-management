@@ -49,7 +49,7 @@ fn max_baselines() -> i64 {
 
 /// The plan's current snapshot: one [`Snap`] per live task, its early dates when
 /// the engine could place it, `None` when it could not (with the reason).
-async fn current(
+pub(crate) async fn current(
     ctx: &AppContext,
     plan_pid: Uuid,
 ) -> Result<(

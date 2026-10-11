@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the buffer fever chart (DP-7, 2026-10-11)
+
+A declared (or rule-given) project buffer per programme, append-only; the pack's `buffer_fever` section and `GET /api/buffer-fever`: chain completed % against buffer consumed %, zones from two configurable sloped lines printed in the pack, edge-plotted recovery and overrun with the true figure, a table twin, and the trail from the last issued pack. The chain is the baselined critical path (the critical chain is not built). Migration 59.
+
+### Added — OpenAPI request and response schemas for the director-pack work (2026-10-11)
+
+`src/openapi_schemas.rs` defines sixty schemas (change requests, the pack summary and pack, delivery confidence, exceptions, aims, the portfolio map, gates, programme status, funding, money, the fever chart) and attaches request bodies and response content to thirty-nine operations already documented. Tests check that every reference resolves, every schema is used, every attachment names a real operation and status, and no name is defined twice. Sections of the pack body that are free-form (exceptions, issues, change-request counts) are documented as objects, not field by field.
+
+### Added — funding sources and financial-year money (DP-6, 2026-10-11)
+
+A funding-source list and an optional source on each budget line; `GET /api/portfolio-money` and the pack's `funding` section group programme money by source, class (capex is capital, opex is revenue) and currency for the financial year, with the existing forecast beside it; a line with no source is counted and listed; classes are never summed unless asked; currencies never. Migration 58.
+
 ### Added — gate decisions, planned gate dates and programme status (DP-5, 2026-10-11)
 
 Planned gate dates per plan and gate; the pack's `gate_decisions` lists gates passed, failed and deferred (a hold, or a planned date that passed with no review) and programmes paused and stopped. Programme status changes only by a recorded decision (reason, decider, date, link to a gate review or exception); stopped is terminal, enforced by the service and by a database trigger; a pause counts the programme's allocations and deletes none. The map shows each programme's status. Migration 57.

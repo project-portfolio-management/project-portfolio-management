@@ -97,6 +97,8 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("delivery_exceptions", "owner_ref"),
     ("strategic_aims", "marked_by"),
     ("planned_gates", "set_by"),
+    ("funding_sources", "created_by"),
+    ("programme_buffers", "declared_by"),
     ("programme_status_decisions", "decided_by"),
     ("director_packs", "drafted_by"),
     ("director_packs", "issued_by"),

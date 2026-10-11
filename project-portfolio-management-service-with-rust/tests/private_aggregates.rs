@@ -96,6 +96,8 @@ const AGGREGATES: &[&str] = &[
     "/api/director-pack/issues-and-changes",
     "/api/exceptions",
     "/api/portfolio-map",
+    "/api/portfolio-money",
+    "/api/buffer-fever",
     "/api/financials/forecast?plan={pub}",
     "/api/financials/forecast?plan={hub}",
     "/api/plans/{hub}/flow-distribution?rollup=true",
@@ -177,6 +179,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// Every mounted such route must be here or in one of the lists above, so a new aggregate cannot
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
+    (
+        "/api/funding-sources",
+        "the owner-supplied reference list of where money comes from; it holds names, not plans or amounts",
+    ),
     (
         "/api/director-packs",
         "the list of stored packs (metadata only); each pack is computed once, at drafting, over plans that are neither private nor marked, and read by audience (tests/director_packs.rs)",

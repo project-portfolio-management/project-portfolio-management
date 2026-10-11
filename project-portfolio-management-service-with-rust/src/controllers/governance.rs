@@ -830,6 +830,9 @@ struct BudgetPayload {
     /// plan's stage reaches this gate and the line is released.
     #[serde(default)]
     gate: Option<String>,
+    /// Where the money comes from (DP-6); optional, and a line with none is reported as such.
+    #[serde(default)]
+    funding_source_pid: Option<Uuid>,
 }
 
 /// `POST /api/plans/{pid}/budget-lines`.
@@ -871,6 +874,9 @@ async fn create_budget_line(
         return Err(unprocessable(&problems));
     }
     let item = find_item(&ctx, &pid).await?;
+    if let Some(s) = payload.funding_source_pid {
+        super::funding::check_source(&ctx, s).await?;
+    }
     let row = budget_lines::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -883,6 +889,7 @@ async fn create_budget_line(
         period_end: ActiveValue::set(payload.period_end),
         gate: ActiveValue::set(payload.gate.clone()),
         released_at: ActiveValue::set(None),
+        funding_source_pid: ActiveValue::set(payload.funding_source_pid),
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }

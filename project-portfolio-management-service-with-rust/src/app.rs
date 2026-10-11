@@ -218,6 +218,8 @@ impl Hooks for App {
             .add_route(controllers::director_summary::routes())
             .add_route(controllers::confidence::routes())
             .add_route(controllers::programme_gates::routes())
+            .add_route(controllers::funding::routes())
+            .add_route(controllers::fever::routes())
             .add_route(controllers::director_packs::routes())
             .add_route(controllers::sandbox::routes())
             .add_route(controllers::onboarding::routes())

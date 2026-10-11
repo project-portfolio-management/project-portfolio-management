@@ -115,6 +115,8 @@ pub fn paths() -> Value {
     merge(&mut all, director_pack_paths());
     merge(&mut all, confidence_paths());
     merge(&mut all, programme_gate_paths());
+    merge(&mut all, funding_paths());
+    merge(&mut all, fever_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -944,6 +946,55 @@ fn programme_gate_paths() -> Value {
             "post": op("gates", "Pause, resume or stop a programme by a recorded decision",
                 "Body: status (active, paused or stopped), reason (at least 10 characters), and optionally gate_review_pid or exception_pid of this programme. Needs access=admin or programme=decider. Only a plan of kind Program. Stopped is terminal; repeating the current status is 409. The decider and the date are recorded and the history cannot be edited. Audited.",
                 vec![pid()], &[("200", "plan_pid, status, decision"), ("403", "Not a decider"), ("409", "Stopped, or already that status"), ("422", "Not a programme, thin reason, or a link that is not this programme's")])
+        }
+    })
+}
+
+/// Funding sources and financial-year money (DP-6).
+fn funding_paths() -> Value {
+    json!({
+        "/api/funding-sources": {
+            "get": op("funding", "The funding-source list",
+                "The owner-supplied list of where money comes from, by name. Inputs: stored sources only.",
+                vec![], &[("200", "funding_sources")]),
+            "post": op("funding", "Add a funding source",
+                "Body: name (2 to 120 characters; unique ignoring case). Audited.",
+                vec![], &[("200", "pid, name, active"), ("409", "Name exists"), ("422", "Bad name")])
+        },
+        "/api/funding-sources/{pid}": {
+            "put": op("funding", "Retire or restore a funding source",
+                "Body: active. A retired source cannot be chosen for a line; lines that have it keep it. Audited.",
+                vec![uuid_param("pid")], &[("200", "The source"), ("404", "No such source")])
+        },
+        "/api/plans/{pid}/budget-lines/{line}/funding-source": {
+            "put": op("funding", "Set or clear a budget line's funding source",
+                "Body: funding_source_pid (an active source, or null to clear). Audited.",
+                vec![uuid_param("pid"), uuid_param("line")], &[("200", "line, funding_source_pid"), ("404", "No such line, or not a plan you can read"), ("422", "Not an active funding source")])
+        },
+        "/api/portfolio-money": {
+            "get": op("funding", "Programme money by funding source for a financial year",
+                "For the programmes you can read: budget (planned_minor), spend to date (actual_minor) and variance by funding source, class (capex is capital, opex is revenue) and currency, with the existing whole-life forecast per currency. ?fy= is the year the financial year starts in (default: the one containing today); ?combine_classes=true sums capital and revenue, otherwise they are never summed. Currencies are never summed. A line with no funding source is counted and listed under data_quality; a line belongs to the year its period start falls in; a line with no dates is outside every year and counted. The year starts in PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH (default 4).",
+                vec![query("fy", false, "year the financial year starts in"), query("combine_classes", false, "true or false")],
+                &[("200", "financial_year, programmes, not_under_a_programme, data_quality, note"), ("422", "Bad fy")])
+        }
+    })
+}
+
+/// The buffer fever chart (DP-7).
+fn fever_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/project-buffer": {
+            "put": op("fever", "Declare a programme's project buffer",
+                "Body: buffer_days (1 to 2000 business days) or rule half_of_critical_duration (half the baselined critical work, rounded up; needs a schedule baseline), not both; optional note. Only a plan of kind Program. Append-only: the latest is the buffer. Audited.",
+                vec![uuid_param("pid")], &[("200", "plan_pid, buffer_days, source"), ("422", "Not a programme, a bad number, or no baseline for the rule")]),
+            "get": op("fever", "A programme's buffer, its history and the chart point now",
+                "The declarations oldest first, the lines in force, and the point now: chain completed % (baselined critical work now done), buffer consumed % (forecast slip against the baselined finish, in business days, over the buffer), the zone, and where it is drawn. No buffer, no baseline, no critical work or no forecast is no point, with the reason. Inputs: the latest schedule baseline, the live schedule, task status, the declared buffer.",
+                vec![uuid_param("pid")], &[("200", "history, now, lines")])
+        },
+        "/api/buffer-fever": {
+            "get": op("fever", "The buffer fever chart for the programmes you can read",
+                "Each programme with a point or the reason it has none, the lines in force (PROJECT_PORTFOLIO_MANAGEMENT_FEVER_LINES, else the defaults) and a table of every point. The chain is the baselined critical path, not a critical chain, which is not built.",
+                vec![], &[("200", "lines, programmes, table, note")])
         }
     })
 }

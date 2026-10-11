@@ -1,8 +1,9 @@
 //! The buffer fever chart (DP-7). Rules in [`crate::fever`].
 //!
-//! **Not the critical chain.** The critical chain (CC-1) and buffer management (CC-4) are not built, so
-//! "the baselined chain" here is the baselined *critical path*: the baseline's tasks with no total
-//! float. The chart is only as good as that stand-in, and the pack says so.
+//! **Two sources.** A plan with a frozen critical-chain buffer plan (CC-4) is read from that: its project
+//! buffer, its chain and the forecast slip. A plan without one falls back to the stand-in: a declared buffer
+//! and the baselined *critical path* (the baseline's tasks with no total float). Each entry says which
+//! (`source`), and the pack says so.
 
 use std::collections::{HashMap, HashSet};
 
@@ -198,6 +199,24 @@ async fn one(
     lines: &Lines,
     previous: Option<&serde_json::Value>,
 ) -> Result<serde_json::Value> {
+    // A frozen critical-chain buffer plan supersedes the declared buffer and the baselined critical path (CC-4).
+    if let Some((row, r)) = super::buffer_management::project_reading(ctx, plan.pid).await? {
+        let mut entry = serde_json::json!({ "plan_pid": plan.pid, "plan": plan.name, "source": "critical_chain" });
+        entry["buffer"] = serde_json::json!({
+            "days": r.buffer_days, "source": "critical_chain", "rule": null, "declared_on": row.taken_on,
+        });
+        entry["chain"] = serde_json::json!({ "done_days": r.chain_done_days, "total_days": r.chain_total_days });
+        if let Some(p) = r.point {
+            entry["point"] = serde_json::to_value(&p).map_err(|e| Error::string(&e.to_string()))?;
+            entry["previous"] = previous.cloned().unwrap_or(serde_json::Value::Null);
+        } else {
+            entry["point"] = serde_json::Value::Null;
+            if let Some(why) = r.no_point {
+                entry["no_fever_chart_point"] = serde_json::json!({ "code": why, "reason": why.reason() });
+            }
+        }
+        return Ok(entry);
+    }
     let buffer = buffers::Entity::find()
         .filter(buffers::Column::PlanPid.eq(plan.pid))
         .order_by_desc(buffers::Column::Id)
@@ -332,7 +351,7 @@ pub(crate) async fn fever_section(
         "configured_lines_unusable_default_used": bad,
         "programmes": entries,
         "table": table,
-        "note": "x is the share of the baselined critical work that is done; y is the share of the project buffer used by the forecast slip against the baselined finish, in business days of the plan's calendar. The chain here is the baselined critical path (tasks with no total float), because the critical chain is not built. Below the lower line is green; a point on a line takes the kinder zone. Recovery (below 0 %) and overrun (above 100 %) are drawn at the edge with their true figure. A programme with no buffer, no baseline, no critical work or no forecast has no point, with the reason. The table lists every point; previous is the point in the last issued pack.",
+        "note": "x is the share of the baselined critical work that is done; y is the share of the project buffer used by the forecast slip against the baselined finish, in business days of the plan's calendar. A programme with a frozen critical-chain buffer plan (source critical_chain) is read from it; any other uses the declared buffer and the baselined critical path (tasks with no total float) as a stand-in. Below the lower line is green; a point on a line takes the kinder zone. Recovery (below 0 %) and overrun (above 100 %) are drawn at the edge with their true figure. A programme with no buffer, no baseline, no critical work or no forecast has no point, with the reason. The table lists every point; previous is the point in the last issued pack.",
     }))
 }
 

@@ -98,6 +98,7 @@ pub mod insights;
 pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
+pub mod buffer_management;
 pub mod buffers;
 pub mod ccpm_estimates;
 pub mod critical_chain;

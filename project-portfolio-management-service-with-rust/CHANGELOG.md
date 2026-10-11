@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — buffer management (CC-4, 2026-10-11)
+
+`POST`/`GET /api/plans/{pid}/buffer-plan` freeze the chain and buffers as planned; `GET …/buffer-management` reads each buffer (chain completed, consumed = forecast slip over the buffer, zone from the fever chart's lines), alerts naming a red chain, snapshots as history, and recovery actions that are recorded, audited and closed once. The fever chart now reads a frozen buffer plan in place of a declared buffer and the baselined critical path. Migration 64.
+
 ### Added — project, feeding and resource buffers (CC-3, 2026-10-11)
 
 `GET /api/plans/{pid}/critical-chain-buffers`: the schedule at aggressive estimates, the project buffer and a feeding buffer per joining chain sized from the safety removed (cut-and-paste or root-sum-of-squares, printed), a feeding buffer that would push the chain flagged rather than absorbed, and resource buffers as readiness alerts. Advice only; no chain or an unestimated chain task gives `no_buffers` with the reason.

@@ -127,6 +127,7 @@ pub fn paths() -> Value {
     merge(&mut all, critical_chain_paths());
     merge(&mut all, ccpm_estimate_paths());
     merge(&mut all, buffer_paths());
+    merge(&mut all, buffer_management_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1395,6 +1396,46 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Buffer management (CC-4).
+fn buffer_management_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/buffer-plan": {
+            "post": op("scheduling", "Freeze the critical chain and its buffers as planned",
+                "Takes what critical-chain-buffers returns now (the chain, the project buffer, each feeding buffer and the planned finishes) and stores it, append-only, as the plan that buffer management measures against. A newer buffer plan supersedes an older for readings; the older stays on record. Refused (422) when there are no buffers to freeze. No person is stored in it. Writes one buffer_plan_frozen audit entry.",
+                vec![uuid_param("pid")],
+                &[("200", "pid, taken_on, document"), ("404", "Unknown plan"), ("422", "No buffers to freeze, with the reason")]),
+            "get": op("scheduling", "The latest frozen buffer plan and when each was taken",
+                "Inputs: the stored buffer plans of the plan. state no_buffer_plan with a reason when none was frozen. Returns the latest document and the history of when plans were taken.",
+                vec![uuid_param("pid")],
+                &[("200", "state, pid, taken_on, document, history; or state no_buffer_plan"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/buffer-management": {
+            "get": op("scheduling", "Every buffer's reading against the live schedule: completed, consumed, zone, alerts",
+                "Inputs: the latest frozen buffer plan, the live schedule (every task at its aggressive estimate, levelled for people's time, as for critical-chain-buffers), which tasks are done, and the recovery actions and snapshots on record. For each buffer: chain_done_days over chain_total_days (planned days of done tasks), slip_days (the forecast finish of the chain's last task less its planned finish, in business days of the plan's calendar) and buffer_consumed_pct (slip over the buffer; below 0 is recovery, above 100 overrun, the true figure kept), and the zone from the same sloped lines as the fever chart (configurable, printed; a point on a line takes the kinder zone). A buffer that is red raises an alert naming its chain (and, for a feeding buffer, the task it joins) and appears under red_without_open_recovery_action until an open recovery action is on record for it. An unsized feeding buffer, or one with no forecast, has no point and says why. state no_buffer_plan with a reason when none was frozen. Overruns show only when someone records them (a duration, a start date or an aggressive figure). Owners of recovery actions are named only to a caller who may manage them.",
+                vec![uuid_param("pid")],
+                &[("200", "state, buffer_plan, lines, readings, alerts, red_without_open_recovery_action, recovery_actions, snapshots; or state no_buffer_plan"), ("404", "Unknown plan"), ("422", "A dependency cycle")])
+        },
+        "/api/plans/{pid}/buffer-management/snapshots": {
+            "post": op("scheduling", "Record every buffer's reading now (append-only history)",
+                "Stores the readings and alerts as they are now. Snapshots are append-only and appear in buffer-management as the zone of each buffer over time. Writes a buffer_snapshot_taken audit entry and one buffer_red entry for each buffer in the red. Refused (422) when no buffer plan has been frozen.",
+                vec![uuid_param("pid")],
+                &[("200", "pid, taken_on, document"), ("404", "Unknown plan"), ("422", "No buffer plan frozen")])
+        },
+        "/api/plans/{pid}/buffer-recovery-actions": {
+            "post": op("scheduling", "Record what was agreed to do about a buffer",
+                "Body: buffer_key (project, or a feeding key from the buffer plan), action (5 to 2000 characters), owner_ref (required) and an optional due_date. Recorded against the latest buffer plan as open. The service records actions; it never invents one. Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "pid, buffer_key, status"), ("404", "Unknown plan"), ("422", "No buffer plan, an unknown buffer_key, a short action or no owner")])
+        },
+        "/api/plans/{pid}/buffer-recovery-actions/{aid}/status": {
+            "put": op("scheduling", "Close a recovery action as done or dropped, once",
+                "Body: status done or dropped. An action closes once; closing again is 409 already_closed and a new action is recorded instead. The database refuses any other change and any delete. Audited.",
+                vec![uuid_param("pid"), uuid_param("aid")],
+                &[("200", "pid, status, closed_on"), ("404", "Unknown plan or action"), ("409", "Already closed"), ("422", "A status other than done or dropped")])
         }
     })
 }

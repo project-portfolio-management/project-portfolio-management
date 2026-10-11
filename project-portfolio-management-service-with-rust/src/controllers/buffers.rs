@@ -29,14 +29,24 @@ fn resource_lead_days() -> (i64, bool) {
 
 /// `GET /api/plans/{pid}/critical-chain-buffers`
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
 async fn show(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let c = super::leveling::compute_with(&ctx, plan.pid, true, 100, true).await?;
+    format::json(build(&ctx, &caller, plan.pid).await?.0)
+}
+
+/// The answer, and (when there are buffers) the plan to freeze: the chain, the buffers and the planned
+/// finishes, with no person in it.
+#[allow(clippy::too_many_lines)]
+pub(crate) async fn build(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+) -> Result<(Value, Option<Value>)> {
+    let c = super::leveling::compute_with(ctx, plan, true, 100, true).await?;
     let (_, nodes, levelled) = super::critical_chain::schedules(&c)?;
     let net = &c.net;
     let (rule, rule_unusable) = buffers::configured_rule();
@@ -54,7 +64,7 @@ async fn show(
         Outcome::NoCriticalChain { reason } => {
             out["state"] = json!("no_buffers");
             out["reason"] = json!(reason);
-            return format::json(out);
+            return Ok((out, None));
         }
         Outcome::Chain(ch) => ch,
     };
@@ -85,7 +95,7 @@ async fn show(
         out["state"] = json!("no_buffers");
         out["reason"] = json!("estimates_missing");
         out["chain_tasks_missing_estimates"] = json!(missing);
-        return format::json(out);
+        return Ok((out, None));
     }
     let when: HashMap<Uuid, &crate::cpm::NodeResult> = levelled.nodes.iter().map(|n| (n.pid, n)).collect();
     let cal = &net.plan_cal;
@@ -135,6 +145,23 @@ async fn show(
     }
     out["feeding_buffers"] = json!(feeding);
 
+    let task = |p: &Uuid| json!({ "pid": p, "title": c.titles.get(p), "days": aggressive.get(p) });
+    let doc = json!({
+        "version": 1, "calendar": net.cal_source, "buffer_rule": rule.name(),
+        "project": {
+            "key": "project", "days": project_days,
+            "tasks": chain_pids.iter().map(&task).collect::<Vec<_>>(),
+            "planned_finish": last.early_finish,
+        },
+        "feeding": feeders.iter().zip(&feeding).map(|(f, v)| json!({
+            "key": format!("feeding:{}:{}", f.joins, f.tasks[0]),
+            "joins": titled(&f.joins),
+            "tasks": f.tasks.iter().map(&task).collect::<Vec<_>>(),
+            "days": v["buffer_days"],
+            "planned_finish": f.tasks.last().and_then(|t| when.get(t)).map(|r| r.early_finish),
+        })).collect::<Vec<_>>(),
+    });
+
     let people: BTreeSet<&str> = chain_pids.iter().filter_map(|p| c.people.get(p)).map(String::as_str).collect();
     let label: HashMap<&str, String> = people.iter().enumerate().map(|(i, p)| (*p, format!("person-{}", i + 1))).collect();
     let alerts: Vec<Value> = chain_pids
@@ -147,7 +174,7 @@ async fn show(
                 "alert_on": cal.date_of(r.es_index - lead),
                 "person": label[person.as_str()],
             });
-            if super::availability::may_manage_person(&caller, person) {
+            if super::availability::may_manage_person(caller, person) {
                 v["person_ref"] = json!(person);
             } else {
                 v["person_ref"] = Value::Null;
@@ -157,7 +184,7 @@ async fn show(
         })
         .collect();
     out["resource_buffers"] = json!(alerts);
-    format::json(out)
+    Ok((out, Some(doc)))
 }
 
 /// The buffer routes.

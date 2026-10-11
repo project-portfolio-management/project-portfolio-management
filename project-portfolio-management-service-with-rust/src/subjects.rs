@@ -99,6 +99,7 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("planned_gates", "set_by"),
     ("funding_sources", "created_by"),
     ("programme_buffers", "declared_by"),
+    ("buffer_recovery_actions", "owner_ref"),
     ("benefit_validations", "validator"),
     ("capacity_commitments", "updated_by"),
     ("director_packs", "reviewed_by"),

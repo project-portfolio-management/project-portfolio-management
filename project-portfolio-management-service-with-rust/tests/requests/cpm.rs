@@ -1464,6 +1464,119 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn buffer_management_reads_consumption_names_the_red_chain_and_records_recovery() {
+    use project_portfolio_management_service::models::_entities::audit_logs;
+    use sea_orm::{ConnectionTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let (p1, p2) = (format!("person:{}", uuid::Uuid::new_v4()), format!("person:{}", uuid::Uuid::new_v4()));
+        let mut ids = std::collections::HashMap::new();
+        for (title, start, days, who) in [
+            ("A", Some("2026-10-05"), 10, Some(&p1)),
+            ("B", None, 10, Some(&p2)),
+            ("G", Some("2026-10-05"), 5, None),
+        ] {
+            let mut body = json!({ "title": title, "duration_days": days });
+            if let Some(s) = start { body["start_date"] = json!(s); }
+            if let Some(w) = who { body["assignee_ref"] = json!(w); }
+            let t: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&body).await.json();
+            ids.insert(title, t["pid"].as_str().unwrap().to_string());
+        }
+        for (f, t) in [("A", "B"), ("G", "B")] {
+            request.post("/api/dependencies").json(&json!({ "predecessor_pid": ids[f], "successor_pid": ids[t] })).await.assert_status_ok();
+        }
+        let estimate = |t: &'static str, a: i64, s: i64| {
+            let (request, p, id) = (&request, p.clone(), ids[t].clone());
+            async move {
+                request.put(&format!("/api/plans/{p}/tasks/{id}/ccpm-estimate")).json(&json!({ "aggressive_days": a, "safe_days": s })).await.assert_status_success();
+            }
+        };
+        for (t, a, s) in [("A", 6, 12), ("B", 6, 10), ("G", 5, 15)] {
+            estimate(t, a, s).await;
+        }
+        let manage = format!("/api/plans/{p}/buffer-management");
+        let r: Value = request.get(&manage).await.json();
+        assert_eq!(r["state"], "no_buffer_plan", "{r}");
+        request.post(&format!("/api/plans/{p}/buffer-management/snapshots")).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+
+        // Freeze, and nothing has slipped yet.
+        request.post(&format!("/api/plans/{p}/buffer-plan")).await.assert_status_success();
+        let r: Value = request.get(&manage).await.json();
+        assert_eq!(r["state"], "readings", "{r}");
+        let by = |r: &Value, kind: &str| r["readings"].as_array().unwrap().iter().find(|x| x["kind"] == kind).cloned().unwrap();
+        let project = by(&r, "project");
+        assert_eq!(project["slip_days"], 0, "{r}");
+        assert_eq!(project["point"]["buffer_consumed_pct"], 0.0);
+        assert_eq!(project["point"]["zone"], "green");
+        assert!(r["alerts"].as_array().unwrap().is_empty());
+
+        // The feeder takes 12 days instead of 5: it pushes the chain, and both buffers go red.
+        estimate("G", 12, 15).await;
+        let r: Value = request.get(&manage).await.json();
+        let feeding = by(&r, "feeding");
+        assert_eq!(feeding["slip_days"], 7, "{r}");
+        let size = feeding["buffer_days"].as_f64().unwrap();
+        assert!((feeding["point"]["buffer_consumed_pct"].as_f64().unwrap() - 700.0 / size).abs() < 1e-9, "consumption is the slip over the buffer");
+        assert_eq!(feeding["point"]["zone"], "red");
+        let alerts = r["alerts"].as_array().unwrap();
+        let fa = alerts.iter().find(|a| a["kind"] == "feeding_buffer_red").expect("a red feeding buffer raises an alert");
+        assert_eq!(fa["chain"], json!(["G"]), "it names its chain");
+        assert_eq!(fa["joins"], "B");
+        assert!(alerts.iter().any(|a| a["kind"] == "project_buffer_red"), "{alerts:?}");
+        let key = fa["buffer_key"].as_str().unwrap().to_string();
+        assert!(r["red_without_open_recovery_action"].as_array().unwrap().iter().any(|k| *k == key.as_str()));
+
+        // The fever chart reads the frozen critical-chain plan in place of a declared buffer (DP-7 superseded).
+        let now: Value = request.get(&format!("/api/plans/{p}/project-buffer")).await.json();
+        assert_eq!(now["now"]["source"], "critical_chain", "{now}");
+        assert_eq!(now["now"]["point"]["zone"], "red");
+
+        // History per snapshot, and the red buffers are audited.
+        request.post(&format!("/api/plans/{p}/buffer-management/snapshots")).await.assert_status_success();
+        let reds = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("buffer_red")).count(&ctx.db).await.unwrap();
+        assert_eq!(reds, 2);
+        let r: Value = request.get(&manage).await.json();
+        assert_eq!(r["snapshots"].as_array().unwrap().len(), 1);
+        assert_eq!(r["snapshots"][0]["zones"][key.as_str()], "red");
+
+        // Recovery actions: recorded, validated, closed once.
+        let acts = format!("/api/plans/{p}/buffer-recovery-actions");
+        for bad in [json!({ "buffer_key": "nope", "action": "Add a second tester", "owner_ref": "person:x" }),
+                    json!({ "buffer_key": key, "action": "no", "owner_ref": "person:x" }),
+                    json!({ "buffer_key": key, "action": "Add a second tester", "owner_ref": " " })] {
+            request.post(&acts).json(&bad).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        }
+        let a: Value = request.post(&acts).json(&json!({ "buffer_key": key, "action": "Add a second tester to G", "owner_ref": p1 })).await.json();
+        let aid = a["pid"].as_str().unwrap().to_string();
+        let r: Value = request.get(&manage).await.json();
+        assert!(!r["red_without_open_recovery_action"].as_array().unwrap().iter().any(|k| *k == key.as_str()));
+        assert_eq!(r["recovery_actions"][0]["owner_ref"], p1.as_str(), "auth is off: not masked");
+        let status = format!("{acts}/{aid}/status");
+        request.put(&status).json(&json!({ "status": "open" })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request.put(&status).json(&json!({ "status": "done" })).await.assert_status_success();
+        request.put(&status).json(&json!({ "status": "dropped" })).await.assert_status(axum::http::StatusCode::CONFLICT);
+        let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.like("buffer_recovery_action_%")).count(&ctx.db).await.unwrap();
+        assert_eq!(n, 2, "recorded and closed");
+
+        // The database does not rely on the service.
+        for (what, sql) in [
+            ("deleting an action", "DELETE FROM buffer_recovery_actions"),
+            ("rewriting an action", "UPDATE buffer_recovery_actions SET action = 'something else'"),
+            ("reopening an action", "UPDATE buffer_recovery_actions SET status = 'open', closed_on = NULL"),
+            ("rewriting a snapshot", "UPDATE buffer_snapshots SET document = '{}'"),
+            ("deleting a buffer plan", "DELETE FROM buffer_plans"),
+        ] {
+            assert!(ctx.db.execute_unprepared(sql).await.is_err(), "{what}");
+        }
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

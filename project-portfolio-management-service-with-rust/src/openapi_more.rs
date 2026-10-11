@@ -1404,9 +1404,15 @@ fn evm_paths() -> Value {
     })
 }
 
-/// The delivery model of a programme (EX-2).
+/// The delivery model of a programme (EX-2) and its reporting method (EX-14).
 fn programme_profile_paths() -> Value {
     json!({
+        "/api/plans/{pid}/reporting-method": {
+            "put": op("governance", "Set how a programme reports: earned value, or burn-up and flow for a product",
+                "Body: method, evm (the default) or product. Only for a plan of kind Program. A product programme shows burn-up (tasks created and finished, week by week) and throughput in the pack's earned-value view in place of earned value, so it is never a blank there. A change is audited with what it was.",
+                vec![uuid_param("pid")],
+                &[("200", "plan_pid, reporting_method"), ("404", "Unknown plan"), ("422", "Not a programme, or a method other than evm or product")])
+        },
         "/api/plans/{pid}/delivery-model": {
             "put": op("governance", "Set a programme's delivery model and the organization that owns the delivery",
                 "Body: delivery_model (central_product, central_platform_local_deployment or local_programme_central_standards; null clears) and delivery_owner_organization_pid (an active organization; null clears). Only for a plan of kind Program. Audited. The portfolio map and the director pack show both.",

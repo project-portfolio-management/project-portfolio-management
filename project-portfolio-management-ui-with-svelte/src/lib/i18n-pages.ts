@@ -2811,6 +2811,13 @@ export const PAGES_EN = {
   "p.director_pack.dm_local_programme_central_standards": "local programme, central standards",
   "p.director_pack.dm_owner": "owner: {name}",
   "p.director_pack.dm_not_ours": "not delivered by the organization",
+  "p.director_pack.s_flow": "Burn-up and flow (product programmes)",
+  "p.director_pack.c_scope": "Tasks created",
+  "p.director_pack.c_finished": "Tasks finished",
+  "p.director_pack.c_open": "Tasks open",
+  "p.director_pack.c_throughput": "Finished per week (last four weeks)",
+  "p.director_pack.c_burnup": "Finished, week by week (oldest first)",
+  "p.director_pack.no_flow": "{name}: a product programme with no tasks yet, so no burn-up or flow.",
 } as const;
 
 /** A key in the page and component catalogue. */

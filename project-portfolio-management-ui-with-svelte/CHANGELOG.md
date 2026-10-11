@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — burn-up and flow for product programmes in the pack page (EX-14, 2026-10-11)
+
+The earned-value section shows a table of tasks created, finished and open, throughput and the weekly finished counts for each product programme. English and Welsh.
+
 ### Added — the delivery model in the director pack page (EX-2, 2026-10-11)
 
 The portfolio map table shows each programme's delivery model, owner and whether the organization delivers it. English and Welsh.

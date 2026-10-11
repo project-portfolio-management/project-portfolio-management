@@ -63,6 +63,8 @@ export const BODY = {
         { currency: "EUR", state: "below EVM threshold", bac_minor: 5_000 },
       ] },
       { plan_pid: "x3", name: "Loose", state: "no_baseline" },
+      { plan_pid: "x4", name: "Portal", method: "product", state: "product", flow: { scope: 12, done: 7, open: 5, throughput_per_week: 1.75, burn_up: [{ done: 2 }, { done: 4 }, { done: 7 }] } },
+      { plan_pid: "x5", name: "Empty product", method: "product", state: "no_flow_data" },
     ],
   },
   benefits: { totals: [

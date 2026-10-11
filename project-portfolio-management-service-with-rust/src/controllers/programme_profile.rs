@@ -33,6 +33,7 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/plans/{pid}/delivery-model", put(set))
         .add("/plans/{pid}/delivery-model", get(show))
+        .add("/plans/{pid}/reporting-method", put(set_method))
 }
 
 #[derive(Debug, Deserialize)]
@@ -160,4 +161,51 @@ async fn show(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     let row = find(&ctx, plan.pid).await?;
     let (_, names) = all(&ctx, &HashSet::from([plan.pid])).await?;
     format::json(view(row.as_ref(), &names))
+}
+
+#[derive(Debug, Deserialize)]
+struct MethodBody {
+    /// `evm` or `product`.
+    method: String,
+}
+
+/// `PUT /api/plans/{pid}/reporting-method` (EX-14) — how a programme reports in the pack: earned value, or
+/// burn-up and flow for a product programme. A change is audited with what it was.
+#[debug_handler]
+async fn set_method(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<MethodBody>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    if plan.kind.as_deref() != Some("Program") {
+        return Err(unprocessable("only a plan of kind Program has a reporting method"));
+    }
+    if !["evm", "product"].contains(&b.method.as_str()) {
+        return Err(unprocessable("method must be evm or product"));
+    }
+    let existing = find(&ctx, plan.pid).await?;
+    let was = existing.as_ref().map_or("evm".to_string(), |e| e.method.clone());
+    let row = if let Some(e) = existing {
+        let mut a: profiles::ActiveModel = e.into();
+        a.method = ActiveValue::set(b.method.clone());
+        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+    } else {
+        profiles::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            plan_pid: ActiveValue::set(plan.pid),
+            method: ActiveValue::set(b.method.clone()),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+    };
+    if was != b.method {
+        AuditModel::record(&ctx.db, plan.pid, "reporting_method_changed", caller.actor(), Some(json!({ "from": was, "to": b.method })))
+            .await
+            .ok();
+    }
+    format::json(json!({ "plan_pid": plan.pid, "reporting_method": row.method }))
 }

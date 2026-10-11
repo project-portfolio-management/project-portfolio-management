@@ -307,10 +307,23 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   // Earned value.
   const ev = obj(body.earned_value);
   const evRows: Cell[][] = [];
+  const flowRows: Cell[][] = [];
   const evLines: string[] = [d.t(`${K}evm_ratio_note`)];
   const ratio = (v: unknown) => fixed(numOrNull(obj(v).bp) === null ? null : (numOrNull(obj(v).bp) as number) / 10000, 2, d.locale);
   for (const p of arr(ev.programmes)) {
     if (p.state === "no_baseline") evLines.push(`${str(p.name)}: ${d.t(`${K}no_baseline`)}`);
+    if (p.state === "no_flow_data") evLines.push(d.t(`${K}no_flow`, { name: str(p.name) }));
+    if (p.state === "product") {
+      const f = obj(p.flow);
+      flowRows.push([
+        plain(str(p.name)),
+        plain(fixed(numOrNull(f.scope), 0, d.locale)),
+        plain(fixed(numOrNull(f.done), 0, d.locale)),
+        plain(fixed(numOrNull(f.open), 0, d.locale)),
+        plain(fixed(numOrNull(f.throughput_per_week), 2, d.locale)),
+        plain(arr(f.burn_up).map((b) => fixed(numOrNull(b.done), 0, d.locale)).join(", ")),
+      ]);
+    }
     for (const c of arr(p.currencies)) {
       const cur = str(c.currency);
       if (c.state === "included") {
@@ -327,11 +340,22 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
       }
     }
   }
-  add("evm", evLines, evRows.length ? [{
-    caption: d.t(`${K}s_evm`),
-    columns: ["c_programme", "c_currency", "c_bac", "c_ev", "c_ac", "c_spi", "c_cpi"].map((k) => d.t(`${K}${k}`)),
-    rows: evRows,
-  }] : []);
+  const evTables: Table[] = [];
+  if (evRows.length) {
+    evTables.push({
+      caption: d.t(`${K}s_evm`),
+      columns: ["c_programme", "c_currency", "c_bac", "c_ev", "c_ac", "c_spi", "c_cpi"].map((k) => d.t(`${K}${k}`)),
+      rows: evRows,
+    });
+  }
+  if (flowRows.length) {
+    evTables.push({
+      caption: d.t(`${K}s_flow`),
+      columns: ["c_programme", "c_scope", "c_finished", "c_open", "c_throughput", "c_burnup"].map((k) => d.t(`${K}${k}`)),
+      rows: flowRows,
+    });
+  }
+  add("evm", evLines, evTables);
 
   // Benefits.
   const ben = obj(body.benefits);

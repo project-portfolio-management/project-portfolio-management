@@ -1132,10 +1132,12 @@ questions in [plan.md §39–§45](plan.md).
   **Acceptance:** approval without a trade-off is 422; the pack lists asks and
   their trade-offs in the period.
 
-- [ ] **EX-14 (S) — Method per programme: EVM or product.** A programme is
+- [x] **EX-14 (S) — Method per programme: EVM or product.** A programme is
   `evm` or `product`; product programmes report burn-up and flow (TBA) in the
   pack's EVM view. **Acceptance:** no EVM blank for a product programme; the
   method change is audited.
+
+  **Built 2026-10-11.** `src/product_flow.rs` (3 unit tests); `PUT /api/plans/{pid}/reporting-method` (evm or product, a programme only; a real change is audited with what it was, a repeat is not); a product programme in `GET /api/portfolio-earned-value` and the pack's earned-value view shows burn-up (tasks created and finished, eight weeks) and throughput of the last four weeks, or `no_flow_data` with the reason, never a blank. Tested in `tests/organizations.rs` and the pack page tests. **Not done, stated:** burn-up counts tasks, not points or effort; it uses real creation and completion stamps only (no ideal line, no forecast; the time-based-analysis cycle and lead times are not in the pack); a product programme's plans are not also shown with earned value, even if they have a baseline; no screen to set the method.
 
 ## Production readiness (HD-n)
 

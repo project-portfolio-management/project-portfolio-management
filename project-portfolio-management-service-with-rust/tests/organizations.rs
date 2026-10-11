@@ -240,6 +240,33 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(care["delivery"]["delivery_model"], "local_programme_central_standards", "{care}");
         assert_eq!(care["delivery"]["delivered_by_organization"], false);
 
+        // ── EX-14: a product programme reports burn-up and flow, never a blank ──
+        let rm = format!("/api/plans/{prog}/reporting-method");
+        assert_eq!(with!(request.put(&rm), writer).json(&json!({ "method": "agile" })).await.status_code(), 422);
+        assert_eq!(with!(request.put(&format!("/api/plans/{proj}/reporting-method")), writer).json(&json!({ "method": "product" })).await.status_code(), 422);
+        let care_of = |v: &Value| v["programmes"].as_array().unwrap().iter().find(|p| p["name"] == "Care").cloned().unwrap();
+        let evm: Value = with!(request.get("/api/portfolio-earned-value"), writer).await.json();
+        assert_eq!(care_of(&evm)["state"], "no_baseline");
+        assert_eq!(care_of(&evm)["method"], "evm");
+        with!(request.put(&rm), writer).json(&json!({ "method": "product" })).await.assert_status_ok();
+        let evm: Value = with!(request.get("/api/portfolio-earned-value"), writer).await.json();
+        assert_eq!(care_of(&evm)["state"], "no_flow_data", "no tasks yet: said, not blank: {evm}");
+        assert!(care_of(&evm)["reason"].is_string());
+        for title in ["One", "Two"] {
+            with!(request.post(&format!("/api/plans/{prog}/tasks")), writer).json(&json!({ "title": title })).await.assert_status_success();
+        }
+        let evm: Value = with!(request.get("/api/portfolio-earned-value"), writer).await.json();
+        let flow = &care_of(&evm)["flow"];
+        assert_eq!((care_of(&evm)["state"].as_str(), flow["scope"].as_u64(), flow["open"].as_u64()), (Some("product"), Some(2), Some(2)), "{evm}");
+        assert_eq!(flow["burn_up"].as_array().unwrap().len(), 8);
+        {
+            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+            use project_portfolio_management_service::models::_entities::audit_logs;
+            with!(request.put(&rm), writer).json(&json!({ "method": "product" })).await.assert_status_ok();
+            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("reporting_method_changed")).count(&_ctx.db).await.unwrap();
+            assert_eq!(n, 1, "the change is audited once, and a repeat is not a change");
+        }
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

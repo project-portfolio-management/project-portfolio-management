@@ -2807,4 +2807,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.dm_local_programme_central_standards": "rhaglen leol, safonau canolog",
   "p.director_pack.dm_owner": "perchennog: {name}",
   "p.director_pack.dm_not_ours": "heb ei gyflawni gan y sefydliad",
+  "p.director_pack.s_flow": "Llosgi i fyny a llif (rhaglenni cynnyrch)",
+  "p.director_pack.c_scope": "Tasgau a grëwyd",
+  "p.director_pack.c_finished": "Tasgau wedi'u gorffen",
+  "p.director_pack.c_open": "Tasgau agored",
+  "p.director_pack.c_throughput": "Wedi'u gorffen yr wythnos (pedair wythnos ddiwethaf)",
+  "p.director_pack.c_burnup": "Wedi'u gorffen, wythnos wrth wythnos (hynaf yn gyntaf)",
+  "p.director_pack.no_flow": "{name}: rhaglen cynnyrch heb unrhyw dasgau eto, felly dim llosgi i fyny na llif.",
 };

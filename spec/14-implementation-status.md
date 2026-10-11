@@ -29,9 +29,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | Matcher version | 0.2.0 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.1.0 | `version` in the front-end `package.json` |
 | Migrations | 102 | files named `m2*.rs` in `migration/src` |
-| Mounted route registrations | 550 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
-| Documented API paths | 378 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1227, plus 214 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Mounted route registrations | 551 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
+| Documented API paths | 379 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
+| Service tests | 1230, plus 214 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 480 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 112 | `test(` lines in `tests/e2e` |
@@ -50,10 +50,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | MS | 4 | 0 |
 | CR | 4 | 0 |
 | DP | 12 | 0 |
-| EX | 3 | 11 |
+| EX | 4 | 10 |
 | HD | 11 | 2 |
 | CC | 6 | 0 |
-| **Total** | **103** | **13** |
+| **Total** | **104** | **12** |
 
 <!-- generated:end -->
 

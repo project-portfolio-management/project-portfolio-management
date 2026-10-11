@@ -952,13 +952,34 @@ pub(crate) async fn portfolio_section(
             .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
             .collect();
     progs.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
+    let methods: std::collections::HashMap<Uuid, String> =
+        crate::models::_entities::programme_profiles::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|r| (r.plan_pid, r.method))
+            .collect();
     let mut out = Vec::new();
     for p in &progs {
         let plans = subtree_in(ctx, p.pid, include).await?;
+        let mut entry = serde_json::json!({ "plan_pid": p.pid, "name": p.name });
+        // A product programme reports burn-up and flow, not earned value (EX-14).
+        if methods.get(&p.pid).map(String::as_str) == Some("product") {
+            entry["method"] = "product".into();
+            if let Some(f) = product_flow(ctx, &plans, as_of).await? {
+                entry["state"] = "product".into();
+                entry["flow"] = serde_json::to_value(&f).unwrap_or_default();
+            } else {
+                entry["state"] = "no_flow_data".into();
+                entry["reason"] = "this product programme has no tasks yet, so there is no burn-up or flow to show".into();
+            }
+            out.push(entry);
+            continue;
+        }
         let (currencies, without) = rollup_over(ctx, &plans, as_of, &t, source, Some(&bac)).await?;
-        let mut entry = serde_json::json!({
-            "plan_pid": p.pid, "name": p.name, "plans_without_figures": without,
-        });
+        entry["plans_without_figures"] = without.into();
+        entry["method"] = "evm".into();
         if currencies.is_empty() {
             entry["state"] = "no_baseline".into();
             entry["reason"] = "no plan in the programme has a phased budget baseline with something to measure percent complete against, so there are no earned-value figures".into();
@@ -978,8 +999,32 @@ pub(crate) async fn portfolio_section(
         },
         "ratio_thresholds": { "values": t, "source": if defaulted { "default" } else { "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS" } },
         "programmes": out,
-        "note": "Per programme, summed per currency, never across currencies. The figures are those of GET /api/plans/{pid}/earned-value/rollup for the same date, restricted to plans that are neither private nor marked in the pack. A programme with no baseline is no_baseline, not zero. Product programmes (EX-14) are not distinguished: they are not built.",
+        "note": "Per programme, summed per currency, never across currencies. The figures are those of GET /api/plans/{pid}/earned-value/rollup for the same date, restricted to plans that are neither private nor marked in the pack. A programme with no baseline is no_baseline, not zero. A programme whose reporting method is product (EX-14) shows burn-up and throughput of its tasks instead of earned value, never a blank.",
     }))
+}
+
+/// The burn-up and flow of the tasks of `plans` (live, not deleted, not hammocks).
+async fn product_flow(
+    ctx: &AppContext,
+    plans: &[Uuid],
+    as_of: chrono::NaiveDate,
+) -> Result<Option<crate::product_flow::Flow>> {
+    use crate::models::_entities::tasks;
+    let rows = tasks::Entity::find()
+        .filter(tasks::Column::PlanPid.is_in(plans.to_vec()))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .filter(tasks::Column::IsHammock.eq(false))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let items: Vec<crate::product_flow::Item> = rows
+        .iter()
+        .map(|t| crate::product_flow::Item {
+            created: t.created_at.date_naive(),
+            done: t.done_at.map(|d| d.date_naive()),
+        })
+        .collect();
+    Ok(crate::product_flow::flow(&items, as_of, 8))
 }
 
 /// `GET /api/portfolio-earned-value[?ac=]` — earned value over the threshold for the programmes you can read.

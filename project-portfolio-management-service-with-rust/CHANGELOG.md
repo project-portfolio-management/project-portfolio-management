@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the reporting method per programme (EX-14, 2026-10-11)
+
+`PUT /api/plans/{pid}/reporting-method`: evm or product. A product programme shows burn-up and throughput in the director pack in place of earned value, or says it has no tasks yet; a change is audited.
+
 ### Added — the delivery-model typology (EX-2, 2026-10-11)
 
 `PUT`/`GET /api/plans/{pid}/delivery-model`: central product, central platform with local deployment, or a local programme under central standards, and the organization that owns the delivery. The portfolio map and the director pack show both, and a local programme is shown as not delivered by the organization. Migration 68.

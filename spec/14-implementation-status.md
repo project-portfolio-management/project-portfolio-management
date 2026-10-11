@@ -157,12 +157,14 @@ checked against the code on 2026-10-06 unless marked unverified.
 | Members sub-resource (comments landed as LT-4; posts and members not found in the code) | §15 |
 | No cross-service link **aggregator** (`link-graph-service`) — out of this trio's scope | §15 |
 
-**Planned, not built:** the escalation-driven capabilities (EX-1 … EX-14)
-are open in [`tasks.md`](../tasks.md). The monthly director pack
-(DP-1 … DP-12) and the critical-chain series (CC-1 … CC-6: the chain,
-estimates, buffers, buffer management, the drum and pipeline, and their
-three pages) are built; most pack sections still have no screen of their
-own beyond the pack pages. The production-readiness series
+**Planned, not built:** nothing in the director-pack (DP-1 … DP-12),
+critical-chain (CC-1 … CC-6) or escalation (EX-1 … EX-14) series is open
+as a capability; each is built at the API, with the honest gaps recorded in
+[`tasks.md`](../tasks.md) under its item. What is **not** built is mostly
+screens: the pack page, the critical-chain, buffer and drum pages exist, and
+the rest of these capabilities (organizations, thresholds, start control,
+cutovers, scorecards, the ledger and so on) are reached through the API only.
+The production-readiness series
 (HD-1 … HD-9) is in progress — see [Release and operations in
 §15](15-roadmap.md#release-and-operations).
 

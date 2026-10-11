@@ -64,6 +64,8 @@ pub(crate) struct Computed {
     pub(crate) titles: HashMap<Uuid, String>,
     /// Who does each assigned, unfinished task.
     pub(crate) people: HashMap<Uuid, String>,
+    /// Each task's aggressive and safe figures (CC-2); empty unless the schedule was built at them.
+    pub(crate) estimates: HashMap<Uuid, crate::ccpm_estimates::Resolved>,
 }
 
 pub(crate) async fn compute(
@@ -72,7 +74,28 @@ pub(crate) async fn compute(
     allow_critical: bool,
     percent: i32,
 ) -> Result<Computed> {
-    let net = super::cpm::load_network(ctx, plan).await?;
+    compute_with(ctx, plan, allow_critical, percent, false).await
+}
+
+/// As [`compute`]; with `aggressive` the tasks are scheduled at their aggressive estimates where they have
+/// one (CC-3), the others keeping their likely duration.
+pub(crate) async fn compute_with(
+    ctx: &AppContext,
+    plan: Uuid,
+    allow_critical: bool,
+    percent: i32,
+    aggressive: bool,
+) -> Result<Computed> {
+    let mut net = super::cpm::load_network(ctx, plan).await?;
+    let mut estimates = HashMap::new();
+    if aggressive {
+        estimates = super::ccpm_estimates::resolved(ctx, plan, &net.rows).await?;
+        for n in &mut net.nodes {
+            if let Some(a) = estimates.get(&n.pid).and_then(|r| r.aggressive) {
+                n.duration = Some(a.days);
+            }
+        }
+    }
     let workflow = super::workflow::in_force(ctx, plan, "task").await?;
     let demands: Vec<Demand> = net
         .rows
@@ -141,6 +164,7 @@ pub(crate) async fn compute(
         proposal,
         titles,
         people,
+        estimates,
     })
 }
 

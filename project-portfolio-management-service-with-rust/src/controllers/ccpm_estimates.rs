@@ -119,6 +119,42 @@ async fn set(
     }))
 }
 
+/// Every task's resolved figures, under the rule in force.
+pub(crate) async fn resolved(
+    ctx: &AppContext,
+    plan: Uuid,
+    rows_of_plan: &[tasks::Model],
+) -> Result<HashMap<Uuid, est::Resolved>> {
+    let (rule, _) = est::configured_rule();
+    let recorded: HashMap<Uuid, rows::Model> = rows::Entity::find()
+        .filter(rows::Column::PlanPid.eq(plan))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|r| (r.task_pid, r))
+        .collect();
+    Ok(rows_of_plan
+        .iter()
+        .map(|t| (t.pid, resolve_task(t, recorded.get(&t.pid), rule)))
+        .collect())
+}
+
+fn resolve_task(t: &tasks::Model, rec: Option<&rows::Model>, rule: est::Rule) -> est::Resolved {
+    est::resolve(
+        t.duration_days.map(i64::from),
+        (
+            rec.and_then(|r| r.aggressive_days).map(i64::from),
+            rec.and_then(|r| r.safe_days).map(i64::from),
+        ),
+        (
+            t.duration_optimistic_days.map(i64::from),
+            t.duration_pessimistic_days.map(i64::from),
+        ),
+        rule,
+    )
+}
+
 #[derive(Debug, Deserialize)]
 struct Page {
     #[serde(default)]
@@ -161,18 +197,7 @@ async fn list(
     let mut items = Vec::new();
     for t in &all {
         let rec = recorded.get(&t.pid);
-        let r = est::resolve(
-            t.duration_days.map(i64::from),
-            (
-                rec.and_then(|r| r.aggressive_days).map(i64::from),
-                rec.and_then(|r| r.safe_days).map(i64::from),
-            ),
-            (
-                t.duration_optimistic_days.map(i64::from),
-                t.duration_pessimistic_days.map(i64::from),
-            ),
-            rule,
-        );
+        let r = resolve_task(t, rec, rule);
         let name = serde_json::to_value(r.state)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — project, feeding and resource buffers (CC-3, 2026-10-11)
+
+`GET /api/plans/{pid}/critical-chain-buffers`: the schedule at aggressive estimates, the project buffer and a feeding buffer per joining chain sized from the safety removed (cut-and-paste or root-sum-of-squares, printed), a feeding buffer that would push the chain flagged rather than absorbed, and resource buffers as readiness alerts. Advice only; no chain or an unestimated chain task gives `no_buffers` with the reason.
+
 ### Added — aggressive and safe estimates (CC-2, 2026-10-11)
 
 `PUT /api/plans/{pid}/tasks/{t_pid}/ccpm-estimate` and `GET /api/plans/{pid}/ccpm-estimates`: each task's aggressive and safe figure, taken from what was recorded, else the schedule-risk range, else (only under the chosen rule) a derivation, with the source printed. A task with a figure missing is listed, never given one. Migration 63.

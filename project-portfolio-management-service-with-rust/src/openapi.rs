@@ -2205,6 +2205,7 @@ mod tests {
             crate::controllers::kpis::routes(),
             crate::controllers::critical_chain::routes(),
             crate::controllers::ccpm_estimates::routes(),
+            crate::controllers::buffers::routes(),
             crate::controllers::leveling::routes(),
             crate::controllers::milestones::routes(),
             crate::controllers::portfolio_resources::routes(),

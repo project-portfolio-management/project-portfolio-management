@@ -247,6 +247,7 @@ pub mod hammock;
 pub mod handover;
 pub mod includes;
 pub mod kpis;
+pub mod buffers;
 pub mod ccpm_estimates;
 pub mod critical_chain;
 pub mod leveling;

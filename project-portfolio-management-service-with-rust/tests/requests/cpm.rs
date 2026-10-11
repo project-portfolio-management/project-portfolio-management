@@ -1403,6 +1403,67 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_chain_is_flagged() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let (p1, p2) = (format!("person:{}", uuid::Uuid::new_v4()), format!("person:{}", uuid::Uuid::new_v4()));
+        let mut ids = std::collections::HashMap::new();
+        for (title, start, days, who) in [
+            ("A", Some("2026-10-05"), 10, Some(&p1)),
+            ("B", None, 10, Some(&p2)),
+            ("F", Some("2026-10-05"), 3, None),
+            ("G", Some("2026-10-05"), 5, None),
+        ] {
+            let mut body = json!({ "title": title, "duration_days": days });
+            if let Some(s) = start { body["start_date"] = json!(s); }
+            if let Some(w) = who { body["assignee_ref"] = json!(w); }
+            let t: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&body).await.json();
+            ids.insert(title, t["pid"].as_str().unwrap().to_string());
+        }
+        for (f, t) in [("A", "B"), ("F", "B"), ("G", "B")] {
+            request.post("/api/dependencies").json(&json!({ "predecessor_pid": ids[f], "successor_pid": ids[t] })).await.assert_status_ok();
+        }
+        let get = || async { request.get(&format!("/api/plans/{p}/critical-chain-buffers")).await.json::<Value>() };
+
+        // No figures yet: no buffers, and the reason names the tasks. Nothing is guessed.
+        let r = get().await;
+        assert_eq!(r["state"], "no_buffers", "{r}");
+        assert_eq!(r["reason"], "estimates_missing");
+        assert_eq!(r["chain_tasks_missing_estimates"].as_array().unwrap().len(), 2);
+
+        for (t, a, s) in [("A", 6, 12), ("B", 6, 10), ("F", 2, 5), ("G", 5, 15)] {
+            request.put(&format!("/api/plans/{p}/tasks/{}/ccpm-estimate", ids[t]))
+                .json(&json!({ "aggressive_days": a, "safe_days": s })).await.assert_status_success();
+        }
+        let r = get().await;
+        assert_eq!(r["state"], "buffers", "{r}");
+        assert_eq!(r["buffer_rule"], "cut_and_paste");
+        assert_eq!(r["chain_days_at_aggressive"], 12, "scheduled at the aggressive estimates: {r}");
+        assert_eq!(r["project_buffer"]["safety_removed_days"], 10);
+        assert_eq!(r["project_buffer"]["days"], 5, "half of the 10 days removed from A and B");
+        let feeding = r["feeding_buffers"].as_array().unwrap();
+        assert_eq!(feeding.len(), 2, "{r}");
+        let of = |title: &str| feeding.iter().find(|f| f["tasks"][0]["title"] == title).cloned().unwrap();
+        let (f, g) = (of("F"), of("G"));
+        assert_eq!(f["buffer_days"], 2, "3 days removed, half rounded up");
+        assert_eq!(f["would_push_chain"], false, "{f}");
+        assert_eq!(g["buffer_days"], 5);
+        assert_eq!(g["would_push_chain"], true, "5 days of buffer, 1 day of room: reported, not absorbed: {g}");
+        assert_eq!(g["push_days"], 4);
+        assert_eq!(f["joins"]["title"], "B");
+        let alerts = r["resource_buffers"].as_array().unwrap();
+        assert_eq!(alerts.len(), 2);
+        assert_eq!(alerts[0]["person_ref"], p1.as_str(), "auth is off: not masked");
+        assert_eq!(r, get().await, "the same input gives the same buffers");
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -19,25 +19,22 @@ use crate::critical_chain::{self, Outcome};
 
 const NOTE: &str = "This is advice; nothing has been changed. The critical chain is the longest chain through dependencies and resource links on a schedule levelled for people's time (critical tasks may move, so the finish may). A resource link means a task started when its person came free. The critical_path is the longest chain through dependencies alone, on the schedule as entered; the two are not blended. Only finish-to-start dependencies are followed as links, and milestones are not resource links. Each unfinished assigned task asks 100 percent of its assignee on each day it works.";
 
-/// `GET /api/plans/{pid}/critical-chain`
-#[debug_handler]
-async fn show(
-    State(ctx): State<AppContext>,
-    caller: MaybeAuthUser,
-    Path(pid): Path<String>,
-) -> Result<Response> {
-    let plan = super::governance::find_item(&ctx, &pid).await?;
-    let c = super::leveling::compute(&ctx, plan.pid, true, 100).await?;
+
+/// The schedule as entered, the nodes with the leveling moves applied as planned starts, and the schedule
+/// those give.
+pub(crate) fn schedules(
+    c: &super::leveling::Computed,
+) -> Result<(cpm::CpmResult, Vec<cpm::Node>, cpm::CpmResult)> {
     let net = &c.net;
-    let unprocessable = |m: String| {
+    let cycle = || {
         Error::CustomError(
             StatusCode::UNPROCESSABLE_ENTITY,
-            ErrorDetail::new("unprocessable_entity", &m),
+            ErrorDetail::new("unprocessable_entity", "the dependencies contain a cycle"),
         )
     };
     let options = Options::default();
     let base = cpm::analyze_with(&net.nodes, &net.edges, &net.plan_cal, &net.own, options)
-        .map_err(|cpm::CpmError::Cycle(_)| unprocessable("the dependencies contain a cycle".into()))?;
+        .map_err(|cpm::CpmError::Cycle(_)| cycle())?;
     let starts: HashMap<Uuid, chrono::NaiveDate> =
         c.proposal.moves.iter().map(|m| (m.pid, m.to_start)).collect();
     let nodes: Vec<cpm::Node> = net
@@ -52,8 +49,21 @@ async fn show(
         })
         .collect();
     let levelled = cpm::analyze_with(&nodes, &net.edges, &net.plan_cal, &net.own, options)
-        .map_err(|cpm::CpmError::Cycle(_)| unprocessable("the dependencies contain a cycle".into()))?;
+        .map_err(|cpm::CpmError::Cycle(_)| cycle())?;
+    Ok((base, nodes, levelled))
+}
 
+/// `GET /api/plans/{pid}/critical-chain`
+#[debug_handler]
+async fn show(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let c = super::leveling::compute(&ctx, plan.pid, true, 100).await?;
+    let (base, nodes, levelled) = schedules(&c)?;
+    let net = &c.net;
     let titled = |p: &Uuid| json!({ "pid": p, "title": c.titles.get(p) });
     let critical_path: Vec<Value> = base.chains.first().into_iter().flatten().map(titled).collect();
     let on_path: BTreeSet<Uuid> = base.chains.iter().flatten().copied().collect();

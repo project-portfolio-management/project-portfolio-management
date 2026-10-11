@@ -126,6 +126,7 @@ pub fn paths() -> Value {
     merge(&mut all, leveling_paths());
     merge(&mut all, critical_chain_paths());
     merge(&mut all, ccpm_estimate_paths());
+    merge(&mut all, buffer_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1394,6 +1395,18 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Project, feeding and resource buffers (CC-3).
+fn buffer_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/critical-chain-buffers": {
+            "get": op("scheduling", "Project, feeding and resource buffers for the critical chain (advice only)",
+                "Inputs: the plan's tasks, dependencies, calendars and assignments, each task's aggressive and safe estimate (see ccpm-estimates; the estimate rule in force is echoed), people's availability and their bookings elsewhere. Tasks are scheduled at their aggressive estimate where they have one (the rest keep their likely duration and are listed under scheduled_at_likely_duration), levelled for people's time, and the critical chain is found as for critical-chain. The project buffer sits at the end of the chain; a feeding buffer sits where a chain of other tasks joins it, each task belonging to one feeding chain. A buffer is sized from the safety removed from its tasks (safe minus aggressive) by buffer_rule (cut_and_paste: half, rounded up; root_sum_squares: the root of the sum of squares, rounded up; PROJECT_PORTFOLIO_MANAGEMENT_BUFFER_RULE, echoed with a flag if the setting was unusable), in business days of the plan's calendar. A feeding buffer larger than the room before its join reports would_push_chain and push_days; it is never absorbed. Resource buffers are readiness alerts for assigned chain tasks, alert_on being resource_buffer_lead_days business days before the start (PROJECT_PORTFOLIO_MANAGEMENT_RESOURCE_BUFFER_DAYS, default 2); a person is named only to a caller who may manage them. With no chain, or a chain task lacking an estimate, the answer is state no_buffers with the reason (no_assignments, no_scheduled_tasks or estimates_missing) and the tasks, never a guess; a feeding chain with a task lacking an estimate has no size and says so.",
+                vec![uuid_param("pid")],
+                &[("200", "state, buffer_rule, chain, project_buffer, feeding_buffers, resource_buffers; or state no_buffers with reason"), ("404", "Unknown plan"), ("422", "A dependency cycle")])
         }
     })
 }

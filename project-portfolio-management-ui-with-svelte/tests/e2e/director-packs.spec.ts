@@ -25,7 +25,7 @@ test.describe("director packs (DP-11)", () => {
 
   test("shows every section with readings as words and symbols", async ({ page }) => {
     await page.goto(`/en-001/director-packs/${PID}`, { waitUntil: "networkidle" });
-    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Milestone sign-off", "External asks and their trade-offs", "Key people and contingent labour", "Triage and thresholds", "Cutover decisions", "Watermelon measures", "Issues", "Change requests"]) {
+    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Milestone sign-off", "External asks and their trade-offs", "Key people and contingent labour", "Triage and thresholds", "Cutover decisions", "Outcomes and de-escalation", "Watermelon measures", "Issues", "Change requests"]) {
       await expect(page.getByRole("heading", { level: 2, name: h, exact: true })).toBeVisible();
     }
     await expect(page.getByText("Change note: Corrected the funding line")).toBeVisible();
@@ -43,6 +43,10 @@ test.describe("director packs (DP-11)", () => {
     await expect(page.getByText("Override in force for Care until 2026-12-01.")).toBeVisible();
     await expect(page.getByRole("row", { name: /Second site cutover.*delay for safety/ })).toContainText("◆");
     await expect(page.getByRole("row", { name: /First site cutover.*go ahead/ })).toContainText("●");
+    await expect(page.getByText("Escalation level: Level 2, set on 2026-09-01.")).toBeVisible();
+    await expect(page.getByText("Consecutive quarters met: 1. The rule asks for 2.")).toBeVisible();
+    await expect(page.getByRole("row", { name: /2026-Q2.*missing.*Uptime: nothing recorded/ })).toContainText("–");
+    await expect(page.getByRole("row", { name: /2026-Q3.*met/ })).toContainText("●");
     await expect(page.getByRole("row", { name: /Late discovery.*Programmes: 1.*Care/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Self-assessed and independent.*not measured.*no programme has an independent assessment/ })).toBeVisible();
     await expect(page.getByRole("row", { name: /Milestones met with sign-off.*50%.*1 met of 2 delivered/ })).toBeVisible();

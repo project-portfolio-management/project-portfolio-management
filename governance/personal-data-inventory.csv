@@ -287,3 +287,10 @@ cutover_criteria,marked_by,identifier,"people named in the record (staff, contra
 cutover_criteria,criterion,free_text,anyone a user mentions or describes in text,cutover decisions,AUD,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
 cutover_criteria,evidence,free_text,anyone a user mentions or describes in text,cutover decisions,AUD,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
 cutover_cosignatures,signed_by,identifier,"people named in the record (staff, contractors, stakeholders, the signed-in user who acted)",cutover decisions,AUD,"An opaque reference to the person who co-signed for a role."
+escalation_levels,set_by,identifier,"people named in the record (staff, contractors, stakeholders, the signed-in user who acted)",escalation level,AUD,"An opaque reference to the sponsor who set the escalation level."
+escalation_levels,note,free_text,anyone a user mentions or describes in text,escalation level,AUD,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
+criterion_evidence,recorded_by,identifier,"people named in the record (staff, contractors, stakeholders, the signed-in user who acted)",de-escalation evidence,AUD,"An opaque reference to the person who recorded the evidence."
+criterion_evidence,note,free_text,anyone a user mentions or describes in text,de-escalation evidence,AUD,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
+criterion_evidence,link,free_text,anyone a user mentions or describes in text,de-escalation evidence,AUD,"A link to the evidence, typed by a user."
+deescalation_criteria,criterion,free_text,anyone a user mentions or describes in text,de-escalation criteria,OPS,Free text typed by a user. It can contain personal data; guidance to operators is that it must not carry special-category data.
+scorecards,name,free_text,anyone a user mentions or describes in text,scorecards,OPS,Free text typed by a user.

@@ -98,6 +98,14 @@ export const BODY = {
     ],
     counts: { go: 1, no_go: 0, delay_for_safety: 1 },
   },
+  outcomes: {
+    level: { level: "Level 2", set_on: "2026-09-01", note: null },
+    consecutive_quarters_met: 1, required_quarters: 2, rule_satisfied: false,
+    by_quarter: [
+      { quarter: "2026-Q2", state: { state: "missing", because: ["Uptime: nothing recorded"] } },
+      { quarter: "2026-Q3", state: { state: "met" } },
+    ],
+  },
   watermelon: {
     self_vs_independent: null,
     late_discovery: { count: 1, programmes: ["Care"] },

@@ -105,6 +105,7 @@ const AGGREGATES: &[&str] = &[
     "/api/portfolio-pipeline",
     "/api/milestone-signoffs",
     "/api/start-queue",
+    "/api/deescalation",
     "/api/register-completeness",
     "/api/capacity-commitments",
     "/api/financials/forecast?plan={pub}",
@@ -188,6 +189,14 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// Every mounted such route must be here or in one of the lists above, so a new aggregate cannot
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
+    (
+        "/api/scorecards",
+        "the scorecard names only; the KPIs are read, filtered by the plans the caller may read, from /api/scorecards/{pid} and /api/deescalation",
+    ),
+    (
+        "/api/scorecard-template",
+        "a fixed list of suggested measures built into the service; no record",
+    ),
     (
         "/api/email-deliveries",
         "per-recipient email deliveries: administrators only (404 for anyone else), no plan, no amount",

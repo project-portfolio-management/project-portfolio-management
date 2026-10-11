@@ -567,6 +567,36 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }] : [],
   );
 
+  // Outcomes and de-escalation (EX-10): the level as the sponsor set it, and the run of met quarters.
+  const oc = obj(body.outcomes);
+  const lvl = obj(oc.level);
+  const qsum = arr(oc.by_quarter);
+  const qLook: Record<string, { symbol: string; tone: Tone }> = {
+    met: { symbol: "●", tone: "green" },
+    not_met: { symbol: "▲", tone: "red" },
+    missing: { symbol: "–", tone: "grey" },
+  };
+  const ocRows: Cell[][] = qsum.map((q) => {
+    const st = obj(q.state);
+    const look = qLook[str(st.state)] ?? { symbol: dash, tone: "grey" as Tone };
+    const because = Array.isArray(st.because) ? st.because.map(String).join("; ") : "";
+    return [plain(str(q.quarter)), { text: d.t(`${K}oc_${str(st.state)}`), symbol: look.symbol, tone: look.tone }, plain(because || dash)];
+  });
+  add(
+    "outcomes",
+    [
+      d.t(`${K}oc_note`),
+      lvl.level ? d.t(`${K}oc_level`, { level: str(lvl.level), on: str(lvl.set_on) }) : d.t(`${K}oc_no_level`),
+      d.t(`${K}oc_run`, { n: numOrNull(oc.consecutive_quarters_met) ?? 0, need: numOrNull(oc.required_quarters) ?? 0 }),
+      oc.rule_satisfied === true ? d.t(`${K}oc_rule_yes`) : d.t(`${K}oc_rule_no`),
+    ],
+    ocRows.length ? [{
+      caption: d.t(`${K}s_outcomes`),
+      columns: ["c_quarter", "c_reading", "c_why"].map((k) => d.t(`${K}${k}`)),
+      rows: ocRows,
+    }] : [],
+  );
+
   // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
   const wm = obj(body.watermelon);
   const why = obj(wm.reasons_null);

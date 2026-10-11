@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — outcomes and de-escalation in the director pack page (EX-10, 2026-10-11)
+
+A section with the sponsor's escalation level, the run of met quarters against the rule, and each quarter's state with the reason when it is missing. English and Welsh.
+
 ### Added — cutover decisions in the director pack page (EX-6, 2026-10-11)
 
 A section with the cutovers decided in the period and counts of go, no-go and delay for safety. English and Welsh.

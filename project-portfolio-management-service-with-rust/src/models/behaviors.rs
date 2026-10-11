@@ -62,6 +62,11 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for scorecards::ActiveModel {}
+impl ActiveModelBehavior for scorecard_kpis::ActiveModel {}
+impl ActiveModelBehavior for escalation_levels::ActiveModel {}
+impl ActiveModelBehavior for deescalation_criteria::ActiveModel {}
+impl ActiveModelBehavior for criterion_evidence::ActiveModel {}
 impl ActiveModelBehavior for cutover_decisions::ActiveModel {}
 impl ActiveModelBehavior for cutover_criteria::ActiveModel {}
 impl ActiveModelBehavior for cutover_cosignatures::ActiveModel {}

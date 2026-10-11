@@ -2879,6 +2879,18 @@ export const PAGES_EN = {
   "p.director_pack.c_cutover": "Cutover",
   "p.director_pack.c_decision": "Decision",
   "p.director_pack.c_decided_on": "Decided on",
+  "p.director_pack.s_outcomes": "Outcomes and de-escalation",
+  "p.director_pack.oc_note": "The escalation level is what the sponsor set, and is never worked out here. The run below counts finished quarters in which every scorecard measure and every criterion is met; it is offered to the person who decides.",
+  "p.director_pack.oc_level": "Escalation level: {level}, set on {on}.",
+  "p.director_pack.oc_no_level": "No escalation level has been recorded.",
+  "p.director_pack.oc_run": "Consecutive quarters met: {n}. The rule asks for {need}.",
+  "p.director_pack.oc_rule_yes": "The rule is satisfied. Whether to come down a level is for the sponsor.",
+  "p.director_pack.oc_rule_no": "The rule is not yet satisfied.",
+  "p.director_pack.oc_met": "met",
+  "p.director_pack.oc_not_met": "not met",
+  "p.director_pack.oc_missing": "missing",
+  "p.director_pack.c_quarter": "Quarter",
+  "p.director_pack.c_why": "Why",
 } as const;
 
 /** A key in the page and component catalogue. */

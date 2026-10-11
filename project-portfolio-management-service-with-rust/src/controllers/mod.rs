@@ -256,6 +256,7 @@ pub mod key_persons;
 pub mod email_deliveries;
 pub mod deployment_moves;
 pub mod cutover;
+pub mod deescalation;
 pub mod leveling;
 pub mod start_control;
 pub mod thresholds;

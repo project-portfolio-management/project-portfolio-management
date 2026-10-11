@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the outcome scorecard and the de-escalation tracker (EX-10, 2026-10-11)
+
+A named set of KPIs read by finished quarter, an optional starter set of measures with no targets, and a de-escalation tracker: the escalation level as the sponsor set it, criteria with evidence per quarter, and the consecutive quarters met. A quarter with a missing reading breaks the run and says why; nothing ever changes the level. Migration 76.
+
 ### Added — go/no-go for safety-critical cutovers (EX-6, 2026-10-11)
 
 A cutover decision with stop criteria that are published before it opens and cannot be edited afterwards (a new version is made instead), criteria marked met or not with evidence, and co-signatures from configured roles. A go needs every criterion met and every co-signature; a no-go or a delay for safety is a decision in its own right and the director pack shows it as such, not as slippage. Migration 75.

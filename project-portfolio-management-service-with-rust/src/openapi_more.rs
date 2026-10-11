@@ -139,6 +139,7 @@ pub fn paths() -> Value {
     merge(&mut all, start_control_paths());
     merge(&mut all, deployment_move_paths());
     merge(&mut all, cutover_paths());
+    merge(&mut all, scorecard_paths());
     merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
@@ -1408,6 +1409,60 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The outcome scorecard and the de-escalation tracker (EX-10).
+fn scorecard_paths() -> Value {
+    json!({
+        "/api/scorecards": {
+            "post": op("kpis", "Create a scorecard: a named set of KPIs",
+                "Body: name (3 to 120 characters, unique ignoring case) and for_deescalation (at most one scorecard is the one the tracker reads). Audited.",
+                vec![], &[("200", "pid, name"), ("409", "The name exists, or another scorecard is the tracker's"), ("422", "A bad name")]),
+            "get": op("kpis", "The scorecards",
+                "Inputs: the scorecard records (names only; the KPIs are read from GET /api/scorecards/{pid}).",
+                vec![], &[("200", "scorecards")])
+        },
+        "/api/scorecard-template": {
+            "get": op("kpis", "A starter set of measures, with no targets (nothing is applied)",
+                "Inputs: the built-in list of suggested measures: a key, name, direction and unit, and no target. It is offered, not a default; POST /api/scorecards/{pid}/from-template creates the ones you pick with the targets you set.",
+                vec![], &[("200", "measures, note")])
+        },
+        "/api/scorecards/{pid}": {
+            "get": op("kpis", "A scorecard's KPIs by finished quarter",
+                "Inputs: the KPIs on the scorecard that the caller may read (a KPI of a plan the caller cannot read is counted, not shown), and their readings. Only finished quarters are read (quarters=1 to 16, default 4). A KPI is met in a quarter when the latest reading dated in it is at or better than its target; with no reading it is missing (met null), which is not the same as not met. by_quarter says whether each quarter is met, not met or missing, and why.",
+                vec![uuid_param("pid"), query("quarters", false, "1 to 16, default 4")], &[("200", "scorecard, quarters, kpis, by_quarter"), ("404", "Unknown scorecard")])
+        },
+        "/api/scorecards/{pid}/kpis": {
+            "put": op("kpis", "Set the KPIs on a scorecard",
+                "Body: kpi_pids (at most 60, each an existing KPI); replaces the set. Audited.",
+                vec![uuid_param("pid")], &[("200", "scorecard_pid, kpi_pids"), ("404", "Unknown scorecard"), ("422", "A pid that is not a KPI")])
+        },
+        "/api/scorecards/{pid}/from-template": {
+            "post": op("kpis", "Create the picked template measures as KPIs, with your targets, on the scorecard",
+                "Body: measures [{key, target_value, red_value}], each key from the template; the red line must lie on the worse side of the target. The KPIs are portfolio-level and quarterly. Audited.",
+                vec![uuid_param("pid")], &[("200", "scorecard_pid, kpi_pids"), ("404", "Unknown scorecard"), ("422", "A key not in the template, or thresholds that contradict the direction")])
+        },
+        "/api/deescalation": {
+            "get": op("kpis", "The de-escalation tracker: level, criteria, evidence and consecutive quarters met",
+                "Inputs: the escalation level as the sponsor last set it (never computed), the criteria with the evidence recorded per finished quarter, and the KPIs of the scorecard marked for de-escalation that the caller may read. A quarter is met when every KPI is met and every criterion is marked met; a quarter with a missing reading or evidence is missing and breaks the run, and by_quarter says why. consecutive_quarters_met counts back from the last finished quarter; rule_satisfied says it has reached required_quarters (PROJECT_PORTFOLIO_MANAGEMENT_DEESCALATION_QUARTERS, default 2). It is offered to the person who decides; it moves no level.",
+                vec![], &[("200", "level, scorecard, consecutive_quarters_met, rule_satisfied, by_quarter, kpis, criteria")])
+        },
+        "/api/deescalation/level": {
+            "put": op("kpis", "Record the escalation level the sponsor has set",
+                "Body: level (1 to 60 characters) and an optional note. Only the sponsor (role=sponsor) or an administrator (403 otherwise). Append-only; the history is kept. The service never changes the level itself.",
+                vec![], &[("200", "level, set_on"), ("403", "Not the sponsor"), ("422", "A bad level")])
+        },
+        "/api/deescalation/criteria": {
+            "post": op("kpis", "Add a criterion for coming down from escalation",
+                "Body: criterion (5 to 500 characters). Audited.",
+                vec![], &[("200", "pid, criterion"), ("422", "A bad criterion")])
+        },
+        "/api/deescalation/criteria/{pid}/evidence": {
+            "put": op("kpis", "Record whether a criterion was met in a finished quarter, with its evidence",
+                "Body: quarter (YYYY-Qn, finished), met, a note of at least 5 characters and an optional link (http or https). Append-only; the latest record for a criterion and quarter speaks. Audited.",
+                vec![uuid_param("pid")], &[("200", "criterion_pid, quarter, met"), ("404", "Unknown criterion"), ("422", "A bad quarter, note or link")])
         }
     })
 }

@@ -2209,6 +2209,7 @@ mod tests {
             crate::controllers::buffer_management::routes(),
             crate::controllers::drum::routes(),
             crate::controllers::organizations::routes(),
+            crate::controllers::deescalation::routes(),
             crate::controllers::cutover::routes(),
             crate::controllers::deployment_moves::routes(),
             crate::controllers::start_control::routes(),

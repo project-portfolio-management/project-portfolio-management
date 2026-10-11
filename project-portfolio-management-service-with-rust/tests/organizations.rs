@@ -649,6 +649,68 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!((cd["counts"]["go"].as_u64(), cd["counts"]["delay_for_safety"].as_u64(), cd["counts"]["no_go"].as_u64()), (Some(1), Some(1), Some(0)), "{cd}");
         assert!(cd["note"].as_str().unwrap().contains("not counted as slippage"));
 
+        // ── EX-10: the outcome scorecard and the de-escalation tracker ──
+        let today = chrono::Utc::now().date_naive();
+        let lf = project_portfolio_management_service::deescalation::last_finished(today);
+        let lf1 = lf.previous();
+        let day = |q: project_portfolio_management_service::deescalation::Quarter| (q.start() + chrono::Duration::days(20)).to_string();
+        let tpl: Value = with!(request.get("/api/scorecard-template"), writer).await.json();
+        assert!(tpl["measures"].as_array().unwrap().iter().all(|m| m.get("target_value").is_none()), "the template carries no targets");
+        let sc: Value = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Recovery outcomes", "for_deescalation": true })).await.json();
+        let scp = sc["pid"].as_str().unwrap().to_string();
+        assert_eq!(with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Another", "for_deescalation": true })).await.status_code(), 409, "only one is the tracker's");
+        assert_eq!(with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [{ "key": "milestones_met_on_time", "target_value": 50, "red_value": 80 }] })).await.status_code(), 422, "red must be on the worse side");
+        assert_eq!(with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [{ "key": "mood", "target_value": 1, "red_value": 0 }] })).await.status_code(), 422);
+        let made: Value = with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [
+            { "key": "milestones_met_on_time", "target_value": 80, "red_value": 50 },
+            { "key": "open_critical_issues", "target_value": 2, "red_value": 10 } ] })).await.json();
+        let kp: Vec<String> = made["kpi_pids"].as_array().unwrap().iter().map(|k| k.as_str().unwrap().to_string()).collect();
+        let reading = |kpi: &str, q, v: i64| {
+            let (request, writer, kpi, d) = (&request, writer.clone(), kpi.to_string(), day(q));
+            async move { request.post(&format!("/api/kpis/{kpi}/readings")).add_header(writer.0, writer.1).json(&json!({ "observed_on": d, "value": v })).await.assert_status_success(); }
+        };
+        let crit: Value = with!(request.post("/api/deescalation/criteria"), writer).json(&json!({ "criterion": "Independent assurance reports no new red programmes" })).await.json();
+        let cp = crit["pid"].as_str().unwrap().to_string();
+        let evid = |q: &str, met: bool| {
+            let (request, writer, cp, q) = (&request, writer.clone(), cp.clone(), q.to_string());
+            async move { request.put(&format!("/api/deescalation/criteria/{cp}/evidence")).add_header(writer.0, writer.1).json(&json!({ "quarter": q, "met": met, "link": "https://example.org/assurance/q", "note": "Assurance report on file" })).await.status_code() }
+        };
+        // Last quarter fully recorded and met; the one before has nothing: the run is one, and says why.
+        reading(&kp[0], lf, 90).await;
+        reading(&kp[1], lf, 1).await;
+        assert_eq!(evid(&lf.label(), true).await, 200);
+        assert_eq!(evid(&{ let n = project_portfolio_management_service::deescalation::Quarter::of(today); n.label() }, true).await, 422, "an unfinished quarter");
+        let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
+        assert_eq!(t["consecutive_quarters_met"], 1, "{t}");
+        assert_eq!(t["rule_satisfied"], false);
+        assert_eq!(t["required_quarters"], 2);
+        let prior = t["by_quarter"].as_array().unwrap().iter().find(|q| q["quarter"] == lf1.label().as_str()).unwrap();
+        assert_eq!(prior["state"]["state"], "missing");
+        assert!(prior["state"]["because"].to_string().contains("nothing recorded"), "a missing quarter says why: {prior}");
+        // Fill in the quarter before: two in a row.
+        reading(&kp[0], lf1, 85).await;
+        reading(&kp[1], lf1, 2).await;
+        assert_eq!(evid(&lf1.label(), true).await, 200);
+        let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
+        assert_eq!((t["consecutive_quarters_met"].as_u64(), t["rule_satisfied"].as_bool()), (Some(2), Some(true)), "{t}");
+        // A reading that misses the target breaks the run.
+        reading(&kp[0], lf, 40).await;
+        let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
+        assert_eq!(t["consecutive_quarters_met"], 0, "the latest reading in the quarter is below target: {t}");
+        // The level is the sponsor's to set, and nothing computes it.
+        assert_eq!(with!(request.put("/api/deescalation/level"), other_user).json(&json!({ "level": "Level 2" })).await.status_code(), 403);
+        let sponsor = bearer(&kid, "3f2c6b7e-0000-4000-8000-0000000000d5", &[("access", "write"), ("role", "sponsor")]);
+        with!(request.put("/api/deescalation/level"), sponsor).json(&json!({ "level": "Level 2", "note": "Set at the board" })).await.assert_status_ok();
+        let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
+        assert_eq!(t["level"]["level"], "Level 2", "the level stays what the sponsor set, whatever the run: {t}");
+        assert!(_ctx.db.execute_unprepared("UPDATE escalation_levels SET level = 'Level 0'").await.is_err(), "append-only");
+        let one: Value = with!(request.get(&format!("/api/scorecards/{scp}?quarters=2")), writer).await.json();
+        assert_eq!(one["kpis"].as_array().unwrap().len(), 2);
+        let d10: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": (first - chrono::Months::new(3)).format("%Y-%m").to_string(), "audience": "executive" })).await.json();
+        let pack10: Value = with!(request.get(&format!("/api/director-packs/{}", d10["pid"].as_str().unwrap())), issuer).await.json();
+        assert_eq!(pack10["body"]["outcomes"]["level"]["level"], "Level 2");
+        assert!(pack10["body"]["outcomes"]["criteria"][0]["quarters"][0]["link"].is_null(), "the pack carries no evidence link");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

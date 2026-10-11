@@ -121,6 +121,7 @@ mod m20261010_000072_email_deliveries;
 mod m20261010_000073_start_control;
 mod m20261010_000074_deployment_moves;
 mod m20261010_000075_cutover_decisions;
+mod m20261010_000076_scorecard_deescalation;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -243,6 +244,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000073_start_control::Migration),
             Box::new(m20261010_000074_deployment_moves::Migration),
             Box::new(m20261010_000075_cutover_decisions::Migration),
+            Box::new(m20261010_000076_scorecard_deescalation::Migration),
             // inject-above (do not remove this comment)
         ]
     }

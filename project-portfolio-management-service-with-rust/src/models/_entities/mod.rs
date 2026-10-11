@@ -93,6 +93,7 @@ pub mod process_executions;
 pub mod process_versions;
 pub mod processes;
 pub mod programme_buffers;
+pub mod programme_profiles;
 pub mod milestone_signoff_requirements;
 pub mod milestone_signoffs;
 pub mod organizations;

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the delivery model in the director pack page (EX-2, 2026-10-11)
+
+The portfolio map table shows each programme's delivery model, owner and whether the organization delivers it. English and Welsh.
+
 ### Added — milestone sign-off in the director pack page (EX-4, 2026-10-11)
 
 A section for milestones that need partner sign-off: delivered, met and the gap, each state a word and a shape as well as a tone. English and Welsh.

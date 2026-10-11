@@ -2800,4 +2800,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_delivered_on": "Cyflwynwyd ar",
   "p.director_pack.c_met_on": "Cwrddwyd ar",
   "p.director_pack.c_outstanding": "Llofnod yn weddill gan",
+  "p.director_pack.c_delivery": "Cyflawni",
+  "p.director_pack.dm_not_stated": "heb ei nodi",
+  "p.director_pack.dm_central_product": "cynnyrch canolog",
+  "p.director_pack.dm_central_platform_local_deployment": "platfform canolog, lleoli lleol",
+  "p.director_pack.dm_local_programme_central_standards": "rhaglen leol, safonau canolog",
+  "p.director_pack.dm_owner": "perchennog: {name}",
+  "p.director_pack.dm_not_ours": "heb ei gyflawni gan y sefydliad",
 };

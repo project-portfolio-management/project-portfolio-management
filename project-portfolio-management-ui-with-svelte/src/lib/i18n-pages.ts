@@ -2804,6 +2804,13 @@ export const PAGES_EN = {
   "p.director_pack.c_delivered_on": "Delivered on",
   "p.director_pack.c_met_on": "Met on",
   "p.director_pack.c_outstanding": "Sign-off outstanding from",
+  "p.director_pack.c_delivery": "Delivery",
+  "p.director_pack.dm_not_stated": "not stated",
+  "p.director_pack.dm_central_product": "central product",
+  "p.director_pack.dm_central_platform_local_deployment": "central platform, local deployment",
+  "p.director_pack.dm_local_programme_central_standards": "local programme, central standards",
+  "p.director_pack.dm_owner": "owner: {name}",
+  "p.director_pack.dm_not_ours": "not delivered by the organization",
 } as const;
 
 /** A key in the page and component catalogue. */

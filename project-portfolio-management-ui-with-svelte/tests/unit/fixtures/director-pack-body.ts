@@ -11,7 +11,8 @@ export const BODY = {
     groups: [
       { aim_pid: "a1", aim: "Safer care", programmes: [
         { plan_pid: "x1", name: "Care", stage: "g2_definition", phase: "execution", programme_status: "active",
-          confidence: { value: "amber_red", kind: "self", marked_self: true, stale: true }, trend: "down" },
+          confidence: { value: "amber_red", kind: "self", marked_self: true, stale: true }, trend: "down",
+          delivery: { delivery_model: "local_programme_central_standards", delivery_owner: { name: "Acme Council" }, delivered_by_organization: false } },
         { plan_pid: "x2", name: "Records", stage: null, phase: null, programme_status: "paused",
           confidence: { value: "not_assessed" }, trend: "not_assessed" },
       ] },

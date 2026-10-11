@@ -225,6 +225,21 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let pack: Value = with!(request.get(&format!("/api/director-packs/{pk2}")), issuer).await.json();
         assert_eq!(pack["body"]["milestone_signoffs"]["totals"]["delivered_not_met"], 1, "{pack}");
 
+        // ── EX-2: the delivery model and its owner, shown in the portfolio map ──
+        let dm = format!("/api/plans/{prog}/delivery-model");
+        let none: Value = with!(request.get(&dm), writer).await.json();
+        assert!(none["delivery_model"].is_null() && none["delivered_by_organization"].is_null() && none["reporting_method"] == "evm");
+        assert_eq!(with!(request.put(&dm), writer).json(&json!({ "delivery_model": "whatever" })).await.status_code(), 422);
+        assert_eq!(with!(request.put(&dm), writer).json(&json!({ "delivery_model": "central_product", "delivery_owner_organization_pid": uuid::Uuid::new_v4() })).await.status_code(), 422);
+        assert_eq!(with!(request.put(&format!("/api/plans/{proj}/delivery-model")), writer).json(&json!({ "delivery_model": "central_product" })).await.status_code(), 422, "a project is not a programme");
+        let set: Value = with!(request.put(&dm), writer).json(&json!({ "delivery_model": "local_programme_central_standards", "delivery_owner_organization_pid": other_pid })).await.json();
+        assert_eq!((set["delivery_model"].as_str(), set["delivered_by_organization"].as_bool()), (Some("local_programme_central_standards"), Some(false)));
+        assert_eq!(set["delivery_owner"]["name"], "Other Health Trust");
+        let map: Value = with!(request.get("/api/portfolio-map"), writer).await.json();
+        let care = map["groups"].as_array().unwrap().iter().flat_map(|g| g["programmes"].as_array().unwrap().clone()).find(|p| p["name"] == "Care").unwrap();
+        assert_eq!(care["delivery"]["delivery_model"], "local_programme_central_standards", "{care}");
+        assert_eq!(care["delivery"]["delivered_by_organization"], false);
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

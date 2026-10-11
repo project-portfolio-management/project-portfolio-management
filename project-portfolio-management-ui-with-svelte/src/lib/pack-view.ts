@@ -42,6 +42,17 @@ const numOrNull = (v: unknown): number | null => (typeof v === "number" && Numbe
 const K = "p.director_pack.";
 
 /** Digits after the decimal point a currency's minor unit has, as the platform's own formatter knows. */
+/** A programme's delivery model, owner and whether the organization delivers it, in words (EX-2). */
+function deliveryText(dl: Record<string, unknown>, d: Deps): string {
+  const model = typeof dl.delivery_model === "string" ? dl.delivery_model : "";
+  if (!model) return d.t(`${K}dm_not_stated`);
+  const owner = obj(dl.delivery_owner);
+  const parts = [d.t(`${K}dm_${model}`)];
+  if (typeof owner.name === "string" && owner.name) parts.push(d.t(`${K}dm_owner`, { name: owner.name }));
+  if (dl.delivered_by_organization === false) parts.push(d.t(`${K}dm_not_ours`));
+  return parts.join("; ");
+}
+
 export function exponentOf(currency: string, locale: string): number {
   try {
     return new Intl.NumberFormat(locale, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
@@ -144,12 +155,13 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
         plain(str(p.phase) || dash),
         { text: d.label("pk_conf", v) + (marks.length ? ` (${marks.join(", ")})` : ""), symbol: SYMBOL[v] ?? dash, tone: TONE[v] ?? "grey" },
         plain(d.label("pk_trend", str(p.trend))),
+        plain(deliveryText(obj(p.delivery), d)),
       ]);
     }
   }
   add("map", [], mapRows.length ? [{
     caption: d.t(`${K}s_map`),
-    columns: ["c_programme", "c_aim", "c_status", "c_stage", "c_phase", "c_confidence", "c_trend"].map((k) => d.t(`${K}${k}`)),
+    columns: ["c_programme", "c_aim", "c_status", "c_stage", "c_phase", "c_confidence", "c_trend", "c_delivery"].map((k) => d.t(`${K}${k}`)),
     rows: mapRows,
   }] : []);
   if (!mapRows.length) out[out.length - 1]!.lines.push(d.t(`${K}nothing_here`));

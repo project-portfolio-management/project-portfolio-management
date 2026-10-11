@@ -33,6 +33,7 @@ test.describe("director packs (DP-11)", () => {
     await expect(care.first()).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*shortfall/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*no supply recorded/ })).toContainText("–");
+    await expect(page.getByRole("row", { name: /Care.*local programme, central standards; owner: Acme Council; not delivered by the organization/ })).toBeVisible();
     await expect(page.getByRole("row", { name: /Cutover.*delivered, not met.*Acme Council/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Training.*met/ })).toContainText("●");
     await expect(page.getByText("no funding source").first()).toBeVisible();

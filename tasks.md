@@ -1039,12 +1039,14 @@ questions in [plan.md §39–§45](plan.md).
   422 listing fields; with it off, the action succeeds and the warning is
   audited.
 
-- [ ] **EX-2 (S) — Delivery-model typology.** `central_product |
+- [x] **EX-2 (S) — Delivery-model typology.** `central_product |
   central_platform_local_deployment | local_programme_central_standards` on a
   programme, with the **delivery owner** organization. **Acceptance:** the pack
   shows the type and owner; a local programme is shown as not delivered by the
   organization;
   EX-5's date-change rule reads the type.
+
+  **Built 2026-10-11.** Migration 68 (`programme_profiles`, one row per programme), `src/delivery_model.rs`, `PUT`/`GET /api/plans/{pid}/delivery-model` (a plan of kind Program; the three models; an active organization as the delivery owner; audited), and the portfolio map entry of each programme gains a `delivery` object that the pack page shows in words (model, owner, and 'not delivered by the organization' for a local programme under central standards). Tested in `tests/organizations.rs` and the pack page tests. **Not done, stated:** EX-5's rule does not read the type yet (it is the next item); the table also holds the reporting method (EX-14) with its API to come; no screen to set the model; a programme with no model is shown as 'not stated', not defaulted.
 
 - [x] **EX-3 (L) — Partner organizations.** An `organizations` entity (the
   delivery organization, partner body, government sponsor, supplier) and optional organization on

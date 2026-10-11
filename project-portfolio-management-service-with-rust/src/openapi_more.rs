@@ -131,6 +131,7 @@ pub fn paths() -> Value {
     merge(&mut all, drum_paths());
     merge(&mut all, organization_paths());
     merge(&mut all, milestone_signoff_paths());
+    merge(&mut all, programme_profile_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1399,6 +1400,22 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The delivery model of a programme (EX-2).
+fn programme_profile_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/delivery-model": {
+            "put": op("governance", "Set a programme's delivery model and the organization that owns the delivery",
+                "Body: delivery_model (central_product, central_platform_local_deployment or local_programme_central_standards; null clears) and delivery_owner_organization_pid (an active organization; null clears). Only for a plan of kind Program. Audited. The portfolio map and the director pack show both.",
+                vec![uuid_param("pid")],
+                &[("200", "delivery_model, delivery_owner, delivered_by_organization, reporting_method"), ("404", "Unknown plan"), ("422", "Not a programme, an unknown model or organization")]),
+            "get": op("governance", "A programme's delivery model, owner and reporting method",
+                "Inputs: the programme's profile. A programme with none has a null delivery_model and reports by evm. delivered_by_organization is false for a local programme under central standards: it is delivered by someone else, to the organization's standards.",
+                vec![uuid_param("pid")],
+                &[("200", "delivery_model, delivery_owner, delivered_by_organization, reporting_method"), ("404", "Unknown plan")])
         }
     })
 }

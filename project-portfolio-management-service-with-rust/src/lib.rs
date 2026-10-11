@@ -103,6 +103,7 @@ pub mod insights;
 pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
+pub mod delivery_model;
 pub mod leveling;
 pub mod milestone_signoff;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the delivery-model typology (EX-2, 2026-10-11)
+
+`PUT`/`GET /api/plans/{pid}/delivery-model`: central product, central platform with local deployment, or a local programme under central standards, and the organization that owns the delivery. The portfolio map and the director pack show both, and a local programme is shown as not delivered by the organization. Migration 68.
+
 ### Added — milestones met only with partner sign-off (EX-4, 2026-10-11)
 
 A milestone can require sign-off from organizations; delivered and met are separate dates, a withdrawn sign-off (with a reason, audited) makes it outstanding again, and `GET /api/milestone-signoffs` and the director pack report the met share and the delivered-not-met gap. Migration 67.

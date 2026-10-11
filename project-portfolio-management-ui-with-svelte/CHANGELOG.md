@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the critical chain, buffers and the drum (CC-6, 2026-10-11)
+
+`/plans/[pid]/critical-chain` (the chain and its buffers as labelled bars with tables, beside the critical path), `/plans/[pid]/buffers` (a fever chart per buffer, an alert naming a red chain, recovery actions, snapshots) and `/pipeline` (the drum and the proposed staggered starts). A zone is a word and a shape (circle, diamond, triangle) as well as a colour; every chart has a table that gives the same figures. Axe passes in `en-001`, `cy-001` and `zh-cn`.
+
 ### Added — the director pack pages (DP-11, 2026-10-11)
 
 `/director-packs` and `/director-packs/[pid]`: every section of an issued pack in English and Welsh (other locales show English words), readings as a word and a symbol as well as a colour, money in the reader's own format with its currency, a link to the service's English PDF. Axe passes in `en-001`, `cy-001` and `zh-cn`.

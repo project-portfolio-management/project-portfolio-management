@@ -28,13 +28,13 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.3.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.0 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.1.0 | `version` in the front-end `package.json` |
-| Migrations | 96 | files named `m2*.rs` in `migration/src` |
-| Mounted route registrations | 529 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
-| Documented API paths | 361 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1189, plus 208 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Migrations | 99 | files named `m2*.rs` in `migration/src` |
+| Mounted route registrations | 542 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
+| Documented API paths | 372 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
+| Service tests | 1220, plus 213 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
-| Front-end unit tests (vitest) | 471 | `it(` / `test(` lines in `tests/unit` |
-| Front-end end-to-end tests (Playwright) | 105 | `test(` lines in `tests/e2e` |
+| Front-end unit tests (vitest) | 480 | `it(` / `test(` lines in `tests/unit` |
+| Front-end end-to-end tests (Playwright) | 112 | `test(` lines in `tests/e2e` |
 | Locales | 10 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
@@ -52,8 +52,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | DP | 12 | 0 |
 | EX | 0 | 14 |
 | HD | 11 | 2 |
-| CC | 0 | 6 |
-| **Total** | **94** | **22** |
+| CC | 6 | 0 |
+| **Total** | **100** | **16** |
 
 <!-- generated:end -->
 
@@ -158,10 +158,11 @@ checked against the code on 2026-10-06 unless marked unverified.
 | No cross-service link **aggregator** (`link-graph-service`) — out of this trio's scope | §15 |
 
 **Planned, not built:** the escalation-driven capabilities (EX-1 … EX-14)
-and the rest of the critical-chain series (CC-2 … CC-6) are open in
-[`tasks.md`](../tasks.md). The monthly director pack (DP-1 … DP-12) and the
-critical chain itself (CC-1, `GET /api/plans/{pid}/critical-chain`) are built;
-screens for most of the pack's sections are not. The production-readiness series
+are open in [`tasks.md`](../tasks.md). The monthly director pack
+(DP-1 … DP-12) and the critical-chain series (CC-1 … CC-6: the chain,
+estimates, buffers, buffer management, the drum and pipeline, and their
+three pages) are built; most pack sections still have no screen of their
+own beyond the pack pages. The production-readiness series
 (HD-1 … HD-9) is in progress — see [Release and operations in
 §15](15-roadmap.md#release-and-operations).
 

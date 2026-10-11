@@ -59,6 +59,7 @@ export const KNOWN_NAV_HREFS = [
   "/issues",
   "/change-requests",
   "/director-packs",
+  "/pipeline",
   "/security",
   "/regulator",
   "/capacity",

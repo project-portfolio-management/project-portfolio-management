@@ -613,6 +613,187 @@ export interface ChangeRequest {
 }
 
 /** A director pack's row (DP-1). */
+// ---- CC-6: the critical chain, its buffers, buffer management and the drum --------------------------
+
+export interface TitledRef {
+  pid: string;
+  title: string | null;
+}
+
+export interface ChainTaskRow {
+  pid: string;
+  title: string | null;
+  duration_days: number;
+  start: string | null;
+  finish: string | null;
+  on_critical_path: boolean;
+}
+
+export interface ChainLink {
+  from: string;
+  to: string;
+  kind: "dependency" | "resource";
+  person?: string;
+  person_ref?: string | null;
+  masked?: boolean;
+}
+
+/** `GET /api/plans/{pid}/critical-chain`. */
+export interface CriticalChain {
+  advisory: boolean;
+  state: "chain" | "no_critical_chain";
+  reason?: string;
+  calendar: string;
+  critical_path: { tasks: TitledRef[]; finish: string | null; chains: number };
+  levelled_finish: string | null;
+  finish_delay_days: number;
+  over_allocated_after: number;
+  chain_days?: number;
+  crosses_paths?: boolean;
+  tied_chains?: boolean;
+  tasks?: ChainTaskRow[];
+  links?: ChainLink[];
+  note: string;
+}
+
+export interface FeedingBuffer {
+  joins: TitledRef;
+  tasks: TitledRef[];
+  duration_days: number;
+  buffer_days: number | null;
+  room_before_join_days?: number;
+  would_push_chain?: boolean;
+  push_days?: number;
+  reason?: string;
+  tasks_missing_estimates?: TitledRef[];
+}
+
+export interface ResourceBuffer {
+  task: TitledRef;
+  starts: string;
+  alert_on: string;
+  person: string;
+  person_ref: string | null;
+  masked?: boolean;
+}
+
+/** `GET /api/plans/{pid}/critical-chain-buffers`. */
+export interface ChainBuffers {
+  advisory: boolean;
+  state: "buffers" | "no_buffers";
+  reason?: string;
+  buffer_rule: string;
+  estimate_rule: string;
+  resource_buffer_lead_days: number;
+  chain_tasks_missing_estimates?: TitledRef[];
+  scheduled_at_likely_duration?: TitledRef[];
+  chain_days_at_aggressive?: number;
+  chain?: TitledRef[];
+  project_buffer?: { days: number; safety_removed_days: number; chain_finish: string; finish_with_buffer: string };
+  feeding_buffers?: FeedingBuffer[];
+  resource_buffers?: ResourceBuffer[];
+  note: string;
+}
+
+export interface FeverPoint {
+  chain_completed_pct: number;
+  buffer_consumed_pct: number;
+  plotted_x_pct: number;
+  plotted_y_pct: number;
+  edge: "below" | "above" | null;
+  zone: "green" | "amber" | "red";
+  slip_days: number;
+  buffer_days: number;
+}
+
+export interface FeverLines {
+  green_amber: { at_start: number; at_end: number };
+  amber_red: { at_start: number; at_end: number };
+}
+
+export interface BufferReading {
+  key: string;
+  kind: "project" | "feeding";
+  buffer_days: number | null;
+  chain_done_days: number;
+  chain_total_days: number;
+  slip_days: number | null;
+  point: FeverPoint | null;
+  no_point: string | null;
+  no_point_reason?: string;
+  chain: string[];
+  joins: string | null;
+}
+
+export interface RecoveryAction {
+  pid: string;
+  buffer_key: string;
+  action: string;
+  due_date: string | null;
+  status: "open" | "done" | "dropped";
+  closed_on: string | null;
+  owner: string | null;
+  owner_ref: string | null;
+}
+
+/** `GET /api/plans/{pid}/buffer-management`. */
+export interface BufferManagement {
+  state: "readings" | "no_buffer_plan";
+  reason?: string;
+  buffer_plan?: { pid: string; taken_on: string };
+  lines?: FeverLines;
+  readings?: BufferReading[];
+  alerts?: { kind: string; buffer_key: string; chain: string[]; joins: string | null; buffer_consumed_pct: number | null }[];
+  red_without_open_recovery_action?: string[];
+  recovery_actions?: RecoveryAction[];
+  snapshots?: { pid: string; taken_on: string; zones: Record<string, string | null> }[];
+  note?: string;
+}
+
+export interface DrumView {
+  state: "drum" | "no_drum";
+  skill_pool_pid?: string;
+  name?: string;
+  source?: "named" | "most_overloaded";
+  why?: string;
+  reason?: string;
+}
+
+export interface PipelineProject {
+  plan_pid: string;
+  name: string;
+  outcome: "as_planned" | "staggered" | "exceeds_drum" | "no_slot";
+  first_drum_use: string;
+  last_drum_use: string;
+  peak_fte: number;
+  delay_days: number;
+  proposed_first_drum_use: string;
+  explanation: string;
+}
+
+/** `GET /api/portfolio-pipeline`. */
+export interface Pipeline {
+  state: "pipeline" | "no_drum" | "no_capacity";
+  reason?: string;
+  why?: string;
+  drum?: { skill_pool_pid: string; name: string; source: string; why: string };
+  capacity_fte?: number;
+  capacity_buffer_days: number;
+  from: string;
+  months: number;
+  projects?: PipelineProject[];
+  staggered?: number;
+  note: string;
+}
+
+export interface SkillPool {
+  pid: string;
+  name: string;
+  active: boolean;
+  roles: string[];
+  skills: string[];
+}
+
 export interface DirectorPackMeta {
   pid: string;
   period: string;
@@ -2458,6 +2639,56 @@ export class PpmClient {
     if (params.open) q.set("open", "true");
     const qs = q.toString();
     return this.http.get(`/api/change-requests${qs ? `?${qs}` : ""}`);
+  }
+  /** The critical chain beside the critical path (advice only). */
+  criticalChain(pid: string): Promise<CriticalChain> {
+    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/critical-chain`);
+  }
+  /** Project, feeding and resource buffers for the chain (advice only). */
+  chainBuffers(pid: string): Promise<ChainBuffers> {
+    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/critical-chain-buffers`);
+  }
+  /** Freeze the chain and buffers as planned. */
+  freezeBufferPlan(pid: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-plan`, { body: {} });
+  }
+  /** Every buffer against the live schedule. */
+  bufferManagement(pid: string): Promise<BufferManagement> {
+    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/buffer-management`);
+  }
+  /** Record every buffer's reading now. */
+  takeBufferSnapshot(pid: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-management/snapshots`, { body: {} });
+  }
+  /** Record what was agreed to do about a buffer. */
+  addRecoveryAction(
+    pid: string,
+    body: { buffer_key: string; action: string; owner_ref: string; due_date?: string },
+  ): Promise<unknown> {
+    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions`, { body });
+  }
+  /** Close an open recovery action as done or dropped. */
+  closeRecoveryAction(pid: string, actionPid: string, status: "done" | "dropped"): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions/${encodeURIComponent(actionPid)}/status`,
+      { body: { status } },
+    );
+  }
+  /** Which skill pool is the portfolio's drum, and why. */
+  portfolioDrum(): Promise<{ drum: DrumView; history: { skill_pool_pid: string | null; declared_on: string }[] }> {
+    return this.http.get("/api/portfolio-drum");
+  }
+  /** Name the drum, or clear the naming with null. */
+  setPortfolioDrum(skillPoolPid: string | null): Promise<unknown> {
+    return this.http.put("/api/portfolio-drum", { body: { skill_pool_pid: skillPoolPid } });
+  }
+  /** Proposed staggered starts for the projects that need the drum. */
+  portfolioPipeline(): Promise<Pipeline> {
+    return this.http.get("/api/portfolio-pipeline");
+  }
+  /** The skill pools. */
+  skillPools(): Promise<{ skill_pools: SkillPool[] }> {
+    return this.http.get("/api/skill-pools");
   }
   /** The director packs the caller may read, without their bodies. */
   directorPacks(): Promise<{ packs: DirectorPackMeta[] }> {

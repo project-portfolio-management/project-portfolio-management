@@ -19,6 +19,8 @@ export const PLAN_LINKS = [
   { key: "calendar", module: "milestones" },
   { key: "schedule-health", module: "tasks" },
   { key: "leveling", module: "tasks" },
+  { key: "critical-chain", module: "tasks" },
+  { key: "buffers", module: "tasks" },
   { key: "schedule-risk", module: "tasks" },
   { key: "cost-risk", module: "financials" },
   { key: "joint-risk", module: "financials" },

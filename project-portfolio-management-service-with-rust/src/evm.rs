@@ -365,6 +365,40 @@ pub fn recommended(
     }
 }
 
+/// The budget-at-completion inclusion thresholds, per currency, in minor units:
+/// `PROJECT_PORTFOLIO_MANAGEMENT_EVM_BAC_THRESHOLDS` as JSON, e.g. `{"GBP":100000000,"EUR":120000000}`.
+/// Unset means no threshold: every programme with figures is included. The flag is true when a value was
+/// set but unusable (not an object of non-negative whole numbers keyed by a three-letter code), in which
+/// case no threshold is applied and the pack says so.
+#[must_use]
+pub fn parse_bac_thresholds(raw: Option<&str>) -> (BTreeMap<String, i64>, bool) {
+    let Some(raw) = raw.map(str::trim).filter(|r| !r.is_empty()) else {
+        return (BTreeMap::new(), false);
+    };
+    let Ok(map) = serde_json::from_str::<BTreeMap<String, i64>>(raw) else {
+        return (BTreeMap::new(), true);
+    };
+    let ok = map
+        .iter()
+        .all(|(k, v)| k.len() == 3 && k.chars().all(|c| c.is_ascii_uppercase()) && *v >= 0);
+    if ok {
+        (map, false)
+    } else {
+        (BTreeMap::new(), true)
+    }
+}
+
+/// Whether a currency's summed BAC reaches its threshold. A BAC equal to the threshold is included; a
+/// currency with no threshold is always included.
+#[must_use]
+pub fn meets_bac_threshold(
+    bac_minor: i64,
+    currency: &str,
+    thresholds: &BTreeMap<String, i64>,
+) -> bool {
+    thresholds.get(currency).is_none_or(|t| bac_minor >= *t)
+}
+
 /// Totals for one currency across plans.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Totals {
@@ -415,6 +449,42 @@ pub fn ratio_bp(num: i64, den: i64) -> Option<i64> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_bac_threshold_includes_the_line_and_names_a_bad_setting() {
+        use super::{meets_bac_threshold, parse_bac_thresholds};
+        let (t, bad) = parse_bac_thresholds(Some(r#"{"GBP":1000,"EUR":0}"#));
+        assert!(!bad);
+        assert!(!meets_bac_threshold(999, "GBP", &t));
+        assert!(
+            meets_bac_threshold(1000, "GBP", &t),
+            "exactly the threshold is in"
+        );
+        assert!(meets_bac_threshold(0, "EUR", &t));
+        assert!(
+            meets_bac_threshold(1, "USD", &t),
+            "no threshold for a currency means in"
+        );
+        assert_eq!(parse_bac_thresholds(None), (BTreeMap::default(), false));
+        assert_eq!(
+            parse_bac_thresholds(Some("  ")),
+            (BTreeMap::default(), false)
+        );
+        for junk in [
+            "gbp",
+            "{\"gbp\":5}",
+            "{\"GBP\":-1}",
+            "{\"GBP\":1.5}",
+            "[1]",
+            "{\"GBPX\":5}",
+        ] {
+            assert_eq!(
+                parse_bac_thresholds(Some(junk)),
+                (BTreeMap::default(), true),
+                "{junk}"
+            );
+        }
+    }
+
     use super::*;
 
     fn amount(e: &Eac) -> Option<i64> {

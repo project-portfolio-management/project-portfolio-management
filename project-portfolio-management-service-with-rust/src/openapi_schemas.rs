@@ -138,7 +138,7 @@ pub fn schemas() -> Value {
                 "sections_included": list(s()), "sections_not_yet_built": list(s()), "note": s() })),
             "portfolio_map": r("PortfolioMap"), "exceptions": any_object(),
             "gate_decisions": r("GateDecisions"), "funding": r("PortfolioMoney"),
-            "buffer_fever": r("BufferFever"), "issues": any_object(), "change_requests": any_object() })),
+            "buffer_fever": r("BufferFever"), "earned_value": r("PortfolioEarnedValue"), "issues": any_object(), "change_requests": any_object() })),
         "DirectorPackList": obj(&["packs"], json!({ "packs": list(r("DirectorPackMeta")) })),
 
         // ── delivery confidence, exceptions, aims, the map ──
@@ -245,6 +245,23 @@ pub fn schemas() -> Value {
                 "lines_with_no_funding_source": int(), "listed_lines_with_no_funding_source": list(any_object()),
                 "lines_with_no_dates": int(), "lines_in_other_financial_years": int(), "lines_running_past_the_year_end": int() })),
             "note": s() })),
+
+        // ── portfolio earned value ──
+        "EarnedValueCurrency": obj(&["currency", "state"], json!({
+            "currency": s(), "state": en(&["included", "below EVM threshold"]),
+            "totals": any_object(), "ac_source": s(), "spi": any_object(), "cpi": any_object(),
+            "eac": any_object(), "vac_minor": int_null(),
+            "bac_minor": int(), "threshold_minor": int_null(), "reason": s() })),
+        "EarnedValueProgramme": obj(&["plan_pid", "name"], json!({
+            "plan_pid": uuid(), "name": s(), "plans_without_figures": int(),
+            "state": en(&["no_baseline"]), "reason": s(),
+            "currencies": list(r("EarnedValueCurrency")) })),
+        "PortfolioEarnedValue": obj(&["as_of", "ac_source", "bac_inclusion_threshold", "programmes"], json!({
+            "as_of": date(), "ac_source": s(),
+            "bac_inclusion_threshold": obj(&["minor_by_currency", "configured"], json!({
+                "minor_by_currency": { "type": "object", "additionalProperties": int() },
+                "configured": boolean(), "setting_unusable_so_none_applied": boolean(), "note": s() })),
+            "ratio_thresholds": any_object(), "programmes": list(r("EarnedValueProgramme")), "note": s() })),
 
         // ── the buffer fever chart ──
         "ProjectBufferInput": json!({ "type": "object", "description": "Either buffer_days or rule, not both.", "properties": {
@@ -513,6 +530,12 @@ pub const ATTACH: &[Attach] = &[
         &[("200", "ProjectBufferView")],
     ),
     ("get", "/api/buffer-fever", None, &[("200", "BufferFever")]),
+    (
+        "get",
+        "/api/portfolio-earned-value",
+        None,
+        &[("200", "PortfolioEarnedValue")],
+    ),
 ];
 
 /// Add the request bodies and response schemas in [`ATTACH`] to the documented operations. An entry that

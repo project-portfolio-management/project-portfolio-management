@@ -117,6 +117,7 @@ pub fn paths() -> Value {
     merge(&mut all, programme_gate_paths());
     merge(&mut all, funding_paths());
     merge(&mut all, fever_paths());
+    merge(&mut all, portfolio_evm_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -995,6 +996,18 @@ fn fever_paths() -> Value {
             "get": op("fever", "The buffer fever chart for the programmes you can read",
                 "Each programme with a point or the reason it has none, the lines in force (PROJECT_PORTFOLIO_MANAGEMENT_FEVER_LINES, else the defaults) and a table of every point. The chain is the baselined critical path, not a critical chain, which is not built.",
                 vec![], &[("200", "lines, programmes, table, note")])
+        }
+    })
+}
+
+/// Portfolio earned value over the threshold (DP-8).
+fn portfolio_evm_paths() -> Value {
+    json!({
+        "/api/portfolio-earned-value": {
+            "get": op("earned-value", "Earned value per programme, over the budget threshold",
+                "For each programme you can read: the roll-up of the plans beneath it per currency, exactly as GET /api/plans/{pid}/earned-value/rollup computes it for the same date (BAC, PV, EV, AC, SPI, CPI, the EAC and the variants used, VAC). A currency whose summed BAC is under its threshold (PROJECT_PORTFOLIO_MANAGEMENT_EVM_BAC_THRESHOLDS, JSON by currency in minor units; equal to the threshold is in) is shown as below EVM threshold with no ratios; a programme with no phased budget baseline is no_baseline. ?ac= is budget_lines (default), labour or both and is stated in each row. Currencies are never summed. Inputs: budget baselines, task percent complete, budget-line actuals or recorded labour, the thresholds.",
+                vec![query("ac", false, "budget_lines, labour or both")],
+                &[("200", "as_of, ac_source, bac_inclusion_threshold, ratio_thresholds, programmes, note"), ("422", "Unknown ac")])
         }
     })
 }

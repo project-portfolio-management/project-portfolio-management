@@ -782,26 +782,28 @@ async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
     Ok(all)
 }
 
-/// `GET /api/plans/{pid}/earned-value/rollup` — the plan and everything beneath it,
-/// summed **per currency**. Plans the caller cannot read are left out without a
-/// trace; plans with no figures are counted, not guessed at.
-#[debug_handler]
-async fn rollup(
-    State(ctx): State<AppContext>,
-    caller: MaybeAuthUser,
-    Path(pid): Path<String>,
-) -> Result<Response> {
-    let root = super::governance::find_item(&ctx, &pid).await?;
-    let as_of = chrono::Utc::now().date_naive();
-    let (t, defaulted) = thresholds();
-    let all = descendants(&ctx, root.pid).await?;
-    let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
+/// The figures for `plans`, summed **per currency**: one JSON entry per currency, and how many plans had
+/// no figures. The one place the roll-up is computed, so the live roll-up, the portfolio view and the
+/// director pack cannot differ. With `bac_thresholds`, a currency whose summed BAC is under its threshold
+/// is reported as below the earned-value threshold, with no ratios.
+pub(crate) async fn rollup_over(
+    ctx: &AppContext,
+    plans: &[Uuid],
+    as_of: chrono::NaiveDate,
+    t: &Thresholds,
+    source: AcSource,
+    bac_thresholds: Option<&std::collections::BTreeMap<String, i64>>,
+) -> Result<(Vec<serde_json::Value>, usize)> {
     let mut totals = std::collections::BTreeMap::new();
     let mut eac: std::collections::BTreeMap<String, (i64, usize)> =
         std::collections::BTreeMap::new();
+    let mut variants_used: std::collections::BTreeMap<
+        String,
+        std::collections::BTreeSet<&'static str>,
+    > = std::collections::BTreeMap::new();
     let mut without = 0_usize;
-    for plan in all.iter().filter(|p| readable.contains(p)) {
-        match compute(&ctx, *plan, as_of).await? {
+    for plan in plans {
+        match compute_with(ctx, *plan, as_of, source).await? {
             Outcome::Figures { blocks, .. } => {
                 for (cur, _, b) in &blocks {
                     evm::add(
@@ -820,7 +822,7 @@ async fn rollup(
                         b.spi.bp,
                         None,
                     );
-                    let (chosen, _) = evm::recommended(b.cpi.bp, b.spi.bp, &t);
+                    let (chosen, _) = evm::recommended(b.cpi.bp, b.spi.bp, t);
                     if let Some(e) = variants
                         .iter()
                         .find(|v| v.variant == chosen)
@@ -829,35 +831,179 @@ async fn rollup(
                         let slot = eac.entry(cur.clone()).or_insert((0, 0));
                         slot.0 = slot.0.saturating_add(e);
                         slot.1 += 1;
+                        variants_used.entry(cur.clone()).or_default().insert(chosen);
                     }
                 }
             }
             _ => without += 1,
         }
     }
-    let currencies: Vec<serde_json::Value> = totals
+    let currencies = totals
         .iter()
         .map(|(cur, tot)| {
+            if let Some(map) = bac_thresholds
+                && !evm::meets_bac_threshold(tot.bac_minor, cur, map)
+            {
+                return serde_json::json!({
+                    "currency": cur, "state": "below EVM threshold",
+                    "bac_minor": tot.bac_minor, "threshold_minor": map.get(cur),
+                    "reason": "the budget at completion is under the inclusion threshold for this currency, so no ratios are shown",
+                });
+            }
             let spi = evm::ratio_bp(tot.ev_minor, tot.pv_minor);
-            let cpi = (tot.plans_without_ac == 0).then(|| evm::ratio_bp(tot.ev_minor, tot.ac_minor)).flatten();
+            let cpi = (tot.plans_without_ac == 0)
+                .then(|| evm::ratio_bp(tot.ev_minor, tot.ac_minor))
+                .flatten();
             let (eac_minor, eac_plans) = eac.get(cur).copied().unwrap_or((0, 0));
             serde_json::json!({
-                "currency": cur, "totals": tot,
-                "spi": { "bp": spi, "rag": rag_json(evm::rag_ratio(spi, &t)) },
-                "cpi": { "bp": cpi, "rag": rag_json(evm::rag_ratio(cpi, &t)),
+                "currency": cur, "state": "included", "totals": tot,
+                "ac_source": source.token(),
+                "spi": { "bp": spi, "rag": rag_json(evm::rag_ratio(spi, t)) },
+                "cpi": { "bp": cpi, "rag": rag_json(evm::rag_ratio(cpi, t)),
                          "absent": (cpi.is_none()).then_some("cost_unknown_for_some_plans_or_zero") },
                 "eac": { "minor": (eac_plans == tot.plans).then_some(eac_minor), "plans_counted": eac_plans, "plans_total": tot.plans,
+                         "variants_used": variants_used.get(cur).map(|v| v.iter().copied().collect::<Vec<_>>()).unwrap_or_default(),
                          "note": "the sum of each plan's own recommended EAC; absent unless every plan has one" },
                 "vac_minor": (eac_plans == tot.plans).then(|| tot.bac_minor - eac_minor),
             })
         })
         .collect();
+    Ok((currencies, without))
+}
+
+/// `GET /api/plans/{pid}/earned-value/rollup` — the plan and everything beneath it,
+/// summed **per currency**. Plans the caller cannot read are left out without a
+/// trace; plans with no figures are counted, not guessed at.
+#[debug_handler]
+async fn rollup(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let root = super::governance::find_item(&ctx, &pid).await?;
+    let as_of = chrono::Utc::now().date_naive();
+    let (t, defaulted) = thresholds();
+    let all = descendants(&ctx, root.pid).await?;
+    let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
+    let plans: Vec<Uuid> = all
+        .iter()
+        .filter(|p| readable.contains(p))
+        .copied()
+        .collect();
+    let (currencies, without) =
+        rollup_over(&ctx, &plans, as_of, &t, AcSource::BudgetLines, None).await?;
     format::json(serde_json::json!({
         "root_plan_pid": root.pid, "as_of": as_of, "currencies": currencies,
         "plans_without_figures": without,
         "thresholds": { "values": t, "source": if defaulted { "default" } else { "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS" } },
         "note": "Summed per currency, never across currencies. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. Plans you cannot read are not included.",
     }))
+}
+
+/// Where the pack takes actual cost from: `PROJECT_PORTFOLIO_MANAGEMENT_EVM_AC_SOURCE`
+/// (`budget_lines`, `labour` or `both`), default `budget_lines`.
+pub(crate) fn pack_ac_source() -> AcSource {
+    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVM_AC_SOURCE")
+        .ok()
+        .as_deref()
+        .and_then(AcSource::parse)
+        .unwrap_or(AcSource::BudgetLines)
+}
+
+/// Every plan beneath `root` (and `root`) that is in `include`.
+async fn subtree_in(
+    ctx: &AppContext,
+    root: Uuid,
+    include: &std::collections::HashSet<Uuid>,
+) -> Result<Vec<Uuid>> {
+    Ok(descendants(ctx, root)
+        .await?
+        .into_iter()
+        .filter(|p| include.contains(p))
+        .collect())
+}
+
+/// The earned-value section over the programmes in `include`: for each, its roll-up per currency,
+/// with currencies under the inclusion threshold reported as below it. Figures come from
+/// [`rollup_over`], the same code as `GET …/earned-value/rollup`.
+///
+/// # Errors
+///
+/// When a database read fails.
+pub(crate) async fn portfolio_section(
+    ctx: &AppContext,
+    include: &std::collections::HashSet<Uuid>,
+    as_of: chrono::NaiveDate,
+    source: AcSource,
+) -> Result<serde_json::Value> {
+    let (t, defaulted) = thresholds();
+    let (bac, bac_bad) = evm::parse_bac_thresholds(
+        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVM_BAC_THRESHOLDS")
+            .ok()
+            .as_deref(),
+    );
+    let mut progs: Vec<crate::models::_entities::plans::Model> =
+        crate::models::_entities::plans::Entity::find()
+            .filter(crate::models::_entities::plans::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
+            .collect();
+    progs.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
+    let mut out = Vec::new();
+    for p in &progs {
+        let plans = subtree_in(ctx, p.pid, include).await?;
+        let (currencies, without) = rollup_over(ctx, &plans, as_of, &t, source, Some(&bac)).await?;
+        let mut entry = serde_json::json!({
+            "plan_pid": p.pid, "name": p.name, "plans_without_figures": without,
+        });
+        if currencies.is_empty() {
+            entry["state"] = "no_baseline".into();
+            entry["reason"] = "no plan in the programme has a phased budget baseline with something to measure percent complete against, so there are no earned-value figures".into();
+        } else {
+            entry["currencies"] = currencies.into();
+        }
+        out.push(entry);
+    }
+    Ok(serde_json::json!({
+        "as_of": as_of,
+        "ac_source": source.token(),
+        "bac_inclusion_threshold": {
+            "minor_by_currency": bac,
+            "configured": !bac.is_empty(),
+            "setting_unusable_so_none_applied": bac_bad,
+            "note": "A programme whose summed budget at completion in a currency is under its threshold is shown as below the earned-value threshold, with no ratios. With no threshold set, every programme with figures is included.",
+        },
+        "ratio_thresholds": { "values": t, "source": if defaulted { "default" } else { "PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS" } },
+        "programmes": out,
+        "note": "Per programme, summed per currency, never across currencies. The figures are those of GET /api/plans/{pid}/earned-value/rollup for the same date, restricted to plans that are neither private nor marked in the pack. A programme with no baseline is no_baseline, not zero. Product programmes (EX-14) are not distinguished: they are not built.",
+    }))
+}
+
+/// `GET /api/portfolio-earned-value[?ac=]` — earned value over the threshold for the programmes you can read.
+#[debug_handler]
+async fn portfolio(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(q): Query<EarnedValueParams>,
+) -> Result<Response> {
+    let source = match q.ac.as_deref() {
+        None => AcSource::BudgetLines,
+        Some(a) => AcSource::parse(a)
+            .ok_or_else(|| unprocessable("ac must be budget_lines, labour or both"))?,
+    };
+    let all: Vec<Uuid> = crate::models::_entities::plans::Entity::find()
+        .filter(crate::models::_entities::plans::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|p| p.pid)
+        .collect();
+    let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
+    format::json(portfolio_section(&ctx, &readable, chrono::Utc::now().date_naive(), source).await?)
 }
 
 /// The earned-value routes.
@@ -868,6 +1014,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/earned-value/forecast", get(forecast))
         .add("/plans/{pid}/earned-value/series", get(series))
         .add("/plans/{pid}/earned-value/rollup", get(rollup))
+        .add("/portfolio-earned-value", get(portfolio))
         .add("/plans/{pid}/earned-value/snapshot", post(snapshot))
         .add("/plans/{pid}/earned-value-settings", put(put_settings))
         .add(

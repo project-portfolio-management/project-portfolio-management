@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — portfolio earned value over the threshold (DP-8, 2026-10-11)
+
+`GET /api/portfolio-earned-value` and the pack's `earned_value` section: each programme's roll-up per currency, from the same code as the plan roll-up, with a configurable BAC inclusion threshold (printed), "below EVM threshold" and `no_baseline` stated rather than blank, and the AC source and EAC variants named. The roll-up endpoint's rows gain `ac_source`, `state` and `eac.variants_used`.
+
 ### Added — the buffer fever chart (DP-7, 2026-10-11)
 
 A declared (or rule-given) project buffer per programme, append-only; the pack's `buffer_fever` section and `GET /api/buffer-fever`: chain completed % against buffer consumed %, zones from two configurable sloped lines printed in the pack, edge-plotted recovery and overrun with the true figure, a table twin, and the trail from the last issued pack. The chain is the baselined critical path (the critical chain is not built). Migration 59.

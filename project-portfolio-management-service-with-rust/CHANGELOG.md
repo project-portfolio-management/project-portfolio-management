@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — triage and pause, reset and stop thresholds (EX-7, 2026-10-11)
+
+Programmes can carry a dated triage and up to three thresholds (red confidence for N issued packs, forecast past a date, P80 cost over a cap). A sweep opens an exception for each crossing; a person records pause, reset, stop or an override with an expiry. Nothing is ever paused automatically; the director pack counts the decisions. Migration 71.
+
 ### Added — an optional Stalwart mail server in the compose file (2026-10-11)
 
 `podman compose --profile mail up -d mail` runs Stalwart v0.16 (SMTP, IMAP, JMAP) on loopback ports, with its data in volumes and a pinned bootstrap administrator password; the API gains `SMTP_*` and `EMAIL_FROM` passthrough in the compose environment. First-time setup is by hand ([operations/email-with-stalwart.md](../operations/email-with-stalwart.md)); delivery from the service to a mailbox was not tested.

@@ -135,6 +135,7 @@ pub fn paths() -> Value {
     merge(&mut all, external_ask_paths());
     merge(&mut all, register_paths());
     merge(&mut all, key_person_paths());
+    merge(&mut all, threshold_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1403,6 +1404,38 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Triage and pause / reset / stop thresholds (EX-7).
+fn threshold_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/triage": {
+            "put": op("governance", "Record a dated triage of a programme: finish, fix, pause or stop",
+                "Body: outcome (finish, fix, pause or stop) and a reason of at least 10 characters. Append-only. Only for a plan of kind Program. It records a view; it changes nothing about the programme. Audited.",
+                vec![uuid_param("pid")], &[("200", "The triage"), ("404", "Unknown plan"), ("422", "Not a programme, a bad outcome or a short reason")]),
+            "get": op("governance", "A programme's triage, latest and history",
+                "Inputs: the programme's recorded triages. triage is the latest (null when none), history all of them, newest first.",
+                vec![uuid_param("pid")], &[("200", "triage, history"), ("404", "Unknown plan"), ("422", "Not a programme")])
+        },
+        "/api/plans/{pid}/thresholds": {
+            "put": op("governance", "Set or remove a programme's pause, reset or stop threshold",
+                "Body: kind and its value. confidence_red_packs: count, 1 to 24 issued packs in a row at red. forecast_past: date; crossed when the forecast finish is after it. p80_cap: cap_minor above 0 and a currency; crossed when the P80 cost is above it. remove: true deletes the threshold. Audited.",
+                vec![uuid_param("pid")], &[("200", "The threshold, or removed"), ("404", "Unknown plan"), ("422", "Not a programme, or a bad kind or value")]),
+            "get": op("governance", "A programme's thresholds",
+                "Inputs: the thresholds set on the programme. A programme with none is not swept.",
+                vec![uuid_param("pid")], &[("200", "thresholds"), ("404", "Unknown plan"), ("422", "Not a programme")])
+        },
+        "/api/threshold-sweep": {
+            "post": op("governance", "Open an exception for each threshold now crossed",
+                "Looks at every programme's thresholds against the issued packs (confidence), the schedule forecast and the P80 cost (default simulation settings). Each crossing opens a delivery exception that names the threshold (or is attached to the programme's open exception); a crossing already open is reported, and one under an unexpired override is suppressed. It pauses, resets and stops nothing: a person records the decision. It is not scheduled; call it, or run it from a scheduler.",
+                vec![], &[("200", "results per threshold: crossed, and the outcome")])
+        },
+        "/api/exceptions/{pid}/threshold-decision": {
+            "post": op("governance", "Record pause, reset, stop or an override for a threshold exception",
+                "Body: action (pause, reset, stop or override), a reason of at least 10 characters and, for an override only, an expiry in the future (at most a year). Closes the exception and records who decided. It does not change the programme: a pause or a stop is acted on by a person. The ordinary decision route refuses a threshold exception.",
+                vec![uuid_param("pid")], &[("200", "pid, action, expiry"), ("404", "Unknown exception"), ("409", "Already closed"), ("422", "Not a threshold exception, a bad action, a short reason or a bad expiry")])
         }
     })
 }

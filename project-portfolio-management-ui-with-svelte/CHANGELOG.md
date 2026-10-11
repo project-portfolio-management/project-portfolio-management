@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — triage and thresholds in the director pack page (EX-7, 2026-10-11)
+
+A section with each programme's latest triage, the period's decisions and the overrides in force. English and Welsh.
+
 ### Added — key people in the director pack page (EX-11, 2026-10-11)
 
 A section with the counts of single points of failure and a table of the contingent share per skill pool. English and Welsh.

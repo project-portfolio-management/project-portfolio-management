@@ -254,6 +254,7 @@ pub mod includes;
 pub mod kpis;
 pub mod key_persons;
 pub mod leveling;
+pub mod thresholds;
 pub mod register;
 pub mod programme_profile;
 pub mod milestone_signoffs;

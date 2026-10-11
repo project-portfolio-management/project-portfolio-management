@@ -503,6 +503,40 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     rows: kpRows,
   }] : []);
 
+  // Triage and thresholds (EX-7): a view and counts; nothing here pauses or stops anything.
+  const tt = obj(body.triage_and_thresholds);
+  const trLook: Record<string, { symbol: string; tone: Tone }> = {
+    finish: { symbol: "●", tone: "green" },
+    fix: { symbol: "◆", tone: "amber" },
+    pause: { symbol: "▲", tone: "red" },
+    stop: { symbol: "▲", tone: "red" },
+  };
+  const ttRows: Cell[][] = arr(tt.triage).map((t) => {
+    const look = trLook[str(t.outcome)] ?? { symbol: dash, tone: "grey" as Tone };
+    return [
+      plain(str(t.programme)),
+      { text: d.t(`${K}tr_${str(t.outcome)}`), symbol: look.symbol, tone: look.tone },
+      plain(str(t.triaged_on)),
+      plain(str(t.reason)),
+    ];
+  });
+  const dp = obj(tt.decisions_in_period);
+  const ov = arr(tt.overrides_in_force).map((o) => d.t(`${K}tr_override_line`, { programme: str(o.programme), expiry: str(o.expiry) }));
+  add(
+    "triage",
+    [
+      d.t(`${K}tr_note`),
+      d.t(`${K}tr_decisions`, { pause: numOrNull(dp.pause) ?? 0, reset: numOrNull(dp.reset) ?? 0, stop: numOrNull(dp.stop) ?? 0, override: numOrNull(dp.override) ?? 0 }),
+      d.t(`${K}tr_open`, { n: numOrNull(tt.open_threshold_exceptions) ?? 0 }),
+      ...ov,
+    ],
+    ttRows.length ? [{
+      caption: d.t(`${K}s_triage`),
+      columns: ["c_programme", "c_outcome", "c_triaged_on", "c_reason"].map((k) => d.t(`${K}${k}`)),
+      rows: ttRows,
+    }] : [],
+  );
+
   // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
   const wm = obj(body.watermelon);
   const why = obj(wm.reasons_null);

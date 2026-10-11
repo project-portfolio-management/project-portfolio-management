@@ -74,6 +74,10 @@ const ACME_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b1";
 const MANAGER: &str = "3f2c6b7e-0000-4000-8000-0000000000c1";
 const OTHER_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 
+async fn sweep_call(req: &axum_test::TestServer, who: &(axum::http::HeaderName, axum::http::HeaderValue)) -> Value {
+    req.post("/api/threshold-sweep").add_header(who.0.clone(), who.1.clone()).await.json::<Value>()
+}
+
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test organizations -- --ignored`"]
 #[allow(clippy::too_many_lines)]
@@ -380,6 +384,63 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let text = pack6.to_string();
         assert!(!text.contains(ada) && !text.contains(bob) && !text.contains("Only one who knows") && !text.contains("Release manager"), "the pack names no one and no role");
         with!(request.delete(&format!("/api/key-persons/{}", reg["entries"][0]["pid"].as_str().unwrap())), manager).await.assert_status_ok();
+
+        // ── EX-7: triage, thresholds, and decisions that nothing makes for you ──
+        let tri = format!("/api/plans/{prog}/triage");
+        assert_eq!(with!(request.put(&tri), writer).json(&json!({ "outcome": "maybe", "reason": "Because it is late" })).await.status_code(), 422);
+        assert_eq!(with!(request.put(&tri), writer).json(&json!({ "outcome": "fix", "reason": "short" })).await.status_code(), 422);
+        assert_eq!(with!(request.put(&format!("/api/plans/{proj}/triage")), writer).json(&json!({ "outcome": "fix", "reason": "A project is not a programme" })).await.status_code(), 422);
+        with!(request.put(&tri), writer).json(&json!({ "outcome": "fix", "reason": "Supplier delays can be recovered" })).await.assert_status_ok();
+        with!(request.put(&tri), writer).json(&json!({ "outcome": "pause", "reason": "Safety case not yet ready" })).await.assert_status_ok();
+        let t: Value = with!(request.get(&tri), writer).await.json();
+        assert_eq!((t["triage"]["outcome"].as_str(), t["history"].as_array().unwrap().len()), (Some("pause"), 2));
+        assert!(_ctx.db.execute_unprepared("UPDATE programme_triages SET outcome = 'finish'").await.is_err(), "append-only");
+
+        with!(request.post(&format!("/api/director-packs/{np}/issue")), issuer).await.assert_status_ok();
+        let th = format!("/api/plans/{prog}/thresholds");
+        for bad in [json!({ "kind": "confidence_red_packs", "count": 0 }), json!({ "kind": "forecast_past" }), json!({ "kind": "p80_cap", "cap_minor": 5 }), json!({ "kind": "mood" })] {
+            assert_eq!(with!(request.put(&th), writer).json(&bad).await.status_code(), 422, "{bad}");
+        }
+        with!(request.post(&format!("/api/plans/{prog}/budget-lines")), writer).json(&json!({ "category": "capex", "description": "Build", "currency": "GBP", "planned_minor": 100_000 })).await.assert_status_success();
+        with!(request.post(&format!("/api/plans/{prog}/tasks")), writer).json(&json!({ "title": "Dated", "start_date": "2026-10-05", "duration_days": 3 })).await.assert_status_success();
+        // At the line: two packs in a row is not met by one red pack and one green; a forecast on the date is not past it.
+        with!(request.put(&th), writer).json(&json!({ "kind": "confidence_red_packs", "count": 2 })).await.assert_status_ok();
+        with!(request.put(&th), writer).json(&json!({ "kind": "forecast_past", "date": "2999-01-01" })).await.assert_status_ok();
+        let r1 = sweep_call(&request, &writer).await;
+        assert!(r1["results"].as_array().unwrap().iter().all(|r| r["crossed"] == false), "nothing is crossed yet: {r1}");
+        with!(request.put(&th), writer).json(&json!({ "kind": "confidence_red_packs", "count": 1 })).await.assert_status_ok();
+        with!(request.put(&th), writer).json(&json!({ "kind": "p80_cap", "cap_minor": 1, "currency": "GBP" })).await.assert_status_ok();
+        let r2 = sweep_call(&request, &writer).await;
+        let by_kind = |r: &Value, k: &str| r["results"].as_array().unwrap().iter().find(|x| x["kind"] == k).cloned().unwrap();
+        assert_eq!(by_kind(&r2, "confidence_red_packs")["outcome"], "attached_to_open_exception", "Care already has an open confidence exception (red): the crossing joins it: {r2}");
+        assert_eq!(by_kind(&r2, "p80_cap")["outcome"], "already_open", "one open exception per programme");
+        let ex_pid = by_kind(&r2, "confidence_red_packs")["exception_pid"].as_str().unwrap().to_string();
+        // Nothing was changed by crossing: the triage and the programme are as they were.
+        assert_eq!(with!(request.post(&format!("/api/exceptions/{ex_pid}/decision")), writer).json(&json!({ "decision": "Carry on regardless of it" })).await.status_code(), 422, "the ordinary decision refuses a threshold exception");
+        for bad in [json!({ "action": "override", "reason": "The sponsor accepts the risk" }), json!({ "action": "override", "reason": "The sponsor accepts the risk", "expiry": "2020-01-01" }), json!({ "action": "stop", "reason": "short" }), json!({ "action": "pause", "reason": "Pausing for the safety case", "expiry": "2999-01-01" })] {
+            assert_eq!(with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&bad).await.status_code(), 422, "{bad}");
+        }
+        let soon = (chrono::Utc::now().date_naive() + chrono::Duration::days(30)).to_string();
+        with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&json!({ "action": "override", "reason": "The sponsor accepts the risk", "expiry": soon })).await.assert_status_ok();
+        assert_eq!(with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&json!({ "action": "stop", "reason": "Decided twice by mistake" })).await.status_code(), 409);
+        let r3 = sweep_call(&request, &writer).await;
+        assert_eq!(by_kind(&r3, "confidence_red_packs")["outcome"], "suppressed_by_override", "an override holds until it expires");
+        assert_eq!(by_kind(&r3, "p80_cap")["outcome"], "opened", "the other threshold now has room to open");
+        let ex2 = by_kind(&r3, "p80_cap")["exception_pid"].as_str().unwrap().to_string();
+        with!(request.post(&format!("/api/exceptions/{ex2}/threshold-decision")), writer).json(&json!({ "action": "reset", "reason": "Re-plan the build with a lower ceiling" })).await.assert_status_ok();
+        let d7: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "executive" })).await.json();
+        let pack7: Value = with!(request.get(&format!("/api/director-packs/{}", d7["pid"].as_str().unwrap())), issuer).await.json();
+        let tt = &pack7["body"]["triage_and_thresholds"];
+        // Decisions are counted in the month they were made, so the earlier month's pack counts none of today's.
+        assert_eq!((tt["triage_counts"]["pause"].as_u64(), tt["decisions_in_period"]["override"].as_u64(), tt["decisions_in_period"]["reset"].as_u64()), (Some(1), Some(0), Some(0)), "{tt}");
+        {
+            use sea_orm::{EntityTrait, PaginatorTrait};
+            use project_portfolio_management_service::models::_entities::threshold_decisions;
+            assert_eq!(threshold_decisions::Entity::find().count(&_ctx.db).await.unwrap(), 2, "an override and a reset were recorded");
+        }
+        assert_eq!(tt["overrides_in_force"][0]["programme"], "Care");
+        assert!(!tt.to_string().contains("person:"), "no one is named: {tt}");
+        assert!(_ctx.db.execute_unprepared("DELETE FROM threshold_decisions").await.is_err(), "append-only");
 
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();

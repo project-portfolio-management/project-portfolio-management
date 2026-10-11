@@ -62,6 +62,9 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for programme_triages::ActiveModel {}
+impl ActiveModelBehavior for programme_thresholds::ActiveModel {}
+impl ActiveModelBehavior for threshold_decisions::ActiveModel {}
 impl ActiveModelBehavior for key_person_entries::ActiveModel {}
 impl ActiveModelBehavior for contingent_workers::ActiveModel {}
 impl ActiveModelBehavior for programme_profiles::ActiveModel {}

@@ -1084,7 +1084,7 @@ questions in [plan.md §39–§45](plan.md).
   version is); "go" needs every co-signature; "no-go" or "delay for safety" is
   recorded as a decision and shown as such in the pack, not as slippage.
 
-- [ ] **EX-7 (M) — Triage and pause / reset / stop thresholds.** A dated
+- [x] **EX-7 (M) — Triage and pause / reset / stop thresholds.** A dated
   **triage** (Finish, Fix, Pause, Stop per programme, with reasons); per
   programme **thresholds** (confidence red for N packs; forecast past a date;
   cost-risk P80 past a cap). Crossing one opens an exception (DP-3) that needs
@@ -1092,6 +1092,8 @@ questions in [plan.md §39–§45](plan.md).
   **Acceptance:** each threshold kind tested at the line; the pack counts
   pause, reset and stop decisions in the period; an override names its
   decider and expiry.
+
+  **Built 2026-10-11.** `src/thresholds.rs` (4 unit tests, each threshold kind at the line), `controllers/thresholds.rs`, migration 71 (`programme_triages` and `threshold_decisions` append-only, `programme_thresholds`, `delivery_exceptions.threshold_kind`; an exception's values may be `threshold`). `PUT`/`GET /api/plans/{pid}/triage` (finish, fix, pause or stop with a reason of 10 or more characters; a view, it changes nothing). `PUT`/`GET /api/plans/{pid}/thresholds`: `confidence_red_packs` N (red in each of the last N issued periods; a pack that is not red breaks the run), `forecast_past` date (crossed one day after it, not on it), `p80_cap` (P80 cost above the cap, not at it). `POST /api/threshold-sweep` opens a delivery exception for each crossing (or attaches it to the programme's open exception; one under an unexpired override is suppressed) and **pauses, resets and stops nothing**. `POST /api/exceptions/{pid}/threshold-decision` records pause, reset, stop or an override that names an expiry (future, at most a year) and who decided; the ordinary decision refuses a threshold exception. The pack's `triage_and_thresholds` section holds the latest triage, the decisions of the period by kind, overrides in force (with expiry, not the decider) and open threshold exceptions; on the pack page in English and Welsh. Tested in `tests/organizations.rs`. **Not done, stated:** the sweep is called, not scheduled; a recorded pause or stop is a decision, not an action on the programme's status (a person sets that through the programme-status route); decisions are counted in the month they were made; the P80 uses the default simulation settings and the programme's whole subtree; a forecast needs scheduled tasks, otherwise it is no crossing; no screen to set thresholds or triage.
 
 - [ ] **EX-8 (M) — Start control: capacity check and WIP limit.** Needs DP-10.
   A configurable limit on programmes in active delivery; promoting a proposal

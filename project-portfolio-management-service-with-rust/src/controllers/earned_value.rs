@@ -758,6 +758,11 @@ async fn series(
     }))
 }
 
+/// A plan and every plan under it (bounded), as pids.
+pub(crate) async fn subtree_ids(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
+    descendants(ctx, root).await
+}
+
 async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
     let mut all = vec![root];
     let mut frontier = vec![root];

@@ -37,6 +37,8 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub decision: Option<String>,
     pub decided_by: Option<String>,
+    /// The threshold that opened it (EX-7); none for a confidence exception.
+    pub threshold_kind: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

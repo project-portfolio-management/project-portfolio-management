@@ -310,7 +310,7 @@ async fn list_exceptions(
     format::json(serde_json::json!({ "exceptions": shown, "window_hours": window }))
 }
 
-async fn find_exception(
+pub(crate) async fn find_exception(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     pid: &str,
@@ -428,6 +428,11 @@ async fn decide_exception(
     Json(b): Json<DecisionBody>,
 ) -> Result<Response> {
     let row = find_exception(&ctx, &caller, &pid).await?;
+    if row.threshold_kind.is_some() {
+        return Err(unprocessable(
+            "this exception was opened by a threshold: it needs a pause, reset, stop or recorded override (POST /api/exceptions/{pid}/threshold-decision)",
+        ));
+    }
     if b.decision.trim().chars().count() < 10 {
         return Err(unprocessable(
             "a decision of at least 10 characters is required",

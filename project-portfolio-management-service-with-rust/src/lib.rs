@@ -105,6 +105,7 @@ pub mod joint_risk;
 pub mod kpi;
 pub mod delivery_model;
 pub mod leveling;
+pub mod thresholds;
 pub mod watermelon;
 pub mod register_completeness;
 pub mod product_flow;

@@ -398,6 +398,52 @@ fn run_error(e: sim::RunError) -> Error {
     }
 }
 
+/// The P80 cost per currency over the given plans, with the default seed, distribution and band; `None` when
+/// they have no budget line to simulate. Used by the threshold sweep (EX-7).
+///
+/// # Errors
+///
+/// When a database read fails.
+pub(crate) async fn p80_by_currency(
+    ctx: &AppContext,
+    plan_pids: &[Uuid],
+) -> Result<Option<HashMap<String, i64>>> {
+    let c = common(&RunParams {
+        iterations: None,
+        seed: None,
+        distribution: None,
+        fallback_band_percent: None,
+        currency: None,
+        delay_cost_per_day_minor: None,
+    })?;
+    let params = sim::Params {
+        iterations: sim::DEFAULT_ITERATIONS,
+        seed: c.seed,
+        distribution: c.distribution,
+        fallback_band_percent: c.band,
+    };
+    let rows = load_lines(ctx, Some(plan_pids)).await?;
+    let lines: Vec<Line> = rows.iter().map(line_of).collect();
+    if lines.is_empty() {
+        return Ok(None);
+    }
+    let register = load_register(ctx, plan_pids).await?;
+    let currencies: HashSet<String> = lines.iter().map(|l| l.currency.clone()).collect();
+    let (events, _, _, _) = classify_cost_events(&register, &currencies);
+    let outcome = match sim::simulate(&lines, &events, params) {
+        Ok(o) => o,
+        Err(sim::RunError::NoLines) => return Ok(None),
+        Err(e) => return Err(run_error(e)),
+    };
+    Ok(Some(
+        outcome
+            .currencies
+            .iter()
+            .filter_map(|cu| cu.percentiles.iter().find(|(p, _)| *p == 80).map(|(_, v)| (cu.currency.clone(), *v)))
+            .collect(),
+    ))
+}
+
 async fn run_cost(
     ctx: &AppContext,
     plan_pids: &[Uuid],

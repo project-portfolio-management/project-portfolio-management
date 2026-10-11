@@ -161,7 +161,7 @@ pub fn schemas() -> Value {
             "exception": { "nullable": true, "allOf": [r("DeliveryException")] } })),
         "DeliveryException": obj(&["pid", "plan_pid", "status"], json!({
             "pid": uuid(), "plan_pid": uuid(), "status": en(&["open", "closed"]), "opened_at": time(),
-            "opened_value": en(&["amber_red", "red"]), "worst_value": en(&["amber_red", "red"]),
+            "opened_value": en(&["amber_red", "red", "threshold"]), "worst_value": en(&["amber_red", "red", "threshold"]),
             "worsened_count": int(), "cause": s_null(), "decision_needed": s_null(),
             "owner_ref": s_null(), "owner_role": s_null(), "decide_by": date_null(),
             "completed_at": time_null(), "complete": boolean(), "missing": list(s()),

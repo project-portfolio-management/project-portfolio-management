@@ -84,6 +84,13 @@ export const BODY = {
   ] },
   key_persons: { single_points: 3, people: 2, roles: 1, without_successor: 1, readiness: { ready: 1, partly: 1, none: 1 },
     contingent_share_by_pool: [{ pool: "Engineering", headcount: 4, contingent: 1, contingent_share_bp: 2500 }, { pool: "Data", headcount: 0, contingent: 0, contingent_share_bp: null }] },
+  triage_and_thresholds: {
+    triage: [{ programme: "Care", outcome: "pause", triaged_on: "2026-10-05", reason: "Safety case not yet ready" }],
+    triage_counts: { finish: 0, fix: 0, pause: 1, stop: 0 },
+    decisions_in_period: { pause: 1, reset: 0, stop: 0, override: 1 },
+    overrides_in_force: [{ programme: "Care", threshold: "p80_cap", expiry: "2026-12-01" }],
+    open_threshold_exceptions: 2,
+  },
   watermelon: {
     self_vs_independent: null,
     late_discovery: { count: 1, programmes: ["Care"] },

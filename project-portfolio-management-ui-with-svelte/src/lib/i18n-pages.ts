@@ -2858,6 +2858,18 @@ export const PAGES_EN = {
   "p.director_pack.c_headcount": "People",
   "p.director_pack.c_contingent": "Contingent",
   "p.director_pack.c_contingent_share": "Contingent share",
+  "p.director_pack.s_triage": "Triage and thresholds",
+  "p.director_pack.tr_note": "Each programme's latest triage is shown. A threshold crossing opens an exception that needs a pause, reset, stop or an override with an expiry; nothing is paused or stopped automatically.",
+  "p.director_pack.tr_decisions": "Decisions this period: pause {pause}, reset {reset}, stop {stop}, override {override}.",
+  "p.director_pack.tr_open": "Threshold exceptions waiting for a decision: {n}.",
+  "p.director_pack.tr_override_line": "Override in force for {programme} until {expiry}.",
+  "p.director_pack.tr_finish": "finish",
+  "p.director_pack.tr_fix": "fix",
+  "p.director_pack.tr_pause": "pause",
+  "p.director_pack.tr_stop": "stop",
+  "p.director_pack.c_outcome": "Triage",
+  "p.director_pack.c_triaged_on": "Triaged on",
+  "l.enum.pk_conf.threshold": "threshold crossed",
 } as const;
 
 /** A key in the page and component catalogue. */

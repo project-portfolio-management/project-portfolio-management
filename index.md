@@ -11,3 +11,10 @@
 | [project-portfolio-management-matcher-with-rust/index.md](project-portfolio-management-matcher-with-rust/index.md) | Matcher library docs |
 | [project-portfolio-management-service-with-rust/index.md](project-portfolio-management-service-with-rust/index.md) | API service docs |
 | [project-portfolio-management-ui-with-svelte/index.md](project-portfolio-management-ui-with-svelte/index.md) | UI docs (see also its AGENTS.md and README.md) |
+| [docs/for/ceo/index.md](docs/for/ceo/index.md) | For the Chief Executive Officer |
+| [docs/for/coo/index.md](docs/for/coo/index.md) | For the Chief Operating Officer |
+| [docs/for/cto/index.md](docs/for/cto/index.md) | For the Chief Technology Officer |
+| [docs/for/cio/index.md](docs/for/cio/index.md) | For the Chief Information Officer |
+| [docs/for/cro/index.md](docs/for/cro/index.md) | For the Chief Risk Officer |
+| [docs/for/clo/index.md](docs/for/clo/index.md) | For the Chief Legal Officer |
+| [docs/for/cpo/index.md](docs/for/cpo/index.md) | For the Chief People Officer |

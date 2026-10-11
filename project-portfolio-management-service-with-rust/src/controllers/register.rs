@@ -24,6 +24,17 @@ fn db_err(e: &sea_orm::DbErr) -> Error {
     Error::string(&e.to_string())
 }
 
+/// What is gathered per programme.
+#[derive(Default)]
+#[allow(clippy::struct_excessive_bools)]
+struct Acc {
+    any_line: bool,
+    unfunded: bool,
+    risk: bool,
+    dep: bool,
+    partner: bool,
+}
+
 /// The routes.
 pub fn routes() -> Routes {
     Routes::new().prefix("/api").add("/register-completeness", get(list))
@@ -116,15 +127,6 @@ pub(crate) async fn assess_programmes(
         .map(|p| (p.plan_pid, p.delivery_model))
         .collect();
 
-    // Everything is gathered per programme.
-    #[derive(Default)]
-    struct Acc {
-        any_line: bool,
-        unfunded: bool,
-        risk: bool,
-        dep: bool,
-        partner: bool,
-    }
     let mut acc: HashMap<Uuid, Acc> = HashMap::new();
     let mut tally = |plan: Uuid, f: &mut dyn FnMut(&mut Acc)| {
         if let Some(p) = programme_of(plan) {

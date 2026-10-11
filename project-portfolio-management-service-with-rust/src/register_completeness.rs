@@ -30,6 +30,7 @@ pub const FIELDS: [&str; 10] = [
 
 /// What is on record for a programme (and the plans under it).
 #[derive(Debug, Clone, Copy, Default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Facts {
     /// A lead is recorded on the programme.
     pub sro: bool,

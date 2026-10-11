@@ -11,11 +11,11 @@
 | [project-portfolio-management-matcher-with-rust/index.md](project-portfolio-management-matcher-with-rust/index.md) | Matcher library docs |
 | [project-portfolio-management-service-with-rust/index.md](project-portfolio-management-service-with-rust/index.md) | API service docs |
 | [project-portfolio-management-ui-with-svelte/index.md](project-portfolio-management-ui-with-svelte/index.md) | UI docs (see also its AGENTS.md and README.md) |
-| [docs/for/ceo/index.md](docs/for/ceo/index.md) | For the Chief Executive Officer |
-| [docs/for/coo/index.md](docs/for/coo/index.md) | For the Chief Operating Officer |
-| [docs/for/cto/index.md](docs/for/cto/index.md) | For the Chief Technology Officer |
-| [docs/for/cio/index.md](docs/for/cio/index.md) | For the Chief Information Officer |
-| [docs/for/cro/index.md](docs/for/cro/index.md) | For the Chief Risk Officer |
-| [docs/for/clo/index.md](docs/for/clo/index.md) | For the Chief Legal Officer |
-| [docs/for/cpo/index.md](docs/for/cpo/index.md) | For the Chief People Officer |
-| [docs/for/grc/index.md](docs/for/grc/index.md) | For Governance, Risk, Compliance |
+| [locales/en-gb-oxendict/for/chief-executive-officer/index.md](locales/en-gb-oxendict/for/chief-executive-officer/index.md) | For the Chief Executive Officer |
+| [locales/en-gb-oxendict/for/chief-operating-officer/index.md](locales/en-gb-oxendict/for/chief-operating-officer/index.md) | For the Chief Operating Officer |
+| [locales/en-gb-oxendict/for/chief-technology-officer/index.md](locales/en-gb-oxendict/for/chief-technology-officer/index.md) | For the Chief Technology Officer |
+| [locales/en-gb-oxendict/for/chief-information-officer/index.md](locales/en-gb-oxendict/for/chief-information-officer/index.md) | For the Chief Information Officer |
+| [locales/en-gb-oxendict/for/chief-risk-officer/index.md](locales/en-gb-oxendict/for/chief-risk-officer/index.md) | For the Chief Risk Officer |
+| [locales/en-gb-oxendict/for/chief-legal-officer/index.md](locales/en-gb-oxendict/for/chief-legal-officer/index.md) | For the Chief Legal Officer |
+| [locales/en-gb-oxendict/for/chief-people-officer/index.md](locales/en-gb-oxendict/for/chief-people-officer/index.md) | For the Chief People Officer |
+| [locales/en-gb-oxendict/for/governance-risk-compliance/index.md](locales/en-gb-oxendict/for/governance-risk-compliance/index.md) | For Governance, Risk, Compliance |

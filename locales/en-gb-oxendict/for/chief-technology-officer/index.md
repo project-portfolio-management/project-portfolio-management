@@ -4,7 +4,7 @@
 
 ## Architecture
 
-Three subprojects, one entity ([architecture](../../../spec/08-architecture.md)):
+Three subprojects, one entity ([architecture](../../../../spec/08-architecture.md)):
 
 | Part | Technology |
 |---|---|
@@ -12,7 +12,7 @@ Three subprojects, one entity ([architecture](../../../spec/08-architecture.md))
 | Service | Rust, Loco.rs on axum, SeaORM, PostgreSQL 18; REST under `/api`, OpenAPI derived from the routes |
 | UI | SvelteKit 2, Svelte 5 SPA with a backend-for-frontend; i18n catalogues |
 
-The toolchain is pinned in [`rust-toolchain.toml`](../../../rust-toolchain.toml). Persistence is in [spec 10](../../../spec/10-persistence.md); the API in [spec 09](../../../spec/09-api-surface.md).
+The toolchain is pinned in [`rust-toolchain.toml`](../../../../rust-toolchain.toml). Persistence is in [spec 10](../../../../spec/10-persistence.md); the API in [spec 09](../../../../spec/09-api-surface.md).
 
 ## Engineering strengths worth knowing
 
@@ -24,11 +24,11 @@ The toolchain is pinned in [`rust-toolchain.toml`](../../../rust-toolchain.toml)
 
 ## Where it is thin
 
-- Single maintainer, so bus factor is one ([`MAINTAINERS.md`](../../../MAINTAINERS.md)).
+- Single maintainer, so bus factor is one ([`MAINTAINERS.md`](../../../../MAINTAINERS.md)).
 - Performance is known roughly; the response cache covers only the critical-path route; very large plans are slow.
 - Sessions are in memory unless Redis is configured.
-- Several director-pack sections and all pack screens are unbuilt ([`tasks.md`](../../../tasks.md)).
-- AI tools are used to build it; the product contains no model. See the [AI statement](../../../AI_STATEMENT.md).
+- Several director-pack sections and all pack screens are unbuilt ([`tasks.md`](../../../../tasks.md)).
+- AI tools are used to build it; the product contains no model. See the [AI statement](../../../../AI_STATEMENT.md).
 
 ## Decisions that are yours
 
@@ -36,4 +36,4 @@ Hosting and Redis topology, whether to fork or to adopt upstream, who reviews th
 
 ## Read next
 
-[Architecture](../../../spec/08-architecture.md) · [Testing strategy](../../../spec/11-testing-strategy.md) · [Implementation status](../../../spec/14-implementation-status.md) · [Benchmarks](../../../BENCHMARKS.md)
+[Architecture](../../../../spec/08-architecture.md) · [Testing strategy](../../../../spec/11-testing-strategy.md) · [Implementation status](../../../../spec/14-implementation-status.md) · [Benchmarks](../../../../BENCHMARKS.md)

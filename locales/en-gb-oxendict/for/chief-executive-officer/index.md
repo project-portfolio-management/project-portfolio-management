@@ -4,7 +4,7 @@
 
 ## What it is, in one paragraph
 
-A registry of every **plan** the organization funds (portfolios, programmes, projects, products and so on, one recursive record), with a project-management workspace underneath (tasks, schedule, cost, resources, risks, issues, change requests, governance). It finds duplicate initiatives by explainable matching, so two departments chartering the same piece of work show up before both are funded. See [purpose and vision](../../../spec/01-purpose-and-vision.md).
+A registry of every **plan** the organization funds (portfolios, programmes, projects, products and so on, one recursive record), with a project-management workspace underneath (tasks, schedule, cost, resources, risks, issues, change requests, governance). It finds duplicate initiatives by explainable matching, so two departments chartering the same piece of work show up before both are funded. See [purpose and vision](../../../../spec/01-purpose-and-vision.md).
 
 ## What you can rely on
 
@@ -15,10 +15,10 @@ A registry of every **plan** the organization funds (portfolios, programmes, pro
 
 ## What it does not give you yet
 
-- The pack does **not** yet include gate decisions, funding and financial-year money, the buffer fever chart, earned value, validated benefits or the capacity heatmap. They are listed as `DP-5` to `DP-10` in [`tasks.md`](../../../tasks.md), and the pack says which sections are not yet built rather than leaving a blank.
+- The pack does **not** yet include gate decisions, funding and financial-year money, the buffer fever chart, earned value, validated benefits or the capacity heatmap. They are listed as `DP-5` to `DP-10` in [`tasks.md`](../../../../tasks.md), and the pack says which sections are not yet built rather than leaving a blank.
 - No PDF or screen for the pack: it is delivered as data (`DP-11`).
-- It is **not certified or audited** by anyone. The project's own verdict: ready for a controlled pilot on non-clinical, non-secret data, not for unsupervised production ([production readiness](../../../governance/production-readiness.md)).
-- One maintainer, no service-level agreement ([governance](../../../GOVERNANCE.md)).
+- It is **not certified or audited** by anyone. The project's own verdict: ready for a controlled pilot on non-clinical, non-secret data, not for unsupervised production ([production readiness](../../../../governance/production-readiness.md)).
+- One maintainer, no service-level agreement ([governance](../../../../GOVERNANCE.md)).
 
 ## Decisions that are yours
 
@@ -28,4 +28,4 @@ A registry of every **plan** the organization funds (portfolios, programmes, pro
 
 ## Read next
 
-[Production readiness](../../../governance/production-readiness.md) · [Roadmap](../../../spec/15-roadmap.md) · [Open questions](../../../spec/16-open-questions.md)
+[Production readiness](../../../../governance/production-readiness.md) · [Roadmap](../../../../spec/15-roadmap.md) · [Open questions](../../../../spec/16-open-questions.md)

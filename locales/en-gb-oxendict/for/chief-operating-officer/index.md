@@ -15,13 +15,13 @@
 | Need | Detail |
 |---|---|
 | Service | One Rust service, PostgreSQL 18, optional Redis (production cache, optional shared sessions), a SvelteKit UI |
-| Runbook | [operations pack](../../../operations/README.md): deployment, runbook, backup and restore, recovery objectives, upgrade and migration |
+| Runbook | [operations pack](../../../../operations/README.md): deployment, runbook, backup and restore, recovery objectives, upgrade and migration |
 | Scheduled jobs | Nothing schedules itself. Retention purge, exception-breach notices and similar tasks must be put on a scheduler by your operators |
 | Support | One maintainer, no SLA; budget for your own first-line support |
 
 ## Know the limits
 
-- A plan of several thousand tasks is slow to schedule; the full answer is refused above 5,000 tasks unless asked for (`?full=true` or `?only=critical`). Figures and caveats are in [`BENCHMARKS.md`](../../../BENCHMARKS.md); they are an order of magnitude from one machine, not capacity.
+- A plan of several thousand tasks is slow to schedule; the full answer is refused above 5,000 tasks unless asked for (`?full=true` or `?only=critical`). Figures and caveats are in [`BENCHMARKS.md`](../../../../BENCHMARKS.md); they are an order of magnitude from one machine, not capacity.
 - Screens exist for much of the workspace but **not** for change requests, issues, packs or delivery confidence yet; those are API-only today.
 
 ## Decisions that are yours
@@ -30,4 +30,4 @@ Who owns each exception, who issues the monthly pack (rhythm and reminders are `
 
 ## Read next
 
-[Operations pack](../../../operations/README.md) · [Runbook](../../../operations/runbook.md) · [Recovery objectives](../../../operations/recovery-objectives.md)
+[Operations pack](../../../../operations/README.md) · [Runbook](../../../../operations/runbook.md) · [Recovery objectives](../../../../operations/recovery-objectives.md)

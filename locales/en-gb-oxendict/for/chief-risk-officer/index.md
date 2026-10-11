@@ -13,10 +13,10 @@
 
 | Risk | State |
 |---|---|
-| No penetration test, third-party audit or certification | Open: buyer's to commission ([assurance checklist](../../../governance/assurance-checklist.md)) |
+| No penetration test, third-party audit or certification | Open: buyer's to commission ([assurance checklist](../../../../governance/assurance-checklist.md)) |
 | Retention enforced for only part of the data | Open; purge must be scheduled |
 | Data-subject tool does not search free text, attachments or backups | Open |
-| Audit trail can be defeated by a database administrator; no hash chain | Stated in the [DPIA](../../../governance/dpia.md) |
+| Audit trail can be defeated by a database administrator; no hash chain | Stated in the [DPIA](../../../../governance/dpia.md) |
 | Handling marks hide and label, they do not encrypt | Stated |
 | Attachment scanning needs a deployer-run scanner | Open |
 | Single maintainer, no SLA | Open |
@@ -25,7 +25,7 @@
 
 ## Controls the software enforces
 
-Login by default, rate limiting, strict security headers, an idle session timeout (30 minutes) and a hard session limit, outbound destinations restricted to public `https`, signature-checked attachments, immutable audit rows, break-glass with audit. Each is covered by a test cited in [production readiness](../../../governance/production-readiness.md).
+Login by default, rate limiting, strict security headers, an idle session timeout (30 minutes) and a hard session limit, outbound destinations restricted to public `https`, signature-checked attachments, immutable audit rows, break-glass with audit. Each is covered by a test cited in [production readiness](../../../../governance/production-readiness.md).
 
 ## Decisions that are yours
 
@@ -33,4 +33,4 @@ Risk appetite for a pilot; the exception window (default 48 hours); which markin
 
 ## Read next
 
-[Production readiness](../../../governance/production-readiness.md) · [DPIA](../../../governance/dpia.md) · [Compliance](../../../spec/12-compliance.md) · [SECURITY](../../../SECURITY.md)
+[Production readiness](../../../../governance/production-readiness.md) · [DPIA](../../../../governance/dpia.md) · [Compliance](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)

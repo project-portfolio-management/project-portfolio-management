@@ -31,7 +31,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | Migrations | 103 | files named `m2*.rs` in `migration/src` |
 | Mounted route registrations | 553 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
 | Documented API paths | 381 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1235, plus 214 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1240, plus 214 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 480 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 112 | `test(` lines in `tests/e2e` |
@@ -50,10 +50,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | MS | 4 | 0 |
 | CR | 4 | 0 |
 | DP | 12 | 0 |
-| EX | 6 | 8 |
+| EX | 7 | 7 |
 | HD | 11 | 2 |
 | CC | 6 | 0 |
-| **Total** | **106** | **10** |
+| **Total** | **107** | **9** |
 
 <!-- generated:end -->
 

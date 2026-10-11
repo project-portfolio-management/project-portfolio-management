@@ -82,6 +82,13 @@ export const BODY = {
     { title: "A new portal", status: "approved", tradeoff: "Displaces the records migration", named_tradeoff: true },
     { title: "Faster reports", status: "in_review", tradeoff: null, named_tradeoff: false },
   ] },
+  watermelon: {
+    self_vs_independent: null,
+    late_discovery: { count: 1, programmes: ["Care"] },
+    milestones_met_with_signoff: { met_share_of_delivered_bp: 5000, delivered: 2, met: 1 },
+    red_without_decision: { count: 0, programmes: [] },
+    reasons_null: { self_vs_independent: "no programme has an independent assessment on record" },
+  },
   capacity_heatmap: { months: ["2026-10"], pools: [
     { pool_pid: "q1", name: "Engineering", cells: [
       { month: "2026-10", state: "shortfall", demand_fte: 2, supply_fte: 1, gap_fte: -1, partner_delivery_short: true },

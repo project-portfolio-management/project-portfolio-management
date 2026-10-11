@@ -1101,12 +1101,14 @@ questions in [plan.md §39–§45](plan.md).
   the limit counts only `active` (not paused) programmes; an override is
   audited; the queue order is stable.
 
-- [ ] **EX-9 (S) — Watermelon measures.** Per pack: self-vs-independent
+- [x] **EX-9 (S) — Watermelon measures.** Per pack: self-vs-independent
   confidence gap per programme, **late discovery** (first report at amber-red or
   red with no amber in the previous pack), milestones met with sign-off as a
   share (EX-4), red without an approved recovery or stop decision. **Acceptance:**
   computed only from issued packs (never re-derived); each measure null with a
   reason when its inputs are missing.
+
+  **Built 2026-10-11.** `src/watermelon.rs` (5 unit tests); every pack body now carries a `watermelon` object computed at drafting from the body being drafted and the **previous issued pack's stored body** (never from live records): programmes whose independent and self assessments disagree, **late discovery** (red or amber-red now, green in the previous issued pack), the met share of delivered milestones that need sign-off (EX-4), and programmes at red with no decision recorded in the period (not paused or stopped). A measure with no inputs is `null` with its reason in `reasons_null` (no earlier issued pack, no independent assessment, no delivered sign-off milestone, no programmes). Shown on the pack page as a table with a word, a count and names (English and Welsh). Tested in `tests/organizations.rs`. **Not done, stated:** 'red without an approved recovery or stop decision' looks only at exceptions closed in the period and the programme's status (paused or stopped), because exception decisions are free text and there is no 'approved recovery' record, so a decision closed in an earlier period is not seen; a programme missing from the previous pack is not counted as late discovery; a programme with no confidence in the previous pack (not assessed) is not counted either; the PDF does not print the section.
 
 - [ ] **EX-10 (M) — Outcome scorecard and de-escalation tracker.** A named set
   of KPIs (KO-1) with targets, read by quarter; a tracker of the escalation

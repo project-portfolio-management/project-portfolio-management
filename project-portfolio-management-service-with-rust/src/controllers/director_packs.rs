@@ -227,7 +227,7 @@ async fn compute_body(
     let signoffs = super::milestone_signoffs::pack_section(ctx, &included_set).await?;
     let asks = super::governance::asks_section(ctx, period).await?;
     let register = super::register::pack_section(ctx, &included_set).await?;
-    let body = serde_json::json!({
+    let mut body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
             "period": period, "audience": audience, "cut_off": cut_off,
@@ -240,7 +240,7 @@ async fn compute_body(
         "data_quality": {
             "plans_included": included,
             "plans_left_out_private_or_marked": excluded,
-            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "capacity_heatmap", "milestone_signoffs", "external_asks", "issues", "change_requests"],
+            "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "capacity_heatmap", "milestone_signoffs", "external_asks", "watermelon", "issues", "change_requests"],
             "sections_not_yet_built": [],
             "register_completeness": register,
             "note": "A section that is not built is absent from this pack, not zero or green.",
@@ -258,6 +258,9 @@ async fn compute_body(
         "issues": i,
         "change_requests": c,
     });
+    // The watermelon measures read the stored bodies only: this one and the previous issued pack's (EX-9).
+    let previous_value = prev_body.and_then(|b| serde_json::from_str::<serde_json::Value>(b).ok());
+    body["watermelon"] = crate::watermelon::measures(&body, previous_value.as_ref());
     serde_json::to_string(&body).map_err(|e| Error::string(&e.to_string()))
 }
 

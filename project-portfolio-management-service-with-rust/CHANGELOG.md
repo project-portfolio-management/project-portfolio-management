@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — watermelon measures (EX-9, 2026-10-11)
+
+Each director pack carries the watermelon measures, read from the pack and the previous issued pack as stored: self-against-independent gap, late discovery, milestones met with sign-off, and red without a decision, each null with a reason when it cannot be measured.
+
 ### Added — register completeness (EX-1, 2026-10-11)
 
 `GET /api/register-completeness` scores each programme's register and names each missing field; the director pack's data-quality panel lists the incomplete ones. An optional deployment switch refuses a budget-line release or a firm allocation on an incomplete programme, naming what is missing; with it off the action goes ahead and the warning is audited.

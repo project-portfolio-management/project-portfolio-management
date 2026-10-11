@@ -475,6 +475,35 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }] : [],
   );
 
+  // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
+  const wm = obj(body.watermelon);
+  const why = obj(wm.reasons_null);
+  const wmRows: Cell[][] = [];
+  const names = (v: unknown): string => {
+    const l = (Array.isArray(obj(v).programmes) ? (obj(v).programmes as unknown[]) : []).map(String);
+    return l.length ? l.join(", ") : dash;
+  };
+  for (const [id, key] of [["self_vs_independent", "wm_gap"], ["late_discovery", "wm_late"], ["red_without_decision", "wm_red"]] as const) {
+    const v = wm[id];
+    if (v === null || v === undefined) {
+      wmRows.push([plain(d.t(`${K}${key}`)), { text: d.t(`${K}wm_not_measured`), symbol: dash, tone: "grey" as Tone }, plain(str(why[id]))]);
+    } else {
+      const n = numOrNull(obj(v).count) ?? 0;
+      wmRows.push([plain(d.t(`${K}${key}`)), { text: d.t(`${K}wm_count`, { n }), symbol: n > 0 ? "▲" : "●", tone: n > 0 ? ("red" as Tone) : ("green" as Tone) }, plain(names(v))]);
+    }
+  }
+  const sg = wm.milestones_met_with_signoff;
+  if (sg === null || sg === undefined) {
+    wmRows.push([plain(d.t(`${K}wm_signoff`)), { text: d.t(`${K}wm_not_measured`), symbol: dash, tone: "grey" as Tone }, plain(str(why.milestones_met_with_signoff))]);
+  } else {
+    wmRows.push([plain(d.t(`${K}wm_signoff`)), plain(`${fixed((numOrNull(obj(sg).met_share_of_delivered_bp) ?? 0) / 100, 0, d.locale)}%`), plain(d.t(`${K}wm_signoff_of`, { met: numOrNull(obj(sg).met) ?? 0, delivered: numOrNull(obj(sg).delivered) ?? 0 }))]);
+  }
+  add("watermelon", [d.t(`${K}wm_note`)], wmRows.length ? [{
+    caption: d.t(`${K}s_watermelon`),
+    columns: ["c_measure", "c_reading", "c_programmes"].map((k) => d.t(`${K}${k}`)),
+    rows: wmRows,
+  }] : []);
+
   add("issues", [d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 })]);
   add("changes", [d.t(`${K}awaiting`, { n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0 })]);
   return out;

@@ -328,6 +328,29 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let rc = &pack4["body"]["data_quality"]["register_completeness"];
         assert!(rc["incomplete"].as_array().unwrap().iter().any(|p| p["name"] == "Care"), "the data-quality panel lists it: {rc}");
 
+        // ── EX-9: watermelon measures, from stored packs only ──
+        let conf = |v: &str| {
+            let (request, writer, prog) = (&request, writer.clone(), prog.clone());
+            let body = json!({ "value": v, "kind": "self", "rationale": "As the team sees it this week" });
+            async move { request.put(&format!("/api/plans/{prog}/delivery-confidence")).add_header(writer.0, writer.1).json(&body).await.assert_status_ok(); }
+        };
+        let earlier = (first - chrono::Months::new(1)).format("%Y-%m").to_string();
+        conf("green").await;
+        let e: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "partner" })).await.json();
+        let ep = e["pid"].as_str().unwrap().to_string();
+        let first_pack: Value = with!(request.get(&format!("/api/director-packs/{ep}")), issuer).await.json();
+        assert!(first_pack["body"]["watermelon"]["late_discovery"].is_null(), "no earlier issued pack: null, not zero");
+        assert!(first_pack["body"]["watermelon"]["reasons_null"]["late_discovery"].is_string());
+        with!(request.post(&format!("/api/director-packs/{ep}/issue")), issuer).await.assert_status_ok();
+        conf("red").await;
+        let n: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "partner" })).await.json();
+        let np = n["pid"].as_str().unwrap().to_string();
+        let now_pack: Value = with!(request.get(&format!("/api/director-packs/{np}")), issuer).await.json();
+        let w = &now_pack["body"]["watermelon"];
+        assert_eq!(w["late_discovery"]["programmes"], json!(["Care"]), "green last pack, red now: {w}");
+        assert_eq!(w["red_without_decision"]["programmes"], json!(["Care"]), "red, and no decision recorded");
+        assert!(w["self_vs_independent"].is_null(), "no independent assessment anywhere");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

@@ -2840,6 +2840,17 @@ export const PAGES_EN = {
   "p.director_pack.rf_confidence": "delivery confidence",
   "p.director_pack.rf_top_risks": "top risks",
   "p.director_pack.rf_dependencies": "dependencies",
+  "p.director_pack.s_watermelon": "Watermelon measures",
+  "p.director_pack.wm_note": "Green on the outside, red inside. These are read from this pack and the previous issued pack as stored, not recalculated. A measure with nothing to measure says why; it is not zero.",
+  "p.director_pack.wm_gap": "Self-assessed and independent confidence disagree",
+  "p.director_pack.wm_late": "Late discovery: red or amber-red now, green in the previous pack",
+  "p.director_pack.wm_red": "Red with no decision recorded in the period",
+  "p.director_pack.wm_signoff": "Milestones met with sign-off, of those delivered",
+  "p.director_pack.wm_signoff_of": "{met} met of {delivered} delivered",
+  "p.director_pack.wm_not_measured": "not measured",
+  "p.director_pack.c_measure": "Measure",
+  "p.director_pack.c_programmes": "Programmes, or why not measured",
+  "p.director_pack.wm_count": "Programmes: {n}",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — watermelon measures in the director pack page (EX-9, 2026-10-11)
+
+A table of the four measures with a word and a shape for each, or why one is not measured. English and Welsh.
+
 ### Added — register completeness in the director pack page (EX-1, 2026-10-11)
 
 The data-quality section shows how many programmes have a complete register and a table of the incomplete ones with each missing field named. English and Welsh.

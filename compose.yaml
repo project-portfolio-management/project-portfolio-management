@@ -36,6 +36,18 @@
 #
 # Do not run both `api` and `api-dev-insecure` at once (they share host port 5150).
 #
+# EMAIL (optional): the compose profile `mail` adds a Stalwart mail server (SMTP, IMAP and JMAP in one
+# container) so notifications can be sent and read without an outside mail host:
+#
+#   podman compose --profile mail up -d mail          # the server on its own
+#   SMTP_HOST=mail SMTP_PORT=587 EMAIL_FROM=ppm@example.test podman compose --profile mail up -d
+#
+# Stalwart starts in a bootstrap mode: its administration page (http://127.0.0.1:8081/, user `admin`,
+# password PPM_MAIL_ADMIN_PASSWORD) is where the domain, an account for the API and the certificate are set
+# up once. Until then it listens on the administration port only. Steps and limits:
+# operations/email-with-stalwart.md. The ports are bound to 127.0.0.1; they are a development and
+# small-site convenience, not a hardened public mail host.
+#
 # The UI (project-portfolio-management-ui-with-svelte) is not containerized
 # here: it builds with @sveltejs/adapter-auto, which produces no runnable
 # server outside a supported host. Run it with `pnpm dev` / `pnpm preview`
@@ -59,6 +71,14 @@ x-api-environment: &api-environment
   # The full-text index is derived from the database and rebuilt on demand
   # (`task search_reindex`); it is kept on a volume only to avoid a rebuild on restart.
   PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH: /app/data/search-index
+  # Outgoing email (notifications, sinks). Empty by default: no mail is sent. With the `mail` profile
+  # (below), SMTP_HOST=mail SMTP_PORT=587 points the API at the bundled Stalwart server; see
+  # operations/email-with-stalwart.md.
+  SMTP_HOST: ${SMTP_HOST:-localhost}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM: ${EMAIL_FROM:-}
 
 x-api-build: &api-build
   context: .
@@ -153,7 +173,34 @@ services:
       retries: 20
       start_period: 10s
 
+  # Optional mail server (profile `mail`): Stalwart. Pinned to a release line, not to `latest`.
+  mail:
+    profiles: ["mail"]
+    image: docker.io/stalwartlabs/stalwart:v0.16
+    hostname: mail
+    environment:
+      # Pins the bootstrap administrator so the password is yours, not a one-time log line.
+      STALWART_RECOVERY_ADMIN: admin:${PPM_MAIL_ADMIN_PASSWORD:?set PPM_MAIL_ADMIN_PASSWORD (any value for local use)}
+    ports:
+      - "127.0.0.1:8081:8080"   # administration and web mail
+      - "127.0.0.1:2525:25"     # SMTP (incoming)
+      - "127.0.0.1:2587:587"    # SMTP submission (the API reaches it as mail:587 inside the network)
+      - "127.0.0.1:2465:465"    # SMTP submission over TLS
+      - "127.0.0.1:2143:143"    # IMAP
+      - "127.0.0.1:2993:993"    # IMAP over TLS
+    volumes:
+      - mail-config:/etc/stalwart
+      - mail-data:/var/lib/stalwart
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
 volumes:
+  mail-config:
+  mail-data:
   postgres-data:
   ppm-artifacts:
   ppm-search:

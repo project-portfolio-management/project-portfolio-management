@@ -11,6 +11,7 @@ back. Each guide says what was **tested** and what was not.
 | [Upgrade and migration](upgrade-and-migration.md) | move to a new version safely, and roll back |
 | [Runbook](runbook.md) | diagnose a symptom and act: refusals at start-up, `401`, `429`, `500`, slow, disk, search, keys |
 | [Sign in with Microsoft Entra ID](sign-in-with-entra.md) | let people sign in through Entra (OpenID Connect), directly or through Keycloak |
+| [Email with Stalwart](email-with-stalwart.md) | an optional Podman/compose mail server (`--profile mail`) for notifications; setup is by hand and delivery is not verified |
 
 The scripts live in [`../scripts`](../scripts): `backup.sh`, `restore.sh`,
 `restore-test.sh`, `check-backup-age.sh`. The CI job `restore` runs the restore

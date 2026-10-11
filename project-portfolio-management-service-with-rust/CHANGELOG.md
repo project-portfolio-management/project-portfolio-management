@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — an optional Stalwart mail server in the compose file (2026-10-11)
+
+`podman compose --profile mail up -d mail` runs Stalwart v0.16 (SMTP, IMAP, JMAP) on loopback ports, with its data in volumes and a pinned bootstrap administrator password; the API gains `SMTP_*` and `EMAIL_FROM` passthrough in the compose environment. First-time setup is by hand ([operations/email-with-stalwart.md](../operations/email-with-stalwart.md)); delivery from the service to a mailbox was not tested.
+
 ### Added — the key-person register (EX-11, 2026-10-11)
 
 `/api/key-persons`: single points of failure (a person or a role), the successor and how ready they are, and who is contingent labour; resource managers only, 404 for anyone else. The director pack carries counts and the contingent share of each skill pool, and no name. Migration 70.

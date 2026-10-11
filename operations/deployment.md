@@ -64,7 +64,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Files | `ARTIFACT_DIR` | `/app/data/artifacts` (a volume in Compose); `ATTACHMENT_MAX_BYTES` (10 MiB); `BULK_MAX_BYTES`; `BULK_TTL_HOURS`; `REPORT_TTL_DAYS` (calendar days) |
 | Search | `SEARCH_INDEX_PATH` | `/app/data/search-index`; `SEARCH_BOOT_REINDEX` |
 | Events | `EVENT_TRANSPORT` (`memory`), `EVENT_RELAY`, `EVENT_RETENTION_DAYS` (7 calendar days) | the durable outbox relay is opt-in |
-| Mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` | for notifications |
+| Mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` | for notifications; an optional bundled server is in [email with Stalwart](email-with-stalwart.md) |
 | Telemetry | `OTLP_ENDPOINT`, `OTLP_SERVICE_NAME`, `RUST_LOG` | **`OTLP_ENDPOINT` unset means export ON to `http://localhost:4317`**; set it to the empty string to disable, or to your collector |
 | Outbound targets | `OUTBOUND_STRICT` | off. `on` applies the same rule user-supplied notification destinations already get (`https`, a public address, no credentials, no `.internal` names) to the **operator-configured** webhook and worker URLs. Leave it off if those legitimately point at internal services |
 | Data-subject requests | `PSEUDONYM_SALT` | optional secret mixed into pseudonyms; without it anyone who knows a person's identifier can recompute the pseudonym. Keep it unchanged: changing it changes later pseudonyms |

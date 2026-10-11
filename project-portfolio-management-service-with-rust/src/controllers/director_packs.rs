@@ -46,10 +46,17 @@ pub(crate) fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
 }
 
 pub(crate) fn caller_audiences(caller: &MaybeAuthUser) -> Vec<String> {
-    caller
+    let mut out = caller
         .claims()
         .and_then(|c| c.attrs.get("pack_audience").cloned())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // A caller of an organization is an audience of the packs addressed to it (EX-3).
+    out.extend(
+        super::organizations::caller_organizations(caller)
+            .into_iter()
+            .map(|o| format!("org:{o}")),
+    );
+    out
 }
 
 /// The pack as a reader sees it, never with the body.
@@ -349,11 +356,11 @@ async fn draft(
             "period must be YYYY-MM",
         ));
     }
-    if !rules::AUDIENCES.contains(&b.audience.as_str()) {
+    if !super::organizations::audience_valid(&ctx, &b.audience).await? {
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",
-            &format!("audience must be one of {:?}", rules::AUDIENCES),
+            &format!("audience must be one of {:?}, or org:<pid> of an active organization", rules::AUDIENCES),
         ));
     }
     let now = Utc::now();

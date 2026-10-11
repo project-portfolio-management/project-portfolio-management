@@ -186,6 +186,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/organizations",
+        "organization records (a name, a kind and an audience string); they hold no plan, person or amount",
+    ),
+    (
         "/api/director-pack-schedules",
         "the monthly schedules (an audience and a day); they hold no plan, person or amount",
     ),

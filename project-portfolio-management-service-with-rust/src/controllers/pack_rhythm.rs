@@ -89,9 +89,9 @@ async fn create_schedule(
     Json(b): Json<NewSchedule>,
 ) -> Result<Response> {
     let actor = need(&caller, Power::Editor)?;
-    if !rules::AUDIENCES.contains(&b.audience.as_str()) {
+    if !super::organizations::audience_valid(&ctx, &b.audience).await? {
         return Err(unprocessable(&format!(
-            "audience must be one of {:?}",
+            "audience must be one of {:?}, or org:<pid> of an active organization",
             rules::AUDIENCES
         )));
     }
@@ -368,9 +368,9 @@ async fn set_subscription(
     caller: MaybeAuthUser,
     Json(b): Json<SubscribeBody>,
 ) -> Result<Response> {
-    if !rules::AUDIENCES.contains(&b.audience.as_str()) {
+    if !super::organizations::audience_valid(&ctx, &b.audience).await? {
         return Err(unprocessable(&format!(
-            "audience must be one of {:?}",
+            "audience must be one of {:?}, or org:<pid> of an active organization",
             rules::AUDIENCES
         )));
     }

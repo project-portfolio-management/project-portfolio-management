@@ -19,6 +19,8 @@ pub struct Model {
     pub plan_pid: Uuid,
     /// The partner's name as a label (until partner organizations exist); none is the organization's own.
     pub organization: Option<String>,
+    /// The organization record it names (EX-3); the label above is then its name.
+    pub organization_pid: Option<Uuid>,
     /// `supply` or `demand`.
     pub kind: String,
     /// The first day of the month.

@@ -111,6 +111,7 @@ mod m20261010_000062_pack_rhythm;
 mod m20261010_000063_ccpm_estimates;
 mod m20261010_000064_buffer_management;
 mod m20261010_000065_portfolio_drum;
+mod m20261010_000066_organizations;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -223,6 +224,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000063_ccpm_estimates::Migration),
             Box::new(m20261010_000064_buffer_management::Migration),
             Box::new(m20261010_000065_portfolio_drum::Migration),
+            Box::new(m20261010_000066_organizations::Migration),
             // inject-above (do not remove this comment)
         ]
     }

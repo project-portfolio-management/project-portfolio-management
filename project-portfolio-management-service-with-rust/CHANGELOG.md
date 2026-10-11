@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — partner organizations (EX-3, 2026-10-11)
+
+`POST`/`GET /api/organizations` and `PUT /api/organizations/{pid}`: delivery, partner, sponsor and supplier as records. A capacity commitment can name one; an organization can be a director pack audience (`org:<pid>`); a caller whose token has the `organization` attribute reads the packs addressed to it and only its own commitments. Existing partner labels became partner organizations. Migration 66.
+
 ### Added — the drum and the pipeline (CC-5, 2026-10-11)
 
 `PUT`/`GET /api/portfolio-drum` (a named skill pool, else the most overloaded) and `GET /api/portfolio-pipeline`: projects needing the drum at once are proposed a staggered start with a capacity buffer and an explanation, over the plans the caller may read. A proposal only; no date is changed. Migration 65.

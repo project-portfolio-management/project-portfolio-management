@@ -93,6 +93,7 @@ pub mod process_executions;
 pub mod process_versions;
 pub mod processes;
 pub mod programme_buffers;
+pub mod organizations;
 pub mod programme_status_decisions;
 pub mod proposals;
 pub mod raci_assignments;

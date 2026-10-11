@@ -1046,13 +1046,15 @@ questions in [plan.md §39–§45](plan.md).
   organization;
   EX-5's date-change rule reads the type.
 
-- [ ] **EX-3 (L) — Partner organizations.** An `organizations` entity (the
+- [x] **EX-3 (L) — Partner organizations.** An `organizations` entity (the
   delivery organization, partner body, government sponsor, supplier) and optional organization on
   people, allocations, milestone sign-offs, approvals and SRO roles (a joint
   SRO is two). Finding F-10. **Acceptance:** existing records with no
   organization behave as today; an organization can be an audience (DP-1); a
   user's organization is an ABAC attribute, so "a partner sees its own
   commitments" is a policy, not code.
+
+  **Built 2026-10-11, in part.** `organizations` (migration 66; `POST`/`GET /api/organizations`, `PUT /{pid}`: kind delivery, partner, sponsor or supplier, unique name ignoring case, retire or restore, audited), `tests/organizations.rs` (real tokens). A capacity commitment may name an organization by `organization_pid` (or by a label that matches one), and the old free-text partner labels were turned into partner organizations and linked by the migration; a commitment with none behaves as before. An organization can be a director pack audience, `org:<pid>` (the three audience checks in the database were widened), and a caller whose token has the `organization` attribute is an audience of the packs addressed to it and sees only its own organization's commitments. **Not done, stated:** optional organization on people, allocations, milestone sign-offs, approvals and SRO roles is **not built** (EX-4 needs sign-offs; a joint SRO is not modelled); the `organization` attribute is used by the service in two places (commitments list, pack audiences), not through the general ABAC policy, so "a partner sees its own commitments" is code reading an attribute, not a policy rule; the heatmap still groups partners by label and hides their names unless the deployment shows them; no screen for organizations; no rule yet decides whether partners see each other's commitments beyond this list.
 
 - [ ] **EX-4 (M) — Milestones met only with partner sign-off.** A milestone may
   require sign-off from named organizations; *delivered* (the organization) and *met* (all

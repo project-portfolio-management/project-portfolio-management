@@ -19,7 +19,7 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::capacity_heatmap::{self as rules, Inputs};
 use crate::models::_entities::{
-    allocations, capacity_commitments as commitments, plans, resource_roles,
+    allocations, capacity_commitments as commitments, organizations, plans, resource_roles,
     skill_pool_members as members, skill_pools as pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
@@ -248,6 +248,9 @@ struct CommitBody {
     plan_pid: Uuid,
     #[serde(default)]
     organization: Option<String>,
+    /// An organization record (EX-3); its name then becomes the label.
+    #[serde(default)]
+    organization_pid: Option<Uuid>,
     kind: String,
     /// `YYYY-MM`.
     month: String,
@@ -323,12 +326,36 @@ async fn set_commitment(
     if !pool.is_some_and(|p| p.active) {
         return Err(unprocessable("pool_pid is not an active skill pool"));
     }
-    let org = b
+    // An organization record, if one is named (by pid, or by a label that matches one); else a label.
+    let mut org_pid: Option<Uuid> = None;
+    let mut label = b
         .organization
         .as_deref()
         .map(str::trim)
         .filter(|o| !o.is_empty())
         .map(str::to_string);
+    if let Some(op) = b.organization_pid {
+        let o = organizations::Entity::find()
+            .filter(organizations::Column::Pid.eq(op))
+            .one(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
+            .filter(|o| o.active)
+            .ok_or_else(|| unprocessable("organization_pid is not an active organization"))?;
+        org_pid = Some(o.pid);
+        label = Some(o.name);
+    } else if let Some(l) = &label
+        && let Some(o) = organizations::Entity::find()
+            .filter(sea_orm::sea_query::Expr::cust_with_values("lower(name) = lower($1)", [l.clone()]))
+            .filter(organizations::Column::Active.eq(true))
+            .one(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
+    {
+        org_pid = Some(o.pid);
+        label = Some(o.name);
+    }
+    let org = label;
     let mut find = commitments::Entity::find()
         .filter(commitments::Column::PoolPid.eq(b.pool_pid))
         .filter(commitments::Column::PlanPid.eq(plan.pid))
@@ -349,6 +376,7 @@ async fn set_commitment(
     let actor = caller.actor().map(str::to_string);
     let row = if let Some(e) = existing {
         let mut a: commitments::ActiveModel = e.into();
+        a.organization_pid = ActiveValue::set(org_pid);
         a.committed_milli_fte = ActiveValue::set(committed);
         a.delivered_milli_fte = ActiveValue::set(delivered);
         a.note = ActiveValue::set(note);
@@ -360,6 +388,7 @@ async fn set_commitment(
             pool_pid: ActiveValue::set(b.pool_pid),
             plan_pid: ActiveValue::set(plan.pid),
             organization: ActiveValue::set(org),
+            organization_pid: ActiveValue::set(org_pid),
             kind: ActiveValue::set(b.kind.clone()),
             month: ActiveValue::set(month),
             committed_milli_fte: ActiveValue::set(committed),
@@ -386,7 +415,7 @@ async fn set_commitment(
 
 fn commitment_json(c: &commitments::Model) -> serde_json::Value {
     serde_json::json!({
-        "pid": c.pid, "pool_pid": c.pool_pid, "plan_pid": c.plan_pid, "organization": c.organization,
+        "pid": c.pid, "pool_pid": c.pool_pid, "plan_pid": c.plan_pid, "organization": c.organization, "organization_pid": c.organization_pid,
         "kind": c.kind, "month": c.month.format("%Y-%m").to_string(),
         "committed_fte": f64::from(c.committed_milli_fte) / 1000.0,
         "delivered_fte": c.delivered_milli_fte.map(|d| f64::from(d) / 1000.0), "note": c.note,
@@ -412,8 +441,15 @@ async fn list_commitments(
         .into_iter()
         .collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plans_of).await;
+    // A caller who belongs to an organization (the `organization` attribute) sees only that organization's
+    // commitments (EX-3): a partner reads its own, not another's and not the organization's own.
+    let mine = super::organizations::caller_organizations(&caller);
+    let belongs = caller.claims().is_some_and(|c| c.attrs.contains_key("organization"));
     format::json(serde_json::json!({
-        "commitments": rows.iter().filter(|r| readable.contains(&r.plan_pid)).map(commitment_json).collect::<Vec<_>>(),
+        "commitments": rows.iter()
+            .filter(|r| readable.contains(&r.plan_pid))
+            .filter(|r| !belongs || r.organization_pid.is_some_and(|o| mine.contains(&o)))
+            .map(commitment_json).collect::<Vec<_>>(),
     }))
 }
 

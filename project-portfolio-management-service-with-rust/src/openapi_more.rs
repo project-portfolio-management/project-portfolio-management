@@ -129,6 +129,7 @@ pub fn paths() -> Value {
     merge(&mut all, buffer_paths());
     merge(&mut all, buffer_management_paths());
     merge(&mut all, drum_paths());
+    merge(&mut all, organization_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1397,6 +1398,26 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Organizations (EX-3).
+fn organization_paths() -> Value {
+    json!({
+        "/api/organizations": {
+            "get": op("organizations", "The organizations: delivery, partner, sponsor and supplier",
+                "Inputs: the organization records. Each has a name, a kind (delivery, partner, sponsor or supplier), whether it is active and the audience string (org:<pid>) under which a director pack can be addressed to it. The list holds no person.",
+                vec![], &[("200", "organizations")]),
+            "post": op("organizations", "Create an organization",
+                "Body: name (1 to 200 characters, unique ignoring case) and kind. Audited.",
+                vec![], &[("200", "The organization"), ("409", "The name exists"), ("422", "A bad name or kind")])
+        },
+        "/api/organizations/{pid}": {
+            "put": op("organizations", "Rename, change the kind of, retire or restore an organization",
+                "Body: any of name, kind, active. A retired organization can no longer be named on a commitment or be a pack audience; what already names it stays. Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "The organization"), ("404", "Unknown organization"), ("409", "The name exists"), ("422", "A bad name or kind")])
         }
     })
 }

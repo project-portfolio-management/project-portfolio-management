@@ -2203,6 +2203,7 @@ mod tests {
             crate::controllers::cost_risk::routes(),
             crate::controllers::cpm::routes(),
             crate::controllers::kpis::routes(),
+            crate::controllers::critical_chain::routes(),
             crate::controllers::leveling::routes(),
             crate::controllers::milestones::routes(),
             crate::controllers::portfolio_resources::routes(),

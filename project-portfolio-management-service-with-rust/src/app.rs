@@ -236,6 +236,7 @@ impl Hooks for App {
             .add_route(controllers::cost_risk::routes())
             .add_route(controllers::cpm::routes())
             .add_route(controllers::kpis::routes())
+            .add_route(controllers::critical_chain::routes())
             .add_route(controllers::leveling::routes())
             .add_route(controllers::milestones::routes())
             .add_route(controllers::portfolio_resources::routes())

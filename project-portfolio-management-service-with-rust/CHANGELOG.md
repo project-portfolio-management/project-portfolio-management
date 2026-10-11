@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the critical chain (CC-1, 2026-10-11)
+
+`GET /api/plans/{pid}/critical-chain`: the longest chain through dependencies and resource links on a schedule levelled for people's time (critical tasks may move, so the finish may), returned beside the critical path and never blended with it. `no_critical_chain` with a reason when nobody is assigned. Advice only; nothing is stored.
+
 ### Added — the monthly rhythm of the director pack (DP-12, 2026-10-11)
 
 A schedule per audience drafts the pack for the month that just ended and never issues; the portfolio office records a review (needed before a schedule-made draft can be issued); a person issues; subscribers are notified with a link and never the body. Drafts that stop short of their period are marked stale. `director_pack_schedule` task, `POST /api/director-pack-schedules/sweep`, `/api/director-pack-subscriptions`. Migration 62.

@@ -58,13 +58,15 @@ fn load_percent(p: Option<i32>) -> Result<i32> {
     }
 }
 
-struct Computed {
-    net: super::cpm::Network,
-    proposal: Proposal,
-    titles: HashMap<Uuid, String>,
+pub(crate) struct Computed {
+    pub(crate) net: super::cpm::Network,
+    pub(crate) proposal: Proposal,
+    pub(crate) titles: HashMap<Uuid, String>,
+    /// Who does each assigned, unfinished task.
+    pub(crate) people: HashMap<Uuid, String>,
 }
 
-async fn compute(
+pub(crate) async fn compute(
     ctx: &AppContext,
     plan: Uuid,
     allow_critical: bool,
@@ -133,10 +135,12 @@ async fn compute(
         ))
     })?;
     let titles = net.rows.iter().map(|t| (t.pid, t.title.clone())).collect();
+    let people = demands.iter().map(|d| (d.pid, d.person.clone())).collect();
     Ok(Computed {
         net,
         proposal,
         titles,
+        people,
     })
 }
 

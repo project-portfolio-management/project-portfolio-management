@@ -1322,7 +1322,7 @@ automatic re-planning); buffer rules and zone boundaries are configuration
 printed with every result; durations in **business days**; missing inputs give
 "no critical chain" with a reason, never a guess.
 
-- [ ] **CC-1 (L) — The critical chain.** From the levelled schedule (SC-6),
+- [x] **CC-1 (L) — The critical chain.** From the levelled schedule (SC-6),
   add **resource links** (a task waiting for a person is linked to the task
   that person was on) and compute the longest chain through dependencies and
   resource links. `GET /api/plans/{pid}/critical-chain`, shown beside the CPM
@@ -1330,6 +1330,8 @@ printed with every result; durations in **business days**; missing inputs give
   share one person yields a chain that crosses paths (pinned by a unit test);
   with no resource contention the chain equals the CPM critical path; a plan
   with no assignments returns `no_critical_chain` with the reason.
+
+  **Built 2026-10-11.** `src/critical_chain.rs` (5 unit tests) + `GET /api/plans/{pid}/critical-chain` (`controllers/critical_chain.rs`, a request test). The schedule is first levelled with the SC-6 code **with critical tasks allowed to move** (a chain is what is left once people's time is respected, so the finish may move; `finish_delay_days` says by how much), then the chain is the longest path by summed business-day duration through *dependency links* (a finish-to-start dependency whose successor starts exactly when the predecessor finishes plus lag) and *resource links* (a task starts the day its person came free), ending on the project's last day. The critical path (dependencies only, schedule as entered) is returned beside it, each chain task says whether it is on that path, and `crosses_paths` is true when a resource link is used; the two are never blended. Missing inputs: `no_critical_chain` with `no_assignments` or `no_scheduled_tasks`. A person is named only to a caller who may manage them (`person-N` otherwise). **Not done, stated:** only finish-to-start dependencies are followed as chain links; a milestone is not a resource link; only the first of equally long chains is returned (`tied_chains` says there was another); every unfinished assigned task asks 100 percent of its assignee (no per-task effort); the levelling is the greedy SC-6 one, not an optimal resource-constrained schedule; nothing is stored, so there is no history of the chain; no screen (CC-6).
 
 - [ ] **CC-2 (S) — Aggressive and safe estimates.** Per task, an aggressive
   (about 50% confidence) and a safe estimate in business days, or a stated rule

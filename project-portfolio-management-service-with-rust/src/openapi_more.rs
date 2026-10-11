@@ -124,6 +124,7 @@ pub fn paths() -> Value {
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
+    merge(&mut all, critical_chain_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1392,6 +1393,18 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The critical chain (CC-1).
+fn critical_chain_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/critical-chain": {
+            "get": op("scheduling", "The critical chain beside the critical path (advice only; changes nothing)",
+                "Inputs: the plan's tasks, dependencies and calendars, who each unfinished task is assigned to, people's availability and their bookings in other plans. The schedule is first levelled for people's time as in the leveling proposal, with critical tasks allowed to move (so the finish may move; finish_delay_days says by how much). The chain is then the longest path, by summed business-day duration, through finish-to-start dependencies that held a task back and resource links (a task started the day its person came free), ending on the project's last day. crosses_paths is true when the chain uses a resource link, which means it is not the critical path; each task says whether it is on the critical path, which is returned beside it, computed from dependencies alone on the schedule as entered, and never blended with the chain. Ties: the earlier task in the input wins and tied_chains says another chain was as long. With no assigned unfinished task the answer is state no_critical_chain with reason no_assignments (or no_scheduled_tasks), never a guess. Only finish-to-start dependencies are followed as links and a milestone is not a resource link. A person is named only to a caller who may manage them; anyone else sees person-N.",
+                vec![uuid_param("pid")],
+                &[("200", "state, chain_days, tasks, links, crosses_paths, tied_chains, critical_path, levelled_finish, finish_delay_days; or state no_critical_chain with reason"), ("404", "Unknown plan"), ("422", "A dependency cycle")])
         }
     })
 }

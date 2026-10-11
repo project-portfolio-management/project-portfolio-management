@@ -98,6 +98,7 @@ pub mod insights;
 pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
+pub mod critical_chain;
 pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;

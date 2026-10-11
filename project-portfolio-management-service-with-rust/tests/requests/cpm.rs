@@ -1287,6 +1287,59 @@ async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let mk_plan = |name: &'static str| {
+            let request = &request;
+            async move {
+                let p: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": name })).await.json();
+                p["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let p = mk_plan("Apollo").await;
+        let none = mk_plan("Unassigned").await;
+        let who = format!("person:{}", uuid::Uuid::new_v4());
+        for (plan, title, days, assignee) in [
+            (&p, "Long path", 5, None),
+            (&p, "B", 2, Some(who.clone())),
+            (&p, "C", 4, Some(who.clone())),
+            (&none, "Alone", 3, None),
+        ] {
+            let mut body = json!({ "title": title, "start_date": "2026-10-05", "duration_days": days });
+            if let Some(a) = assignee {
+                body["assignee_ref"] = json!(a);
+            }
+            request.post(&format!("/api/plans/{plan}/tasks")).json(&body).await.assert_status_success();
+        }
+
+        let r: Value = request.get(&format!("/api/plans/{p}/critical-chain")).await.json();
+        assert_eq!(r["advisory"], true);
+        assert_eq!(r["state"], "chain", "{r}");
+        assert_eq!(r["crosses_paths"], true, "two tasks of one person ran one after the other: {r}");
+        assert_eq!(r["chain_days"], 6, "{r}");
+        assert_eq!(r["tasks"].as_array().unwrap().len(), 2);
+        assert_eq!(r["links"][0]["kind"], "resource");
+        assert_eq!(r["links"][0]["person_ref"], who.as_str(), "auth is off: not masked");
+        assert!(r["finish_delay_days"].as_i64().unwrap() > 0, "waiting for a person moves the finish: {r}");
+        assert_eq!(r["critical_path"]["tasks"][0]["title"], "Long path", "the path is returned beside the chain: {r}");
+        assert!(r["tasks"].as_array().unwrap().iter().all(|t| t["on_critical_path"] == false));
+        let again: Value = request.get(&format!("/api/plans/{p}/critical-chain")).await.json();
+        assert_eq!(r, again, "the same input gives the same chain");
+
+        // Nobody assigned: no chain, and the reason.
+        let r: Value = request.get(&format!("/api/plans/{none}/critical-chain")).await.json();
+        assert_eq!(r["state"], "no_critical_chain");
+        assert_eq!(r["reason"], "no_assignments");
+        assert!(r.get("tasks").is_none(), "no guessed chain: {r}");
+        request.get("/api/plans/00000000-0000-0000-0000-000000000000/critical-chain").await.assert_status(axum::http::StatusCode::NOT_FOUND);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

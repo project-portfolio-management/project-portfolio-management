@@ -76,7 +76,10 @@ async fn set(
         .await
         .map_err(db_err)?;
     let was = existing.as_ref().map(|r| (r.aggressive_days, r.safe_days));
-    match (existing, b.aggressive_days.is_none() && b.safe_days.is_none()) {
+    match (
+        existing,
+        b.aggressive_days.is_none() && b.safe_days.is_none(),
+    ) {
         (Some(r), true) => {
             r.delete(&ctx.db).await.map_err(db_err)?;
         }

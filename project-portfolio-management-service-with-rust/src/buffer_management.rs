@@ -71,9 +71,8 @@ pub fn read(
         .filter(|(t, _)| done.contains(t))
         .map(|(_, d)| d)
         .sum();
-    let slip = forecast_finish.and_then(|f| {
-        Some(calendar.index_of(f)? - calendar.index_of(spec.planned_finish)?)
-    });
+    let slip = forecast_finish
+        .and_then(|f| Some(calendar.index_of(f)? - calendar.index_of(spec.planned_finish)?));
     let base = Reading {
         key: spec.key.clone(),
         buffer_days: spec.days,
@@ -131,7 +130,13 @@ mod tests {
 
     fn at(forecast: NaiveDate, done: &[u128], days: Option<i64>) -> Reading {
         let done: HashSet<Uuid> = done.iter().map(|n| id(*n)).collect();
-        read(&spec(days), &done, Some(forecast), &WorkCalendar::mon_fri(), &DEFAULT_LINES)
+        read(
+            &spec(days),
+            &done,
+            Some(forecast),
+            &WorkCalendar::mon_fri(),
+            &DEFAULT_LINES,
+        )
     }
 
     #[test]
@@ -141,7 +146,10 @@ mod tests {
         assert_eq!(r.slip_days, Some(3));
         let p = r.point.unwrap();
         assert!((p.buffer_consumed_pct - 50.0).abs() < 1e-9);
-        assert!((p.chain_completed_pct - 60.0).abs() < 1e-9, "6 of 10 planned days are done");
+        assert!(
+            (p.chain_completed_pct - 60.0).abs() < 1e-9,
+            "6 of 10 planned days are done"
+        );
     }
 
     #[test]
@@ -173,7 +181,13 @@ mod tests {
         assert!(r.point.is_none());
         assert_eq!(r.no_point, Some(Absent::NoBuffer));
         let done = HashSet::new();
-        let r = read(&spec(Some(5)), &done, None, &WorkCalendar::mon_fri(), &DEFAULT_LINES);
+        let r = read(
+            &spec(Some(5)),
+            &done,
+            None,
+            &WorkCalendar::mon_fri(),
+            &DEFAULT_LINES,
+        );
         assert_eq!(r.no_point, Some(Absent::NoForecast));
     }
 }

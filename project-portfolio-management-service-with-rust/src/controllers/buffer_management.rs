@@ -24,7 +24,9 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::buffer_management::{self as rules, Reading, Spec};
 use crate::fever;
-use crate::models::_entities::{buffer_plans, buffer_recovery_actions as actions, buffer_snapshots};
+use crate::models::_entities::{
+    buffer_plans, buffer_recovery_actions as actions, buffer_snapshots,
+};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn unprocessable(message: &str) -> Error {
@@ -63,7 +65,12 @@ fn specs(doc: &Value) -> Vec<(Spec, Value)> {
             .as_array()
             .into_iter()
             .flatten()
-            .filter_map(|t| Some((Uuid::parse_str(t["pid"].as_str()?).ok()?, t["days"].as_i64()?)))
+            .filter_map(|t| {
+                Some((
+                    Uuid::parse_str(t["pid"].as_str()?).ok()?,
+                    t["days"].as_i64()?,
+                ))
+            })
             .collect();
         let planned = v["planned_finish"]
             .as_str()
@@ -112,14 +119,21 @@ async fn readings(ctx: &AppContext, plan: Uuid, doc: &Value) -> Result<Vec<(Read
         .into_iter()
         .map(|(spec, label)| {
             let forecast = spec.tasks.last().and_then(|(t, _)| finish.get(t)).copied();
-            (rules::read(&spec, &done, forecast, &c.net.plan_cal, &lines), label)
+            (
+                rules::read(&spec, &done, forecast, &c.net.plan_cal, &lines),
+                label,
+            )
         })
         .collect())
 }
 
 fn reading_json(r: &Reading, label: &Value) -> Value {
     let mut v = serde_json::to_value(r).unwrap_or_default();
-    v["kind"] = json!(if r.key == "project" { "project" } else { "feeding" });
+    v["kind"] = json!(if r.key == "project" {
+        "project"
+    } else {
+        "feeding"
+    });
     v["chain"] = label["tasks"].clone();
     v["joins"] = label["joins"].clone();
     if let Some(why) = r.no_point {
@@ -184,9 +198,15 @@ async fn freeze(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan.pid, "buffer_plan_frozen", caller.actor(), Some(json!({ "buffer_plan": row.pid })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "buffer_plan_frozen",
+        caller.actor(),
+        Some(json!({ "buffer_plan": row.pid })),
+    )
+    .await
+    .ok();
     format::json(json!({ "pid": row.pid, "taken_on": row.taken_on, "document": doc }))
 }
 
@@ -201,7 +221,9 @@ async fn show_plan(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Re
         .await
         .map_err(db_err)?;
     let Some(first) = all.first() else {
-        return format::json(json!({ "state": "no_buffer_plan", "reason": "no buffer plan has been frozen for this plan" }));
+        return format::json(
+            json!({ "state": "no_buffer_plan", "reason": "no buffer plan has been frozen for this plan" }),
+        );
     };
     format::json(json!({
         "state": "buffer_plan", "pid": first.pid, "taken_on": first.taken_on, "document": parse_doc(first)?,
@@ -218,7 +240,9 @@ async fn manage(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let Some(row) = latest(&ctx, plan.pid).await? else {
-        return format::json(json!({ "state": "no_buffer_plan", "reason": "no buffer plan has been frozen for this plan: POST buffer-plan once the chain and buffers are agreed" }));
+        return format::json(
+            json!({ "state": "no_buffer_plan", "reason": "no buffer plan has been frozen for this plan: POST buffer-plan once the chain and buffers are agreed" }),
+        );
     };
     let doc = parse_doc(&row)?;
     let rs = readings(&ctx, plan.pid, &doc).await?;
@@ -230,8 +254,16 @@ async fn manage(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    let open: HashSet<&str> = acts.iter().filter(|a| a.status == "open").map(|a| a.buffer_key.as_str()).collect();
-    let red: Vec<&str> = rs.iter().filter(|(r, _)| r.zone() == Some("red")).map(|(r, _)| r.key.as_str()).collect();
+    let open: HashSet<&str> = acts
+        .iter()
+        .filter(|a| a.status == "open")
+        .map(|a| a.buffer_key.as_str())
+        .collect();
+    let red: Vec<&str> = rs
+        .iter()
+        .filter(|(r, _)| r.zone() == Some("red"))
+        .map(|(r, _)| r.key.as_str())
+        .collect();
     let snaps = buffer_snapshots::Entity::find()
         .filter(buffer_snapshots::Column::PlanPid.eq(plan.pid))
         .filter(buffer_snapshots::Column::BufferPlanPid.eq(row.pid))
@@ -248,13 +280,27 @@ async fn manage(
                 .as_array()
                 .into_iter()
                 .flatten()
-                .map(|r| (r["key"].as_str().unwrap_or("").to_string(), r["point"]["zone"].clone()))
+                .map(|r| {
+                    (
+                        r["key"].as_str().unwrap_or("").to_string(),
+                        r["point"]["zone"].clone(),
+                    )
+                })
                 .collect();
             json!({ "pid": s.pid, "taken_on": s.taken_on, "zones": zones })
         })
         .collect();
-    let people: Vec<&str> = acts.iter().filter_map(|a| a.owner_ref.as_deref()).collect::<std::collections::BTreeSet<_>>().into_iter().collect();
-    let label: HashMap<&str, String> = people.iter().enumerate().map(|(i, p)| (*p, format!("person-{}", i + 1))).collect();
+    let people: Vec<&str> = acts
+        .iter()
+        .filter_map(|a| a.owner_ref.as_deref())
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let label: HashMap<&str, String> = people
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (*p, format!("person-{}", i + 1)))
+        .collect();
     format::json(json!({
         "state": "readings",
         "buffer_plan": { "pid": row.pid, "taken_on": row.taken_on },
@@ -300,11 +346,19 @@ async fn snapshot(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan.pid, "buffer_snapshot_taken", caller.actor(), Some(json!({ "snapshot": snap.pid })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "buffer_snapshot_taken",
+        caller.actor(),
+        Some(json!({ "snapshot": snap.pid })),
+    )
+    .await
+    .ok();
     for a in alerts(&rs) {
-        AuditModel::record(&ctx.db, plan.pid, "buffer_red", caller.actor(), Some(a)).await.ok();
+        AuditModel::record(&ctx.db, plan.pid, "buffer_red", caller.actor(), Some(a))
+            .await
+            .ok();
     }
     format::json(json!({ "pid": snap.pid, "taken_on": snap.taken_on, "document": document }))
 }
@@ -330,7 +384,10 @@ async fn add_action(
     let Some(row) = latest(&ctx, plan.pid).await? else {
         return Err(unprocessable("freeze a buffer plan first"));
     };
-    let keys: Vec<String> = specs(&parse_doc(&row)?).into_iter().map(|(s, _)| s.key).collect();
+    let keys: Vec<String> = specs(&parse_doc(&row)?)
+        .into_iter()
+        .map(|(s, _)| s.key)
+        .collect();
     let mut problems = Vec::new();
     if !keys.contains(&b.buffer_key) {
         problems.push(format!("buffer_key must be one of: {}", keys.join(", ")));
@@ -360,9 +417,15 @@ async fn add_action(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan.pid, "buffer_recovery_action_recorded", caller.actor(), Some(json!({ "action": a.pid, "buffer_key": a.buffer_key })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "buffer_recovery_action_recorded",
+        caller.actor(),
+        Some(json!({ "action": a.pid, "buffer_key": a.buffer_key })),
+    )
+    .await
+    .ok();
     format::json(json!({ "pid": a.pid, "buffer_key": a.buffer_key, "status": a.status }))
 }
 
@@ -394,16 +457,25 @@ async fn close_action(
     if a.status != "open" {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
-            ErrorDetail::new("already_closed", "this action is already closed; record a new one"),
+            ErrorDetail::new(
+                "already_closed",
+                "this action is already closed; record a new one",
+            ),
         ));
     }
     let mut m: actions::ActiveModel = a.into();
     m.status = ActiveValue::set(b.status.clone());
     m.closed_on = ActiveValue::set(Some(Utc::now().date_naive()));
     let row = m.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan.pid, "buffer_recovery_action_closed", caller.actor(), Some(json!({ "action": row.pid, "status": row.status })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "buffer_recovery_action_closed",
+        caller.actor(),
+        Some(json!({ "action": row.pid, "status": row.status })),
+    )
+    .await
+    .ok();
     format::json(json!({ "pid": row.pid, "status": row.status, "closed_on": row.closed_on }))
 }
 
@@ -416,5 +488,8 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/buffer-management", get(manage))
         .add("/plans/{pid}/buffer-management/snapshots", post(snapshot))
         .add("/plans/{pid}/buffer-recovery-actions", post(add_action))
-        .add("/plans/{pid}/buffer-recovery-actions/{aid}/status", put(close_action))
+        .add(
+            "/plans/{pid}/buffer-recovery-actions/{aid}/status",
+            put(close_action),
+        )
 }

@@ -134,7 +134,9 @@ pub fn resolve(
     }
     let state = match (aggressive, safe) {
         (Some(a), Some(s)) if a.days > s.days => State::Inconsistent,
-        (Some(a), Some(s)) if a.source == Source::Rule || s.source == Source::Rule => State::Derived,
+        (Some(a), Some(s)) if a.source == Source::Rule || s.source == Source::Rule => {
+            State::Derived
+        }
         (Some(_), Some(_)) => State::Complete,
         _ => State::Missing,
     };
@@ -187,19 +189,37 @@ mod tests {
 
     #[test]
     fn recorded_figures_are_complete() {
-        let r = resolve(Some(10), (Some(5), Some(9)), (None, None), Rule::ExplicitOnly);
+        let r = resolve(
+            Some(10),
+            (Some(5), Some(9)),
+            (None, None),
+            Rule::ExplicitOnly,
+        );
         assert_eq!(
             fig(&r),
-            (Some((5, Source::Recorded)), Some((9, Source::Recorded)), State::Complete)
+            (
+                Some((5, Source::Recorded)),
+                Some((9, Source::Recorded)),
+                State::Complete
+            )
         );
     }
 
     #[test]
     fn the_risk_range_is_reused_and_says_so() {
-        let r = resolve(Some(10), (None, Some(9)), (Some(4), Some(12)), Rule::ExplicitOnly);
+        let r = resolve(
+            Some(10),
+            (None, Some(9)),
+            (Some(4), Some(12)),
+            Rule::ExplicitOnly,
+        );
         assert_eq!(
             fig(&r),
-            (Some((4, Source::RiskRange)), Some((9, Source::Recorded)), State::Complete),
+            (
+                Some((4, Source::RiskRange)),
+                Some((9, Source::Recorded)),
+                State::Complete
+            ),
             "a recorded figure beats the range; the range fills the other"
         );
     }
@@ -209,7 +229,11 @@ mod tests {
         let r = resolve(Some(10), (None, None), (None, None), Rule::ExplicitOnly);
         assert_eq!(fig(&r), (None, None, State::Missing));
         let r = resolve(Some(10), (Some(5), None), (None, None), Rule::ExplicitOnly);
-        assert_eq!(fig(&r), (Some((5, Source::Recorded)), None, State::Missing), "one is not two");
+        assert_eq!(
+            fig(&r),
+            (Some((5, Source::Recorded)), None, State::Missing),
+            "one is not two"
+        );
     }
 
     #[test]
@@ -217,13 +241,21 @@ mod tests {
         let r = resolve(Some(9), (None, None), (None, None), Rule::HalfOfSafe);
         assert_eq!(
             fig(&r),
-            (Some((5, Source::Rule)), Some((9, Source::Rule)), State::Derived),
+            (
+                Some((5, Source::Rule)),
+                Some((9, Source::Rule)),
+                State::Derived
+            ),
             "9 taken as safe; half rounded up is 5"
         );
         let r = resolve(Some(9), (None, Some(6)), (None, None), Rule::HalfOfSafe);
         assert_eq!(
             fig(&r),
-            (Some((3, Source::Rule)), Some((6, Source::Recorded)), State::Derived)
+            (
+                Some((3, Source::Rule)),
+                Some((6, Source::Recorded)),
+                State::Derived
+            )
         );
         let r = resolve(Some(1), (None, None), (None, None), Rule::HalfOfSafe);
         assert_eq!(r.aggressive.map(|f| f.days), Some(1), "never below one day");
@@ -231,23 +263,53 @@ mod tests {
 
     #[test]
     fn milestones_and_undated_tasks_are_not_estimated() {
-        assert_eq!(resolve(Some(0), (None, None), (None, None), Rule::HalfOfSafe).state, State::Milestone);
-        assert_eq!(resolve(None, (Some(1), Some(2)), (None, None), Rule::HalfOfSafe).state, State::NoDuration);
+        assert_eq!(
+            resolve(Some(0), (None, None), (None, None), Rule::HalfOfSafe).state,
+            State::Milestone
+        );
+        assert_eq!(
+            resolve(None, (Some(1), Some(2)), (None, None), Rule::HalfOfSafe).state,
+            State::NoDuration
+        );
     }
 
     #[test]
     fn contradictory_figures_are_flagged() {
-        let r = resolve(Some(10), (Some(8), None), (None, Some(6)), Rule::ExplicitOnly);
-        assert_eq!(r.state, State::Inconsistent, "recorded aggressive 8 over the range's safe 6");
+        let r = resolve(
+            Some(10),
+            (Some(8), None),
+            (None, Some(6)),
+            Rule::ExplicitOnly,
+        );
+        assert_eq!(
+            r.state,
+            State::Inconsistent,
+            "recorded aggressive 8 over the range's safe 6"
+        );
     }
 
     #[test]
     fn recording_is_refused_in_words() {
         assert!(problems(Some(10), Some(5), Some(9)).is_empty());
-        assert_eq!(problems(Some(10), Some(9), Some(5)), ["aggressive_days is above safe_days"]);
-        assert_eq!(problems(Some(10), Some(0), None), ["aggressive_days must be 1 to 3650"]);
-        assert_eq!(problems(None, Some(1), None), ["set the task's duration (duration_days) first"]);
-        assert_eq!(problems(Some(0), None, Some(2)), ["a milestone has no work to estimate"]);
-        assert!(problems(Some(0), None, None).is_empty(), "clearing is always allowed");
+        assert_eq!(
+            problems(Some(10), Some(9), Some(5)),
+            ["aggressive_days is above safe_days"]
+        );
+        assert_eq!(
+            problems(Some(10), Some(0), None),
+            ["aggressive_days must be 1 to 3650"]
+        );
+        assert_eq!(
+            problems(None, Some(1), None),
+            ["set the task's duration (duration_days) first"]
+        );
+        assert_eq!(
+            problems(Some(0), None, Some(2)),
+            ["a milestone has no work to estimate"]
+        );
+        assert!(
+            problems(Some(0), None, None).is_empty(),
+            "clearing is always allowed"
+        );
     }
 }

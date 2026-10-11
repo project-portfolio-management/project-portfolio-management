@@ -69,7 +69,9 @@ pub struct Chain {
 pub enum Outcome {
     Chain(Chain),
     /// No chain, and why: `no_assignments` or `no_scheduled_tasks`.
-    NoCriticalChain { reason: &'static str },
+    NoCriticalChain {
+        reason: &'static str,
+    },
 }
 
 /// Find the critical chain on a levelled schedule. `people` maps a task to the person doing it (only
@@ -91,7 +93,8 @@ pub fn find(
         .iter()
         .map(|n| (n.pid, n.duration.unwrap_or(0)))
         .collect();
-    let position: HashMap<Uuid, usize> = nodes.iter().enumerate().map(|(i, n)| (n.pid, i)).collect();
+    let position: HashMap<Uuid, usize> =
+        nodes.iter().enumerate().map(|(i, n)| (n.pid, i)).collect();
     let mut order: Vec<&crate::cpm::NodeResult> = levelled.nodes.iter().collect();
     order.sort_by_key(|n| (n.es_index, n.ef_index, position.get(&n.pid).copied()));
     if order.is_empty() {
@@ -109,7 +112,10 @@ pub fn find(
         let (Some(p), Some(s)) = (at.get(&e.pred), at.get(&e.succ)) else {
             continue;
         };
-        if s.es_index == p.ef_index + e.lag && rank[&e.pred] < rank[&e.succ] && seen.insert((e.pred, e.succ)) {
+        if s.es_index == p.ef_index + e.lag
+            && rank[&e.pred] < rank[&e.succ]
+            && seen.insert((e.pred, e.succ))
+        {
             into.entry(e.succ)
                 .or_default()
                 .push((e.pred, LinkKind::Dependency, None));
@@ -130,9 +136,11 @@ pub fn find(
                 && rank[&a.pid] < rank[&b.pid]
                 && seen.insert((a.pid, b.pid))
             {
-                into.entry(b.pid)
-                    .or_default()
-                    .push((a.pid, LinkKind::Resource, Some(person.clone())));
+                into.entry(b.pid).or_default().push((
+                    a.pid,
+                    LinkKind::Resource,
+                    Some(person.clone()),
+                ));
             }
         }
     }
@@ -152,10 +160,14 @@ pub fn find(
     }
 
     let finish = order.iter().map(|n| n.ef_index).max().unwrap_or(0);
-    let ends: Vec<&&crate::cpm::NodeResult> = order.iter().filter(|n| n.ef_index == finish).collect();
+    let ends: Vec<&&crate::cpm::NodeResult> =
+        order.iter().filter(|n| n.ef_index == finish).collect();
     let top = ends.iter().map(|n| best[&n.pid].0).max().unwrap_or(0);
-    let at_top: Vec<&&crate::cpm::NodeResult> =
-        ends.iter().copied().filter(|n| best[&n.pid].0 == top).collect();
+    let at_top: Vec<&&crate::cpm::NodeResult> = ends
+        .iter()
+        .copied()
+        .filter(|n| best[&n.pid].0 == top)
+        .collect();
     let Some(end) = at_top.first() else {
         return Outcome::NoCriticalChain {
             reason: "no_scheduled_tasks",
@@ -168,7 +180,11 @@ pub fn find(
     let mut tied = at_top.len() > 1;
     while let Some(i) = best[&cur].1 {
         let longest = best[&into[&cur][i].0].0;
-        tied |= into[&cur].iter().filter(|(f, _, _)| best[f].0 == longest).count() > 1;
+        tied |= into[&cur]
+            .iter()
+            .filter(|(f, _, _)| best[f].0 == longest)
+            .count()
+            > 1;
         let (from, kind, person) = into[&cur][i].clone();
         links.push(Link {
             from,
@@ -236,7 +252,10 @@ mod tests {
     }
 
     fn who(pairs: &[(u128, &str)]) -> HashMap<Uuid, String> {
-        pairs.iter().map(|(n, p)| (id(*n), (*p).to_string())).collect()
+        pairs
+            .iter()
+            .map(|(n, p)| (id(*n), (*p).to_string()))
+            .collect()
     }
 
     fn pids(c: &Chain) -> Vec<Uuid> {
@@ -248,15 +267,26 @@ mod tests {
         // A(3) -> B(2) and C(2) -> D(2). One person does B and D. Unlevelled, B ends day 5 and D
         // ends day 4 (the critical path is A, B). Levelled, D waits for that person and starts day 5.
         let edges = [fs(1, 1, 2), fs(2, 3, 4)];
-        let plain = [node(1, 3, Some(day())), node(2, 2, None), node(3, 2, Some(day())), node(4, 2, None)];
+        let plain = [
+            node(1, 3, Some(day())),
+            node(2, 2, None),
+            node(3, 2, Some(day())),
+            node(4, 2, None),
+        ];
         let path: Vec<Uuid> = run(&plain, &edges).chains[0].clone();
         assert_eq!(path, [id(1), id(2)]);
         let mut levelled = plain;
         levelled[3].planned_start = Some(day() + chrono::Duration::days(5));
         let r = run(&levelled, &edges);
         let out = find(&levelled, &edges, &r, &who(&[(2, "x"), (4, "x")]));
-        let Outcome::Chain(c) = out else { panic!("a chain") };
-        assert_eq!(pids(&c), [id(1), id(2), id(4)], "A, B, then D: it crosses to the other path");
+        let Outcome::Chain(c) = out else {
+            panic!("a chain")
+        };
+        assert_eq!(
+            pids(&c),
+            [id(1), id(2), id(4)],
+            "A, B, then D: it crosses to the other path"
+        );
         assert_eq!(c.chain_days, 7);
         assert!(c.crosses_paths);
         assert_eq!(c.links[1].kind, LinkKind::Resource);
@@ -268,10 +298,17 @@ mod tests {
     #[test]
     fn without_contention_the_chain_is_the_critical_path() {
         let edges = [fs(1, 1, 2), fs(2, 2, 3), fs(3, 4, 3)];
-        let nodes = [node(1, 3, Some(day())), node(2, 4, None), node(3, 2, None), node(4, 2, Some(day()))];
+        let nodes = [
+            node(1, 3, Some(day())),
+            node(2, 4, None),
+            node(3, 2, None),
+            node(4, 2, Some(day())),
+        ];
         let r = run(&nodes, &edges);
         let people = who(&[(1, "a"), (2, "b"), (3, "c"), (4, "d")]);
-        let Outcome::Chain(c) = find(&nodes, &edges, &r, &people) else { panic!("a chain") };
+        let Outcome::Chain(c) = find(&nodes, &edges, &r, &people) else {
+            panic!("a chain")
+        };
         assert_eq!(pids(&c), r.chains[0], "the same tasks in the same order");
         assert!(!c.crosses_paths);
         assert!(c.links.iter().all(|l| l.kind == LinkKind::Dependency));
@@ -284,17 +321,29 @@ mod tests {
         let r = run(&nodes, &[]);
         assert_eq!(
             find(&nodes, &[], &r, &HashMap::new()),
-            Outcome::NoCriticalChain { reason: "no_assignments" }
+            Outcome::NoCriticalChain {
+                reason: "no_assignments"
+            }
         );
     }
 
     #[test]
     fn equally_long_chains_are_reported_as_tied() {
         let edges = [fs(1, 1, 3), fs(2, 2, 3)];
-        let nodes = [node(1, 2, Some(day())), node(2, 2, Some(day())), node(3, 1, None)];
+        let nodes = [
+            node(1, 2, Some(day())),
+            node(2, 2, Some(day())),
+            node(3, 1, None),
+        ];
         let r = run(&nodes, &edges);
-        let Outcome::Chain(c) = find(&nodes, &edges, &r, &who(&[(1, "a")])) else { panic!("a chain") };
-        assert_eq!(pids(&c), [id(1), id(3)], "the earlier task in the input wins");
+        let Outcome::Chain(c) = find(&nodes, &edges, &r, &who(&[(1, "a")])) else {
+            panic!("a chain")
+        };
+        assert_eq!(
+            pids(&c),
+            [id(1), id(3)],
+            "the earlier task in the input wins"
+        );
         assert_eq!(c.chain_days, 3);
         assert!(c.tied_chains);
     }
@@ -302,9 +351,14 @@ mod tests {
     #[test]
     fn a_gap_in_a_persons_day_is_not_a_wait() {
         // B starts three days after the person finished A: they were not waiting for A.
-        let nodes = [node(1, 2, Some(day())), node(2, 2, Some(day() + chrono::Duration::days(5)))];
+        let nodes = [
+            node(1, 2, Some(day())),
+            node(2, 2, Some(day() + chrono::Duration::days(5))),
+        ];
         let r = run(&nodes, &[]);
-        let Outcome::Chain(c) = find(&nodes, &[], &r, &who(&[(1, "x"), (2, "x")])) else { panic!("a chain") };
+        let Outcome::Chain(c) = find(&nodes, &[], &r, &who(&[(1, "x"), (2, "x")])) else {
+            panic!("a chain")
+        };
         assert_eq!(pids(&c), [id(2)]);
         assert!(c.links.is_empty());
     }

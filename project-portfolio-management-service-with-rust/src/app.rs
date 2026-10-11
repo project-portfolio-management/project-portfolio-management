@@ -240,6 +240,7 @@ impl Hooks for App {
             .add_route(controllers::ccpm_estimates::routes())
             .add_route(controllers::buffers::routes())
             .add_route(controllers::buffer_management::routes())
+            .add_route(controllers::drum::routes())
             .add_route(controllers::leveling::routes())
             .add_route(controllers::milestones::routes())
             .add_route(controllers::portfolio_resources::routes())

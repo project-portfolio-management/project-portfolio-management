@@ -81,7 +81,8 @@ pub(crate) async fn build(
                 r.aggressive.is_none()
                     && !matches!(
                         r.state,
-                        crate::ccpm_estimates::State::Milestone | crate::ccpm_estimates::State::NoDuration
+                        crate::ccpm_estimates::State::Milestone
+                            | crate::ccpm_estimates::State::NoDuration
                     )
             })
         })
@@ -90,14 +91,19 @@ pub(crate) async fn build(
     out["scheduled_at_likely_duration"] = json!(using_likely);
 
     let chain_pids: Vec<Uuid> = chain.tasks.iter().map(|t| t.pid).collect();
-    let missing: Vec<Value> = chain_pids.iter().filter(|p| safety(p).is_none()).map(titled).collect();
+    let missing: Vec<Value> = chain_pids
+        .iter()
+        .filter(|p| safety(p).is_none())
+        .map(titled)
+        .collect();
     if !missing.is_empty() {
         out["state"] = json!("no_buffers");
         out["reason"] = json!("estimates_missing");
         out["chain_tasks_missing_estimates"] = json!(missing);
         return Ok((out, None));
     }
-    let when: HashMap<Uuid, &crate::cpm::NodeResult> = levelled.nodes.iter().map(|n| (n.pid, n)).collect();
+    let when: HashMap<Uuid, &crate::cpm::NodeResult> =
+        levelled.nodes.iter().map(|n| (n.pid, n)).collect();
     let cal = &net.plan_cal;
     let last = when[chain_pids.last().expect("a chain has a task")];
     let project_days = buffers::size(
@@ -122,15 +128,27 @@ pub(crate) async fn build(
     let feeders = buffers::feeding_chains(&chain_pids, &own, &net.edges, &aggressive);
     let mut feeding = Vec::new();
     for f in &feeders {
-        let gaps: Vec<Value> = f.tasks.iter().filter(|t| safety(t).is_none()).map(&titled).collect();
+        let gaps: Vec<Value> = f
+            .tasks
+            .iter()
+            .filter(|t| safety(t).is_none())
+            .map(&titled)
+            .collect();
         let mut v = json!({
             "joins": titled(&f.joins),
             "tasks": f.tasks.iter().map(&titled).collect::<Vec<_>>(),
             "duration_days": f.duration_days,
         });
         if gaps.is_empty() {
-            let days = buffers::size(rule, &f.tasks.iter().filter_map(&safety).collect::<Vec<_>>());
-            let ends = f.tasks.last().and_then(|t| when.get(t)).map_or(0, |r| r.ef_index);
+            let days = buffers::size(
+                rule,
+                &f.tasks.iter().filter_map(&safety).collect::<Vec<_>>(),
+            );
+            let ends = f
+                .tasks
+                .last()
+                .and_then(|t| when.get(t))
+                .map_or(0, |r| r.ef_index);
             let room = when.get(&f.joins).map_or(0, |r| r.es_index) - ends;
             v["buffer_days"] = json!(days);
             v["room_before_join_days"] = json!(room.max(0));
@@ -162,8 +180,16 @@ pub(crate) async fn build(
         })).collect::<Vec<_>>(),
     });
 
-    let people: BTreeSet<&str> = chain_pids.iter().filter_map(|p| c.people.get(p)).map(String::as_str).collect();
-    let label: HashMap<&str, String> = people.iter().enumerate().map(|(i, p)| (*p, format!("person-{}", i + 1))).collect();
+    let people: BTreeSet<&str> = chain_pids
+        .iter()
+        .filter_map(|p| c.people.get(p))
+        .map(String::as_str)
+        .collect();
+    let label: HashMap<&str, String> = people
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (*p, format!("person-{}", i + 1)))
+        .collect();
     let alerts: Vec<Value> = chain_pids
         .iter()
         .filter_map(|p| {
@@ -193,4 +219,3 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/plans/{pid}/critical-chain-buffers", get(show))
 }
-

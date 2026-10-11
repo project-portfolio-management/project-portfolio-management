@@ -2207,6 +2207,7 @@ mod tests {
             crate::controllers::ccpm_estimates::routes(),
             crate::controllers::buffers::routes(),
             crate::controllers::buffer_management::routes(),
+            crate::controllers::drum::routes(),
             crate::controllers::leveling::routes(),
             crate::controllers::milestones::routes(),
             crate::controllers::portfolio_resources::routes(),

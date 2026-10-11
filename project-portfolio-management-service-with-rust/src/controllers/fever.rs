@@ -205,14 +205,16 @@ async fn one(
         entry["buffer"] = serde_json::json!({
             "days": r.buffer_days, "source": "critical_chain", "rule": null, "declared_on": row.taken_on,
         });
-        entry["chain"] = serde_json::json!({ "done_days": r.chain_done_days, "total_days": r.chain_total_days });
+        entry["chain"] =
+            serde_json::json!({ "done_days": r.chain_done_days, "total_days": r.chain_total_days });
         if let Some(p) = r.point {
             entry["point"] = serde_json::to_value(&p).map_err(|e| Error::string(&e.to_string()))?;
             entry["previous"] = previous.cloned().unwrap_or(serde_json::Value::Null);
         } else {
             entry["point"] = serde_json::Value::Null;
             if let Some(why) = r.no_point {
-                entry["no_fever_chart_point"] = serde_json::json!({ "code": why, "reason": why.reason() });
+                entry["no_fever_chart_point"] =
+                    serde_json::json!({ "code": why, "reason": why.reason() });
             }
         }
         return Ok(entry);

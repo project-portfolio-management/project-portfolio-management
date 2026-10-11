@@ -128,6 +128,7 @@ pub fn paths() -> Value {
     merge(&mut all, ccpm_estimate_paths());
     merge(&mut all, buffer_paths());
     merge(&mut all, buffer_management_paths());
+    merge(&mut all, drum_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1396,6 +1397,28 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// The drum and the pipeline (CC-5).
+fn drum_paths() -> Value {
+    json!({
+        "/api/portfolio-drum": {
+            "put": op("resources", "Name the skill pool that is the portfolio's drum, or clear the naming",
+                "Body: skill_pool_pid, an active skill pool, or null to clear. Append-only; the latest naming wins. With no naming the drum is the pool with the largest total shortfall in the capacity heatmap. Audited.",
+                vec![],
+                &[("200", "skill_pool_pid, declared_on"), ("422", "No such pool, or it is retired")]),
+            "get": op("resources", "Which skill pool is the drum now, and why",
+                "Inputs: the drum naming history, the skill pools, and the capacity heatmap over the plans the caller may read (from=YYYY-MM, months 1 to 24, default 6). state drum with the pool and why (named, or most_overloaded with its shortfall); state no_drum with a reason (no_skill_pools, no_overloaded_pool or named_pool_retired) otherwise, never a guess.",
+                vec![query("from", false, "YYYY-MM, default this month"), query("months", false, "1 to 24, default 6")],
+                &[("200", "drum, history, note"), ("422", "A bad window")])
+        },
+        "/api/portfolio-pipeline": {
+            "get": op("resources", "A proposed staggered start for each project that needs the drum, with a capacity buffer",
+                "Inputs: the drum (named, or the most overloaded pool; see portfolio-drum), the drum pool's lowest monthly supply in the window as capacity, and the firm allocations of people in the drum pool's roles on plans the caller may read (proposed bookings and plans the caller cannot read are not looked at). Projects are taken in order of first need, then by name; a project is proposed to start later only when those already placed leave no room, to after an earlier project's last drum use plus the capacity buffer (PROJECT_PORTFOLIO_MANAGEMENT_DRUM_BUFFER_DAYS, calendar days, default 7, echoed). Each project says as_planned, staggered, exceeds_drum (it alone asks more than the drum has) or no_slot, with a sentence explaining it. This proposes only; no start date is changed. state no_drum with a reason when there is no drum, and no_capacity when the drum pool has no supply recorded in the window.",
+                vec![query("from", false, "YYYY-MM, default this month"), query("months", false, "1 to 24, default 6")],
+                &[("200", "state, drum, capacity_fte, capacity_buffer_days, projects with outcome and explanation; or state no_drum / no_capacity with a reason"), ("422", "A bad window")])
         }
     })
 }

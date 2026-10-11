@@ -110,6 +110,7 @@ mod m20261010_000061_capacity_heatmap;
 mod m20261010_000062_pack_rhythm;
 mod m20261010_000063_ccpm_estimates;
 mod m20261010_000064_buffer_management;
+mod m20261010_000065_portfolio_drum;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -120,6 +121,7 @@ impl MigratorTrait for Migrator {
     /// The ordered migration set. Order matters: `plans` is created
     /// first because the side tables reference its `pid`, then
     /// `audit_logs` and `merge_records`.
+    #[allow(clippy::too_many_lines)]
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20220101_000001_plans::Migration),
@@ -220,6 +222,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000062_pack_rhythm::Migration),
             Box::new(m20261010_000063_ccpm_estimates::Migration),
             Box::new(m20261010_000064_buffer_management::Migration),
+            Box::new(m20261010_000065_portfolio_drum::Migration),
             // inject-above (do not remove this comment)
         ]
     }

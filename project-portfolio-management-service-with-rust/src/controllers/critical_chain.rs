@@ -19,7 +19,6 @@ use crate::critical_chain::{self, Outcome};
 
 const NOTE: &str = "This is advice; nothing has been changed. The critical chain is the longest chain through dependencies and resource links on a schedule levelled for people's time (critical tasks may move, so the finish may). A resource link means a task started when its person came free. The critical_path is the longest chain through dependencies alone, on the schedule as entered; the two are not blended. Only finish-to-start dependencies are followed as links, and milestones are not resource links. Each unfinished assigned task asks 100 percent of its assignee on each day it works.";
 
-
 /// The schedule as entered, the nodes with the leveling moves applied as planned starts, and the schedule
 /// those give.
 pub(crate) fn schedules(
@@ -35,8 +34,12 @@ pub(crate) fn schedules(
     let options = Options::default();
     let base = cpm::analyze_with(&net.nodes, &net.edges, &net.plan_cal, &net.own, options)
         .map_err(|cpm::CpmError::Cycle(_)| cycle())?;
-    let starts: HashMap<Uuid, chrono::NaiveDate> =
-        c.proposal.moves.iter().map(|m| (m.pid, m.to_start)).collect();
+    let starts: HashMap<Uuid, chrono::NaiveDate> = c
+        .proposal
+        .moves
+        .iter()
+        .map(|m| (m.pid, m.to_start))
+        .collect();
     let nodes: Vec<cpm::Node> = net
         .nodes
         .iter()
@@ -65,7 +68,13 @@ async fn show(
     let (base, nodes, levelled) = schedules(&c)?;
     let net = &c.net;
     let titled = |p: &Uuid| json!({ "pid": p, "title": c.titles.get(p) });
-    let critical_path: Vec<Value> = base.chains.first().into_iter().flatten().map(titled).collect();
+    let critical_path: Vec<Value> = base
+        .chains
+        .first()
+        .into_iter()
+        .flatten()
+        .map(titled)
+        .collect();
     let on_path: BTreeSet<Uuid> = base.chains.iter().flatten().copied().collect();
     let label: HashMap<&str, String> = c
         .people
@@ -116,12 +125,13 @@ async fn show(
                         let mut v = json!({ "from": l.from, "to": l.to, "kind": l.kind });
                         if let Some(person) = &l.person {
                             v["person"] = json!(label[person.as_str()]);
-                            v["person_ref"] = if super::availability::may_manage_person(&caller, person) {
-                                json!(person)
-                            } else {
-                                v["masked"] = json!(true);
-                                Value::Null
-                            };
+                            v["person_ref"] =
+                                if super::availability::may_manage_person(&caller, person) {
+                                    json!(person)
+                                } else {
+                                    v["masked"] = json!(true);
+                                    Value::Null
+                                };
                         }
                         v
                     })

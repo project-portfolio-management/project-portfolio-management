@@ -36,12 +36,15 @@ pub mod availability;
 pub mod baselines;
 pub mod benefit_validation;
 pub mod break_glass;
+pub mod buffer_management;
+pub mod buffers;
 pub mod bulk;
 pub mod calendars;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` and nothing else identity-shaped (T-28l).
 pub mod canvas;
 pub mod capacity_heatmap;
+pub mod ccpm_estimates;
 pub mod change_requests;
 /// Pure collaborative-review + assignee-workload rules.
 pub mod collaboration;
@@ -58,6 +61,7 @@ pub mod controls;
 pub mod cost_rates;
 pub mod cost_risk;
 pub mod cpm;
+pub mod critical_chain;
 pub mod custom_fields;
 pub mod data;
 pub mod delivery_confidence;
@@ -72,6 +76,7 @@ pub mod distribution;
 /// Recorded effort and utilization — including per person, under the
 /// five obligations in `agents/share/time-based-analysis.md` §7.1.
 pub mod documents;
+pub mod drum;
 pub mod earned_value;
 pub mod effort;
 pub mod engineering;
@@ -98,10 +103,6 @@ pub mod insights;
 pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
-pub mod buffer_management;
-pub mod buffers;
-pub mod ccpm_estimates;
-pub mod critical_chain;
 pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;

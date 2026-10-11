@@ -108,7 +108,11 @@ pub fn feeding_chains(
         preds.entry(e.succ).or_default().push(e.pred);
     }
     // Topological order of the nodes outside the chain (Kahn), so the longest-path pass needs no recursion.
-    let outside: Vec<Uuid> = nodes.iter().copied().filter(|n| !on_chain.contains(n)).collect();
+    let outside: Vec<Uuid> = nodes
+        .iter()
+        .copied()
+        .filter(|n| !on_chain.contains(n))
+        .collect();
     let outside_set: HashSet<Uuid> = outside.iter().copied().collect();
     let mut indegree: HashMap<Uuid, usize> = outside.iter().map(|n| (*n, 0)).collect();
     let mut succs: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
@@ -118,7 +122,11 @@ pub fn feeding_chains(
             succs.entry(e.pred).or_default().push(e.succ);
         }
     }
-    let mut queue: Vec<Uuid> = outside.iter().copied().filter(|n| indegree[n] == 0).collect();
+    let mut queue: Vec<Uuid> = outside
+        .iter()
+        .copied()
+        .filter(|n| indegree[n] == 0)
+        .collect();
     let mut order = Vec::new();
     let mut head = 0;
     while head < queue.len() {
@@ -145,7 +153,10 @@ pub fn feeding_chains(
                 best = Some((*l, *p));
             }
         }
-        longest.insert(*n, duration.get(n).copied().unwrap_or(0) + best.map_or(0, |b| b.0));
+        longest.insert(
+            *n,
+            duration.get(n).copied().unwrap_or(0) + best.map_or(0, |b| b.0),
+        );
         via.insert(*n, best.map(|b| b.1));
     }
     let position: HashMap<Uuid, usize> = chain.iter().enumerate().map(|(i, c)| (*c, i)).collect();
@@ -178,7 +189,10 @@ pub fn feeding_chains(
         for t in &tasks {
             taken.insert(*t);
         }
-        let duration_days = tasks.iter().map(|t| duration.get(t).copied().unwrap_or(0)).sum();
+        let duration_days = tasks
+            .iter()
+            .map(|t| duration.get(t).copied().unwrap_or(0))
+            .sum();
         out.push(Feeding {
             joins: join,
             tasks,
@@ -212,8 +226,16 @@ mod tests {
         // safety 4, 6, 3: total 13, half 6.5, rounded up 7.
         assert_eq!(size(SizeRule::CutAndPaste, &[4, 6, 3]), 7);
         assert_eq!(size(SizeRule::CutAndPaste, &[4, 6]), 5);
-        assert_eq!(size(SizeRule::CutAndPaste, &[1]), 1, "never below a day when there is safety");
-        assert_eq!(size(SizeRule::CutAndPaste, &[0, 0]), 0, "no safety, no buffer");
+        assert_eq!(
+            size(SizeRule::CutAndPaste, &[1]),
+            1,
+            "never below a day when there is safety"
+        );
+        assert_eq!(
+            size(SizeRule::CutAndPaste, &[0, 0]),
+            0,
+            "no safety, no buffer"
+        );
     }
 
     #[test]
@@ -232,22 +254,38 @@ mod tests {
     fn a_feeding_chain_is_the_longest_run_of_outside_tasks_into_the_chain() {
         // Chain: 10 -> 11. Feeders: 1 -> 2 -> 11 (durations 3, 2) and 3 -> 11 (duration 4).
         let nodes = [id(10), id(11), id(1), id(2), id(3)];
-        let edges = [edge(1, 10, 11), edge(2, 1, 2), edge(3, 2, 11), edge(4, 3, 11)];
+        let edges = [
+            edge(1, 10, 11),
+            edge(2, 1, 2),
+            edge(3, 2, 11),
+            edge(4, 3, 11),
+        ];
         let dur: HashMap<Uuid, i64> = [(10, 5), (11, 5), (1, 3), (2, 2), (3, 4)]
             .iter()
             .map(|(n, d)| (id(*n), *d))
             .collect();
         let f = feeding_chains(&[id(10), id(11)], &nodes, &edges, &dur);
         assert_eq!(f.len(), 2);
-        assert_eq!((f[0].joins, &f[0].tasks[..], f[0].duration_days), (id(11), &[id(1), id(2)][..], 5));
-        assert_eq!((f[1].joins, &f[1].tasks[..], f[1].duration_days), (id(11), &[id(3)][..], 4));
+        assert_eq!(
+            (f[0].joins, &f[0].tasks[..], f[0].duration_days),
+            (id(11), &[id(1), id(2)][..], 5)
+        );
+        assert_eq!(
+            (f[1].joins, &f[1].tasks[..], f[1].duration_days),
+            (id(11), &[id(3)][..], 4)
+        );
     }
 
     #[test]
     fn a_task_feeding_two_joins_is_buffered_once() {
         // Chain 10 -> 11 -> 12. Task 1 feeds both 11 and 12: the earlier join takes it.
         let nodes = [id(10), id(11), id(12), id(1)];
-        let edges = [edge(1, 10, 11), edge(2, 11, 12), edge(3, 1, 11), edge(4, 1, 12)];
+        let edges = [
+            edge(1, 10, 11),
+            edge(2, 11, 12),
+            edge(3, 1, 11),
+            edge(4, 1, 12),
+        ];
         let dur: HashMap<Uuid, i64> = [(1, 3)].iter().map(|(n, d)| (id(*n), *d)).collect();
         let f = feeding_chains(&[id(10), id(11), id(12)], &nodes, &edges, &dur);
         assert_eq!(f.len(), 1);
@@ -257,7 +295,12 @@ mod tests {
     #[test]
     fn no_outside_task_means_no_feeding_chain() {
         let nodes = [id(10), id(11)];
-        let f = feeding_chains(&[id(10), id(11)], &nodes, &[edge(1, 10, 11)], &HashMap::new());
+        let f = feeding_chains(
+            &[id(10), id(11)],
+            &nodes,
+            &[edge(1, 10, 11)],
+            &HashMap::new(),
+        );
         assert!(f.is_empty());
     }
 }

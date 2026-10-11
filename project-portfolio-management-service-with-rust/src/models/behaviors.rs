@@ -62,6 +62,7 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for portfolio_drum::ActiveModel {}
 impl ActiveModelBehavior for buffer_plans::ActiveModel {}
 impl ActiveModelBehavior for buffer_snapshots::ActiveModel {}
 impl ActiveModelBehavior for buffer_recovery_actions::ActiveModel {}

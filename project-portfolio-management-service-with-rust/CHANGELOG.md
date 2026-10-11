@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the drum and the pipeline (CC-5, 2026-10-11)
+
+`PUT`/`GET /api/portfolio-drum` (a named skill pool, else the most overloaded) and `GET /api/portfolio-pipeline`: projects needing the drum at once are proposed a staggered start with a capacity buffer and an explanation, over the plans the caller may read. A proposal only; no date is changed. Migration 65.
+
 ### Added — buffer management (CC-4, 2026-10-11)
 
 `POST`/`GET /api/plans/{pid}/buffer-plan` freeze the chain and buffers as planned; `GET …/buffer-management` reads each buffer (chain completed, consumed = forecast slip over the buffer, zone from the fever chart's lines), alerts naming a red chain, snapshots as history, and recovery actions that are recorded, audited and closed once. The fever chart now reads a frozen buffer plan in place of a declared buffer and the baselined critical path. Migration 64.

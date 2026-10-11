@@ -226,6 +226,7 @@ async fn compute_body(
     let heatmap = super::capacity_heatmap::pack_section(ctx, &included_set, cut_off).await?;
     let signoffs = super::milestone_signoffs::pack_section(ctx, &included_set).await?;
     let asks = super::governance::asks_section(ctx, period).await?;
+    let register = super::register::pack_section(ctx, &included_set).await?;
     let body = serde_json::json!({
         "cover": {
             "pack_pid": pid, "version": version, "supersedes_pid": supersedes,
@@ -241,6 +242,7 @@ async fn compute_body(
             "plans_left_out_private_or_marked": excluded,
             "sections_included": ["portfolio_map", "exceptions", "gate_decisions", "funding", "buffer_fever", "earned_value", "benefits", "capacity_heatmap", "milestone_signoffs", "external_asks", "issues", "change_requests"],
             "sections_not_yet_built": [],
+            "register_completeness": register,
             "note": "A section that is not built is absent from this pack, not zero or green.",
         },
         "portfolio_map": portfolio_map,

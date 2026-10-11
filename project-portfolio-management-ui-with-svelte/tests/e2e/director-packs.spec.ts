@@ -33,6 +33,8 @@ test.describe("director packs (DP-11)", () => {
     await expect(care.first()).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*shortfall/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*no supply recorded/ })).toContainText("–");
+    await expect(page.getByRole("row", { name: /Care.*70%.*senior responsible owner, schedule baseline/ })).toContainText("▲");
+    await expect(page.getByText("Programmes with a complete register: 2 of 4.")).toBeVisible();
     await expect(page.getByRole("row", { name: /A new portal.*Displaces the records migration/ })).toBeVisible();
     await expect(page.getByRole("row", { name: /Faster reports.*no trade-off named yet/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Portal.*12.*7.*5.*1\.75.*2, 4, 7/ })).toBeVisible();

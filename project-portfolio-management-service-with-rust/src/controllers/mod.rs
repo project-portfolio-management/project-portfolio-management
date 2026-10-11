@@ -253,6 +253,7 @@ pub mod handover;
 pub mod includes;
 pub mod kpis;
 pub mod leveling;
+pub mod register;
 pub mod programme_profile;
 pub mod milestone_signoffs;
 pub mod organizations;

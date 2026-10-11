@@ -242,6 +242,7 @@ impl Hooks for App {
             .add_route(controllers::buffer_management::routes())
             .add_route(controllers::drum::routes())
             .add_route(controllers::organizations::routes())
+            .add_route(controllers::register::routes())
             .add_route(controllers::programme_profile::routes())
             .add_route(controllers::milestone_signoffs::routes())
             .add_route(controllers::leveling::routes())

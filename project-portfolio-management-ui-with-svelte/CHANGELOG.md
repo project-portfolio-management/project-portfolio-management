@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — register completeness in the director pack page (EX-1, 2026-10-11)
+
+The data-quality section shows how many programmes have a complete register and a table of the incomplete ones with each missing field named. English and Welsh.
+
 ### Added — external asks in the director pack page (EX-13, 2026-10-11)
 
 A section listing the asks raised in the period and what each displaces, or that none is named yet. English and Welsh.

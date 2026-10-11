@@ -1029,7 +1029,7 @@ oversight by its sponsor) needs from a portfolio tool, generalized from the
 owner's private notes. Assessment, gaps, findings F-10 to F-13 and owner
 questions in [plan.md §39–§45](plan.md).
 
-- [ ] **EX-1 (M) — Register completeness; optional "no register, no money".**
+- [x] **EX-1 (M) — Register completeness; optional "no register, no money".**
   A completeness score per programme over SRO, partners, stage, baseline and
   forecast dates, budget, funding source, confidence, top risks and
   dependencies, each missing field named. A deployment switch (off by default)
@@ -1038,6 +1038,8 @@ questions in [plan.md §39–§45](plan.md).
   (DP-1) lists every incomplete programme; with the switch on, the refusal is
   422 listing fields; with it off, the action succeeds and the warning is
   audited.
+
+  **Built 2026-10-11.** `src/register_completeness.rs` (5 unit tests), `controllers/register.rs`, `GET /api/register-completeness`: per programme the share of applicable fields on record out of ten (a lead standing for the SRO; partners, asked only where the delivery model has partners; stage; a schedule baseline; a target date; budget lines; a funding source on each line, asked only where there is a line; a delivery-confidence assessment; risks; plan dependencies) with **each missing field named**. The pack's data-quality panel lists every incomplete programme with its missing fields (English and Welsh). `PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED` (off by default): on, releasing a budget line or booking a firm allocation (not a proposed one) on a programme with an incomplete register is 422 `register_incomplete` naming the fields; off, the action succeeds and `register_incomplete_warning` is audited. Tested in `tests/organizations.rs`. **Not done, stated:** there is no senior-responsible-owner role, so the plan's lead stands for it; the check reads the programme as the plan or its nearest ancestor of kind Program, and a plan under none is not checked; 'partners' counts a commitment or a sign-off requirement that names an organization (EX-3), since plans do not yet list their partner organizations; the baseline and confidence checks look at the programme and the plans under it; the switch is deployment-wide; only budget-line release and firm allocation are guarded (not other money movements); no screen.
 
 - [x] **EX-2 (S) — Delivery-model typology.** `central_product |
   central_platform_local_deployment | local_programme_central_standards` on a

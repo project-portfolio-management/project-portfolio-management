@@ -290,6 +290,44 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(asks["asks"][0]["tradeoff"], "Displaces the records migration by one quarter");
         assert_eq!(asks["without_named_tradeoff"], 0);
 
+        // ── EX-1: register completeness, and "no register, no money" ──
+        let reg: Value = with!(request.get("/api/register-completeness"), writer).await.json();
+        let care = reg["programmes"].as_array().unwrap().iter().find(|p| p["name"] == "Care").cloned().unwrap();
+        assert_eq!(care["complete"], false);
+        let missing: Vec<&str> = care["missing"].as_array().unwrap().iter().map(|m| m.as_str().unwrap()).collect();
+        for want in ["sro", "stage", "baseline", "target_date", "budget", "confidence", "top_risks", "dependencies"] {
+            assert!(missing.contains(&want), "{want} should be named missing: {care}");
+        }
+        assert!(!missing.contains(&"partners"), "it has partner commitments on record (and a delivery model with partners)");
+        assert!(care["not_applicable"].as_array().unwrap().iter().any(|f| f == "funding_source"), "no budget line, so no funding source is asked");
+        assert_eq!(reg["enforced"], false);
+        let alloc = |booking: &str| {
+            let (request, writer, prog) = (&request, writer.clone(), prog.clone());
+            let body = json!({ "person_ref": format!("person:{}", uuid::Uuid::new_v4()), "percent": 50, "booking": booking });
+            async move { request.post(&format!("/api/plans/{prog}/allocations")).add_header(writer.0, writer.1).json(&body).await }
+        };
+        assert_eq!(alloc("committed").await.status_code(), 200, "switch off: the action goes ahead");
+        {
+            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+            use project_portfolio_management_service::models::_entities::audit_logs;
+            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("register_incomplete_warning")).count(&_ctx.db).await.unwrap();
+            assert_eq!(n, 1, "and the warning is audited");
+        }
+        // SAFETY: this binary is single-test, so nothing else reads the setting concurrently.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED", "on") };
+        let refused = alloc("committed").await;
+        assert_eq!(refused.status_code(), 422, "switch on: refused");
+        let text = refused.text();
+        assert!(text.contains("register_incomplete") && text.contains("sro") && text.contains("baseline"), "naming the fields: {text}");
+        assert_eq!(alloc("proposed").await.status_code(), 200, "a proposed booking is not money");
+        let reg: Value = with!(request.get("/api/register-completeness"), writer).await.json();
+        assert_eq!(reg["enforced"], true);
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED") };
+        let d4: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "escalation_board" })).await.json();
+        let pack4: Value = with!(request.get(&format!("/api/director-packs/{}", d4["pid"].as_str().unwrap())), issuer).await.json();
+        let rc = &pack4["body"]["data_quality"]["register_completeness"];
+        assert!(rc["incomplete"].as_array().unwrap().iter().any(|p| p["name"] == "Care"), "the data-quality panel lists it: {rc}");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

@@ -5,7 +5,7 @@ export const BODY = {
   cover: { pack_pid: "p1", version: 2, period: "2026-10", audience: "board", previous_issued_pack: { pid: "p0", period: "2026-09", version: 1 } },
   what_changed: ["Open issues: 9, was 4", "Change requests waiting for a decision: 5, unchanged"],
   basis: "Records dated on or before the cut-off.",
-  data_quality: { plans_included: 17, plans_left_out_private_or_marked: 3, sections_included: ["issues"], sections_not_yet_built: [] },
+  data_quality: { plans_included: 17, plans_left_out_private_or_marked: 3, sections_included: ["issues"], sections_not_yet_built: [] , register_completeness: { programmes: 4, complete: 2, enforced: false, incomplete: [{ name: "Care", score_pct: 70, missing: ["sro", "baseline"] }, { name: "Loose", score_pct: 30, missing: ["budget", "top_risks"] }] } },
   portfolio_map: {
     period: "2026-10", programmes_total: 3,
     groups: [

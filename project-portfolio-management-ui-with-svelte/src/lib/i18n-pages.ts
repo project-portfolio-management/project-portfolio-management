@@ -2824,6 +2824,22 @@ export const PAGES_EN = {
   "p.director_pack.ask_none": "no trade-off named yet",
   "p.director_pack.c_ask": "Ask",
   "p.director_pack.c_tradeoff": "What it displaces",
+  "p.director_pack.register_line": "Programmes with a complete register: {complete} of {n}.",
+  "p.director_pack.register_enforced": "A budget line is not released, and no firm allocation is booked, on a programme with an incomplete register.",
+  "p.director_pack.register_not_enforced": "An incomplete register is a warning, not a bar: money can still move, and the warning is audited.",
+  "p.director_pack.s_register": "Programmes with an incomplete register",
+  "p.director_pack.c_score": "Complete",
+  "p.director_pack.c_missing": "Missing",
+  "p.director_pack.rf_sro": "senior responsible owner",
+  "p.director_pack.rf_partners": "partners",
+  "p.director_pack.rf_stage": "stage",
+  "p.director_pack.rf_baseline": "schedule baseline",
+  "p.director_pack.rf_target_date": "target date",
+  "p.director_pack.rf_budget": "budget",
+  "p.director_pack.rf_funding_source": "funding source",
+  "p.director_pack.rf_confidence": "delivery confidence",
+  "p.director_pack.rf_top_risks": "top risks",
+  "p.director_pack.rf_dependencies": "dependencies",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -725,6 +725,9 @@ async fn create_allocation(
         return Err(unprocessable(&problems.join("; ")));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
+    if payload.booking.as_deref() != Some("proposed") {
+        super::register::guard(&ctx, &caller, item.pid, "booking a firm allocation").await?;
+    }
     let row = allocations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),

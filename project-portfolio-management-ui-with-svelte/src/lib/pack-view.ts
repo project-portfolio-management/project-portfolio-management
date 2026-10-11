@@ -129,11 +129,24 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   const dash = "–";
   const dq = obj(body.data_quality);
   const missing = (Array.isArray(dq.sections_not_yet_built) ? dq.sections_not_yet_built : []).map(String);
+  // Register completeness: every incomplete programme with each missing field named (EX-1).
+  const rc = obj(dq.register_completeness);
+  const rcRows: Cell[][] = arr(rc.incomplete).map((r) => [
+    plain(str(r.name)),
+    plain(`${fixed(numOrNull(r.score_pct), 0, d.locale)}%`),
+    { text: (Array.isArray(r.missing) ? r.missing : []).map((f) => d.t(`${K}rf_${String(f)}`)).join(", "), symbol: "▲", tone: "red" as Tone },
+  ]);
   add("quality", [
     d.t(`${K}plans_included`, { n: numOrNull(dq.plans_included) ?? 0 }),
     d.t(`${K}plans_left_out`, { n: numOrNull(dq.plans_left_out_private_or_marked) ?? 0 }),
     missing.length ? d.t(`${K}sections_missing`, { list: missing.join(", ") }) : d.t(`${K}all_sections`),
-  ]);
+    d.t(`${K}register_line`, { complete: numOrNull(rc.complete) ?? 0, n: numOrNull(rc.programmes) ?? 0 }),
+    rc.enforced === true ? d.t(`${K}register_enforced`) : d.t(`${K}register_not_enforced`),
+  ], rcRows.length ? [{
+    caption: d.t(`${K}s_register`),
+    columns: ["c_programme", "c_score", "c_missing"].map((k) => d.t(`${K}${k}`)),
+    rows: rcRows,
+  }] : []);
 
   const changed = (Array.isArray(body.what_changed) ? body.what_changed : []).map((x) => changedLine(String(x), d));
   add("changed", changed.length ? changed : [d.t(`${K}nothing_here`)]);

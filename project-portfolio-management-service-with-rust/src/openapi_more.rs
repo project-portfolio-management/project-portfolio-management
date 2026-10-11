@@ -133,6 +133,7 @@ pub fn paths() -> Value {
     merge(&mut all, milestone_signoff_paths());
     merge(&mut all, programme_profile_paths());
     merge(&mut all, external_ask_paths());
+    merge(&mut all, register_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1401,6 +1402,17 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Register completeness (EX-1).
+fn register_paths() -> Value {
+    json!({
+        "/api/register-completeness": {
+            "get": op("governance", "How complete each programme's register is, and what is missing",
+                "Inputs: each programme (a plan of kind Program) the caller may read and what is on record for it and the plans under it: a lead (standing for the senior responsible owner), partners (asked only where the delivery model has partners), a stage, a schedule baseline, a target date, budget lines, a funding source on each line (asked only where there is a line), a delivery-confidence assessment, risks and plan dependencies. The score is the share of applicable fields present and every missing field is named; a field that does not apply is listed as such. enforced says whether PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED is on: then releasing a budget line or booking a firm allocation on an incomplete programme is refused with 422 register_incomplete naming the fields; off (the default) the action succeeds and a register_incomplete_warning is audited.",
+                vec![], &[("200", "enforced, programmes with score and missing fields, fields, note")])
         }
     })
 }

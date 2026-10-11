@@ -1122,6 +1122,7 @@ async fn release_budget_line(
             item.stage.as_deref().unwrap_or("pre_gate")
         )));
     }
+    super::register::guard(&ctx, &caller, item.pid, "releasing a budget line").await?;
     let line_pid = line.pid;
     let mut active: budget_lines::ActiveModel = line.into();
     active.released_at = ActiveValue::set(Some(chrono::Utc::now().into()));

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — register completeness (EX-1, 2026-10-11)
+
+`GET /api/register-completeness` scores each programme's register and names each missing field; the director pack's data-quality panel lists the incomplete ones. An optional deployment switch refuses a budget-line release or a firm allocation on an incomplete programme, naming what is missing; with it off the action goes ahead and the warning is audited.
+
 ### Added — named trade-offs for external asks (EX-13, 2026-10-11)
 
 A proposal tagged as an external ask cannot be approved until it names what it displaces (`PUT /api/proposals/{pid}/tradeoff`); the director pack lists the period's asks and trade-offs. Migration 69.

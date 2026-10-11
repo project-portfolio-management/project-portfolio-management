@@ -173,3 +173,64 @@ describe("getPage", () => {
     expect(page.offset).toBe(0);
   });
 });
+
+describe("ApiClient Idempotency-Key", () => {
+  const key = (f: { calls: Array<{ init: RequestInit }> }, i = 0) =>
+    (f.calls[i]?.init.headers as Record<string, string>)["idempotency-key"];
+
+  // Pins: every POST carries a key; a read carries none.
+  it("sends a key on POST and none on GET, PUT or DELETE", async () => {
+    const f = fakeFetch(200, {});
+    const c = client(f);
+    await c.post("/api/x", { body: { a: 1 } });
+    await c.get("/api/x");
+    await c.put("/api/x", { body: {} });
+    await c.delete("/api/x");
+    expect(key(f, 0)).toMatch(/\S{8,}/);
+    expect([key(f, 1), key(f, 2), key(f, 3)]).toEqual([undefined, undefined, undefined]);
+  });
+
+  // Pins: a separate action is a separate key.
+  it("uses a new key for each separate call", async () => {
+    const f = fakeFetch(200, {});
+    const c = client(f);
+    await c.post("/api/x", { body: { a: 1 } });
+    await c.post("/api/x", { body: { a: 1 } });
+    expect(key(f, 0)).not.toBe(key(f, 1));
+  });
+
+  // Pins: a double submit while the first is in flight is one key, so the service can treat it as one.
+  it("reuses the key for an identical POST still in flight", async () => {
+    const f = fakeFetch(200, {});
+    const c = client(f);
+    await Promise.all([
+      c.post("/api/x", { body: { a: 1 } }),
+      c.post("/api/x", { body: { a: 1 } }),
+      c.post("/api/x", { body: { a: 2 } }),
+    ]);
+    expect(key(f, 0)).toBe(key(f, 1));
+    expect(key(f, 2)).not.toBe(key(f, 0));
+  });
+
+  // Pins: the caller's own key wins, and false sends none.
+  it("honours a caller's key, a caller's header, and false", async () => {
+    const f = fakeFetch(200, {});
+    const c = client(f);
+    await c.post("/api/x", { body: {}, idempotencyKey: "mine-1" });
+    await c.post("/api/x", { body: {}, headers: { "Idempotency-Key": "mine-2" } });
+    await c.post("/api/x", { body: {}, idempotencyKey: false });
+    expect(key(f, 0)).toBe("mine-1");
+    expect((f.calls[1]?.init.headers as Record<string, string>)["Idempotency-Key"]).toBe("mine-2");
+    expect(key(f, 1)).toBeUndefined();
+    expect(key(f, 2)).toBeUndefined();
+  });
+
+  // Pins: a failed request frees the in-flight slot, so a retry after a failure is a new request.
+  it("forgets the in-flight key when the request fails", async () => {
+    const f = fakeFetch(500, { error: "boom" });
+    const c = client(f);
+    await caughtError(c.post("/api/x", { body: { a: 1 } }));
+    await caughtError(c.post("/api/x", { body: { a: 1 } }));
+    expect(key(f, 0)).not.toBe(key(f, 1));
+  });
+});

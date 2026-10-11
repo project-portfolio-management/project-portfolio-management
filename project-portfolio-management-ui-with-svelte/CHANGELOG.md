@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the API client sends an Idempotency-Key on every POST (2026-10-11)
+
+A fresh key per call, reused while an identical POST (same path and body) is still in flight, so a double click is one request to the service. A caller can pass its own `idempotencyKey` to reuse across a retry, or `false` for none; a caller's own `Idempotency-Key` header wins. The proxy already forwards request headers. **Be clear about what it buys today:** the service replays on this key only for bulk imports; elsewhere it ignores it, so a double submit of another POST is still two writes at the service. The key is what makes server-side replay possible; the service side is not built for other routes.
+
 ### Added — the change requests page (IR-4, 2026-10-10)
 
 `/change-requests` lists change requests across plans with a status summary and filters, in English and Welsh (draft). Read-only: drafting and deciding are through the API.

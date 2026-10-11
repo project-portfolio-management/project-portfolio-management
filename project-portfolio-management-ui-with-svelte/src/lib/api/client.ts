@@ -35,6 +35,19 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   /** Abort signal for cancellation (e.g. component teardown). */
   signal?: AbortSignal;
+  /**
+   * The `Idempotency-Key` for a `POST`. Omit to let the client choose one: a fresh key per call, reused
+   * while an identical `POST` (same path and body) is still in flight, so a double click is one request
+   * to the service. Pass your own to reuse a key across a retry; pass `false` to send none.
+   */
+  idempotencyKey?: string | false;
+}
+
+/** A fresh key. `crypto.randomUUID` needs a secure context; the fallback is for plain http and tests. */
+function newIdempotencyKey(): string {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === "function") return c.randomUUID();
+  return `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
 /**
@@ -99,6 +112,8 @@ export class ApiClient {
   private readonly baseUrl: string;
   /** The `fetch` implementation to use for every request. */
   private readonly fetchFn: typeof fetch;
+  /** Keys of `POST`s in flight, by method, path and body, so an identical double submit shares one key. */
+  private readonly inflight = new Map<string, { key: string; count: number }>();
 
   /**
    * @param options Base URL, plus optional `fetch` seam.
@@ -232,6 +247,22 @@ export class ApiClient {
       accept: "application/json",
       ...opts.headers,
     };
+    // A POST carries an Idempotency-Key (a caller's own header wins). The service honours it where it
+    // can replay (bulk import) and ignores it elsewhere; sending it is harmless and lets a retry be safe.
+    let inflightKey: string | undefined;
+    const hasKey = Object.keys(headers).some((h) => h.toLowerCase() === "idempotency-key");
+    if (method === "POST" && !hasKey && opts.idempotencyKey !== false) {
+      if (opts.idempotencyKey) {
+        headers["idempotency-key"] = opts.idempotencyKey;
+      } else {
+        const sig = `${path}\n${opts.rawBody ?? JSON.stringify(opts.body ?? null)}`;
+        const held = this.inflight.get(sig);
+        if (held) held.count += 1;
+        else this.inflight.set(sig, { key: newIdempotencyKey(), count: 1 });
+        headers["idempotency-key"] = (held ?? this.inflight.get(sig))!.key;
+        inflightKey = sig;
+      }
+    }
     // The BFF proxy injects the bearer server-side; this client sends a
     // bearer only when one is explicitly passed for this request.
     if (opts.token) {
@@ -255,7 +286,15 @@ export class ApiClient {
       path.startsWith("/") ? path.slice(1) : path,
       `${this.baseUrl}/`,
     ).toString();
-    const response = await this.fetchFn(url, init);
+    let response: Response;
+    try {
+      response = await this.fetchFn(url, init);
+    } finally {
+      if (inflightKey !== undefined) {
+        const held = this.inflight.get(inflightKey);
+        if (held && (held.count -= 1) <= 0) this.inflight.delete(inflightKey);
+      }
+    }
 
     // Read as text first so we can handle empty bodies (soft-delete) and
     // non-JSON error pages without a hard parse failure.

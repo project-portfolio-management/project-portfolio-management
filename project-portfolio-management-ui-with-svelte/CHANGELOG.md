@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — milestone sign-off in the director pack page (EX-4, 2026-10-11)
+
+A section for milestones that need partner sign-off: delivered, met and the gap, each state a word and a shape as well as a tone. English and Welsh.
+
 ### Added — the critical chain, buffers and the drum (CC-6, 2026-10-11)
 
 `/plans/[pid]/critical-chain` (the chain and its buffers as labelled bars with tables, beside the critical path), `/plans/[pid]/buffers` (a fever chart per buffer, an alert naming a red chain, recovery actions, snapshots) and `/pipeline` (the drum and the proposed staggered starts). A zone is a word and a shape (circle, diamond, triangle) as well as a colour; every chart has a table that gives the same figures. Axe passes in `en-001`, `cy-001` and `zh-cn`.

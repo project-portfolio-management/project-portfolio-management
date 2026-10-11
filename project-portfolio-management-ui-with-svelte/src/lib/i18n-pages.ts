@@ -2792,6 +2792,18 @@ export const PAGES_EN = {
   "p.critical_chain.col_delay": "Later by (days)",
   "p.critical_chain.col_why": "Why",
   "p.critical_chain.could_not_load_pipeline": "Could not load the pipeline",
+  "p.director_pack.s_signoffs": "Milestone sign-off",
+  "p.director_pack.signoffs_note": "Some milestones are met only when the partner organizations they name have signed them off. Delivered is the delivery organization saying it is done; met is delivered with every sign-off in force. A sign-off that is withdrawn counts as outstanding.",
+  "p.director_pack.signoffs_totals": "Needing sign-off: {n}. Delivered: {delivered}. Met: {met}. Delivered but not met: {gap}. Met, as a share of those delivered: {share}.",
+  "p.director_pack.so_met": "met",
+  "p.director_pack.so_delivered_not_met": "delivered, not met",
+  "p.director_pack.so_not_delivered": "not delivered",
+  "p.director_pack.so_no_share": "none delivered yet",
+  "p.director_pack.c_milestone": "Milestone",
+  "p.director_pack.c_due": "Due",
+  "p.director_pack.c_delivered_on": "Delivered on",
+  "p.director_pack.c_met_on": "Met on",
+  "p.director_pack.c_outstanding": "Sign-off outstanding from",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -68,6 +68,13 @@ export const BODY = {
     { currency: "GBP", recurrence: "recurring", classification: "cash_releasing", planned_minor: 100_000, claimed_minor: 60_000, validated_minor: 20_000, unvalidated_claim_minor: 40_000 },
     { currency: "GBP", recurrence: "one_off", classification: "not_stated", planned_minor: 500_000, claimed_minor: 0, validated_minor: 0, unvalidated_claim_minor: 0 },
   ] },
+  milestone_signoffs: {
+    totals: { requiring_signoff: 3, delivered: 2, met: 1, delivered_not_met: 1, met_share_of_delivered_bp: 5000 },
+    milestones: [
+      { name: "Cutover", due: "2026-12-01", signoff: { state: "delivered_not_met", delivered_on: "2026-11-28", met_on: null, outstanding: ["Acme Council"] } },
+      { name: "Training", due: "2026-11-01", signoff: { state: "met", delivered_on: "2026-10-30", met_on: "2026-11-02", outstanding: [] } },
+    ],
+  },
   capacity_heatmap: { months: ["2026-10"], pools: [
     { pool_pid: "q1", name: "Engineering", cells: [
       { month: "2026-10", state: "shortfall", demand_fte: 2, supply_fte: 1, gap_fte: -1, partner_delivery_short: true },

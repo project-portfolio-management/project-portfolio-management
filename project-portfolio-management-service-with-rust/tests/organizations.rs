@@ -165,6 +165,66 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         with!(request.get(&format!("/api/director-packs/{pk}")), acme_user).await.assert_status_ok();
         assert_ne!(with!(request.get(&format!("/api/director-packs/{pk}")), other_user).await.status_code(), 200);
 
+        // ── EX-4: a milestone is met only with its partners' sign-off ──
+        let proj: Value = with!(request.post("/api/plans"), writer).json(&json!({ "kind": "Project", "name": "Go-live" })).await.json();
+        let proj = proj["pid"].as_str().unwrap().to_string();
+        let ms: Value = with!(request.post(&format!("/api/plans/{proj}/milestones")), writer).json(&json!({ "name": "Cutover", "due": "2026-12-01" })).await.json();
+        let mp = ms["pid"].as_str().unwrap().to_string();
+        let base = format!("/api/plans/{proj}/milestones/{mp}");
+        with!(request.put(&format!("{base}/signoff-required")), writer).json(&json!({ "organization_pids": [acme_pid, other_pid] })).await.assert_status_ok();
+        assert_eq!(with!(request.put(&format!("{base}/signoff-required")), writer).json(&json!({ "organization_pids": [uuid::Uuid::new_v4()] })).await.status_code(), 422);
+        let state = |v: &Value| v["milestones"].as_array().unwrap().iter().find(|m| m["name"] == "Cutover").cloned().unwrap();
+        let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
+        assert_eq!(state(&sum)["signoff"]["state"], "not_delivered");
+
+        with!(request.post(&format!("{base}/complete")), writer).json(&json!({})).await.assert_status_success();
+        let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
+        let m = state(&sum);
+        assert_eq!(m["signoff"]["state"], "delivered_not_met", "{sum}");
+        assert!(m["signoff"]["met_on"].is_null() && !m["signoff"]["delivered_on"].is_null());
+        assert_eq!(m["signoff"]["outstanding"].as_array().unwrap().len(), 2);
+        assert_eq!((sum["totals"]["delivered"].as_u64(), sum["totals"]["delivered_not_met"].as_u64(), sum["totals"]["met"].as_u64()), (Some(1), Some(1), Some(0)));
+
+        let sign = |who: (axum::http::HeaderName, axum::http::HeaderValue), org: &str, action: &str, reason: Option<&str>| {
+            let (request, base) = (&request, base.clone());
+            let body = json!({ "organization_pid": org, "action": action, "reason": reason });
+            async move { request.post(&format!("{base}/signoffs")).add_header(who.0, who.1).json(&body).await.status_code() }
+        };
+        assert_eq!(sign(writer.clone(), &acme_pid, "sign", None).await, 403, "a person of no organization cannot sign for one");
+        assert_eq!(sign(other_user.clone(), &acme_pid, "sign", None).await, 403, "nor for another's");
+        assert_eq!(sign(acme_user.clone(), &acme_pid, "sign", None).await, 200);
+        let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
+        assert_eq!(state(&sum)["signoff"]["outstanding"], json!(["Other Health Trust"]));
+        assert_eq!(sign(other_user.clone(), &other_pid, "sign", None).await, 200);
+        let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
+        assert_eq!(state(&sum)["signoff"]["state"], "met");
+        assert!(!state(&sum)["signoff"]["met_on"].is_null());
+        assert_eq!(sum["totals"]["met_share_of_delivered_bp"], 10000);
+        let one: Value = with!(request.get(&format!("/api/milestones/{mp}")), writer).await.json();
+        assert_eq!(one["signoff"]["state"], "met", "the milestone itself carries it");
+
+        assert_eq!(sign(acme_user.clone(), &acme_pid, "withdraw", None).await, 422, "a withdrawal needs a reason");
+        assert_eq!(sign(acme_user.clone(), &acme_pid, "withdraw", Some("Evidence was incomplete")).await, 200);
+        let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
+        assert_eq!(state(&sum)["signoff"]["state"], "delivered_not_met", "withdrawn, so outstanding again");
+        assert_eq!(state(&sum)["signoff"]["outstanding"], json!(["Acme Council"]));
+        {
+            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+            use project_portfolio_management_service::models::_entities::audit_logs;
+            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("milestone_signoff_withdrawn")).count(&_ctx.db).await.unwrap();
+            assert_eq!(n, 1, "the withdrawal is audited");
+        }
+        {
+            use sea_orm::ConnectionTrait;
+            assert!(_ctx.db.execute_unprepared("DELETE FROM milestone_signoffs").await.is_err(), "append-only");
+            assert!(_ctx.db.execute_unprepared("UPDATE milestone_signoffs SET reason = 'x'").await.is_err());
+        }
+        // The pack reports the met share and the gap.
+        let d2: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "board" })).await.json();
+        let pk2 = d2["pid"].as_str().unwrap().to_string();
+        let pack: Value = with!(request.get(&format!("/api/director-packs/{pk2}")), issuer).await.json();
+        assert_eq!(pack["body"]["milestone_signoffs"]["totals"]["delivered_not_met"], 1, "{pack}");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

@@ -367,6 +367,46 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     rows: capRows,
   }] : []);
 
+  // Milestones that need partner sign-off: delivered and met are separate, and the gap is a row.
+  const so = obj(body.milestone_signoffs);
+  const tot = obj(so.totals);
+  const SO: Record<string, { key: string; symbol: string; tone: Tone }> = {
+    met: { key: "so_met", symbol: "●", tone: "green" },
+    delivered_not_met: { key: "so_delivered_not_met", symbol: "▲", tone: "red" },
+    not_delivered: { key: "so_not_delivered", symbol: "–", tone: "grey" },
+  };
+  const soRows: Cell[][] = arr(so.milestones).map((m) => {
+    const sg = obj(m.signoff);
+    const st = SO[str(sg.state)] ?? { key: "so_not_delivered", symbol: "–", tone: "grey" as Tone };
+    return [
+      plain(str(m.name)),
+      plain(str(m.due)),
+      { text: d.t(`${K}${st.key}`), symbol: st.symbol, tone: st.tone },
+      plain(str(sg.delivered_on)),
+      plain(str(sg.met_on)),
+      plain(Array.isArray(sg.outstanding) ? sg.outstanding.map(String).join(", ") : ""),
+    ];
+  });
+  const soShare = numOrNull(tot.met_share_of_delivered_bp);
+  add(
+    "signoffs",
+    [
+      d.t(`${K}signoffs_note`),
+      d.t(`${K}signoffs_totals`, {
+        n: numOrNull(tot.requiring_signoff) ?? 0,
+        delivered: numOrNull(tot.delivered) ?? 0,
+        met: numOrNull(tot.met) ?? 0,
+        gap: numOrNull(tot.delivered_not_met) ?? 0,
+        share: soShare === null ? d.t(`${K}so_no_share`) : `${fixed(soShare / 100, 0, d.locale)}%`,
+      }),
+    ],
+    soRows.length ? [{
+      caption: d.t(`${K}s_signoffs`),
+      columns: ["c_milestone", "c_due", "c_reading", "c_delivered_on", "c_met_on", "c_outstanding"].map((k) => d.t(`${K}${k}`)),
+      rows: soRows,
+    }] : [],
+  );
+
   add("issues", [d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 })]);
   add("changes", [d.t(`${K}awaiting`, { n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0 })]);
   return out;

@@ -108,12 +108,12 @@ pub(crate) async fn achieved_by_tasks(
 }
 
 /// Everything derived for a set of milestones.
-struct Derived {
-    json: Vec<(NaiveDate, i64, serde_json::Value)>,
+pub(crate) struct Derived {
+    pub(crate) json: Vec<(NaiveDate, i64, serde_json::Value)>,
 }
 
 #[allow(clippy::too_many_lines)] // one linear pipeline: load, classify, forecast, shape
-async fn derive(
+pub(crate) async fn derive(
     ctx: &AppContext,
     rows: &[milestones::Model],
     today: NaiveDate,
@@ -297,6 +297,24 @@ async fn derive(
             );
         }
         out.push((m.due, m.id, v));
+    }
+    // Partner sign-off (EX-4): delivered keeps its meaning; met is separate. Only a milestone that requires
+    // sign-off carries a `signoff` object.
+    let delivered: HashMap<Uuid, Option<NaiveDate>> = out
+        .iter()
+        .filter_map(|(_, _, v)| {
+            let pid = Uuid::parse_str(v["pid"].as_str()?).ok()?;
+            let on = v["achieved_on"].as_str().and_then(|s| s.parse().ok()).or_else(|| {
+                v["achieved"].as_bool().filter(|a| *a).and(v["due"].as_str().and_then(|s| s.parse().ok()))
+            });
+            Some((pid, on))
+        })
+        .collect();
+    let assessed = super::milestone_signoffs::assessments(ctx, &delivered).await?;
+    for (_, _, v) in &mut out {
+        if let Some(a) = v["pid"].as_str().and_then(|s| Uuid::parse_str(s).ok()).and_then(|p| assessed.get(&p)) {
+            v["signoff"] = super::milestone_signoffs::assessment_json(a);
+        }
     }
     out.sort_by_key(|(due, id, _)| (*due, *id));
     Ok(Derived { json: out })

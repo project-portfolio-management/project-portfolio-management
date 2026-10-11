@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — milestones met only with partner sign-off (EX-4, 2026-10-11)
+
+A milestone can require sign-off from organizations; delivered and met are separate dates, a withdrawn sign-off (with a reason, audited) makes it outstanding again, and `GET /api/milestone-signoffs` and the director pack report the met share and the delivered-not-met gap. Migration 67.
+
 ### Added — partner organizations (EX-3, 2026-10-11)
 
 `POST`/`GET /api/organizations` and `PUT /api/organizations/{pid}`: delivery, partner, sponsor and supplier as records. A capacity commitment can name one; an organization can be a director pack audience (`org:<pid>`); a caller whose token has the `organization` attribute reads the packs addressed to it and only its own commitments. Existing partner labels became partner organizations. Migration 66.

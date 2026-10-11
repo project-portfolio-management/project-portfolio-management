@@ -25,7 +25,7 @@ test.describe("director packs (DP-11)", () => {
 
   test("shows every section with readings as words and symbols", async ({ page }) => {
     await page.goto(`/en-001/director-packs/${PID}`, { waitUntil: "networkidle" });
-    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Issues", "Change requests"]) {
+    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Milestone sign-off", "Issues", "Change requests"]) {
       await expect(page.getByRole("heading", { level: 2, name: h, exact: true })).toBeVisible();
     }
     await expect(page.getByText("Change note: Corrected the funding line")).toBeVisible();
@@ -33,6 +33,8 @@ test.describe("director packs (DP-11)", () => {
     await expect(care.first()).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*shortfall/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*no supply recorded/ })).toContainText("–");
+    await expect(page.getByRole("row", { name: /Cutover.*delivered, not met.*Acme Council/ })).toContainText("▲");
+    await expect(page.getByRole("row", { name: /Training.*met/ })).toContainText("●");
     await expect(page.getByText("no funding source").first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Download as PDF" })).toHaveAttribute("href", new RegExp(`/api/proxy/api/director-packs/${PID}/pdf$`));
     await expect(page.locator("table caption").first()).toBeVisible();

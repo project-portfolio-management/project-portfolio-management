@@ -130,6 +130,7 @@ pub fn paths() -> Value {
     merge(&mut all, buffer_management_paths());
     merge(&mut all, drum_paths());
     merge(&mut all, organization_paths());
+    merge(&mut all, milestone_signoff_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1398,6 +1399,29 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Milestone sign-off (EX-4).
+fn milestone_signoff_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/milestones/{m_pid}/signoff-required": {
+            "put": op("milestones", "Set the organizations whose sign-off a milestone needs",
+                "Body: organization_pids (at most 20, each an active organization); replaces the set. A milestone with none is delivered-is-met as before. Audited.",
+                vec![uuid_param("pid"), uuid_param("m_pid")],
+                &[("200", "milestone_pid, organization_pids"), ("404", "Unknown plan or milestone"), ("422", "An unknown or retired organization, or too many")])
+        },
+        "/api/plans/{pid}/milestones/{m_pid}/signoffs": {
+            "post": op("milestones", "Record an organization's sign-off of a milestone, or withdraw it",
+                "Body: organization_pid (one the milestone requires), action sign or withdraw, and a reason of 5 to 500 characters for a withdrawal. Only a person whose token has that organization (the organization attribute), or an administrator, may. Append-only and audited; a withdrawal makes the sign-off outstanding again.",
+                vec![uuid_param("pid"), uuid_param("m_pid")],
+                &[("200", "pid, action, acted_on"), ("403", "Not a person of that organization"), ("404", "Unknown plan or milestone"), ("422", "Not required, a bad action, or a withdrawal with no reason")])
+        },
+        "/api/milestone-signoffs": {
+            "get": op("milestones", "Delivered, met and the delivered-not-met gap across milestones that need sign-off",
+                "Inputs: the milestones, on plans the caller may read, that require sign-off, when each was delivered (marked done, or its linked tasks all done), and the sign-offs now in force. Each carries state (not_delivered, delivered_not_met or met), its delivered and met dates and the organizations outstanding; totals give the number requiring sign-off, delivered, met, delivered-not-met and the met share of those delivered. The state is as now. Milestones listed by GET /api/milestones carry the same signoff object when they require sign-off.",
+                vec![], &[("200", "totals, milestones, note")])
         }
     })
 }

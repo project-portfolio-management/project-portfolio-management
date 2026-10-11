@@ -93,6 +93,7 @@ pub mod process_executions;
 pub mod process_versions;
 pub mod processes;
 pub mod programme_buffers;
+pub mod deployment_moves;
 pub mod start_queue_entries;
 pub mod start_overrides;
 pub mod email_deliveries;

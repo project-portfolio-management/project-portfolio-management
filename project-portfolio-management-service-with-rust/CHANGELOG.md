@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — deployment-date change control (EX-5, 2026-10-11)
+
+In a programme delivered as a central platform with local deployment, moving a deployment's go-live is a request: the knock-on to other deployments is computed from the schedule network when it is asked, its labour cost is recorded against the requester, and a named approver (a person or a role such as the escalation board, never the requester) approves or refuses with a reason. Nothing changes until it is approved. Migration 74.
+
 ### Added — start control (EX-8, 2026-10-11)
 
 A limit on programmes in active delivery and a capacity check on the constraint pool: a programme moving into executing is refused with the reason and joins a queue, or starts with a recorded, audited override. Paused programmes do not count. Migration 73.

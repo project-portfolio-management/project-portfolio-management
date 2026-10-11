@@ -501,6 +501,95 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(phase(&gamma, "executing", json!({})).await.0, 200, "paused programmes do not count");
         unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT") };
 
+        // ── EX-5: a deployment's go-live date is under change control ──
+        let platform: Value = with!(request.post("/api/plans"), writer).json(&json!({ "kind": "Program", "name": "Platform" })).await.json();
+        let platform = platform["pid"].as_str().unwrap().to_string();
+        let mkdep = |name: &'static str| {
+            let (request, writer, platform) = (&request, writer.clone(), platform.clone());
+            async move {
+                let v: Value = request.post("/api/plans").add_header(writer.0, writer.1).json(&json!({ "kind": "Project", "name": name, "parent_ref": platform })).await.json();
+                v["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let (d1, d2) = (mkdep("Deployment one").await, mkdep("Deployment two").await);
+        let mktask = |plan: &str, title: &'static str, start: Option<&'static str>, days: i64| {
+            let (request, writer, plan) = (&request, writer.clone(), plan.to_string());
+            async move {
+                let mut body = json!({ "title": title, "duration_days": days });
+                if let Some(s) = start { body["start_date"] = json!(s); }
+                let t: Value = request.post(&format!("/api/plans/{plan}/tasks")).add_header(writer.0, writer.1).json(&body).await.json();
+                t["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let g1 = mktask(&d1, "Go-live one", Some("2026-10-05"), 3).await;
+        let h1 = mktask(&d2, "Go-live two", None, 4).await;
+        let other = mktask(&d2, "Unrelated", Some("2026-10-05"), 2).await;
+        with!(request.post("/api/dependencies"), writer).json(&json!({ "predecessor_pid": g1, "successor_pid": h1 })).await.assert_status_ok();
+        let starts = |plan: String| {
+            let (request, writer) = (&request, writer.clone());
+            async move {
+                let v: Value = request.get(&format!("/api/plans/{plan}/cpm")).add_header(writer.0, writer.1).await.json();
+                v["nodes"].as_array().unwrap().iter().map(|n| (n["pid"].as_str().unwrap().to_string(), n["early_start"].as_str().unwrap_or("").to_string())).collect::<std::collections::BTreeMap<_, _>>()
+            }
+        };
+        let before = starts(d2.clone()).await;
+        let url = format!("/api/plans/{d1}/deployment-moves");
+        let acme_ref = format!("person:{ACME_USER}");
+        let ask = json!({ "task_pid": g1, "new_start": "2026-10-12", "reason": "Local supplier needs another week", "approver_ref": acme_ref });
+        assert_eq!(with!(request.post(&url), writer).json(&ask).await.status_code(), 422, "not yet a controlled programme");
+        with!(request.put(&format!("/api/plans/{platform}/delivery-model")), writer).json(&json!({ "delivery_model": "central_platform_local_deployment" })).await.assert_status_ok();
+        let own = format!("person:{WRITER}");
+        assert_eq!(with!(request.post(&url), writer).json(&json!({ "task_pid": g1, "new_start": "2026-10-12", "reason": "Local supplier needs another week", "approver_ref": own })).await.status_code(), 422, "the approver cannot be the requester");
+        assert_eq!(with!(request.post(&url), writer).json(&json!({ "task_pid": g1, "new_start": "2026-10-12", "reason": "Local supplier needs another week" })).await.status_code(), 422, "an approver must be named");
+        let req: Value = with!(request.post(&url), writer).json(&ask).await.json();
+        let mv = req["pid"].as_str().unwrap().to_string();
+        assert_eq!(req["status"], "requested", "{req}");
+        let ko = req["knock_on"].as_array().unwrap();
+        let knocked: std::collections::BTreeSet<String> = ko.iter().map(|k| k["task_pid"].as_str().unwrap().to_string()).collect();
+        assert!(knocked.contains(&h1) && !knocked.contains(&other), "the dependent go-live moves and the unrelated task does not: {req}");
+        assert_eq!(ko.iter().find(|k| k["task_pid"] == h1.as_str()).unwrap()["other_deployment"], true);
+        // An unapproved move changes nothing.
+        assert_eq!(starts(d2.clone()).await, before, "the schedule is as it was");
+        let t1: Value = with!(request.get(&format!("/api/plans/{d1}/tasks/{g1}")), writer).await.json();
+        assert_eq!(t1["start_date"], "2026-10-05");
+        assert_eq!(with!(request.post(&url), writer).json(&ask).await.status_code(), 409, "one open move per go-live");
+        // Only the named approver decides, and not the requester.
+        let decide = format!("{url}/{mv}/decision");
+        let body = json!({ "decision": "approve", "reason": "Agreed with the supplier and the board" });
+        for (who, name) in [(&writer, "the requester"), (&other_user, "another writer"), (&admin, "an administrator")] {
+            assert_eq!(with!(request.post(&decide), who).json(&body).await.status_code(), 403, "{name}");
+        }
+        assert_eq!(with!(request.post(&decide), acme_user).json(&json!({ "decision": "approve", "reason": "ok" })).await.status_code(), 422, "a thin reason");
+        let done: Value = with!(request.post(&decide), acme_user).json(&body).await.json();
+        assert_eq!(done["status"], "approved");
+        // The knock-on list equals what the network now shows.
+        let after = starts(d2.clone()).await;
+        let changed: std::collections::BTreeSet<String> = after.iter().filter(|(k, v)| **k != g1 && before.get(*k) != Some(*v)).map(|(k, _)| k.clone()).collect();
+        let listed: std::collections::BTreeSet<String> = knocked.iter().filter(|k| after.contains_key(*k)).cloned().collect();
+        assert_eq!(changed, listed, "the listed knock-on is exactly what moved in the other deployment");
+        let t1: Value = with!(request.get(&format!("/api/plans/{d1}/tasks/{g1}")), writer).await.json();
+        assert_eq!(t1["start_date"], "2026-10-12", "approved, so the go-live moved");
+        assert_eq!(with!(request.post(&decide), acme_user).json(&body).await.status_code(), 409, "decided once");
+        // A refusal changes nothing and is audited.
+        let ask2 = json!({ "task_pid": g1, "new_start": "2026-10-26", "reason": "Another delay was proposed", "approver_ref": "role:escalation_board" });
+        let req2: Value = with!(request.post(&url), writer).json(&ask2).await.json();
+        let board = bearer(&kid, "3f2c6b7e-0000-4000-8000-0000000000b9", &[("access", "write"), ("role", "escalation_board")]);
+        let refused: Value = with!(request.post(&format!("{url}/{}/decision", req2["pid"].as_str().unwrap())), board).json(&json!({ "decision": "refuse", "reason": "The date would break the audit window" })).await.json();
+        assert_eq!(refused["status"], "refused");
+        let t1: Value = with!(request.get(&format!("/api/plans/{d1}/tasks/{g1}")), writer).await.json();
+        assert_eq!(t1["start_date"], "2026-10-12", "refused: unchanged");
+        {
+            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+            use project_portfolio_management_service::models::_entities::audit_logs;
+            for (action, want) in [("deployment_move_requested", 2), ("deployment_move_approved", 1), ("deployment_move_refused", 1)] {
+                let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&_ctx.db).await.unwrap();
+                assert_eq!(n, want, "{action}");
+            }
+        }
+        let l: Value = with!(request.get(&url), writer).await.json();
+        assert_eq!(l["moves"].as_array().unwrap().len(), 2);
+        assert_eq!(l["cost_by_requester"][0]["requests"], 2, "recorded against the requester");
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

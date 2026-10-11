@@ -62,6 +62,7 @@ impl ActiveModelBehavior for strategic_aims::ActiveModel {}
 impl ActiveModelBehavior for planned_gates::ActiveModel {}
 impl ActiveModelBehavior for funding_sources::ActiveModel {}
 impl ActiveModelBehavior for programme_buffers::ActiveModel {}
+impl ActiveModelBehavior for deployment_moves::ActiveModel {}
 impl ActiveModelBehavior for start_queue_entries::ActiveModel {}
 impl ActiveModelBehavior for start_overrides::ActiveModel {}
 impl ActiveModelBehavior for email_deliveries::ActiveModel {}

@@ -119,6 +119,7 @@ mod m20261010_000070_key_persons;
 mod m20261010_000071_triage_thresholds;
 mod m20261010_000072_email_deliveries;
 mod m20261010_000073_start_control;
+mod m20261010_000074_deployment_moves;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -239,6 +240,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000071_triage_thresholds::Migration),
             Box::new(m20261010_000072_email_deliveries::Migration),
             Box::new(m20261010_000073_start_control::Migration),
+            Box::new(m20261010_000074_deployment_moves::Migration),
             // inject-above (do not remove this comment)
         ]
     }

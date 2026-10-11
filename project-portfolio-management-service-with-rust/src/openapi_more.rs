@@ -137,6 +137,7 @@ pub fn paths() -> Value {
     merge(&mut all, key_person_paths());
     merge(&mut all, threshold_paths());
     merge(&mut all, start_control_paths());
+    merge(&mut all, deployment_move_paths());
     merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
@@ -1406,6 +1407,25 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Deployment-date change control (EX-5).
+fn deployment_move_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/deployment-moves": {
+            "post": op("scheduling", "Ask to move a deployment's go-live (a change request; the schedule does not change)",
+                "Only for a plan in a programme delivered as a central platform with local deployment. Body: task_pid (the go-live task, with a start date), new_start, a reason of at least 10 characters and approver_ref (person:<id>, or role:<name> such as role:escalation_board; defaults to PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_APPROVER). The approver cannot be the requester. The knock-on is computed now by running the schedule network across linked plans the caller may read with the moved date and comparing it with the network as it stands; the labour cost of the knock-on is recorded per currency against the requester. Nothing is written to the schedule. One open move per go-live (409).",
+                vec![uuid_param("pid")], &[("200", "The move with its knock_on and knock_on_cost"), ("404", "Unknown plan"), ("409", "A move of this go-live is already waiting"), ("422", "Not a controlled deployment, a bad task, date, reason or approver")]),
+            "get": op("scheduling", "The moves asked for a deployment, and the knock-on cost by requester",
+                "Inputs: the deployment moves of the plan, newest first, each with the knock-on and its cost as recorded when it was asked, and the knock-on labour cost summed per requester and currency.",
+                vec![uuid_param("pid")], &[("200", "moves, cost_by_requester"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/deployment-moves/{mpid}/decision": {
+            "post": op("scheduling", "The named approver approves or refuses a move",
+                "Body: decision (approve or refuse) and a reason of at least 10 characters. Only the named approver (the person, or anyone holding the named role) may, and never the requester; an administrator is not the approver unless named (403). Approving sets the go-live date and fails with 409 stale_move if the date has changed since the request. Both outcomes are audited.",
+                vec![uuid_param("pid"), uuid_param("mpid")], &[("200", "The decided move"), ("403", "Not the approver"), ("404", "Unknown plan or move"), ("409", "Already decided, or stale"), ("422", "A bad decision or a short reason")])
         }
     })
 }

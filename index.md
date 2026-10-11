@@ -18,3 +18,4 @@
 | [docs/for/cro/index.md](docs/for/cro/index.md) | For the Chief Risk Officer |
 | [docs/for/clo/index.md](docs/for/clo/index.md) | For the Chief Legal Officer |
 | [docs/for/cpo/index.md](docs/for/cpo/index.md) | For the Chief People Officer |
+| [docs/for/grc/index.md](docs/for/grc/index.md) | For Governance, Risk, Compliance |

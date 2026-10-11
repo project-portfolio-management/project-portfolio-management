@@ -94,7 +94,9 @@ impl Sender for NoSender {
     }
 
     async fn send(&self, _: &Message) -> Result<(), SendError> {
-        Err(SendError::Permanent("no mailer is configured (set SMTP_HOST and the other SMTP settings)".to_string()))
+        Err(SendError::Permanent(
+            "no mailer is configured (set SMTP_HOST and the other SMTP settings)".to_string(),
+        ))
     }
 }
 
@@ -172,7 +174,9 @@ pub fn address_ok(a: &str) -> bool {
     !a.is_empty()
         && a.len() <= 254
         && !a.contains(['\r', '\n', ',', ';', ' ', '<', '>'])
-        && a.split_once('@').is_some_and(|(l, d)| !l.is_empty() && d.contains('.') && !d.starts_with('.') && !d.ends_with('.'))
+        && a.split_once('@').is_some_and(|(l, d)| {
+            !l.is_empty() && d.contains('.') && !d.starts_with('.') && !d.ends_with('.')
+        })
 }
 
 /// What an attempt leaves the delivery as: its new status and, for a retry, when to try again.
@@ -190,12 +194,26 @@ pub struct After {
 #[must_use]
 pub fn after(result: &Result<(), SendError>, attempts: i32, now: DateTime<Utc>) -> After {
     match result {
-        Ok(()) => After { status: "sent", next: None },
-        Err(SendError::Permanent(_)) => After { status: "failed", next: None },
-        Err(SendError::Transient(_)) if attempts >= MAX_ATTEMPTS => After { status: "failed", next: None },
+        Ok(()) => After {
+            status: "sent",
+            next: None,
+        },
+        Err(SendError::Permanent(_)) => After {
+            status: "failed",
+            next: None,
+        },
+        Err(SendError::Transient(_)) if attempts >= MAX_ATTEMPTS => After {
+            status: "failed",
+            next: None,
+        },
         Err(SendError::Transient(_)) => {
-            let minutes = 5_i64.saturating_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0)).min(360);
-            After { status: "retry", next: Some(now + Duration::minutes(minutes)) }
+            let minutes = 5_i64
+                .saturating_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
+                .min(360);
+            After {
+                status: "retry",
+                next: Some(now + Duration::minutes(minutes)),
+            }
         }
     }
 }
@@ -219,27 +237,58 @@ mod tests {
         let now = Utc::now();
         let t = Err(SendError::Transient("down".into()));
         let one = after(&t, 1, now);
-        assert_eq!((one.status, one.next), ("retry", Some(now + Duration::minutes(1))));
+        assert_eq!(
+            (one.status, one.next),
+            ("retry", Some(now + Duration::minutes(1)))
+        );
         assert_eq!(after(&t, 2, now).next, Some(now + Duration::minutes(5)));
         assert_eq!(after(&t, 3, now).next, Some(now + Duration::minutes(25)));
-        assert_eq!(after(&t, MAX_ATTEMPTS, now).status, "failed", "the last attempt ends it");
+        assert_eq!(
+            after(&t, MAX_ATTEMPTS, now).status,
+            "failed",
+            "the last attempt ends it"
+        );
     }
 
     #[test]
     fn a_permanent_failure_ends_at_once_and_success_is_sent() {
         let now = Utc::now();
-        assert_eq!(after(&Err(SendError::Permanent("no".into())), 1, now).status, "failed");
-        assert_eq!(after(&Ok(()), 1, now), After { status: "sent", next: None });
+        assert_eq!(
+            after(&Err(SendError::Permanent("no".into())), 1, now).status,
+            "failed"
+        );
+        assert_eq!(
+            after(&Ok(()), 1, now),
+            After {
+                status: "sent",
+                next: None
+            }
+        );
     }
 
     #[tokio::test]
     async fn the_recorder_keeps_what_it_sends_and_fails_on_request() {
         let r = RecordingSender::new();
-        let m = Message { from: "a@x.org".into(), to: "b@x.org".into(), subject: "s".into(), text: "t".into() };
+        let m = Message {
+            from: "a@x.org".into(),
+            to: "b@x.org".into(),
+            subject: "s".into(),
+            text: "t".into(),
+        };
         r.fail_next(SendError::Transient("busy".into()));
         assert_eq!(r.send(&m).await, Err(SendError::Transient("busy".into())));
         assert!(r.send(&m).await.is_ok());
         assert_eq!(r.sent(), [m]);
-        assert!(matches!(NoSender.send(&Message { from: String::new(), to: String::new(), subject: String::new(), text: String::new() }).await, Err(SendError::Permanent(_))));
+        assert!(matches!(
+            NoSender
+                .send(&Message {
+                    from: String::new(),
+                    to: String::new(),
+                    subject: String::new(),
+                    text: String::new()
+                })
+                .await,
+            Err(SendError::Permanent(_))
+        ));
     }
 }

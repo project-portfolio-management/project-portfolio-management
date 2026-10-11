@@ -18,7 +18,8 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    contingent_workers, key_person_entries as entries, resource_roles, skill_pool_members, skill_pools,
+    contingent_workers, key_person_entries as entries, resource_roles, skill_pool_members,
+    skill_pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -77,7 +78,9 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .into_iter()
         .map(|c| c.person_ref)
         .collect();
-    format::json(json!({ "entries": rows.iter().map(view).collect::<Vec<_>>(), "contingent": contingent }))
+    format::json(
+        json!({ "entries": rows.iter().map(view).collect::<Vec<_>>(), "contingent": contingent }),
+    )
 }
 
 #[derive(Debug, Deserialize)]
@@ -115,7 +118,8 @@ async fn upsert(
     if !(1..=200).contains(&subject.chars().count()) {
         problems.push("subject must be 1 to 200 characters");
     }
-    if b.subject_kind == "person" && !super::governance::valid_ref(&subject, &["person", "worker"]) {
+    if b.subject_kind == "person" && !super::governance::valid_ref(&subject, &["person", "worker"])
+    {
         problems.push("a person subject must be a person:/worker: URN");
     }
     if let Some(s) = &b.successor_ref
@@ -138,11 +142,17 @@ async fn upsert(
     }
     let existing = entries::Entity::find()
         .filter(entries::Column::SubjectKind.eq(&b.subject_kind))
-        .filter(sea_orm::sea_query::Expr::cust_with_values("lower(btrim(subject)) = lower($1)", [subject.clone()]))
+        .filter(sea_orm::sea_query::Expr::cust_with_values(
+            "lower(btrim(subject)) = lower($1)",
+            [subject.clone()],
+        ))
         .one(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    let note = b.note.map(|n| n.trim().to_string()).filter(|n| !n.is_empty());
+    let note = b
+        .note
+        .map(|n| n.trim().to_string())
+        .filter(|n| !n.is_empty());
     let row = if let Some(e) = existing {
         let mut a: entries::ActiveModel = e.into();
         a.successor_ref = ActiveValue::set(b.successor_ref.clone());
@@ -165,9 +175,15 @@ async fn upsert(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(&ctx.db, row.pid, "key_person_recorded", caller.actor(), Some(json!({ "kind": row.subject_kind, "readiness": row.readiness })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "key_person_recorded",
+        caller.actor(),
+        Some(json!({ "kind": row.subject_kind, "readiness": row.readiness })),
+    )
+    .await
+    .ok();
     format::json(view(&row))
 }
 
@@ -187,7 +203,9 @@ async fn remove(
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)?;
     row.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, pid, "key_person_removed", caller.actor(), None).await.ok();
+    AuditModel::record(&ctx.db, pid, "key_person_removed", caller.actor(), None)
+        .await
+        .ok();
     format::json(json!({ "removed": pid }))
 }
 
@@ -229,9 +247,15 @@ async fn set_contingent(
         }
         _ => {}
     }
-    AuditModel::record(&ctx.db, Uuid::new_v4(), "contingent_worker_set", caller.actor(), Some(json!({ "contingent": b.contingent })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        Uuid::new_v4(),
+        "contingent_worker_set",
+        caller.actor(),
+        Some(json!({ "contingent": b.contingent })),
+    )
+    .await
+    .ok();
     format::json(json!({ "person_ref": b.person_ref, "contingent": b.contingent }))
 }
 
@@ -242,7 +266,10 @@ async fn set_contingent(
 ///
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext) -> Result<Value> {
-    let rows = entries::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let rows = entries::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let count = |f: &dyn Fn(&entries::Model) -> bool| rows.iter().filter(|r| f(r)).count();
     let pools = skill_pools::Entity::find()
         .filter(skill_pools::Column::Active.eq(true))
@@ -255,7 +282,10 @@ pub(crate) async fn pack_section(ctx: &AppContext) -> Result<Value> {
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    let roles: Vec<resource_roles::Model> = resource_roles::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let roles: Vec<resource_roles::Model> = resource_roles::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let contingent: HashSet<String> = contingent_workers::Entity::find()
         .all(&ctx.db)
         .await
@@ -263,10 +293,13 @@ pub(crate) async fn pack_section(ctx: &AppContext) -> Result<Value> {
         .into_iter()
         .map(|c| c.person_ref)
         .collect();
-    let pool_roles: HashMap<Uuid, HashSet<String>> = members.iter().fold(HashMap::new(), |mut m, r| {
-        m.entry(r.pool_pid).or_default().insert(r.value.to_lowercase());
-        m
-    });
+    let pool_roles: HashMap<Uuid, HashSet<String>> =
+        members.iter().fold(HashMap::new(), |mut m, r| {
+            m.entry(r.pool_pid)
+                .or_default()
+                .insert(r.value.to_lowercase());
+            m
+        });
     let shares: Vec<Value> = pools
         .iter()
         .map(|p| {

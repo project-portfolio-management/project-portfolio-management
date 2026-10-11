@@ -42,17 +42,27 @@ pub enum Refusal {
 /// The refusals for a start, given the programmes now in delivery and the constraint pool's short months.
 /// A programme already in delivery is never refused for being there: pass the count without it.
 #[must_use]
-pub fn refusals(in_delivery_now: usize, limit: Option<usize>, pool: Option<(&str, &[String])>) -> Vec<Refusal> {
+pub fn refusals(
+    in_delivery_now: usize,
+    limit: Option<usize>,
+    pool: Option<(&str, &[String])>,
+) -> Vec<Refusal> {
     let mut out = Vec::new();
     if let Some(l) = limit
         && in_delivery_now >= l
     {
-        out.push(Refusal::LimitReached { in_delivery: in_delivery_now, limit: l });
+        out.push(Refusal::LimitReached {
+            in_delivery: in_delivery_now,
+            limit: l,
+        });
     }
     if let Some((name, short)) = pool
         && !short.is_empty()
     {
-        out.push(Refusal::ConstraintPoolOver { pool: name.to_string(), months: short.to_vec() });
+        out.push(Refusal::ConstraintPoolOver {
+            pool: name.to_string(),
+            months: short.to_vec(),
+        });
     }
     out
 }
@@ -65,7 +75,10 @@ mod tests {
     fn only_an_active_programme_in_executing_or_controlling_uses_a_place() {
         assert!(in_delivery(Some("executing"), "active"));
         assert!(in_delivery(Some("controlling"), "active"));
-        assert!(!in_delivery(Some("executing"), "paused"), "paused does not count");
+        assert!(
+            !in_delivery(Some("executing"), "paused"),
+            "paused does not count"
+        );
         assert!(!in_delivery(Some("executing"), "stopped"));
         assert!(!in_delivery(Some("planning"), "active"));
         assert!(!in_delivery(None, "active"));
@@ -74,8 +87,17 @@ mod tests {
 
     #[test]
     fn the_limit_is_reached_at_the_limit_and_not_below_it() {
-        assert!(refusals(2, Some(3), None).is_empty(), "two of three places: room");
-        assert_eq!(refusals(3, Some(3), None), [Refusal::LimitReached { in_delivery: 3, limit: 3 }]);
+        assert!(
+            refusals(2, Some(3), None).is_empty(),
+            "two of three places: room"
+        );
+        assert_eq!(
+            refusals(3, Some(3), None),
+            [Refusal::LimitReached {
+                in_delivery: 3,
+                limit: 3
+            }]
+        );
         assert!(refusals(99, None, None).is_empty(), "no limit set");
     }
 
@@ -83,8 +105,17 @@ mod tests {
     fn a_short_constraint_pool_refuses_and_names_the_months() {
         let months = vec!["2026-11".to_string(), "2026-12".to_string()];
         let r = refusals(0, Some(5), Some(("Engineering", &months)));
-        assert_eq!(r, [Refusal::ConstraintPoolOver { pool: "Engineering".into(), months }]);
-        assert!(refusals(0, None, Some(("Engineering", &[]))).is_empty(), "no short month, no refusal");
+        assert_eq!(
+            r,
+            [Refusal::ConstraintPoolOver {
+                pool: "Engineering".into(),
+                months
+            }]
+        );
+        assert!(
+            refusals(0, None, Some(("Engineering", &[]))).is_empty(),
+            "no short month, no refusal"
+        );
     }
 
     #[test]

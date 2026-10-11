@@ -53,7 +53,9 @@ pub fn routes() -> Routes {
 async fn programme(ctx: &AppContext, pid: &str, what: &str) -> Result<plans::Model> {
     let plan = super::governance::find_item(ctx, pid).await?;
     if plan.kind.as_deref() != Some("Program") {
-        return Err(unprocessable(&format!("only a plan of kind Program has {what}")));
+        return Err(unprocessable(&format!(
+            "only a plan of kind Program has {what}"
+        )));
     }
     Ok(plan)
 }
@@ -81,10 +83,15 @@ async fn set_triage(
 ) -> Result<Response> {
     let plan = programme(&ctx, &pid, "a triage").await?;
     if !rules::OUTCOMES.contains(&b.outcome.as_str()) {
-        return Err(unprocessable(&format!("outcome must be one of {:?}", rules::OUTCOMES)));
+        return Err(unprocessable(&format!(
+            "outcome must be one of {:?}",
+            rules::OUTCOMES
+        )));
     }
     if b.reason.trim().chars().count() < 10 {
-        return Err(unprocessable("a reason of at least 10 characters is required"));
+        return Err(unprocessable(
+            "a reason of at least 10 characters is required",
+        ));
     }
     let row = triages::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -98,9 +105,15 @@ async fn set_triage(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, plan.pid, "programme_triaged", caller.actor(), Some(json!({ "outcome": b.outcome })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "programme_triaged",
+        caller.actor(),
+        Some(json!({ "outcome": b.outcome })),
+    )
+    .await
+    .ok();
     format::json(triage_view(&row))
 }
 
@@ -114,7 +127,9 @@ async fn get_triage(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    format::json(json!({ "triage": rows.first().map(triage_view), "history": rows.iter().map(triage_view).collect::<Vec<_>>() }))
+    format::json(
+        json!({ "triage": rows.first().map(triage_view), "history": rows.iter().map(triage_view).collect::<Vec<_>>() }),
+    )
 }
 
 // ---- thresholds -----------------------------------------------------------------------------
@@ -152,7 +167,10 @@ async fn set_threshold(
 ) -> Result<Response> {
     let plan = programme(&ctx, &pid, "thresholds").await?;
     if !rules::KINDS.contains(&b.kind.as_str()) {
-        return Err(unprocessable(&format!("kind must be one of {:?}", rules::KINDS)));
+        return Err(unprocessable(&format!(
+            "kind must be one of {:?}",
+            rules::KINDS
+        )));
     }
     let existing = thresholds::Entity::find()
         .filter(thresholds::Column::PlanPid.eq(plan.pid))
@@ -164,17 +182,33 @@ async fn set_threshold(
         if let Some(e) = existing {
             e.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
         }
-        AuditModel::record(&ctx.db, plan.pid, "threshold_removed", caller.actor(), Some(json!({ "kind": b.kind }))).await.ok();
+        AuditModel::record(
+            &ctx.db,
+            plan.pid,
+            "threshold_removed",
+            caller.actor(),
+            Some(json!({ "kind": b.kind })),
+        )
+        .await
+        .ok();
         return format::json(json!({ "removed": b.kind }));
     }
     let (count, date, amount, currency) = match b.kind.as_str() {
-        "confidence_red_packs" if b.count.is_some_and(|n| (1..=24).contains(&n)) => (b.count, None, None, None),
+        "confidence_red_packs" if b.count.is_some_and(|n| (1..=24).contains(&n)) => {
+            (b.count, None, None, None)
+        }
         "confidence_red_packs" => return Err(unprocessable("count must be 1 to 24")),
         "forecast_past" if b.date.is_some() => (None, b.date, None, None),
         "forecast_past" => return Err(unprocessable("date is required")),
         _ => match (b.cap_minor, b.currency.as_deref()) {
-            (Some(c), Some(cur)) if c > 0 && crate::governance::valid_currency(cur) => (None, None, Some(c), Some(cur.to_string())),
-            _ => return Err(unprocessable("cap_minor (above 0) and a currency (ISO 4217) are required")),
+            (Some(c), Some(cur)) if c > 0 && crate::governance::valid_currency(cur) => {
+                (None, None, Some(c), Some(cur.to_string()))
+            }
+            _ => {
+                return Err(unprocessable(
+                    "cap_minor (above 0) and a currency (ISO 4217) are required",
+                ));
+            }
         },
     };
     let row = if let Some(e) = existing {
@@ -199,13 +233,24 @@ async fn set_threshold(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(&ctx.db, plan.pid, "threshold_set", caller.actor(), Some(threshold_view(&row))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "threshold_set",
+        caller.actor(),
+        Some(threshold_view(&row)),
+    )
+    .await
+    .ok();
     format::json(threshold_view(&row))
 }
 
 /// `GET /api/plans/{pid}/thresholds`
 #[debug_handler]
-async fn get_thresholds(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+async fn get_thresholds(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+) -> Result<Response> {
     let plan = programme(&ctx, &pid, "thresholds").await?;
     let rows = thresholds::Entity::find()
         .filter(thresholds::Column::PlanPid.eq(plan.pid))
@@ -231,10 +276,18 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
     let mut seen: HashSet<(String, String)> = HashSet::new();
     let mut out: HashMap<String, Vec<bool>> = HashMap::new();
     for p in packs {
-        let Ok(body) = serde_json::from_str::<Value>(&p.body) else { continue };
-        for g in body["portfolio_map"]["groups"].as_array().into_iter().flatten() {
+        let Ok(body) = serde_json::from_str::<Value>(&p.body) else {
+            continue;
+        };
+        for g in body["portfolio_map"]["groups"]
+            .as_array()
+            .into_iter()
+            .flatten()
+        {
             for prog in g["programmes"].as_array().into_iter().flatten() {
-                let Some(id) = prog["plan_pid"].as_str() else { continue };
+                let Some(id) = prog["plan_pid"].as_str() else {
+                    continue;
+                };
                 if seen.insert((p.period.clone(), id.to_string())) {
                     out.entry(id.to_string())
                         .or_default()
@@ -251,7 +304,11 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
 #[allow(clippy::too_many_lines)]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let today = Utc::now().date_naive();
-    let all = thresholds::Entity::find().order_by_asc(thresholds::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let all = thresholds::Entity::find()
+        .order_by_asc(thresholds::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let reds = red_history(&ctx).await?;
     let mut results = Vec::new();
     for t in &all {
@@ -268,20 +325,34 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             "confidence_red_packs" => {
                 let n = usize::try_from(t.count_value.unwrap_or(0)).unwrap_or(0);
                 let h = reds.get(&plan.pid.to_string()).cloned().unwrap_or_default();
-                (rules::confidence_crossed(&h, n), format!("delivery confidence was red in each of the last {n} issued packs"))
+                (
+                    rules::confidence_crossed(&h, n),
+                    format!("delivery confidence was red in each of the last {n} issued packs"),
+                )
             }
             "forecast_past" => {
                 let limit = t.date_value.unwrap_or(today);
-                let forecast = super::schedule_baselines::current(&ctx, plan.pid).await.ok().and_then(|(_, f, _, _)| f);
-                (rules::forecast_crossed(forecast, limit), format!("the forecast finish is after {limit}"))
+                let forecast = super::schedule_baselines::current(&ctx, plan.pid)
+                    .await
+                    .ok()
+                    .and_then(|(_, f, _, _)| f);
+                (
+                    rules::forecast_crossed(forecast, limit),
+                    format!("the forecast finish is after {limit}"),
+                )
             }
             _ => {
                 let cur = t.currency.clone().unwrap_or_default();
                 let tree = super::earned_value::subtree_ids(&ctx, plan.pid).await?;
-                let p80 = super::cost_risk::p80_by_currency(&ctx, &tree).await?.and_then(|m| m.get(&cur).copied());
+                let p80 = super::cost_risk::p80_by_currency(&ctx, &tree)
+                    .await?
+                    .and_then(|m| m.get(&cur).copied());
                 (
                     rules::p80_crossed(p80, t.amount_minor.unwrap_or(i64::MAX)),
-                    format!("the P80 cost is above the cap of {} {cur} (minor units)", t.amount_minor.unwrap_or(0)),
+                    format!(
+                        "the P80 cost is above the cap of {} {cur} (minor units)",
+                        t.amount_minor.unwrap_or(0)
+                    ),
                 )
             }
         };
@@ -324,7 +395,15 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     _ => cause.clone(),
                 }));
                 a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-                AuditModel::record(&ctx.db, o.pid, "threshold_attached_to_exception", actor.as_deref(), Some(json!({ "kind": t.kind }))).await.ok();
+                AuditModel::record(
+                    &ctx.db,
+                    o.pid,
+                    "threshold_attached_to_exception",
+                    actor.as_deref(),
+                    Some(json!({ "kind": t.kind })),
+                )
+                .await
+                .ok();
                 row["outcome"] = json!("attached_to_open_exception");
                 row["exception_pid"] = json!(o.pid);
             }
@@ -340,14 +419,24 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     worst_value: ActiveValue::set("threshold".to_string()),
                     worsened_count: ActiveValue::set(0),
                     cause: ActiveValue::set(Some(cause)),
-                    decision_needed: ActiveValue::set(Some("Pause, reset, stop, or record an override with an expiry".to_string())),
+                    decision_needed: ActiveValue::set(Some(
+                        "Pause, reset, stop, or record an override with an expiry".to_string(),
+                    )),
                     threshold_kind: ActiveValue::set(Some(t.kind.clone())),
                     ..Default::default()
                 }
                 .insert(&ctx.db)
                 .await
                 .map_err(|e| db_err(&e))?;
-                AuditModel::record(&ctx.db, e.pid, "threshold_exception_opened", actor.as_deref(), Some(json!({ "kind": t.kind }))).await.ok();
+                AuditModel::record(
+                    &ctx.db,
+                    e.pid,
+                    "threshold_exception_opened",
+                    actor.as_deref(),
+                    Some(json!({ "kind": t.kind })),
+                )
+                .await
+                .ok();
                 row["outcome"] = json!("opened");
                 row["exception_pid"] = json!(e.pid);
             }
@@ -380,7 +469,9 @@ async fn decide(
 ) -> Result<Response> {
     let row = super::confidence::find_exception(&ctx, &caller, &pid).await?;
     let Some(kind) = row.threshold_kind.clone() else {
-        return Err(unprocessable("this exception was not opened by a threshold: use the ordinary decision"));
+        return Err(unprocessable(
+            "this exception was not opened by a threshold: use the ordinary decision",
+        ));
     };
     let today = Utc::now().date_naive();
     let problems = rules::decision_problems(&b.action, &b.reason, b.expiry, today);
@@ -392,7 +483,10 @@ async fn decide(
     let text = format!("{}: {}", b.action, b.reason.trim());
     let mut a: exceptions::ActiveModel = row.clone().into();
     if row.status != "open" {
-        return Err(Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "this exception is already closed")));
+        return Err(Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new("conflict", "this exception is already closed"),
+        ));
     }
     a.status = ActiveValue::set("closed".to_string());
     a.closed_at = ActiveValue::set(Some(Utc::now().into()));
@@ -414,11 +508,19 @@ async fn decide(
     .insert(&tx)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&tx, row.pid, "threshold_decision", Some(&actor), Some(json!({ "action": b.action, "kind": kind, "expiry": b.expiry })))
-        .await
-        .map_err(|e| Error::string(&e.to_string()))?;
+    AuditModel::record(
+        &tx,
+        row.pid,
+        "threshold_decision",
+        Some(&actor),
+        Some(json!({ "action": b.action, "kind": kind, "expiry": b.expiry })),
+    )
+    .await
+    .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await.map_err(|e| db_err(&e))?;
-    format::json(json!({ "pid": d.pid, "exception_pid": row.pid, "action": d.action, "expiry": d.expiry, "decided_on": d.decided_on }))
+    format::json(
+        json!({ "pid": d.pid, "exception_pid": row.pid, "action": d.action, "expiry": d.expiry, "decided_on": d.decided_on }),
+    )
 }
 
 // ---- the pack -------------------------------------------------------------------------------
@@ -429,7 +531,11 @@ async fn decide(
 /// # Errors
 ///
 /// When a database read fails.
-pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>, period: &str) -> Result<Value> {
+pub(crate) async fn pack_section(
+    ctx: &AppContext,
+    include: &HashSet<Uuid>,
+    period: &str,
+) -> Result<Value> {
     let names: HashMap<Uuid, String> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
@@ -440,7 +546,12 @@ pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>, peri
         .map(|p| (p.pid, p.name))
         .collect();
     let mut latest: HashMap<Uuid, triages::Model> = HashMap::new();
-    for t in triages::Entity::find().order_by_asc(triages::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))? {
+    for t in triages::Entity::find()
+        .order_by_asc(triages::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+    {
         if names.contains_key(&t.plan_pid) {
             latest.insert(t.plan_pid, t);
         }
@@ -460,7 +571,12 @@ pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>, peri
         .into_iter()
         .filter(|d| names.contains_key(&d.plan_pid))
         .collect();
-    let in_period = |a: &str| decided.iter().filter(|d| d.action == a && d.decided_on.format("%Y-%m").to_string() == period).count();
+    let in_period = |a: &str| {
+        decided
+            .iter()
+            .filter(|d| d.action == a && d.decided_on.format("%Y-%m").to_string() == period)
+            .count()
+    };
     let overrides: Vec<Value> = decided
         .iter()
         .filter(|d| d.action == "override" && d.expiry.is_some_and(|e| e > today))

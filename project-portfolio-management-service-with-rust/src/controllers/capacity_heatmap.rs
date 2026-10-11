@@ -346,7 +346,10 @@ async fn set_commitment(
         label = Some(o.name);
     } else if let Some(l) = &label
         && let Some(o) = organizations::Entity::find()
-            .filter(sea_orm::sea_query::Expr::cust_with_values("lower(name) = lower($1)", [l.clone()]))
+            .filter(sea_orm::sea_query::Expr::cust_with_values(
+                "lower(name) = lower($1)",
+                [l.clone()],
+            ))
             .filter(organizations::Column::Active.eq(true))
             .one(&ctx.db)
             .await
@@ -444,7 +447,9 @@ async fn list_commitments(
     // A caller who belongs to an organization (the `organization` attribute) sees only that organization's
     // commitments (EX-3): a partner reads its own, not another's and not the organization's own.
     let mine = super::organizations::caller_organizations(&caller);
-    let belongs = caller.claims().is_some_and(|c| c.attrs.contains_key("organization"));
+    let belongs = caller
+        .claims()
+        .is_some_and(|c| c.attrs.contains_key("organization"));
     format::json(serde_json::json!({
         "commitments": rows.iter()
             .filter(|r| readable.contains(&r.plan_pid))

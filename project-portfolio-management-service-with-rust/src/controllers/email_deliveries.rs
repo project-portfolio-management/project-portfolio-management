@@ -24,7 +24,9 @@ fn db_err(e: &sea_orm::DbErr) -> Error {
 
 /// The routes.
 pub fn routes() -> Routes {
-    Routes::new().prefix("/api").add("/email-deliveries", get(list))
+    Routes::new()
+        .prefix("/api")
+        .add("/email-deliveries", get(list))
 }
 
 /// How a delivery attempt ended, for a caller that keeps its own record.
@@ -41,7 +43,9 @@ pub enum Delivered {
 /// The sender address: `PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM`.
 #[must_use]
 pub fn from_address() -> Option<String> {
-    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM").ok().filter(|f| !f.trim().is_empty())
+    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM")
+        .ok()
+        .filter(|f| !f.trim().is_empty())
 }
 
 /// Record and attempt one message to one recipient. The message is identified by `kind` and `subject_ref`:
@@ -63,7 +67,10 @@ pub async fn deliver(
     let existing = rows::Entity::find()
         .filter(rows::Column::Kind.eq(kind))
         .filter(rows::Column::SubjectRef.eq(subject_ref))
-        .filter(sea_orm::sea_query::Expr::cust_with_values("lower(recipient) = lower($1)", [recipient.to_string()]))
+        .filter(sea_orm::sea_query::Expr::cust_with_values(
+            "lower(recipient) = lower($1)",
+            [recipient.to_string()],
+        ))
         .one(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
@@ -74,9 +81,15 @@ pub async fn deliver(
     let from = from_address();
     let sender = email::sender_for(ctx);
     let result = match (&from, email::address_ok(recipient)) {
-        (None, _) => Err(SendError::Permanent("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM is not set".to_string())),
-        (Some(f), _) if !email::address_ok(f) => Err(SendError::Permanent("the sender address is malformed".to_string())),
-        (_, false) => Err(SendError::Permanent("the recipient address is malformed".to_string())),
+        (None, _) => Err(SendError::Permanent(
+            "PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM is not set".to_string(),
+        )),
+        (Some(f), _) if !email::address_ok(f) => Err(SendError::Permanent(
+            "the sender address is malformed".to_string(),
+        )),
+        (_, false) => Err(SendError::Permanent(
+            "the recipient address is malformed".to_string(),
+        )),
         (Some(f), true) => {
             sender
                 .send(&Message {
@@ -150,7 +163,17 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
         .map_err(|e| db_err(&e))?;
     let mut sent = 0;
     for d in due {
-        if deliver(ctx, &d.kind, d.subject_ref, &d.recipient, &d.subject, &d.body_text).await? == Delivered::Sent {
+        if deliver(
+            ctx,
+            &d.kind,
+            d.subject_ref,
+            &d.recipient,
+            &d.subject,
+            &d.body_text,
+        )
+        .await?
+            == Delivered::Sent
+        {
             sent += 1;
         }
     }
@@ -167,8 +190,16 @@ struct ListQuery {
 
 /// `GET /api/email-deliveries[?status=][&limit=]` — administrators only; anyone else gets 404.
 #[debug_handler]
-async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser, Query(q): Query<ListQuery>) -> Result<Response> {
-    let admin = caller.claims().is_none_or(|c| c.attrs.get("access").is_some_and(|v| v.iter().any(|a| a == "admin")));
+async fn list(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(q): Query<ListQuery>,
+) -> Result<Response> {
+    let admin = caller.claims().is_none_or(|c| {
+        c.attrs
+            .get("access")
+            .is_some_and(|v| v.iter().any(|a| a == "admin"))
+    });
     if !admin {
         return Err(Error::NotFound);
     }
@@ -178,16 +209,29 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser, Query(q): Qu
         if !["queued", "retry", "sent", "failed"].contains(&s.as_str()) {
             return Err(Error::CustomError(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                loco_rs::controller::ErrorDetail::new("unprocessable_entity", "status must be queued, retry, sent or failed"),
+                loco_rs::controller::ErrorDetail::new(
+                    "unprocessable_entity",
+                    "status must be queued, retry, sent or failed",
+                ),
             ));
         }
         find = find.filter(rows::Column::Status.eq(s.as_str()));
     }
-    let list = find.limit(limit).all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let list = find
+        .limit(limit)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let count = |s: &str| {
         let ctx = ctx.clone();
         let s = s.to_string();
-        async move { rows::Entity::find().filter(rows::Column::Status.eq(s)).count(&ctx.db).await.unwrap_or(0) }
+        async move {
+            rows::Entity::find()
+                .filter(rows::Column::Status.eq(s))
+                .count(&ctx.db)
+                .await
+                .unwrap_or(0)
+        }
     };
     format::json(json!({
         "deliveries": list.iter().map(|d| json!({

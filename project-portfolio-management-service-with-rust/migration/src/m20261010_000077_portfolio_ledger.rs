@@ -75,9 +75,12 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("ALTER TABLE budget_lines DROP COLUMN funding_allocation_pid").await?;
-        db.execute_unprepared("DROP TRIGGER IF EXISTS fa_append_only ON funding_allocations").await?;
-        db.execute_unprepared("DROP FUNCTION IF EXISTS fa_append_only()").await?;
+        db.execute_unprepared("ALTER TABLE budget_lines DROP COLUMN funding_allocation_pid")
+            .await?;
+        db.execute_unprepared("DROP TRIGGER IF EXISTS fa_append_only ON funding_allocations")
+            .await?;
+        db.execute_unprepared("DROP FUNCTION IF EXISTS fa_append_only()")
+            .await?;
         drop_table(m, "cost_code_maps").await?;
         drop_table(m, "funding_allocations").await
     }

@@ -96,20 +96,38 @@ pub fn assess(f: &Facts) -> Assessment {
     check("target_date", true, f.target_date);
     check("budget", true, f.budget);
     // Funding sources can only be missing where there is a budget line to fund.
-    check("funding_source", f.all_funded.is_some(), f.all_funded.unwrap_or(false));
+    check(
+        "funding_source",
+        f.all_funded.is_some(),
+        f.all_funded.unwrap_or(false),
+    );
     check("confidence", true, f.confidence);
     check("top_risks", true, f.risks);
     check("dependencies", true, f.dependencies);
-    let score_bp = if applicable == 0 { 10_000 } else { ((present as u64 * 10_000 + applicable as u64 / 2) / applicable as u64) as u32 };
-    Assessment { applicable, present, score_bp, missing, not_applicable }
+    let score_bp = if applicable == 0 {
+        10_000
+    } else {
+        ((present as u64 * 10_000 + applicable as u64 / 2) / applicable as u64) as u32
+    };
+    Assessment {
+        applicable,
+        present,
+        score_bp,
+        missing,
+        not_applicable,
+    }
 }
 
 /// Whether the deployment refuses actions on an incomplete programme: `PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED`
 /// is `on`, `1`, `true` or `yes`. Off by default.
 #[must_use]
 pub fn enforced() -> bool {
-    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED")
-        .is_ok_and(|v| matches!(v.trim().to_lowercase().as_str(), "on" | "1" | "true" | "yes"))
+    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED").is_ok_and(|v| {
+        matches!(
+            v.trim().to_lowercase().as_str(),
+            "on" | "1" | "true" | "yes"
+        )
+    })
 }
 
 #[cfg(test)]
@@ -141,32 +159,62 @@ mod tests {
 
     #[test]
     fn each_missing_field_is_named_and_the_score_is_the_share_present() {
-        let a = assess(&Facts { sro: false, baseline: false, risks: false, ..full() });
+        let a = assess(&Facts {
+            sro: false,
+            baseline: false,
+            risks: false,
+            ..full()
+        });
         assert_eq!(a.missing, ["sro", "baseline", "top_risks"]);
         assert_eq!((a.present, a.applicable, a.score_bp), (7, 10, 7_000));
     }
 
     #[test]
     fn partners_apply_only_where_the_delivery_model_has_them() {
-        let a = assess(&Facts { partners_required: false, has_partners: false, ..full() });
+        let a = assess(&Facts {
+            partners_required: false,
+            has_partners: false,
+            ..full()
+        });
         assert!(a.complete() && a.not_applicable == ["partners"] && a.applicable == 9);
-        let b = assess(&Facts { has_partners: false, ..full() });
+        let b = assess(&Facts {
+            has_partners: false,
+            ..full()
+        });
         assert_eq!(b.missing, ["partners"]);
     }
 
     #[test]
     fn a_funding_source_is_asked_for_only_where_there_is_a_budget() {
-        let none = assess(&Facts { budget: false, all_funded: None, ..full() });
-        assert_eq!(none.missing, ["budget"], "no budget line, so only the budget is missing");
+        let none = assess(&Facts {
+            budget: false,
+            all_funded: None,
+            ..full()
+        });
+        assert_eq!(
+            none.missing,
+            ["budget"],
+            "no budget line, so only the budget is missing"
+        );
         assert_eq!(none.not_applicable, ["funding_source"]);
-        let unfunded = assess(&Facts { all_funded: Some(false), ..full() });
+        let unfunded = assess(&Facts {
+            all_funded: Some(false),
+            ..full()
+        });
         assert_eq!(unfunded.missing, ["funding_source"]);
     }
 
     #[test]
     fn an_empty_register_names_all_ten() {
-        let a = assess(&Facts { partners_required: true, ..Facts::default() });
-        assert_eq!(a.missing.len(), 9, "funding_source does not apply with no budget");
+        let a = assess(&Facts {
+            partners_required: true,
+            ..Facts::default()
+        });
+        assert_eq!(
+            a.missing.len(),
+            9,
+            "funding_source does not apply with no budget"
+        );
         assert_eq!(a.score_bp, 0);
     }
 }

@@ -100,7 +100,13 @@ async fn set_phase(
     rules::check_move(from, to, payload.reason.as_deref()).map_err(|e| refuse(&e))?;
     // A programme moving into delivery meets the limit and the constraint pool (EX-8).
     if to == PlanPhase::Executing {
-        super::start_control::gate(&ctx, &caller, &plan, payload.start_override_reason.as_deref()).await?;
+        super::start_control::gate(
+            &ctx,
+            &caller,
+            &plan,
+            payload.start_override_reason.as_deref(),
+        )
+        .await?;
     }
 
     phase_transitions::ActiveModel {

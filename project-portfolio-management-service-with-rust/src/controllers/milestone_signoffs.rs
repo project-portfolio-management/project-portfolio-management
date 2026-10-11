@@ -23,8 +23,7 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::milestone_signoff::{self as rules, Assessment, Required};
 use crate::models::_entities::{
-    milestone_signoff_requirements as reqs, milestone_signoffs as events, milestones,
-    organizations,
+    milestone_signoff_requirements as reqs, milestone_signoffs as events, milestones, organizations,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
@@ -44,7 +43,10 @@ fn db_err(e: sea_orm::DbErr) -> Error {
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
-        .add("/plans/{pid}/milestones/{m_pid}/signoff-required", put(set_required))
+        .add(
+            "/plans/{pid}/milestones/{m_pid}/signoff-required",
+            put(set_required),
+        )
         .add("/plans/{pid}/milestones/{m_pid}/signoffs", post(act))
         .add("/milestone-signoffs", get(portfolio))
 }
@@ -137,7 +139,11 @@ async fn the_milestone(ctx: &AppContext, pid: &str, m_pid: &str) -> Result<miles
     let plan = super::governance::find_item(ctx, pid).await?;
     let m_pid = Uuid::parse_str(m_pid).map_err(|_| Error::NotFound)?;
     let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
-    if m.plan_pid == plan.pid { Ok(m) } else { Err(Error::NotFound) }
+    if m.plan_pid == plan.pid {
+        Ok(m)
+    } else {
+        Err(Error::NotFound)
+    }
 }
 
 /// `PUT /api/plans/{pid}/milestones/{m_pid}/signoff-required`
@@ -149,9 +155,17 @@ async fn set_required(
     Json(b): Json<Required_>,
 ) -> Result<Response> {
     let m = the_milestone(&ctx, &pid, &m_pid).await?;
-    let wanted: Vec<Uuid> = b.organization_pids.iter().copied().collect::<HashSet<_>>().into_iter().collect();
+    let wanted: Vec<Uuid> = b
+        .organization_pids
+        .iter()
+        .copied()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
     if wanted.len() > 20 {
-        return Err(unprocessable("a milestone may require at most 20 organizations"));
+        return Err(unprocessable(
+            "a milestone may require at most 20 organizations",
+        ));
     }
     let found = organizations::Entity::find()
         .filter(organizations::Column::Pid.is_in(wanted.clone()))
@@ -178,9 +192,15 @@ async fn set_required(
         .await
         .map_err(db_err)?;
     }
-    AuditModel::record(&ctx.db, m.pid, "milestone_signoff_required_set", caller.actor(), Some(json!({ "organizations": wanted })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        m.pid,
+        "milestone_signoff_required_set",
+        caller.actor(),
+        Some(json!({ "organizations": wanted })),
+    )
+    .await
+    .ok();
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 
@@ -212,17 +232,35 @@ async fn act(
         .await
         .map_err(db_err)?;
     if required.is_none() {
-        return Err(unprocessable("that organization is not required to sign this milestone"));
-    }
-    if !is_admin(&caller) && !super::organizations::caller_organizations(&caller).contains(&b.organization_pid) {
-        return Err(Error::CustomError(
-            StatusCode::FORBIDDEN,
-            ErrorDetail::new("forbidden", "only a person of that organization, or an administrator, signs for it"),
+        return Err(unprocessable(
+            "that organization is not required to sign this milestone",
         ));
     }
-    let reason = b.reason.as_deref().map(str::trim).filter(|r| !r.is_empty()).map(str::to_string);
-    if b.action == "withdraw" && reason.as_ref().is_none_or(|r| r.chars().count() < 5 || r.chars().count() > 500) {
-        return Err(unprocessable("a withdrawal needs a reason of 5 to 500 characters"));
+    if !is_admin(&caller)
+        && !super::organizations::caller_organizations(&caller).contains(&b.organization_pid)
+    {
+        return Err(Error::CustomError(
+            StatusCode::FORBIDDEN,
+            ErrorDetail::new(
+                "forbidden",
+                "only a person of that organization, or an administrator, signs for it",
+            ),
+        ));
+    }
+    let reason = b
+        .reason
+        .as_deref()
+        .map(str::trim)
+        .filter(|r| !r.is_empty())
+        .map(str::to_string);
+    if b.action == "withdraw"
+        && reason
+            .as_ref()
+            .is_none_or(|r| r.chars().count() < 5 || r.chars().count() > 500)
+    {
+        return Err(unprocessable(
+            "a withdrawal needs a reason of 5 to 500 characters",
+        ));
     }
     let row = events::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -240,7 +278,11 @@ async fn act(
     AuditModel::record(
         &ctx.db,
         m.pid,
-        if b.action == "sign" { "milestone_signed_off" } else { "milestone_signoff_withdrawn" },
+        if b.action == "sign" {
+            "milestone_signed_off"
+        } else {
+            "milestone_signoff_withdrawn"
+        },
         caller.actor(),
         Some(json!({ "organization": b.organization_pid, "reason": reason })),
     )

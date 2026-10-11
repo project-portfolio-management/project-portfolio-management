@@ -25,7 +25,8 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::ledger::{self as rules, Line};
 use crate::models::_entities::{
-    benefit_validations, benefits, budget_lines, cost_code_maps as codes, funding_allocations as allocations, funding_sources, milestones, plans,
+    benefit_validations, benefits, budget_lines, cost_code_maps as codes,
+    funding_allocations as allocations, funding_sources, milestones, plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -39,7 +40,13 @@ fn unprocessable(message: &str) -> Error {
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
     if t.contains("ccm_once") {
-        return Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "that cost code is already mapped: map it to one line only"));
+        return Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new(
+                "conflict",
+                "that cost code is already mapped: map it to one line only",
+            ),
+        );
     }
     Error::string(&t)
 }
@@ -51,7 +58,10 @@ pub fn routes() -> Routes {
         .add("/funding-allocations", post(create))
         .add("/funding-allocations", get(list))
         .add("/funding-allocations/{pid}/trace", get(trace))
-        .add("/plans/{pid}/budget-lines/{line}/funding-allocation", put(attach))
+        .add(
+            "/plans/{pid}/budget-lines/{line}/funding-allocation",
+            put(attach),
+        )
         .add("/cost-codes", put(map_code))
         .add("/cost-codes", get(list_codes))
         .add("/ledger/reconcile", post(reconcile))
@@ -88,7 +98,11 @@ fn view(a: &allocations::Model, source: &str) -> Value {
 
 /// `POST /api/funding-allocations`
 #[debug_handler]
-async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): Json<NewAllocation>) -> Result<Response> {
+async fn create(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<NewAllocation>,
+) -> Result<Response> {
     let src = funding_sources::Entity::find()
         .filter(funding_sources::Column::Pid.eq(b.funding_source_pid))
         .one(&ctx.db)
@@ -105,7 +119,10 @@ async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): J
     if b.allocated_on > Utc::now().date_naive() {
         problems.push("allocated_on is not in the future");
     }
-    if b.reference.as_deref().is_some_and(|r| r.chars().count() > 120) {
+    if b.reference
+        .as_deref()
+        .is_some_and(|r| r.chars().count() > 120)
+    {
         problems.push("reference is at most 120 characters");
     }
     if !problems.is_empty() {
@@ -117,19 +134,34 @@ async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): J
         amount_minor: ActiveValue::set(b.amount_minor),
         currency: ActiveValue::set(b.currency.clone()),
         allocated_on: ActiveValue::set(b.allocated_on),
-        reference: ActiveValue::set(b.reference.map(|r| r.trim().to_string()).filter(|r| !r.is_empty())),
+        reference: ActiveValue::set(
+            b.reference
+                .map(|r| r.trim().to_string())
+                .filter(|r| !r.is_empty()),
+        ),
         created_by: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "funding_allocation_recorded", caller.actor(), Some(json!({ "amount_minor": row.amount_minor, "currency": row.currency }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "funding_allocation_recorded",
+        caller.actor(),
+        Some(json!({ "amount_minor": row.amount_minor, "currency": row.currency })),
+    )
+    .await
+    .ok();
     format::json(view(&row, &src.name))
 }
 
 /// The lines drawing on each allocation that the caller may read.
-async fn lines_by_allocation(ctx: &AppContext, visible: &HashSet<Uuid>) -> Result<HashMap<Uuid, Vec<budget_lines::Model>>> {
+async fn lines_by_allocation(
+    ctx: &AppContext,
+    visible: &HashSet<Uuid>,
+) -> Result<HashMap<Uuid, Vec<budget_lines::Model>>> {
     let mut out: HashMap<Uuid, Vec<budget_lines::Model>> = HashMap::new();
     for l in budget_lines::Entity::find()
         .filter(budget_lines::Column::DeletedAt.is_null())
@@ -154,8 +186,19 @@ async fn lines_by_allocation(ctx: &AppContext, visible: &HashSet<Uuid>) -> Resul
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let visible = visible_plans(&ctx, &caller).await?;
     let by = lines_by_allocation(&ctx, &visible).await?;
-    let names: HashMap<Uuid, String> = funding_sources::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|s| (s.pid, s.name)).collect();
-    let rows = allocations::Entity::find().order_by_desc(allocations::Column::AllocatedOn).order_by_desc(allocations::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let names: HashMap<Uuid, String> = funding_sources::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|s| (s.pid, s.name))
+        .collect();
+    let rows = allocations::Entity::find()
+        .order_by_desc(allocations::Column::AllocatedOn)
+        .order_by_desc(allocations::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     format::json(json!({ "allocations": rows.iter().map(|a| {
         let planned: i64 = by.get(&a.pid).map_or(0, |ls| ls.iter().map(|l| l.planned_minor).sum());
         let mut v = view(a, names.get(&a.funding_source_pid).map_or("", String::as_str));
@@ -175,7 +218,12 @@ struct AttachBody {
 
 /// `PUT /api/plans/{pid}/budget-lines/{line}/funding-allocation`
 #[debug_handler]
-async fn attach(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, line)): Path<(String, Uuid)>, Json(b): Json<AttachBody>) -> Result<Response> {
+async fn attach(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, line)): Path<(String, Uuid)>,
+    Json(b): Json<AttachBody>,
+) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let row = budget_lines::Entity::find()
         .filter(budget_lines::Column::Pid.eq(line))
@@ -186,40 +234,92 @@ async fn attach(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid,
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)?;
     if let Some(a) = b.funding_allocation_pid {
-        let alloc = allocations::Entity::find().filter(allocations::Column::Pid.eq(a)).one(&ctx.db).await.map_err(|e| db_err(&e))?
+        let alloc = allocations::Entity::find()
+            .filter(allocations::Column::Pid.eq(a))
+            .one(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
             .ok_or_else(|| unprocessable("funding_allocation_pid is not an allocation"))?;
         if row.funding_source_pid != Some(alloc.funding_source_pid) {
-            return Err(unprocessable("the line's funding source must be the allocation's source: set the line's funding source first"));
+            return Err(unprocessable(
+                "the line's funding source must be the allocation's source: set the line's funding source first",
+            ));
         }
         if row.currency != alloc.currency {
-            return Err(unprocessable("the line and the allocation are in different currencies"));
+            return Err(unprocessable(
+                "the line and the allocation are in different currencies",
+            ));
         }
     }
     let mut a: budget_lines::ActiveModel = row.into();
     a.funding_allocation_pid = ActiveValue::set(b.funding_allocation_pid);
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, plan.pid, "budget_line_allocation_set", caller.actor(), Some(json!({ "line": line, "allocation": b.funding_allocation_pid }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "budget_line_allocation_set",
+        caller.actor(),
+        Some(json!({ "line": line, "allocation": b.funding_allocation_pid })),
+    )
+    .await
+    .ok();
     format::json(json!({ "line": line, "funding_allocation_pid": b.funding_allocation_pid }))
 }
 
 /// `GET /api/funding-allocations/{pid}/trace` — what the allocation bought.
 #[debug_handler]
 #[allow(clippy::too_many_lines)]
-async fn trace(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>) -> Result<Response> {
+async fn trace(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
     let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
-    let a = allocations::Entity::find().filter(allocations::Column::Pid.eq(pid)).one(&ctx.db).await.map_err(|e| db_err(&e))?.ok_or(Error::NotFound)?;
-    let source = funding_sources::Entity::find().filter(funding_sources::Column::Pid.eq(a.funding_source_pid)).one(&ctx.db).await.map_err(|e| db_err(&e))?.map(|s| s.name).unwrap_or_default();
+    let a = allocations::Entity::find()
+        .filter(allocations::Column::Pid.eq(pid))
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .ok_or(Error::NotFound)?;
+    let source = funding_sources::Entity::find()
+        .filter(funding_sources::Column::Pid.eq(a.funding_source_pid))
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .map(|s| s.name)
+        .unwrap_or_default();
     let visible = visible_plans(&ctx, &caller).await?;
-    let lines = lines_by_allocation(&ctx, &visible).await?.remove(&a.pid).unwrap_or_default();
-    let plan_ids: Vec<Uuid> = lines.iter().map(|l| l.plan_pid).collect::<HashSet<_>>().into_iter().collect();
-    let names: HashMap<Uuid, String> = plans::Entity::find().filter(plans::Column::Pid.is_in(plan_ids.clone())).all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|p| (p.pid, p.name)).collect();
+    let lines = lines_by_allocation(&ctx, &visible)
+        .await?
+        .remove(&a.pid)
+        .unwrap_or_default();
+    let plan_ids: Vec<Uuid> = lines
+        .iter()
+        .map(|l| l.plan_pid)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let names: HashMap<Uuid, String> = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(plan_ids.clone()))
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|p| (p.pid, p.name))
+        .collect();
     // Milestones met on those plans.
     let ms: Vec<milestones::Model> = if plan_ids.is_empty() {
         Vec::new()
     } else {
-        milestones::Entity::find().filter(milestones::Column::PlanPid.is_in(plan_ids.clone())).filter(milestones::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))?
+        milestones::Entity::find()
+            .filter(milestones::Column::PlanPid.is_in(plan_ids.clone()))
+            .filter(milestones::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
     };
-    let derived = super::milestones::derive(&ctx, &ms, Utc::now().date_naive(), 14, 5, false).await?;
+    let derived =
+        super::milestones::derive(&ctx, &ms, Utc::now().date_naive(), 14, 5, false).await?;
     let milestone_rows: Vec<Value> = derived.json.iter().map(|(_, _, v)| json!({
         "plan": names.get(&Uuid::parse_str(v["plan_pid"].as_str().unwrap_or("")).unwrap_or_default()), "name": v["name"], "due": v["due"],
         "met": v["achieved"], "met_on": v["achieved_on"],
@@ -229,13 +329,22 @@ async fn trace(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): 
     let bens: Vec<benefits::Model> = if plan_ids.is_empty() {
         Vec::new()
     } else {
-        benefits::Entity::find().filter(benefits::Column::PlanPid.is_in(plan_ids.clone())).filter(benefits::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))?
+        benefits::Entity::find()
+            .filter(benefits::Column::PlanPid.is_in(plan_ids.clone()))
+            .filter(benefits::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
     };
     let bids: Vec<Uuid> = bens.iter().map(|b| b.pid).collect();
     let vals = if bids.is_empty() {
         Vec::new()
     } else {
-        benefit_validations::Entity::find().filter(benefit_validations::Column::BenefitPid.is_in(bids)).all(&ctx.db).await.map_err(|e| db_err(&e))?
+        benefit_validations::Entity::find()
+            .filter(benefit_validations::Column::BenefitPid.is_in(bids))
+            .all(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
     };
     let mut validated: BTreeMap<String, i64> = BTreeMap::new();
     let mut planned_b: BTreeMap<String, i64> = BTreeMap::new();
@@ -290,18 +399,31 @@ struct CodeBody {
 
 /// `PUT /api/cost-codes` — map a finance cost code to a budget line (one code, one line).
 #[debug_handler]
-async fn map_code(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): Json<CodeBody>) -> Result<Response> {
+async fn map_code(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<CodeBody>,
+) -> Result<Response> {
     let code = b.cost_code.trim().to_string();
     if !(1..=60).contains(&code.chars().count()) {
         return Err(unprocessable("cost_code is 1 to 60 characters"));
     }
-    let line = budget_lines::Entity::find().filter(budget_lines::Column::Pid.eq(b.budget_line_pid)).filter(budget_lines::Column::DeletedAt.is_null()).one(&ctx.db).await.map_err(|e| db_err(&e))?.ok_or_else(|| unprocessable("budget_line_pid is not a budget line"))?;
+    let line = budget_lines::Entity::find()
+        .filter(budget_lines::Column::Pid.eq(b.budget_line_pid))
+        .filter(budget_lines::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .ok_or_else(|| unprocessable("budget_line_pid is not a budget line"))?;
     // The line sits on a plan: the caller must be able to read it, or the answer is the same as for no line.
     if !visible_plans(&ctx, &caller).await?.contains(&line.plan_pid) {
         return Err(unprocessable("budget_line_pid is not a budget line"));
     }
     let existing = codes::Entity::find()
-        .filter(sea_orm::sea_query::Expr::cust_with_values("lower(btrim(cost_code)) = lower($1)", [code.clone()]))
+        .filter(sea_orm::sea_query::Expr::cust_with_values(
+            "lower(btrim(cost_code)) = lower($1)",
+            [code.clone()],
+        ))
         .one(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
@@ -310,12 +432,26 @@ async fn map_code(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b):
         a.budget_line_pid = ActiveValue::set(line.pid);
         a.update(&ctx.db).await.map_err(|e| db_err(&e))?
     } else {
-        codes::ActiveModel { pid: ActiveValue::set(Uuid::new_v4()), cost_code: ActiveValue::set(code), budget_line_pid: ActiveValue::set(line.pid), created_by: ActiveValue::set(caller.actor().map(str::to_string)), ..Default::default() }
-            .insert(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
+        codes::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            cost_code: ActiveValue::set(code),
+            budget_line_pid: ActiveValue::set(line.pid),
+            created_by: ActiveValue::set(caller.actor().map(str::to_string)),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(&ctx.db, row.pid, "cost_code_mapped", caller.actor(), Some(json!({ "line": line.pid }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "cost_code_mapped",
+        caller.actor(),
+        Some(json!({ "line": line.pid })),
+    )
+    .await
+    .ok();
     format::json(json!({ "cost_code": row.cost_code, "budget_line_pid": row.budget_line_pid }))
 }
 
@@ -323,21 +459,45 @@ async fn map_code(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b):
 #[debug_handler]
 async fn list_codes(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let visible = visible_plans(&ctx, &caller).await?;
-    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find().filter(budget_lines::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|l| (l.pid, l)).collect();
-    let rows = codes::Entity::find().order_by_asc(codes::Column::CostCode).all(&ctx.db).await.map_err(|e| db_err(&e))?;
-    format::json(json!({ "cost_codes": rows.iter().filter(|c| lines.get(&c.budget_line_pid).is_some_and(|l| visible.contains(&l.plan_pid)))
-        .map(|c| json!({ "cost_code": c.cost_code, "budget_line_pid": c.budget_line_pid })).collect::<Vec<_>>() }))
+    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find()
+        .filter(budget_lines::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|l| (l.pid, l))
+        .collect();
+    let rows = codes::Entity::find()
+        .order_by_asc(codes::Column::CostCode)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    format::json(
+        json!({ "cost_codes": rows.iter().filter(|c| lines.get(&c.budget_line_pid).is_some_and(|l| visible.contains(&l.plan_pid)))
+        .map(|c| json!({ "cost_code": c.cost_code, "budget_line_pid": c.budget_line_pid })).collect::<Vec<_>>() }),
+    )
 }
 
 /// `POST /api/ledger/reconcile` — body: a CSV export (`cost_code,amount_minor,currency`). Writes nothing.
 #[debug_handler]
-async fn reconcile(State(ctx): State<AppContext>, caller: MaybeAuthUser, body: String) -> Result<Response> {
+async fn reconcile(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    body: String,
+) -> Result<Response> {
     if body.len() > 1_000_000 {
         return Err(unprocessable("the file is over 1 MB: split it"));
     }
     let rows = rules::parse(&body).map_err(|p| unprocessable(&p.join("; ")))?;
     let visible = visible_plans(&ctx, &caller).await?;
-    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find().filter(budget_lines::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|l| (l.pid, l)).collect();
+    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find()
+        .filter(budget_lines::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|l| (l.pid, l))
+        .collect();
     let map: HashMap<String, Line> = codes::Entity::find()
         .all(&ctx.db)
         .await
@@ -345,7 +505,16 @@ async fn reconcile(State(ctx): State<AppContext>, caller: MaybeAuthUser, body: S
         .into_iter()
         .filter_map(|c| {
             let l = lines.get(&c.budget_line_pid)?;
-            visible.contains(&l.plan_pid).then(|| (c.cost_code.trim().to_lowercase(), Line { line_pid: l.pid, currency: l.currency.clone(), actual_minor: l.actual_minor }))
+            visible.contains(&l.plan_pid).then(|| {
+                (
+                    c.cost_code.trim().to_lowercase(),
+                    Line {
+                        line_pid: l.pid,
+                        currency: l.currency.clone(),
+                        actual_minor: l.actual_minor,
+                    },
+                )
+            })
         })
         .collect();
     let report = rules::reconcile(&rows, &map);

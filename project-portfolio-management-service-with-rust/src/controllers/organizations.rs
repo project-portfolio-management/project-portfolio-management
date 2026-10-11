@@ -101,9 +101,15 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "organization_created", caller.actor(), Some(json!({ "kind": row.kind })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "organization_created",
+        caller.actor(),
+        Some(json!({ "kind": row.kind })),
+    )
+    .await
+    .ok();
     format::json(show(&row))
 }
 
@@ -132,7 +138,10 @@ async fn update(
         .await
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)?;
-    validate(b.name.as_deref().unwrap_or(&row.name), b.kind.as_deref().unwrap_or(&row.kind))?;
+    validate(
+        b.name.as_deref().unwrap_or(&row.name),
+        b.kind.as_deref().unwrap_or(&row.kind),
+    )?;
     let mut a: orgs::ActiveModel = row.into();
     if let Some(n) = b.name {
         a.name = ActiveValue::set(n.trim().to_string());
@@ -144,9 +153,15 @@ async fn update(
         a.active = ActiveValue::set(v);
     }
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "organization_changed", caller.actor(), Some(json!({ "active": row.active })))
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "organization_changed",
+        caller.actor(),
+        Some(json!({ "active": row.active })),
+    )
+    .await
+    .ok();
     format::json(show(&row))
 }
 
@@ -160,7 +175,10 @@ pub(crate) async fn audience_valid(ctx: &AppContext, audience: &str) -> Result<b
     if crate::director_pack::AUDIENCES.contains(&audience) {
         return Ok(true);
     }
-    let Some(pid) = audience.strip_prefix("org:").and_then(|p| Uuid::parse_str(p).ok()) else {
+    let Some(pid) = audience
+        .strip_prefix("org:")
+        .and_then(|p| Uuid::parse_str(p).ok())
+    else {
         return Ok(false);
     };
     Ok(orgs::Entity::find()

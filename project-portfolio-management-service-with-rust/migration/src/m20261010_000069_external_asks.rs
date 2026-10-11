@@ -16,8 +16,12 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn up(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("ALTER TABLE proposals ADD COLUMN external_ask boolean NOT NULL DEFAULT false").await?;
-        db.execute_unprepared("ALTER TABLE proposals ADD COLUMN tradeoff text").await?;
+        db.execute_unprepared(
+            "ALTER TABLE proposals ADD COLUMN external_ask boolean NOT NULL DEFAULT false",
+        )
+        .await?;
+        db.execute_unprepared("ALTER TABLE proposals ADD COLUMN tradeoff text")
+            .await?;
         db.execute_unprepared("ALTER TABLE proposals ADD CONSTRAINT proposals_tradeoff_len CHECK (tradeoff IS NULL OR length(tradeoff) <= 2000)").await?;
         Ok(())
     }
@@ -29,9 +33,12 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("ALTER TABLE proposals DROP CONSTRAINT proposals_tradeoff_len").await?;
-        db.execute_unprepared("ALTER TABLE proposals DROP COLUMN tradeoff").await?;
-        db.execute_unprepared("ALTER TABLE proposals DROP COLUMN external_ask").await?;
+        db.execute_unprepared("ALTER TABLE proposals DROP CONSTRAINT proposals_tradeoff_len")
+            .await?;
+        db.execute_unprepared("ALTER TABLE proposals DROP COLUMN tradeoff")
+            .await?;
+        db.execute_unprepared("ALTER TABLE proposals DROP COLUMN external_ask")
+            .await?;
         Ok(())
     }
 }

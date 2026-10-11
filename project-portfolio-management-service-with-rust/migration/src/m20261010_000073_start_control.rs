@@ -75,8 +75,10 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("DROP TRIGGER IF EXISTS so_append_only ON start_overrides").await?;
-        db.execute_unprepared("DROP FUNCTION IF EXISTS so_append_only()").await?;
+        db.execute_unprepared("DROP TRIGGER IF EXISTS so_append_only ON start_overrides")
+            .await?;
+        db.execute_unprepared("DROP FUNCTION IF EXISTS so_append_only()")
+            .await?;
         drop_table(m, "start_overrides").await?;
         drop_table(m, "start_queue_entries").await
     }

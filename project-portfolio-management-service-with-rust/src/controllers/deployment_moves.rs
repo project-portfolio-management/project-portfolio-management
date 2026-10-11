@@ -43,7 +43,10 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/plans/{pid}/deployment-moves", post(request_move))
         .add("/plans/{pid}/deployment-moves", get(list))
-        .add("/plans/{pid}/deployment-moves/{mpid}/decision", post(decide))
+        .add(
+            "/plans/{pid}/deployment-moves/{mpid}/decision",
+            post(decide),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -63,7 +66,9 @@ async fn programme_of(ctx: &AppContext, plan: &plans::Model) -> Result<Option<pl
         if cur.kind.as_deref() == Some("Program") {
             return Ok(Some(cur));
         }
-        let Some(parent) = cur.parent_pid else { return Ok(None) };
+        let Some(parent) = cur.parent_pid else {
+            return Ok(None);
+        };
         let Some(p) = plans::Entity::find()
             .filter(plans::Column::Pid.eq(parent))
             .filter(plans::Column::DeletedAt.is_null())
@@ -79,7 +84,10 @@ async fn programme_of(ctx: &AppContext, plan: &plans::Model) -> Result<Option<pl
 }
 
 fn roles_of(caller: &MaybeAuthUser) -> Vec<String> {
-    caller.claims().and_then(|c| c.attrs.get("role").cloned()).unwrap_or_default()
+    caller
+        .claims()
+        .and_then(|c| c.attrs.get("role").cloned())
+        .unwrap_or_default()
 }
 
 fn view(m: &moves::Model) -> Value {
@@ -119,7 +127,9 @@ async fn request_move(
         ));
     }
     if b.reason.trim().chars().count() < 10 {
-        return Err(unprocessable("a reason of at least 10 characters is required"));
+        return Err(unprocessable(
+            "a reason of at least 10 characters is required",
+        ));
     }
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(b.task_pid))
@@ -151,7 +161,13 @@ async fn request_move(
         .map_err(|e| db_err(&e))?
         .is_some()
     {
-        return Err(Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "a move of this go-live is already waiting for a decision")));
+        return Err(Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new(
+                "conflict",
+                "a move of this go-live is already waiting for a decision",
+            ),
+        ));
     }
 
     // The knock-on: the network across linked plans (as the caller may read them) as it stands, and with the
@@ -165,8 +181,22 @@ async fn request_move(
             n.planned_start = Some(b.new_start);
         }
     }
-    let after = cpm::analyze_with(&nodes, &net.edges, &net.plan_cal, &net.own, Options { near_critical_days: 0, ..Options::default() }).map_err(cycle)?;
-    let titles: HashMap<Uuid, (&str, Uuid)> = net.rows.iter().map(|t| (t.pid, (t.title.as_str(), t.plan_pid))).collect();
+    let after = cpm::analyze_with(
+        &nodes,
+        &net.edges,
+        &net.plan_cal,
+        &net.own,
+        Options {
+            near_critical_days: 0,
+            ..Options::default()
+        },
+    )
+    .map_err(cycle)?;
+    let titles: HashMap<Uuid, (&str, Uuid)> = net
+        .rows
+        .iter()
+        .map(|t| (t.pid, (t.title.as_str(), t.plan_pid)))
+        .collect();
     let knock_on: Vec<Value> = cpm::diff(&before, &after)
         .into_iter()
         .filter(|m| m.pid != task.pid)
@@ -182,13 +212,20 @@ async fn request_move(
         .collect();
     let b_cost = super::cost_rates::labour_totals(&ctx, &net, Some(&before)).await?;
     let a_cost = super::cost_rates::labour_totals(&ctx, &net, Some(&after)).await?;
-    let mut currencies: Vec<&String> = b_cost.by_currency.keys().chain(a_cost.by_currency.keys()).collect();
+    let mut currencies: Vec<&String> = b_cost
+        .by_currency
+        .keys()
+        .chain(a_cost.by_currency.keys())
+        .collect();
     currencies.sort();
     currencies.dedup();
     let cost: Vec<Value> = currencies
         .iter()
         .map(|c| {
-            let (x, y) = (b_cost.by_currency.get(*c).copied().unwrap_or(0), a_cost.by_currency.get(*c).copied().unwrap_or(0));
+            let (x, y) = (
+                b_cost.by_currency.get(*c).copied().unwrap_or(0),
+                a_cost.by_currency.get(*c).copied().unwrap_or(0),
+            );
             json!({ "currency": c, "delta_minor": y - x })
         })
         .collect();
@@ -245,15 +282,28 @@ async fn decide(
         return Err(unprocessable("decision must be approve or refuse"));
     }
     if b.reason.trim().chars().count() < 10 {
-        return Err(unprocessable("a decision needs a reason of at least 10 characters"));
+        return Err(unprocessable(
+            "a decision needs a reason of at least 10 characters",
+        ));
     }
     if m.status != "requested" {
-        return Err(Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "this move has been decided")));
+        return Err(Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new("conflict", "this move has been decided"),
+        ));
     }
-    if !rules::may_decide(&m.approver_ref, caller.actor(), &roles_of(&caller), m.requested_by.as_deref()) {
+    if !rules::may_decide(
+        &m.approver_ref,
+        caller.actor(),
+        &roles_of(&caller),
+        m.requested_by.as_deref(),
+    ) {
         return Err(Error::CustomError(
             StatusCode::FORBIDDEN,
-            ErrorDetail::new("forbidden", "only the named approver decides a move, and never the person who asked for it"),
+            ErrorDetail::new(
+                "forbidden",
+                "only the named approver decides a move, and never the person who asked for it",
+            ),
         ));
     }
     let approve = b.decision == "approve";
@@ -268,15 +318,24 @@ async fn decide(
         if task.start_date != Some(m.from_start) {
             return Err(Error::CustomError(
                 StatusCode::CONFLICT,
-                ErrorDetail::new("stale_move", "the go-live date has changed since this was asked; the knock-on no longer holds: ask again"),
+                ErrorDetail::new(
+                    "stale_move",
+                    "the go-live date has changed since this was asked; the knock-on no longer holds: ask again",
+                ),
             ));
         }
         let mut a: tasks::ActiveModel = task.into();
         a.start_date = ActiveValue::set(Some(m.to_start));
         a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-        AuditModel::record(&ctx.db, m.task_pid, "deployment_go_live_moved", caller.actor(), Some(json!({ "from": m.from_start, "to": m.to_start, "move": m.pid })))
-            .await
-            .ok();
+        AuditModel::record(
+            &ctx.db,
+            m.task_pid,
+            "deployment_go_live_moved",
+            caller.actor(),
+            Some(json!({ "from": m.from_start, "to": m.to_start, "move": m.pid })),
+        )
+        .await
+        .ok();
     }
     let mut a: moves::ActiveModel = m.into();
     a.status = ActiveValue::set(if approve { "approved" } else { "refused" }.to_string());
@@ -284,9 +343,19 @@ async fn decide(
     a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, if approve { "deployment_move_approved" } else { "deployment_move_refused" }, caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        if approve {
+            "deployment_move_approved"
+        } else {
+            "deployment_move_refused"
+        },
+        caller.actor(),
+        None,
+    )
+    .await
+    .ok();
     format::json(view(&row))
 }
 
@@ -303,11 +372,14 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     // The knock-on cost recorded against each requester (all requests, whatever their outcome).
     let mut by: BTreeMap<String, (usize, BTreeMap<String, i64>)> = BTreeMap::new();
     for r in &rows {
-        let e = by.entry(r.requested_by.clone().unwrap_or_default()).or_default();
+        let e = by
+            .entry(r.requested_by.clone().unwrap_or_default())
+            .or_default();
         e.0 += 1;
         let cost: Value = serde_json::from_str(&r.knock_on_cost).unwrap_or_default();
         for l in cost["labour"].as_array().into_iter().flatten() {
-            *e.1.entry(l["currency"].as_str().unwrap_or("").to_string()).or_default() += l["delta_minor"].as_i64().unwrap_or(0);
+            *e.1.entry(l["currency"].as_str().unwrap_or("").to_string())
+                .or_default() += l["delta_minor"].as_i64().unwrap_or(0);
         }
     }
     format::json(json!({

@@ -54,8 +54,12 @@ impl MigrationTrait for Migration {
             ("director_pack_schedules", "dps_audience"),
             ("director_pack_subscriptions", "dsub_audience"),
         ] {
-            db.execute_unprepared(&format!("ALTER TABLE {table} DROP CONSTRAINT {name}")).await?;
-            db.execute_unprepared(&format!("ALTER TABLE {table} ADD CONSTRAINT {name} CHECK ({AUD})")).await?;
+            db.execute_unprepared(&format!("ALTER TABLE {table} DROP CONSTRAINT {name}"))
+                .await?;
+            db.execute_unprepared(&format!(
+                "ALTER TABLE {table} ADD CONSTRAINT {name} CHECK ({AUD})"
+            ))
+            .await?;
         }
         Ok(())
     }
@@ -72,14 +76,17 @@ impl MigrationTrait for Migration {
             ("director_pack_schedules", "dps_audience"),
             ("director_pack_subscriptions", "dsub_audience"),
         ] {
-            db.execute_unprepared(&format!("DELETE FROM {table} WHERE audience LIKE 'org:%'")).await?;
-            db.execute_unprepared(&format!("ALTER TABLE {table} DROP CONSTRAINT {name}")).await?;
+            db.execute_unprepared(&format!("DELETE FROM {table} WHERE audience LIKE 'org:%'"))
+                .await?;
+            db.execute_unprepared(&format!("ALTER TABLE {table} DROP CONSTRAINT {name}"))
+                .await?;
             db.execute_unprepared(&format!(
                 "ALTER TABLE {table} ADD CONSTRAINT {name} CHECK (audience IN ('executive','board','escalation_board','partner'))"
             ))
             .await?;
         }
-        db.execute_unprepared("ALTER TABLE capacity_commitments DROP COLUMN organization_pid").await?;
+        db.execute_unprepared("ALTER TABLE capacity_commitments DROP COLUMN organization_pid")
+            .await?;
         drop_table(m, "organizations").await
     }
 }

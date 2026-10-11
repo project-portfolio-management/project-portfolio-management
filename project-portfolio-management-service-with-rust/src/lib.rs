@@ -63,8 +63,12 @@ pub mod cost_risk;
 pub mod cpm;
 pub mod critical_chain;
 pub mod custom_fields;
+pub mod cutover;
 pub mod data;
+pub mod deescalation;
 pub mod delivery_confidence;
+pub mod delivery_model;
+pub mod deployment_moves;
 pub mod director_pack;
 pub mod director_pack_text;
 pub mod director_summary;
@@ -79,6 +83,7 @@ pub mod documents;
 pub mod drum;
 pub mod earned_value;
 pub mod effort;
+pub mod email;
 pub mod engineering;
 pub mod evm;
 pub mod extract;
@@ -103,24 +108,14 @@ pub mod insights;
 pub mod issues;
 pub mod joint_risk;
 pub mod kpi;
-pub mod delivery_model;
-pub mod email;
-pub mod deployment_moves;
-pub mod cutover;
-pub mod deescalation;
 pub mod ledger;
 pub mod leveling;
-pub mod start_control;
-pub mod thresholds;
-pub mod watermelon;
-pub mod register_completeness;
-pub mod product_flow;
-pub mod milestone_signoff;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;
 pub mod live;
 pub mod merge;
 pub mod metrics;
+pub mod milestone_signoff;
 pub mod milestones;
 pub mod models;
 pub mod modules;
@@ -154,9 +149,11 @@ pub mod prioritization;
 /// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
 pub mod privacy;
 pub mod processes;
+pub mod product_flow;
 pub mod raci;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod rate_limit;
+pub mod register_completeness;
 pub mod relay;
 pub mod report_schedules;
 pub mod response_cache;
@@ -173,6 +170,7 @@ pub mod search;
 pub mod sinks;
 /// Point-in-time estate snapshots (board / CRO trends).
 pub mod snapshots;
+pub mod start_control;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).
 pub mod strategy;
 pub mod streaming;
@@ -186,6 +184,7 @@ pub mod tasks;
 /// rework and first-pass yield, the service level expectation,
 /// constraint ranking, and queueing-theory flow.
 pub mod tba;
+pub mod thresholds;
 pub mod timesheets;
 /// Total Project Control (TPC): pure rules for Devaux's Index of
 /// Project Performance (DIPP), Expected Monetary Value, and Cost
@@ -204,6 +203,7 @@ pub mod value;
 pub mod version;
 /// Pure PPM visibility rules (schedule math, RAG, capacity, CSV).
 pub mod visibility;
+pub mod watermelon;
 /// Outbound webhook delivery — the `WebhookSink` family contract
 /// (`agents/share/event-bus.md` §12, repo `tasks.md` EV-3).
 pub mod webhooks;

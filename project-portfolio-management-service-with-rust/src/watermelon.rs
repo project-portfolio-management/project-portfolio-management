@@ -32,8 +32,12 @@ fn programmes(body: &Value) -> Vec<&Value> {
 pub fn measures(body: &Value, previous: Option<&Value>) -> Value {
     let progs = programmes(body);
 
-    let gap = if progs.iter().any(|p| p["disagreement"]["independent_vs_self"].is_boolean())
-        && progs.iter().any(|p| p["confidence"]["kind"] == "independent")
+    let gap = if progs
+        .iter()
+        .any(|p| p["disagreement"]["independent_vs_self"].is_boolean())
+        && progs
+            .iter()
+            .any(|p| p["confidence"]["kind"] == "independent")
     {
         let names: Vec<&str> = progs
             .iter()
@@ -87,7 +91,11 @@ pub fn measures(body: &Value, previous: Option<&Value>) -> Value {
             .iter()
             .filter(|p| value_of(p) == "red")
             .filter(|p| !matches!(p["programme_status"].as_str(), Some("paused" | "stopped")))
-            .filter(|p| p["plan_pid"].as_str().is_none_or(|id| !decided.contains(id)))
+            .filter(|p| {
+                p["plan_pid"]
+                    .as_str()
+                    .is_none_or(|id| !decided.contains(id))
+            })
             .filter_map(|p| p["name"].as_str())
             .collect();
         json!({ "count": names.len(), "programmes": names })
@@ -125,24 +133,47 @@ mod tests {
 
     #[test]
     fn late_discovery_is_red_now_and_green_before() {
-        let before = pack(&[prog("a", "A", "green", "self", false, "active"), prog("b", "B", "amber", "self", false, "active")]);
-        let now = pack(&[prog("a", "A", "red", "self", false, "active"), prog("b", "B", "red", "self", false, "active"), prog("c", "C", "red", "self", false, "active")]);
+        let before = pack(&[
+            prog("a", "A", "green", "self", false, "active"),
+            prog("b", "B", "amber", "self", false, "active"),
+        ]);
+        let now = pack(&[
+            prog("a", "A", "red", "self", false, "active"),
+            prog("b", "B", "red", "self", false, "active"),
+            prog("c", "C", "red", "self", false, "active"),
+        ]);
         let m = measures(&now, Some(&before));
-        assert_eq!(m["late_discovery"]["programmes"], json!(["A"]), "B had amber on the way; C was not in the earlier pack");
+        assert_eq!(
+            m["late_discovery"]["programmes"],
+            json!(["A"]),
+            "B had amber on the way; C was not in the earlier pack"
+        );
     }
 
     #[test]
     fn with_no_earlier_pack_late_discovery_is_null_with_a_reason() {
-        let m = measures(&pack(&[prog("a", "A", "red", "self", false, "active")]), None);
+        let m = measures(
+            &pack(&[prog("a", "A", "red", "self", false, "active")]),
+            None,
+        );
         assert!(m["late_discovery"].is_null());
         assert!(m["reasons_null"]["late_discovery"].is_string());
     }
 
     #[test]
     fn the_gap_needs_an_independent_assessment_to_exist() {
-        let none = measures(&pack(&[prog("a", "A", "green", "self", false, "active")]), None);
+        let none = measures(
+            &pack(&[prog("a", "A", "green", "self", false, "active")]),
+            None,
+        );
         assert!(none["self_vs_independent"].is_null());
-        let some = measures(&pack(&[prog("a", "A", "green", "independent", true, "active"), prog("b", "B", "green", "independent", false, "active")]), None);
+        let some = measures(
+            &pack(&[
+                prog("a", "A", "green", "independent", true, "active"),
+                prog("b", "B", "green", "independent", false, "active"),
+            ]),
+            None,
+        );
         assert_eq!(some["self_vs_independent"]["programmes"], json!(["A"]));
     }
 
@@ -155,17 +186,25 @@ mod tests {
             prog("d", "D", "red", "self", false, "active"),
             prog("e", "E", "amber", "self", false, "active"),
         ]);
-        now["exceptions"]["closed_in_period"] = json!([{ "plan_pid": "d", "decision": "Recovery plan approved" }]);
+        now["exceptions"]["closed_in_period"] =
+            json!([{ "plan_pid": "d", "decision": "Recovery plan approved" }]);
         let m = measures(&now, None);
         assert_eq!(m["red_without_decision"]["programmes"], json!(["A"]));
-        assert!(measures(&json!({}), None)["red_without_decision"].is_null(), "no programmes: null, not zero");
+        assert!(
+            measures(&json!({}), None)["red_without_decision"].is_null(),
+            "no programmes: null, not zero"
+        );
     }
 
     #[test]
     fn the_signoff_share_is_passed_through_or_null() {
         let mut p = pack(&[]);
         assert!(measures(&p, None)["milestones_met_with_signoff"].is_null());
-        p["milestone_signoffs"]["totals"] = json!({ "met_share_of_delivered_bp": 5000, "delivered": 2, "met": 1 });
-        assert_eq!(measures(&p, None)["milestones_met_with_signoff"]["met_share_of_delivered_bp"], 5000);
+        p["milestone_signoffs"]["totals"] =
+            json!({ "met_share_of_delivered_bp": 5000, "delivered": 2, "met": 1 });
+        assert_eq!(
+            measures(&p, None)["milestones_met_with_signoff"]["met_share_of_delivered_bp"],
+            5000
+        );
     }
 }

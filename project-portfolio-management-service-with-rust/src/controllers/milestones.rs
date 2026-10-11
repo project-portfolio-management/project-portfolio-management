@@ -304,15 +304,25 @@ pub(crate) async fn derive(
         .iter()
         .filter_map(|(_, _, v)| {
             let pid = Uuid::parse_str(v["pid"].as_str()?).ok()?;
-            let on = v["achieved_on"].as_str().and_then(|s| s.parse().ok()).or_else(|| {
-                v["achieved"].as_bool().filter(|a| *a).and(v["due"].as_str().and_then(|s| s.parse().ok()))
-            });
+            let on = v["achieved_on"]
+                .as_str()
+                .and_then(|s| s.parse().ok())
+                .or_else(|| {
+                    v["achieved"]
+                        .as_bool()
+                        .filter(|a| *a)
+                        .and(v["due"].as_str().and_then(|s| s.parse().ok()))
+                });
             Some((pid, on))
         })
         .collect();
     let assessed = super::milestone_signoffs::assessments(ctx, &delivered).await?;
     for (_, _, v) in &mut out {
-        if let Some(a) = v["pid"].as_str().and_then(|s| Uuid::parse_str(s).ok()).and_then(|p| assessed.get(&p)) {
+        if let Some(a) = v["pid"]
+            .as_str()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .and_then(|p| assessed.get(&p))
+        {
             v["signoff"] = super::milestone_signoffs::assessment_json(a);
         }
     }

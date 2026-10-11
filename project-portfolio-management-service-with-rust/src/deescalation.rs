@@ -28,7 +28,10 @@ impl Quarter {
     /// The quarter a date falls in.
     #[must_use]
     pub fn of(d: NaiveDate) -> Self {
-        Self { year: d.year(), q: (d.month() - 1) / 3 + 1 }
+        Self {
+            year: d.year(),
+            q: (d.month() - 1) / 3 + 1,
+        }
     }
 
     /// `2026-Q3`.
@@ -48,7 +51,17 @@ impl Quarter {
     /// The quarter before.
     #[must_use]
     pub fn previous(self) -> Self {
-        if self.q == 1 { Self { year: self.year - 1, q: 4 } } else { Self { year: self.year, q: self.q - 1 } }
+        if self.q == 1 {
+            Self {
+                year: self.year - 1,
+                q: 4,
+            }
+        } else {
+            Self {
+                year: self.year,
+                q: self.q - 1,
+            }
+        }
     }
 
     /// The first day.
@@ -60,7 +73,17 @@ impl Quarter {
     /// The last day.
     #[must_use]
     pub fn end(self) -> NaiveDate {
-        let next = if self.q == 4 { Self { year: self.year + 1, q: 1 } } else { Self { year: self.year, q: self.q + 1 } };
+        let next = if self.q == 4 {
+            Self {
+                year: self.year + 1,
+                q: 1,
+            }
+        } else {
+            Self {
+                year: self.year,
+                q: self.q + 1,
+            }
+        };
         next.start().pred_opt().unwrap_or_default()
     }
 }
@@ -109,21 +132,39 @@ pub struct Input {
 #[must_use]
 pub fn quarter_state(inputs: &[Input]) -> QuarterState {
     if inputs.is_empty() {
-        return QuarterState::Missing { because: vec!["there is nothing to measure: no KPI and no criterion".to_string()] };
+        return QuarterState::Missing {
+            because: vec!["there is nothing to measure: no KPI and no criterion".to_string()],
+        };
     }
-    let missing: Vec<String> = inputs.iter().filter(|i| i.met.is_none()).map(|i| format!("{}: nothing recorded", i.name)).collect();
+    let missing: Vec<String> = inputs
+        .iter()
+        .filter(|i| i.met.is_none())
+        .map(|i| format!("{}: nothing recorded", i.name))
+        .collect();
     if !missing.is_empty() {
         return QuarterState::Missing { because: missing };
     }
-    let not_met: Vec<String> = inputs.iter().filter(|i| i.met == Some(false)).map(|i| format!("{}: not met", i.name)).collect();
-    if not_met.is_empty() { QuarterState::Met } else { QuarterState::NotMet { because: not_met } }
+    let not_met: Vec<String> = inputs
+        .iter()
+        .filter(|i| i.met == Some(false))
+        .map(|i| format!("{}: not met", i.name))
+        .collect();
+    if not_met.is_empty() {
+        QuarterState::Met
+    } else {
+        QuarterState::NotMet { because: not_met }
+    }
 }
 
 /// Consecutive met quarters counting back from the last one (the slice is oldest first). A quarter that is
 /// not met or is missing ends the run.
 #[must_use]
 pub fn consecutive_met(states: &[QuarterState]) -> usize {
-    states.iter().rev().take_while(|s| **s == QuarterState::Met).count()
+    states
+        .iter()
+        .rev()
+        .take_while(|s| **s == QuarterState::Met)
+        .count()
 }
 
 /// The quarters the rule asks for: `PROJECT_PORTFOLIO_MANAGEMENT_DEESCALATION_QUARTERS`, 1 to 12, default 2.
@@ -141,12 +182,42 @@ pub fn required_quarters() -> (usize, bool) {
 /// The starter set of measures: names and directions only, **with no targets**. A deployment chooses its own
 /// measures and sets its own targets; this list is a convenience, not a default.
 pub const TEMPLATE: &[(&str, &str, &str, &str)] = &[
-    ("programmes_with_independent_assurance", "Programmes with independent assurance in the last quarter", "higher_better", "percent"),
-    ("milestones_met_on_time", "Milestones met on or before their date", "higher_better", "percent"),
-    ("benefits_validated", "Planned benefits validated by someone outside the programme", "higher_better", "percent"),
-    ("red_without_decision", "Programmes at red with no decision recorded", "lower_better", "count"),
-    ("open_critical_issues", "Open issues at critical severity", "lower_better", "count"),
-    ("change_requests_waiting", "Change requests waiting more than 30 days for a decision", "lower_better", "count"),
+    (
+        "programmes_with_independent_assurance",
+        "Programmes with independent assurance in the last quarter",
+        "higher_better",
+        "percent",
+    ),
+    (
+        "milestones_met_on_time",
+        "Milestones met on or before their date",
+        "higher_better",
+        "percent",
+    ),
+    (
+        "benefits_validated",
+        "Planned benefits validated by someone outside the programme",
+        "higher_better",
+        "percent",
+    ),
+    (
+        "red_without_decision",
+        "Programmes at red with no decision recorded",
+        "lower_better",
+        "count",
+    ),
+    (
+        "open_critical_issues",
+        "Open issues at critical severity",
+        "lower_better",
+        "count",
+    ),
+    (
+        "change_requests_waiting",
+        "Change requests waiting more than 30 days for a decision",
+        "lower_better",
+        "count",
+    ),
 ];
 
 #[cfg(test)]
@@ -158,7 +229,10 @@ mod tests {
     }
 
     fn input(name: &str, met: Option<bool>) -> Input {
-        Input { name: name.into(), met }
+        Input {
+            name: name.into(),
+            met,
+        }
     }
 
     #[test]
@@ -168,31 +242,57 @@ mod tests {
         assert_eq!(Quarter { year: 2026, q: 1 }.end(), d(2026, 3, 31));
         assert_eq!(Quarter { year: 2026, q: 4 }.end(), d(2026, 12, 31));
         assert_eq!(Quarter { year: 2026, q: 1 }.previous().label(), "2025-Q4");
-        assert_eq!(Quarter::parse("2026-Q3"), Some(Quarter { year: 2026, q: 3 }));
+        assert_eq!(
+            Quarter::parse("2026-Q3"),
+            Some(Quarter { year: 2026, q: 3 })
+        );
         assert_eq!(Quarter::parse("2026-Q5"), None);
     }
 
     #[test]
     fn only_a_finished_quarter_is_read() {
-        assert_eq!(last_finished(d(2026, 10, 11)).label(), "2026-Q3", "we are in Q4");
+        assert_eq!(
+            last_finished(d(2026, 10, 11)).label(),
+            "2026-Q3",
+            "we are in Q4"
+        );
         assert_eq!(last_finished(d(2026, 1, 1)).label(), "2025-Q4");
         let w = window(d(2026, 10, 11), 3);
-        assert_eq!(w.iter().map(|q| q.label()).collect::<Vec<_>>(), ["2026-Q1", "2026-Q2", "2026-Q3"]);
+        assert_eq!(
+            w.iter().map(|q| q.label()).collect::<Vec<_>>(),
+            ["2026-Q1", "2026-Q2", "2026-Q3"]
+        );
     }
 
     #[test]
     fn a_missing_reading_is_missing_not_not_met_and_says_why() {
-        assert_eq!(quarter_state(&[input("Uptime", Some(true)), input("Defects", Some(true))]), QuarterState::Met);
+        assert_eq!(
+            quarter_state(&[input("Uptime", Some(true)), input("Defects", Some(true))]),
+            QuarterState::Met
+        );
         assert_eq!(
             quarter_state(&[input("Uptime", Some(true)), input("Defects", None)]),
-            QuarterState::Missing { because: vec!["Defects: nothing recorded".to_string()] }
+            QuarterState::Missing {
+                because: vec!["Defects: nothing recorded".to_string()]
+            }
         );
         assert_eq!(
             quarter_state(&[input("Uptime", Some(false)), input("Defects", Some(true))]),
-            QuarterState::NotMet { because: vec!["Uptime: not met".to_string()] }
+            QuarterState::NotMet {
+                because: vec!["Uptime: not met".to_string()]
+            }
         );
-        assert!(matches!(quarter_state(&[input("A", Some(false)), input("B", None)]), QuarterState::Missing { .. }), "missing outranks not met");
-        assert!(matches!(quarter_state(&[]), QuarterState::Missing { .. }), "nothing to measure is never met");
+        assert!(
+            matches!(
+                quarter_state(&[input("A", Some(false)), input("B", None)]),
+                QuarterState::Missing { .. }
+            ),
+            "missing outranks not met"
+        );
+        assert!(
+            matches!(quarter_state(&[]), QuarterState::Missing { .. }),
+            "nothing to measure is never met"
+        );
     }
 
     #[test]
@@ -201,7 +301,11 @@ mod tests {
         let miss = QuarterState::Missing { because: vec![] };
         let nm = QuarterState::NotMet { because: vec![] };
         assert_eq!(consecutive_met(&[m.clone(), m.clone(), m.clone()]), 3);
-        assert_eq!(consecutive_met(&[m.clone(), miss.clone(), m.clone()]), 1, "a missing quarter breaks the run");
+        assert_eq!(
+            consecutive_met(&[m.clone(), miss.clone(), m.clone()]),
+            1,
+            "a missing quarter breaks the run"
+        );
         assert_eq!(consecutive_met(&[m.clone(), m.clone(), nm]), 0);
         assert_eq!(consecutive_met(&[m, miss]), 0);
         assert_eq!(consecutive_met(&[]), 0);
@@ -209,7 +313,11 @@ mod tests {
 
     #[test]
     fn the_template_has_no_targets_and_every_direction_is_valid() {
-        assert!(TEMPLATE.iter().all(|(_, _, dir, _)| crate::kpi::Direction::parse(dir).is_some()));
+        assert!(
+            TEMPLATE
+                .iter()
+                .all(|(_, _, dir, _)| crate::kpi::Direction::parse(dir).is_some())
+        );
         assert!(TEMPLATE.len() >= 5);
     }
 }

@@ -75,8 +75,14 @@ const MANAGER: &str = "3f2c6b7e-0000-4000-8000-0000000000c1";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 const OTHER_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 
-async fn sweep_call(req: &axum_test::TestServer, who: &(axum::http::HeaderName, axum::http::HeaderValue)) -> Value {
-    req.post("/api/threshold-sweep").add_header(who.0.clone(), who.1.clone()).await.json::<Value>()
+async fn sweep_call(
+    req: &axum_test::TestServer,
+    who: &(axum::http::HeaderName, axum::http::HeaderValue),
+) -> Value {
+    req.post("/api/threshold-sweep")
+        .add_header(who.0.clone(), who.1.clone())
+        .await
+        .json::<Value>()
 }
 
 #[tokio::test]
@@ -94,7 +100,11 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         );
     }
     let writer = bearer(&kid, WRITER, &[("access", "write")]);
-    let issuer = bearer(&kid, ISSUER_SUB, &[("access", "write"), ("directorpack", "issuer")]);
+    let issuer = bearer(
+        &kid,
+        ISSUER_SUB,
+        &[("access", "write"), ("directorpack", "issuer")],
+    );
     let first = {
         use chrono::Datelike;
         chrono::Utc::now().date_naive().with_day(1).unwrap()

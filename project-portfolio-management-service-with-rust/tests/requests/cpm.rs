@@ -1293,7 +1293,11 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
         let mk_plan = |name: &'static str| {
             let request = &request;
             async move {
-                let p: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": name })).await.json();
+                let p: Value = request
+                    .post("/api/plans")
+                    .json(&json!({ "kind": "Project", "name": name }))
+                    .await
+                    .json();
                 p["pid"].as_str().unwrap().to_string()
             }
         };
@@ -1306,33 +1310,69 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
             (&p, "C", 4, Some(who.clone())),
             (&none, "Alone", 3, None),
         ] {
-            let mut body = json!({ "title": title, "start_date": "2026-10-05", "duration_days": days });
+            let mut body =
+                json!({ "title": title, "start_date": "2026-10-05", "duration_days": days });
             if let Some(a) = assignee {
                 body["assignee_ref"] = json!(a);
             }
-            request.post(&format!("/api/plans/{plan}/tasks")).json(&body).await.assert_status_success();
+            request
+                .post(&format!("/api/plans/{plan}/tasks"))
+                .json(&body)
+                .await
+                .assert_status_success();
         }
 
-        let r: Value = request.get(&format!("/api/plans/{p}/critical-chain")).await.json();
+        let r: Value = request
+            .get(&format!("/api/plans/{p}/critical-chain"))
+            .await
+            .json();
         assert_eq!(r["advisory"], true);
         assert_eq!(r["state"], "chain", "{r}");
-        assert_eq!(r["crosses_paths"], true, "two tasks of one person ran one after the other: {r}");
+        assert_eq!(
+            r["crosses_paths"], true,
+            "two tasks of one person ran one after the other: {r}"
+        );
         assert_eq!(r["chain_days"], 6, "{r}");
         assert_eq!(r["tasks"].as_array().unwrap().len(), 2);
         assert_eq!(r["links"][0]["kind"], "resource");
-        assert_eq!(r["links"][0]["person_ref"], who.as_str(), "auth is off: not masked");
-        assert!(r["finish_delay_days"].as_i64().unwrap() > 0, "waiting for a person moves the finish: {r}");
-        assert_eq!(r["critical_path"]["tasks"][0]["title"], "Long path", "the path is returned beside the chain: {r}");
-        assert!(r["tasks"].as_array().unwrap().iter().all(|t| t["on_critical_path"] == false));
-        let again: Value = request.get(&format!("/api/plans/{p}/critical-chain")).await.json();
+        assert_eq!(
+            r["links"][0]["person_ref"],
+            who.as_str(),
+            "auth is off: not masked"
+        );
+        assert!(
+            r["finish_delay_days"].as_i64().unwrap() > 0,
+            "waiting for a person moves the finish: {r}"
+        );
+        assert_eq!(
+            r["critical_path"]["tasks"][0]["title"], "Long path",
+            "the path is returned beside the chain: {r}"
+        );
+        assert!(
+            r["tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|t| t["on_critical_path"] == false)
+        );
+        let again: Value = request
+            .get(&format!("/api/plans/{p}/critical-chain"))
+            .await
+            .json();
         assert_eq!(r, again, "the same input gives the same chain");
 
         // Nobody assigned: no chain, and the reason.
-        let r: Value = request.get(&format!("/api/plans/{none}/critical-chain")).await.json();
+        let r: Value = request
+            .get(&format!("/api/plans/{none}/critical-chain"))
+            .await
+            .json();
         assert_eq!(r["state"], "no_critical_chain");
         assert_eq!(r["reason"], "no_assignments");
         assert!(r.get("tasks").is_none(), "no guessed chain: {r}");
-        request.get("/api/plans/00000000-0000-0000-0000-000000000000/critical-chain").await.assert_status(axum::http::StatusCode::NOT_FOUND);
+        request
+            .get("/api/plans/00000000-0000-0000-0000-000000000000/critical-chain")
+            .await
+            .assert_status(axum::http::StatusCode::NOT_FOUND);
     })
     .await;
 }
@@ -1345,10 +1385,19 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
-        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
         let p = plan["pid"].as_str().unwrap().to_string();
         let mut ids = Vec::new();
-        for (title, days) in [("Recorded", 10), ("From range", 10), ("Nothing", 10), ("Milestone", 0)] {
+        for (title, days) in [
+            ("Recorded", 10),
+            ("From range", 10),
+            ("Nothing", 10),
+            ("Milestone", 0),
+        ] {
             let t: Value = request
                 .post(&format!("/api/plans/{p}/tasks"))
                 .json(&json!({ "title": title, "start_date": "2026-10-05", "duration_days": days }))
@@ -1358,35 +1407,86 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
         }
         let est = |t: &str| format!("/api/plans/{p}/tasks/{t}/ccpm-estimate");
         // The schedule-risk range (CR-4) is reused where set, and says so.
-        request.put(&format!("/api/plans/{p}/tasks/{}/estimate", ids[1]))
-            .json(&json!({ "optimistic_days": 6, "pessimistic_days": 14 })).await.assert_status_success();
-        request.put(&est(&ids[0])).json(&json!({ "aggressive_days": 5, "safe_days": 9 })).await.assert_status_success();
+        request
+            .put(&format!("/api/plans/{p}/tasks/{}/estimate", ids[1]))
+            .json(&json!({ "optimistic_days": 6, "pessimistic_days": 14 }))
+            .await
+            .assert_status_success();
+        request
+            .put(&est(&ids[0]))
+            .json(&json!({ "aggressive_days": 5, "safe_days": 9 }))
+            .await
+            .assert_status_success();
 
-        let r: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        let r: Value = request
+            .get(&format!("/api/plans/{p}/ccpm-estimates"))
+            .await
+            .json();
         assert_eq!(r["rule"], "explicit_only", "{r}");
-        let by = |title: &str| r["tasks"].as_array().unwrap().iter().find(|t| t["title"] == title).cloned().unwrap();
+        let by = |title: &str| {
+            r["tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|t| t["title"] == title)
+                .cloned()
+                .unwrap()
+        };
         assert_eq!(by("Recorded")["state"], "complete");
-        assert_eq!(by("Recorded")["aggressive"], json!({ "days": 5, "source": "recorded" }));
-        assert_eq!(by("From range")["aggressive"], json!({ "days": 6, "source": "risk_range" }));
-        assert_eq!(by("From range")["safe"], json!({ "days": 14, "source": "risk_range" }));
+        assert_eq!(
+            by("Recorded")["aggressive"],
+            json!({ "days": 5, "source": "recorded" })
+        );
+        assert_eq!(
+            by("From range")["aggressive"],
+            json!({ "days": 6, "source": "risk_range" })
+        );
+        assert_eq!(
+            by("From range")["safe"],
+            json!({ "days": 14, "source": "risk_range" })
+        );
         assert_eq!(by("Nothing")["state"], "missing");
-        assert!(by("Nothing")["aggressive"].is_null() && by("Nothing")["safe"].is_null(), "no figure is invented");
+        assert!(
+            by("Nothing")["aggressive"].is_null() && by("Nothing")["safe"].is_null(),
+            "no figure is invented"
+        );
         assert_eq!(by("Milestone")["state"], "milestone");
         assert_eq!(r["counts"]["complete"], 2);
         assert_eq!(r["needing_attention"], json!([ids[2]]));
 
         // Refused in words, and nothing is stored.
         // (aggressive above safe, then zero)
-        for body in [json!({ "aggressive_days": 9, "safe_days": 5 }), json!({ "aggressive_days": 0 })] {
-            request.put(&est(&ids[2])).json(&body).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        for body in [
+            json!({ "aggressive_days": 9, "safe_days": 5 }),
+            json!({ "aggressive_days": 0 }),
+        ] {
+            request
+                .put(&est(&ids[2]))
+                .json(&body)
+                .await
+                .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
         }
-        request.put(&est(&ids[3])).json(&json!({ "safe_days": 2 })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
-        let again: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        request
+            .put(&est(&ids[3]))
+            .json(&json!({ "safe_days": 2 }))
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        let again: Value = request
+            .get(&format!("/api/plans/{p}/ccpm-estimates"))
+            .await
+            .json();
         assert_eq!(again["counts"]["missing"], 1);
 
         // Clearing removes the record, and each change is audited.
-        request.put(&est(&ids[0])).json(&json!({})).await.assert_status_success();
-        let r: Value = request.get(&format!("/api/plans/{p}/ccpm-estimates")).await.json();
+        request
+            .put(&est(&ids[0]))
+            .json(&json!({}))
+            .await
+            .assert_status_success();
+        let r: Value = request
+            .get(&format!("/api/plans/{p}/ccpm-estimates"))
+            .await
+            .json();
         assert_eq!(r["counts"]["missing"], 2);
         let n = audit_logs::Entity::find()
             .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&ids[0]).unwrap()))
@@ -1395,7 +1495,10 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
             .await
             .unwrap();
         assert_eq!(n, 2, "set, then cleared");
-        request.get("/api/plans/00000000-0000-0000-0000-000000000000/ccpm-estimates").await.assert_status(axum::http::StatusCode::NOT_FOUND);
+        request
+            .get("/api/plans/00000000-0000-0000-0000-000000000000/ccpm-estimates")
+            .await
+            .assert_status(axum::http::StatusCode::NOT_FOUND);
     })
     .await;
 }
@@ -1406,9 +1509,16 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
 async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_chain_is_flagged() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
-        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
         let p = plan["pid"].as_str().unwrap().to_string();
-        let (p1, p2) = (format!("person:{}", uuid::Uuid::new_v4()), format!("person:{}", uuid::Uuid::new_v4()));
+        let (p1, p2) = (
+            format!("person:{}", uuid::Uuid::new_v4()),
+            format!("person:{}", uuid::Uuid::new_v4()),
+        );
         let mut ids = std::collections::HashMap::new();
         for (title, start, days, who) in [
             ("A", Some("2026-10-05"), 10, Some(&p1)),
@@ -1417,45 +1527,87 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
             ("G", Some("2026-10-05"), 5, None),
         ] {
             let mut body = json!({ "title": title, "duration_days": days });
-            if let Some(s) = start { body["start_date"] = json!(s); }
-            if let Some(w) = who { body["assignee_ref"] = json!(w); }
-            let t: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&body).await.json();
+            if let Some(s) = start {
+                body["start_date"] = json!(s);
+            }
+            if let Some(w) = who {
+                body["assignee_ref"] = json!(w);
+            }
+            let t: Value = request
+                .post(&format!("/api/plans/{p}/tasks"))
+                .json(&body)
+                .await
+                .json();
             ids.insert(title, t["pid"].as_str().unwrap().to_string());
         }
         for (f, t) in [("A", "B"), ("F", "B"), ("G", "B")] {
-            request.post("/api/dependencies").json(&json!({ "predecessor_pid": ids[f], "successor_pid": ids[t] })).await.assert_status_ok();
+            request
+                .post("/api/dependencies")
+                .json(&json!({ "predecessor_pid": ids[f], "successor_pid": ids[t] }))
+                .await
+                .assert_status_ok();
         }
-        let get = || async { request.get(&format!("/api/plans/{p}/critical-chain-buffers")).await.json::<Value>() };
+        let get = || async {
+            request
+                .get(&format!("/api/plans/{p}/critical-chain-buffers"))
+                .await
+                .json::<Value>()
+        };
 
         // No figures yet: no buffers, and the reason names the tasks. Nothing is guessed.
         let r = get().await;
         assert_eq!(r["state"], "no_buffers", "{r}");
         assert_eq!(r["reason"], "estimates_missing");
-        assert_eq!(r["chain_tasks_missing_estimates"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            r["chain_tasks_missing_estimates"].as_array().unwrap().len(),
+            2
+        );
 
         for (t, a, s) in [("A", 6, 12), ("B", 6, 10), ("F", 2, 5), ("G", 5, 15)] {
-            request.put(&format!("/api/plans/{p}/tasks/{}/ccpm-estimate", ids[t]))
-                .json(&json!({ "aggressive_days": a, "safe_days": s })).await.assert_status_success();
+            request
+                .put(&format!("/api/plans/{p}/tasks/{}/ccpm-estimate", ids[t]))
+                .json(&json!({ "aggressive_days": a, "safe_days": s }))
+                .await
+                .assert_status_success();
         }
         let r = get().await;
         assert_eq!(r["state"], "buffers", "{r}");
         assert_eq!(r["buffer_rule"], "cut_and_paste");
-        assert_eq!(r["chain_days_at_aggressive"], 12, "scheduled at the aggressive estimates: {r}");
+        assert_eq!(
+            r["chain_days_at_aggressive"], 12,
+            "scheduled at the aggressive estimates: {r}"
+        );
         assert_eq!(r["project_buffer"]["safety_removed_days"], 10);
-        assert_eq!(r["project_buffer"]["days"], 5, "half of the 10 days removed from A and B");
+        assert_eq!(
+            r["project_buffer"]["days"], 5,
+            "half of the 10 days removed from A and B"
+        );
         let feeding = r["feeding_buffers"].as_array().unwrap();
         assert_eq!(feeding.len(), 2, "{r}");
-        let of = |title: &str| feeding.iter().find(|f| f["tasks"][0]["title"] == title).cloned().unwrap();
+        let of = |title: &str| {
+            feeding
+                .iter()
+                .find(|f| f["tasks"][0]["title"] == title)
+                .cloned()
+                .unwrap()
+        };
         let (f, g) = (of("F"), of("G"));
         assert_eq!(f["buffer_days"], 2, "3 days removed, half rounded up");
         assert_eq!(f["would_push_chain"], false, "{f}");
         assert_eq!(g["buffer_days"], 5);
-        assert_eq!(g["would_push_chain"], true, "5 days of buffer, 1 day of room: reported, not absorbed: {g}");
+        assert_eq!(
+            g["would_push_chain"], true,
+            "5 days of buffer, 1 day of room: reported, not absorbed: {g}"
+        );
         assert_eq!(g["push_days"], 4);
         assert_eq!(f["joins"]["title"], "B");
         let alerts = r["resource_buffers"].as_array().unwrap();
         assert_eq!(alerts.len(), 2);
-        assert_eq!(alerts[0]["person_ref"], p1.as_str(), "auth is off: not masked");
+        assert_eq!(
+            alerts[0]["person_ref"],
+            p1.as_str(),
+            "auth is off: not masked"
+        );
         assert_eq!(r, get().await, "the same input gives the same buffers");
     })
     .await;
@@ -1466,7 +1618,7 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn buffer_management_reads_consumption_names_the_red_chain_and_records_recovery() {
     use project_portfolio_management_service::models::_entities::audit_logs;
-    use sea_orm::{ConnectionTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();

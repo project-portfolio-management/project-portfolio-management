@@ -16,7 +16,6 @@ pub struct Model {
     pub pid: Uuid,
     pub milestone_pid: Uuid,
     pub organization_pid: Uuid,
-
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

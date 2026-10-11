@@ -7,9 +7,11 @@
 
 use loco_rs::testing::prelude::*;
 use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::controllers::email_deliveries::{Delivered, deliver, run_due};
+use project_portfolio_management_service::controllers::email_deliveries::{
+    Delivered, deliver, run_due,
+};
 use project_portfolio_management_service::email::{self, RecordingSender, SendError};
-use sea_orm::{ConnectionTrait, Statement, DatabaseBackend};
+use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serde_json::Value;
 use serial_test::serial;
 use uuid::Uuid;

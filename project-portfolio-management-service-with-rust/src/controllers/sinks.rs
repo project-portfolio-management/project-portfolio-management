@@ -161,7 +161,16 @@ async fn send_email(
 ) -> Outcome {
     let (subject, text) = rules::render_email(note);
     // Through the sender in force, one row per recipient (email_deliveries); the sink keeps its own schedule.
-    match super::email_deliveries::deliver(ctx, "sink", delivery, &sink.destination, &subject, &text).await {
+    match super::email_deliveries::deliver(
+        ctx,
+        "sink",
+        delivery,
+        &sink.destination,
+        &subject,
+        &text,
+    )
+    .await
+    {
         Ok(super::email_deliveries::Delivered::Sent) => Outcome::Sent,
         Ok(super::email_deliveries::Delivered::Retry(why)) => Outcome::Retry(why),
         Ok(super::email_deliveries::Delivered::Failed(why)) => Outcome::Failed(why),

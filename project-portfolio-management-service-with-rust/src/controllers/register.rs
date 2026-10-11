@@ -14,8 +14,9 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    budget_lines, capacity_commitments, delivery_confidence_assessments as assessments, milestone_signoff_requirements,
-    milestones, plan_dependencies, plans, programme_profiles, risks, schedule_baselines,
+    budget_lines, capacity_commitments, delivery_confidence_assessments as assessments,
+    milestone_signoff_requirements, milestones, plan_dependencies, plans, programme_profiles,
+    risks, schedule_baselines,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::register_completeness::{self as rules, Assessment, Facts};
@@ -37,7 +38,9 @@ struct Acc {
 
 /// The routes.
 pub fn routes() -> Routes {
-    Routes::new().prefix("/api").add("/register-completeness", get(list))
+    Routes::new()
+        .prefix("/api")
+        .add("/register-completeness", get(list))
 }
 
 /// Each programme in `include` with its assessment, ordered by name.
@@ -62,7 +65,10 @@ pub(crate) async fn assess_programmes(
     programmes.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
     // The programme each plan belongs to (itself, or its nearest ancestor of kind Program).
     let parent: HashMap<Uuid, Option<Uuid>> = all.iter().map(|p| (p.pid, p.parent_pid)).collect();
-    let kind: HashMap<Uuid, bool> = all.iter().map(|p| (p.pid, p.kind.as_deref() == Some("Program"))).collect();
+    let kind: HashMap<Uuid, bool> = all
+        .iter()
+        .map(|p| (p.pid, p.kind.as_deref() == Some("Program")))
+        .collect();
     let programme_of = |start: Uuid| -> Option<Uuid> {
         let mut cur = Some(start);
         for _ in 0..64 {
@@ -80,7 +86,10 @@ pub(crate) async fn assess_programmes(
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    let risk_rows = risks::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let risk_rows = risks::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let assessed: HashSet<Uuid> = assessments::Entity::find()
         .all(&ctx.db)
         .await
@@ -95,7 +104,10 @@ pub(crate) async fn assess_programmes(
         .into_iter()
         .map(|b| b.plan_pid)
         .collect();
-    let deps = plan_dependencies::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let deps = plan_dependencies::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let commitments: Vec<(Uuid, bool)> = capacity_commitments::Entity::find()
         .all(&ctx.db)
         .await
@@ -154,7 +166,8 @@ pub(crate) async fn assess_programmes(
     for plan in &ms_plan {
         tally(*plan, &mut |a| a.partner = true);
     }
-    let in_programme = |prog: Uuid, with: &HashSet<Uuid>| with.iter().any(|p| programme_of(*p) == Some(prog));
+    let in_programme =
+        |prog: Uuid, with: &HashSet<Uuid>| with.iter().any(|p| programme_of(*p) == Some(prog));
 
     Ok(programmes
         .into_iter()
@@ -162,7 +175,11 @@ pub(crate) async fn assess_programmes(
             let a = acc.remove(&p.pid).unwrap_or_default();
             let model = models.get(&p.pid).cloned().flatten();
             let facts = Facts {
-                sro: p.data.get("lead_ref").and_then(Value::as_str).is_some_and(|s| !s.trim().is_empty()),
+                sro: p
+                    .data
+                    .get("lead_ref")
+                    .and_then(Value::as_str)
+                    .is_some_and(|s| !s.trim().is_empty()),
                 // A programme delivered with partners needs them on record; one that is not stated, or is
                 // a central product, is not asked.
                 partners_required: matches!(
@@ -172,7 +189,11 @@ pub(crate) async fn assess_programmes(
                 has_partners: a.partner,
                 stage: p.stage.is_some(),
                 baseline: in_programme(p.pid, &baselined),
-                target_date: p.data.get("target_date").and_then(Value::as_str).is_some_and(|s| !s.trim().is_empty()),
+                target_date: p
+                    .data
+                    .get("target_date")
+                    .and_then(Value::as_str)
+                    .is_some_and(|s| !s.trim().is_empty()),
                 budget: a.any_line,
                 all_funded: a.any_line.then_some(!a.unfunded),
                 confidence: in_programme(p.pid, &assessed),
@@ -200,7 +221,11 @@ fn row(p: &plans::Model, a: &Assessment) -> Value {
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>) -> Result<Value> {
     let all = assess_programmes(ctx, include).await?;
-    let incomplete: Vec<Value> = all.iter().filter(|(_, a)| !a.complete()).map(|(p, a)| row(p, a)).collect();
+    let incomplete: Vec<Value> = all
+        .iter()
+        .filter(|(_, a)| !a.complete())
+        .map(|(p, a)| row(p, a))
+        .collect();
     Ok(json!({
         "programmes": all.len(), "complete": all.len() - incomplete.len(),
         "incomplete": incomplete, "enforced": rules::enforced(),
@@ -260,7 +285,9 @@ pub(crate) async fn guard(
     }
     let Some(prog) = prog else { return Ok(()) };
     let rows = assess_programmes(ctx, &HashSet::from([prog])).await?;
-    let Some((p, a)) = rows.first() else { return Ok(()) };
+    let Some((p, a)) = rows.first() else {
+        return Ok(());
+    };
     if a.complete() {
         return Ok(());
     }

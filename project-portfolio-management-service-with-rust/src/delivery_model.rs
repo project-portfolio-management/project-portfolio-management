@@ -26,8 +26,12 @@ mod tests {
     #[test]
     fn only_a_local_programme_is_not_delivered_by_the_organization() {
         assert!(delivered_by_organization("central_product"));
-        assert!(delivered_by_organization("central_platform_local_deployment"));
-        assert!(!delivered_by_organization("local_programme_central_standards"));
+        assert!(delivered_by_organization(
+            "central_platform_local_deployment"
+        ));
+        assert!(!delivered_by_organization(
+            "local_programme_central_standards"
+        ));
         assert_eq!(MODELS.len(), 3);
     }
 }

@@ -74,8 +74,10 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("DROP TRIGGER IF EXISTS mso_append_only ON milestone_signoffs").await?;
-        db.execute_unprepared("DROP FUNCTION IF EXISTS mso_append_only()").await?;
+        db.execute_unprepared("DROP TRIGGER IF EXISTS mso_append_only ON milestone_signoffs")
+            .await?;
+        db.execute_unprepared("DROP FUNCTION IF EXISTS mso_append_only()")
+            .await?;
         drop_table(m, "milestone_signoffs").await?;
         drop_table(m, "milestone_signoff_requirements").await
     }

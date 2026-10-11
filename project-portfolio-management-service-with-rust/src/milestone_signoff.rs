@@ -116,7 +116,8 @@ pub fn totals(states: &[State]) -> Totals {
         }
         t.requiring_signoff += 1;
     }
-    t.met_share_of_delivered_bp = (t.delivered > 0).then(|| (t.met * 10_000 + t.delivered / 2) / t.delivered);
+    t.met_share_of_delivered_bp =
+        (t.delivered > 0).then(|| (t.met * 10_000 + t.delivered / 2) / t.delivered);
     t
 }
 
@@ -153,9 +154,16 @@ mod tests {
     #[test]
     fn met_is_the_later_of_delivery_and_the_last_signoff() {
         let a = assess(&[req("A", Some(9)), req("B", Some(7))], Some(d(5)));
-        assert_eq!((a.state, a.delivered_on, a.met_on), (State::Met, Some(d(5)), Some(d(9))));
+        assert_eq!(
+            (a.state, a.delivered_on, a.met_on),
+            (State::Met, Some(d(5)), Some(d(9)))
+        );
         let early = assess(&[req("A", Some(2))], Some(d(5)));
-        assert_eq!(early.met_on, Some(d(5)), "signed before delivery: met when delivered");
+        assert_eq!(
+            early.met_on,
+            Some(d(5)),
+            "signed before delivery: met when delivered"
+        );
     }
 
     #[test]
@@ -166,9 +174,22 @@ mod tests {
 
     #[test]
     fn the_totals_give_the_met_share_and_the_gap() {
-        let t = totals(&[State::Met, State::DeliveredNotMet, State::DeliveredNotMet, State::NotDelivered, State::NotRequired]);
-        assert_eq!((t.requiring_signoff, t.delivered, t.met, t.delivered_not_met), (4, 3, 1, 2));
+        let t = totals(&[
+            State::Met,
+            State::DeliveredNotMet,
+            State::DeliveredNotMet,
+            State::NotDelivered,
+            State::NotRequired,
+        ]);
+        assert_eq!(
+            (t.requiring_signoff, t.delivered, t.met, t.delivered_not_met),
+            (4, 3, 1, 2)
+        );
         assert_eq!(t.met_share_of_delivered_bp, Some(3333));
-        assert_eq!(totals(&[State::NotDelivered]).met_share_of_delivered_bp, None, "nothing delivered: no share");
+        assert_eq!(
+            totals(&[State::NotDelivered]).met_share_of_delivered_bp,
+            None,
+            "nothing delivered: no share"
+        );
     }
 }

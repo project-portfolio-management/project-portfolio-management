@@ -21,8 +21,8 @@ use crate::auth::MaybeAuthUser;
 use crate::deescalation::{self as rules, Input, Quarter, QuarterState};
 use crate::kpi::{self, Direction, Status};
 use crate::models::_entities::{
-    criterion_evidence as evidence, deescalation_criteria as crits, escalation_levels as levels, kpi_readings, kpis, plans,
-    scorecard_kpis as members, scorecards,
+    criterion_evidence as evidence, deescalation_criteria as crits, escalation_levels as levels,
+    kpi_readings, kpis, plans, scorecard_kpis as members, scorecards,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -36,10 +36,19 @@ fn unprocessable(message: &str) -> Error {
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
     if t.contains("sc_name") {
-        return Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "a scorecard with that name exists"));
+        return Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new("conflict", "a scorecard with that name exists"),
+        );
     }
     if t.contains("sc_one_deescalation") {
-        return Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", "another scorecard is already the one the de-escalation tracker reads"));
+        return Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new(
+                "conflict",
+                "another scorecard is already the one the de-escalation tracker reads",
+            ),
+        );
     }
     Error::string(&t)
 }
@@ -61,11 +70,19 @@ pub fn routes() -> Routes {
 }
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| c.attrs.get("access").is_some_and(|v| v.iter().any(|a| a == "admin")))
+    caller.claims().is_none_or(|c| {
+        c.attrs
+            .get("access")
+            .is_some_and(|v| v.iter().any(|a| a == "admin"))
+    })
 }
 
 fn has_role(caller: &MaybeAuthUser, role: &str) -> bool {
-    caller.claims().is_none_or(|c| c.attrs.get("role").is_some_and(|v| v.iter().any(|r| r == role)))
+    caller.claims().is_none_or(|c| {
+        c.attrs
+            .get("role")
+            .is_some_and(|v| v.iter().any(|r| r == role))
+    })
 }
 
 async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
@@ -92,7 +109,11 @@ struct NewScorecard {
 
 /// `POST /api/scorecards`
 #[debug_handler]
-async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): Json<NewScorecard>) -> Result<Response> {
+async fn create(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<NewScorecard>,
+) -> Result<Response> {
     if !(3..=120).contains(&b.name.trim().chars().count()) {
         return Err(unprocessable("name is 3 to 120 characters"));
     }
@@ -106,15 +127,25 @@ async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): J
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "scorecard_created", caller.actor(), None).await.ok();
-    format::json(json!({ "pid": row.pid, "name": row.name, "for_deescalation": row.for_deescalation }))
+    AuditModel::record(&ctx.db, row.pid, "scorecard_created", caller.actor(), None)
+        .await
+        .ok();
+    format::json(
+        json!({ "pid": row.pid, "name": row.name, "for_deescalation": row.for_deescalation }),
+    )
 }
 
 /// `GET /api/scorecards`
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = scorecards::Entity::find().order_by_asc(scorecards::Column::Name).all(&ctx.db).await.map_err(|e| db_err(&e))?;
-    format::json(json!({ "scorecards": rows.iter().map(|r| json!({ "pid": r.pid, "name": r.name, "for_deescalation": r.for_deescalation, "active": r.active })).collect::<Vec<_>>() }))
+    let rows = scorecards::Entity::find()
+        .order_by_asc(scorecards::Column::Name)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    format::json(
+        json!({ "scorecards": rows.iter().map(|r| json!({ "pid": r.pid, "name": r.name, "for_deescalation": r.for_deescalation, "active": r.active })).collect::<Vec<_>>() }),
+    )
 }
 
 #[derive(Debug, Deserialize)]
@@ -134,9 +165,20 @@ async fn find_scorecard(ctx: &AppContext, pid: &str) -> Result<scorecards::Model
 
 /// `PUT /api/scorecards/{pid}/kpis` — the KPIs on the scorecard (replaces the set).
 #[debug_handler]
-async fn set_kpis(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>, Json(b): Json<SetKpis>) -> Result<Response> {
+async fn set_kpis(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<SetKpis>,
+) -> Result<Response> {
     let sc = find_scorecard(&ctx, &pid).await?;
-    let wanted: Vec<Uuid> = b.kpi_pids.iter().copied().collect::<HashSet<_>>().into_iter().collect();
+    let wanted: Vec<Uuid> = b
+        .kpi_pids
+        .iter()
+        .copied()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
     if wanted.len() > 60 {
         return Err(unprocessable("a scorecard holds at most 60 KPIs"));
     }
@@ -149,14 +191,31 @@ async fn set_kpis(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid
     if found.len() != wanted.len() {
         return Err(unprocessable("every kpi_pid must be a KPI"));
     }
-    members::Entity::delete_many().filter(members::Column::ScorecardPid.eq(sc.pid)).exec(&ctx.db).await.map_err(|e| db_err(&e))?;
+    members::Entity::delete_many()
+        .filter(members::Column::ScorecardPid.eq(sc.pid))
+        .exec(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     for k in &wanted {
-        members::ActiveModel { pid: ActiveValue::set(Uuid::new_v4()), scorecard_pid: ActiveValue::set(sc.pid), kpi_pid: ActiveValue::set(*k), ..Default::default() }
-            .insert(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?;
+        members::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            scorecard_pid: ActiveValue::set(sc.pid),
+            kpi_pid: ActiveValue::set(*k),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     }
-    AuditModel::record(&ctx.db, sc.pid, "scorecard_kpis_set", caller.actor(), Some(json!({ "count": wanted.len() }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        sc.pid,
+        "scorecard_kpis_set",
+        caller.actor(),
+        Some(json!({ "count": wanted.len() })),
+    )
+    .await
+    .ok();
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": wanted }))
 }
 
@@ -183,7 +242,12 @@ struct FromTemplate {
 
 /// `POST /api/scorecards/{pid}/from-template` — create the picked measures as KPIs (with your targets) and add them.
 #[debug_handler]
-async fn from_template(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>, Json(b): Json<FromTemplate>) -> Result<Response> {
+async fn from_template(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<FromTemplate>,
+) -> Result<Response> {
     let sc = find_scorecard(&ctx, &pid).await?;
     if b.measures.is_empty() || b.measures.len() > rules::TEMPLATE.len() {
         return Err(unprocessable("pick at least one measure from the template"));
@@ -219,19 +283,37 @@ async fn from_template(State(ctx): State<AppContext>, caller: MaybeAuthUser, Pat
         .insert(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-        members::ActiveModel { pid: ActiveValue::set(Uuid::new_v4()), scorecard_pid: ActiveValue::set(sc.pid), kpi_pid: ActiveValue::set(k.pid), ..Default::default() }
-            .insert(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?;
+        members::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            scorecard_pid: ActiveValue::set(sc.pid),
+            kpi_pid: ActiveValue::set(k.pid),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
         made.push(k.pid);
     }
-    AuditModel::record(&ctx.db, sc.pid, "scorecard_from_template", caller.actor(), Some(json!({ "created": made.len() }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        sc.pid,
+        "scorecard_from_template",
+        caller.actor(),
+        Some(json!({ "created": made.len() })),
+    )
+    .await
+    .ok();
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": made }))
 }
 
 /// One KPI of a scorecard by quarter. A KPI is *met* in a quarter when the latest reading dated in it is at or
 /// better than the target; with no reading it is missing (`met` null), not unmet.
-async fn kpi_rows(ctx: &AppContext, sc: &scorecards::Model, quarters: &[Quarter], visible: &HashSet<Uuid>) -> Result<(Vec<Value>, usize, Vec<Vec<Input>>)> {
+async fn kpi_rows(
+    ctx: &AppContext,
+    sc: &scorecards::Model,
+    quarters: &[Quarter],
+    visible: &HashSet<Uuid>,
+) -> Result<(Vec<Value>, usize, Vec<Vec<Input>>)> {
     let ids: Vec<Uuid> = members::Entity::find()
         .filter(members::Column::ScorecardPid.eq(sc.pid))
         .order_by_asc(members::Column::Id)
@@ -241,7 +323,12 @@ async fn kpi_rows(ctx: &AppContext, sc: &scorecards::Model, quarters: &[Quarter]
         .into_iter()
         .map(|m| m.kpi_pid)
         .collect();
-    let all = kpis::Entity::find().filter(kpis::Column::Pid.is_in(ids.clone())).filter(kpis::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let all = kpis::Entity::find()
+        .filter(kpis::Column::Pid.is_in(ids.clone()))
+        .filter(kpis::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let by: HashMap<Uuid, kpis::Model> = all.into_iter().map(|k| (k.pid, k)).collect();
     let mut hidden = 0;
     let mut rows = Vec::new();
@@ -262,9 +349,15 @@ async fn kpi_rows(ctx: &AppContext, sc: &scorecards::Model, quarters: &[Quarter]
             .map_err(|e| db_err(&e))?;
         let mut per = Vec::new();
         for (i, q) in quarters.iter().enumerate() {
-            let latest = readings.iter().rfind(|r| r.observed_on >= q.start() && r.observed_on <= q.end());
-            let met = latest.map(|r| kpi::status(dir, k.target_value, k.red_value, r.value) == Status::Green);
-            inputs[i].push(Input { name: k.name.clone(), met });
+            let latest = readings
+                .iter()
+                .rfind(|r| r.observed_on >= q.start() && r.observed_on <= q.end());
+            let met = latest
+                .map(|r| kpi::status(dir, k.target_value, k.red_value, r.value) == Status::Green);
+            inputs[i].push(Input {
+                name: k.name.clone(),
+                met,
+            });
             per.push(json!({ "quarter": q.label(), "value": latest.map(|r| r.value), "observed_on": latest.map(|r| r.observed_on), "met": met }));
         }
         rows.push(json!({ "kpi_pid": k.pid, "name": k.name, "unit": k.unit, "direction": k.direction, "target_value": k.target_value, "quarters": per }));
@@ -280,12 +373,21 @@ struct Quarters {
 
 /// `GET /api/scorecards/{pid}[?quarters=4]` — each KPI by finished quarter.
 #[debug_handler]
-async fn show(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>, Query(q): Query<Quarters>) -> Result<Response> {
+async fn show(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Query(q): Query<Quarters>,
+) -> Result<Response> {
     let sc = find_scorecard(&ctx, &pid).await?;
     let qs = rules::window(Utc::now().date_naive(), q.quarters.unwrap_or(4));
     let visible = readable(&ctx, &caller).await?;
     let (rows, hidden, inputs) = kpi_rows(&ctx, &sc, &qs, &visible).await?;
-    let states: Vec<Value> = qs.iter().zip(&inputs).map(|(q, i)| json!({ "quarter": q.label(), "state": rules::quarter_state(i) })).collect();
+    let states: Vec<Value> = qs
+        .iter()
+        .zip(&inputs)
+        .map(|(q, i)| json!({ "quarter": q.label(), "state": rules::quarter_state(i) }))
+        .collect();
     format::json(json!({
         "scorecard": { "pid": sc.pid, "name": sc.name, "for_deescalation": sc.for_deescalation },
         "quarters": qs.iter().map(|q| q.label()).collect::<Vec<_>>(),
@@ -305,9 +407,19 @@ struct LevelBody {
 
 /// `PUT /api/deescalation/level` — record the escalation level the sponsor has set. It is never computed.
 #[debug_handler]
-async fn set_level(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): Json<LevelBody>) -> Result<Response> {
+async fn set_level(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<LevelBody>,
+) -> Result<Response> {
     if !is_admin(&caller) && !has_role(&caller, "sponsor") {
-        return Err(Error::CustomError(StatusCode::FORBIDDEN, ErrorDetail::new("forbidden", "the escalation level is recorded by the sponsor (role=sponsor) or an administrator")));
+        return Err(Error::CustomError(
+            StatusCode::FORBIDDEN,
+            ErrorDetail::new(
+                "forbidden",
+                "the escalation level is recorded by the sponsor (role=sponsor) or an administrator",
+            ),
+        ));
     }
     if !(1..=60).contains(&b.level.trim().chars().count()) {
         return Err(unprocessable("level is 1 to 60 characters"));
@@ -315,7 +427,11 @@ async fn set_level(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b)
     let row = levels::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         level: ActiveValue::set(b.level.trim().to_string()),
-        note: ActiveValue::set(b.note.map(|n| n.trim().to_string()).filter(|n| !n.is_empty())),
+        note: ActiveValue::set(
+            b.note
+                .map(|n| n.trim().to_string())
+                .filter(|n| !n.is_empty()),
+        ),
         set_by: ActiveValue::set(caller.actor().map(str::to_string)),
         set_on: ActiveValue::set(Utc::now().date_naive()),
         ..Default::default()
@@ -323,7 +439,15 @@ async fn set_level(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b)
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "escalation_level_set", caller.actor(), Some(json!({ "level": row.level }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "escalation_level_set",
+        caller.actor(),
+        Some(json!({ "level": row.level })),
+    )
+    .await
+    .ok();
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
@@ -334,15 +458,32 @@ struct CriterionBody {
 
 /// `POST /api/deescalation/criteria`
 #[debug_handler]
-async fn add_criterion(State(ctx): State<AppContext>, caller: MaybeAuthUser, Json(b): Json<CriterionBody>) -> Result<Response> {
+async fn add_criterion(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(b): Json<CriterionBody>,
+) -> Result<Response> {
     if !(5..=500).contains(&b.criterion.trim().chars().count()) {
         return Err(unprocessable("a criterion is 5 to 500 characters"));
     }
-    let row = crits::ActiveModel { pid: ActiveValue::set(Uuid::new_v4()), criterion: ActiveValue::set(b.criterion.trim().to_string()), active: ActiveValue::set(true), ..Default::default() }
-        .insert(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "deescalation_criterion_added", caller.actor(), None).await.ok();
+    let row = crits::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        criterion: ActiveValue::set(b.criterion.trim().to_string()),
+        active: ActiveValue::set(true),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await
+    .map_err(|e| db_err(&e))?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "deescalation_criterion_added",
+        caller.actor(),
+        None,
+    )
+    .await
+    .ok();
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
@@ -358,22 +499,38 @@ struct EvidenceBody {
 
 /// `PUT /api/deescalation/criteria/{pid}/evidence` — record whether the criterion was met in a finished quarter.
 #[debug_handler]
-async fn set_evidence(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>, Json(b): Json<EvidenceBody>) -> Result<Response> {
+async fn set_evidence(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<EvidenceBody>,
+) -> Result<Response> {
     let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
-    let c = crits::Entity::find().filter(crits::Column::Pid.eq(pid)).one(&ctx.db).await.map_err(|e| db_err(&e))?.ok_or(Error::NotFound)?;
+    let c = crits::Entity::find()
+        .filter(crits::Column::Pid.eq(pid))
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .ok_or(Error::NotFound)?;
     let Some(q) = Quarter::parse(&b.quarter) else {
         return Err(unprocessable("quarter must be YYYY-Qn"));
     };
     if q > rules::last_finished(Utc::now().date_naive()) {
-        return Err(unprocessable("a quarter that has not finished cannot be recorded"));
+        return Err(unprocessable(
+            "a quarter that has not finished cannot be recorded",
+        ));
     }
     if b.note.trim().chars().count() < 5 {
         return Err(unprocessable("a note of at least 5 characters is required"));
     }
     if let Some(l) = &b.link
-        && (l.len() > 500 || !(l.starts_with("https://") || l.starts_with("http://")) || l.contains(char::is_whitespace))
+        && (l.len() > 500
+            || !(l.starts_with("https://") || l.starts_with("http://"))
+            || l.contains(char::is_whitespace))
     {
-        return Err(unprocessable("link must be an http or https address with no spaces, up to 500 characters"));
+        return Err(unprocessable(
+            "link must be an http or https address with no spaces, up to 500 characters",
+        ));
     }
     evidence::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -389,7 +546,15 @@ async fn set_evidence(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, c.pid, "deescalation_evidence_recorded", caller.actor(), Some(json!({ "quarter": q.label(), "met": b.met }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        c.pid,
+        "deescalation_evidence_recorded",
+        caller.actor(),
+        Some(json!({ "quarter": q.label(), "met": b.met })),
+    )
+    .await
+    .ok();
     format::json(json!({ "criterion_pid": c.pid, "quarter": q.label(), "met": b.met }))
 }
 
@@ -399,25 +564,54 @@ async fn set_evidence(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path
 ///
 /// When a database read fails.
 #[allow(clippy::too_many_lines)]
-pub(crate) async fn tracker_view(ctx: &AppContext, visible: &HashSet<Uuid>, today: chrono::NaiveDate, with_detail: bool) -> Result<Value> {
+pub(crate) async fn tracker_view(
+    ctx: &AppContext,
+    visible: &HashSet<Uuid>,
+    today: chrono::NaiveDate,
+    with_detail: bool,
+) -> Result<Value> {
     let (need, unusable) = rules::required_quarters();
     let qs = rules::window(today, need.max(4));
-    let level = levels::Entity::find().order_by_desc(levels::Column::Id).one(&ctx.db).await.map_err(|e| db_err(&e))?;
-    let history = levels::Entity::find().order_by_desc(levels::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))?;
-    let criteria = crits::Entity::find().filter(crits::Column::Active.eq(true)).order_by_asc(crits::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))?;
-    let evid = evidence::Entity::find().order_by_asc(evidence::Column::Id).all(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let level = levels::Entity::find()
+        .order_by_desc(levels::Column::Id)
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    let history = levels::Entity::find()
+        .order_by_desc(levels::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    let criteria = crits::Entity::find()
+        .filter(crits::Column::Active.eq(true))
+        .order_by_asc(crits::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    let evid = evidence::Entity::find()
+        .order_by_asc(evidence::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let mut latest: HashMap<(Uuid, String), &evidence::Model> = HashMap::new();
     for e in &evid {
         latest.insert((e.criterion_pid, e.quarter.clone()), e);
     }
-    let sc = scorecards::Entity::find().filter(scorecards::Column::ForDeescalation.eq(true)).one(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let sc = scorecards::Entity::find()
+        .filter(scorecards::Column::ForDeescalation.eq(true))
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     let (kpi_rows_v, hidden, mut inputs) = match &sc {
         Some(s) => kpi_rows(ctx, s, &qs, visible).await?,
         None => (Vec::new(), 0, vec![Vec::new(); qs.len()]),
     };
     for (i, q) in qs.iter().enumerate() {
         for c in &criteria {
-            inputs[i].push(Input { name: c.criterion.clone(), met: latest.get(&(c.pid, q.label())).map(|e| e.met) });
+            inputs[i].push(Input {
+                name: c.criterion.clone(),
+                met: latest.get(&(c.pid, q.label())).map(|e| e.met),
+            });
         }
     }
     let states: Vec<QuarterState> = inputs.iter().map(|i| rules::quarter_state(i)).collect();
@@ -438,7 +632,12 @@ pub(crate) async fn tracker_view(ctx: &AppContext, visible: &HashSet<Uuid>, toda
             "pid": c.pid, "criterion": c.criterion,
             "quarters": qs.iter().map(|q| { let e = latest.get(&(c.pid, q.label())); json!({ "quarter": q.label(), "met": e.map(|x| x.met), "link": e.and_then(|x| x.link.clone()), "note": e.map(|x| x.note.clone()) }) }).collect::<Vec<_>>(),
         })).collect::<Vec<_>>());
-        out["level_history"] = json!(history.iter().map(|l| json!({ "level": l.level, "set_on": l.set_on })).collect::<Vec<_>>());
+        out["level_history"] = json!(
+            history
+                .iter()
+                .map(|l| json!({ "level": l.level, "set_on": l.set_on }))
+                .collect::<Vec<_>>()
+        );
     }
     Ok(out)
 }

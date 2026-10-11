@@ -59,14 +59,23 @@ fn fields(line: &str) -> Vec<String> {
 ///
 /// The list of problems, when the header is wrong, a row is malformed, or there are too many rows.
 pub fn parse(text: &str) -> Result<Vec<Row>, Vec<String>> {
-    let mut lines = text.lines().enumerate().filter(|(_, l)| !l.trim().is_empty());
+    let mut lines = text
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty());
     let Some((_, header)) = lines.next() else {
         return Err(vec!["the file is empty".to_string()]);
     };
-    let head: Vec<String> = fields(header).into_iter().map(|h| h.to_lowercase()).collect();
+    let head: Vec<String> = fields(header)
+        .into_iter()
+        .map(|h| h.to_lowercase())
+        .collect();
     let col = |name: &str| head.iter().position(|h| h == name);
-    let (Some(c), Some(a), Some(u)) = (col("cost_code"), col("amount_minor"), col("currency")) else {
-        return Err(vec!["the header must name cost_code, amount_minor and currency".to_string()]);
+    let (Some(c), Some(a), Some(u)) = (col("cost_code"), col("amount_minor"), col("currency"))
+    else {
+        return Err(vec![
+            "the header must name cost_code, amount_minor and currency".to_string(),
+        ]);
     };
     let mut rows = Vec::new();
     let mut problems = Vec::new();
@@ -80,17 +89,28 @@ pub fn parse(text: &str) -> Result<Vec<Row>, Vec<String>> {
         if code.is_empty() || code.chars().count() > 60 {
             problems.push(format!("line {n}: cost_code is 1 to 60 characters"));
         } else if amount.is_err() {
-            problems.push(format!("line {n}: amount_minor is not a whole number of minor units"));
+            problems.push(format!(
+                "line {n}: amount_minor is not a whole number of minor units"
+            ));
         } else if currency.len() != 3 || !currency.chars().all(|ch| ch.is_ascii_uppercase()) {
             problems.push(format!("line {n}: currency is a three-letter code"));
         } else {
-            rows.push(Row { line: n, cost_code: code.to_string(), amount_minor: amount.unwrap_or(0), currency });
+            rows.push(Row {
+                line: n,
+                cost_code: code.to_string(),
+                amount_minor: amount.unwrap_or(0),
+                currency,
+            });
         }
         if rows.len() + problems.len() > MAX_ROWS {
             return Err(vec![format!("more than {MAX_ROWS} rows: split the file")]);
         }
     }
-    if problems.is_empty() { Ok(rows) } else { Err(problems) }
+    if problems.is_empty() {
+        Ok(rows)
+    } else {
+        Err(problems)
+    }
 }
 
 /// What the register holds for a mapped cost code.
@@ -155,12 +175,14 @@ pub fn reconcile(rows: &[Row], map: &HashMap<String, Line>) -> Report {
         let key = r.cost_code.to_lowercase();
         match map.get(&key) {
             None => {
-                let u = unmatched.entry((key, r.currency.clone())).or_insert_with(|| Unmatched {
-                    cost_code: r.cost_code.clone(),
-                    currency: r.currency.clone(),
-                    amount_minor: 0,
-                    rows: 0,
-                });
+                let u = unmatched
+                    .entry((key, r.currency.clone()))
+                    .or_insert_with(|| Unmatched {
+                        cost_code: r.cost_code.clone(),
+                        currency: r.currency.clone(),
+                        amount_minor: 0,
+                        rows: 0,
+                    });
                 u.amount_minor += r.amount_minor;
                 u.rows += 1;
             }
@@ -190,8 +212,15 @@ pub fn reconcile(rows: &[Row], map: &HashMap<String, Line>) -> Report {
         m.difference_minor = m.ledger_minor - m.register_minor;
     }
     let unmatched: Vec<Unmatched> = unmatched.into_values().collect();
-    let reconciled = unmatched.is_empty() && mismatches.is_empty() && matched.iter().all(|m| m.difference_minor == 0);
-    Report { matched, unmatched, currency_mismatches: mismatches, reconciled }
+    let reconciled = unmatched.is_empty()
+        && mismatches.is_empty()
+        && matched.iter().all(|m| m.difference_minor == 0);
+    Report {
+        matched,
+        unmatched,
+        currency_mismatches: mismatches,
+        reconciled,
+    }
 }
 
 /// Untraced money: what was allocated less what budget lines drawing on it plan, per currency. Positive is
@@ -206,35 +235,70 @@ mod tests {
     use super::*;
 
     fn line(cur: &str, actual: i64) -> Line {
-        Line { line_pid: Uuid::new_v4(), currency: cur.into(), actual_minor: actual }
+        Line {
+            line_pid: Uuid::new_v4(),
+            currency: cur.into(),
+            actual_minor: actual,
+        }
     }
 
     #[test]
     fn a_csv_is_read_with_quotes_extra_columns_and_credits() {
         let rows = parse("period, Cost_Code ,amount_minor,currency\n2026-09,\"CC-1,A\",12500,gbp\n2026-09,CC-2,-300,GBP\n\n").unwrap();
         assert_eq!(rows.len(), 2);
-        assert_eq!((rows[0].cost_code.as_str(), rows[0].amount_minor, rows[0].currency.as_str(), rows[0].line), ("CC-1,A", 12500, "GBP", 2));
+        assert_eq!(
+            (
+                rows[0].cost_code.as_str(),
+                rows[0].amount_minor,
+                rows[0].currency.as_str(),
+                rows[0].line
+            ),
+            ("CC-1,A", 12500, "GBP", 2)
+        );
         assert_eq!(rows[1].amount_minor, -300, "a credit");
     }
 
     #[test]
     fn every_problem_is_reported_with_its_line() {
-        assert_eq!(parse("a,b\n1,2").unwrap_err(), ["the header must name cost_code, amount_minor and currency"]);
-        let e = parse("cost_code,amount_minor,currency\nCC-1,12.5,GBP\n,5,GBP\nCC-3,5,pounds").unwrap_err();
+        assert_eq!(
+            parse("a,b\n1,2").unwrap_err(),
+            ["the header must name cost_code, amount_minor and currency"]
+        );
+        let e = parse("cost_code,amount_minor,currency\nCC-1,12.5,GBP\n,5,GBP\nCC-3,5,pounds")
+            .unwrap_err();
         assert_eq!(e.len(), 3);
-        assert!(e[0].starts_with("line 2:") && e[1].starts_with("line 3:") && e[2].starts_with("line 4:"), "{e:?}");
+        assert!(
+            e[0].starts_with("line 2:")
+                && e[1].starts_with("line 3:")
+                && e[2].starts_with("line 4:"),
+            "{e:?}"
+        );
         assert!(parse("").is_err());
     }
 
     #[test]
     fn matched_codes_reconcile_and_unmatched_ones_are_listed_with_their_amount() {
-        let map = HashMap::from([("cc-1".to_string(), line("GBP", 15_000)), ("cc-2".to_string(), line("GBP", 100))]);
+        let map = HashMap::from([
+            ("cc-1".to_string(), line("GBP", 15_000)),
+            ("cc-2".to_string(), line("GBP", 100)),
+        ]);
         let rows = parse("cost_code,amount_minor,currency\nCC-1,10000,GBP\ncc-1,5000,GBP\nCC-9,700,GBP\nCC-9,300,GBP\nCC-2,100,GBP").unwrap();
         let r = reconcile(&rows, &map);
         assert_eq!(r.matched.len(), 2);
         assert!(r.matched.iter().all(|m| m.difference_minor == 0), "{r:?}");
-        assert_eq!(r.unmatched, [Unmatched { cost_code: "CC-9".into(), currency: "GBP".into(), amount_minor: 1000, rows: 2 }]);
-        assert!(!r.reconciled, "an unmatched code means it does not reconcile");
+        assert_eq!(
+            r.unmatched,
+            [Unmatched {
+                cost_code: "CC-9".into(),
+                currency: "GBP".into(),
+                amount_minor: 1000,
+                rows: 2
+            }]
+        );
+        assert!(
+            !r.reconciled,
+            "an unmatched code means it does not reconcile"
+        );
         let clean = reconcile(&rows[..2], &map);
         assert!(clean.reconciled);
     }
@@ -254,6 +318,10 @@ mod tests {
     fn untraced_money_is_the_allocation_less_what_lines_plan() {
         assert_eq!(untraced(1_000_000, 750_000), 250_000);
         assert_eq!(untraced(1_000_000, 1_000_000), 0);
-        assert_eq!(untraced(1_000_000, 1_200_000), -200_000, "lines planned beyond the allocation");
+        assert_eq!(
+            untraced(1_000_000, 1_200_000),
+            -200_000,
+            "lines planned beyond the allocation"
+        );
     }
 }

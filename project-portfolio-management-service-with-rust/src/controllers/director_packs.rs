@@ -377,7 +377,10 @@ async fn draft(
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",
-            &format!("audience must be one of {:?}, or org:<pid> of an active organization", rules::AUDIENCES),
+            &format!(
+                "audience must be one of {:?}, or org:<pid> of an active organization",
+                rules::AUDIENCES
+            ),
         ));
     }
     let now = Utc::now();

@@ -102,12 +102,17 @@ async fn set(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     if plan.kind.as_deref() != Some("Program") {
-        return Err(unprocessable("only a plan of kind Program has a delivery model"));
+        return Err(unprocessable(
+            "only a plan of kind Program has a delivery model",
+        ));
     }
     if let Some(m) = &b.delivery_model
         && !rules::MODELS.contains(&m.as_str())
     {
-        return Err(unprocessable(&format!("delivery_model must be one of {:?}", rules::MODELS)));
+        return Err(unprocessable(&format!(
+            "delivery_model must be one of {:?}",
+            rules::MODELS
+        )));
     }
     if let Some(o) = b.delivery_owner_organization_pid {
         let ok = organizations::Entity::find()
@@ -118,7 +123,9 @@ async fn set(
             .map_err(|e| db_err(&e))?
             .is_some();
         if !ok {
-            return Err(unprocessable("delivery_owner_organization_pid is not an active organization"));
+            return Err(unprocessable(
+                "delivery_owner_organization_pid is not an active organization",
+            ));
         }
     }
     let existing = find(&ctx, plan.pid).await?;
@@ -180,13 +187,17 @@ async fn set_method(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     if plan.kind.as_deref() != Some("Program") {
-        return Err(unprocessable("only a plan of kind Program has a reporting method"));
+        return Err(unprocessable(
+            "only a plan of kind Program has a reporting method",
+        ));
     }
     if !["evm", "product"].contains(&b.method.as_str()) {
         return Err(unprocessable("method must be evm or product"));
     }
     let existing = find(&ctx, plan.pid).await?;
-    let was = existing.as_ref().map_or("evm".to_string(), |e| e.method.clone());
+    let was = existing
+        .as_ref()
+        .map_or("evm".to_string(), |e| e.method.clone());
     let row = if let Some(e) = existing {
         let mut a: profiles::ActiveModel = e.into();
         a.method = ActiveValue::set(b.method.clone());
@@ -203,9 +214,15 @@ async fn set_method(
         .map_err(|e| db_err(&e))?
     };
     if was != b.method {
-        AuditModel::record(&ctx.db, plan.pid, "reporting_method_changed", caller.actor(), Some(json!({ "from": was, "to": b.method })))
-            .await
-            .ok();
+        AuditModel::record(
+            &ctx.db,
+            plan.pid,
+            "reporting_method_changed",
+            caller.actor(),
+            Some(json!({ "from": was, "to": b.method })),
+        )
+        .await
+        .ok();
     }
     format::json(json!({ "plan_pid": plan.pid, "reporting_method": row.method }))
 }

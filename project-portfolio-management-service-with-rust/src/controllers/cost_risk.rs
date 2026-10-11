@@ -439,7 +439,12 @@ pub(crate) async fn p80_by_currency(
         outcome
             .currencies
             .iter()
-            .filter_map(|cu| cu.percentiles.iter().find(|(p, _)| *p == 80).map(|(_, v)| (cu.currency.clone(), *v)))
+            .filter_map(|cu| {
+                cu.percentiles
+                    .iter()
+                    .find(|(p, _)| *p == 80)
+                    .map(|(_, v)| (cu.currency.clone(), *v))
+            })
             .collect(),
     ))
 }

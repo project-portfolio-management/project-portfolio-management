@@ -23,7 +23,10 @@ use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::cutover as rules;
-use crate::models::_entities::{cutover_cosignatures as cosigs, cutover_criteria as criteria, cutover_decisions as decisions, plans};
+use crate::models::_entities::{
+    cutover_cosignatures as cosigs, cutover_criteria as criteria, cutover_decisions as decisions,
+    plans,
+};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn unprocessable(message: &str) -> Error {
@@ -47,13 +50,25 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/plans/{pid}/cutover-decisions", post(create))
         .add("/plans/{pid}/cutover-decisions", get(list))
-        .add("/plans/{pid}/cutover-decisions/{did}/criteria", put(replace_criteria))
-        .add("/plans/{pid}/cutover-decisions/{did}/publish", post(publish))
+        .add(
+            "/plans/{pid}/cutover-decisions/{did}/criteria",
+            put(replace_criteria),
+        )
+        .add(
+            "/plans/{pid}/cutover-decisions/{did}/publish",
+            post(publish),
+        )
         .add("/plans/{pid}/cutover-decisions/{did}/open", post(open))
-        .add("/plans/{pid}/cutover-decisions/{did}/criteria/{n}/mark", put(mark))
+        .add(
+            "/plans/{pid}/cutover-decisions/{did}/criteria/{n}/mark",
+            put(mark),
+        )
         .add("/plans/{pid}/cutover-decisions/{did}/cosign", post(cosign))
         .add("/plans/{pid}/cutover-decisions/{did}/decide", post(decide))
-        .add("/plans/{pid}/cutover-decisions/{did}/new-version", post(new_version))
+        .add(
+            "/plans/{pid}/cutover-decisions/{did}/new-version",
+            post(new_version),
+        )
 }
 
 async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, decisions::Model)> {
@@ -69,7 +84,10 @@ async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, d
     Ok((plan, d))
 }
 
-async fn parts(ctx: &AppContext, d: &decisions::Model) -> Result<(Vec<criteria::Model>, Vec<cosigs::Model>)> {
+async fn parts(
+    ctx: &AppContext,
+    d: &decisions::Model,
+) -> Result<(Vec<criteria::Model>, Vec<cosigs::Model>)> {
     let c = criteria::Entity::find()
         .filter(criteria::Column::DecisionPid.eq(d.pid))
         .order_by_asc(criteria::Column::Position)
@@ -105,7 +123,10 @@ fn clean(list: &[String]) -> Result<Vec<String>> {
     if !(1..=30).contains(&items.len()) {
         return Err(unprocessable("give 1 to 30 stop criteria"));
     }
-    if items.iter().any(|x| !(5..=500).contains(&x.chars().count())) {
+    if items
+        .iter()
+        .any(|x| !(5..=500).contains(&x.chars().count()))
+    {
         return Err(unprocessable("each stop criterion is 5 to 500 characters"));
     }
     Ok(items)
@@ -135,7 +156,12 @@ struct New {
 
 /// `POST /api/plans/{pid}/cutover-decisions` — a draft, version 1.
 #[debug_handler]
-async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>, Json(b): Json<New>) -> Result<Response> {
+async fn create(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<New>,
+) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     if !(3..=200).contains(&b.title.trim().chars().count()) {
         return Err(unprocessable("title is 3 to 200 characters"));
@@ -151,9 +177,23 @@ async fn create(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid):
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| if e.to_string().contains("cd_version") { conflict("a decision with that title exists for this plan: make a new version of it") } else { db_err(&e) })?;
+    .map_err(|e| {
+        if e.to_string().contains("cd_version") {
+            conflict("a decision with that title exists for this plan: make a new version of it")
+        } else {
+            db_err(&e)
+        }
+    })?;
     put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record(&ctx.db, d.pid, "cutover_decision_drafted", caller.actor(), None).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        d.pid,
+        "cutover_decision_drafted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .ok();
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -183,22 +223,51 @@ struct Criteria {
 
 /// `PUT …/criteria` — replace the criteria of a draft.
 #[debug_handler]
-async fn replace_criteria(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>, Json(b): Json<Criteria>) -> Result<Response> {
+async fn replace_criteria(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+    Json(b): Json<Criteria>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
     if d.status != "draft" {
-        return Err(conflict("the criteria of a published decision cannot be edited: make a new version"));
+        return Err(conflict(
+            "the criteria of a published decision cannot be edited: make a new version",
+        ));
     }
     let items = clean(&b.criteria)?;
-    criteria::Entity::delete_many().filter(criteria::Column::DecisionPid.eq(d.pid)).exec(&ctx.db).await.map_err(|e| db_err(&e))?;
+    criteria::Entity::delete_many()
+        .filter(criteria::Column::DecisionPid.eq(d.pid))
+        .exec(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
     put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record(&ctx.db, d.pid, "cutover_criteria_edited", caller.actor(), Some(json!({ "count": items.len() }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        d.pid,
+        "cutover_criteria_edited",
+        caller.actor(),
+        Some(json!({ "count": items.len() })),
+    )
+    .await
+    .ok();
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
 
-async fn advance(ctx: &AppContext, d: decisions::Model, from: &str, to: &str, action: &str, caller: &MaybeAuthUser) -> Result<Response> {
+async fn advance(
+    ctx: &AppContext,
+    d: decisions::Model,
+    from: &str,
+    to: &str,
+    action: &str,
+    caller: &MaybeAuthUser,
+) -> Result<Response> {
     if d.status != from {
-        return Err(conflict(&format!("this decision is {}, not {from}", d.status)));
+        return Err(conflict(&format!(
+            "this decision is {}, not {from}",
+            d.status
+        )));
     }
     let today = Utc::now().date_naive();
     let mut a: decisions::ActiveModel = d.into();
@@ -209,23 +278,49 @@ async fn advance(ctx: &AppContext, d: decisions::Model, from: &str, to: &str, ac
         a.opened_on = ActiveValue::set(Some(today));
     }
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, action, caller.actor(), None).await.ok();
+    AuditModel::record(&ctx.db, row.pid, action, caller.actor(), None)
+        .await
+        .ok();
     let (c, s) = parts(ctx, &row).await?;
     format::json(view(&row, &c, &s))
 }
 
 /// `POST …/publish` — freeze the criteria.
 #[debug_handler]
-async fn publish(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>) -> Result<Response> {
+async fn publish(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
-    advance(&ctx, d, "draft", "published", "cutover_criteria_published", &caller).await
+    advance(
+        &ctx,
+        d,
+        "draft",
+        "published",
+        "cutover_criteria_published",
+        &caller,
+    )
+    .await
 }
 
 /// `POST …/open` — open the decision (the criteria were published first, and stay as they are).
 #[debug_handler]
-async fn open(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>) -> Result<Response> {
+async fn open(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
-    advance(&ctx, d, "published", "open", "cutover_decision_opened", &caller).await
+    advance(
+        &ctx,
+        d,
+        "published",
+        "open",
+        "cutover_decision_opened",
+        &caller,
+    )
+    .await
 }
 
 #[derive(Debug, Deserialize)]
@@ -236,13 +331,20 @@ struct Mark {
 
 /// `PUT …/criteria/{n}/mark` — mark a criterion met or not, with evidence.
 #[debug_handler]
-async fn mark(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did, n)): Path<(String, String, i32)>, Json(b): Json<Mark>) -> Result<Response> {
+async fn mark(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did, n)): Path<(String, String, i32)>,
+    Json(b): Json<Mark>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
     if d.status != "open" {
         return Err(conflict("criteria are marked while the decision is open"));
     }
     if b.evidence.trim().chars().count() < 5 {
-        return Err(unprocessable("evidence of at least 5 characters is required"));
+        return Err(unprocessable(
+            "evidence of at least 5 characters is required",
+        ));
     }
     let c = criteria::Entity::find()
         .filter(criteria::Column::DecisionPid.eq(d.pid))
@@ -257,7 +359,15 @@ async fn mark(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, d
     a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.marked_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, d.pid, "cutover_criterion_marked", caller.actor(), Some(json!({ "n": n, "met": b.met }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        d.pid,
+        "cutover_criterion_marked",
+        caller.actor(),
+        Some(json!({ "n": n, "met": b.met })),
+    )
+    .await
+    .ok();
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -269,18 +379,38 @@ struct Cosign {
 
 /// `POST …/cosign` — co-sign for a role; the caller's token must carry it in `cutover_role`.
 #[debug_handler]
-async fn cosign(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>, Json(b): Json<Cosign>) -> Result<Response> {
+async fn cosign(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+    Json(b): Json<Cosign>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
     if d.status != "open" {
-        return Err(conflict("co-signatures are given while the decision is open"));
+        return Err(conflict(
+            "co-signatures are given while the decision is open",
+        ));
     }
     let role = b.role.trim().to_lowercase();
     if !rules::required_roles().contains(&role) {
-        return Err(unprocessable(&format!("role must be one of {:?}", rules::required_roles())));
+        return Err(unprocessable(&format!(
+            "role must be one of {:?}",
+            rules::required_roles()
+        )));
     }
-    let holds = caller.claims().is_none_or(|c| c.attrs.get("cutover_role").is_some_and(|v| v.iter().any(|r| r.eq_ignore_ascii_case(&role))));
+    let holds = caller.claims().is_none_or(|c| {
+        c.attrs
+            .get("cutover_role")
+            .is_some_and(|v| v.iter().any(|r| r.eq_ignore_ascii_case(&role)))
+    });
     if !holds {
-        return Err(Error::CustomError(StatusCode::FORBIDDEN, ErrorDetail::new("forbidden", "only a person holding that role (the cutover_role attribute) co-signs for it")));
+        return Err(Error::CustomError(
+            StatusCode::FORBIDDEN,
+            ErrorDetail::new(
+                "forbidden",
+                "only a person holding that role (the cutover_role attribute) co-signs for it",
+            ),
+        ));
     }
     cosigs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -292,8 +422,22 @@ async fn cosign(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid,
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| if e.to_string().contains("ccs_once") { conflict("that role has already co-signed") } else { db_err(&e) })?;
-    AuditModel::record(&ctx.db, d.pid, "cutover_cosigned", caller.actor(), Some(json!({ "role": role }))).await.ok();
+    .map_err(|e| {
+        if e.to_string().contains("ccs_once") {
+            conflict("that role has already co-signed")
+        } else {
+            db_err(&e)
+        }
+    })?;
+    AuditModel::record(
+        &ctx.db,
+        d.pid,
+        "cutover_cosigned",
+        caller.actor(),
+        Some(json!({ "role": role })),
+    )
+    .await
+    .ok();
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -306,23 +450,40 @@ struct Decide {
 
 /// `POST …/decide` — go, no-go or delay for safety.
 #[debug_handler]
-async fn decide(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>, Json(b): Json<Decide>) -> Result<Response> {
+async fn decide(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+    Json(b): Json<Decide>,
+) -> Result<Response> {
     let (_, d) = load(&ctx, &pid, &did).await?;
     if d.status != "open" {
         return Err(conflict("only an open decision is decided"));
     }
     if !rules::OUTCOMES.contains(&b.outcome.as_str()) {
-        return Err(unprocessable(&format!("outcome must be one of {:?}", rules::OUTCOMES)));
+        return Err(unprocessable(&format!(
+            "outcome must be one of {:?}",
+            rules::OUTCOMES
+        )));
     }
     if b.reason.trim().chars().count() < 10 {
-        return Err(unprocessable("a reason of at least 10 characters is required"));
+        return Err(unprocessable(
+            "a reason of at least 10 characters is required",
+        ));
     }
     let (c, s) = parts(&ctx, &d).await?;
     if b.outcome == "go" {
         let signed: Vec<String> = s.iter().map(|x| x.role.clone()).collect();
-        let problems = rules::go_problems(&c.iter().map(|x| x.met).collect::<Vec<_>>(), &rules::required_roles(), &signed);
+        let problems = rules::go_problems(
+            &c.iter().map(|x| x.met).collect::<Vec<_>>(),
+            &rules::required_roles(),
+            &signed,
+        );
         if !problems.is_empty() {
-            return Err(unprocessable(&format!("a go is refused: {}", problems.join("; "))));
+            return Err(unprocessable(&format!(
+                "a go is refused: {}",
+                problems.join("; ")
+            )));
         }
     }
     let mut a: decisions::ActiveModel = d.into();
@@ -332,24 +493,41 @@ async fn decide(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid,
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "cutover_decided", caller.actor(), Some(json!({ "outcome": b.outcome }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "cutover_decided",
+        caller.actor(),
+        Some(json!({ "outcome": b.outcome })),
+    )
+    .await
+    .ok();
     format::json(view(&row, &c, &s))
 }
 
 /// `POST …/new-version` — a new draft with the same criteria, to change them. A published or open decision is
 /// superseded; a decided one stays as decided (the new version supersedes it by reference).
 #[debug_handler]
-async fn new_version(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path((pid, did)): Path<(String, String)>) -> Result<Response> {
+async fn new_version(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, did)): Path<(String, String)>,
+) -> Result<Response> {
     let (plan, d) = load(&ctx, &pid, &did).await?;
     if d.status == "draft" || d.status == "superseded" {
-        return Err(conflict("only a published, open or decided decision has a new version"));
+        return Err(conflict(
+            "only a published, open or decided decision has a new version",
+        ));
     }
     if d.outcome.as_deref() == Some("go") {
         return Err(conflict("a decision that went ahead is final"));
     }
     let latest = decisions::Entity::find()
         .filter(decisions::Column::PlanPid.eq(plan.pid))
-        .filter(sea_orm::sea_query::Expr::cust_with_values("lower(title) = lower($1)", [d.title.clone()]))
+        .filter(sea_orm::sea_query::Expr::cust_with_values(
+            "lower(title) = lower($1)",
+            [d.title.clone()],
+        ))
         .order_by_desc(decisions::Column::Version)
         .one(&ctx.db)
         .await
@@ -376,8 +554,24 @@ async fn new_version(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    put_criteria(&ctx, nd.pid, &old_c.iter().map(|x| x.criterion.clone()).collect::<Vec<_>>()).await?;
-    AuditModel::record(&ctx.db, nd.pid, "cutover_decision_new_version", caller.actor(), Some(json!({ "supersedes": d.pid }))).await.ok();
+    put_criteria(
+        &ctx,
+        nd.pid,
+        &old_c
+            .iter()
+            .map(|x| x.criterion.clone())
+            .collect::<Vec<_>>(),
+    )
+    .await?;
+    AuditModel::record(
+        &ctx.db,
+        nd.pid,
+        "cutover_decision_new_version",
+        caller.actor(),
+        Some(json!({ "supersedes": d.pid })),
+    )
+    .await
+    .ok();
     let (c, s) = parts(&ctx, &nd).await?;
     format::json(view(&nd, &c, &s))
 }
@@ -388,7 +582,11 @@ async fn new_version(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(
 /// # Errors
 ///
 /// When a database read fails.
-pub(crate) async fn pack_section(ctx: &AppContext, include: &std::collections::HashSet<Uuid>, period: &str) -> Result<Value> {
+pub(crate) async fn pack_section(
+    ctx: &AppContext,
+    include: &std::collections::HashSet<Uuid>,
+    period: &str,
+) -> Result<Value> {
     let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
@@ -405,9 +603,17 @@ pub(crate) async fn pack_section(ctx: &AppContext, include: &std::collections::H
         .await
         .map_err(|e| db_err(&e))?
         .into_iter()
-        .filter(|d| names.contains_key(&d.plan_pid) && d.decided_on.is_some_and(|x| x.format("%Y-%m").to_string() == period))
+        .filter(|d| {
+            names.contains_key(&d.plan_pid)
+                && d.decided_on
+                    .is_some_and(|x| x.format("%Y-%m").to_string() == period)
+        })
         .collect();
-    let count = |o: &str| rows.iter().filter(|d| d.outcome.as_deref() == Some(o)).count();
+    let count = |o: &str| {
+        rows.iter()
+            .filter(|d| d.outcome.as_deref() == Some(o))
+            .count()
+    };
     Ok(json!({
         "decisions": rows.iter().map(|d| json!({ "plan": names[&d.plan_pid], "title": d.title, "version": d.version, "outcome": d.outcome, "decided_on": d.decided_on })).collect::<Vec<_>>(),
         "counts": { "go": count("go"), "no_go": count("no_go"), "delay_for_safety": count("delay_for_safety") },

@@ -35,7 +35,12 @@ impl MigrationTrait for Migration {
         create_table(
             m,
             "scorecard_kpis",
-            &[("id", ColType::PkAuto), ("pid", ColType::UuidUniq), ("scorecard_pid", ColType::Uuid), ("kpi_pid", ColType::Uuid)],
+            &[
+                ("id", ColType::PkAuto),
+                ("pid", ColType::UuidUniq),
+                ("scorecard_pid", ColType::Uuid),
+                ("kpi_pid", ColType::Uuid),
+            ],
             &[],
         )
         .await?;
@@ -56,7 +61,12 @@ impl MigrationTrait for Migration {
         create_table(
             m,
             "deescalation_criteria",
-            &[("id", ColType::PkAuto), ("pid", ColType::UuidUniq), ("criterion", ColType::Text), ("active", ColType::Boolean)],
+            &[
+                ("id", ColType::PkAuto),
+                ("pid", ColType::UuidUniq),
+                ("criterion", ColType::Text),
+                ("active", ColType::Boolean),
+            ],
             &[],
         )
         .await?;
@@ -107,9 +117,12 @@ impl MigrationTrait for Migration {
     /// Propagates any DDL error.
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let db = m.get_connection();
-        db.execute_unprepared("DROP TRIGGER IF EXISTS ce_append_only ON criterion_evidence").await?;
-        db.execute_unprepared("DROP TRIGGER IF EXISTS el_append_only ON escalation_levels").await?;
-        db.execute_unprepared("DROP FUNCTION IF EXISTS ex10_append_only()").await?;
+        db.execute_unprepared("DROP TRIGGER IF EXISTS ce_append_only ON criterion_evidence")
+            .await?;
+        db.execute_unprepared("DROP TRIGGER IF EXISTS el_append_only ON escalation_levels")
+            .await?;
+        db.execute_unprepared("DROP FUNCTION IF EXISTS ex10_append_only()")
+            .await?;
         drop_table(m, "criterion_evidence").await?;
         drop_table(m, "deescalation_criteria").await?;
         drop_table(m, "escalation_levels").await?;

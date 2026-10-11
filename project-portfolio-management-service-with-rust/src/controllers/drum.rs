@@ -118,7 +118,10 @@ struct Drum {
 /// # Errors
 ///
 /// When a database read fails.
-pub(crate) async fn constraint_pool(ctx: &AppContext, heat: &Value) -> Result<Option<(Uuid, String)>> {
+pub(crate) async fn constraint_pool(
+    ctx: &AppContext,
+    heat: &Value,
+) -> Result<Option<(Uuid, String)>> {
     Ok(resolve(ctx, heat).await?.ok().map(|d| (d.pool, d.name)))
 }
 

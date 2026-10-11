@@ -34,7 +34,10 @@ impl MigrationTrait for Migration {
         .await?;
         let db = m.get_connection();
         db.execute_unprepared("ALTER TABLE programme_profiles ADD CONSTRAINT pp_model CHECK (delivery_model IS NULL OR delivery_model IN ('central_product','central_platform_local_deployment','local_programme_central_standards'))").await?;
-        db.execute_unprepared("ALTER TABLE programme_profiles ALTER COLUMN method SET DEFAULT 'evm'").await?;
+        db.execute_unprepared(
+            "ALTER TABLE programme_profiles ALTER COLUMN method SET DEFAULT 'evm'",
+        )
+        .await?;
         db.execute_unprepared("ALTER TABLE programme_profiles ADD CONSTRAINT pp_method CHECK (method IN ('evm','product'))").await?;
         Ok(())
     }

@@ -9,7 +9,7 @@ starts unless you ask.
 ## Start it
 
 ```sh
-export PPM_MAIL_ADMIN_PASSWORD='<choose one>'          # the bootstrap administrator's password
+export PPM_MAIL_ADMIN='admin:<choose a password>'      # optional: pins the bootstrap administrator
 podman compose --profile mail up -d mail               # the mail server on its own
 ```
 
@@ -24,7 +24,7 @@ podman compose --profile mail up -d mail               # the mail server on its 
 
 Stalwart starts in **bootstrap mode**: only the administration page is open, until it is configured.
 
-1. Open `http://127.0.0.1:8081/` and sign in as `admin` with `PPM_MAIL_ADMIN_PASSWORD`.
+1. Open `http://127.0.0.1:8081/` and sign in as `admin` with the password you pinned, or the one-time password in `podman compose --profile mail logs mail`.
 2. Complete the setup: your **domain**, the **hostname**, and a **certificate** for it.
 3. Create an **account** for the API to send as (for example `ppm@your-domain`) and give it a password.
 4. Point the API at it and restart:
@@ -61,5 +61,6 @@ of kind `email` use it; other callers (for example, mailing a pack's subscribers
 - **The API's mailer expects a trusted TLS certificate** (`secure: true` in `config/production.yaml`). A
   self-signed certificate made by Stalwart will be refused; use a certificate from a CA the API container
   trusts, or send through a relay you already run.
-- The bootstrap password lives in `PPM_MAIL_ADMIN_PASSWORD`; once Stalwart has provisioned its permanent
-  administrator, remove the variable's use and rotate.
+- The bootstrap password is `PPM_MAIL_ADMIN` or the one-time log line; once Stalwart has provisioned its
+  permanent administrator, stop using it and rotate. The variable is optional so the rest of the stack
+  starts without it (it was once required, which broke `docker compose` for every profile).

@@ -95,7 +95,10 @@ fn validate_proposal(p: &ProposalPayload) -> Vec<String> {
     }
     cap(&mut problems, "title", &p.title);
     cap_opt(&mut problems, "summary", p.summary.as_deref());
-    if p.tradeoff.as_deref().is_some_and(|t| t.chars().count() > 2000) {
+    if p.tradeoff
+        .as_deref()
+        .is_some_and(|t| t.chars().count() > 2000)
+    {
         problems.push("tradeoff must be at most 2000 characters".to_string());
     }
     cap_opt(
@@ -253,10 +256,12 @@ pub(crate) async fn asks_section(ctx: &AppContext, period: &str) -> Result<serde
     let mut asks: Vec<serde_json::Value> = rows
         .iter()
         .filter(|p| p.created_at.format("%Y-%m").to_string() == period)
-        .map(|p| serde_json::json!({
-            "title": p.title, "status": p.status, "tradeoff": p.tradeoff,
-            "named_tradeoff": p.tradeoff.as_deref().is_some_and(|t| !t.trim().is_empty()),
-        }))
+        .map(|p| {
+            serde_json::json!({
+                "title": p.title, "status": p.status, "tradeoff": p.tradeoff,
+                "named_tradeoff": p.tradeoff.as_deref().is_some_and(|t| !t.trim().is_empty()),
+            })
+        })
         .collect();
     asks.sort_by_key(|a| a["title"].as_str().unwrap_or("").to_string());
     let without = asks.iter().filter(|a| a["named_tradeoff"] == false).count();
@@ -283,10 +288,15 @@ async fn set_tradeoff(
 ) -> Result<Response> {
     let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
     if !row.external_ask {
-        return Err(refuse("only an external ask has a trade-off: tag the proposal as one first"));
+        return Err(refuse(
+            "only an external ask has a trade-off: tag the proposal as one first",
+        ));
     }
     if !["draft", "submitted", "in_review"].contains(&row.status.as_str()) {
-        return Err(refuse(&format!("a {} proposal's trade-off can no longer be changed", row.status)));
+        return Err(refuse(&format!(
+            "a {} proposal's trade-off can no longer be changed",
+            row.status
+        )));
     }
     let text = b.tradeoff.trim().to_string();
     if !(10..=2000).contains(&text.chars().count()) {
@@ -295,8 +305,19 @@ async fn set_tradeoff(
     let row_pid = row.pid;
     let mut active: proposals::ActiveModel = row.into();
     active.tradeoff = ActiveValue::set(Some(text));
-    let row = active.update(&ctx.db).await.map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, "proposal_tradeoff_set", caller.actor(), None).await.ok();
+    let row = active
+        .update(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    AuditModel::record(
+        &ctx.db,
+        row_pid,
+        "proposal_tradeoff_set",
+        caller.actor(),
+        None,
+    )
+    .await
+    .ok();
     format::json(row)
 }
 
@@ -312,7 +333,10 @@ async fn transition_proposal(
     // A new ask from the sponsor must name what it displaces before it is approved (EX-13).
     if matches!(action, rules::ProposalAction::Approve)
         && row.external_ask
-        && row.tradeoff.as_deref().is_none_or(|t| t.trim().chars().count() < 10)
+        && row
+            .tradeoff
+            .as_deref()
+            .is_none_or(|t| t.trim().chars().count() < 10)
     {
         return Err(refuse(
             "an external ask needs a named trade-off before approval: set tradeoff to what it displaces (10 or more characters)",

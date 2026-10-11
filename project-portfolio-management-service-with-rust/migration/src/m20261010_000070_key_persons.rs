@@ -36,7 +36,11 @@ impl MigrationTrait for Migration {
         create_table(
             m,
             "contingent_workers",
-            &[("id", ColType::PkAuto), ("pid", ColType::UuidUniq), ("person_ref", ColType::StringUniq)],
+            &[
+                ("id", ColType::PkAuto),
+                ("pid", ColType::UuidUniq),
+                ("person_ref", ColType::StringUniq),
+            ],
             &[],
         )
         .await?;

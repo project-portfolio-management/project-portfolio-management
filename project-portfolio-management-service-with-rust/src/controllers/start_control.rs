@@ -62,7 +62,12 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     let in_delivery: Vec<(Uuid, String)> = all
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && p.pid != plan.pid)
-        .filter(|p| rules::in_delivery(p.phase.as_deref(), statuses.get(&p.pid).copied().unwrap_or("active")))
+        .filter(|p| {
+            rules::in_delivery(
+                p.phase.as_deref(),
+                statuses.get(&p.pid).copied().unwrap_or("active"),
+            )
+        })
         .map(|p| (p.pid, p.name.clone()))
         .collect();
     let (limit, limit_unusable) = rules::limit();
@@ -75,27 +80,45 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     let short: Vec<String> = pool
         .as_ref()
         .and_then(|(pid, _)| {
-            heat["pools"].as_array()?.iter().find(|p| p["pool_pid"].as_str().and_then(|s| Uuid::parse_str(s).ok()) == Some(*pid))
+            heat["pools"].as_array()?.iter().find(|p| {
+                p["pool_pid"].as_str().and_then(|s| Uuid::parse_str(s).ok()) == Some(*pid)
+            })
         })
         .into_iter()
         .flat_map(|p| p["cells"].as_array().cloned().unwrap_or_default())
         .filter(|c| c["gap_fte"].as_f64().is_some_and(|g| g < 0.0))
         .filter_map(|c| c["month"].as_str().map(str::to_string))
         .collect();
-    let refusals = rules::refusals(in_delivery.len(), limit, pool.as_ref().map(|(_, n)| (n.as_str(), short.as_slice())));
+    let refusals = rules::refusals(
+        in_delivery.len(),
+        limit,
+        pool.as_ref().map(|(_, n)| (n.as_str(), short.as_slice())),
+    );
 
     // This programme's demand per skill pool and month (firm allocations on it and the plans under it).
     let mut tree = vec![plan.pid];
     let mut frontier = vec![plan.pid];
     for _ in 0..10 {
-        let kids: Vec<Uuid> = all.iter().filter(|p| p.parent_pid.is_some_and(|x| frontier.contains(&x)) && !tree.contains(&p.pid)).map(|p| p.pid).collect();
+        let kids: Vec<Uuid> = all
+            .iter()
+            .filter(|p| {
+                p.parent_pid.is_some_and(|x| frontier.contains(&x)) && !tree.contains(&p.pid)
+            })
+            .map(|p| p.pid)
+            .collect();
         if kids.is_empty() {
             break;
         }
         tree.extend(kids.iter().copied());
         frontier = kids;
     }
-    let pool_names: HashMap<Uuid, String> = skill_pools::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|p| (p.pid, p.name)).collect();
+    let pool_names: HashMap<Uuid, String> = skill_pools::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|p| (p.pid, p.name))
+        .collect();
     let pool_of_role: HashMap<String, Uuid> = members::Entity::find()
         .filter(members::Column::Kind.eq("role"))
         .all(&ctx.db)
@@ -104,34 +127,76 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
         .into_iter()
         .map(|m| (m.value.to_lowercase(), m.pool_pid))
         .collect();
-    let role_of: HashMap<String, String> = resource_roles::Entity::find().all(&ctx.db).await.map_err(|e| db_err(&e))?.into_iter().map(|r| (r.person_ref, r.role.to_lowercase())).collect();
+    let role_of: HashMap<String, String> = resource_roles::Entity::find()
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|r| (r.person_ref, r.role.to_lowercase()))
+        .collect();
     let mut milli: BTreeMap<(String, String), i64> = BTreeMap::new();
-    for a in allocations::Entity::find().filter(allocations::Column::DeletedAt.is_null()).all(&ctx.db).await.map_err(|e| db_err(&e))? {
+    for a in allocations::Entity::find()
+        .filter(allocations::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+    {
         if !tree.contains(&a.plan_pid) || a.booking == "proposed" {
             continue;
         }
-        let role = a.role.clone().filter(|r| !r.trim().is_empty()).map(|r| r.to_lowercase()).or_else(|| role_of.get(&a.person_ref).cloned());
-        let Some(pool_pid) = role.and_then(|r| pool_of_role.get(&r).copied()) else { continue };
+        let role = a
+            .role
+            .clone()
+            .filter(|r| !r.trim().is_empty())
+            .map(|r| r.to_lowercase())
+            .or_else(|| role_of.get(&a.person_ref).cloned());
+        let Some(pool_pid) = role.and_then(|r| pool_of_role.get(&r).copied()) else {
+            continue;
+        };
         for m in 0..6u32 {
             let ms = crate::capacity_heatmap::add_months(first, m);
-            let me = crate::capacity_heatmap::add_months(first, m + 1).pred_opt().unwrap_or(ms);
-            let (s, e) = (a.start_date.unwrap_or(ms).max(ms), a.end_date.unwrap_or(me).min(me));
+            let me = crate::capacity_heatmap::add_months(first, m + 1)
+                .pred_opt()
+                .unwrap_or(ms);
+            let (s, e) = (
+                a.start_date.unwrap_or(ms).max(ms),
+                a.end_date.unwrap_or(me).min(me),
+            );
             if s > e {
                 continue;
             }
             let days = (e - s).num_days() + 1;
             let month_days = (me - ms).num_days() + 1;
-            *milli.entry((pool_names.get(&pool_pid).cloned().unwrap_or_default(), ms.format("%Y-%m").to_string())).or_default() +=
-                i64::from(a.percent) * 10 * days / month_days;
+            *milli
+                .entry((
+                    pool_names.get(&pool_pid).cloned().unwrap_or_default(),
+                    ms.format("%Y-%m").to_string(),
+                ))
+                .or_default() += i64::from(a.percent) * 10 * days / month_days;
         }
     }
     let mut by_pool: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for ((pool_name, month), v) in milli {
         #[allow(clippy::cast_precision_loss)]
-        by_pool.entry(pool_name).or_default().push(json!({ "month": month, "demand_fte": v as f64 / 1000.0 }));
+        by_pool
+            .entry(pool_name)
+            .or_default()
+            .push(json!({ "month": month, "demand_fte": v as f64 / 1000.0 }));
     }
-    let demand = json!(by_pool.into_iter().map(|(p, months)| json!({ "pool": p, "months": months })).collect::<Vec<_>>());
-    Ok(Evaluation { in_delivery, limit, limit_unusable, refusals, pool, demand })
+    let demand = json!(
+        by_pool
+            .into_iter()
+            .map(|(p, months)| json!({ "pool": p, "months": months }))
+            .collect::<Vec<_>>()
+    );
+    Ok(Evaluation {
+        in_delivery,
+        limit,
+        limit_unusable,
+        refusals,
+        pool,
+        demand,
+    })
 }
 
 async fn waiting(ctx: &AppContext) -> Result<Vec<queue::Model>> {
@@ -145,7 +210,11 @@ async fn waiting(ctx: &AppContext) -> Result<Vec<queue::Model>> {
 
 /// `GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing.
 #[debug_handler]
-async fn start_check(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(pid): Path<String>) -> Result<Response> {
+async fn start_check(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let e = evaluate(&ctx, &plan).await?;
     let q = waiting(&ctx).await?;
@@ -168,6 +237,7 @@ async fn start_check(State(ctx): State<AppContext>, caller: MaybeAuthUser, Path(
 /// # Errors
 ///
 /// 422 when refused and no override reason was given; a database error otherwise.
+#[allow(clippy::too_many_lines)]
 pub(crate) async fn gate(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -178,7 +248,11 @@ pub(crate) async fn gate(
         return Ok(());
     }
     let today = Utc::now().date_naive();
-    let status = super::programme_gates::status_map(ctx, today).await?.get(&plan.pid).copied().unwrap_or("active");
+    let status = super::programme_gates::status_map(ctx, today)
+        .await?
+        .get(&plan.pid)
+        .copied()
+        .unwrap_or("active");
     if rules::in_delivery(plan.phase.as_deref(), status) {
         return Ok(());
     }
@@ -202,7 +276,10 @@ pub(crate) async fn gate(
         return started(entry).await;
     }
     let text = serde_json::to_string(&e.refusals).unwrap_or_default();
-    if let Some(r) = override_reason.map(str::trim).filter(|r| r.chars().count() >= 10) {
+    if let Some(r) = override_reason
+        .map(str::trim)
+        .filter(|r| r.chars().count() >= 10)
+    {
         overrides::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
             plan_pid: ActiveValue::set(plan.pid),
@@ -215,7 +292,15 @@ pub(crate) async fn gate(
         .insert(&ctx.db)
         .await
         .map_err(|x| db_err(&x))?;
-        AuditModel::record(&ctx.db, plan.pid, "start_override", caller.actor(), Some(json!({ "refusals": e.refusals }))).await.ok();
+        AuditModel::record(
+            &ctx.db,
+            plan.pid,
+            "start_override",
+            caller.actor(),
+            Some(json!({ "refusals": e.refusals })),
+        )
+        .await
+        .ok();
         return started(entry).await;
     }
     let position = if let Some(q) = entry {
@@ -241,22 +326,41 @@ pub(crate) async fn gate(
     let waiting_now = waiting(ctx).await?;
     let pids: Vec<Uuid> = waiting_now.iter().map(|x| x.plan_pid).collect();
     let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
-    let place = waiting_now.iter().filter(|x| readable.contains(&x.plan_pid)).position(|x| x.id == position).map_or(1, |i| i + 1);
+    let place = waiting_now
+        .iter()
+        .filter(|x| readable.contains(&x.plan_pid))
+        .position(|x| x.id == position)
+        .map_or(1, |i| i + 1);
     let why = e
         .refusals
         .iter()
         .map(|r| match r {
-            Refusal::LimitReached { in_delivery, limit } => format!("{in_delivery} of {limit} places for programmes in active delivery are taken"),
-            Refusal::ConstraintPoolOver { pool, months } => format!("the {pool} pool is short of supply in {}", months.join(", ")),
+            Refusal::LimitReached { in_delivery, limit } => format!(
+                "{in_delivery} of {limit} places for programmes in active delivery are taken"
+            ),
+            Refusal::ConstraintPoolOver { pool, months } => format!(
+                "the {pool} pool is short of supply in {}",
+                months.join(", ")
+            ),
         })
         .collect::<Vec<_>>()
         .join("; ");
-    AuditModel::record(&ctx.db, plan.pid, "start_refused", caller.actor(), Some(json!({ "refusals": e.refusals, "queue_position": place }))).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "start_refused",
+        caller.actor(),
+        Some(json!({ "refusals": e.refusals, "queue_position": place })),
+    )
+    .await
+    .ok();
     Err(Error::CustomError(
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new(
             "start_refused",
-            format!("this programme cannot start yet: {why}. It is number {place} in the queue; send start_override_reason (10 or more characters) to start anyway."),
+            format!(
+                "this programme cannot start yet: {why}. It is number {place} in the queue; send start_override_reason (10 or more characters) to start anyway."
+            ),
         ),
     ))
 }
@@ -280,7 +384,15 @@ async fn withdraw(
     a.status = ActiveValue::set("withdrawn".to_string());
     a.resolved_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, plan.pid, "start_queue_withdrawn", caller.actor(), None).await.ok();
+    AuditModel::record(
+        &ctx.db,
+        plan.pid,
+        "start_queue_withdrawn",
+        caller.actor(),
+        None,
+    )
+    .await
+    .ok();
     format::json(json!({ "withdrawn": plan.pid }))
 }
 
@@ -308,5 +420,7 @@ async fn list_queue(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
             "queued_on": x.queued_on, "refusals": serde_json::from_str::<Value>(&x.refusals).unwrap_or_default(),
         }))
         .collect();
-    format::json(json!({ "queue": list, "note": "In the order the programmes asked to start; the order never changes. A place counts only the programmes you may read." }))
+    format::json(
+        json!({ "queue": list, "note": "In the order the programmes asked to start; the order never changes. A place counts only the programmes you may read." }),
+    )
 }

@@ -43,7 +43,7 @@
 #   SMTP_HOST=mail SMTP_PORT=587 EMAIL_FROM=ppm@example.test podman compose --profile mail up -d
 #
 # Stalwart starts in a bootstrap mode: its administration page (http://127.0.0.1:8081/, user `admin`,
-# password PPM_MAIL_ADMIN_PASSWORD) is where the domain, an account for the API and the certificate are set
+# password pinned by PPM_MAIL_ADMIN=admin:<password>, else the one-time one in the mail log) is where the domain, an account for the API and the certificate are set
 # up once. Until then it listens on the administration port only. Steps and limits:
 # operations/email-with-stalwart.md. The ports are bound to 127.0.0.1; they are a development and
 # small-site convenience, not a hardened public mail host.
@@ -179,8 +179,10 @@ services:
     image: docker.io/stalwartlabs/stalwart:v0.16
     hostname: mail
     environment:
-      # Pins the bootstrap administrator so the password is yours, not a one-time log line.
-      STALWART_RECOVERY_ADMIN: admin:${PPM_MAIL_ADMIN_PASSWORD:?set PPM_MAIL_ADMIN_PASSWORD (any value for local use)}
+      # Optional: PPM_MAIL_ADMIN=admin:<password> pins the bootstrap administrator. Empty (the default) leaves
+      # Stalwart to print a one-time password in its log (`podman compose logs mail`). Not required, so the
+      # rest of the stack starts without it.
+      STALWART_RECOVERY_ADMIN: ${PPM_MAIL_ADMIN:-}
     ports:
       - "127.0.0.1:8081:8080"   # administration and web mail
       - "127.0.0.1:2525:25"     # SMTP (incoming)

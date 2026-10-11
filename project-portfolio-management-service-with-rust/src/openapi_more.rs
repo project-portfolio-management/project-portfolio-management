@@ -1079,6 +1079,11 @@ fn director_pack_paths() -> Value {
                 "Computes the pack once, over live plans that are neither private nor carrying a handling mark, and stores the text. Body: period (YYYY-MM), audience (executive, board, escalation_board or partner), optional cut_off (not future, at most 400 days old). Needs access=admin or directorpack=editor or issuer. One pack per period and audience: a second is 409, saying whether to issue the draft or reissue the issued pack.",
                 vec![], &[("201", "The draft's metadata"), ("403", "Not allowed to draft"), ("409", "That period and audience already has a pack"), ("422", "Bad period, audience or cut_off")])
         },
+        "/api/director-packs/{pid}/pdf": {
+            "get": op("director-packs", "A director pack as a PDF",
+                "The same pack, made from the stored JSON alone, so it shows no figure the JSON does not; readable by the same audiences as the JSON (a pack you may not read is a 404). An issued pack gives the same bytes on every read. The fixed words are English because the PDF writer is Latin-1 only: Welsh, Chinese and Hindi text cannot be carried (free text outside Latin-1 becomes a question mark); the interface shows the translated page, which can be printed. A draft is marked DRAFT. Inputs: the stored pack only.",
+                vec![uuid_param("pid")], &[("200", "application/pdf"), ("404", "No such pack, or not one you may read")])
+        },
         "/api/director-packs/{pid}": {
             "get": op("director-pack", "Read a director pack",
                 "The metadata and the stored body. For an issued pack the body is the exact text stored at drafting, byte-identical on every read and after any later change to the data; it lists the plans counted and left out and the sections that are not built yet. Stored text, not recomputed. A pack you may not read is 404.",

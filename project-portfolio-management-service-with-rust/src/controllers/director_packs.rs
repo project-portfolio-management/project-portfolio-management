@@ -555,6 +555,45 @@ async fn get_one(
     Ok(([(header::CONTENT_TYPE, "application/json")], text).into_response())
 }
 
+/// `GET /api/director-packs/{pid}/pdf` — the same pack as a PDF. It is made from the stored JSON alone, so
+/// it shows no figure the JSON does not, and it is as deterministic as the JSON is frozen: two reads of an
+/// issued pack are byte-identical. The words are English (the writer is Latin-1 only); a reader of another
+/// language prints the translated page in the interface.
+#[debug_handler]
+async fn get_pdf(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let row = find(&ctx, &pid).await?;
+    if !may_read(&caller, &row) {
+        return Err(Error::NotFound);
+    }
+    let body: serde_json::Value = serde_json::from_str(&row.body)
+        .map_err(|e| Error::string(&format!("the stored pack cannot be read: {e}")))?;
+    let lines = crate::director_pack_text::lines(&meta(&row), &body);
+    let title = format!(
+        "Director pack {} {} v{}",
+        row.period, row.audience, row.version
+    );
+    let pdf = crate::pdf::render(&title, &lines);
+    let name = format!(
+        "director-pack-{}-{}-v{}.pdf",
+        row.period, row.audience, row.version
+    );
+    Ok((
+        [
+            (header::CONTENT_TYPE, "application/pdf".to_string()),
+            (
+                header::CONTENT_DISPOSITION,
+                format!("inline; filename=\"{name}\""),
+            ),
+        ],
+        pdf,
+    )
+        .into_response())
+}
+
 /// The routes.
 pub fn routes() -> Routes {
     Routes::new()
@@ -562,6 +601,7 @@ pub fn routes() -> Routes {
         .add("", post(draft))
         .add("", get(list))
         .add("/{pid}", get(get_one))
+        .add("/{pid}/pdf", get(get_pdf))
         .add("/{pid}/issue", post(issue))
         .add("/{pid}/reissue", post(reissue))
 }

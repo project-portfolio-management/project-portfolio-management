@@ -176,6 +176,7 @@
     { href: "/risk", label: t("ppm.nav.risk") },
     { href: "/issues", get label() { return t("p.issues.issues"); } },
     { href: "/change-requests", get label() { return t("p.change_requests.change_requests"); } },
+    { href: "/director-packs", get label() { return t("p.director_pack.director_packs"); } },
     { href: "/security", label: t("ppm.nav.security") },
     { href: "/regulator", label: t("ppm.nav.regulator") },
     { href: "/capacity", label: t("ppm.nav.capacity") },

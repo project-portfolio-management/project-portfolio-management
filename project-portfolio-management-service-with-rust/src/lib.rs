@@ -62,6 +62,7 @@ pub mod custom_fields;
 pub mod data;
 pub mod delivery_confidence;
 pub mod director_pack;
+pub mod director_pack_text;
 pub mod director_summary;
 pub mod discussion;
 /// Pure rules for the engineering-team features (tasks / burndown / MoSCoW).

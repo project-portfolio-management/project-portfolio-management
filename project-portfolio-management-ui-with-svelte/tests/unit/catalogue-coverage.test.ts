@@ -17,7 +17,7 @@ const SAME_IN_WELSH = new Set([
   "CSV", "GBP", "PERT", "Gantt", "RACI — PPM", "PROJ-2026", "uuid", "capex", "opex",
   "person:…", "person:<uuid>", "worker:<uuid>", "CPI {value}", "Delta (b − a)", "Asana (allforio CSV)",
   // Same word in Welsh, or a name/abbreviation:
-  "Cost", "cost", "Person", "Band", "Cap", "label", "pts", "PPM", "ROI", "SPI", "SPI {ratioOrReason} ·",
+  "Cost", "cost", "CPI", "Person", "Band", "Cap", "label", "pts", "PPM", "ROI", "SPI", "SPI {ratioOrReason} ·",
   "· ROI {toFixed}%", "Cost — {title}: {costSkippedText}", "band", "person", "{word}: SPI {ratioText}, {gap}.",
   " · {points}pt", "{headcount} person",
   "Main X", "Gantt — Main X", "Plans — Main X", "Main X · Plans", "{name} — Main X", "{t} — Main X",

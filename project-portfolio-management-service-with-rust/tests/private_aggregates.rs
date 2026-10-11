@@ -184,6 +184,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/director-packs/{pid}/pdf",
+        "one stored pack as a PDF, made from the stored JSON alone; computed once at drafting over plans that are neither private nor marked, and read by audience (tests/capacity_heatmap.rs)",
+    ),
+    (
         "/api/skill-pools",
         "the owner-supplied grouping of roles and skills into pools; it holds names, not plans, people or amounts",
     ),

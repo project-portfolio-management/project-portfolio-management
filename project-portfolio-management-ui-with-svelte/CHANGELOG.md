@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the director pack pages (DP-11, 2026-10-11)
+
+`/director-packs` and `/director-packs/[pid]`: every section of an issued pack in English and Welsh (other locales show English words), readings as a word and a symbol as well as a colour, money in the reader's own format with its currency, a link to the service's English PDF. Axe passes in `en-001`, `cy-001` and `zh-cn`.
+
 ### Added — the API client sends an Idempotency-Key on every POST (2026-10-11)
 
 A fresh key per call, reused while an identical POST (same path and body) is still in flight, so a double click is one request to the service. A caller can pass its own `idempotencyKey` to reuse across a retry, or `false` for none; a caller's own `Idempotency-Key` header wins. The proxy already forwards request headers. **Be clear about what it buys today:** the service replays on this key only for bulk imports; elsewhere it ignores it, so a double submit of another POST is still two writes at the service. The key is what makes server-side replay possible; the service side is not built for other routes.

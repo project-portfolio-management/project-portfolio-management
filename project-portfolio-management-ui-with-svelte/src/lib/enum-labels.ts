@@ -17,7 +17,16 @@ export type EnumGroup =
   | "issue_status"
   | "issue_kind"
   | "cr_status"
-  | "cr_kind";
+  | "cr_kind"
+  | "pk_conf"
+  | "pk_trend"
+  | "pk_status"
+  | "pk_zone"
+  | "pk_heat"
+  | "pk_class"
+  | "pk_recur"
+  | "pk_cls"
+  | "pk_gate";
 
 /** The label for `value` in `group`, in the current language. */
 export function enumLabel(group: EnumGroup, value: unknown): string {

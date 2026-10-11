@@ -612,6 +612,26 @@ export interface ChangeRequest {
   decision_reason: string | null;
 }
 
+/** A director pack's row (DP-1). */
+export interface DirectorPackMeta {
+  pid: string;
+  period: string;
+  audience: string;
+  version: number;
+  status: "draft" | "issued";
+  cut_off: string;
+  change_note: string | null;
+  supersedes_pid: string | null;
+  issued_at: string | null;
+  issued_by: string | null;
+}
+
+/** `GET /api/director-packs/{pid}`: the pack row and its frozen body, as stored. */
+export interface DirectorPack {
+  pack: DirectorPackMeta;
+  body: Record<string, unknown>;
+}
+
 /** `GET /api/change-requests`. */
 export interface ChangeRequestList {
   change_requests: ChangeRequest[];
@@ -2438,6 +2458,14 @@ export class PpmClient {
     if (params.open) q.set("open", "true");
     const qs = q.toString();
     return this.http.get(`/api/change-requests${qs ? `?${qs}` : ""}`);
+  }
+  /** The director packs the caller may read, without their bodies. */
+  directorPacks(): Promise<{ packs: DirectorPackMeta[] }> {
+    return this.http.get("/api/director-packs");
+  }
+  /** One director pack with its frozen body. */
+  directorPack(pid: string): Promise<DirectorPack> {
+    return this.http.get(`/api/director-packs/${encodeURIComponent(pid)}`);
   }
   /** The issues register across the plans the caller can read. */
   issues(

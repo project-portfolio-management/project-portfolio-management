@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the director pack as a PDF (DP-11, 2026-10-11)
+
+`GET /api/director-packs/{pid}/pdf`: the stored pack as a deterministic PDF made from the JSON alone, readable by the same audiences; English words only (the writer is Latin-1). `DirectorPack` in the OpenAPI schemas now matches what `GET /api/director-packs/{pid}` returns (`pack` and `body`).
+
 ### Added — the capacity heatmap by skill pool and month (DP-10, 2026-10-11)
 
 Skill pools (a role in at most one), partner capacity commitments, and `GET /api/capacity-heatmap` plus the pack's `capacity_heatmap`: demand, own and partner supply, and the gap per pool and month, each cell with a word, a shape and a colour, "no supply recorded" instead of zero, and a table twin. Partner organizations are labels until EX-3; their names are hidden unless the deployment shows them. Migration 61. The pack now lists no section as not yet built.

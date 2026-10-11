@@ -129,8 +129,7 @@ pub fn schemas() -> Value {
             "pid": uuid(), "period": s(), "audience": s(), "version": int(),
             "status": en(&["draft", "issued"]), "cut_off": time(), "change_note": s_null(),
             "supersedes_pid": uuid_null(), "issued_at": time_null(), "issued_by": s_null() })),
-        "DirectorPack": json!({ "allOf": [r("DirectorPackMeta"), obj(&["body"], json!({
-            "body": r("DirectorPackBody") }))] }),
+        "DirectorPack": obj(&["pack", "body"], json!({ "pack": r("DirectorPackMeta"), "body": r("DirectorPackBody") })),
         "DirectorPackBody": obj(&["cover", "data_quality"], json!({
             "cover": any_object(), "what_changed": list(any_object()), "basis": s(),
             "data_quality": obj(&["sections_included", "sections_not_yet_built"], json!({

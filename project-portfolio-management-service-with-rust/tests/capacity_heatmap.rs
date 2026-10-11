@@ -226,6 +226,33 @@ async fn the_heatmap_keeps_its_promises() {
         assert_eq!(h["months"].as_array().unwrap().len(), 6);
         assert_eq!(cell(h, "Engineering", &month)["word"], "enough");
         assert!(!pack.to_string().contains("person:") && !pack.to_string().contains("Acme"));
+
+        // ── the PDF shows exactly the figures the JSON does ──
+        let pdf_url = format!("/api/director-packs/{pk}/pdf");
+        let r1 = with!(request.get(&pdf_url), issuer).await;
+        assert_eq!(r1.status_code(), 200);
+        assert_eq!(r1.header("content-type"), "application/pdf");
+        let bytes = r1.as_bytes().to_vec();
+        assert!(bytes.starts_with(b"%PDF"));
+        assert_eq!(with!(request.get(&pdf_url), issuer).await.as_bytes().to_vec(), bytes, "an issued pack gives the same bytes every time");
+        let text = project_portfolio_management_service::pdf::text_of(&bytes).replace("\\(", "(").replace("\\)", ")");
+        let body = &pack["body"];
+        let has = |needle: String| assert!(text.contains(&needle), "the PDF lacks {needle:?}");
+        has(format!("Director pack {month} for board"));
+        has(format!("Plans included: {}.", body["data_quality"]["plans_included"]));
+        has(format!("left out (private or marked): {}", body["data_quality"]["plans_left_out_private_or_marked"]));
+        for p in body["capacity_heatmap"]["pools"].as_array().unwrap() {
+            has(format!("Pool {}", p["name"].as_str().unwrap()));
+            for c in p["cells"].as_array().unwrap() {
+                let f = |k: &str| c[k].as_f64().map_or("-".to_string(), |x| format!("{x:.3}"));
+                has(format!("{} | {} ({}) | demand {} | supply {} | gap {}", c["month"].as_str().unwrap(), c["word"].as_str().unwrap(), c["shape"].as_str().unwrap(), f("demand_fte"), f("supply_fte"), f("gap_fte")));
+            }
+        }
+        for g in body["portfolio_map"]["groups"].as_array().unwrap() {
+            for prog in g["programmes"].as_array().unwrap() { has(format!("{} | status {}", prog["name"].as_str().unwrap(), prog["programme_status"].as_str().unwrap())); }
+        }
+        assert!(!text.contains("Secret") && !text.contains("person:") && !text.contains("Acme"), "the PDF holds nothing the JSON does not");
+        assert_eq!(with!(request.get(&pdf_url), outsider).await.status_code(), 404, "the same audiences as the JSON");
         assert!(pack["body"]["data_quality"]["sections_included"].as_array().unwrap().iter().any(|s| s == "capacity_heatmap"));
         assert_eq!(pack["body"]["data_quality"]["sections_not_yet_built"].as_array().unwrap().len(), 0, "every section of the director pack now exists");
     })

@@ -69,6 +69,9 @@ struct PhasePayload {
     phase: String,
     #[serde(default)]
     reason: Option<String>,
+    /// Start control (EX-8): why a refused start should go ahead anyway (10 or more characters).
+    #[serde(default)]
+    start_override_reason: Option<String>,
 }
 
 /// `PUT /api/plans/{pid}/phase` — advance one step, or move back with a
@@ -95,6 +98,10 @@ async fn set_phase(
     };
     let from = plan.phase.as_deref().and_then(PlanPhase::parse);
     rules::check_move(from, to, payload.reason.as_deref()).map_err(|e| refuse(&e))?;
+    // A programme moving into delivery meets the limit and the constraint pool (EX-8).
+    if to == PlanPhase::Executing {
+        super::start_control::gate(&ctx, &caller, &plan, payload.start_override_reason.as_deref()).await?;
+    }
 
     phase_transitions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),

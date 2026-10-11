@@ -113,6 +113,15 @@ struct Drum {
     why: String,
 }
 
+/// The constraint pool for start control (EX-8): the drum, named or the most overloaded, with its name.
+///
+/// # Errors
+///
+/// When a database read fails.
+pub(crate) async fn constraint_pool(ctx: &AppContext, heat: &Value) -> Result<Option<(Uuid, String)>> {
+    Ok(resolve(ctx, heat).await?.ok().map(|d| (d.pool, d.name)))
+}
+
 /// Which pool is the drum: the one named, else the most overloaded in the heatmap, else none (with why).
 async fn resolve(
     ctx: &AppContext,

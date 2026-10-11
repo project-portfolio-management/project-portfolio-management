@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — start control (EX-8, 2026-10-11)
+
+A limit on programmes in active delivery and a capacity check on the constraint pool: a programme moving into executing is refused with the reason and joins a queue, or starts with a recorded, audited override. Paused programmes do not count. Migration 73.
+
 ### Added — a sender trait and a delivery row per recipient for email (2026-10-11)
 
 `src/email.rs` defines `Sender` (SMTP via the configured mailer, none, or a recording sender for tests) and the retry rules; `email_deliveries` (migration 72) holds one row per message per recipient with status, attempts, last error and sender; `controllers::email_deliveries::deliver` sends through the sender in force and never sends the same message to the same recipient twice; `GET /api/email-deliveries` lists them for administrators. The notification sinks of kind `email` now send through it. The service was not tested against the bundled Stalwart server.

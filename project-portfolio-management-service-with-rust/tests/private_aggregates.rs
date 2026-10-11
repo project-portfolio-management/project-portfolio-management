@@ -104,6 +104,7 @@ const AGGREGATES: &[&str] = &[
     "/api/portfolio-drum",
     "/api/portfolio-pipeline",
     "/api/milestone-signoffs",
+    "/api/start-queue",
     "/api/register-completeness",
     "/api/capacity-commitments",
     "/api/financials/forecast?plan={pub}",

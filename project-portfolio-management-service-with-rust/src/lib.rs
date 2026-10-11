@@ -106,6 +106,7 @@ pub mod kpi;
 pub mod delivery_model;
 pub mod email;
 pub mod leveling;
+pub mod start_control;
 pub mod thresholds;
 pub mod watermelon;
 pub mod register_completeness;

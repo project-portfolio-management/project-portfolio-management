@@ -136,6 +136,7 @@ pub fn paths() -> Value {
     merge(&mut all, register_paths());
     merge(&mut all, key_person_paths());
     merge(&mut all, threshold_paths());
+    merge(&mut all, start_control_paths());
     merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
@@ -1405,6 +1406,27 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Start control (EX-8).
+fn start_control_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/start-check": {
+            "get": op("governance", "What starting this programme would meet now: the limit and the constraint pool",
+                "Inputs: the programmes in active delivery (phase executing or controlling, status active; paused and stopped do not count), the limit (PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT, none if unset), the constraint pool (the drum) and its supply against demand in the next six months from the capacity heatmap, and this programme's own firm demand by skill pool and month in FTE. would_be_refused and refusals say what would stop it; queue_position is its place if it is waiting. Changes nothing.",
+                vec![uuid_param("pid")], &[("200", "wip, constraint_pool, demand_by_pool, would_be_refused, refusals, queue_position"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/start-queue/withdraw": {
+            "post": op("governance", "Leave the queue of programmes waiting to start",
+                "Removes the programme from the waiting queue; the places of those behind it move up. 404 if it is not waiting. Audited.",
+                vec![uuid_param("pid")], &[("200", "withdrawn"), ("404", "Unknown plan, or not waiting")])
+        },
+        "/api/start-queue": {
+            "get": op("governance", "Programmes waiting to start, in the order they asked",
+                "Inputs: the waiting queue entries, filtered to programmes the caller may read. The order is the order of asking and never changes; a position counts only the programmes the caller may read, so a private plan is nowhere. Each entry carries why it was refused.",
+                vec![], &[("200", "queue, note")])
         }
     })
 }

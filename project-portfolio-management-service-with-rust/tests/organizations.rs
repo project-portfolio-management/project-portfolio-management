@@ -72,6 +72,7 @@ const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
 const ISSUER_SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000e2";
 const ACME_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b1";
 const MANAGER: &str = "3f2c6b7e-0000-4000-8000-0000000000c1";
+const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 const OTHER_USER: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 
 async fn sweep_call(req: &axum_test::TestServer, who: &(axum::http::HeaderName, axum::http::HeaderValue)) -> Value {
@@ -441,6 +442,64 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(tt["overrides_in_force"][0]["programme"], "Care");
         assert!(!tt.to_string().contains("person:"), "no one is named: {tt}");
         assert!(_ctx.db.execute_unprepared("DELETE FROM threshold_decisions").await.is_err(), "append-only");
+
+        // ── EX-8: start control: a limit on programmes in active delivery, a queue, an audited override ──
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let mkprog = |name: &'static str| {
+            let (request, writer) = (&request, writer.clone());
+            async move {
+                let v: Value = request.post("/api/plans").add_header(writer.0, writer.1).json(&json!({ "kind": "Program", "name": name })).await.json();
+                v["pid"].as_str().unwrap().to_string()
+            }
+        };
+        let phase = |pid: &str, to: &str, extra: Value| {
+            let (request, writer) = (&request, writer.clone());
+            let mut body = json!({ "phase": to });
+            for (k, v) in extra.as_object().cloned().unwrap_or_default() { body[k] = v; }
+            let url = format!("/api/plans/{pid}/phase");
+            async move { let r = request.put(&url).add_header(writer.0, writer.1).json(&body).await; (r.status_code().as_u16(), r.text()) }
+        };
+        let (alpha, beta, gamma, delta) = (mkprog("Alpha").await, mkprog("Beta").await, mkprog("Gamma").await, mkprog("Delta").await);
+        for p in [&alpha, &beta, &gamma, &delta] {
+            assert_eq!(phase(p, "initiating", json!({})).await.0, 200);
+            assert_eq!(phase(p, "planning", json!({})).await.0, 200);
+        }
+        // No limit set: anyone may start.
+        // SAFETY: this binary is single-test, so nothing else reads the setting concurrently.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT", "1") };
+        assert_eq!(phase(&alpha, "executing", json!({})).await.0, 200, "room for the first");
+        let (code, text) = phase(&beta, "executing", json!({})).await;
+        assert_eq!(code, 422, "{text}");
+        assert!(text.contains("start_refused") && text.contains("1 of 1 places") && text.contains("number 1 in the queue"), "{text}");
+        assert_eq!(phase(&delta, "executing", json!({})).await.0, 422);
+        let q: Value = with!(request.get("/api/start-queue"), writer).await.json();
+        let names: Vec<&str> = q["queue"].as_array().unwrap().iter().filter(|e| e["name"] == "Beta" || e["name"] == "Delta").map(|e| e["name"].as_str().unwrap()).collect();
+        assert_eq!(names, ["Beta", "Delta"], "in the order they asked: {q}");
+        let chk: Value = with!(request.get(&format!("/api/plans/{beta}/start-check")), writer).await.json();
+        assert_eq!((chk["would_be_refused"].as_bool(), chk["wip"]["limit"].as_u64(), chk["wip"]["in_delivery"].as_u64()), (Some(true), Some(1), Some(1)), "{chk}");
+        // Asking again does not change the place; leaving does.
+        assert_eq!(phase(&beta, "executing", json!({})).await.0, 422);
+        let q2: Value = with!(request.get("/api/start-queue"), writer).await.json();
+        assert_eq!(q2["queue"].as_array().unwrap().iter().filter(|e| e["name"] == "Beta").count(), 1, "one place each");
+        with!(request.post(&format!("/api/plans/{delta}/start-queue/withdraw")), writer).await.assert_status_ok();
+        // A refusal can be overridden, with a reason, and the override is recorded.
+        assert_eq!(phase(&beta, "executing", json!({ "start_override_reason": "short" })).await.0, 422, "a thin reason is no override");
+        assert_eq!(phase(&beta, "executing", json!({ "start_override_reason": "The sponsor needs it live before the audit" })).await.0, 200);
+        {
+            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+            use project_portfolio_management_service::models::_entities::audit_logs;
+            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("start_override")).count(&_ctx.db).await.unwrap();
+            assert_eq!(n, 1, "the override is audited");
+        }
+        let q3: Value = with!(request.get("/api/start-queue"), writer).await.json();
+        assert!(q3["queue"].as_array().unwrap().iter().all(|e| e["name"] != "Beta" && e["name"] != "Delta"), "started and withdrawn are out of the queue: {q3}");
+        assert!(_ctx.db.execute_unprepared("DELETE FROM start_overrides").await.is_err(), "overrides are append-only");
+        // Paused programmes use no place: pause both, and a third starts without an override.
+        for p in [&alpha, &beta] {
+            with!(request.post(&format!("/api/plans/{p}/programme-status")), admin).json(&json!({ "status": "paused", "reason": "Paused while the audit runs" })).await.assert_status_ok();
+        }
+        assert_eq!(phase(&gamma, "executing", json!({})).await.0, 200, "paused programmes do not count");
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT") };
 
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();

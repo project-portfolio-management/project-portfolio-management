@@ -255,6 +255,7 @@ pub mod kpis;
 pub mod key_persons;
 pub mod email_deliveries;
 pub mod leveling;
+pub mod start_control;
 pub mod thresholds;
 pub mod register;
 pub mod programme_profile;

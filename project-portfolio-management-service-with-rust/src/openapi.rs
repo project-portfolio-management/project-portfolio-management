@@ -977,7 +977,7 @@ fn phase_paths() -> Value {
             "put": {
                 "tags": ["phase"],
                 "summary": "Advance one step, or move back with a stated reason",
-                "description": "Advancement is one step at a time and a skip is refused, naming the phase that would have been jumped. A backward move is permitted but must carry a reason: re-planning is normal, an unexplained regression is not. The phase never gates an operational write — tasks may be created in initiating and issues raised in closing, because refusing writes on that basis teaches operators to misreport the phase. An unrecognized token is refused, never coerced to a default.",
+                "description": "Advancement is one step at a time and a skip is refused, naming the phase that would have been jumped. A backward move is permitted but must carry a reason: re-planning is normal, an unexplained regression is not. The phase never gates an operational write — tasks may be created in initiating and issues raised in closing, because refusing writes on that basis teaches operators to misreport the phase. An unrecognized token is refused, never coerced to a default. START CONTROL (EX-8): for a plan of kind Program, moving into executing is refused with 422 start_refused when the limit on programmes in active delivery is full (PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT; paused and stopped programmes do not count) or the constraint pool (the drum) is short of supply in a month of the next six; the programme joins the queue (GET /api/start-queue) and starts when asked again with room, or at once with start_override_reason (10 or more characters), which is recorded and audited. GET /api/plans/{pid}/start-check shows what a start would meet without moving anything.",
                 "parameters": [plan],
                 "responses": {
                     "200": { "description": "New phase, and the next one available" },
@@ -2209,6 +2209,7 @@ mod tests {
             crate::controllers::buffer_management::routes(),
             crate::controllers::drum::routes(),
             crate::controllers::organizations::routes(),
+            crate::controllers::start_control::routes(),
             crate::controllers::email_deliveries::routes(),
             crate::controllers::thresholds::routes(),
             crate::controllers::key_persons::routes(),

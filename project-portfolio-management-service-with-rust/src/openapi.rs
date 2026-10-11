@@ -2187,6 +2187,7 @@ mod tests {
             crate::controllers::programme_gates::routes(),
             crate::controllers::funding::routes(),
             crate::controllers::fever::routes(),
+            crate::controllers::capacity_heatmap::routes(),
             crate::controllers::benefit_validation::routes(),
             crate::controllers::director_packs::routes(),
             crate::controllers::sandbox::routes(),

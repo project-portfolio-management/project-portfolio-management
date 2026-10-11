@@ -10,6 +10,8 @@ pub mod break_glass;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` (T-28l).
 pub mod canvas;
+/// Skill pools, capacity commitments and the capacity heatmap (DP-10).
+pub mod capacity_heatmap;
 /// Sprint ceremonies and the commitment snapshot.
 pub mod ceremony;
 pub mod change_requests;

@@ -119,6 +119,7 @@ pub fn paths() -> Value {
     merge(&mut all, fever_paths());
     merge(&mut all, portfolio_evm_paths());
     merge(&mut all, benefit_paths());
+    merge(&mut all, capacity_paths());
     merge(&mut all, earned_value_paths());
     merge(&mut all, evm_paths());
     merge(&mut all, leveling_paths());
@@ -1035,6 +1036,35 @@ fn benefit_paths() -> Value {
             "get": op("benefits", "Planned against validated benefits for the programmes you can read",
                 "Per programme and in total, one row per currency, recurrence and classification: planned (the yearly amount of a recurring benefit, the target of a one-off one), claimed, validated and the unvalidated part of the claim. Recurring and one-off are never added together. A non-financial benefit shows its KPI's status, or not measured when it has no KPI. Inputs: benefits, validations, KPIs and their latest readings.",
                 vec![], &[("200", "programmes, not_under_a_programme, totals, note")])
+        }
+    })
+}
+
+/// Skill pools, capacity commitments and the capacity heatmap (DP-10).
+fn capacity_paths() -> Value {
+    json!({
+        "/api/skill-pools": {
+            "get": op("capacity", "The skill pools", "Each pool with the roles and skills it groups. Inputs: stored pools only.", vec![], &[("200", "skill_pools")]),
+            "post": op("capacity", "Add a skill pool",
+                "Body: name (2 to 120 characters, unique ignoring case), optional roles and skills. A role or skill is in at most one pool (409), so demand is never counted twice. Audited.",
+                vec![], &[("200", "The pool"), ("409", "Name exists, or a role is already in another pool"), ("422", "Bad name")])
+        },
+        "/api/skill-pools/{pid}": {
+            "put": op("capacity", "Retire, restore or regroup a skill pool",
+                "Body: any of active, roles, skills; roles and skills replace the pool's list when sent. Audited.",
+                vec![uuid_param("pid")], &[("200", "The pool"), ("404", "No such pool"), ("409", "A role is already in another pool")])
+        },
+        "/api/capacity-commitments": {
+            "get": op("capacity", "Capacity commitments on the programmes you can read", "Capacity promised to, or work owed on, programmes, oldest month first, at most 1000. Inputs: stored commitments only; those on plans you cannot read are left out.", vec![], &[("200", "commitments")]),
+            "put": op("capacity", "Set a capacity commitment",
+                "Body: pool_pid, plan_pid (a programme), organization (a partner's name as a label; omit for the organization's own), kind (supply: capacity committed to the programme; demand: work owed), month (YYYY-MM), committed_fte, optional delivered_fte and note. One per pool, programme, organization, kind and month; setting it again replaces it. Audited.",
+                vec![], &[("200", "The commitment"), ("404", "Not a programme you can read"), ("422", "Every fault named")])
+        },
+        "/api/capacity-heatmap": {
+            "get": op("capacity", "Capacity by skill pool and month",
+                "For each active pool and each month (?from=YYYY-MM, default this month; ?months=1 to 24, default 6): demand (committed allocations on plans you may read, by role, plus work partners owe), supply (the organization's own people with the pool's roles, from their availability, plus partners' commitments), the gap, and a word, a shape and a colour. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is under 110 % of demand. Partner supply is shown apart from the organization's own and combined; partner names only when the deployment shows them. Roles in no pool are under no pool assigned. A flat table twin is included. No person appears.",
+                vec![query("from", false, "YYYY-MM"), query("months", false, "1 to 24")],
+                &[("200", "months, pools, table, partner_names_shown, note"), ("422", "Bad window")])
         }
     })
 }

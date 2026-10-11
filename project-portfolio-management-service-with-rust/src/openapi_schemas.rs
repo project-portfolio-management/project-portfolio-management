@@ -138,7 +138,7 @@ pub fn schemas() -> Value {
                 "sections_included": list(s()), "sections_not_yet_built": list(s()), "note": s() })),
             "portfolio_map": r("PortfolioMap"), "exceptions": any_object(),
             "gate_decisions": r("GateDecisions"), "funding": r("PortfolioMoney"),
-            "buffer_fever": r("BufferFever"), "earned_value": r("PortfolioEarnedValue"), "benefits": r("PortfolioBenefits"), "issues": any_object(), "change_requests": any_object() })),
+            "buffer_fever": r("BufferFever"), "earned_value": r("PortfolioEarnedValue"), "benefits": r("PortfolioBenefits"), "capacity_heatmap": r("CapacityHeatmap"), "issues": any_object(), "change_requests": any_object() })),
         "DirectorPackList": obj(&["packs"], json!({ "packs": list(r("DirectorPackMeta")) })),
 
         // ── delivery confidence, exceptions, aims, the map ──
@@ -245,6 +245,36 @@ pub fn schemas() -> Value {
                 "lines_with_no_funding_source": int(), "listed_lines_with_no_funding_source": list(any_object()),
                 "lines_with_no_dates": int(), "lines_in_other_financial_years": int(), "lines_running_past_the_year_end": int() })),
             "note": s() })),
+
+        // ── skill pools, commitments, heatmap ──
+        "SkillPoolInput": obj(&["name"], json!({ "name": { "type": "string", "minLength": 2, "maxLength": 120 }, "roles": list(s()), "skills": list(s()) })),
+        "SkillPoolUpdate": obj(&[], json!({ "active": boolean(), "roles": list(s()), "skills": list(s()) })),
+        "SkillPool": obj(&["pid", "name", "active", "roles", "skills"], json!({
+            "pid": uuid(), "name": s(), "active": boolean(), "roles": list(s()), "skills": list(s()) })),
+        "SkillPoolList": obj(&["skill_pools"], json!({ "skill_pools": list(r("SkillPool")) })),
+        "CapacityCommitmentInput": obj(&["pool_pid", "plan_pid", "kind", "month", "committed_fte"], json!({
+            "pool_pid": uuid(), "plan_pid": uuid(),
+            "organization": { "type": "string", "nullable": true, "description": "A partner's name as a label; omit for the organization's own." },
+            "kind": en(&["supply", "demand"]), "month": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+            "committed_fte": { "type": "number", "minimum": 0, "maximum": 1000 },
+            "delivered_fte": { "type": "number", "nullable": true, "minimum": 0, "maximum": 1000 }, "note": s_null() })),
+        "CapacityCommitment": obj(&["pid", "pool_pid", "plan_pid", "kind", "month", "committed_fte"], json!({
+            "pid": uuid(), "pool_pid": uuid(), "plan_pid": uuid(), "organization": s_null(),
+            "kind": en(&["supply", "demand"]), "month": s(), "committed_fte": num(),
+            "delivered_fte": { "type": "number", "nullable": true }, "note": s_null() })),
+        "CapacityCommitmentList": obj(&["commitments"], json!({ "commitments": list(r("CapacityCommitment")) })),
+        "HeatmapCell": obj(&["month", "state", "word", "shape", "colour", "demand_fte"], json!({
+            "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "no_demand", "nothing_recorded"]),
+            "word": s(), "shape": s(), "colour": s(), "demand_fte": num(), "own_demand_fte": num(), "partner_demand_fte": num(),
+            "supply_fte": { "type": "number", "nullable": true }, "own_supply_fte": { "type": "number", "nullable": true },
+            "partner_supply_committed_fte": { "type": "number", "nullable": true },
+            "partner_supply_delivered_fte": { "type": "number", "nullable": true },
+            "gap_fte": { "type": "number", "nullable": true }, "partner_delivery_short": boolean(), "partners": int(),
+            "by_organization": list(any_object()) })),
+        "CapacityHeatmap": obj(&["months", "pools", "table"], json!({
+            "months": list(s()),
+            "pools": list(obj(&["name", "cells"], json!({ "pool_pid": uuid_null(), "name": s(), "cells": list(r("HeatmapCell")) }))),
+            "table": list(any_object()), "partner_names_shown": boolean(), "note": s() })),
 
         // ── validated benefits ──
         "BenefitClassificationInput": obj(&[], json!({
@@ -595,6 +625,37 @@ pub const ATTACH: &[Attach] = &[
         "/api/portfolio-benefits",
         None,
         &[("200", "PortfolioBenefits")],
+    ),
+    ("get", "/api/skill-pools", None, &[("200", "SkillPoolList")]),
+    (
+        "post",
+        "/api/skill-pools",
+        Some("SkillPoolInput"),
+        &[("200", "SkillPool")],
+    ),
+    (
+        "put",
+        "/api/skill-pools/{pid}",
+        Some("SkillPoolUpdate"),
+        &[("200", "SkillPool")],
+    ),
+    (
+        "get",
+        "/api/capacity-commitments",
+        None,
+        &[("200", "CapacityCommitmentList")],
+    ),
+    (
+        "put",
+        "/api/capacity-commitments",
+        Some("CapacityCommitmentInput"),
+        &[("200", "CapacityCommitment")],
+    ),
+    (
+        "get",
+        "/api/capacity-heatmap",
+        None,
+        &[("200", "CapacityHeatmap")],
     ),
 ];
 

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the capacity heatmap by skill pool and month (DP-10, 2026-10-11)
+
+Skill pools (a role in at most one), partner capacity commitments, and `GET /api/capacity-heatmap` plus the pack's `capacity_heatmap`: demand, own and partner supply, and the gap per pool and month, each cell with a word, a shape and a colour, "no supply recorded" instead of zero, and a table twin. Partner organizations are labels until EX-3; their names are hidden unless the deployment shows them. Migration 61. The pack now lists no section as not yet built.
+
 ### Added — validated benefits, per year and non-financial (DP-9, 2026-10-11)
 
 Benefits gain a recurrence, a yearly amount, a classification and a KPI; independent validations (append-only, with evidence) turn a claim into a validated figure, and a validator who is a member of the programme is refused. `GET /api/portfolio-benefits` and the pack's `benefits` section show planned, claimed and validated per programme and in total without adding recurring to one-off, and non-financial benefits by KPI status or "not measured". Migration 60.

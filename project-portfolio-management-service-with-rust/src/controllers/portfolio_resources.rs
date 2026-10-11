@@ -58,7 +58,7 @@ fn forbidden(message: &str) -> Error {
     )
 }
 
-fn to_alloc(a: &allocations::Model) -> Alloc {
+pub(crate) fn to_alloc(a: &allocations::Model) -> Alloc {
     Alloc {
         plan: a.plan_pid,
         person: (!is_placeholder(&a.person_ref)).then(|| a.person_ref.clone()),

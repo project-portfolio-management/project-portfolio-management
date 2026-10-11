@@ -100,6 +100,8 @@ const AGGREGATES: &[&str] = &[
     "/api/buffer-fever",
     "/api/portfolio-earned-value",
     "/api/portfolio-benefits",
+    "/api/capacity-heatmap",
+    "/api/capacity-commitments",
     "/api/financials/forecast?plan={pub}",
     "/api/financials/forecast?plan={hub}",
     "/api/plans/{hub}/flow-distribution?rollup=true",
@@ -181,6 +183,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// Every mounted such route must be here or in one of the lists above, so a new aggregate cannot
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
+    (
+        "/api/skill-pools",
+        "the owner-supplied grouping of roles and skills into pools; it holds names, not plans, people or amounts",
+    ),
     (
         "/api/funding-sources",
         "the owner-supplied reference list of where money comes from; it holds names, not plans or amounts",

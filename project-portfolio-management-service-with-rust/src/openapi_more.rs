@@ -132,6 +132,7 @@ pub fn paths() -> Value {
     merge(&mut all, organization_paths());
     merge(&mut all, milestone_signoff_paths());
     merge(&mut all, programme_profile_paths());
+    merge(&mut all, external_ask_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1400,6 +1401,18 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// External asks need a named trade-off (EX-13).
+fn external_ask_paths() -> Value {
+    json!({
+        "/api/proposals/{pid}/tradeoff": {
+            "put": op("governance", "Name what an external ask displaces",
+                "Body: tradeoff, 10 to 2000 characters. Only for a proposal tagged external_ask; allowed until it is decided (draft, submitted or in review), so a reviewer can record it without reopening the draft. Approving an external ask without a named trade-off is refused with 422. Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "The proposal"), ("404", "Unknown proposal"), ("422", "Not an external ask, already decided, or a trade-off that is too short or long")])
         }
     })
 }

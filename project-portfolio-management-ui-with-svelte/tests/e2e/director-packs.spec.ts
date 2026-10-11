@@ -25,7 +25,7 @@ test.describe("director packs (DP-11)", () => {
 
   test("shows every section with readings as words and symbols", async ({ page }) => {
     await page.goto(`/en-001/director-packs/${PID}`, { waitUntil: "networkidle" });
-    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Milestone sign-off", "Issues", "Change requests"]) {
+    for (const h of ["Data quality", "What changed", "Portfolio map", "Exceptions", "Gate decisions", "Funding", "Buffer fever chart", "Earned value", "Benefits", "Capacity", "Milestone sign-off", "External asks and their trade-offs", "Issues", "Change requests"]) {
       await expect(page.getByRole("heading", { level: 2, name: h, exact: true })).toBeVisible();
     }
     await expect(page.getByText("Change note: Corrected the funding line")).toBeVisible();
@@ -33,6 +33,8 @@ test.describe("director packs (DP-11)", () => {
     await expect(care.first()).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*shortfall/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Engineering.*no supply recorded/ })).toContainText("–");
+    await expect(page.getByRole("row", { name: /A new portal.*Displaces the records migration/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /Faster reports.*no trade-off named yet/ })).toContainText("▲");
     await expect(page.getByRole("row", { name: /Portal.*12.*7.*5.*1\.75.*2, 4, 7/ })).toBeVisible();
     await expect(page.getByText("Empty product: a product programme with no tasks yet")).toBeVisible();
     await expect(page.getByRole("row", { name: /Care.*local programme, central standards; owner: Acme Council; not delivered by the organization/ })).toBeVisible();

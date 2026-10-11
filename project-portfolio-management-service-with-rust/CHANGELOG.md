@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — named trade-offs for external asks (EX-13, 2026-10-11)
+
+A proposal tagged as an external ask cannot be approved until it names what it displaces (`PUT /api/proposals/{pid}/tradeoff`); the director pack lists the period's asks and trade-offs. Migration 69.
+
 ### Added — the reporting method per programme (EX-14, 2026-10-11)
 
 `PUT /api/plans/{pid}/reporting-method`: evm or product. A product programme shows burn-up and throughput in the director pack in place of earned value, or says it has no tasks yet; a change is audited.

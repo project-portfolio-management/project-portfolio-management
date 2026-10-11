@@ -78,6 +78,10 @@ export const BODY = {
       { name: "Training", due: "2026-11-01", signoff: { state: "met", delivered_on: "2026-10-30", met_on: "2026-11-02", outstanding: [] } },
     ],
   },
+  external_asks: { period: "2026-10", without_named_tradeoff: 1, asks: [
+    { title: "A new portal", status: "approved", tradeoff: "Displaces the records migration", named_tradeoff: true },
+    { title: "Faster reports", status: "in_review", tradeoff: null, named_tradeoff: false },
+  ] },
   capacity_heatmap: { months: ["2026-10"], pools: [
     { pool_pid: "q1", name: "Engineering", cells: [
       { month: "2026-10", state: "shortfall", demand_fte: 2, supply_fte: 1, gap_fte: -1, partner_delivery_short: true },

@@ -2818,6 +2818,12 @@ export const PAGES_EN = {
   "p.director_pack.c_throughput": "Finished per week (last four weeks)",
   "p.director_pack.c_burnup": "Finished, week by week (oldest first)",
   "p.director_pack.no_flow": "{name}: a product programme with no tasks yet, so no burn-up or flow.",
+  "p.director_pack.s_asks": "External asks and their trade-offs",
+  "p.director_pack.asks_note": "An ask from the sponsor cannot be approved until it names what it displaces. This lists the asks raised in the period.",
+  "p.director_pack.asks_count": "Asks raised in the period: {n}. Without a named trade-off yet: {without}.",
+  "p.director_pack.ask_none": "no trade-off named yet",
+  "p.director_pack.c_ask": "Ask",
+  "p.director_pack.c_tradeoff": "What it displaces",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -2814,4 +2814,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_throughput": "Wedi'u gorffen yr wythnos (pedair wythnos ddiwethaf)",
   "p.director_pack.c_burnup": "Wedi'u gorffen, wythnos wrth wythnos (hynaf yn gyntaf)",
   "p.director_pack.no_flow": "{name}: rhaglen cynnyrch heb unrhyw dasgau eto, felly dim llosgi i fyny na llif.",
+  "p.director_pack.s_asks": "Ceisiadau allanol a'u cyfaddawdau",
+  "p.director_pack.asks_note": "Ni ellir cymeradwyo cais gan y noddwr nes iddo enwi'r hyn y mae'n ei ddisodli. Mae hyn yn rhestru'r ceisiadau a godwyd yn y cyfnod.",
+  "p.director_pack.asks_count": "Ceisiadau a godwyd yn y cyfnod: {n}. Heb gyfaddawd a enwyd eto: {without}.",
+  "p.director_pack.ask_none": "dim cyfaddawd wedi'i enwi eto",
+  "p.director_pack.c_ask": "Cais",
+  "p.director_pack.c_tradeoff": "Yr hyn y mae'n ei ddisodli",
 };

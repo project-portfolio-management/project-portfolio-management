@@ -267,6 +267,29 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             assert_eq!(n, 1, "the change is audited once, and a repeat is not a change");
         }
 
+        // ── EX-13: an external ask needs a named trade-off before approval ──
+        let ask: Value = with!(request.post("/api/proposals"), writer).json(&json!({ "title": "Sponsor wants a new portal", "kind_target": "", "external_ask": true })).await.json();
+        let ap = ask["pid"].as_str().unwrap().to_string();
+        let plain: Value = with!(request.post("/api/proposals"), writer).json(&json!({ "title": "Ordinary idea", "kind_target": "" })).await.json();
+        let pp = plain["pid"].as_str().unwrap().to_string();
+        for p in [&ap, &pp] {
+            with!(request.post(&format!("/api/proposals/{p}/submit")), writer).await.assert_status_ok();
+            with!(request.post(&format!("/api/proposals/{p}/review")), writer).await.assert_status_ok();
+        }
+        assert_eq!(with!(request.post(&format!("/api/proposals/{ap}/approve")), writer).await.status_code(), 422, "an ask with no trade-off");
+        assert_eq!(with!(request.put(&format!("/api/proposals/{pp}/tradeoff")), writer).json(&json!({ "tradeoff": "Nothing at all really" })).await.status_code(), 422, "not an external ask");
+        assert_eq!(with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "short" })).await.status_code(), 422);
+        with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "Displaces the records migration by one quarter" })).await.assert_status_ok();
+        with!(request.post(&format!("/api/proposals/{ap}/approve")), writer).await.assert_status_ok();
+        with!(request.post(&format!("/api/proposals/{pp}/approve")), writer).await.assert_status_ok();
+        assert_eq!(with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "Changed my mind about it" })).await.status_code(), 422, "decided");
+        let d3: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "executive" })).await.json();
+        let pack3: Value = with!(request.get(&format!("/api/director-packs/{}", d3["pid"].as_str().unwrap())), issuer).await.json();
+        let asks = &pack3["body"]["external_asks"];
+        assert_eq!(asks["asks"].as_array().unwrap().len(), 1, "{asks}");
+        assert_eq!(asks["asks"][0]["tradeoff"], "Displaces the records migration by one quarter");
+        assert_eq!(asks["without_named_tradeoff"], 0);
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

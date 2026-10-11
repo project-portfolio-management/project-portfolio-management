@@ -26,6 +26,10 @@ pub struct Model {
     pub status: String,
     pub promoted_plan_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
+    /// An ask from the sponsor (EX-13): approving it needs a named trade-off.
+    pub external_ask: bool,
+    /// What the ask displaces.
+    pub tradeoff: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

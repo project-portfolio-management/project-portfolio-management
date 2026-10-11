@@ -114,6 +114,7 @@ mod m20261010_000065_portfolio_drum;
 mod m20261010_000066_organizations;
 mod m20261010_000067_milestone_signoffs;
 mod m20261010_000068_programme_profiles;
+mod m20261010_000069_external_asks;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -229,6 +230,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000066_organizations::Migration),
             Box::new(m20261010_000067_milestone_signoffs::Migration),
             Box::new(m20261010_000068_programme_profiles::Migration),
+            Box::new(m20261010_000069_external_asks::Migration),
             // inject-above (do not remove this comment)
         ]
     }

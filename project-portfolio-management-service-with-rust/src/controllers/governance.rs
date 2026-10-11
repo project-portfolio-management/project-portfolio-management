@@ -80,6 +80,12 @@ struct ProposalPayload {
     requested_minor: Option<i64>,
     #[serde(default)]
     currency: Option<String>,
+    /// An external ask from the sponsor (EX-13).
+    #[serde(default)]
+    external_ask: bool,
+    /// What the ask displaces; needed to approve an external ask.
+    #[serde(default)]
+    tradeoff: Option<String>,
 }
 
 fn validate_proposal(p: &ProposalPayload) -> Vec<String> {
@@ -89,6 +95,9 @@ fn validate_proposal(p: &ProposalPayload) -> Vec<String> {
     }
     cap(&mut problems, "title", &p.title);
     cap_opt(&mut problems, "summary", p.summary.as_deref());
+    if p.tradeoff.as_deref().is_some_and(|t| t.chars().count() > 2000) {
+        problems.push("tradeoff must be at most 2000 characters".to_string());
+    }
     cap_opt(
         &mut problems,
         "strategic_rationale",
@@ -141,6 +150,8 @@ async fn create_proposal(
         status: ActiveValue::set("draft".to_string()),
         promoted_plan_pid: ActiveValue::set(None),
         deleted_at: ActiveValue::set(None),
+        external_ask: ActiveValue::set(payload.external_ask),
+        tradeoff: ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty())),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -214,6 +225,8 @@ async fn update_proposal(
     active.strategic_rationale = ActiveValue::set(payload.strategic_rationale.clone());
     active.requested_minor = ActiveValue::set(payload.requested_minor);
     active.currency = ActiveValue::set(payload.currency.clone());
+    active.external_ask = ActiveValue::set(payload.external_ask);
+    active.tradeoff = ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty()));
     let row = active
         .update(&ctx.db)
         .await
@@ -221,6 +234,69 @@ async fn update_proposal(
     AuditModel::record(&ctx.db, row_pid, "proposal_updated", caller.actor(), None)
         .await
         .ok();
+    format::json(row)
+}
+
+/// The pack's section: external asks raised in the period and the trade-off each names (EX-13). Proposals
+/// carry no plan, so this is portfolio-wide; it holds titles and trade-offs, no person or amount.
+///
+/// # Errors
+///
+/// When a database read fails.
+pub(crate) async fn asks_section(ctx: &AppContext, period: &str) -> Result<serde_json::Value> {
+    let rows = proposals::Entity::find()
+        .filter(proposals::Column::ExternalAsk.eq(true))
+        .filter(proposals::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut asks: Vec<serde_json::Value> = rows
+        .iter()
+        .filter(|p| p.created_at.format("%Y-%m").to_string() == period)
+        .map(|p| serde_json::json!({
+            "title": p.title, "status": p.status, "tradeoff": p.tradeoff,
+            "named_tradeoff": p.tradeoff.as_deref().is_some_and(|t| !t.trim().is_empty()),
+        }))
+        .collect();
+    asks.sort_by_key(|a| a["title"].as_str().unwrap_or("").to_string());
+    let without = asks.iter().filter(|a| a["named_tradeoff"] == false).count();
+    Ok(serde_json::json!({
+        "period": period, "asks": asks, "without_named_tradeoff": without,
+        "note": "External asks from the sponsor raised in the period, with what each displaces. An ask cannot be approved without a named trade-off; one still in draft or review may not have one yet.",
+    }))
+}
+
+#[derive(Debug, Deserialize)]
+struct TradeoffBody {
+    /// What the ask displaces (10 to 2000 characters).
+    tradeoff: String,
+}
+
+/// `PUT /api/proposals/{pid}/tradeoff` — name what an external ask displaces (EX-13). Allowed until the
+/// proposal is decided, so a reviewer can record it without reopening the draft. Audited.
+#[debug_handler]
+async fn set_tradeoff(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<TradeoffBody>,
+) -> Result<Response> {
+    let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    if !row.external_ask {
+        return Err(refuse("only an external ask has a trade-off: tag the proposal as one first"));
+    }
+    if !["draft", "submitted", "in_review"].contains(&row.status.as_str()) {
+        return Err(refuse(&format!("a {} proposal's trade-off can no longer be changed", row.status)));
+    }
+    let text = b.tradeoff.trim().to_string();
+    if !(10..=2000).contains(&text.chars().count()) {
+        return Err(refuse("tradeoff must be 10 to 2000 characters"));
+    }
+    let row_pid = row.pid;
+    let mut active: proposals::ActiveModel = row.into();
+    active.tradeoff = ActiveValue::set(Some(text));
+    let row = active.update(&ctx.db).await.map_err(|e| Error::Model(ModelError::from(e)))?;
+    AuditModel::record(&ctx.db, row_pid, "proposal_tradeoff_set", caller.actor(), None).await.ok();
     format::json(row)
 }
 
@@ -233,6 +309,15 @@ async fn transition_proposal(
 ) -> Result<proposals::Model> {
     let row = gov::find_proposal(&ctx.db, gov::parse_pid(pid)?).await?;
     let next = rules::proposal_transition(&row.status, action).map_err(|e| refuse(&e))?;
+    // A new ask from the sponsor must name what it displaces before it is approved (EX-13).
+    if matches!(action, rules::ProposalAction::Approve)
+        && row.external_ask
+        && row.tradeoff.as_deref().is_none_or(|t| t.trim().chars().count() < 10)
+    {
+        return Err(refuse(
+            "an external ask needs a named trade-off before approval: set tradeoff to what it displaces (10 or more characters)",
+        ));
+    }
     let row_pid = row.pid;
     let mut active: proposals::ActiveModel = row.into();
     active.status = ActiveValue::set(next.to_string());
@@ -1099,6 +1184,7 @@ pub fn routes() -> Routes {
         .add("/proposals/forecast", get(intake_forecast))
         .add("/proposals/{pid}", get(get_proposal))
         .add("/proposals/{pid}", put(update_proposal))
+        .add("/proposals/{pid}/tradeoff", put(set_tradeoff))
         .add("/proposals/{pid}/submit", post(submit_proposal))
         .add("/proposals/{pid}/review", post(review_proposal))
         .add("/proposals/{pid}/approve", post(approve_proposal))

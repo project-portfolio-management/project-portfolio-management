@@ -1127,10 +1127,12 @@ questions in [plan.md §39–§45](plan.md).
   complete and per currency; a CSV ledger import reconciles or lists unmatched
   codes.
 
-- [ ] **EX-13 (S) — New asks need a named trade-off.** A proposal tagged as an
+- [x] **EX-13 (S) — New asks need a named trade-off.** A proposal tagged as an
   external ask from the sponsor must name what it displaces before approval.
   **Acceptance:** approval without a trade-off is 422; the pack lists asks and
   their trade-offs in the period.
+
+  **Built 2026-10-11.** Migration 69 (`proposals.external_ask`, `tradeoff`); a proposal can be tagged `external_ask` on create or update; approving one without a named trade-off (10 or more characters) is 422; `PUT /api/proposals/{pid}/tradeoff` names it until the proposal is decided (a reviewer need not reopen the draft; audited); the pack's `external_asks` section lists the asks raised in the period with their trade-offs and counts those without one, on the pack page in English and Welsh. Tested in `tests/organizations.rs`. **Not done, stated:** the 'period' is the month the ask was created, not the month it was approved; the trade-off is free text, not a link to the work displaced; proposals carry no plan, so the section is portfolio-wide and not filtered for private plans (it holds titles and trade-offs only, no person or amount); no screen to tag an ask or set the trade-off.
 
 - [x] **EX-14 (S) — Method per programme: EVM or product.** A programme is
   `evm` or `product`; product programmes report burn-up and flow (TBA) in the

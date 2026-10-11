@@ -443,6 +443,25 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }] : [],
   );
 
+  // External asks from the sponsor and what each displaces (EX-13).
+  const asks = obj(body.external_asks);
+  const askRows: Cell[][] = arr(asks.asks).map((a) => [
+    plain(str(a.title)),
+    plain(str(a.status)),
+    a.named_tradeoff === true
+      ? plain(str(a.tradeoff))
+      : { text: d.t(`${K}ask_none`), symbol: "▲", tone: "red" as Tone },
+  ]);
+  add(
+    "asks",
+    [d.t(`${K}asks_note`), d.t(`${K}asks_count`, { n: askRows.length, without: numOrNull(asks.without_named_tradeoff) ?? 0 })],
+    askRows.length ? [{
+      caption: d.t(`${K}s_asks`),
+      columns: ["c_ask", "c_status", "c_tradeoff"].map((k) => d.t(`${K}${k}`)),
+      rows: askRows,
+    }] : [],
+  );
+
   add("issues", [d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 })]);
   add("changes", [d.t(`${K}awaiting`, { n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0 })]);
   return out;

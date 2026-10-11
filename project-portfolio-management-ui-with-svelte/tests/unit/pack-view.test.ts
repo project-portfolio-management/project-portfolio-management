@@ -35,7 +35,7 @@ describe("the director pack view", () => {
   const text = flat(en);
 
   it("has every section, in order, with a heading from the catalogue", () => {
-    expect(en.map((s) => s.id)).toEqual(["quality", "changed", "map", "exceptions", "gates", "funding", "fever", "evm", "benefits", "capacity", "signoffs", "asks", "keypeople", "triage", "watermelon", "issues", "changes"]);
+    expect(en.map((s) => s.id)).toEqual(["quality", "changed", "map", "exceptions", "gates", "funding", "fever", "evm", "benefits", "capacity", "signoffs", "asks", "keypeople", "triage", "cutovers", "watermelon", "issues", "changes"]);
     expect(en.every((s) => s.title.length > 2)).toBe(true);
   });
 
@@ -101,7 +101,7 @@ describe("the director pack view", () => {
 
   it("copes with an empty body without throwing", () => {
     const secs = buildPackView({}, deps(PAGES_EN as unknown as Record<string, string>, "en-GB", new Set()));
-    expect(secs).toHaveLength(17);
+    expect(secs).toHaveLength(18);
   });
 
   it("renders in Welsh with Welsh words", () => {

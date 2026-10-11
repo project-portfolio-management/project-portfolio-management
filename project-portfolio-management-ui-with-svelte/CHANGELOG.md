@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — cutover decisions in the director pack page (EX-6, 2026-10-11)
+
+A section with the cutovers decided in the period and counts of go, no-go and delay for safety. English and Welsh.
+
 ### Added — triage and thresholds in the director pack page (EX-7, 2026-10-11)
 
 A section with each programme's latest triage, the period's decisions and the overrides in force. English and Welsh.

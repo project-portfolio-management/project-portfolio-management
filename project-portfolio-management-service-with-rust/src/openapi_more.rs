@@ -138,6 +138,7 @@ pub fn paths() -> Value {
     merge(&mut all, threshold_paths());
     merge(&mut all, start_control_paths());
     merge(&mut all, deployment_move_paths());
+    merge(&mut all, cutover_paths());
     merge(&mut all, email_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
@@ -1407,6 +1408,55 @@ fn evm_paths() -> Value {
             "get": op("earned-value", "Earned value for a plan and everything beneath it, per currency",
                 "Sums BAC, PV, EV and AC over the plan and its descendants (to ten levels, 500 plans), per currency and never across currencies; SPI and CPI are computed from the totals. A partial cost (some plans with no recorded cost) gives no CPI rather than a flattering one. EAC and VAC appear only when every contributing plan has its own recommended EAC. Plans the caller cannot read (private, or denied by policy) are left out without a trace; plans with no figures are counted in plans_without_figures, not guessed at.",
                 vec![uuid_param("pid")], &[("200", "currencies, plans_without_figures, thresholds"), ("404", "Unknown plan")])
+        }
+    })
+}
+
+/// Go / no-go for safety-critical cutovers (EX-6).
+fn cutover_paths() -> Value {
+    json!({
+        "/api/plans/{pid}/cutover-decisions": {
+            "post": op("governance", "Draft a cutover go/no-go decision with its stop criteria",
+                "Body: title (3 to 200 characters) and criteria (1 to 30, each 5 to 500 characters). A draft, version 1; the criteria can be replaced while it is a draft. One title per plan: a changed decision is a new version.",
+                vec![uuid_param("pid")], &[("200", "The decision"), ("404", "Unknown plan"), ("409", "That title exists"), ("422", "A bad title or criteria")]),
+            "get": op("governance", "The cutover decisions of a plan, with criteria and co-signatures",
+                "Inputs: the plan's cutover decisions, newest first. Each lists its criteria with whether each is met and the evidence, the co-signatures given and the roles still missing (required_cosigners, set by PROJECT_PORTFOLIO_MANAGEMENT_CUTOVER_COSIGNERS), and for an open decision why a go would be refused now.",
+                vec![uuid_param("pid")], &[("200", "decisions, required_cosigners"), ("404", "Unknown plan")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/criteria": {
+            "put": op("governance", "Replace the criteria of a draft",
+                "Only while the decision is a draft (409 afterwards, and the database refuses too): once published, a criterion cannot be added, edited or removed; make a new version.",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The decision"), ("404", "Unknown"), ("409", "Already published"), ("422", "Bad criteria")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/publish": {
+            "post": op("governance", "Publish the criteria (they are frozen from now)",
+                "Draft to published. The criteria are fixed before the decision opens.",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The decision"), ("404", "Unknown"), ("409", "Not a draft")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/open": {
+            "post": op("governance", "Open the decision",
+                "Published to open. Criteria are then marked and roles co-sign.",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The decision"), ("404", "Unknown"), ("409", "Not published")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/criteria/{n}/mark": {
+            "put": op("governance", "Mark a criterion met or not, with evidence",
+                "Body: met and evidence (5 or more characters). Only while the decision is open. Audited.",
+                vec![uuid_param("pid"), uuid_param("did"), query("n", true, "the criterion's number, from 1")], &[("200", "The decision"), ("404", "Unknown"), ("409", "Not open"), ("422", "Short evidence")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/cosign": {
+            "post": op("governance", "Co-sign for a role",
+                "Body: role, one of the required co-signers. The caller's token must carry the role in its cutover_role attribute (403 otherwise). One signature per role; append-only. Only while the decision is open.",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The decision"), ("403", "Not a holder of that role"), ("409", "Not open, or already signed"), ("422", "Not a required role")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/decide": {
+            "post": op("governance", "Decide: go, no-go or delay for safety",
+                "Body: outcome and a reason of at least 10 characters. A go is refused (422) unless every criterion is marked met and every required role has co-signed, and the answer names what is missing. A no-go or a delay for safety can be decided at any time while open. A decided decision is final.",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The decision"), ("404", "Unknown"), ("409", "Not open"), ("422", "A go that is not ready, a bad outcome or a short reason")])
+        },
+        "/api/plans/{pid}/cutover-decisions/{did}/new-version": {
+            "post": op("governance", "Make a new version to change the criteria",
+                "A new draft with the same criteria, version plus one, referring to the one it supersedes. A published or open decision becomes superseded; a no-go or delay stays as decided. A go is final (409).",
+                vec![uuid_param("pid"), uuid_param("did")], &[("200", "The new draft"), ("404", "Unknown"), ("409", "Draft, superseded, already followed, or a go")])
         }
     })
 }

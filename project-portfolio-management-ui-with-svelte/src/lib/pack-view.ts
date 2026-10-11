@@ -537,6 +537,36 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }] : [],
   );
 
+  // Cutover decisions (EX-6): a no-go or a delay for safety is a decision, not slippage.
+  const co = obj(body.cutover_decisions);
+  const cc = obj(co.counts);
+  const coLook: Record<string, { symbol: string; tone: Tone }> = {
+    go: { symbol: "●", tone: "green" },
+    no_go: { symbol: "▲", tone: "red" },
+    delay_for_safety: { symbol: "◆", tone: "amber" },
+  };
+  const coRows: Cell[][] = arr(co.decisions).map((x) => {
+    const look = coLook[str(x.outcome)] ?? { symbol: dash, tone: "grey" as Tone };
+    return [
+      plain(str(x.title)),
+      plain(str(x.plan)),
+      { text: d.t(`${K}co_${str(x.outcome)}`), symbol: look.symbol, tone: look.tone },
+      plain(str(x.decided_on)),
+    ];
+  });
+  add(
+    "cutovers",
+    [
+      d.t(`${K}co_note`),
+      d.t(`${K}co_counts`, { go: numOrNull(cc.go) ?? 0, nogo: numOrNull(cc.no_go) ?? 0, delay: numOrNull(cc.delay_for_safety) ?? 0 }),
+    ],
+    coRows.length ? [{
+      caption: d.t(`${K}s_cutovers`),
+      columns: ["c_cutover", "c_programme", "c_decision", "c_decided_on"].map((k) => d.t(`${K}${k}`)),
+      rows: coRows,
+    }] : [],
+  );
+
   // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
   const wm = obj(body.watermelon);
   const why = obj(wm.reasons_null);

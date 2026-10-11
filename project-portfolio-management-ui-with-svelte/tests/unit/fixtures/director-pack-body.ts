@@ -91,6 +91,13 @@ export const BODY = {
     overrides_in_force: [{ programme: "Care", threshold: "p80_cap", expiry: "2026-12-01" }],
     open_threshold_exceptions: 2,
   },
+  cutover_decisions: {
+    decisions: [
+      { plan: "Go-live", title: "First site cutover", outcome: "go", decided_on: "2026-10-20" },
+      { plan: "Go-live", title: "Second site cutover", outcome: "delay_for_safety", decided_on: "2026-10-22" },
+    ],
+    counts: { go: 1, no_go: 0, delay_for_safety: 1 },
+  },
   watermelon: {
     self_vs_independent: null,
     late_discovery: { count: 1, programmes: ["Care"] },

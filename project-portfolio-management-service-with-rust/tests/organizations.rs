@@ -590,6 +590,65 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(l["moves"].as_array().unwrap().len(), 2);
         assert_eq!(l["cost_by_requester"][0]["requests"], 2, "recorded against the requester");
 
+        // ── EX-6: a cutover go/no-go with published criteria and co-signatures ──
+        let lead = bearer(&kid, "3f2c6b7e-0000-4000-8000-0000000000c2", &[("access", "write"), ("cutover_role", "accountable_professional_lead")]);
+        let delivery = bearer(&kid, "3f2c6b7e-0000-4000-8000-0000000000c3", &[("access", "write"), ("cutover_role", "delivery_organization")]);
+        let cut = format!("/api/plans/{proj}/cutover-decisions");
+        assert_eq!(with!(request.post(&cut), writer).json(&json!({ "title": "Go-live cutover", "criteria": [] })).await.status_code(), 422);
+        let c1: Value = with!(request.post(&cut), writer).json(&json!({ "title": "Go-live cutover", "criteria": ["Rollback rehearsed end to end", "Clinical safety case signed"] })).await.json();
+        let c1p = c1["pid"].as_str().unwrap().to_string();
+        let one = format!("{cut}/{c1p}");
+        assert_eq!(c1["status"], "draft");
+        with!(request.put(&format!("{one}/criteria")), writer).json(&json!({ "criteria": ["Rollback rehearsed end to end", "Clinical safety case signed", "Help desk staffed for the first week"] })).await.assert_status_ok();
+        assert_eq!(with!(request.put(&format!("{one}/criteria/1/mark")), writer).json(&json!({ "met": true, "evidence": "Rehearsal record" })).await.status_code(), 409, "not open yet");
+        with!(request.post(&format!("{one}/publish")), writer).await.assert_status_ok();
+        // Frozen: neither the service nor the database lets the criteria change now.
+        assert_eq!(with!(request.put(&format!("{one}/criteria")), writer).json(&json!({ "criteria": ["Something easier to meet"] })).await.status_code(), 409);
+        for (what, sql) in [
+            ("editing a criterion", "UPDATE cutover_criteria SET criterion = 'Something easier to meet' WHERE decision_pid IN (SELECT pid FROM cutover_decisions WHERE status <> 'draft')"),
+            ("removing one", "DELETE FROM cutover_criteria WHERE decision_pid IN (SELECT pid FROM cutover_decisions WHERE status <> 'draft')"),
+        ] {
+            assert!(_ctx.db.execute_unprepared(sql).await.is_err(), "{what}");
+        }
+        assert!(_ctx.db.execute_unprepared(&format!("INSERT INTO cutover_criteria (pid, decision_pid, position, criterion, created_at, updated_at) VALUES (gen_random_uuid(), '{c1p}', 9, 'A late extra criterion', now(), now())")).await.is_err(), "adding one");
+        with!(request.post(&format!("{one}/open")), writer).await.assert_status_ok();
+        // Go is refused until every criterion is met and every role has signed.
+        let go = json!({ "outcome": "go", "reason": "All criteria met and signed" });
+        let refused = with!(request.post(&format!("{one}/decide")), writer).json(&go).await;
+        assert_eq!(refused.status_code(), 422);
+        let t = refused.text();
+        assert!(t.contains("criteria not yet marked: 1, 2, 3") && t.contains("co-signatures missing"), "{t}");
+        for n in 1..=3 {
+            with!(request.put(&format!("{one}/criteria/{n}/mark")), writer).json(&json!({ "met": true, "evidence": "Evidence on file" })).await.assert_status_ok();
+        }
+        assert_eq!(with!(request.post(&format!("{one}/cosign")), writer).json(&json!({ "role": "accountable_professional_lead" })).await.status_code(), 403, "without the role");
+        assert_eq!(with!(request.post(&format!("{one}/cosign")), lead).json(&json!({ "role": "supplier" })).await.status_code(), 422, "not a required role");
+        with!(request.post(&format!("{one}/cosign")), lead).json(&json!({ "role": "accountable_professional_lead" })).await.assert_status_ok();
+        assert_eq!(with!(request.post(&format!("{one}/cosign")), lead).json(&json!({ "role": "accountable_professional_lead" })).await.status_code(), 409, "once");
+        let t = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.text();
+        assert!(t.contains("co-signatures missing: delivery_organization"), "{t}");
+        with!(request.post(&format!("{one}/cosign")), delivery).json(&json!({ "role": "delivery_organization" })).await.assert_status_ok();
+        let decided: Value = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.json();
+        assert_eq!((decided["status"].as_str(), decided["outcome"].as_str()), (Some("decided"), Some("go")));
+        assert!(_ctx.db.execute_unprepared("UPDATE cutover_decisions SET outcome = 'no_go' WHERE status = 'decided'").await.is_err(), "a decided decision is final");
+        assert_eq!(with!(request.post(&format!("{one}/new-version")), writer).await.status_code(), 409, "a go is final");
+
+        // A delay for safety needs no met criteria, is a decision, and a new version can follow it.
+        let c2: Value = with!(request.post(&cut), writer).json(&json!({ "title": "Second site cutover", "criteria": ["Clinical safety case signed"] })).await.json();
+        let two = format!("{cut}/{}", c2["pid"].as_str().unwrap());
+        with!(request.post(&format!("{two}/publish")), writer).await.assert_status_ok();
+        with!(request.post(&format!("{two}/open")), writer).await.assert_status_ok();
+        with!(request.put(&format!("{two}/criteria/1/mark")), writer).json(&json!({ "met": false, "evidence": "Safety case not yet signed" })).await.assert_status_ok();
+        let delayed: Value = with!(request.post(&format!("{two}/decide")), writer).json(&json!({ "outcome": "delay_for_safety", "reason": "Safety case unsigned; hold the cutover" })).await.json();
+        assert_eq!(delayed["outcome"], "delay_for_safety");
+        let v2: Value = with!(request.post(&format!("{two}/new-version")), writer).await.json();
+        assert_eq!((v2["version"].as_i64(), v2["status"].as_str(), v2["supersedes_pid"].as_str()), (Some(2), Some("draft"), c2["pid"].as_str()));
+        let d8: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": format!("org:{other_pid}") })).await.json();
+        let pack8: Value = with!(request.get(&format!("/api/director-packs/{}", d8["pid"].as_str().unwrap())), issuer).await.json();
+        let cd = &pack8["body"]["cutover_decisions"];
+        assert_eq!((cd["counts"]["go"].as_u64(), cd["counts"]["delay_for_safety"].as_u64(), cd["counts"]["no_go"].as_u64()), (Some(1), Some(1), Some(0)), "{cd}");
+        assert!(cd["note"].as_str().unwrap().contains("not counted as slippage"));
+
         // ── retired: it can no longer be named or addressed ──
         with!(request.put(&format!("/api/organizations/{acme_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
         let (c, _) = commit(json!({ "pool_pid": pool, "plan_pid": prog, "organization_pid": acme_pid, "kind": "demand", "month": month, "committed_fte": 1 })).await;

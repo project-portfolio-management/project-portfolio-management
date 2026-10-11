@@ -2866,4 +2866,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_outcome": "Didoli",
   "p.director_pack.c_triaged_on": "Didolwyd ar",
   "l.enum.pk_conf.threshold": "trothwy wedi'i groesi",
+  "p.director_pack.s_cutovers": "Penderfyniadau newid drosodd",
+  "p.director_pack.co_note": "Penderfynir ar newid drosodd yn erbyn meini prawf atal a gyhoeddwyd cyn y penderfyniad. Penderfyniad a wneir ar y meini prawf hynny yw na-fynd neu oedi am resymau diogelwch, ac ni chaiff ei gyfrif fel llithriad.",
+  "p.director_pack.co_counts": "Penderfynwyd yn y cyfnod: mynd {go}, na-fynd {nogo}, oedi am resymau diogelwch {delay}.",
+  "p.director_pack.co_go": "mynd ymlaen",
+  "p.director_pack.co_no_go": "na-fynd",
+  "p.director_pack.co_delay_for_safety": "oedi am resymau diogelwch",
+  "p.director_pack.c_cutover": "Newid drosodd",
+  "p.director_pack.c_decision": "Penderfyniad",
+  "p.director_pack.c_decided_on": "Penderfynwyd ar",
 };

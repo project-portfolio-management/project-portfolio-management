@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — go/no-go for safety-critical cutovers (EX-6, 2026-10-11)
+
+A cutover decision with stop criteria that are published before it opens and cannot be edited afterwards (a new version is made instead), criteria marked met or not with evidence, and co-signatures from configured roles. A go needs every criterion met and every co-signature; a no-go or a delay for safety is a decision in its own right and the director pack shows it as such, not as slippage. Migration 75.
+
 ### Added — deployment-date change control (EX-5, 2026-10-11)
 
 In a programme delivered as a central platform with local deployment, moving a deployment's go-live is a request: the knock-on to other deployments is computed from the schedule network when it is asked, its labour cost is recorded against the requester, and a named approver (a person or a role such as the escalation board, never the requester) approves or refuses with a reason. Nothing changes until it is approved. Migration 74.

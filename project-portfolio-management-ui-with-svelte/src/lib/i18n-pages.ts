@@ -2870,6 +2870,15 @@ export const PAGES_EN = {
   "p.director_pack.c_outcome": "Triage",
   "p.director_pack.c_triaged_on": "Triaged on",
   "l.enum.pk_conf.threshold": "threshold crossed",
+  "p.director_pack.s_cutovers": "Cutover decisions",
+  "p.director_pack.co_note": "A cutover is decided against stop criteria that were published before the decision. A no-go or a delay for safety is a decision taken on those criteria, and is not counted as slippage.",
+  "p.director_pack.co_counts": "Decided in the period: go {go}, no-go {nogo}, delay for safety {delay}.",
+  "p.director_pack.co_go": "go ahead",
+  "p.director_pack.co_no_go": "no-go",
+  "p.director_pack.co_delay_for_safety": "delay for safety",
+  "p.director_pack.c_cutover": "Cutover",
+  "p.director_pack.c_decision": "Decision",
+  "p.director_pack.c_decided_on": "Decided on",
 } as const;
 
 /** A key in the page and component catalogue. */

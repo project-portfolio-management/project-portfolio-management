@@ -48,10 +48,14 @@
 # operations/email-with-stalwart.md. The ports are bound to 127.0.0.1; they are a development and
 # small-site convenience, not a hardened public mail host.
 #
-# The UI (project-portfolio-management-ui-with-svelte) is not containerized
-# here: it builds with @sveltejs/adapter-auto, which produces no runnable
-# server outside a supported host. Run it with `pnpm dev` / `pnpm preview`
-# against http://localhost:5150 (see the UI's .env.example).
+# The UI (project-portfolio-management-ui-with-svelte) is the compose profile `ui`: a Node server
+# (SvelteKit, adapter-node) on http://localhost:3000 that proxies to the API with the session's token.
+#
+#   podman compose --profile ui up -d --build --wait
+#
+# It needs UI_ORIGIN, the address people type (default http://localhost:3000), and sign-in through your
+# token issuer (AUTH_API_URL, default the API itself). It is a separate profile so the default stack
+# (and the CI container and ZAP jobs) stays the API and its database.
 
 name: project-portfolio-management
 
@@ -148,6 +152,29 @@ services:
       timeout: 3s
       retries: 20
       start_period: 10s
+
+  # The UI (profile `ui`). Sessions are kept in memory (one replica); OIDC_SESSION_STORE=redis shares them.
+  ui:
+    profiles: ["ui"]
+    build:
+      context: .
+      dockerfile: project-portfolio-management-ui-with-svelte/Dockerfile
+    image: project-portfolio-management-ui:local
+    environment:
+      ORIGIN: ${UI_ORIGIN:-http://localhost:3000}
+      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api:5150
+      AUTH_API_URL: ${AUTH_API_URL:-http://api:5150}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    depends_on:
+      api:
+        condition: service_healthy
 
   # UNSAFE development override; see the header. Login enforcement is OFF.
   api-dev-insecure:

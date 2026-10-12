@@ -275,11 +275,27 @@ jobs:
           tags: project-portfolio-management-service:local
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Build the UI image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.UI }}/Dockerfile
+          load: true
+          tags: project-portfolio-management-ui:local
+          cache-from: type=gha,scope=ui
+          cache-to: type=gha,mode=max,scope=ui
       - name: Public-only test key set (so the secure stack can boot)
         run: echo "PPM_PASETO_KEYS=$(scripts/smoke-keys.sh)" >> "$GITHUB_ENV"
       - name: Start the stack
-        # The image is already built and tagged; do not rebuild.
-        run: docker compose up -d --no-build --wait --wait-timeout 180
+        # The images are already built and tagged; do not rebuild. The `ui` profile adds the UI server.
+        run: docker compose --profile ui up -d --no-build --wait --wait-timeout 180
+      - name: The UI serves its sign-in page, with its security headers, and its proxy refuses an anonymous call
+        run: |
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 2 -o /dev/null http://localhost:3000/
+          curl --silent --head http://localhost:3000/en-001/signin | grep -i '^content-security-policy:.*frame-ancestors'
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/proxy/api/plans)"
+          echo "anonymous GET via the UI proxy -> $code"
+          test "$code" = 401
       - name: /_health answers
         run: curl --fail --silent --show-error --retry 5 --retry-delay 2 http://localhost:5150/_health
       - name: Login enforcement is on (anonymous API call is refused)
@@ -289,10 +305,10 @@ jobs:
           test "$code" = 401
       - name: Logs on failure
         if: failure()
-        run: docker compose logs --no-color
+        run: docker compose --profile ui logs --no-color
       - name: Stop the stack
         if: always()
-        run: docker compose down -v
+        run: docker compose --profile ui down -v
 
   zap:
     name: ZAP baseline scan

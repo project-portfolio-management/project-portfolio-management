@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 12 October
+
+- **UI container** (HD-2 remainder): the UI now builds with `@sveltejs/adapter-node` (adapter-auto produced no runnable server), has a Dockerfile (Node 26, non-root, health check) and a compose profile `ui` on port 3000 (`ORIGIN` from `UI_ORIGIN`). Verified locally with podman: the stack boots with the UI healthy, `/` redirects to `/en-001`, the sign-in page carries the CSP, and an anonymous call through the UI's proxy is 401; `svelte-check`, 678 unit tests and 449 Playwright tests (with axe) pass. The container CI job gained the matching steps, which have not run on GitHub yet. Not done: sessions stay in memory (one replica) unless `OIDC_SESSION_STORE=redis`.
+
 ### 10 October
 
 - **Change requests** (IR-4, IR-5): drafted, submitted, reviewed and decided by one named approver who is not

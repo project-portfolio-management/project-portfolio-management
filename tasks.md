@@ -1177,7 +1177,7 @@ findings F-14 to F-23 and owner questions in [plan.md §46–§51 and §52a](pla
   check licenses` still passes; a crate published on its own includes the
   licence files (`include` in its manifest).
 
-- [x] **HD-2 (M) — Buildable from its own repository, with automated checks.** **Landed 2026-10-12:** GitHub run 38182107871 (commit 75708ad) passed all 12 jobs, including `ci-ok`, the container smoke, the ZAP baseline, the fresh-clone build and the docs link check. **Not done, stated plainly:** no deliberately broken commit was pushed to prove each job fails (the earlier red runs showed only the API, Container and ZAP jobs failing, for real faults); Codeberg/GitLab mirrors have no pipeline (owner's canonical-forge answer outstanding); the UI container is still not built.
+- [x] **HD-2 (M) — Buildable from its own repository, with automated checks.** **Landed 2026-10-12:** GitHub run 38182107871 (commit 75708ad) passed all 12 jobs, including `ci-ok`, the container smoke, the ZAP baseline, the fresh-clone build and the docs link check. **Not done, stated plainly:** no deliberately broken commit was pushed to prove each job fails (the earlier red runs showed only the API, Container and ZAP jobs failing, for real faults); Codeberg/GitLab mirrors have no pipeline (owner's canonical-forge answer outstanding); the UI container was built after this entry (12 October): `project-portfolio-management-ui-with-svelte/Dockerfile`, compose profile `ui`, and a CI step in the container job (not yet run on GitHub).
   Root `.github/workflows/ci.yml` (the sub-directory workflows are inert,
   F-15): Rust jobs for both crates on the pinned toolchain (`fmt --check`,
   `clippy -D warnings`, unit tests, DB request suites against a Postgres

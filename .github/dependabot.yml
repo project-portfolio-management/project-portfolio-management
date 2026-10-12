@@ -21,6 +21,12 @@ updates:
     groups:
       npm-ui:
         patterns: ["*"]
+    ignore:
+      # TypeScript 7 (the native compiler) breaks svelte-check 4.7.6 ("Cannot read properties of
+      # undefined (reading 'readFile')", seen in the Dependabot run on 2026-10-12). Stay on 6.x until
+      # svelte-check supports 7; 6.x patch and minor updates still arrive.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

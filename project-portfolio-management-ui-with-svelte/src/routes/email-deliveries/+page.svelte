@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EmailDeliveries } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let data = $state<EmailDeliveries | null>(null);
@@ -25,9 +27,23 @@
   onMount(() => void load());
 
   const word = (s: string) => t(`p.email_deliveries.status_${s}` as never);
+  const when = (v: unknown) => (typeof v === "string" ? v.slice(0, 16).replace("T", " ") : "");
+  const columns: DataGridColumn[] = $derived([
+    { id: "recipient", header: t("p.email_deliveries.col_recipient"), rowHeader: true },
+    { id: "subject", header: t("p.email_deliveries.col_subject") },
+    { id: "status", header: t("p.email_deliveries.col_status"), format: (v) => word(String(v)), cell: statusCell, cellClass: (c) => ({ sent: "cell-green", failed: "cell-red", retry: "cell-amber", queued: "cell-amber" })[String(c.value)] ?? "" },
+    { id: "attempts", header: t("p.email_deliveries.col_attempts"), align: "end" },
+    { id: "last_error", header: t("p.email_deliveries.col_error"), format: (v) => (v ? String(v) : "") },
+    { id: "next_attempt_at", header: t("p.email_deliveries.col_next"), format: when },
+    { id: "sent_at", header: t("p.email_deliveries.col_sent"), format: when },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.email_deliveries.title")}</title></svelte:head>
+
+{#snippet statusCell({ value, formatted }: DataGridCellContext)}
+  <span aria-hidden="true">{value === "sent" ? "●" : value === "failed" ? "✖" : "◆"}</span> {formatted}
+{/snippet}
 
 <h1>{t("p.email_deliveries.h1")}</h1>
 <p class="lede">{t("p.email_deliveries.lede")}</p>
@@ -42,45 +58,13 @@
       {#each ["queued", "retry", "sent", "failed"] as s (s)}<option value={s}>{word(s)}</option>{/each}
     </select>
   </label>
-  {#if data.deliveries.length === 0}
-    <p>{t("p.email_deliveries.none")}</p>
-  {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.email_deliveries.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.email_deliveries.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.email_deliveries.col_recipient")}</th>
-            <th scope="col">{t("p.email_deliveries.col_subject")}</th>
-            <th scope="col">{t("p.email_deliveries.col_status")}</th>
-            <th scope="col">{t("p.email_deliveries.col_attempts")}</th>
-            <th scope="col">{t("p.email_deliveries.col_error")}</th>
-            <th scope="col">{t("p.email_deliveries.col_next")}</th>
-            <th scope="col">{t("p.email_deliveries.col_sent")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each data.deliveries as d (d.pid)}
-            <tr>
-              <th scope="row">{d.recipient}</th>
-              <td>{d.subject}</td>
-              <td class={`st-${d.status}`}><span aria-hidden="true">{d.status === "sent" ? "●" : d.status === "failed" ? "✖" : "◆"}</span> {word(d.status)}</td>
-              <td>{d.attempts}</td>
-              <td>{d.last_error ?? ""}</td>
-              <td>{d.next_attempt_at?.slice(0, 16).replace("T", " ") ?? ""}</td>
-              <td>{d.sent_at?.slice(0, 16).replace("T", " ") ?? ""}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  {/if}
+  <DataTable
+    label={t("p.email_deliveries.h1")}
+    columns={columns}
+    rows={data.deliveries}
+    rowId={(r) => String(r.pid)}
+    emptyText={t("p.email_deliveries.none")}
+    searchable
+    pageSize={25}
+  />
 {/if}
-
-<style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
-  .st-failed { background: #fde8e8; }
-  .st-retry, .st-queued { background: #fff4d6; }
-  .st-sent { background: #e3f4e3; }
-</style>

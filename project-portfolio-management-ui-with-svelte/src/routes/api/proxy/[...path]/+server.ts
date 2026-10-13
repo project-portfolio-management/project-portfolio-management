@@ -13,6 +13,7 @@ import { exchangeToken } from "#lib/server/auth.js";
 import { oidcConfig } from "#lib/server/config.js";
 import { accessTokenFor, providerMetadata } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
+import { DEMO_TOKEN } from "#lib/server/demo.js";
 
 const proxy: RequestHandler = async ({
   request,
@@ -39,7 +40,7 @@ const proxy: RequestHandler = async ({
   if (locals.sessionId) {
     const token = await exchangeToken(fetch, locals.sessionId);
     if (token) headers.set("authorization", `Bearer ${token}`);
-  } else if (locals.oidc) {
+  } else if (locals.oidc && locals.oidc.accessToken !== DEMO_TOKEN) {
     // A direct OpenID Connect session: the provider's access token (refreshed when it is
     // about to expire) goes to the API, which verifies it. The BFF never interprets it.
     const cfg = oidcConfig();

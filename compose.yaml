@@ -36,6 +36,10 @@
 #
 # Do not run both `api` and `api-dev-insecure` at once (they share host port 5150).
 #
+# THE DEMONSTRATION (profile `demo`, fictitious data, sign in as example@example.com): operations/demo.md.
+#
+#   podman compose --profile demo up -d --build --wait && open http://localhost:3000
+#
 # EMAIL (optional): the compose profile `mail` adds a Stalwart mail server (SMTP, IMAP and JMAP in one
 # container) so notifications can be sent and read without an outside mail host:
 #
@@ -53,8 +57,8 @@
 #
 #   podman compose --profile ui up -d --build --wait
 #
-# It needs UI_ORIGIN, the address people type (default http://localhost:3000), and sign-in through your
-# token issuer (AUTH_API_URL, default the API itself). It is a separate profile so the default stack
+# Sign-in goes through your token issuer (AUTH_API_URL, default the API itself). Behind a TLS proxy, have the
+# proxy send X-Forwarded-Proto: https (project-portfolio-management-ui-with-svelte/container-server.mjs). It is a separate profile so the default stack
 # (and the CI container and ZAP jobs) stays the API and its database.
 
 name: project-portfolio-management
@@ -161,7 +165,6 @@ services:
       dockerfile: project-portfolio-management-ui-with-svelte/Dockerfile
     image: project-portfolio-management-ui:local
     environment:
-      ORIGIN: ${UI_ORIGIN:-http://localhost:3000}
       PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api:5150
       AUTH_API_URL: ${AUTH_API_URL:-http://api:5150}
     ports:
@@ -175,6 +178,73 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+  # ---- The demonstration (profile `demo`): see operations/demo.md ---------------------------------
+  # An API with login OFF and a database that holds only FICTITIOUS data, a UI whose sign-in accepts only
+  # example@example.com, and a one-shot job that fills the API with the made-up Northgate portfolio.
+  # NEVER point this at real data or put it on a shared network.
+  api-demo:
+    profiles: ["demo"]
+    build: *api-build
+    image: project-portfolio-management-service:local
+    environment:
+      <<: *api-environment
+      LOCO_ENV: container-dev
+      PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
+      # Two programmes may be in delivery at once: the third waits in the start queue (the demonstration shows it).
+      PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT: "2"
+      # Who approves a deployment move.
+      PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_APPROVER: "person:00000000-0000-4000-8000-0000000000a1"
+    volumes:
+      - ppm-artifacts:/app/data/artifacts
+      - ppm-search:/app/data/search-index
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  ui-demo:
+    profiles: ["demo"]
+    build:
+      context: .
+      dockerfile: project-portfolio-management-ui-with-svelte/Dockerfile
+    image: project-portfolio-management-ui:local
+    environment:
+      PPM_DEMO_MODE: "true"
+      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api-demo:5150
+      AUTH_API_URL: http://api-demo:5150
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    depends_on:
+      api-demo:
+        condition: service_healthy
+      seed-demo:
+        condition: service_completed_successfully
+
+  seed-demo:
+    profiles: ["demo"]
+    image: docker.io/library/node:26-slim
+    working_dir: /repo
+    command: ["node", "scripts/seed-demo.mjs"]
+    environment:
+      PPM_API_URL: http://api-demo:5150
+    volumes:
+      - ./scripts:/repo/scripts:ro,z
+    depends_on:
+      api-demo:
+        condition: service_healthy
+    restart: "no"
 
   # UNSAFE development override; see the header. Login enforcement is OFF.
   api-dev-insecure:

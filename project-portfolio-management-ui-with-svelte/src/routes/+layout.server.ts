@@ -7,11 +7,17 @@
 
 import type { LayoutServerLoad } from "./$types";
 import { currentUser } from "#lib/server/auth.js";
+import { demoEnabled } from "#lib/server/demo.js";
 import { KNOWN_NAV_HREFS, landingRouteForView, viewAttr } from "#lib/nav.js";
 
 const DEFAULT_LANDING_ROUTE = "/plans";
 
-export const load: LayoutServerLoad = async ({ locals, fetch }) => {
+export const load: LayoutServerLoad = async (event) => {
+  const data = await loadSession(event);
+  return { ...data, demo: demoEnabled() };
+};
+
+const loadSession = async ({ locals, fetch }: Parameters<LayoutServerLoad>[0]) => {
   if (!locals.sessionId && locals.oidc) {
     // A direct OpenID Connect sign-in: no authentication-service session to ask
     // about attributes, so the default landing route applies.

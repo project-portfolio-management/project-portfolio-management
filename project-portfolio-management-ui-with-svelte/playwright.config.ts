@@ -46,6 +46,13 @@ export default defineConfig({
       },
     },
     {
+      // Demonstration mode (port 4174): the same build with PPM_DEMO_MODE=true.
+      command: "node tests/e2e/support/demo-server.mjs",
+      url: "http://localhost:4174",
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+    {
       // A minimal Microsoft Entra ID-compatible OIDC provider (4180) and an API that only
       // accepts tokens it issued (4181).
       command: "node tests/e2e/support/entra-mock.mjs",

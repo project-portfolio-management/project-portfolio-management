@@ -5,7 +5,7 @@
   import { PUBLIC_OIDC_SIGNIN_ENABLED, PUBLIC_OIDC_DIRECT_ENABLED, PUBLIC_OIDC_DIRECT_PROVIDER } from '$app/env/public';
   import { i18n, t, localeHref } from "#lib/i18n.svelte.js";
 
-  let { form }: { form: ActionData } = $props();
+  let { form, data }: { form: ActionData; data: { demo?: boolean } } = $props();
   // Opt-in OIDC "Sign in with SSO": a plain <a> (browser navigation), shown
   // only when PUBLIC_OIDC_SIGNIN_ENABLED=true. Magic link stays the default.
   const ssoEnabled = PUBLIC_OIDC_SIGNIN_ENABLED === "true";
@@ -27,17 +27,25 @@
 
 <h1>{t("p.signin.sign_in")}</h1>
 
-{#if form?.sent}
+{#if data.demo}
+    <section aria-labelledby="demo-signin">
+        <h2 id="demo-signin">{t("p.demo.signin_h2")}</h2>
+        <p class="banner" role="note">{t("p.demo.signin_lede")}</p>
+    </section>
+{/if}
+{#if form?.sent && !data.demo}
     <p class="banner">{t("p.signin.check_your_email_for_a")}</p>
 {:else}
     <form class="stack" method="POST" use:enhance>
         <label>
             {t("p.signin.email")}
-            <input type="email" name="email" required autocomplete="email" />
+            <input type="email" name="email" required autocomplete="email" value={data.demo ? "example@example.com" : ""} />
         </label>
         <input type="hidden" name="locale" value={i18n.locale} />
-        <button class="button primary" type="submit">{t("p.signin.send_magic_link")}</button>
-        {#if form?.error}
+        <button class="button primary" type="submit">{data.demo ? t("p.demo.signin_button") : t("p.signin.send_magic_link")}</button>
+        {#if form?.error === "demo-email"}
+            <p class="banner" role="alert">{t("p.demo.signin_wrong")}</p>
+        {:else if form?.error}
             <p class="banner" role="alert">{t("p.signin.could_not_send_the_sign")}</p>
         {/if}
     </form>

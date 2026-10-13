@@ -367,6 +367,9 @@
     </div>
   </header>
   {#if handlingMark}<p class="handling-mark" role="note" data-testid="handling-mark">{t("p._layout_svelte.handling_mark", { mark: handlingMark })}</p>{/if}
+  {#if data.demo}
+    <p class="demo-banner" role="note">{t("p.demo.banner")} <a href={localeHref("/demo")}>{t("p.demo.banner_tour")}</a></p>
+  {/if}
   <main>{@render children()}</main>
 </div>
 
@@ -585,6 +588,18 @@
   .header-end :global(.locale-picker-option),
   .header-end :global(.text-size-picker-option) {
     white-space: nowrap;
+  }
+  .demo-banner {
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    background: #fff4d6;
+    color: #4a3b00;
+    border-block-end: 1px solid #e6c65c;
+    font-size: 0.9rem;
+  }
+  .demo-banner a {
+    color: inherit;
+    font-weight: 600;
   }
   /* Six pickers and the session buttons no longer fit one row on a tablet. Display is also in the link
      picker, so its button goes first. */

@@ -6,6 +6,7 @@
 <script lang="ts">
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { page } from "$app/state";
   import { PpmClient, type Dashboard } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
@@ -23,7 +24,8 @@
 
 <svelte:head><title>{t("p.dashboard.dashboard_ppm")}</title></svelte:head>
 
-<h1>{t("ppm.dashboard.title")}</h1>
+<!-- Signed in, the dashboard is the person's own home page; signed out it keeps its plain title. -->
+<h1>{page.data.signedIn ? t("p.dashboard.my_home") : t("ppm.dashboard.title")}</h1>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if board}

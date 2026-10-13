@@ -73,7 +73,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each rows as group (group.key)}
+      {#each rows as group, gi (`${gi}:${group.key}`)}
         {#each group.variance as row, index (row.currency)}
           <tr class:overrun={row.overrun}>
             <td>{#if index === 0}<strong>{group.key}</strong>{/if}</td>

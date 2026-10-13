@@ -481,16 +481,13 @@ async fn financial_variance(
         .iter()
         .map(|i| (i.pid, i.kind.as_deref().unwrap_or("unspecified")))
         .collect();
+    let parent_of: std::collections::BTreeMap<Uuid, Option<Uuid>> =
+        items.iter().map(|i| (i.pid, i.parent_pid)).collect();
+    // A plan rolls up to the nearest portfolio above it (a project under a programme under a portfolio
+    // included), not just to its direct parent.
     let bucket_of: std::collections::BTreeMap<Uuid, Option<Uuid>> = items
         .iter()
-        .map(|i| {
-            let bucket = if i.kind.as_deref() == Some("Portfolio") {
-                Some(i.pid)
-            } else {
-                i.parent_pid
-            };
-            (i.pid, bucket)
-        })
+        .map(|i| (i.pid, insights::portfolio_of(i.pid, &kind_of, &parent_of)))
         .collect();
     let portfolio_items: std::collections::BTreeMap<Uuid, &plans::Model> = items
         .iter()

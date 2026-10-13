@@ -41,6 +41,26 @@ pub struct VarianceRow {
     pub line_count: usize,
 }
 
+/// The portfolio a plan rolls up to: the plan itself when it is a portfolio, else the nearest ancestor that
+/// is one (a project under a programme under a portfolio rolls up to the portfolio), else `None`. Walks at most
+/// 64 steps, so a cycle in bad data ends instead of looping.
+#[must_use]
+pub fn portfolio_of(
+    pid: Uuid,
+    kind_of: &BTreeMap<Uuid, &str>,
+    parent_of: &BTreeMap<Uuid, Option<Uuid>>,
+) -> Option<Uuid> {
+    let mut cur = Some(pid);
+    for _ in 0..64 {
+        let p = cur?;
+        if kind_of.get(&p) == Some(&"Portfolio") {
+            return Some(p);
+        }
+        cur = parent_of.get(&p).copied().flatten();
+    }
+    None
+}
+
 /// Aggregate money lines into one variance row per currency
 /// (deterministic order: currency code ascending).
 #[must_use]
@@ -337,6 +357,48 @@ mod tests {
         let cells = heatmap_cells(&[(1, 1), (1, 1), (9, 0)]);
         assert_eq!(cells["p1i1"], 2);
         assert_eq!(cells["p5i1"], 1, "out-of-range clamps for display");
+    }
+
+    #[test]
+    fn a_project_rolls_up_through_its_programme_to_the_portfolio() {
+        let (pf, pg, pj, orphan) = (
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            Uuid::from_u128(3),
+            Uuid::from_u128(4),
+        );
+        let kinds: BTreeMap<Uuid, &str> = BTreeMap::from([
+            (pf, "Portfolio"),
+            (pg, "Program"),
+            (pj, "Project"),
+            (orphan, "Project"),
+        ]);
+        let parents: BTreeMap<Uuid, Option<Uuid>> =
+            BTreeMap::from([(pf, None), (pg, Some(pf)), (pj, Some(pg)), (orphan, None)]);
+        assert_eq!(
+            portfolio_of(pf, &kinds, &parents),
+            Some(pf),
+            "a portfolio is its own"
+        );
+        assert_eq!(portfolio_of(pg, &kinds, &parents), Some(pf));
+        assert_eq!(
+            portfolio_of(pj, &kinds, &parents),
+            Some(pf),
+            "two levels up"
+        );
+        assert_eq!(
+            portfolio_of(orphan, &kinds, &parents),
+            None,
+            "no portfolio above"
+        );
+    }
+
+    #[test]
+    fn a_cycle_in_the_parents_ends_the_walk() {
+        let (a, b) = (Uuid::from_u128(1), Uuid::from_u128(2));
+        let kinds: BTreeMap<Uuid, &str> = BTreeMap::from([(a, "Project"), (b, "Project")]);
+        let parents: BTreeMap<Uuid, Option<Uuid>> = BTreeMap::from([(a, Some(b)), (b, Some(a))]);
+        assert_eq!(portfolio_of(a, &kinds, &parents), None);
     }
 
     #[test]

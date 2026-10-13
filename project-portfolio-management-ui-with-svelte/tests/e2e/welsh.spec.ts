@@ -20,7 +20,8 @@ async function lines(page: import("@playwright/test").Page, path: string): Promi
   return text
     .split("\n")
     .map((l) => l.replace(/[⁦-⁩‎‏]/g, "").trim())
-    .filter((l) => /[A-Za-z]{4,}/.test(l));
+    // A row that carries a record id is data (a name beside its id), not text to translate.
+    .filter((l) => /[A-Za-z]{4,}/.test(l) && !/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/.test(l));
 }
 
 test.describe("every page renders in Welsh (HD-13)", () => {

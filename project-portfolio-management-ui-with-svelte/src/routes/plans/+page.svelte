@@ -1,20 +1,13 @@
 <!--
   Plans index route (`/plans`).
 
-  Purpose: fetch the plan refs and render them in the SVAR DataGrid with a
-  SVAR FilterBar above it (client-side filtering over the loaded rows). Row
-  selection navigates to the detail route.
+  Purpose: fetch the plan refs and show them on Lily's DataGrid (through DataTable): sortable, with a filter
+  box. The plan's name links to its detail route.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import { Grid, Willow as GridTheme } from "@svar-ui/svelte-grid";
-  import { repairAria } from "#lib/aria-repair.js";
-  import {
-    FilterBar,
-    Willow as FilterTheme,
-    createArrayFilter,
-  } from "@svar-ui/svelte-filter";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { PlanRef } from "#lib/api/types.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -42,35 +35,15 @@
     }
   });
 
-  // The list endpoint returns lightweight `{pid, name}` refs, so the
-  // grid carries those two columns; `pid` stays a technical literal.
-  const columns = $derived([
-    { id: "name", header: t("form.title"), flexgrow: 1 },
-    { id: "pid", header: "pid", width: 300 },
+  // The list endpoint returns lightweight `{pid, name}` refs, so the grid carries those two columns;
+  // `pid` stays a technical literal.
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("form.title"), rowHeader: true, cell: nameCell },
+    { id: "pid", header: "pid" },
   ]);
-
-  const rows = $derived(items.map((r) => ({ id: r.pid, name: r.name, pid: r.pid })));
-
-  // FilterBar over the name column (contains-match, client-side).
-  const filterFields = $derived([
-    { id: "name", label: t("form.title"), type: "text" },
-  ]);
-  let filterRules = $state<unknown>(null);
-  const filtered = $derived(
-    filterRules
-      ? createArrayFilter(filterRules as Parameters<typeof createArrayFilter>[0])(rows)
-      : rows,
-  );
-
-  // Row selection navigates to the plan detail route.
-  function initGrid(api: {
-    on(action: string, cb: (ev: { id: string | number }) => void): void;
-  }) {
-    api.on("select-row", (ev) => {
-      void goto(localeHref(`/plans/${ev.id}`));
-    });
-  }
 </script>
+
+{#snippet nameCell({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${row.pid}`)}>{formatted}</a>{/snippet}
 
 <svelte:head><title>{t("p.plans.main_x", { t: t("list.title") })}</title></svelte:head>
 
@@ -87,84 +60,16 @@
   <p class="count">
     {items.length === total ? `${total}` : `${items.length} / ${total}`}
   </p>
-  <GridTheme fonts={false}>
-    <FilterTheme fonts={false}>
-      <div class="filter-wrap">
-        <FilterBar
-          fields={filterFields}
-          onchange={({ value }: { value: unknown }) => (filterRules = value)}
-        />
-      </div>
-      <!-- T-28k (repo tasks.md EV-1): the SVAR grid is a poor fit under
-           a phone viewport (fixed-height, horizontal-scrolling columns).
-           Both this and `.mobile-list` below render unconditionally;
-           `@media (max-width: 600px)` is the sole switch, so there is
-           no JS viewport detection and nothing to get out of sync with
-           SSR (this app has none — ssr = false, +layout.ts). -->
-      <div class="grid-wrap" use:repairAria>
-        <Grid data={filtered} {columns} select init={initGrid} />
-      </div>
-    </FilterTheme>
-  </GridTheme>
-  <ul class="mobile-list">
-    {#each filtered as row (row.id)}
-      <li><a href={localeHref(`/plans/${row.id}`)}>{row.name}</a></li>
-    {/each}
-  </ul>
+  <DataTable label={t("list.title")} {columns} rows={items} rowId={(r) => String(r.pid)} searchable pageSize={100} />
 {/if}
 
 <style>
-  .filter-wrap {
-    margin-bottom: 0.5rem;
-  }
-  .grid-wrap {
-    height: 480px;
-    overflow: hidden;
-  }
-
-  /* The row count: just the total when the page holds everything, and
-     "shown / total" when it does not, so a first page of a long list
-     cannot be mistaken for a short list (same convention as the
-     organization service's front-end /organizations list route). */
+  /* The row count: just the total when the page holds everything, and "shown / total" when it does not, so a
+     first page of a long list cannot be mistaken for a short list (same convention as the organization
+     service's front-end /organizations list route). */
   .count {
     margin: 0 0 0.5rem;
     opacity: 0.75;
     font-variant-numeric: tabular-nums;
-  }
-
-  /* T-28k: a plain, read-only list stands in for the SVAR grid under a
-     phone viewport — hidden above the breakpoint, shown below it. */
-  .mobile-list {
-    display: none;
-  }
-
-  @media (max-width: 600px) {
-    .grid-wrap {
-      display: none;
-    }
-    /* T-28k: the SVAR FilterBar (`.filter-wrap`) sits OUTSIDE
-       `.grid-wrap`, so hiding the grid alone left it as the actual
-       overflow source (measured: its `.wx-filter-bar` rendered at a
-       fixed ~610px regardless of viewport). Filtering a plain list of
-       names has little value anyway, so it is hidden alongside the
-       grid rather than reflowed. */
-    .filter-wrap {
-      display: none;
-    }
-    .mobile-list {
-      display: block;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .mobile-list li {
-      border-bottom: 1px solid var(--mxi-color-border);
-    }
-    .mobile-list a {
-      display: block;
-      padding: 0.75rem 0.25rem;
-      color: inherit;
-      text-decoration: none;
-    }
   }
 </style>

@@ -2674,6 +2674,16 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** Requests to move a task's start, with the knock-on worked out when each was asked. */
+  deploymentMoves(planPid: string): Promise<DeploymentMoves> {
+    return this.http.get(`/api/plans/${planPid}/deployment-moves`);
+  }
+  requestDeploymentMove(planPid: string, body: { task_pid: string; new_start: string; reason: string; approver_ref?: string }): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/deployment-moves`, { body });
+  }
+  decideDeploymentMove(planPid: string, movePid: string, decision: "approve" | "refuse", reason: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/deployment-moves/${movePid}/decision`, { body: { decision, reason } });
+  }
   /** The funding allocations, each with the money on lines that draw on it and what is untraced. */
   fundingAllocations(): Promise<{ allocations: FundingAllocation[] }> {
     return this.http.get("/api/funding-allocations");
@@ -3737,5 +3747,19 @@ export interface AllocationTrace {
   gates: { lines_with_a_gate: number; released: number };
   milestones: { met: number; total: number; items: { plan: string | null; name: string; due: string | null; met: boolean; met_on: string | null }[] };
   benefits: { validated_by_currency: { currency: string; validated_minor: number }[]; planned_by_currency: { currency: string; planned_minor: number }[]; benefits: number };
+  note: string;
+}
+
+export interface DeploymentMove {
+  pid: string; plan_pid: string; task_pid: string; from_start: string; to_start: string; reason: string;
+  requested_by: string | null; approver_ref: string; status: "requested" | "approved" | "refused";
+  decided_by: string | null; decided_on: string | null; decision_reason: string | null;
+  knock_on: { task_pid: string; title: string; plan_pid: string; other_deployment: boolean; moved: boolean; start_days: number; finish_days: number }[];
+  knock_on_cost: { labour?: { currency: string; delta_minor: number }[] };
+}
+
+export interface DeploymentMoves {
+  moves: DeploymentMove[];
+  cost_by_requester: { requested_by: string; requests: number; knock_on_labour: { currency: string; delta_minor: number }[] }[];
   note: string;
 }

@@ -43,6 +43,7 @@
     get leveling() { return t("p.plans.pid.leveling"); },
     get "critical-chain"() { return t("p.critical_chain.link_chain"); },
     get buffers() { return t("p.critical_chain.link_buffers"); },
+    get "deployment-moves"() { return t("p.moves.link"); },
     get "schedule-risk"() { return t("p.plans.pid.schedule_risk.schedule_risk"); },
     get "cost-risk"() { return t("p.plans.pid.joint_risk.cost_risk"); },
     get "joint-risk"() { return t("p.plans.pid.cost_and_schedule_risk"); },

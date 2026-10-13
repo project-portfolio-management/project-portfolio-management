@@ -2674,6 +2674,14 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** The funding allocations, each with the money on lines that draw on it and what is untraced. */
+  fundingAllocations(): Promise<{ allocations: FundingAllocation[] }> {
+    return this.http.get("/api/funding-allocations");
+  }
+  /** What one allocation bought: lines, gates, milestones met and benefits validated. */
+  traceAllocation(pid: string): Promise<AllocationTrace> {
+    return this.http.get(`/api/funding-allocations/${pid}/trace`);
+  }
   /** Milestones that need partner sign-off, and where each stands. */
   milestoneSignoffs(): Promise<MilestoneSignoffs> {
     return this.http.get("/api/milestone-signoffs");
@@ -3713,5 +3721,21 @@ export interface MilestoneSignoffs {
     milestone_pid: string; plan_pid: string; name: string; due: string | null;
     signoff: { state: "met" | "delivered_not_met" | "not_delivered" | "not_required"; delivered_on: string | null; met_on: string | null; outstanding: string[] };
   }[];
+  note: string;
+}
+
+export interface FundingAllocation {
+  pid: string; funding_source_pid: string; funding_source: string; amount_minor: number; currency: string;
+  allocated_on: string; reference: string | null; planned_on_lines_minor: number; untraced_minor: number; lines: number;
+}
+
+export interface AllocationTrace {
+  allocation: FundingAllocation;
+  currency: string;
+  lines: { line_pid: string; plan_pid: string; plan: string | null; description: string; category: string; planned_minor: number; actual_minor: number; gate: string | null; released: boolean }[];
+  money: { allocated_minor: number; planned_on_lines_minor: number; spent_minor: number; untraced_minor: number; untraced_reason: string | null };
+  gates: { lines_with_a_gate: number; released: number };
+  milestones: { met: number; total: number; items: { plan: string | null; name: string; due: string | null; met: boolean; met_on: string | null }[] };
+  benefits: { validated_by_currency: { currency: string; validated_minor: number }[]; planned_by_currency: { currency: string; planned_minor: number }[]; benefits: number };
   note: string;
 }

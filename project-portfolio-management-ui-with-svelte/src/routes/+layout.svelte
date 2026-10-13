@@ -179,6 +179,7 @@
     { href: "/director-packs", get label() { return t("p.director_pack.director_packs"); } },
     { href: "/pipeline", get label() { return t("p.critical_chain.nav_pipeline"); } },
     { href: "/start-queue", get label() { return t("p.start_queue.nav"); } },
+    { href: "/ledger", get label() { return t("p.ledger.nav"); } },
     { href: "/milestone-signoffs", get label() { return t("p.signoffs.nav"); } },
     { href: "/key-persons", get label() { return t("p.key_persons.nav"); } },
     { href: "/organizations", get label() { return t("p.organizations.nav"); } },

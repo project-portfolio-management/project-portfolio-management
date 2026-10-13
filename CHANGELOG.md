@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 13 October
 
+- **Funding ledger screen** (EX-12): `/ledger` lists funding allocations with planned and untraced money and traces one to its budget lines, gates, milestones met and benefits validated. Read-only: creating allocations, mapping cost codes and reconciling a finance export stay API-only. English and Welsh (unreviewed draft); tested over stubbed answers.
 - **Milestone sign-off screen** (EX-4): `/milestone-signoffs` shows milestones that need partner sign-off with delivered and met apart, the gap, and who is outstanding, and records a sign-off or a withdrawal for a chosen organization. Choosing which organizations a milestone needs is still API-only. English and Welsh (unreviewed draft); tested over stubbed answers.
 - **Key people screen** (EX-11): `/key-persons` lists single points of failure with their successor and readiness, records and removes them, and marks contingent workers; resource managers only (others see the API's 404 as a message). English and Welsh (unreviewed draft); tested over stubbed answers.
 - **Organizations screen** (EX-3): `/organizations` lists the partner organizations with their kind and pack audience, adds one, and retires or restores one. English and Welsh (unreviewed draft); tested over stubbed answers, not a live service.

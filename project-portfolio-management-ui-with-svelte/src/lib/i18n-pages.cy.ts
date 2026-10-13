@@ -2821,7 +2821,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.organizations.col_audience": "Cynulleidfa'r pecyn",
   "p.organizations.col_act": "Gweithred",
   "p.organizations.kind_delivery": "cyflawni",
-  "p.organizations.kind_partner": "partner",
+  "p.organizations.kind_partner": "partner cydweithredol",
   "p.organizations.kind_sponsor": "noddwr",
   "p.organizations.kind_supplier": "cyflenwr",
   "p.organizations.active": "gweithredol",

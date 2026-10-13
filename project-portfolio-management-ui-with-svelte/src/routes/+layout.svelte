@@ -179,6 +179,7 @@
     { href: "/director-packs", get label() { return t("p.director_pack.director_packs"); } },
     { href: "/pipeline", get label() { return t("p.critical_chain.nav_pipeline"); } },
     { href: "/start-queue", get label() { return t("p.start_queue.nav"); } },
+    { href: "/organizations", get label() { return t("p.organizations.nav"); } },
     { href: "/email-deliveries", get label() { return t("p.email_deliveries.nav"); } },
     { href: "/security", label: t("ppm.nav.security") },
     { href: "/regulator", label: t("ppm.nav.regulator") },

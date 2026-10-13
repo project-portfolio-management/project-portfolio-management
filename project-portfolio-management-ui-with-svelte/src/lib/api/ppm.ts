@@ -2674,6 +2674,17 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** The partner organizations. */
+  organizations(): Promise<{ organizations: Organization[] }> {
+    return this.http.get("/api/organizations");
+  }
+  addOrganization(name: string, kind: string): Promise<unknown> {
+    return this.http.post("/api/organizations", { body: { name, kind } });
+  }
+  /** Rename, change kind, retire (`active: false`) or restore an organization. */
+  changeOrganization(pid: string, change: { name?: string; kind?: string; active?: boolean }): Promise<unknown> {
+    return this.http.put(`/api/organizations/${pid}`, { body: change });
+  }
   /** Email delivery rows, one for each recipient (administrators only). */
   emailDeliveries(status?: string): Promise<EmailDeliveries> {
     return this.http.get(`/api/email-deliveries${status ? `?status=${encodeURIComponent(status)}` : ""}`);
@@ -3654,4 +3665,13 @@ export interface EmailDeliveries {
     sender: string | null; next_attempt_at: string | null; sent_at: string | null;
   }[];
   counts: { retry: number; sent: number; failed: number };
+}
+
+export interface Organization {
+  pid: string;
+  name: string;
+  kind: "delivery" | "partner" | "sponsor" | "supplier";
+  active: boolean;
+  /** The pack audience that addresses this organization (`org:<pid>`). */
+  audience: string;
 }

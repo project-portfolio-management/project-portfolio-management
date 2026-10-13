@@ -1,0 +1,55 @@
+// The partner organizations screen (EX-3), over stubbed API answers.
+import { test, expect } from "@playwright/test";
+
+test.describe("organizations", () => {
+  let list = [
+    { pid: "o1", name: "Acme Build", kind: "delivery", active: true, audience: "org:o1" },
+    { pid: "o2", name: "Old Partner", kind: "partner", active: false, audience: "org:o2" },
+  ];
+  let posted = "";
+  let changed = "";
+  test.beforeEach(async ({ page }) => {
+    posted = "";
+    changed = "";
+    await page.route("**/api/organizations", (r) => {
+      if (r.request().method() === "POST") {
+        posted = r.request().postData() ?? "";
+        list = [...list, { pid: "o3", name: "New Co", kind: "supplier", active: true, audience: "org:o3" }];
+        return r.fulfill({ json: {} });
+      }
+      return r.fulfill({ json: { organizations: list } });
+    });
+    await page.route("**/api/organizations/*", (r) => {
+      changed = `${r.request().url().split("/").pop()} ${r.request().postData()}`;
+      return r.fulfill({ json: {} });
+    });
+  });
+
+  test("lists organizations, adds one, retires one", async ({ page }) => {
+    await page.goto("/en-001/organizations", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { level: 1, name: "Partner organizations" })).toBeVisible();
+    await expect(page.getByRole("row", { name: /Acme Build.*delivery.*active.*org:o1/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /Old Partner.*retired/ })).toBeVisible();
+    await page.getByLabel("Name").fill("New Co");
+    await page.getByLabel("Kind").selectOption("supplier");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await expect.poll(() => posted).toBe('{"name":"New Co","kind":"supplier"}');
+    await expect(page.getByRole("row", { name: /New Co.*supplier/ })).toBeVisible();
+    await page.getByRole("button", { name: "Retire Acme Build" }).click();
+    await expect.poll(() => changed).toBe('o1 {"active":false}');
+  });
+
+  test("reads in Welsh", async ({ page }) => {
+    await page.goto("/cy-001/organizations", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { level: 1, name: "Sefydliadau partner" })).toBeVisible();
+  });
+
+  for (const locale of ["en-001", "cy-001", "zh-cn"]) {
+    test(`passes axe in ${locale}`, async ({ page }) => {
+      await page.goto(`/${locale}/organizations`, { waitUntil: "networkidle" });
+      const { default: AxeBuilder } = await import("@axe-core/playwright");
+      const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+      expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
+    });
+  }
+});

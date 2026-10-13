@@ -5,8 +5,8 @@ the Northgate Transport Authority, its eight people, four organizations, ten pla
 for this. It is for showing the product, not for running one.
 
 > **Never** point the demonstration at real data, switch demonstration mode on in front of a real deployment, or
-> put it on a shared network you do not control. The API in it runs with login **off**, and the sign-in page
-> accepts one fixed address.
+> put it on a shared network you do not control. The API in it trusts a **published test key** (anyone can
+> mint a token for it), and the sign-in page accepts one fixed address.
 
 ## Start it
 
@@ -26,7 +26,7 @@ Stop it and delete the data with `podman compose --profile demo down -v`.
 
 | Service | What it is |
 | --- | --- |
-| `api-demo` | The API with login off, a work-in-progress limit of two programmes, and a deployment approver. |
+| `api-demo` | The API with login **on**, trusting one published test key; a work-in-progress limit of two programmes; a deployment approver. |
 | `seed-demo` | One-shot: runs `scripts/seed-demo.mjs` against `api-demo`, then exits. |
 | `ui-demo` | The UI with `PPM_DEMO_MODE=true`, on port 3000. |
 | `postgres`, `redis`, `migrate` | As in the normal stack. |
@@ -36,16 +36,23 @@ which refuses to start without token keys.
 
 ## What the sign-in does
 
-With `PPM_DEMO_MODE=true` the sign-in page accepts only `example@example.com` (any other address is refused), sends
-no email, asks no identity provider, and starts a session in the UI server's own memory. The UI's proxy then
-forwards no token, which is what the demonstration API expects. Turn it off by not setting the variable. The code is
-`src/lib/server/demo.ts` and `src/routes/signin/+page.server.ts` in the UI.
+With `PPM_DEMO_MODE=true` the sign-in page accepts only `example@example.com` (any other address is refused), sends no
+email and asks no identity provider. It starts a session in the UI server's own memory and signs a PASETO token for
+"Example Person" (a made-up person id, administrator and write access, and the co-signing role `accountable_professional_lead`) with a **published test key**. The UI's proxy sends that token
+to the demonstration API, which trusts exactly that public key. So the signed-in person has a real identity:
+**My work** (`/me`), the **kanban board** (`/kanban`), saved views and the administrator screens all work, and
+the seed gives Example Person some open tasks.
+
+The key's private half is in the repository on purpose (`src/lib/server/demo-token.ts`, `scripts/demo/token.mjs`; a
+unit test keeps the two the same and checks the public half in `compose.yaml`). That is only safe because the
+demonstration holds fictitious data on its own network: **never trust that key anywhere else**. Turn the mode off by
+not setting the variable. The sign-in code is `src/routes/signin/+page.server.ts`.
 
 ## The data
 
 `scripts/seed-demo.mjs` fills a running API through its own endpoints, so every feature works on it, and you can
-change things. It is safe to run twice (each group looks for what is there). It sends no token, so it needs an API
-with login off. It seeds, in order:
+change things. It is safe to run twice (each group looks for what is there). It signs in with the same published test key,
+so it works against the demonstration API (use `PPM_API_TOKEN` to give it another token). It seeds, in order:
 
 - **Core:** four organizations; a portfolio, three programmes and six projects; eight tasks on each project with
   dependencies; three milestones, three risks, budget lines with spend, and two benefits on each project.
@@ -60,15 +67,14 @@ with login off. It seeds, in order:
 - **Critical chain:** aggressive and safe estimates, a frozen buffer plan with a snapshot and a recovery action, the
   drum, a schedule baseline, an earned-value snapshot, a scenario.
 
-To seed an API you already run (login off): `PPM_API_URL=http://127.0.0.1:5150 node scripts/seed-demo.mjs`.
+To seed another API that trusts the demonstration key: `PPM_API_URL=http://127.0.0.1:5150 node scripts/seed-demo.mjs`.
 
 ## What is and is not covered
 
-- **Covered and checked:** the tour lists 39 features. Each link was opened on a stack started as above and loaded
+- **Covered and checked:** the tour lists 41 features. Each link was opened on a stack started as above and loaded
   without an error page (see the changelog for the date and the result).
-- **Not in the demonstration:** email (nothing is sent, so the deliveries list is empty), the screens that need
-  a signed-in identity with attributes (a few preference calls answer 401 and the screens carry on), real token
-  verification, and the thresholds, triage and start-control override screens (the data is seeded; those are
+- **Not in the demonstration:** email (nothing is sent, so the deliveries list is empty), a real identity provider
+  (the token is signed by the published test key), and the thresholds, triage and start-control override screens (the data is seeded; those are
   API-only still).
 - **Fictitious by design:** people are references like `person:<uuid>` with made-up ids; the UI shows the references
   where it has no name directory.

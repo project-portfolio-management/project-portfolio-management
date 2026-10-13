@@ -7,7 +7,8 @@
 
 import * as env from "$app/env/private";
 
-export { DEMO_EMAIL, DEMO_TOKEN, isDemoEmail, demoClaims } from "../demo";
+export { DEMO_EMAIL, DEMO_SUB, isDemoEmail, demoClaims } from "../demo";
+export { mintDemoToken } from "./demo-token";
 
 /** Whether demonstration mode is on. */
 export function demoEnabled(): boolean {

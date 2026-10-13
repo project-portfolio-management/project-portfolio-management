@@ -11,6 +11,16 @@ export interface DemoFeature {
 
 export const FEATURES: DemoFeature[] = [
   {
+    "id": "kanban",
+    "group": "overview",
+    "href": "/kanban"
+  },
+  {
+    "id": "me",
+    "group": "overview",
+    "href": "/me"
+  },
+  {
     "id": "plans",
     "group": "overview",
     "href": "/plans"

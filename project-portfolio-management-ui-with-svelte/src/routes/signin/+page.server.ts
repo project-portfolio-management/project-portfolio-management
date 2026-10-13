@@ -8,7 +8,7 @@ import { redirect } from "@sveltejs/kit";
 import { requestMagicLink } from "#lib/server/auth.js";
 import { pageTitle } from "#lib/i18n.svelte.js";
 import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
-import { demoClaims, demoEnabled, isDemoEmail, DEMO_TOKEN } from "#lib/server/demo.js";
+import { demoClaims, demoEnabled, isDemoEmail, mintDemoToken } from "#lib/server/demo.js";
 import { OIDC_COOKIE, OIDC_COOKIE_OPTIONS } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
 import { oidcOptions } from "#lib/server/config.js";
@@ -34,7 +34,7 @@ export const actions: Actions = {
       if (!isDemoEmail(email)) return { sent: false, error: "demo-email" };
       const now = Math.floor(Date.now() / 1000);
       const session = await sessions().createSession({
-        accessToken: DEMO_TOKEN,
+        accessToken: mintDemoToken(now, oidcOptions().sessionSeconds),
         sessionSeconds: oidcOptions().sessionSeconds,
         claims: demoClaims(now),
       });

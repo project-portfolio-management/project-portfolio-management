@@ -1,7 +1,7 @@
 // Demonstration mode: the one address it accepts, and the identity it signs in.
 
 import { describe, expect, it } from "vitest";
-import { DEMO_EMAIL, DEMO_TOKEN, demoClaims, isDemoEmail } from "../../src/lib/demo";
+import { DEMO_EMAIL, DEMO_SUB, demoClaims, isDemoEmail } from "../../src/lib/demo";
 
 describe("demonstration sign-in", () => {
   it("accepts example@example.com, ignoring case and surrounding space", () => {
@@ -16,12 +16,12 @@ describe("demonstration sign-in", () => {
     }
   });
 
-  it("signs in a named person with no roles and a token the proxy does not forward", () => {
+  it("signs in a named person with no roles", () => {
     const c = demoClaims(1_000);
     expect(c.email).toBe(DEMO_EMAIL);
     expect(c.name).toBe("Example Person");
     expect(c.roles).toEqual([]);
     expect(c.exp).toBeGreaterThan(c.iat ?? 0);
-    expect(DEMO_TOKEN).toBe("demo");
+    expect(c.sub).toBe(DEMO_SUB);
   });
 });

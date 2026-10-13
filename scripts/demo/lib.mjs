@@ -4,6 +4,8 @@
 // Everything seeded is FICTITIOUS: the Northgate Transport Authority and every person, project, amount and
 // date below were made up for the demonstration. Do not run this against a real deployment.
 
+import { mintDemoToken } from "./token.mjs";
+
 export const API = (process.env.PPM_API_URL ?? "http://127.0.0.1:5150").replace(/\/+$/, "");
 
 export class ApiFailure extends Error {
@@ -16,7 +18,8 @@ export class ApiFailure extends Error {
 async function call(method, path, body) {
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { "content-type": "application/json", "accepts-version": "1.0" },
+    // The demonstration API has login on and trusts the published demonstration key; PPM_API_TOKEN overrides.
+    headers: { "content-type": "application/json", "accepts-version": "1.0", authorization: `Bearer ${process.env.PPM_API_TOKEN ?? mintDemoToken()}` },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();

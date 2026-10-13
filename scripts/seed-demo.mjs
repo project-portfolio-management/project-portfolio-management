@@ -4,8 +4,8 @@
 //   PPM_API_URL=http://127.0.0.1:5150 node scripts/seed-demo.mjs
 //
 // Safe to run twice: each group looks for what is already there. NEVER run it against a deployment that
-// holds real data. The API should run with login off (the demonstration stack does), because the script
-// sends no token.
+// holds real data. The script signs in with the published demonstration key (scripts/demo/token.mjs), which is
+// what the demonstration API trusts; PPM_API_TOKEN supplies a different token for another API.
 
 import { API, get, log } from "./demo/lib.mjs";
 import { seedCore } from "./demo/core.mjs";

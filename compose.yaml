@@ -180,7 +180,7 @@ services:
         condition: service_healthy
 
   # ---- The demonstration (profile `demo`): see operations/demo.md ---------------------------------
-  # An API with login OFF and a database that holds only FICTITIOUS data, a UI whose sign-in accepts only
+  # An API that trusts one published test key and a database that holds only FICTITIOUS data, a UI whose sign-in accepts only
   # example@example.com, and a one-shot job that fills the API with the made-up Northgate portfolio.
   # NEVER point this at real data or put it on a shared network.
   api-demo:
@@ -190,7 +190,11 @@ services:
     environment:
       <<: *api-environment
       LOCO_ENV: container-dev
-      PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
+      # Login is ON. The API trusts one PUBLISHED test key (its private half is in the UI's demonstration code and
+      # in scripts/demo/token.mjs), so the signed-in demonstration person has a real identity: "My work", saved
+      # views and the kanban board work. Safe only because the data is fictitious.
+      PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "true"
+      PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS: '{"keys":[{"kty":"OKP","crv":"Ed25519","use":"sig","kid":"sUcFiI9KaDkaCapZaN0l0Ww7unuzttFb81TY3KroWkc","x":"11l5O7wTooGagnx2rbb7qKSa7gB_SfLQmS2ZuCWtLEg"}]}'
       # Two programmes may be in delivery at once: the third waits in the start queue (the demonstration shows it).
       PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT: "2"
       # Who approves a deployment move.

@@ -5,6 +5,7 @@ import { PEOPLE, ref } from "./core.mjs";
 
 const list = (r, key) => (Array.isArray(r) ? r : r?.[key] ?? []);
 const ROLE = {
+  "example-person": "Programme coordinator",
   "amara-okafor": "Programme director", "ben-whitfield": "Signalling engineer", "chloe-martin": "Project manager",
   "dev-patel": "Software developer", "elena-rossi": "Accessibility lead", "farid-haddad": "Test engineer",
   "grace-liu": "Finance partner", "hugo-bennett": "Operations manager",

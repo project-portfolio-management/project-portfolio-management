@@ -5,6 +5,7 @@ import { get, post, put, tryPost, ensure, log, day } from "./lib.mjs";
 
 // Fictitious people. The API wants `person:<uuid>` references, so each has a fixed made-up id.
 export const PEOPLE = [
+  ["example-person", "Example Person", "Programme coordinator", "00000000-0000-4000-8000-0000000000a0"],
   ["amara-okafor", "Amara Okafor", "Programme director", "00000000-0000-4000-8000-0000000000a1"],
   ["ben-whitfield", "Ben Whitfield", "Signalling engineer", "00000000-0000-4000-8000-0000000000a2"],
   ["chloe-martin", "Chloe Martin", "Project manager", "00000000-0000-4000-8000-0000000000a3"],
@@ -42,10 +43,10 @@ const TASKS = [
   ["Survey the existing equipment", "done", "ben-whitfield", 3, 0, 15],
   ["Design the replacement", "done", "ben-whitfield", 8, 15, 30],
   ["Order long-lead items", "done", "grace-liu", 2, 40, 10],
-  ["Build and bench-test", "in_progress", "dev-patel", 8, 55, 45],
-  ["Install on site", "todo", "farid-haddad", 13, 100, 40],
-  ["Safety assurance", "blocked", "amara-okafor", 5, 130, 25],
-  ["Train operators", "todo", "hugo-bennett", 3, 150, 15],
+  ["Build and bench-test", "in_progress", "example-person", 8, 55, 45],
+  ["Install on site", "todo", "example-person", 13, 100, 40],
+  ["Safety assurance", "blocked", "example-person", 5, 130, 25],
+  ["Train operators", "todo", "example-person", 3, 150, 15],
   ["Commission and hand over", "todo", "chloe-martin", 5, 170, 20],
 ];
 

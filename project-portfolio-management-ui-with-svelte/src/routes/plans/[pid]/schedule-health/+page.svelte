@@ -7,6 +7,8 @@
   a symbol, never colour alone.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -28,7 +30,39 @@
     }
   }
   onMount(() => void load());
+
+  type Check = ScheduleHealth["checks"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.plans.pid.schedule_health.check"), rowHeader: true, format: (v, r) => `${r.id}. ${v}` },
+    { id: "result", header: t("p.plans.pid.schedule_health.result"), accessor: (r) => healthResult(r as unknown as Check).text, cell: resultCell, cellClass: (c) => ({ fail: "cell-red health-fail", na: "cell-grey health-na", pass: "" })[healthResult(c.row as unknown as Check).kind] },
+    { id: "found", header: t("p.plans.pid.schedule_health.what_was_found"), accessor: (r) => { const c = r as unknown as Check; return c.pass === null ? healthReason(c.reason) : healthValue(c); } },
+    { id: "held", header: t("p.plans.pid.schedule_health.held_to"), accessor: (r) => thresholdSentence(r as unknown as Check) },
+    { id: "fix", header: t("p.plans.pid.schedule_health.to_fix"), sortable: false, accessor: (r) => (r as unknown as Check).offenders.length, cell: fixCell },
+  ]);
 </script>
+
+{#snippet resultCell({ row }: DataGridCellContext)}
+  {@const r = healthResult(row as unknown as Check)}
+  <span aria-hidden="true">{r.symbol}</span> {r.text}
+{/snippet}
+
+{#snippet fixCell({ row }: DataGridCellContext)}
+  {@const c = row as unknown as Check}
+  {#if c.offenders.length === 0}
+    {c.pass === false ? t("p.plans.pid.schedule_health.see_the_note") : "—"}
+  {:else}
+    <details>
+      <summary>{(c.offenders.length === 1 ? t("p.plans.pid.schedule_health.task_one", { length: c.offenders.length }) : t("p.plans.pid.schedule_health.task_other", { length: c.offenders.length }))}</summary>
+      <ul>
+        {#each c.offenders as o (o.pid)}
+          <li><a href={localeHref(offenderHref(pid, o.pid))}>{o.title ?? o.pid}</a></li>
+        {/each}
+      </ul>
+    </details>
+  {/if}
+  {#if c.note}<p class="small muted">{c.note}</p>{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.schedule_health.schedule_health_ppm")}</title></svelte:head>
 
@@ -50,70 +84,15 @@
     <button class="button small" type="submit">{t("p.plans.pid.schedule_health.re_run")}</button>
   </form>
 
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.schedule_health.the_fourteen_schedule_health_checks")}</caption>
-    <thead>
-      <tr>
-        <th scope="col">{t("p.plans.pid.schedule_health.check")}</th>
-        <th scope="col">{t("p.plans.pid.schedule_health.result")}</th>
-        <th scope="col">{t("p.plans.pid.schedule_health.what_was_found")}</th>
-        <th scope="col">{t("p.plans.pid.schedule_health.held_to")}</th>
-        <th scope="col">{t("p.plans.pid.schedule_health.to_fix")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each report.checks as c (c.id)}
-        {@const r = healthResult(c)}
-        <tr class={r.kind}>
-          <th scope="row">{c.id}. {c.name}</th>
-          <td><span aria-hidden="true">{r.symbol}</span> {r.text}</td>
-          <td>
-            {#if c.pass === null}{healthReason(c.reason)}{:else}{healthValue(c)}{/if}
-          </td>
-          <td>{thresholdSentence(c)}</td>
-          <td>
-            {#if c.offenders.length === 0}
-              {c.pass === false ? t("p.plans.pid.schedule_health.see_the_note") : "—"}
-            {:else}
-              <details>
-                <summary>{(c.offenders.length === 1 ? t("p.plans.pid.schedule_health.task_one", { length: c.offenders.length }) : t("p.plans.pid.schedule_health.task_other", { length: c.offenders.length }))}</summary>
-                <ul>
-                  {#each c.offenders as o (o.pid)}
-                    <li><a href={localeHref(offenderHref(pid, o.pid))}>{o.title ?? o.pid}</a></li>
-                  {/each}
-                </ul>
-              </details>
-            {/if}
-            {#if c.note}<p class="small muted">{c.note}</p>{/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.schedule_health.the_fourteen_schedule_health_checks")} {columns} rows={report.checks} rowId={(r) => String(r.id)} sortable={false} />
   <p class="small muted">{report.note}</p>
 {:else if !error}
   <p class="muted">{t("p.plans.pid.schedule_health.loading")}</p>
 {/if}
 
 <style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--mxi-color-border, #ddd);
-    vertical-align: top;
-  }
-  tr.fail td:nth-child(2) {
-    font-weight: 700;
-    color: var(--danger, #b00020);
-  }
-  tr.na td:nth-child(2) {
-    font-style: italic;
-  }
+  :global(.health-fail) { font-weight: 700; color: var(--danger, #b00020); }
+  :global(.health-na) { font-style: italic; }
   .filter {
     display: flex;
     gap: 0.75rem;

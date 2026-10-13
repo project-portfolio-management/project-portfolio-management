@@ -7,6 +7,8 @@
   the last-24h standup digest. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { page } from "$app/state";
   import { Kanban, Willow, getCardShape } from "@svar-ui/svelte-kanban";
   import type { KanbanInstanceApi } from "@svar-ui/svelte-kanban";
@@ -120,6 +122,18 @@
       }
     }
   }
+
+  const burndownColumns = (total: number): DataGridColumn[] => [
+    { id: "date", header: t("p.plans.pid.board.date"), rowHeader: true },
+    { id: "remaining", header: t("p.plans.pid.board.remaining_of", { total_tasks: total }), align: "end" },
+  ];
+  type VRow = Velocity["sprints"][number];
+  const velocityColumns: DataGridColumn[] = $derived([
+    { id: "sprint", header: t("p.plans.pid.board.sprint"), rowHeader: true, accessor: (r) => (r as unknown as VRow).sprint.name },
+    { id: "tasks_done", header: t("p.plans.pid.board.tasks_done"), align: "end" },
+    { id: "points_done", header: t("p.plans.pid.board.points_done"), align: "end" },
+    { id: "unpointed_done", header: t("p.plans.pid.board.unpointed"), align: "end" },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.plans.pid.board.ppm", { t: t("ppm.common.board") })}</title></svelte:head>
@@ -214,14 +228,7 @@
 {#if burndown}
   <h2>{t("p.plans.pid.board.burndown", { name: burndown.sprint.name })}</h2>
   <p class="muted">{burndown.derivation}</p>
-  <table data-testid="burndown">
-    <thead><tr><th>{t("p.plans.pid.board.date")}</th><th>{t("p.plans.pid.board.remaining_of", { total_tasks: burndown.total_tasks })}</th></tr></thead>
-    <tbody>
-      {#each burndown.points as point (point.date)}
-        <tr><td>{point.date}</td><td>{point.remaining}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.plans.pid.board.remaining_of", { total_tasks: burndown.total_tasks })} columns={burndownColumns(burndown.total_tasks)} rows={burndown.points} rowId={(r) => String(r.date)} sortable={false} testid="burndown" />
 {/if}
 
 {#if standup}
@@ -285,19 +292,7 @@
 {#if velocity && velocity.sprints.length > 0}
   <h2>{t("p.plans.pid.board.velocity")}</h2>
   <p class="muted">{velocity.note}</p>
-  <table data-testid="velocity">
-    <thead><tr><th>{t("p.plans.pid.board.sprint")}</th><th>{t("p.plans.pid.board.tasks_done")}</th><th>{t("p.plans.pid.board.points_done")}</th><th>{t("p.plans.pid.board.unpointed")}</th></tr></thead>
-    <tbody>
-      {#each velocity.sprints as row (row.sprint.pid)}
-        <tr>
-          <td>{row.sprint.name}</td>
-          <td>{row.tasks_done}</td>
-          <td>{row.points_done}</td>
-          <td>{row.unpointed_done}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.plans.pid.board.sprint")} columns={velocityColumns} rows={velocity.sprints} rowId={(r) => String((r as unknown as { sprint: { pid: string } }).sprint.pid)} testid="velocity" />
 {/if}
 
 <style>

@@ -8,6 +8,8 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -119,6 +121,18 @@
       error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_save");
     }
   }
+
+  type Forecast = NonNullable<EvForecast["forecasts"]>[number];
+  type Variant = Forecast["variants"][number];
+  const forecastColumns = (currency: string, recommended: string): DataGridColumn[] => {
+    const c = (n: number) => money(n, currency);
+    return [
+      { id: "formula", header: t("p.plans.pid.earned_value.forecast"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as Variant).variant === recommended ? ` — ${t("p.plans.pid.earned_value.the_one_to_lead_with")}` : ""}` },
+      { id: "eac", header: t("p.plans.pid.earned_value.final_cost_eac"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor); } },
+      { id: "etc", header: t("p.plans.pid.earned_value.still_to_spend_etc"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.etc.minor === null ? "—" : c(v.etc.minor); } },
+      { id: "vac", header: t("p.plans.pid.earned_value.against_the_budget_vac"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.vac.minor === null ? "—" : c(v.vac.minor) + (v.vac.minor < 0 ? t("p.plans.pid.earned_value.overrun") : ""); } },
+    ];
+  };
 </script>
 
 <svelte:head><title>{t("p.plans.pid.earned_value.earned_value_ppm")}</title></svelte:head>
@@ -194,25 +208,7 @@
             <span aria-hidden="true">{ragText(f.spi.rag).marker}</span> {t("p.plans.pid.earned_value.schedule_is", { word: ragText(f.spi.rag).word })}
             <span aria-hidden="true">{ragText(f.cpi.rag).marker}</span> {t("p.plans.pid.earned_value.cost_is", { word: ragText(f.cpi.rag).word })}
           </p>
-          <table>
-            <caption class="sr-only">{t("p.plans.pid.earned_value.forecasts_of_the_final_cost", { currency: f.currency })}</caption>
-            <thead>
-              <tr><th scope="col">{t("p.plans.pid.earned_value.forecast")}</th><th scope="col">{t("p.plans.pid.earned_value.final_cost_eac")}</th><th scope="col">{t("p.plans.pid.earned_value.still_to_spend_etc")}</th><th scope="col">{t("p.plans.pid.earned_value.against_the_budget_vac")}</th></tr>
-            </thead>
-            <tbody>
-              {#each f.variants as v (v.variant)}
-                <tr class:chosen={v.variant === f.recommended.variant}>
-                  <th scope="row">
-                    {v.formula}
-                    {#if v.variant === f.recommended.variant}<strong> {t("p.plans.pid.earned_value.the_one_to_lead_with")}</strong>{/if}
-                  </th>
-                  <td>{v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor)}</td>
-                  <td>{v.etc.minor === null ? "—" : c(v.etc.minor)}</td>
-                  <td>{v.vac.minor === null ? "—" : c(v.vac.minor) + (v.vac.minor < 0 ? t("p.plans.pid.earned_value.overrun") : "")}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+          <DataTable label={t("p.plans.pid.earned_value.forecasts_of_the_final_cost", { currency: f.currency })} columns={forecastColumns(f.currency, f.recommended.variant)} rows={f.variants} rowId={(r) => String(r.variant)} sortable={false} rowClass={(r) => ((r as unknown as Variant).variant === f.recommended.variant ? "chosen" : "")} />
           <p class="small">{t("p.plans.pid.earned_value.leading_with_that_one_because", { why: f.recommended.why })}</p>
           <p><span aria-hidden="true">{ragText(f.tcpi_to_budget.rag).marker}</span> {tcpiSentence(f.tcpi_to_budget.tcpi, t("p.plans.pid.earned_value.target_budget"))}</p>
           {#if f.tcpi_to_recommended_eac}
@@ -295,7 +291,7 @@
 {/if}
 
 <style>
-  tr.chosen th[scope="row"] {
+  :global(.data-table tr.chosen th[scope="row"]) {
     border-inline-start: 4px solid var(--mxi-color-focus, #1d4ed8);
   }
   table {

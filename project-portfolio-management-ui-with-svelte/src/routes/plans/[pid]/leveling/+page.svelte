@@ -7,6 +7,8 @@
   then the finish cost is stated.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -58,7 +60,29 @@
       busy = false;
     }
   }
+
+  type Move = LevelingProposal["moves"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "apply", header: t("p.plans.pid.leveling.apply"), sortable: false, accessor: (r) => picked[(r as unknown as Move).pid] ?? false, cell: applyCell },
+    { id: "title", header: t("p.plans.pid.leveling.task"), rowHeader: true, cell: moveTaskCell, accessor: (r) => (r as unknown as Move).title ?? (r as unknown as Move).pid },
+    { id: "person", header: t("p.plans.pid.leveling.person"), accessor: (r) => { const m = r as unknown as Move; return m.masked ? m.person : (m.person_ref ?? m.person); } },
+    { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => `${(r as unknown as Move).from_start} → ${(r as unknown as Move).scheduled_start}` },
+    { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => `${(r as unknown as Move).from_finish} → ${(r as unknown as Move).to_finish}` },
+    { id: "delay_days", header: t("p.plans.pid.leveling.later_by"), align: "end", format: (v) => (Number(v) === 1 ? t("p.plans.pid.leveling.business_day_one", { delay_days: Number(v) }) : t("p.plans.pid.leveling.business_day_other", { delay_days: Number(v) })) },
+    { id: "float", header: t("p.plans.pid.leveling.float"), accessor: (r) => `${(r as unknown as Move).float_before} → ${(r as unknown as Move).float_after}` },
+  ]);
 </script>
+
+{#snippet applyCell({ row }: DataGridCellContext)}
+  {@const m = row as unknown as Move}
+  <input type="checkbox" bind:checked={picked[m.pid]} aria-label={`Apply: ${moveText(m)}`} />
+{/snippet}
+
+{#snippet moveTaskCell({ row }: DataGridCellContext)}
+  {@const m = row as unknown as Move}
+  {m.title ?? m.pid}{#if m.critical} <span aria-hidden="true">▲</span> <strong>{t("p.plans.pid.leveling.critical")}</strong>{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.leveling.resource_leveling_ppm")}</title></svelte:head>
 
@@ -107,33 +131,7 @@
   {:else}
     <p class="small" aria-live="polite">{finishEffectText(proposal.finish_before, proposal.finish_after, proposal.finish_delay_days)}</p>
     <form onsubmit={apply}>
-      <table>
-        <caption class="sr-only">{t("p.plans.pid.leveling.each_start_date_the_proposal")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.plans.pid.leveling.apply")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.task")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.person")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.start")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.finish")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.later_by")}</th>
-            <th scope="col">{t("p.plans.pid.leveling.float")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each proposal.moves as m (m.pid)}
-            <tr class:critical={m.critical}>
-              <td><input type="checkbox" bind:checked={picked[m.pid]} aria-label={`Apply: ${moveText(m)}`} /></td>
-              <th scope="row">{m.title ?? m.pid}{#if m.critical} <span aria-hidden="true">▲</span> <strong>{t("p.plans.pid.leveling.critical")}</strong>{/if}</th>
-              <td>{m.masked ? m.person : (m.person_ref ?? m.person)}</td>
-              <td>{m.from_start} → {m.scheduled_start}</td>
-              <td>{m.from_finish} → {m.to_finish}</td>
-              <td>{(m.delay_days === 1 ? t("p.plans.pid.leveling.business_day_one", { delay_days: m.delay_days }) : t("p.plans.pid.leveling.business_day_other", { delay_days: m.delay_days }))}</td>
-              <td>{m.float_before} → {m.float_after}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+        <DataTable label={t("p.plans.pid.leveling.each_start_date_the_proposal")} {columns} rows={proposal.moves} rowId={(r) => String(r.pid)} sortable={false} />
       {#if proposal.effects.length > 0}
         <details>
           <summary>{(proposal.effects.length === 1 ? t("p.plans.pid.leveling.other_task_would_be_pushed_one", { length: proposal.effects.length }) : t("p.plans.pid.leveling.other_task_would_be_pushed_other", { length: proposal.effects.length }))}</summary>
@@ -169,16 +167,6 @@
 {/if}
 
 <style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--mxi-color-border, #ddd);
-  }
   .filter {
     display: flex;
     flex-wrap: wrap;

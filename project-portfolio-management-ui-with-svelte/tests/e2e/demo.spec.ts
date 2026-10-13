@@ -2,7 +2,7 @@
 // guided tour of every feature. The API is stubbed.
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:4174" });
+test.use({ baseURL: `http://localhost:${Number(process.env.PW_PORT ?? 4173) + 1}` });
 
 const NORTH = "46314b8b-8f65-4185-b6e9-ab5a4d08524c";
 const PLANS = [

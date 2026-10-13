@@ -13,3 +13,5 @@ minimumReleaseAgeExclude:
   - '@lilydesignsystem/svelte-link-picker@0.1.1'
   - '@lilydesignsystem/svelte-search-picker@0.1.0'
   - '@lilydesignsystem/themes@0.4.0'
+  - '@lilydesignsystem/svelte-data-grid@0.1.0'
+  - '@lilydesignsystem/svelte-kanban-board@0.1.0'

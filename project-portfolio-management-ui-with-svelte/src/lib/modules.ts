@@ -22,6 +22,7 @@ export const PLAN_LINKS = [
   { key: "critical-chain", module: "tasks" },
   { key: "buffers", module: "tasks" },
   { key: "deployment-moves", module: "tasks" },
+  { key: "cutover", module: "governance" },
   { key: "schedule-risk", module: "tasks" },
   { key: "cost-risk", module: "financials" },
   { key: "joint-risk", module: "financials" },

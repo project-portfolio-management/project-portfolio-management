@@ -2674,6 +2674,26 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** The cutover go/no-go decisions of a plan, newest first. */
+  cutoverDecisions(planPid: string): Promise<{ decisions: CutoverDecision[]; required_cosigners: string[] }> {
+    return this.http.get(`/api/plans/${planPid}/cutover-decisions`);
+  }
+  createCutoverDecision(planPid: string, title: string, criteria: string[]): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/cutover-decisions`, { body: { title, criteria } });
+  }
+  /** One step on a decision: publish, open or new-version. */
+  cutoverStep(planPid: string, did: string, step: "publish" | "open" | "new-version"): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/${step}`, { body: {} });
+  }
+  markCutoverCriterion(planPid: string, did: string, n: number, met: boolean, evidence: string): Promise<unknown> {
+    return this.http.put(`/api/plans/${planPid}/cutover-decisions/${did}/criteria/${n}/mark`, { body: { met, evidence } });
+  }
+  cosignCutover(planPid: string, did: string, role: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/cosign`, { body: { role } });
+  }
+  decideCutover(planPid: string, did: string, outcome: string, reason: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/decide`, { body: { outcome, reason } });
+  }
   /** Requests to move a task's start, with the knock-on worked out when each was asked. */
   deploymentMoves(planPid: string): Promise<DeploymentMoves> {
     return this.http.get(`/api/plans/${planPid}/deployment-moves`);
@@ -3762,4 +3782,14 @@ export interface DeploymentMoves {
   moves: DeploymentMove[];
   cost_by_requester: { requested_by: string; requests: number; knock_on_labour: { currency: string; delta_minor: number }[] }[];
   note: string;
+}
+
+export interface CutoverDecision {
+  pid: string; plan_pid: string; title: string; version: number; supersedes_pid: string | null;
+  status: "draft" | "published" | "open" | "decided" | "superseded";
+  published_on: string | null; opened_on: string | null;
+  outcome: "go" | "no_go" | "delay_for_safety" | null; decided_on: string | null; decision_reason: string | null;
+  criteria: { n: number; criterion: string; met: boolean; evidence: string | null; marked_on: string | null }[];
+  cosignatures: { required: string[]; signed: { role: string; signed_on: string }[]; missing: string[] };
+  go_would_be_refused_because: string[];
 }

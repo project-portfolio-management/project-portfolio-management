@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 13 October
 
+- **Email deliveries screen**: `/email-deliveries` lists each recipient's delivery (sent, will retry, failed, with attempts and the last error) and filters by status; administrators only (anyone else gets the API's 404, shown as a message). English and Welsh (unreviewed draft); tested over stubbed answers, not a live service.
 - **Start queue screen** (EX-8): `/start-queue` lists the programmes refused a start in the order they asked, with each reason (limit full, or the constraint pool short in named months), and a Withdraw button per programme. In the nav, in English and Welsh (the Welsh is an unreviewed draft). Tested over stubbed API answers (list, withdraw, Welsh, axe in three locales); not run against a live service.
 
 ### 12 October

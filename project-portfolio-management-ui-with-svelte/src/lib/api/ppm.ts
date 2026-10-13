@@ -2674,6 +2674,10 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** Email delivery rows, one for each recipient (administrators only). */
+  emailDeliveries(status?: string): Promise<EmailDeliveries> {
+    return this.http.get(`/api/email-deliveries${status ? `?status=${encodeURIComponent(status)}` : ""}`);
+  }
   /** Programmes refused a start, in the order they asked. */
   startQueue(): Promise<StartQueue> {
     return this.http.get("/api/start-queue");
@@ -3641,4 +3645,13 @@ export type StartRefusal =
 export interface StartQueue {
   queue: { position: number; plan_pid: string; name: string | null; queued_on: string; refusals: StartRefusal[] }[];
   note: string;
+}
+
+export interface EmailDeliveries {
+  deliveries: {
+    pid: string; kind: string; subject_ref: string; recipient: string; subject: string;
+    status: "queued" | "retry" | "sent" | "failed"; attempts: number; last_error: string | null;
+    sender: string | null; next_attempt_at: string | null; sent_at: string | null;
+  }[];
+  counts: { retry: number; sent: number; failed: number };
 }

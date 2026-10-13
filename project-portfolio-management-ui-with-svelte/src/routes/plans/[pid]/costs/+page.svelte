@@ -6,6 +6,8 @@
   Rates are finance data: someone without access sees a plain note, not an error.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -68,6 +70,22 @@
     }
   }
   const label = (b: { from: string; to: string }) => (b.from === b.to ? b.from : `${b.from.slice(5)}–${b.to.slice(5)}`);
+
+  type Cur = CostPlan["currencies"][number];
+  type Measure = Cur["labour"];
+  const costRows = (c: Cur) => [
+    { name: "Labour", m: c.labour },
+    { name: "Expenses", m: c.fixed },
+    { name: "Total", m: c.total },
+  ];
+  const costColumns = (c: Cur): DataGridColumn[] => [
+    { id: "name", header: "", rowHeader: true },
+    ...c.total.buckets.map((b, i): DataGridColumn => ({
+      id: `b${i}`, header: label(b), align: "end",
+      accessor: (r) => ((r as unknown as { m: Measure }).m.buckets[i]?.minor ?? 0), format: (v) => (v ? money(Number(v)) : "–"),
+    })),
+    { id: "total", header: t("p.plans.pid.costs.total"), align: "end", accessor: (r) => (r as unknown as { m: Measure }).m.total_minor, format: (v) => money(Number(v)) },
+  ];
 </script>
 
 <svelte:head><title>{t("p.plans.pid.costs.costs_ppm")}</title></svelte:head>
@@ -83,19 +101,7 @@
     <p class="muted">{t("p.plans.pid.costs.nothing_could_be_costed_yet")}</p>
   {/if}
   {#each plan?.currencies ?? [] as c (c.currency)}
-    <table data-testid="cost-{c.currency}">
-      <caption class="small muted">{t("p.plans.pid.costs.per_period", { currency: c.currency })}</caption>
-      <thead><tr><th scope="col"></th>{#each c.total.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">{t("p.plans.pid.costs.total")}</th></tr></thead>
-      <tbody>
-        {#each [["Labour", c.labour], ["Expenses", c.fixed], ["Total", c.total]] as [name, m]}
-          <tr>
-            <th scope="row">{name}</th>
-            {#each (m as typeof c.labour).buckets as b}<td>{b.minor ? money(b.minor) : "–"}</td>{/each}
-            <td>{money((m as typeof c.labour).total_minor)}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.costs.per_period", { currency: c.currency })} columns={costColumns(c)} rows={costRows(c)} rowId={(r) => String(r.name)} sortable={false} testid={`cost-${c.currency}`} />
   {/each}
   {#each [...(plan?.unrated ?? []), ...(plan?.unassigned ?? [])] as u}
     <p class="small">{t("p.plans.pid.costs.so_its_labour_is_not", { title: u.title, hoursText: hoursText(u.work_minutes), reason: NO_RATE_TEXT[u.reason] ?? u.reason })}</p>

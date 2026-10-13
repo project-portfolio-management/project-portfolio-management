@@ -7,6 +7,8 @@
   be placed is listed, never dropped.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -108,7 +110,27 @@
   }
   const day = (iso: string) => iso.slice(5);
   const label = (b: { from: string; to: string }) => (b.from === b.to ? b.from : `${day(b.from)}–${day(b.to)}`);
+
+  type WRow = WorkProfile["tasks"][number];
+  const workColumns = (profile: WorkProfile): DataGridColumn[] => [
+    { id: "title", header: t("p.plans.pid.work.task"), rowHeader: true, cell: workTaskCell },
+    ...(profile.totals.buckets ?? []).map((b, i): DataGridColumn => ({
+      id: `b${i}`, header: label(b), align: "end",
+      accessor: (r) => ((r as unknown as WRow).buckets[i]?.minutes ?? 0), format: (v) => (v ? hoursText(Number(v)) : "–"),
+    })),
+    { id: "work_minutes", header: t("p.plans.pid.work.total"), align: "end", cell: workTotalCell, format: (v) => hoursText(Number(v)) },
+  ];
 </script>
+
+{#snippet workTaskCell({ row }: DataGridCellContext)}
+  {@const r = row as unknown as WRow}
+  {r.title} <span class="muted small">({r.contour.replace("_", " ")})</span>
+{/snippet}
+
+{#snippet workTotalCell({ row, formatted }: DataGridCellContext)}
+  {formatted}{#if !(row as unknown as WRow).placed} <span class="small">{t("p.plans.pid.work.not_placed")}</span>{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.work.work_and_assignments_ppm")}</title></svelte:head>
 
@@ -198,28 +220,17 @@
 {#if profile && profile.reason === "no_assignments"}
   <p class="muted">{t("p.plans.pid.work.no_task_carries_work_yet")}</p>
 {:else if profile && profile.totals.buckets}
-  <table data-testid="work-profile">
-    <caption class="small muted">{t("p.plans.pid.work.hours_per_each_row_adds", { grain })}</caption>
-    <thead>
-      <tr><th scope="col">{t("p.plans.pid.work.task")}</th>{#each profile.totals.buckets as b}<th scope="col">{label(b)}</th>{/each}<th scope="col">{t("p.plans.pid.work.total")}</th></tr>
-    </thead>
-    <tbody>
-      {#each profile.tasks as row (row.pid)}
-        <tr>
-          <th scope="row">{row.title} <span class="muted small">({row.contour.replace("_", " ")})</span></th>
-          {#each row.buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
-          <td>{hoursText(row.work_minutes)}{#if !row.placed} <span class="small">{t("p.plans.pid.work.not_placed")}</span>{/if}</td>
-        </tr>
-      {/each}
-    </tbody>
-    <tfoot>
+  {@const p = profile}
+  {@const buckets = profile.totals.buckets}
+  <DataTable label={t("p.plans.pid.work.hours_per_each_row_adds", { grain })} columns={workColumns(p)} rows={p.tasks} rowId={(r) => String(r.pid)} sortable={false} testid="work-profile">
+    {#snippet footer()}
       <tr>
         <th scope="row">{t("p.plans.pid.work.plan_2")}</th>
-        {#each profile.totals.buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
-        <td>{hoursText(profile.totals.work_minutes)}</td>
+        {#each buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
+        <td>{hoursText(p.totals.work_minutes)}</td>
       </tr>
-    </tfoot>
-  </table>
+    {/snippet}
+  </DataTable>
   {#if profile.unplaced.length}
     <ul>
       {#each profile.unplaced as u}

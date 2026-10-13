@@ -24,6 +24,7 @@
     emptyText,
     searchable = false,
     pageSize,
+    sortable = true,
     grid = false,
     selectionMode = "none",
     selected = $bindable([]),
@@ -46,6 +47,8 @@
     /** Show a filter box. */
     searchable?: boolean;
     pageSize?: number;
+    /** Sort by clicking a column header (default). Turn off for a table whose rows have a meaningful order. */
+    sortable?: boolean;
     /** Use the grid keyboard model instead of a plain table. */
     grid?: boolean;
     selectionMode?: "none" | "single" | "multiple";
@@ -60,7 +63,7 @@
   } = $props();
 
   // Sort on every column unless it says no. Done here so a table's column list stays short.
-  const cols = $derived(columns.map((c) => ({ sortable: true, ...c })));
+  const cols = $derived(columns.map((c) => ({ sortable, ...c })));
   const direction = (d: string) => t(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}` as never);
 </script>
 

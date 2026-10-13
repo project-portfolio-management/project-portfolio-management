@@ -6,6 +6,8 @@
   table alone. A task under a parent you may not see sits under "Restricted item".
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -27,6 +29,13 @@
 
   const rows = $derived(buildWbs(tasks ?? []));
   const tooBig = $derived(rows.length > WBS_TREE_LIMIT);
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "code", header: t("p.plans.pid.wbs.code"), rowHeader: true },
+    { id: "title", header: t("p.plans.pid.wbs.task") },
+    { id: "depth", header: t("p.plans.pid.wbs.level"), align: "end", format: (v) => String(Number(v) + 1) },
+    { id: "children", header: t("p.plans.pid.wbs.sub_tasks"), align: "end" },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.plans.pid.wbs.work_breakdown_ppm")}</title></svelte:head>
@@ -53,15 +62,7 @@
         {/each}
       </ul>
     {/if}
-    <table>
-      <caption class="sr-only">{t("p.plans.pid.wbs.work_breakdown_as_a_table")}</caption>
-      <thead><tr><th scope="col">{t("p.plans.pid.wbs.code")}</th><th scope="col">{t("p.plans.pid.wbs.task")}</th><th scope="col">{t("p.plans.pid.wbs.level")}</th><th scope="col">{t("p.plans.pid.wbs.sub_tasks")}</th></tr></thead>
-      <tbody>
-        {#each rows as r (r.key)}
-          <tr><th scope="row">{r.code}</th><td>{r.title}</td><td>{r.depth + 1}</td><td>{r.children}</td></tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.wbs.work_breakdown_as_a_table")} {columns} rows={rows} rowId={(r) => String(r.key)} sortable={false} />
   {/if}
 {/if}
 

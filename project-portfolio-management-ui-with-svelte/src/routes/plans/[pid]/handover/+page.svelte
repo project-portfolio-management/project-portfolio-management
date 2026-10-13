@@ -7,6 +7,8 @@
   people.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -61,6 +63,11 @@
     preview = null;
     status = t("p.plans.pid.handover.discarded_nothing_was_changed");
   }
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "kind", header: t("p.plans.pid.handover.kind"), format: (v) => HOLDING_TEXT[String(v)] ?? String(v) },
+    { id: "label", header: t("p.plans.pid.handover.what") },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.plans.pid.handover.handover_ppm")}</title></svelte:head>
@@ -81,15 +88,7 @@
     <h2 id="pv-h">{t("p.plans.pid.handover.preview")}</h2>
     <p>{handoverText(preview.action, preview.holdings.length, preview.to_person)}</p>
     {#if preview.holdings.length}
-      <table>
-        <caption class="small muted">{t("p.plans.pid.handover.what_holds_that_is_still", { from_person: preview.from_person })}</caption>
-        <thead><tr><th scope="col">{t("p.plans.pid.handover.kind")}</th><th scope="col">{t("p.plans.pid.handover.what")}</th></tr></thead>
-        <tbody>
-          {#each preview.holdings as h (h.pid)}
-            <tr><td>{HOLDING_TEXT[h.kind] ?? h.kind}</td><td>{h.label}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("p.plans.pid.handover.what_holds_that_is_still", { from_person: preview.from_person })} {columns} rows={preview.holdings} rowId={(r) => String(r.pid)} />
       <p class="small muted">{t("p.plans.pid.handover.the_new_person_s_capacity")}</p>
       <label>{t("p.plans.pid.handover.reason_recorded_with_each_item")} <input bind:value={reason} maxlength="500" /></label>
       <div class="row">

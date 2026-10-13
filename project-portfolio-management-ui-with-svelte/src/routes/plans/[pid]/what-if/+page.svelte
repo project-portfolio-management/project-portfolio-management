@@ -7,6 +7,8 @@
   may manage people.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -120,7 +122,25 @@
   }
   const dates = (d: { early_start: string; early_finish: string; total_float: number; critical: boolean } | null) =>
     d ? t("p.plans.pid.what_if.to", { early_start: d.early_start, early_finish: d.early_finish }) : t("p.plans.pid.what_if.not_scheduled");
+
+  type PRow = SandboxPreview["tasks"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.plans.pid.what_if.task"), rowHeader: true, cell: whatTaskCell },
+    { id: "before", header: t("p.plans.pid.what_if.before"), accessor: (r) => dates((r as unknown as PRow).before) },
+    { id: "after", header: t("p.plans.pid.what_if.after"), accessor: (r) => dates((r as unknown as PRow).after) },
+    { id: "float", header: t("p.plans.pid.what_if.float"), sortable: false, accessor: (r) => { const x = r as unknown as PRow; return `${x.before?.total_float ?? "–"} → ${x.after?.total_float ?? "–"}`; }, cell: floatCell },
+  ]);
 </script>
+
+{#snippet whatTaskCell({ row }: DataGridCellContext)}
+  {@const r = row as unknown as PRow}
+  {r.title}{#if r.assignee} <span class="muted small">({r.assignee})</span>{/if}
+{/snippet}
+
+{#snippet floatCell({ row, formatted }: DataGridCellContext)}
+  {formatted}{#if (row as unknown as PRow).after?.critical}<span class="small"> {t("p.plans.pid.what_if.critical")}</span>{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.what_if.what_if_ppm")}</title></svelte:head>
 
@@ -210,23 +230,7 @@
     {#if preview.tasks.length === 0}
       <p class="muted">{t("p.plans.pid.what_if.no_task_s_dates_or")}</p>
     {:else}
-      <table>
-        <caption class="small muted">{t("p.plans.pid.what_if.tasks_whose_dates_float_or")}</caption>
-        <thead><tr><th scope="col">{t("p.plans.pid.what_if.task")}</th><th scope="col">{t("p.plans.pid.what_if.before")}</th><th scope="col">{t("p.plans.pid.what_if.after")}</th><th scope="col">{t("p.plans.pid.what_if.float")}</th></tr></thead>
-        <tbody>
-          {#each preview.tasks as row (row.pid)}
-            <tr>
-              <th scope="row">{row.title}{#if row.assignee} <span class="muted small">({row.assignee})</span>{/if}</th>
-              <td>{dates(row.before)}</td>
-              <td>{dates(row.after)}</td>
-              <td>
-                {row.before?.total_float ?? "–"} → {row.after?.total_float ?? "–"}
-                {#if row.after?.critical}<span class="small"> {t("p.plans.pid.what_if.critical")}</span>{/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("p.plans.pid.what_if.tasks_whose_dates_float_or")} {columns} rows={preview.tasks} rowId={(r) => String(r.pid)} />
     {/if}
     {#if preview.critical_path.added.length || preview.critical_path.removed.length}
       <p class="small">

@@ -4,6 +4,8 @@
   deciding are done through the API.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -26,7 +28,28 @@
   onMount(refresh);
 
   const STATUSES = ["draft", "submitted", "under_review", "approved", "rejected", "implemented", "withdrawn"] as const;
+
+  type CR = ChangeRequestList["change_requests"][number];
+  const impactText = (cr: CR): string => {
+    if (cr.impact.schedule_business_days === null && cr.impact.cost_minor === null) return t("p.change_requests.no_impact");
+    const days = cr.impact.schedule_business_days !== null ? t("p.change_requests.impact_days", { days: cr.impact.schedule_business_days }) : "";
+    const cost = cr.impact.cost_minor !== null ? `${cr.impact.schedule_business_days !== null ? " · " : ""}${(cr.impact.cost_minor / 100).toFixed(2)} ${cr.impact.cost_currency}` : "";
+    return `${days}${cost}`;
+  };
+  const columns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.change_requests.title_col"), rowHeader: true, cell: crTitle },
+    { id: "kind", header: t("p.change_requests.kind_col"), format: (v) => enumLabel("cr_kind", String(v)) },
+    { id: "status", header: t("p.change_requests.status_col"), format: (v) => enumLabel("cr_status", String(v)) },
+    { id: "impact", header: t("p.change_requests.impact_col"), sortable: false, accessor: (r) => impactText(r as unknown as CR) },
+    { id: "approver_ref", header: t("p.change_requests.approver_col"), format: (v) => (v ? String(v) : t("p.change_requests.no_approver")) },
+    { id: "age_calendar_days", header: t("p.change_requests.age_col"), align: "end" },
+  ]);
 </script>
+
+{#snippet crTitle({ row, formatted }: DataGridCellContext)}
+  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={t("p.change_requests.plan_link")}>{formatted}</a>
+{/snippet}
+
 
 <svelte:head><title>{t("p.change_requests.change_requests_ppm")}</title></svelte:head>
 
@@ -69,39 +92,7 @@
     <p class="small muted" aria-live="polite">
       {list.change_requests.length === 1 ? t("p.change_requests.count_one", { n: 1 }) : t("p.change_requests.count_other", { n: list.change_requests.length })}
     </p>
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">{t("p.change_requests.title_col")}</th>
-          <th scope="col">{t("p.change_requests.kind_col")}</th>
-          <th scope="col">{t("p.change_requests.status_col")}</th>
-          <th scope="col">{t("p.change_requests.impact_col")}</th>
-          <th scope="col">{t("p.change_requests.approver_col")}</th>
-          <th scope="col">{t("p.change_requests.age_col")}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each list.change_requests as cr (cr.pid)}
-          <tr>
-            <th scope="row"><a href={localeHref(`/plans/${cr.plan_pid}/governance`)} aria-label={t("p.change_requests.plan_link")}>{cr.title}</a></th>
-            <td>{enumLabel("cr_kind", cr.kind)}</td>
-            <td>{enumLabel("cr_status", cr.status)}</td>
-            <td>
-              {#if cr.impact.schedule_business_days === null && cr.impact.cost_minor === null}
-                {t("p.change_requests.no_impact")}
-              {:else}
-                {#if cr.impact.schedule_business_days !== null}{t("p.change_requests.impact_days", { days: cr.impact.schedule_business_days })}{/if}
-                {#if cr.impact.cost_minor !== null}
-                  {cr.impact.schedule_business_days !== null ? " · " : ""}{(cr.impact.cost_minor / 100).toFixed(2)} {cr.impact.cost_currency}
-                {/if}
-              {/if}
-            </td>
-            <td>{cr.approver_ref ?? t("p.change_requests.no_approver")}</td>
-            <td>{cr.age_calendar_days}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.change_requests.title_col")} columns={columns} rows={list.change_requests} rowId={(r) => String(r.pid)} searchable />
   {/if}
 {:else if !error}
   <p class="muted">{t("p.change_requests.loading")}</p>

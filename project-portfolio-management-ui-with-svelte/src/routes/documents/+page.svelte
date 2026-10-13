@@ -4,6 +4,8 @@
   force today; creating a document starts its first draft.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { onMount } from "svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient, type ControlledDocument } from "#lib/api/ppm.js";
@@ -38,7 +40,16 @@
       saving = false;
     }
   }
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.documents.document"), rowHeader: true, cell: docCell },
+    { id: "in_force", header: t("p.documents.in_force"), accessor: (r) => forceText(r as unknown as ControlledDocument) },
+    { id: "versions", header: t("p.documents.versions"), align: "end", accessor: (r) => (r as unknown as ControlledDocument).versions.length },
+  ]);
 </script>
+
+{#snippet docCell({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/documents/${row.pid}`)}>{formatted}</a>{/snippet}
+
 
 <svelte:head><title>{t("p.documents.documents_ppm")}</title></svelte:head>
 
@@ -51,19 +62,7 @@
 {:else if docs && docs.length === 0}
   <p class="muted" data-testid="no-documents">{t("p.documents.no_documents_yet")}</p>
 {:else if docs}
-  <table data-testid="documents">
-    <caption class="sr-only">{t("p.documents.controlled_documents")}</caption>
-    <thead><tr><th scope="col">{t("p.documents.document")}</th><th scope="col">{t("p.documents.in_force")}</th><th scope="col">{t("p.documents.versions")}</th></tr></thead>
-    <tbody>
-      {#each docs as d (d.pid)}
-        <tr>
-          <th scope="row"><a href={localeHref(`/documents/${d.pid}`)}>{d.title}</a></th>
-          <td>{forceText(d)}</td>
-          <td>{d.versions.length}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.documents.controlled_documents")} columns={columns} rows={docs} rowId={(r) => String(r.pid)} testid="documents" searchable />
 {/if}
 
 <form class="surface stack" onsubmit={create} aria-labelledby="new-h">

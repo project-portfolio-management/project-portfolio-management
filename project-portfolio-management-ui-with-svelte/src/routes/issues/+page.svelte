@@ -4,6 +4,8 @@
   happened; a risk is something that might. Age is in calendar days.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -34,7 +36,27 @@
 
   const SEVERITIES = ["critical", "high", "med", "low"] as const;
   const STATUSES = ["open", "in_progress", "resolved", "closed"] as const;
+
+  type Issue = IssueRegister["issues"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.issues.title_col"), rowHeader: true, cell: titleCell },
+    { id: "kind", header: t("p.issues.kind_col"), format: (v) => enumLabel("issue_kind", String(v)) },
+    { id: "severity", header: t("p.issues.severity_col"), format: (v) => enumLabel("severity", String(v)) },
+    { id: "status", header: t("p.issues.status_col"), format: (v) => enumLabel("issue_status", String(v)) },
+    { id: "owner_ref", header: t("p.issues.owner_col"), format: (v) => (v ? String(v) : t("p.issues.no_owner")) },
+    { id: "age_calendar_days", header: t("p.issues.age_col"), align: "end" },
+    { id: "due_date", header: t("p.issues.due_col"), format: (v) => (v ? String(v) : t("p.issues.no_due")), cell: dueCell },
+  ]);
 </script>
+
+{#snippet titleCell({ row, formatted }: DataGridCellContext)}
+  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={t("p.issues.plan_link")}>{formatted}</a>
+{/snippet}
+
+{#snippet dueCell({ row, formatted }: DataGridCellContext)}
+  {formatted}{#if (row as unknown as Issue).overdue}<strong> · {t("p.issues.overdue_flag")}</strong>{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.issues.issues_ppm")}</title></svelte:head>
 
@@ -90,35 +112,7 @@
       {register.matching === 1 ? t("p.issues.count_one", { n: register.matching }) : t("p.issues.count_other", { n: register.matching })}
     </p>
     {#if register.truncated}<p class="small muted">{t("p.issues.truncated", { n: register.issues.length })}</p>{/if}
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">{t("p.issues.title_col")}</th>
-          <th scope="col">{t("p.issues.kind_col")}</th>
-          <th scope="col">{t("p.issues.severity_col")}</th>
-          <th scope="col">{t("p.issues.status_col")}</th>
-          <th scope="col">{t("p.issues.owner_col")}</th>
-          <th scope="col">{t("p.issues.age_col")}</th>
-          <th scope="col">{t("p.issues.due_col")}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each register.issues as issue (issue.pid)}
-          <tr>
-            <th scope="row"><a href={localeHref(`/plans/${issue.plan_pid}/governance`)} aria-label={t("p.issues.plan_link")}>{issue.title}</a></th>
-            <td>{enumLabel("issue_kind", issue.kind)}</td>
-            <td>{enumLabel("severity", issue.severity)}</td>
-            <td>{enumLabel("issue_status", issue.status)}</td>
-            <td>{issue.owner_ref ?? t("p.issues.no_owner")}</td>
-            <td>{issue.age_calendar_days}</td>
-            <td>
-              {issue.due_date ?? t("p.issues.no_due")}
-              {#if issue.overdue}<strong> · {t("p.issues.overdue_flag")}</strong>{/if}
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.issues.title_col")} columns={columns} rows={register.issues} rowId={(r) => String(r.pid)} searchable />
   {/if}
 {:else if !error}
   <p class="muted">{t("p.issues.loading")}</p>

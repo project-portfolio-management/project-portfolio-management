@@ -4,6 +4,8 @@
   data, and commit the feasible winner.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -86,7 +88,49 @@
       error = err instanceof Error ? err.message : t("p.scenarios.evaluate_failed");
     }
   }
+
+  const scenarioColumns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.scenarios.scenario"), rowHeader: true },
+    { id: "budget_cap_minor", header: t("p.scenarios.cap"), align: "end", format: (v, r) => (v !== null && v !== undefined ? money(Number(v), String(r.currency)) : "—") },
+    { id: "status", header: t("p.scenarios.status"), cell: statusChip },
+    { id: "evaluation", header: t("p.scenarios.evaluation"), sortable: false, accessor: (r) => (evaluations[String(r.pid)] ? "evaluated" : ""), cell: evalCell },
+    { id: "pid", header: "", sortable: false, cell: scenarioActions },
+  ]);
+  type CRow = { metric: string; a: string; b: string; delta: string };
+  const compareRows = (c: ScenarioComparison): CRow[] => [
+    { metric: t("p.scenarios.feasible"), a: c.a.feasible ? t("p.scenarios.yes") : t("p.scenarios.no"), b: c.b.feasible ? t("p.scenarios.yes") : t("p.scenarios.no"), delta: "—" },
+    ...c.deltas.planned_by_currency.map((r) => ({ metric: t("p.scenarios.planned", { currency: r.currency }), a: money(r.a_minor, r.currency), b: money(r.b_minor, r.currency), delta: money(r.delta_minor, r.currency) })),
+    { metric: t("p.scenarios.open_exposure"), a: String(c.a.evaluation.total_exposure), b: String(c.b.evaluation.total_exposure), delta: String(c.deltas.exposure) },
+    { metric: t("p.scenarios.alignment"), a: String(c.a.evaluation.total_alignment), b: String(c.b.evaluation.total_alignment), delta: String(c.deltas.alignment) },
+  ];
+  const compareColumns = (c: ScenarioComparison): DataGridColumn[] => [
+    { id: "metric", header: "", rowHeader: true },
+    { id: "a", header: c.a.name, align: "end" },
+    { id: "b", header: c.b.name, align: "end" },
+    { id: "delta", header: t("p.scenarios.delta_b_a"), align: "end" },
+  ];
 </script>
+
+{#snippet statusChip({ formatted }: DataGridCellContext)}<span class="chip">{formatted}</span>{/snippet}
+
+{#snippet evalCell({ row }: DataGridCellContext)}
+  {@const evaluated = evaluations[String(row.pid)]}
+  {#if evaluated}
+    {#each evaluated.evaluation.planned_by_currency as [code, total] (code)}<span class="chip">{code} {money(total)}</span>{/each}
+    <span class="chip">{t("ppm.scenarios.exposure")} {evaluated.evaluation.total_exposure}</span>
+    <span class="chip">{t("ppm.scenarios.alignment")} {evaluated.evaluation.total_alignment}</span>
+    {#each evaluated.evaluation.violations as violation (violation)}<span class="chip red">{violation}</span>{/each}
+    {#if evaluated.feasible}<span class="chip green">{t("ppm.scenarios.feasible")}</span>{/if}
+  {/if}
+{/snippet}
+
+{#snippet scenarioActions({ row }: DataGridCellContext)}
+  <button class="button small" onclick={() => evaluate(String(row.pid))}>{t("ppm.scenarios.evaluate")}</button>
+  {#if row.status === "draft"}
+    <button class="button small" onclick={() => act(() => ppm.commitScenario(String(row.pid)))}>{t("ppm.scenarios.commit")}</button>
+  {/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.scenarios.scenarios_ppm")}</title></svelte:head>
 
@@ -101,46 +145,7 @@
   <button class="button primary" type="submit">{t("ppm.scenarios.create")}</button>
 </form>
 
-<table>
-  <thead><tr><th>{t("p.scenarios.scenario")}</th><th>{t("p.scenarios.cap")}</th><th>{t("p.scenarios.status")}</th><th>{t("p.scenarios.evaluation")}</th><th></th></tr></thead>
-  <tbody>
-    {#each scenarios as scenario (scenario.pid)}
-      <tr>
-        <td><strong>{scenario.name}</strong></td>
-        <td>
-          {scenario.budget_cap_minor !== null
-            ? money(scenario.budget_cap_minor, scenario.currency)
-            : "—"}
-        </td>
-        <td><span class="chip">{scenario.status}</span></td>
-        <td class="small">
-          {#if evaluations[scenario.pid]}
-            {@const evaluated = evaluations[scenario.pid]}
-            {#if evaluated}
-              {#each evaluated.evaluation.planned_by_currency as [code, total] (code)}
-                <span class="chip">{code} {money(total)}</span>
-              {/each}
-              <span class="chip">{t("ppm.scenarios.exposure")} {evaluated.evaluation.total_exposure}</span>
-              <span class="chip">{t("ppm.scenarios.alignment")} {evaluated.evaluation.total_alignment}</span>
-              {#each evaluated.evaluation.violations as violation (violation)}
-                <span class="chip red">{violation}</span>
-              {/each}
-              {#if evaluated.feasible}<span class="chip green">{t("ppm.scenarios.feasible")}</span>{/if}
-            {/if}
-          {/if}
-        </td>
-        <td>
-          <button class="button small" onclick={() => evaluate(scenario.pid)}>{t("ppm.scenarios.evaluate")}</button>
-          {#if scenario.status === "draft"}
-            <button class="button small" onclick={() => act(() => ppm.commitScenario(scenario.pid))}>
-              {t("ppm.scenarios.commit")}
-            </button>
-          {/if}
-        </td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.scenarios.scenario")} columns={scenarioColumns} rows={scenarios} rowId={(r) => String(r.pid)} />
 
 
 <h2>{t("p.scenarios.compare")}</h2>
@@ -172,39 +177,7 @@
 
 {#if comparison}
   <p class="muted">{comparison.note}</p>
-  <table data-testid="scenario-compare">
-    <thead>
-      <tr><th></th><th>{comparison.a.name}</th><th>{comparison.b.name}</th><th>{t("p.scenarios.delta_b_a")}</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{t("p.scenarios.feasible")}</td>
-        <td>{comparison.a.feasible ? t("p.scenarios.yes") : t("p.scenarios.no")}</td>
-        <td>{comparison.b.feasible ? t("p.scenarios.yes") : t("p.scenarios.no")}</td>
-        <td>—</td>
-      </tr>
-      {#each comparison.deltas.planned_by_currency as row (row.currency)}
-        <tr>
-          <td>{t("p.scenarios.planned", { currency: row.currency })}</td>
-          <td>{money(row.a_minor, row.currency)}</td>
-          <td>{money(row.b_minor, row.currency)}</td>
-          <td>{money(row.delta_minor, row.currency)}</td>
-        </tr>
-      {/each}
-      <tr>
-        <td>{t("p.scenarios.open_exposure")}</td>
-        <td>{comparison.a.evaluation.total_exposure}</td>
-        <td>{comparison.b.evaluation.total_exposure}</td>
-        <td>{comparison.deltas.exposure}</td>
-      </tr>
-      <tr>
-        <td>{t("p.scenarios.alignment")}</td>
-        <td>{comparison.a.evaluation.total_alignment}</td>
-        <td>{comparison.b.evaluation.total_alignment}</td>
-        <td>{comparison.deltas.alignment}</td>
-      </tr>
-    </tbody>
-  </table>
+  <DataTable label={`${comparison.a.name} / ${comparison.b.name}`} columns={compareColumns(comparison)} rows={compareRows(comparison)} rowId={(_r, i) => String(i)} sortable={false} testid="scenario-compare" />
 {/if}
 
 <style>

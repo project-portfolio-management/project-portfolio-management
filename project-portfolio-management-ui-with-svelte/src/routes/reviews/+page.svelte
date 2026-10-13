@@ -10,6 +10,8 @@
   outsider is a disclosure decision, not an inference.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -117,7 +119,35 @@
   }
 
   onMount(refresh);
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "subject", header: t("p.reviews.subject_2"), rowHeader: true, accessor: (r) => `${(r as unknown as Review).subject_kind} ${(r as unknown as Review).subject_pid.slice(0, 8)}…` },
+    { id: "reviewer_ref", header: t("p.reviews.reviewer_2") },
+    { id: "reviewer_scope", header: t("p.reviews.scope_2"), cell: scopeCell },
+    { id: "expertise", header: t("p.reviews.expertise_2"), format: (v) => (v ? String(v) : "—") },
+    { id: "status", header: t("p.reviews.status_2") },
+    { id: "verdict", header: t("p.reviews.verdict"), accessor: (r) => { const x = r as unknown as Review; return x.status === "submitted" ? `${x.recommendation} · ${x.score ?? t("p.reviews.no_score")}` : "—"; } },
+    { id: "pid", header: t("p.reviews.actions"), sortable: false, cell: reviewActions },
+  ]);
 </script>
+
+{#snippet scopeCell({ row, formatted }: DataGridCellContext)}<span class="chip" class:external={row.reviewer_scope === "external"}>{formatted}</span>{/snippet}
+
+{#snippet reviewActions({ row }: DataGridCellContext)}
+  {@const review = row as unknown as Review}
+  {#if review.status === "invited"}
+    <button class="button small" type="button" onclick={() => respond(review.pid, "accept")}>{t("p.reviews.accept")}</button>
+    <button class="button small" type="button" onclick={() => respond(review.pid, "decline")}>{t("p.reviews.decline")}</button>
+  {:else if review.status === "accepted"}
+    <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "advance")}>{t("p.reviews.advance")}</button>
+    <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "hold")}>{t("p.reviews.hold")}</button>
+    <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "reject")}>{t("p.reviews.reject")}</button>
+  {/if}
+  {#if review.status === "invited" || review.status === "accepted"}
+    <button class="button small" type="button" onclick={() => withdraw(review.pid)}>{t("p.reviews.withdraw")}</button>
+  {/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.reviews.reviews_ppm")}</title></svelte:head>
 
@@ -199,61 +229,7 @@
       : `${reviews.length} / ${reviewsTotal}`}
   </p>
 {/if}
-<table>
-  <thead>
-    <tr>
-      <th>{t("p.reviews.subject_2")}</th><th>{t("p.reviews.reviewer_2")}</th><th>{t("p.reviews.scope_2")}</th><th>{t("p.reviews.expertise_2")}</th>
-      <th>{t("p.reviews.status_2")}</th><th>{t("p.reviews.verdict")}</th><th>{t("p.reviews.actions")}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {#each reviews as review (review.pid)}
-      <tr>
-        <td class="small">{review.subject_kind} {review.subject_pid.slice(0, 8)}…</td>
-        <td class="small">{review.reviewer_ref}</td>
-        <td>
-          <span class="chip" class:external={review.reviewer_scope === "external"}>
-            {review.reviewer_scope}
-          </span>
-        </td>
-        <td class="small muted">{review.expertise ?? "—"}</td>
-        <td>{review.status}</td>
-        <td class="small">
-          {#if review.status === "submitted"}
-            {review.recommendation} · {review.score ?? t("p.reviews.no_score")}
-          {:else}
-            —
-          {/if}
-        </td>
-        <td class="actions">
-          {#if review.status === "invited"}
-            <button class="button small" type="button" onclick={() => respond(review.pid, "accept")}>
-              {t("p.reviews.accept")}
-            </button>
-            <button class="button small" type="button" onclick={() => respond(review.pid, "decline")}>
-              {t("p.reviews.decline")}
-            </button>
-          {:else if review.status === "accepted"}
-            <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "advance")}>
-              {t("p.reviews.advance")}
-            </button>
-            <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "hold")}>
-              {t("p.reviews.hold")}
-            </button>
-            <button class="button small" type="button" onclick={() => submitVerdict(review.pid, "reject")}>
-              {t("p.reviews.reject")}
-            </button>
-          {/if}
-          {#if review.status === "invited" || review.status === "accepted"}
-            <button class="button small" type="button" onclick={() => withdraw(review.pid)}>
-              {t("p.reviews.withdraw")}
-            </button>
-          {/if}
-        </td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.reviews.subject_2")} columns={columns} rows={reviews} rowId={(r) => String(r.pid)} searchable />
 {#if reviews.length === 0}
   <p class="small muted">{t("p.reviews.no_review_invitations_yet")}</p>
 {/if}
@@ -267,13 +243,6 @@
     margin: 0.8rem 0;
   }
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }
-  .actions { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-  .panel {
-    border: 1px solid var(--border, #ddd);
-    border-radius: 6px;
-    padding: 0.6rem 0.8rem;
-    margin: 0.8rem 0;
-  }
   .chip {
     display: inline-block;
     border: 1px solid currentColor;

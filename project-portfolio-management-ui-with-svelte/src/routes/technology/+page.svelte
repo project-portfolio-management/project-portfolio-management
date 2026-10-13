@@ -7,6 +7,8 @@
   other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -37,7 +39,43 @@
   });
 
   const RINGS = ["adopt", "trial", "assess", "hold", "unclassified"] as const;
+
+  type Fan = DependencyRisk["top_fan_out"][number];
+  type Edge = DependencyRisk["red_predecessor_edges"][number];
+  type DebtRow = TechDebtRegister["register"][number];
+  const fanColumns: DataGridColumn[] = $derived([
+    { id: "item", header: t("p.technology.item"), rowHeader: true, accessor: (r) => (r as unknown as Fan).item.name, cell: fanItemCell },
+    { id: "kind", header: t("p.technology.kind"), accessor: (r) => (r as unknown as Fan).item.kind },
+    { id: "dependents", header: t("p.technology.dependents"), align: "end" },
+    { id: "rag", header: t("p.technology.status"), format: (v) => (v ? String(v) : "—") },
+  ]);
+  const redColumns: DataGridColumn[] = $derived([
+    { id: "predecessor", header: t("p.technology.predecessor_red"), rowHeader: true, accessor: (r) => (r as unknown as Edge).predecessor.name },
+    { id: "successor", header: t("p.technology.successor_at_risk"), accessor: (r) => (r as unknown as Edge).successor.name },
+  ]);
+  const crossColumns: DataGridColumn[] = $derived([
+    { id: "predecessor", header: t("p.technology.predecessor"), rowHeader: true, accessor: (r) => `${(r as unknown as Edge).predecessor.name} (${(r as unknown as Edge).predecessor.kind})` },
+    { id: "successor", header: t("p.technology.successor"), accessor: (r) => `${(r as unknown as Edge).successor.name} (${(r as unknown as Edge).successor.kind})` },
+  ]);
+  const debtColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.technology.risk"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as DebtRow).escalated ? " ⚠" : ""}` },
+    { id: "item", header: t("p.technology.item"), accessor: (r) => (r as unknown as DebtRow).item?.name ?? "—" },
+    { id: "status", header: t("p.technology.status_2") },
+    { id: "exposure", header: t("p.technology.exposure"), align: "end" },
+    { id: "owner_ref", header: t("p.technology.owner"), format: (v) => (v ? String(v) : "—") },
+  ]);
+  const flowRows = $derived(flow ? Object.entries(flow.throughput_by_month).map(([month, count]) => ({ month, count })) : []);
+  const flowColumns: DataGridColumn[] = $derived([
+    { id: "month", header: t("p.technology.month"), rowHeader: true },
+    { id: "count", header: t("p.technology.milestones_completed"), align: "end" },
+  ]);
 </script>
+
+{#snippet fanItemCell({ row, formatted }: DataGridCellContext)}
+  {@const f = row as unknown as Fan}
+  <a href={localeHref(`/${f.item.kind.toLowerCase()}s/${f.item.pid}`)}>{formatted}</a>
+{/snippet}
+
 
 <svelte:head><title>{t("p.technology.ppm", { t: t("ppm.nav.technology") })}</title></svelte:head>
 
@@ -76,97 +114,25 @@
   <p class="muted">{t("p.technology.as_of_edges", { as_of: risk.as_of, edges: risk.edges })}</p>
 
   <h3>{t("p.technology.most_depended_on_single_point")}</h3>
-  <table data-testid="tech-fan-out">
-    <thead>
-      <tr><th>{t("p.technology.item")}</th><th>{t("p.technology.kind")}</th><th>{t("p.technology.dependents")}</th><th>{t("p.technology.status")}<Term t="RAG" />)</th></tr>
-    </thead>
-    <tbody>
-      {#each risk.top_fan_out as row (row.item.pid)}
-        <tr>
-          <td><a href={localeHref(`/${row.item.kind.toLowerCase()}s/${row.item.pid}`)}>{row.item.name}</a></td>
-          <td>{row.item.kind}</td>
-          <td>{row.dependents}</td>
-          <td>{row.rag ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.technology.no_dependencies_recorded_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.technology.item")} columns={fanColumns} rows={risk.top_fan_out} rowId={(r) => String((r as unknown as Fan).item.pid)} emptyText={t("p.technology.no_dependencies_recorded_yet")} testid="tech-fan-out" />
 
   <h3>{t("p.technology.edges_importing_risk_from_a")}</h3>
-  <table data-testid="tech-red-edges">
-    <thead>
-      <tr><th>{t("p.technology.predecessor_red")}</th><th>{t("p.technology.successor_at_risk")}</th></tr>
-    </thead>
-    <tbody>
-      {#each risk.red_predecessor_edges as edge (edge.edge)}
-        <tr>
-          <td>{edge.predecessor.name}</td>
-          <td>{edge.successor.name}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.technology.none_no_red_predecessors")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.technology.predecessor_red")} columns={redColumns} rows={risk.red_predecessor_edges} rowId={(r) => String(r.edge)} emptyText={t("p.technology.none_no_red_predecessors")} testid="tech-red-edges" />
 
   <h3>{t("p.technology.cross_portfolio_edges")}</h3>
-  <table data-testid="tech-cross-portfolio">
-    <thead>
-      <tr><th>{t("p.technology.predecessor")}</th><th>{t("p.technology.successor")}</th></tr>
-    </thead>
-    <tbody>
-      {#each risk.cross_portfolio as edge (edge.edge)}
-        <tr>
-          <td>{edge.predecessor.name} <span class="muted">({edge.predecessor.kind})</span></td>
-          <td>{edge.successor.name} <span class="muted">({edge.successor.kind})</span></td>
-        </tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.technology.none_all_edges_stay_within")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.technology.predecessor")} columns={crossColumns} rows={risk.cross_portfolio} rowId={(r) => String(r.edge)} emptyText={t("p.technology.none_all_edges_stay_within")} testid="tech-cross-portfolio" />
 {/if}
 
 {#if debt}
   <h2>{t("p.technology.technical_debt_register")}</h2>
   <p class="muted">{t("p.technology.open_exposure", { note: debt.note, open_exposure: debt.open_exposure })}</p>
-  <table data-testid="tech-debt">
-    <thead>
-      <tr><th>{t("p.technology.risk")}</th><th>{t("p.technology.item")}</th><th>{t("p.technology.status_2")}</th><th>{t("p.technology.exposure")}</th><th>{t("p.technology.owner")}</th></tr>
-    </thead>
-    <tbody>
-      {#each debt.register as row (row.pid)}
-        <tr>
-          <td>{row.title}{#if row.escalated}&nbsp;⚠{/if}</td>
-          <td>{row.item?.name ?? "—"}</td>
-          <td>{row.status}</td>
-          <td>{row.exposure}</td>
-          <td>{row.owner_ref ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="5" class="muted">{t("p.technology.no_tech_debt_risks_recorded")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.technology.risk")} columns={debtColumns} rows={debt.register} rowId={(r) => String(r.pid)} emptyText={t("p.technology.no_tech_debt_risks_recorded")} testid="tech-debt" searchable />
 {/if}
 
 {#if flow}
   <h2>{t("p.technology.delivery_flow")}</h2>
   <p class="muted">{flow.derivation}</p>
-  <table data-testid="tech-flow">
-    <thead>
-      <tr><th>{t("p.technology.month")}</th><th>{t("p.technology.milestones_completed")}</th></tr>
-    </thead>
-    <tbody>
-      {#each Object.entries(flow.throughput_by_month) as [month, count] (month)}
-        <tr><td>{month}</td><td>{count}</td></tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.technology.no_timed_completions_in_the")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.technology.month")} columns={flowColumns} rows={flowRows} rowId={(r) => String(r.month)} emptyText={t("p.technology.no_timed_completions_in_the")} testid="tech-flow" />
   <p>
     {t("p.technology.median_lead")}
     {#if flow.median_lead_days === null}

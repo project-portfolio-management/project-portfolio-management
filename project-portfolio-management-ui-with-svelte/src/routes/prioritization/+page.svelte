@@ -8,6 +8,8 @@
   reported as no evidence, never as a low score.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -49,7 +51,35 @@
   }
 
   onMount(refresh);
+
+  type PRow = Prioritization["plans"][number];
+  type Component = PlanSmartScore["smart_score"]["components"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.prioritization.plan"), rowHeader: true, cell: planCell },
+    { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(1)) },
+    { id: "band", header: t("p.prioritization.band_2"), format: (v) => enumLabel("band", String(v)), cell: bandCell },
+    { id: "coverage", header: t("p.prioritization.coverage_2"), align: "end", format: (v) => `${Math.round(Number(v) * 100)}%` },
+    { id: "missing_evidence", header: t("p.prioritization.missing_evidence"), accessor: (r) => ((r as unknown as PRow).missing_evidence.length === 0 ? t("p.prioritization.none") : (r as unknown as PRow).missing_evidence.join(", ")) },
+    { id: "pid", header: "", sortable: false, cell: explainCell },
+  ]);
+  const componentColumns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.prioritization.component"), rowHeader: true },
+    { id: "weight", header: t("p.prioritization.weight"), align: "end", format: (v) => `${Math.round(Number(v) * 100)}%` },
+    { id: "raw", header: t("p.prioritization.value"), align: "end", format: (v) => Number(v).toFixed(2) },
+    { id: "contribution", header: t("p.prioritization.points"), align: "end", format: (v) => Number(v).toFixed(1) },
+  ]);
 </script>
+
+{#snippet planCell({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${row.pid}`)}>{formatted}</a>{/snippet}
+
+{#snippet bandCell({ row, formatted }: DataGridCellContext)}<span class={`chip ${(row as unknown as PRow).band}`}>{formatted}</span>{/snippet}
+
+{#snippet explainCell({ row }: DataGridCellContext)}
+  <button class="button small" type="button" onclick={() => toggle(String(row.pid))}>
+    {expanded === row.pid ? t("p.prioritization.hide") : t("p.prioritization.explain")}
+  </button>
+{/snippet}
+
 
 <svelte:head><title>{t("p.prioritization.prioritization_ppm")}</title></svelte:head>
 
@@ -82,63 +112,21 @@
 
 {#if view}
   <p class="small muted">{t("p.prioritization.of_plan_s", { length: view.plans.length, scored_of: view.scored_of })}</p>
-  <table>
-    <thead>
-      <tr>
-        <th>{t("p.prioritization.plan")}</th><th>{t("p.prioritization.score")}</th><th>{t("p.prioritization.band_2")}</th><th>{t("p.prioritization.coverage_2")}</th><th>{t("p.prioritization.missing_evidence")}</th><th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each view.plans as plan (plan.pid)}
-        <tr>
-          <td><a href={localeHref(`/plans/${plan.pid}`)}>{plan.name}</a></td>
-          <td>{plan.score === null ? "—" : plan.score.toFixed(1)}</td>
-          <td><span class={`chip ${plan.band}`}>{enumLabel("band", plan.band)}</span></td>
-          <td>{Math.round(plan.coverage * 100)}%</td>
-          <td class="small muted">
-            {plan.missing_evidence.length === 0
-              ? t("p.prioritization.none")
-              : plan.missing_evidence.join(", ")}
-          </td>
-          <td>
-            <button class="button small" type="button" onclick={() => toggle(plan.pid)}>
-              {expanded === plan.pid ? t("p.prioritization.hide") : t("p.prioritization.explain")}
-            </button>
-          </td>
-        </tr>
-        {#if expanded === plan.pid}
-          <tr>
-            <td colspan="6">
-              {#if detail}
-                <table class="inner">
-                  <thead>
-                    <tr><th>{t("p.prioritization.component")}</th><th>{t("p.prioritization.weight")}</th><th>{t("p.prioritization.value")}</th><th>{t("p.prioritization.points")}</th></tr>
-                  </thead>
-                  <tbody>
-                    {#each detail.smart_score.components as component (component.name)}
-                      <tr>
-                        <td>{component.name}</td>
-                        <td>{Math.round(component.weight * 100)}%</td>
-                        <td>{component.raw.toFixed(2)}</td>
-                        <td>{component.contribution.toFixed(1)}</td>
-                      </tr>
-                    {/each}
-                  </tbody>
-                </table>
-                {#if detail.smart_score.components.length === 0}
-                  <p class="small muted">
-                    {t("p.prioritization.no_evidence_for_any_component")}
-                  </p>
-                {/if}
-              {:else}
-                <p class="small muted">{t("p.prioritization.loading_the_breakdown")}</p>
-              {/if}
-            </td>
-          </tr>
+  <DataTable label={t("p.prioritization.plan")} columns={columns} rows={view.plans} rowId={(r) => String(r.pid)} searchable />
+  {#if expanded}
+    {@const open = view.plans.find((p) => p.pid === expanded)}
+    <section aria-labelledby="pr-detail">
+      <h2 id="pr-detail">{open?.name ?? ""}</h2>
+      {#if detail}
+        <DataTable label={t("p.prioritization.component")} columns={componentColumns} rows={detail.smart_score.components} rowId={(r) => String(r.name)} sortable={false} />
+        {#if detail.smart_score.components.length === 0}
+          <p class="small muted">{t("p.prioritization.no_evidence_for_any_component")}</p>
         {/if}
-      {/each}
-    </tbody>
-  </table>
+      {:else}
+        <p class="small muted">{t("p.prioritization.loading_the_breakdown")}</p>
+      {/if}
+    </section>
+  {/if}
   {#if view.plans.length === 0}
     <p class="small muted">{t("p.prioritization.no_plans_match_that_filter")}</p>
   {/if}
@@ -157,5 +145,4 @@
   .chip.medium { color: #8a6d1d; }
   .chip.low { color: #a4262c; }
   .chip.unscored { color: var(--text-2, #666); }
-  table.inner { width: 100%; font-size: 0.85rem; }
 </style>

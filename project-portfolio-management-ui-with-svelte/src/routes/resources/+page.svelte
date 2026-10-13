@@ -7,6 +7,8 @@
   sees roles and totals only. The whole of it is also available as a long table.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type ResourcePlan } from "#lib/api/ppm.js";
@@ -34,6 +36,19 @@
     [...new Set((plan?.periods ?? []).flatMap((p) => p.rows.map((r) => r.key)))].sort(),
   );
   const maxAbs = $derived(maxAbsGap((plan?.periods ?? []).flatMap((p) => p.rows)));
+
+  type PRow = ResourcePlan["periods"][number]["rows"][number] & { period: string };
+  const planRows = (plan: ResourcePlan): PRow[] => plan.periods.flatMap((p) => p.rows.map((r) => ({ ...r, period: periodLabel(p.from, p.to) })));
+  const planColumns = (plan: ResourcePlan): DataGridColumn[] => [
+    { id: "period", header: t("p.resources.period"), rowHeader: true },
+    { id: "key", header: plan.group_by === "role" ? t("p.resources.role") : t("p.resources.skill") },
+    { id: "demand_fte", header: t("p.resources.demand_fte"), align: "end" },
+    { id: "placeholder_fte", header: t("p.resources.of_which_unassigned"), align: "end" },
+    { id: "proposed_fte", header: t("p.resources.proposed_fte"), align: "end" },
+    { id: "supply_fte", header: t("p.resources.supply_fte"), align: "end", format: (v) => (v ?? t("p.resources.not_known")) as string },
+    { id: "gap_fte", header: t("p.resources.gap_fte"), align: "end", format: (v) => (v ?? t("p.resources.not_known")) as string },
+    { id: "headcount", header: t("p.resources.people"), align: "end", format: (v) => (plan.group_by === "role" ? String(v) : "—") },
+  ];
 </script>
 
 <svelte:head><title>{t("p.resources.resources_ppm")}</title></svelte:head>
@@ -101,32 +116,7 @@
 
     <details>
       <summary>{t("p.resources.every_figure_as_a_table")}</summary>
-      <table>
-        <caption class="sr-only">{t("p.resources.demand_supply_and_gap_by", { group_by: plan.group_by })}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.resources.period")}</th><th scope="col">{plan.group_by === "role" ? t("p.resources.role") : t("p.resources.skill")}</th>
-            <th scope="col">{t("p.resources.demand_fte")}</th><th scope="col">{t("p.resources.of_which_unassigned")}</th><th scope="col">{t("p.resources.proposed_fte")}</th>
-            <th scope="col">{t("p.resources.supply_fte")}</th><th scope="col">{t("p.resources.gap_fte")}</th><th scope="col">{t("p.resources.people")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each plan.periods as p (p.from)}
-            {#each p.rows as r (r.key)}
-              <tr>
-                <th scope="row">{periodLabel(p.from, p.to)}</th>
-                <td>{r.key}</td>
-                <td>{r.demand_fte}</td>
-                <td>{r.placeholder_fte}</td>
-                <td>{r.proposed_fte}</td>
-                <td>{r.supply_fte ?? t("p.resources.not_known")}</td>
-                <td>{r.gap_fte ?? t("p.resources.not_known")}</td>
-                <td>{plan.group_by === "role" ? r.headcount : "—"}</td>
-              </tr>
-            {/each}
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("p.resources.demand_supply_and_gap_by", { group_by: plan.group_by })} columns={planColumns(plan)} rows={planRows(plan)} rowId={(_r, i) => String(i)} sortable={false} pageSize={50} searchable />
     </details>
   {/if}
 

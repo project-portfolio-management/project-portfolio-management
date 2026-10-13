@@ -42,11 +42,16 @@ test.describe("phone-viewport responsive audit (T-28k)", () => {
 
       const overflow = await page.evaluate(() => {
         const doc = document.documentElement;
-        return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth };
+        // Name what sticks out, so a failure says where (a bare width does not).
+        const wide = [...document.querySelectorAll("body *")]
+          .filter((e) => e.getBoundingClientRect().right > doc.clientWidth + 1)
+          .slice(0, 6)
+          .map((e) => `${e.tagName.toLowerCase()}.${String((e as HTMLElement).className).slice(0, 40)} right=${Math.round(e.getBoundingClientRect().right)}`);
+        return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, wide };
       });
       expect(
         overflow.scrollWidth,
-        `${route}: scrollWidth ${overflow.scrollWidth} > clientWidth ${overflow.clientWidth} (horizontal scroll)`,
+        `${route}: scrollWidth ${overflow.scrollWidth} > clientWidth ${overflow.clientWidth} (horizontal scroll) — wide: ${overflow.wide.join("; ")}`,
       ).toBeLessThanOrEqual(overflow.clientWidth);
 
       // The primary heading is reachable — visible within the viewport

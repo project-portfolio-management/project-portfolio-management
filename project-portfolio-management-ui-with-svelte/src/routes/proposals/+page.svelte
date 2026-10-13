@@ -5,6 +5,8 @@
   duplicate-demand checks, and promote-to-work-item.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -77,7 +79,38 @@
     if (status === "in_review") return ["approve", "reject"];
     return [];
   }
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.proposals.title"), rowHeader: true, cell: titleCell },
+    { id: "kind_target", header: t("p.proposals.target") },
+    { id: "requested_minor", header: t("p.proposals.requested"), align: "end", format: (v, r) => (v !== null && v !== undefined ? money(Number(v), String(r.currency)) : "—") },
+    { id: "status", header: t("p.proposals.status"), format: (v) => enumLabel("proposal_status", String(v)), cell: statusChip },
+    { id: "pid", header: t("p.proposals.actions"), sortable: false, cell: proposalActions },
+  ]);
 </script>
+
+{#snippet titleCell({ row, formatted }: DataGridCellContext)}
+  <strong>{formatted}</strong>
+  {#if row.summary}<div class="small muted">{row.summary}</div>{/if}
+{/snippet}
+
+{#snippet statusChip({ formatted }: DataGridCellContext)}<span class="chip">{formatted}</span>{/snippet}
+
+{#snippet proposalActions({ row }: DataGridCellContext)}
+  {@const proposal = row as unknown as Proposal}
+  {#each actionsFor(proposal.status) as action (action)}
+    <button class="button small" onclick={() => act(() => ppm.proposalAction(proposal.pid, action))}>{action}</button>
+  {/each}
+  {#if proposal.status === "approved"}
+    <button class="button small" onclick={() => act(() => ppm.promoteProposal(proposal.pid))}>{t("p.proposals.promote")}</button>
+  {/if}
+  {#if proposal.status === "promoted" && proposal.promoted_plan_pid}
+    <a href={localeHref(`/plans/${proposal.promoted_plan_pid}`)}>{t("ppm.proposals.workItem")}</a>
+  {:else}
+    <button class="button small" onclick={() => showDuplicates(proposal.pid)}>{t("ppm.proposals.duplicates")}</button>
+  {/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.proposals.proposals_ppm")}</title></svelte:head>
 
@@ -105,63 +138,22 @@
   </select>
 </p>
 
-<table>
-  <thead>
-    <tr><th>{t("p.proposals.title")}</th><th>{t("p.proposals.target")}</th><th>{t("p.proposals.requested")}</th><th>{t("p.proposals.status")}</th><th>{t("p.proposals.actions")}</th></tr>
-  </thead>
-  <tbody>
-    {#each proposals as proposal (proposal.pid)}
-      <tr>
-        <td>
-          <strong>{proposal.title}</strong>
-          {#if proposal.summary}<div class="small muted">{proposal.summary}</div>{/if}
-        </td>
-        <td>{proposal.kind_target}</td>
-        <td>
-          {proposal.requested_minor !== null
-            ? money(proposal.requested_minor, proposal.currency)
-            : "—"}
-        </td>
-        <td><span class="chip">{enumLabel("proposal_status", proposal.status)}</span></td>
-        <td>
-          {#each actionsFor(proposal.status) as action (action)}
-            <button class="button small" onclick={() => act(() => ppm.proposalAction(proposal.pid, action))}>
-              {action}
-            </button>
-          {/each}
-          {#if proposal.status === "approved"}
-            <button class="button small" onclick={() => act(() => ppm.promoteProposal(proposal.pid))}>
-              {t("p.proposals.promote")}
-            </button>
-          {/if}
-          {#if proposal.status === "promoted" && proposal.promoted_plan_pid}
-            <a href={localeHref(`/plans/${proposal.promoted_plan_pid}`)}>{t("ppm.proposals.workItem")}</a>
-          {:else}
-            <button class="button small" onclick={() => showDuplicates(proposal.pid)}>
-              {t("ppm.proposals.duplicates")}
-            </button>
-          {/if}
-        </td>
-      </tr>
-      {#if duplicates[proposal.pid]}
-        <tr>
-          <td colspan="5" class="small">
-            {#if (duplicates[proposal.pid] ?? []).length === 0}
-              {t("ppm.proposals.noDuplicates")}
-            {:else}
-              {#each duplicates[proposal.pid] ?? [] as hit (hit.pid)}
-                <span class="chip">
-                  {hit.source === "plan" ? t("p.proposals.live") : t("p.proposals.proposal")}
-                  {hit.name} ({hit.score.toFixed(2)})
-                </span>
-              {/each}
-            {/if}
-          </td>
-        </tr>
-      {/if}
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.proposals.title")} columns={columns} rows={proposals} rowId={(r) => String(r.pid)} searchable />
+{#each proposals.filter((p) => duplicates[p.pid]) as proposal (proposal.pid)}
+  <section class="small" aria-label={proposal.title}>
+    <strong>{proposal.title}:</strong>
+    {#if (duplicates[proposal.pid] ?? []).length === 0}
+      {t("ppm.proposals.noDuplicates")}
+    {:else}
+      {#each duplicates[proposal.pid] ?? [] as hit (hit.pid)}
+        <span class="chip">
+          {hit.source === "plan" ? t("p.proposals.live") : t("p.proposals.proposal")}
+          {hit.name} ({hit.score.toFixed(2)})
+        </span>
+      {/each}
+    {/if}
+  </section>
+{/each}
 
 <style>
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }

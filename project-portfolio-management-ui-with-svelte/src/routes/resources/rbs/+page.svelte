@@ -4,6 +4,8 @@
   not know supply or people for skills, and says so). Each grouping is a table.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient } from "#lib/api/ppm.js";
@@ -24,6 +26,17 @@
       error = err instanceof Error ? err.message : t("p.resources.rbs.could_not_load_resources");
     }
   });
+
+  const roleColumns: DataGridColumn[] = $derived([
+    { id: "role", header: t("p.resources.rbs.role"), rowHeader: true },
+    { id: "headcount", header: t("p.resources.rbs.people"), align: "end" },
+    { id: "demand_fte", header: t("p.resources.rbs.demand_fte"), align: "end" },
+    { id: "supply_fte", header: t("p.resources.rbs.supply_fte"), align: "end", format: (v) => (v ?? t("p.resources.rbs.not_known")) as string },
+  ]);
+  const skillColumns: DataGridColumn[] = $derived([
+    { id: "skill", header: t("p.resources.rbs.skill"), rowHeader: true },
+    { id: "demand_fte", header: t("p.resources.rbs.demand_fte"), align: "end" },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.resources.rbs.resource_breakdown_ppm")}</title></svelte:head>
@@ -46,15 +59,7 @@
           </li>
         {/each}
       </ul>
-      <table>
-        <caption class="sr-only">{t("p.resources.rbs.roles_with_people_demand_and")}</caption>
-        <thead><tr><th scope="col">{t("p.resources.rbs.role")}</th><th scope="col">{t("p.resources.rbs.people")}</th><th scope="col">{t("p.resources.rbs.demand_fte")}</th><th scope="col">{t("p.resources.rbs.supply_fte")}</th></tr></thead>
-        <tbody>
-          {#each rbs.roles as r (r.role)}
-            <tr><th scope="row">{r.role}</th><td>{r.headcount}</td><td>{r.demand_fte}</td><td>{r.supply_fte ?? t("p.resources.rbs.not_known")}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("p.resources.rbs.roles_with_people_demand_and")} columns={roleColumns} rows={rbs.roles} rowId={(r) => String(r.role)} />
     {/if}
   </section>
   <section aria-labelledby="skills-h">
@@ -63,11 +68,7 @@
     {#if rbs.skills.length === 0}
       <p>{t("p.resources.rbs.no_skill_demand_in_this")}</p>
     {:else}
-      <table>
-        <caption class="sr-only">{t("p.resources.rbs.demand_by_skill")}</caption>
-        <thead><tr><th scope="col">{t("p.resources.rbs.skill")}</th><th scope="col">{t("p.resources.rbs.demand_fte")}</th></tr></thead>
-        <tbody>{#each rbs.skills as s (s.skill)}<tr><th scope="row">{s.skill}</th><td>{s.demand_fte}</td></tr>{/each}</tbody>
-      </table>
+      <DataTable label={t("p.resources.rbs.demand_by_skill")} columns={skillColumns} rows={rbs.skills} rowId={(r) => String(r.skill)} />
     {/if}
   </section>
 {/if}

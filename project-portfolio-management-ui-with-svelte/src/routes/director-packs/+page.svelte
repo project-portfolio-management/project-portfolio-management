@@ -3,6 +3,8 @@
   accessible page; the figures are read from the issued pack, never recalculated.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type DirectorPackMeta } from "#lib/api/ppm.js";
@@ -18,7 +20,21 @@
       error = err instanceof Error ? err.message : t("p.director_pack.could_not_load");
     }
   });
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "period", header: t("p.director_pack.col_period"), rowHeader: true, cell: periodCell },
+    { id: "audience", header: t("p.director_pack.col_audience") },
+    { id: "version", header: t("p.director_pack.col_version"), align: "end" },
+    { id: "status", header: t("p.director_pack.col_status"), format: (v) => (v === "issued" ? t("p.director_pack.status_issued") : t("p.director_pack.status_draft")) },
+    { id: "issued_at", header: t("p.director_pack.col_issued"), format: (v) => (v ? String(v).slice(0, 10) : "–") },
+  ]);
 </script>
+
+{#snippet periodCell({ row, formatted }: DataGridCellContext)}
+  {@const p = row as unknown as DirectorPackMeta}
+  <a href={localeHref(`/director-packs/${p.pid}`)} aria-label={t("p.director_pack.open_pack", { period: p.period, audience: p.audience, version: p.version })}>{formatted}</a>
+{/snippet}
+
 
 <svelte:head><title>{t("p.director_pack.director_packs_ppm")}</title></svelte:head>
 
@@ -31,33 +47,7 @@
   {#if packs.length === 0}
     <p>{t("p.director_pack.none")}</p>
   {:else}
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">{t("p.director_pack.col_period")}</th>
-          <th scope="col">{t("p.director_pack.col_audience")}</th>
-          <th scope="col">{t("p.director_pack.col_version")}</th>
-          <th scope="col">{t("p.director_pack.col_status")}</th>
-          <th scope="col">{t("p.director_pack.col_issued")}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each packs as p (p.pid)}
-          <tr>
-            <th scope="row">
-              <a
-                href={localeHref(`/director-packs/${p.pid}`)}
-                aria-label={t("p.director_pack.open_pack", { period: p.period, audience: p.audience, version: p.version })}
-              >{p.period}</a>
-            </th>
-            <td>{p.audience}</td>
-            <td>{p.version}</td>
-            <td>{p.status === "issued" ? t("p.director_pack.status_issued") : t("p.director_pack.status_draft")}</td>
-            <td>{p.issued_at ? p.issued_at.slice(0, 10) : "–"}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.director_pack.col_period")} columns={columns} rows={packs} rowId={(r) => String(r.pid)} />
   {/if}
 {:else if !error}
   <p class="muted">{t("p.director_pack.loading")}</p>

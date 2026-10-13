@@ -9,6 +9,8 @@
   per-run cap.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -138,7 +140,41 @@
   }
 
   onMount(refresh);
+
+  type Rule = Automation;
+  const ruleColumns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.automations.name_2"), rowHeader: true },
+    { id: "plan_pid", header: t("p.automations.scope"), format: (v) => (v ? `${String(v).slice(0, 8)}…` : t("p.automations.every_plan")) },
+    { id: "trigger", header: t("p.automations.trigger_2"), accessor: (r) => { const x = r as unknown as Rule; return `${x.trigger_kind}${x.from_status || x.to_status ? ` (${x.from_status ?? t("p.automations.any")} → ${x.to_status ?? t("p.automations.any")})` : ""}`; } },
+    { id: "action_kind", header: t("p.automations.action_2") },
+    { id: "enabled", header: t("p.automations.state"), format: (v) => (v ? t("p.automations.on") : t("p.automations.off")) },
+    { id: "pid", header: "", sortable: false, cell: ruleActions },
+  ]);
+  const scheduledColumns: DataGridColumn[] = $derived([
+    { id: "subject", header: t("p.automations.subject"), rowHeader: true, accessor: (r) => `${(r as unknown as ScheduledAction).subject_kind} ${(r as unknown as ScheduledAction).subject_pid.slice(0, 8)}…` },
+    { id: "action_kind", header: t("p.automations.action_2") },
+    { id: "due_at", header: t("p.automations.due") },
+    { id: "source", header: t("p.automations.source"), accessor: (r) => ((r as unknown as ScheduledAction).source_automation_pid ? t("p.automations.automation") : t("p.automations.operator")) },
+    { id: "pid", header: "", sortable: false, cell: scheduledActions },
+  ]);
+  const runColumns: DataGridColumn[] = $derived([
+    { id: "created_at", header: t("p.automations.when"), rowHeader: true },
+    { id: "subject", header: t("p.automations.subject"), accessor: (r) => `${(r as unknown as AutomationRun).subject_kind} ${(r as unknown as AutomationRun).subject_pid.slice(0, 8)}…` },
+    { id: "outcome", header: t("p.automations.outcome"), cellClass: (c) => (c.value === "failed" ? "cell-red" : "") },
+    { id: "detail", header: t("p.automations.detail"), sortable: false, accessor: (r) => JSON.stringify((r as unknown as AutomationRun).detail) },
+  ]);
 </script>
+
+{#snippet ruleActions({ row }: DataGridCellContext)}
+  {@const rule = row as unknown as Rule}
+  <button class="button small" type="button" onclick={() => act(() => api.setAutomationEnabled(rule.pid, !rule.enabled))}>{rule.enabled ? t("p.automations.disable") : t("p.automations.enable")}</button>
+  <button class="button small" type="button" onclick={() => act(() => api.deleteAutomation(rule.pid))}>{t("p.automations.delete")}</button>
+{/snippet}
+
+{#snippet scheduledActions({ row }: DataGridCellContext)}
+  <button class="button small" type="button" onclick={() => act(() => api.cancelScheduled(String(row.pid)))}>{t("p.automations.cancel")}</button>
+{/snippet}
+
 
 <svelte:head><title>{t("p.automations.automations_ppm")}</title></svelte:head>
 
@@ -237,43 +273,7 @@
       : `${automations.length} / ${automationsTotal}`}
   </p>
 {/if}
-<table>
-  <thead>
-    <tr><th>{t("p.automations.name_2")}</th><th>{t("p.automations.scope")}</th><th>{t("p.automations.trigger_2")}</th><th>{t("p.automations.action_2")}</th><th>{t("p.automations.state")}</th><th></th></tr>
-  </thead>
-  <tbody>
-    {#each automations as rule (rule.pid)}
-      <tr>
-        <td>{rule.name}</td>
-        <td class="small muted">{rule.plan_pid ? `${rule.plan_pid.slice(0, 8)}…` : t("p.automations.every_plan")}</td>
-        <td class="small">
-          {rule.trigger_kind}
-          {#if rule.from_status || rule.to_status}
-            ({rule.from_status ?? t("p.automations.any")} → {rule.to_status ?? t("p.automations.any")})
-          {/if}
-        </td>
-        <td class="small">{rule.action_kind}</td>
-        <td>{rule.enabled ? t("p.automations.on") : t("p.automations.off")}</td>
-        <td class="actions">
-          <button
-            class="button small"
-            type="button"
-            onclick={() => act(() => api.setAutomationEnabled(rule.pid, !rule.enabled))}
-          >
-            {rule.enabled ? t("p.automations.disable") : t("p.automations.enable")}
-          </button>
-          <button
-            class="button small"
-            type="button"
-            onclick={() => act(() => api.deleteAutomation(rule.pid))}
-          >
-            {t("p.automations.delete")}
-          </button>
-        </td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.automations.name_2")} columns={ruleColumns} rows={automations} rowId={(r) => String(r.pid)} />
 {#if automations.length === 0}<p class="small muted">{t("p.automations.no_rules_configured")}</p>{/if}
 
 <h2>{t("p.automations.set_and_forget")}</h2>
@@ -290,28 +290,7 @@
       : `${scheduled.length} / ${scheduledTotal}`}
   </p>
 {/if}
-<table>
-  <thead><tr><th>{t("p.automations.subject")}</th><th>{t("p.automations.action_2")}</th><th>{t("p.automations.due")}</th><th>{t("p.automations.source")}</th><th></th></tr></thead>
-  <tbody>
-    {#each scheduled as action (action.pid)}
-      <tr>
-        <td class="small">{action.subject_kind} {action.subject_pid.slice(0, 8)}…</td>
-        <td>{action.action_kind}</td>
-        <td class="small">{action.due_at}</td>
-        <td class="small muted">{action.source_automation_pid ? t("p.automations.automation") : t("p.automations.operator")}</td>
-        <td>
-          <button
-            class="button small"
-            type="button"
-            onclick={() => act(() => api.cancelScheduled(action.pid))}
-          >
-            {t("p.automations.cancel")}
-          </button>
-        </td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.automations.subject")} columns={scheduledColumns} rows={scheduled} rowId={(r) => String(r.pid)} />
 {#if scheduled.length === 0}<p class="small muted">{t("p.automations.nothing_pending")}</p>{/if}
 
 <h2>{t("p.automations.runs")}</h2>
@@ -320,19 +299,7 @@
     {runs.length === runsTotal ? `${runsTotal}` : `${runs.length} / ${runsTotal}`}
   </p>
 {/if}
-<table>
-  <thead><tr><th>{t("p.automations.when")}</th><th>{t("p.automations.subject")}</th><th>{t("p.automations.outcome")}</th><th>{t("p.automations.detail")}</th></tr></thead>
-  <tbody>
-    {#each runs as run (run.pid)}
-      <tr>
-        <td class="small">{run.created_at}</td>
-        <td class="small">{run.subject_kind} {run.subject_pid.slice(0, 8)}…</td>
-        <td class:failed={run.outcome === "failed"}>{run.outcome}</td>
-        <td class="small muted">{JSON.stringify(run.detail)}</td>
-      </tr>
-    {/each}
-  </tbody>
-</table>
+<DataTable label={t("p.automations.when")} columns={runColumns} rows={runs} rowId={(r) => String(r.pid)} pageSize={50} searchable />
 {#if runs.length === 0}<p class="small muted">{t("p.automations.nothing_has_fired_yet")}</p>{/if}
 
 <style>
@@ -344,8 +311,6 @@
     margin: 0.8rem 0;
   }
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }
-  .actions { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-  .failed { color: #a4262c; font-weight: 700; }
 
   /* The row count: just the total when the page holds everything, and
      "shown / total" when it does not, so a first page of a long list

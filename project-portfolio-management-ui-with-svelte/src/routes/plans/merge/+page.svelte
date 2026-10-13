@@ -21,6 +21,8 @@
   so the history row is read back from `/api/plans/merges/recent`.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { PlanRepository } from "#lib/api/plans.js";
@@ -113,7 +115,20 @@
   }
 
   onMount(loadRecent);
+
+  const mergeColumns: DataGridColumn[] = $derived([
+    { id: "created_at", header: t("merge.mergedAt"), rowHeader: true, format: (v) => new Date(String(v)).toLocaleString() },
+    { id: "main_pid", header: t("merge.main"), cell: mainCell },
+    { id: "duplicate_pid", header: t("merge.duplicate"), cell: codeCell },
+    { id: "reason", header: t("merge.reason"), format: (v) => (v ? String(v) : "—") },
+    { id: "actor", header: t("merge.actor"), format: (v) => (v ? String(v) : "—") },
+  ]);
 </script>
+
+{#snippet mainCell({ formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${formatted}`)}><code>{formatted}</code></a>{/snippet}
+
+{#snippet codeCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
+
 
 <svelte:head><title>{t("p.plans.merge.ppm", { t: t("merge.title") })}</title></svelte:head>
 
@@ -188,28 +203,5 @@
 
 <section style="margin-top:1.5rem">
   <h2>{t("merge.recent")}</h2>
-  <table data-testid="recent-merges">
-    <thead>
-      <tr>
-        <th>{t("merge.mergedAt")}</th>
-        <th>{t("merge.main")}</th>
-        <th>{t("merge.duplicate")}</th>
-        <th>{t("merge.reason")}</th>
-        <th>{t("merge.actor")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each recent as row (row.id)}
-        <tr>
-          <td>{new Date(row.created_at).toLocaleString()}</td>
-          <td><a href={localeHref(`/plans/${row.main_pid}`)}><code>{row.main_pid}</code></a></td>
-          <td><code>{row.duplicate_pid}</code></td>
-          <td>{row.reason ?? "—"}</td>
-          <td>{row.actor ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="5" class="muted">{t("merge.recentEmpty")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("merge.mergedAt")} columns={mergeColumns} rows={recent} rowId={(r) => String(r.id)} emptyText={t("merge.recentEmpty")} testid="recent-merges" />
 </section>

@@ -5,6 +5,8 @@
   language, or download the service's English PDF.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { i18n } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
@@ -37,7 +39,22 @@
   const previous = $derived(
     pack ? ((pack.body.cover as { previous_issued_pack?: { period?: string; version?: number } } | undefined)?.previous_issued_pack ?? null) : null,
   );
+
+  type PackCell = { text: string; symbol?: string; tone?: string };
+  const cellOf = (row: unknown, i: number): PackCell => ((row as { cells: PackCell[] }).cells[i] ?? { text: "" });
+  /** A pack table: the first column names the row, and a cell with a tone carries its symbol and word as well. */
+  const packColumns = (names: string[]): DataGridColumn[] =>
+    names.map((name, i) => ({
+      id: `c${i}`, header: name, rowHeader: i === 0, accessor: (row) => cellOf(row, i).text,
+      ...(i === 0 ? {} : { cell: packCell, cellClass: (ctx: DataGridCellContext) => { const tone = cellOf(ctx.row, i).tone; return tone ? `cell-${tone}` : ""; } }),
+    }));
 </script>
+
+{#snippet packCell({ row, column, formatted }: DataGridCellContext)}
+  {@const c = cellOf(row, Number(column.id.slice(1)))}
+  {#if c.symbol}<span aria-hidden="true" class="sym">{c.symbol}</span>{/if}{formatted}
+{/snippet}
+
 
 <svelte:head><title>{t("p.director_pack.director_packs_ppm")}</title></svelte:head>
 
@@ -72,30 +89,7 @@
       {#each s.lines as line, i (i)}<p>{line}</p>{/each}
       {#each s.tables as tb, ti (ti)}
         <!-- A wide table scrolls on its own; the region is focusable so a keyboard can scroll it. -->
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <div class="scroll" role="region" aria-label={tb.caption} tabindex="0">
-          <table>
-            <caption>{tb.caption}</caption>
-            <thead>
-              <tr>{#each tb.columns as c, ci (ci)}<th scope="col">{c}</th>{/each}</tr>
-            </thead>
-            <tbody>
-              {#each tb.rows as row, ri (ri)}
-                <tr>
-                  {#each row as cell, ci (ci)}
-                    {#if ci === 0}
-                      <th scope="row">{cell.text}</th>
-                    {:else}
-                      <td class={cell.tone ? `tone-${cell.tone}` : undefined}>
-                        {#if cell.symbol}<span aria-hidden="true" class="sym">{cell.symbol}</span>{/if}{cell.text}
-                      </td>
-                    {/if}
-                  {/each}
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <DataTable label={tb.caption} caption={tb.caption} columns={packColumns(tb.columns)} rows={tb.rows.map((cells) => ({ cells }))} rowId={(_r, i) => String(i)} sortable={false} />
       {/each}
     </section>
   {/each}
@@ -104,25 +98,12 @@
 {/if}
 
 <style>
-  .scroll {
-    overflow-x: auto;
-    margin-bottom: 1rem;
-  }
-  caption {
-    text-align: start;
-    font-weight: 600;
-    padding: 0.25rem 0;
-  }
-  .sym {
+  :global(.sym) {
     display: inline-block;
     inline-size: 1.25em;
   }
   /* Colour is never the only signal: every reading also carries its word and its symbol. These tints are
      pale so the text keeps its contrast. */
-  .tone-red { background: #fde8e8; }
-  .tone-amber { background: #fff4d6; }
-  .tone-green { background: #e3f4e3; }
-  .tone-grey { background: #eeeeee; }
   @media print {
     .noprint { display: none; }
     section { break-inside: avoid; }

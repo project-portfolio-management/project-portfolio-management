@@ -6,6 +6,8 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import RiskInputs from "#lib/components/RiskInputs.svelte";
   import LineRange from "#lib/components/LineRange.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -110,7 +112,99 @@
   }
 
   const toMinor = (major: string) => Math.round(Number(major) * 100);
+
+  type BudgetLine = BudgetBoard["lines"][number];
+  type BenefitRow = BenefitBoard["benefits"][number];
+  const riskColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.plans.pid.governance.risk"), rowHeader: true, cell: riskCell },
+    { id: "exposure", header: "P×I", align: "end", cell: exposureCell },
+    { id: "status", header: t("p.plans.pid.governance.status"), cell: riskStatus },
+    { id: "pid", header: "", sortable: false, cell: riskActions },
+  ]);
+  const lineColumns: DataGridColumn[] = $derived([
+    { id: "description", header: t("p.plans.pid.governance.line"), rowHeader: true, cell: lineCell },
+    { id: "planned_minor", header: t("p.plans.pid.governance.planned"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "range", header: t("p.plans.pid.governance.range_for_cost_risk"), sortable: false, accessor: () => "", cell: rangeCell },
+    { id: "actual_minor", header: t("p.plans.pid.governance.actual"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "record", header: t("p.plans.pid.governance.record_actual"), sortable: false, accessor: () => "", cell: recordCell },
+  ]);
+  const benefitColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.plans.pid.governance.benefit"), rowHeader: true, cell: benefitCell },
+    { id: "target", header: t("p.plans.pid.governance.target"), align: "end", accessor: (r) => { const b = r as unknown as BenefitRow; return b.target_minor !== null ? money(b.target_minor, b.currency) : (b.target_note ?? "—"); } },
+    { id: "realized_minor", header: t("p.plans.pid.governance.realized"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "status", header: t("p.plans.pid.governance.status"), cell: chip },
+    { id: "realize", header: "", sortable: false, accessor: () => "", cell: realizeCell },
+  ]);
 </script>
+
+{#snippet riskCell({ row }: DataGridCellContext)}
+  {@const risk = row as unknown as Risk}
+  {risk.title}{#if risk.mitigation}<div class="small muted">{risk.mitigation}</div>{/if}
+  <RiskInputs {risk} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
+{/snippet}
+
+{#snippet exposureCell({ row }: DataGridCellContext)}
+  {@const risk = row as unknown as Risk}
+  {risk.probability}×{risk.impact} = <strong>{risk.exposure}</strong>
+{/snippet}
+
+{#snippet riskStatus({ row, formatted }: DataGridCellContext)}<span class="chip" class:red={row.status === "materialized"}>{formatted}</span>{/snippet}
+
+{#snippet chip({ formatted }: DataGridCellContext)}<span class="chip">{formatted}</span>{/snippet}
+
+{#snippet riskActions({ row }: DataGridCellContext)}
+  {@const risk = row as unknown as Risk}
+  {#if risk.status === "open" || risk.status === "mitigating"}
+    <button class="button danger small" onclick={() => act(() => ppm.escalateRisk(pid, risk.pid))}>{t("ppm.gov.escalate")}</button>
+  {/if}
+{/snippet}
+
+{#snippet lineCell({ row, formatted }: DataGridCellContext)}{formatted} <span class="chip">{row.category}</span>{/snippet}
+
+{#snippet rangeCell({ row }: DataGridCellContext)}
+  <LineRange line={row as unknown as BudgetLine} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
+{/snippet}
+
+{#snippet recordCell({ row }: DataGridCellContext)}
+  {@const line = row as unknown as BudgetLine}
+  <form
+    class="row"
+    onsubmit={(e) => {
+      e.preventDefault();
+      const input = (e.currentTarget as HTMLFormElement).elements.namedItem("amount") as HTMLInputElement;
+      const minor = toMinor(input.value);
+      if (Number.isFinite(minor)) {
+        act(() => ppm.recordActual(pid, line.pid, minor));
+        input.value = "";
+      }
+    }}
+  >
+    <input name="amount" size="8" placeholder="0.00" />
+    <button class="button small" type="submit">+</button>
+  </form>
+{/snippet}
+
+{#snippet benefitCell({ row, formatted }: DataGridCellContext)}{formatted} <span class="chip">{row.category}</span>{/snippet}
+
+{#snippet realizeCell({ row }: DataGridCellContext)}
+  {@const benefit = row as unknown as BenefitRow}
+  <form
+    class="row"
+    onsubmit={(e) => {
+      e.preventDefault();
+      const input = (e.currentTarget as HTMLFormElement).elements.namedItem("realize") as HTMLInputElement;
+      const minor = toMinor(input.value);
+      if (Number.isFinite(minor)) {
+        act(() => ppm.realizeBenefit(pid, benefit.pid, { amount_minor: minor, status: "on_track" }));
+        input.value = "";
+      }
+    }}
+  >
+    <input name="realize" size="8" placeholder="0.00" />
+    <button class="button small" type="submit">{t("ppm.gov.realize")}</button>
+  </form>
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.governance.governance_ppm")}</title></svelte:head>
 
@@ -178,28 +272,7 @@
 
 <details open>
   <summary><h2>{t("ppm.gov.risks")}</h2></summary>
-  <table>
-    <thead><tr><th>{t("p.plans.pid.governance.risk")}</th><th>P×I</th><th>{t("p.plans.pid.governance.status")}</th><th></th></tr></thead>
-    <tbody>
-      {#each risks as risk (risk.pid)}
-        <tr>
-          <td>
-            {risk.title}{#if risk.mitigation}<div class="small muted">{risk.mitigation}</div>{/if}
-            <RiskInputs {risk} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
-          </td>
-          <td>{risk.probability}×{risk.impact} = <strong>{risk.exposure}</strong></td>
-          <td><span class="chip" class:red={risk.status === "materialized"}>{risk.status}</span></td>
-          <td>
-            {#if risk.status === "open" || risk.status === "mitigating"}
-              <button class="button danger small" onclick={() => act(() => ppm.escalateRisk(pid, risk.pid))}>
-                {t("ppm.gov.escalate")}
-              </button>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.governance.risk")} columns={riskColumns} rows={risks} rowId={(r) => String(r.pid)} />
   <form
     class="row"
     onsubmit={(e) => {
@@ -223,38 +296,7 @@
 <details open>
   <summary><h2>{t("ppm.gov.budget")}</h2></summary>
   {#if budget}
-    <table>
-      <thead><tr><th>{t("p.plans.pid.governance.line")}</th><th>{t("p.plans.pid.governance.planned")}</th><th>{t("p.plans.pid.governance.range_for_cost_risk")}</th><th>{t("p.plans.pid.governance.actual")}</th><th>{t("p.plans.pid.governance.record_actual")}</th></tr></thead>
-      <tbody>
-        {#each budget.lines as line (line.pid)}
-          <tr>
-            <td>{line.description} <span class="chip">{line.category}</span></td>
-            <td>{money(line.planned_minor, line.currency)}</td>
-            <td><LineRange {line} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} /></td>
-            <td>{money(line.actual_minor, line.currency)}</td>
-            <td>
-              <form
-                class="row"
-                onsubmit={(e) => {
-                  e.preventDefault();
-                  const input = (e.currentTarget as HTMLFormElement).elements.namedItem(
-                    "amount",
-                  ) as HTMLInputElement;
-                  const minor = toMinor(input.value);
-                  if (Number.isFinite(minor)) {
-                    act(() => ppm.recordActual(pid, line.pid, minor));
-                    input.value = "";
-                  }
-                }}
-              >
-                <input name="amount" size="8" placeholder="0.00" />
-                <button class="button small" type="submit">+</button>
-              </form>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.governance.line")} columns={lineColumns} rows={budget.lines} rowId={(r) => String(r.pid)} />
     {#each budget.totals as total (total.currency)}
       <p class="small">
         <strong>{total.currency}</strong>{t("p.plans.pid.governance.planned_actual_variance", { money: money(total.planned_minor), money2: money(total.actual_minor), money3: money(total.variance_minor) })}
@@ -291,47 +333,7 @@
 <details open>
   <summary><h2>{t("ppm.gov.benefits")}</h2></summary>
   {#if benefits}
-    <table>
-      <thead><tr><th>{t("p.plans.pid.governance.benefit")}</th><th>{t("p.plans.pid.governance.target")}</th><th>{t("p.plans.pid.governance.realized")}</th><th>{t("p.plans.pid.governance.status")}</th><th></th></tr></thead>
-      <tbody>
-        {#each benefits.benefits as benefit (benefit.pid)}
-          <tr>
-            <td>{benefit.title} <span class="chip">{benefit.category}</span></td>
-            <td>
-              {benefit.target_minor !== null
-                ? money(benefit.target_minor, benefit.currency)
-                : (benefit.target_note ?? "—")}
-            </td>
-            <td>{money(benefit.realized_minor, benefit.currency)}</td>
-            <td><span class="chip">{benefit.status}</span></td>
-            <td>
-              <form
-                class="row"
-                onsubmit={(e) => {
-                  e.preventDefault();
-                  const input = (e.currentTarget as HTMLFormElement).elements.namedItem(
-                    "realize",
-                  ) as HTMLInputElement;
-                  const minor = toMinor(input.value);
-                  if (Number.isFinite(minor)) {
-                    act(() =>
-                      ppm.realizeBenefit(pid, benefit.pid, {
-                        amount_minor: minor,
-                        status: "on_track",
-                      }),
-                    );
-                    input.value = "";
-                  }
-                }}
-              >
-                <input name="realize" size="8" placeholder="0.00" />
-                <button class="button small" type="submit">{t("ppm.gov.realize")}</button>
-              </form>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.governance.benefit")} columns={benefitColumns} rows={benefits.benefits} rowId={(r) => String(r.pid)} />
     {#each benefits.totals as total (total.currency)}
       <p class="small">
         <strong>{total.currency}</strong>{t("p.plans.pid.governance.target_realized_spend", { money: money(total.target_minor), money2: money(total.realized_minor), money3: money(total.spend_minor) })}

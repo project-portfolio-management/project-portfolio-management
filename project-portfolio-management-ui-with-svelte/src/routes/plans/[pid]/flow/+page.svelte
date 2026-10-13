@@ -18,6 +18,8 @@
   English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
@@ -71,7 +73,57 @@
 
   /** Items already past the expectation — the ones worth a conversation today. */
   const overdue = $derived((aging?.aging ?? []).filter((row) => row.aging.past_sle));
+
+  type Aging = AgingWip["aging"][number];
+  type FlowColumn = PlanFlow["columns"][number];
+  const agingColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.plans.pid.flow.item"), rowHeader: true, accessor: (r) => (r as unknown as Aging).task.title, cell: agingTitle },
+    { id: "status", header: t("p.plans.pid.flow.status") },
+    { id: "age", header: t("p.plans.pid.flow.age"), align: "end", accessor: (r) => (r as unknown as Aging).aging.age_days, format: (v) => days(Number(v)) },
+    { id: "sle", header: t("p.plans.pid.flow.vs_expectation"), align: "end", accessor: (r) => (r as unknown as Aging).aging.sle_ratio ?? -1, cell: sleCell },
+    { id: "blocked", header: t("p.plans.pid.flow.blocked"), align: "end", accessor: (r) => (r as unknown as Aging).blocked_time_ms, format: (v) => msAsDays(Number(v)) },
+    { id: "rework_count", header: t("p.plans.pid.flow.rework"), align: "end" },
+    { id: "assignee", header: t("p.plans.pid.flow.assignee"), accessor: (r) => (r as unknown as Aging).task.assignee_ref ?? t("p.plans.pid.flow.unassigned") },
+  ]);
+  const constraintColumns: DataGridColumn[] = $derived([
+    { id: "rule", header: t("p.plans.pid.flow.rule"), rowHeader: true, cell: ruleCell },
+    { id: "subject", header: t("p.plans.pid.flow.subject") },
+    { id: "recoverable_days", header: t("p.plans.pid.flow.recoverable"), align: "end", format: (v) => days(v as number | null) },
+    { id: "detail", header: t("p.plans.pid.flow.detail") },
+  ]);
+  const columnColumns: DataGridColumn[] = $derived([
+    { id: "status", header: t("p.plans.pid.flow.column"), rowHeader: true },
+    { id: "count", header: t("p.plans.pid.flow.count"), align: "end" },
+    { id: "limit", header: t("p.plans.pid.flow.limit"), align: "end", accessor: (r) => (r as unknown as FlowColumn).limit ?? "", cell: limitCell },
+  ]);
+  const distributionRows = (s: NonNullable<typeof summary>) => [{ label: "Cycle time", d: s.cycle_time }, { label: "Lead time", d: s.lead_time }];
+  type Dist = ReturnType<typeof distributionRows>[number];
+  const distributionColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("p.plans.pid.flow.measure"), rowHeader: true },
+    { id: "n", header: "n", align: "end", accessor: (r) => (r as unknown as Dist).d?.n ?? "—" },
+    { id: "min", header: t("p.plans.pid.flow.min"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.min_ms ?? null) },
+    { id: "p50", header: "p50", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p50_ms ?? null) },
+    { id: "p85", header: "p85", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p85_ms ?? null) },
+    { id: "p95", header: "p95", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p95_ms ?? null) },
+    { id: "max", header: t("p.plans.pid.flow.max"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.max_ms ?? null) },
+    { id: "mean", header: t("p.plans.pid.flow.mean"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.mean_ms ?? null) },
+  ]);
 </script>
+
+{#snippet agingTitle({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${pid}/board`)}>{formatted}</a>{/snippet}
+
+{#snippet sleCell({ row }: DataGridCellContext)}
+  {@const a = (row as unknown as Aging).aging}
+  {#if a.sle_ratio === null}<span class="muted">{t("p.plans.pid.flow.no_expectation_yet")}</span>{:else}{a.past_sle ? "⚠ " : ""}{percent(a.sle_ratio)}{/if}
+{/snippet}
+
+{#snippet ruleCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
+
+{#snippet limitCell({ row }: DataGridCellContext)}
+  {@const c = row as unknown as FlowColumn}
+  {#if c.limit === null}<span class="muted">{t("p.plans.pid.flow.no_cap")}</span>{:else}{c.over_limit ? "⚠ " : ""}{c.limit}{/if}
+{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.flow.flow_ppm")}</title></svelte:head>
 
@@ -153,40 +205,7 @@
   {#if aging.aging.length === 0}
     <p class="muted">{t("p.plans.pid.flow.nothing_in_progress")}</p>
   {:else}
-    <table data-testid="aging-wip">
-      <thead>
-        <tr>
-          <th scope="col">{t("p.plans.pid.flow.item")}</th>
-          <th scope="col">{t("p.plans.pid.flow.status")}</th>
-          <th scope="col">{t("p.plans.pid.flow.age")}</th>
-          <th scope="col">{t("p.plans.pid.flow.vs_expectation")}</th>
-          <th scope="col">{t("p.plans.pid.flow.blocked")}</th>
-          <th scope="col">{t("p.plans.pid.flow.rework")}</th>
-          <th scope="col">{t("p.plans.pid.flow.assignee")}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each aging.aging as row (row.task.pid)}
-          <tr class:past={row.aging.past_sle}>
-            <th scope="row">
-              <a href={localeHref(`/plans/${pid}/board`)}>{row.task.title}</a>
-            </th>
-            <td>{row.status}</td>
-            <td>{days(row.aging.age_days)}</td>
-            <td>
-              {#if row.aging.sle_ratio === null}
-                <span class="muted">{t("p.plans.pid.flow.no_expectation_yet")}</span>
-              {:else}
-                {row.aging.past_sle ? "⚠ " : ""}{percent(row.aging.sle_ratio)}
-              {/if}
-            </td>
-            <td>{msAsDays(row.blocked_time_ms)}</td>
-            <td>{row.rework_count}</td>
-            <td class="muted">{row.task.assignee_ref ?? t("p.plans.pid.flow.unassigned")}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.flow.item")} columns={agingColumns} rows={aging.aging} rowId={(r) => String((r as unknown as Aging).task.pid)} testid="aging-wip" />
     {#if overdue.length > 0}
       <p class="finding">
         {overdue.length === 1 ? t("p.plans.pid.flow.overdue_one", { count: overdue.length }) : t("p.plans.pid.flow.overdue_other", { count: overdue.length })}
@@ -220,28 +239,7 @@
 <h2>{t("p.plans.pid.flow.constraints")}</h2>
 {#if constraints}
   <p class="muted">{constraints.note}</p>
-  <table data-testid="constraints">
-    <thead>
-      <tr>
-        <th scope="col">{t("p.plans.pid.flow.rule")}</th>
-        <th scope="col">{t("p.plans.pid.flow.subject")}</th>
-        <th scope="col">{t("p.plans.pid.flow.recoverable")}</th>
-        <th scope="col">{t("p.plans.pid.flow.detail")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each constraints.findings as finding (finding.rule + finding.subject)}
-        <tr>
-          <th scope="row"><code>{finding.rule}</code></th>
-          <td>{finding.subject}</td>
-          <td>{days(finding.recoverable_days)}</td>
-          <td class="detail">{finding.detail}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.plans.pid.flow.no_findings_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.flow.rule")} columns={constraintColumns} rows={constraints.findings} rowId={(r) => String(r.rule) + String(r.subject)} emptyText={t("p.plans.pid.flow.no_findings_yet")} testid="constraints" />
 {/if}
 
 <!-- Little's Law, and the columns it points at. -->
@@ -283,26 +281,7 @@
   <p class="muted">
     {t("p.plans.pid.flow.cycle_time_is_work_in")}
   </p>
-  <table data-testid="columns">
-    <thead>
-      <tr><th scope="col">{t("p.plans.pid.flow.column")}</th><th scope="col">{t("p.plans.pid.flow.count")}</th><th scope="col">{t("p.plans.pid.flow.limit")}</th></tr>
-    </thead>
-    <tbody>
-      {#each flow.columns as column (column.status)}
-        <tr class:past={column.over_limit}>
-          <th scope="row">{column.status}</th>
-          <td>{column.count}</td>
-          <td>
-            {#if column.limit === null}
-              <span class="muted">{t("p.plans.pid.flow.no_cap")}</span>
-            {:else}
-              {column.over_limit ? "⚠ " : ""}{column.limit}
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.flow.column")} columns={columnColumns} rows={flow.columns} rowId={(r) => String(r.status)} sortable={false} testid="columns" />
 {/if}
 
 <!-- The distributions last: history, not something to act on today. -->
@@ -311,29 +290,7 @@
   <p class="muted">
     {t("p.plans.pid.flow.percentiles_are_nearest_rank_so")}
   </p>
-  <table data-testid="distributions">
-    <thead>
-      <tr>
-        <th scope="col">{t("p.plans.pid.flow.measure")}</th><th scope="col">n</th><th scope="col">{t("p.plans.pid.flow.min")}</th>
-        <th scope="col">p50</th><th scope="col">p85</th><th scope="col">p95</th>
-        <th scope="col">{t("p.plans.pid.flow.max")}</th><th scope="col">{t("p.plans.pid.flow.mean")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each [{ label: "Cycle time", d: summary.cycle_time }, { label: "Lead time", d: summary.lead_time }] as row (row.label)}
-        <tr>
-          <th scope="row">{row.label}</th>
-          <td>{row.d.n}</td>
-          <td>{msAsDays(row.d.min_ms)}</td>
-          <td>{msAsDays(row.d.p50_ms)}</td>
-          <td>{msAsDays(row.d.p85_ms)}</td>
-          <td>{msAsDays(row.d.p95_ms)}</td>
-          <td>{msAsDays(row.d.max_ms)}</td>
-          <td class="muted">{msAsDays(row.d.mean_ms)}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.flow.measure")} columns={distributionColumns} rows={distributionRows(summary)} rowId={(r) => String(r.label)} sortable={false} testid="distributions" />
   <p class="muted">
     {t("p.plans.pid.flow.the_mean_is_shown_for")}
   </p>
@@ -404,13 +361,6 @@
   }
   td {
     font-variant-numeric: tabular-nums;
-  }
-  tr.past th[scope="row"] {
-    font-weight: 700;
-  }
-  .detail {
-    font-size: 0.85rem;
-    opacity: 0.85;
   }
   .muted {
     opacity: 0.75;

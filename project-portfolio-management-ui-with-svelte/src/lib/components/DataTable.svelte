@@ -37,7 +37,8 @@
     label: string;
     caption?: string;
     columns: DataGridColumn[];
-    rows: DataGridRow[];
+    /** Any objects: interfaces are fine (they are read, never changed). */
+    rows: readonly object[];
     rowId?: (row: DataGridRow, index: number) => string;
     /** What to show with no rows; the default says "Nothing to show." */
     emptyText?: string;
@@ -64,7 +65,7 @@
   {label}
   {caption}
   columns={cols}
-  {rows}
+  rows={rows as DataGridRow[]}
   {rowId}
   mode={grid ? "grid" : "table"}
   {selectionMode}

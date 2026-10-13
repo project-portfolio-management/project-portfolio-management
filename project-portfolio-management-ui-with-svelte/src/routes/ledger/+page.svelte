@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let allocations = $state<FundingAllocation[] | null>(null);
@@ -31,7 +33,30 @@
   /** Minor units (pence, cents) as a decimal amount. */
   const money = (minor: number) => `${minor < 0 ? "-" : ""}${Math.floor(Math.abs(minor) / 100)}.${String(Math.abs(minor) % 100).padStart(2, "0")}`;
   const label = (a: FundingAllocation) => `${a.funding_source} ${a.allocated_on}`;
+  const num = (a: unknown, b: unknown) => Number(a) - Number(b);
+  const allocColumns: DataGridColumn[] = $derived([
+    { id: "funding_source", header: t("p.ledger.col_source"), rowHeader: true },
+    { id: "reference", header: t("p.ledger.col_ref"), format: (v) => (v ? String(v) : "") },
+    { id: "allocated_on", header: t("p.ledger.col_on") },
+    { id: "amount_minor", header: t("p.ledger.col_amount"), align: "end", compare: num, format: (v, r) => `${money(Number(v))} ${r.currency}` },
+    { id: "planned_on_lines_minor", header: t("p.ledger.col_planned"), align: "end", compare: num, format: (v) => money(Number(v)) },
+    { id: "untraced_minor", header: t("p.ledger.col_untraced"), align: "end", compare: num, format: (v) => money(Number(v)), cellClass: (c) => (Number(c.value) !== 0 ? "cell-amber" : "") },
+    { id: "lines", header: t("p.ledger.col_lines"), align: "end" },
+    { id: "pid", header: t("p.ledger.col_act"), sortable: false, cell: traceCell },
+  ]);
+  const lineColumns: DataGridColumn[] = $derived([
+    { id: "plan", header: t("p.ledger.line_plan"), rowHeader: true, format: (v) => (v ? String(v) : "") },
+    { id: "description", header: t("p.ledger.line_desc") },
+    { id: "planned_minor", header: t("p.ledger.line_planned"), align: "end", compare: num, format: (v) => money(Number(v)) },
+    { id: "actual_minor", header: t("p.ledger.line_actual"), align: "end", compare: num, format: (v) => money(Number(v)) },
+    { id: "gate", header: t("p.ledger.line_gate"), format: (v, r) => (v ? `${v}: ${r.released ? t("p.ledger.released") : t("p.ledger.held")}` : t("p.ledger.no_gate")) },
+  ]);
 </script>
+
+{#snippet traceCell({ row }: DataGridCellContext)}
+  {@const a = row as unknown as FundingAllocation}
+  <button class="button" type="button" aria-label={t("p.ledger.trace", { name: label(a) })} onclick={() => void open(a)}>{t("p.ledger.trace_short")}</button>
+{/snippet}
 
 <svelte:head><title>{t("p.ledger.title")}</title></svelte:head>
 
@@ -45,38 +70,7 @@
   {#if allocations.length === 0}
     <p>{t("p.ledger.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.ledger.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.ledger.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.ledger.col_source")}</th>
-            <th scope="col">{t("p.ledger.col_ref")}</th>
-            <th scope="col">{t("p.ledger.col_on")}</th>
-            <th scope="col">{t("p.ledger.col_amount")}</th>
-            <th scope="col">{t("p.ledger.col_planned")}</th>
-            <th scope="col">{t("p.ledger.col_untraced")}</th>
-            <th scope="col">{t("p.ledger.col_lines")}</th>
-            <th scope="col">{t("p.ledger.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each allocations as a (a.pid)}
-            <tr>
-              <th scope="row">{a.funding_source}</th>
-              <td>{a.reference ?? ""}</td>
-              <td>{a.allocated_on}</td>
-              <td>{money(a.amount_minor)} {a.currency}</td>
-              <td>{money(a.planned_on_lines_minor)}</td>
-              <td class:untraced={a.untraced_minor !== 0}>{money(a.untraced_minor)}</td>
-              <td>{a.lines}</td>
-              <td><button class="button" type="button" aria-label={t("p.ledger.trace", { name: label(a) })} onclick={() => void open(a)}>{t("p.ledger.trace_short")}</button></td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.ledger.h1")} columns={allocColumns} rows={allocations} rowId={(r) => String(r.pid)} searchable />
   {/if}
 {/if}
 
@@ -92,37 +86,10 @@
     </p>
     {#if trace.lines.length > 0}
       <h3>{t("p.ledger.lines_h3")}</h3>
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="scroll" role="region" aria-label={t("p.ledger.lines_h3")} tabindex="0">
-        <table>
-          <caption class="sr-only">{t("p.ledger.lines_h3")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.ledger.line_plan")}</th>
-              <th scope="col">{t("p.ledger.line_desc")}</th>
-              <th scope="col">{t("p.ledger.line_planned")}</th>
-              <th scope="col">{t("p.ledger.line_actual")}</th>
-              <th scope="col">{t("p.ledger.line_gate")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each trace.lines as l (l.line_pid)}
-              <tr>
-                <th scope="row">{l.plan ?? ""}</th>
-                <td>{l.description}</td>
-                <td>{money(l.planned_minor)}</td>
-                <td>{money(l.actual_minor)}</td>
-                <td>{l.gate ? `${l.gate}: ${l.released ? t("p.ledger.released") : t("p.ledger.held")}` : t("p.ledger.no_gate")}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <DataTable label={t("p.ledger.lines_h3")} columns={lineColumns} rows={trace.lines} rowId={(r) => String(r.line_pid)} />
     {/if}
   </section>
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
-  .untraced { background: #fff4d6; }
 </style>

@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Organization } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const KINDS = ["delivery", "partner", "sponsor", "supplier"] as const;
   const ppm = PpmClient.withFetch();
@@ -41,7 +43,23 @@
     if (!error) name = "";
   };
   const kindWord = (k: string) => t(`p.organizations.kind_${k}` as never);
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.organizations.col_name"), rowHeader: true },
+    { id: "kind", header: t("p.organizations.col_kind"), format: (v) => kindWord(String(v)) },
+    { id: "active", header: t("p.organizations.col_state"), format: (v) => (v ? t("p.organizations.active") : t("p.organizations.retired")) },
+    { id: "audience", header: t("p.organizations.col_audience"), cell: audienceCell },
+    { id: "pid", header: t("p.organizations.col_act"), sortable: false, cell: actCell },
+  ]);
 </script>
+
+{#snippet audienceCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
+
+{#snippet actCell({ row }: DataGridCellContext)}
+  <button class="button" type="button" disabled={busy}
+    aria-label={t(row.active ? "p.organizations.retire" : "p.organizations.restore", { name: String(row.name) })}
+    onclick={() => void run(() => ppm.changeOrganization(String(row.pid), { active: !row.active }))}
+  >{row.active ? t("p.organizations.retire_short") : t("p.organizations.restore_short")}</button>
+{/snippet}
 
 <svelte:head><title>{t("p.organizations.title")}</title></svelte:head>
 
@@ -65,41 +83,10 @@
   {#if orgs.length === 0}
     <p>{t("p.organizations.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.organizations.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.organizations.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.organizations.col_name")}</th>
-            <th scope="col">{t("p.organizations.col_kind")}</th>
-            <th scope="col">{t("p.organizations.col_state")}</th>
-            <th scope="col">{t("p.organizations.col_audience")}</th>
-            <th scope="col">{t("p.organizations.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each orgs as o (o.pid)}
-            <tr>
-              <th scope="row">{o.name}</th>
-              <td>{kindWord(o.kind)}</td>
-              <td>{o.active ? t("p.organizations.active") : t("p.organizations.retired")}</td>
-              <td><code>{o.audience}</code></td>
-              <td>
-                <button class="button" type="button" disabled={busy}
-                  aria-label={t(o.active ? "p.organizations.retire" : "p.organizations.restore", { name: o.name })}
-                  onclick={() => void run(() => ppm.changeOrganization(o.pid, { active: !o.active }))}
-                >{o.active ? t("p.organizations.retire_short") : t("p.organizations.restore_short")}</button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.organizations.h1")} {columns} rows={orgs} rowId={(r) => String(r.pid)} searchable />
   {/if}
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
   form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
 </style>

@@ -8,6 +8,9 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type CutoverDecision } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { Snippet } from "svelte";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -48,8 +51,23 @@
   };
   const status = (s: string) => t(`p.cutover.status_${s}` as never);
   const outcomeWord = (o: string) => t(`p.cutover.outcome_${o}` as never);
+  type Criterion = CutoverDecision["criteria"][number];
+  /** Columns for one decision's criteria: an open decision adds the column that marks them. */
+  function criteriaColumns(d: CutoverDecision, mark: Snippet<[DataGridCellContext]>): DataGridColumn[] {
+    const cols: DataGridColumn[] = [
+      { id: "n", header: t("p.cutover.col_n"), align: "end" },
+      { id: "criterion", header: t("p.cutover.col_criterion"), rowHeader: true },
+      { id: "met", header: t("p.cutover.col_met"), format: (v) => (v ? t("p.cutover.met") : t("p.cutover.not_met")), cell: metCell, cellClass: (c) => (c.value ? "cell-green" : "cell-red") },
+      { id: "evidence", header: t("p.cutover.col_evidence"), format: (v) => (v ? String(v) : "") },
+    ];
+    if (d.status === "open") cols.push({ id: "mark", header: t("p.cutover.col_mark"), sortable: false, accessor: () => "", cell: mark });
+    return cols;
+  }
   const list = (xs: string[]) => (xs.length ? xs.join(", ") : t("p.cutover.cosign_none"));
 </script>
+
+{#snippet metCell({ value, formatted }: DataGridCellContext)}<span aria-hidden="true">{value ? "●" : "✖"}</span> {formatted}{/snippet}
+
 
 <svelte:head><title>{t("p.cutover.title")}</title></svelte:head>
 
@@ -73,6 +91,13 @@
   {/if}
 
   {#each decisions as d (d.pid)}
+{#snippet markCell({ row }: DataGridCellContext)}
+  {@const c = row as unknown as Criterion}
+  <label>{t("p.cutover.evidence")} <input bind:value={evidence[`${d.pid}-${c.n}`]} maxlength="500" /></label>
+  <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_met", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, true, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_met_short")}</button>
+  <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_unmet", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, false, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_unmet_short")}</button>
+{/snippet}
+  {@const cols = criteriaColumns(d, markCell)}
     <section class="decision" aria-labelledby={`co-${d.pid}`}>
       <h2 id={`co-${d.pid}`}>{d.title} <small>({t("p.cutover.version", { n: d.version })}, {status(d.status)})</small></h2>
       {#if d.outcome && d.decided_on}
@@ -80,38 +105,7 @@
       {/if}
 
       <h3>{t("p.cutover.criteria_h3")}</h3>
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="scroll" role="region" aria-label={`${d.title}: ${t("p.cutover.criteria_h3")}`} tabindex="0">
-        <table>
-          <caption class="sr-only">{d.title}: {t("p.cutover.criteria_h3")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.cutover.col_n")}</th>
-              <th scope="col">{t("p.cutover.col_criterion")}</th>
-              <th scope="col">{t("p.cutover.col_met")}</th>
-              <th scope="col">{t("p.cutover.col_evidence")}</th>
-              {#if d.status === "open"}<th scope="col">{t("p.cutover.col_mark")}</th>{/if}
-            </tr>
-          </thead>
-          <tbody>
-            {#each d.criteria as c (c.n)}
-              <tr>
-                <td>{c.n}</td>
-                <th scope="row">{c.criterion}</th>
-                <td class={c.met ? "ok" : "no"}><span aria-hidden="true">{c.met ? "●" : "✖"}</span> {c.met ? t("p.cutover.met") : t("p.cutover.not_met")}</td>
-                <td>{c.evidence ?? ""}</td>
-                {#if d.status === "open"}
-                  <td>
-                    <label>{t("p.cutover.evidence")} <input bind:value={evidence[`${d.pid}-${c.n}`]} maxlength="500" /></label>
-                    <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_met", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, true, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_met_short")}</button>
-                    <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_unmet", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, false, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_unmet_short")}</button>
-                  </td>
-                {/if}
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <DataTable label={`${d.title}: ${t("p.cutover.criteria_h3")}`} columns={cols} rows={d.criteria} rowId={(r) => `${d.pid}-${r.n}`} />
 
       <h3>{t("p.cutover.cosign_h3")}</h3>
       <p>{t("p.cutover.cosign_signed", { roles: list(d.cosignatures.signed.map((s) => s.role)) })} {t("p.cutover.cosign_missing", { roles: list(d.cosignatures.missing) })}</p>
@@ -153,11 +147,8 @@
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
   form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-block: 0.5rem; }
   textarea { min-inline-size: 20rem; }
   .decision { border-block-start: 1px solid #ccc; margin-block-start: 1.5rem; padding-block-start: 0.5rem; }
   .steps { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-block: 0.75rem; }
-  .ok { background: #e3f4e3; }
-  .no { background: #fde8e8; }
 </style>

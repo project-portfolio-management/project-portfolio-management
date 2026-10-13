@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type StartQueue, type StartRefusal } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let queue = $state<StartQueue | null>(null);
@@ -39,7 +41,23 @@
       ? t("p.start_queue.limit", { limit: r.limit, in_delivery: r.in_delivery })
       : t("p.start_queue.pool", { pool: r.pool, months: r.months.join(", ") });
   }
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "position", header: t("p.start_queue.col_pos"), align: "end" },
+    { id: "name", header: t("p.start_queue.col_prog"), rowHeader: true, accessor: (r) => (r.name as string | null) ?? String(r.plan_pid) },
+    { id: "queued_on", header: t("p.start_queue.col_asked"), format: (v) => String(v).slice(0, 10) },
+    { id: "refusals", header: t("p.start_queue.col_why"), sortable: false, format: (v) => (v as StartRefusal[]).map(why).join(" "), cell: whyCell },
+    { id: "plan_pid", header: t("p.start_queue.col_act"), sortable: false, cell: actCell },
+  ]);
 </script>
+
+{#snippet whyCell({ value }: DataGridCellContext)}
+  <ul>{#each value as StartRefusal[] as r (r.reason)}<li>{why(r)}</li>{/each}</ul>
+{/snippet}
+
+{#snippet actCell({ row }: DataGridCellContext)}
+  <button class="button" type="button" disabled={busy} aria-label={t("p.start_queue.withdraw", { name: String(row.name ?? row.plan_pid) })} onclick={() => void withdraw(String(row.plan_pid))}>{t("p.start_queue.withdraw_short")}</button>
+{/snippet}
 
 <svelte:head><title>{t("p.start_queue.title")}</title></svelte:head>
 
@@ -52,40 +70,10 @@
   {#if queue.queue.length === 0}
     <p>{t("p.start_queue.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.start_queue.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.start_queue.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.start_queue.col_pos")}</th>
-            <th scope="col">{t("p.start_queue.col_prog")}</th>
-            <th scope="col">{t("p.start_queue.col_asked")}</th>
-            <th scope="col">{t("p.start_queue.col_why")}</th>
-            <th scope="col">{t("p.start_queue.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each queue.queue as q (q.plan_pid)}
-            <tr>
-              <td>{q.position}</td>
-              <th scope="row">{q.name ?? q.plan_pid}</th>
-              <td>{q.queued_on.slice(0, 10)}</td>
-              <td>
-                <ul>{#each q.refusals as r (r.reason)}<li>{why(r)}</li>{/each}</ul>
-              </td>
-              <td>
-                <button class="button" type="button" disabled={busy} aria-label={t("p.start_queue.withdraw", { name: q.name ?? q.plan_pid })} onclick={() => void withdraw(q.plan_pid)}>{t("p.start_queue.withdraw_short")}</button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.start_queue.h1")} {columns} rows={queue.queue} rowId={(r) => String(r.plan_pid)} />
   {/if}
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-bottom: 1rem; }
   ul { margin: 0; padding-inline-start: 1.1rem; }
 </style>

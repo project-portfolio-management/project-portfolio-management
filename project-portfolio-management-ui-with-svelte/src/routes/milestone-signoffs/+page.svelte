@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneSignoffs, type Organization } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let data = $state<MilestoneSignoffs | null>(null);
@@ -40,10 +42,35 @@
     }
   }
   const SYM: Record<string, string> = { met: "●", delivered_not_met: "▲", not_delivered: "–", not_required: "–" };
+  type Row = MilestoneSignoffs["milestones"][number];
+  const stateWord = (s: string) => t(`p.signoffs.state_${s === "not_required" ? "met" : s}` as never);
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.signoffs.col_milestone"), rowHeader: true },
+    { id: "due", header: t("p.signoffs.col_due"), format: (v) => (v ? String(v).slice(0, 10) : "") },
+    { id: "state", header: t("p.signoffs.col_state"), accessor: (r) => (r as unknown as Row).signoff.state, format: (v) => stateWord(String(v)), cell: stateCell, cellClass: (c) => (c.value === "delivered_not_met" ? "cell-red" : c.value === "met" ? "cell-green" : "") },
+    { id: "delivered_on", header: t("p.signoffs.col_delivered"), accessor: (r) => (r as unknown as Row).signoff.delivered_on ?? "" },
+    { id: "met_on", header: t("p.signoffs.col_met"), accessor: (r) => (r as unknown as Row).signoff.met_on ?? "" },
+    { id: "outstanding", header: t("p.signoffs.col_outstanding"), accessor: (r) => (r as unknown as Row).signoff.outstanding.join(", ") },
+    { id: "milestone_pid", header: t("p.signoffs.col_act"), sortable: false, cell: actCell },
+  ]);
   const share = $derived(
     data?.totals.met_share_of_delivered_bp == null ? t("p.signoffs.no_share") : `${Math.round(data.totals.met_share_of_delivered_bp / 100)}%`,
   );
 </script>
+
+{#snippet stateCell({ value, formatted }: DataGridCellContext)}<span aria-hidden="true">{SYM[String(value)] ?? "–"}</span> {formatted}{/snippet}
+
+{#snippet actCell({ row }: DataGridCellContext)}
+  {@const m = row as unknown as Row}
+  <div class="act">
+    <label>{t("p.signoffs.organization")}
+      <select bind:value={pick[m.milestone_pid]}>{#each orgs as o (o.pid)}<option value={o.pid}>{o.name}</option>{/each}</select>
+    </label>
+    <label>{t("p.signoffs.reason")} <input bind:value={reason[m.milestone_pid]} maxlength="500" /></label>
+    <button class="button" type="button" disabled={busy || orgs.length === 0} aria-label={t("p.signoffs.sign_for", { name: m.name })} onclick={() => void act(m, "sign")}>{t("p.signoffs.sign")}</button>
+    <button class="button" type="button" disabled={busy || orgs.length === 0} aria-label={t("p.signoffs.withdraw_for", { name: m.name })} onclick={() => void act(m, "withdraw")}>{t("p.signoffs.withdraw")}</button>
+  </div>
+{/snippet}
 
 <svelte:head><title>{t("p.signoffs.title")}</title></svelte:head>
 
@@ -58,49 +85,10 @@
   {#if data.milestones.length === 0}
     <p>{t("p.signoffs.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.signoffs.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.signoffs.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.signoffs.col_milestone")}</th>
-            <th scope="col">{t("p.signoffs.col_due")}</th>
-            <th scope="col">{t("p.signoffs.col_state")}</th>
-            <th scope="col">{t("p.signoffs.col_delivered")}</th>
-            <th scope="col">{t("p.signoffs.col_met")}</th>
-            <th scope="col">{t("p.signoffs.col_outstanding")}</th>
-            <th scope="col">{t("p.signoffs.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each data.milestones as m (m.milestone_pid)}
-            <tr>
-              <th scope="row">{m.name}</th>
-              <td>{m.due?.slice(0, 10) ?? ""}</td>
-              <td class={`so-${m.signoff.state}`}><span aria-hidden="true">{SYM[m.signoff.state] ?? "–"}</span> {t(`p.signoffs.state_${m.signoff.state === "not_required" ? "met" : m.signoff.state}` as never)}</td>
-              <td>{m.signoff.delivered_on ?? ""}</td>
-              <td>{m.signoff.met_on ?? ""}</td>
-              <td>{m.signoff.outstanding.join(", ")}</td>
-              <td class="act">
-                <label>{t("p.signoffs.organization")}
-                  <select bind:value={pick[m.milestone_pid]}>{#each orgs as o (o.pid)}<option value={o.pid}>{o.name}</option>{/each}</select>
-                </label>
-                <label>{t("p.signoffs.reason")} <input bind:value={reason[m.milestone_pid]} maxlength="500" /></label>
-                <button class="button" type="button" disabled={busy || orgs.length === 0} aria-label={t("p.signoffs.sign_for", { name: m.name })} onclick={() => void act(m, "sign")}>{t("p.signoffs.sign")}</button>
-                <button class="button" type="button" disabled={busy || orgs.length === 0} aria-label={t("p.signoffs.withdraw_for", { name: m.name })} onclick={() => void act(m, "withdraw")}>{t("p.signoffs.withdraw")}</button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.signoffs.h1")} {columns} rows={data.milestones} rowId={(r) => String(r.milestone_pid)} />
   {/if}
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
   .act { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
-  .so-delivered_not_met { background: #fde8e8; }
-  .so-met { background: #e3f4e3; }
 </style>

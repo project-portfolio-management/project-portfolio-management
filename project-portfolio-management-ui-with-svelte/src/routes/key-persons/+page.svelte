@@ -6,6 +6,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KeyPersons } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let data = $state<KeyPersons | null>(null);
@@ -55,7 +57,24 @@
   }
   const ready = (r: string) => t(`p.key_persons.ready_${r}` as never);
   const kindWord = (k: string) => t(`p.key_persons.kind_${k}` as never);
+  const columns: DataGridColumn[] = $derived([
+    { id: "subject", header: t("p.key_persons.col_subject"), rowHeader: true, cell: subjectCell },
+    { id: "successor_ref", header: t("p.key_persons.col_successor"), format: (v) => (v ? String(v) : t("p.key_persons.no_successor")) },
+    { id: "readiness", header: t("p.key_persons.col_ready"), format: (v) => ready(String(v)), cell: readyCell, cellClass: (c) => ({ ready: "cell-green", partly: "cell-amber", none: "cell-red" })[String(c.value)] ?? "" },
+    { id: "note", header: t("p.key_persons.col_note"), format: (v) => (v ? String(v) : "") },
+    { id: "pid", header: t("p.key_persons.col_act"), sortable: false, cell: actCell },
+  ]);
 </script>
+
+{#snippet subjectCell({ row }: DataGridCellContext)}{row.subject} <span class="muted">({kindWord(String(row.subject_kind))})</span>{/snippet}
+
+{#snippet readyCell({ value, formatted }: DataGridCellContext)}
+  <span aria-hidden="true">{value === "ready" ? "●" : value === "partly" ? "◐" : "✖"}</span> {formatted}
+{/snippet}
+
+{#snippet actCell({ row }: DataGridCellContext)}
+  <button class="button" type="button" disabled={busy} aria-label={t("p.key_persons.remove", { name: String(row.subject) })} onclick={() => void run(() => ppm.removeKeyPerson(String(row.pid)))}>{t("p.key_persons.remove_short")}</button>
+{/snippet}
 
 <svelte:head><title>{t("p.key_persons.title")}</title></svelte:head>
 
@@ -84,34 +103,7 @@
   {#if data.entries.length === 0}
     <p>{t("p.key_persons.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.key_persons.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.key_persons.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.key_persons.col_subject")}</th>
-            <th scope="col">{t("p.key_persons.col_successor")}</th>
-            <th scope="col">{t("p.key_persons.col_ready")}</th>
-            <th scope="col">{t("p.key_persons.col_note")}</th>
-            <th scope="col">{t("p.key_persons.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each data.entries as e (e.pid)}
-            <tr>
-              <th scope="row">{e.subject} <span class="muted">({kindWord(e.subject_kind)})</span></th>
-              <td>{e.successor_ref ?? t("p.key_persons.no_successor")}</td>
-              <td class={`rd-${e.readiness}`}><span aria-hidden="true">{e.readiness === "ready" ? "●" : e.readiness === "partly" ? "◐" : "✖"}</span> {ready(e.readiness)}</td>
-              <td>{e.note ?? ""}</td>
-              <td>
-                <button class="button" type="button" disabled={busy} aria-label={t("p.key_persons.remove", { name: e.subject })} onclick={() => void run(() => ppm.removeKeyPerson(e.pid))}>{t("p.key_persons.remove_short")}</button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.key_persons.h1")} {columns} rows={data.entries} rowId={(r) => String(r.pid)} />
   {/if}
 
   <section aria-labelledby="kp-cont">
@@ -136,9 +128,5 @@
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
   form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-block: 0.75rem; }
-  .rd-none { background: #fde8e8; }
-  .rd-partly { background: #fff4d6; }
-  .rd-ready { background: #e3f4e3; }
 </style>

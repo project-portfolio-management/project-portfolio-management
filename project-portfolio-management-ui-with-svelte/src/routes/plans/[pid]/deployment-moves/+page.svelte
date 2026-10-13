@@ -6,7 +6,9 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { PpmClient, type DeploymentMoves, type Task } from "#lib/api/ppm.js";
+  import { PpmClient, type DeploymentMoves, type DeploymentMove, type Task } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -50,7 +52,32 @@
   const cost = (c: { currency: string; delta_minor: number }[] | undefined) =>
     c && c.length ? c.map((x) => `${money(x.delta_minor)} ${x.currency}`).join(", ") : t("p.moves.no_cost");
   const title = (taskPid: string) => tasks.find((x) => x.pid === taskPid)?.title ?? taskPid;
+  const columns: DataGridColumn[] = $derived([
+    { id: "task_pid", header: t("p.moves.col_task"), rowHeader: true, format: (v) => title(String(v)) },
+    { id: "to_start", header: t("p.moves.col_dates"), format: (v, r) => `${r.from_start} → ${v}` },
+    { id: "reason", header: t("p.moves.col_reason") },
+    { id: "requested_by", header: t("p.moves.col_by"), format: (v) => (v ? String(v) : "") },
+    { id: "approver_ref", header: t("p.moves.col_approver") },
+    { id: "status", header: t("p.moves.col_status"), format: (v) => t(`p.moves.status_${v}` as never), cell: statusCell, cellClass: (c) => ({ approved: "cell-green", refused: "cell-red", requested: "cell-amber" })[String(c.value)] ?? "" },
+    { id: "knock_on", header: t("p.moves.col_knock"), sortable: false, format: (_v, r) => t("p.moves.knock", { n: (r as unknown as DeploymentMove).knock_on.length, cost: cost((r as unknown as DeploymentMove).knock_on_cost.labour) }) },
+    { id: "pid", header: t("p.moves.col_act"), sortable: false, cell: decideCell },
+  ]);
 </script>
+
+{#snippet statusCell({ value, formatted, row }: DataGridCellContext)}
+  {@const m = row as unknown as DeploymentMove}
+  <span aria-hidden="true">{value === "approved" ? "●" : value === "refused" ? "✖" : "◆"}</span> {formatted}
+  {#if m.decided_on}<br /><small>{t("p.moves.decided", { by: m.decided_by ?? "", on: m.decided_on.slice(0, 10), why: m.decision_reason ?? "" })}</small>{/if}
+{/snippet}
+
+{#snippet decideCell({ row }: DataGridCellContext)}
+  {@const m = row as unknown as DeploymentMove}
+  {#if m.status === "requested"}
+    <label>{t("p.moves.decision_reason")} <input bind:value={why[m.pid]} maxlength="500" /></label>
+    <button class="button" type="button" disabled={busy} aria-label={t("p.moves.approve_for", { name: title(m.task_pid) })} onclick={() => void decide(m.pid, "approve")}>{t("p.moves.approve")}</button>
+    <button class="button" type="button" disabled={busy} aria-label={t("p.moves.refuse_for", { name: title(m.task_pid) })} onclick={() => void decide(m.pid, "refuse")}>{t("p.moves.refuse")}</button>
+  {/if}
+{/snippet}
 
 <svelte:head><title>{t("p.moves.title")}</title></svelte:head>
 
@@ -76,47 +103,7 @@
   {#if data.moves.length === 0}
     <p>{t("p.moves.none")}</p>
   {:else}
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.moves.h1")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.moves.h1")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.moves.col_task")}</th>
-            <th scope="col">{t("p.moves.col_dates")}</th>
-            <th scope="col">{t("p.moves.col_reason")}</th>
-            <th scope="col">{t("p.moves.col_by")}</th>
-            <th scope="col">{t("p.moves.col_approver")}</th>
-            <th scope="col">{t("p.moves.col_status")}</th>
-            <th scope="col">{t("p.moves.col_knock")}</th>
-            <th scope="col">{t("p.moves.col_act")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each data.moves as m (m.pid)}
-            <tr>
-              <th scope="row">{title(m.task_pid)}</th>
-              <td>{m.from_start} → {m.to_start}</td>
-              <td>{m.reason}</td>
-              <td>{m.requested_by ?? ""}</td>
-              <td>{m.approver_ref}</td>
-              <td class={`mv-${m.status}`}>
-                <span aria-hidden="true">{m.status === "approved" ? "●" : m.status === "refused" ? "✖" : "◆"}</span> {t(`p.moves.status_${m.status}` as never)}
-                {#if m.decided_on}<br /><small>{t("p.moves.decided", { by: m.decided_by ?? "", on: m.decided_on.slice(0, 10), why: m.decision_reason ?? "" })}</small>{/if}
-              </td>
-              <td>{t("p.moves.knock", { n: m.knock_on.length, cost: cost(m.knock_on_cost.labour) })}</td>
-              <td>
-                {#if m.status === "requested"}
-                  <label>{t("p.moves.decision_reason")} <input bind:value={why[m.pid]} maxlength="500" /></label>
-                  <button class="button" type="button" disabled={busy} aria-label={t("p.moves.approve_for", { name: title(m.task_pid) })} onclick={() => void decide(m.pid, "approve")}>{t("p.moves.approve")}</button>
-                  <button class="button" type="button" disabled={busy} aria-label={t("p.moves.refuse_for", { name: title(m.task_pid) })} onclick={() => void decide(m.pid, "refuse")}>{t("p.moves.refuse")}</button>
-                {/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.moves.h1")} {columns} rows={data.moves} rowId={(r) => String(r.pid)} />
     {#if data.cost_by_requester.length > 0}
       <h2>{t("p.moves.by_requester_h2")}</h2>
       <ul>
@@ -129,9 +116,5 @@
 {/if}
 
 <style>
-  .scroll { overflow-x: auto; margin-block: 1rem; }
   form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
-  .mv-requested { background: #fff4d6; }
-  .mv-approved { background: #e3f4e3; }
-  .mv-refused { background: #fde8e8; }
 </style>

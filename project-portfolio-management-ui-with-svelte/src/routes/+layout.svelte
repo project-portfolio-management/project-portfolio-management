@@ -178,6 +178,7 @@
     { href: "/change-requests", get label() { return t("p.change_requests.change_requests"); } },
     { href: "/director-packs", get label() { return t("p.director_pack.director_packs"); } },
     { href: "/pipeline", get label() { return t("p.critical_chain.nav_pipeline"); } },
+    { href: "/start-queue", get label() { return t("p.start_queue.nav"); } },
     { href: "/security", label: t("ppm.nav.security") },
     { href: "/regulator", label: t("ppm.nav.regulator") },
     { href: "/capacity", label: t("ppm.nav.capacity") },

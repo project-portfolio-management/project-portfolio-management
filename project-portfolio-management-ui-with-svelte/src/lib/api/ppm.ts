@@ -2674,6 +2674,14 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** Programmes refused a start, in the order they asked. */
+  startQueue(): Promise<StartQueue> {
+    return this.http.get("/api/start-queue");
+  }
+  /** Take a programme out of the start queue. */
+  withdrawFromStartQueue(planPid: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/start-queue/withdraw`, { body: {} });
+  }
   /** Which skill pool is the portfolio's drum, and why. */
   portfolioDrum(): Promise<{ drum: DrumView; history: { skill_pool_pid: string | null; declared_on: string }[] }> {
     return this.http.get("/api/portfolio-drum");
@@ -3623,4 +3631,14 @@ export class PpmClient {
   reportCsvUrl(pid: string): string {
     return `${API_BASE_URL}/api/reports/${pid}/run?format=csv`;
   }
+}
+
+/** Why a programme was refused a start (EX-8). */
+export type StartRefusal =
+  | { reason: "limit_reached"; in_delivery: number; limit: number }
+  | { reason: "constraint_pool_over"; pool: string; months: string[] };
+
+export interface StartQueue {
+  queue: { position: number; plan_pid: string; name: string | null; queued_on: string; refusals: StartRefusal[] }[];
+  note: string;
 }

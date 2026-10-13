@@ -60,6 +60,7 @@ export const KNOWN_NAV_HREFS = [
   "/change-requests",
   "/director-packs",
   "/pipeline",
+  "/start-queue",
   "/security",
   "/regulator",
   "/capacity",

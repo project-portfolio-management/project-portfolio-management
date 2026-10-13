@@ -103,6 +103,21 @@
   // The page's path without its locale prefix, for the active-nav check.
   const here = $derived(splitPath(page.url.pathname).rest);
 
+  // The link picker: a short list of the places people go most. `current` marks the page you are on.
+  const pickerLinks = $derived(
+    [
+      { href: "/", label: t("p.layout.lp_home") },
+      { href: "/plans", label: t("p.layout.lp_plans") },
+      { href: "/dashboard", label: t("p.layout.lp_dashboard") },
+      { href: "/milestones", label: t("p.layout.lp_milestones") },
+      { href: "/proposals", label: t("p.layout.lp_proposals") },
+      { href: "/director-packs", label: t("p.director_pack.director_packs") },
+      { href: "/start-queue", label: t("p.start_queue.nav") },
+      { href: "/organizations", label: t("p.organizations.nav") },
+      { href: "/display", label: t("p.layout.display") },
+    ].map((l) => ({ label: l.label, href: localeHref(l.href), current: l.href === "/" ? here === "/" : here === l.href || here.startsWith(`${l.href}/`) })),
+  );
+
   // Picking a language goes to the same page under that language's prefix.
   function switchLocale(code: string): void {
     const next = normalizeLocale(code);
@@ -294,7 +309,7 @@
       <button type="button" class="session-button" aria-pressed={simple} onclick={toggleSimple}>
         {t("p.layout.simple_view", { v: simple ? t("p.common.on") : t("p.common.off") })}
       </button>
-      <a class="session-button" href={localeHref("/display")}>{t("p.layout.display")}</a>
+      <a class="session-button display-link" href={localeHref("/display")}>{t("p.layout.display")}</a>
       {#if signedIn}
         <!-- Sign-out posts to the root page's \`signout\` action
              (BFF: revokes server-side + clears the cookie). -->
@@ -308,7 +323,14 @@
         <a class="session-button signin" href={localeHref("/signin")}>{t("auth.signin")}</a>
       {/if}
       <PickerBar
+        links={pickerLinks}
+        linkProps={{ navigate: (href: string) => void goto(href) }}
+        searchProps={{ action: localeHref("/search"), navigate: (href: string) => void goto(href) }}
         labels={{
+          link: t("p.layout.link_picker"),
+          search: t("p.layout.search_picker"),
+          searchInput: t("p.layout.search_input"),
+          searchSubmit: t("p.layout.search_submit"),
           theme: t("chrome.theme"),
           locale: t("chrome.language"),
           textSize: t("nav.text_size"),
@@ -496,22 +518,23 @@
 
   /* Lily PickerBar. The Lily theme stylesheet (loaded by ThemePicker, see
      `defaultValue` below) styles the picker buttons and listboxes; this
-     only places them. Each listbox is anchored to the header (`.topbar`
-     is `position: relative`) rather than to its own button, so it drops
-     down under the header's end edge, is as wide as its longest label
-     (the theme names are long), never pushes the page down, and cannot
-     run off either side of a narrow screen. */
+     only places the buttons and sizes the popups. Since the 0.4 themes each popup is placed by the theme
+     itself (CSS anchor positioning, `position: fixed`): under its own button, flipping to the button's end
+     edge or above it when it would run off the window. Do not set `top` or `inset-*` on the popups here:
+     that fights the anchor and throws them to the bottom of the window. A popup is as wide as its longest
+     label (the theme names are long) and never pushes the page down. */
   .header-end :global(.picker-bar) {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.375rem;
   }
+  .header-end :global(.link-picker),
+  .header-end :global(.search-picker),
   .header-end :global(.theme-picker),
   .header-end :global(.locale-picker),
   .header-end :global(.text-size-picker),
   .header-end :global(.share-picker) {
-    position: static;
     display: inline-flex;
     align-items: center;
   }
@@ -534,6 +557,8 @@
   .header-end :global(.share-picker-status:empty) {
     display: none;
   }
+  .header-end :global(.link-picker-button),
+  .header-end :global(.search-picker-button),
   .header-end :global(.theme-picker-button),
   .header-end :global(.locale-picker-button),
   .header-end :global(.text-size-picker-button),
@@ -544,13 +569,12 @@
     margin: 0;
     vertical-align: middle;
   }
+  .header-end :global(.link-picker-list),
+  .header-end :global(.search-picker-panel),
   .header-end :global(.theme-picker-list),
   .header-end :global(.locale-picker-list),
   .header-end :global(.text-size-picker-list),
   .header-end :global(.share-picker-list) {
-    top: 100%;
-    inset-inline-start: auto;
-    inset-inline-end: 1.5rem;
     z-index: 40;
     box-sizing: border-box;
     min-width: 0;
@@ -561,6 +585,13 @@
   .header-end :global(.locale-picker-option),
   .header-end :global(.text-size-picker-option) {
     white-space: nowrap;
+  }
+  /* Six pickers and the session buttons no longer fit one row on a tablet. Display is also in the link
+     picker, so its button goes first. */
+  @media (max-width: 64rem) {
+    .display-link {
+      display: none;
+    }
   }
   @media (max-width: 40rem) {
     .topbar {
@@ -578,11 +609,13 @@
     .header-end :global(.share-picker-status) {
       inset-inline-end: 0.75rem;
     }
+    .header-end :global(.link-picker-list),
+    .header-end :global(.search-picker-panel),
     .header-end :global(.theme-picker-list),
     .header-end :global(.locale-picker-list),
     .header-end :global(.text-size-picker-list),
     .header-end :global(.share-picker-list) {
-      inset-inline-end: 0.75rem;
+      max-width: calc(100vw - 1.5rem);
     }
   }
 </style>

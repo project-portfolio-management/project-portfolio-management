@@ -909,9 +909,9 @@ test("dashboard renders tiles and RAG rollups", async ({ page }) => {
   // Six tiles sit at the top, above the per-collection table.
   await expect(tiles.locator(".tile")).toHaveCount(6);
   const tilesBox = await tiles.boundingBox();
-  const tableBox = await page.getByRole("cell", { name: "Project" }).boundingBox();
+  const tableBox = await page.getByRole("rowheader", { name: "Project" }).boundingBox();
   expect(tilesBox!.y + tilesBox!.height).toBeLessThanOrEqual(tableBox!.y);
-  await expect(page.getByRole("cell", { name: "Project" })).toBeVisible();
+  await expect(page.getByRole("rowheader", { name: "Project" })).toBeVisible();
   // RAG counts render in their columns.
   await expect(page.locator("td.rag.red")).toHaveText("1");
   await expect(page.locator("td.rag.green")).toHaveText("2");

@@ -31,6 +31,7 @@
     onRowActivate,
     footer,
     storageKey,
+    testid,
     class: className = "",
   }: {
     /** The table's accessible name (also the scroll region's). */
@@ -53,6 +54,8 @@
     onRowActivate?: (row: DataGridRow, id: string) => void;
     footer?: Snippet<[{ columns: DataGridColumn[]; rows: DataGridRow[] }]>;
     storageKey?: string;
+    /** A `data-testid` for tests. */
+    testid?: string;
     class?: string;
   } = $props();
 
@@ -75,6 +78,7 @@
   {onRowActivate}
   {footer}
   {storageKey}
+  data-testid={testid}
   class={`data-table ${className}`.trim()}
   labels={{
     ...(searchable ? { search: t("p.table.search") } : {}),

@@ -4,6 +4,8 @@
   table, and the CSV download.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -54,6 +56,10 @@
       error = err instanceof Error ? err.message : t("p.reports.run_failed");
     }
   }
+
+  /** One column per field of the first row (a report's fields are the author's choice). */
+  const reportColumns = (first: Record<string, unknown>): DataGridColumn[] =>
+    Object.keys(first).map((k, i) => ({ id: k, header: k, rowHeader: i === 0, format: (v) => (v === null || v === undefined ? "" : String(v)) }));
 </script>
 
 <svelte:head><title>{t("p.reports.reports_ppm")}</title></svelte:head>
@@ -85,16 +91,7 @@
         <p class="small muted">{result.rows} {t("ppm.reports.rows")}</p>
         {#if result.data.length > 0}
           {@const first = result.data[0] ?? {}}
-          <table class="small">
-            <thead>
-              <tr>{#each Object.keys(first) as column (column)}<th>{column}</th>{/each}</tr>
-            </thead>
-            <tbody>
-              {#each result.data as row, index (index)}
-                <tr>{#each Object.values(row) as cell, cellIndex (cellIndex)}<td>{cell}</td>{/each}</tr>
-              {/each}
-            </tbody>
-          </table>
+          <DataTable label={report.name} columns={reportColumns(first)} rows={result.data} rowId={(_r, i) => String(i)} searchable />
         {/if}
       {/if}
     {/if}

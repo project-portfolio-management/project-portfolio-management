@@ -4,6 +4,8 @@
   English-first (locale catalogues extend as a follow-up).
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -20,7 +22,22 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   });
+
+  type Collection = Dashboard["collections"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "collection", header: t("ppm.dashboard.collection"), rowHeader: true },
+    { id: "total", header: t("ppm.dashboard.total"), align: "end" },
+    { id: "red", header: t("ppm.dashboard.red"), align: "end", accessor: (r) => (r as unknown as Collection).rag.red, cellClass: "rag red" },
+    { id: "amber", header: t("ppm.dashboard.amber"), align: "end", accessor: (r) => (r as unknown as Collection).rag.amber, cellClass: "rag amber" },
+    { id: "green", header: t("ppm.dashboard.green"), align: "end", accessor: (r) => (r as unknown as Collection).rag.green, cellClass: "rag green" },
+    { id: "stages", header: t("ppm.dashboard.stages"), sortable: false, accessor: (r) => Object.entries((r as unknown as Collection).stages).map(([k, v]) => `${k}: ${v}`).join(", "), cell: stagesCell },
+  ]);
 </script>
+
+{#snippet stagesCell({ row }: DataGridCellContext)}
+  {#each Object.entries((row as unknown as Collection).stages) as [stage, count] (stage)}<span class="chip">{stage}: {count}</span>{/each}
+{/snippet}
+
 
 <svelte:head><title>{t("p.dashboard.dashboard_ppm")}</title></svelte:head>
 
@@ -38,31 +55,7 @@
     <div class="tile"><strong>{board.site_tiles.over_allocated_people}</strong><span>{t("ppm.dashboard.overAllocated")}</span></div>
   </section>
 
-  <table>
-    <thead>
-      <tr>
-        <th>{t("ppm.dashboard.collection")}</th><th>{t("ppm.dashboard.total")}</th>
-        <th>{t("ppm.dashboard.red")}</th><th>{t("ppm.dashboard.amber")}</th><th>{t("ppm.dashboard.green")}</th>
-        <th>{t("ppm.dashboard.stages")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each board.collections as row (row.collection)}
-        <tr>
-          <td><strong>{row.collection}</strong></td>
-          <td>{row.total}</td>
-          <td class="rag red">{row.rag.red}</td>
-          <td class="rag amber">{row.rag.amber}</td>
-          <td class="rag green">{row.rag.green}</td>
-          <td class="small muted">
-            {#each Object.entries(row.stages) as [stage, count] (stage)}
-              <span class="chip">{stage}: {count}</span>
-            {/each}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("ppm.dashboard.title")} {columns} rows={board.collections} rowId={(r) => String(r.collection)} />
   <p class="small muted">{t("ppm.common.asOf")} {board.as_of}</p>
 {:else if !error}
   <p>{t("ppm.common.loading")}</p>
@@ -84,10 +77,10 @@
   }
   .tile strong { font-size: 1.5rem; }
   .tile span { font-size: 0.8rem; opacity: 0.75; }
-  .rag { font-weight: 700; text-align: center; }
-  .rag.red { color: #a4262c; }
-  .rag.amber { color: #a06a00; }
-  .rag.green { color: #1d8a4e; }
+  :global(.rag) { font-weight: 700; }
+  :global(.rag.red) { color: #a4262c; }
+  :global(.rag.amber) { color: #a06a00; }
+  :global(.rag.green) { color: #1d8a4e; }
   .chip {
     display: inline-block;
     border: 1px solid var(--border, #ccc);

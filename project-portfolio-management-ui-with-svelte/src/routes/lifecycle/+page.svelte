@@ -8,6 +8,8 @@
   separately instead of being quietly folded in somewhere.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { CapabilityClient, type LifecycleFunnel } from "#lib/api/capabilities.js";
@@ -29,7 +31,20 @@
     }
   }
   onMount(refresh);
+
+  type Phase = LifecycleFunnel["phases"][number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "phase", header: t("p.lifecycle.phase"), rowHeader: true, format: (v) => String(v).replaceAll("_", " ") },
+    { id: "live", header: t("p.lifecycle.live"), align: "end" },
+    { id: "stalled", header: t("p.lifecycle.stalled"), align: "end", cellClass: (c) => (Number(c.value) > 0 ? "cell-red" : "") },
+    { id: "share", header: t("p.lifecycle.share"), sortable: false, accessor: (r) => (r as unknown as Phase).live, cell: shareCell },
+  ]);
 </script>
+
+{#snippet shareCell({ row }: DataGridCellContext)}
+  <span class="meter"><span class="fill" style={`width:${total === 0 ? 0 : ((row as unknown as Phase).live / total) * 100}%`}></span></span>
+{/snippet}
+
 
 <svelte:head><title>{t("p.lifecycle.lifecycle_ppm")}</title></svelte:head>
 
@@ -47,31 +62,12 @@
       · <strong>{view.unknown_phase}</strong> {t("p.lifecycle.in_an_unrecognized_phase")}
     {/if}
   </p>
-  <table>
-    <thead><tr><th>{t("p.lifecycle.phase")}</th><th>{t("p.lifecycle.live")}</th><th>{t("p.lifecycle.stalled")}</th><th>{t("p.lifecycle.share")}</th></tr></thead>
-    <tbody>
-      {#each view.phases as phase (phase.phase)}
-        <tr>
-          <td>{phase.phase.replaceAll("_", " ")}</td>
-          <td>{phase.live}</td>
-          <td class:stalled={phase.stalled > 0}>{phase.stalled}</td>
-          <td>
-            <span class="meter">
-              <span
-                class="fill"
-                style={`width:${total === 0 ? 0 : (phase.live / total) * 100}%`}
-              ></span>
-            </span>
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.lifecycle.phase")} {columns} rows={view.phases} rowId={(r) => String(r.phase)} />
   <p class="small muted">{t("p.lifecycle.as_of", { as_of: view.as_of })}</p>
 {/if}
 
 <style>
-  .stalled { color: #a4262c; font-weight: 700; }
+
   .meter {
     display: inline-block;
     width: 200px;

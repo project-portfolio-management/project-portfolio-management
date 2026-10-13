@@ -8,6 +8,8 @@
   import { onMount } from "svelte";
   import { PpmClient, type Pipeline, type SkillPool } from "#lib/api/ppm.js";
   import { layoutBars, outcomeLook } from "#lib/chain-view.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
   let pipe = $state<Pipeline | null>(null);
@@ -53,6 +55,16 @@
       }),
     ),
   );
+  type Proj = NonNullable<NonNullable<typeof pipe>["projects"]>[number];
+  const columns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.critical_chain.col_project"), rowHeader: true },
+    { id: "needs", header: t("p.critical_chain.col_needs"), accessor: (r) => `${(r as unknown as Proj).first_drum_use} → ${(r as unknown as Proj).last_drum_use}` },
+    { id: "peak_fte", header: t("p.critical_chain.col_peak"), align: "end" },
+    { id: "outcome", header: t("p.critical_chain.col_proposal"), format: (v) => t(outcomeLook(String(v)).word as never), cell: outcomeCell, cellClass: (c) => `cell-${outcomeLook(String(c.value)).tone}` },
+    { id: "proposed_first_drum_use", header: t("p.critical_chain.col_proposed") },
+    { id: "delay_days", header: t("p.critical_chain.col_delay"), align: "end" },
+    { id: "explanation", header: t("p.critical_chain.col_why") },
+  ]);
   function span(a: string, b: string): number {
     return Math.round((Date.parse(b.slice(0, 10)) - Date.parse(a.slice(0, 10))) / 86_400_000);
   }
@@ -60,6 +72,8 @@
     return new Date(Date.parse(d.slice(0, 10)) + days * 86_400_000).toISOString().slice(0, 10);
   }
 </script>
+
+{#snippet outcomeCell({ value, formatted }: DataGridCellContext)}<span aria-hidden="true">{outcomeLook(String(value)).symbol}</span> {formatted}{/snippet}
 
 <svelte:head><title>{t("p.critical_chain.pipeline_ppm")}</title></svelte:head>
 
@@ -114,37 +128,7 @@
             {/each}
           </ol>
         </figure>
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <div class="scroll" role="region" aria-label={t("p.critical_chain.projects_h2")} tabindex="0">
-          <table>
-            <caption class="sr-only">{t("p.critical_chain.projects_h2")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t("p.critical_chain.col_project")}</th>
-                <th scope="col">{t("p.critical_chain.col_needs")}</th>
-                <th scope="col">{t("p.critical_chain.col_peak")}</th>
-                <th scope="col">{t("p.critical_chain.col_proposal")}</th>
-                <th scope="col">{t("p.critical_chain.col_proposed")}</th>
-                <th scope="col">{t("p.critical_chain.col_delay")}</th>
-                <th scope="col">{t("p.critical_chain.col_why")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each projects as p (p.plan_pid)}
-                {@const look = outcomeLook(p.outcome)}
-                <tr>
-                  <th scope="row">{p.name}</th>
-                  <td>{p.first_drum_use} → {p.last_drum_use}</td>
-                  <td>{p.peak_fte}</td>
-                  <td class={`tone-${look.tone}`}><span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}</td>
-                  <td>{p.proposed_first_drum_use}</td>
-                  <td>{p.delay_days}</td>
-                  <td>{p.explanation}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <DataTable label={t("p.critical_chain.projects_h2")} columns={columns} rows={projects} rowId={(r) => String((r as unknown as Proj).plan_pid)} />
       {/if}
     </section>
   {/if}
@@ -161,8 +145,4 @@
   .sw { display: inline-block; inline-size: 1.2rem; block-size: 0.6rem; border: 2px solid #1b3a6b; box-sizing: border-box; vertical-align: middle; }
   .sw.now { background: #5b7fb8; }
   .sw.prop { background: repeating-linear-gradient(45deg, #fff, #fff 3px, #d7dfee 3px, #d7dfee 6px); border-style: dashed; }
-  .scroll { overflow-x: auto; margin-bottom: 1rem; }
-  .tone-red { background: #fde8e8; }
-  .tone-amber { background: #fff4d6; }
-  .tone-green { background: #e3f4e3; }
 </style>

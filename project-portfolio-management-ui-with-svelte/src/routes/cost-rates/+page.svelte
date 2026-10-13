@@ -5,6 +5,8 @@
   Finance data: someone without access sees a plain note.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { ApiError } from "#lib/api/client.js";
@@ -60,6 +62,11 @@
       status = err instanceof Error ? err.message : t("p.cost_rates.could_not_add_the_rate");
     }
   }
+
+  const rateColumns = (currency: string): DataGridColumn[] => [
+    { id: "effective_from", header: t("p.cost_rates.from"), rowHeader: true },
+    { id: "per_hour_minor", header: t("p.cost_rates.per_hour"), align: "end", format: (v) => money(Number(v), currency) },
+  ];
 </script>
 
 <svelte:head><title>{t("p.cost_rates.cost_rates_ppm")}</title></svelte:head>
@@ -77,10 +84,7 @@
         {#if row.rates.length === 0}
           <p class="small muted">{t("p.cost_rates.no_rate_yet_work_by", { v: row.role ? t("p.common.role_word") : t("p.common.person_word") })}</p>
         {:else}
-          <table>
-            <thead><tr><th scope="col">{t("p.cost_rates.from")}</th><th scope="col">{t("p.cost_rates.per_hour")}</th></tr></thead>
-            <tbody>{#each row.rates as r}<tr><td>{r.effective_from}</td><td>{money(r.per_hour_minor, row.currency)}</td></tr>{/each}</tbody>
-          </table>
+          <DataTable label={`${row.name} — ${row.role ?? row.person_ref}`} columns={rateColumns(row.currency)} rows={row.rates} rowId={(r) => String(r.effective_from)} />
         {/if}
         <form class="row" onsubmit={(e) => addRate(row, e)}>
           <label>{t("p.cost_rates.effective_from")} <input type="date" value={from[row.pid] ?? ""} oninput={(e) => (from[row.pid] = e.currentTarget.value)} /></label>

@@ -10,6 +10,8 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ChainBuffers, type CriticalChain } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { layoutBars } from "#lib/chain-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -52,6 +54,38 @@
     });
     return out;
   });
+  type Task = NonNullable<CriticalChain["tasks"]>[number];
+  type Feeding = NonNullable<ChainBuffers["feeding_buffers"]>[number];
+  type ResBuf = NonNullable<ChainBuffers["resource_buffers"]>[number];
+  const heldText = (task: Task): string => {
+    const link = heldBy.get(task.pid);
+    if (!link) return t("p.critical_chain.held_first");
+    if (link.kind === "dependency") return t("p.critical_chain.held_dep");
+    if (link.masked) return t("p.critical_chain.held_person_hidden");
+    return t("p.critical_chain.held_person", { person: link.person_ref ?? link.person ?? "" });
+  };
+  const chainColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => (r as unknown as Task).title ?? (r as unknown as Task).pid },
+    { id: "duration_days", header: t("p.critical_chain.col_days"), align: "end" },
+    { id: "start", header: t("p.critical_chain.col_start"), format: (v) => (v ? String(v) : "") },
+    { id: "finish", header: t("p.critical_chain.col_finish"), format: (v) => (v ? String(v) : "") },
+    { id: "held", header: t("p.critical_chain.col_held_by"), accessor: (r) => heldText(r as unknown as Task) },
+    { id: "on_critical_path", header: t("p.critical_chain.col_on_path"), format: (v) => (v ? t("p.critical_chain.yes") : t("p.critical_chain.no")) },
+  ]);
+  const feedingColumns: DataGridColumn[] = $derived([
+    { id: "tasks", header: t("p.critical_chain.col_feeding_tasks"), rowHeader: true, accessor: (r) => (r as unknown as Feeding).tasks.map((x) => x.title ?? x.pid).join(" → ") },
+    { id: "joins", header: t("p.critical_chain.col_joins"), accessor: (r) => (r as unknown as Feeding).joins.title ?? (r as unknown as Feeding).joins.pid },
+    { id: "duration_days", header: t("p.critical_chain.col_days"), align: "end" },
+    { id: "buffer_days", header: t("p.critical_chain.col_buffer"), align: "end", format: (v) => (v === null || v === undefined ? t("p.critical_chain.unsized") : String(v)) },
+    { id: "room_before_join_days", header: t("p.critical_chain.col_room"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
+    { id: "push", header: t("p.critical_chain.col_push"), accessor: (r) => { const f = r as unknown as Feeding; return f.would_push_chain ? `▲ ${t("p.critical_chain.push_yes", { days: f.push_days ?? 0 })}` : f.buffer_days !== null ? t("p.critical_chain.no") : ""; } },
+  ]);
+  const resourceColumns: DataGridColumn[] = $derived([
+    { id: "task", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => (r as unknown as ResBuf).task.title ?? (r as unknown as ResBuf).task.pid },
+    { id: "person", header: t("p.critical_chain.col_person"), accessor: (r) => { const x = r as unknown as ResBuf; return x.masked ? `${x.person} ${t("p.critical_chain.hidden")}` : (x.person_ref ?? x.person); } },
+    { id: "alert_on", header: t("p.critical_chain.col_alert_on") },
+    { id: "starts", header: t("p.critical_chain.col_task_starts") },
+  ]);
   const scale = $derived(Math.max(1, ...rows.map((r) => r.work + (r.buffer ?? 0))));
 </script>
 
@@ -96,40 +130,7 @@
         </ol>
       </figure>
       <!-- A wide table scrolls on its own; the region is focusable so a keyboard can scroll it. -->
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="scroll" role="region" aria-label={t("p.critical_chain.chain_h2")} tabindex="0">
-        <table>
-          <caption class="sr-only">{t("p.critical_chain.chain_h2")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.critical_chain.col_task")}</th>
-              <th scope="col">{t("p.critical_chain.col_days")}</th>
-              <th scope="col">{t("p.critical_chain.col_start")}</th>
-              <th scope="col">{t("p.critical_chain.col_finish")}</th>
-              <th scope="col">{t("p.critical_chain.col_held_by")}</th>
-              <th scope="col">{t("p.critical_chain.col_on_path")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each tasks as task (task.pid)}
-              {@const link = heldBy.get(task.pid)}
-              <tr>
-                <th scope="row">{task.title ?? task.pid}</th>
-                <td>{task.duration_days}</td>
-                <td>{task.start ?? ""}</td>
-                <td>{task.finish ?? ""}</td>
-                <td>
-                  {#if !link}{t("p.critical_chain.held_first")}
-                  {:else if link.kind === "dependency"}{t("p.critical_chain.held_dep")}
-                  {:else if link.masked}{t("p.critical_chain.held_person_hidden")}
-                  {:else}{t("p.critical_chain.held_person", { person: link.person_ref ?? link.person ?? "" })}{/if}
-                </td>
-                <td>{task.on_critical_path ? t("p.critical_chain.yes") : t("p.critical_chain.no")}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <DataTable label={t("p.critical_chain.chain_h2")} columns={chainColumns} rows={tasks} rowId={(r) => String(r.pid)} />
     {/if}
   </section>
 
@@ -177,63 +178,13 @@
       {#if (buffers.feeding_buffers ?? []).length === 0}
         <p>{t("p.critical_chain.feeding_none")}</p>
       {:else}
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <div class="scroll" role="region" aria-label={t("p.critical_chain.feeding_h3")} tabindex="0">
-          <table>
-            <caption class="sr-only">{t("p.critical_chain.feeding_h3")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t("p.critical_chain.col_feeding_tasks")}</th>
-                <th scope="col">{t("p.critical_chain.col_joins")}</th>
-                <th scope="col">{t("p.critical_chain.col_days")}</th>
-                <th scope="col">{t("p.critical_chain.col_buffer")}</th>
-                <th scope="col">{t("p.critical_chain.col_room")}</th>
-                <th scope="col">{t("p.critical_chain.col_push")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each buffers.feeding_buffers ?? [] as f, i (i)}
-                <tr>
-                  <th scope="row">{f.tasks.map((x) => x.title ?? x.pid).join(" → ")}</th>
-                  <td>{f.joins.title ?? f.joins.pid}</td>
-                  <td>{f.duration_days}</td>
-                  <td>{f.buffer_days ?? t("p.critical_chain.unsized")}</td>
-                  <td>{f.room_before_join_days ?? ""}</td>
-                  <td>
-                    {#if f.would_push_chain}<span aria-hidden="true">▲</span> {t("p.critical_chain.push_yes", { days: f.push_days ?? 0 })}
-                    {:else if f.buffer_days !== null}{t("p.critical_chain.no")}{/if}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <DataTable label={t("p.critical_chain.feeding_h3")} columns={feedingColumns} rows={buffers.feeding_buffers ?? []} rowId={(_r, i) => String(i)} />
       {/if}
 
       <h3>{t("p.critical_chain.resource_h3")}</h3>
       <p>{t("p.critical_chain.resource_lede", { lead: buffers.resource_buffer_lead_days })}</p>
       {#if (buffers.resource_buffers ?? []).length > 0}
-        <table>
-          <caption class="sr-only">{t("p.critical_chain.resource_h3")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.critical_chain.col_task")}</th>
-              <th scope="col">{t("p.critical_chain.col_person")}</th>
-              <th scope="col">{t("p.critical_chain.col_alert_on")}</th>
-              <th scope="col">{t("p.critical_chain.col_task_starts")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each buffers.resource_buffers ?? [] as r (r.task.pid)}
-              <tr>
-                <th scope="row">{r.task.title ?? r.task.pid}</th>
-                <td>{r.masked ? `${r.person} ${t("p.critical_chain.hidden")}` : (r.person_ref ?? r.person)}</td>
-                <td>{r.alert_on}</td>
-                <td>{r.starts}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+        <DataTable label={t("p.critical_chain.resource_h3")} columns={resourceColumns} rows={buffers.resource_buffers ?? []} rowId={(r) => String((r as unknown as ResBuf).task.pid)} />
       {/if}
 
       {#if (buffers.scheduled_at_likely_duration ?? []).length > 0}
@@ -252,5 +203,4 @@
   .bar.solid { background: #5b7fb8; }
   /* A dashed outline and stripes so the buffer is told apart without colour. */
   .bar.dashed { background: repeating-linear-gradient(45deg, #fff, #fff 4px, #d7dfee 4px, #d7dfee 8px); border-style: dashed; }
-  .scroll { overflow-x: auto; margin-bottom: 1rem; }
 </style>

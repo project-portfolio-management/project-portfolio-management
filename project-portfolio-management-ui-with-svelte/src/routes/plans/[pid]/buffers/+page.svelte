@@ -9,7 +9,9 @@
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { PpmClient, type BufferManagement, type BufferReading } from "#lib/api/ppm.js";
+  import { PpmClient, type BufferManagement, type BufferReading, type RecoveryAction } from "#lib/api/ppm.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import FeverChart from "#lib/components/FeverChart.svelte";
   import { zoneLook } from "#lib/chain-view.js";
 
@@ -64,6 +66,31 @@
       form.due_date = "";
     });
   }
+
+  type Snap = NonNullable<BufferManagement["snapshots"]>[number];
+  type Action = RecoveryAction;
+  const tone = (z: unknown) => `cell-${zoneLook(z as never).tone}`;
+  const readingColumns: DataGridColumn[] = $derived([
+    { id: "key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, accessor: (r) => label(r as unknown as BufferReading) },
+    { id: "buffer_days", header: t("p.critical_chain.col_size"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
+    { id: "done", header: t("p.critical_chain.col_done"), align: "end", accessor: (r) => (r as unknown as BufferReading).point?.chain_completed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
+    { id: "used", header: t("p.critical_chain.col_used"), align: "end", accessor: (r) => (r as unknown as BufferReading).point?.buffer_consumed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
+    { id: "slip_days", header: t("p.critical_chain.col_slip"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
+    { id: "zone", header: t("p.critical_chain.col_zone"), accessor: (r) => (r as unknown as BufferReading).point?.zone ?? null, cell: zoneCell, cellClass: (c) => tone(c.value) },
+  ]);
+  const actionColumns: DataGridColumn[] = $derived([
+    { id: "buffer_key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, format: (v) => labelOf.get(String(v)) ?? String(v) },
+    { id: "action", header: t("p.critical_chain.col_action") },
+    { id: "owner", header: t("p.critical_chain.col_owner"), accessor: (r) => { const a = r as unknown as Action; return a.owner_ref ?? (a.owner ? `${a.owner} ${t("p.critical_chain.hidden")}` : ""); } },
+    { id: "due_date", header: t("p.critical_chain.col_due"), format: (v) => (v ? String(v) : "") },
+    { id: "status", header: t("p.critical_chain.col_status"), format: (v) => statusText(String(v) as Action["status"]), cell: statusCell },
+  ]);
+  const snapColumns: DataGridColumn[] = $derived([
+    { id: "taken_on", header: t("p.critical_chain.col_snap_date"), rowHeader: true },
+    ...(data?.readings ?? []).map((r): DataGridColumn => ({
+      id: `z-${r.key}`, header: label(r), accessor: (row) => ((row as unknown as Snap).zones[r.key] ?? null), cell: snapZoneCell, cellClass: (c) => tone(c.value),
+    })),
+  ]);
 </script>
 
 <svelte:head><title>{t("p.critical_chain.buffers_ppm")}</title></svelte:head>
@@ -121,38 +148,7 @@
 
   <section aria-labelledby="bm-table">
     <h2 id="bm-table">{t("p.critical_chain.table_h2")}</h2>
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <div class="scroll" role="region" aria-label={t("p.critical_chain.table_h2")} tabindex="0">
-      <table>
-        <caption class="sr-only">{t("p.critical_chain.table_h2")}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("p.critical_chain.col_buffer_name")}</th>
-            <th scope="col">{t("p.critical_chain.col_size")}</th>
-            <th scope="col">{t("p.critical_chain.col_done")}</th>
-            <th scope="col">{t("p.critical_chain.col_used")}</th>
-            <th scope="col">{t("p.critical_chain.col_slip")}</th>
-            <th scope="col">{t("p.critical_chain.col_zone")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each data.readings as r (r.key)}
-            {@const look = zoneLook(r.point?.zone)}
-            <tr>
-              <th scope="row">{label(r)}</th>
-              <td>{r.buffer_days ?? ""}</td>
-              <td>{r.point ? pct(r.point.chain_completed_pct) : ""}</td>
-              <td>{r.point ? pct(r.point.buffer_consumed_pct) : ""}</td>
-              <td>{r.slip_days ?? ""}</td>
-              <td class={`tone-${look.tone}`}>
-                <span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}
-                {#if !r.point && r.no_point_reason}<span class="small"> — {r.no_point_reason}</span>{/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable label={t("p.critical_chain.table_h2")} columns={readingColumns} rows={data.readings} rowId={(r) => String((r as unknown as BufferReading).key)} />
   </section>
 
   <section aria-labelledby="bm-actions">
@@ -160,38 +156,7 @@
     {#if (data.recovery_actions ?? []).length === 0}
       <p>{t("p.critical_chain.actions_none")}</p>
     {:else}
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="scroll" role="region" aria-label={t("p.critical_chain.actions_h2")} tabindex="0">
-        <table>
-          <caption class="sr-only">{t("p.critical_chain.actions_h2")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.critical_chain.col_buffer_name")}</th>
-              <th scope="col">{t("p.critical_chain.col_action")}</th>
-              <th scope="col">{t("p.critical_chain.col_owner")}</th>
-              <th scope="col">{t("p.critical_chain.col_due")}</th>
-              <th scope="col">{t("p.critical_chain.col_status")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each data.recovery_actions ?? [] as a (a.pid)}
-              <tr>
-                <th scope="row">{labelOf.get(a.buffer_key) ?? a.buffer_key}</th>
-                <td>{a.action}</td>
-                <td>{a.owner_ref ?? (a.owner ? `${a.owner} ${t("p.critical_chain.hidden")}` : "")}</td>
-                <td>{a.due_date ?? ""}</td>
-                <td>
-                  {statusText(a.status)}
-                  {#if a.status === "open"}
-                    <button class="button small" type="button" disabled={busy} aria-label={`${t("p.critical_chain.mark_done")}: ${a.action}`} onclick={() => void run(() => ppm.closeRecoveryAction(pid, a.pid, "done"))}>{t("p.critical_chain.mark_done")}</button>
-                    <button class="button small" type="button" disabled={busy} aria-label={`${t("p.critical_chain.drop_action")}: ${a.action}`} onclick={() => void run(() => ppm.closeRecoveryAction(pid, a.pid, "dropped"))}>{t("p.critical_chain.drop_action")}</button>
-                  {/if}
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <DataTable label={t("p.critical_chain.actions_h2")} columns={actionColumns} rows={data.recovery_actions ?? []} rowId={(r) => String((r as unknown as Action).pid)} />
     {/if}
 
     <h3>{t("p.critical_chain.add_action_h3")}</h3>
@@ -216,39 +181,33 @@
     {#if (data.snapshots ?? []).length === 0}
       <p>{t("p.critical_chain.snap_none")}</p>
     {:else}
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <div class="scroll" role="region" aria-label={t("p.critical_chain.snap_h2")} tabindex="0">
-        <table>
-          <caption class="sr-only">{t("p.critical_chain.snap_h2")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("p.critical_chain.col_snap_date")}</th>
-              {#each data.readings as r (r.key)}<th scope="col">{label(r)}</th>{/each}
-            </tr>
-          </thead>
-          <tbody>
-            {#each data.snapshots ?? [] as s (s.pid)}
-              <tr>
-                <th scope="row">{s.taken_on}</th>
-                {#each data.readings as r (r.key)}
-                  {@const look = zoneLook((s.zones[r.key] ?? null) as never)}
-                  <td class={`tone-${look.tone}`}><span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}</td>
-                {/each}
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <DataTable label={t("p.critical_chain.snap_h2")} columns={snapColumns} rows={data.snapshots ?? []} rowId={(r) => String((r as unknown as Snap).pid)} />
     {/if}
   </section>
 {/if}
 
+{#snippet zoneCell({ row, formatted }: DataGridCellContext)}
+  {@const r = row as unknown as BufferReading}
+  {@const look = zoneLook(r.point?.zone)}
+  <span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}
+  {#if !r.point && r.no_point_reason}<span class="small"> — {r.no_point_reason}</span>{/if}
+{/snippet}
+
+{#snippet snapZoneCell({ value }: DataGridCellContext)}
+  {@const look = zoneLook((value ?? null) as never)}
+  <span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}
+{/snippet}
+
+{#snippet statusCell({ row, formatted }: DataGridCellContext)}
+  {@const a = row as unknown as Action}
+  {formatted}
+  {#if a.status === "open"}
+    <button class="button small" type="button" disabled={busy} aria-label={`${t("p.critical_chain.mark_done")}: ${a.action}`} onclick={() => void run(() => ppm.closeRecoveryAction(pid, a.pid, "done"))}>{t("p.critical_chain.mark_done")}</button>
+    <button class="button small" type="button" disabled={busy} aria-label={`${t("p.critical_chain.drop_action")}: ${a.action}`} onclick={() => void run(() => ppm.closeRecoveryAction(pid, a.pid, "dropped"))}>{t("p.critical_chain.drop_action")}</button>
+  {/if}
+{/snippet}
+
 <style>
   .charts { display: flex; flex-wrap: wrap; gap: 1rem; }
-  .scroll { overflow-x: auto; margin-bottom: 1rem; }
   /* Pale tints so the text keeps its contrast; the word and the shape carry the meaning. */
-  .tone-red { background: #fde8e8; }
-  .tone-amber { background: #fff4d6; }
-  .tone-green { background: #e3f4e3; }
-  .tone-grey { background: #eeeeee; }
 </style>

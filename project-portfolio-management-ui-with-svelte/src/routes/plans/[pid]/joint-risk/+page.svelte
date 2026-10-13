@@ -7,6 +7,8 @@
   and the scatter has the same numbers beneath it.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -57,7 +59,41 @@
   onMount(() => void run());
 
   const scatter = $derived(result ? scatterGeometry(result.points, result.cost.budget_minor) : null);
+
+  const quadrantColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("p.plans.pid.joint_risk.outcome"), rowHeader: true, cell: quadrantLabel },
+    { id: "count", header: t("p.plans.pid.joint_risk.simulations"), align: "end" },
+    { id: "share", header: t("p.plans.pid.joint_risk.share"), align: "end" },
+  ]);
+  const costColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("p.plans.pid.joint_risk.outcome"), rowHeader: true },
+    { id: "value", header: t("p.plans.pid.joint_risk.cost"), align: "end" },
+  ]);
+  const finishColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("p.plans.pid.joint_risk.outcome"), rowHeader: true },
+    { id: "value", header: t("p.plans.pid.joint_risk.finish"), align: "end" },
+  ]);
+  type Line = JointRisk["cost"]["lines"][number];
+  const lineColumns = (currencyOf: string): DataGridColumn[] => [
+    { id: "description", header: t("p.plans.pid.joint_risk.line"), rowHeader: true, accessor: (r) => (r as unknown as Line).description ?? (r as unknown as Line).pid },
+    { id: "range", header: t("p.plans.pid.joint_risk.low_planned_high"), sortable: false, accessor: (r) => { const l = r as unknown as Line; return `${money(l.low, currencyOf)} / ${money(l.likely, currencyOf)} / ${money(l.high, currencyOf)}`; } },
+    { id: "estimate", header: t("p.plans.pid.joint_risk.estimate"), accessor: (r) => lineSourceText(r as unknown as Line), cell: lineSourceCell },
+  ];
+  const costRows = (result: JointRisk) => [
+    { label: t("p.plans.pid.joint_risk.budget_2"), value: money(result.cost.budget_minor, result.currency) },
+    { label: t("p.plans.pid.joint_risk.mean_delay_cost_included"), value: money(result.cost.mean_minor, result.currency) },
+    { label: t("p.plans.pid.joint_risk.of_which_delay_cost_on"), value: money(result.cost.mean_delay_cost_minor, result.currency) },
+    ...result.cost.percentiles.map((p) => ({ label: `P${p.p}`, value: money(p.minor, result.currency) })),
+  ];
+  const finishRows = (result: JointRisk) => [
+    ...result.schedule.percentiles.map((p) => ({ label: `P${p.p}`, value: p.finish })),
+    { label: t("p.plans.pid.joint_risk.critical_path_finish_the_plan"), value: result.schedule.cpm_finish ?? t("p.plans.pid.joint_risk.not_enough_data") },
+  ];
 </script>
+
+{#snippet quadrantLabel({ row, formatted }: DataGridCellContext)}<span aria-hidden="true">{row.symbol}</span> {formatted}{/snippet}
+
+{#snippet lineSourceCell({ row, formatted }: DataGridCellContext)}{#if row.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{formatted}{/snippet}
 
 <svelte:head><title>{t("p.plans.pid.joint_risk.cost_and_schedule_risk_ppm")}</title></svelte:head>
 
@@ -90,15 +126,7 @@
 
   <h2>{t("p.plans.pid.joint_risk.both_at_once")}</h2>
   <p><strong>{jointConfidenceText(result.confidence)}</strong></p>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.joint_risk.how_the_simulated_outcomes_fall")}</caption>
-    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.simulations")}</th><th scope="col">{t("p.plans.pid.joint_risk.share")}</th></tr></thead>
-    <tbody>
-      {#each quadrantRows(result.quadrants) as q (q.key)}
-        <tr><th scope="row"><span aria-hidden="true">{q.symbol}</span> {q.label}</th><td>{q.count}</td><td>{q.share}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.joint_risk.how_the_simulated_outcomes_fall")} columns={quadrantColumns} rows={quadrantRows(result.quadrants)} rowId={(r) => String(r.key)} sortable={false} />
 
   {#if scatter}
     <figure>
@@ -117,45 +145,17 @@
   {/if}
 
   <h2>{t("p.plans.pid.joint_risk.cost")}</h2>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.joint_risk.total_cost_delay_cost_included")}</caption>
-    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.cost")}</th></tr></thead>
-    <tbody>
-      <tr><th scope="row">{t("p.plans.pid.joint_risk.budget_2")}</th><td>{money(result.cost.budget_minor, result.currency)}</td></tr>
-      <tr><th scope="row">{t("p.plans.pid.joint_risk.mean_delay_cost_included")}</th><td>{money(result.cost.mean_minor, result.currency)}</td></tr>
-      <tr><th scope="row">{t("p.plans.pid.joint_risk.of_which_delay_cost_on")}</th><td>{money(result.cost.mean_delay_cost_minor, result.currency)}</td></tr>
-      {#each result.cost.percentiles as p (p.p)}<tr><th scope="row">P{p.p}</th><td>{money(p.minor, result.currency)}</td></tr>{/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.joint_risk.total_cost_delay_cost_included")} columns={costColumns} rows={costRows(result)} rowId={(r) => String(r.label)} sortable={false} />
   <p>{budgetConfidenceText(result.confidence.budget_bp, money(result.cost.budget_minor, result.currency))}</p>
   <p class="small">{delayCostText(a.delay_cost.per_day_minor, a.delay_cost.currency, money)}</p>
 
   <h2>{t("p.plans.pid.joint_risk.finish")}</h2>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.joint_risk.finish_date_at_each_percentile")}</caption>
-    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.outcome")}</th><th scope="col">{t("p.plans.pid.joint_risk.finish")}</th></tr></thead>
-    <tbody>
-      {#each result.schedule.percentiles as p (p.p)}<tr><th scope="row">P{p.p}</th><td>{p.finish}</td></tr>{/each}
-      <tr><th scope="row">{t("p.plans.pid.joint_risk.critical_path_finish_the_plan")}</th><td>{result.schedule.cpm_finish ?? t("p.plans.pid.joint_risk.not_enough_data")}</td></tr>
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.joint_risk.finish_date_at_each_percentile")} columns={finishColumns} rows={finishRows(result)} rowId={(r) => String(r.label)} sortable={false} />
   <p>{confidenceText(result.confidence.finish_bp, result.schedule.cpm_finish)}</p>
   <p class="small muted">{result.schedule.percentiles.map(percentileText).join(" · ")}</p>
 
   <h2>{t("p.plans.pid.joint_risk.cost_lines")}</h2>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.joint_risk.per_line_estimate_in", { currency: result.currency })}</caption>
-    <thead><tr><th scope="col">{t("p.plans.pid.joint_risk.line")}</th><th scope="col">{t("p.plans.pid.joint_risk.low_planned_high")}</th><th scope="col">{t("p.plans.pid.joint_risk.estimate")}</th></tr></thead>
-    <tbody>
-      {#each result.cost.lines as l (l.pid)}
-        <tr class:fallback={l.source === "fallback"}>
-          <th scope="row">{l.description ?? l.pid}</th>
-          <td>{money(l.low, result.currency)} / {money(l.likely, result.currency)} / {money(l.high, result.currency)}</td>
-          <td>{#if l.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{lineSourceText(l)}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.joint_risk.per_line_estimate_in", { currency: result.currency })} columns={lineColumns(result.currency)} rows={result.cost.lines} rowId={(r) => String(r.pid)} sortable={false} />
 
   <h2>{t("p.plans.pid.joint_risk.risks")}</h2>
   {#if result.assumptions.shared_events.length > 0}
@@ -185,17 +185,6 @@
 {/if}
 
 <style>
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0.5rem 0;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--mxi-color-border, #ddd);
-  }
   .dot {
     fill: var(--mxi-color-accent, #4a6fa5);
     fill-opacity: 0.55;
@@ -211,9 +200,6 @@
   .label {
     font-size: 11px;
     fill: currentColor;
-  }
-  tr.fallback th {
-    font-style: italic;
   }
   .filter {
     display: flex;

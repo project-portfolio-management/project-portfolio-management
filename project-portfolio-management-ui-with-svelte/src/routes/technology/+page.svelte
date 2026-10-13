@@ -47,7 +47,7 @@
     { id: "item", header: t("p.technology.item"), rowHeader: true, accessor: (r) => (r as unknown as Fan).item.name, cell: fanItemCell },
     { id: "kind", header: t("p.technology.kind"), accessor: (r) => (r as unknown as Fan).item.kind },
     { id: "dependents", header: t("p.technology.dependents"), align: "end" },
-    { id: "rag", header: t("p.technology.status"), format: (v) => (v ? String(v) : "—") },
+    { id: "rag", header: t("p.technology.status"), headerCell: ragHeader, format: (v) => (v ? String(v) : "—") },
   ]);
   const redColumns: DataGridColumn[] = $derived([
     { id: "predecessor", header: t("p.technology.predecessor_red"), rowHeader: true, accessor: (r) => (r as unknown as Edge).predecessor.name },
@@ -70,6 +70,8 @@
     { id: "count", header: t("p.technology.milestones_completed"), align: "end" },
   ]);
 </script>
+
+{#snippet ragHeader()}{t("p.technology.status")}<Term t="RAG" />){/snippet}
 
 {#snippet fanItemCell({ row, formatted }: DataGridCellContext)}
   {@const f = row as unknown as Fan}

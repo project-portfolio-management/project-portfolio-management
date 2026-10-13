@@ -7,6 +7,8 @@
   drop out of the matrix. Export to a spreadsheet from the link.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -60,6 +62,14 @@
     if (!people.includes(ref)) extra = [...extra, ref];
     newPerson = "";
   }
+
+  const workloadColumns: DataGridColumn[] = $derived([
+    { id: "person", header: t("p.plans.pid.raci.person"), rowHeader: true, accessor: (r) => shortRef(String(r.person_ref)) },
+    { id: "responsible", header: LETTER_WORD.R, align: "end" },
+    { id: "accountable", header: LETTER_WORD.A, align: "end" },
+    { id: "consulted", header: LETTER_WORD.C, align: "end" },
+    { id: "informed", header: LETTER_WORD.I, align: "end" },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.plans.pid.raci.raci_ppm")}</title></svelte:head>
@@ -97,20 +107,7 @@
 
   {#if matrix.workload.length > 0}
     <h2>{t("p.plans.pid.raci.load_by_person")}</h2>
-    <table>
-      <caption class="sr-only">{t("p.plans.pid.raci.how_many_tasks_each_person")}</caption>
-      <thead>
-        <tr><th scope="col">{t("p.plans.pid.raci.person")}</th>{#each LETTERS as l (l)}<th scope="col">{LETTER_WORD[l]}</th>{/each}</tr>
-      </thead>
-      <tbody>
-        {#each matrix.workload as w (w.person_ref)}
-          <tr>
-            <th scope="row" title={w.person_ref}>{shortRef(w.person_ref)}</th>
-            <td>{w.responsible}</td><td>{w.accountable}</td><td>{w.consulted}</td><td>{w.informed}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+    <DataTable label={t("p.plans.pid.raci.how_many_tasks_each_person")} columns={workloadColumns} rows={matrix.workload} rowId={(r) => String(r.person_ref)} />
   {/if}
 {:else if !error}
   <p>{t("p.plans.pid.raci.loading")}</p>
@@ -131,22 +128,5 @@
     gap: 0.5rem 1rem;
     align-items: end;
     margin-block: 0.75rem;
-  }
-  table {
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    border: 1px solid var(--border, #ccc);
-    padding: 0.25rem 0.5rem;
-    text-align: start;
-  }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 </style>

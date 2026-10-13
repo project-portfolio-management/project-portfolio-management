@@ -5,12 +5,21 @@
   budget at completion. The table under the picture carries every number.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { money, type EvSeries } from "#lib/api/ppm.js";
   import { sCurve } from "#lib/ev-view.js";
 
   let { curve }: { curve: EvSeries["curves"][number] } = $props();
   const g = $derived(sCurve(curve));
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "date", header: t("c.SCurve.date"), rowHeader: true },
+    { id: "pv_minor", header: t("c.SCurve.planned"), align: "end", format: (v) => money(Number(v), curve.currency) },
+    { id: "ev_minor", header: t("c.SCurve.earned"), align: "end", format: (v) => (v === null ? t("c.SCurve.not_recorded") : money(Number(v), curve.currency)) },
+    { id: "ac_minor", header: t("c.SCurve.actual"), align: "end", format: (v) => (v === null ? t("c.SCurve.not_recorded") : money(Number(v), curve.currency)) },
+  ]);
 </script>
 
 {#if g}
@@ -27,19 +36,7 @@
     </svg>
     <details>
       <summary>{t("c.SCurve.the_same_figures_as_a")}</summary>
-      <table>
-        <thead><tr><th scope="col">{t("c.SCurve.date")}</th><th scope="col">{t("c.SCurve.planned")}</th><th scope="col">{t("c.SCurve.earned")}</th><th scope="col">{t("c.SCurve.actual")}</th></tr></thead>
-        <tbody>
-          {#each curve.points as p (p.date)}
-            <tr>
-              <th scope="row">{p.date}</th>
-              <td>{money(p.pv_minor, curve.currency)}</td>
-              <td>{p.ev_minor === null ? t("c.SCurve.not_recorded") : money(p.ev_minor, curve.currency)}</td>
-              <td>{p.ac_minor === null ? t("c.SCurve.not_recorded") : money(p.ac_minor, curve.currency)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("c.SCurve.date")} columns={columns} rows={curve.points} rowId={(r) => String(r.date)} sortable={false} />
     </details>
     <figcaption class="small">
       {t("c.SCurve.line_planned_value_to_earned", { from: g.from, to: g.to, snapshots: curve.snapshots, money: money(curve.bac_minor, curve.currency) })}
@@ -68,15 +65,5 @@
     stroke: currentColor;
     stroke-dasharray: 6 4;
     stroke-width: 1;
-  }
-  table {
-    border-collapse: collapse;
-    font-size: 0.85em;
-  }
-  th,
-  td {
-    border: 1px solid var(--border, #ccc);
-    padding: 0.2rem 0.5rem;
-    text-align: start;
   }
 </style>

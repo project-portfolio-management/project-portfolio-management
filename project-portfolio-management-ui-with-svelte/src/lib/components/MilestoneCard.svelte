@@ -6,6 +6,8 @@
   says so; it is never called "on track" by default.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import type { MilestoneView, MilestoneMode, PpmClient, Task } from "#lib/api/ppm.js";
   import {
@@ -99,6 +101,13 @@
       onerror(err instanceof Error ? err.message : t("c.MilestoneCard.could_not_load_the_history"));
     }
   }
+
+  const historyColumns: DataGridColumn[] = $derived([
+    { id: "from", header: t("c.MilestoneCard.from"), rowHeader: true },
+    { id: "to", header: t("c.MilestoneCard.to") },
+    { id: "reason", header: t("c.MilestoneCard.why"), format: (v) => (v ? String(v) : t("c.MilestoneCard.no_reason_given")) },
+    { id: "actor", header: t("c.MilestoneCard.by"), format: (v) => (v ? String(v) : "") },
+  ]);
 </script>
 
 <article class={`surface milestone status-${item.status}`} aria-labelledby={`m-${item.pid}`}>
@@ -194,14 +203,7 @@
     {:else if history.length === 0}
       <p class="small muted">{t("c.MilestoneCard.never_rescheduled")}</p>
     {:else}
-      <table class="small">
-        <thead><tr><th scope="col">{t("c.MilestoneCard.from")}</th><th scope="col">{t("c.MilestoneCard.to")}</th><th scope="col">{t("c.MilestoneCard.why")}</th><th scope="col">{t("c.MilestoneCard.by")}</th></tr></thead>
-        <tbody>
-          {#each history as h (h.at + h.to)}
-            <tr><td>{h.from}</td><td>{h.to}</td><td>{h.reason ?? t("c.MilestoneCard.no_reason_given")}</td><td>{h.actor ?? ""}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("c.MilestoneCard.from")} columns={historyColumns} rows={history} rowId={(r) => String(r.at) + String(r.to)} sortable={false} />
     {/if}
   </details>
 </article>

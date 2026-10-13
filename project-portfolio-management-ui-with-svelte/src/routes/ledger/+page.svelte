@@ -90,6 +90,3 @@
     {/if}
   </section>
 {/if}
-
-<style>
-</style>

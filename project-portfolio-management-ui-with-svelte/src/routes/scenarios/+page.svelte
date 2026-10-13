@@ -177,7 +177,7 @@
 
 {#if comparison}
   <p class="muted">{comparison.note}</p>
-  <DataTable label={`${comparison.a.name} / ${comparison.b.name}`} columns={compareColumns(comparison)} rows={compareRows(comparison)} rowId={(_r, i) => String(i)} sortable={false} testid="scenario-compare" />
+  <DataTable label={t("p.scenarios.delta_b_a")} columns={compareColumns(comparison)} rows={compareRows(comparison)} rowId={(_r, i) => String(i)} sortable={false} testid="scenario-compare" />
 {/if}
 
 <style>

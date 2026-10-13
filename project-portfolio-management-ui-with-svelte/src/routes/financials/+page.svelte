@@ -90,6 +90,3 @@
     "fin-by-portfolio",
   )}
 {/if}
-
-<style>
-</style>

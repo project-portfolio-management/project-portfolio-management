@@ -18,6 +18,7 @@
   let {
     label,
     caption,
+    captionVisible = false,
     columns,
     rows,
     rowId,
@@ -29,6 +30,7 @@
     selectionMode = "none",
     selected = $bindable([]),
     rowClass,
+    rowAttrs,
     onRowActivate,
     footer,
     storageKey,
@@ -37,7 +39,9 @@
   }: {
     /** The table's accessible name (also the scroll region's). */
     label: string;
+    /** Text for the table's `<caption>`. Without it the label is the caption, hidden unless `captionVisible`. */
     caption?: string;
+    captionVisible?: boolean;
     columns: DataGridColumn[];
     /** Any objects: interfaces are fine (they are read, never changed). */
     rows: readonly object[];
@@ -54,6 +58,8 @@
     selectionMode?: "none" | "single" | "multiple";
     selected?: string[];
     rowClass?: (row: DataGridRow) => string;
+    /** Extra attributes for a row (for example an `id` that a link can point to). */
+    rowAttrs?: (row: DataGridRow) => Record<string, unknown>;
     onRowActivate?: (row: DataGridRow, id: string) => void;
     footer?: Snippet<[{ columns: DataGridColumn[]; rows: DataGridRow[] }]>;
     storageKey?: string;
@@ -69,7 +75,7 @@
 
 <DataGrid
   {label}
-  {caption}
+  caption={caption ?? label}
   columns={cols}
   rows={rows as DataGridRow[]}
   {rowId}
@@ -78,11 +84,12 @@
   bind:selected
   {pageSize}
   {rowClass}
+  {rowAttrs}
   {onRowActivate}
   {footer}
   {storageKey}
   data-testid={testid}
-  class={`data-table ${className}`.trim()}
+  class={`data-table ${caption && captionVisible ? "caption-visible" : "caption-hidden"} ${className}`.trim()}
   labels={{
     ...(searchable ? { search: t("p.table.search") } : {}),
     columnVisibility: undefined,
@@ -108,6 +115,9 @@
   :global(.data-table .cell-amber) { background: #fff4d6; }
   :global(.data-table .cell-green) { background: #e3f4e3; }
   :global(.data-table .cell-grey) { background: #eeeeee; }
+  /* A caption names the table for assistive technology; it shows only when asked for. */
+  :global(.data-table.caption-hidden caption) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  :global(.data-table.caption-visible caption) { text-align: start; font-weight: 600; padding: 0.25rem 0; }
   :global(.data-grid-scroll) { margin-block: 0.5rem 1rem; overflow-x: auto; }
   :global(.data-grid-toolbar) { margin-block-end: 0.25rem; }
   :global(.data-grid-search) { box-sizing: border-box; inline-size: min(100%, 20rem); padding: 0.4rem 0.6rem; }

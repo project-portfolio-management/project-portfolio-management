@@ -119,7 +119,7 @@ describe("CpmTable", () => {
     const { root, done } = render(CpmTable, { nodes });
     expect(root.querySelector("caption")).not.toBeNull();
     expect(
-      [...root.querySelectorAll("thead th")].map((h) => h.textContent),
+      [...root.querySelectorAll("thead th")].map((h) => h.textContent?.trim()),
     ).toEqual([
       "Task",
       "Starts",

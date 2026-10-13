@@ -89,7 +89,7 @@
       {#each s.lines as line, i (i)}<p>{line}</p>{/each}
       {#each s.tables as tb, ti (ti)}
         <!-- A wide table scrolls on its own; the region is focusable so a keyboard can scroll it. -->
-        <DataTable label={tb.caption} caption={tb.caption} columns={packColumns(tb.columns)} rows={tb.rows.map((cells) => ({ cells }))} rowId={(_r, i) => String(i)} sortable={false} />
+        <DataTable label={tb.caption} caption={tb.caption} captionVisible columns={packColumns(tb.columns)} rows={tb.rows.map((cells) => ({ cells }))} rowId={(_r, i) => String(i)} sortable={false} />
       {/each}
     </section>
   {/each}

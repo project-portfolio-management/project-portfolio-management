@@ -19,6 +19,8 @@
   not optional decoration — it is the relief the palette requires.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import type { FlowSample } from "#lib/api/tba.js";
 
@@ -129,6 +131,12 @@
       Math.min(samples.length - 1, Math.round(ratio * (samples.length - 1))),
     );
   }
+
+  const columns: DataGridColumn[] = $derived([
+    { id: "day", header: t("c.CumulativeFlow.day"), rowHeader: true, accessor: (r) => dayLabel((r as unknown as FlowSample).at_ms) },
+    ...BANDS.map((band): DataGridColumn => ({ id: band.status, header: band.label, align: "end", accessor: (r) => (r as unknown as FlowSample).counts[band.status] ?? 0 })),
+    { id: "total", header: t("c.CumulativeFlow.total"), align: "end" },
+  ]);
 </script>
 
 <figure class="cfd viz-root">
@@ -246,31 +254,7 @@
     </button>
 
     {#if showTable}
-      <table data-testid="cfd-table">
-        <caption class="muted">
-          {t("c.CumulativeFlow.every_value_in_the_chart", { note })}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("c.CumulativeFlow.day")}</th>
-            {#each BANDS as band (band.status)}
-              <th scope="col">{band.label}</th>
-            {/each}
-            <th scope="col">{t("c.CumulativeFlow.total")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each samples as sample (sample.at_ms)}
-            <tr>
-              <th scope="row">{dayLabel(sample.at_ms)}</th>
-              {#each BANDS as band (band.status)}
-                <td>{sample.counts[band.status] ?? 0}</td>
-              {/each}
-              <td>{sample.total}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("c.CumulativeFlow.day")} caption={t("c.CumulativeFlow.every_value_in_the_chart", { note })} columns={columns} rows={samples} rowId={(r) => String(r.at_ms)} sortable={false} testid="cfd-table" />
     {/if}
   {/if}
 </figure>
@@ -411,25 +395,5 @@
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.85rem;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    font-variant-numeric: tabular-nums;
-    margin-top: 0.5rem;
-  }
-  th,
-  td {
-    text-align: right;
-    padding: 0.2rem 0.4rem;
-  }
-  th[scope="row"] {
-    text-align: left;
-    font-weight: normal;
-  }
-  caption {
-    text-align: left;
-    padding-bottom: 0.4rem;
   }
 </style>

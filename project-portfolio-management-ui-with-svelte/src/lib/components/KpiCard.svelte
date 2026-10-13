@@ -5,6 +5,8 @@
   green.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import type { KpiView, KpiCadence, PpmClient, KpiReading } from "#lib/api/ppm.js";
   import { STATUS_SYMBOL, STATUS_TEXT, staleText, thresholdText, trendText, valueText } from "#lib/kpi-view.js";
@@ -89,6 +91,12 @@
   const remove = () => {
     if (confirm(t("c.KpiCard.delete_the_kpi_its_readings", { name: k.name }))) void run(() => ppm.deleteKpi(k.pid));
   };
+
+  const historyColumns: DataGridColumn[] = $derived([
+    { id: "observed_on", header: t("c.KpiCard.observed"), rowHeader: true },
+    { id: "value", header: t("c.KpiCard.value"), align: "end", format: (v) => valueText(Number(v), k.unit) },
+    { id: "note", header: t("c.KpiCard.note"), format: (v) => (v ? String(v) : "") },
+  ]);
 </script>
 
 <article class={`surface kpi status-${item.status}`} aria-labelledby={`k-${k.pid}`}>
@@ -127,14 +135,7 @@
     {:else if history.length === 0}
       <p class="small muted">{t("c.KpiCard.no_readings")}</p>
     {:else}
-      <table class="small">
-        <thead><tr><th scope="col">{t("c.KpiCard.observed")}</th><th scope="col">{t("c.KpiCard.value")}</th><th scope="col">{t("c.KpiCard.note")}</th></tr></thead>
-        <tbody>
-          {#each history as r (r.pid)}
-            <tr><td>{r.observed_on}</td><td>{valueText(r.value, k.unit)}</td><td>{r.note ?? ""}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("c.KpiCard.observed")} columns={historyColumns} rows={history} rowId={(r) => String(r.pid)} sortable={false} />
     {/if}
   </details>
   <details>

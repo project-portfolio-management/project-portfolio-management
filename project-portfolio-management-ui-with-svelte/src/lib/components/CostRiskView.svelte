@@ -6,13 +6,50 @@
   and every assumption, including that the inputs are independent.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { money, type CostRisk } from "#lib/api/ppm.js";
   import { budgetConfidenceText, costHistogramGeometry, costSkippedText, eventHitText, lineSourceText, sensitivityText } from "#lib/scheduling-view.js";
 
   let { result }: { result: CostRisk } = $props();
   const a = $derived(result.assumptions);
+
+  type Cur = CostRisk["currencies"][number];
+  type Line = Cur["lines"][number];
+  const outcomeColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("c.CostRiskView.outcome"), rowHeader: true },
+    { id: "value", header: t("c.CostRiskView.cost"), align: "end" },
+  ]);
+  const outcomeRows = (c: Cur) => [
+    { label: t("c.CostRiskView.budget_sum_of_planned_amounts"), value: money(c.budget_minor, c.currency) },
+    { label: t("c.CostRiskView.already_spent"), value: money(c.spent_minor, c.currency) },
+    { label: t("c.CostRiskView.mean_simulated_cost"), value: money(c.mean_minor, c.currency) },
+    ...c.percentiles.map((p) => ({ label: `P${p.p}`, value: money(p.minor, c.currency) })),
+  ];
+  const histogramColumns = (cur: string): DataGridColumn[] => [
+    { id: "from_minor", header: t("c.CostRiskView.cost_from"), rowHeader: true, align: "end", format: (v) => money(Number(v), cur) },
+    { id: "to_minor", header: t("c.CostRiskView.to"), align: "end", format: (v) => money(Number(v), cur) },
+    { id: "count", header: t("c.CostRiskView.simulations"), align: "end" },
+  ];
+  const planColumns = (cur: string): DataGridColumn[] => [
+    { id: "name", header: t("c.CostRiskView.plan"), rowHeader: true, accessor: (r) => (r as { name?: string | null; plan: string }).name ?? (r as { plan: string }).plan },
+    { id: "budget_minor", header: t("c.CostRiskView.budget_2"), align: "end", format: (v) => money(Number(v), cur) },
+    { id: "mean_minor", header: t("c.CostRiskView.mean_simulated_cost"), align: "end", format: (v) => money(Number(v), cur) },
+  ];
+  const lineColumns = (cur: string): DataGridColumn[] => [
+    { id: "description", header: t("c.CostRiskView.line"), rowHeader: true, accessor: (r) => (r as unknown as Line).description ?? (r as unknown as Line).pid, cell: lineNameCell },
+    { id: "range", header: t("c.CostRiskView.low_planned_high"), sortable: false, accessor: (r) => { const l = r as unknown as Line; return `${money(l.low, cur)} / ${money(l.likely, cur)} / ${money(l.high, cur)}`; } },
+    { id: "estimate", header: t("c.CostRiskView.estimate"), accessor: (r) => lineSourceText(r as unknown as Line), cell: lineSourceCell },
+    { id: "actual", header: t("c.CostRiskView.spent"), align: "end", format: (v) => money(Number(v), cur) },
+    { id: "sensitivity", header: t("c.CostRiskView.sensitivity"), accessor: (r) => sensitivityText((r as unknown as Line).sensitivity) },
+  ];
 </script>
+
+{#snippet lineNameCell({ row, formatted }: DataGridCellContext)}{formatted}{#if row.category} <span class="muted small">({row.category})</span>{/if}{/snippet}
+
+{#snippet lineSourceCell({ row, formatted }: DataGridCellContext)}{#if row.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{formatted}{/snippet}
+
 
 <p class="small muted">
   {result.scope.kind === "portfolio" ? (result.scope.plans === 1 ? t("c.CostRiskView.scope_all_one", { plans: result.scope.plans }) : t("c.CostRiskView.scope_all_other", { plans: result.scope.plans })) : t("c.CostRiskView.scope_this_plan")} ·
@@ -23,18 +60,7 @@
   {@const g = costHistogramGeometry(c.histogram, c.percentiles, c.budget_minor)}
   <section aria-labelledby={`cur-${c.currency}`}>
     <h2 id={`cur-${c.currency}`}>{c.currency}</h2>
-    <table>
-      <caption class="sr-only">{t("c.CostRiskView.cost_at_each_percentile", { currency: c.currency })}</caption>
-      <thead><tr><th scope="col">{t("c.CostRiskView.outcome")}</th><th scope="col">{t("c.CostRiskView.cost")}</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">{t("c.CostRiskView.budget_sum_of_planned_amounts")}</th><td>{money(c.budget_minor, c.currency)}</td></tr>
-        <tr><th scope="row">{t("c.CostRiskView.already_spent")}</th><td>{money(c.spent_minor, c.currency)}</td></tr>
-        <tr><th scope="row">{t("c.CostRiskView.mean_simulated_cost")}</th><td>{money(c.mean_minor, c.currency)}</td></tr>
-        {#each c.percentiles as p (p.p)}
-          <tr><th scope="row">P{p.p}</th><td>{money(p.minor, c.currency)}</td></tr>
-        {/each}
-      </tbody>
-    </table>
+      <DataTable label={t("c.CostRiskView.cost_at_each_percentile", { currency: c.currency })} columns={outcomeColumns} rows={outcomeRows(c)} rowId={(r) => String(r.label)} sortable={false} />
     <p>{budgetConfidenceText(c.budget_confidence_bp, money(c.budget_minor, c.currency))}</p>
 
     {#if g}
@@ -55,14 +81,7 @@
         </svg>
         <details>
           <summary>{t("c.CostRiskView.the_same_figures_as_a")}</summary>
-          <table>
-            <thead><tr><th scope="col">{t("c.CostRiskView.cost_from")}</th><th scope="col">{t("c.CostRiskView.to")}</th><th scope="col">{t("c.CostRiskView.simulations")}</th></tr></thead>
-            <tbody>
-              {#each c.histogram as b (b.from_minor)}
-                <tr><th scope="row">{money(b.from_minor, c.currency)}</th><td>{money(b.to_minor, c.currency)}</td><td>{b.count}</td></tr>
-              {/each}
-            </tbody>
-          </table>
+          <DataTable label={t("c.CostRiskView.cost_from")} columns={histogramColumns(c.currency)} rows={c.histogram} rowId={(r) => String(r.from_minor)} sortable={false} />
         </details>
         <figcaption class="small muted">{t("c.CostRiskView.each_bar_is_a_cost")}</figcaption>
       </figure>
@@ -70,35 +89,11 @@
 
     {#if result.scope.kind === "portfolio"}
       <h3>{t("c.CostRiskView.by_plan")}</h3>
-      <table>
-        <caption class="sr-only">{t("c.CostRiskView.each_plan_s_budget_and", { currency: c.currency })}</caption>
-        <thead><tr><th scope="col">{t("c.CostRiskView.plan")}</th><th scope="col">{t("c.CostRiskView.budget_2")}</th><th scope="col">{t("c.CostRiskView.mean_simulated_cost")}</th></tr></thead>
-        <tbody>
-          {#each c.plans as p (p.plan)}
-            <tr><th scope="row">{p.name ?? p.plan}</th><td>{money(p.budget_minor, c.currency)}</td><td>{money(p.mean_minor, c.currency)}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <DataTable label={t("c.CostRiskView.each_plan_s_budget_and", { currency: c.currency })} columns={planColumns(c.currency)} rows={c.plans} rowId={(r) => String(r.plan)} />
     {/if}
 
     <h3>{t("c.CostRiskView.what_drives_it")}</h3>
-    <table>
-      <caption class="sr-only">{t("c.CostRiskView.per_line_estimate_and_sensitivity", { currency: c.currency })}</caption>
-      <thead>
-        <tr><th scope="col">{t("c.CostRiskView.line")}</th><th scope="col">{t("c.CostRiskView.low_planned_high")}</th><th scope="col">{t("c.CostRiskView.estimate")}</th><th scope="col">{t("c.CostRiskView.spent")}</th><th scope="col">{t("c.CostRiskView.sensitivity")}</th></tr>
-      </thead>
-      <tbody>
-        {#each c.lines as l (l.pid)}
-          <tr class:fallback={l.source === "fallback"}>
-            <th scope="row">{l.description ?? l.pid}{#if l.category} <span class="muted small">({l.category})</span>{/if}</th>
-            <td>{money(l.low, c.currency)} / {money(l.likely, c.currency)} / {money(l.high, c.currency)}</td>
-            <td>{#if l.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{lineSourceText(l)}</td>
-            <td>{money(l.actual, c.currency)}</td>
-            <td>{sensitivityText(l.sensitivity)}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+      <DataTable label={t("c.CostRiskView.per_line_estimate_and_sensitivity", { currency: c.currency })} columns={lineColumns(c.currency)} rows={c.lines} rowId={(r) => String(r.pid)} />
 
     {#if c.events.length > 0}
       <h3>{t("c.CostRiskView.risks_that_added_cost")}</h3>
@@ -136,17 +131,6 @@
 <p class="small muted">{result.note}</p>
 
 <style>
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0.5rem 0;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--mxi-color-border, #ddd);
-  }
   .bar {
     fill: var(--mxi-color-accent, #4a6fa5);
   }
@@ -174,8 +158,5 @@
   .label {
     font-size: 11px;
     fill: currentColor;
-  }
-  tr.fallback th {
-    font-style: italic;
   }
 </style>

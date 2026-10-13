@@ -7,6 +7,8 @@
   fallback band; a risk that could not be used is named with the reason.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -49,7 +51,33 @@
 
   const g = $derived(run ? histogramGeometry(run.histogram, run.percentiles, run.cpm_finish) : null);
   const pName = (p: number) => `P${p}`;
+
+  type RTask = ScheduleRisk["tasks"][number];
+  type Run = ScheduleRisk;
+  const finishColumns: DataGridColumn[] = $derived([
+    { id: "label", header: t("p.plans.pid.schedule_risk.outcome"), rowHeader: true },
+    { id: "value", header: t("p.plans.pid.schedule_risk.finish"), align: "end" },
+  ]);
+  const finishRows = (run: Run) => [
+    ...run.percentiles.map((p) => ({ label: pName(p.p), value: p.finish })),
+    { label: t("p.plans.pid.schedule_risk.critical_path_finish_the_plan"), value: run.cpm_finish ?? t("p.plans.pid.schedule_risk.not_enough_data") },
+  ];
+  const histogramColumns = (iterations: number): DataGridColumn[] => [
+    { id: "date", header: t("p.plans.pid.schedule_risk.finish_date"), rowHeader: true },
+    { id: "count", header: t("p.plans.pid.schedule_risk.simulations"), align: "end" },
+    { id: "share", header: t("p.plans.pid.schedule_risk.share"), align: "end", accessor: (r) => ((r as { count: number }).count / iterations) * 100, format: (v) => `${Number(v).toFixed(1)}%` },
+  ];
+  const taskColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.plans.pid.schedule_risk.task"), rowHeader: true, accessor: (r) => (r as unknown as RTask).title ?? (r as unknown as RTask).pid },
+    { id: "range", header: t("p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine"), accessor: (r) => { const x = r as unknown as RTask; return `${x.optimistic} / ${x.likely} / ${x.pessimistic}`; } },
+    { id: "estimate", header: t("p.plans.pid.schedule_risk.estimate"), accessor: (r) => sourceText(r as unknown as RTask), cell: sourceCell },
+    { id: "critical", header: t("p.plans.pid.schedule_risk.critical_in"), accessor: (r) => t("p.plans.pid.schedule_risk.of_runs", { criticalityText: criticalityText((r as unknown as RTask).criticality_bp) }) },
+    { id: "sensitivity", header: t("p.plans.pid.schedule_risk.sensitivity"), accessor: (r) => sensitivityText((r as unknown as RTask).sensitivity) },
+  ]);
 </script>
+
+{#snippet sourceCell({ row, formatted }: DataGridCellContext)}{#if row.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{formatted}{/snippet}
+
 
 <svelte:head><title>{t("p.plans.pid.schedule_risk.schedule_risk_ppm")}</title></svelte:head>
 
@@ -78,16 +106,7 @@
   </p>
 
   <h2>{t("p.plans.pid.schedule_risk.when_it_finishes")}</h2>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.schedule_risk.finish_date_at_each_percentile")}</caption>
-    <thead><tr><th scope="col">{t("p.plans.pid.schedule_risk.outcome")}</th><th scope="col">{t("p.plans.pid.schedule_risk.finish")}</th></tr></thead>
-    <tbody>
-      {#each run.percentiles as p (p.p)}
-        <tr><th scope="row">{pName(p.p)}</th><td>{p.finish}</td></tr>
-      {/each}
-      <tr><th scope="row">{t("p.plans.pid.schedule_risk.critical_path_finish_the_plan")}</th><td>{run.cpm_finish ?? t("p.plans.pid.schedule_risk.not_enough_data")}</td></tr>
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.schedule_risk.finish_date_at_each_percentile")} columns={finishColumns} rows={finishRows(run)} rowId={(r) => String(r.label)} sortable={false} />
   <p>{confidenceText(run.cpm_finish_confidence_bp, run.cpm_finish)}</p>
   <p class="small muted">{t("p.plans.pid.schedule_risk.earliest_latest", { join: run.percentiles.map(percentileText).join(" · "), earliest: run.earliest, latest: run.latest })}</p>
 
@@ -109,40 +128,14 @@
       </svg>
       <details>
         <summary>{t("p.plans.pid.schedule_risk.the_same_figures_as_a")}</summary>
-        <table>
-          <thead><tr><th scope="col">{t("p.plans.pid.schedule_risk.finish_date")}</th><th scope="col">{t("p.plans.pid.schedule_risk.simulations")}</th><th scope="col">{t("p.plans.pid.schedule_risk.share")}</th></tr></thead>
-          <tbody>
-            {#each run.histogram as h (h.date)}
-              <tr><th scope="row">{h.date}</th><td>{h.count}</td><td>{((h.count / run.assumptions.iterations) * 100).toFixed(1)}%</td></tr>
-            {/each}
-          </tbody>
-        </table>
+        <DataTable label={t("p.plans.pid.schedule_risk.finish_date")} columns={histogramColumns(run.assumptions.iterations)} rows={run.histogram} rowId={(r) => String(r.date)} sortable={false} />
       </details>
       <figcaption class="small muted">{t("p.plans.pid.schedule_risk.each_bar_is_a_finish")}</figcaption>
     </figure>
   {/if}
 
   <h2>{t("p.plans.pid.schedule_risk.what_drives_it")}</h2>
-  <table>
-    <caption class="sr-only">{t("p.plans.pid.schedule_risk.per_task_estimate_criticality_and")}</caption>
-    <thead>
-      <tr>
-        <th scope="col">{t("p.plans.pid.schedule_risk.task")}</th><th scope="col">{t("p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine")}</th>
-        <th scope="col">{t("p.plans.pid.schedule_risk.estimate")}</th><th scope="col">{t("p.plans.pid.schedule_risk.critical_in")}</th><th scope="col">{t("p.plans.pid.schedule_risk.sensitivity")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each [...run.tasks].sort((a, b) => b.criticality_bp - a.criticality_bp) as row (row.pid)}
-        <tr class:fallback={row.source === "fallback"}>
-          <th scope="row">{row.title ?? row.pid}</th>
-          <td>{row.optimistic} / {row.likely} / {row.pessimistic}</td>
-          <td>{#if row.source === "fallback"}<span aria-hidden="true">▲</span> {/if}{sourceText(row)}</td>
-          <td>{t("p.plans.pid.schedule_risk.of_runs", { criticalityText: criticalityText(row.criticality_bp) })}</td>
-          <td>{sensitivityText(row.sensitivity)}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    <DataTable label={t("p.plans.pid.schedule_risk.per_task_estimate_criticality_and")} columns={taskColumns} rows={[...run.tasks].sort((a, b) => b.criticality_bp - a.criticality_bp)} rowId={(r) => String(r.pid)} sortable={false} />
 
   <h2>{t("p.plans.pid.schedule_risk.risks_used")}</h2>
   {#if run.events.used.length === 0}
@@ -182,16 +175,6 @@
 {/if}
 
 <style>
-  table {
-    border-collapse: collapse;
-    width: 100%;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--mxi-color-border, #ddd);
-  }
   .bar {
     fill: var(--mxi-color-accent, #4a6fa5);
   }
@@ -217,9 +200,6 @@
   .label {
     font-size: 11px;
     fill: currentColor;
-  }
-  tr.fallback th {
-    font-style: italic;
   }
   .filter {
     display: flex;

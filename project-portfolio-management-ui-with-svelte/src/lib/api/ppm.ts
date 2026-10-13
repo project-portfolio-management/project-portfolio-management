@@ -2674,6 +2674,19 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** Key people and roles, and the contingent workers (resource managers only). */
+  keyPersons(): Promise<KeyPersons> {
+    return this.http.get("/api/key-persons");
+  }
+  recordKeyPerson(entry: { subject_kind: string; subject: string; successor_ref?: string; readiness: string; note?: string }): Promise<unknown> {
+    return this.http.put("/api/key-persons", { body: entry });
+  }
+  removeKeyPerson(pid: string): Promise<unknown> {
+    return this.http.delete(`/api/key-persons/${pid}`);
+  }
+  setContingent(personRef: string, contingent: boolean): Promise<unknown> {
+    return this.http.put("/api/key-persons/contingent", { body: { person_ref: personRef, contingent } });
+  }
   /** The partner organizations. */
   organizations(): Promise<{ organizations: Organization[] }> {
     return this.http.get("/api/organizations");
@@ -3674,4 +3687,12 @@ export interface Organization {
   active: boolean;
   /** The pack audience that addresses this organization (`org:<pid>`). */
   audience: string;
+}
+
+export interface KeyPersons {
+  entries: {
+    pid: string; subject_kind: "person" | "role"; subject: string; successor_ref: string | null;
+    readiness: "ready" | "partly" | "none"; skill_pool_pid: string | null; note: string | null;
+  }[];
+  contingent: string[];
 }

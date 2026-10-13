@@ -61,6 +61,7 @@ export const KNOWN_NAV_HREFS = [
   "/director-packs",
   "/pipeline",
   "/start-queue",
+  "/key-persons",
   "/organizations",
   "/email-deliveries",
   "/security",

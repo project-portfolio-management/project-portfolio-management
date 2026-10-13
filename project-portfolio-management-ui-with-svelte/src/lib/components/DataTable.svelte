@@ -70,9 +70,17 @@
 
   // Sort on every column unless it says no. Done here so a table's column list stays short.
   const cols = $derived(columns.map((c) => ({ sortable, ...c })));
+  // The filter box's name is its aria-label; give sighted readers the same words as a placeholder
+  // (the grid sets no placeholder of its own).
+  let host = $state<HTMLElement | undefined>();
+  $effect(() => {
+    const text = t("p.table.search");
+    host?.querySelectorAll<HTMLInputElement>(".data-grid-search").forEach((i) => i.setAttribute("placeholder", text));
+  });
   const direction = (d: string) => t(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}` as never);
 </script>
 
+<div bind:this={host} class="data-table-host">
 <DataGrid
   {label}
   caption={caption ?? label}
@@ -108,6 +116,7 @@
 >
   {#snippet empty()}{emptyText ?? t("p.table.empty")}{/snippet}
 </DataGrid>
+</div>
 
 <style>
   /* Cell tones. A tone is never the only signal: the cell text carries a word or a symbol as well. */

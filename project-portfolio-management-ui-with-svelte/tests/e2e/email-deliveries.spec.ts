@@ -22,6 +22,20 @@ test.describe("email deliveries", () => {
     await expect(page.getByRole("row", { name: /bo@example.test.*will retry.*connection refused/ })).toBeVisible();
   });
 
+  test("sorts by a column header and filters by the filter box", async ({ page }) => {
+    await page.goto("/en-001/email-deliveries", { waitUntil: "networkidle" });
+    const rows = page.locator("tbody tr");
+    await expect(rows).toHaveCount(2);
+    await page.getByRole("button", { name: "Attempts" }).click();
+    await expect(page.getByRole("columnheader", { name: /Attempts/ })).toHaveAttribute("aria-sort", "ascending");
+    await expect(rows.first()).toContainText("ana@example.test");
+    await page.getByRole("button", { name: "Attempts" }).click();
+    await expect(page.getByRole("columnheader", { name: /Attempts/ })).toHaveAttribute("aria-sort", "descending");
+    await expect(rows.first()).toContainText("bo@example.test");
+    await page.getByPlaceholder("Filter rows").fill("ana@");
+    await expect(rows).toHaveCount(1);
+  });
+
   test("says so when the caller is not an administrator", async ({ page }) => {
     await page.route("**/api/email-deliveries**", (r) => r.fulfill({ status: 404, json: { error: "not_found" } }));
     await page.goto("/en-001/email-deliveries", { waitUntil: "networkidle" });

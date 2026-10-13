@@ -5,6 +5,8 @@
   other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -26,7 +28,23 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   });
+
+  type Row = RiskRegister["register"][number];
+  const findingColumns: DataGridColumn[] = $derived([
+    { id: "rule", header: t("p.compliance.rule"), rowHeader: true, cell: codeCell },
+    { id: "detail", header: t("p.compliance.detail") },
+  ]);
+  const registerColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.compliance.risk"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as Row).escalated ? " ⚠" : ""}` },
+    { id: "item", header: t("p.compliance.item"), accessor: (r) => (r as unknown as Row).item?.name ?? "—" },
+    { id: "status", header: t("p.compliance.status") },
+    { id: "exposure", header: t("p.compliance.exposure"), align: "end" },
+    { id: "owner_ref", header: t("p.compliance.owner"), format: (v) => (v ? String(v) : "—") },
+  ]);
 </script>
+
+{#snippet codeCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
+
 
 <svelte:head><title>{t("p.compliance.ppm", { t: t("ppm.nav.compliance") })}</title></svelte:head>
 
@@ -36,37 +54,11 @@
 {#if findings}
   <h2>{t("p.compliance.conformance_findings")}</h2>
   <p class="muted">{t("p.compliance.gate_review_recency_threshold_calend", { review_days: findings.review_days })}</p>
-  <table data-testid="compliance-findings">
-    <thead><tr><th>{t("p.compliance.rule")}</th><th>{t("p.compliance.detail")}</th></tr></thead>
-    <tbody>
-      {#each findings.findings as finding, index (index)}
-        <tr><td><code>{finding.rule}</code></td><td>{finding.detail}</td></tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.compliance.no_conformance_findings")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.compliance.rule")} columns={findingColumns} rows={findings.findings} rowId={(_r, i) => String(i)} emptyText={t("p.compliance.no_conformance_findings")} testid="compliance-findings" searchable />
 {/if}
 
 {#if register}
   <h2>{t("p.compliance.compliance_risk_register")}</h2>
   <p class="muted">{t("p.compliance.open_exposure", { note: register.note, open_exposure: register.open_exposure })}</p>
-  <table data-testid="compliance-register">
-    <thead>
-      <tr><th>{t("p.compliance.risk")}</th><th>{t("p.compliance.item")}</th><th>{t("p.compliance.status")}</th><th>{t("p.compliance.exposure")}</th><th>{t("p.compliance.owner")}</th></tr>
-    </thead>
-    <tbody>
-      {#each register.register as row (row.pid)}
-        <tr>
-          <td>{row.title}{#if row.escalated}&nbsp;⚠{/if}</td>
-          <td>{row.item?.name ?? "—"}</td>
-          <td>{row.status}</td>
-          <td>{row.exposure}</td>
-          <td>{row.owner_ref ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="5" class="muted">{t("p.compliance.no_compliance_risks_recorded")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.compliance.risk")} columns={registerColumns} rows={register.register} rowId={(r) => String(r.pid)} emptyText={t("p.compliance.no_compliance_risks_recorded")} testid="compliance-register" searchable />
 {/if}

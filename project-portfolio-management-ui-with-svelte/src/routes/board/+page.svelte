@@ -7,6 +7,8 @@
   other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -53,6 +55,27 @@
       ? money(minor, entry.currency)
       : "—";
   };
+
+  type Dec = BoardPack["decisions"][number];
+  type Trend = TrendSeries["series"][number];
+  const decisionColumns: DataGridColumn[] = $derived([
+    { id: "at", header: t("p.board.when"), rowHeader: true },
+    { id: "kind", header: t("p.board.kind") },
+    { id: "decision", header: t("p.board.decision") },
+    { id: "subject", header: t("p.board.subject"), accessor: (r) => { const s = (r as unknown as Dec).subject; return s.name ?? s.pid; } },
+  ]);
+  const investmentColumns: DataGridColumn[] = $derived([
+    { id: "at", header: t("p.board.when"), rowHeader: true },
+    { id: "kind", header: t("p.board.kind"), accessor: (r) => { const e = r as unknown as Investment; return `${e.kind}${e.gate ? ` · ${e.gate}` : ""}`; } },
+    { id: "what", header: t("p.board.what"), accessor: (r) => label(r as unknown as Investment) },
+    { id: "amount", header: t("p.board.amount"), align: "end", sortable: false, accessor: (r) => amount(r as unknown as Investment) },
+  ]);
+  const trendColumns: DataGridColumn[] = $derived([
+    { id: "taken_at", header: t("p.board.taken"), rowHeader: true },
+    { id: "plans", header: t("p.board.work_items"), align: "end", accessor: (r) => String((r as unknown as Trend).body["plans"] ?? "—") },
+    { id: "portfolios", header: t("p.board.portfolios"), align: "end", accessor: (r) => String((r as unknown as Trend).body["portfolios"] ?? "—") },
+    { id: "open_exposure", header: t("p.board.open_exposure"), align: "end", accessor: (r) => String((r as unknown as Trend).body["open_exposure"] ?? "—") },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.board.ppm", { t: t("ppm.nav.board") })}</title></svelte:head>
@@ -86,59 +109,17 @@
   {/if}
 
   <h3>{t("p.board.decisions_in_window")}</h3>
-  <table data-testid="board-decisions">
-    <thead><tr><th>{t("p.board.when")}</th><th>{t("p.board.kind")}</th><th>{t("p.board.decision")}</th><th>{t("p.board.subject")}</th></tr></thead>
-    <tbody>
-      {#each pack.decisions as entry (entry.kind + entry.at + entry.subject.pid)}
-        <tr>
-          <td>{entry.at}</td>
-          <td>{entry.kind}</td>
-          <td>{entry.decision}</td>
-          <td>{entry.subject.name ?? entry.subject.pid}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.board.no_decisions_in_the_window")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.board.decision")} columns={decisionColumns} rows={pack.decisions} rowId={(r) => String(r.kind) + String(r.at) + String((r as unknown as Dec).subject.pid)} emptyText={t("p.board.no_decisions_in_the_window")} testid="board-decisions" pageSize={50} searchable />
 {/if}
 
 {#if investments}
   <h2>{t("p.board.investment_decisions")}</h2>
-  <table data-testid="board-investments">
-    <thead><tr><th>{t("p.board.when")}</th><th>{t("p.board.kind")}</th><th>{t("p.board.what")}</th><th>{t("p.board.amount")}</th></tr></thead>
-    <tbody>
-      {#each investments as entry (entry.kind + entry.at + label(entry))}
-        <tr>
-          <td>{entry.at}</td>
-          <td>{entry.kind}{#if entry.gate}&nbsp;· {entry.gate}{/if}</td>
-          <td>{label(entry)}</td>
-          <td>{amount(entry)}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.board.no_investment_decisions_recorded")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.board.what")} columns={investmentColumns} rows={investments} rowId={(r) => String(r.kind) + String(r.at) + label(r as unknown as Investment)} emptyText={t("p.board.no_investment_decisions_recorded")} testid="board-investments" />
 {/if}
 
 {#if trends}
   <h2>{t("p.board.trends")}</h2>
   <p class="muted">{trends.note}</p>
   <p><button onclick={() => void snapshot()}>{t("p.board.take_snapshot_now")}</button></p>
-  <table data-testid="board-trends">
-    <thead><tr><th>{t("p.board.taken")}</th><th>{t("p.board.work_items")}</th><th>{t("p.board.portfolios")}</th><th>{t("p.board.open_exposure")}</th></tr></thead>
-    <tbody>
-      {#each trends.series as row (row.taken_at)}
-        <tr>
-          <td>{row.taken_at}</td>
-          <td>{String(row.body["plans"] ?? "—")}</td>
-          <td>{String(row.body["portfolios"] ?? "—")}</td>
-          <td>{String(row.body["open_exposure"] ?? "—")}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.board.no_snapshots_captured_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.board.taken")} columns={trendColumns} rows={trends.series} rowId={(r) => String(r.taken_at)} emptyText={t("p.board.no_snapshots_captured_yet")} testid="board-trends" />
 {/if}

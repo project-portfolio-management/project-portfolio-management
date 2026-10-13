@@ -7,6 +7,8 @@
   other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -37,7 +39,32 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   });
+
+  type Blocked = BlockedWork["blocked"][number];
+  type Tracked = DeliveryLinks["tracked"][number];
+  type Release = DevopsReleases["releases"][number];
+  const blockedColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.engineering.task"), rowHeader: true },
+    { id: "item", header: t("p.engineering.item"), accessor: (r) => (r as unknown as Blocked).item?.name ?? "—" },
+    { id: "assignee_ref", header: t("p.engineering.assignee"), format: (v) => (v ? String(v) : "—") },
+    { id: "blocked_days", header: t("p.engineering.blocked_calendar_days"), align: "end" },
+  ]);
+  const linkColumns: DataGridColumn[] = $derived([
+    { id: "item", header: t("p.engineering.item"), rowHeader: true, accessor: (r) => (r as unknown as Tracked).item.name },
+    { id: "links", header: t("p.engineering.trackers"), sortable: false, accessor: (r) => (r as unknown as Tracked).links.map((l) => `${l.scheme}:${l.value}`).join(" "), cell: trackersCell },
+  ]);
+  const releaseColumns: DataGridColumn[] = $derived([
+    { id: "occurred_at", header: t("p.engineering.when") },
+    { id: "version", header: t("p.engineering.version"), format: (v) => (v ? String(v) : "—") },
+    { id: "environment", header: t("p.engineering.environment"), format: (v) => (v ? String(v) : "—") },
+    { id: "item", header: t("p.engineering.item"), accessor: (r) => (r as unknown as Release).item?.name ?? "—" },
+  ]);
 </script>
+
+{#snippet trackersCell({ row }: DataGridCellContext)}
+  {#each (row as unknown as Tracked).links as link (link.scheme + link.value)}<code>{link.scheme}:{link.value}</code>&nbsp;{/each}
+{/snippet}
+
 
 <svelte:head><title>{t("p.engineering.ppm", { t: t("ppm.nav.engineering") })}</title></svelte:head>
 
@@ -47,21 +74,7 @@
 {#if blocked}
   <h2>{t("p.engineering.blocked_work")}</h2>
   <p class="muted">{blocked.derivation}</p>
-  <table data-testid="eng-blocked">
-    <thead><tr><th>{t("p.engineering.task")}</th><th>{t("p.engineering.item")}</th><th>{t("p.engineering.assignee")}</th><th>{t("p.engineering.blocked_calendar_days")}</th></tr></thead>
-    <tbody>
-      {#each blocked.blocked as task (task.pid)}
-        <tr>
-          <td>{task.title}</td>
-          <td>{task.item?.name ?? "—"}</td>
-          <td>{task.assignee_ref ?? "—"}</td>
-          <td>{task.blocked_days}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.engineering.nothing_blocked_ship_it")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.engineering.task")} columns={blockedColumns} rows={blocked.blocked} rowId={(r) => String(r.pid)} emptyText={t("p.engineering.nothing_blocked_ship_it")} testid="eng-blocked" />
 {/if}
 
 {#if moscow}
@@ -86,23 +99,7 @@
 
 {#if links}
   <h2>{t("p.engineering.delivery_links")}</h2>
-  <table data-testid="eng-links">
-    <thead><tr><th>{t("p.engineering.item")}</th><th>{t("p.engineering.trackers")}</th></tr></thead>
-    <tbody>
-      {#each links.tracked as row (row.item.pid)}
-        <tr>
-          <td>{row.item.name}</td>
-          <td>
-            {#each row.links as link (link.scheme + link.value)}
-              <code>{link.scheme}:{link.value}</code>&nbsp;
-            {/each}
-          </td>
-        </tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.engineering.no_externally_tracked_items")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.engineering.item")} columns={linkColumns} rows={links.tracked} rowId={(r) => String((r as unknown as Tracked).item.pid)} emptyText={t("p.engineering.no_externally_tracked_items")} testid="eng-links" />
   {#if links.untracked.length > 0}
     <p data-testid="eng-untracked">
       {t("p.engineering.untracked")}
@@ -139,21 +136,7 @@
 
 {#if releases}
   <h2>{t("p.engineering.releases")}</h2>
-  <table data-testid="devops-releases">
-    <thead><tr><th>{t("p.engineering.when")}</th><th>{t("p.engineering.version")}</th><th>{t("p.engineering.environment")}</th><th>{t("p.engineering.item")}</th></tr></thead>
-    <tbody>
-      {#each releases.releases as release (release.pid)}
-        <tr>
-          <td>{release.occurred_at}</td>
-          <td>{release.version ?? "—"}</td>
-          <td>{release.environment ?? "—"}</td>
-          <td>{release.item?.name ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.engineering.no_deploy_events_ingested_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.engineering.when")} columns={releaseColumns} rows={releases.releases} rowId={(r) => String(r.pid)} emptyText={t("p.engineering.no_deploy_events_ingested_yet")} testid="devops-releases" />
 {/if}
 
 <style>

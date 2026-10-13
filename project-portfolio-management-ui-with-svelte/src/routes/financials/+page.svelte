@@ -6,6 +6,8 @@
   is displayed verbatim). English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -29,6 +31,27 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   });
+
+  const overrun = (c: DataGridCellContext) => ((c.row as { overrun?: boolean }).overrun ? "cell-red" : "");
+  const exposureColumns: DataGridColumn[] = $derived([
+    { id: "currency", header: t("p.financials.currency"), rowHeader: true },
+    { id: "planned_minor", header: t("p.financials.planned"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "actual_minor", header: t("p.financials.actual"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "remaining_minor", header: t("p.financials.remaining"), align: "end", format: (v, r) => money(Number(v), String(r.currency)), cellClass: overrun },
+    { id: "line_count", header: t("p.financials.lines"), align: "end" },
+    { id: "plans", header: t("p.financials.work_items"), align: "end" },
+  ]);
+  type Group = { key: string; variance: VarianceRow[] };
+  /** One row for each currency of each group; the group's name only on its first row. */
+  const flat = (groups: Group[]) => groups.flatMap((g) => g.variance.map((row, i) => ({ ...row, group: i === 0 ? g.key : "" })));
+  const varianceColumns = (label: string): DataGridColumn[] => [
+    { id: "group", header: label, rowHeader: true },
+    { id: "currency", header: t("p.financials.currency") },
+    { id: "planned_minor", header: t("p.financials.planned"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "actual_minor", header: t("p.financials.actual"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "remaining_minor", header: t("p.financials.remaining"), align: "end", format: (v, r) => money(Number(v), String(r.currency)), cellClass: overrun },
+    { id: "line_count", header: t("p.financials.lines"), align: "end" },
+  ];
 </script>
 
 <svelte:head><title>{t("p.financials.ppm", { t: t("ppm.nav.financials") })}</title></svelte:head>
@@ -39,56 +62,12 @@
 {#if exposure}
   <h2>{t("p.financials.currency_exposure")}</h2>
   <p class="muted">{t("p.financials.as_of", { as_of: exposure.as_of, note: exposure.note })}</p>
-  <table data-testid="fin-exposure">
-    <thead>
-      <tr>
-        <th>{t("p.financials.currency")}</th><th>{t("p.financials.planned")}</th><th>{t("p.financials.actual")}</th><th>{t("p.financials.remaining")}</th>
-        <th>{t("p.financials.lines")}</th><th>{t("p.financials.work_items")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each exposure.currencies as row (row.currency)}
-        <tr class:overrun={row.overrun}>
-          <td><strong>{row.currency}</strong></td>
-          <td>{money(row.planned_minor, row.currency)}</td>
-          <td>{money(row.actual_minor, row.currency)}</td>
-          <td>{money(row.remaining_minor, row.currency)}</td>
-          <td>{row.line_count}</td>
-          <td>{row.plans}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="6" class="muted">{t("p.financials.no_budget_lines_recorded_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.financials.currency_exposure")} columns={exposureColumns} rows={exposure.currencies} rowId={(r) => String(r.currency)} emptyText={t("p.financials.no_budget_lines_recorded_yet")} testid="fin-exposure" />
 {/if}
 
 {#snippet varianceTable(label: string, rows: Array<{ key: string; variance: VarianceRow[] }>, testid: string)}
   <h2>{label}</h2>
-  <table data-testid={testid}>
-    <thead>
-      <tr>
-        <th>{label}</th><th>{t("p.financials.currency")}</th><th>{t("p.financials.planned")}</th><th>{t("p.financials.actual")}</th>
-        <th>{t("p.financials.remaining")}</th><th>{t("p.financials.lines")}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each rows as group, gi (`${gi}:${group.key}`)}
-        {#each group.variance as row, index (row.currency)}
-          <tr class:overrun={row.overrun}>
-            <td>{#if index === 0}<strong>{group.key}</strong>{/if}</td>
-            <td>{row.currency}</td>
-            <td>{money(row.planned_minor, row.currency)}</td>
-            <td>{money(row.actual_minor, row.currency)}</td>
-            <td>{money(row.remaining_minor, row.currency)}</td>
-            <td>{row.line_count}</td>
-          </tr>
-        {/each}
-      {:else}
-        <tr><td colspan="6" class="muted">{t("p.financials.no_budget_lines_recorded_yet")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable {label} columns={varianceColumns(label)} rows={flat(rows)} rowId={(_r, i) => String(i)} emptyText={t("p.financials.no_budget_lines_recorded_yet")} sortable={false} {testid} />
 {/snippet}
 
 {#if variance}
@@ -113,5 +92,4 @@
 {/if}
 
 <style>
-  tr.overrun td { color: #b91c1c; }
 </style>

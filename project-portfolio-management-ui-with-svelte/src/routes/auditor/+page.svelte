@@ -5,6 +5,8 @@
   download. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import {
@@ -38,7 +40,21 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   });
+
+  const findingColumns: DataGridColumn[] = $derived([
+    { id: "rule", header: t("p.auditor.rule"), rowHeader: true, cell: codeCell },
+    { id: "detail", header: t("p.auditor.detail") },
+  ]);
+  const trailColumns: DataGridColumn[] = $derived([
+    { id: "created_at", header: t("p.auditor.when") },
+    { id: "actor", header: t("p.auditor.actor"), format: (v) => (v ? String(v) : "—") },
+    { id: "action", header: t("p.auditor.action"), cell: codeCell },
+    { id: "entity_pid", header: t("p.auditor.entity"), format: (v) => String(v).slice(0, 8) },
+  ]);
 </script>
+
+{#snippet codeCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
+
 
 <svelte:head><title>{t("p.auditor.ppm", { t: t("ppm.nav.auditor") })}</title></svelte:head>
 
@@ -48,16 +64,7 @@
 {#if findings}
   <h2>{t("p.auditor.findings")}</h2>
   <p class="muted">{findings.note}</p>
-  <table data-testid="auditor-findings">
-    <thead><tr><th>{t("p.auditor.rule")}</th><th>{t("p.auditor.detail")}</th></tr></thead>
-    <tbody>
-      {#each findings.findings as finding, index (index)}
-        <tr><td><code>{finding.rule}</code></td><td>{finding.detail}</td></tr>
-      {:else}
-        <tr><td colspan="2" class="muted">{t("p.auditor.no_findings")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.auditor.rule")} columns={findingColumns} rows={findings.findings} rowId={(_r, i) => String(i)} emptyText={t("p.auditor.no_findings")} testid="auditor-findings" searchable />
   <p data-testid="auditor-actorless">
     {t("p.auditor.actor_less_recorded_actions")} <strong>{findings.actorless_actions}</strong>
     <span class="muted">{t("p.auditor.submitted_without_a_verified_token")}</span>
@@ -82,21 +89,7 @@
   <p class="muted" data-testid="trail-stats">
     {t("p.auditor.rows_distinct_actors_actor_less", { returned: trail.returned, distinct_actors: trail.stats.distinct_actors, actorless: trail.stats.actorless })}
   </p>
-  <table data-testid="auditor-trail">
-    <thead><tr><th>{t("p.auditor.when")}</th><th>{t("p.auditor.actor")}</th><th>{t("p.auditor.action")}</th><th>{t("p.auditor.entity")}</th></tr></thead>
-    <tbody>
-      {#each trail.rows as row (row.created_at + row.action + row.entity_pid)}
-        <tr>
-          <td>{row.created_at}</td>
-          <td>{row.actor ?? "—"}</td>
-          <td><code>{row.action}</code></td>
-          <td class="muted">{row.entity_pid.slice(0, 8)}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.auditor.no_audit_rows_match")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.auditor.when")} columns={trailColumns} rows={trail.rows} rowId={(r) => String(r.created_at) + String(r.action) + String(r.entity_pid)} emptyText={t("p.auditor.no_audit_rows_match")} testid="auditor-trail" searchable pageSize={50} />
 {/if}
 
 <style>

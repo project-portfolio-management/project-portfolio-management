@@ -6,6 +6,8 @@
   server-derived. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type RiskHeatmap } from "#lib/api/ppm.js";
@@ -24,6 +26,21 @@
 
   const SCALE = [1, 2, 3, 4, 5] as const;
   const cell = (p: number, i: number) => heatmap?.cells[`p${p}i${i}`] ?? 0;
+
+  type Top = RiskHeatmap["top_risks"][number];
+  type Post = RiskHeatmap["posture"][number];
+  const topColumns: DataGridColumn[] = $derived([
+    { id: "title", header: t("p.risk.risk"), rowHeader: true },
+    { id: "category", header: t("p.risk.category") },
+    { id: "exposure", header: t("p.risk.exposure"), align: "end" },
+    { id: "item", header: t("p.risk.item"), accessor: (r) => (r as unknown as Top).item?.name ?? "—" },
+  ]);
+  const postureColumns: DataGridColumn[] = $derived([
+    { id: "portfolio", header: t("p.risk.portfolio"), rowHeader: true, accessor: (r) => (r as unknown as Post).portfolio?.name ?? t("p.risk.unassigned") },
+    { id: "open_exposure", header: t("p.risk.open_exposure"), align: "end" },
+    { id: "escalated", header: t("p.risk.escalated"), align: "end" },
+    { id: "materialized", header: t("p.risk.materialized"), align: "end" },
+  ]);
 </script>
 
 <svelte:head><title>{t("p.risk.ppm", { t: t("ppm.nav.risk") })}</title></svelte:head>
@@ -69,36 +86,10 @@
   </table>
 
   <h2>{t("p.risk.top_risks")}</h2>
-  <table data-testid="risk-top">
-    <thead><tr><th>{t("p.risk.risk")}</th><th>{t("p.risk.category")}</th><th>{t("p.risk.exposure")}</th><th>{t("p.risk.item")}</th></tr></thead>
-    <tbody>
-      {#each heatmap.top_risks as row (row.pid)}
-        <tr>
-          <td>{row.title}</td>
-          <td>{row.category}</td>
-          <td>{row.exposure}</td>
-          <td>{row.item?.name ?? "—"}</td>
-        </tr>
-      {:else}
-        <tr><td colspan="4" class="muted">{t("p.risk.no_open_risks")}</td></tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.risk.risk")} columns={topColumns} rows={heatmap.top_risks} rowId={(r) => String(r.pid)} emptyText={t("p.risk.no_open_risks")} testid="risk-top" />
 
   <h2>{t("p.risk.posture_by_portfolio")}</h2>
-  <table data-testid="risk-posture">
-    <thead><tr><th>{t("p.risk.portfolio")}</th><th>{t("p.risk.open_exposure")}</th><th>{t("p.risk.escalated")}</th><th>{t("p.risk.materialized")}</th></tr></thead>
-    <tbody>
-      {#each heatmap.posture as row (row.portfolio?.pid ?? "unassigned")}
-        <tr>
-          <td>{row.portfolio?.name ?? t("p.risk.unassigned")}</td>
-          <td>{row.open_exposure}</td>
-          <td>{row.escalated}</td>
-          <td>{row.materialized}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  <DataTable label={t("p.risk.portfolio")} columns={postureColumns} rows={heatmap.posture} rowId={(r) => String((r as unknown as Post).portfolio?.pid ?? "unassigned")} testid="risk-posture" />
 
   {#if heatmap.concentration.length > 0}
     <h2>{t("p.risk.concentration")}</h2>

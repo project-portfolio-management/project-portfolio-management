@@ -2674,6 +2674,16 @@ export class PpmClient {
       { body: { status } },
     );
   }
+  /** Milestones that need partner sign-off, and where each stands. */
+  milestoneSignoffs(): Promise<MilestoneSignoffs> {
+    return this.http.get("/api/milestone-signoffs");
+  }
+  /** An organization signs a milestone off, or withdraws its sign-off. */
+  actOnSignoff(planPid: string, milestonePid: string, organizationPid: string, action: "sign" | "withdraw", reason?: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/milestones/${milestonePid}/signoffs`, {
+      body: { organization_pid: organizationPid, action, ...(reason ? { reason } : {}) },
+    });
+  }
   /** Key people and roles, and the contingent workers (resource managers only). */
   keyPersons(): Promise<KeyPersons> {
     return this.http.get("/api/key-persons");
@@ -3695,4 +3705,13 @@ export interface KeyPersons {
     readiness: "ready" | "partly" | "none"; skill_pool_pid: string | null; note: string | null;
   }[];
   contingent: string[];
+}
+
+export interface MilestoneSignoffs {
+  totals: { requiring_signoff: number; delivered: number; met: number; delivered_not_met: number; met_share_of_delivered_bp: number | null };
+  milestones: {
+    milestone_pid: string; plan_pid: string; name: string; due: string | null;
+    signoff: { state: "met" | "delivered_not_met" | "not_delivered" | "not_required"; delivered_on: string | null; met_on: string | null; outstanding: string[] };
+  }[];
+  note: string;
 }

@@ -17,7 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 14 October
 
-- **Working calendar on Lily's CalendarView** (`@lilydesignsystem/svelte-calendar` 0.2.0): `CalendarMonth` (plan calendar and My calendar) now sits on it, so the calendar browses by week, four weeks or month, has a Today button, and moves with the arrow, Home, End and Page keys. Holidays are still marked by selecting a business day, and every state keeps its symbol (– off day, ✕ holiday, A absent) as well as its colour. All other `@lilydesignsystem` packages were already at their latest versions. The new button labels have Welsh text that is machine-written and unreviewed, like the rest of the Welsh. Added `tests/e2e/calendar.spec.ts`; all 581 browser tests and 709 unit tests pass.
+- **Working calendar on Lily's CalendarView** (`@lilydesignsystem/svelte-calendar` 0.2.0): `CalendarMonth` (plan calendar and My calendar) now sits on it, so the calendar browses by week, four weeks or month, has a Today button, and moves with the arrow, Home, End and Page keys. Holidays are still marked by selecting a business day, and every state keeps its symbol (– off day, ✕ holiday, A absent) as well as its colour. All other `@lilydesignsystem` packages were already at their latest versions. The new button labels have Welsh text that is machine-written and unreviewed, like the rest of the Welsh. Added `tests/e2e/calendar.spec.ts`; all 578 browser tests and 708 unit tests pass.
 
 ### 13 October
 

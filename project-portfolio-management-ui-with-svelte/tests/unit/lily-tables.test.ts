@@ -37,7 +37,9 @@ describe("Lily Gantt table", () => {
     expect(body).toContain('aria-label="Schedule"');
     expect(body).toContain("Design: 2026-10-05 to 2026-10-14");
     expect(body).toContain("(ends here)");
-    expect(body).toContain('aria-selected="true"');
+    // Headless 0.5: an active cell is the tab stop only; nothing is selected, so nothing says so.
+    expect(body).toContain('tabindex="0"');
+    expect(body).not.toContain("aria-selected");
     expect(body).toContain("critical path");
   });
   it("lists a task with no dates instead of drawing it", () => {

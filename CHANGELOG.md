@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 14 October
+
+- **Working calendar on Lily's CalendarView** (`@lilydesignsystem/svelte-calendar` 0.2.0): `CalendarMonth` (plan calendar and My calendar) now sits on it, so the calendar browses by week, four weeks or month, has a Today button, and moves with the arrow, Home, End and Page keys. Holidays are still marked by selecting a business day, and every state keeps its symbol (– off day, ✕ holiday, A absent) as well as its colour. All other `@lilydesignsystem` packages were already at their latest versions. The new button labels have Welsh text that is machine-written and unreviewed, like the rest of the Welsh. Added `tests/e2e/calendar.spec.ts`; all 581 browser tests and 709 unit tests pass.
+
 ### 13 October
 
 - **Data tables on Lily's DataGrid** (`@lilydesignsystem/svelte-data-grid` 0.4.0, which added cell snippets, cell classes, a plain-table mode, an empty snippet and a footer): one wrapper, `DataTable` (`src/lib/components/DataTable.svelte`), now shows every data table in the app (about 95 tables on 60 screens, including the plans list, which had been on the SVAR grid). A table gets sorting on every column, an optional filter box, paging where a table is long, a named scrollable region, a caption for assistive technology, the empty text, and sort, filter and page announcements in English and Welsh. Buttons, links, forms and checkboxes sit in cells; status colours are cell tones with the word or symbol still in the text; glossary terms stay in headers. The SVAR grid and filter packages and their helper code were removed. **Left as plain tables on purpose:** the five-by-five risk matrix, the resource gap heatmap, the RACI matrix, the calendar month grid, and two-column key-and-value summaries with no header row (earned-value figures and the flow rates), because they are matrices or definitions, not tables of records. Tests were updated where a name became a row header or a table lost a hand-written class; all 574 browser tests (with axe) and 707 unit tests pass.

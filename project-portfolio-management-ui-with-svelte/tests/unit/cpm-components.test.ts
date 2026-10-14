@@ -222,14 +222,15 @@ describe("CalendarMonth", () => {
       editable: true,
       ontoggle,
     });
-    const buttons = [
-      ...root.querySelectorAll("td button"),
-    ] as HTMLButtonElement[];
-    expect(buttons).toHaveLength(22); // 22 weekdays in October 2026
-    buttons
-      .find((b) => b.getAttribute("aria-label")?.startsWith("2026-10-12"))!
-      .click();
+    const open = [
+      ...root.querySelectorAll("td[data-date]:not([aria-disabled])"),
+    ] as HTMLElement[];
+    expect(open).toHaveLength(22); // 22 weekdays in October 2026
+    open.find((b) => b.dataset.date === "2026-10-12")!.click();
     expect(ontoggle).toHaveBeenCalledWith("2026-10-12");
+    (root.querySelector('td[data-date="2026-10-03"]') as HTMLElement).click(); // a Saturday
+    (root.querySelector('td[data-date="2026-09-30"]') as HTMLElement).click(); // outside the month
+    expect(ontoggle).toHaveBeenCalledTimes(1);
     done();
   });
   it("is read-only by default", () => {
@@ -239,7 +240,8 @@ describe("CalendarMonth", () => {
       mask: "1111100",
       holidays: [],
     });
-    expect(root.querySelectorAll("td button")).toHaveLength(0);
+    expect(root.querySelectorAll("td[data-date]:not([aria-disabled])")).toHaveLength(0);
+    (root.querySelector('td[data-date="2026-10-12"]') as HTMLElement).click();
     done();
   });
   it("moves between months", () => {
@@ -250,10 +252,23 @@ describe("CalendarMonth", () => {
       holidays: [],
     });
     (
-      root.querySelector('button[aria-label="Next month"]') as HTMLButtonElement
+      root.querySelector(".calendar-view-next-button") as HTMLButtonElement
     ).click();
     flushSync();
     expect(root.textContent).toContain("January 2027");
+    done();
+  });
+  it("browses by week and four weeks, and labels the buttons", () => {
+    const { root, done } = render(CalendarMonth, { year: 2026, month: 10, mask: "1111100", holidays: [] });
+    const next = () => root.querySelector(".calendar-view-next-button") as HTMLButtonElement;
+    expect(next().getAttribute("aria-label")).toBe("Next Month");
+    (root.querySelector(".calendar-view-switcher-button-week") as HTMLButtonElement).click();
+    flushSync();
+    expect(root.querySelectorAll("td[data-date]")).toHaveLength(7);
+    expect(next().getAttribute("aria-label")).toBe("Next Week");
+    (root.querySelector(".calendar-view-switcher-button-four-week") as HTMLButtonElement).click();
+    flushSync();
+    expect(root.querySelectorAll("td[data-date]")).toHaveLength(28);
     done();
   });
 });

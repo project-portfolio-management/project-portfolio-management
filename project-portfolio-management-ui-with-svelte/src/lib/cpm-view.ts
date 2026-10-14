@@ -108,6 +108,20 @@ export function monthGrid(
   return grid;
 }
 
+/** The working state of one date under a weekly pattern, holidays and absences (the cell of any calendar view). */
+export function dayState(
+  date: string,
+  mask: string,
+  holidays: readonly string[],
+  absences: readonly string[] = [],
+): Omit<MonthCell, "inMonth"> {
+  const n = dayNumber(date);
+  const off = n === null ? false : !maskToWeekdays(mask)[mondayIndex(n)];
+  const holiday = holidays.includes(date);
+  const absent = absences.includes(date);
+  return { date, holiday, absent, offDay: off, working: !off && !holiday && !absent };
+}
+
 /** The (year, month) before / after `(year, month)`. */
 export function shiftMonth(
   year: number,

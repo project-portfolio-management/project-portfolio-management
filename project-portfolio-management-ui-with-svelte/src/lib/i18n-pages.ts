@@ -13,6 +13,13 @@
 
 export const PAGES_EN = {
   "c.CalendarMonth.next_month": "Next month",
+  "c.CalendarMonth.week": "Week",
+  "c.CalendarMonth.four_weeks": "4 weeks",
+  "c.CalendarMonth.month": "Month",
+  "c.CalendarMonth.today": "Today",
+  "c.CalendarMonth.previous": "Previous {view}",
+  "c.CalendarMonth.next": "Next {view}",
+  "c.CalendarMonth.working_calendar": "Working calendar",
   "c.CalendarMonth.previous_month": "Previous month",
   "c.CapacityMeter.days_over_capacity": "Days over capacity",
   "c.CostRiskView.adds": "{risk}: adds {money} — {eventHitText}",

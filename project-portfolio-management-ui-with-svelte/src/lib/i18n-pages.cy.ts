@@ -9,6 +9,13 @@ import type { PageKey } from "./i18n-pages";
 
 export const PAGES_CY: Record<PageKey, string> = {
   "c.CalendarMonth.next_month": "Mis nesaf",
+  "c.CalendarMonth.week": "Wythnos",
+  "c.CalendarMonth.four_weeks": "4 wythnos",
+  "c.CalendarMonth.month": "Mis",
+  "c.CalendarMonth.today": "Heddiw",
+  "c.CalendarMonth.previous": "{view} blaenorol",
+  "c.CalendarMonth.next": "{view} nesaf",
+  "c.CalendarMonth.working_calendar": "Calendr gwaith",
   "c.CalendarMonth.previous_month": "Mis blaenorol",
   "c.CapacityMeter.days_over_capacity": "Diwrnodau dros y capasiti",
   "c.CostRiskView.adds": "{risk}: yn ychwanegu {money} — {eventHitText}",

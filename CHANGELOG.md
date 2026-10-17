@@ -15,6 +15,11 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 17 October
+
+- **Lily upgrades**: `svelte-calendar` 0.5.0, `svelte-data-grid` 0.9.0, `svelte-kanban-board` 0.6.0, the link, locale, search, share, text-size and theme pickers, `svelte-picker-bar` 0.4.0 and `themes` 0.5.0. No code changes were needed; all 578 browser tests and 708 unit tests pass.
+- **Service advisories**: CI's `cargo deny` failed on four new rustls advisories (fixed by `cargo update -p rustls`, 0.23.46) and three zip advisories (fixed by moving `zip` to 9; `entry.name()` now returns a `Result`, so a part with an unreadable name is skipped). The `API (Postgres 18)` job on ad9cab8 failed once with `PoolTimedOut` in `saved_views_are_scoped_to_their_owner_and_their_route`, which looks like a runner flake and is not explained; it will be re-checked on this push.
+
 ### 14 October
 
 - **Lily upgrades**: `svelte-calendar` 0.3.0, `svelte-data-grid` 0.5.0, `svelte-kanban-board` 0.3.0 and `svelte-headless` 0.5.0 (the other seven `@lilydesignsystem` packages were already current). Headless 0.5 no longer sets `aria-selected` on an active Gantt cell, because focus is not selection; our Gantt has no selection, so its unit test now checks for the tab stop and no `aria-selected`. All 578 browser tests and 708 unit tests pass.

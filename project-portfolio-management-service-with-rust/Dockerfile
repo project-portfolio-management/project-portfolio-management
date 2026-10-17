@@ -17,7 +17,7 @@
 # Toolchain: the base image tag below must equal `channel` in the root
 # rust-toolchain.toml; the first RUN step fails the build if they drift.
 
-FROM docker.io/library/rust:1.96.1-slim AS builder
+FROM docker.io/library/rust:1.99.0-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \

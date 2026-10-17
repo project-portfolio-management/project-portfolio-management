@@ -43,3 +43,52 @@ test.describe("working calendar", () => {
     });
   }
 });
+
+// The delivery calendar (/<locale>/calendar): milestones on CalendarView. Due dates are relative to the test run's
+// month, because the calendar opens on today's month.
+const DUE = (() => {
+  const d = new Date();
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), 24)).toISOString().slice(0, 10);
+})();
+const MILESTONES = {
+  as_of: "2026-10-17T00:00:00Z",
+  kinds: ["demo", "release"],
+  milestones: [
+    { pid: "m1", name: "Sprint demo", kind: "demo", due: DUE, done: false, item: { pid: "w1", name: "Platform rebuild", kind: "Project" } },
+    { pid: "m2", name: "Go live", kind: "release", due: DUE, done: true, item: { pid: "w1", name: "Platform rebuild", kind: "Project" } },
+  ],
+};
+async function stubMilestones(page: Page) {
+  await page.route("**/api/engineering/milestone-calendar*", (r) => r.fulfill({ json: MILESTONES }));
+}
+
+test.describe("delivery calendar", () => {
+  test("shows milestones in the month, marks a done one in words, and switches to the agenda with typed fields", async ({ page }) => {
+    await stubMilestones(page);
+    await page.goto("/en-001/calendar", { waitUntil: "networkidle" });
+    const cal = page.getByTestId("milestone-calendar");
+    await expect(cal.getByText("demo: Sprint demo")).toBeVisible();
+    await expect(cal.getByText("release: Go live ✓ done")).toBeVisible();
+    await cal.getByRole("button", { name: "Agenda" }).click();
+    await expect(cal.getByText("Work item: Platform rebuild").first()).toBeVisible();
+    await expect(cal.getByText("Status: done")).toBeVisible();
+  });
+
+  test("exports the milestones as CSV", async ({ page }) => {
+    await stubMilestones(page);
+    await page.goto("/en-001/calendar", { waitUntil: "networkidle" });
+    const download = page.waitForEvent("download");
+    await page.getByTestId("milestone-calendar").getByRole("button", { name: "CSV" }).click();
+    expect((await download).suggestedFilename()).toBe("milestones.csv");
+  });
+
+  for (const locale of ["en-001", "cy-001"]) {
+    test(`passes axe in ${locale}`, async ({ page }) => {
+      await stubMilestones(page);
+      await page.goto(`/${locale}/calendar`, { waitUntil: "networkidle" });
+      const { default: AxeBuilder } = await import("@axe-core/playwright");
+      const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+      expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
+    });
+  }
+});

@@ -6,8 +6,8 @@ plan **identity CRUD + matching + merge** over **one recursive
 (Kanban task board, governance, schedule) and a wide set of oversight /
 executive views.
 
-SvelteKit 2 · Svelte 5 (runes) · TypeScript strict · SPA · SVAR Svelte
-DataGrid · Lily Design System Svelte Headless · 13-locale i18n · full
+SvelteKit 2 · Svelte 5 (runes) · TypeScript strict · SPA · Lily Design
+System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte Headless · 13-locale i18n · full
 theme catalogue.
 
 > **Status: implemented (v0.1.0), verified 2026-10-06.** `pnpm run check`
@@ -42,7 +42,7 @@ Every plan route lives under the static `plans/` directory.
 |---|---|
 | `/` | Landing — links into Plans |
 | `/dashboard` | PPM dashboard — site tiles + RAG / stage rollups |
-| `/plans` | Plan index (SVAR DataGrid + client-side FilterBar; row selection opens the detail) |
+| `/plans` | Plan index (Lily DataGrid with a filter box; selecting a row opens the detail) |
 | `/plans/new` | Create |
 | `/plans/[pid]` | Detail + edit / delete / check-duplicates |
 | `/plans/[pid]/edit` | Edit |

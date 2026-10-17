@@ -21,11 +21,13 @@ export default defineConfig({
                     "default-src": ["self"],
                     "script-src": ["self"],
                     "style-src": ["self"],
-                    // Style ATTRIBUTES only. The SVAR grid, Gantt, calendar and
-                    // Kanban set a computed `style="…"` on rows, cells and bars
-                    // (virtual-scroll offsets, row heights, bar positions), and
-                    // SvelteKit's route announcer carries one too; none of those
-                    // can be hashed or given a nonce. Scripts and <style>
+                    // Style ATTRIBUTES only. This was needed for the SVAR widgets,
+                    // which set a computed `style="…"` on rows, cells and bars;
+                    // they are gone (2026-10-17), but SvelteKit's route announcer
+                    // carries one too and nothing has yet shown that no Lily
+                    // widget or page needs it, so it is kept until that is
+                    // checked on every route. None of those can be hashed or
+                    // given a nonce. Scripts and <style>
                     // elements stay strict ('self' + kit nonces/hashes), so
                     // this does not let injected markup run code or load CSS.
                     "style-src-attr": ["unsafe-inline"],

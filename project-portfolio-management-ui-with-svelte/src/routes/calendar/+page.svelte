@@ -1,18 +1,32 @@
 <!--
-  Delivery calendar (`/calendar`) — the estate's milestones on a SVAR
-  Calendar, filterable by kind (milestone / demo / release /
-  checkpoint). Read-only: milestones are created and completed on their
-  work item. English-first, like the other PPM views.
+  Delivery calendar (`/calendar`) — the estate's milestones on Lily's CalendarView, filterable by kind
+  (milestone / demo / release / checkpoint). Browse by day, week, four weeks, month or as an agenda list; each
+  milestone carries its kind, work item and status as typed fields, a done milestone is marked with a tick and
+  says so in words, and the shown milestones export as CSV or Excel. Read-only: milestones are created and
+  completed on their work item. The list below the calendar is the same data as plain text.
 -->
 <script lang="ts">
-  import { Calendar, Willow } from "@svar-ui/svelte-calendar";
+  import CalendarView from "@lilydesignsystem/svelte-calendar";
+  import type { CalendarEvent, CalendarEventField, CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
+  import { onMount } from "svelte";
   import { PpmClient, type MilestoneCalendar } from "#lib/api/ppm.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { lazyArray } from "#lib/lazy.js";
+  import { WEEKDAY_NAMES } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
   let calendar = $state<MilestoneCalendar | null>(null);
   let kind = $state("");
   let error = $state<string | null>(null);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  let view = $state<Mode>("month");
+  let anchorDate = $state("2000-01-01");
+  let today = $state<string | undefined>(undefined);
+  onMount(() => {
+    const d = new Date();
+    today = anchorDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  });
 
   async function load() {
     try {
@@ -25,32 +39,52 @@
     void load();
   });
 
-  // `@svar-ui/calendar-store` requires an all-day event's `end` to be
-  // strictly *after* `start` (`!(e.end > start)` silently drops the
-  // event — confirmed against the compiled library source). `end: day`
-  // — the same Date as `start` — therefore filtered out every milestone
-  // this calendar was ever asked to show; the fallback `<ul>` below it
-  // is a separate render path, so the widget's own emptiness went
-  // unnoticed. Fixed with the following calendar day, the minimum
-  // exclusive span a one-day all-day event needs (the same bug and fix
-  // as worker-front-end's and person-front-end's `/expiry` calendars).
-  const events = $derived(
-    (calendar?.milestones ?? []).map((milestone) => {
-      const day = new Date(`${milestone.due}T00:00:00`);
-      const nextDay = new Date(
-        day.getFullYear(),
-        day.getMonth(),
-        day.getDate() + 1,
-      );
-      return {
-        id: milestone.pid,
-        start: day,
-        end: nextDay,
-        allDay: true,
-        text: `${milestone.kind}: ${milestone.name}${milestone.done ? " ✓" : ""}`,
-      };
-    }),
+  const events = $derived<CalendarEvent[]>(
+    (calendar?.milestones ?? []).map((m) => ({
+      id: m.pid,
+      date: m.due,
+      title: `${m.kind}: ${m.name}`,
+      done: m.done,
+      values: { kind: m.kind, item: m.item?.name ?? "—", status: m.done ? t("p.calendar.status_done") : t("p.calendar.status_open") },
+    })),
   );
+  const eventFields = $derived<CalendarEventField[]>([
+    { id: "kind", header: t("p.calendar.kind"), type: "text" },
+    { id: "item", header: t("p.calendar.item"), type: "text" },
+    { id: "status", header: t("p.calendar.status"), type: "text" },
+  ]);
+
+  const MONTHS = lazyArray([
+    "c.CalendarMonth.january", "c.CalendarMonth.february", "c.CalendarMonth.march", "c.CalendarMonth.april",
+    "c.CalendarMonth.may", "c.CalendarMonth.june", "c.CalendarMonth.july", "c.CalendarMonth.august",
+    "c.CalendarMonth.september", "c.CalendarMonth.october", "c.CalendarMonth.november", "c.CalendarMonth.december",
+  ]);
+  const sundayFirst = (wd: number) => (wd + 6) % 7;
+  const viewName = (v: Mode) =>
+    t(({ day: "p.calendar.day", week: "c.CalendarMonth.week", "four-week": "c.CalendarMonth.four_weeks", month: "c.CalendarMonth.month", agenda: "p.calendar.agenda" } as const)[v]);
+
+  const labels = $derived({
+    dayView: t("p.calendar.day"),
+    weekView: t("c.CalendarMonth.week"),
+    fourWeekView: t("c.CalendarMonth.four_weeks"),
+    monthView: t("c.CalendarMonth.month"),
+    agendaView: t("p.calendar.agenda"),
+    agendaEmpty: t("p.calendar.no_milestones_match"),
+    previous: (v: Mode) => t("c.CalendarMonth.previous", { view: viewName(v) }),
+    next: (v: Mode) => t("c.CalendarMonth.next", { view: viewName(v) }),
+    today: t("c.CalendarMonth.today"),
+    periodTitle: (v: Mode, start: string, end: string) =>
+      v === "month" || v === "agenda" ? `${MONTHS[Number(anchorDate.slice(5, 7)) - 1]} ${anchorDate.slice(0, 4)}` : v === "day" ? start : `${start} – ${end}`,
+    periodAnnouncement: (v: Mode, start: string, end: string) => t("p.calendar.showing", { view: viewName(v), start, end }),
+    weekday: (wd: number) => WEEKDAY_NAMES[sundayFirst(wd)] ?? "",
+    weekdayAbbr: (wd: number) => (WEEKDAY_NAMES[sundayFirst(wd)] ?? "").slice(0, 3),
+    day: (date: string, wd: number) => `${date}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}`,
+    export: t("p.calendar.export"),
+    exportCsv: t("p.calendar.csv"),
+    exportExcel: t("p.calendar.excel"),
+    exportAnnouncement: (_f: string, n: number, file: string) => t("p.calendar.exported", { n, file }),
+    exportHeaders: { title: t("p.calendar.milestone"), start: t("p.calendar.due"), end: t("p.calendar.due") },
+  });
 </script>
 
 <svelte:head><title>{t("p.calendar.ppm", { t: t("ppm.nav.calendar") })}</title></svelte:head>
@@ -78,9 +112,28 @@
 
 {#if calendar}
   <div class="calendar-wrap" data-testid="milestone-calendar">
-    <Willow fonts={false}>
-      <Calendar {events} view="month" readonly />
-    </Willow>
+    <CalendarView
+      label={t("ppm.nav.calendar")}
+      bind:view
+      bind:anchorDate
+      {today}
+      {events}
+      {eventFields}
+      {labels}
+      maxEvents={3}
+      exportFilename="milestones"
+    >
+      {#snippet day({ date, visibleEvents, hiddenCount, fieldText })}
+        <span class="d">{Number(date.slice(8))}</span>
+        {#each visibleEvents as event (event.id)}
+          <span class="ev" class:done={event["done"]}>{event["title"]}{event["done"] ? ` ✓ ${t("p.calendar.status_done")}` : ""}</span>
+          {#if view === "agenda"}
+            <span class="fields">{eventFields.map((f) => `${f.header}: ${fieldText(event, f.id)}`).join(" · ")}</span>
+          {/if}
+        {/each}
+        {#if hiddenCount > 0}<span class="more">{t("p.calendar.more", { n: hiddenCount })}</span>{/if}
+      {/snippet}
+    </CalendarView>
   </div>
   <ul data-testid="milestone-list">
     {#each calendar.milestones as milestone (milestone.pid)}
@@ -95,5 +148,29 @@
 {/if}
 
 <style>
-  .calendar-wrap { height: 560px; overflow-x: auto; margin-bottom: 1rem; }
+  .calendar-wrap { overflow-x: auto; margin-bottom: 1rem; }
+  .calendar-wrap :global(table) { border-collapse: collapse; width: 100%; }
+  .calendar-wrap :global(th),
+  .calendar-wrap :global(td) {
+    border: 1px solid var(--border, #ccc);
+    padding: 0.2rem 0.3rem;
+    vertical-align: top;
+    font-size: 0.85em;
+  }
+  .calendar-wrap :global(td) { min-width: 5.5rem; height: 5rem; }
+  .calendar-wrap :global([data-outside-period]) { background: var(--surface-2, #f1f1f1); color: var(--text-2, #595959); }
+  .calendar-wrap :global([data-today]) { outline: 2px solid var(--text, #222); outline-offset: -2px; }
+  .calendar-wrap :global(td:focus-visible) { outline: 3px solid var(--mxi-color-focus, #1d4ed8); outline-offset: -3px; }
+  .calendar-wrap :global(.calendar-view-toolbar) {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; margin-block-end: 0.4rem;
+  }
+  .calendar-wrap :global(.calendar-view-nav),
+  .calendar-wrap :global(.calendar-view-switcher),
+  .calendar-wrap :global(.calendar-view-export) { display: flex; gap: 0.25rem; }
+  .calendar-wrap :global(button[aria-pressed="true"]) { font-weight: 700; }
+  .d { display: block; font-weight: 600; }
+  .ev { display: block; margin-block-start: 0.15rem; padding-inline-start: 0.25rem; border-inline-start: 3px solid var(--accent, #1d4ed8); overflow-wrap: anywhere; }
+  .ev.done { text-decoration: line-through; border-inline-start-style: dashed; }
+  .fields { display: block; margin-inline-start: 0.5rem; color: var(--text-2, #595959); }
+  .more { display: block; font-style: italic; }
 </style>

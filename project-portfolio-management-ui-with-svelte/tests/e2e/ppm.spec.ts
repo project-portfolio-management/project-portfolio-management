@@ -7,11 +7,10 @@ import { test, expect, type Page } from "@playwright/test";
 const PROPOSAL = "11111111-1111-4111-8111-111111111111";
 const IDEA = "22222222-2222-4222-8222-222222222222";
 
-// The SVAR Calendar (`/calendar`) always opens on today's month, so a
+// The delivery calendar (`/calendar`) opens on today's month, so a
 // stubbed milestone due date must be computed relative to the actual
 // test-run date — a fixed past/future date would scroll out of the
-// widget's default view and never render, masking the very bug this
-// date exists to catch.
+// calendar's default view and never render.
 const MILESTONE_DUE = (() => {
   const today = new Date();
   return new Date(today.getFullYear(), today.getMonth(), 24)
@@ -1149,10 +1148,7 @@ test("delivery calendar lists milestones with kinds", async ({ page }) => {
   await page.goto("/calendar");
   const calendar = page.getByTestId("milestone-calendar");
   await expect(calendar).toBeVisible();
-  // Pins the widget actually rendering the event, not just the fallback
-  // `<ul>` below it — the two are separate render paths, and an all-day
-  // event with `end` equal to `start` was previously dropped silently
-  // by @svar-ui/calendar-store (see the fix in +page.svelte).
+  // The calendar itself shows the milestone, not just the plain list below it.
   await expect(
     calendar.getByText("demo: Sprint demo", { exact: false }),
   ).toBeVisible();

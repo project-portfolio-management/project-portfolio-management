@@ -1,8 +1,10 @@
 <!--
   Per-item task board (`/{collection}/{pid}/board`) — the spec-§13
-  operational Kanban: five status columns, drag = the PATCH board move
-  (the service stamps status_changed_at / first done_at, so flow data
-  stays true), plus sprint create/select with the honest burndown
+  operational Kanban on Lily's KanbanBoard: five status columns, a card
+  moves by drag or by its "Move to" menu (the PATCH board move; the service
+  stamps status_changed_at / first done_at, so flow data stays true), each
+  card shows its assignee and points as typed fields and a blocked task says
+  so in words, plus sprint create/select with the honest burndown
   (real completions only — the server's derivation note is shown) and
   the last-24h standup digest. English-first, like the other PPM views.
 -->
@@ -10,8 +12,8 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { page } from "$app/state";
-  import { Kanban, Willow, getCardShape } from "@svar-ui/svelte-kanban";
-  import type { KanbanInstanceApi } from "@svar-ui/svelte-kanban";
+  import KanbanBoard from "@lilydesignsystem/svelte-kanban-board";
+  import type { KanbanCard, KanbanColumn, KanbanField } from "@lilydesignsystem/svelte-kanban-board";
   import {
     PpmClient,
     type Burndown,
@@ -21,7 +23,6 @@
     type Task,
     type Velocity,
   } from "#lib/api/ppm.js";
-  import LilyKanbanTable from "#lib/components/LilyKanbanTable.svelte";
   import { t } from "#lib/i18n.svelte.js";
   import { calendarDays } from "#lib/units.js";
   const pid = page.params.pid ?? "";
@@ -37,7 +38,6 @@
   let noteBody = $state("");
   let noteCategory = $state("action");
   let points = $state("");
-  let view = $state<"board" | "table">("board");
   let error = $state<string | null>(null);
   let title = $state("");
   let sprintName = $state("");
@@ -81,35 +81,55 @@
     }
   }
 
-  const COLUMNS = [
-    { id: "todo", get label() { return t("p.plans.pid.board.todo"); }, addCard: false },
-    { id: "in_progress", get label() { return t("p.plans.pid.board.in_progress"); }, addCard: false },
-    { id: "in_review", get label() { return t("p.plans.pid.board.in_review"); }, addCard: false },
-    { id: "done", get label() { return t("p.plans.pid.onboarding.done"); }, addCard: false },
-    { id: "blocked", get label() { return t("p.plans.pid.flow.blocked"); }, addCard: false },
-  ];
+  const STATUSES = [
+    { id: "todo", key: "p.plans.pid.board.todo" },
+    { id: "in_progress", key: "p.plans.pid.board.in_progress" },
+    { id: "in_review", key: "p.plans.pid.board.in_review" },
+    { id: "done", key: "p.plans.pid.onboarding.done" },
+    { id: "blocked", key: "p.plans.pid.flow.blocked" },
+  ] as const;
+  const columns = $derived<KanbanColumn[]>(STATUSES.map((c) => ({ id: c.id, title: t(c.key) })));
+  const fields = $derived<KanbanField[]>([
+    { id: "assignee", header: t("p.plans.pid.board.assignee"), type: "text" },
+    { id: "points", header: t("p.plans.pid.board.story_points"), type: "number" },
+  ]);
 
-  const cards = $derived(
+  const cards = $derived<KanbanCard[]>(
     (tasks ?? []).map((task) => ({
       id: task.pid,
-      label: task.title,
-      description:
-        (task.assignee_ref ?? t("p.plans.pid.board.unassigned")) +
-        (task.points !== null && task.points !== undefined ? t("p.plans.pid.board.pt", { points: task.points }) : "") +
-        (task.blocked_days !== null ? t("p.plans.pid.board.blocked_for", { days: calendarDays(task.blocked_days) }) : ""),
-      status: task.status,
+      columnId: STATUSES.some((c) => c.id === task.status) ? task.status : "todo",
+      title: task.title,
+      // A non-colour status: said in words, and announced with the card.
+      flag:
+        task.blocked_days !== null
+          ? t(task.blocked_days === 1 ? "p.plans.pid.board.blocked_calendar_day_one" : "p.plans.pid.board.blocked_calendar_day_other", { blocked_days: task.blocked_days })
+          : undefined,
+      values: { assignee: task.assignee_ref ?? t("p.plans.pid.board.unassigned"), points: task.points ?? null },
     })),
   );
 
-  // Drag = the PATCH board move; the service owns the stamps and the
-  // reload restores the stored truth on refusal.
-  function init(api: KanbanInstanceApi) {
-    api.on("move-card", (raw) => {
-      const ev = raw as { id: string | number; column?: string | number };
-      if (!ev.column) return;
-      void act(() => ppm.moveTask(pid, String(ev.id), String(ev.column)));
-    });
+  // A move is the PATCH board move; the board shows the card as pending, and if the service refuses it puts the card back
+  // (and `onMoveError` says so). The reload then restores the stored truth either way.
+  async function move(cardId: string, toColumn: string) {
+    await ppm.moveTask(pid, cardId, toColumn);
+    void load();
   }
+
+  const boardLabels = $derived({
+    cardCount: (n: number) => t("p.kanban.card_count", { n }),
+    moveButton: (card: KanbanCard) => t("p.kanban.move_button", { title: card.title }),
+    moveMenuLabel: t("p.kanban.move_menu"),
+    moveAnnouncement: (title: string, column: string) => t("p.kanban.moved", { title, column }),
+    movePending: (title: string, column: string) => t("p.plans.pid.board.moving", { title, column }),
+    moveFailed: (title: string, column: string) => t("p.plans.pid.board.move_failed", { title, column }),
+    emptyColumn: () => t("p.plans.pid.board.empty_column"),
+    search: t("p.plans.pid.board.search"),
+    export: t("p.plans.pid.board.export"),
+    exportCsv: t("p.plans.pid.board.csv"),
+    exportExcel: t("p.plans.pid.board.excel"),
+    exportAnnouncement: (_f: string, n: number, file: string) => t("p.plans.pid.board.exported", { n, file }),
+    exportHeaders: { title: t("p.plans.pid.board.task"), column: t("p.plans.pid.board.status"), flag: t("p.plans.pid.flow.blocked") },
+  });
 
   async function selectSprint(value: string) {
     selectedSprint = value;
@@ -180,32 +200,18 @@
 </form>
 
 {#if tasks !== null}
-  <div class="view-toggle" role="group" aria-label={t("p.plans.pid.board.board_view")}>
-    <button type="button" aria-pressed={view === "board"} onclick={() => (view = "board")}>{t("p.plans.pid.board.board")}</button>
-    <button type="button" aria-pressed={view === "table"} onclick={() => (view = "table")}>
-      {t("p.plans.pid.board.accessible_table")}
-    </button>
-  </div>
-  {#if view === "table"}
-    <LilyKanbanTable
-      cards={tasks.map((task) => ({ pid: task.pid, title: task.title, status: task.status }))}
-      columns={COLUMNS.map(({ id, label }) => ({ id, label }))}
+  <div class="board-wrap" data-testid="task-board">
+    <KanbanBoard
       label={t("ppm.common.board")}
-      onmove={(taskPid, status) => void act(() => ppm.moveTask(pid, taskPid, status))}
+      {columns}
+      {cards}
+      {fields}
+      labels={boardLabels}
+      exportFilename="tasks"
+      onMove={move}
+      onMoveError={() => (error = t("p.kanban.could_not_move"))}
     />
-  {:else}
-    <div class="board-wrap" data-testid="task-board">
-      <Willow fonts={false}>
-        <Kanban
-          {cards}
-          columns={COLUMNS}
-          columnAccessor="status"
-          card={{ ...getCardShape(), menu: false }}
-          {init}
-        />
-      </Willow>
-    </div>
-  {/if}
+  </div>
 {/if}
 
 <h2>{t("p.plans.pid.board.sprints")}</h2>
@@ -296,16 +302,7 @@
 {/if}
 
 <style>
-  .view-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-block: 0.5rem;
-  }
-  .view-toggle button[aria-pressed="true"] {
-    font-weight: 700;
-    text-decoration: underline;
-  }
   .row { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; margin-bottom: 1rem; }
-  .board-wrap { height: 480px; overflow-x: auto; }
+  .board-wrap { overflow-x: auto; margin-block: 1rem; }
   input.points { width: 4rem; }
 </style>

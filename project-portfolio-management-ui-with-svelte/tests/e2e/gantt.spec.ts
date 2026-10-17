@@ -39,12 +39,14 @@ test.describe("schedule gantt", () => {
     await page.goto("/en-001/gantt", { waitUntil: "networkidle" });
     const chart = page.getByTestId("ppm-gantt");
     const columns = () => chart.locator("thead th").count();
+    await expect(chart.getByRole("button", { name: "Finer time scale" })).toBeVisible();
     const weeks = await columns();
+    expect(weeks).toBeGreaterThan(1);
     await chart.getByRole("button", { name: "Finer time scale" }).click();
-    expect(await columns()).toBeGreaterThan(weeks);
+    await expect.poll(columns).toBeGreaterThan(weeks);
     await chart.getByRole("button", { name: "Coarser time scale" }).click();
     await chart.getByRole("button", { name: "Coarser time scale" }).click();
-    expect(await columns()).toBeLessThan(weeks);
+    await expect.poll(columns).toBeLessThan(weeks);
     const download = page.waitForEvent("download");
     await chart.getByRole("button", { name: "CSV" }).click();
     const file = await download;

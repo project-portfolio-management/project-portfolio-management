@@ -9,6 +9,17 @@ import type { PageKey } from "./i18n-pages";
 
 export const PAGES_CY: Record<PageKey, string> = {
   "c.CalendarMonth.next_month": "Mis nesaf",
+  "p.plans.pid.board.assignee": "Aseinai",
+  "p.plans.pid.board.moving": "Symud {title} i {column}…",
+  "p.plans.pid.board.move_failed": "Methu symud {title} i {column}; mae wedi dychwelyd i'w le.",
+  "p.plans.pid.board.empty_column": "Dim tasgau",
+  "p.plans.pid.board.search": "Chwilio'r bwrdd",
+  "p.plans.pid.board.export": "Allforio'r bwrdd",
+  "p.plans.pid.board.csv": "CSV",
+  "p.plans.pid.board.excel": "Excel",
+  "p.plans.pid.board.exported": "Allforiwyd {n} tasg i {file}",
+  "p.plans.pid.board.task": "Tasg",
+  "p.plans.pid.board.status": "Statws",
   "c.GanttView.task": "Tasg",
   "c.GanttView.start": "Dechrau",
   "c.GanttView.end": "Diwedd",

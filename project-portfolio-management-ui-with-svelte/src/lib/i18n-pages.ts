@@ -13,6 +13,17 @@
 
 export const PAGES_EN = {
   "c.CalendarMonth.next_month": "Next month",
+  "p.plans.pid.board.assignee": "Assignee",
+  "p.plans.pid.board.moving": "Moving {title} to {column}…",
+  "p.plans.pid.board.move_failed": "Could not move {title} to {column}; it is back where it was.",
+  "p.plans.pid.board.empty_column": "No tasks",
+  "p.plans.pid.board.search": "Search the board",
+  "p.plans.pid.board.export": "Export the board",
+  "p.plans.pid.board.csv": "CSV",
+  "p.plans.pid.board.excel": "Excel",
+  "p.plans.pid.board.exported": "Exported {n} tasks to {file}",
+  "p.plans.pid.board.task": "Task",
+  "p.plans.pid.board.status": "Status",
   "c.GanttView.task": "Task",
   "c.GanttView.start": "Start",
   "c.GanttView.end": "End",

@@ -104,16 +104,18 @@
   <p class="banner" role="alert">{error}</p>
 {:else if record}
   <h1>{record.name}</h1>
-  <p class="small">
+  <p class="small tools">
     {#each front as k (k)}
       <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
     {/each}
     {#if more.length > 0}
       <details class="more-tools">
         <summary>{t("p.plans.pid.more_tools")}</summary>
-        {#each more as k (k)}
-          <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
-        {/each}
+        <span class="tools">
+          {#each more as k (k)}
+            <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>
+          {/each}
+        </span>
       </details>
     {/if}
   </p>
@@ -174,3 +176,23 @@
     {/if}
   {/if}
 {/if}
+
+<style>
+  /* The tool links are a wrapping row of boxes. As plain inline links, a long label broken across two lines made one
+     box whose right padding could stick out past the phone viewport (a rare 28px horizontal scroll). */
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .tools > details {
+    flex: 1 1 100%;
+  }
+  .tools :global(a.button) {
+    max-width: 100%;
+  }
+  .more-tools .tools {
+    margin-block-start: 0.4rem;
+  }
+</style>

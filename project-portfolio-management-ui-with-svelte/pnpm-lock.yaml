@@ -56,9 +56,6 @@ importers:
       '@svar-ui/svelte-filemanager':
         specifier: ^2.6.0
         version: 2.6.0
-      '@svar-ui/svelte-kanban':
-        specifier: ^2.6.0
-        version: 2.6.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)
       '@sveltia/i18n':
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.1)
@@ -459,17 +456,11 @@ packages:
   '@svar-ui/calendar-store@2.7.0':
     resolution: {integrity: sha512-G5kkwwnXsr+mUCQlBRY46HmLYGr1fbFHQloriOv44GrGsdw4CH2kb2ALh6PC9zvNlIcwg+w/hJ4dKvhTgrzw0g==}
 
-  '@svar-ui/comments-locales@2.6.0':
-    resolution: {integrity: sha512-ctpmaE0BN2sXRc9MuCMzIut/2Piudnsxno7RoadJ8uIe3bZGRRSZfDW+kJ5pWgYmgdofLlWawTr3PCNjxt7R3w==}
-
   '@svar-ui/core-locales@2.6.0':
     resolution: {integrity: sha512-Sma/BkR3we76Ix/67NmSh511yvtKVpi8LFK06ZbWSiC3xEsCSoKsJ5AtLmi8dxaXPa5HuCWI/jMwJsKRwQ0F2Q==}
 
   '@svar-ui/core-locales@2.6.1':
     resolution: {integrity: sha512-18xu7qn8Bxwi2EHguVV3Xya5kS+A+6Gnuo2wl55dofp9y948iZ5z7HIRh1+Mj1BgzbdVt6+B04JOCDMLJXyjtg==}
-
-  '@svar-ui/editor-locales@2.6.0':
-    resolution: {integrity: sha512-xgLLHMi1rvIor+X9u3JChNEkjztZZxpwfpsUocUBIZ07jKqu+h0a/4Vqyue9ZMq3gIq2oyo+HP5Q9Ydb44CrqQ==}
 
   '@svar-ui/editor-locales@2.7.0':
     resolution: {integrity: sha512-Bp3yK6zoUC21ejfbzPclWJylICHrXVhvy/ebXrOJ3rvhEvX1C1lmqe/1rEXqZi4ETUY7/q5AoLRjLgDiTTrw7Q==}
@@ -491,15 +482,6 @@ packages:
 
   '@svar-ui/grid-store@2.7.0':
     resolution: {integrity: sha512-m23KKQPuEyDfXiD+nLe7LCGX2+zRhbGUxIUzjAnInqhtjAM0HyhWsQpuZzzXhSdUyFYje5haStffUoK6rrpq6Q==}
-
-  '@svar-ui/kanban-locales@2.6.0':
-    resolution: {integrity: sha512-WchNgOChoCn6V+pw4/uGHLHarAjpwDLS5KgWHsT1PzvxtSuuY1L0hJbuiNjab38aQTEniRvfkAmsRZN4VkcNpA==}
-
-  '@svar-ui/kanban-provider@2.6.0':
-    resolution: {integrity: sha512-JUVY1NtzMMmyHe6JJh6yW8UQ8WR+z/2AYAJ6W/KKcgSWVBsJVPnbM1ITgKxUqFxDghOCRu7wobV7l9mCBvhA7g==}
-
-  '@svar-ui/kanban-store@2.6.0':
-    resolution: {integrity: sha512-mA3rQ1O+o5i1TowAk/jtnpkquilun5JLtWxz8k3ilQnokKEUVY7LgTrwAZgkry+0GO3eT3OcT5iZ3Jowat0hTw==}
 
   '@svar-ui/lib-data-provider@1.7.1':
     resolution: {integrity: sha512-5Bi9ywngcMTKpGtan0s7q8ivd84Bp0ZnRP+5bLZg6oiRB7YMyN5D5X+apc3CWDAnG4zZn3en4YwS2qc/aHIIuQ==}
@@ -530,17 +512,11 @@ packages:
     peerDependencies:
       svelte: ^5.54.0
 
-  '@svar-ui/svelte-comments@2.6.0':
-    resolution: {integrity: sha512-73C+SlRU9TTBPh1vJ6WV/zHF6rYf4H6SWm+uSSsjrpkgKyx02JdIt0xFWr2xBkpjWSQ0U4ZH78hsY0PiSLANrw==}
-
   '@svar-ui/svelte-core@2.6.0':
     resolution: {integrity: sha512-5fnEm4FXjRpVZgU8EoOMisiZ0bkkj0gtP1RK66Pi5Jw9OWu+ytZleaeUyFkpBxWNPX9yENkqEEOMWUnitPYO6A==}
 
   '@svar-ui/svelte-core@2.6.1':
     resolution: {integrity: sha512-PDITkUE/D5RfGTYezrzK2U5/uNSW1n/aPJ59VmMPCdrrfKpVvrcPIZrg+O6zlnQHxBP0sMh18AN7iuSR+Y7Sxw==}
-
-  '@svar-ui/svelte-editor@2.6.0':
-    resolution: {integrity: sha512-cM+gvheqpUPqEZEF2Qa5ZuxbGcHN7IhJQYuK5GE/D24sEeFs+w9j6zoe0Lc7wCRV4inqkpvkCHc3POK5yrys4A==}
 
   '@svar-ui/svelte-editor@2.7.0':
     resolution: {integrity: sha512-kURFph8cL3bJZ4/wrjakyDQcsnM67NemF2eyg0OrR4pl8XIan/4Dkozz03wRS4++KC7oT/2ViHnxLbnNY3sqyQ==}
@@ -553,19 +529,11 @@ packages:
   '@svar-ui/svelte-grid@2.7.0':
     resolution: {integrity: sha512-kgPIwNi8JxdQRgmgDn5SmfZFGg7kp/L0jQPXpIpsXZ9Yun/E6XeYRpfduG9DRchzP714dHGxJ50UEW4p7+/b9w==}
 
-  '@svar-ui/svelte-kanban@2.6.0':
-    resolution: {integrity: sha512-78kqlz8rseglxxJQW76hrLQ3AtWbdhLOwNjOMshSD01lMbBEQNU47vO3LiU4hdFSi+mfRECBuXOvtNc+jBTeCQ==}
-    peerDependencies:
-      svelte: ^5.54.0
-
   '@svar-ui/svelte-menu@2.6.0':
     resolution: {integrity: sha512-1sXgVKG4hUhkrnbfrSKvfp0M/OqMjbHBnoYRMZKNLs9z1hWGJpKqzZZkUZg8ahH40SfitMjK8XjEgGMFBwC/7g==}
 
   '@svar-ui/svelte-menu@2.6.1':
     resolution: {integrity: sha512-F6CfgKATDZR5Qo0Xs3kLJkiLeNU9CV10NV96IZgKF4Gdz/g1QaaY20KXyyAXYDwgm0RVFzMMy2bBzWLxyuZ9Kg==}
-
-  '@svar-ui/svelte-tasklist@2.6.0':
-    resolution: {integrity: sha512-hHEQ++YqqCTjm0cpi/jiKT10alFpjbAzookIEn6wrLqlu6rO5hAdALDWqBwCCE1/Pq78pUKigTxvHPLy0LMWcQ==}
 
   '@svar-ui/svelte-toolbar@2.6.0':
     resolution: {integrity: sha512-/LHwQdo2FTzuQHdNXzmV0rsnKONAMHvb1M+8jSv6WCzfSBtggEEZ1voItl4EB3NzoBeI42zKxwuiskjXpkHyoQ==}
@@ -575,9 +543,6 @@ packages:
 
   '@svar-ui/svelte-uploader@2.6.0':
     resolution: {integrity: sha512-aXnGC+InNzpNcPSf2BlhKSkhsQh5BY6a0srRnrJDKGrrsPKhdtPX9vm7wVdzHea7BY+itHRoPLPNxf4lB19haA==}
-
-  '@svar-ui/tasklist-locales@2.6.0':
-    resolution: {integrity: sha512-0VxhXVJJPFrfWiyLin5QrdRbp/9ESK74S3y7vmTmha17hLnI9kiz7+CNT4K4B98mSyS2KzD2BrPej5bhsZ7f8w==}
 
   '@svar-ui/uploader-locales@2.6.0':
     resolution: {integrity: sha512-ecqvGp2KbVlecYJ1+5erWIMIrRtAqbNwxJJTNjh6fgHdFX/wQn7cO4rJZD8Gbvag5GiR2btA0EOAi3ug6Lvf2g==}
@@ -1462,13 +1427,9 @@ snapshots:
       '@svar-ui/lib-dom': 0.14.0
       '@svar-ui/lib-state': 1.9.7
 
-  '@svar-ui/comments-locales@2.6.0': {}
-
   '@svar-ui/core-locales@2.6.0': {}
 
   '@svar-ui/core-locales@2.6.1': {}
-
-  '@svar-ui/editor-locales@2.6.0': {}
 
   '@svar-ui/editor-locales@2.7.0': {}
 
@@ -1492,15 +1453,6 @@ snapshots:
     dependencies:
       '@svar-ui/lib-dom': 0.12.1
       '@svar-ui/lib-state': 1.9.6
-
-  '@svar-ui/kanban-locales@2.6.0': {}
-
-  '@svar-ui/kanban-provider@2.6.0': {}
-
-  '@svar-ui/kanban-store@2.6.0':
-    dependencies:
-      '@svar-ui/lib-dom': 0.13.1
-      '@svar-ui/lib-state': 1.9.7
 
   '@svar-ui/lib-data-provider@1.7.1':
     dependencies:
@@ -1543,15 +1495,6 @@ snapshots:
       - picomatch
       - typescript
 
-  '@svar-ui/svelte-comments@2.6.0':
-    dependencies:
-      '@svar-ui/comments-locales': 2.6.0
-      '@svar-ui/lib-data-provider': 1.7.1
-      '@svar-ui/lib-dom': 0.13.1
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/svelte-core': 2.6.0
-      '@svar-ui/svelte-menu': 2.6.0
-
   '@svar-ui/svelte-core@2.6.0':
     dependencies:
       '@svar-ui/core-locales': 2.6.0
@@ -1563,17 +1506,6 @@ snapshots:
       '@svar-ui/core-locales': 2.6.1
       '@svar-ui/lib-dom': 0.14.0
       '@svar-ui/lib-svelte': 0.5.2
-
-  '@svar-ui/svelte-editor@2.6.0':
-    dependencies:
-      '@svar-ui/editor-locales': 2.6.0
-      '@svar-ui/lib-dom': 0.13.1
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/lib-svelte': 0.5.2
-      '@svar-ui/svelte-comments': 2.6.0
-      '@svar-ui/svelte-core': 2.6.0
-      '@svar-ui/svelte-tasklist': 2.6.0
-      '@svar-ui/svelte-toolbar': 2.6.0
 
   '@svar-ui/svelte-editor@2.7.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)':
     dependencies:
@@ -1614,24 +1546,6 @@ snapshots:
       '@svar-ui/svelte-menu': 2.6.0
       '@svar-ui/svelte-toolbar': 2.6.0
 
-  '@svar-ui/svelte-kanban@2.6.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)':
-    dependencies:
-      '@svar-ui/core-locales': 2.6.0
-      '@svar-ui/kanban-locales': 2.6.0
-      '@svar-ui/kanban-provider': 2.6.0
-      '@svar-ui/kanban-store': 2.6.0
-      '@svar-ui/lib-dom': 0.13.1
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/svelte-core': 2.6.0
-      '@svar-ui/svelte-editor': 2.6.0
-      '@svar-ui/svelte-menu': 2.6.0
-      '@svar-ui/svelte-toolbar': 2.6.0
-      svelte: 5.57.1
-      svelte-check: 4.7.6(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)
-    transitivePeerDependencies:
-      - picomatch
-      - typescript
-
   '@svar-ui/svelte-menu@2.6.0':
     dependencies:
       '@svar-ui/lib-dom': 0.13.1
@@ -1641,14 +1555,6 @@ snapshots:
     dependencies:
       '@svar-ui/lib-dom': 0.14.0
       '@svar-ui/svelte-core': 2.6.1
-
-  '@svar-ui/svelte-tasklist@2.6.0':
-    dependencies:
-      '@svar-ui/lib-data-provider': 1.7.1
-      '@svar-ui/lib-dom': 0.13.1
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/svelte-core': 2.6.0
-      '@svar-ui/tasklist-locales': 2.6.0
 
   '@svar-ui/svelte-toolbar@2.6.0':
     dependencies:
@@ -1665,8 +1571,6 @@ snapshots:
       '@svar-ui/lib-dom': 0.13.1
       '@svar-ui/svelte-core': 2.6.0
       '@svar-ui/uploader-locales': 2.6.0
-
-  '@svar-ui/tasklist-locales@2.6.0': {}
 
   '@svar-ui/uploader-locales@2.6.0': {}
 

@@ -36,9 +36,9 @@ jobs:
       run:
         working-directory: project-portfolio-management-service-with-rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
-      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: dtolnay/rust-toolchain@1.120.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -72,9 +72,9 @@ jobs:
     env:
       DATABASE_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_service_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
-      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: dtolnay/rust-toolchain@1.120.0
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ${{ env.API }}
@@ -117,7 +117,7 @@ jobs:
       DATABASE_URL: postgres://loco:loco@localhost:5432/ppm_source
       ARTIFACT_DIR: ${{ github.workspace }}/restore-artifacts
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # pg_dump must not be older than the server (18): take the client from PGDG.
       - name: PostgreSQL 18 client tools
         working-directory: .
@@ -134,7 +134,7 @@ jobs:
           echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
           /usr/lib/postgresql/18/bin/pg_dump --version
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
-      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: dtolnay/rust-toolchain@1.120.0
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ${{ env.API }}
@@ -164,9 +164,9 @@ jobs:
       run:
         working-directory: project-portfolio-management-matcher-with-rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
-      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: dtolnay/rust-toolchain@1.120.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -186,7 +186,7 @@ jobs:
           - project-portfolio-management-service-with-rust
           - project-portfolio-management-matcher-with-rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           manifest-path: ${{ matrix.crate }}/Cargo.toml
@@ -212,11 +212,11 @@ jobs:
     env:
       REDIS_TEST_URL: redis://127.0.0.1:6379/0
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: pnpm
@@ -236,7 +236,7 @@ jobs:
           CI: "true"
           OIDC_SESSION_STORE: redis
           REDIS_URL: redis://127.0.0.1:6379/0
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -249,7 +249,7 @@ jobs:
     name: Docs (generated status, links)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Generated status is current
         run: scripts/generate-status.sh --check
       - name: Link check (offline)
@@ -264,10 +264,10 @@ jobs:
     env:
       POSTGRES_PASSWORD: ci-only-password
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - name: Build the API image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ env.API }}/Dockerfile
@@ -276,7 +276,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build the UI image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ env.UI }}/Dockerfile
@@ -316,14 +316,14 @@ jobs:
     env:
       POSTGRES_PASSWORD: ci-only-password
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - name: Public-only test key set (so the secure stack can boot)
         run: echo "PPM_PASETO_KEYS=$(scripts/smoke-keys.sh)" >> "$GITHUB_ENV"
       - name: Start the stack
         run: docker compose up -d --build --wait --wait-timeout 600
       - name: ZAP baseline (passive) scan
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: http://localhost:5150
           rules_file_name: .zap/rules.tsv
@@ -342,24 +342,24 @@ jobs:
     name: Fresh clone builds with the documented commands
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Toolchain pin matches this workflow
         run: |
           pinned="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
           echo "rust-toolchain.toml: $pinned; workflow: $RUST_TOOLCHAIN"
           test "$pinned" = "$RUST_TOOLCHAIN"
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
-      - uses: dtolnay/rust-toolchain@1.96.1
+      - uses: dtolnay/rust-toolchain@1.120.0
       - name: Build the matcher
         run: cargo build --locked
         working-directory: ${{ env.MATCHER }}
       - name: Build the API
         run: cargo build --locked
         working-directory: ${{ env.API }}
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
       - name: Build the UI

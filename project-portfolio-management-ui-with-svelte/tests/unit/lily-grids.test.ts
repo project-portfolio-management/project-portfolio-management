@@ -2,24 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   dateOf,
   dayNumber,
-  ganttGrid,
   gridKeyTarget,
   kanbanGrid,
-  type GanttItem,
 } from "../../src/lib/lily-grids";
-
-const item = (
-  pid: string,
-  start: string | null,
-  end: string | null,
-  critical = false,
-): GanttItem => ({
-  pid,
-  name: pid,
-  start,
-  end,
-  critical,
-});
 
 describe("dates", () => {
   it("round-trips calendar dates and rejects junk", () => {
@@ -33,75 +18,6 @@ describe("dates", () => {
     // US clocks changed on 2026-03-08: the day before and after are still one apart.
     expect(dayNumber("2026-03-09")! - dayNumber("2026-03-08")!).toBe(1);
     expect(dayNumber("2026-03-08")! - dayNumber("2026-03-07")!).toBe(1);
-  });
-});
-
-describe("ganttGrid", () => {
-  it("marks the run of weeks a task spans, Monday-based", () => {
-    // 2026-10-05 is a Monday.
-    const g = ganttGrid([item("a", "2026-10-06", "2026-10-14")]);
-    expect(g.unit).toBe("week");
-    expect(g.columns.map((c) => c.from)).toEqual(["2026-10-05", "2026-10-12"]);
-    expect(g.rows[0]!.cells).toEqual([
-      { active: true, ends: false },
-      { active: true, ends: true },
-    ]);
-  });
-  it("lines several tasks up on one shared timeline", () => {
-    const g = ganttGrid([
-      item("a", "2026-10-05", "2026-10-11"),
-      item("b", "2026-10-19", "2026-10-25", true),
-    ]);
-    expect(g.columns).toHaveLength(3);
-    expect(g.rows[0]!.cells.map((c) => c.active)).toEqual([true, false, false]);
-    expect(g.rows[1]!.cells.map((c) => c.active)).toEqual([false, false, true]);
-    expect(g.rows[1]!.critical).toBe(true);
-  });
-  it("never invents an undated or reversed task onto the timeline", () => {
-    const g = ganttGrid([
-      item("ok", "2026-10-05", "2026-10-06"),
-      item("none", null, null),
-      item("half", "2026-10-05", null),
-      item("back", "2026-10-09", "2026-10-01"),
-    ]);
-    expect(g.rows.map((r) => r.pid)).toEqual(["ok"]);
-    expect(g.undated.map((u) => u.pid)).toEqual(["none", "half", "back"]);
-  });
-  it("coarsens the unit instead of drawing hundreds of columns, and says so", () => {
-    const g = ganttGrid([item("long", "2026-01-01", "2026-12-31")], {
-      unit: "day",
-      maxColumns: 60,
-    });
-    expect(g.coarsened).toBe(true);
-    expect(g.unit).toBe("week");
-    const years = ganttGrid([item("y", "2020-01-01", "2026-12-31")], {
-      unit: "week",
-      maxColumns: 60,
-    });
-    expect(years.unit).toBe("month");
-    expect(years.columns.length).toBeLessThanOrEqual(84);
-    const fine = ganttGrid([item("s", "2026-10-01", "2026-10-03")], {
-      unit: "day",
-    });
-    expect(fine.coarsened).toBe(false);
-    expect(fine.columns).toHaveLength(3);
-  });
-  it("builds whole calendar months with correct last days", () => {
-    const g = ganttGrid([item("m", "2028-01-15", "2028-03-02")], {
-      unit: "month",
-    });
-    expect(g.columns.map((c) => [c.from, c.to])).toEqual([
-      ["2028-01-01", "2028-01-31"],
-      ["2028-02-01", "2028-02-29"],
-      ["2028-03-01", "2028-03-31"],
-    ]);
-    expect(g.rows[0]!.cells.map((c) => c.ends)).toEqual([false, false, true]);
-  });
-  it("is empty, not broken, with nothing dated", () => {
-    const g = ganttGrid([item("x", null, null)]);
-    expect(g.columns).toEqual([]);
-    expect(g.rows).toEqual([]);
-    expect(g.undated).toHaveLength(1);
   });
 });
 

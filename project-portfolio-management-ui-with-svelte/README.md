@@ -69,7 +69,7 @@ Every plan route lives under the static `plans/` directory.
 | `/executive` | CEO area: portfolio-health briefing (server-derived RAG), decision log, benefits realization |
 | `/financials` | CFO area: budget variance (category / kind / plan) + per-currency exposure — minor units, no FX |
 | `/technology` | CTO area: technology radar (`tech:` tags) + dependency-risk lens (fan-out, red predecessors) |
-| `/gantt` | Schedule Gantt (SVAR) — the selected plan's dated child plans as task bars, dependency edges as links, critical path highlighted (read-only) |
+| `/gantt` | Schedule Gantt (Lily GanttChart) — the selected plan's dated child plans as task bars, dependencies as a text summary per task, critical path in colour and words, zoom and CSV/Excel export (read-only) |
 | `/capacity` | Resource capacity — per-person rollup over a window; over-allocation flagged |
 | `/ideas` | Idea board — capture, vote, dismiss, convert to a draft proposal |
 | `/objectives` | OKR objectives registry + per-objective alignment rollups |

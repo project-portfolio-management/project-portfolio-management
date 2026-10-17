@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { flushSync, mount, unmount } from "svelte";
-import LilyGanttTable from "../../src/lib/components/LilyGanttTable.svelte";
 import LilyKanbanTable from "../../src/lib/components/LilyKanbanTable.svelte";
 
 /** Mount into jsdom (the suite compiles for the client), return the HTML, clean up. */
@@ -17,41 +16,6 @@ function render(
   target.remove();
   return { body };
 }
-
-describe("Lily Gantt table", () => {
-  const items = [
-    {
-      pid: "a",
-      name: "Design",
-      start: "2026-10-05",
-      end: "2026-10-14",
-      critical: true,
-    },
-    { pid: "b", name: "Undated", start: null, end: null },
-  ];
-  it("is a labelled grid whose marked cells name their task and dates", () => {
-    const { body } = render(LilyGanttTable, {
-      props: { items, label: "Schedule" },
-    });
-    expect(body).toContain('role="grid"');
-    expect(body).toContain('aria-label="Schedule"');
-    expect(body).toContain("Design: 2026-10-05 to 2026-10-14");
-    expect(body).toContain("(ends here)");
-    // Headless 0.5: an active cell is the tab stop only; nothing is selected, so nothing says so.
-    expect(body).toContain('tabindex="0"');
-    expect(body).not.toContain("aria-selected");
-    expect(body).toContain("critical path");
-  });
-  it("lists a task with no dates instead of drawing it", () => {
-    const { body } = render(LilyGanttTable, { props: { items } });
-    expect(body).toMatch(/No usable dates:[\s\S]*Undated/);
-    expect(body).not.toContain("Undated: not scheduled");
-  });
-  it("says so when nothing is dated", () => {
-    const { body } = render(LilyGanttTable, { props: { items: [items[1]!] } });
-    expect(body).toContain("No dated tasks to show.");
-  });
-});
 
 describe("Lily Kanban table", () => {
   const columns = [

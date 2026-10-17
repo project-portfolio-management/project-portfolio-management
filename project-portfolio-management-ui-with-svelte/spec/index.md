@@ -131,10 +131,10 @@ match breakdown).
                              that answers with what moved (SC-1/SC-2)
 /plans/[pid]/calendar        the plan's working weekdays and holidays
 /me/calendar                 my working weekdays and days off
-/gantt                       schedule Gantt (SVAR; dependency links +
-                             critical path; read-only) with an
-                             "Accessible table" view (Lily headless
-                             GanttTable: a bar is a run of named cells)
+/gantt                       schedule Gantt (Lily GanttChart: a bar is a
+                             run of named cells; dependencies as text,
+                             critical path in colour and words, zoom,
+                             CSV/Excel export; read-only)
 /capacity                    resource capacity rollup
 /engineering                 blocked aging + MoSCoW + delivery links
 /calendar                    estate milestone calendar (kind filter)

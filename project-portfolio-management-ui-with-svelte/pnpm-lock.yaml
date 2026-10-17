@@ -17,6 +17,9 @@ importers:
       '@lilydesignsystem/svelte-data-grid':
         specifier: 0.9.0
         version: 0.9.0(svelte@5.57.1)
+      '@lilydesignsystem/svelte-gantt-chart':
+        specifier: 0.5.0
+        version: 0.5.0(svelte@5.57.1)
       '@lilydesignsystem/svelte-headless':
         specifier: 0.5.0
         version: 0.5.0(svelte@5.57.1)
@@ -53,9 +56,6 @@ importers:
       '@svar-ui/svelte-filemanager':
         specifier: ^2.6.0
         version: 2.6.0
-      '@svar-ui/svelte-gantt':
-        specifier: ^2.7.3
-        version: 2.7.3
       '@svar-ui/svelte-kanban':
         specifier: ^2.6.0
         version: 2.6.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)
@@ -218,6 +218,12 @@ packages:
 
   '@lilydesignsystem/svelte-date-time-picker@0.2.0':
     resolution: {integrity: sha512-CPIw0DmSX2Rl6RiPD3rGUx40KzvMhklzAlYktc7tlmzoGL/455oB7ooGeocYjOvdSc9lHjSX27jQWNz+UYxr0Q==}
+    engines: {node: '=26'}
+    peerDependencies:
+      svelte: ^5.0.0
+
+  '@lilydesignsystem/svelte-gantt-chart@0.5.0':
+    resolution: {integrity: sha512-VrH6gA3iiCDKcsVEPIK8O2DblVuTgK42anY/OAGIRWCt+49iHXZAri7mw+ZWssDJ0XsIBQeX71GDyxcV292OlQ==}
     engines: {node: '=26'}
     peerDependencies:
       svelte: ^5.0.0
@@ -456,9 +462,6 @@ packages:
   '@svar-ui/comments-locales@2.6.0':
     resolution: {integrity: sha512-ctpmaE0BN2sXRc9MuCMzIut/2Piudnsxno7RoadJ8uIe3bZGRRSZfDW+kJ5pWgYmgdofLlWawTr3PCNjxt7R3w==}
 
-  '@svar-ui/comments-locales@2.6.1':
-    resolution: {integrity: sha512-jouLSwt0rPp2818bHftsb37aU8ERsyBney8XVUHhnWrsIaGJy/0TSOCw6YqN3cae6SQBd6KBO+P1+hBcDEsmUg==}
-
   '@svar-ui/core-locales@2.6.0':
     resolution: {integrity: sha512-Sma/BkR3we76Ix/67NmSh511yvtKVpi8LFK06ZbWSiC3xEsCSoKsJ5AtLmi8dxaXPa5HuCWI/jMwJsKRwQ0F2Q==}
 
@@ -467,9 +470,6 @@ packages:
 
   '@svar-ui/editor-locales@2.6.0':
     resolution: {integrity: sha512-xgLLHMi1rvIor+X9u3JChNEkjztZZxpwfpsUocUBIZ07jKqu+h0a/4Vqyue9ZMq3gIq2oyo+HP5Q9Ydb44CrqQ==}
-
-  '@svar-ui/editor-locales@2.6.1':
-    resolution: {integrity: sha512-HFEB43W+AEUjoBh3ZsrlLFFTVh8WYPVpZeOiCfptS5hS0qC8pEnqaXtreM6TM1g3W5VHHOR+sXsWkIxAoeKVvg==}
 
   '@svar-ui/editor-locales@2.7.0':
     resolution: {integrity: sha512-Bp3yK6zoUC21ejfbzPclWJylICHrXVhvy/ebXrOJ3rvhEvX1C1lmqe/1rEXqZi4ETUY7/q5AoLRjLgDiTTrw7Q==}
@@ -483,32 +483,14 @@ packages:
   '@svar-ui/filemanager-store@2.6.0':
     resolution: {integrity: sha512-59fbDTpHDr7DzgXCTw+2aLLkVXR8Yg8Y5nMUImkuNf0ekD5eb0vfthwH8I2FqqhW3bupGfgGEFscRWTupBNq4w==}
 
-  '@svar-ui/gantt-data-provider@2.7.3':
-    resolution: {integrity: sha512-vyYXsDrKI9zU+NJtG8kxu/5aJPIhHUuEu+xBpaScJE6RrhyzTINdYx3I2dksDvLJq7awlccxXRKXDKnQ99uxsA==}
-
-  '@svar-ui/gantt-locales@2.7.3':
-    resolution: {integrity: sha512-RfvYbimdbjSBGGmMTlvS+ApXAnUYqp5O2hme7MHWqOvQhq1X8mFrW6gvn8ZIrPEPI3r43UV9Kxx2j/ZpZNJKaw==}
-
-  '@svar-ui/gantt-store@2.7.3':
-    resolution: {integrity: sha512-oCLrbgK3lue1gXyffXXjfnd+D+T5Kk+RGUWV+bcys7rPmtzVWk+XxGE7VI0hY2bCxr6lewRZwWyAbsHoWYaixA==}
-
   '@svar-ui/grid-data-provider@2.7.0':
     resolution: {integrity: sha512-bLhxYwGVjWnC3NbvGeYoOJ3Kv7/qhbEIJeXZhwGQZLYEYUaYrkgmz2pCVmzSt2EfPLG4YlUMf3y+Afz0EoE86g==}
-
-  '@svar-ui/grid-data-provider@2.7.3':
-    resolution: {integrity: sha512-MFobgoczW6wBPjKq8fTORlJEEn2f6jHKWH1h3pC6qmcKr8GRA+TaRaFPVcI2iD5pOc+h/JZxuKE6L+x99S2Uwg==}
 
   '@svar-ui/grid-locales@2.7.0':
     resolution: {integrity: sha512-/y4aR6CEbIAsV2YTeLRPfGXTIKYBWqrKc485LN2xkT6jPilT5i1QST1BRn+S2ANC9p83MXCNVLJxAoR+3glsBw==}
 
-  '@svar-ui/grid-locales@2.7.3':
-    resolution: {integrity: sha512-bgB2TfSKjY7mYeTzJjCyOoPco7boz+SQ0xFFsnRp849QN5sJoJEtOl/xnzbR58bLdxq57ne5Z708ozxXDT36lQ==}
-
   '@svar-ui/grid-store@2.7.0':
     resolution: {integrity: sha512-m23KKQPuEyDfXiD+nLe7LCGX2+zRhbGUxIUzjAnInqhtjAM0HyhWsQpuZzzXhSdUyFYje5haStffUoK6rrpq6Q==}
-
-  '@svar-ui/grid-store@2.7.3':
-    resolution: {integrity: sha512-YVmLnFLq7P3ACAos0EiMYHLQbnmjaukmUaMoraTG8vhFsI5BwVaeSFdeC9MQIjbIMlxn/uMA0eEXmZuSxHk2hA==}
 
   '@svar-ui/kanban-locales@2.6.0':
     resolution: {integrity: sha512-WchNgOChoCn6V+pw4/uGHLHarAjpwDLS5KgWHsT1PzvxtSuuY1L0hJbuiNjab38aQTEniRvfkAmsRZN4VkcNpA==}
@@ -524,9 +506,6 @@ packages:
 
   '@svar-ui/lib-data-provider@1.7.2':
     resolution: {integrity: sha512-Od93Iiy0vBwVzgJm25WdizH3d4Xlli/HAA2kqoUj1pzeZ2SWBeFzvE59iihQz8NuIlfAtQJ6MMe168458T+2lQ==}
-
-  '@svar-ui/lib-data-provider@1.7.3':
-    resolution: {integrity: sha512-+UAM1VybQco5N52iv6rVcDwOJ5G1qE+V+nvaoBHx41H05w4TZTFJL+UnRy99NDLrVbLoCWhoH3L8vyNmZVjTvw==}
 
   '@svar-ui/lib-dom@0.12.1':
     resolution: {integrity: sha512-srvDleQqR6stBBDijCgzDHMFTTffI6sv3XCpNPKmurrnE83L1MDNqezqg6j3+0dUVPd4AAEGOez2DvK6byblTQ==}
@@ -554,9 +533,6 @@ packages:
   '@svar-ui/svelte-comments@2.6.0':
     resolution: {integrity: sha512-73C+SlRU9TTBPh1vJ6WV/zHF6rYf4H6SWm+uSSsjrpkgKyx02JdIt0xFWr2xBkpjWSQ0U4ZH78hsY0PiSLANrw==}
 
-  '@svar-ui/svelte-comments@2.6.1':
-    resolution: {integrity: sha512-rKolmlFvjHQksJegOMMZYk9/8EHPz9UfWZZVmjNABV2Wizq80sSGLnoJAdZmwySWwSsJqeff990XCvD6gSMcXw==}
-
   '@svar-ui/svelte-core@2.6.0':
     resolution: {integrity: sha512-5fnEm4FXjRpVZgU8EoOMisiZ0bkkj0gtP1RK66Pi5Jw9OWu+ytZleaeUyFkpBxWNPX9yENkqEEOMWUnitPYO6A==}
 
@@ -566,9 +542,6 @@ packages:
   '@svar-ui/svelte-editor@2.6.0':
     resolution: {integrity: sha512-cM+gvheqpUPqEZEF2Qa5ZuxbGcHN7IhJQYuK5GE/D24sEeFs+w9j6zoe0Lc7wCRV4inqkpvkCHc3POK5yrys4A==}
 
-  '@svar-ui/svelte-editor@2.6.1':
-    resolution: {integrity: sha512-EmOrddNEJhEtyMjxfbqtdRDYtVm0+akcxoqVkTFuy9PXLRFG4EDYwuUVLi7JZBbaKYrDsbn0x9khvTRnsAqcVA==}
-
   '@svar-ui/svelte-editor@2.7.0':
     resolution: {integrity: sha512-kURFph8cL3bJZ4/wrjakyDQcsnM67NemF2eyg0OrR4pl8XIan/4Dkozz03wRS4++KC7oT/2ViHnxLbnNY3sqyQ==}
     peerDependencies:
@@ -577,14 +550,8 @@ packages:
   '@svar-ui/svelte-filemanager@2.6.0':
     resolution: {integrity: sha512-//RMVYKCdxug3iN3wAlJQcODrbgBZ4/kPd808lRFIj0XQqeen5H/gtBWTrjc1i6kAW+NSO32mb7ncdPcoSkYyA==}
 
-  '@svar-ui/svelte-gantt@2.7.3':
-    resolution: {integrity: sha512-i/mg9SAU4yQoiIgeyPB5HcmZQ7krtE33B9AcZyMgi3WKRQCV/+qi50VeIMSW385iPCqnjzHNPyMhM0kgAKc4DA==}
-
   '@svar-ui/svelte-grid@2.7.0':
     resolution: {integrity: sha512-kgPIwNi8JxdQRgmgDn5SmfZFGg7kp/L0jQPXpIpsXZ9Yun/E6XeYRpfduG9DRchzP714dHGxJ50UEW4p7+/b9w==}
-
-  '@svar-ui/svelte-grid@2.7.3':
-    resolution: {integrity: sha512-+/zhEKK2/QUGQyRcbPlkjpfkcLwP7bJCY/XDpVDhUZ6yNLrWstnLSJhvORljEFCt/GIii50yk7FVHWDpmXUq9Q==}
 
   '@svar-ui/svelte-kanban@2.6.0':
     resolution: {integrity: sha512-78kqlz8rseglxxJQW76hrLQ3AtWbdhLOwNjOMshSD01lMbBEQNU47vO3LiU4hdFSi+mfRECBuXOvtNc+jBTeCQ==}
@@ -600,9 +567,6 @@ packages:
   '@svar-ui/svelte-tasklist@2.6.0':
     resolution: {integrity: sha512-hHEQ++YqqCTjm0cpi/jiKT10alFpjbAzookIEn6wrLqlu6rO5hAdALDWqBwCCE1/Pq78pUKigTxvHPLy0LMWcQ==}
 
-  '@svar-ui/svelte-tasklist@2.6.1':
-    resolution: {integrity: sha512-OU8U7NmAz3rjjq+G/IUn1zXIeQOavtyO3ushCtJF+zi2qnXh397zK1gwhqgVapP0W4LFzyS9h+g5bKGtaMPqUQ==}
-
   '@svar-ui/svelte-toolbar@2.6.0':
     resolution: {integrity: sha512-/LHwQdo2FTzuQHdNXzmV0rsnKONAMHvb1M+8jSv6WCzfSBtggEEZ1voItl4EB3NzoBeI42zKxwuiskjXpkHyoQ==}
 
@@ -614,9 +578,6 @@ packages:
 
   '@svar-ui/tasklist-locales@2.6.0':
     resolution: {integrity: sha512-0VxhXVJJPFrfWiyLin5QrdRbp/9ESK74S3y7vmTmha17hLnI9kiz7+CNT4K4B98mSyS2KzD2BrPej5bhsZ7f8w==}
-
-  '@svar-ui/tasklist-locales@2.6.1':
-    resolution: {integrity: sha512-ewGvdmALpEJR3CpzlNX8aDL2JPmeyF1EweRBoI0jQmp7bIpYDIlpTWStmGwDEwQ5SgvUTJylFyIj6baPf2RBlw==}
 
   '@svar-ui/uploader-locales@2.6.0':
     resolution: {integrity: sha512-ecqvGp2KbVlecYJ1+5erWIMIrRtAqbNwxJJTNjh6fgHdFX/wQn7cO4rJZD8Gbvag5GiR2btA0EOAi3ug6Lvf2g==}
@@ -777,9 +738,6 @@ packages:
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
-
-  date-fns@3.6.0:
-    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
   decimal.js@10.6.0:
     resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
@@ -1338,6 +1296,12 @@ snapshots:
       '@lilydesignsystem/svelte-headless': 0.2.0(svelte@5.57.1)
       svelte: 5.57.1
 
+  '@lilydesignsystem/svelte-gantt-chart@0.5.0(svelte@5.57.1)':
+    dependencies:
+      '@lilydesignsystem/svelte-date-time-picker': 0.2.0(svelte@5.57.1)
+      '@lilydesignsystem/svelte-headless': 0.4.0(svelte@5.57.1)
+      svelte: 5.57.1
+
   '@lilydesignsystem/svelte-headless@0.2.0(svelte@5.57.1)':
     dependencies:
       aria-query: 5.3.2
@@ -1500,15 +1464,11 @@ snapshots:
 
   '@svar-ui/comments-locales@2.6.0': {}
 
-  '@svar-ui/comments-locales@2.6.1': {}
-
   '@svar-ui/core-locales@2.6.0': {}
 
   '@svar-ui/core-locales@2.6.1': {}
 
   '@svar-ui/editor-locales@2.6.0': {}
-
-  '@svar-ui/editor-locales@2.6.1': {}
 
   '@svar-ui/editor-locales@2.7.0': {}
 
@@ -1522,35 +1482,13 @@ snapshots:
     dependencies:
       '@svar-ui/lib-state': 1.9.7
 
-  '@svar-ui/gantt-data-provider@2.7.3':
-    dependencies:
-      '@svar-ui/lib-data-provider': 1.7.1
-
-  '@svar-ui/gantt-locales@2.7.3': {}
-
-  '@svar-ui/gantt-store@2.7.3':
-    dependencies:
-      '@svar-ui/lib-state': 1.9.7
-      date-fns: 3.6.0
-
   '@svar-ui/grid-data-provider@2.7.0':
-    dependencies:
-      '@svar-ui/lib-data-provider': 1.7.2
-
-  '@svar-ui/grid-data-provider@2.7.3':
     dependencies:
       '@svar-ui/lib-data-provider': 1.7.2
 
   '@svar-ui/grid-locales@2.7.0': {}
 
-  '@svar-ui/grid-locales@2.7.3': {}
-
   '@svar-ui/grid-store@2.7.0':
-    dependencies:
-      '@svar-ui/lib-dom': 0.12.1
-      '@svar-ui/lib-state': 1.9.6
-
-  '@svar-ui/grid-store@2.7.3':
     dependencies:
       '@svar-ui/lib-dom': 0.12.1
       '@svar-ui/lib-state': 1.9.6
@@ -1569,10 +1507,6 @@ snapshots:
       '@svar-ui/lib-state': 1.9.6
 
   '@svar-ui/lib-data-provider@1.7.2':
-    dependencies:
-      '@svar-ui/lib-state': 1.9.6
-
-  '@svar-ui/lib-data-provider@1.7.3':
     dependencies:
       '@svar-ui/lib-state': 1.9.6
 
@@ -1618,15 +1552,6 @@ snapshots:
       '@svar-ui/svelte-core': 2.6.0
       '@svar-ui/svelte-menu': 2.6.0
 
-  '@svar-ui/svelte-comments@2.6.1':
-    dependencies:
-      '@svar-ui/comments-locales': 2.6.1
-      '@svar-ui/lib-data-provider': 1.7.3
-      '@svar-ui/lib-dom': 0.14.0
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/svelte-core': 2.6.1
-      '@svar-ui/svelte-menu': 2.6.1
-
   '@svar-ui/svelte-core@2.6.0':
     dependencies:
       '@svar-ui/core-locales': 2.6.0
@@ -1649,17 +1574,6 @@ snapshots:
       '@svar-ui/svelte-core': 2.6.0
       '@svar-ui/svelte-tasklist': 2.6.0
       '@svar-ui/svelte-toolbar': 2.6.0
-
-  '@svar-ui/svelte-editor@2.6.1':
-    dependencies:
-      '@svar-ui/editor-locales': 2.6.1
-      '@svar-ui/lib-dom': 0.14.0
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/lib-svelte': 0.5.2
-      '@svar-ui/svelte-comments': 2.6.1
-      '@svar-ui/svelte-core': 2.6.1
-      '@svar-ui/svelte-tasklist': 2.6.1
-      '@svar-ui/svelte-toolbar': 2.6.1
 
   '@svar-ui/svelte-editor@2.7.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)':
     dependencies:
@@ -1688,20 +1602,6 @@ snapshots:
       '@svar-ui/svelte-menu': 2.6.0
       '@svar-ui/svelte-uploader': 2.6.0
 
-  '@svar-ui/svelte-gantt@2.7.3':
-    dependencies:
-      '@svar-ui/gantt-data-provider': 2.7.3
-      '@svar-ui/gantt-locales': 2.7.3
-      '@svar-ui/gantt-store': 2.7.3
-      '@svar-ui/lib-dom': 0.14.0
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/lib-svelte': 0.5.2
-      '@svar-ui/svelte-core': 2.6.1
-      '@svar-ui/svelte-editor': 2.6.1
-      '@svar-ui/svelte-grid': 2.7.3
-      '@svar-ui/svelte-menu': 2.6.1
-      '@svar-ui/svelte-toolbar': 2.6.1
-
   '@svar-ui/svelte-grid@2.7.0':
     dependencies:
       '@svar-ui/grid-data-provider': 2.7.0
@@ -1713,18 +1613,6 @@ snapshots:
       '@svar-ui/svelte-core': 2.6.0
       '@svar-ui/svelte-menu': 2.6.0
       '@svar-ui/svelte-toolbar': 2.6.0
-
-  '@svar-ui/svelte-grid@2.7.3':
-    dependencies:
-      '@svar-ui/grid-data-provider': 2.7.3
-      '@svar-ui/grid-locales': 2.7.3
-      '@svar-ui/grid-store': 2.7.3
-      '@svar-ui/lib-dom': 0.14.0
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/lib-svelte': 0.5.2
-      '@svar-ui/svelte-core': 2.6.1
-      '@svar-ui/svelte-menu': 2.6.1
-      '@svar-ui/svelte-toolbar': 2.6.1
 
   '@svar-ui/svelte-kanban@2.6.0(picomatch@4.0.7)(svelte@5.57.1)(typescript@6.0.3)':
     dependencies:
@@ -1762,14 +1650,6 @@ snapshots:
       '@svar-ui/svelte-core': 2.6.0
       '@svar-ui/tasklist-locales': 2.6.0
 
-  '@svar-ui/svelte-tasklist@2.6.1':
-    dependencies:
-      '@svar-ui/lib-data-provider': 1.7.3
-      '@svar-ui/lib-dom': 0.14.0
-      '@svar-ui/lib-state': 1.9.7
-      '@svar-ui/svelte-core': 2.6.1
-      '@svar-ui/tasklist-locales': 2.6.1
-
   '@svar-ui/svelte-toolbar@2.6.0':
     dependencies:
       '@svar-ui/lib-dom': 0.13.1
@@ -1787,8 +1667,6 @@ snapshots:
       '@svar-ui/uploader-locales': 2.6.0
 
   '@svar-ui/tasklist-locales@2.6.0': {}
-
-  '@svar-ui/tasklist-locales@2.6.1': {}
 
   '@svar-ui/uploader-locales@2.6.0': {}
 
@@ -1927,8 +1805,6 @@ snapshots:
       whatwg-url: 16.0.1
     transitivePeerDependencies:
       - '@noble/hashes'
-
-  date-fns@3.6.0: {}
 
   decimal.js@10.6.0: {}
 

@@ -34,6 +34,8 @@
     onRowActivate,
     footer,
     storageKey,
+    exportable = true,
+    exportFilename,
     testid,
     class: className = "",
   }: {
@@ -63,6 +65,10 @@
     onRowActivate?: (row: DataGridRow, id: string) => void;
     footer?: Snippet<[{ columns: DataGridColumn[]; rows: DataGridRow[] }]>;
     storageKey?: string;
+    /** Offer CSV, TSV and Excel export of the rows the filter leaves (default). Turn off for a table that is not data. */
+    exportable?: boolean;
+    /** The export's file name without its extension. Default: the label, lower-cased and hyphenated. */
+    exportFilename?: string;
     /** A `data-testid` for tests. */
     testid?: string;
     class?: string;
@@ -77,6 +83,8 @@
     const text = t("p.table.search");
     host?.querySelectorAll<HTMLInputElement>(".data-grid-search").forEach((i) => i.setAttribute("placeholder", text));
   });
+  const slug = (s: string) =>
+    s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "") || "table";
   const direction = (d: string) => t(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}` as never);
 </script>
 
@@ -96,10 +104,20 @@
   {onRowActivate}
   {footer}
   {storageKey}
+  exportFilename={exportFilename ?? slug(label)}
   data-testid={testid}
   class={`data-table ${caption && captionVisible ? "caption-visible" : "caption-hidden"} ${className}`.trim()}
   labels={{
     ...(searchable ? { search: t("p.table.search") } : {}),
+    ...(exportable
+      ? {
+          export: t("p.table.export"),
+          exportCsv: t("p.table.export_csv"),
+          exportTsv: t("p.table.export_tsv"),
+          exportExcel: t("p.table.export_excel"),
+          exportAnnouncement: (_f: string, rows: number, file: string) => t("p.table.exported", { rows, file }),
+        }
+      : {}),
     columnVisibility: undefined,
     resizeHandle: (header: string) => t("p.table.resize", { header }),
     selectAll: t("p.table.select_all"),

@@ -39,6 +39,28 @@ test.describe("organizations", () => {
     await expect.poll(() => changed).toBe('o1 {"active":false}');
   });
 
+  test("exports the table as CSV, TSV and Excel", async ({ page }) => {
+    list = [
+      { pid: "o1", name: "Acme Build", kind: "delivery", active: true, audience: "org:o1" },
+      { pid: "o2", name: "=HYPERLINK(\"x\")", kind: "partner", active: false, audience: "org:o2" },
+    ];
+    await page.goto("/en-001/organizations", { waitUntil: "networkidle" });
+    const group = page.getByRole("group", { name: "Export" });
+    await expect(group.getByRole("button", { name: "CSV" })).toBeVisible();
+    for (const [name, ext] of [["CSV", "csv"], ["TSV", "tsv"], ["Excel", "xlsx"]] as const) {
+      const download = page.waitForEvent("download");
+      await group.getByRole("button", { name }).click();
+      const file = await download;
+      expect(file.suggestedFilename()).toMatch(new RegExp(`\\.${ext}$`));
+      if (ext !== "xlsx") {
+        const text = (await import("node:fs")).readFileSync((await file.path())!, "utf8");
+        expect(text).toContain("Acme Build");
+        // A name that starts with "=" must not reach a spreadsheet as a formula.
+        expect(text).toContain("'=HYPERLINK");
+      }
+    }
+  });
+
   test("reads in Welsh", async ({ page }) => {
     await page.goto("/cy-001/organizations", { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { level: 1, name: "Sefydliadau partner" })).toBeVisible();

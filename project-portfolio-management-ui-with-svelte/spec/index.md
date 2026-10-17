@@ -313,8 +313,10 @@ keys fall back to `en`.
 - **SvelteKit 2**, SPA (`ssr = false` / `prerender = false`).
 - **TypeScript strict** with `noUncheckedIndexedAccess`; no `any`
   without a justifying comment.
-- **SVAR Svelte DataGrid** for the plans list and any tabular
-  sub-view; native HTML for simple lists.
+- **Lily DataGrid** (`@lilydesignsystem/svelte-data-grid`, wrapped once
+  as `DataTable`) for the plans list and any tabular sub-view; native
+  HTML for simple lists. Every `DataTable` can be exported (see
+  "Exporting a table").
 - **Lily Design System Svelte Headless** for accessibility primitives
   (focus trap, listbox, combobox, dialog) and the theme / locale
   selectors; native HTML elsewhere.
@@ -995,6 +997,37 @@ Update this spec with any behavioural change; a behavioural change is
 one PR with three parts (spec + code + test). Bump `CHANGELOG.md`. Keep
 `src/lib/api/types.ts` in lockstep with the matcher `Plan` type — if
 a field changes in the service / matcher, fix it here in the same cycle.
+
+## Exporting a table (CSV, TSV, Excel)
+
+Every `DataTable` offers three buttons, **CSV**, **TSV** and **Excel**, in a
+group named "Export" (the group and the buttons are the data grid's own,
+switched on by giving it their labels; we write no export code).
+
+- **What is exported:** every row the filter leaves, in the current sort,
+  not only the shown page (`exportScope="view"`). Hidden columns and a
+  column with `exportable: false` (an actions column, say) are left out.
+  A cell exports its number, boolean or date as itself and anything else as
+  the text shown, so a column's `format` applies.
+- **File name:** `exportFilename` on `DataTable`, else the table's label,
+  lower-cased and hyphenated; the grid adds `.csv`, `.tsv` or `.xlsx`.
+- **Opt out:** `exportable={false}` for a table that is a layout aid rather
+  than data (a two-row summary, say). Default on.
+- **Safety:** a string starting with `=`, `+`, `-`, `@`, tab or CR is
+  written with a leading `'`, so a spreadsheet never runs it as a formula
+  (the grid's `safe` default; we do not turn it off). CSV and TSV carry a
+  UTF-8 byte-order mark so Excel reads Welsh and Arabic correctly.
+- **Words:** the button text and the "exported" announcement are in the
+  page's language (`p.table.export*`); "CSV", "TSV" and "Excel" are the
+  same in every language, so they are on the Welsh allow-list.
+- **Access:** the export is done in the browser from rows already loaded; it
+  reaches no new endpoint and shows nothing the page did not. A table that
+  holds masked values exports the masked values.
+
+**Not built:** server-side export of rows the page has not loaded (the
+service's own CSV endpoints cover that), choosing columns at export time,
+and a "selected rows only" option on the UI (the grid supports it; tables
+here rarely select rows).
 
 ## Accessible table views (Lily headless Gantt and Kanban)
 

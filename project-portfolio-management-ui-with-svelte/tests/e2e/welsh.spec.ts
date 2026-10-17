@@ -7,7 +7,7 @@ import { ROUTES, stubPlansApi } from "./fixtures";
 
 /** Lines that are the same in both languages by design: product, data and fixture names, units. */
 const SAME = new Set([
-  "PPM", "Website replatform", "WEB-42", "Kanban", "Gantt", "CSV", "GBP", "PERT", "RACI", "Main X",
+  "PPM", "Website replatform", "WEB-42", "Kanban", "Gantt", "CSV", "CSV TSV Excel", "GBP", "PERT", "RACI", "Main X",
   "Project", "Active", "platform", "Cymraeg", "English",
   // Catalogue words that are the same in Welsh, and the stub API's own error text (test data):
   "band", "capex", "opex", "unhandled in stub", "404: unhandled in stub",

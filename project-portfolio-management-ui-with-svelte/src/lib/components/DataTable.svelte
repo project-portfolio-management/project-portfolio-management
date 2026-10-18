@@ -92,7 +92,7 @@
     const text = t("p.table.search");
     host?.querySelectorAll<HTMLInputElement>(".data-grid-search").forEach((i) => i.setAttribute("placeholder", text));
   });
-  // Languages other than English and Welsh take the grid's words from the locale-translations pack.
+  // Languages other than English and Welsh take the grid's words from the svelte-locale-translations pack.
   let pack = $state<Record<string, unknown>>({});
   $effect(() => {
     const locale = i18n.locale;

@@ -1,10 +1,10 @@
-// The words Lily's widgets need, in the page's language, from `@lilydesignsystem/locale-translations`.
+// The words Lily's widgets need, in the page's language, from `@lilydesignsystem/svelte-locale-translations`.
 //
 // English and Welsh keep this app's own wording (`p.table.*` and friends, tested and in the Welsh review
 // list). The other languages used to fall back to English for every widget label; they now get the package's
 // pack. Every pack but English is a machine draft that no native speaker has read (`pack.reviewed` is false),
 // so these labels are unreviewed.
-import { labelsFor, type LabelHelper, type LabelPack } from "@lilydesignsystem/locale-translations";
+import { labelsFor, type LabelHelper, type LabelPack } from "@lilydesignsystem/svelte-locale-translations";
 import type { Locale } from "./locales";
 
 /** Locales whose widget words this app writes itself (see `i18n-pages`). */
@@ -26,14 +26,14 @@ const PACK_OF: Record<Locale, string> = {
 
 // The JSON packs are typed with `direction: string`, not the `"ltr" | "rtl"` of `LabelPack`, so they are cast on use.
 const PACKS: Record<string, () => Promise<{ default: unknown }>> = {
-  "ar-001": () => import("@lilydesignsystem/locale-translations/ar-001"),
-  "cy-001": () => import("@lilydesignsystem/locale-translations/cy-001"),
-  "de-001": () => import("@lilydesignsystem/locale-translations/de-001"),
-  "en-001": () => import("@lilydesignsystem/locale-translations/en-001"),
-  "es-001": () => import("@lilydesignsystem/locale-translations/es-001"),
-  "fr-001": () => import("@lilydesignsystem/locale-translations/fr-001"),
-  "hi-001": () => import("@lilydesignsystem/locale-translations/hi-001"),
-  "zh-001": () => import("@lilydesignsystem/locale-translations/zh-001"),
+  "ar-001": () => import("@lilydesignsystem/svelte-locale-translations/ar-001"),
+  "cy-001": () => import("@lilydesignsystem/svelte-locale-translations/cy-001"),
+  "de-001": () => import("@lilydesignsystem/svelte-locale-translations/de-001"),
+  "en-001": () => import("@lilydesignsystem/svelte-locale-translations/en-001"),
+  "es-001": () => import("@lilydesignsystem/svelte-locale-translations/es-001"),
+  "fr-001": () => import("@lilydesignsystem/svelte-locale-translations/fr-001"),
+  "hi-001": () => import("@lilydesignsystem/svelte-locale-translations/hi-001"),
+  "zh-001": () => import("@lilydesignsystem/svelte-locale-translations/zh-001"),
 };
 
 /** Whether this app supplies the locale's widget words itself. */

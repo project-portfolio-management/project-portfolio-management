@@ -173,6 +173,96 @@
       ]
     },
     {
+      "title": "Install and operate",
+      "links": [
+        {
+          "title": "Install and use",
+          "path": "INSTALL.md",
+          "description": "Run the service and the UI, with Podman Compose or from source"
+        },
+        {
+          "title": "Operations pack",
+          "path": "operations/README.md",
+          "description": "Deployment, backup and restore, recovery objectives, upgrades, runbook"
+        },
+        {
+          "title": "Deployment",
+          "path": "operations/deployment.md",
+          "description": "Compose deployment, configuration and the doctor command"
+        },
+        {
+          "title": "Backup and restore",
+          "path": "operations/backup-and-restore.md",
+          "description": "Database and artifact backup, verified restore, RPO and RTO"
+        },
+        {
+          "title": "Upgrade and migration",
+          "path": "operations/upgrade-and-migration.md",
+          "description": "Upgrading, migrations and rollback"
+        },
+        {
+          "title": "Runbook",
+          "path": "operations/runbook.md",
+          "description": "Logs, health, common faults"
+        },
+        {
+          "title": "Demo",
+          "path": "operations/demo.md",
+          "description": "A seeded demonstration stack"
+        },
+        {
+          "title": "Sign in with Entra",
+          "path": "operations/sign-in-with-entra.md",
+          "description": "Single sign-on through Keycloak and Microsoft Entra"
+        },
+        {
+          "title": "Email with Stalwart",
+          "path": "operations/email-with-stalwart.md",
+          "description": "Outgoing mail with a local Stalwart server"
+        }
+      ]
+    },
+    {
+      "title": "Governance and security",
+      "links": [
+        {
+          "title": "Information governance pack",
+          "path": "governance/README.md",
+          "description": "DPIA, records of processing, retention, data flow, assurance checklists"
+        },
+        {
+          "title": "Security policy",
+          "path": "SECURITY.md",
+          "description": "Reporting a vulnerability and what is covered"
+        },
+        {
+          "title": "Accessibility statement",
+          "path": "governance/accessibility-statement.md",
+          "description": "Conformance and known gaps"
+        },
+        {
+          "title": "Welsh language statement",
+          "path": "governance/language-statement.md",
+          "description": "What is translated and by whom"
+        },
+        {
+          "title": "Welsh translation review",
+          "path": "governance/welsh-translation-review.md",
+          "description": "How the machine-written Welsh is reviewed; every string is in the CSV, none reviewed yet"
+        },
+        {
+          "title": "Production readiness",
+          "path": "governance/production-readiness.md",
+          "description": "What must hold before production use"
+        },
+        {
+          "title": "AI statement",
+          "path": "AI_STATEMENT.md",
+          "description": "How AI was used to build this repository"
+        }
+      ]
+    },
+    {
       "title": "Work queue",
       "links": [
         {
@@ -216,6 +306,93 @@
           "description": "Overview and run instructions for the UI"
         }
       ]
+    },
+    {
+      "title": "Project documents",
+      "links": [
+        {
+          "title": "README",
+          "path": "README.md",
+          "description": "Overview, routes and quick start"
+        },
+        {
+          "title": "Changelog",
+          "path": "CHANGELOG.md",
+          "description": "Everything that changed, with what was not done or not verified"
+        },
+        {
+          "title": "Contributing",
+          "path": "CONTRIBUTING.md",
+          "description": "How to contribute"
+        },
+        {
+          "title": "Governance",
+          "path": "GOVERNANCE.md",
+          "description": "Decision making and maintainers"
+        },
+        {
+          "title": "Comparisons",
+          "path": "COMPARISONS.md",
+          "description": "How this compares with other tools"
+        },
+        {
+          "title": "Benchmarks",
+          "path": "BENCHMARKS.md",
+          "description": "Measured performance and the machine it was measured on"
+        },
+        {
+          "title": "News",
+          "path": "NEWS.md",
+          "description": "Release announcements"
+        },
+        {
+          "title": "Request for comments",
+          "path": "RFC.md",
+          "description": "Open proposals"
+        }
+      ]
+    },
+    {
+      "title": "AI agent skill",
+      "links": [
+        {
+          "title": "Skill",
+          "path": "project-portfolio-management-skill/SKILL.md",
+          "description": "Working in this repository: layout, commands, conventions"
+        },
+        {
+          "title": "Skill commands",
+          "path": "project-portfolio-management-skill/references/commands.md",
+          "description": "The exact commands for building, testing and checking each project"
+        }
+      ]
     }
-  ]
+  ],
+  "facts": {
+    "version": "0.4.0",
+    "layout": {
+      "service": "project-portfolio-management-service-with-rust",
+      "matcher": "project-portfolio-management-matcher-with-rust",
+      "ui": "project-portfolio-management-ui-with-svelte"
+    },
+    "stack": [
+      "Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18",
+      "SvelteKit 2, Svelte 5 (runes), Node 26, pnpm",
+      "Lily Design System widgets (@lilydesignsystem/*)",
+      "Podman with Compose to run it"
+    ],
+    "run": [
+      "podman compose up -d --build --wait",
+      "cd project-portfolio-management-ui-with-svelte && pnpm install && pnpm dev"
+    ],
+    "check": [
+      "cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib",
+      "cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest run && pnpm exec playwright test"
+    ],
+    "rules": [
+      "Spec first: a behavioural change is one commit with a spec edit, a code edit and a test edit.",
+      "Say plainly what is not built or not tested.",
+      "Stage named files; run scripts/generate-status.sh after adding tests."
+    ]
+  }
 }

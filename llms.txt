@@ -2,6 +2,22 @@
 
 > A plan registry and project-management tool: one recursive plan collection with an optional kind label, a Rust matcher library for explainable duplicate detection, a loco.rs REST service (governance, scheduling, cost, approvals, controlled documents), and a SvelteKit UI.
 
+## Facts
+
+- Version: 0.4.0
+- Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-matcher-with-rust` (matcher), `project-portfolio-management-ui-with-svelte` (ui)
+- Stack: Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18
+- Stack: SvelteKit 2, Svelte 5 (runes), Node 26, pnpm
+- Stack: Lily Design System widgets (@lilydesignsystem/*)
+- Stack: Podman with Compose to run it
+- Run: `podman compose up -d --build --wait`
+- Run: `cd project-portfolio-management-ui-with-svelte && pnpm install && pnpm dev`
+- Check: `cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib`
+- Check: `cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest run && pnpm exec playwright test`
+- Rule: Spec first: a behavioural change is one commit with a spec edit, a code edit and a test edit.
+- Rule: Say plainly what is not built or not tested.
+- Rule: Stage named files; run scripts/generate-status.sh after adding tests.
+
 ## Specification
 
 - [Entity living spec](spec/index.md): Entity-level contract: the Plan model, the trio, shared invariants; index of sections 1-18
@@ -40,6 +56,28 @@
 - [Testing](agents/testing.md): Test layers, quality gates and contract seams
 - [Spec-driven development](agents/spec-driven-development.md): Authority model and three-part PR discipline
 
+## Install and operate
+
+- [Install and use](INSTALL.md): Run the service and the UI, with Podman Compose or from source
+- [Operations pack](operations/README.md): Deployment, backup and restore, recovery objectives, upgrades, runbook
+- [Deployment](operations/deployment.md): Compose deployment, configuration and the doctor command
+- [Backup and restore](operations/backup-and-restore.md): Database and artifact backup, verified restore, RPO and RTO
+- [Upgrade and migration](operations/upgrade-and-migration.md): Upgrading, migrations and rollback
+- [Runbook](operations/runbook.md): Logs, health, common faults
+- [Demo](operations/demo.md): A seeded demonstration stack
+- [Sign in with Entra](operations/sign-in-with-entra.md): Single sign-on through Keycloak and Microsoft Entra
+- [Email with Stalwart](operations/email-with-stalwart.md): Outgoing mail with a local Stalwart server
+
+## Governance and security
+
+- [Information governance pack](governance/README.md): DPIA, records of processing, retention, data flow, assurance checklists
+- [Security policy](SECURITY.md): Reporting a vulnerability and what is covered
+- [Accessibility statement](governance/accessibility-statement.md): Conformance and known gaps
+- [Welsh language statement](governance/language-statement.md): What is translated and by whom
+- [Welsh translation review](governance/welsh-translation-review.md): How the machine-written Welsh is reviewed; every string is in the CSV, none reviewed yet
+- [Production readiness](governance/production-readiness.md): What must hold before production use
+- [AI statement](AI_STATEMENT.md): How AI was used to build this repository
+
 ## Work queue
 
 - [Tasks](tasks.md): LT-n work items derived from the research plan, with acceptance state
@@ -52,3 +90,19 @@
 - [Matcher README](project-portfolio-management-matcher-with-rust/README.md): Usage and weights table for the matching library
 - [Matcher changelog](project-portfolio-management-matcher-with-rust/CHANGELOG.md): Release notes for the matcher
 - [UI README](project-portfolio-management-ui-with-svelte/README.md): Overview and run instructions for the UI
+
+## Project documents
+
+- [README](README.md): Overview, routes and quick start
+- [Changelog](CHANGELOG.md): Everything that changed, with what was not done or not verified
+- [Contributing](CONTRIBUTING.md): How to contribute
+- [Governance](GOVERNANCE.md): Decision making and maintainers
+- [Comparisons](COMPARISONS.md): How this compares with other tools
+- [Benchmarks](BENCHMARKS.md): Measured performance and the machine it was measured on
+- [News](NEWS.md): Release announcements
+- [Request for comments](RFC.md): Open proposals
+
+## AI agent skill
+
+- [Skill](project-portfolio-management-skill/SKILL.md): Working in this repository: layout, commands, conventions
+- [Skill commands](project-portfolio-management-skill/references/commands.md): The exact commands for building, testing and checking each project

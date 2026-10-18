@@ -256,6 +256,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generated status is current
         run: scripts/generate-status.sh --check
+      - name: llms.txt matches llms.json and every listed file exists
+        run: python3 scripts/generate-llms.py --check
       - name: Link check (offline)
         uses: lycheeverse/lychee-action@v2
         with:

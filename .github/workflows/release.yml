@@ -43,7 +43,12 @@ jobs:
             echo "::error::tag $tag does not match the API crate version $api"
             exit 1
           fi
-          # The matcher and UI are versioned independently; surface the values.
+          # The UI is released with the service, so its version must agree too (HD-8).
+          if [ "$version" != "$ui" ]; then
+            echo "::error::tag $tag does not match the UI package version $ui"
+            exit 1
+          fi
+          # The matcher crate is versioned independently; surface its value.
           echo "::notice::matcher crate $matcher, UI package $ui"
           # Release notes must exist (also proves the CHANGELOG has the section).
           scripts/release-notes.sh "$tag" "$API/CHANGELOG.md" >/dev/null
@@ -136,6 +141,7 @@ jobs:
           for crate in "$API" "$MATCHER"; do
             (cd "$crate" && cargo cyclonedx --format json --override-filename "$crate.cdx")
             mv "$crate/$crate.cdx.json" "sbom/$crate.cdx.json"
+            python3 scripts/check-sbom.py "sbom/$crate.cdx.json" "$crate/Cargo.lock"
           done
       - uses: pnpm/action-setup@v4
         with:
@@ -148,7 +154,10 @@ jobs:
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile
-          pnpm dlx @cyclonedx/cyclonedx-npm --output-format JSON --output-file "$GITHUB_WORKSPACE/sbom/$UI.cdx.json"
+          # `pnpm sbom` reads pnpm's own lock file (cyclonedx-npm refuses to run under pnpm).
+          # No --prod: the app bundles its development-time dependencies into what ships.
+          pnpm sbom --sbom-format cyclonedx > "$GITHUB_WORKSPACE/sbom/$UI.cdx.json"
+          python3 "$GITHUB_WORKSPACE/scripts/check-sbom.py" "$GITHUB_WORKSPACE/sbom/$UI.cdx.json" pnpm-lock.yaml
       - uses: actions/upload-artifact@v4
         with:
           name: sbom

@@ -25,9 +25,9 @@ no network, database or compilation; counts are source lines, not test runs):
 
 | Fact | Value | Method |
 |---|---|---|
-| Service version | 0.3.0 | `version` in the service `Cargo.toml` |
+| Service version | 0.4.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.0 | `version` in the matcher `Cargo.toml` |
-| Front-end version | 0.1.0 | `version` in the front-end `package.json` |
+| Front-end version | 0.4.0 | `version` in the front-end `package.json` |
 | Migrations | 111 | files named `m2*.rs` in `migration/src` |
 | Mounted route registrations | 596 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
 | Documented API paths | 416 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |

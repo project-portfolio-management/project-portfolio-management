@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-18
+
+The service and the operator interface are versioned together from this release. The interface changes in this release (Lily widgets, table export, the strict style policy) are in the repository `CHANGELOG.md`.
+
 ### Added — the portfolio ledger (EX-12, 2026-10-11)
 
 A funding allocation (source, amount, date) that budget lines draw on, traced in one query to the lines, gates, milestones met and benefits validated, with untraced money stated with its amount; a map from finance cost codes to budget lines; and a read-only reconciliation of a CSV ledger export that lists unmatched codes. Migration 77.

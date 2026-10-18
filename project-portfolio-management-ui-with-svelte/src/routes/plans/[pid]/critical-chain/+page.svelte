@@ -123,7 +123,7 @@
             <li>
               <span class="name">{task.title ?? task.pid}</span>
               <span class="track" aria-hidden="true">
-                {#if bars[i]}<span class="bar solid" style={`left:${bars[i].left}%;width:${bars[i].width}%`}></span>{/if}
+                {#if bars[i]}<span class="bar solid" style:left="{bars[i].left}%" style:width="{bars[i].width}%"></span>{/if}
               </span>
             </li>
           {/each}
@@ -166,8 +166,8 @@
             <li>
               <span class="name">{r.label}</span>
               <span class="track" aria-hidden="true">
-                <span class="bar solid" style={`left:0;width:${(r.work / scale) * 100}%`}></span>
-                {#if r.buffer}<span class="bar dashed" style={`left:${(r.work / scale) * 100}%;width:${(r.buffer / scale) * 100}%`}></span>{/if}
+                <span class="bar solid" style:left="0" style:width="{(r.work / scale) * 100}%"></span>
+                {#if r.buffer}<span class="bar dashed" style:left="{(r.work / scale) * 100}%" style:width="{(r.buffer / scale) * 100}%"></span>{/if}
               </span>
             </li>
           {/each}

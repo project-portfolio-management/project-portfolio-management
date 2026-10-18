@@ -42,7 +42,7 @@
 </script>
 
 {#snippet shareCell({ row }: DataGridCellContext)}
-  <span class="meter"><span class="fill" style={`width:${total === 0 ? 0 : ((row as unknown as Phase).live / total) * 100}%`}></span></span>
+  <span class="meter"><span class="fill" style:width="{total === 0 ? 0 : ((row as unknown as Phase).live / total) * 100}%"></span></span>
 {/snippet}
 
 

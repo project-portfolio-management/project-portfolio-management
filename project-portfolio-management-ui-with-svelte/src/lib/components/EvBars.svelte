@@ -18,8 +18,8 @@
     <li>
       <span class="label">{bar.label}</span>
       <span class="track" aria-hidden="true">
-        <span class="fill {bar.key}" style="width:{bar.widthPct}%"></span>
-        <span class="bac" style="left:{bar.bacPct}%"></span>
+        <span class="fill {bar.key}" style:width="{bar.widthPct}%"></span>
+        <span class="bac" style:left="{bar.bacPct}%"></span>
       </span>
       <span class="amount">{bar.minor === null ? t("c.EvBars.unknown") : money(bar.minor, block.currency)}</span>
     </li>

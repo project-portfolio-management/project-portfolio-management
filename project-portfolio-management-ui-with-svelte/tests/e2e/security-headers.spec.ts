@@ -68,6 +68,11 @@ test.describe("security headers", () => {
     ]) {
       expect(csp).toContain(d);
     }
+    // Style attributes: one hash (SvelteKit's announcer), never a blanket 'unsafe-inline'.
+    const attr = csp.split(";").find((s) => s.trim().startsWith("style-src-attr"))!;
+    expect(attr).toContain("'unsafe-hashes'");
+    expect(attr).toMatch(/'sha256-[A-Za-z0-9+/=]+'/);
+    expect(attr).not.toContain("'unsafe-inline'");
     const script = csp.split(";").find((s) => s.trim().startsWith("script-src"))!;
     expect(script).toContain("'self'");
     expect(script).not.toContain("'unsafe-inline'");

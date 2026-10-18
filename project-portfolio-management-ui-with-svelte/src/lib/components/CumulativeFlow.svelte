@@ -154,7 +154,7 @@
       {#each BANDS as band (band.status)}
         {#if bandUsed(band.status)}
           <li>
-            <span class="swatch" style={`background:var(--series-${band.slot})`}
+            <span class="swatch" style:background="var(--series-{band.slot})"
             ></span>
             {band.label}
           </li>
@@ -234,7 +234,7 @@
               <li>
                 <span
                   class="swatch"
-                  style={`background:var(--series-${band.slot})`}
+                  style:background="var(--series-{band.slot})"
                 ></span>
                 {band.label}: {sample.counts[band.status]}
               </li>

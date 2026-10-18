@@ -21,16 +21,15 @@ export default defineConfig({
                     "default-src": ["self"],
                     "script-src": ["self"],
                     "style-src": ["self"],
-                    // Style ATTRIBUTES only. This was needed for the SVAR widgets,
-                    // which set a computed `style="…"` on rows, cells and bars;
-                    // they are gone (2026-10-17), but SvelteKit's route announcer
-                    // carries one too and nothing has yet shown that no Lily
-                    // widget or page needs it, so it is kept until that is
-                    // checked on every route. None of those can be hashed or
-                    // given a nonce. Scripts and <style>
-                    // elements stay strict ('self' + kit nonces/hashes), so
-                    // this does not let injected markup run code or load CSS.
-                    "style-src-attr": ["unsafe-inline"],
+                    // Style ATTRIBUTES: only the one value SvelteKit's own screen-reader
+                    // announcer (`#svelte-announcer`) sets, allowed by its hash
+                    // (`unsafe-hashes` is what lets a hash cover an attribute). Found on
+                    // 2026-10-18 by removing the old blanket 'unsafe-inline': every
+                    // route reported exactly this one violation and nothing else (no Lily
+                    // widget or page sets a style attribute). If SvelteKit changes that
+                    // string, tests/e2e/security-headers.spec.ts fails on every route;
+                    // recompute with: printf '%s' '<style value>' | openssl dgst -sha256 -binary | base64
+                    "style-src-attr": ["unsafe-hashes", "sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo="],
                     "img-src": ["self", "data:"],
                     "font-src": ["self"],
                     "connect-src": ["self"],

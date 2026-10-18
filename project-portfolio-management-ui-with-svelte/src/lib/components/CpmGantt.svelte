@@ -40,7 +40,7 @@
       <span class="name"></span>
       <span class="track">
         {#each chart.ticks as tick (tick.pct)}
-          <span class="tick" style="left:{tick.pct}%">{tick.label}</span>
+          <span class="tick" style:left="{tick.pct}%">{tick.label}</span>
         {/each}
       </span>
     </div>
@@ -54,14 +54,14 @@
           </button>
           <span class="track" aria-hidden="true">
             {#if bar.ghost}
-              <span class="ghost" style="left:{bar.ghost.startPct}%;width:{bar.ghost.widthPct}%"></span>
+              <span class="ghost" style:left="{bar.ghost.startPct}%" style:width="{bar.ghost.widthPct}%"></span>
             {/if}
-            <span class="bar {bar.state}" style="left:{bar.startPct}%;width:{bar.widthPct}%"></span>
+            <span class="bar {bar.state}" style:left="{bar.startPct}%" style:width="{bar.widthPct}%"></span>
             {#if bar.floatPct > 0}
-              <span class="float" style="left:{bar.startPct + bar.widthPct}%;width:{bar.floatPct}%"></span>
+              <span class="float" style:left="{bar.startPct + bar.widthPct}%" style:width="{bar.floatPct}%"></span>
             {/if}
             {#if bar.limitPct !== null}
-              <span class="limit" style="left:{bar.limitPct}%"></span>
+              <span class="limit" style:left="{bar.limitPct}%"></span>
             {/if}
           </span>
         </li>

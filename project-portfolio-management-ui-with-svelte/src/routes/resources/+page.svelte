@@ -104,7 +104,7 @@
             <th scope="row">{key}</th>
             {#each plan.periods as p (p.from)}
               {@const cell = gapCell(p.rows.find((r) => r.key === key), maxAbs)}
-              <td class={`cell ${cell.kind}`} style={`--level:${cell.level}`}>
+              <td class={`cell ${cell.kind}`} style:--level={cell.level}>
                 <span aria-hidden="true">{cell.symbol}</span> {cell.text}
               </td>
             {/each}

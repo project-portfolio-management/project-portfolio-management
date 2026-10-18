@@ -40,7 +40,7 @@
     if (!span || !start || !end) return null;
     const from = ((new Date(start).getTime() - span.min) / span.width) * 100;
     const to = ((new Date(end).getTime() - span.min) / span.width) * 100;
-    return `left:${from.toFixed(1)}%;width:${Math.max(to - from, 0.5).toFixed(1)}%`;
+    return { left: `${from.toFixed(1)}%`, width: `${Math.max(to - from, 0.5).toFixed(1)}%` };
   }
 </script>
 
@@ -71,7 +71,7 @@
         </span>
         <span class="track">
           {#if bar(item.start, item.end)}
-            <span class="bar" class:critical={item.on_critical_path} style={bar(item.start, item.end)}
+            <span class="bar" class:critical={item.on_critical_path} style:left={bar(item.start, item.end)?.left} style:width={bar(item.start, item.end)?.width}
             ></span>
           {:else}
             <span class="small muted">{t("ppm.schedule.undated")}</span>

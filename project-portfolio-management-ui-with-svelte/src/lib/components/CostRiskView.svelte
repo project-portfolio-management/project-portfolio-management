@@ -65,7 +65,7 @@
 
     {#if g}
       <figure>
-        <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("c.CostRiskView.histogram_label", { currency: c.currency })} width="100%" style="max-width: 44rem">
+        <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("c.CostRiskView.histogram_label", { currency: c.currency })} width="100%" style:max-width="44rem">
           {#each g.bars as b (b.from)}
             <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("c.CostRiskView.to_of", { money: money(b.from, c.currency), money2: money(b.to, c.currency), count: b.count, iterations: a.iterations })}</title></rect>
           {/each}

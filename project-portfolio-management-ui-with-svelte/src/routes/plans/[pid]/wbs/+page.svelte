@@ -54,7 +54,7 @@
     {:else}
       <ul class="wbs" aria-label={t("p.plans.pid.wbs.work_breakdown_tree")}>
         {#each rows as r (r.key)}
-          <li style={`margin-inline-start:${r.depth * 1.5}rem`}>
+          <li style:margin-inline-start="{r.depth * 1.5}rem">
             <span class="code">{r.code}</span>
             {#if r.restricted}<em>{r.title}</em>{:else}<a href={localeHref(`/plans/${pid}/tasks/${r.key}`)}>{r.title}</a>{/if}
             {#if r.children > 0}<span class="small muted"> {(r.children === 1 ? t("p.plans.pid.wbs.sub_task_one", { children: r.children }) : t("p.plans.pid.wbs.sub_task_other", { children: r.children }))}</span>{/if}

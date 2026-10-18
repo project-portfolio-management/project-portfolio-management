@@ -121,8 +121,8 @@
               <li>
                 <span class="name">{p.name}</span>
                 <span class="track" aria-hidden="true">
-                  <span class="bar now" style={`top:0;bottom:50%;left:${bars[2 * i]?.left ?? 0}%;width:${bars[2 * i]?.width ?? 0}%`}></span>
-                  <span class="bar proposed" style={`top:50%;bottom:0;left:${bars[2 * i + 1]?.left ?? 0}%;width:${bars[2 * i + 1]?.width ?? 0}%`}></span>
+                  <span class="bar now" style:top="0" style:bottom="50%" style:left="{bars[2 * i]?.left ?? 0}%" style:width="{bars[2 * i]?.width ?? 0}%"></span>
+                  <span class="bar proposed" style:top="50%" style:bottom="0" style:left="{bars[2 * i + 1]?.left ?? 0}%" style:width="{bars[2 * i + 1]?.width ?? 0}%"></span>
                 </span>
               </li>
             {/each}

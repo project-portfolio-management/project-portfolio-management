@@ -130,7 +130,7 @@
 
   {#if scatter}
     <figure>
-      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label={t("p.plans.pid.joint_risk.scatter_of_simulated_total_cost")} width="100%" style="max-width: 32rem">
+      <svg viewBox="0 0 {scatter.width} {scatter.height}" role="img" aria-label={t("p.plans.pid.joint_risk.scatter_of_simulated_total_cost")} width="100%" style:max-width="32rem">
         {#each scatter.dots as d, i (i)}
           <circle cx={d.x} cy={d.y} r="2.5" class="dot"><title>{t("p.plans.pid.joint_risk.business_days_late", { days: d.days, money: money(d.cost, result.currency) })}</title></circle>
         {/each}

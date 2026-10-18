@@ -152,7 +152,7 @@
     <div><strong>{t("detail.id")}</strong> <code>{pid}</code></div>
   </div>
 
-  <div class="row" style="margin-top:1rem">
+  <div class="row" style:margin-top="1rem">
     <a class="button" href={localeHref(`/plans/${pid}/edit`)}>{t("detail.edit")}</a>
     <button class="button" onclick={handleCheckDuplicates} disabled={checking}>
       {checking ? t("detail.checking") : t("detail.checkDuplicates")}

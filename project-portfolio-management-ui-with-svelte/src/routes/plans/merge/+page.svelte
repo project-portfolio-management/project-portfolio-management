@@ -172,7 +172,7 @@
 </section>
 
 {#if preview.main || preview.duplicate}
-  <section class="surface stack" style="margin-top:1rem">
+  <section class="surface stack" style:margin-top="1rem">
     <h2>{t("merge.preview")}</h2>
     <div><strong>{t("merge.main")}</strong> {summary(preview.main)}</div>
     <div>
@@ -183,7 +183,7 @@
 {/if}
 
 {#if result}
-  <section class="surface stack" style="margin-top:1rem">
+  <section class="surface stack" style:margin-top="1rem">
     <h2>{t("merge.completed")}</h2>
     <div><strong>{t("merge.main")}</strong> <code>{result.main_pid}</code></div>
     <div>
@@ -201,7 +201,7 @@
   </section>
 {/if}
 
-<section style="margin-top:1.5rem">
+<section style:margin-top="1.5rem">
   <h2>{t("merge.recent")}</h2>
   <DataTable label={t("merge.mergedAt")} columns={mergeColumns} rows={recent} rowId={(r) => String(r.id)} emptyText={t("merge.recentEmpty")} testid="recent-merges" />
 </section>

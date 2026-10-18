@@ -24,7 +24,7 @@
 
 {#if g}
   <figure data-testid="scurve">
-    <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("c.SCurve.s_curve_planned_value_over")} width="100%" style="max-width: 44rem">
+    <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("c.SCurve.s_curve_planned_value_over")} width="100%" style:max-width="44rem">
       <line x1="0" x2={g.width} y1={g.bacY} y2={g.bacY} class="bac" />
       <polyline points={g.pv} class="pv" fill="none" />
       {#each g.ev as d (d.label)}

@@ -265,10 +265,10 @@ on by default, so the BFF must send the operator bearer on every call.
 `src/lib/security-headers.ts` to every response (HSTS only over HTTPS), and
 `kit.csp` in `vite.config.ts` sets a strict policy: `script-src 'self'` with
 SvelteKit's nonces/hashes, no `'unsafe-inline'` for scripts or `<style>`
-elements, and `'unsafe-inline'` for style *attributes* only (the SVAR widgets
-set computed `style="…"`). SVAR's icon font is self-hosted in `static/svar/`
-and its themes are mounted with `fonts={false}`, so no third-party stylesheet
-loads. `tests/e2e/security-headers.spec.ts` fails on any CSP violation across
+elements, and for style *attributes* a single hash (`unsafe-hashes` plus the
+hash of SvelteKit's own `#svelte-announcer` style), never `'unsafe-inline'`. So
+a page sets a computed style with Svelte's `style:left="{x}%"` directive (set
+through the CSSOM, allowed), never a `style="…"` attribute (blocked). `tests/e2e/security-headers.spec.ts` fails on any CSP violation across
 representative routes; a test helper that needs CSS must use a constructed
 stylesheet (see `settle()` in `tests/e2e/fixtures.ts`), not an injected
 `<style>` tag.

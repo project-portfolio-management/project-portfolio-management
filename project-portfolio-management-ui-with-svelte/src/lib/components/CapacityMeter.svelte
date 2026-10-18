@@ -24,16 +24,16 @@
   <span class="mk" aria-hidden="true">{model.marker}</span>
   <span class="stack">
     <span class="meter" role="img" aria-label={model.label}>
-      <span class="fill {model.state}" style="width:{model.committedPct}%"></span>
+      <span class="fill {model.state}" style:width="{model.committedPct}%"></span>
       {#if model.proposedPct > 0}
-        <span class="proposed" style="left:{model.committedPct}%;width:{model.proposedPct}%"></span>
+        <span class="proposed" style:left="{model.committedPct}%" style:width="{model.proposedPct}%"></span>
       {/if}
-      <span class="cap" style="left:{model.capacityPct}%"></span>
+      <span class="cap" style:left="{model.capacityPct}%"></span>
     </span>
     {#if segments.length > 0}
       <span class="strip" role="img" aria-label={t("c.CapacityMeter.days_over_capacity")}>
         {#each segments as s (s.label)}
-          <span class="seg" style="left:{s.startPct}%;width:{s.widthPct}%" title={s.label}></span>
+          <span class="seg" style:left="{s.startPct}%" style:width="{s.widthPct}%" title={s.label}></span>
         {/each}
       </span>
     {/if}

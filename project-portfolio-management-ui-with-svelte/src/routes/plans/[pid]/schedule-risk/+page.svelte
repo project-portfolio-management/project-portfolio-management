@@ -112,7 +112,7 @@
 
   {#if g}
     <figure>
-      <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates")} width="100%" style="max-width: 44rem">
+      <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates")} width="100%" style:max-width="44rem">
         {#each g.bars as b (b.date)}
           <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("p.plans.pid.schedule_risk.of", { date: b.date, count: b.count, iterations: run.assumptions.iterations })}</title></rect>
         {/each}

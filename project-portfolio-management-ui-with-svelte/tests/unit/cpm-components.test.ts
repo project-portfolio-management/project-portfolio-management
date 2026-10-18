@@ -203,13 +203,14 @@ describe("CalendarMonth", () => {
     expect(text).toContain("✕");
     expect(text).toContain("A");
     expect(text).toContain("–");
+    // A day's name starts with the number the cell shows, so what is seen is in what is said (WCAG 2.5.3).
     const label = (d: string) =>
       [...root.querySelectorAll("[aria-label]")]
         .find((e) => e.getAttribute("aria-label")?.startsWith(d))
         ?.getAttribute("aria-label");
-    expect(label("2026-10-12")).toBe("2026-10-12, Monday: holiday");
-    expect(label("2026-10-03")).toBe("2026-10-03, Saturday: not a business day");
-    expect(label("2026-10-13")).toBe("2026-10-13, Tuesday: business day");
+    expect(label("12 October 2026")).toBe("12 October 2026, Monday: holiday");
+    expect(label("3 October 2026")).toBe("3 October 2026, Saturday: not a business day");
+    expect(label("13 October 2026")).toBe("13 October 2026, Tuesday: business day");
     done();
   });
   it("toggles a holiday only on a business day of this month when editable", () => {

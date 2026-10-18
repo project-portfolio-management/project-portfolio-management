@@ -65,6 +65,15 @@
   const viewName = (v: Mode) =>
     t(({ day: "p.calendar.day", week: "c.CalendarMonth.week", "four-week": "c.CalendarMonth.four_weeks", month: "c.CalendarMonth.month", agenda: "p.calendar.agenda" } as const)[v]);
 
+  const MAX_SHOWN = 3;
+  /** The text the day cell shows: its number, then up to three milestones, then "+N more". Keep in step with the `day` snippet below. */
+  function shownOn(date: string): string {
+    const here = events.filter((e) => e.date === date);
+    const shown = here.slice(0, MAX_SHOWN).map((e) => `${e.title}${e["done"] ? ` ✓ ${t("p.calendar.status_done")}` : ""}`);
+    const more = here.length > MAX_SHOWN ? [t("p.calendar.more", { n: here.length - MAX_SHOWN })] : [];
+    return [String(Number(date.slice(8, 10))), ...shown, ...more].join(" ");
+  }
+
   const labels = $derived({
     dayView: t("p.calendar.day"),
     weekView: t("c.CalendarMonth.week"),
@@ -80,7 +89,9 @@
     periodAnnouncement: (v: Mode, start: string, end: string) => t("p.calendar.showing", { view: viewName(v), start, end }),
     weekday: (wd: number) => WEEKDAY_NAMES[sundayFirst(wd)] ?? "",
     weekdayAbbr: (wd: number) => (WEEKDAY_NAMES[sundayFirst(wd)] ?? "").slice(0, 3),
-    day: (date: string, wd: number) => `${date}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}`,
+    // A cell's name starts with exactly the text it shows (the day number and its milestones), then says the full date (WCAG 2.5.3).
+    day: (date: string, wd: number) =>
+      `${shownOn(date)}. ${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1] ?? ""} ${date.slice(0, 4)}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}`,
     ...exportLabels(),
     search: t("p.table.find"),
     searchAnnouncement,
@@ -121,7 +132,7 @@
       {events}
       {eventFields}
       {labels}
-      maxEvents={3}
+      maxEvents={MAX_SHOWN}
       agendaBelow={640}
       bind:search
       exportFilename="milestones"

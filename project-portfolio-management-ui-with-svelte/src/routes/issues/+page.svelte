@@ -50,7 +50,7 @@
 </script>
 
 {#snippet titleCell({ row, formatted }: DataGridCellContext)}
-  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={t("p.issues.plan_link")}>{formatted}</a>
+  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={`${formatted}: ${t("p.issues.plan_link")}`}>{formatted}</a>
 {/snippet}
 
 {#snippet dueCell({ row, formatted }: DataGridCellContext)}

@@ -47,7 +47,7 @@
 </script>
 
 {#snippet crTitle({ row, formatted }: DataGridCellContext)}
-  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={t("p.change_requests.plan_link")}>{formatted}</a>
+  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={`${formatted}: ${t("p.change_requests.plan_link")}`}>{formatted}</a>
 {/snippet}
 
 

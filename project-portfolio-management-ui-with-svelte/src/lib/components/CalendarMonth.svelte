@@ -65,6 +65,9 @@
   const viewName = (v: Mode) =>
     v === "week" ? t("c.CalendarMonth.week") : v === "four-week" ? t("c.CalendarMonth.four_weeks") : t("c.CalendarMonth.month");
 
+  // A day's name starts with the number the cell shows ("1 October 2026"), so what is seen is in what is said (WCAG 2.5.3).
+  const spoken = (date: string) => `${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1] ?? ""} ${date.slice(0, 4)}`;
+
   function describe(date: string, wd: number): string {
     const c = dayState(date, mask, holidays, absences);
     const state = c.holiday
@@ -74,7 +77,7 @@
         : c.offDay
           ? t("c.CalendarMonth.not_a_business_day")
           : t("c.CalendarMonth.business_day");
-    return `${date}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}: ${state}`;
+    return `${spoken(date)}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}: ${state}`;
   }
 
   const labels = $derived({

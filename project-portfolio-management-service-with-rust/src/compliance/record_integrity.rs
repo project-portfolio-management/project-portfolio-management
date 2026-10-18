@@ -588,7 +588,15 @@ mod tests {
             hasher.update(b"r0");
             hasher.update([SEP as u8]);
             hasher.update(r.pid.to_string().as_bytes());
-            format!("{:x}", hasher.finalize())
+            // sha2 0.11 digests no longer implement `LowerHex`; write the bytes as hex by hand.
+            hasher
+                .finalize()
+                .iter()
+                .fold(String::new(), |mut hex, byte| {
+                    use std::fmt::Write as _;
+                    write!(hex, "{byte:02x}").expect("writing to a String cannot fail");
+                    hex
+                })
         };
         assert_ne!(hash_of(&r), with_other_version);
         // The exact tag is pinned against the spec by

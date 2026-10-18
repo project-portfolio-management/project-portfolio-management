@@ -31,7 +31,7 @@ loco-rs = { version = "1.2.0", default-features = false, features = ["cli", "wit
 # implementation shared by every service, rather than a copy per crate.
 integrity-mac = { git = "https://github.com/SixArm/main-x-service.git", rev = "52b107a9f06c0ae8896149e964c8d9b0739d2cc4" }
 # Unkeyed content digests: SHA-256 (FIPS 180-4) and SHA3-256 (FIPS 202).
-sha2 = { version = "0.10" }
+sha2 = { version = "0.11" }
 sha3 = { version = "0.12" }
 loco-rs = { workspace = true  }
 serde = { version = "1", features = ["derive"] }
@@ -50,7 +50,7 @@ tokio = { version = "1.53", default-features = false, features = [
 zip = { version = "9", default-features = false, features = ["deflate"] }
 # Read-only XML parsing for MS Project (MSPDI) import (PJ-10): no external
 # entities, a node cap, and no DTD.
-roxmltree = "0.20"
+roxmltree = "0.21"
 # Server-sent events (PL-3): a stream built from the broadcast receiver.
 async-stream = { version = "0.3" }
 futures-util = { version = "0.3", default-features = false }
@@ -138,7 +138,7 @@ required-features = []
 # A local OIDC provider so tests/keycloak_guard.rs can push a Keycloak access
 # token through the real guard without a Keycloak container. Tests only.
 authentication-verifier = { git = "https://github.com/SixArm/main-x-service.git", rev = "52b107a9f06c0ae8896149e964c8d9b0739d2cc4", default-features = false, features = ["test-idp"] }
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 loco-rs = { workspace = true, features = ["testing"] }
 # Name the `TestServer` type in shared request-test helpers.
 axum-test = { version = "17.3.0" }
@@ -155,13 +155,13 @@ serial_test = { version = "4.0.1" }
 # `ServiceExt::oneshot` to drive a bare `axum::Router` in the middleware unit
 # tests (security headers, CORS, rate limiting). Already in the tree via axum.
 tower = { version = "0.5", features = ["util"] }
-rstest = { version = "0.25" }
+rstest = { version = "0.27" }
 insta = { version = "1.48", features = ["redactions", "yaml", "filters"] }
 # Mint PASETO v4.public tokens + a matching Ed25519 key set in-process so the extractor.s
 # happy path is verified un-gated (no auth-service / network dependency).
 ed25519-dalek = { version = "3.0" }
 rusty_paseto = { version = "0.10", default-features = false, features = ["v4_public", "serde_json"] }
-sha2 = { version = "0.10" }
+sha2 = { version = "0.11" }
 base64 = { version = "0.23" }
 # Temp directories for the search-index tests.
 tempfile = { version = "3" }

@@ -330,6 +330,8 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
         roxmltree::ParsingOptions {
             allow_dtd: false,
             nodes_limit: MAX_NODES,
+            // No other option is set: a DTD is refused outright, so there is no entity to resolve.
+            ..roxmltree::ParsingOptions::default()
         },
     )
     .map_err(|e| ParseError::Xml(e.to_string()))?;

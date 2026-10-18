@@ -112,7 +112,7 @@
 
 {#if view}
   <p class="small muted">{t("p.prioritization.of_plan_s", { length: view.plans.length, scored_of: view.scored_of })}</p>
-  <DataTable label={t("p.prioritization.plan")} columns={columns} rows={view.plans} rowId={(r) => String(r.pid)} searchable />
+  <DataTable label={t("p.prioritization.plan")} columns={columns} rows={view.plans} rowId={(r) => String(r.pid)} searchable grid storageKey="prioritization-queue" />
   {#if expanded}
     {@const open = view.plans.find((p) => p.pid === expanded)}
     <section aria-labelledby="pr-detail">

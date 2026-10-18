@@ -28,7 +28,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       major_minor: ${{ steps.v.outputs.major_minor }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: v
         run: |
           set -euo pipefail
@@ -66,7 +66,7 @@ jobs:
           - project-portfolio-management-service-with-rust
           - project-portfolio-management-matcher-with-rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           manifest-path: ${{ matrix.crate }}/Cargo.toml
@@ -85,16 +85,16 @@ jobs:
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -102,7 +102,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=long,prefix=sha-
       - id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ env.API }}/Dockerfile
@@ -114,7 +114,7 @@ jobs:
           sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -126,7 +126,7 @@ jobs:
     needs: [verify, deny]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.99.1
       - uses: Swatinem/rust-cache@v2
         with:
@@ -143,10 +143,10 @@ jobs:
             mv "$crate/$crate.cdx.json" "sbom/$crate.cdx.json"
             python3 scripts/check-sbom.py "sbom/$crate.cdx.json" "$crate/Cargo.lock"
           done
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
       - name: UI SBOM
@@ -158,7 +158,7 @@ jobs:
           # No --prod: the app bundles its development-time dependencies into what ships.
           pnpm sbom --sbom-format cyclonedx > "$GITHUB_WORKSPACE/sbom/$UI.cdx.json"
           python3 "$GITHUB_WORKSPACE/scripts/check-sbom.py" "$GITHUB_WORKSPACE/sbom/$UI.cdx.json" pnpm-lock.yaml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom/*.cdx.json
@@ -171,8 +171,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: sbom
           path: sbom

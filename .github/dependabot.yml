@@ -7,6 +7,13 @@ updates:
     groups:
       cargo-api:
         patterns: ["*"]
+    ignore:
+      # loco-rs 1.2 depends on axum-test 17 and jsonwebtoken 9; the tests use loco's TestServer, so a different
+      # major here breaks them (mismatched types). Revisit when loco-rs moves.
+      - dependency-name: axum-test
+        update-types: ["version-update:semver-major"]
+      - dependency-name: jsonwebtoken
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: cargo
     directory: /project-portfolio-management-matcher-with-rust
     schedule:
@@ -34,6 +41,10 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+    ignore:
+      # The action's tag IS the Rust toolchain version and must equal rust-toolchain.toml; it is bumped by hand
+      # together with that file (Dependabot proposed 1.120.0, which is not a Rust release).
+      - dependency-name: dtolnay/rust-toolchain
   - package-ecosystem: docker
     directory: /project-portfolio-management-service-with-rust
     schedule:

@@ -37,6 +37,7 @@
     storageKey,
     exportable = true,
     movable = grid,
+    hideable,
     exportFilename,
     testid,
     class: className = "",
@@ -71,6 +72,8 @@
     exportable?: boolean;
     /** Columns move with Alt+Arrow on the header (only in the grid keyboard model) or by drag. Default: on exactly when `grid` is, so a move always has a keyboard way. Shift+click on a second header sorts by it as a tie-break. A column may set `movable: false`. */
     movable?: boolean;
+    /** A "Columns" control to hide and show columns (not the row header or an unnamed column). Default: on for a table of five or more columns. `storageKey` remembers the choice. */
+    hideable?: boolean;
     /** The export's file name without its extension. Default: the label, lower-cased and hyphenated. */
     exportFilename?: string;
     /** A `data-testid` for tests. */
@@ -79,7 +82,8 @@
   } = $props();
 
   // Sort on every column unless it says no. Done here so a table's column list stays short.
-  const cols = $derived(columns.map((c) => ({ sortable, ...c })));
+  const canHide = $derived(hideable ?? columns.length >= 5);
+  const cols = $derived(columns.map((c) => ({ sortable, hidable: canHide && !c.rowHeader && c.header !== "", ...c })));
   // The filter box's name is its aria-label; give sighted readers the same words as a placeholder
   // (the grid sets no placeholder of its own).
   let host = $state<HTMLElement | undefined>();
@@ -119,7 +123,8 @@
     pagination: t("p.table.pages"),
     columnMoveAnnouncement: (header: string, position: number, count: number) => t("p.table.moved", { header, position, count }),
     ...(searchable ? { searchField: t("p.table.search_in"), searchAllFields: t("p.table.all_columns") } : {}),
-    columnVisibility: undefined,
+    columnVisibility: canHide ? t("p.table.columns") : undefined,
+    columnVisibilityOption: (header: string) => t("p.table.show_column", { header }),
     resizeHandle: (header: string) => t("p.table.resize", { header }),
     selectAll: t("p.table.select_all"),
     selectionColumn: t("p.table.select_col"),

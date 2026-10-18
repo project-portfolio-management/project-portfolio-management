@@ -30,13 +30,23 @@ test.describe("organizations", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Partner organizations" })).toBeVisible();
     await expect(page.getByRole("row", { name: /Acme Build.*delivery.*active.*org:o1/ })).toBeVisible();
     await expect(page.getByRole("row", { name: /Old Partner.*retired/ })).toBeVisible();
-    await page.getByLabel("Name").fill("New Co");
-    await page.getByLabel("Kind").selectOption("supplier");
+    await page.getByRole("textbox", { name: "Name" }).fill("New Co");
+    await page.getByRole("combobox", { name: /Kind/ }).selectOption("supplier");
     await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect.poll(() => posted).toBe('{"name":"New Co","kind":"supplier"}');
     await expect(page.getByRole("row", { name: /New Co.*supplier/ })).toBeVisible();
     await page.getByRole("button", { name: "Retire Acme Build" }).click();
     await expect.poll(() => changed).toBe('o1 {"active":false}');
+  });
+
+  test("hides and shows a column from the Columns control", async ({ page }) => {
+    await page.goto("/en-001/organizations", { waitUntil: "networkidle" });
+    const kind = page.getByRole("columnheader", { name: /^Kind/ });
+    await expect(kind).toBeVisible();
+    await page.getByRole("checkbox", { name: "Show Kind" }).uncheck();
+    await expect(kind).toHaveCount(0);
+    await page.getByRole("checkbox", { name: "Show Kind" }).check();
+    await expect(kind).toBeVisible();
   });
 
   test("sorts by two columns with Shift+click", async ({ page }) => {

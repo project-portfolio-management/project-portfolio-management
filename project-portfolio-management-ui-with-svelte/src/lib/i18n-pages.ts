@@ -2860,6 +2860,7 @@ export const PAGES_EN = {
   "p.table.search": "Filter rows",
   "p.table.export": "Export",
   "p.table.find": "Search",
+  "p.table.moved": "{header} moved to position {position} of {count}",
   "p.table.copy": "Copy",
   "p.table.copied": "Copied {rows} rows to the clipboard",
   "p.table.copy_failed": "Could not copy to the clipboard",

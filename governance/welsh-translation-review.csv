@@ -3163,6 +3163,7 @@ p.start_queue.could_not_withdraw,Could not withdraw from the queue,Methu tynnu'n
 p.table.search,Filter rows,Hidlo rhesi,,,
 p.table.export,Export,Allforio,,,
 p.table.find,Search,Chwilio,,,
+p.table.moved,{header} moved to position {position} of {count},Symudwyd {header} i safle {position} o {count},,,
 p.table.copy,Copy,Copïo,,,
 p.table.copied,Copied {rows} rows to the clipboard,Copïwyd {rows} rhes i'r clipfwrdd,,,
 p.table.copy_failed,Could not copy to the clipboard,Methu copïo i'r clipfwrdd,,,

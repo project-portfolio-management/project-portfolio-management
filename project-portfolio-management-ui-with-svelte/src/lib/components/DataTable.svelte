@@ -36,6 +36,7 @@
     footer,
     storageKey,
     exportable = true,
+    movable = grid,
     exportFilename,
     testid,
     class: className = "",
@@ -68,6 +69,8 @@
     storageKey?: string;
     /** Offer CSV, TSV and Excel export of the rows the filter leaves (default). Turn off for a table that is not data. */
     exportable?: boolean;
+    /** Columns move with Alt+Arrow on the header (only in the grid keyboard model) or by drag. Default: on exactly when `grid` is, so a move always has a keyboard way. Shift+click on a second header sorts by it as a tie-break. A column may set `movable: false`. */
+    movable?: boolean;
     /** The export's file name without its extension. Default: the label, lower-cased and hyphenated. */
     exportFilename?: string;
     /** A `data-testid` for tests. */
@@ -106,6 +109,7 @@
   {footer}
   {storageKey}
   locale={i18n.locale}
+  movableColumns={movable}
   exportFilename={exportFilename ?? slug(label)}
   data-testid={testid}
   class={`data-table ${caption && captionVisible ? "caption-visible" : "caption-hidden"} ${className}`.trim()}
@@ -113,6 +117,7 @@
     ...(searchable ? { search: t("p.table.search") } : {}),
     ...(exportable ? exportLabels() : {}),
     pagination: t("p.table.pages"),
+    columnMoveAnnouncement: (header: string, position: number, count: number) => t("p.table.moved", { header, position, count }),
     ...(searchable ? { searchField: t("p.table.search_in"), searchAllFields: t("p.table.all_columns") } : {}),
     columnVisibility: undefined,
     resizeHandle: (header: string) => t("p.table.resize", { header }),

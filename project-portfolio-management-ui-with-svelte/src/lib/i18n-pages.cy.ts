@@ -2856,6 +2856,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.table.search": "Hidlo rhesi",
   "p.table.export": "Allforio",
   "p.table.find": "Chwilio",
+  "p.table.moved": "Symudwyd {header} i safle {position} o {count}",
   "p.table.copy": "Copïo",
   "p.table.copied": "Copïwyd {rows} rhes i'r clipfwrdd",
   "p.table.copy_failed": "Methu copïo i'r clipfwrdd",

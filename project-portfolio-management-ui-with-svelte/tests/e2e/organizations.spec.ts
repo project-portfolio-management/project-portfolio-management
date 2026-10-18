@@ -39,6 +39,16 @@ test.describe("organizations", () => {
     await expect.poll(() => changed).toBe('o1 {"active":false}');
   });
 
+  test("sorts by two columns with Shift+click", async ({ page }) => {
+    await page.goto("/en-001/organizations", { waitUntil: "networkidle" });
+    const kind = page.getByRole("columnheader", { name: /^Kind/ });
+    const name = page.getByRole("columnheader", { name: /^Name/ });
+    await kind.click();
+    await name.click({ modifiers: ["Shift"] });
+    await expect(kind).toHaveAttribute("data-sort-order", "1");
+    await expect(name).toHaveAttribute("data-sort-order", "2");
+  });
+
   test("exports the table as CSV, TSV and Excel", async ({ page }) => {
     list = [
       { pid: "o1", name: "Acme Build", kind: "delivery", active: true, audience: "org:o1" },

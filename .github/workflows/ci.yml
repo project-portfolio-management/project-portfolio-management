@@ -71,6 +71,10 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       DATABASE_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_service_test
+      # config/test.yaml gives the pool ONE connection and a 500 ms wait for it. On a busy
+      # runner a request that queues behind another fails with PoolTimedOut (seen twice, in
+      # two different tests, 2026-10-18). Wait up to 10 s; a real deadlock still fails.
+      DB_CONNECT_TIMEOUT: "10000"
     steps:
       - uses: actions/checkout@v4
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.

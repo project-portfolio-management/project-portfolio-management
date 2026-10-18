@@ -1,12 +1,12 @@
 [package]
-name = "migration"
+name = "project-portfolio-management-migration"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.96"
 publish = false
 
 [lib]
-name = "migration"
+name = "project_portfolio_management_migration"
 path = "src/lib.rs"
 
 [dependencies]

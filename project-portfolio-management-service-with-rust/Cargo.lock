@@ -4234,14 +4234,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "migration"
-version = "0.1.0"
-dependencies = [
- "loco-rs",
- "sea-orm-migration",
-]
-
-[[package]]
 name = "mimalloc"
 version = "0.1.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5318,7 +5310,6 @@ dependencies = [
  "integrity-mac",
  "jsonwebtoken",
  "loco-rs",
- "migration",
  "mimalloc",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -5326,6 +5317,7 @@ dependencies = [
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "project-portfolio-management-matcher",
+ "project-portfolio-management-migration",
  "prometheus",
  "regex",
  "reqwest 0.13.5",
@@ -5364,6 +5356,14 @@ dependencies = [
  "strsim",
  "thiserror 2.0.21",
  "unicode-normalization",
+]
+
+[[package]]
+name = "project-portfolio-management-migration"
+version = "0.1.0"
+dependencies = [
+ "loco-rs",
+ "sea-orm-migration",
 ]
 
 [[package]]

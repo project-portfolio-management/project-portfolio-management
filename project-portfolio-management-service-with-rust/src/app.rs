@@ -20,7 +20,7 @@ use loco_rs::{
     environment::Environment,
     task::Tasks,
 };
-use migration::Migrator;
+use project_portfolio_management_migration::Migrator;
 use std::path::Path;
 use std::sync::OnceLock;
 

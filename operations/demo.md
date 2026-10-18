@@ -11,7 +11,7 @@ for this. It is for showing the product, not for running one.
 ## Start it
 
 ```sh
-POSTGRES_PASSWORD=demo podman compose --profile demo up -d --build --wait ui-demo   # or docker compose
+POSTGRES_PASSWORD=demo podman compose --profile demo up -d --build --wait ui-demo
 ```
 
 That builds the API and UI images, starts the database, applies the migrations, starts the demonstration API,

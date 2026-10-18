@@ -2,12 +2,12 @@
 # Print a PUBLIC-ONLY Ed25519 key set (the RFC 8032 section 7.1 test vector 1
 # public key) in the shape PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS expects.
 #
-# It lets a throwaway stack (CI smoke tests, a first `docker compose up`) boot
+# It lets a throwaway stack (CI smoke tests, a first `podman compose up`) boot
 # with login enforcement ON: the service can verify tokens signed by the
 # matching private key, which is public test material, so NEVER use this
 # anywhere that matters. Real deployments publish their auth service's keys.
 #
-#   PPM_PASETO_KEYS="$(scripts/smoke-keys.sh)" POSTGRES_PASSWORD=x docker compose up -d --build --wait
+#   PPM_PASETO_KEYS="$(scripts/smoke-keys.sh)" POSTGRES_PASSWORD=x podman compose up -d --build --wait
 set -eu
 python3 - <<'PY'
 import base64, hashlib, json

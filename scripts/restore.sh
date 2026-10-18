@@ -10,9 +10,9 @@
 #
 # Environment: PG_RESTORE, PSQL override the commands (see scripts/backup.sh).
 # ARTIFACT_UNTAR_CMD reads the gzip tar on stdin and unpacks it where the service
-# expects it (compose: "docker compose exec -T api tar -C /app/data/artifacts -xz");
+# expects it (compose: "podman compose exec -T api tar -C /app/data/artifacts -xz");
 # it replaces -a. With the compose overrides pg_restore must read the dump from stdin
-# (PG_RESTORE="docker compose exec -T postgres pg_restore" and RESTORE_FROM_STDIN=1).
+# (PG_RESTORE="podman compose exec -T postgres pg_restore" and RESTORE_FROM_STDIN=1).
 # An encrypted backup (db.dump.gpg, see scripts/backup.sh) is decrypted into a private temporary
 # directory that is removed on exit: set BACKUP_PASSPHRASE_FILE for a passphrase backup; a
 # public-key backup needs the private key in the gpg keyring. A wrong key fails before the database

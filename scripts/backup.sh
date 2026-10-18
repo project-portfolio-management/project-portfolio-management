@@ -15,12 +15,12 @@
 #                       if neither is set the artifact step is skipped and the MANIFEST says so)
 #   PG_DUMP, PSQL       commands to run (default pg_dump / psql). Override to run inside
 #                       the database container of a compose deployment:
-#                         PG_DUMP="docker compose exec -T postgres pg_dump"
-#                         PSQL="docker compose exec -T postgres psql"
+#                         PG_DUMP="podman compose exec -T postgres pg_dump"
+#                         PSQL="podman compose exec -T postgres psql"
 #                       (DATABASE_URL is then resolved inside that container).
 #   ARTIFACT_TAR_CMD    a command that writes the artifact store as a gzip tar to stdout, for
 #                       a store that is not a host directory (compose: a named volume):
-#                         ARTIFACT_TAR_CMD="docker compose exec -T api tar -C /app/data/artifacts -cz ."
+#                         ARTIFACT_TAR_CMD="podman compose exec -T api tar -C /app/data/artifacts -cz ."
 #
 # Encryption (optional, RG-5): the database dump and the artifact archive hold personal data, so
 # encrypt a backup that leaves the machine. Set ONE of

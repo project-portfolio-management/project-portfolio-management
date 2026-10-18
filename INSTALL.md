@@ -9,7 +9,7 @@ in [`operations/`](operations/README.md).
 
 | For | You need |
 |---|---|
-| The service | Docker or Podman with Compose (easiest), or Rust 1.96.1 (pinned in [`rust-toolchain.toml`](rust-toolchain.toml)) and PostgreSQL 18 |
+| The service | Podman with Compose (easiest), or Rust 1.96.1 (pinned in [`rust-toolchain.toml`](rust-toolchain.toml)) and PostgreSQL 18 |
 | The front end | Node 26 and pnpm |
 | Signing in | A token issuer the service can verify: PASETO keys from your authentication service, or a Keycloak realm (which can broker Microsoft Entra ID). See [`operations/sign-in-with-entra.md`](operations/sign-in-with-entra.md) |
 
@@ -24,14 +24,14 @@ cd project-portfolio-management
 
 POSTGRES_PASSWORD='<a long random password>' \
 PPM_PASETO_KEYS_URL='https://auth.example.com/.well-known/paseto-keys' \
-  docker compose up -d --build --wait
+  podman compose up -d --build --wait
 curl -fsS http://localhost:5150/_readiness
 ```
 
 To look around on your own machine **with login off** (never expose this):
 
 ```sh
-POSTGRES_PASSWORD=x docker compose --profile dev-insecure up -d --build --wait \
+POSTGRES_PASSWORD=x podman compose --profile dev-insecure up -d --build --wait \
   postgres migrate api-dev-insecure
 curl -s http://localhost:5150/api/plans
 ```

@@ -47,9 +47,9 @@ The database and the artifact volume live in containers, so run the tools there:
 
 ```sh
 export DATABASE_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
-export PG_DUMP="docker compose exec -T postgres pg_dump"
-export PSQL="docker compose exec -T postgres psql"
-export ARTIFACT_TAR_CMD="docker compose exec -T api tar -C /app/data/artifacts -cz ."
+export PG_DUMP="podman compose exec -T postgres pg_dump"
+export PSQL="podman compose exec -T postgres psql"
+export ARTIFACT_TAR_CMD="podman compose exec -T api tar -C /app/data/artifacts -cz ."
 scripts/backup.sh -o /backups
 ```
 
@@ -89,13 +89,13 @@ target as it was.
 With Compose (this exact sequence was exercised after deleting every volume):
 
 ```sh
-docker compose up -d --wait postgres                       # an empty database
+podman compose up -d --wait postgres                       # an empty database
 export DATABASE_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
-export PSQL="docker compose exec -T postgres psql"
-export PG_RESTORE="docker compose exec -T postgres pg_restore" RESTORE_FROM_STDIN=1
+export PSQL="podman compose exec -T postgres psql"
+export PG_RESTORE="podman compose exec -T postgres pg_restore" RESTORE_FROM_STDIN=1
 scripts/restore.sh /backups/ppm-backup-20261010T020000Z "$DATABASE_URL"   # the database
-docker compose up -d --wait migrate api                    # start the service (migrate is a no-op)
-docker compose exec -T api tar -C /app/data/artifacts -xz \
+podman compose up -d --wait migrate api                    # start the service (migrate is a no-op)
+podman compose exec -T api tar -C /app/data/artifacts -xz \
     < /backups/ppm-backup-20261010T020000Z/artifacts.tar.gz               # the artifact store
 ```
 

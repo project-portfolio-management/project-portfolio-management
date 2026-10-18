@@ -63,4 +63,4 @@ of kind `email` use it; other callers (for example, mailing a pack's subscribers
   trusts, or send through a relay you already run.
 - The bootstrap password is `PPM_MAIL_ADMIN` or the one-time log line; once Stalwart has provisioned its
   permanent administrator, stop using it and rotate. The variable is optional so the rest of the stack
-  starts without it (it was once required, which broke `docker compose` for every profile).
+  starts without it (it was once required, which broke `podman compose` for every profile).

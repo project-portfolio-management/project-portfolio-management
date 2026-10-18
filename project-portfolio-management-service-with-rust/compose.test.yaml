@@ -7,7 +7,7 @@
 #     cargo test --test mod -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
 #
-# `docker compose` works the same. The file is plain Compose spec.
+# The file is plain Compose spec.
 #
 # The connection details deliberately match what CI provides
 # (/.github/workflows/ci.yml job `api-db`): superuser `loco`/`loco` on 5432.

@@ -27,11 +27,11 @@ repository root as the build context.
 # Secure by default: login enforcement is ON, so the API needs the public keys
 # of whatever issues your tokens (see the header of compose.yaml).
 POSTGRES_PASSWORD=change-me PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys \
-  docker compose up -d --build --wait
+  podman compose up -d --build --wait
 curl -fsS http://localhost:5150/_health
 
 # Throwaway, UNSAFE (login off), for poking with curl on your own machine:
-POSTGRES_PASSWORD=x docker compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
+POSTGRES_PASSWORD=x podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
 ```
 
 Without a key set the service refuses to start, and it refuses to start in

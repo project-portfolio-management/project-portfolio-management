@@ -9,13 +9,13 @@ For the person on call. Start with the quick reference, then find the symptom.
 | Liveness | `GET /_health` and `GET /_ping` (stay `200` with the database down) |
 | Readiness | `GET /_readiness` (`200` `{"ok":true}`; `503` when the database, queue or cache fails) |
 | Metrics | `GET /metrics.prom` (needs a bearer token); flow gauges are `ppm_flow_*` |
-| Logs | standard output, JSON in production (`docker compose logs api`) |
+| Logs | standard output, JSON in production (`podman compose logs api`) |
 | Traces and metrics export | OTLP to `OTLP_ENDPOINT` |
 | Version | `<service> version`; the image tag |
 | Configuration as resolved | `<service> doctor --config` |
 | Migration state | `<service> db status` |
 
-`<service>` is `docker compose run --rm api /app/project-portfolio-management`.
+`<service>` is `podman compose run --rm api /app/project-portfolio-management`.
 
 ## Symptoms
 

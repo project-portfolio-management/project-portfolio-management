@@ -7,8 +7,8 @@ is what the root [`compose.yaml`](../compose.yaml) runs. Read
 
 ## Prerequisites
 
-- Docker or Podman with the Compose plugin, a registry the host can pull from
-  (or build the image yourself: `docker compose build`).
+- Podman with the Compose plugin, a registry the host can pull from
+  (or build the image yourself: `podman compose build`).
 - A **token issuer**: login is enforced, so the API must be able to verify the
   bearer tokens your identity provider issues (PASETO keys from your
   authentication service, or a Keycloak realm; see
@@ -27,7 +27,7 @@ POSTGRES_PASSWORD=<a long random password>
 PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys
 ENV
 
-docker compose up -d --build --wait
+podman compose up -d --build --wait
 curl -fsS http://localhost:5150/_readiness      # {"ok":true}
 ```
 
@@ -38,7 +38,7 @@ compiled into the binary and exits; then `api` on port 5150, healthy when
 **To try it without an identity provider** (your own machine only; login is OFF):
 
 ```sh
-docker compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
+podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
 ```
 
 That profile uses `config/container-dev.yaml`, logs a loud warning at start, and
@@ -73,7 +73,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Retention | `cargo loco task retention_purge` | a dry run unless `apply:true`; schedule it daily after reading the dry run. Covers read notifications, delivery logs and trend snapshots; see the [retention schedule](../governance/retention-schedule.md) |
 | Background loops | `SCHEDULER_MINUTES`, `SNAPSHOT_HOURS`, `FLOW_METRICS_SECS`, `SINKS_TICK_SECS` | each is off unless set (sinks tick on by default; `0` turns it off) |
 
-`docker compose run --rm api /app/project-portfolio-management doctor --config`
+`podman compose run --rm api /app/project-portfolio-management doctor --config`
 prints the configuration the service resolved, and `… doctor -e production` checks it.
 
 ## TLS and a reverse proxy

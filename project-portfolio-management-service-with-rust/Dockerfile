@@ -7,7 +7,6 @@
 #
 #   podman build -f project-portfolio-management-service-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
-#   # or: docker build -f project-portfolio-management-service-with-rust/Dockerfile -t ... .
 #
 # The two pinned git dependencies (`integrity-mac`, `authentication-verifier`
 # from github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) are

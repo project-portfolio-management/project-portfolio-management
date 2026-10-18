@@ -40,9 +40,9 @@
 
 ```sh
 git fetch --tags && git checkout v0.4.0          # or pull the image tag you deploy
-docker compose pull                              # or: docker compose build
-docker compose run --rm migrate                  # apply the new migrations, then it exits
-docker compose up -d --wait api                  # start the new version
+podman compose pull                              # or: podman compose build
+podman compose run --rm migrate                  # apply the new migrations, then it exits
+podman compose up -d --wait api                  # start the new version
 curl -fsS http://localhost:5150/_readiness
 ```
 
@@ -52,8 +52,8 @@ migration that holds locks lengthens it. Plan a window.
 Check the result:
 
 ```sh
-docker compose run --rm api /app/project-portfolio-management db status   # all migrations applied
-docker compose logs --tail=50 api                                                # no errors and no `refusing to start`
+podman compose run --rm api /app/project-portfolio-management db status   # all migrations applied
+podman compose logs --tail=50 api                                                # no errors and no `refusing to start`
 ```
 
 Then smoke-test as a real user: sign in, open the portfolio, open a plan, open a
@@ -66,11 +66,11 @@ Go back to the previous **image tag** and, if the new version applied
 migrations, **restore the backup you took before the upgrade**:
 
 ```sh
-docker compose stop api
+podman compose stop api
 # restore the pre-upgrade backup into the database (see backup-and-restore.md),
 # including the artifact store if files were uploaded since
 git checkout v0.3.0                              # the previous tag
-docker compose up -d --wait api
+podman compose up -d --wait api
 ```
 
 If the upgrade applied **no** migration (the changelog says so, and
@@ -81,8 +81,8 @@ Anything written after the backup is lost on a restore; export it first if it ma
 ## Running a migration by hand
 
 ```sh
-docker compose run --rm api /app/project-portfolio-management db status    # what is applied
-docker compose run --rm migrate                                                    # apply all pending
+podman compose run --rm api /app/project-portfolio-management db status    # what is applied
+podman compose run --rm migrate                                                    # apply all pending
 ```
 
 If a migration fails it runs in a transaction where PostgreSQL allows, so the

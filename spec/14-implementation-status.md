@@ -51,9 +51,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | CR | 4 | 0 |
 | DP | 12 | 0 |
 | EX | 14 | 0 |
-| HD | 12 | 1 |
+| HD | 13 | 0 |
 | CC | 6 | 0 |
-| **Total** | **115** | **1** |
+| **Total** | **116** | **0** |
 
 <!-- generated:end -->
 

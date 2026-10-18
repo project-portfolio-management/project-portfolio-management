@@ -38,6 +38,8 @@ export const PAGES_EN = {
   "p.plans.pid.board.exported": "Exported {n} tasks to {file}",
   "p.plans.pid.board.task": "Task",
   "p.plans.pid.board.status": "Status",
+  "c.GanttView.holiday": "Holiday",
+  "c.GanttView.shaded": "Shaded columns are days off: weekends and holidays in this plan's working calendar.",
   "c.GanttView.task": "Task",
   "c.GanttView.start": "Start",
   "c.GanttView.end": "End",

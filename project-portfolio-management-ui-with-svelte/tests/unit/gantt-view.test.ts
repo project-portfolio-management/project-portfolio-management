@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartRange, chartTasks } from "../../src/lib/gantt-view";
+import { chartRange, chartTasks, holidayRanges, nonWorkingWeekdays } from "../../src/lib/gantt-view";
 
 const item = (pid: string, start: string | null, end: string | null, on_critical_path = false) => ({
   pid, kind: "project", name: pid.toUpperCase(), stage: null, start, end, on_critical_path,
@@ -40,5 +40,21 @@ describe("chartRange", () => {
   it("centres on today with nothing dated, and is null with neither", () => {
     expect(chartRange([{ id: "x", label: "X" }], "2026-10-15")).toEqual({ start: "2026-10-01", end: "2026-10-29" });
     expect(chartRange([])).toBeNull();
+  });
+});
+
+describe("calendar shading", () => {
+  it("numbers days off from Sunday, whatever the mask", () => {
+    expect(nonWorkingWeekdays("1111100")).toEqual([0, 6]);
+    expect(nonWorkingWeekdays("1111001")).toEqual([5, 6]);
+    expect(nonWorkingWeekdays("1111111")).toEqual([]);
+  });
+  it("shades nothing for a malformed mask", () => {
+    expect(nonWorkingWeekdays("")).toEqual([]);
+    expect(nonWorkingWeekdays("11111")).toEqual([]);
+    expect(nonWorkingWeekdays("11111xx")).toEqual([]);
+  });
+  it("turns holidays into labelled holiday days", () => {
+    expect(holidayRanges(["2026-12-25"], "Holiday")).toEqual([{ start: "2026-12-25", kind: "holiday", label: "Holiday" }]);
   });
 });

@@ -20,6 +20,8 @@
   let portfolios = $state<PlanRef[]>([]);
   let selected = $state<string>("");
   let schedule = $state<ScheduleView | null>(null);
+  let mask = $state("");
+  let holidays = $state<string[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -29,6 +31,15 @@
     error = null;
     try {
       schedule = await client.schedule(pid);
+      // The plan's own working days shade the chart; without a calendar nothing is shaded.
+      try {
+        const cal = await client.planCalendar(pid);
+        mask = cal.weekdays;
+        holidays = cal.holidays;
+      } catch {
+        mask = "";
+        holidays = [];
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
       schedule = null;
@@ -88,7 +99,7 @@
   <!-- T-28k (repo tasks.md EV-1): a horizontal-scrolling timeline needs real width under a phone viewport;
        `.mobile-list` below is its read-only stand-in, switched purely by `@media (max-width: 600px)`. -->
   <div class="gantt-wrap">
-    <GanttView tasks={chart} label={t("ppm.nav.gantt")} />
+    <GanttView tasks={chart} label={t("ppm.nav.gantt")} {mask} {holidays} />
   </div>
   <ul class="mobile-list">
     {#each tasks as task (task.id)}

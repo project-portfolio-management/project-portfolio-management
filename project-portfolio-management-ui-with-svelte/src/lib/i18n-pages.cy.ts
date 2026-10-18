@@ -34,6 +34,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.board.exported": "Allforiwyd {n} tasg i {file}",
   "p.plans.pid.board.task": "Tasg",
   "p.plans.pid.board.status": "Statws",
+  "c.GanttView.holiday": "Gwyliau",
+  "c.GanttView.shaded": "Mae'r colofnau cysgodol yn ddiwrnodau i ffwrdd: penwythnosau a gwyliau yng nghalendr gwaith y cynllun hwn.",
   "c.GanttView.task": "Tasg",
   "c.GanttView.start": "Dechrau",
   "c.GanttView.end": "Diwedd",

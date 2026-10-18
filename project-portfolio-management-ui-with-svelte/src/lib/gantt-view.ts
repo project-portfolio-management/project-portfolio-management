@@ -66,3 +66,17 @@ export function chartRange(
   }
   return { start: dateOf(first - pad), end: dateOf(last + pad) };
 }
+
+/**
+ * The weekdays a working-days mask (seven `0`/`1`, Monday first) marks as days off, numbered the way the chart
+ * numbers them (0 = Sunday … 6 = Saturday). A malformed mask shades nothing.
+ */
+export function nonWorkingWeekdays(mask: string): number[] {
+  if (!/^[01]{7}$/.test(mask)) return [];
+  return [0, 1, 2, 3, 4, 5, 6].filter((weekday) => mask[(weekday + 6) % 7] === "0");
+}
+
+/** A plan's holidays as the chart's unavailable days, each with its visible word. */
+export function holidayRanges(holidays: readonly string[], label: string): { start: string; kind: string; label: string }[] {
+  return holidays.map((start) => ({ start, kind: "holiday", label }));
+}

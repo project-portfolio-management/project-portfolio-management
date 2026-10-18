@@ -11,9 +11,23 @@
   import { onMount } from "svelte";
   import { t } from "#lib/i18n.svelte.js";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
-  import { chartRange, type ChartTask } from "#lib/gantt-view.js";
+  import { chartRange, holidayRanges, nonWorkingWeekdays, type ChartTask } from "#lib/gantt-view.js";
 
-  let { tasks, label }: { tasks: ChartTask[]; label: string } = $props();
+  let {
+    tasks,
+    label,
+    mask = "",
+    holidays = [],
+  }: {
+    tasks: ChartTask[];
+    label: string;
+    /** The plan's working days, seven `0`/`1`, Monday first. Empty: no weekend shading. */
+    mask?: string;
+    holidays?: readonly string[];
+  } = $props();
+  const weekends = $derived(nonWorkingWeekdays(mask));
+  const unavailable = $derived(holidayRanges(holidays, t("c.GanttView.holiday")));
+  const shaded = $derived(weekends.length > 0 || unavailable.length > 0);
 
   let today = $state<string | undefined>(undefined);
   let timeUnit = $state<GanttTimeUnit>("week");
@@ -42,8 +56,9 @@
 
 <div class="gantt-view" data-testid="ppm-gantt">
   {#if range}
-    <GanttChart {label} {range} tasks={tasks as GanttTask[]} bind:timeUnit {today} taskLabel={critical} readonly dependencyArrows {labels} exportFilename="schedule" />
+    <GanttChart {label} {range} tasks={tasks as GanttTask[]} bind:timeUnit {today} taskLabel={critical} readonly dependencyArrows {weekends} {unavailable} {labels} exportFilename="schedule" />
   {/if}
+  {#if shaded}<p class="small muted">{t("c.GanttView.shaded")}</p>{/if}
 </div>
 
 <style>
@@ -67,6 +82,11 @@
   }
   .gantt-view :global([data-milestone]) {
     font-weight: 700;
+  }
+  /* Days off are hatched as well as tinted, so they are not told by colour alone; the note under the chart says it in words. */
+  .gantt-view :global([data-weekend]),
+  .gantt-view :global([data-unavailable]) {
+    background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--text, #222) 14%, transparent) 4px 5px);
   }
   .gantt-view :global([data-today]) {
     outline: 2px solid var(--text, #222);

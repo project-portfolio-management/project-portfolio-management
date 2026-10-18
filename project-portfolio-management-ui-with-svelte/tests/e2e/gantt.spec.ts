@@ -56,6 +56,28 @@ test.describe("schedule gantt", () => {
     expect((await tsv).suggestedFilename()).toBe("schedule.tsv");
   });
 
+  test("shades the plan's weekends and holidays, and says so in words", async ({ page }) => {
+    await stub(page);
+    await page.route("**/api/plans/p1/calendar", (r) => r.fulfill({ json: { source: "plan", weekdays: "1111100", holidays: ["2026-10-14"] } }));
+    await page.goto("/en-001/gantt", { waitUntil: "networkidle" });
+    const chart = page.getByTestId("ppm-gantt");
+    await expect(chart.getByRole("button", { name: "Finer time scale" })).toBeVisible();
+    await chart.getByRole("button", { name: "Finer time scale" }).click();
+    await expect(chart.getByText("Shaded columns are days off", { exact: false })).toBeVisible();
+    await expect.poll(() => chart.locator("th[data-weekend]").count()).toBeGreaterThan(0);
+    await expect.poll(() => chart.locator("[data-unavailable~='holiday']").count()).toBeGreaterThan(0);
+  });
+
+  test("shades nothing when the plan has no calendar", async ({ page }) => {
+    await stub(page);
+    await page.goto("/en-001/gantt", { waitUntil: "networkidle" });
+    const chart = page.getByTestId("ppm-gantt");
+    await expect(chart.getByRole("button", { name: "Finer time scale" })).toBeVisible();
+    await chart.getByRole("button", { name: "Finer time scale" }).click();
+    await expect(chart.locator("[data-weekend]")).toHaveCount(0);
+    await expect(chart.getByText("Shaded columns are days off", { exact: false })).toHaveCount(0);
+  });
+
   test("searches the tasks and draws dependency arrows", async ({ page }) => {
     await stub(page);
     await page.goto("/en-001/gantt", { waitUntil: "networkidle" });

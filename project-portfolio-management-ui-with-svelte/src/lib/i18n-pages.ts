@@ -40,6 +40,8 @@ export const PAGES_EN = {
   "p.plans.pid.board.status": "Status",
   "c.GanttView.holiday": "Holiday",
   "c.GanttView.shaded": "Shaded columns are days off: weekends and holidays in this plan's working calendar.",
+  "c.GanttView.kind": "Kind",
+  "c.GanttView.stage": "Stage",
   "c.GanttView.task": "Task",
   "c.GanttView.start": "Start",
   "c.GanttView.end": "End",

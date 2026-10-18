@@ -15,6 +15,8 @@ export interface ChartTask {
   end?: string;
   critical?: boolean;
   dependsOn?: string[];
+  /** What the optional columns show, by field id (see {@link GANTT_COLUMNS}). */
+  values?: Record<string, string>;
 }
 
 /**
@@ -35,9 +37,12 @@ export function chartTasks(schedule: Pick<ScheduleView, "items" | "edges">): Cha
     const e = dayNumber(i.end);
     const dated = s !== null && e !== null && e >= s;
     const task: ChartTask = { id: i.pid, label: i.name, critical: i.on_critical_path };
+    task.values = { kind: i.kind, stage: i.stage ?? "" };
     if (dated) {
       task.start = dateOf(s);
       task.end = dateOf(e);
+      task.values.start = task.start;
+      task.values.end = task.end;
     }
     const dependsOn = preds.get(i.pid);
     if (dependsOn) task.dependsOn = dependsOn;
@@ -79,4 +84,28 @@ export function nonWorkingWeekdays(mask: string): number[] {
 /** A plan's holidays as the chart's unavailable days, each with its visible word. */
 export function holidayRanges(holidays: readonly string[], label: string): { start: string; kind: string; label: string }[] {
   return holidays.map((start) => ({ start, kind: "holiday", label }));
+}
+
+/** The optional columns between a task's name and the timeline, in order. */
+export const GANTT_COLUMNS = ["kind", "stage", "start", "end"] as const;
+export type GanttColumnId = (typeof GANTT_COLUMNS)[number];
+/** Shown until the person chooses: the dates are what a schedule reader wants beside the bars. */
+export const DEFAULT_GANTT_COLUMNS: readonly GanttColumnId[] = ["start", "end"];
+
+/** `shown` with `id` switched on or off, always in the columns' own order. */
+export function toggleGanttColumn(shown: readonly GanttColumnId[], id: GanttColumnId, on: boolean): GanttColumnId[] {
+  return GANTT_COLUMNS.filter((c) => (c === id ? on : shown.includes(c)));
+}
+
+/** A remembered choice, read safely: anything that is not a list of known columns means "use the default". */
+export function parseGanttColumns(raw: string | null | undefined): GanttColumnId[] {
+  try {
+    const v: unknown = JSON.parse(raw ?? "null");
+    if (Array.isArray(v) && v.every((c) => (GANTT_COLUMNS as readonly unknown[]).includes(c))) {
+      return GANTT_COLUMNS.filter((c) => v.includes(c));
+    }
+  } catch {
+    // fall through to the default
+  }
+  return [...DEFAULT_GANTT_COLUMNS];
 }

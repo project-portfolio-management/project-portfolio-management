@@ -78,6 +78,22 @@ test.describe("schedule gantt", () => {
     await expect(chart.getByText("Shaded columns are days off", { exact: false })).toHaveCount(0);
   });
 
+  test("hides and shows optional columns, and remembers the choice", async ({ page }) => {
+    await stub(page);
+    await page.goto("/en-001/gantt", { waitUntil: "networkidle" });
+    const chart = page.getByTestId("ppm-gantt");
+    const group = page.getByRole("group", { name: "Columns" });
+    await expect(chart.getByRole("columnheader", { name: "Start", exact: true })).toBeVisible();
+    await expect(chart.getByRole("columnheader", { name: "Kind", exact: true })).toHaveCount(0);
+    await group.getByRole("checkbox", { name: "Show Kind" }).check();
+    await expect(chart.getByRole("columnheader", { name: "Kind", exact: true })).toBeVisible();
+    await group.getByRole("checkbox", { name: "Show Start" }).uncheck();
+    await expect(chart.getByRole("columnheader", { name: "Start", exact: true })).toHaveCount(0);
+    await page.reload({ waitUntil: "networkidle" });
+    await expect(chart.getByRole("columnheader", { name: "Kind", exact: true })).toBeVisible();
+    await expect(chart.getByRole("columnheader", { name: "Start", exact: true })).toHaveCount(0);
+  });
+
   test("searches the tasks and draws dependency arrows", async ({ page }) => {
     await stub(page);
     await page.goto("/en-001/gantt", { waitUntil: "networkidle" });

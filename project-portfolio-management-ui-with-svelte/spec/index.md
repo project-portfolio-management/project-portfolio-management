@@ -1035,6 +1035,8 @@ filter be limited to one column. The Gantt and the calendar have a search box
 "Depends on" stays the accessible description), and a phone-width calendar
 opens as the agenda.
 
+The Gantt (`/gantt`) has a **Columns** group for its optional Kind, Stage, Start and End columns (Start and End by default; the choice is remembered in the browser).
+
 A `DataTable` of five or more columns has a **Columns** control to hide and show columns (`hideable` overrides; `storageKey` remembers the choice). Shift+click on a second header adds a tie-break sort. Moving columns exists (`movable`) but only with `grid`, because the grid handles the keyboard move only in its grid model; no table uses `grid` yet.
 
 **Not built:** server-side export of rows the page has not loaded (the

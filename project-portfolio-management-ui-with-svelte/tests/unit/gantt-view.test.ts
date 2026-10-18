@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartRange, chartTasks, holidayRanges, nonWorkingWeekdays } from "../../src/lib/gantt-view";
+import { chartRange, chartTasks, holidayRanges, nonWorkingWeekdays, parseGanttColumns, toggleGanttColumn } from "../../src/lib/gantt-view";
 
 const item = (pid: string, start: string | null, end: string | null, on_critical_path = false) => ({
   pid, kind: "project", name: pid.toUpperCase(), stage: null, start, end, on_critical_path,
@@ -13,8 +13,8 @@ describe("chartTasks", () => {
       edges: [edge("e1", "a", "b")],
     });
     expect(tasks).toEqual([
-      { id: "a", label: "A", start: "2026-10-05", end: "2026-10-09", critical: true },
-      { id: "b", label: "B", start: "2026-10-12", end: "2026-10-16", critical: false, dependsOn: ["a"] },
+      expect.objectContaining({ id: "a", label: "A", start: "2026-10-05", end: "2026-10-09", critical: true }),
+      expect.objectContaining({ id: "b", label: "B", start: "2026-10-12", end: "2026-10-16", critical: false, dependsOn: ["a"] }),
     ]);
   });
   it("lists undated and reversed items without a bar, never inventing dates", () => {
@@ -56,5 +56,23 @@ describe("calendar shading", () => {
   });
   it("turns holidays into labelled holiday days", () => {
     expect(holidayRanges(["2026-12-25"], "Holiday")).toEqual([{ start: "2026-12-25", kind: "holiday", label: "Holiday" }]);
+  });
+});
+
+describe("optional columns", () => {
+  it("gives each task the text its columns show, dates only when it has a bar", () => {
+    const [dated, undated] = chartTasks({ items: [item("a", "2026-10-05", "2026-10-09"), item("x", null, null)], edges: [] });
+    expect(dated?.values).toMatchObject({ kind: "project", start: "2026-10-05", end: "2026-10-09" });
+    expect(undated?.values).not.toHaveProperty("start");
+  });
+  it("switches a column on or off and keeps the columns in their own order", () => {
+    expect(toggleGanttColumn(["start", "end"], "kind", true)).toEqual(["kind", "start", "end"]);
+    expect(toggleGanttColumn(["kind", "start"], "kind", false)).toEqual(["start"]);
+    expect(toggleGanttColumn([], "end", false)).toEqual([]);
+  });
+  it("reads a remembered choice, and falls back to the dates for anything else", () => {
+    expect(parseGanttColumns('["end","kind"]')).toEqual(["kind", "end"]);
+    expect(parseGanttColumns("[]")).toEqual([]);
+    for (const bad of [null, "", "nope", '["colour"]', '{"a":1}', "3"]) expect(parseGanttColumns(bad)).toEqual(["start", "end"]);
   });
 });

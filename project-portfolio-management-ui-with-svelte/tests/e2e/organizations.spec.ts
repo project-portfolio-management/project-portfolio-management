@@ -81,6 +81,16 @@ test.describe("organizations", () => {
     }
   });
 
+  test("takes the grid's words from the locale-translations pack in German and Arabic", async ({ page }) => {
+    await page.goto("/de-001/organizations", { waitUntil: "networkidle" });
+    // English and Welsh use the app's own words; the other languages use the package's pack.
+    await expect(page.getByRole("group", { name: "Exportieren" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /anzeigen/ }).first()).toBeAttached();
+    await page.goto("/ar-001/organizations", { waitUntil: "networkidle" });
+    await expect(page.getByRole("group", { name: "Exportieren" })).toHaveCount(0);
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  });
+
   test("reads in Welsh", async ({ page }) => {
     await page.goto("/cy-001/organizations", { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { level: 1, name: "Sefydliadau partner" })).toBeVisible();

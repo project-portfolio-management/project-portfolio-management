@@ -207,6 +207,8 @@
       {fields}
       labels={boardLabels}
       exportFilename="tasks"
+      showSearchLabel
+      fieldLayout="compact"
       onMove={move}
       onMoveError={() => (error = t("p.kanban.could_not_move"))}
     />

@@ -15,6 +15,7 @@
   import type { Snippet } from "svelte";
   import { t, i18n } from "#lib/i18n.svelte.js";
   import { exportLabels } from "#lib/table-labels.js";
+  import { hasOwnWidgetWords, packLabels } from "#lib/lily-labels.js";
 
   let {
     label,
@@ -91,6 +92,19 @@
     const text = t("p.table.search");
     host?.querySelectorAll<HTMLInputElement>(".data-grid-search").forEach((i) => i.setAttribute("placeholder", text));
   });
+  // Languages other than English and Welsh take the grid's words from the locale-translations pack.
+  let pack = $state<Record<string, unknown>>({});
+  $effect(() => {
+    const locale = i18n.locale;
+    let current = true;
+    void packLabels("data-grid", locale).then((l) => {
+      if (current) pack = l;
+    });
+    return () => {
+      current = false;
+    };
+  });
+  const own = $derived(hasOwnWidgetWords(i18n.locale));
   const slug = (s: string) =>
     s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "") || "table";
   const direction = (d: string) => t(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}` as never);
@@ -117,7 +131,7 @@
   exportFilename={exportFilename ?? slug(label)}
   data-testid={testid}
   class={`data-table ${caption && captionVisible ? "caption-visible" : "caption-hidden"} ${className}`.trim()}
-  labels={{
+  labels={own ? {
     ...(searchable ? { search: t("p.table.search") } : {}),
     ...(exportable ? exportLabels() : {}),
     pagination: t("p.table.pages"),
@@ -136,7 +150,7 @@
     sortAnnouncement: (header: string, d: string) => t("p.table.sorted", { header, direction: direction(d) }),
     filterAnnouncement: (matches: number, total: number) => t("p.table.filtered", { matches, total }),
     selectionAnnouncement: (n: number) => t("p.table.selected", { n }),
-  }}
+  } : pack}
 >
   {#snippet empty()}{emptyText ?? t("p.table.empty")}{/snippet}
 </DataGrid>

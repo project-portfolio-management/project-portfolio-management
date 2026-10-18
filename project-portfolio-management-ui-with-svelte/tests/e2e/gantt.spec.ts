@@ -51,6 +51,19 @@ test.describe("schedule gantt", () => {
     await chart.getByRole("button", { name: "CSV" }).click();
     const file = await download;
     expect(file.suggestedFilename()).toBe("schedule.csv");
+    const tsv = page.waitForEvent("download");
+    await chart.getByRole("button", { name: "TSV" }).click();
+    expect((await tsv).suggestedFilename()).toBe("schedule.tsv");
+  });
+
+  test("searches the tasks and draws dependency arrows", async ({ page }) => {
+    await stub(page);
+    await page.goto("/en-001/gantt", { waitUntil: "networkidle" });
+    const chart = page.getByTestId("ppm-gantt");
+    await expect(chart.locator("svg[aria-hidden='true']").first()).toBeAttached();
+    await chart.getByRole("searchbox", { name: "Search" }).fill("launch");
+    await expect(chart.getByRole("rowheader", { name: "Launch" })).toBeVisible();
+    await expect(chart.getByRole("rowheader", { name: "Design (critical path)" })).toHaveCount(0);
   });
 
   for (const locale of ["en-001", "cy-001"]) {

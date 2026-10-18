@@ -24,6 +24,7 @@
     type Velocity,
   } from "#lib/api/ppm.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { calendarDays } from "#lib/units.js";
   const pid = page.params.pid ?? "";
   const ppm = PpmClient.withFetch();
@@ -124,10 +125,8 @@
     moveFailed: (title: string, column: string) => t("p.plans.pid.board.move_failed", { title, column }),
     emptyColumn: () => t("p.plans.pid.board.empty_column"),
     search: t("p.plans.pid.board.search"),
-    export: t("p.plans.pid.board.export"),
-    exportCsv: t("p.plans.pid.board.csv"),
-    exportExcel: t("p.plans.pid.board.excel"),
-    exportAnnouncement: (_f: string, n: number, file: string) => t("p.plans.pid.board.exported", { n, file }),
+    ...exportLabels(),
+    searchAnnouncement,
     exportHeaders: { title: t("p.plans.pid.board.task"), column: t("p.plans.pid.board.status"), flag: t("p.plans.pid.flow.blocked") },
   });
 

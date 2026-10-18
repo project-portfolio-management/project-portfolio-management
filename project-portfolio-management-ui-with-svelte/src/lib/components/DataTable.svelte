@@ -13,7 +13,8 @@
   import DataGrid from "@lilydesignsystem/svelte-data-grid";
   import type { DataGridColumn, DataGridRow } from "@lilydesignsystem/svelte-data-grid";
   import type { Snippet } from "svelte";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, i18n } from "#lib/i18n.svelte.js";
+  import { exportLabels } from "#lib/table-labels.js";
 
   let {
     label,
@@ -104,20 +105,15 @@
   {onRowActivate}
   {footer}
   {storageKey}
+  locale={i18n.locale}
   exportFilename={exportFilename ?? slug(label)}
   data-testid={testid}
   class={`data-table ${caption && captionVisible ? "caption-visible" : "caption-hidden"} ${className}`.trim()}
   labels={{
     ...(searchable ? { search: t("p.table.search") } : {}),
-    ...(exportable
-      ? {
-          export: t("p.table.export"),
-          exportCsv: t("p.table.export_csv"),
-          exportTsv: t("p.table.export_tsv"),
-          exportExcel: t("p.table.export_excel"),
-          exportAnnouncement: (_f: string, rows: number, file: string) => t("p.table.exported", { rows, file }),
-        }
-      : {}),
+    ...(exportable ? exportLabels() : {}),
+    pagination: t("p.table.pages"),
+    ...(searchable ? { searchField: t("p.table.search_in"), searchAllFields: t("p.table.all_columns") } : {}),
     columnVisibility: undefined,
     resizeHandle: (header: string) => t("p.table.resize", { header }),
     selectAll: t("p.table.select_all"),

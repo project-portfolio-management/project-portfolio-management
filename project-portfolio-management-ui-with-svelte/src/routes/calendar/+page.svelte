@@ -11,6 +11,7 @@
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneCalendar } from "#lib/api/ppm.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { lazyArray } from "#lib/lazy.js";
   import { WEEKDAY_NAMES } from "#lib/cpm-view.js";
 
@@ -22,6 +23,7 @@
   const pad = (n: number) => String(n).padStart(2, "0");
   let view = $state<Mode>("month");
   let anchorDate = $state("2000-01-01");
+  let search = $state("");
   let today = $state<string | undefined>(undefined);
   onMount(() => {
     const d = new Date();
@@ -79,10 +81,9 @@
     weekday: (wd: number) => WEEKDAY_NAMES[sundayFirst(wd)] ?? "",
     weekdayAbbr: (wd: number) => (WEEKDAY_NAMES[sundayFirst(wd)] ?? "").slice(0, 3),
     day: (date: string, wd: number) => `${date}, ${WEEKDAY_NAMES[sundayFirst(wd)] ?? ""}`,
-    export: t("p.calendar.export"),
-    exportCsv: t("p.calendar.csv"),
-    exportExcel: t("p.calendar.excel"),
-    exportAnnouncement: (_f: string, n: number, file: string) => t("p.calendar.exported", { n, file }),
+    ...exportLabels(),
+    search: t("p.table.find"),
+    searchAnnouncement,
     exportHeaders: { title: t("p.calendar.milestone"), start: t("p.calendar.due"), end: t("p.calendar.due") },
   });
 </script>
@@ -121,6 +122,8 @@
       {eventFields}
       {labels}
       maxEvents={3}
+      agendaBelow={640}
+      bind:search
       exportFilename="milestones"
     >
       {#snippet day({ date, visibleEvents, hiddenCount, fieldText })}

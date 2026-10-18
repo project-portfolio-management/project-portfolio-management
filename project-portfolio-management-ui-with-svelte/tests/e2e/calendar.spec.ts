@@ -74,6 +74,14 @@ test.describe("delivery calendar", () => {
     await expect(cal.getByText("Status: done")).toBeVisible();
   });
 
+  test("searches the milestones and offers TSV", async ({ page }) => {
+    await stubMilestones(page);
+    await page.goto("/en-001/calendar", { waitUntil: "networkidle" });
+    const cal = page.getByTestId("milestone-calendar");
+    await expect(cal.getByRole("button", { name: "TSV" })).toBeVisible();
+    await expect(cal.getByRole("searchbox", { name: "Search" })).toBeVisible();
+  });
+
   test("exports the milestones as CSV", async ({ page }) => {
     await stubMilestones(page);
     await page.goto("/en-001/calendar", { waitUntil: "networkidle" });

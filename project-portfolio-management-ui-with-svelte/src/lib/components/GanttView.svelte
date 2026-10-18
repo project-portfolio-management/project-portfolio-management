@@ -10,6 +10,7 @@
   import type { GanttTask, GanttTimeUnit } from "@lilydesignsystem/svelte-gantt-chart";
   import { onMount } from "svelte";
   import { t } from "#lib/i18n.svelte.js";
+  import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { chartRange, type ChartTask } from "#lib/gantt-view.js";
 
   let { tasks, label }: { tasks: ChartTask[]; label: string } = $props();
@@ -32,17 +33,16 @@
     zoomIn: t("c.GanttView.zoom_in"),
     zoomOut: t("c.GanttView.zoom_out"),
     zoomAnnouncement: (u: GanttTimeUnit) => t("c.GanttView.zoomed", { unit: unitName(u) }),
-    export: t("c.GanttView.export"),
-    exportCsv: t("c.GanttView.csv"),
-    exportExcel: t("c.GanttView.excel"),
-    exportAnnouncement: (_f: string, n: number, file: string) => t("c.GanttView.exported", { n, file }),
+    ...exportLabels(),
+    search: t("p.table.find"),
+    searchAnnouncement,
     exportHeaders: { task: t("c.GanttView.task"), start: t("c.GanttView.start"), end: t("c.GanttView.end"), dependsOn: t("c.GanttView.predecessors") },
   });
 </script>
 
 <div class="gantt-view" data-testid="ppm-gantt">
   {#if range}
-    <GanttChart {label} {range} tasks={tasks as GanttTask[]} bind:timeUnit {today} taskLabel={critical} readonly {labels} exportFilename="schedule" />
+    <GanttChart {label} {range} tasks={tasks as GanttTask[]} bind:timeUnit {today} taskLabel={critical} readonly dependencyArrows {labels} exportFilename="schedule" />
   {/if}
 </div>
 

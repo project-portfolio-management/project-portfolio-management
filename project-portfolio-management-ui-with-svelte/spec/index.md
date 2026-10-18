@@ -1024,6 +1024,17 @@ switched on by giving it their labels; we write no export code).
   reaches no new endpoint and shows nothing the page did not. A table that
   holds masked values exports the masked values.
 
+The Gantt (`/gantt`), the delivery calendar (`/calendar`) and the plan task
+board offer the same three formats, plus a **Copy** button that puts the rows
+on the clipboard tab-separated for pasting into a spreadsheet (the widgets'
+own, labelled from `src/lib/table-labels.ts`). `DataTable` also copies, sorts
+text in the page's language with numbers in natural order ("Item 2" before
+"Item 10"), names its pager as a landmark, and, when `searchable`, lets the
+filter be limited to one column. The Gantt and the calendar have a search box
+(every word, any order), the Gantt draws an arrow per dependency (the text
+"Depends on" stays the accessible description), and a phone-width calendar
+opens as the agenda.
+
 **Not built:** server-side export of rows the page has not loaded (the
 service's own CSV endpoints cover that), choosing columns at export time,
 and a "selected rows only" option on the UI (the grid supports it; tables

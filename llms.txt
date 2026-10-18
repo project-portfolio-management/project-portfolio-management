@@ -45,6 +45,7 @@
 
 ## Agent guides
 
+- [Root agent guide](AGENTS.md): Where to start: the three projects, how work is done here, the gates, easy mistakes
 - [API service guide](project-portfolio-management-service-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
 - [Matcher guide](project-portfolio-management-matcher-with-rust/AGENTS.md): Matching rules, golden rules and file layout for the library
 - [UI guide](project-portfolio-management-ui-with-svelte/AGENTS.md): Working guide for the SvelteKit UI

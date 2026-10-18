@@ -1,8 +1,8 @@
 # AGENTS.md — Portfolio Service
 
 Entry point for AI coding agents working in the
-`project-portfolio-management-service` crate (v0.3.0, edition 2024, Rust
-1.96, loco-rs 1.2, sea-orm 2.0, axum 0.8): a registry of **plan** records
+`project-portfolio-management` crate (v0.4.0, edition 2024, Rust 1.99.1 with a
+minimum of 1.96, loco-rs 1.2, sea-orm 2.0, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -37,7 +37,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DATABASE_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
-| Migrations | `migration/src/` — 83 files `m2026…`, latest `m20261009_000049_oxford_spelling` |
+| Migrations | `migration/src/` (crate `project-portfolio-management-migration`) — 111 files `m2026…`, latest `m20261010_000077_portfolio_ledger` |
 
 ## API surface
 

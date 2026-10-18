@@ -9,10 +9,10 @@ holds no token).
 > Read [`spec/index.md`](./spec/index.md) first — the living spec
 > (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
 >
-> **Status: implemented (v0.1.0), verified 2026-10-06.** `pnpm run check`
-> is **0 errors / 0 warnings**, `npx vitest run` passes (**529 tests**, 40
-> files in `tests/unit/`), and the Playwright suite (14 files in
-> `tests/e2e/`) runs against a production build. There are **64 page
+> **Status: implemented (v0.4.0), verified 2026-10-18.** `pnpm run check`
+> is **0 errors / 0 warnings**, `npx vitest run` passes (**703 tests**, 51
+> files in `tests/unit/`), and the Playwright suite (40 files in
+> `tests/e2e/`, about 600 tests with axe audits) runs against a production build. There are **85 page
 > routes** under `src/routes`. Shipped: the unified identity surface
 > (`/plans`, `/plans/new`, `/plans/[pid]`, `/plans/[pid]/edit`,
 > `/plans/merge`), the Kanban board, governance and schedule views, the
@@ -63,8 +63,11 @@ of the matching surface (except goal titles).
 2. **SPA.** `+layout.ts` sets `ssr = false` / `prerender = false`.
 3. **TypeScript strict** (`noUncheckedIndexedAccess`). No `any` without
    a justifying comment.
-4. **SVAR DataGrid** for tabular data (the plans list, sub-resource
-   tables). Native HTML for simple lists.
+4. **`DataTable`** (`src/lib/components/DataTable.svelte`, Lily's DataGrid) for
+   every table: sorting, filter, paging, CSV / TSV / Excel export, copy, a
+   Columns control. The Gantt (`GanttView`), calendar and task board are
+   Lily's GanttChart, CalendarView and KanbanBoard. SVAR is gone. Native HTML
+   for simple lists.
 5. **Lily Headless** for accessibility primitives (focus trap,
    listbox, combobox, dialog) and the theme / locale selectors. Native
    HTML elsewhere.
@@ -124,14 +127,14 @@ src/
 │   │   └── plans.ts               PlanRepository (list + listPage + search + get + create + update + remove + checkDuplicates + merge + recentMerges; all paths under /api/plans). No audit() or recentEvents() method.
 │   ├── server/                    BFF-only (never bundled to the browser): auth.ts (magic-link + session→PASETO exchange + currentUser(), T-28f), session.ts (cookie), config.ts (PROJECT_PORTFOLIO_MANAGEMENT_API_URL / AUTH_API_URL)
 │   ├── nav.ts                     T-28f (repo `tasks.md` EV-1), pure, DB-free: viewAttr/orderNavForView/landingRouteForView — role-tailored nav ordering + landing route from a deployment-declared `view` ABAC attribute
-│   └── components/                PlanForm.svelte, merge-validation.ts (pure guard). No MatchBreakdown / KanbanBoard / IssuesList / Timeline / Burndown / GoalsPanel / picker components — the board route uses @svar-ui/svelte-kanban directly.
+│   └── components/                PlanForm.svelte, merge-validation.ts (pure guard). Also DataTable, GanttView, CalendarMonth and the chart components. No MatchBreakdown / IssuesList / Timeline / Burndown / GoalsPanel; the board route uses Lily's KanbanBoard directly.
 └── routes/
     ├── +layout.svelte / +layout.ts / +layout.server.ts   top-bar nav (leftmost hamburger) + Plans destination + theme/locale selectors + session affordance + SPA toggle; +layout.server.ts also resolves `view`/`landingRoute` (T-28f)
     ├── signin/ · verify/          per-app magic-link sign-in (BFF server routes)
     ├── api/proxy/[...path]/+server.ts   BFF proxy → portfolio service (injects the PASETO bearer)
     ├── +page.svelte               landing (links to /plans)
     └── plans/
-        ├── +page.svelte          list (SVAR DataGrid + client-side FilterBar over the loaded rows)
+        ├── +page.svelte          list (DataTable with its filter box over the loaded rows)
         ├── new/+page.svelte      create
         ├── [pid]/+page.svelte    detail + delete + check-duplicates (plain score/confidence, no breakdown visual)
         ├── [pid]/edit/+page.svelte    edit
@@ -238,7 +241,7 @@ pnpm install
 pnpm dev                       # http://localhost:5173 (needs the service for real data)
 pnpm run check                 # svelte-kit sync + svelte-check (strict; 0/0 expected)
 pnpm run build
-npx vitest run                 # unit suite (same as `pnpm test`), 529 tests
+npx vitest run                 # unit suite (same as `pnpm test`), 703 tests
 pkill -f 'vite preview'        # free port 4173 if a stale preview is running
 npx playwright test            # e2e: builds, then `vite preview` on :4173
 npx playwright test --project=mobile   # just the 390x844 audit

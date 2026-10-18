@@ -121,6 +121,11 @@
       "title": "Agent guides",
       "links": [
         {
+          "title": "Root agent guide",
+          "path": "AGENTS.md",
+          "description": "Where to start: the three projects, how work is done here, the gates, easy mistakes"
+        },
+        {
           "title": "API service guide",
           "path": "project-portfolio-management-service-with-rust/AGENTS.md",
           "description": "Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands"

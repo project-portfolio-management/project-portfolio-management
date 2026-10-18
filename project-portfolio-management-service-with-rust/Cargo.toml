@@ -81,9 +81,9 @@ prometheus = { version = "0.14" }
 # Canonical matching algorithm — embedded and used directly as the API DTO.
 project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-with-rust" }
 
-# Offline PASETO v4.public verification against the authentication-service Ed25519 keys (local path; monorepo 0.2 verifier).
+# Offline PASETO v4.public verification against the authentication-service Ed25519 keys (the published `authentication-verifier` crate).
 # The `fetch` feature adds `Verifier::from_paseto_keys_url` for the boot-time key-set fetch (`PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`).
-authentication-verifier = { git = "https://github.com/SixArm/main-x-service.git", rev = "52b107a9f06c0ae8896149e964c8d9b0739d2cc4", default-features = false }
+authentication-verifier = { version = "0.9.1", default-features = false }
 
 # Durable event bus Phase 3 (BUS-3, following BUS-1's case-service
 # reference; agents/share/event-bus.md §5/§8): the relay's real broker
@@ -137,7 +137,7 @@ required-features = []
 [dev-dependencies]
 # A local OIDC provider so tests/keycloak_guard.rs can push a Keycloak access
 # token through the real guard without a Keycloak container. Tests only.
-authentication-verifier = { git = "https://github.com/SixArm/main-x-service.git", rev = "52b107a9f06c0ae8896149e964c8d9b0739d2cc4", default-features = false, features = ["test-idp"] }
+authentication-verifier = { version = "0.9.1", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
 loco-rs = { workspace = true, features = ["testing"] }
 # Name the `TestServer` type in shared request-test helpers.

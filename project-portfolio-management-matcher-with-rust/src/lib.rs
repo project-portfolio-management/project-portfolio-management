@@ -68,7 +68,11 @@
 // Always start with high quality coding conventions.
 #![forbid(unsafe_code)] // pure library: no `unsafe` is ever needed.
 #![deny(missing_docs)] // every public item must carry a doc comment.
-#![warn(clippy::pedantic)] // opt in to Clippy's stricter lint set.
+#![warn(clippy::pedantic)]
+// opt in to Clippy's stricter lint set.
+// Rust 1.99 clippy flags `assert!(x.is_empty())` in tests and suggests `assert_eq!(x, [] as [T; 0])`, which reads
+// worse, so it is allowed in test builds only.
+#![cfg_attr(test, allow(clippy::assert_is_empty))]
 
 // ─── Modules ─────────────────────────────────────────────────────────
 // One concern per module; `lib.rs` re-exports the stable surface below so

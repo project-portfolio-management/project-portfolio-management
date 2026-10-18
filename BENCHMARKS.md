@@ -11,7 +11,7 @@ Criterion benchmarks for the matching engine: `project-portfolio-management-matc
 |---|---|
 | Date | 2026-10-10 |
 | Machine | Apple M4 Max, macOS 26.6.1 |
-| Toolchain | rustc 1.96.1 |
+| Toolchain | rustc 1.99.1 |
 | Command | `cargo bench --bench match_pair -- --warm-up-time 1 --measurement-time 3` |
 | Reported | the middle value of Criterion's range (time per call) |
 

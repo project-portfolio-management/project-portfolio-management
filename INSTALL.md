@@ -9,7 +9,7 @@ in [`operations/`](operations/README.md).
 
 | For | You need |
 |---|---|
-| The service | Podman with Compose (easiest), or Rust 1.96.1 (pinned in [`rust-toolchain.toml`](rust-toolchain.toml)) and PostgreSQL 18 |
+| The service | Podman with Compose (easiest), or Rust 1.99.1 (pinned in [`rust-toolchain.toml`](rust-toolchain.toml)) and PostgreSQL 18 |
 | The front end | Node 26 and pnpm |
 | Signing in | A token issuer the service can verify: PASETO keys from your authentication service, or a Keycloak realm (which can broker Microsoft Entra ID). See [`operations/sign-in-with-entra.md`](operations/sign-in-with-entra.md) |
 

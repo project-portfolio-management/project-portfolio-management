@@ -13,7 +13,7 @@ resources, governance).
 | [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 2 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
 
 The Rust toolchain is pinned in [`rust-toolchain.toml`](rust-toolchain.toml)
-(1.96.1). The UI needs Node 26 and pnpm; its e2e tests stub the backend, so
+(1.99.1). The UI needs Node 26 and pnpm; its e2e tests stub the backend, so
 they do not need the service. Run `pkill -f 'vite preview'` before
 `npx playwright test` if an earlier preview server may still be running.
 

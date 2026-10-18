@@ -2681,7 +2681,7 @@ mod tests {
         assert!(cumulative_flow(std::slice::from_ref(&history), at(0), at(5), 0).is_empty());
         assert!(cumulative_flow(std::slice::from_ref(&history), at(0), at(5), -1).is_empty());
         assert!(cumulative_flow(std::slice::from_ref(&history), at(5), at(0), DAY_MS).is_empty());
-        assert!(cumulative_flow(&[], at(0), at(5), DAY_MS).len() == 6);
+        assert_eq!(cumulative_flow(&[], at(0), at(5), DAY_MS).len(), 6);
 
         // A very fine step over a wide window is capped, not unbounded.
         let capped = cumulative_flow(&[history], at(0), at(100_000), 1);

@@ -19,6 +19,9 @@
 //! See `spec/index.md` for the living specification.
 
 #![warn(clippy::pedantic)]
+// Rust 1.99 clippy flags `assert!(x.is_empty())` in tests and suggests `assert_eq!(x, [] as [T; 0])`, which reads
+// worse; over a hundred unit-test assertions use the first form, so it is allowed in test builds only.
+#![cfg_attr(test, allow(clippy::assert_is_empty))]
 // The hand-written OpenAPI document is one large nested `json!` tree.
 #![recursion_limit = "512"]
 #![forbid(unsafe_code)]

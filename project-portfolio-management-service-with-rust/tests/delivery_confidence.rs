@@ -17,7 +17,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
@@ -185,9 +185,9 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         let b: Value = with!(request.get("/api/exceptions?breached=true"), writer).await.json();
         assert_eq!(b["exceptions"].as_array().unwrap().len(), 1);
         assert_eq!(b["exceptions"][0]["breached"], true);
-        let told = project_portfolio_management_service::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap();
+        let told = project_portfolio_management::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap();
         assert_eq!(told, 1);
-        assert_eq!(project_portfolio_management_service::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap(), 0, "notified once");
+        assert_eq!(project_portfolio_management::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap(), 0, "notified once");
         // A private programme's exception is nowhere for an outsider.
         let sx: Value = with!(request.put(&conf(&secret)), writer).json(&json!({ "value": "red", "kind": "self", "rationale": "Secret programme is failing" })).await.json();
         let sxp = sx["exception"]["pid"].as_str().map(str::to_string);

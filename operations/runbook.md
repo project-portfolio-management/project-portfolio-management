@@ -15,7 +15,7 @@ For the person on call. Start with the quick reference, then find the symptom.
 | Configuration as resolved | `<service> doctor --config` |
 | Migration state | `<service> db status` |
 
-`<service>` is `docker compose run --rm api /app/project-portfolio-management-service`.
+`<service>` is `docker compose run --rm api /app/project-portfolio-management`.
 
 ## Symptoms
 

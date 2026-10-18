@@ -6,7 +6,7 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -355,7 +355,7 @@ async fn the_flow_gauges_publish_only_what_may_be_published() {
         for i in 0..2 {
             seed_task(&request, &plan, &format!("Task {i}")).await;
         }
-        let set = project_portfolio_management_service::flow_metrics::refresh_once(&ctx)
+        let set = project_portfolio_management::flow_metrics::refresh_once(&ctx)
             .await
             .expect("refresh");
         assert!(
@@ -368,7 +368,7 @@ async fn the_flow_gauges_publish_only_what_may_be_published() {
         for i in 2..5 {
             seed_task(&request, &plan, &format!("Task {i}")).await;
         }
-        let set = project_portfolio_management_service::flow_metrics::refresh_once(&ctx)
+        let set = project_portfolio_management::flow_metrics::refresh_once(&ctx)
             .await
             .expect("refresh");
         let row = set
@@ -383,7 +383,7 @@ async fn the_flow_gauges_publish_only_what_may_be_published() {
              gauge inherits it rather than inventing a number"
         );
 
-        let body = project_portfolio_management_service::metrics::Metrics::global().render();
+        let body = project_portfolio_management::metrics::Metrics::global().render();
         assert!(
             body.contains(&format!(r#"ppm_flow_work_in_progress{{plan="{plan}"}}"#)),
             "missing the labelled series in: {body}"

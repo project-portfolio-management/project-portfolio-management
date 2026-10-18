@@ -73,7 +73,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Retention | `cargo loco task retention_purge` | a dry run unless `apply:true`; schedule it daily after reading the dry run. Covers read notifications, delivery logs and trend snapshots; see the [retention schedule](../governance/retention-schedule.md) |
 | Background loops | `SCHEDULER_MINUTES`, `SNAPSHOT_HOURS`, `FLOW_METRICS_SECS`, `SINKS_TICK_SECS` | each is off unless set (sinks tick on by default; `0` turns it off) |
 
-`docker compose run --rm api /app/project-portfolio-management-service doctor --config`
+`docker compose run --rm api /app/project-portfolio-management doctor --config`
 prints the configuration the service resolved, and `… doctor -e production` checks it.
 
 ## TLS and a reverse proxy

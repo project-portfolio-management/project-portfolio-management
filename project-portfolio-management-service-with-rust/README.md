@@ -110,7 +110,7 @@ matcher (goal **titles** bridge in via `data.goals[]`).
 Requires PostgreSQL.
 
 ```bash
-export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_development
+export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo loco start        # migrations auto-run in development
 
 # Create a plan labelled as a portfolio (the umbrella kind)

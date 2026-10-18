@@ -10,7 +10,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
@@ -227,7 +227,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(state(&sum)["signoff"]["outstanding"], json!(["Acme Council"]));
         {
             use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("milestone_signoff_withdrawn")).count(&_ctx.db).await.unwrap();
             assert_eq!(n, 1, "the withdrawal is audited");
         }
@@ -278,7 +278,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(flow["burn_up"].as_array().unwrap().len(), 8);
         {
             use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             with!(request.put(&rm), writer).json(&json!({ "method": "product" })).await.assert_status_ok();
             let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("reporting_method_changed")).count(&_ctx.db).await.unwrap();
             assert_eq!(n, 1, "the change is audited once, and a repeat is not a change");
@@ -326,7 +326,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(alloc("committed").await.status_code(), 200, "switch off: the action goes ahead");
         {
             use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("register_incomplete_warning")).count(&_ctx.db).await.unwrap();
             assert_eq!(n, 1, "and the warning is audited");
         }
@@ -446,7 +446,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!((tt["triage_counts"]["pause"].as_u64(), tt["decisions_in_period"]["override"].as_u64(), tt["decisions_in_period"]["reset"].as_u64()), (Some(1), Some(0), Some(0)), "{tt}");
         {
             use sea_orm::{EntityTrait, PaginatorTrait};
-            use project_portfolio_management_service::models::_entities::threshold_decisions;
+            use project_portfolio_management::models::_entities::threshold_decisions;
             assert_eq!(threshold_decisions::Entity::find().count(&_ctx.db).await.unwrap(), 2, "an override and a reset were recorded");
         }
         assert_eq!(tt["overrides_in_force"][0]["programme"], "Care");
@@ -497,7 +497,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(phase(&beta, "executing", json!({ "start_override_reason": "The sponsor needs it live before the audit" })).await.0, 200);
         {
             use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("start_override")).count(&_ctx.db).await.unwrap();
             assert_eq!(n, 1, "the override is audited");
         }
@@ -590,7 +590,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(t1["start_date"], "2026-10-12", "refused: unchanged");
         {
             use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             for (action, want) in [("deployment_move_requested", 2), ("deployment_move_approved", 1), ("deployment_move_refused", 1)] {
                 let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&_ctx.db).await.unwrap();
                 assert_eq!(n, want, "{action}");
@@ -661,9 +661,9 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
 
         // ── EX-10: the outcome scorecard and the de-escalation tracker ──
         let today = chrono::Utc::now().date_naive();
-        let lf = project_portfolio_management_service::deescalation::last_finished(today);
+        let lf = project_portfolio_management::deescalation::last_finished(today);
         let lf1 = lf.previous();
-        let day = |q: project_portfolio_management_service::deescalation::Quarter| (q.start() + chrono::Duration::days(20)).to_string();
+        let day = |q: project_portfolio_management::deescalation::Quarter| (q.start() + chrono::Duration::days(20)).to_string();
         let tpl: Value = with!(request.get("/api/scorecard-template"), writer).await.json();
         assert!(tpl["measures"].as_array().unwrap().iter().all(|m| m.get("target_value").is_none()), "the template carries no targets");
         let sc: Value = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Recovery outcomes", "for_deescalation": true })).await.json();
@@ -689,7 +689,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         reading(&kp[0], lf, 90).await;
         reading(&kp[1], lf, 1).await;
         assert_eq!(evid(&lf.label(), true).await, 200);
-        assert_eq!(evid(&{ let n = project_portfolio_management_service::deescalation::Quarter::of(today); n.label() }, true).await, 422, "an unfinished quarter");
+        assert_eq!(evid(&{ let n = project_portfolio_management::deescalation::Quarter::of(today); n.label() }, true).await, 422, "an unfinished quarter");
         let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
         assert_eq!(t["consecutive_quarters_met"], 1, "{t}");
         assert_eq!(t["rule_satisfied"], false);

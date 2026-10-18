@@ -20,7 +20,7 @@
 
 use libfuzzer_sys::fuzz_target;
 use project_portfolio_management_matcher::Plan;
-use project_portfolio_management_service::merge;
+use project_portfolio_management::merge;
 
 /// Build a `Plan` from a byte slice, round-robining NUL-separated chunks
 /// across the collections the fold unions.

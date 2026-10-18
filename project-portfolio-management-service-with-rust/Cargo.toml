@@ -1,12 +1,12 @@
 [workspace]
 
 [package]
-name = "project-portfolio-management-service"
+name = "project-portfolio-management"
 version = "0.4.0"
 edition = "2024"
 rust-version = "1.96"
 publish = true
-default-run = "project-portfolio-management-service"
+default-run = "project-portfolio-management"
 authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
 description = "Project portfolio management service — plan registry (one recursive plan tree; kind is an optional label, no gate) and full project-management suite: workflows, OKRs, phases, flow, effort, ceremonies, controls, TPC, value realization"
 readme = "README.md"
@@ -130,7 +130,7 @@ keycloak = ["authentication-verifier/keycloak"]
 fluvio = ["dep:fluvio"]
 
 [[bin]]
-name = "project-portfolio-management-service"
+name = "project-portfolio-management"
 path = "src/bin/main.rs"
 required-features = []
 

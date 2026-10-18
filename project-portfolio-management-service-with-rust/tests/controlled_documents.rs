@@ -13,7 +13,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -78,7 +78,7 @@ fn hdr(kid: &str, sub: &str, access: &[&str]) -> Who {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test controlled_documents -- --ignored`"]
 async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_approval() {
-    use project_portfolio_management_service::models::_entities::audit_logs;
+    use project_portfolio_management::models::_entities::audit_logs;
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
     unsafe {

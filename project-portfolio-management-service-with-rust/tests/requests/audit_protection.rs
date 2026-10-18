@@ -4,8 +4,8 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::models::audit_logs::Model as AuditModel;
+use project_portfolio_management::app::App;
+use project_portfolio_management::models::audit_logs::Model as AuditModel;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use serial_test::serial;
 use uuid::Uuid;

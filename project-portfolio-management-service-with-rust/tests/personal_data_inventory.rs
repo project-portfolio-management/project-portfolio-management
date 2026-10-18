@@ -290,7 +290,7 @@ fn the_retention_schedule_defines_every_class_the_inventory_uses() {
 /// be missed by an export or a pseudonymisation.
 #[test]
 fn every_identifier_column_is_covered_by_the_data_subject_tools() {
-    use project_portfolio_management_service::subjects::{COLUMNS, EXCLUDED};
+    use project_portfolio_management::subjects::{COLUMNS, EXCLUDED};
     let inv = inventory();
     let covered: BTreeSet<(String, String)> = COLUMNS
         .iter()

@@ -3,7 +3,7 @@
 //! Ported from case-service's `tests/otlp_middleware.rs`.
 //! `tests/otlp_export.rs` proves the export pipeline; this proves the
 //! thing the service actually runs — the exact
-//! [`observability::trace_mw`](project_portfolio_management_service::observability::trace_mw)
+//! [`observability::trace_mw`](project_portfolio_management::observability::trace_mw)
 //! layer `App::after_routes` installs (this crate's **only**
 //! router-construction surface — see that module's doc comment). It
 //! layers `trace_mw` onto a minimal, real Axum router — rather than
@@ -33,7 +33,7 @@ use opentelemetry::trace::TracerProvider as _;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use project_portfolio_management_service::observability::{
+use project_portfolio_management::observability::{
     TelemetryConfig, build_tracer_provider, trace_mw,
 };
 
@@ -58,7 +58,7 @@ async fn a_served_request_exports_a_span_and_returns_its_traceparent() {
                 .with_tracer(provider.tracer("project-portfolio-management-service")),
         )
         .with(tracing_subscriber::EnvFilter::new(
-            "project_portfolio_management_service=trace,otlp_middleware=trace",
+            "project_portfolio_management=trace,otlp_middleware=trace",
         ))
         .init();
 

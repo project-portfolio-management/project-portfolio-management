@@ -16,7 +16,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::EntityTrait;
 use serde_json::{Value, json};
@@ -149,11 +149,10 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
             .json();
         let token = issued["token"].as_str().expect("token").to_string();
         assert_eq!(token.len(), 64);
-        let stored =
-            project_portfolio_management_service::models::_entities::feed_tokens::Entity::find()
-                .all(&ctx.db)
-                .await
-                .expect("tokens");
+        let stored = project_portfolio_management::models::_entities::feed_tokens::Entity::find()
+            .all(&ctx.db)
+            .await
+            .expect("tokens");
         assert_eq!(stored.len(), 1);
         assert_ne!(stored[0].token_hash, token, "never stored in the clear");
 

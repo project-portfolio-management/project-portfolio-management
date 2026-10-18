@@ -2,7 +2,7 @@
 //! now run the same record-level ABAC decision `GET /{pid}` always has.
 //!
 //! `get_one`/`get_export` already call
-//! [`crate::auth::authorize_record`](project_portfolio_management_service::auth::authorize_record)
+//! [`crate::auth::authorize_record`](project_portfolio_management::auth::authorize_record)
 //! per plan (keyed on `resource.stage`, PPM-3); before this change
 //! `list`/`search`/`check_duplicates` did not, so a policy that
 //! **denies** read past some gate still let those plans' pid + name
@@ -21,7 +21,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use serial_test::serial;

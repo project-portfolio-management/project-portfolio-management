@@ -560,8 +560,7 @@ mod tests {
     #[test]
     fn exporter_diagnostics_are_added_to_a_default_filter() {
         // Loco's whitelist, standing in for what `init_env_filter` builds.
-        let base =
-            || tracing_subscriber::EnvFilter::new("project_portfolio_management_service=info");
+        let base = || tracing_subscriber::EnvFilter::new("project_portfolio_management=info");
 
         assert!(
             !sdk_error_is_recorded(base()),
@@ -609,12 +608,9 @@ mod tests {
     /// re-enabling targets they silenced would be the mirror-image surprise.
     #[test]
     fn an_operator_supplied_filter_is_left_alone() {
-        let base = tracing_subscriber::EnvFilter::new("project_portfolio_management_service=info");
+        let base = tracing_subscriber::EnvFilter::new("project_portfolio_management=info");
         let untouched = with_exporter_diagnostics(base, true);
-        assert_eq!(
-            untouched.to_string(),
-            "project_portfolio_management_service=info"
-        );
+        assert_eq!(untouched.to_string(), "project_portfolio_management=info");
     }
 
     #[test]

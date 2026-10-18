@@ -18,7 +18,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
@@ -235,7 +235,7 @@ async fn the_heatmap_keeps_its_promises() {
         let bytes = r1.as_bytes().to_vec();
         assert!(bytes.starts_with(b"%PDF"));
         assert_eq!(with!(request.get(&pdf_url), issuer).await.as_bytes().to_vec(), bytes, "an issued pack gives the same bytes every time");
-        let text = project_portfolio_management_service::pdf::text_of(&bytes).replace("\\(", "(").replace("\\)", ")");
+        let text = project_portfolio_management::pdf::text_of(&bytes).replace("\\(", "(").replace("\\)", ")");
         let body = &pack["body"];
         let has = |needle: String| assert!(text.contains(&needle), "the PDF lacks {needle:?}");
         has(format!("Director pack {month} for board"));

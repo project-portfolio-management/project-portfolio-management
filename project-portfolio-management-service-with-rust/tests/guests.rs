@@ -15,7 +15,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -209,7 +209,7 @@ async fn a_guest_sees_only_what_is_granted_masked_and_nothing_else() {
             .json();
         assert_eq!(status(format!("/api/plans/{p}"), gk.clone(), gv.clone()).await, 200);
         {
-            use project_portfolio_management_service::models::_entities::guest_grants;
+            use project_portfolio_management::models::_entities::guest_grants;
             use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter};
             let row = guest_grants::Entity::find()
                 .filter(guest_grants::Column::Pid.eq(uuid::Uuid::parse_str(fresh["pid"].as_str().unwrap()).unwrap()))

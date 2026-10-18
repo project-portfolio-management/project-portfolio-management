@@ -5300,19 +5300,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "project-portfolio-management-matcher"
-version = "0.2.0"
-dependencies = [
- "mimalloc",
- "serde",
- "serde_json",
- "strsim",
- "thiserror 2.0.21",
- "unicode-normalization",
-]
-
-[[package]]
-name = "project-portfolio-management-service"
+name = "project-portfolio-management"
 version = "0.4.0"
 dependencies = [
  "async-stream",
@@ -5366,6 +5354,18 @@ dependencies = [
  "uuid",
  "validator 0.21.0",
  "zip",
+]
+
+[[package]]
+name = "project-portfolio-management-matcher"
+version = "0.2.0"
+dependencies = [
+ "mimalloc",
+ "serde",
+ "serde_json",
+ "strsim",
+ "thiserror 2.0.21",
+ "unicode-normalization",
 ]
 
 [[package]]

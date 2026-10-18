@@ -13,10 +13,10 @@
 //! `cargo test --test outbox_audit -- --ignored`.
 
 use loco_rs::testing::prelude::*;
+use project_portfolio_management::app::App;
+use project_portfolio_management::models::_entities::{audit_logs, event_outbox, plans};
+use project_portfolio_management::streaming;
 use project_portfolio_management_matcher::Plan;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::models::_entities::{audit_logs, event_outbox, plans};
-use project_portfolio_management_service::streaming;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serial_test::serial;
 

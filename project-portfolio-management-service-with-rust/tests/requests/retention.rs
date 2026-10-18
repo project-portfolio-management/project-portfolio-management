@@ -5,8 +5,8 @@
 
 use chrono::Utc;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::retention;
+use project_portfolio_management::app::App;
+use project_portfolio_management::retention;
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serial_test::serial;
 

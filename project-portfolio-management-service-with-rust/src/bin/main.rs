@@ -12,7 +12,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use loco_rs::cli;
 use migration::Migrator;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 
 #[tokio::main]
 async fn main() -> loco_rs::Result<()> {

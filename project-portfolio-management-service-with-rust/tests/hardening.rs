@@ -13,7 +13,7 @@
 //! `cargo test --test hardening -- --ignored`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use serial_test::serial;
 
 #[tokio::test]

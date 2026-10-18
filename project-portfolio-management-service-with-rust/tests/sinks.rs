@@ -16,7 +16,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -203,7 +203,7 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
         assert_eq!(ctx_run(&ctx).await.retrying + ctx_run(&ctx).await.sent, 0);
         // Make them due, recover the destination, and they go through.
         {
-            use project_portfolio_management_service::models::_entities::sink_deliveries;
+            use project_portfolio_management::models::_entities::sink_deliveries;
             use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, sea_query::Expr};
             sink_deliveries::Entity::update_many()
                 .col_expr(sink_deliveries::Column::NextAttemptAt, Expr::value(chrono::Utc::now() - chrono::Duration::minutes(1)))
@@ -253,8 +253,8 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
 
 async fn ctx_run(
     ctx: &loco_rs::app::AppContext,
-) -> project_portfolio_management_service::controllers::sinks::Dispatched {
-    project_portfolio_management_service::controllers::sinks::run_due(ctx, 100)
+) -> project_portfolio_management::controllers::sinks::Dispatched {
+    project_portfolio_management::controllers::sinks::run_due(ctx, 100)
         .await
         .expect("dispatch")
 }

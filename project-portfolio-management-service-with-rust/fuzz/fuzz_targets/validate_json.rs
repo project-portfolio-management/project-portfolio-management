@@ -21,7 +21,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use project_portfolio_management_service::validation;
+use project_portfolio_management::validation;
 
 /// Ceiling on the problem count, not a tight bound.
 ///

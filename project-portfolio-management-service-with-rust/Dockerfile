@@ -60,7 +60,7 @@ WORKDIR /app/project-portfolio-management-service-with-rust
 # (operations/sign-in-with-entra.md); it is inert unless KEYCLOAK_* is configured. Add more with
 # `--build-arg CARGO_FEATURES="keycloak fluvio"`; empty it to build the default set only.
 ARG CARGO_FEATURES="keycloak"
-RUN cargo build --release --locked --features "${CARGO_FEATURES}" --bin project-portfolio-management-service
+RUN cargo build --release --locked --features "${CARGO_FEATURES}" --bin project-portfolio-management
 
 # ---- runtime ---------------------------------------------------------------
 FROM docker.io/library/debian:13-slim
@@ -78,8 +78,8 @@ RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin portfolio
 WORKDIR /app
 
 COPY --from=builder --chown=portfolio:portfolio \
-    /app/project-portfolio-management-service-with-rust/target/release/project-portfolio-management-service \
-    /app/project-portfolio-management-service
+    /app/project-portfolio-management-service-with-rust/target/release/project-portfolio-management \
+    /app/project-portfolio-management
 
 # loco reads config/<LOCO_ENV>.yaml at run time (it is not baked into the binary).
 COPY --chown=portfolio:portfolio project-portfolio-management-service-with-rust/config ./config
@@ -106,4 +106,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 ENV LOCO_ENV=production \
     PORT=5150
 
-CMD ["/app/project-portfolio-management-service", "start"]
+CMD ["/app/project-portfolio-management", "start"]

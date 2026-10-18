@@ -8,7 +8,7 @@
 //! stays green on a database-less machine. Run them with:
 //!
 //! ```sh
-//! DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_test \
+//! DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
 //!   cargo test -- --ignored
 //! ```
 //!
@@ -16,7 +16,7 @@
 //! DB-free unit tests in `src/controllers/plans.rs`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 

@@ -10,7 +10,7 @@
 use authentication_verifier::test_idp::TestIdp;
 use axum::http::header::AUTHORIZATION;
 use axum::http::{HeaderMap, Method};
-use project_portfolio_management_service::auth;
+use project_portfolio_management::auth;
 use serde_json::json;
 
 fn bearer(token: &str) -> HeaderMap {

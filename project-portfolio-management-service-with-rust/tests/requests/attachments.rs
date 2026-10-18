@@ -6,8 +6,8 @@
 
 use axum::body::Bytes;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::artifacts::sha256_hex;
+use project_portfolio_management::app::App;
+use project_portfolio_management::artifacts::sha256_hex;
 use serde_json::{Value, json};
 use serial_test::serial;
 

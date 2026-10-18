@@ -24,7 +24,7 @@ use std::time::Duration;
 
 use axum::http::header::AUTHORIZATION;
 use axum::http::{HeaderMap, Method};
-use project_portfolio_management_service::auth;
+use project_portfolio_management::auth;
 use serde_json::{Value, json};
 use testcontainers::core::{IntoContainerPort, WaitFor};
 use testcontainers::runners::AsyncRunner;

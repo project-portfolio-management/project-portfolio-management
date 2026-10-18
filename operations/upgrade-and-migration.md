@@ -52,7 +52,7 @@ migration that holds locks lengthens it. Plan a window.
 Check the result:
 
 ```sh
-docker compose run --rm api /app/project-portfolio-management-service db status   # all migrations applied
+docker compose run --rm api /app/project-portfolio-management db status   # all migrations applied
 docker compose logs --tail=50 api                                                # no errors and no `refusing to start`
 ```
 
@@ -81,7 +81,7 @@ Anything written after the backup is lost on a restore; export it first if it ma
 ## Running a migration by hand
 
 ```sh
-docker compose run --rm api /app/project-portfolio-management-service db status    # what is applied
+docker compose run --rm api /app/project-portfolio-management db status    # what is applied
 docker compose run --rm migrate                                                    # apply all pending
 ```
 

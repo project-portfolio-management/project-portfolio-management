@@ -5,7 +5,7 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -1193,7 +1193,7 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
-    use project_portfolio_management_service::models::_entities::audit_logs;
+    use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -1381,7 +1381,7 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted() {
-    use project_portfolio_management_service::models::_entities::audit_logs;
+    use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -1617,7 +1617,7 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn buffer_management_reads_consumption_names_the_red_chain_and_records_recovery() {
-    use project_portfolio_management_service::models::_entities::audit_logs;
+    use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -3028,7 +3028,7 @@ async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_it_showed() {
-    use project_portfolio_management_service::models::_entities::{audit_logs, plan_dependencies};
+    use project_portfolio_management::models::_entities::{audit_logs, plan_dependencies};
     use sea_orm::{EntityTrait, PaginatorTrait};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -3167,7 +3167,7 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
-    use project_portfolio_management_service::models::_entities::audit_logs;
+    use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -3854,7 +3854,7 @@ async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn jira_and_asana_exports_import_idempotently_and_report_what_they_drop() {
-    use project_portfolio_management_service::models::_entities::{plan_dependencies, tasks};
+    use project_portfolio_management::models::_entities::{plan_dependencies, tasks};
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

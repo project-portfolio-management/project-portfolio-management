@@ -3,7 +3,7 @@
 # From this crate's directory:
 #
 #   podman compose -f compose.test.yaml up -d --wait
-#   DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_test \
+#   DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
 #     cargo test --test mod -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
 #
@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: loco
       # Matches config/test.yaml, so a bare `cargo test -- --ignored`
       # finds its database.
-      POSTGRES_DB: project_portfolio_management_service_test
+      POSTGRES_DB: project_portfolio_management_test
     ports:
       # Override to run two services' databases side by side:
       #   TEST_DB_PORT=5433 podman compose -f compose.test.yaml up -d
@@ -44,7 +44,7 @@ services:
     healthcheck:
       # `up --wait` waits on this, so a test run cannot start
       # against a database that is still initializing.
-      test: ["CMD-SHELL", "pg_isready -U loco -d project_portfolio_management_service_test"]
+      test: ["CMD-SHELL", "pg_isready -U loco -d project_portfolio_management_test"]
       interval: 2s
       timeout: 3s
       retries: 30

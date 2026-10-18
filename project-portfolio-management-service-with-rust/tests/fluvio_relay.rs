@@ -29,11 +29,11 @@
 #![cfg(feature = "fluvio")]
 
 use loco_rs::testing::prelude::*;
+use project_portfolio_management::app::App;
+use project_portfolio_management::models::_entities::event_outbox;
+use project_portfolio_management::relay::{self, FluvioSink};
+use project_portfolio_management::streaming;
 use project_portfolio_management_matcher::Plan;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::models::_entities::event_outbox;
-use project_portfolio_management_service::relay::{self, FluvioSink};
-use project_portfolio_management_service::streaming;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serial_test::serial;
 

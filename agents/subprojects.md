@@ -59,7 +59,7 @@ cargo run                    # demo binary (not SemVer surface)
 
 # Service — needs PostgreSQL; port 5150
 cd project-portfolio-management-service-with-rust
-export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_service_development
+export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo loco start             # migrations auto-run in development
 cargo test --lib             # DB-free unit tests
 cargo test --test matching   # DB-free embedding tests

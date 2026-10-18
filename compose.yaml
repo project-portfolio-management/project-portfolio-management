@@ -127,7 +127,7 @@ services:
   migrate:
     build: *api-build
     image: project-portfolio-management-service:local
-    command: ["/app/project-portfolio-management-service", "db", "migrate"]
+    command: ["/app/project-portfolio-management", "db", "migrate"]
     environment: *api-environment
     depends_on:
       postgres:

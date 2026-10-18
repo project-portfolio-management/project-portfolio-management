@@ -42,7 +42,7 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use project_portfolio_management_service::auth;
+use project_portfolio_management::auth;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use testcontainers::core::{IntoContainerPort, WaitFor};

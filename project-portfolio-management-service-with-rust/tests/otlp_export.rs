@@ -19,7 +19,7 @@ use opentelemetry::metrics::MeterProvider as _;
 use opentelemetry::trace::TracerProvider as _;
 use tracing_subscriber::layer::SubscriberExt;
 
-use project_portfolio_management_service::observability::{
+use project_portfolio_management::observability::{
     TelemetryConfig, build_meter_provider, build_tracer_provider,
 };
 

@@ -16,7 +16,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -136,7 +136,7 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
 
         // Audited like an export, even the zero-row run.
         {
-            use project_portfolio_management_service::models::_entities::audit_logs;
+            use project_portfolio_management::models::_entities::audit_logs;
             use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
             let rows = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("report_run_scheduled")).all(&ctx.db).await.unwrap();
             assert_eq!(rows.len(), 2);
@@ -158,7 +158,7 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
         // A deleted report fails the run, records why, and does not loop.
         request.delete(&format!("/api/reports/{none}")).add_header(mk.clone(), mv.clone()).await.assert_status_ok();
         {
-            use project_portfolio_management_service::models::_entities::report_schedules;
+            use project_portfolio_management::models::_entities::report_schedules;
             use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, sea_query::Expr};
             report_schedules::Entity::update_many()
                 .col_expr(report_schedules::Column::NextRunDate, Expr::value(chrono::NaiveDate::from_ymd_opt(2026, 9, 1).unwrap()))

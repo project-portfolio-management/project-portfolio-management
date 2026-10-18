@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
+use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 use tracing_subscriber::layer::{Context, Layer, SubscriberExt};

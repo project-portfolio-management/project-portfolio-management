@@ -8,8 +8,8 @@
 
 use axum::body::Bytes;
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::models::_entities::audit_logs;
+use project_portfolio_management::app::App;
+use project_portfolio_management::models::_entities::audit_logs;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -334,7 +334,7 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
         assert!(jobs.as_array().unwrap().len() >= 5);
 
         // The sweep deletes an expired artifact's file and leaves its row.
-        use project_portfolio_management_service::models::_entities::artifacts;
+        use project_portfolio_management::models::_entities::artifacts;
         use sea_orm::{ActiveModelTrait, ActiveValue};
         let one = artifacts::Entity::find()
             .one(&ctx.db)
@@ -346,7 +346,7 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
             (chrono::Utc::now() - chrono::Duration::hours(1)).into(),
         ));
         let expired = a.update(&ctx.db).await.unwrap();
-        let swept = project_portfolio_management_service::controllers::bulk::run_sweep(&ctx)
+        let swept = project_portfolio_management::controllers::bulk::run_sweep(&ctx)
             .await
             .unwrap();
         assert!(swept["artifacts_deleted"].as_u64().unwrap() >= 1);
@@ -368,8 +368,8 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_back() {
-    use project_portfolio_management_service::controllers::bulk::run_job;
-    use project_portfolio_management_service::models::_entities::bulk_jobs;
+    use project_portfolio_management::controllers::bulk::run_job;
+    use project_portfolio_management::models::_entities::bulk_jobs;
     use sea_orm::{ActiveModelTrait, ActiveValue, ConnectionTrait};
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");

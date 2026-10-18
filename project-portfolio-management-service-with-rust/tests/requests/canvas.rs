@@ -7,8 +7,8 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use loco_rs::testing::prelude::*;
-use project_portfolio_management_service::app::App;
-use project_portfolio_management_service::models::_entities::audit_logs;
+use project_portfolio_management::app::App;
+use project_portfolio_management::models::_entities::audit_logs;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -239,14 +239,20 @@ async fn deleting_a_canvas_soft_deletes_its_items() {
             .delete(&format!("/api/canvases/{c}"))
             .await
             .assert_status_ok();
-        assert_eq!(request.get(&format!("/api/canvases/{c}")).await.status_code(), 404);
-        let live = project_portfolio_management_service::models::_entities::canvas_items::Entity::find()
+        assert_eq!(
+            request
+                .get(&format!("/api/canvases/{c}"))
+                .await
+                .status_code(),
+            404
+        );
+        let live = project_portfolio_management::models::_entities::canvas_items::Entity::find()
             .filter(
-                project_portfolio_management_service::models::_entities::canvas_items::Column::CanvasPid
+                project_portfolio_management::models::_entities::canvas_items::Column::CanvasPid
                     .eq(uuid::Uuid::parse_str(&c).unwrap()),
             )
             .filter(
-                project_portfolio_management_service::models::_entities::canvas_items::Column::DeletedAt
+                project_portfolio_management::models::_entities::canvas_items::Column::DeletedAt
                     .is_null(),
             )
             .all(&ctx.db)

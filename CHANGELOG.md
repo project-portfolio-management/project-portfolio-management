@@ -21,8 +21,8 @@ workflow yet. Dates are 2026.
   transition; blocked time is reported by reason, with `unrecorded` for moves that gave none. Verified: lint, unit
   tests (the split sums to the total; the validation rule), the full database suite (173). Not done: no screen or
   bulk-move path captures the reason (only the single-task move does), existing and imported transitions have none, the
-  plan-level analysis and the aging view carry the split only through the finding text, and a request test cannot show
-  a non-empty split because the clock does not advance within a test.
+  plan-level analysis and the aging view carry the split only through the finding text, and a request test cannot pin
+  a non-empty split because test time is too short and varies by machine (CI first failed on that assumption; fixed in the next commit).
 
 - **Goals sub-resource (FR-12).** The last "no goals sub-resource" gap: `/api/plans/{pid}/goals` (list, add) and
   `/goals/{index}` (replace, delete, plus a POST delete twin). Goals are addressed by position because `Goal` has no

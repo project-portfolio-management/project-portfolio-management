@@ -674,10 +674,21 @@ async fn a_blocked_reason_is_recorded_on_the_move_and_checked() {
 
         // The analysis reports blocked time by reason.
         let analysis: Value = request.get(&format!("{path}/time-analysis")).await.json();
-        // The move and the read happen within a millisecond or so, so no
-        // blocked time has accrued to split; the split itself is pinned by
-        // the unit test `blocked_time_is_split_by_the_reason_given…`.
-        assert_eq!(analysis["analysis"]["blocked_by_reason"], json!({}));
+        // How much blocked time has accrued by now depends on the machine
+        // (none on a fast one, a few milliseconds on a slow one), so assert
+        // what always holds: whatever accrued is under the given reason and
+        // the parts sum to the whole. The split with real durations is
+        // pinned by the unit test `blocked_time_is_split_by_the_reason_given…`.
+        let a = &analysis["analysis"];
+        let parts = a["blocked_by_reason"]
+            .as_object()
+            .expect("blocked_by_reason");
+        assert!(
+            parts.keys().all(|k| k == "external_dependency"),
+            "{parts:?}"
+        );
+        let sum: i64 = parts.values().filter_map(Value::as_i64).sum();
+        assert_eq!(Some(sum), a["blocked_time_ms"].as_i64());
     })
     .await;
 }

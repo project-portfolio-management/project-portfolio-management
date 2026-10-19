@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Redis in the test compose file.** `compose.test.yaml` now starts Redis 7 (alpine) beside Postgres: 127.0.0.1 only,
+  port 6379 (`TEST_REDIS_PORT`), password `loco`, nothing saved to disk, 64 MB with LRU eviction. Checked with Podman:
+  both containers report healthy, `PING` answers `PONG` with the password and `NOAUTH` without. Not done: the tests
+  still use the in-memory cache (`config/test.yaml`), so nothing exercises the Redis cache provider automatically, and
+  CI is unchanged (its `api-db` job does not start Redis). The root `compose.yaml` already had Redis.
+
 - **Matcher bumped to 0.2.1, ready to publish (not published).** crates.io already holds a 0.2.0 built from the
   `main-x-service` copy of the source, which differs from this repository's code. Compared with it, the only public-API
   difference is the new `MatchConfig::validated`, so this repository's code is 0.2.1. Tests (63 unit, 7 property, 10

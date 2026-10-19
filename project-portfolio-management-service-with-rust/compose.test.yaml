@@ -1,4 +1,4 @@
-# Postgres for this service's DB-gated test suite.
+# Postgres (and Redis) for this service's DB-gated test suite.
 #
 # From this crate's directory:
 #
@@ -6,6 +6,12 @@
 #   DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
 #     cargo test --test mod -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
+#
+# Redis (the production cache provider) is started with Postgres, on 127.0.0.1:6379 with the password `loco`
+# (override the port with TEST_REDIS_PORT). The tests keep the in-memory cache (config/test.yaml) and do not
+# need it; it is there to run the service against Redis by hand:
+#
+#   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:loco@127.0.0.1:6379/0 LOCO_ENV=production ...
 #
 # The file is plain Compose spec.
 #
@@ -49,3 +55,17 @@ services:
       timeout: 3s
       retries: 30
       start_period: 5s
+
+  # The production cache provider, for running the service against Redis locally. Throwaway: nothing is
+  # saved to disk. Bound to the loopback address only.
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: mxi-project-portfolio-management-test-redis
+    command: ["redis-server", "--requirepass", "loco", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:${TEST_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a loco --no-auth-warning ping | grep -q PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

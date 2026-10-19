@@ -3,7 +3,11 @@ name = "project-portfolio-management-migration"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.96"
-publish = false
+description = "Database migrations for the project portfolio management service (sea-orm-migration on loco-rs)"
+license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
+repository = "https://github.com/project-portfolio-management/project-portfolio-management"
+keywords = ["portfolio", "project", "migration", "database"]
+categories = ["database"]
 
 [lib]
 name = "project_portfolio_management_migration"

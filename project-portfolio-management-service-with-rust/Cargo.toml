@@ -62,7 +62,7 @@ regex = { version = "1.13" }
 # Embedded full-text search index (see src/search/). Same version as the
 # rest of the family, so one index format.
 tantivy = { version = "0.26" }
-project-portfolio-management-migration = { path = "migration" }
+project-portfolio-management-migration = { version = "0.1.0", path = "migration" }
 sea-orm = { version = "2.0", features = [
   "sqlx-sqlite",
   "sqlx-postgres",

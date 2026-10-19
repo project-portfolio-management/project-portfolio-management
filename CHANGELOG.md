@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Migration crate published.** `project-portfolio-management-migration` 0.1.0 is on crates.io (description, licence,
+  repository and keywords added; `publish = false` removed). The service keeps `version = "0.1.0"` beside its `path`, so
+  local builds use the directory and a packaged service would use crates.io. Not verified: the database tests after
+  this change. `cargo package` on the service still fails on one thing: `integrity-mac` (git, no version, unpublished).
+  A published crate cannot be deleted, only yanked.
+
 - **Service uses the published matcher.** `project-portfolio-management-matcher = "0.2.0"` from crates.io replaces the path
   dependency; the Dockerfile no longer copies the matcher directory. Build, clippy `-D warnings` and the 1,030 library
   tests pass against 0.2.0. Not verified: the database tests, the container build (`podman build`), and whether the

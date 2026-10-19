@@ -18,3 +18,4 @@ dist/
 # Local config overrides.
 **/config/local.yaml
 **/config/*.local.yaml
+chaos-report.json

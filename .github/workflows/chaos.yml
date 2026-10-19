@@ -1,0 +1,57 @@
+# Chaos test: random faults (database paused, every connection dropped, the service killed) under a mixed
+# workload, then a check that acknowledged writes survived and the service recovered. See
+# scripts/chaos-test.mjs for exactly what it breaks, what it checks, and what it does not cover.
+#
+# Weekly and on demand, not on every push: it takes minutes and timing-dependent tests flake on shared runners,
+# so a red run here is a prompt to read the report, not a merge gate. It is deliberately not part of `ci-ok`.
+name: Chaos
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: How long to inject faults
+        default: "120"
+      seed:
+        description: Random seed (empty for a fresh one)
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  chaos:
+    name: Chaos (database and service faults)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: project-portfolio-management-service-with-rust
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Run the chaos test
+        env:
+          RUNTIME: docker
+          TEST_DB_PORT: "5432"
+          CHAOS_REPORT: chaos-report.json
+          SECONDS_TO_RUN: ${{ inputs.seconds || '120' }}
+          SEED: ${{ inputs.seed }}
+        run: |
+          set -euo pipefail
+          seed_args=""
+          if [ -n "$SEED" ]; then seed_args="--seed $SEED"; fi
+          # shellcheck disable=SC2086
+          scripts/chaos-test.sh --seconds "$SECONDS_TO_RUN" $seed_args | tee "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: chaos-report
+          path: chaos-report.json
+          if-no-files-found: ignore

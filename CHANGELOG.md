@@ -17,6 +17,18 @@ workflow yet. Dates are 2026.
 
 ### 19 October
 
+- **Chaos test.** `scripts/chaos-test.sh` (and `chaos-test.mjs`) runs the real service against the real test Postgres
+  under a mixed workload (plans, goals, reads) while a seeded monkey pauses the database, drops every client
+  connection, and kill -9s the service. It checks: the service is healthy again within 30 s of each fault and never
+  exits on its own; every response is a success or a clean 5xx (no panics, no non-JSON errors, no wrong 4xx);
+  every acknowledged plan and goal is still there afterwards, goals in order; and a listing is fast after the last
+  fault. `--self-test` removes a plan behind the service's back and passes only if the check notices. A new
+  `chaos.yml` workflow runs it weekly and on demand; it is not part of `ci-ok`. Ran locally: 40 s at seed 7 (8 faults,
+  no violations) and the self-test. Not covered: a Postgres crash (the test database is in RAM, so a restart would
+  empty it), full disk, network partitions, clock jumps, Redis (the `container-dev` profile uses the in-memory
+  cache), several replicas, and the UI. Reads, goals and plan creation are the only operations in the workload. The
+  workflow has not run on GitHub yet, and timing-dependent runs can flake there.
+
 - **Blocked-reason vocabulary.** A move into `blocked` can say why (five fixed reasons, chosen with you), stored on the
   transition; blocked time is reported by reason, with `unrecorded` for moves that gave none. Verified: lint, unit
   tests (the split sums to the total; the validation rule), the full database suite (173). Not done: no screen or

@@ -17,6 +17,17 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Container file aligned with the crate.** The `Dockerfile` drops `git` from the builder (no git dependencies remain),
+  takes `--build-arg VERSION` and fails the build unless it equals the crate's `version` in `Cargo.toml`, and labels the
+  image (`org.opencontainers.image.version`, `title`, `description`, `source`, `licenses`, `revision`). The release
+  workflow passes `VERSION` (the tag's version, already checked against the crate and the UI) and `REVISION`
+  (the commit). Checked: a wrong `VERSION` (9.9.9) fails at that step with the message, and a correct `VERSION=0.1.0` passes that step
+  and the release compile finishes (3 min 17 s). The image itself was NOT produced: committing the build layer
+  failed with "no space left on device" in the shared Podman machine, so the labels and the runtime stage are untested
+  (CI's container job builds the image and will test the Dockerfile as a whole, but passes no `VERSION`). Not done: the build source is still the repository checkout, so the image is not
+  built from the published crate (that package has no `config/` files), the file is still called `Dockerfile`, and no
+  `v0.1.0` tag has been pushed, so the release workflow's use of `VERSION` has not run.
+
 - **Matcher 0.2.1 published; the service uses it.** `project-portfolio-management-matcher` 0.2.1 (this repository's
   code) is on crates.io and the service now depends on `0.2.1` instead of 0.2.0. Service clippy `-D warnings`, 1,030
   library tests, the matching test binary and `cargo deny check` pass. Not verified: the database test run against

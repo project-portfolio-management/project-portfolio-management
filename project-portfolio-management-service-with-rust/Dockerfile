@@ -10,13 +10,17 @@
 # Every dependency now comes from crates.io (no git dependencies), so the build
 # needs network access to the registry and `ca-certificates`.
 #
+# Version: pass `--build-arg VERSION=<x.y.z>` (the release workflow does, from the tag) and the build fails
+# unless it equals the crate's `version` in Cargo.toml, and the image is labelled with it
+# (org.opencontainers.image.version). Without the argument no version label is set. `REVISION` (the git
+# commit) is optional and sets the revision label.
+#
 # Toolchain: the base image tag below must equal `channel` in the root
 # rust-toolchain.toml; the first RUN step fails the build if they drift.
 
 FROM docker.io/library/rust:1.99.1-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
         ca-certificates \
         pkg-config \
         libssl-dev \
@@ -45,6 +49,12 @@ COPY project-portfolio-management-service-with-rust/benches project-portfolio-ma
 
 WORKDIR /app/project-portfolio-management-service-with-rust
 
+# The crate's version, read from Cargo.toml; a VERSION build argument must agree with it.
+ARG VERSION=""
+RUN crate="$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)" \
+    && echo "crate version ${crate}, VERSION argument '${VERSION}'" \
+    && { [ -z "${VERSION}" ] || [ "${VERSION}" = "${crate}" ]; }
+
 # Migrations are compiled into the binary, so the runtime stage needs no loose
 # migration files; the same binary runs them (`... db migrate`). Default
 # features plus CARGO_FEATURES below.
@@ -57,6 +67,15 @@ RUN cargo build --release --locked --features "${CARGO_FEATURES}" --bin project-
 
 # ---- runtime ---------------------------------------------------------------
 FROM docker.io/library/debian:13-slim
+
+ARG VERSION=""
+ARG REVISION=""
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.title="project-portfolio-management" \
+      org.opencontainers.image.description="Project portfolio management service (loco.rs REST API, PostgreSQL)" \
+      org.opencontainers.image.source="https://github.com/project-portfolio-management/project-portfolio-management" \
+      org.opencontainers.image.licenses="MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only" \
+      org.opencontainers.image.revision="${REVISION}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq5 \

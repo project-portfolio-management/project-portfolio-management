@@ -5349,9 +5349,9 @@ dependencies = [
 
 [[package]]
 name = "project-portfolio-management-matcher"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec077b4830fd16a4f71de10bae2ce6f2ee57343475b3ed84b8c32f3c3faeb103"
+checksum = "3abc2ee10e77f29b62b610f5591e3ecabe714cab77f5e45a5234d936e53421c2"
 dependencies = [
  "mimalloc",
  "serde",

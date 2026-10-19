@@ -17,6 +17,11 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Matcher 0.2.1 published; the service uses it.** `project-portfolio-management-matcher` 0.2.1 (this repository's
+  code) is on crates.io and the service now depends on `0.2.1` instead of 0.2.0. Service clippy `-D warnings`, 1,030
+  library tests, the matching test binary and `cargo deny check` pass. Not verified: the database test run against
+  0.2.1 (read CI), and the container build. A published version cannot be deleted, only yanked.
+
 - **Service and interface versions reset to 0.1.0.** `Cargo.toml` and the interface's `package.json` are 0.1.0 (they
   must agree for a release), with the version in `AGENTS.md`, `llms.json` and the status page updated. A number lower
   than the released `v0.4.0` is unusual: the `v0.4.0` tag and GitHub release (and its container image) still exist and

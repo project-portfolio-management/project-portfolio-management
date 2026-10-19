@@ -1,4 +1,4 @@
-//! The plan matcher — pairwise plan record matching.
+//! `project-portfolio-management-matcher` — pairwise plan record matching.
 //!
 //! A *plan* is a named unit of intended work in a portfolio /
 //! project-management registry, forming one recursive tree: any work
@@ -31,7 +31,7 @@
 //! ## Usage
 //!
 //! ```
-//! use project_portfolio_management::matcher::{Plan, MatchConfig, MatchingEngine};
+//! use project_portfolio_management_matcher::{Plan, MatchConfig, MatchingEngine};
 //!
 //! let engine = MatchingEngine::new(MatchConfig::default());
 //! let a = Plan::new("Apollo platform migration");
@@ -51,15 +51,28 @@
 //! ## The caller must bound array sizes
 //!
 //! `goals`, `keywords`, `relationships`, and `tags` are each compared by
-//! Jaccard over every element (`engine.rs`), an **unbounded O(n·m)**
-//! operation — this module has no length cap of its own on any of the
+//! Jaccard over every element (`matcher.rs`), an **unbounded O(n·m)**
+//! operation — this crate has no length cap of its own on any of the
 //! four fields (unlike `Plan`'s consuming service, which validates
-//! every payload before it ever reaches a matcher). Any new caller that accepts
-//! these fields from untrusted input must cap array length and per-entry
+//! every payload before it ever reaches a matcher). A standalone
+//! integrator (this crate is documented as usable outside
+//! `project-portfolio-management-service`) that accepts any of these
+//! fields from untrusted input must cap array length and per-entry
 //! length itself before calling [`MatchingEngine::match_plans`] — an
 //! unbounded caller-supplied array is a denial-of-service vector
-//! (`agents/share/security.md` invariant 3). The service's `src/validation.rs`
-//! (`MAX_ARRAY_LEN` = 256, `MAX_ITEM_LEN` = 512) is the reference cap.
+//! (`agents/share/security.md` invariant 3).
+//! `project-portfolio-management-service`'s `src/validation.rs`
+//! (`MAX_ARRAY_LEN` = 256, `MAX_ITEM_LEN` = 512) is the reference cap
+//! to copy.
+
+// Always start with high quality coding conventions.
+#![forbid(unsafe_code)] // pure library: no `unsafe` is ever needed.
+#![deny(missing_docs)] // every public item must carry a doc comment.
+#![warn(clippy::pedantic)]
+// opt in to Clippy's stricter lint set.
+// Rust 1.99 clippy flags `assert!(x.is_empty())` in tests and suggests `assert_eq!(x, [] as [T; 0])`, which reads
+// worse, so it is allowed in test builds only.
+#![cfg_attr(test, allow(clippy::assert_is_empty))]
 
 // ─── Modules ─────────────────────────────────────────────────────────
 // One concern per module; `lib.rs` re-exports the stable surface below so
@@ -68,10 +81,10 @@
 /// Tunable weights, timeframe σ, and threshold for the probabilistic
 /// strategy.
 pub mod config;
-/// The [`MatchingEngine`] entry point and the matching algorithm.
-pub mod engine;
 /// Crate error type and its [`Result`] alias.
 pub mod error;
+/// The [`MatchingEngine`] entry point and the matching algorithm.
+pub mod matcher;
 /// Input normalization helpers (fold / code / URL / set / ISO date).
 pub mod normalize;
 /// Soundex phonetic encoder backing the name-component bonus.
@@ -86,8 +99,8 @@ pub mod scoring;
 // crates should name; the module layout above is free to evolve.
 
 pub use config::MatchConfig;
-pub use engine::MatchingEngine;
 pub use error::{Error, Result};
+pub use matcher::MatchingEngine;
 pub use plan::{
     Goal, GoalStatus, IdentifierScheme, Plan, PlanIdentifier, PlanKind, PlanPhase,
     PlanRelationship, PlanStatus, RelationKind,

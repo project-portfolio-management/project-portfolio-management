@@ -1,4 +1,4 @@
-# Normalization — Plan matcher
+# Normalization — project-portfolio-management-matcher
 
 All in `src/normalize.rs`. Pure, deterministic, diacritic-preserving.
 

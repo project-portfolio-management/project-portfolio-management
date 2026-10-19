@@ -1,6 +1,6 @@
 // Types mirroring the Portfolio Service payload, which is the
 // `project_portfolio_management_matcher::Plan` shape itself.
-// Source of truth: project-portfolio-management-service-with-rust/src/matcher/plan.rs.
+// Source of truth: project-portfolio-management-matcher-with-rust/src/plan.rs.
 //
 // The service now exposes ONE recursive `/api/plans` collection: a plan may
 // contain any other plan (via `parent_ref`), and `kind` is only an optional

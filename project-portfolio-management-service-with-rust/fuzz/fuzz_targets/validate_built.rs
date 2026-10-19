@@ -18,7 +18,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use project_portfolio_management::matcher::{Goal, IdentifierScheme, Plan, PlanIdentifier};
+use project_portfolio_management_matcher::{Goal, IdentifierScheme, Plan, PlanIdentifier};
 use project_portfolio_management::validation;
 
 /// Ceiling on the problem count — see `validate_json` for the derivation.

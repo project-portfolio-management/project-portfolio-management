@@ -13,11 +13,11 @@
 
 use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::matcher::Plan;
 use project_portfolio_management::models::_entities::{event_outbox, plans};
 use project_portfolio_management::models::event_outbox::OutboxInsert;
 use project_portfolio_management::models::plans::Model as PlanModel;
 use project_portfolio_management::streaming::{ENTITY, Envelope, EventKind, SCHEMA_VERSION};
+use project_portfolio_management_matcher::Plan;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, TransactionTrait};
 use serial_test::serial;
 use uuid::Uuid;

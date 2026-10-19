@@ -1,19 +1,19 @@
 //! Plan CRUD + matching endpoints over the single recursive `plans`
 //! collection.
 //!
-//! The API DTO is `crate::matcher::Plan` itself — the service
+//! The API DTO is `project_portfolio_management_matcher::Plan` itself — the service
 //! stores it verbatim (as JSONB) and matches with the canonical
-//! `matcher` module engine, so there is no separate model or adapter
+//! `project-portfolio-management-matcher` engine, so there is no separate model or adapter
 //! to drift. The former kinds (Portfolio / Project / Product / Program /
 //! Practice / Process / Purpose / Pathway) were unified into one
 //! recursive tree: any plan may contain
 //! any other via `parent_ref`, `kind` is an optional descriptive label,
 //! and matching is not gated by kind.
 
-use crate::matcher::{MatchConfig, MatchingEngine, Plan, PlanKind};
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
+use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan, PlanKind};
 use serde::{Deserialize, Serialize};
 
 use crate::auth::{AuthUser, MaybeAuthUser};
@@ -952,7 +952,7 @@ pub fn routes() -> Routes {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matcher::Plan;
+    use project_portfolio_management_matcher::Plan;
 
     /// Pins the validation status: a blank name is `422`.
     #[test]

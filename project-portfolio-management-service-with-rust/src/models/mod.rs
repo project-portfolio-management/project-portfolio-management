@@ -1,5 +1,5 @@
 //! Domain models: the `SeaORM` entity and CRUD helpers over the stored
-//! `crate::matcher::Plan` payload.
+//! `project_portfolio_management_matcher::Plan` payload.
 
 pub mod _entities;
 pub mod audit_logs;

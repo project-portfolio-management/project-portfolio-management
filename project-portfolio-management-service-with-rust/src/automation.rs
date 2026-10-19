@@ -364,7 +364,7 @@ pub fn validate_trigger(
         // other would reject every legitimate rule.
         for (field, phase) in [("from_status", from_status), ("to_status", to_status)] {
             if let Some(phase) = phase
-                && crate::matcher::PlanPhase::parse(phase).is_none()
+                && project_portfolio_management_matcher::PlanPhase::parse(phase).is_none()
             {
                 return Err(format!(
                     "{field} must be a project phase (initiating, planning, executing, \

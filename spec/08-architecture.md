@@ -26,9 +26,9 @@
 |  controllers/bulk.rs         import/export jobs (bg_pg)        |
 |  models/plans.rs + sub-resources                              |
 +--------------+-------------------------------+----------------+
-               |  module of the same crate     |
+               |  path dependency (Cargo)      |
 +--------------v---------------+  +------------v---------------+
-|  plan matcher (src/matcher/)                      |  |  PostgreSQL (SeaORM 1.1)   |
+|  project-portfolio-management-matcher           |  |  PostgreSQL (SeaORM 1.1)   |
 |  pure library, no IO         |  |  plans ({…, data JSONB}) +  |
 |  MatchingEngine ·            |  |  goals(via JSONB) · tasks · |
 |  MatchConfig · Plan ·        |  |  issues · audit_logs ·      |
@@ -38,9 +38,10 @@
 ```
 
 Dependency direction is strictly downward: front-end → service →
-matcher. The matcher depends on nothing else in the service (serde,
+matcher. The matcher depends on nothing in the workspace (serde,
 strsim, unicode-normalization, chrono/time for date proximity,
-thiserror only). It is the `matcher` module of the service crate (it was a separate crate; version 0.2.0 of that crate remains on crates.io), and the service
+thiserror only). The service declares
+`project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-with-rust" }` and
 uses the matcher's `Plan` directly as its API DTO for the thin
 record — there is no adapter layer (the care-pathway posture).
 

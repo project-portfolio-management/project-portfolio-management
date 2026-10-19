@@ -15,10 +15,10 @@
 //!   deliberate — refusing writes on the basis of a phase teaches
 //!   operators to misreport it.
 
-use crate::matcher::PlanPhase;
 use axum::http::{HeaderMap, StatusCode};
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
+use project_portfolio_management_matcher::PlanPhase;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;

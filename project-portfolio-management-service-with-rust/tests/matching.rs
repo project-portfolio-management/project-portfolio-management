@@ -1,13 +1,13 @@
-//! DB-free tests: the service embeds `matcher` module directly and
+//! DB-free tests: the service embeds `project-portfolio-management-matcher` directly and
 //! persists `Plan` as JSON, so both the matcher contract (one unified
 //! recursive collection, no kind gate) and the storage round-trip can be
 //! checked without a database.
 
-use project_portfolio_management::matcher::{
+use project_portfolio_management_matcher::{
     IdentifierScheme, MatchingEngine, Plan, PlanIdentifier, PlanKind,
 };
 
-/// Pins that the service uses the canonical `matcher` module engine,
+/// Pins that the service uses the canonical `project-portfolio-management-matcher` engine,
 /// not a fork: two same-kind plans sharing a Jira project key hit
 /// the deterministic short-circuit and score exactly `1.0`.
 #[test]

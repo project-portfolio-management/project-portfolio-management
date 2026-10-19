@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::matcher::error::{Error, Result};
+use crate::error::{Error, Result};
 
 /// Per-component weights, the timeframe Gaussian width, and the
 /// probable-match threshold.
@@ -84,7 +84,7 @@ impl MatchConfig {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management::matcher::MatchConfig;
+    /// use project_portfolio_management_matcher::MatchConfig;
     ///
     /// assert_eq!(MatchConfig::strict().threshold, 0.95);
     /// ```
@@ -101,7 +101,7 @@ impl MatchConfig {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management::matcher::MatchConfig;
+    /// use project_portfolio_management_matcher::MatchConfig;
     ///
     /// assert_eq!(MatchConfig::lenient().threshold, 0.70);
     /// ```
@@ -129,7 +129,7 @@ impl MatchConfig {
     /// quietly substituting a different value than the one they set.
     /// Every weight, by contrast, has no such internal fallback: an
     /// unchecked negative or non-finite weight reaching
-    /// [`crate::matcher::scoring::weighted_average`] can push the returned score
+    /// [`crate::scoring::weighted_average`] can push the returned score
     /// outside `[0.0, 1.0]` or produce `NaN`, breaking the crate's own
     /// "scores stay bounded and finite" invariant (spec §19/§24) and
     /// the [`crate::Confidence`] banding built on it. Same shape as the

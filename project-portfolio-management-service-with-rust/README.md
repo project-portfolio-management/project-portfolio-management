@@ -2,7 +2,7 @@
 
 A registry of **plan** records — and a project-management tool —
 built on **loco.rs** and embedding the canonical
-[plan matcher](agents/matcher/README.md) (its `src/matcher/` module).
+[project-portfolio-management-matcher](../project-portfolio-management-matcher-with-rust).
 
 A *plan* is a matchable identity in one recursive collection. Its `kind`
 — **Portfolio**, **Project**, **Product**, **Program**, **Practice**,

@@ -1,11 +1,12 @@
 # AGENTS.md — Project Portfolio Management
 
-Entry point for AI coding agents at the repository root. Two projects live here; each has its own, longer
+Entry point for AI coding agents at the repository root. Three projects live here; each has its own, longer
 `AGENTS.md`. [`llms.txt`](llms.txt) and [`llms.json`](llms.json) list every document.
 
 | Project | Directory | Guide |
 | --- | --- | --- |
-| Service (loco.rs REST API, PostgreSQL; the plan matcher is its `src/matcher/` module) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
+| Service (loco.rs REST API, PostgreSQL) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
+| Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 2, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
 Version 0.4.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
@@ -25,7 +26,7 @@ Version 0.4.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum support
 ## Gates
 
 ```bash
-# service (includes the matcher)
+# service and matcher
 cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib
 # database tests need Postgres 18: podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
 #   then DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
@@ -36,7 +37,7 @@ cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest r
 ## Things that are easy to get wrong
 
 - The crate is `project-portfolio-management`, the binary the same, the migration crate
-  `project-portfolio-management-migration`; the matcher is a module of the service (`src/matcher/`), no longer a crate of its own; the directories keep their `-service-with-rust` names.
+  `project-portfolio-management-migration`; the directories keep their `-service-with-rust` names.
 - The UI wraps one table component (`DataTable`) and Lily widgets (`@lilydesignsystem/*`); there is no SVAR.
   Computed styles use Svelte's `style:` directive, never a `style="…"` attribute (the CSP blocks those).
 - `axum-test` and `jsonwebtoken` follow `loco-rs`; do not bump them alone. `dtolnay/rust-toolchain` is bumped by hand

@@ -1,4 +1,4 @@
-# Testing — Plan matcher
+# Testing — project-portfolio-management-matcher
 
 ## Unit tests
 
@@ -16,7 +16,7 @@ Embedded in `#[cfg(test)] mod tests` blocks per source file. Run with
 
 ## Integration tests
 
-[`tests/public_api.rs`](../../tests/matcher_public_api.rs) drives only the
+[`tests/public_api.rs`](../tests/public_api.rs) drives only the
 re-exported surface (`use project_portfolio_management_matcher::…`): that `kind` does not
 gate (differing kinds still match), R-0 for every deterministic scheme,
 owner-scoped/`Custom` NOT short-circuiting, R-1 code, R-2 `same_as`,
@@ -26,7 +26,7 @@ renormalization, threshold presets, the one-to-many surface, and
 
 ## Property-based tests (SEC-M6)
 
-[`tests/property_tests.rs`](../../tests/matcher_properties.rs) uses `proptest`
+[`tests/property_tests.rs`](../tests/property_tests.rs) uses `proptest`
 (dev-dependency) to prove invariants over arbitrary, not just
 hand-picked, input: `score_is_finite_and_bounded` (never `NaN`, always
 `[0.0, 1.0]`); `matching_is_symmetric_same_kind`; `different_kinds_are_not_gated`
@@ -38,13 +38,13 @@ SEC-M4 fix in `normalize::iso_date_to_days`). Run
 
 ## Fuzzing (SEC-I2)
 
-[`fuzz/`](../../fuzz/) is a standalone `cargo-fuzz` crate (not a workspace
+[`fuzz/`](../fuzz/) is a standalone `cargo-fuzz` crate (not a workspace
 member — never affects the normal stable build/test/clippy) with two
 coverage-guided libFuzzer targets: `match_plans` (deserialize →
 `MatchingEngine::match_plans`, finite score in `[0,1]`, both argument
 orders) and `normalize` (the pure `normalize` free functions,
 never-panic). Requires nightly + `cargo-fuzz`; see
-[`fuzz/README.md`](fuzzing.md). Not run by the stable `cargo
+[`fuzz/README.md`](../fuzz/README.md). Not run by the stable `cargo
 test` gate below.
 
 ## Gate

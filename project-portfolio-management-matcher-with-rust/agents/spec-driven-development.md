@@ -1,7 +1,7 @@
 # Spec-Driven Development — Agent Guide
 
 This crate practises **spec-driven development**: the specification
-([`../spec/index.md`](../../spec/matcher.md)) is the canonical artefact. Code conforms
+([`../spec/index.md`](../spec/index.md)) is the canonical artefact. Code conforms
 to the spec; not the other way around.
 
 ## What That Means In Practice
@@ -18,12 +18,12 @@ to the spec; not the other way around.
   `lib.rs`, `MatchConfig` fields, `MatchResult` / `MatchBreakdown`
   shape, deterministic-identifier scheme list), update the bridge
   test in
-  [`../project-portfolio-management-service-with-rust/tests/matching.rs`](../../../project-portfolio-management-service-with-rust/tests/matching.rs)
+  [`../project-portfolio-management-service-with-rust/tests/matching.rs`](../../project-portfolio-management-service-with-rust/tests/matching.rs)
   in the same PR.
 
 ## When To Update Which Section
 
-The plan matcher spec (`spec/matcher.md`) uses the §1–§25 matcher shape (distinct
+The project-portfolio-management-matcher spec uses the §1–§25 matcher-crate shape (distinct
 from the §1–§18 shape used by the service crates).
 
 | You're changing… | Update spec section… |

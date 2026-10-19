@@ -1,10 +1,10 @@
-//! `plans` model — CRUD over the stored `crate::matcher::Plan`
+//! `plans` model — CRUD over the stored `project_portfolio_management_matcher::Plan`
 //! payload. All plans live in one recursive collection (one table); the
 //! `kind` column is an optional descriptive label, and `parent_pid` is
 //! the containment link (any plan may contain any other).
 
-use crate::matcher::Plan as MatchPlan;
 use loco_rs::prelude::*;
+use project_portfolio_management_matcher::Plan as MatchPlan;
 use sea_orm::sea_query::Expr;
 use sea_orm::sea_query::extension::postgres::PgExpr;
 use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder, QuerySelect};
@@ -394,7 +394,7 @@ impl ActiveModel {
 #[cfg(test)]
 mod tests {
     use super::{escape_like, kind_of, parent_pid_of};
-    use crate::matcher::{Plan, PlanKind};
+    use project_portfolio_management_matcher::{Plan, PlanKind};
 
     /// Pins the `LIKE` escaping: literal text is unchanged, `%` and `_`
     /// are escaped, and the backslash is escaped first.

@@ -1,9 +1,9 @@
 //! `project-portfolio-management-service` — a loco.rs registry for **plan**
 //! records in one recursive collection, with CRUD + matching.
 //!
-//! The API DTO is `crate::matcher::Plan` itself: the service stores
+//! The API DTO is `project_portfolio_management_matcher::Plan` itself: the service stores
 //! it verbatim (JSONB in the `plans` table) and matches with the
-//! canonical [`crate::matcher`] engine, so there is no separate domain
+//! canonical [`project_portfolio_management_matcher`] engine, so there is no separate domain
 //! model to drift. Every plan lives in one `plans` table; `kind` is an
 //! optional descriptive label and matching is kind-agnostic (there is
 //! no kind gate).
@@ -116,8 +116,6 @@ pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;
 pub mod live;
-/// The plan matcher: the `Plan` model and the pairwise matching engine.
-pub mod matcher;
 pub mod merge;
 pub mod metrics;
 pub mod milestone_signoff;

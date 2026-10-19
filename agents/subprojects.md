@@ -1,6 +1,6 @@
-# Subprojects
+# Subprojects — the Portfolio Trio
 
-One entity, two subprojects (the plan matcher is a module of the service), one capability: a plan registry (an
+One entity, three subprojects, one capability: a plan registry (an
 optional Portfolio / Project / Product / Program / Practice / Process /
 Purpose / Pathway / Proposal `kind` label, recursive containment) with
 explainable duplicate matching **and** a project-management tool with
@@ -8,6 +8,7 @@ operational sub-resources and derived views.
 
 | Subproject | Kind | Responsibility |
 |---|---|---|
+| [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | Rust library (edition 2024, dependency-light) | Pairwise `Plan` comparison: kind-agnostic deterministic short-circuits + weighted probabilistic scoring with per-component breakdown. Owns the canonical `Plan` domain type. |
 | [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | loco.rs 1.2 service (Axum 0.8, SeaORM 2.0, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/merge`; the project-management areas (tasks and sprints, governance, scheduling and critical path, cost, onboarding, approval processes, controlled documents, announcements, …); typed plan links; bulk import/export. `/deduplicate`, goals/issues and `/timeline` are not wired. Stores the matcher type verbatim as JSONB. |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | SvelteKit 2 SPA (Svelte 5 runes, TS strict) | Operator UI: plan list / create / detail / edit / delete / check-duplicates + sub-resource management + timeline / burndown views over the service REST API; a plan detail rolls up its child plans. |
 
@@ -51,7 +52,12 @@ link aggregator's job.
 ## How to run each
 
 ```bash
-# Service — needs PostgreSQL; port 5150. The matcher demo needs none: cargo run --example matcher_demo
+# Matcher — pure library; tests + demo
+cd project-portfolio-management-matcher-with-rust
+cargo test
+cargo run                    # demo binary (not SemVer surface)
+
+# Service — needs PostgreSQL; port 5150
 cd project-portfolio-management-service-with-rust
 export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo loco start             # migrations auto-run in development
@@ -68,13 +74,13 @@ pnpm run check               # svelte-check strict (0/0 expected)
 
 ## Where each subproject's docs live
 
-| Doc | Matcher (inside the service) | Service | Front-end |
+| Doc | Matcher | Service | Front-end |
 |---|---|---|---|
-| Living spec | [spec/index.md](../project-portfolio-management-service-with-rust/spec/matcher.md) (§1–§25) | [spec/index.md](../project-portfolio-management-service-with-rust/spec/index.md) (§1–§18) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) (§1–§18) |
-| Agent guide | [AGENTS.md](../project-portfolio-management-service-with-rust/agents/matcher/AGENTS.md) | [AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) |
-| Detailed guides | [agents/](../project-portfolio-management-service-with-rust/agents/matcher/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
-| User intro | [README.md](../project-portfolio-management-service-with-rust/agents/matcher/README.md) | [README.md](../project-portfolio-management-service-with-rust/README.md) | [README.md](../project-portfolio-management-ui-with-svelte/README.md) |
-| Changelog | [CHANGELOG.md](../project-portfolio-management-service-with-rust/agents/matcher/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-service-with-rust/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-ui-with-svelte/CHANGELOG.md) |
+| Living spec | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) (§1–§25) | [spec/index.md](../project-portfolio-management-service-with-rust/spec/index.md) (§1–§18) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) (§1–§18) |
+| Agent guide | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) |
+| Detailed guides | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (5 files) | — (thin; entity spec §13 T-1) | — (thin) |
+| User intro | [README.md](../project-portfolio-management-matcher-with-rust/README.md) | [README.md](../project-portfolio-management-service-with-rust/README.md) | [README.md](../project-portfolio-management-ui-with-svelte/README.md) |
+| Changelog | [CHANGELOG.md](../project-portfolio-management-matcher-with-rust/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-service-with-rust/CHANGELOG.md) | [CHANGELOG.md](../project-portfolio-management-ui-with-svelte/CHANGELOG.md) |
 
 The entity-level contract between the three lives in
 [`../spec/`](../spec/index.md). Drift between this front-end and its

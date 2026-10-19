@@ -2,7 +2,7 @@
 
 A loco.rs registry of plan records — and a full project-management
 tool: CRUD + matching (embedding the canonical
-plan matcher, `src/matcher/`) over one recursive `plans`
+project-portfolio-management-matcher) over one recursive `plans`
 collection with an **optional** Portfolio / Project / Product / Program
 / Practice / Process / Purpose / Pathway / Proposal kind label, plus the
 governance / visibility / strategy PPM phases, executive insight and
@@ -67,7 +67,7 @@ and oversight views, and integrity verification each have their own
 route group (spec §9.9–§9.15) too large to fit this worked-flow sketch;
 see [AGENTS.md](./AGENTS.md)'s API surface table for the full list.
 
-The `Plan` body shape is the `matcher` module type (optional `kind`
+The `Plan` body shape is the `project-portfolio-management-matcher` type (optional `kind`
 label, name, code, owner org, `parent_ref`, goals, dates, keywords, tags,
 relationships, identifiers, sameAs). All plans live in **one collection
 and table**, and **matching is kind-agnostic** (there is no kind gate, so

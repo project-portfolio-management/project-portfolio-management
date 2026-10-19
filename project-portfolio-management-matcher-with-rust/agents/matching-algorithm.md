@@ -1,4 +1,4 @@
-# Matching algorithm — Plan matcher
+# Matching algorithm — project-portfolio-management-matcher
 
 ## Strategies
 

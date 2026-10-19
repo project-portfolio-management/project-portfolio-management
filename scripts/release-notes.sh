@@ -6,7 +6,7 @@
 # Looks for a heading `## [0.3.0]` (Keep a Changelog style, optionally followed
 # by " - date") in each changelog file given, and prints that section's body up
 # to the next `## ` heading. With no files, searches the crate changelogs:
-# the service first, then the UI. The leading "v" is optional.
+# the API first, then the matcher, then the UI. The leading "v" is optional.
 # Exit 1 if no changelog has the heading or the section is empty.
 set -euo pipefail
 
@@ -22,6 +22,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ "$#" -eq 0 ]; then
   set -- \
     "$root/project-portfolio-management-service-with-rust/CHANGELOG.md" \
+    "$root/project-portfolio-management-matcher-with-rust/CHANGELOG.md" \
     "$root/project-portfolio-management-ui-with-svelte/CHANGELOG.md"
 fi
 

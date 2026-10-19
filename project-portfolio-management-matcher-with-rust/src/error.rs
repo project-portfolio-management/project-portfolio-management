@@ -1,4 +1,4 @@
-//! Error type for the `matcher` module.
+//! Error type for the `project-portfolio-management-matcher` crate.
 
 use thiserror::Error;
 

@@ -13,11 +13,11 @@
 
 use strsim::jaro_winkler;
 
-use crate::matcher::config::MatchConfig;
-use crate::matcher::normalize;
-use crate::matcher::phonetic;
-use crate::matcher::plan::{Plan, PlanRelationship, RelationKind};
-use crate::matcher::scoring::{Confidence, MatchBreakdown, MatchResult, weighted_average};
+use crate::config::MatchConfig;
+use crate::normalize;
+use crate::phonetic;
+use crate::plan::{Plan, PlanRelationship, RelationKind};
+use crate::scoring::{Confidence, MatchBreakdown, MatchResult, weighted_average};
 
 /// Additive Soundex bonus applied to the name component when the two
 /// names share a phonetic code but the raw Jaro-Winkler score is still
@@ -86,7 +86,7 @@ impl MatchingEngine {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management::matcher::{Plan, MatchingEngine};
+    /// use project_portfolio_management_matcher::{Plan, MatchingEngine};
     ///
     /// let engine = MatchingEngine::default_config();
     /// let a = Plan::new("Apollo platform migration");
@@ -488,7 +488,7 @@ fn jaccard(a_set: &[String], b_set: &[String]) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matcher::plan::{
+    use crate::plan::{
         Goal, IdentifierScheme, PlanIdentifier, PlanKind, PlanPhase, PlanRelationship, PlanStatus,
     };
 

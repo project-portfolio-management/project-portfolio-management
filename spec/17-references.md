@@ -69,7 +69,7 @@ useful when judging whether two records describe the same plan:
 
 - Subproject specs (to be scaffolded, T-1):
   [service](../project-portfolio-management-service-with-rust/spec/index.md),
-  [matcher](../project-portfolio-management-service-with-rust/spec/matcher.md),
+  [matcher](../project-portfolio-management-matcher-with-rust/spec/index.md),
   [front-end](../project-portfolio-management-ui-with-svelte/spec/index.md).
 - Entity AGENTS reference set: [`agents/index.md`](../agents/index.md).
 - Adopted family designs:

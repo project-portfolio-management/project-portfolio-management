@@ -106,7 +106,7 @@ impl Plan {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management::matcher::Plan;
+    /// use project_portfolio_management_matcher::Plan;
     ///
     /// let w = Plan::new("Apollo platform migration");
     /// assert_eq!(w.name, "Apollo platform migration");
@@ -356,7 +356,7 @@ impl IdentifierScheme {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management::matcher::IdentifierScheme;
+    /// use project_portfolio_management_matcher::IdentifierScheme;
     ///
     /// assert!(IdentifierScheme::JiraProjectKey.is_deterministic());
     /// assert!(!IdentifierScheme::Code.is_deterministic());

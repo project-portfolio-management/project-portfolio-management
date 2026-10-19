@@ -15,6 +15,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision"] }
+project-portfolio-management-matcher = { path = "../../project-portfolio-management-matcher-with-rust" }
 
 [dependencies.project-portfolio-management]
 path = ".."
@@ -44,20 +45,6 @@ bench = false
 [[bin]]
 name = "merge_plans"
 path = "fuzz_targets/merge_plans.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "match_plans"
-path = "fuzz_targets/match_plans.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "normalize"
-path = "fuzz_targets/normalize.rs"
 test = false
 doc = false
 bench = false

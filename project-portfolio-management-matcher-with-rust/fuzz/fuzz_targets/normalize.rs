@@ -9,7 +9,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use project_portfolio_management::matcher::normalize;
+use project_portfolio_management_matcher::normalize;
 
 fuzz_target!(|data: &[u8]| {
     let Ok(s) = std::str::from_utf8(data) else {

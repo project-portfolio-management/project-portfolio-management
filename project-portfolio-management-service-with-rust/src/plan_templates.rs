@@ -14,8 +14,8 @@
 //! 3. **Shape, not history.** Tasks come back at the workflow's initial
 //!    state, with no transitions, comments or time.
 
-use crate::matcher::Plan;
 use chrono::NaiveDate;
+use project_portfolio_management_matcher::Plan;
 use serde::{Deserialize, Serialize};
 
 use crate::workflow::WorkflowDef;

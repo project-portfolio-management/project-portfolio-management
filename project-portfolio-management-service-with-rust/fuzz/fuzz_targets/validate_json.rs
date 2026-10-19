@@ -1,7 +1,7 @@
 //! FUZZ-2 target: the real request path into payload validation.
 //!
 //! `POST /api/plans` deserializes an attacker-supplied body into
-//! `project_portfolio_management::matcher::Plan` and runs `validation::problems` over it, so this
+//! `project_portfolio_management_matcher::Plan` and runs `validation::problems` over it, so this
 //! target drives exactly that: arbitrary bytes → `serde_json` → the
 //! validator. Coverage-guided search learns the JSON shape, which is what
 //! makes the deep fields reachable at all.
@@ -32,7 +32,7 @@ use project_portfolio_management::validation;
 const MAX_PROBLEMS: usize = 4096;
 
 fuzz_target!(|data: &[u8]| {
-    let Ok(record) = serde_json::from_slice::<project_portfolio_management::matcher::Plan>(data)
+    let Ok(record) = serde_json::from_slice::<project_portfolio_management_matcher::Plan>(data)
     else {
         // A body that is not a `Plan` is rejected by the extractor long
         // before validation; reaching here without aborting is the point.

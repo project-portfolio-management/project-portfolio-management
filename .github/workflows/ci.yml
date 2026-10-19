@@ -25,6 +25,7 @@ env:
   RUST_TOOLCHAIN: "1.99.1"
   CARGO_TERM_COLOR: always
   API: project-portfolio-management-service-with-rust
+  MATCHER: project-portfolio-management-matcher-with-rust
   UI: project-portfolio-management-ui-with-svelte
 
 jobs:
@@ -46,9 +47,8 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test --lib
-      - run: cargo test --doc
       - run: >-
-          cargo test --test matching --test otlp_export --test otlp_middleware --test matcher_public_api --test matcher_properties
+          cargo test --test matching --test otlp_export --test otlp_middleware
           --test licence_files
 
   api-db:
@@ -90,7 +90,7 @@ jobs:
         # fluvio_relay (they need a container runtime / broker).
         run: |
           set -euo pipefail
-          skip=" mod matching matcher_public_api matcher_properties otlp_export otlp_middleware licence_files keycloak_container fluvio_relay "
+          skip=" mod matching otlp_export otlp_middleware licence_files keycloak_container fluvio_relay "
           for f in tests/*.rs; do
             name="$(basename "$f" .rs)"
             case "$skip" in *" $name "*) continue ;; esac
@@ -161,6 +161,25 @@ jobs:
           printf '%s' "ci-only-passphrase-$GITHUB_RUN_ID" > "$RUNNER_TEMP/ppm-pass"
           BACKUP_PASSPHRASE_FILE="$RUNNER_TEMP/ppm-pass" scripts/restore-test.sh
 
+  matcher:
+    name: Matcher (fmt, clippy, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@v7
+      # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@1.99.1
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.MATCHER }}
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test
+
   deny:
     name: cargo deny (advisories, licenses, bans, sources)
     runs-on: ubuntu-latest
@@ -169,6 +188,7 @@ jobs:
       matrix:
         crate:
           - project-portfolio-management-service-with-rust
+          - project-portfolio-management-matcher-with-rust
     steps:
       - uses: actions/checkout@v7
       - uses: EmbarkStudios/cargo-deny-action@v2
@@ -336,6 +356,9 @@ jobs:
           test "$pinned" = "$RUST_TOOLCHAIN"
       # The action's tag IS the toolchain version; keep it equal to rust-toolchain.toml.
       - uses: dtolnay/rust-toolchain@1.99.1
+      - name: Build the matcher
+        run: cargo build --locked
+        working-directory: ${{ env.MATCHER }}
       - name: Build the API
         run: cargo build --locked
         working-directory: ${{ env.API }}
@@ -357,6 +380,7 @@ jobs:
       - api
       - api-db
       - restore
+      - matcher
       - deny
       - ui
       - docs

@@ -1,13 +1,11 @@
 # Changelog
 
-All notable changes to the matcher are documented in this file. The matcher was a separate crate
-(`project-portfolio-management-matcher`, last published as 0.2.0) until it was folded into the service as its
-`matcher` module; later changes are recorded in the service and repository changelogs.
+All notable changes to this crate are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> See also: [spec/index.md](../../spec/matcher.md) — single source of truth;
+> See also: [spec/index.md](./spec/index.md) — single source of truth;
 > [README.md](./README.md) — user-facing intro; [AGENTS.md](./AGENTS.md) — agent guide.
 
 ## [Unreleased]

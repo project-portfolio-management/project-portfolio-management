@@ -1,4 +1,4 @@
-# Plan matcher — Specification
+# project-portfolio-management-matcher — Specification
 
 > **Single source of truth.** Code conforms to this spec. A behavioural
 > change is a three-part PR: spec edit + code edit + test edit. Live
@@ -6,7 +6,7 @@
 
 ## 1. Purpose
 
-The plan matcher (the service's `src/matcher/` module, formerly its own crate) is a dependency-light
+`project-portfolio-management-matcher` is a reusable, dependency-light
 Rust library for **pairwise plan record matching**. A *plan* is a named
 unit of intended work — with goals and a timeframe — that may contain
 other plans, forming a recursive tree, tracked in a portfolio /
@@ -545,7 +545,7 @@ property suite (`tests/property_tests.rs`, SEC-M6) proving never-panic,
 bounded-score, symmetry, no-kind-gate, and reflexivity invariants over
 arbitrary input; rustdoc examples run as doctests. A standalone,
 nightly-only `cargo-fuzz` harness (`fuzz/`, SEC-I2, two libFuzzer
-targets — see [`agents/testing.md`](../agents/matcher/testing.md)) complements
+targets — see [`agents/testing.md`](../agents/testing.md)) complements
 `proptest` with coverage-guided search; it is not part of the stable
 gate below. Gate (mirrors CI): `cargo test`, `cargo clippy
 --all-targets --all-features -- -D warnings`, `cargo fmt --check`.

@@ -1,7 +1,7 @@
 //! Integration tests driving the public re-exported surface only —
-//! everything reachable via `use project_portfolio_management::matcher::…`.
+//! everything reachable via `use project_portfolio_management_matcher::…`.
 
-use project_portfolio_management::matcher::{
+use project_portfolio_management_matcher::{
     Confidence, Goal, IdentifierScheme, MatchConfig, MatchingEngine, Plan, PlanIdentifier,
     PlanKind, PlanRelationship, RelationKind,
 };

@@ -1,8 +1,9 @@
 # AGENTS.md — Working Guide for AI Coding Agents
 
-Entry point for AI coding agents working in the plan matcher (the service's `src/matcher/` module).
+Entry point for AI coding agents working in the `project-portfolio-management-matcher` Rust
+crate.
 
-> If you only read one file, read [`spec/index.md`](../../spec/matcher.md) —
+> If you only read one file, read [`spec/index.md`](./spec/index.md) —
 > the living specification.
 
 ## Quick orientation
@@ -10,8 +11,8 @@ Entry point for AI coding agents working in the plan matcher (the service's `src
 | Question | Answer |
 |---|---|
 | What does the crate do? | Pairwise plan record matching, deterministic + probabilistic, for dedup. Plans live in one recursive tree; the optional `kind` label (Portfolio / Project / Product / Program / Practice / Process / Purpose / Pathway / Proposal) is descriptive metadata and does not gate matching. v0.2.0. |
-| Canonical spec? | [`spec/index.md`](../../spec/matcher.md). |
-| Entity domain model? | [`../spec/index.md`](../../spec/matcher.md) §5 (entity-level umbrella). |
+| Canonical spec? | [`spec/index.md`](./spec/index.md). |
+| Entity domain model? | [`../spec/index.md`](../spec/index.md) §5 (entity-level umbrella). |
 | Build / test / lint / fmt | `cargo build` · `cargo test` (unit, `tests/public_api.rs`, `tests/property_tests.rs` with proptest, doctests) · `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` · `cargo bench` (`benches/match_pair.rs`) |
 | Run the demo | `cargo run` (`src/main.rs`; not SemVer surface). |
 | Public types | `src/lib.rs` re-exports from `src/{plan,matcher,scoring,config,normalize,phonetic,error}.rs`. |
@@ -57,10 +58,10 @@ Entry point for AI coding agents working in the plan matcher (the service's `src
 
 ## Detailed guides
 
-- [agents/matching-algorithm.md](matching-algorithm.md)
-- [agents/normalization.md](normalization.md)
-- [agents/spec-driven-development.md](spec-driven-development.md)
-- [agents/testing.md](testing.md)
+- [agents/matching-algorithm.md](./agents/matching-algorithm.md)
+- [agents/normalization.md](./agents/normalization.md)
+- [agents/spec-driven-development.md](./agents/spec-driven-development.md)
+- [agents/testing.md](./agents/testing.md)
 
 ## File layout
 

@@ -4,7 +4,7 @@ Summaries of the history of the whole repository, newest first. Each subproject
 keeps its own detailed changelog, and those are the record of what changed in
 the code:
 
-- [`project-portfolio-management-service-with-rust/agents/matcher/CHANGELOG.md`](project-portfolio-management-service-with-rust/agents/matcher/CHANGELOG.md) (the former matcher crate)
+- [`project-portfolio-management-matcher-with-rust/CHANGELOG.md`](project-portfolio-management-matcher-with-rust/CHANGELOG.md)
 - [`project-portfolio-management-service-with-rust/CHANGELOG.md`](project-portfolio-management-service-with-rust/CHANGELOG.md)
 - [`project-portfolio-management-ui-with-svelte/CHANGELOG.md`](project-portfolio-management-ui-with-svelte/CHANGELOG.md)
 
@@ -16,20 +16,6 @@ workflow yet. Dates are 2026.
 ## Unreleased
 
 ### 17 October
-
-- **Matcher folded into the service; the matcher project is gone.** The 2,400-line library is now the service's
-  `src/matcher/` module (`config`, `engine`, `error`, `normalize`, `phonetic`, `plan`, `scoring`), imported as
-  `project_portfolio_management::matcher`. Its tests, benchmark, fuzz targets, spec (`spec/matcher.md`), agent guides
-  (`agents/matcher/`), former README and changelog moved with it; the CLI became `cargo run --example matcher_demo`.
-  `project-portfolio-management-matcher-with-rust/` is deleted, with its CI job, cargo-deny matrix entries, Dependabot
-  entry, SBOM and release-check lines. `generate-status.sh`, `release-notes.sh`, `llms.json`, the skill, READMEs and
-  the spec/agent documents are updated and the link check finds 0 broken links. Checked: build, clippy `-D warnings`,
-  1,093 library tests (the matcher's 63 unit tests are now among them), the moved integration and property tests,
-  the licence test. The `matcher_*` test binaries run in CI's DB-free step and `cargo test --doc` is added there
-  (it was part of the old matcher job). Not verified: the full database test run, the container build, a run of CI
-  (read it before relying on this), and the fuzz crate (nightly only; its imports were changed, not compiled).
-  Not done: version 0.2.0 of the old crate stays on crates.io (it can be yanked, not deleted); the service no
-  longer depends on it. Historical entries and `tasks.md` still mention the old crate by name on purpose.
 
 - **`integrity-mac` published and used from crates.io.** Version 0.2.0 (your `SixArm/main-x-service` repository, unchanged
   since the revision the service pinned) is on crates.io, and the service now depends on `integrity-mac = "0.2.0"` instead

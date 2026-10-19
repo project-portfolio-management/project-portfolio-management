@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag `vX.Y.Z` to publish a release. The tag must equal the API crate's
-# version; the UI version must match too.
+# version; the matcher and UI versions are reported (they version independently).
 # Action pinning: major-version tags; full-SHA pinning is the stricter option.
 
 on:
@@ -17,6 +17,7 @@ concurrency:
 
 env:
   API: project-portfolio-management-service-with-rust
+  MATCHER: project-portfolio-management-matcher-with-rust
   UI: project-portfolio-management-ui-with-svelte
 
 jobs:
@@ -35,8 +36,9 @@ jobs:
           version="${tag#v}"
           crate_version() { sed -n 's/^version *= *"\(.*\)"/\1/p' "$1" | head -1; }
           api="$(crate_version "$API/Cargo.toml")"
+          matcher="$(crate_version "$MATCHER/Cargo.toml")"
           ui="$(sed -n 's/^ *"version": *"\(.*\)",*/\1/p' "$UI/package.json" | head -1)"
-          echo "tag=$version api=$api ui=$ui"
+          echo "tag=$version api=$api matcher=$matcher ui=$ui"
           if [ "$version" != "$api" ]; then
             echo "::error::tag $tag does not match the API crate version $api"
             exit 1
@@ -46,6 +48,8 @@ jobs:
             echo "::error::tag $tag does not match the UI package version $ui"
             exit 1
           fi
+          # The matcher crate is versioned independently; surface its value.
+          echo "::notice::matcher crate $matcher, UI package $ui"
           # Release notes must exist (also proves the CHANGELOG has the section).
           scripts/release-notes.sh "$tag" "$API/CHANGELOG.md" >/dev/null
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -60,6 +64,7 @@ jobs:
       matrix:
         crate:
           - project-portfolio-management-service-with-rust
+          - project-portfolio-management-matcher-with-rust
     steps:
       - uses: actions/checkout@v7
       - uses: EmbarkStudios/cargo-deny-action@v2
@@ -127,12 +132,13 @@ jobs:
         with:
           workspaces: |
             ${{ env.API }}
+            ${{ env.MATCHER }}
       - run: cargo install cargo-cyclonedx --locked
       - name: Rust SBOMs
         run: |
           set -euo pipefail
           mkdir -p sbom
-          for crate in "$API"; do
+          for crate in "$API" "$MATCHER"; do
             (cd "$crate" && cargo cyclonedx --format json --override-filename "$crate.cdx")
             mv "$crate/$crate.cdx.json" "sbom/$crate.cdx.json"
             python3 scripts/check-sbom.py "sbom/$crate.cdx.json" "$crate/Cargo.lock"

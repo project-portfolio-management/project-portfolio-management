@@ -1,13 +1,14 @@
 ---
 name: project-portfolio-management
-description: How an AI agent works in the Project Portfolio Management repo (Rust loco.rs API with its plan-matcher module, SvelteKit UI). Use when editing code, specs, tasks.md or tests here, or when you need the run and test commands, conventions and gotchas.
+description: How an AI agent works in the Project Portfolio Management repo (Rust matcher library, Rust loco.rs API, SvelteKit UI). Use when editing code, specs, tasks.md or tests here, or when you need the run and test commands, conventions and gotchas.
 ---
 
 # Working in the Project Portfolio Management repo
 
 ## Layout
 
-- `project-portfolio-management-service-with-rust/`: loco.rs service under `/api/...`; the DTO is the `Plan` of its `src/matcher/` module. The crate and binary are `project-portfolio-management`; its migration crate (`migration/`) is `project-portfolio-management-migration`.
+- `project-portfolio-management-matcher-with-rust/`: library; the `Plan` type and matching engine.
+- `project-portfolio-management-service-with-rust/`: loco.rs service under `/api/...`; the DTO is the matcher's `Plan`. The crate and binary are `project-portfolio-management`; its migration crate (`migration/`) is `project-portfolio-management-migration`.
 - `project-portfolio-management-ui-with-svelte/`: SvelteKit 2 / Svelte 5 (runes) SPA with a BFF.
 - `spec/` (entity contract), `agents/` (shared guidance), `tasks.md` (backlog), `plan.md` (research history).
 - Each subproject has `AGENTS.md`, `README.md`, `index.md` and its own `spec/`. Read the subproject `AGENTS.md` before editing it.
@@ -16,7 +17,8 @@ description: How an AI agent works in the Project Portfolio Management repo (Rus
 
 | Where | Command |
 |---|---|
-| service (with the matcher) | `cargo fmt --check`; `cargo clippy --all-targets -- -D warnings`; `cargo test --lib` (database-free); with Postgres 18 (`podman compose -f compose.test.yaml up -d --wait`): `DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1`, then each other `tests/*.rs` with `-- --ignored`; run the app with `podman compose up -d --build --wait` |
+| matcher | `cargo test`; `cargo clippy --all-targets --all-features -- -D warnings`; `cargo fmt --check` |
+| service | `cargo fmt --check`; `cargo clippy --all-targets -- -D warnings`; `cargo test --lib` (database-free); with Postgres 18 (`podman compose -f compose.test.yaml up -d --wait`): `DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1`, then each other `tests/*.rs` with `-- --ignored`; run the app with `podman compose up -d --build --wait` |
 | ui | `pnpm run check` (0 errors, 0 warnings expected); `npx vitest run`; `PW_PORT=4183 CI=true pnpm exec playwright test` (other projects on a shared machine may hold 4173) |
 
 Toolchain is pinned in `rust-toolchain.toml` (1.99.1; minimum supported 1.96); the UI pins Node 26. Use Podman (`podman compose`), not Docker, in instructions.

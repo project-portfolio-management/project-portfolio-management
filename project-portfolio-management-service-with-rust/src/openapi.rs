@@ -99,6 +99,7 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/plans/{pid}/budget-baselines",
     "/api/plans/{pid}/components",
     "/api/plans/{pid}/controls",
+    "/api/plans/{pid}/goals",
     "/api/plans/{pid}/guests",
     "/api/plans/{pid}/links",
     "/api/plans/{pid}/schedule-baselines",
@@ -2171,6 +2172,7 @@ mod tests {
             crate::controllers::attachments::routes(),
             crate::controllers::bulk::routes(),
             crate::controllers::guests::routes(),
+            crate::controllers::goals::routes(),
             crate::controllers::plan_links::routes(),
             crate::controllers::pdf::routes(),
             crate::controllers::sinks::routes(),
@@ -2388,6 +2390,7 @@ mod tests {
         "/api/comments",
         "/api/comments/{pid}/history",
         "/api/plans/{pid}/links",
+        "/api/plans/{pid}/goals",
     ];
 
     /// Words and phrases this family's response conventions actually use

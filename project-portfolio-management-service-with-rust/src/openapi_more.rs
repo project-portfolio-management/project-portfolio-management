@@ -93,6 +93,7 @@ pub fn paths() -> Value {
     merge(&mut all, attachment_paths());
     merge(&mut all, bulk_paths());
     merge(&mut all, guest_paths());
+    merge(&mut all, goal_paths());
     merge(&mut all, link_paths());
     merge(&mut all, pdf_paths());
     merge(&mut all, sink_paths());
@@ -640,6 +641,38 @@ fn guest_paths() -> Value {
             "post": op("guests", "Revoke a guest grant",
                 "Effective on the guest's very next request (the guard reads the grants every time). Idempotent and audited.",
                 with_grant, &[("200", "Revoked"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan or grant")])
+        }
+    })
+}
+
+/// Goals under a plan (FR-12).
+fn goal_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    let mut with_index = pid.clone();
+    with_index.push(json!({"name": "index", "in": "path", "required": true,
+        "description": "Zero-based position of the goal in the plan's goals list",
+        "schema": {"type": "integer", "minimum": 0}}));
+    json!({
+        "/api/plans/{pid}/goals": {
+            "get": op("goals", "A plan's goals",
+                "The goals in order, each with its zero-based `index`. A goal has no identifier, so it is addressed by position.",
+                pid.clone(), &[("200", "Goals"), ("404", "Unknown plan")]),
+            "post": op("goals", "Add a goal",
+                "Appends a goal `{title, description?, target_date?, status?}` to the plan's `goals[]` and answers with all goals. Rewrites the plan like `PUT /api/plans/{pid}`: same validation, audit row and event.",
+                pid, &[("200", "All goals"), ("404", "Unknown plan"), ("422", "A blank title or another plan rule")])
+        },
+        "/api/plans/{pid}/goals/{index}": {
+            "put": op("goals", "Replace a goal",
+                "Replaces the goal at a position and answers with all goals.", with_index.clone(),
+                &[("200", "All goals"), ("404", "Unknown plan or no goal at that position"), ("422", "A blank title or another plan rule")]),
+            "delete": op("goals", "Remove a goal",
+                "Removes the goal at a position; the goals after it move down one. Answers with the remaining goals.", with_index.clone(),
+                &[("200", "Remaining goals"), ("404", "Unknown plan or no goal at that position")])
+        },
+        "/api/plans/{pid}/goals/{index}/delete": {
+            "post": op("goals", "Remove a goal (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", with_index,
+                &[("200", "Remaining goals"), ("404", "Unknown plan or no goal at that position")])
         }
     })
 }

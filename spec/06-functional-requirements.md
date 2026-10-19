@@ -116,7 +116,13 @@ hang off **any** plan.
   (`/api/plans/{pid}/goals`); goal writes mutate `data.goals[]` on
   the parent so the matchable payload and the sub-resource stay
   consistent (§5.3, §10.2). `Goal { title, description?, target_date?,
-  status }`.
+  status }`. A goal has no identifier, so it is addressed by its
+  zero-based position: `GET` and `POST /api/plans/{pid}/goals`,
+  `PUT` and `DELETE /api/plans/{pid}/goals/{index}`, and the POST twin
+  `…/{index}/delete`. Each answer is the whole list, every goal with its
+  `index`; a delete moves the later goals down one, and an index past the
+  end is `404`. Writes rewrite the plan like `PUT /api/plans/{pid}` (same
+  validation, so a blank title is `422`, same audit row and event).
 - **FR-13 Tasks.** CRUD tasks under a plan
   (`/api/plans/{pid}/tasks`). `Task { pid, parent_pid, title,
   description?, assignee_ref? (EntityRef), status:

@@ -29,9 +29,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | Matcher version | 0.2.1 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.1.0 | `version` in the front-end `package.json` |
 | Migrations | 111 | files named `m2*.rs` in `migration/src` |
-| Mounted route registrations | 596 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
-| Documented API paths | 416 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1269, plus 215 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Mounted route registrations | 601 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
+| Documented API paths | 419 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
+| Service tests | 1270, plus 216 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 483 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 184 | `test(` lines in `tests/e2e` |
@@ -143,7 +143,6 @@ checked against the code on 2026-10-06 unless marked unverified.
 |---|---|
 | No cross-service link write-side (`entity_links`, `linked`/`unlinked` events): no such entity or route exists. The `plan_links` table (LT-8, migration `…_000020`) is a different thing, typed links from a plan to a document, ticket or URL | T-7 |
 | No FHIR surface — **deliberate**, not a gap: no FHIR resource models a plan (`fhir.md` (shared family guidance, not in this repository) §3 puts portfolio out of scope) | — |
-| **No `goals` sub-resource** — FR-12 specifies it, but no route or entity exists (re-checked 2026-10-06); `goals[]` is reachable only by rewriting the whole plan payload | FR-12 |
 | **Issues register: plan CRUD and the cross-plan register** — `/api/plans/{pid}/issues` and `GET /api/issues` with the `/issues` page exist (IR-1, IR-2, 2026-10-10); raising an issue from a risk or a blocked task exists in the API only (IR-3, no button yet); change requests are built in the API with a list page (IR-4, IR-5); drafting and deciding have no screens, and the director-pack report (IR-6) waits for the pack | FR-14, FR-14a |
 | Automation breadth: field-change, date-arrival and SLE-breach triggers and multi-action rules — status unverified since 2026-08-26 (see §13 T-21, partly landed) | T-21 |
 | Source-tool import: MS Project (`POST /api/plans/{pid}/import/mspdi`, `src/controllers/mspdi_import.rs`, PJ-10), Jira and Asana (`POST /api/plans/{pid}/import/jira` and `…/asana`, `src/controllers/tracker_import.rs`, T-28n) are **built**. **Not built:** MS Project (MSPDI) **export** — there is no export route in `src/controllers/mspdi_import.rs` or elsewhere (the only `…/export` routes are the plan JSON export `GET /api/plans/{pid}/export` and the bulk export jobs `POST /api/plans/export`); no JSON or live-API pull for Jira / Asana | T-28n, PJ-10 |

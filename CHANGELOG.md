@@ -15,6 +15,16 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 19 October
+
+- **Goals sub-resource (FR-12).** The last "no goals sub-resource" gap: `/api/plans/{pid}/goals` (list, add) and
+  `/goals/{index}` (replace, delete, plus a POST delete twin). Goals are addressed by position because `Goal` has no
+  identifier and the published matcher crate was not changed. Verified: lint, unit tests, the paging census and the
+  full database suite (172) pass locally. Not done: no screen; position addressing means a delete or reorder by
+  another caller between a read and a write can hit a different goal (there is no `If-Match` check); the goal count is
+  not capped beyond the plan's own validation. One earlier full run failed an unrelated search test that passed alone
+  and on rerun; I changed my test's plan name to avoid a possible clash, and did not find the cause.
+
 ### 17 October
 
 - **Documentation audit (remaining items).** Searched `tasks.md`, `plan.md`, `spec/`, `agents/`, `governance/`,

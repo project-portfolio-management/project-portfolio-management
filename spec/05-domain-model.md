@@ -320,7 +320,7 @@ before.
 > found that **`Goal` has no identifier** — it is a bare
 > `{title, description?, target_date?, status?}` in the JSONB payload,
 > addressable only by array position — and that **no goals sub-resource
-> exists** (FR-12 is specified in §6.4 and built nowhere, §14.2). A
+> exists** when this was written (FR-12, §6.4, was built later, 2026-10-19, addressed by position). A
 > key result anchored to an array index would be orphaned by any
 > reordering.
 >

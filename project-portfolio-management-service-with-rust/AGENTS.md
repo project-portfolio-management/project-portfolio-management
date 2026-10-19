@@ -1,7 +1,7 @@
 # AGENTS.md — Portfolio Service
 
 Entry point for AI coding agents working in the
-`project-portfolio-management` crate (v0.4.0, edition 2024, Rust 1.99.1 with a
+`project-portfolio-management` crate (v0.1.0, edition 2024, Rust 1.99.1 with a
 minimum of 1.96, loco-rs 1.2, sea-orm 2.0, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`

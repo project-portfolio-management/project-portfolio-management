@@ -9,7 +9,7 @@ holds no token).
 > Read [`spec/index.md`](./spec/index.md) first — the living spec
 > (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
 >
-> **Status: implemented (v0.4.0), verified 2026-10-18.** `pnpm run check`
+> **Status: implemented (v0.1.0), verified 2026-10-18.** `pnpm run check`
 > is **0 errors / 0 warnings**, `npx vitest run` passes (**703 tests**, 51
 > files in `tests/unit/`), and the Playwright suite (40 files in
 > `tests/e2e/`, about 600 tests with axe audits) runs against a production build. There are **85 page

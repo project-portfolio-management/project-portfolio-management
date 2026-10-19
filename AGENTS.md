@@ -9,7 +9,7 @@ Entry point for AI coding agents at the repository root. Three projects live her
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 2, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
-Version 0.4.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
+Version 0.1.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
 
 ## How work is done here
 

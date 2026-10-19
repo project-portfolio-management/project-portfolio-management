@@ -374,7 +374,7 @@
     }
   ],
   "facts": {
-    "version": "0.4.0",
+    "version": "0.1.0",
     "layout": {
       "service": "project-portfolio-management-service-with-rust",
       "matcher": "project-portfolio-management-matcher-with-rust",

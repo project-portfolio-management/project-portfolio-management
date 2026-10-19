@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-19
+
+The version number was reset to 0.1.0 before the first crates.io release; the service and the operator interface
+are both 0.1.0. This is a lower number than the 0.4.0 that was tagged and released on GitHub (`v0.4.0`, 2026-10-18),
+which was never published to crates.io. No code changed.
+
 ## [0.4.0] - 2026-10-18
 
 The service and the operator interface are versioned together from this release. The interface changes in this release (Lily widgets, table export, the strict style policy) are in the repository `CHANGELOG.md`.

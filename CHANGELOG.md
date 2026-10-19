@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Service and interface versions reset to 0.1.0.** `Cargo.toml` and the interface's `package.json` are 0.1.0 (they
+  must agree for a release), with the version in `AGENTS.md`, `llms.json` and the status page updated. A number lower
+  than the released `v0.4.0` is unusual: the `v0.4.0` tag and GitHub release (and its container image) still exist and
+  are not touched, nothing was published to crates.io at 0.4.0, and the release workflow would accept a `v0.1.0` tag.
+  Not done: no `v0.1.0` tag, no re-run of the build and tests (only the version strings changed), and the history
+  below still says 0.4.0 where that was true at the time.
+
 - **Redis in the test compose file.** `compose.test.yaml` now starts Redis 7 (alpine) beside Postgres: 127.0.0.1 only,
   port 6379 (`TEST_REDIS_PORT`), password `loco`, nothing saved to disk, 64 MB with LRU eviction. Checked with Podman:
   both containers report healthy, `PING` answers `PONG` with the password and `NOAUTH` without. Not done: the tests

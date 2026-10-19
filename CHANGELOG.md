@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **`integrity-mac` published and used from crates.io.** Version 0.2.0 (your `SixArm/main-x-service` repository, unchanged
+  since the revision the service pinned) is on crates.io, and the service now depends on `integrity-mac = "0.2.0"` instead
+  of the git revision. The crate's 21 tests and clippy pass; the service's clippy `-D warnings`, 1,030 library tests,
+  `cargo deny check` and `cargo package` pass. The service is therefore packageable. Not done: `cargo publish` of the
+  service, the database tests and the container build against this change, and the matcher is still 0.2.0 (the repository's
+  copy has moved on and has not been republished). Nothing in the Dockerfile needed `git` any more; the install line is left.
+
 - **Migration crate published.** `project-portfolio-management-migration` 0.1.0 is on crates.io (description, licence,
   repository and keywords added; `publish = false` removed). The service keeps `version = "0.1.0"` beside its `path`, so
   local builds use the directory and a packaged service would use crates.io. Not verified: the database tests after

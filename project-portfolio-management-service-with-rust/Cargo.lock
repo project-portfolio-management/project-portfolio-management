@@ -3586,7 +3586,8 @@ dependencies = [
 [[package]]
 name = "integrity-mac"
 version = "0.2.0"
-source = "git+https://github.com/SixArm/main-x-service.git?rev=52b107a9f06c0ae8896149e964c8d9b0739d2cc4#52b107a9f06c0ae8896149e964c8d9b0739d2cc4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b432025607a8cf6d948d4b37d6fbe25a46144fb16ac05e7202c2cf7178da666c"
 dependencies = [
  "getrandom 0.4.3",
  "hkdf",

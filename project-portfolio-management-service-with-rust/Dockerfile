@@ -1,16 +1,14 @@
 # Multi-stage container build for Project Portfolio Management Service.
 #
 # BUILD CONTEXT IS THE REPOSITORY ROOT (the root rust-toolchain.toml is read
-# from it). The matcher and `authentication-verifier` come from crates.io.
+# from it). The matcher, `authentication-verifier` and `integrity-mac` come from crates.io.
 # Build from the repository root:
 #
 #   podman build -f project-portfolio-management-service-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
 #
-# The one pinned git dependency (`integrity-mac`, from
-# github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) is fetched by
-# cargo during the build, which is why the builder needs `git` and
-# `ca-certificates` and network access.
+# Every dependency now comes from crates.io (no git dependencies), so the build
+# needs network access to the registry and `ca-certificates`.
 #
 # Toolchain: the base image tag below must equal `channel` in the root
 # rust-toolchain.toml; the first RUN step fails the build if they drift.

@@ -28,10 +28,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.1.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.1 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.1.0 | `version` in the front-end `package.json` |
-| Migrations | 111 | files named `m2*.rs` in `migration/src` |
+| Migrations | 112 | files named `m2*.rs` in `migration/src` |
 | Mounted route registrations | 601 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
 | Documented API paths | 419 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
-| Service tests | 1270, plus 216 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1273, plus 217 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 483 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 184 | `test(` lines in `tests/e2e` |
@@ -151,7 +151,6 @@ checked against the code on 2026-10-06 unless marked unverified.
 | Approval processes (`controllers/processes.rs`, PL-2) have no front-end page. Controlled documents (`controllers/controlled_documents.rs`, PL-6) have one (`src/routes/documents`, `tests/e2e/documents.spec.ts`) | PL-2 |
 | WBS has no sibling reordering and the RBS no task drill-down | PJ-12 |
 | A cancelled export produces no file; a running import may process up to 9 rows after a cancel; simulations are not jobs and cannot be cancelled | PJ-11 |
-| `blocked` carries no reason vocabulary, so the constraint finding stops at "8 calendar days blocked" | [time-based-analysis.md §17](time-based-analysis.md) |
 | Front-end lint / e2e-in-CI status — unverified since 2026-08-23 | §15 / HD-2 |
 | Members sub-resource (comments landed as LT-4; posts and members not found in the code) | §15 |
 | No cross-service link **aggregator** (`link-graph-service`) — out of this trio's scope | §15 |

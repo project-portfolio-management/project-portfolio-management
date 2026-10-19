@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 19 October
 
+- **Blocked-reason vocabulary.** A move into `blocked` can say why (five fixed reasons, chosen with you), stored on the
+  transition; blocked time is reported by reason, with `unrecorded` for moves that gave none. Verified: lint, unit
+  tests (the split sums to the total; the validation rule), the full database suite (173). Not done: no screen or
+  bulk-move path captures the reason (only the single-task move does), existing and imported transitions have none, the
+  plan-level analysis and the aging view carry the split only through the finding text, and a request test cannot show
+  a non-empty split because the clock does not advance within a test.
+
 - **Goals sub-resource (FR-12).** The last "no goals sub-resource" gap: `/api/plans/{pid}/goals` (list, add) and
   `/goals/{index}` (replace, delete, plus a POST delete twin). Goals are addressed by position because `Goal` has no
   identifier and the published matcher crate was not changed. Verified: lint, unit tests, the paging census and the

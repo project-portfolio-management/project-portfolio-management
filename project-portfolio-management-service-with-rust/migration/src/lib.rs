@@ -123,6 +123,7 @@ mod m20261010_000074_deployment_moves;
 mod m20261010_000075_cutover_decisions;
 mod m20261010_000076_scorecard_deescalation;
 mod m20261010_000077_portfolio_ledger;
+mod m20261019_000078_blocked_reason;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -247,6 +248,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261010_000075_cutover_decisions::Migration),
             Box::new(m20261010_000076_scorecard_deescalation::Migration),
             Box::new(m20261010_000077_portfolio_ledger::Migration),
+            Box::new(m20261019_000078_blocked_reason::Migration),
             // inject-above (do not remove this comment)
         ]
     }

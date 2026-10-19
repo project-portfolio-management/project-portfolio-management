@@ -509,6 +509,10 @@ fn enforce_move_roles(
 #[derive(Debug, Deserialize)]
 struct MovePayload {
     status: String,
+    /// Why the task is blocked; only on a move into `blocked`
+    /// (`crate::tba::BLOCKED_REASONS`).
+    #[serde(default)]
+    blocked_reason: Option<String>,
 }
 
 /// Refuse a move into a capped column that is already full.
@@ -583,6 +587,8 @@ async fn move_task(
             "status must be one of {declared:?} (the workflow in force for this plan)"
         )));
     }
+    crate::tba::check_blocked_reason(&payload.status, payload.blocked_reason.as_deref())
+        .map_err(|problem| refuse(&problem))?;
     if task.status == payload.status {
         return format::json(task_view(&task));
     }
@@ -628,7 +634,7 @@ async fn move_task(
         .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    crate::tba::transition_row(
+    let mut transition = crate::tba::transition_row(
         task_pid,
         item.pid,
         Some(from.clone()),
@@ -636,10 +642,12 @@ async fn move_task(
         now,
         caller.actor().map(ToString::to_string),
         assignee,
-    )
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
+    );
+    transition.blocked_reason = sea_orm::ActiveValue::set(payload.blocked_reason.clone());
+    transition
+        .insert(&txn)
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
     txn.commit()
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;

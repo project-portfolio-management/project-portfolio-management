@@ -29,6 +29,9 @@ pub struct Model {
     /// Synthesized by the migration rather than observed — reported by
     /// every analysis so thin evidence stays visible.
     pub backfilled: bool,
+    /// Why the task was blocked, on a transition into `blocked`; one of
+    /// [`crate::tba::BLOCKED_REASONS`]. `None` when not recorded.
+    pub blocked_reason: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

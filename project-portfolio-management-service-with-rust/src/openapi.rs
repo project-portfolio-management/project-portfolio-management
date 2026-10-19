@@ -313,7 +313,7 @@ fn insight_paths() -> Value {
                 "parameters": [{ "name": "include", "in": "query", "required": false, "description": "comma-separated: children, relations, transitions, raci, time_entries", "schema": { "type": "string" } }],
                 "responses": { "200": { "description": "The task, or {task, included, omitted}" }, "404": { "description": "Unknown plan or task" }, "422": { "description": "An unknown include" } } },
             "put": { "tags": ["engineering"], "summary": "Update task fields (status changes go through PATCH)", "responses": { "200": { "description": "The task" }, "422": { "description": "Validation failure" } } },
-            "patch": { "tags": ["engineering"], "summary": "Board move: {status}; stamps status_changed_at, first done stamps done_at", "responses": { "200": { "description": "The task" }, "422": { "description": "Unknown status" } } },
+            "patch": { "tags": ["engineering"], "summary": "Board move: {status, blocked_reason?}; stamps status_changed_at, first done stamps done_at. blocked_reason (waiting_on_person, external_dependency, awaiting_decision, awaiting_resource, other) is allowed only on a move into blocked and is recorded on the transition", "responses": { "200": { "description": "The task" }, "422": { "description": "Unknown status, or a blocked_reason outside the list or on a move to another status" } } },
             "delete": { "tags": ["engineering"], "summary": "Soft-delete the task", "responses": { "200": { "description": "Deleted" } } }
         },
         "/api/plans/{pid}/sprints": {

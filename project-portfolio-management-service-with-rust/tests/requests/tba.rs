@@ -624,3 +624,60 @@ async fn the_rollup_unions_the_tree_and_keeps_the_children_comparable() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_blocked_reason_is_recorded_on_the_move_and_checked() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = seed_plan(&request).await;
+        let task = seed_task(&request, &plan, "Wait for the vendor").await;
+        let path = format!("/api/plans/{plan}/tasks/{task}");
+        move_task(&request, &plan, &task, "in_progress").await;
+
+        for (body, why) in [
+            (
+                json!({ "status": "blocked", "blocked_reason": "lunch" }),
+                "not in the list",
+            ),
+            (
+                json!({ "status": "in_review", "blocked_reason": "other" }),
+                "not a move into blocked",
+            ),
+        ] {
+            assert_eq!(
+                request.patch(&path).json(&body).await.status_code(),
+                422,
+                "{why}"
+            );
+        }
+        let log: Value = request.get(&format!("{path}/transitions")).await.json();
+        assert_eq!(
+            log["transitions"].as_array().map(Vec::len),
+            Some(2),
+            "refused moves write no transition"
+        );
+
+        request
+            .patch(&path)
+            .json(&json!({ "status": "blocked", "blocked_reason": "external_dependency" }))
+            .await
+            .assert_status_ok();
+        let log: Value = request.get(&format!("{path}/transitions")).await.json();
+        let last = log["transitions"]
+            .as_array()
+            .and_then(|t| t.last())
+            .expect("last");
+        assert_eq!(last["to_status"], "blocked");
+        assert_eq!(last["blocked_reason"], "external_dependency");
+
+        // The analysis reports blocked time by reason.
+        let analysis: Value = request.get(&format!("{path}/time-analysis")).await.json();
+        // The move and the read happen within a millisecond or so, so no
+        // blocked time has accrued to split; the split itself is pinned by
+        // the unit test `blocked_time_is_split_by_the_reason_given…`.
+        assert_eq!(analysis["analysis"]["blocked_by_reason"], json!({}));
+    })
+    .await;
+}

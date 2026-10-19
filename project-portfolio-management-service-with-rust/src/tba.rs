@@ -66,6 +66,68 @@ pub const BACKLOG_STATUS: &str = "todo";
 /// The board status that means externally halted.
 pub const BLOCKED_STATUS: &str = "blocked";
 
+/// Why a task was blocked, recorded on the move into [`BLOCKED_STATUS`]
+/// (spec §17). Fixed, so blocked time can be totalled by reason. The same
+/// list is a `CHECK` on `task_transitions.blocked_reason`.
+pub const BLOCKED_REASONS: [&str; 5] = [
+    "waiting_on_person",
+    "external_dependency",
+    "awaiting_decision",
+    "awaiting_resource",
+    "other",
+];
+
+/// The key under which blocked time with no recorded reason is reported.
+pub const UNRECORDED_REASON: &str = "unrecorded";
+
+/// Check a move's blocked reason: only a move into `blocked` may carry
+/// one, and it must be in [`BLOCKED_REASONS`].
+///
+/// # Errors
+///
+/// A sentence naming the problem, for a `422`.
+pub fn check_blocked_reason(to_status: &str, reason: Option<&str>) -> Result<(), String> {
+    let Some(reason) = reason else {
+        return Ok(());
+    };
+    if to_status != BLOCKED_STATUS {
+        return Err(format!(
+            "`blocked_reason` belongs on a move into `{BLOCKED_STATUS}`, not `{to_status}`"
+        ));
+    }
+    if BLOCKED_REASONS.contains(&reason) {
+        Ok(())
+    } else {
+        Err(format!(
+            "`blocked_reason` must be one of {BLOCKED_REASONS:?}, not `{reason}`"
+        ))
+    }
+}
+
+/// Blocked time by reason: each `blocked` interval takes the reason of the
+/// latest move into `blocked` at or before it, else [`UNRECORDED_REASON`].
+/// Sums to the `blocked` interval total.
+#[must_use]
+pub fn blocked_by_reason(transitions: &[Transition], spans: &[Interval]) -> BTreeMap<String, i64> {
+    let mut entries: Vec<&Transition> = transitions
+        .iter()
+        .filter(|t| t.to_status == BLOCKED_STATUS)
+        .collect();
+    entries.sort_by_key(|t| t.at_ms);
+    let mut out: BTreeMap<String, i64> = BTreeMap::new();
+    for span in spans.iter().filter(|s| s.status == BLOCKED_STATUS) {
+        let reason = entries
+            .iter()
+            .rev()
+            .find(|t| t.at_ms <= span.from_ms)
+            .and_then(|t| t.blocked_reason.clone())
+            .unwrap_or_else(|| UNRECORDED_REASON.to_string());
+        let slot = out.entry(reason).or_insert(0);
+        *slot = slot.saturating_add(span.duration_ms());
+    }
+    out
+}
+
 /// The board order used to decide whether a move was **backwards**
 /// (§6.5). `blocked` is deliberately absent: it is orthogonal to
 /// progress, so moving into or out of it is never rework.
@@ -181,6 +243,8 @@ pub struct Transition {
     pub assignee_ref: Option<String>,
     /// Synthesized by the migration rather than observed.
     pub backfilled: bool,
+    /// Why the task was blocked, on a move into `blocked`.
+    pub blocked_reason: Option<String>,
 }
 
 /// The task facts the analysis needs beyond its transitions.
@@ -276,6 +340,9 @@ pub struct TaskAnalysis {
     pub wait_time_ms: i64,
     /// Time in `blocked` — the waste with the shortest path to a fix.
     pub blocked_time_ms: i64,
+    /// `blocked_time_ms` by reason; time with no recorded reason is under
+    /// `unrecorded`. Sums to `blocked_time_ms`.
+    pub blocked_by_reason: BTreeMap<String, i64>,
     /// Time in `todo` — the backlog dwell, reported separately so it
     /// cannot vanish behind the cycle-time denominator (§6.1).
     pub queue_time_ms: i64,
@@ -559,6 +626,7 @@ pub fn analyze(
         process_time_ms: process,
         wait_time_ms: denominator.saturating_sub(process).max(0),
         blocked_time_ms: status_ms(BLOCKED_STATUS),
+        blocked_by_reason: blocked_by_reason(transitions, &spans),
         queue_time_ms: status_ms(BACKLOG_STATUS),
         flow_efficiency: Ratio::new(work, denominator),
         by_status,
@@ -931,13 +999,28 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
         .iter()
         .fold(0i64, |a, x| a.saturating_add(x.blocked_time_ms));
     if blocked > 0 {
+        let mut by_reason: BTreeMap<&str, i64> = BTreeMap::new();
+        for analysis in analyses {
+            for (reason, ms) in &analysis.blocked_by_reason {
+                let slot = by_reason.entry(reason.as_str()).or_insert(0);
+                *slot = slot.saturating_add(*ms);
+            }
+        }
+        let reasons = by_reason
+            .iter()
+            .map(|(reason, ms)| format!("{reason} {:.1} days", as_days(*ms)))
+            .collect::<Vec<_>>()
+            .join(", ");
         findings.push(Finding {
             rule: "blocked_time",
             subject: BLOCKED_STATUS.to_string(),
-            detail: "time halted on something external. Separated from the \
-                     other waste because it has the shortest path to a fix: \
-                     something specific is in the way, and it has a name"
-                .to_string(),
+            detail: format!(
+                "time halted on something external. Separated from the \
+                 other waste because it has the shortest path to a fix: \
+                 something specific is in the way, and it has a name. By \
+                 reason: {reasons} (`{UNRECORDED_REASON}` is time whose move \
+                 into `{BLOCKED_STATUS}` recorded none)"
+            ),
             recoverable_ms: blocked,
             recoverable_days: as_days(blocked),
         });
@@ -2066,6 +2149,7 @@ pub fn to_transition(row: &crate::models::_entities::task_transitions::Model) ->
         at_ms: row.at.timestamp_millis(),
         assignee_ref: row.assignee_ref.clone(),
         backfilled: row.backfilled,
+        blocked_reason: row.blocked_reason.clone(),
     }
 }
 
@@ -2098,6 +2182,7 @@ mod tests {
             at_ms: at(day),
             assignee_ref: None,
             backfilled: false,
+            blocked_reason: None,
         }
     }
 
@@ -2189,6 +2274,51 @@ mod tests {
         let efficiency = a.flow_efficiency.value.expect("efficiency");
         assert!((efficiency - 3.0 / 11.0).abs() < 1e-9, "got {efficiency}");
         assert!((0.0..=1.0).contains(&efficiency));
+    }
+
+    fn blocked(day: i64, reason: Option<&str>) -> Transition {
+        Transition {
+            blocked_reason: reason.map(ToString::to_string),
+            ..tr(Some("in_progress"), "blocked", day)
+        }
+    }
+
+    #[test]
+    fn blocked_time_is_split_by_the_reason_given_and_sums_to_the_total() {
+        let transitions = vec![
+            tr(None, "todo", 0),
+            tr(Some("todo"), "in_progress", 1),
+            blocked(2, Some("external_dependency")),
+            tr(Some("blocked"), "in_progress", 5),
+            blocked(6, None),
+            tr(Some("blocked"), "in_progress", 8),
+            blocked(9, Some("external_dependency")),
+            tr(Some("blocked"), "done", 10),
+        ];
+        let clock = TaskClock {
+            created_ms: at(0),
+            done_ms: Some(at(10)),
+        };
+        let a = analyze(&transitions, clock, &classes(), at(10));
+        assert_eq!(a.blocked_by_reason["external_dependency"], 4 * DAY_MS);
+        assert_eq!(a.blocked_by_reason[UNRECORDED_REASON], 2 * DAY_MS);
+        assert_eq!(
+            a.blocked_by_reason.values().sum::<i64>(),
+            a.blocked_time_ms,
+            "the parts are the whole"
+        );
+    }
+
+    #[test]
+    fn a_blocked_reason_is_allowed_only_on_a_move_into_blocked_and_only_from_the_list() {
+        assert!(check_blocked_reason("in_progress", None).is_ok());
+        assert!(check_blocked_reason("blocked", None).is_ok());
+        for reason in BLOCKED_REASONS {
+            assert!(check_blocked_reason("blocked", Some(reason)).is_ok());
+        }
+        assert!(check_blocked_reason("blocked", Some("lunch")).is_err());
+        assert!(check_blocked_reason("in_progress", Some("other")).is_err());
+        assert!(check_blocked_reason("done", Some("other")).is_err());
     }
 
     #[test]

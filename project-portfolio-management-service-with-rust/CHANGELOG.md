@@ -11,6 +11,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Blocked reasons (`spec/time-based-analysis.md` §17): `PATCH /api/plans/{pid}/tasks/{t_pid}` accepts an optional
+  `blocked_reason` on a move into `blocked` (`waiting_on_person`, `external_dependency`, `awaiting_decision`,
+  `awaiting_resource`, `other`), stored on the transition (migration `m20261019_000078_blocked_reason`, with a `CHECK`).
+  The task time analysis reports `blocked_by_reason` and the `blocked_time` finding names the split.
+
 - Goals under a plan (FR-12): `GET` and `POST /api/plans/{pid}/goals`, `PUT` and `DELETE /api/plans/{pid}/goals/{index}`
   and the POST twin `…/{index}/delete`. A goal has no identifier, so it is addressed by position (a delete shifts the
   later goals down). Writes go through the plan update path (validation, audit row, event). One request test, OpenAPI

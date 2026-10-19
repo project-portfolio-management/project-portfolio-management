@@ -966,11 +966,18 @@ questions, which are decisions rather than unbuilt work.
   the cost of another board column, which teams resist. *Lean: leave the
   board alone; revisit if the constraint ranking keeps naming
   `in_review` and nobody can act on it.*
-- **Blocked-reason vocabulary.** `blocked` is the most actionable waste
+- ~~**Blocked-reason vocabulary.** `blocked` is the most actionable waste
   and currently carries no reason, so the finding stops at "8 calendar days
-  blocked" rather than "8 calendar days blocked on external dependency". A
-  disclosed reason vocabulary would fix that. *Lean: add it with TBA-8,
-  when a UI exists to capture it.*
+  blocked" rather than "8 calendar days blocked on external dependency".~~ —
+  **BUILT 2026-10-19 (API only).** A move into `blocked` may carry
+  `blocked_reason`: `waiting_on_person`, `external_dependency`,
+  `awaiting_decision`, `awaiting_resource` or `other`. It is recorded on the
+  transition (migration 78; a database `CHECK` allows it only on a `blocked`
+  transition), refused with `422` on any other move or outside the list, and
+  optional. The per-task analysis carries `blocked_by_reason` (summing to
+  `blocked_time_ms`, time with no recorded reason under `unrecorded`) and the
+  `blocked_time` finding names the split. No screen captures it yet, which the
+  earlier lean (add it with TBA-8) had wanted first.
 - ~~**Monte-Carlo forecasting.** The cycle-time distribution is exactly
   the input a Monte-Carlo "when will these 20 items be done" forecast
   needs~~ — **RESOLVED, and the sentence above was wrong.** It is the

@@ -10,6 +10,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-19
+
+Published to crates.io from this repository. A version 0.2.0 was already on crates.io, built from a different copy
+of the source (the `main-x-service` repository), so this release carries this repository's code under a new number.
+Compared with that 0.2.0, the only public-API difference is the addition of `MatchConfig::validated`; there are also
+internal, documentation, test and benchmark differences, and the minimum supported Rust is 1.96 (it was 1.95).
+Not verified: behaviour differences between the two copies beyond the public items, which I did not compare line by line.
+
 ### Added — `bench_field_arrays` Criterion group: per-field array-size scaling
 
 `benches/match_pair.rs` had `bench_rank` scaling *candidate-list*

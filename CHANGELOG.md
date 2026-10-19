@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Matcher bumped to 0.2.1, ready to publish (not published).** crates.io already holds a 0.2.0 built from the
+  `main-x-service` copy of the source, which differs from this repository's code. Compared with it, the only public-API
+  difference is the new `MatchConfig::validated`, so this repository's code is 0.2.1. Tests (63 unit, 7 property, 10
+  public-API, 7 doctests), fmt and clippy pass. The service still depends on the published 0.2.0 until 0.2.1 is
+  published. Not verified: behaviour differences between the two copies beyond their public items.
+
 - **`integrity-mac` published and used from crates.io.** Version 0.2.0 (your `SixArm/main-x-service` repository, unchanged
   since the revision the service pinned) is on crates.io, and the service now depends on `integrity-mac = "0.2.0"` instead
   of the git revision. The crate's 21 tests and clippy pass; the service's clippy `-D warnings`, 1,030 library tests,

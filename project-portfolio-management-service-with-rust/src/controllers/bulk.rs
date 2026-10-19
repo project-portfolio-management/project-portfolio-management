@@ -18,6 +18,7 @@
 //! destructive action. One bad row never aborts the load; the counters always
 //! reconcile.
 
+use crate::matcher::{MatchConfig, MatchingEngine};
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
@@ -25,7 +26,6 @@ use axum::response::IntoResponse;
 use loco_rs::bgworker::BackgroundWorker;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
-use project_portfolio_management_matcher::{MatchConfig, MatchingEngine};
 use sea_orm::sea_query::{Expr, Func};
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -780,9 +780,8 @@ async fn confirm_item(
             ErrorDetail::new("conflict", format!("the item is already {}", item.status)),
         ));
     }
-    let plan: project_portfolio_management_matcher::Plan =
-        serde_json::from_value(item.candidate.clone())
-            .map_err(|_| unprocessable("the held candidate is no longer a valid plan"))?;
+    let plan: crate::matcher::Plan = serde_json::from_value(item.candidate.clone())
+        .map_err(|_| unprocessable("the held candidate is no longer a valid plan"))?;
     super::plans::validate(&plan)?;
     let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
     let mut a: review_queue_items::ActiveModel = item.into();
@@ -988,7 +987,7 @@ async fn process_row(
     ctx: &AppContext,
     d: &Decoded,
     pid: Option<&str>,
-    plan: &project_portfolio_management_matcher::Plan,
+    plan: &crate::matcher::Plan,
     on_keyless: &str,
     actor: Option<&str>,
     job_pid: Uuid,

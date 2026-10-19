@@ -1,6 +1,6 @@
 #![warn(clippy::pedantic)]
 
-//! Criterion benchmarks for the `project-portfolio-management-matcher`
+//! Criterion benchmarks for the `matcher` module
 //! crate.
 //!
 //! Run with `cargo bench`. The harness covers the hot paths a downstream
@@ -13,7 +13,7 @@
 //! the cost of the component that actually runs.
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use project_portfolio_management_matcher::{
+use project_portfolio_management::matcher::{
     Goal, IdentifierScheme, MatchConfig, MatchingEngine, Plan, PlanIdentifier, PlanKind,
     PlanRelationship, PlanStatus, RelationKind,
 };

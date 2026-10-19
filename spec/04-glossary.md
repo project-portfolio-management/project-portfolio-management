@@ -2,7 +2,7 @@
 
 Entity-level terms. Per-subproject vocabularies: service
 [spec §4](../project-portfolio-management-service-with-rust/spec/index.md), matcher
-[spec §3](../project-portfolio-management-matcher-with-rust/spec/index.md), front-end
+[spec §3](../project-portfolio-management-service-with-rust/spec/matcher.md), front-end
 [spec §4](../project-portfolio-management-ui-with-svelte/spec/index.md).
 
 | Term | Meaning |

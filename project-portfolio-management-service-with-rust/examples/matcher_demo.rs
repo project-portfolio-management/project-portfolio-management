@@ -1,4 +1,4 @@
-//! Demo binary — a runnable walkthrough of the `project-portfolio-management-matcher`
+//! Demo binary — a runnable walkthrough of the `matcher` module
 //! public API. Not part of the public API's `SemVer` surface.
 
 #![forbid(unsafe_code)] // demo binary needs no `unsafe` either.
@@ -11,7 +11,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use project_portfolio_management_matcher::{
+use project_portfolio_management::matcher::{
     Goal, IdentifierScheme, MatchConfig, MatchingEngine, Plan, PlanIdentifier,
 };
 
@@ -22,7 +22,7 @@ use project_portfolio_management_matcher::{
 fn main() {
     let engine = MatchingEngine::new(MatchConfig::default());
 
-    println!("== project-portfolio-management-matcher demo ==\n");
+    println!("== plan matcher demo ==\n");
 
     // 1. Fuzzy name + shared goal title (same kind).
     let mut a = Plan::new("Apollo platform migration");

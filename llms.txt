@@ -5,7 +5,7 @@
 ## Facts
 
 - Version: 0.4.0
-- Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-matcher-with-rust` (matcher), `project-portfolio-management-ui-with-svelte` (ui)
+- Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-ui-with-svelte` (ui)
 - Stack: Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18
 - Stack: SvelteKit 2, Svelte 5 (runes), Node 26, pnpm
 - Stack: Lily Design System widgets (@lilydesignsystem/*)
@@ -40,14 +40,14 @@
 - [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics
 - [Keycloak test containers](spec/testcontainers-keycloak/index.md): Testing against a Keycloak container
 - [API crate spec](project-portfolio-management-service-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
-- [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalization
+- [Matcher crate spec](project-portfolio-management-service-with-rust/spec/matcher.md): Living spec for the matching library: weights, rules, normalization
 - [UI spec](project-portfolio-management-ui-with-svelte/spec/index.md): Living spec for the SvelteKit operator UI
 
 ## Agent guides
 
 - [Root agent guide](AGENTS.md): Where to start: the three projects, how work is done here, the gates, easy mistakes
 - [API service guide](project-portfolio-management-service-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
-- [Matcher guide](project-portfolio-management-matcher-with-rust/AGENTS.md): Matching rules, golden rules and file layout for the library
+- [Matcher guide](project-portfolio-management-service-with-rust/agents/matcher/AGENTS.md): Matching rules, golden rules and file layout for the library
 - [UI guide](project-portfolio-management-ui-with-svelte/AGENTS.md): Working guide for the SvelteKit UI
 - [Agents index](agents/index.md): Entity-level reference documents
 - [Subprojects](agents/subprojects.md): The trio: responsibilities, dependency direction, how to run each
@@ -88,8 +88,8 @@
 
 - [API README](project-portfolio-management-service-with-rust/README.md): Overview, quick start and testing for the service
 - [API changelog](project-portfolio-management-service-with-rust/CHANGELOG.md): Release notes for the service
-- [Matcher README](project-portfolio-management-matcher-with-rust/README.md): Usage and weights table for the matching library
-- [Matcher changelog](project-portfolio-management-matcher-with-rust/CHANGELOG.md): Release notes for the matcher
+- [Matcher README](project-portfolio-management-service-with-rust/agents/matcher/README.md): Usage and weights table for the matching library
+- [Matcher changelog](project-portfolio-management-service-with-rust/agents/matcher/CHANGELOG.md): Release notes for the matcher
 - [UI README](project-portfolio-management-ui-with-svelte/README.md): Overview and run instructions for the UI
 
 ## Project documents

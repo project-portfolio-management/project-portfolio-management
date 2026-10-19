@@ -1,4 +1,4 @@
-# Fuzzing — `project-portfolio-management-matcher` (SEC-I2)
+# Fuzzing — Plan matcher (SEC-I2)
 
 Coverage-guided [`cargo-fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html)
 harness for the matcher, adopting the

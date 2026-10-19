@@ -34,8 +34,8 @@
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
+use crate::matcher::{Plan, phonetic::soundex};
 use loco_rs::Error;
-use project_portfolio_management_matcher::{Plan, phonetic::soundex};
 use tantivy::{
     IndexWriter, TantivyDocument,
     collector::TopDocs,
@@ -578,7 +578,7 @@ fn tokenize(s: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use project_portfolio_management_matcher::{Goal, IdentifierScheme, PlanIdentifier, PlanKind};
+    use crate::matcher::{Goal, IdentifierScheme, PlanIdentifier, PlanKind};
     use tempfile::TempDir;
 
     /// An engine over a throwaway directory, plus the directory guard.

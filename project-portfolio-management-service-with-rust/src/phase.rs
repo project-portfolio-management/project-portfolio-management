@@ -21,7 +21,7 @@
 //!   that basis would teach operators to misreport the phase, which
 //!   costs more than it buys.
 
-use project_portfolio_management_matcher::PlanPhase;
+use crate::matcher::PlanPhase;
 use serde::{Deserialize, Serialize};
 
 /// Why a phase move is refused.

@@ -30,13 +30,13 @@
 use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use project_portfolio_management::matcher::{
+    Goal, IdentifierScheme, Plan, PlanIdentifier, PlanKind, PlanStatus,
+};
 use project_portfolio_management::{
     effort, merge,
     search::{SearchEngine, SearchMode},
     validation, visibility,
-};
-use project_portfolio_management_matcher::{
-    Goal, IdentifierScheme, Plan, PlanIdentifier, PlanKind, PlanStatus,
 };
 use uuid::Uuid;
 

@@ -1,4 +1,4 @@
-//! `SeaORM` Entity — `plans`. The full `project_portfolio_management_matcher::Plan`
+//! `SeaORM` Entity — `plans`. The full `crate::matcher::Plan`
 //! payload is stored in `data` (JSONB); `pid`, `kind`, `name`, and
 //! `parent_pid` are denormalized for lookup, listing, and roll-up.
 //!
@@ -29,7 +29,7 @@ pub struct Model {
     pub kind: Option<String>,
     /// Denormalized plan name, for lookup and listing.
     pub name: String,
-    /// The full `project_portfolio_management_matcher::Plan` payload (JSONB).
+    /// The full `crate::matcher::Plan` payload (JSONB).
     pub data: Json,
     /// Denormalized parent plan pid (any plan may contain any other), for
     /// cheap roll-up of a plan's children; `None` for a root plan.

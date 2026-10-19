@@ -24,7 +24,7 @@
 //!   (amplified by the check-duplicates scan) — rejected here, before the
 //!   record is stored or matched.
 
-use project_portfolio_management_matcher::{IdentifierScheme, Plan};
+use crate::matcher::{IdentifierScheme, Plan};
 
 /// Maximum length, in Unicode scalar values, of any single scalar text
 /// field (e.g. `name`, `code`). SEC-M1 denial-of-service guard.
@@ -258,7 +258,7 @@ fn looks_like_bcp47(s: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use project_portfolio_management_matcher::{Goal, Plan, PlanIdentifier};
+    use crate::matcher::{Goal, Plan, PlanIdentifier};
 
     fn project(name: &str) -> Plan {
         Plan::new(name)

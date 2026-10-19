@@ -18,7 +18,7 @@
 //!   normal probabilistic pipeline, never forced to `0.0`;
 //! - an identical clone of a record matches itself.
 
-use project_portfolio_management_matcher::{
+use project_portfolio_management::matcher::{
     MatchConfig, MatchingEngine, Plan, PlanKind, normalize, phonetic,
 };
 use proptest::prelude::*;

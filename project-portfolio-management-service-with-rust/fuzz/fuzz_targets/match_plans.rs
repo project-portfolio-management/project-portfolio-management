@@ -10,7 +10,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan};
+use project_portfolio_management::matcher::{MatchConfig, MatchingEngine, Plan};
 
 fuzz_target!(|data: &[u8]| {
     // Only well-formed JSON tuples reach the engine; malformed input is a

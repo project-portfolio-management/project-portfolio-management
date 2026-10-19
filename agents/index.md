@@ -19,7 +19,7 @@ service crate + matcher crate + front-end.
 | Subproject | Spec | Agent guide | Detailed guides |
 |---|---|---|---|
 | [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | [spec/index.md](../project-portfolio-management-service-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | — (see the crate's AGENTS.md) |
-| [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | [spec/index.md](../project-portfolio-management-matcher-with-rust/spec/index.md) | [AGENTS.md](../project-portfolio-management-matcher-with-rust/AGENTS.md) | [agents/](../project-portfolio-management-matcher-with-rust/agents/index.md) (algorithm, normalization, SDD, testing) |
+| [plan matcher](../project-portfolio-management-service-with-rust/agents/matcher/overview.md) (module of the service) | [spec/index.md](../project-portfolio-management-service-with-rust/spec/matcher.md) | [AGENTS.md](../project-portfolio-management-service-with-rust/agents/matcher/AGENTS.md) | [agents/](../project-portfolio-management-service-with-rust/agents/matcher/index.md) (algorithm, normalization, SDD, testing) |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | [spec/index.md](../project-portfolio-management-ui-with-svelte/spec/index.md) | [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) | — (thin) |
 
 ## Related documents in this repository

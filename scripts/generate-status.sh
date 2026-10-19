@@ -16,7 +16,6 @@ export LC_ALL
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 STATUS="$ROOT/spec/14-implementation-status.md"
 API="$ROOT/project-portfolio-management-service-with-rust"
-MATCHER="$ROOT/project-portfolio-management-matcher-with-rust"
 UI="$ROOT/project-portfolio-management-ui-with-svelte"
 TASKS="$ROOT/tasks.md"
 START='<!-- generated:start -->'
@@ -43,8 +42,7 @@ generate() {
   documented=$(cat "$API/src/openapi.rs" "$API/src/openapi_more.rs" | grep -cE '^[[:space:]]*"/api/[^"]*"[[:space:]]*:' || true)
   svc_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$API/src" "$API/tests" "$API/migration/src")
   svc_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$API/src" "$API/tests" "$API/migration/src")
-  mat_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$MATCHER/src" "$MATCHER/tests")
-  mat_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$MATCHER/src" "$MATCHER/tests")
+  mat_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$API/src/matcher" "$API/tests/matcher_public_api.rs" "$API/tests/matcher_properties.rs")
   vitest=$(count_ts '^[[:space:]]*(it|test)(\.each)?[(`]' "$UI/tests/unit")
   playwright=$(count_ts '^[[:space:]]*test(\.each)?\(' "$UI/tests/e2e")
   locales=$(awk '/^export const LOCALES = \[/{f=1;next} f&&/\] as const/{exit} f&&/"/{n++} END{print n+0}' "$UI/src/lib/locales.ts")
@@ -59,13 +57,12 @@ generate() {
   echo "| Fact | Value | Method |"
   echo "|---|---|---|"
   echo "| Service version | $(cargo_version "$API/Cargo.toml") | \`version\` in the service \`Cargo.toml\` |"
-  echo "| Matcher version | $(cargo_version "$MATCHER/Cargo.toml") | \`version\` in the matcher \`Cargo.toml\` |"
   echo "| Front-end version | $ui_version | \`version\` in the front-end \`package.json\` |"
   echo "| Migrations | $migrations | files named \`m2*.rs\` in \`migration/src\` |"
   echo "| Mounted route registrations | $mounted | \`.add(\` calls in \`src/controllers/*.rs\` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |"
   echo "| Documented API paths | $documented | quoted \`\"/api/...\"\` keys in \`src/openapi.rs\` and \`src/openapi_more.rs\` |"
   echo "| Service tests | $svc_tests, plus $svc_ignored \`#[ignore]\`d (database or container gated) | \`#[test]\` and \`#[tokio::test]\` lines; \`#[ignore]\` lines, in \`src\`, \`tests\`, \`migration/src\` |"
-  echo "| Matcher tests | $mat_tests, plus $mat_ignored \`#[ignore]\`d | the same patterns in the matcher \`src\` and \`tests\` |"
+  echo "| Matcher tests (included in the service count) | $mat_tests | the same pattern in \`src/matcher\` and the \`tests/matcher_*.rs\` files |"
   echo "| Front-end unit tests (vitest) | $vitest | \`it(\` / \`test(\` lines in \`tests/unit\` |"
   echo "| Front-end end-to-end tests (Playwright) | $playwright | \`test(\` lines in \`tests/e2e\` |"
   echo "| Locales | $locales | entries of \`LOCALES\` in \`src/lib/locales.ts\` |"

@@ -1,6 +1,6 @@
 //! Hand-written `OpenAPI` 3 description of the portfolio REST API.
 //!
-//! The request/response `Plan` body is the `project_portfolio_management_matcher::Plan`
+//! The request/response `Plan` body is the `crate::matcher::Plan`
 //! shape. That crate is intentionally dependency-light (no `utoipa`), so
 //! the schema is authored here by hand rather than derived — which also
 //! keeps the doc accurate to the wire format. All plans live in one
@@ -17,7 +17,7 @@ pub fn spec() -> Value {
         "info": {
             "title": "Project Portfolio Management Service API",
             "version": env!("CARGO_PKG_VERSION"),
-            "description": "Registry of plan identities in one recursive collection (any plan may contain any other via parent_ref; kind is an optional descriptive label): CRUD + matching. The request/response body is the project-portfolio-management-matcher Plan shape. Validation failures (blank name, blank goal title, malformed identifier, malformed parent_ref / in_language, or a containment cycle) return 422. Matching is not gated by kind."
+            "description": "Registry of plan identities in one recursive collection (any plan may contain any other via parent_ref; kind is an optional descriptive label): CRUD + matching. The request/response body is the matcher module's Plan shape. Validation failures (blank name, blank goal title, malformed identifier, malformed parent_ref / in_language, or a containment cycle) return 422. Matching is not gated by kind."
         },
         "paths": paths(),
         "components": components(),

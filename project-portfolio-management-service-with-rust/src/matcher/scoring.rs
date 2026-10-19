@@ -47,7 +47,7 @@ impl Confidence {
     /// # Examples
     ///
     /// ```
-    /// use project_portfolio_management_matcher::Confidence;
+    /// use project_portfolio_management::matcher::Confidence;
     ///
     /// assert_eq!(Confidence::classify(0.99), Confidence::High);
     /// assert_eq!(Confidence::classify(0.80), Confidence::Medium);

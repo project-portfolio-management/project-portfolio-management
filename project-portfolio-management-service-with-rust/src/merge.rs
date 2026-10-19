@@ -10,7 +10,7 @@
 //! its own optional `kind` label — merging never changes `name` or
 //! `kind`.
 
-use project_portfolio_management_matcher::{Goal, Plan};
+use crate::matcher::{Goal, Plan};
 use serde_json::Value;
 
 /// The result of merging a duplicate into a surviving (main) plan.
@@ -116,9 +116,7 @@ fn union_by<T: Clone>(main: &[T], extra: &[T], eq: impl Fn(&T, &T) -> bool) -> V
 #[cfg(test)]
 mod tests {
     use super::*;
-    use project_portfolio_management_matcher::{
-        IdentifierScheme, PlanIdentifier, PlanRelationship, RelationKind,
-    };
+    use crate::matcher::{IdentifierScheme, PlanIdentifier, PlanRelationship, RelationKind};
 
     fn project(name: &str) -> Plan {
         Plan::new(name)

@@ -98,7 +98,7 @@ This spec owns the **cross-subproject contract**:
   sub-resource and family-baseline tables (§10).
 - loco.rs app structure, migrations, configuration.
 
-**project-portfolio-management-matcher-with-rust** owns:
+The service's **plan matcher** (`src/matcher/`) owns:
 
 - Pure-library pairwise comparison: kind-agnostic deterministic
   short-circuits (shared deterministic-scheme identifier, same owner-org

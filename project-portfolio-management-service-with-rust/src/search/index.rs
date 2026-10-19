@@ -13,7 +13,7 @@
 //! `kind` is indexed as an exact-match field so a caller **may** narrow
 //! a search to one kind (`?kind=project`) — it is deliberately **not**
 //! applied as a duplicate-detection gate: the matcher and this service
-//! are kind-agnostic (`project_portfolio_management_matcher`'s "no kind
+//! are kind-agnostic (`crate::matcher`'s "no kind
 //! gate" rule — two plans with different `kind` labels may still be the
 //! same identity), so [`super::SearchEngine::candidates`] never filters
 //! on it.

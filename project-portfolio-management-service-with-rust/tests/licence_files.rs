@@ -80,7 +80,7 @@ fn the_licence_directory_holds_only_the_expression_s_licences() {
 fn every_manifest_declares_the_one_expression() {
     for manifest in [
         "project-portfolio-management-service-with-rust/Cargo.toml",
-        "project-portfolio-management-matcher-with-rust/Cargo.toml",
+        "project-portfolio-management-service-with-rust/migration/Cargo.toml",
         "project-portfolio-management-ui-with-svelte/package.json",
     ] {
         assert_eq!(declared(&root().join(manifest)), EXPRESSION, "{manifest}");

@@ -28,8 +28,8 @@
 use std::collections::VecDeque;
 use std::sync::{Mutex, OnceLock};
 
+use crate::matcher::Plan;
 use loco_rs::prelude::ModelResult;
-use project_portfolio_management_matcher::Plan;
 use sea_orm::{ConnectionTrait, DatabaseConnection, IntoActiveModel, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

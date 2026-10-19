@@ -5,7 +5,7 @@ runs; where nothing was run, this page says so.
 
 ## The matcher (measured)
 
-Criterion benchmarks for the matching engine: `project-portfolio-management-matcher-with-rust/benches/match_pair.rs`.
+Criterion benchmarks for the matching engine: `project-portfolio-management-service-with-rust/benches/match_pair.rs`.
 
 | | |
 |---|---|

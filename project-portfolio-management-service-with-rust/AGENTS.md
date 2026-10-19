@@ -19,7 +19,7 @@ label — **and** a project-management tool.
 ## What this is
 
 A **loco.rs** service. The API DTO **is**
-`project_portfolio_management_matcher::Plan` — stored verbatim (JSONB) and
+`project_portfolio_management::matcher::Plan` — stored verbatim (JSONB) and
 matched with the same type, so there is no adapter to drift. All plans
 live in **one `plans` table** (`pid`, nullable `kind`, `name`, `data`
 JSONB `Plan`, `parent_pid`, `active`, soft delete) behind one REST

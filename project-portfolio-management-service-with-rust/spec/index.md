@@ -6,7 +6,7 @@
 >
 > Entity-wide contract: [portfolio entity spec](../../spec/index.md) (the API
 > DTO **is** the matcher's `Plan` type; canonical domain model in its §5).
-> Sibling matcher: [project-portfolio-management-matcher](../../project-portfolio-management-matcher-with-rust/spec/index.md).
+> Sibling matcher: [plan matcher](matcher.md).
 > Sibling front-end: [project-portfolio-management-ui-with-svelte](../../project-portfolio-management-ui-with-svelte/spec/index.md).
 
 ## 1. Purpose and vision
@@ -19,7 +19,7 @@ recursive collection; its `kind` — **Portfolio**, **Project**,
 display / grouping hint), not a required discriminator and not a separate
 collection. The service has **two faces that share one record**: a
 deduplicated, matchable identity registry (the thin `Plan` payload,
-scored by the canonical project-portfolio-management-matcher) and a
+scored by the canonical plan matcher, `src/matcher/`) and a
 project workspace (each plan *owns* operational sub-resources — goals,
 tasks, issues — plus derived timeline / burndown views). All plans live
 in **one collection and table**; any plan may contain any other plan via
@@ -115,7 +115,7 @@ titles feed matching via `data.goals[]`).
 
 > **Matching is kind-agnostic.** There is no kind gate: two plans may
 > match regardless of their (optional) `kind` labels
-> ([project-portfolio-management-matcher §1–§25](../../project-portfolio-management-matcher-with-rust/spec/index.md)).
+> ([plan matcher §1–§25](matcher.md)).
 > The matcher's `MatchBreakdown.kind_gate_blocked` remains only as a
 > vestigial, always-`false` field. Containment is expressed with
 > `parent_ref`, not with a collection boundary.
@@ -222,7 +222,7 @@ is expressed by `parent_ref`, never by a collection boundary.
 ## 7. Non-functional requirements
 
 loco-idiomatic; Postgres persistence; deterministic + probabilistic
-matching via the embedded `project-portfolio-management-matcher` (`MatchingEngine::new(
+matching via the embedded `matcher` module (`MatchingEngine::new(
 MatchConfig::default())` in
 [`src/controllers/plans.rs`](../src/controllers/plans.rs));
 soft-delete with audit-friendly timestamps. One shared controller core
@@ -240,7 +240,7 @@ stores `pid` + denormalized `name` + the full `Plan` JSONB `data` + a
 **nullable** `kind` column (the optional label) + a denormalized
 `parent_pid` UUID (from `data.parent_ref`, for child roll-up queries);
 the operational sub-resources live in their own tables keyed by the
-parent plan `pid` (§10). Matching calls `project-portfolio-management-matcher` directly
+parent plan `pid` (§10). Matching calls `matcher` module directly
 on the deserialized payloads — **no adapter**, mirroring care-pathway —
 with **no kind gate**, so any two plans may match. Cross-service
 links use the hybrid topology
@@ -1112,7 +1112,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `identifiers[i].value` / `relationships[i].plan_id`) → `422`, before
   store/match, to close the matcher's `O(n·m)` CPU/memory DoS vector
   (amplified by check-duplicates). `kind` is an enum, not capped.
-- [x] Matching — embed `project-portfolio-management-matcher`
+- [x] Matching — embed `matcher` module
   (`MatchingEngine::new( MatchConfig::default())`); `POST /match`, `POST
   /check-duplicates` (blocked on the Tantivy index since 2026-08-02, §9.2).
   Matching is **kind-agnostic** — no kind gate, so any
@@ -1570,7 +1570,7 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 ## 17. References
 
 - The [portfolio entity spec](../../spec/index.md) (canonical model §5);
-  the [project-portfolio-management-matcher spec](../../project-portfolio-management-matcher-with-rust/spec/index.md);
+  the [plan matcher spec](matcher.md);
   loco.rs; cross-service linking;
   [bulk import/export](../../spec/bulk-import-export.md);
   event bus.

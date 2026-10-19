@@ -1,6 +1,6 @@
 # Project Portfolio Management
 
-One entity, three subprojects: a registry of **plans** (one recursive
+One entity, two subprojects: a registry of **plans** (one recursive
 `/api/plans` collection; an optional `kind` label such as Portfolio, Project
 or Program; any plan may contain any other) with explainable duplicate
 matching, plus a project-management workspace (tasks, schedule, cost,
@@ -8,8 +8,7 @@ resources, governance).
 
 | Subproject | What it is | Run | Test |
 |---|---|---|---|
-| [`project-portfolio-management-matcher-with-rust`](project-portfolio-management-matcher-with-rust) | Rust library: the `Plan` type and the matching engine, embedded by the API | `cargo run` (demo) | `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo fmt --check` |
-| [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | loco.rs REST service; the API DTO is the matcher's `Plan` | `cargo loco start` (needs Postgres) | `cargo test` (database-free), `cargo test -- --ignored` (request tests, need Postgres) |
+| [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | loco.rs REST service; the API DTO is the `Plan` type of its `matcher` module (the matching engine, with a demo: `cargo run --example matcher_demo`) | `cargo loco start` (needs Postgres) | `cargo test` (database-free), `cargo test -- --ignored` (request tests, need Postgres) |
 | [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 2 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
 
 The Rust toolchain is pinned in [`rust-toolchain.toml`](rust-toolchain.toml)

@@ -107,7 +107,7 @@
         },
         {
           "title": "Matcher crate spec",
-          "path": "project-portfolio-management-matcher-with-rust/spec/index.md",
+          "path": "project-portfolio-management-service-with-rust/spec/matcher.md",
           "description": "Living spec for the matching library: weights, rules, normalization"
         },
         {
@@ -132,7 +132,7 @@
         },
         {
           "title": "Matcher guide",
-          "path": "project-portfolio-management-matcher-with-rust/AGENTS.md",
+          "path": "project-portfolio-management-service-with-rust/agents/matcher/AGENTS.md",
           "description": "Matching rules, golden rules and file layout for the library"
         },
         {
@@ -297,12 +297,12 @@
         },
         {
           "title": "Matcher README",
-          "path": "project-portfolio-management-matcher-with-rust/README.md",
+          "path": "project-portfolio-management-service-with-rust/agents/matcher/README.md",
           "description": "Usage and weights table for the matching library"
         },
         {
           "title": "Matcher changelog",
-          "path": "project-portfolio-management-matcher-with-rust/CHANGELOG.md",
+          "path": "project-portfolio-management-service-with-rust/agents/matcher/CHANGELOG.md",
           "description": "Release notes for the matcher"
         },
         {
@@ -377,7 +377,6 @@
     "version": "0.4.0",
     "layout": {
       "service": "project-portfolio-management-service-with-rust",
-      "matcher": "project-portfolio-management-matcher-with-rust",
       "ui": "project-portfolio-management-ui-with-svelte"
     },
     "stack": [

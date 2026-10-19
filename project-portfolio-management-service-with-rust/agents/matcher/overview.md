@@ -1,4 +1,4 @@
-# project-portfolio-management-matcher — documentation index
+# Plan matcher — documentation index
 
 Pairwise plan record matching, deterministic + probabilistic, for
 deduplication across one recursive plan collection. The four former
@@ -10,16 +10,16 @@ optional descriptive metadata that does not gate matching.
 
 | Doc | Purpose |
 |---|---|
-| [spec/index.md](./spec/index.md) | **Single source of truth** (§1–§25). |
+| [spec/index.md](../../spec/matcher.md) | **Single source of truth** (§1–§25). |
 | [AGENTS.md](./AGENTS.md) | How to work in this crate; public API; layout. |
 | [README.md](./README.md) | User-facing intro + usage. |
 | [CHANGELOG.md](./CHANGELOG.md) | Release history. |
-| [agents/matching-algorithm.md](./agents/matching-algorithm.md) | No kind gate + per-component derivations + weights. |
-| [agents/normalization.md](./agents/normalization.md) | Fold / code rules. |
-| [agents/testing.md](./agents/testing.md) | Test layout. |
+| [agents/matching-algorithm.md](matching-algorithm.md) | No kind gate + per-component derivations + weights. |
+| [agents/normalization.md](normalization.md) | Fold / code rules. |
+| [agents/testing.md](testing.md) | Test layout. |
 
 The entity-level domain model lives in
-[`../spec/index.md`](../spec/index.md) §5.
+[`../spec/index.md`](../../spec/matcher.md) §5.
 
 ## Worked example
 
@@ -83,4 +83,4 @@ So the pair lands at `~0.79` — `Medium` confidence, below the default
 name-only score down from `~1.0`.
 
 Part of the Main X Index family; embedded by
-[project-portfolio-management-service](../project-portfolio-management-service-with-rust).
+[project-portfolio-management-service](../../).

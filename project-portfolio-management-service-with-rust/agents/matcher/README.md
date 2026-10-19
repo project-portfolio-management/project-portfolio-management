@@ -1,4 +1,9 @@
-# project-portfolio-management-matcher
+# Plan matcher
+
+> The matcher is the `matcher` module of the service crate (`src/matcher/`). It was a separate crate,
+> `project-portfolio-management-matcher`, until it was folded in; version 0.2.0 of that crate stays on crates.io.
+> Paths and commands below are relative to the service directory: `cargo test --lib matcher`,
+> `cargo run --example matcher_demo`, `cargo bench --bench match_pair`.
 
 Pairwise **plan record matching** for Rust, for deduplication across one
 recursive plan collection. A *plan* may contain other plans (a
@@ -8,9 +13,9 @@ that is descriptive metadata and does not gate matching. Combines
 deterministic identifier short-circuits and explainable probabilistic
 scoring. Dependency-light, no IO, no `unsafe`.
 
-- Spec: [spec/index.md](./spec/index.md)
+- Spec: [spec/index.md](../../spec/matcher.md)
 - Agent guide: [AGENTS.md](./AGENTS.md)
-- Entity domain model: [`../spec/index.md`](../spec/index.md) §5
+- Entity domain model: [`../spec/index.md`](../../spec/matcher.md) §5
 
 ## Usage
 
@@ -73,10 +78,10 @@ cargo bench               # benches/match_pair.rs
 
 Licence is any of these, or contact us for custom licence options.
 
-* [MIT](https://opensource.org/license/mit) ([SPDX: MIT](https://spdx.org/licenses/MIT.html)), text in [`../LICENSE/MIT.txt`](../LICENSE/MIT.txt)
-* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([SPDX: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)), text in [`../LICENSE/Apache-2.0.txt`](../LICENSE/Apache-2.0.txt)
-* [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) ([SPDX: GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)), text in [`../LICENSE/GPL-2.0-only.txt`](../LICENSE/GPL-2.0-only.txt)
-* [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) ([SPDX: GPL-3.0-only](https://spdx.org/licenses/GPL-3.0-only.html)), text in [`../LICENSE/GPL-3.0-only.txt`](../LICENSE/GPL-3.0-only.txt)
-* [BSD 3-Clause License](https://opensource.org/license/bsd-3-clause) ([SPDX: BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)), text in [`../LICENSE/BSD-3-Clause.txt`](../LICENSE/BSD-3-Clause.txt)
+* [MIT](https://opensource.org/license/mit) ([SPDX: MIT](https://spdx.org/licenses/MIT.html)), text in [`../LICENSE/MIT.txt`](../../../LICENSE/MIT.txt)
+* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) ([SPDX: Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)), text in [`../LICENSE/Apache-2.0.txt`](../../../LICENSE/Apache-2.0.txt)
+* [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) ([SPDX: GPL-2.0-only](https://spdx.org/licenses/GPL-2.0-only.html)), text in [`../LICENSE/GPL-2.0-only.txt`](../../../LICENSE/GPL-2.0-only.txt)
+* [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) ([SPDX: GPL-3.0-only](https://spdx.org/licenses/GPL-3.0-only.html)), text in [`../LICENSE/GPL-3.0-only.txt`](../../../LICENSE/GPL-3.0-only.txt)
+* [BSD 3-Clause License](https://opensource.org/license/bsd-3-clause) ([SPDX: BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)), text in [`../LICENSE/BSD-3-Clause.txt`](../../../LICENSE/BSD-3-Clause.txt)
 
 SPDX expression: `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`.

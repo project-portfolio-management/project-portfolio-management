@@ -12,7 +12,7 @@
 //! total`. The error report names the offending *field* and never echoes the
 //! source value, so it can be shared without leaking personal data.
 
-use project_portfolio_management_matcher::Plan;
+use crate::matcher::Plan;
 use serde::Serialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;

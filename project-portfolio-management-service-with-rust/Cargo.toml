@@ -35,6 +35,10 @@ sha2 = { version = "0.11" }
 sha3 = { version = "0.12" }
 loco-rs = { workspace = true  }
 serde = { version = "1", features = ["derive"] }
+# The plan matcher (src/matcher/): fuzzy name similarity, Unicode folding, errors.
+strsim = "0.11"
+unicode-normalization = "0.1"
+thiserror = "2.0"
 serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision"] }
 tokio = { version = "1.53", default-features = false, features = [
   "rt-multi-thread",
@@ -78,8 +82,6 @@ include_dir = { version = "0.7" }
 mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }
 
-# Canonical matching algorithm (published crate) — embedded and used directly as the API DTO.
-project-portfolio-management-matcher = "0.2.0"
 
 # Offline PASETO v4.public verification against the authentication-service Ed25519 keys (the published `authentication-verifier` crate).
 # The `fetch` feature adds `Verifier::from_paseto_keys_url` for the boot-time key-set fetch (`PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`).
@@ -139,6 +141,7 @@ required-features = []
 # token through the real guard without a Keycloak container. Tests only.
 authentication-verifier = { version = "0.9.1", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
+proptest = "1.12"
 loco-rs = { workspace = true, features = ["testing"] }
 # Name the `TestServer` type in shared request-test helpers.
 axum-test = { version = "17.3.0" }
@@ -201,4 +204,8 @@ tracing-core = { version = "0.1" }
 
 [[bench]]
 name = "service_bench"
+harness = false
+
+[[bench]]
+name = "match_pair"
 harness = false

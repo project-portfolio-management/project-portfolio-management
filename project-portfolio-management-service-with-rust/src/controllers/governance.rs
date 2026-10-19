@@ -5,10 +5,10 @@
 //! [`crate::governance`]; nothing here ever feeds the matcher (the §8
 //! partition rule).
 
+use crate::matcher::{MatchConfig, MatchingEngine, Plan};
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
-use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan};
 use sea_orm::QueryOrder;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

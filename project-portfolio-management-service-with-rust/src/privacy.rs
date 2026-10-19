@@ -47,7 +47,7 @@
 //! [`EntityRef`]: ../../../link/entity-ref-rust-crate
 //! [`agents/share/privacy.md`]: ../../../agents/share/privacy.md
 
-use project_portfolio_management_matcher::Plan;
+use crate::matcher::Plan;
 
 /// Return a copy of `plan` with the sensitive fields masked (see the
 /// module docs for what counts as sensitive here and why the set is

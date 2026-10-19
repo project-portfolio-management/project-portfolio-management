@@ -14,7 +14,7 @@ The portfolio entity is two things at once:
    critical path, flow, cost, …).
 
 Normative definitions: entity spec [§5](../spec/05-domain-model.md)
-and matcher [spec §6](../project-portfolio-management-matcher-with-rust/spec/index.md).
+and matcher [spec §6](../project-portfolio-management-service-with-rust/spec/matcher.md).
 
 ## The optional kind label + recursive containment
 
@@ -33,7 +33,7 @@ HTTP `422`.
 
 ## `Plan` (matchable identity)
 
-**File:** [`project-portfolio-management-matcher-with-rust/src/plan.rs`](../project-portfolio-management-matcher-with-rust/src/plan.rs)
+**File:** [`project-portfolio-management-service-with-rust/src/matcher/plan.rs`](../project-portfolio-management-service-with-rust/src/matcher/plan.rs)
 
 | Field | Type | Description |
 |---|---|---|

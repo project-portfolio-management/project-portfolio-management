@@ -54,19 +54,20 @@ The interface is available in several languages (English, Welsh and others);
 the first path segment is the locale, for example `/en-001/plans` or
 `/cy-001/plans`. See [`governance/language-statement.md`](governance/language-statement.md).
 
-## 3. Use the matcher library on its own
+## 3. Try the matcher
+
+The plan matcher is a module of the service (`src/matcher/`). Its demo needs no database:
 
 ```sh
-cd project-portfolio-management-matcher-with-rust
-cargo run        # a small demo
-cargo test
+cd project-portfolio-management-service-with-rust
+cargo run --example matcher_demo
+cargo test --lib matcher
 ```
 
 ## 4. Build and test everything from source
 
 ```sh
-# Matcher and service
-(cd project-portfolio-management-matcher-with-rust && cargo test)
+# Service (includes the matcher)
 (cd project-portfolio-management-service-with-rust && cargo test)               # database-free
 (cd project-portfolio-management-service-with-rust && cargo test -- --ignored)  # needs PostgreSQL
 

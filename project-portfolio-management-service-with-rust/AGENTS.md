@@ -235,9 +235,10 @@ config/                     development / production / test yaml
 ## Container image
 
 `Dockerfile` (multi-stage, Debian 13 slim) must be built with the
-**repository root** as context, because sibling path dependencies
-(`integrity-mac`, `authentication-verifier`,
-`project-portfolio-management-matcher`) live outside this directory:
-`podman build -f project-portfolio-management/project-portfolio-management-service-with-rust/Dockerfile -t project-portfolio-management-service .`
+**repository root** as context (it reads the root `rust-toolchain.toml`; the
+matcher and `authentication-verifier` now come from crates.io, only
+`integrity-mac` is a git dependency, and the `migration/` crate is a path
+dependency inside this directory):
+`podman build -f project-portfolio-management-service-with-rust/Dockerfile -t project-portfolio-management-service .`
 Exclude every `target/` via `.containerignore`. `GET /_health` returns
 `200` once Postgres is reachable.

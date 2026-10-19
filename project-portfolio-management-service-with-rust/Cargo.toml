@@ -78,8 +78,8 @@ include_dir = { version = "0.7" }
 mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }
 
-# Canonical matching algorithm — embedded and used directly as the API DTO.
-project-portfolio-management-matcher = { path = "../project-portfolio-management-matcher-with-rust" }
+# Canonical matching algorithm (published crate) — embedded and used directly as the API DTO.
+project-portfolio-management-matcher = "0.2.0"
 
 # Offline PASETO v4.public verification against the authentication-service Ed25519 keys (the published `authentication-verifier` crate).
 # The `fetch` feature adds `Verifier::from_paseto_keys_url` for the boot-time key-set fetch (`PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`).

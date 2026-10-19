@@ -1,16 +1,15 @@
 # Multi-stage container build for Project Portfolio Management Service.
 #
-# BUILD CONTEXT IS THE REPOSITORY ROOT. This crate depends on its sibling
-# crate `project-portfolio-management-matcher-with-rust` by relative path
-# (`../project-portfolio-management-matcher-with-rust`), so both must be in
-# the context. Build from the repository root:
+# BUILD CONTEXT IS THE REPOSITORY ROOT (the root rust-toolchain.toml is read
+# from it). The matcher and `authentication-verifier` come from crates.io.
+# Build from the repository root:
 #
 #   podman build -f project-portfolio-management-service-with-rust/Dockerfile \
 #     -t project-portfolio-management-service .
 #
-# The two pinned git dependencies (`integrity-mac`, `authentication-verifier`
-# from github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) are
-# fetched by cargo during the build, which is why the builder needs `git` and
+# The one pinned git dependency (`integrity-mac`, from
+# github.com/SixArm/main-x-service, locked by `rev` in Cargo.toml) is fetched by
+# cargo during the build, which is why the builder needs `git` and
 # `ca-certificates` and network access.
 #
 # Toolchain: the base image tag below must equal `channel` in the root
@@ -37,9 +36,6 @@ RUN want="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
     && test "${want}" = "${have}"
 
 WORKDIR /app
-
-# Sibling path dependency (sources only; target/ is excluded by .dockerignore).
-COPY project-portfolio-management-matcher-with-rust project-portfolio-management-matcher-with-rust
 
 # This crate: manifests first, then the nested `migration` crate, sources,
 # and benches. Cargo parses the whole manifest even for a --bin build, and

@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 17 October
 
+- **Documentation audit (remaining items).** Searched `tasks.md`, `plan.md`, `spec/`, `agents/`, `governance/`,
+  `operations/` and `docs/` for old crate names, Docker commands, SVAR and old Rust versions. Fixed two current-state
+  statements that were wrong: the accessibility statement and the implementation-status page still named the SVAR
+  widgets (there are none; the interface uses Lily's), and the status page said 34 routes (there are 85 page routes).
+  Left alone on purpose: the history in `tasks.md`, `plan.md`, `spec/13-tasks.md` and the changelogs, which describes
+  what was true then. Not done: the accessibility statement's "table twin" claim for each widget was not re-verified,
+  and I read only what the searches found, not every line of these documents.
+
 - **Container file aligned with the crate.** The `Dockerfile` drops `git` from the builder (no git dependencies remain),
   takes `--build-arg VERSION` and fails the build unless it equals the crate's `version` in `Cargo.toml`, and labels the
   image (`org.opencontainers.image.version`, `title`, `description`, `source`, `licenses`, `revision`). The release

@@ -47,8 +47,8 @@ date, the tools and the findings here: **â€¹buyer: date, tester, tools, resultâ€
 
 ## Known issues
 
-The third-party **SVAR** widgets (grid, Gantt, calendar, Kanban) are used for
-some views. They are checked by the same audit, but their internal behaviour is
+The third-party **Lily Design System** widgets (`@lilydesignsystem`: data grid, Gantt chart, calendar,
+kanban board) are used for some views. They are checked by the same audit, but their internal behaviour is
 not under this project's control. Each of these views also has a table or list
 version that carries the same information in plain markup (the "table twin"),
 which is the accessible route for the Gantt, the board and the network

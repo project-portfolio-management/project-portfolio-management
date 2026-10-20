@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Control action to issue (T-26).** The issues register exists now, so `POST /api/actions/{pid}/convert?to=issue`
+  turns a control action into an issue on the same plan. Verified: lint, unit tests, the full database suite (176) and
+  every real-token test binary. Not done: no button in the interface (the control pages have no screens for actions
+  yet, as far as I checked); the issue's kind and severity are fixed defaults (`concern`, `med`), not derived from the
+  action; the action's own kind (for example `correct`) is only mentioned in the issue text.
+
 - **Approval processes page.** `/approval-processes` defines processes, starts runs and follows them; the last open gap
   in the list (PL-2 had no front-end). Verified: type check, unit tests (714), the full Playwright run (611, incl. 2 new
   and an axe audit of the opened run). **Found on the way:** my first path, `/processes`, would have shadowed the

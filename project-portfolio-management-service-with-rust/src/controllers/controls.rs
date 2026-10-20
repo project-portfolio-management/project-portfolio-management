@@ -676,6 +676,79 @@ async fn add_action(
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
+/// `POST /api/actions/{pid}/convert` query.
+#[derive(Debug, Deserialize)]
+struct ConvertParams {
+    /// `task` (default) or `issue`.
+    #[serde(default)]
+    to: Option<String>,
+}
+
+/// The issue half of [`convert_action`]: raise the issue and mark the action in one transaction.
+async fn convert_to_issue(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    action: &control_actions::Model,
+    control: &controls::Model,
+) -> Result<Response> {
+    let today = chrono::Utc::now().date_naive();
+    let title: String = action
+        .description
+        .trim()
+        .chars()
+        .take(crate::issues::TITLE_MAX)
+        .collect();
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let issue = crate::models::_entities::issues::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        plan_pid: ActiveValue::set(control.plan_pid),
+        title: ActiveValue::set(title),
+        description: ActiveValue::set(Some(format!(
+            "Converted from a {} action on control \"{}\".\n\n{}",
+            action.kind, control.name, action.description
+        ))),
+        kind: ActiveValue::set("concern".to_string()),
+        severity: ActiveValue::set("med".to_string()),
+        priority: ActiveValue::set(None),
+        status: ActiveValue::set("open".to_string()),
+        owner_ref: ActiveValue::set(action.owner_ref.clone()),
+        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        raised_on: ActiveValue::set(today),
+        due_date: ActiveValue::set(action.due_date),
+        resolution: ActiveValue::set(None),
+        resolved_on: ActiveValue::set(None),
+        source_risk_pid: ActiveValue::set(None),
+        source_task_pid: ActiveValue::set(None),
+        change_request_pid: ActiveValue::set(None),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&txn)
+    .await
+    .map_err(db_err)?;
+    let mut active: control_actions::ActiveModel = action.clone().into();
+    active.converted_issue_pid = ActiveValue::set(Some(issue.pid));
+    active.update(&txn).await.map_err(db_err)?;
+    txn.commit().await.map_err(db_err)?;
+    AuditModel::record(
+        &ctx.db,
+        control.pid,
+        "control_action_converted",
+        caller.actor(),
+        Some(serde_json::json!({
+            "action_pid": action.pid.to_string(),
+            "issue_pid": issue.pid.to_string(),
+        })),
+    )
+    .await
+    .ok();
+    format::json(serde_json::json!({
+        "pid": action.pid.to_string(),
+        "issue_pid": issue.pid.to_string(),
+        "plan_pid": control.plan_pid.to_string(),
+    }))
+}
+
 /// `POST /api/actions/{pid}/convert` — turn a control action into a
 /// task on the control's own plan (T-26: actions convert into the work
 /// stores that already exist rather than becoming a fifth one — see
@@ -685,16 +758,22 @@ async fn add_action(
 /// enters the board and the flow analysis identically to a
 /// hand-created one.
 ///
-/// **Issue conversion is deliberately not offered here.** This service
-/// has no `issues` store yet (spec §13, FR-14, deferred); the
-/// `converted_issue_pid` column stays reserved, `NULL`, until one
-/// lands, rather than this endpoint faking an issue as a task.
+/// `?to=issue` converts it into an issue on the same plan instead (the
+/// issues register, FR-14): kind `concern`, severity `med`, owner and due
+/// date from the action; the action records `converted_issue_pid`. The
+/// default, `?to=task`, is unchanged. Either way an action converts once.
 #[debug_handler]
 async fn convert_action(
     Path(pid): Path<String>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    Query(params): Query<ConvertParams>,
 ) -> Result<Response> {
+    let to_issue = match params.to.as_deref() {
+        None | Some("task") => false,
+        Some("issue") => true,
+        Some(_) => return Err(unprocessable("to must be task or issue")),
+    };
     let action = find_action(&ctx, &pid).await?;
     if action.converted_task_pid.is_some() || action.converted_issue_pid.is_some() {
         return Err(unprocessable("action is already converted"));
@@ -715,6 +794,10 @@ async fn convert_action(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+
+    if to_issue {
+        return convert_to_issue(&ctx, &caller, &action, &control).await;
+    }
 
     // The vocabulary comes from the workflow in force for the control's
     // plan, exactly like `engineering::create_task` — a plan with a

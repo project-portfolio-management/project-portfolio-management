@@ -654,6 +654,38 @@ async fn converting_a_control_action_creates_a_task_on_the_plan() {
             "an already-converted action cannot be converted twice"
         );
 
+        // A second action converts into an issue on the same plan instead of a task.
+        let second: Value = request
+            .post(&format!("/api/readings/{reading}/actions"))
+            .json(&json!({ "kind": "correct", "description": "Agree the flow-efficiency target with the sponsor" }))
+            .await
+            .json();
+        let second_pid = second["pid"].as_str().expect("action pid").to_string();
+        assert_eq!(
+            request.post(&format!("/api/actions/{second_pid}/convert?to=nowhere")).await.status_code(),
+            422,
+            "an unknown target"
+        );
+        let to_issue: Value = request
+            .post(&format!("/api/actions/{second_pid}/convert?to=issue"))
+            .await
+            .json();
+        let issue_pid = to_issue["issue_pid"].as_str().expect("convert returns issue_pid").to_string();
+        let issues: Value = request.get(&format!("/api/plans/{plan}/issues")).await.json();
+        let issue = issues["issues"]
+            .as_array()
+            .expect("issues array")
+            .iter()
+            .find(|i| i["pid"] == issue_pid)
+            .expect("the converted issue is on the control's own plan");
+        assert_eq!(issue["title"], "Agree the flow-efficiency target with the sponsor");
+        assert_eq!(issue["status"], "open");
+        assert_eq!(
+            request.post(&format!("/api/actions/{second_pid}/convert")).await.status_code(),
+            422,
+            "an issue-converted action cannot also become a task"
+        );
+
         // An unknown action is a plain 404, not a 500.
         let unknown = request
             .post("/api/actions/00000000-0000-0000-0000-000000000000/convert")

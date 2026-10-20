@@ -938,13 +938,13 @@ fn control_action_paths() -> Value {
         "/api/actions/{pid}/convert": {
             "post": {
                 "tags": ["controls"],
-                "summary": "Convert a control action into a task on its own plan",
-                "description": "Actions convert into the work stores that already exist rather than becoming a fifth one. Created into the workflow-initial state of the control's own plan, carrying the action's description as the task title. Issue conversion is not offered — this service has no issues store yet, so converted_issue_pid stays reserved and NULL.",
-                "parameters": [plan],
+                "summary": "Convert a control action into a task (default) or, with ?to=issue, an issue on its own plan",
+                "description": "Actions convert into the work stores that already exist rather than becoming a fifth one. Created into the workflow-initial state of the control's own plan, carrying the action's description as the task title. With ?to=issue it raises an issue in the issues register instead (kind concern, severity med, owner and due date from the action, the description as title and in the text) and records converted_issue_pid. An action converts once, to one or the other.",
+                "parameters": [plan, { "name": "to", "in": "query", "required": false, "schema": { "type": "string", "enum": ["task", "issue"], "default": "task" } }],
                 "responses": {
-                    "200": { "description": "Converted; body carries the new task_pid" },
+                    "200": { "description": "Converted; body carries the new task_pid (or issue_pid)" },
                     "404": { "description": "Unknown action" },
-                    "422": { "description": "Already converted, or already closed" }
+                    "422": { "description": "Already converted, already closed, or to is not task or issue" }
                 }
             }
         },

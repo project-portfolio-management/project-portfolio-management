@@ -440,7 +440,7 @@ described manual check confirms it. Split tasks too big for one PR
     a conversion of a closed one (`422`), and a `404` on an unknown
     action — pinned by
     `tests/requests/metrics_control.rs::converting_a_control_action_creates_a_task_on_the_plan`.
-    **Issue conversion is deliberately not implemented**:
+    **Issue conversion was left out at first** (written then; built 2026-10-20 as `POST /api/actions/{pid}/convert?to=issue`, see §14):
     `converted_issue_pid` stays reserved, always `NULL`, until this
     service has an `issues` store of its own (FR-14, still deferred
     below) — the migration's own doc comment says actions convert into

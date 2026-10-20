@@ -855,6 +855,12 @@ fn calendar_paths() -> Value {
 /// MS Project (MSPDI XML) import (PJ-10, T-28n).
 fn mspdi_paths() -> Value {
     json!({
+        "/api/plans/{pid}/export/mspdi": {
+            "get": op("cpm", "Export this plan as an MS Project XML (MSPDI) file",
+                "Answers the XML file as an attachment. Tasks come in outline order (siblings in their stored order) with outline level, dates, business-day durations (8 hours a day), constraints, deadlines, notes, done as 100 percent complete, dependencies with kind and lag (plan links, and `precedes` relations as finish-to-start) and the plan calendar (weekdays and holidays). A task imported from MS Project keeps its UID, so export after import round-trips. NOT carried (also written into the file as a comment): assignees and resources, status other than done, sprints, components, effort and contours, custom fields, comments, baselines, other relations, elapsed-time lags. Refused with 413 above 5000 tasks (the most the importer reads). Audited as mspdi_export.",
+                vec![uuid_param("pid")],
+                &[("200", "The MSPDI XML (application/xml, attachment)"), ("404", "Unknown plan"), ("413", "More than 5000 tasks")])
+        },
         "/api/plans/{pid}/import/mspdi": {
             "post": op("cpm", "Import an MS Project XML (MSPDI) file into this plan",
                 "The body is the XML itself (up to 5 MiB, 5000 tasks). Binary .mpp is NOT read: export as XML from MS Project. dry_run defaults to true and returns the report without writing; dry_run=false applies it. Tasks, outline parents, dates, business-day durations, constraints, deadlines, dependencies (FF 0, FS 1, SF 2, SS 3, with lag or lead) and the base calendar come across; summary tasks come without schedule fields. Idempotent: a task's MS Project UID is kept as external_ref, so a re-import updates in place and never duplicates, and never changes status. A hard constraint (mso, mfo) needs access=admin or scheduling=hard_constraints, otherwise the task is imported without it. Resources are NOT matched to people (names are kept in the task description), and baselines, resource cost rates, as-late-as-possible, links to other files and inactive tasks are not imported: every one is listed in `unmapped` with its reason. DTDs are refused. The file is parsed with a node cap.",

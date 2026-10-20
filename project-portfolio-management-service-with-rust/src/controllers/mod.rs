@@ -263,6 +263,7 @@ pub mod leveling;
 pub mod live;
 pub mod milestone_signoffs;
 pub mod milestones;
+pub mod mspdi_export;
 pub mod mspdi_import;
 pub mod organizations;
 pub mod paging;

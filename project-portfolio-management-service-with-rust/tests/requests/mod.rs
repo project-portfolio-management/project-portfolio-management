@@ -27,6 +27,7 @@ mod issues;
 mod live;
 mod metrics_control;
 mod modules;
+mod mspdi_export;
 mod oversight;
 mod paging;
 mod pdf;

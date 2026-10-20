@@ -192,13 +192,11 @@ rewritten.
   `controllers/processes.rs`) and controlled documents (PL-6,
   `controllers/controlled_documents.rs`, front-end `/documents`).
 - **Still open:** the cross-service link write-side (T-7, no
-  `entity_links`), a members sub-resource, gRPC, two-way PM-tool sync, MS
-  Project (MSPDI) **export** (there is no export route: the only `…/export`
-  routes are the plan JSON export `GET /api/plans/{pid}/export` and the bulk
-  export jobs `POST /api/plans/export`; `tasks.md` PJ-10 itself records "no
-  export"), and the **`goals` and `issues` sub-resources**, so there is no
-  issues register (no `/issues` route, table or controller; earlier roadmap
-  and status wording that treated issues as shipped was wrong). A link aggregator stays
+  `entity_links`), a members sub-resource, gRPC, two-way PM-tool sync, and
+  screens for much of the escalation and critical-chain work (§14.2 lists the
+  gaps). MS Project (MSPDI) export, the `goals` sub-resource and the issues
+  register are built since this line was written (2026-10-20; see
+  [implementation status](14-implementation-status.md)). A link aggregator stays
   out of this trio's scope.
 - **The 2026-10 catalogue is in `tasks.md`, not here:** Leantime
   (LT-n), Redmine (RM-n), Huly (PL-n), the scheduling and cost canon

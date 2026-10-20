@@ -515,8 +515,290 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
     })
 }
 
+// ---- the writer ----------------------------------------------------------------------------------
+
+/// MS Project's constraint id for ours (the inverse of [`constraint_of`]).
+#[must_use]
+pub fn constraint_id(c: MsConstraint) -> i64 {
+    match c {
+        MsConstraint::Asap => 0,
+        MsConstraint::Alap => 1,
+        MsConstraint::Mso => 2,
+        MsConstraint::Mfo => 3,
+        MsConstraint::Snet => 4,
+        MsConstraint::Snlt => 5,
+        MsConstraint::Fnet => 6,
+        MsConstraint::Fnlt => 7,
+    }
+}
+
+/// MS Project's link type id for our kind (the inverse of [`link_kind_of`]).
+#[must_use]
+pub fn link_type_id(k: Kind) -> i64 {
+    match k {
+        Kind::Ff => 0,
+        Kind::Fs => 1,
+        Kind::Sf => 2,
+        Kind::Ss => 3,
+    }
+}
+
+/// Escape text for XML 1.0 element content, dropping the control characters it cannot carry.
+fn xml_text(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\t' | '\n' | '\r' => out.push(c),
+            c if (c as u32) < 0x20 || matches!(c as u32, 0xFFFE | 0xFFFF) => {}
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// `PT{hours}H{minutes}M0S` for a number of minutes.
+fn iso_duration(minutes: i64) -> String {
+    format!("PT{}H{}M0S", minutes / 60, minutes % 60)
+}
+
+/// The `CalendarUID`, `Calendars` and opening `Tasks` elements.
+fn write_calendar(x: &mut String, calendar: Option<&MsCalendar>) {
+    use std::fmt::Write as _;
+    x.push_str("  <CalendarUID>1</CalendarUID>\n  <Calendars>\n    <Calendar>\n");
+    x.push_str("      <UID>1</UID>\n      <Name>Standard</Name>\n      <IsBaseCalendar>1</IsBaseCalendar>\n      <WeekDays>\n");
+    let mask: Vec<char> = calendar
+        .map_or("1111100", |c| c.weekdays.as_str())
+        .chars()
+        .collect();
+    // DayType 1 = Sunday … 7 = Saturday; our mask is Monday first.
+    for day_type in 1..=7_i64 {
+        let monday_first = usize::try_from((day_type + 5) % 7).unwrap_or(0);
+        let working = mask.get(monday_first) == Some(&'1');
+        let _ = write!(
+            x,
+            "        <WeekDay><DayType>{day_type}</DayType><DayWorking>{}</DayWorking>",
+            i32::from(working)
+        );
+        if working {
+            x.push_str("<WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes>");
+        }
+        x.push_str("</WeekDay>\n");
+    }
+    x.push_str("      </WeekDays>\n");
+    if let Some(cal) = calendar.filter(|c| !c.holidays.is_empty()) {
+        x.push_str("      <Exceptions>\n");
+        for d in &cal.holidays {
+            let _ = writeln!(
+                x,
+                "        <Exception><EnteredByOccurrences>0</EnteredByOccurrences><TimePeriod><FromDate>{d}T00:00:00</FromDate><ToDate>{d}T23:59:00</ToDate></TimePeriod><DayWorking>0</DayWorking></Exception>"
+            );
+        }
+        x.push_str("      </Exceptions>\n");
+    }
+    x.push_str("    </Calendar>\n  </Calendars>\n  <Tasks>\n");
+}
+
+/// Write an MSPDI document ([`parse`] reads it back). Pure.
+///
+/// `tasks` must be in outline order with `outline_level` set; UIDs must be unique and non-zero (UID 0 is
+/// the project summary row written here). A summary task is written without dates or duration, as MS Project
+/// computes those. Working time is 08:00-12:00 and 13:00-17:00 on working days, so `minutes_per_day`
+/// should be 480. `notice` goes into an XML comment at the top (what the file does not carry).
+#[must_use]
+pub fn write(
+    name: &str,
+    notice: &str,
+    minutes_per_day: i64,
+    tasks: &[MsTask],
+    links: &[MsLink],
+    calendar: Option<&MsCalendar>,
+) -> String {
+    use std::fmt::Write as _;
+    let mut x = String::new();
+    x.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
+    let _ = writeln!(x, "<!-- {} -->", xml_text(notice).replace("--", "- -"));
+    x.push_str("<Project xmlns=\"http://schemas.microsoft.com/project\">\n");
+    let _ = writeln!(
+        x,
+        "  <Name>{0}</Name>\n  <Title>{0}</Title>",
+        xml_text(name)
+    );
+    let _ = writeln!(x, "  <MinutesPerDay>{minutes_per_day}</MinutesPerDay>");
+    write_calendar(&mut x, calendar);
+    let _ = writeln!(
+        x,
+        "    <Task><UID>0</UID><ID>0</ID><Name>{}</Name><Type>0</Type><OutlineLevel>0</OutlineLevel><Summary>1</Summary></Task>",
+        xml_text(name)
+    );
+    for (index, t) in tasks.iter().enumerate() {
+        let _ = write!(
+            x,
+            "    <Task><UID>{}</UID><ID>{}</ID><Name>{}</Name><Type>0</Type><Active>1</Active><OutlineLevel>{}</OutlineLevel><Summary>{}</Summary><Milestone>{}</Milestone>",
+            t.uid,
+            index + 1,
+            xml_text(&t.name),
+            t.outline_level.max(1),
+            i32::from(t.summary),
+            i32::from(t.milestone)
+        );
+        if !t.summary {
+            if let Some(start) = t.start {
+                let _ = write!(x, "<Start>{start}T08:00:00</Start>");
+            }
+            let days = if t.milestone {
+                Some(0)
+            } else {
+                t.duration_days
+            };
+            if let Some(days) = days {
+                let _ = write!(
+                    x,
+                    "<Duration>{}</Duration>",
+                    iso_duration(days * minutes_per_day)
+                );
+            }
+        }
+        let _ = write!(
+            x,
+            "<PercentComplete>{}</PercentComplete>",
+            t.percent_complete.clamp(0, 100)
+        );
+        if let Some((kind, on)) = t.constraint {
+            let _ = write!(
+                x,
+                "<ConstraintType>{}</ConstraintType><ConstraintDate>{on}T08:00:00</ConstraintDate>",
+                constraint_id(kind)
+            );
+        }
+        if let Some(d) = t.deadline {
+            let _ = write!(x, "<Deadline>{d}T17:00:00</Deadline>");
+        }
+        if let Some(n) = t.notes.as_deref().filter(|n| !n.is_empty()) {
+            let _ = write!(x, "<Notes>{}</Notes>", xml_text(n));
+        }
+        for l in links.iter().filter(|l| l.successor == t.uid) {
+            let _ = write!(
+                x,
+                "<PredecessorLink><PredecessorUID>{}</PredecessorUID><Type>{}</Type><CrossProject>0</CrossProject><LinkLag>{}</LinkLag><LagFormat>7</LagFormat></PredecessorLink>",
+                l.predecessor,
+                link_type_id(l.kind),
+                l.lag_days * minutes_per_day * 10
+            );
+        }
+        x.push_str("</Task>\n");
+    }
+    x.push_str("  </Tasks>\n</Project>\n");
+    x
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn what_is_written_reads_back_the_same() {
+        let tasks = vec![
+            MsTask {
+                uid: 7,
+                name: "Phase <1> & \"two\"".into(),
+                outline_level: 1,
+                start: None,
+                duration_days: None,
+                summary: true,
+                milestone: false,
+                percent_complete: 0,
+                constraint: None,
+                deadline: None,
+                notes: None,
+            },
+            MsTask {
+                uid: 9,
+                name: "Build".into(),
+                outline_level: 2,
+                start: Some(d(2026, 11, 2)),
+                duration_days: Some(5),
+                summary: false,
+                milestone: false,
+                percent_complete: 100,
+                constraint: Some((MsConstraint::Snet, d(2026, 11, 2))),
+                deadline: Some(d(2026, 12, 1)),
+                notes: Some("line one\nline two".into()),
+            },
+            MsTask {
+                uid: 10,
+                name: "Ship".into(),
+                outline_level: 2,
+                start: None,
+                duration_days: Some(0),
+                summary: false,
+                milestone: true,
+                percent_complete: 0,
+                constraint: None,
+                deadline: None,
+                notes: None,
+            },
+        ];
+        let links = vec![
+            MsLink {
+                successor: 10,
+                predecessor: 9,
+                kind: Kind::Fs,
+                lag_days: 2,
+            },
+            MsLink {
+                successor: 10,
+                predecessor: 7,
+                kind: Kind::Ss,
+                lag_days: -1,
+            },
+        ];
+        let calendar = MsCalendar {
+            weekdays: "1111010".into(),
+            holidays: vec![d(2026, 12, 25), d(2026, 12, 28)],
+        };
+        let xml = write("Plan & Co", "a -- b", 480, &tasks, &links, Some(&calendar));
+        let back = parse(&xml).expect("our own file parses");
+        assert_eq!(back.name.as_deref(), Some("Plan & Co"));
+        assert_eq!(back.tasks, tasks);
+        assert_eq!(back.links, links);
+        assert_eq!(back.calendar, Some(calendar));
+        assert!(back.unmapped.is_empty(), "{:?}", back.unmapped);
+    }
+
+    #[test]
+    fn text_that_xml_cannot_carry_is_escaped_or_dropped() {
+        assert_eq!(
+            xml_text("a<b>&\"c\"\u{1}\u{b}"),
+            "a&lt;b&gt;&amp;&quot;c&quot;"
+        );
+        let t = MsTask {
+            uid: 1,
+            name: "x\u{0}y".into(),
+            outline_level: 1,
+            start: None,
+            duration_days: None,
+            summary: false,
+            milestone: false,
+            percent_complete: 0,
+            constraint: None,
+            deadline: None,
+            notes: None,
+        };
+        assert!(parse(&write("p", "n", 480, &[t], &[], None)).is_ok());
+    }
+
+    #[test]
+    fn the_id_tables_are_the_inverse_of_the_pinned_ones() {
+        for id in 0..=7 {
+            assert_eq!(constraint_of(id).map(constraint_id), Some(id));
+        }
+        for id in 0..=3 {
+            assert_eq!(link_kind_of(id).map(link_type_id), Some(id));
+        }
+    }
+
     use super::*;
 
     fn d(y: i32, m: u32, day: u32) -> NaiveDate {

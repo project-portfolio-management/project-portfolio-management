@@ -2228,6 +2228,7 @@ mod tests {
             crate::controllers::schedule_risk::routes(),
             crate::controllers::schedule_health::routes(),
             crate::controllers::calendars::routes(),
+            crate::controllers::mspdi_export::routes(),
             crate::controllers::mspdi_import::routes(),
             crate::controllers::tracker_import::routes(),
             crate::controllers::availability::routes(),

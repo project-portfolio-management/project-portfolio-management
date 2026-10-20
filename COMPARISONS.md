@@ -39,8 +39,9 @@ sections 1 to 31.
 
 - **Jira and Asana:** CSV import with a preview and a stated reason for everything
   left out.
-- **Microsoft Project:** import of the MSPDI XML export. Export to MSPDI is **not
-  built**.
+- **Microsoft Project:** import of the MSPDI XML, and export to it (tasks, outline,
+  dates, durations, constraints, dependencies, calendar; not assignees, resources, baselines or
+  anything beyond done/not-done progress, which the file says).
 
 ## Where this project is deliberately different
 

@@ -145,6 +145,16 @@ pub(crate) async fn set_plan_calendar(
         .map(|_| ())
 }
 
+/// A plan's own calendar as stored (weekday mask, holidays), or `None` when it has none.
+pub(crate) async fn plan_calendar_spec(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+) -> Result<Option<(String, Vec<NaiveDate>)>> {
+    Ok(find(ctx, "plan", &plan_pid.to_string())
+        .await?
+        .map(|row| (row.weekdays.clone(), holidays_of(&row))))
+}
+
 /// Whether a plan already has its own calendar.
 pub(crate) async fn plan_has_calendar(ctx: &AppContext, plan_pid: Uuid) -> Result<bool> {
     Ok(find(ctx, "plan", &plan_pid.to_string()).await?.is_some())

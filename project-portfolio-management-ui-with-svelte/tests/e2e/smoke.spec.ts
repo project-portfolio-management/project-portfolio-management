@@ -104,7 +104,7 @@ test("detail page renders the fetched plan", async ({ page }) => {
     page.getByRole("heading", { name: "Website replatform" }),
   ).toBeVisible();
   // The governance panel is linked from the detail page (PPM views).
-  await expect(page.getByRole("link", { name: "Governance" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Governance", exact: true })).toBeVisible();
 });
 
 // Pins: the edit route loads the plan and renders the edit form. Heading

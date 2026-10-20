@@ -16,6 +16,14 @@ workflow yet. Dates are 2026.
 ## Unreleased
 
 ### 20 October
+
+- **Screens for ways of working, governance frameworks and plan links.** Three plan pages: ways of working and
+  governance framework (what is in force and whether it is the plan's own or inherited; follow a shared one; stop
+  following; write one for the plan and edit it, including the escalation path) and links (add, remove; Jira,
+  Trello, Asana, Linear, Monday and others, checked against each hosted tool's own domain). Verified: type check,
+  unit tests (750), 3 new browser tests with axe audits. **Not built:** editing ceremonies, definitions of ready/done,
+  decision rights and forums (shown, and kept when a record is saved, but not editable here); editing or deleting a
+  shared organisation-wide record; the Welsh strings are machine-written and unreviewed.
 - **Escalate every red tolerance.** `POST /api/plans/{pid}/tolerances/escalate` and a button on the tolerances page raise
   one escalation per red dimension that has none live. It is a person's action: nothing raises an escalation on its
   own (a read that wrote would surprise), and asking twice raises nothing new. Verified: request test (4 in the

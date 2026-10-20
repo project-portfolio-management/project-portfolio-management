@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — ways of working, governance framework and links pages (FR-52, LT-8, 2026-10-20)
+
+`/plans/[pid]/ways-of-working`, `/governance-framework` and `/links`, from the plan page. Not built: editing ceremonies, definitions, decision rights and forums (kept on save, not editable); editing shared records. Welsh machine-written, unreviewed.
+
 ### Added — escalate red tolerances (FR-54, 2026-10-20)
 
 A button on a plan's tolerances page raises an escalation for every red dimension that has none. One browser test with an axe audit; Welsh strings machine-written, unreviewed.

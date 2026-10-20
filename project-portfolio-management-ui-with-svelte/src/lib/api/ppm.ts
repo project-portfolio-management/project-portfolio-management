@@ -284,6 +284,52 @@ export interface ResourcePeriod {
   total_proposed_fte: number;
 }
 
+/** A ways-of-working or governance framework record (`/api/ways-of-working`, `/api/governance-frameworks`). */
+export interface Framework {
+  pid: string;
+  name: string;
+  description: string | null;
+  scope: "organization" | "plan";
+  owner_plan_pid: string | null;
+  plans_using: number;
+  // Ways of working.
+  methodology?: string;
+  cadence_days?: number | null;
+  wip_limit?: number | null;
+  definition_of_ready?: string | null;
+  definition_of_done?: string | null;
+  ceremonies?: { name: string; cadence: string; purpose?: string | null }[];
+  // Governance.
+  decision_model?: string;
+  review_cadence_days?: number | null;
+  reporting_cadence_days?: number | null;
+  escalation_path?: { level: number; body: string; trigger: string }[];
+  decision_rights?: { decision: string; decides: string; consulted?: string | null }[];
+  forums?: { name: string; cadence: string; purpose?: string | null }[];
+}
+
+/** `GET /api/plans/{pid}/ways-of-working` and `…/governance-framework`: what is in force and where it came from. */
+export interface FrameworkInForce {
+  plan_pid: string;
+  source: "own" | "inherited" | "none";
+  from_plan_pid: string | null;
+  ways_of_working?: Framework | null;
+  governance_framework?: Framework | null;
+  reason: string | null;
+}
+
+/** One link on a plan (`/api/plans/{pid}/links`). */
+export interface PlanLink {
+  pid: string;
+  kind: string;
+  url: string;
+  label: string;
+  system: string | null;
+  external_id: string | null;
+}
+
+export type FrameworkFamily = "ways-of-working" | "governance-frameworks";
+
 export type EscalationStatus = "open" | "acknowledged" | "resolved" | "withdrawn";
 
 /** One escalation (`/api/plans/{pid}/escalations`, `/api/escalations`). */
@@ -3079,6 +3125,33 @@ export class PpmClient {
     if (params.overdue) q.set("overdue", "true");
     const qs = q.toString();
     return this.http.get(`/api/escalations${qs ? `?${qs}` : ""}`);
+  }
+  frameworks(family: FrameworkFamily): Promise<Framework[]> {
+    return this.http.get(`/api/${family}`);
+  }
+  createFramework(family: FrameworkFamily, body: Record<string, unknown>): Promise<Framework> {
+    return this.http.post(`/api/${family}`, { body });
+  }
+  updateFramework(family: FrameworkFamily, pid: string, body: Record<string, unknown>): Promise<Framework> {
+    return this.http.put(`/api/${family}/${pid}`, { body });
+  }
+  frameworkInForce(family: FrameworkFamily, pid: string): Promise<FrameworkInForce> {
+    return this.http.get(`/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`);
+  }
+  /** Follow `frameworkPid`, or follow none of its own (the plan then inherits) with null. */
+  linkFramework(family: FrameworkFamily, pid: string, frameworkPid: string | null): Promise<FrameworkInForce> {
+    return this.http.put(`/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`, {
+      body: { framework_pid: frameworkPid },
+    });
+  }
+  planLinks(pid: string): Promise<PlanLink[]> {
+    return this.http.get(`/api/plans/${pid}/links`);
+  }
+  addPlanLink(pid: string, body: { kind: string; url: string; label: string; system?: string; external_id?: string }): Promise<PlanLink> {
+    return this.http.post(`/api/plans/${pid}/links`, { body });
+  }
+  removePlanLink(pid: string, lpid: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}/links/${lpid}/delete`, { body: {} });
   }
   planTolerances(pid: string): Promise<TolerancePicture> {
     return this.http.get(`/api/plans/${pid}/tolerances`);

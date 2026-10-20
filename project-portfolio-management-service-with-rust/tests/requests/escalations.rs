@@ -152,3 +152,60 @@ async fn a_red_tolerance_with_no_escalation_is_flagged_until_someone_escalates_i
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Escalate in one go" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        request
+            .post(&format!("/api/plans/{p}/risks"))
+            .json(&json!({ "title": "Vendor", "probability": 5, "impact": 5 }))
+            .await
+            .assert_status_ok();
+        request
+            .put(&format!("/api/plans/{p}/tolerances/risk"))
+            .json(&json!({ "limit": 10 }))
+            .await
+            .assert_status_ok();
+
+        let first: Value = request
+            .post(&format!("/api/plans/{p}/tolerances/escalate"))
+            .await
+            .json();
+        let raised = first["raised"].as_array().expect("raised");
+        assert_eq!(raised.len(), 1);
+        assert_eq!(
+            (
+                raised[0]["reason_kind"].as_str(),
+                raised[0]["tolerance_dimension"].as_str(),
+                raised[0]["status"].as_str()
+            ),
+            (Some("tolerance"), Some("risk"), Some("open"))
+        );
+        assert_eq!(first["tolerances"]["escalation_needed"], false);
+
+        let second: Value = request
+            .post(&format!("/api/plans/{p}/tolerances/escalate"))
+            .await
+            .json();
+        assert!(
+            second["raised"].as_array().expect("raised").is_empty(),
+            "asking twice raises nothing new"
+        );
+
+        let listed: Value = request
+            .get(&format!("/api/plans/{p}/escalations"))
+            .await
+            .json();
+        assert_eq!(listed["escalations"].as_array().map(Vec::len), Some(1));
+    })
+    .await;
+}

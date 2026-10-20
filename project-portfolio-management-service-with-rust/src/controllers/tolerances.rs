@@ -478,6 +478,54 @@ async fn board(
     }))
 }
 
+/// `POST /api/plans/{pid}/tolerances/escalate`: raise one escalation, at the first level of the governance path, for
+/// every red dimension that has no live escalation. Nothing happens on its own: a person asks for it, and asking
+/// twice raises nothing the second time.
+#[debug_handler]
+async fn escalate(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let allocs = readable_allocations(&ctx, &caller).await?;
+    let p = picture(&ctx, &caller, &plan, &allocs).await?;
+    let mut raised = Vec::new();
+    for d in p["dimensions"].as_array().into_iter().flatten() {
+        if d["escalation_needed"] != true {
+            continue;
+        }
+        let token = d["dimension"].as_str().unwrap_or_default();
+        let unit = d["unit"].as_str().unwrap_or_default();
+        let row = super::escalations::insert(
+            &ctx,
+            &caller,
+            plan.pid,
+            super::escalations::New {
+                title: format!("{token} tolerance exceeded"),
+                description: Some(format!(
+                    "Measured {} {unit} against a limit of {} {unit} ({}% of the limit).",
+                    d["measured"], d["limit"], d["usage_percent"]
+                )),
+                reason_kind: "tolerance".to_string(),
+                tolerance_dimension: Some(token.to_string()),
+                level: None,
+                escalated_to: None,
+                owner_ref: None,
+                respond_by: None,
+            },
+        )
+        .await?;
+        raised.push(super::escalations::view(
+            &row,
+            chrono::Utc::now().date_naive(),
+        ));
+    }
+    format::json(
+        json!({ "raised": raised, "tolerances": picture(&ctx, &caller, &plan, &allocs).await? }),
+    )
+}
+
 /// The tolerance routes.
 #[must_use]
 pub fn routes() -> Routes {
@@ -485,6 +533,7 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/tolerances", get(board))
         .add("/plans/{pid}/tolerances", get(get_plan))
+        .add("/plans/{pid}/tolerances/escalate", post(escalate))
         .add("/plans/{pid}/tolerances/{dimension}", put(set_one))
         .add("/plans/{pid}/tolerances/{dimension}", delete(remove_one))
         .add(

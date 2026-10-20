@@ -11,6 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Escalate red tolerances (FR-54): `POST /api/plans/{pid}/tolerances/escalate` raises one `tolerance` escalation per red dimension with none live, at the first governance-path level; idempotent; a person asks, nothing raises one on its own. `controllers/escalations.rs` gained a shared `insert`. Not done: automatic raising, notification.
 - Project escalations (FR-54): `POST/GET /api/plans/{pid}/escalations`, `GET …/{epid}` (with history), `POST …/{epid}/acknowledge|raise-level|resolve|withdraw`, `GET /api/escalations`. Raised at a level of the governance framework's escalation path (own, else the nearest ancestor's); an append-only history protected by a trigger. Tolerances report `open_escalations` and `escalation_needed`. Migration `m20261020_000083_escalations`. `controllers::frameworks::in_force` and `escalation_path` expose the framework in force to other controllers.
 
 - Tolerances (FR-53): `GET /api/plans/{pid}/tolerances`, `PUT` and `DELETE`/`POST …/delete` on `…/tolerances/{dimension}`, `GET /api/tolerances`. Per-plan limits on time, cost, risk and resources (own, else the nearest ancestor's), measured from the schedule, budget baseline, risk register and bookings and shown as red/amber/green; a limit that cannot be measured is `unknown`, never green. Migration `m20261020_000082_plan_tolerances`. The nearest-ancestor rule moved from `frameworks` to a shared `inherit` module.

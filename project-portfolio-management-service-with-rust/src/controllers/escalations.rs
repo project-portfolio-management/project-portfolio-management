@@ -27,7 +27,7 @@ fn today() -> NaiveDate {
     chrono::Utc::now().date_naive()
 }
 
-fn view(e: &escalations::Model, now: NaiveDate) -> Value {
+pub(crate) fn view(e: &escalations::Model, now: NaiveDate) -> Value {
     json!({
         "pid": e.pid, "plan_pid": e.plan_pid, "title": e.title, "description": e.description,
         "reason_kind": e.reason_kind, "tolerance_dimension": e.tolerance_dimension,
@@ -115,6 +115,66 @@ fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
 
+/// The fields of a new escalation, already validated and trimmed.
+pub(crate) struct New {
+    pub title: String,
+    pub description: Option<String>,
+    pub reason_kind: String,
+    pub tolerance_dimension: Option<String>,
+    /// The level of the escalation path; the first level (else 1) when absent.
+    pub level: Option<i32>,
+    pub escalated_to: Option<String>,
+    pub owner_ref: Option<String>,
+    pub respond_by: Option<NaiveDate>,
+}
+
+/// Insert an escalation at a level of the plan's governance path, with its first history entry and an audit record.
+pub(crate) async fn insert(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    n: New,
+) -> Result<escalations::Model> {
+    let path = path_of(ctx, caller, plan).await?;
+    let level = n.level.unwrap_or_else(|| {
+        path.first()
+            .and_then(|(l, _)| i32::try_from(*l).ok())
+            .unwrap_or(1)
+    });
+    let default_to = rules::check_level(level, &path).map_err(|m| unprocessable(&m))?;
+    let row = escalations::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        plan_pid: ActiveValue::set(plan),
+        title: ActiveValue::set(n.title),
+        description: ActiveValue::set(n.description),
+        reason_kind: ActiveValue::set(n.reason_kind),
+        tolerance_dimension: ActiveValue::set(n.tolerance_dimension),
+        level: ActiveValue::set(level),
+        escalated_to: ActiveValue::set(n.escalated_to.or(default_to)),
+        owner_ref: ActiveValue::set(n.owner_ref),
+        status: ActiveValue::set("open".to_string()),
+        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        raised_on: ActiveValue::set(today()),
+        respond_by: ActiveValue::set(n.respond_by),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&ctx.db)
+    .await
+    .map_err(db_err)?;
+    event(&ctx.db, row.pid, "raised", level, caller.actor(), None).await?;
+    AuditModel::record(
+        &ctx.db,
+        row.pid,
+        "escalation_raised",
+        caller.actor(),
+        Some(json!({ "plan_pid": plan, "level": level, "reason_kind": row.reason_kind })),
+    )
+    .await
+    .ok();
+    Ok(row)
+}
+
 #[debug_handler]
 async fn raise(
     State(ctx): State<AppContext>,
@@ -137,43 +197,22 @@ async fn raise(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let path = path_of(&ctx, &caller, plan.pid).await?;
-    let level = b.level.unwrap_or_else(|| {
-        path.first()
-            .and_then(|(l, _)| i32::try_from(*l).ok())
-            .unwrap_or(1)
-    });
-    let default_to = rules::check_level(level, &path).map_err(|m| unprocessable(&m))?;
-    let row = escalations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        description: ActiveValue::set(trimmed(b.description.as_ref())),
-        reason_kind: ActiveValue::set(b.reason_kind.clone()),
-        tolerance_dimension: ActiveValue::set(b.tolerance_dimension.clone()),
-        level: ActiveValue::set(level),
-        escalated_to: ActiveValue::set(trimmed(b.escalated_to.as_ref()).or(default_to)),
-        owner_ref: ActiveValue::set(trimmed(b.owner_ref.as_ref())),
-        status: ActiveValue::set("open".to_string()),
-        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        raised_on: ActiveValue::set(now),
-        respond_by: ActiveValue::set(b.respond_by),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
-    event(&ctx.db, row.pid, "raised", level, caller.actor(), None).await?;
-    AuditModel::record(
-        &ctx.db,
-        row.pid,
-        "escalation_raised",
-        caller.actor(),
-        Some(json!({ "plan_pid": plan.pid, "level": level, "reason_kind": row.reason_kind })),
+    let row = insert(
+        &ctx,
+        &caller,
+        plan.pid,
+        New {
+            title: b.title.trim().to_string(),
+            description: trimmed(b.description.as_ref()),
+            reason_kind: b.reason_kind.clone(),
+            tolerance_dimension: b.tolerance_dimension.clone(),
+            level: b.level,
+            escalated_to: trimmed(b.escalated_to.as_ref()),
+            owner_ref: trimmed(b.owner_ref.as_ref()),
+            respond_by: b.respond_by,
+        },
     )
-    .await
-    .ok();
+    .await?;
     format::json(view(&row, now))
 }
 

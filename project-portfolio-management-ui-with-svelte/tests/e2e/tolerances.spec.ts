@@ -115,3 +115,27 @@ test("a plan's tolerances can be set and removed, and an unmeasurable one says w
   await expect(page.getByRole("status")).toContainText("Give a limit as a number.");
   expect(sent).toBeNull();
 });
+
+test("a plan with red tolerances can escalate them all in one go", async ({ page }) => {
+  let escalated = false;
+  const current = () =>
+    ({
+      ...picture("red", [
+        dimension("time", { status: "red", limit: 5, measured: 9, usage_percent: 180, source: "own", amber_from_percent: 75, escalation_needed: !escalated, open_escalations: escalated ? 1 : 0 }),
+        dimension("cost", {}),
+        dimension("risk", {}),
+        dimension("resources", {}),
+      ]),
+      escalation_needed: !escalated,
+    });
+  await page.route(`**/api/plans/${PID}/tolerances`, (r) => r.fulfill({ json: current() }));
+  await page.route(`**/api/plans/${PID}/tolerances/escalate`, (r) => {
+    escalated = true;
+    return r.fulfill({ json: { raised: [{ pid: "e1", tolerance_dimension: "time" }], tolerances: current() } });
+  });
+  await page.goto(`/en-001/plans/${PID}/tolerances`);
+  await page.getByRole("button", { name: "Escalate every red tolerance" }).click();
+  await expect(page.getByRole("status")).toContainText("Raised 1 escalation(s).");
+  await expect(page.getByRole("button", { name: "Escalate every red tolerance" })).toHaveCount(0);
+  await audit(page);
+});

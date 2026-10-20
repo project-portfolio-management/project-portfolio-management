@@ -16,6 +16,11 @@ workflow yet. Dates are 2026.
 ## Unreleased
 
 ### 20 October
+- **Escalate every red tolerance.** `POST /api/plans/{pid}/tolerances/escalate` and a button on the tolerances page raise
+  one escalation per red dimension that has none live. It is a person's action: nothing raises an escalation on its
+  own (a read that wrote would surprise), and asking twice raises nothing new. Verified: request test (4 in the
+  escalation file), full request suite (182 plus this one), a browser test with an axe audit. Not done: automatic
+  raising, notifying the escalation target. Welsh strings are machine-written and unreviewed.
 
 - **Escalation screens.** A project page to raise and work escalations (acknowledge, take up a level with a reason,
   resolve, withdraw, with history), a register of every escalation you can read with an overdue filter, and a link from

@@ -72,6 +72,17 @@
     }
   }
 
+  async function escalateAll() {
+    try {
+      const r = await ppm.escalateTolerances(pid);
+      picture = r.tolerances;
+      fill(picture);
+      notice = t("p.tolerances.escalated", { n: r.raised.length });
+    } catch (err) {
+      notice = t("p.tolerances.could_not", { reason: err instanceof Error ? err.message : "" });
+    }
+  }
+
   async function remove(d: ToleranceDimension) {
     try {
       picture = await ppm.removeTolerance(pid, d.dimension);
@@ -99,6 +110,12 @@
     <strong>{t("p.tolerances.overall")}:</strong>
     <span aria-hidden="true">{STATUS_SYMBOL[picture.overall]}</span> {STATUS_TEXT[picture.overall]}
   </p>
+  {#if picture.escalation_needed}
+    <p class="needed" role="note">
+      {t("p.tolerances.escalate_all_intro")}
+      <button type="button" onclick={escalateAll}>{t("p.tolerances.escalate_all")}</button>
+    </p>
+  {/if}
   {#each picture.dimensions as d (d.dimension)}
     <section class={`surface rag rag-${d.status}`} aria-labelledby={`d-${d.dimension}`}>
       <h2 id={`d-${d.dimension}`}>

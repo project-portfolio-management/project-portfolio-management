@@ -636,7 +636,9 @@ across currencies.
   kept in an append-only history that a database trigger protects. `GET /api/plans/{pid}/escalations` (`?status=` incl.
   `live`), `GET …/{epid}` with the history, and `GET /api/escalations` across the plans the caller can read, with
   `counts` and `overdue` (a live escalation past its `respond_by`). **Tolerances (FR-53) point here:** each dimension
-  reports its `open_escalations`, and a red one with none is `escalation_needed`. Nothing is notified, and nothing
+  reports its `open_escalations`, and a red one with none is `escalation_needed`. `POST /api/plans/{pid}/tolerances/escalate`
+  raises one `tolerance` escalation at the path's first level for every such dimension (asking again raises nothing new).
+  It happens only when a person asks: nothing raises an escalation on its own. Nothing is notified, and nothing
   checks who acknowledges or resolves.
 
 ### 6.5 Cross-service links & bulk — service

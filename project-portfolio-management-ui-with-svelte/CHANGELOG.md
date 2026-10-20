@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — escalate red tolerances (FR-54, 2026-10-20)
+
+A button on a plan's tolerances page raises an escalation for every red dimension that has none. One browser test with an axe audit; Welsh strings machine-written, unreviewed.
+
 ### Added — escalations (FR-54, 2026-10-20)
 
 `/plans/[pid]/escalations` raises an escalation (title, why, which tolerance, level, who it goes to, the person it is for, an answer-by date) and works the ones raised: acknowledge, take it up a level (a reason of ten characters is required), resolve (an outcome and a written response) or withdraw, each with its history. `/escalations` lists every escalation on the plans you can read, with a filter for those still open and for the overdue. A red tolerance with no escalation says so and links to a pre-filled form. Each state is a word and a shape; overdue is said in words. Tests: 3 unit groups, 3 e2e (one with an axe audit of each page). Welsh strings are machine-written, unreviewed. Not done: it does not suggest the level or the body from the governance path (the service fills those in when left blank); no notification.

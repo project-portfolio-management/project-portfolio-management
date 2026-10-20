@@ -3090,6 +3090,10 @@ export class PpmClient {
   ): Promise<TolerancePicture> {
     return this.http.put(`/api/plans/${pid}/tolerances/${dimension}`, { body });
   }
+  /** Raise one escalation for every red dimension that has no live one; asking again raises nothing new. */
+  escalateTolerances(pid: string): Promise<{ raised: { pid: string; tolerance_dimension: string | null }[]; tolerances: TolerancePicture }> {
+    return this.http.post(`/api/plans/${pid}/tolerances/escalate`, { body: {} });
+  }
   removeTolerance(pid: string, dimension: string): Promise<TolerancePicture> {
     return this.http.post(`/api/plans/${pid}/tolerances/${dimension}/delete`, { body: {} });
   }

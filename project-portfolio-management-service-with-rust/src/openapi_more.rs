@@ -703,6 +703,11 @@ fn tolerance_paths() -> Value {
                 "One entry per dimension. `time`: calendar days the critical-path forecast finish is after the plan's target_date. `cost`: basis points the estimate at completion is over the latest approved baseline. `risk`: the highest probability x impact among open and mitigating risks. `resources`: percentage points above 100 that the plan's named, committed people are booked at worst in the next 90 days, across the plans the caller can read (so it can differ between callers). The limit is the plan's own, else the nearest ancestor's (`source` own/inherited, `from_plan_pid`; resolved on read). `status`: green below `amber_from_percent` of the limit (default 75), amber from there up to the limit, red beyond it; `unknown` when a limit is set but could not be measured (the `reason` says why: no target date, no baseline, no risks recorded, nobody booked) and never shown as green; `not_set` when there is no limit here or above. `overall` is the worst, with unknown ranking above green.",
                 pid.clone(), &[("200", "plan_pid, overall, dimensions"), ("404", "Unknown plan")])
         },
+        "/api/plans/{pid}/tolerances/escalate": {
+            "post": op("tolerances", "Escalate every red tolerance that has no live escalation",
+                "Raises one escalation per red dimension with none open or acknowledged, at the first level of the plan's governance escalation path (else level 1), reason `tolerance`. A person asks for it; nothing raises one on its own, and asking again raises nothing new. Answers `{raised, tolerances}`.",
+                pid.clone(), &[("200", "raised (possibly empty), tolerances"), ("404", "Unknown plan")])
+        },
         "/api/plans/{pid}/tolerances/{dimension}": {
             "put": op("tolerances", "Set the plan's own tolerance for one dimension",
                 "Body `{limit, amber_from_percent?, note?}`. Limits: time 0-3650 days, cost 0-100000 basis points, risk 1-25 (a score), resources 0-500 percentage points; `amber_from_percent` 1-99 (default 75). Zero is a zero-tolerance limit: any slip is red. Replaces an earlier limit for the same dimension. Answers like GET.",

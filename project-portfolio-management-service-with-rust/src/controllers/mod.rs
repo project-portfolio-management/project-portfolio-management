@@ -88,6 +88,24 @@ pub fn model_not_found(err: loco_rs::model::ModelError) -> loco_rs::Error {
     }
 }
 
+/// A database error as the service's error type (`500`). One definition for every controller.
+#[must_use]
+pub(crate) fn db_err(e: sea_orm::DbErr) -> loco_rs::Error {
+    loco_rs::Error::Model(loco_rs::model::ModelError::from(e))
+}
+
+/// `422 Unprocessable Entity` with the error code `unprocessable` and `message`.
+///
+/// Controllers that answer with the code `unprocessable_entity` keep their own copy: the code string is part of
+/// their responses and changing it would change the API.
+#[must_use]
+pub(crate) fn unprocessable(message: &str) -> loco_rs::Error {
+    loco_rs::Error::CustomError(
+        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+        loco_rs::controller::ErrorDetail::new("unprocessable", message),
+    )
+}
+
 /// Map a record-level authorization rejection (`(status, reason)`) to
 /// a loco error: `403` = policy denied; `401` = fail-safe when claims
 /// are missing behind the guard.

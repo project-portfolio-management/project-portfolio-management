@@ -11,6 +11,7 @@
 //! Counted over **completed** work in the window, because a mix of
 //! what was *started* measures intent rather than delivery.
 
+use super::db_err;
 use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use sea_orm::QuerySelect;
@@ -27,10 +28,6 @@ const DEFAULT_WINDOW_DAYS: i64 = 90;
 /// Rows scanned per read, so an unbounded estate cannot become an
 /// unbounded query.
 const MAX_ROWS: u64 = 5000;
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
     let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;

@@ -7,6 +7,7 @@
 //! `omitted_unreadable`, never shown masked. The `unclassified` row has no list of people and is refused.
 //! Skills have no people at all, so there is no skill drill-down.
 
+use super::db_err;
 use std::collections::{BTreeMap, HashMap};
 
 use axum::http::StatusCode;
@@ -22,10 +23,6 @@ use crate::models::_entities::{plans, resource_roles, tasks};
 
 /// Open tasks read per request; a role with more is told so.
 const ROW_CAP: u64 = 500;
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
     Error::CustomError(status, ErrorDetail::new(code, message))

@@ -7,6 +7,7 @@
 //! count as holidays automatically. A task is scheduled on its plan's calendar,
 //! and an assignee's narrows it: their work happens only on days both work.
 
+use super::db_err;
 use std::collections::HashMap;
 
 use axum::http::StatusCode;
@@ -27,10 +28,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {

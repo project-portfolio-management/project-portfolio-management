@@ -9,6 +9,7 @@
 //!
 //! An assignment needs an assignee: units are a share of *their* day.
 
+use super::db_err;
 use std::collections::BTreeMap;
 
 use axum::http::StatusCode;
@@ -30,10 +31,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn field_name(f: Field) -> &'static str {

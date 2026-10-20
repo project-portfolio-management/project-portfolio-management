@@ -5,6 +5,7 @@
 //! An issue that has been `closed` must carry a resolution (`422` otherwise; the
 //! database enforces it too). `resolved_on` is set by the service, never typed.
 
+use super::db_err;
 use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
 use loco_rs::controller::ErrorDetail;
@@ -23,10 +24,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn today() -> NaiveDate {

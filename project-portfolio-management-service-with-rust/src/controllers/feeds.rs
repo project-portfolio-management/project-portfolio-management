@@ -14,6 +14,7 @@
 //! cannot be evaluated for it, and widening it would leak. Nothing a feed
 //! returns is anything the token's owner is not already assigned to.
 
+use super::db_err;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::IntoResponse;
 use loco_rs::controller::ErrorDetail;
@@ -27,10 +28,6 @@ use crate::feeds::{self as rules, Entry, Event};
 use crate::models::_entities::{
     feed_tokens, milestones, notifications, planned_slots, plans, sprints, tasks,
 };
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn unauthorized() -> Error {
     Error::CustomError(

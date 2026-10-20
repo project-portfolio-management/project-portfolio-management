@@ -9,6 +9,7 @@
 //! and is served with `nosniff` and `Content-Disposition: attachment` so a
 //! file can never be rendered as a page.
 
+use super::{db_err, unprocessable};
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
@@ -27,22 +28,11 @@ use crate::discussion as subject_rules;
 use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, attachments};
 use crate::models::audit_logs::Model as AuditModel;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn forbidden(message: &str) -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
         ErrorDetail::new("forbidden", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {

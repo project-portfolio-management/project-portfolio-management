@@ -5,6 +5,7 @@
 //! * `GET /api/plans/{pid}/ccpm-estimates` — every task's figures with where each came from, the rule in
 //!   force, and the tasks that are missing one.
 
+use super::db_err;
 use std::collections::HashMap;
 
 use axum::http::StatusCode;
@@ -25,10 +26,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Most tasks one answer lists.

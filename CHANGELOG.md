@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Code quality: shared error helpers.** The controllers carried 96 copies of `db_err` and 83 of `unprocessable`. The
+  69 identical `db_err` copies and 44 identical `unprocessable` copies (code `unprocessable`) are now one definition each
+  in `controllers/mod.rs`: 526 fewer lines over 73 files, no behaviour change. Verified: lint, unit tests, the full
+  database suite (176) and every real-token test binary. Left on purpose: 30 `unprocessable` copies answer with the
+  code `unprocessable_entity` (changing it would change API responses; the two spellings are a consistency problem
+  worth a decision), 20 `db_err` copies return a different error, and the 66 `too_many_lines` suppressions each need
+  their own split.
+
 - **Control action to issue (T-26).** The issues register exists now, so `POST /api/actions/{pid}/convert?to=issue`
   turns a control action into an issue on the same plan. Verified: lint, unit tests, the full database suite (176) and
   every real-token test binary. Not done: no button in the interface (the control pages have no screens for actions

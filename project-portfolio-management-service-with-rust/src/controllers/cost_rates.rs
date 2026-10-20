@@ -19,6 +19,7 @@
 //! deployment's posture for every write); anyone else gets `404`, and no rate or
 //! cost appears in any other response.
 
+use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -46,10 +47,6 @@ fn unprocessable(message: &str) -> Error {
 
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Whether the caller may see or change rates and the costs derived from them.

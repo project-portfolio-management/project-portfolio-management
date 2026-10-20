@@ -13,6 +13,7 @@
 //! answers with **what moved** across the whole network (PJ-8), not just the
 //! task that was edited.
 
+use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -34,10 +35,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// A plan's task network, ready for [`cpm::analyze`].

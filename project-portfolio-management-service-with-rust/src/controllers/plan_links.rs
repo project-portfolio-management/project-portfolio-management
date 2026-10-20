@@ -1,6 +1,7 @@
 //! Typed links on a plan (LT-8). Pure rules in [`crate::plan_links`]. The
 //! service stores a link and returns it; it never fetches or renders one.
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
@@ -13,17 +14,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::plan_links;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::plan_links as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 async fn live(ctx: &AppContext, plan: Uuid) -> Result<Vec<plan_links::Model>> {
     plan_links::Entity::find()

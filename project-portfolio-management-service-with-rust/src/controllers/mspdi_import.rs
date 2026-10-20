@@ -15,6 +15,7 @@
 //! report says so. Resources are not matched to people (names are not identities):
 //! their names are kept in the task description and listed.
 
+use super::db_err;
 use std::collections::HashMap;
 
 use axum::body::Bytes;
@@ -37,10 +38,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 #[derive(Debug, Deserialize)]

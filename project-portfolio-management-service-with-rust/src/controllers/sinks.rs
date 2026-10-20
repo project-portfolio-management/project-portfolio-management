@@ -17,6 +17,7 @@
 //! body. A person's notification-channel preferences (`webhook` / `chat` /
 //! `email`) are honoured per kind.
 
+use super::{db_err, unprocessable};
 use std::net::IpAddr;
 use std::time::Duration;
 
@@ -34,17 +35,6 @@ use crate::models::_entities::{
 };
 use crate::notification_prefs::recipient_sub;
 use crate::sinks::{self as rules, Note};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn allow_loopback() -> bool {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_SINKS_ALLOW_LOOPBACK").is_ok()

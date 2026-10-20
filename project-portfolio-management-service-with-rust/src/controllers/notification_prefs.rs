@@ -9,10 +9,9 @@
 //! preferences could never take effect — that is refused up front rather
 //! than silently stored.
 
+use super::{db_err, unprocessable};
 use std::collections::BTreeSet;
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -22,17 +21,6 @@ use crate::auth::AuthUser;
 use crate::models::_entities::{notification_prefs, notifications};
 use crate::notification_prefs as rules;
 use crate::tz;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// The caller's user id in the form notifications are addressed by, or a
 /// `422` saying why preferences cannot apply to them.

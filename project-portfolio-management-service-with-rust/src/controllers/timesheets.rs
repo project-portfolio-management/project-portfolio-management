@@ -13,6 +13,7 @@
 //! An approver is a caller holding `access=admin` or the `timesheet_approver`
 //! role (the token's `role` attribute — a vocabulary the deployment declares).
 
+use super::{db_err, unprocessable};
 use std::fmt::Write as _;
 
 use axum::http::{StatusCode, header};
@@ -30,13 +31,6 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::notification_prefs::recipient_sub;
 use crate::timesheets::{self as rules, Entry, GroupBy};
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn forbidden(message: &str) -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
@@ -46,10 +40,6 @@ fn forbidden(message: &str) -> Error {
 
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Rows a report or week reads at most.

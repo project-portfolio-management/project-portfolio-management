@@ -15,6 +15,7 @@
 //! a cost impact is a single event: in the joint run it strikes once and drives
 //! both.
 
+use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -36,10 +37,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 #[derive(Debug, Deserialize)]

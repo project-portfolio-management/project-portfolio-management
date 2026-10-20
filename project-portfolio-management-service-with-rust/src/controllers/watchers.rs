@@ -10,8 +10,7 @@
 //! **auto-watch** (the `auto_watch` preference) so creating or being
 //! assigned a thing does not subscribe them.
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
+use super::{db_err, unprocessable};
 use loco_rs::prelude::*;
 use sea_orm::{DatabaseConnection, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -22,17 +21,6 @@ use crate::auth::{AuthUser, MaybeAuthUser};
 use crate::discussion as rules;
 use crate::models::_entities::{notification_prefs, watchers};
 use crate::models::capabilities as cap_models;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// The `sub`s watching a subject.
 pub(crate) async fn watcher_subs(db: &DatabaseConnection, kind: &str, pid: Uuid) -> Vec<String> {

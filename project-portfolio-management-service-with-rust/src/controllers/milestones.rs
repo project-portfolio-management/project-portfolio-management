@@ -14,6 +14,7 @@
 //! tasks and the critical-path analysis; the only stored facts are the links, the
 //! manual completion and the append-only reschedule history.
 
+use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -47,10 +48,6 @@ fn unprocessable(message: &str) -> Error {
 
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// The tasks each milestone waits for, as pids.

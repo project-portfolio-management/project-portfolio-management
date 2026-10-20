@@ -13,6 +13,7 @@
 //! answer on every day it covers (the capacity of a day is read from the first
 //! range found).
 
+use super::db_err;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
@@ -31,10 +32,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Whether the caller may read or change `person_ref`'s availability and

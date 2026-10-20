@@ -18,13 +18,13 @@
 //! design: the admin-only bulk reads (board pack, board investments, board trends,
 //! auditor trail, evidence pack), which answer 403 to everyone else.
 
+use super::{db_err, unprocessable};
 use std::collections::HashSet;
 
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -34,17 +34,6 @@ use crate::auth::{AuthUser, MaybeAuthUser};
 use crate::models::_entities::plan_access_settings as plan_access;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::plan_access as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn members_of(row: &plan_access::Model) -> Vec<String> {
     serde_json::from_value(row.members.clone()).unwrap_or_default()

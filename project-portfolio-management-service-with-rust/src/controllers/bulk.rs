@@ -18,6 +18,7 @@
 //! destructive action. One bad row never aborts the load; the counters always
 //! reconcile.
 
+use super::{db_err, unprocessable};
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
@@ -49,22 +50,11 @@ const LEASE_SECS: i64 = 600;
 /// Plans one export may carry.
 const MAX_EXPORT_ROWS: u64 = 100_000;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn forbidden(message: &str) -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
         ErrorDetail::new("forbidden", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn import_max() -> usize {

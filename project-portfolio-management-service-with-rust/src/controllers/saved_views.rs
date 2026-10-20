@@ -7,8 +7,7 @@
 //! always scoped to the `route` it was saved from and to the caller
 //! who saved it — never another user's, never another route's.
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
+use super::{db_err, unprocessable};
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -17,17 +16,6 @@ use uuid::Uuid;
 use crate::auth::AuthUser;
 use crate::models::_entities::saved_views;
 use crate::saved_views as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// `POST /api/saved-views` body.
 #[derive(Debug, Deserialize)]

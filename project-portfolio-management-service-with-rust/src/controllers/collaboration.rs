@@ -21,8 +21,8 @@
 //!
 //! Every mutation writes an `audit_logs` row.
 
-use axum::http::{HeaderMap, StatusCode};
-use loco_rs::controller::ErrorDetail;
+use super::{db_err, unprocessable};
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -42,17 +42,6 @@ use crate::validation::MAX_TEXT_LEN;
 /// landed; a bigger `limit` clamps rather than errors
 /// ([`super::pagination::MAX_LIMIT`]).
 pub const LIST_CAP: u64 = 200;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// A reviewer / recipient reference: an `EntityRef` over the family's
 /// person-bearing services.

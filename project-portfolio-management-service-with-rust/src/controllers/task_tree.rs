@@ -4,6 +4,7 @@
 //! stored. Parent links are validated here (same plan, no cycle, bounded
 //! depth) and on the task create/update path.
 
+use super::{db_err, unprocessable};
 use std::collections::BTreeMap;
 
 use axum::http::StatusCode;
@@ -14,17 +15,6 @@ use uuid::Uuid;
 use super::governance::find_item;
 use crate::models::_entities::{tasks, time_entries};
 use crate::task_rollup::{self as rules, Fact};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// The plan's live tasks.
 async fn plan_tasks(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<tasks::Model>> {

@@ -10,6 +10,7 @@
 //! (reason `masked`). An omitted name is *listed*, never silently missing; an unknown
 //! name is a `422` that lists the allowed ones.
 
+use super::db_err;
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
@@ -33,10 +34,6 @@ pub const INCLUDABLE: &[(&str, &str, bool)] = &[
     ("raci", "tasks", true),
     ("time_entries", "time", true),
 ];
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// Parse `include=a,b` into known names; an unknown one lists what is allowed.
 ///

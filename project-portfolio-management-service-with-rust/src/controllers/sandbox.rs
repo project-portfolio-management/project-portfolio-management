@@ -15,6 +15,7 @@
 //! the finance gate on cost are the same as everywhere else, and a preview applies
 //! them, so a preview never shows more than a commit would allow.
 
+use super::{db_err, unprocessable};
 use std::collections::{HashMap, HashSet};
 
 use axum::http::{HeaderMap, StatusCode, header};
@@ -31,17 +32,6 @@ use crate::cpm::{self, CpmResult};
 use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Change, Edit};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn forbidden(message: &str) -> Error {
     Error::CustomError(

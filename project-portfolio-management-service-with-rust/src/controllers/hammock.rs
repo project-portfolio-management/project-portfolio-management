@@ -10,11 +10,10 @@
 //! task's float. The span is derived on read from the same analysis the critical
 //! path uses.
 
+use super::{db_err, unprocessable};
 use std::collections::HashMap;
 
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::ConnectionTrait;
 use sea_orm::QueryOrder;
@@ -25,17 +24,6 @@ use crate::auth::MaybeAuthUser;
 use crate::hammock::{self as rules, Span};
 use crate::models::_entities::{hammock_links, plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 async fn find_task(ctx: &AppContext, plan: Uuid, raw: &str) -> Result<tasks::Model> {
     let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;

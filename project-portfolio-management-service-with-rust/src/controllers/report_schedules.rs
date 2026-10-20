@@ -13,6 +13,7 @@
 //!
 //! Only the owner can read their schedules and download the latest output.
 
+use super::{db_err, unprocessable};
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
@@ -27,17 +28,6 @@ use crate::auth::AuthUser;
 use crate::models::_entities::{artifacts as artifact_rows, report_definitions, report_schedules};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::report_schedules as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn ttl() -> chrono::Duration {
     let days = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS")

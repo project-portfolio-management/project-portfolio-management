@@ -6,6 +6,7 @@
 //! their stored order. Dependencies come from the plan's links (kind and lag) and from `precedes` task
 //! relations (finish-to-start, no lag).
 
+use super::db_err;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use axum::http::{StatusCode, header};
@@ -19,10 +20,6 @@ use crate::cpm;
 use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsCalendar, MsConstraint, MsLink, MsTask};
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// What the file does not carry; written into it as a comment and listed in the API description.
 pub const NOT_EXPORTED: &str = "Exported from Project Portfolio Management. Not carried: assignees and resources, \

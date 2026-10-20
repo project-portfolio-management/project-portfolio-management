@@ -10,6 +10,7 @@
 //! every column, row, link, date and parent that did not come across is listed with the
 //! reason. Assignees are names, not identities: they are kept in the description.
 
+use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use axum::body::Bytes;
@@ -31,10 +32,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 #[derive(Debug, Deserialize)]

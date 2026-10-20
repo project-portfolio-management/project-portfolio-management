@@ -4,6 +4,7 @@
 //!
 //! Named a *self-check* everywhere: it is not a DCMA compliance assessment.
 
+use super::db_err;
 use std::collections::HashMap;
 
 use axum::http::StatusCode;
@@ -25,10 +26,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 #[derive(Debug, Deserialize)]

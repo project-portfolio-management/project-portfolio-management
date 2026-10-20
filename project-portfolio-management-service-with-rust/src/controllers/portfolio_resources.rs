@@ -7,6 +7,7 @@
 //! — the same line as availability) sees **roles and totals only**: no person
 //! refs anywhere, and unplanned time is shown per plan, not per person.
 
+use super::db_err;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -33,10 +34,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Whether the caller may see and manage people's resource detail.

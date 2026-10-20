@@ -8,6 +8,7 @@
 //! pulls nothing operational at all (reason `masked`). An omitted name is
 //! *listed*, never silently missing.
 
+use super::db_err;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
@@ -51,10 +52,6 @@ pub fn parse(raw: &str) -> std::result::Result<Vec<&'static str>, String> {
         return Err(format!("unknown include {bad:?} (allowed: {allowed:?})"));
     }
     Ok(out)
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Build the `included` map and the `omitted` list for `names`.

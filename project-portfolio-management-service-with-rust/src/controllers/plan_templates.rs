@@ -14,6 +14,7 @@
 //! own); if it fails part-way, the plans already created are soft-deleted and
 //! the failure is reported, so a half-built tree is never left behind.
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
@@ -31,19 +32,8 @@ use crate::models::plans::Model as PlanModel;
 use crate::plan_templates::{self as rules, Snapshot, TplMilestone, TplNode, TplTask};
 use crate::streaming;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// A plan as captured, before offsets are computed.

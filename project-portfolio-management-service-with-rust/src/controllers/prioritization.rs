@@ -23,6 +23,7 @@
 //! Every response carries `as_of` and is ETag-conditional, mirroring
 //! `/api/at-a-glance`.
 
+use super::db_err;
 use std::collections::BTreeSet;
 
 use axum::http::HeaderMap;
@@ -49,10 +50,6 @@ pub const DEFAULT_STALL_DAYS: i64 = 30;
 /// Risk exposure (probability × impact) at or above which an open risk
 /// blocks phase readiness.
 pub const SEVERE_RISK_EXPOSURE: i32 = 15;
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// Load all live rows of one entity.
 macro_rules! live {

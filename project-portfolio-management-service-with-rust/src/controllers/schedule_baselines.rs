@@ -11,6 +11,7 @@
 //! moment, so a baseline and the variance against it are measured on the same
 //! footing, in business days of the plan's calendar.
 
+use super::db_err;
 use axum::http::StatusCode;
 use chrono::Utc;
 use loco_rs::controller::ErrorDetail;
@@ -33,10 +34,6 @@ fn unprocessable(message: &str) -> Error {
 
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn max_baselines() -> i64 {

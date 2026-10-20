@@ -4,6 +4,7 @@
 //! live in [`crate::strategy`]; every mutation audits; nothing here
 //! feeds the matcher (§8 partition rule).
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
@@ -23,19 +24,8 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::strategy as rules;
 use crate::validation::MAX_TEXT_LEN;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// Generic active-row-by-pid finder over a strategy entity.

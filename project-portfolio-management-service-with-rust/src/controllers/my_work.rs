@@ -9,10 +9,9 @@
 //! never a guess. A task in a plan the caller may not read is **omitted**,
 //! not shown masked.
 
+use super::unprocessable;
 use std::collections::{BTreeMap, HashMap};
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -25,13 +24,6 @@ use crate::tz;
 
 /// Rows read per request; a person with more open tasks is told so.
 const ROW_CAP: u64 = 500;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
 
 /// `GET /api/me/tasks?tz=&as_of=` query.
 #[derive(Debug, Deserialize)]

@@ -6,6 +6,7 @@
 //! otherwise `403`. Audited. `?include=all` (publishers only) also lists the
 //! scheduled and expired ones, which is how a publisher manages the feed.
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
 use loco_rs::controller::ErrorDetail;
@@ -18,17 +19,6 @@ use crate::announcements::{self as rules, Severity, Sortable, State as Window};
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::announcements;
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// Whether the caller may publish, edit or retract announcements.
 fn may_publish(caller: &MaybeAuthUser) -> bool {

@@ -15,6 +15,7 @@
 //!   deliberate — refusing writes on the basis of a phase teaches
 //!   operators to misreport it.
 
+use super::db_err;
 use axum::http::{HeaderMap, StatusCode};
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
@@ -27,10 +28,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{phase_transitions, plans};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::phase as rules;
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// `422` naming what was wrong, not merely that something was.
 fn refuse(detail: &rules::Refusal) -> Error {

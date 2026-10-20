@@ -6,13 +6,13 @@
 //! gated route can forget it** — and it runs only for paths that belong to
 //! a module, so every other request pays nothing.
 
+use super::{db_err, unprocessable};
 use std::collections::BTreeSet;
 
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
@@ -22,17 +22,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::plan_modules;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::modules as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// The plan's explicit module set, if it has chosen one.
 async fn explicit_modules(

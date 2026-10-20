@@ -8,6 +8,7 @@
 //! Plan and task subjects reuse the discussion module's resolver, so the
 //! owning plan's record-level read check applies to every read and write.
 
+use super::{db_err, unprocessable};
 use std::collections::BTreeMap;
 
 use axum::http::StatusCode;
@@ -24,19 +25,8 @@ use crate::custom_fields::{self as rules, Def};
 use crate::models::_entities::{custom_field_defs, custom_field_values, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn strings(v: &Value) -> Vec<String> {

@@ -8,6 +8,7 @@
 //! told (`approval_requested`) and the requester is told of the outcome
 //! (`approval_decided`), both honouring notification preferences.
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
@@ -24,13 +25,6 @@ use crate::models::_entities::approval_requests;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
 }
@@ -40,10 +34,6 @@ fn forbidden(message: &str) -> Error {
         StatusCode::FORBIDDEN,
         ErrorDetail::new("forbidden", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {

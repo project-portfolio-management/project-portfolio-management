@@ -6,11 +6,10 @@
 //! reading is `no_data`, not red and not green. Readings are append-only: a
 //! correction is a newer reading for the same day.
 
+use super::{db_err, unprocessable};
 use std::collections::HashMap;
 
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -20,17 +19,6 @@ use crate::auth::MaybeAuthUser;
 use crate::kpi::{self, Direction, Status, Summary};
 use crate::models::_entities::{kpi_readings, kpis, objectives};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 const CADENCES: &[&str] = &["daily", "weekly", "monthly", "quarterly"];
 

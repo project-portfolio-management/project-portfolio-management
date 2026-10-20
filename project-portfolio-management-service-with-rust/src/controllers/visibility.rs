@@ -8,8 +8,8 @@
 //! Pure rules live in [`crate::visibility`]; nothing here feeds the
 //! matcher (§8 partition rule).
 
+use super::unprocessable;
 use axum::http::{HeaderMap, StatusCode, header};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -26,13 +26,6 @@ use crate::models::visibility as vis_models;
 use crate::validation::{MAX_ARRAY_LEN, MAX_ITEM_LEN, MAX_TEXT_LEN};
 use crate::visibility as rules;
 use crate::workers_client;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
 
 /// Find an active plan by pid across **any** collection (edges
 /// may span kinds).

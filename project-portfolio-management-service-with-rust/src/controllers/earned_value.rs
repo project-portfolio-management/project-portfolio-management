@@ -18,6 +18,7 @@
 //! **Currencies never merge.** One block per baseline currency; budget lines in a
 //! currency with no baseline are listed, not added in.
 
+use super::db_err;
 use axum::http::{StatusCode, header};
 use std::fmt::Write as _;
 
@@ -42,10 +43,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 async fn default_method(ctx: &AppContext, plan: Uuid) -> Result<DefaultMethod> {

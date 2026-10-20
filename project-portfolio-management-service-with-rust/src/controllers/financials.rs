@@ -13,8 +13,8 @@
 //! future bulk import (T-8); this module only reads what is already
 //! there.
 
-use axum::http::{HeaderMap, StatusCode};
-use loco_rs::controller::ErrorDetail;
+use super::{db_err, unprocessable};
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
@@ -31,17 +31,6 @@ use crate::validation::{MAX_ARRAY_LEN, MAX_TEXT_LEN};
 /// Plans scanned to build the containment map for the portfolio-wide
 /// rollup (mirrors `controllers::tba::rollup`'s own cap).
 const MAX_PLANS_SCANNED: u64 = 1000;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// Find one live plan by public id, or `404`.
 async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {

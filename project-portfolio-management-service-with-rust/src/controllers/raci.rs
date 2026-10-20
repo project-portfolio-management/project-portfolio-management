@@ -12,6 +12,7 @@
 //! task (RM-3), unless they have switched `auto_watch` off. Removing them from the
 //! row does **not** unsubscribe them (they may be watching for other reasons).
 
+use super::db_err;
 use std::collections::BTreeMap;
 
 use axum::http::{StatusCode, header};
@@ -32,10 +33,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 async fn live_tasks(ctx: &AppContext, plan: Uuid) -> Result<Vec<tasks::Model>> {

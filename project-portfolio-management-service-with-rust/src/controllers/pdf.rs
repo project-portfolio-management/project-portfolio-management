@@ -14,10 +14,10 @@
 //! **Not signed.** Signing needs a named signer (a person or a service key) and
 //! a key policy; that decision is open (see the repo `plan.md`).
 
-use axum::http::{StatusCode, header};
+use super::{db_err, unprocessable};
+use axum::http::header;
 use axum::response::IntoResponse;
 use chrono::{DateTime, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -28,17 +28,6 @@ use crate::artifacts::content_disposition;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{milestones, plans, risks, tasks};
 use crate::pdf;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// `?as_of=` — the stamp the document carries.
 fn stamp(raw: Option<&str>) -> Result<DateTime<Utc>> {

@@ -9,12 +9,12 @@
 //! to them at all. Grants are time-boxed, revocable, audited and listed per
 //! plan.
 
+use super::{db_err, unprocessable};
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
 use chrono::{DateTime, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
@@ -25,17 +25,6 @@ use crate::auth::{AuthUser, MaybeAuthUser};
 use crate::guests::{self as rules, Attempt, Grant};
 use crate::models::_entities::guest_grants;
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 fn roles_of(claims: &authentication_verifier::Claims) -> Vec<String> {
     claims.attrs.get("role").cloned().unwrap_or_default()

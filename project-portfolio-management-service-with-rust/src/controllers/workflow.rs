@@ -13,8 +13,8 @@
 //! vocabulary. A plan with nothing configured therefore behaves exactly
 //! as it did before this feature existed.
 
-use axum::http::{HeaderMap, StatusCode};
-use loco_rs::controller::ErrorDetail;
+use super::{db_err, unprocessable};
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -24,17 +24,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{plans, tasks, workflow_states, workflow_transitions, workflows};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::workflow as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// Rebuild the pure definition from stored rows.
 async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::WorkflowDef> {

@@ -16,10 +16,9 @@
 //! - **move** re-homes tasks, re-validating against the **target** workflow:
 //!   a status it lacks maps to its initial state **and the result says so**.
 
+use super::unprocessable;
 use std::collections::BTreeMap;
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
@@ -33,13 +32,6 @@ use crate::models::_entities::{components, custom_field_values, task_relations, 
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::task_bulk::{self as rules, Change, ItemResult};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
 
 /// The human text of an error, for a per-item refusal note.
 fn error_text(e: &Error) -> String {

@@ -6,6 +6,7 @@
 //! `GET`. Only a comment's author edits or deletes it; every edit keeps
 //! the previous body; every mutation audits.
 
+use super::{db_err, unprocessable};
 use std::collections::BTreeMap;
 
 use axum::http::StatusCode;
@@ -24,22 +25,11 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn forbidden(message: &str) -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
         ErrorDetail::new("forbidden", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 /// What the controller needs to know about a resolved subject.

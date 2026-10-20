@@ -8,6 +8,7 @@
 //! * `GET …/schedule-risk` — the seeded simulation. Every assumption is echoed
 //!   in the response, including that inputs are treated as independent.
 
+use super::db_err;
 use std::collections::HashMap;
 
 use axum::http::StatusCode;
@@ -27,10 +28,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 #[derive(Debug, Deserialize)]

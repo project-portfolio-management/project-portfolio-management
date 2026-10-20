@@ -8,6 +8,7 @@
 //! a plan the caller cannot read is **hidden** from them (counted, never
 //! shown), and deleting nothing here ever removes a task.
 
+use super::{db_err, unprocessable};
 use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
@@ -22,19 +23,8 @@ use crate::models::_entities::{plans, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::task_relations as rules;
 
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
 fn conflict(message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 async fn live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {

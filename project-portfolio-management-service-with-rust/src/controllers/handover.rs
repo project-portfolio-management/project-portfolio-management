@@ -11,6 +11,7 @@
 //! About people, so it needs the permission to manage people. It moves ownership;
 //! it does not check the new person's capacity (the leveling view does that).
 
+use super::{db_err, unprocessable};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
@@ -25,17 +26,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{allocations, raci_assignments, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::workflow::WorkflowDef;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
-    )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
-}
 
 /// One thing a person holds.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

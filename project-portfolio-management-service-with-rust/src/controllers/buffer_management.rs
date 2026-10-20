@@ -10,6 +10,7 @@
 //!
 //! Report, a person decides: nothing is re-planned and no action is invented.
 
+use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -34,10 +35,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn db_err(e: sea_orm::DbErr) -> Error {
-    Error::Model(ModelError::from(e))
 }
 
 fn json_err(e: &serde_json::Error) -> Error {

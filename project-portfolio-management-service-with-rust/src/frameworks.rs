@@ -8,12 +8,11 @@
 //!   decision rights, forums.
 //!
 //! A plan follows at most one of each family, through a link; a plan with no link inherits the nearest ancestor's
-//! ([`resolve`]). The family's own fields live in one JSON `body`, validated here ([`check`]); unknown fields are
+//! ([`crate::inherit::resolve`]). The family's own fields live in one JSON `body`, validated here ([`check`]); unknown fields are
 //! refused, so a misspelt one is an error and not silently dropped.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use uuid::Uuid;
 
 /// The two families.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -353,57 +352,6 @@ pub fn check(
     }
 }
 
-/// Where a plan's framework comes from.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Source {
-    /// The plan's own link.
-    Own,
-    /// The nearest ancestor's link.
-    Inherited,
-    /// Neither: nothing is declared.
-    None,
-}
-
-/// The outcome of [`resolve`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Resolution {
-    /// Where it came from.
-    pub source: Source,
-    /// The framework followed, when there is one.
-    pub framework: Option<Uuid>,
-    /// The plan whose link it is (the plan itself for [`Source::Own`]).
-    pub from_plan: Option<Uuid>,
-}
-
-/// Decide the framework for `plan`: its own link, else the first ancestor with one, else none. `ancestors` is
-/// nearest first, each with that plan's link (if any).
-#[must_use]
-pub fn resolve(plan: Uuid, own: Option<Uuid>, ancestors: &[(Uuid, Option<Uuid>)]) -> Resolution {
-    if let Some(w) = own {
-        return Resolution {
-            source: Source::Own,
-            framework: Some(w),
-            from_plan: Some(plan),
-        };
-    }
-    ancestors
-        .iter()
-        .find_map(|(p, link)| link.map(|w| (*p, w)))
-        .map_or(
-            Resolution {
-                source: Source::None,
-                framework: None,
-                from_plan: None,
-            },
-            |(p, w)| Resolution {
-                source: Source::Inherited,
-                framework: Some(w),
-                from_plan: Some(p),
-            },
-        )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -530,37 +478,6 @@ mod tests {
                 fields(json!({ "wip_limit": 3 }))
             )
             .is_err()
-        );
-    }
-
-    #[test]
-    fn a_plan_follows_its_own_then_the_nearest_ancestors_then_nothing() {
-        let (plan, parent, grand) = (Uuid::from_u128(1), Uuid::from_u128(2), Uuid::from_u128(3));
-        let (mine, theirs, top) = (
-            Uuid::from_u128(10),
-            Uuid::from_u128(11),
-            Uuid::from_u128(12),
-        );
-        let own = resolve(plan, Some(mine), &[(parent, Some(theirs))]);
-        assert_eq!(
-            (own.source, own.framework, own.from_plan),
-            (Source::Own, Some(mine), Some(plan))
-        );
-        let near = resolve(plan, None, &[(parent, Some(theirs)), (grand, Some(top))]);
-        assert_eq!(
-            (near.source, near.framework, near.from_plan),
-            (Source::Inherited, Some(theirs), Some(parent))
-        );
-        let far = resolve(plan, None, &[(parent, None), (grand, Some(top))]);
-        assert_eq!(
-            (far.framework, far.from_plan),
-            (Some(top), Some(grand)),
-            "skips an ancestor with none"
-        );
-        let none = resolve(plan, None, &[(parent, None), (grand, None)]);
-        assert_eq!(
-            (none.source, none.framework, none.from_plan),
-            (Source::None, None, None)
         );
     }
 }

@@ -107,6 +107,7 @@ pub mod guests;
 pub mod hammock;
 pub mod handling_marks;
 pub mod http_security;
+pub mod inherit;
 pub mod initializers;
 pub mod insights;
 pub mod issues;
@@ -190,6 +191,7 @@ pub mod tasks;
 pub mod tba;
 pub mod thresholds;
 pub mod timesheets;
+pub mod tolerances;
 /// Total Project Control (TPC): pure rules for Devaux's Index of
 /// Project Performance (DIPP), Expected Monetary Value, and Cost
 /// Estimate to Complete — is the value still to come worth the money

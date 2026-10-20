@@ -334,5 +334,6 @@ pub mod task_relations;
 pub mod task_tree;
 pub mod thresholds;
 pub mod timesheets;
+pub mod tolerances;
 pub mod tracker_import;
 pub mod watchers;

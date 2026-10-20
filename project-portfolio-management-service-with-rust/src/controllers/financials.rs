@@ -205,7 +205,10 @@ async fn list(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<
 }
 
 /// Load the plan's latest baseline (with periods), if any.
-async fn latest_baseline(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<rules::Baseline>> {
+pub(crate) async fn latest_baseline(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+) -> Result<Option<rules::Baseline>> {
     let Some(row) = budget_baselines::Entity::find()
         .filter(budget_baselines::Column::PlanPid.eq(plan_pid))
         .order_by_desc(budget_baselines::Column::Version)

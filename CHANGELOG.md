@@ -17,6 +17,17 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Tolerances with red/amber/green (API).** Each project can set how far it may drift on time, cost, risk and
+  resources (its own limits, or a programme's by inheritance), and the service measures each from data it already
+  holds and colours it: green below 75 percent of the limit (adjustable), amber up to it, red beyond. A limit it cannot
+  measure is `unknown` with the reason, not green. A board lists every readable plan, worst first. Verified: lint,
+  unit tests (1048), the full database suite (180, incl. every colour on every dimension), every real-token binary
+  incl. the private-plan census with a tolerance on the private plan. **Not done: there is no screen yet** (so it is
+  not visible to people until the next step), nothing raises an escalation when a dimension turns red, and only four
+  dimensions exist (no scope, quality or benefits). Choices of mine you may want to change: time is measured against
+  `target_date`, not a schedule baseline; cost against the latest approved baseline; the resources figure counts only
+  plans the reader can see, so two people can see different numbers; 75 percent as the amber line.
+
 - **Links to external systems.** A plan can link to its project or board, and to single issues, in Jira, Trello, Asana,
   Linear and monday.com (and ClickUp, Azure DevOps, GitHub, other): `kind` `tracker` or `ticket` with a `system` and
   the system's own `external_id`, listed with `?system=`. Built on the existing plan links, so the safe-URL rules,

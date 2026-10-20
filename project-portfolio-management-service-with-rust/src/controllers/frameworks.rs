@@ -24,7 +24,8 @@ use uuid::Uuid;
 use super::governance::find_item;
 use super::{conflict, db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
-use crate::frameworks::{self as rules, Family, Source};
+use crate::frameworks::Family;
+use crate::inherit::{Source, resolve};
 use crate::models::_entities::{frameworks, plan_frameworks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
@@ -53,7 +54,7 @@ fn parse(family: Family, input: Value) -> Result<Parsed> {
         .map(|d| d.trim().to_string())
         .filter(|d| !d.is_empty());
     let plan_pid = take_text(&mut fields, "plan_pid");
-    let body = rules::check(family, &name, description.as_deref(), fields)
+    let body = crate::frameworks::check(family, &name, description.as_deref(), fields)
         .map_err(|p| unprocessable(&p.join("; ")))?;
     Ok(Parsed {
         name: name.trim().to_string(),
@@ -394,8 +395,8 @@ async fn effective(
         .iter()
         .map(|p| (*p, links.get(p).copied()))
         .collect();
-    let r = rules::resolve(plan, links.get(&plan).copied(), &ancestor_links);
-    let record = match r.framework {
+    let r = resolve(plan, links.get(&plan).copied(), &ancestor_links);
+    let record = match r.value {
         None => None,
         Some(w) => frameworks::Entity::find()
             .filter(frameworks::Column::Pid.eq(w))
@@ -417,11 +418,7 @@ async fn effective(
     };
     let withheld = guarded.iter().any(|p| !readable.contains(p));
     let shown = if withheld { None } else { record.as_ref() };
-    let reason = match (
-        r.source,
-        withheld,
-        r.framework.is_some() && record.is_none(),
-    ) {
+    let reason = match (r.source, withheld, r.value.is_some() && record.is_none()) {
         (_, true, _) => Some("it comes from a plan you cannot read".to_string()),
         (Source::None, _, _) => Some(format!(
             "neither this plan nor any plan above it declares a {}",

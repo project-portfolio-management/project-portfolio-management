@@ -76,6 +76,10 @@ mutation (§10.2).
   `plan_frameworks`: `plan_pid`, `family`, `framework_pid`, `set_by?`, unique
   `(plan_pid, family)`. A plan with no row for a family inherits the nearest
   ancestor's, resolved on read (migration `m20261020_000080`).
+- **`plan_tolerances`** (built, FR-53) — a plan's limit per dimension: `plan_pid`, `dimension` (CHECK
+  `time`/`cost`/`risk`/`resources`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
+  `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan
+  with no row for a dimension inherits the nearest ancestor's, resolved on read (migration `m20261020_000082`).
 - **`entity_links`** — **not built (T-7).** No migration, entity or
   route exists. The cross-service write-side table in
   `agents/share/cross-service-linking.md` §4.1

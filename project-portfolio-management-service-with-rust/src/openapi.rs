@@ -2177,6 +2177,7 @@ mod tests {
             crate::controllers::goals::routes(),
             crate::controllers::plan_links::routes(),
             crate::controllers::frameworks::routes(),
+            crate::controllers::tolerances::routes(),
             crate::controllers::role_tasks::routes(),
             crate::controllers::pdf::routes(),
             crate::controllers::sinks::routes(),

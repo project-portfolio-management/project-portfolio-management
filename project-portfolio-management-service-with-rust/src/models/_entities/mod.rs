@@ -100,6 +100,7 @@ pub mod plan_handling_marks;
 pub mod plan_links;
 pub mod plan_modules;
 pub mod plan_templates;
+pub mod plan_tolerances;
 pub mod planned_gates;
 pub mod planned_slots;
 pub mod plans;

@@ -152,6 +152,7 @@ const AGGREGATES: &[&str] = &[
     "/api/plans",
     "/api/ways-of-working",
     "/api/governance-frameworks",
+    "/api/tolerances",
     "/api/plans/search?q=Secret",
     "/api/plans/search?q=Public",
     "/api/plans/audit/recent",
@@ -472,6 +473,12 @@ async fn seed(
     post(format!("/api/plans/{p}/change-requests"), json!({ "title": format!("{name} change"), "description": "d", "reason": "r", "kind": "schedule", "impact_schedule_days": 3 * scale })).await;
     post(format!("/api/plans/{p}/issues"), json!({ "title": format!("{name} issue"), "kind": "blocker", "severity": "high", "owner_ref": PERSON, "raised_on": "2026-10-01" })).await;
     post(format!("/api/plans/{p}/access-records"), json!({ "person_ref": PERSON, "access": format!("{name} repo"), "action": "granted", "recorded_on": "2026-01-05" })).await;
+    // A tolerance on the plan: a non-member must not see the plan on the tolerance board.
+    request
+        .put(&format!("/api/plans/{p}/tolerances/risk"))
+        .add_header(who.0.clone(), who.1.clone())
+        .json(&json!({ "limit": 10 }))
+        .await;
     // A framework owned by the plan: a non-member must not see it in either list.
     post(
         "/api/ways-of-working".into(),

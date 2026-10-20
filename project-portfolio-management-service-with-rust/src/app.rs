@@ -208,6 +208,7 @@ impl Hooks for App {
             .add_route(controllers::goals::routes())
             .add_route(controllers::plan_links::routes())
             .add_route(controllers::frameworks::routes())
+            .add_route(controllers::tolerances::routes())
             .add_route(controllers::role_tasks::routes())
             .add_route(controllers::pdf::routes())
             .add_route(controllers::sinks::routes())

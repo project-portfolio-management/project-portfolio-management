@@ -310,6 +310,12 @@ fn relation_paths() -> Value {
 /// Subtask roll-up (RM-5).
 fn rollup_paths() -> Value {
     json!({
+        "/api/plans/{pid}/task-order": {
+            "put": op("task-tree", "Set the order of one parent's subtasks",
+                "Body: `{parent_task_pid?, order: [task pid, ...]}`. `order` must name exactly the live children of that parent (null or absent for the top level), once each, in the new order; otherwise 409 (someone added, removed or moved a task meanwhile: reload and try again). Stores each child's `sibling_position`; task lists then come back positioned siblings first. Audited as `task_order_set`.",
+                vec![uuid_param("pid")],
+                &[("200", "The parent and the order stored"), ("404", "Unknown plan"), ("409", "order is not exactly the parent's current children"), ("422", "Unknown parent or a task named twice")])
+        },
         "/api/plans/{pid}/tasks/{t_pid}/rollup": {
             "get": op("task-tree", "A parent task's figures derived from its subtasks",
                 "Derived on read, never stored, so it cannot drift: due is the latest descendant due date; estimate is the sum of descendants' story points; progress is estimate-weighted (basis points) over the descendants that have an estimate, which are the only ones weighed; those without an estimate are named in excluded_unestimated and never counted as zero; spent is recorded minutes across the parent and its descendants. A figure that cannot be derived is null with a reason (no_children, no_estimates, no_dated_children), never zero. Parents are set with parent_task_pid on task create or update: same plan, no cycle, at most ten deep.",

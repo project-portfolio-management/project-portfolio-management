@@ -1903,6 +1903,8 @@ export interface Task {
   blocked_days: number | null;
   /** The parent task (a sub-task's), or null for a top-level task. */
   parent_task_pid?: string | null;
+  /** Position among the siblings; null until a reorder sets it. */
+  sibling_position?: number | null;
   is_hammock?: boolean;
 }
 
@@ -3635,6 +3637,16 @@ export class PpmClient {
     truncated?: boolean;
   }> {
     return this.http.get(`/api/plans/${pid}/tasks`);
+  }
+  /** Set the order of one parent's subtasks (`null` for the top level); `order` names every child. */
+  setTaskOrder(
+    pid: string,
+    parentTaskPid: string | null,
+    order: string[],
+  ): Promise<{ parent_task_pid: string | null; order: string[] }> {
+    return this.http.put(`/api/plans/${pid}/task-order`, {
+      body: { parent_task_pid: parentTaskPid, order },
+    });
   }
   createTask(pid: string, body: unknown): Promise<Task> {
     return this.http.post(`/api/plans/${pid}/tasks`, { body });

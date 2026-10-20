@@ -127,9 +127,89 @@ async fn rollup(
     }))
 }
 
+/// `PUT /api/plans/{pid}/task-order` body.
+#[derive(Debug, serde::Deserialize)]
+struct OrderBody {
+    /// The parent whose children are ordered; absent or null for the top level.
+    #[serde(default)]
+    parent_task_pid: Option<Uuid>,
+    /// Every live child of that parent, once each, in the new order.
+    order: Vec<Uuid>,
+}
+
+/// `PUT /api/plans/{pid}/task-order`: set the order of one parent's children.
+///
+/// The body must name **exactly** the live children of the parent, so two people reordering at once cannot
+/// silently drop or resurrect a task: whoever is second sees a `409` and reloads.
+#[debug_handler]
+async fn set_order(
+    State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(body): Json<OrderBody>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let all = plan_tasks(&ctx, plan.pid).await?;
+    if let Some(parent) = body.parent_task_pid
+        && !all.iter().any(|t| t.pid == parent)
+    {
+        return Err(unprocessable(
+            "parent_task_pid must name a live task of this plan",
+        ));
+    }
+    let mut asked = body.order.clone();
+    asked.sort();
+    if asked.windows(2).any(|w| w[0] == w[1]) {
+        return Err(unprocessable("order names a task more than once"));
+    }
+    let mut actual: Vec<Uuid> = all
+        .iter()
+        .filter(|t| t.parent_task_pid == body.parent_task_pid)
+        .map(|t| t.pid)
+        .collect();
+    actual.sort();
+    if asked != actual {
+        return Err(Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new(
+                "conflict",
+                "order must name exactly the current children of that parent, once each; reload and try again",
+            ),
+        ));
+    }
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    for (index, task_pid) in body.order.iter().enumerate() {
+        let position = i32::try_from(index).map_err(|_| unprocessable("too many tasks"))?;
+        let row = all
+            .iter()
+            .find(|t| t.pid == *task_pid)
+            .ok_or(Error::NotFound)?;
+        if row.sibling_position != Some(position) {
+            let mut active: tasks::ActiveModel = row.clone().into();
+            active.sibling_position = ActiveValue::set(Some(position));
+            active.update(&txn).await.map_err(db_err)?;
+        }
+    }
+    txn.commit().await.map_err(db_err)?;
+    crate::models::audit_logs::Model::record(
+        &ctx.db,
+        plan.pid,
+        "task_order_set",
+        caller.actor(),
+        Some(serde_json::json!({ "parent_task_pid": body.parent_task_pid, "order": body.order })),
+    )
+    .await
+    .ok();
+    format::json(serde_json::json!({
+        "parent_task_pid": body.parent_task_pid,
+        "order": body.order,
+    }))
+}
+
 /// The subtask routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api")
         .add("/plans/{pid}/tasks/{t_pid}/rollup", get(rollup))
+        .add("/plans/{pid}/task-order", put(set_order))
 }

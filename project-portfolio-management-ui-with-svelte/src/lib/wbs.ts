@@ -13,6 +13,8 @@ export interface WbsInput {
   pid: string;
   title: string;
   parent_task_pid?: string | null;
+  /** Position among the siblings set by a reorder; a task without one follows the positioned ones. */
+  sibling_position?: number | null;
   created_at: string;
 }
 
@@ -29,9 +31,16 @@ export interface WbsRow {
   restricted: boolean;
 }
 
-/** Sibling order: oldest first, the pid as the tie-break so the order is total. */
+/**
+ * Sibling order: by the position a reorder set, those without one after them, then oldest
+ * first, the pid as the tie-break so the order is total.
+ */
 const byAge = (a: WbsInput, b: WbsInput) =>
-  a.created_at < b.created_at
+  (a.sibling_position ?? Infinity) !== (b.sibling_position ?? Infinity)
+    ? (a.sibling_position ?? Infinity) < (b.sibling_position ?? Infinity)
+      ? -1
+      : 1
+    : a.created_at < b.created_at
     ? -1
     : a.created_at > b.created_at
       ? 1
@@ -94,6 +103,32 @@ export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {
   const left = tasks.filter((t) => !seen.has(t.pid));
   if (left.length) walk([...left], "", 0);
   return out;
+}
+
+/**
+ * The order to send to `PUT /api/plans/{pid}/task-order` to move a task one place among its
+ * siblings, or null at the edge, for a task the reader cannot see, or one in a cycle.
+ * `order` names every sibling the reader has, in the new order; the service refuses it
+ * (409) if the real children differ, which is how a hidden sibling is never reordered blind.
+ */
+export function siblingMove(
+  tasks: readonly WbsInput[],
+  pid: string,
+  direction: "up" | "down",
+): { parent_task_pid: string | null; order: string[] } | null {
+  const task = tasks.find((x) => x.pid === pid);
+  if (!task) return null;
+  const parent = task.parent_task_pid ?? null;
+  if (parent !== null && !tasks.some((x) => x.pid === parent)) return null;
+  const siblings = tasks
+    .filter((x) => (x.parent_task_pid ?? null) === parent && x.pid !== parent)
+    .sort(byAge);
+  const at = siblings.findIndex((x) => x.pid === pid);
+  const to = direction === "up" ? at - 1 : at + 1;
+  if (at < 0 || to < 0 || to >= siblings.length) return null;
+  const order = siblings.map((x) => x.pid);
+  [order[at], order[to]] = [order[to]!, order[at]!];
+  return { parent_task_pid: parent, order };
 }
 
 /** Whether a string looks like a WBS code (so a caller can refuse one where an id belongs). */

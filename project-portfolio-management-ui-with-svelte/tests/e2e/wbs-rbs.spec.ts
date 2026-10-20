@@ -137,3 +137,35 @@ test("the RBS lists roles and skills, skills as demand only", async ({
   ).toBeVisible();
   await audit(page);
 });
+
+test("a task moves one place among its siblings and the order is sent to the service", async ({
+  page,
+}) => {
+  let order = ["a1", "b2", "c3"];
+  let sent: unknown = null;
+  await page.route(`**/api/plans/${PID}/tasks`, (r) =>
+    r.fulfill({
+      json: {
+        counts: {},
+        tasks: order.map((pid, i) => ({
+          ...task(pid, pid.toUpperCase(), null, Number(pid.slice(1))),
+          sibling_position: i,
+        })),
+      },
+    }),
+  );
+  await page.route(`**/api/plans/${PID}/task-order`, async (r) => {
+    sent = r.request().postDataJSON();
+    order = (sent as { order: string[] }).order;
+    await r.fulfill({ json: sent as object });
+  });
+  await page.goto(`/en-001/plans/${PID}/wbs`);
+  const tree = page.getByRole("list", { name: "Work breakdown tree" });
+  await expect(tree.getByRole("button", { name: "Move A1 up" })).toBeDisabled();
+  await expect(tree.getByRole("button", { name: "Move C3 down" })).toBeDisabled();
+  await tree.getByRole("button", { name: "Move C3 up" }).click();
+  await expect(page.getByRole("status")).toContainText("Moved C3.");
+  expect(sent).toEqual({ parent_task_pid: null, order: ["a1", "c3", "b2"] });
+  await expect(tree.getByRole("listitem").nth(1)).toContainText("C3");
+  await audit(page);
+});

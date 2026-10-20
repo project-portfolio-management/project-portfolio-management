@@ -12,7 +12,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type Task } from "#lib/api/ppm.js";
-  import { WBS_TREE_LIMIT, buildWbs } from "#lib/wbs.js";
+  import { WBS_TREE_LIMIT, buildWbs, siblingMove } from "#lib/wbs.js";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -26,6 +26,21 @@
       error = err instanceof Error ? err.message : t("p.plans.pid.wbs.could_not_load_the_tasks");
     }
   });
+
+  let notice = $state("");
+
+  /** Move a task one place among its siblings, then reload so the codes are the service's order. */
+  async function move(taskPid: string, title: string, direction: "up" | "down") {
+    const change = siblingMove(tasks ?? [], taskPid, direction);
+    if (!change) return;
+    try {
+      await ppm.setTaskOrder(pid, change.parent_task_pid, change.order);
+      tasks = (await ppm.listTasks(pid)).tasks;
+      notice = t("p.plans.pid.wbs.moved", { title });
+    } catch (err) {
+      notice = t("p.plans.pid.wbs.could_not_move", { reason: err instanceof Error ? err.message : "" });
+    }
+  }
 
   const rows = $derived(buildWbs(tasks ?? []));
   const tooBig = $derived(rows.length > WBS_TREE_LIMIT);
@@ -46,6 +61,7 @@
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if tasks}
+  <p class="small" role="status">{notice}</p>
   {#if rows.length === 0}
     <p>{t("p.plans.pid.wbs.no_tasks_yet")}</p>
   {:else}
@@ -58,6 +74,10 @@
             <span class="code">{r.code}</span>
             {#if r.restricted}<em>{r.title}</em>{:else}<a href={localeHref(`/plans/${pid}/tasks/${r.key}`)}>{r.title}</a>{/if}
             {#if r.children > 0}<span class="small muted"> {(r.children === 1 ? t("p.plans.pid.wbs.sub_task_one", { children: r.children }) : t("p.plans.pid.wbs.sub_task_other", { children: r.children }))}</span>{/if}
+            {#if !r.restricted}
+              <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "up")} aria-label={t("p.plans.pid.wbs.move_up", { title: r.title })} onclick={() => move(r.key, r.title, "up")}><span aria-hidden="true">↑</span></button>
+              <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "down")} aria-label={t("p.plans.pid.wbs.move_down", { title: r.title })} onclick={() => move(r.key, r.title, "down")}><span aria-hidden="true">↓</span></button>
+            {/if}
           </li>
         {/each}
       </ul>
@@ -68,5 +88,6 @@
 
 <style>
   .wbs { list-style: none; padding: 0; }
+  .move { margin-inline-start: 0.25rem; min-inline-size: 2rem; min-block-size: 2rem; }
   .code { font-variant-numeric: tabular-nums; font-weight: 600; margin-inline-end: 0.5rem; }
 </style>

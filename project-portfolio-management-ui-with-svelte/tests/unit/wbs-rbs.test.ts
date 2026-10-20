@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildWbs,
   looksLikeWbsCode,
+  siblingMove,
   taskHref,
   type WbsInput,
 } from "../../src/lib/wbs";
@@ -251,5 +252,32 @@ describe("a very large network", () => {
     expect(restrictedText(3)).toBe(
       "3 dependencies to a plan you cannot see are left out of these dates.",
     );
+  });
+});
+
+describe("WBS sibling order", () => {
+  const p = (pid: string, parent: string | null, at: number, pos?: number): WbsInput => ({
+    ...t(pid, parent, at),
+    sibling_position: pos ?? null,
+  });
+
+  it("orders by position first, unpositioned after, then by age", () => {
+    const rows = buildWbs([p("a", null, 1), p("b", null, 2, 1), p("c", null, 3, 0), p("d", null, 4)]);
+    expect(rows.map((r) => r.key)).toEqual(["c", "b", "a", "d"]);
+    expect(rows.map((r) => r.code)).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("moves a task one place and names every sibling", () => {
+    const tasks = [p("a", null, 1), p("b", null, 2), p("c", null, 3), p("a1", "a", 4), p("a2", "a", 5)];
+    expect(siblingMove(tasks, "c", "up")).toEqual({ parent_task_pid: null, order: ["a", "c", "b"] });
+    expect(siblingMove(tasks, "a2", "up")).toEqual({ parent_task_pid: "a", order: ["a2", "a1"] });
+  });
+
+  it("offers no move at an edge, for an unknown task, or under a parent the reader cannot see", () => {
+    const tasks = [p("a", null, 1), p("b", null, 2), p("x", "hidden", 3)];
+    expect(siblingMove(tasks, "a", "up")).toBeNull();
+    expect(siblingMove(tasks, "b", "down")).toBeNull();
+    expect(siblingMove(tasks, "nope", "up")).toBeNull();
+    expect(siblingMove(tasks, "x", "up")).toBeNull();
   });
 });

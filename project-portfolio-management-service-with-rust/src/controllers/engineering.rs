@@ -93,6 +93,7 @@ pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
         "contour_custom": task.contour_custom,
         "component_pid": task.component_pid,
         "parent_task_pid": task.parent_task_pid,
+        "sibling_position": task.sibling_position,
         "sprint_pid": task.sprint_pid,
         "created_at": task.created_at.to_utc(),
         "status_changed_at": task.status_changed_at.to_utc(),
@@ -410,7 +411,9 @@ async fn list_tasks(
             *entry += n;
         }
     }
+    // Positioned siblings first (Postgres sorts NULL last), then by age.
     let rows = query
+        .order_by_asc(tasks::Column::SiblingPosition)
         .order_by_asc(tasks::Column::Id)
         .offset(offset)
         .limit(limit)

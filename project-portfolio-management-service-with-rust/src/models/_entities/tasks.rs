@@ -64,6 +64,8 @@ pub struct Model {
     pub component_pid: Option<Uuid>,
     /// The parent task (a subtask's parent), if any. Roll-ups derive on read.
     pub parent_task_pid: Option<Uuid>,
+    /// Position among the tasks with the same parent (`PUT …/task-order`); `None` sorts after the positioned ones.
+    pub sibling_position: Option<i32>,
     /// The declared Flow Framework work-item type (`feature` /
     /// `defect` / `risk` / `debt`). `None` means **nobody declared
     /// one**, reported as `unclassified` and counted separately — never

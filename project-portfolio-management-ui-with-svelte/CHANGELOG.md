@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — reorder siblings in the work breakdown (PJ-12, 2026-10-20)
+
+Each task in `/plans/{pid}/wbs` has move-up and move-down buttons (disabled at the edge; none for a "Restricted item"). A move sends the full sibling order to `PUT /api/plans/{pid}/task-order` and reloads, so the codes follow the service's order; a refusal (409, someone else changed the siblings) is shown as a message. Siblings sort by `sibling_position`, then by age. Tests: 3 unit (`siblingMove`, order), 1 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: buttons only, no drag and drop; moving a task to another parent is still the task's own edit; the buttons do not repeat for a hidden sibling, which makes the service refuse (409) rather than reorder blind.
+
 ### Added — outcomes and de-escalation in the director pack page (EX-10, 2026-10-11)
 
 A section with the sponsor's escalation level, the run of met quarters against the rule, and each quarter's state with the reason when it is missing. English and Welsh.

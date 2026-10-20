@@ -15,6 +15,17 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 20 October
+
+- **WBS sibling reordering (PJ-12).** `PUT /api/plans/{pid}/task-order` (the full child list of one parent, refused with
+  409 unless it is exactly the current children) stores `tasks.sibling_position`; task lists come back positioned
+  siblings first. The work breakdown page has move-up and move-down buttons. Verified: lint, unit tests (service 1032,
+  UI 706 incl. 3 new), the full database suite (174, incl. a new request test), the full Playwright run (604, incl.
+  one new test with axe). Not done: no drag and drop; moving to a different parent is still the task edit; the
+  reorder button sends only the siblings the reader can see, so with a hidden sibling it gets a 409 and the task cannot
+  be moved by that reader; tasks created later have no position until the next reorder (they follow the positioned
+  ones); the RBS drill-down gap remains. Welsh strings are machine-written and unreviewed.
+
 ### 19 October
 
 - **Chaos test.** `scripts/chaos-test.sh` (and `chaos-test.mjs`) runs the real service against the real test Postgres

@@ -128,7 +128,12 @@ hang off **any** plan.
   description?, assignee_ref? (EntityRef), status:
   Todo|InProgress|InReview|Done|Blocked, goal_id?, parent_task_id?,
   estimate?, remaining?, due_date? }`. A task may attach to a goal and
-  nest under a parent task.
+  nest under a parent task. Siblings (tasks with one parent, or the top
+  level) have an order: `PUT /api/plans/{pid}/task-order` takes
+  `{parent_task_pid?, order: [pid, ...]}`, which must name exactly the
+  parent's live children once each (`409` otherwise, `422` for an unknown
+  parent or a repeat), and task lists return positioned siblings first
+  (`sibling_position`), the rest by age.
 - **FR-14 Issues register.** An issue is something that has **already
   happened** and needs managing (a risk is something that might). CRUD issues
   under a plan (`/api/plans/{pid}/issues`) and a portfolio-wide register

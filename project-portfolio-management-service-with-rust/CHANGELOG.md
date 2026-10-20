@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Sibling order of tasks (PJ-12): `PUT /api/plans/{pid}/task-order` with `{parent_task_pid?, order: [pids]}` sets the order of one parent's children (migration `m20261020_000079_task_sibling_position`, column `tasks.sibling_position`). The body must name exactly the live children once each (`409` if not, `422` for an unknown parent or a repeat), so concurrent reorders cannot drop a task. Task lists order positioned siblings first, then by id; `sibling_position` is in the task view. Audited as `task_order_set`.
+
 - Blocked reasons (`spec/time-based-analysis.md` §17): `PATCH /api/plans/{pid}/tasks/{t_pid}` accepts an optional
   `blocked_reason` on a move into `blocked` (`waiting_on_person`, `external_dependency`, `awaiting_decision`,
   `awaiting_resource`, `other`), stored on the transition (migration `m20261019_000078_blocked_reason`, with a `CHECK`).

@@ -10,6 +10,7 @@
 /** The plan workspace links, in display order, and the module each needs. */
 export const PLAN_LINKS = [
   { key: "governance", module: "governance" },
+  { key: "tolerances", module: "governance" },
   { key: "board", module: "tasks" },
   { key: "schedule", module: "milestones" },
   { key: "flow", module: "tasks" },

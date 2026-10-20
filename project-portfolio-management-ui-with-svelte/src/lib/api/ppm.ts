@@ -284,6 +284,42 @@ export interface ResourcePeriod {
   total_proposed_fte: number;
 }
 
+export type ToleranceStatus = "green" | "amber" | "red" | "unknown" | "not_set";
+
+/** One dimension of a plan's tolerances (`GET /api/plans/{pid}/tolerances`). */
+export interface ToleranceDimension {
+  dimension: "time" | "cost" | "risk" | "resources";
+  unit: string;
+  basis: string;
+  status: ToleranceStatus;
+  limit: number | null;
+  amber_from_percent?: number;
+  measured?: number | null;
+  usage_percent?: number | null;
+  reason?: string | null;
+  source: "own" | "inherited" | "none";
+  from_plan_pid?: string | null;
+  note?: string | null;
+}
+
+/** A plan's tolerances in force, measured and coloured. */
+export interface TolerancePicture {
+  plan_pid: string;
+  plan_name: string;
+  overall: ToleranceStatus;
+  as_of: string;
+  dimensions: ToleranceDimension[];
+  how_to_read: string;
+}
+
+/** `GET /api/tolerances`: every readable plan with a tolerance, worst first. */
+export interface ToleranceBoard {
+  plans: TolerancePicture[];
+  truncated: boolean;
+  measured_at_most: number;
+  note: string;
+}
+
 /** An approval process definition (`GET /api/processes`). The list has no `steps`. */
 export interface ProcessDefinition {
   pid: string;
@@ -2984,6 +3020,26 @@ export class PpmClient {
     },
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
+  }
+  planTolerances(pid: string): Promise<TolerancePicture> {
+    return this.http.get(`/api/plans/${pid}/tolerances`);
+  }
+  setTolerance(
+    pid: string,
+    dimension: string,
+    body: { limit: number; amber_from_percent?: number; note?: string | null },
+  ): Promise<TolerancePicture> {
+    return this.http.put(`/api/plans/${pid}/tolerances/${dimension}`, { body });
+  }
+  removeTolerance(pid: string, dimension: string): Promise<TolerancePicture> {
+    return this.http.post(`/api/plans/${pid}/tolerances/${dimension}/delete`, { body: {} });
+  }
+  toleranceBoard(params: { status?: string; dimension?: string } = {}): Promise<ToleranceBoard> {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.dimension) q.set("dimension", params.dimension);
+    const qs = q.toString();
+    return this.http.get(`/api/tolerances${qs ? `?${qs}` : ""}`);
   }
   listProcesses(): Promise<ProcessDefinition[]> {
     return this.http.get("/api/processes");

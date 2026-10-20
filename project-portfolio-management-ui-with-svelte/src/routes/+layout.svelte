@@ -211,6 +211,7 @@
     { href: "/onboarding", get label() { return t("p._layout_svelte.onboarding"); } },
     { href: "/documents", get label() { return t("p.documents.documents"); } },
     { href: "/approval-processes", get label() { return t("p.processes.processes"); } },
+    { href: "/tolerances", get label() { return t("p.tolerances.tolerances"); } },
     { href: "/tour", label: t("nav.tour") },
   ];
 

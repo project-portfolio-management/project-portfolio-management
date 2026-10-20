@@ -53,6 +53,7 @@
     get onboarding() { return t("p.plans.pid.onboarding.onboarding_and_offboarding"); },
     get handover() { return t("p.plans.pid.handover.handover"); },
     get wbs() { return t("p.plans.pid.wbs.work_breakdown"); },
+    get tolerances() { return t("p.tolerances.plan_link"); },
     get import() { return t("p.plans.pid.import.import"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };

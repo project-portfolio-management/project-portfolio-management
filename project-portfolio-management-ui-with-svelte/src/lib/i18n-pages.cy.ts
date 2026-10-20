@@ -1644,7 +1644,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.links.system_kind_problem": "Dim ond dolen olrhain neu docyn sy'n enwi offeryn.",
   "p.links.id_problem": "Mae dynodydd angen offeryn ac nid oes ganddo fylchau.",
   "p.links.domain_problem": "Mae dolenni'r offeryn hwnnw ar {domains}.",
-  "p.escalations.intro": "Cyfeirio rhywbeth i fyny pan na all y prosiect ei setlo ei hun, neu na ddylai. Mae'n cael ei godi ar lefel o'r llwybr uwchgyfeirio yn fframwaith llywodraethu'r prosiect, ei gydnabod, ei godi lefel os na fydd neb yn ateb, a daw i ben wedi'i ddatrys neu ei dynnu'n ôl. Ni hysbysir neb yn awtomatig.",
+  "p.escalations.intro": "Cyfeirio rhywbeth i fyny pan na all y prosiect ei setlo ei hun, neu na ddylai. Mae'n cael ei godi ar lefel o'r llwybr uwchgyfeirio yn fframwaith llywodraethu'r prosiect, ei gydnabod, ei godi lefel os na fydd neb yn ateb, a daw i ben wedi'i ddatrys neu ei dynnu'n ôl. Dywedir wrth y person a enwir fel un cyfrifol a'r person a'i cododd yn eu mewnflwch (ni anfonir e-bost).",
   "p.escalations.register_intro": "Pob uwchgyfeiriad ar y cynlluniau y gallwch eu darllen.",
   "p.escalations.none": "Dim uwchgyfeirio eto.",
   "p.escalations.none_match": "Nid oes uwchgyfeiriad yn cyfateb.",

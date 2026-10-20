@@ -209,3 +209,52 @@ async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_person_an_escalation_names_is_told_in_their_inbox() {
+    use project_portfolio_management::models::_entities::notifications;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Tell them" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let who = "person:3f2b1c9e-0000-4000-8000-000000000001";
+        let told = || async {
+            notifications::Entity::find()
+                .filter(notifications::Column::RecipientRef.eq(who))
+                .filter(notifications::Column::Kind.eq("escalation"))
+                .all(&ctx.db)
+                .await
+                .expect("notifications")
+        };
+        let raised: Value = request
+            .post(&format!("/api/plans/{p}/escalations"))
+            .json(&json!({ "title": "Vendor slipping", "owner_ref": who }))
+            .await
+            .json();
+        let first = told().await;
+        assert_eq!(first.len(), 1);
+        assert!(
+            first[0].message.contains("Vendor slipping")
+                && first[0].message.contains("raised with you")
+        );
+        assert_eq!(first[0].subject_pid.to_string(), p);
+
+        request
+            .post(&format!(
+                "/api/plans/{p}/escalations/{}/acknowledge",
+                raised["pid"].as_str().expect("pid")
+            ))
+            .json(&json!({}))
+            .await
+            .assert_status_ok();
+        assert_eq!(told().await.len(), 2, "the named person hears of each step");
+    })
+    .await;
+}

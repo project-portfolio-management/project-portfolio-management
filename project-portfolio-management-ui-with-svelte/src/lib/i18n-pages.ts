@@ -1642,7 +1642,7 @@ export const PAGES_EN = {
   "p.links.system_kind_problem": "Only a tracker or ticket link names a tool.",
   "p.links.id_problem": "An identifier needs a tool and has no spaces.",
   "p.links.domain_problem": "That tool's links are on {domains}.",
-  "p.escalations.intro": "Refer something upward when the project cannot or should not settle it itself. It is raised at a level of the escalation path in the project's governance framework, acknowledged, taken up a level if nobody answers, and ends resolved or withdrawn. Nobody is notified automatically.",
+  "p.escalations.intro": "Refer something upward when the project cannot or should not settle it itself. It is raised at a level of the escalation path in the project's governance framework, acknowledged, taken up a level if nobody answers, and ends resolved or withdrawn. The person it names as responsible and the person who raised it are told in their inbox (no email is sent).",
   "p.escalations.register_intro": "Every escalation on the plans you can read.",
   "p.escalations.none": "No escalations yet.",
   "p.escalations.none_match": "No escalation matches.",

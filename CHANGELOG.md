@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Escalations tell people.** The person an escalation names as responsible and the person who raised it now get an
+  in-app inbox notification (kind `escalation`, can be switched off) when it is raised, acknowledged, taken up a level,
+  resolved or withdrawn, except the person who acted. Verified: one request test (the named person hears of the raise
+  and the acknowledgement). **Not done:** email or push (this service has none); notifying the free-text body in
+  `escalated_to` (it names a body, not a person); a test of the opt-out for this kind (the mechanism is shared and
+  tested elsewhere). Welsh text changed is machine-written and unreviewed.
+
 - **Screens for ways of working, governance frameworks and plan links.** Three plan pages: ways of working and
   governance framework (what is in force and whether it is the plan's own or inherited; follow a shared one; stop
   following; write one for the plan and edit it, including the escalation path) and links (add, remove; Jira,

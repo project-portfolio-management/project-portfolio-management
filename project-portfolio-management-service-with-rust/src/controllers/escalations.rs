@@ -115,6 +115,44 @@ fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
 
+/// Tell the people an escalation concerns, in their inbox: the person who raised it and the person it names as
+/// responsible, but never the person who just acted. `tell_raiser` is false when the escalation has only just been
+/// raised. Best effort: a failure to notify never fails the step, and a recipient who has switched the `escalation`
+/// kind off is skipped. In-app only; this service sends no email.
+async fn tell(
+    ctx: &AppContext,
+    e: &escalations::Model,
+    actor: Option<&str>,
+    tell_raiser: bool,
+    what: &str,
+) {
+    let mut people: Vec<String> = Vec::new();
+    if tell_raiser && let Some(sub) = e.raised_by.as_deref() {
+        people.push(format!("person:{sub}"));
+    }
+    people.extend(e.owner_ref.clone());
+    people.sort();
+    people.dedup();
+    for who in people {
+        let is_actor = actor.is_some_and(|a| {
+            who.strip_prefix("person:") == Some(a) || who.strip_prefix("worker:") == Some(a)
+        });
+        if is_actor {
+            continue;
+        }
+        crate::models::capabilities::notify(
+            &ctx.db,
+            &who,
+            "plan",
+            e.plan_pid,
+            "escalation",
+            &format!("Escalation \"{}\" {what}", e.title),
+        )
+        .await
+        .ok();
+    }
+}
+
 /// The fields of a new escalation, already validated and trimmed.
 pub(crate) struct New {
     pub title: String,
@@ -172,6 +210,7 @@ pub(crate) async fn insert(
     )
     .await
     .ok();
+    tell(ctx, &row, caller.actor(), false, "has been raised with you").await;
     Ok(row)
 }
 
@@ -326,6 +365,13 @@ async fn step(
     )
     .await
     .ok();
+    let what = match event_name {
+        "acknowledged" => "has been acknowledged",
+        "level_raised" => "has been taken up a level",
+        "resolved" => "has been resolved",
+        _ => "has been withdrawn",
+    };
+    tell(ctx, &row, caller.actor(), true, what).await;
     format::json(view(&row, today()))
 }
 

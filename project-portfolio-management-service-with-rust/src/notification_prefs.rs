@@ -29,6 +29,7 @@ pub const KINDS: &[&str] = &[
     "auto_watch",
     "automation",
     "comment",
+    "escalation",
     "reschedule_proposed",
     "review_invited",
     "review_submitted",

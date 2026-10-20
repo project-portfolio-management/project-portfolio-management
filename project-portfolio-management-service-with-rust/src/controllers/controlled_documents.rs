@@ -8,10 +8,9 @@
 //! edit is the next draft) — in the database itself as well as here. Every transition
 //! is audited.
 
+use super::{conflict, forbidden};
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
@@ -25,17 +24,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
-}
 
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
     claims

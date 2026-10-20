@@ -4,9 +4,8 @@
 //! live in [`crate::strategy`]; every mutation audits; nothing here
 //! feeds the matcher (§8 partition rule).
 
+use super::conflict;
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -23,10 +22,6 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::strategy as rules;
 use crate::validation::MAX_TEXT_LEN;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 /// Generic active-row-by-pid finder over a strategy entity.
 macro_rules! find_active {

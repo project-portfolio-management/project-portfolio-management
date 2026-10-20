@@ -8,6 +8,7 @@
 //! refs anywhere, and unplanned time is shown per plan, not per person.
 
 use super::db_err;
+use super::forbidden;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use axum::http::StatusCode;
@@ -46,13 +47,6 @@ pub(crate) fn may_manage_people(caller: &MaybeAuthUser) -> bool {
         };
         has("access", "admin") || has("role", "resource_manager")
     })
-}
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
 }
 
 pub(crate) fn to_alloc(a: &allocations::Model) -> Alloc {

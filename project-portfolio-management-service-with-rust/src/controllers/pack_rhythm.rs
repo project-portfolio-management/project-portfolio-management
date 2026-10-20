@@ -9,9 +9,9 @@
 //!   before the work, so a ticker and a cron cannot draft twice, and a missed run drafts once.
 //! * A notice carries the period, the audience, the version and a link. It never carries the body.
 
+use super::refuse;
 use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, sea_query::Expr};
 use serde::Deserialize;
@@ -25,10 +25,6 @@ use crate::models::_entities::{
     director_packs as packs,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

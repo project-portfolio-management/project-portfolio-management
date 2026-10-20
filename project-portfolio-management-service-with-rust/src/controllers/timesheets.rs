@@ -13,12 +13,12 @@
 //! An approver is a caller holding `access=admin` or the `timesheet_approver`
 //! role (the token's `role` attribute — a vocabulary the deployment declares).
 
+use super::{conflict, forbidden};
 use super::{db_err, unprocessable};
 use std::fmt::Write as _;
 
 use axum::http::{StatusCode, header};
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -30,17 +30,6 @@ use crate::models::_entities::{time_entries, timesheet_weeks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::notification_prefs::recipient_sub;
 use crate::timesheets::{self as rules, Entry, GroupBy};
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
-}
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 /// Rows a report or week reads at most.
 const ROW_CAP: u64 = 20_000;

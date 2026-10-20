@@ -8,11 +8,10 @@
 //! Plan and task subjects reuse the discussion module's resolver, so the
 //! owning plan's record-level read check applies to every read and write.
 
+use super::conflict;
 use super::{db_err, unprocessable};
 use std::collections::BTreeMap;
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
@@ -24,10 +23,6 @@ use crate::auth::MaybeAuthUser;
 use crate::custom_fields::{self as rules, Def};
 use crate::models::_entities::{custom_field_defs, custom_field_values, plans};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 fn strings(v: &Value) -> Vec<String> {
     serde_json::from_value(v.clone()).unwrap_or_default()

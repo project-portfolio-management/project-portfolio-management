@@ -7,11 +7,11 @@
 //! lists are built here once and used both by the live routes (for the plans the caller may read) and by
 //! the director pack (for plans that are neither private nor marked).
 
+use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::{DateTime, NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -24,10 +24,6 @@ use crate::models::_entities::{
     delivery_exceptions as exceptions, objective_links, objectives, plans, risks, strategic_aims,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

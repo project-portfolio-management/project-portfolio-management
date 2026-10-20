@@ -8,10 +8,10 @@
 //! Skills have no people at all, so there is no skill drill-down.
 
 use super::db_err;
+use super::refuse;
 use std::collections::{BTreeMap, HashMap};
 
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -23,10 +23,6 @@ use crate::models::_entities::{plans, resource_roles, tasks};
 
 /// Open tasks read per request; a role with more is told so.
 const ROW_CAP: u64 = 500;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 /// The plans of `rows` the caller can read, with their names: not hidden (private) and readable at the
 /// plan's stage.

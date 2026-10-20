@@ -10,10 +10,9 @@
 //! * A step starts only after the one before it completes. A rejected approval ends
 //!   the execution `rejected` and **skips, and logs, every step after it**.
 
+use super::{conflict, forbidden};
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -28,17 +27,6 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::processes::{self as rules, Kind, Status, Step};
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
-}
 
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
     claims

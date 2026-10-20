@@ -6,9 +6,9 @@
 //! plan is no longer hidden from the grantee (see `plan_access`); every request that gets through only
 //! because of it is audited. A grant ends at its expiry or when it is revoked, and is never deleted.
 
+use super::refuse;
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -20,10 +20,6 @@ use crate::models::_entities::{
     break_glass_grants as grants, plan_access_settings as plan_access, plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     Error::string(&e.to_string())

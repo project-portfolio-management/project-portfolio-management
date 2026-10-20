@@ -19,6 +19,7 @@
 //! deployment's posture for every write); anyone else gets `404`, and no rate or
 //! cost appears in any other response.
 
+use super::conflict;
 use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -43,10 +44,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
 }
 
 /// Whether the caller may see or change rates and the costs derived from them.

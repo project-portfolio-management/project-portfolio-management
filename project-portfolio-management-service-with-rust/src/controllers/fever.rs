@@ -5,11 +5,11 @@
 //! and the baselined *critical path* (the baseline's tasks with no total float). Each entry says which
 //! (`source`), and the pack says so.
 
+use super::refuse;
 use std::collections::{HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -21,10 +21,6 @@ use crate::models::_entities::{
     plans, programme_buffers as buffers, schedule_baseline_tasks, schedule_baselines,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

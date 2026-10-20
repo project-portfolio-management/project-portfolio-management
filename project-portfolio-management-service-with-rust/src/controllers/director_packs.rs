@@ -7,9 +7,9 @@
 //! something the live estate would hide from them. Today it holds the sections that are built (issues and
 //! change requests) and says plainly which are not.
 
+use super::refuse;
 use axum::http::{StatusCode, header};
 use chrono::{DateTime, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -23,10 +23,6 @@ use crate::models::_entities::{
     plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     Error::string(&e.to_string())

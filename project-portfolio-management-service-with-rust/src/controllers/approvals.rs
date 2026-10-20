@@ -8,9 +8,8 @@
 //! told (`approval_requested`) and the requester is told of the outcome
 //! (`approval_decided`), both honouring notification preferences.
 
+use super::{conflict, forbidden};
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -24,17 +23,6 @@ use crate::discussion as discussion_rules;
 use crate::models::_entities::approval_requests;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
-}
 
 async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
     let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;

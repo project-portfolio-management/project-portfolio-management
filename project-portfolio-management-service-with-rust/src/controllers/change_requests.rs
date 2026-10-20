@@ -8,9 +8,9 @@
 //! baseline taken because of a change request is taken by a person who chooses to, never automatically.
 //! When login is off (a development profile) the identity checks are skipped, as for every write.
 
+use super::refuse;
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
@@ -23,9 +23,6 @@ use crate::models::_entities::{change_request_risks, change_requests, issues, ri
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Edit};
 
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 fn unprocessable(message: &str) -> Error {
     refuse(
         StatusCode::UNPROCESSABLE_ENTITY,

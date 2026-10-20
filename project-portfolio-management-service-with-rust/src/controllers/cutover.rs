@@ -12,6 +12,7 @@
 
 #![allow(clippy::many_single_char_names)]
 
+use super::conflict;
 use axum::http::StatusCode;
 use chrono::Utc;
 use loco_rs::controller::ErrorDetail;
@@ -34,10 +35,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
 }
 
 fn db_err(e: &sea_orm::DbErr) -> Error {

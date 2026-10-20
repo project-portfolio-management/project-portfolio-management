@@ -3,9 +3,8 @@
 //! an idea, a risk or an objective. Pure rules and the templates live in
 //! [`crate::canvas`]; every mutation audits.
 
+use super::conflict;
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -18,10 +17,6 @@ use crate::governance as gov_rules;
 use crate::models::_entities::{canvas_items, canvases, ideas, objectives, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 async fn find_canvas(ctx: &AppContext, pid: &str) -> Result<canvases::Model> {
     let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;

@@ -5,11 +5,11 @@
 //! it, why, when, and the gate review or exception it follows from. `stopped` is terminal and keeps the
 //! record. A pause flags the programme's allocations in the pack and the status read; it deletes none.
 
+use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::{DateTime, NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -23,10 +23,6 @@ use crate::models::_entities::{
     programme_status_decisions as decisions,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

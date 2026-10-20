@@ -5,11 +5,11 @@
 //! cut-off falls in: budget, spend to date and variance, with the existing whole-life forecast beside
 //! them per currency. A line with no funding source is counted and listed, never hidden.
 
+use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -18,10 +18,6 @@ use crate::auth::MaybeAuthUser;
 use crate::financial_year::{self as rules, Line, Row};
 use crate::models::_entities::{budget_lines, funding_sources, plans};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

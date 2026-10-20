@@ -14,10 +14,9 @@
 //! own); if it fails part-way, the plans already created are soft-deleted and
 //! the failure is reported, so a half-built tree is never left behind.
 
+use super::conflict;
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -31,10 +30,6 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::plan_templates::{self as rules, Snapshot, TplMilestone, TplNode, TplTask};
 use crate::streaming;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 /// A plan as captured, before offsets are computed.
 struct Raw {

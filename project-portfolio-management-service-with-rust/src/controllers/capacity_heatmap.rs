@@ -6,11 +6,11 @@
 //! the partners' names are shown only when `PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS` is
 //! `1`/`true`; by default partner supply is shown combined and the number of partners is stated.
 
+use super::refuse;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use axum::http::StatusCode;
 use chrono::{Datelike, NaiveDate};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -24,10 +24,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::{self as pr, Grain, GroupBy, Person};
-
-fn refuse(status: StatusCode, code: &str, message: &str) -> Error {
-    Error::CustomError(status, ErrorDetail::new(code, message))
-}
 
 fn unprocessable(message: &str) -> Error {
     refuse(

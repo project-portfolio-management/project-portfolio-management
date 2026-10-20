@@ -106,6 +106,30 @@ pub(crate) fn unprocessable(message: &str) -> loco_rs::Error {
     )
 }
 
+/// `409 Conflict` with the error code `conflict` and `message`.
+#[must_use]
+pub(crate) fn conflict(message: &str) -> loco_rs::Error {
+    loco_rs::Error::CustomError(
+        axum::http::StatusCode::CONFLICT,
+        loco_rs::controller::ErrorDetail::new("conflict", message),
+    )
+}
+
+/// `403 Forbidden` with the error code `forbidden` and `message`.
+#[must_use]
+pub(crate) fn forbidden(message: &str) -> loco_rs::Error {
+    loco_rs::Error::CustomError(
+        axum::http::StatusCode::FORBIDDEN,
+        loco_rs::controller::ErrorDetail::new("forbidden", message),
+    )
+}
+
+/// An error with any status and code.
+#[must_use]
+pub(crate) fn refuse(status: axum::http::StatusCode, code: &str, message: &str) -> loco_rs::Error {
+    loco_rs::Error::CustomError(status, loco_rs::controller::ErrorDetail::new(code, message))
+}
+
 /// Map a record-level authorization rejection (`(status, reason)`) to
 /// a loco error: `403` = policy denied; `401` = fail-safe when claims
 /// are missing behind the guard.

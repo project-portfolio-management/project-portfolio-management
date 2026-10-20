@@ -8,10 +8,9 @@
 //! a plan the caller cannot read is **hidden** from them (counted, never
 //! shown), and deleting nothing here ever removes a task.
 
+use super::conflict;
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{ActiveModelTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -22,10 +21,6 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{plans, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::task_relations as rules;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 async fn live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
     tasks::Entity::find()

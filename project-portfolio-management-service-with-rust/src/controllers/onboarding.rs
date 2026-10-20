@@ -13,10 +13,9 @@
 //! the permission to manage people, as everywhere else; a plan's own intake and
 //! close-out checklists do not name anyone and follow the plan.
 
+use super::{conflict, forbidden};
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -30,17 +29,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::onboarding::{self as rules, Kind, Seed};
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
-
-fn forbidden(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::FORBIDDEN,
-        ErrorDetail::new("forbidden", message),
-    )
-}
 
 fn need_people(caller: &MaybeAuthUser) -> Result<()> {
     if may_manage_people(caller) {

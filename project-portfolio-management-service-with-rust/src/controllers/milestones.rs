@@ -14,6 +14,7 @@
 //! tasks and the critical-path analysis; the only stored facts are the links, the
 //! manual completion and the append-only reschedule history.
 
+use super::conflict;
 use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -44,10 +45,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
 }
 
 /// The tasks each milestone waits for, as pids.

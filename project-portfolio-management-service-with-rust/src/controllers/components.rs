@@ -4,9 +4,8 @@
 //! deleting a component that still has tasks is refused, never silently
 //! orphaning them.
 
+use super::conflict;
 use super::{db_err, unprocessable};
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
@@ -17,10 +16,6 @@ use crate::auth::MaybeAuthUser;
 use crate::components as rules;
 use crate::models::_entities::{components, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
-}
 
 fn lead_ok(s: &str) -> bool {
     valid_ref(s, &["worker", "person"])

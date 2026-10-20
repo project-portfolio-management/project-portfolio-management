@@ -11,6 +11,7 @@
 //! moment, so a baseline and the variance against it are measured on the same
 //! footing, in business days of the plan's calendar.
 
+use super::conflict;
 use super::db_err;
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -30,10 +31,6 @@ fn unprocessable(message: &str) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable_entity", message),
     )
-}
-
-fn conflict(message: &str) -> Error {
-    Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new("conflict", message))
 }
 
 fn max_baselines() -> i64 {

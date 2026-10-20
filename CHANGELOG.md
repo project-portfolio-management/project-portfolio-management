@@ -17,6 +17,11 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Code quality: three more shared error helpers.** `conflict`, `forbidden` and `refuse(status, code, message)` join
+  `db_err` and `unprocessable` in `controllers/mod.rs`, replacing 37 identical copies in 32 files (156 fewer lines).
+  No behaviour change. Verified: lint, unit tests, the full database suite (176) and every real-token test binary.
+  Left alone: copies with a different body (a fixed message, a different code or status).
+
 - **Code quality: shared error helpers.** The controllers carried 96 copies of `db_err` and 83 of `unprocessable`. The
   69 identical `db_err` copies and 44 identical `unprocessable` copies (code `unprocessable`) are now one definition each
   in `controllers/mod.rs`: 526 fewer lines over 73 files, no behaviour change. Verified: lint, unit tests, the full

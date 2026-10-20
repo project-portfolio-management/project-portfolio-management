@@ -17,6 +17,16 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **MS Project (MSPDI) export.** `GET /api/plans/{pid}/export/mspdi` writes a plan as MSPDI XML that the importer reads
+  back; imported tasks keep their UIDs; the file says what it leaves out (assignees and resources, partial progress,
+  baselines, other relations). Also corrected three documents that still said there was no export (and the roadmap's
+  claim that `goals` and issues do not exist). Verified: lint, unit tests incl. a writer-to-reader round trip, the
+  full database suite (175) incl. an import, reorder, export, re-import test. **Not verified: the file was never
+  opened in Microsoft Project or any other tool**, only read back by our own parser, so a real MS Project may
+  complain about something our parser accepts (for example, no `Finish` dates, a project summary row of my own
+  design). Not done: no UI button; no assignees or resources; progress is 0 or 100 only; an export over 5000 tasks is
+  refused.
+
 - **WBS sibling reordering (PJ-12).** `PUT /api/plans/{pid}/task-order` (the full child list of one parent, refused with
   409 unless it is exactly the current children) stores `tasks.sibling_position`; task lists come back positioned
   siblings first. The work breakdown page has move-up and move-down buttons. Verified: lint, unit tests (service 1032,

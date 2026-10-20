@@ -126,6 +126,7 @@ mod m20261010_000077_portfolio_ledger;
 mod m20261019_000078_blocked_reason;
 mod m20261020_000079_task_sibling_position;
 mod m20261020_000080_frameworks;
+mod m20261020_000081_link_systems;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -253,6 +254,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261019_000078_blocked_reason::Migration),
             Box::new(m20261020_000079_task_sibling_position::Migration),
             Box::new(m20261020_000080_frameworks::Migration),
+            Box::new(m20261020_000081_link_systems::Migration),
             // inject-above (do not remove this comment)
         ]
     }

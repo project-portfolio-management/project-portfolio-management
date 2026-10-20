@@ -31,6 +31,12 @@ struct LinkBody {
     kind: String,
     url: String,
     label: String,
+    /// The work-tracking system this points into (`jira`, `trello`, `asana`, `linear`, `monday`, ...).
+    #[serde(default)]
+    system: Option<String>,
+    /// That system's own identifier for the thing (a Jira key, a board id).
+    #[serde(default)]
+    external_id: Option<String>,
 }
 
 /// `POST /api/plans/{pid}/links`.
@@ -42,7 +48,13 @@ async fn add_link(
     Json(b): Json<LinkBody>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let problems = rules::problems(&b.kind, &b.url, &b.label);
+    let problems = rules::problems(
+        &b.kind,
+        &b.url,
+        &b.label,
+        b.system.as_deref(),
+        b.external_id.as_deref(),
+    );
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
@@ -65,6 +77,8 @@ async fn add_link(
         kind: ActiveValue::set(b.kind.clone()),
         url: ActiveValue::set(b.url.clone()),
         label: ActiveValue::set(b.label.trim().to_string()),
+        system: ActiveValue::set(b.system.clone()),
+        external_id: ActiveValue::set(b.external_id.clone()),
         created_by: ActiveValue::set(caller.actor().map(str::to_string)),
         deleted_at: ActiveValue::set(None),
         ..Default::default()
@@ -78,11 +92,37 @@ async fn add_link(
     format::json(row)
 }
 
-/// `GET /api/plans/{pid}/links`.
+/// `GET /api/plans/{pid}/links` query: narrow to one system and/or kind.
+#[derive(Debug, Deserialize)]
+struct ListQuery {
+    #[serde(default)]
+    system: Option<String>,
+    #[serde(default)]
+    kind: Option<String>,
+}
+
+/// `GET /api/plans/{pid}/links?system=&kind=`.
 #[debug_handler]
-async fn list_links(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
+async fn list_links(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+    Query(q): Query<ListQuery>,
+) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    format::json(live(&ctx, plan.pid).await?)
+    let mut rows = live(&ctx, plan.pid).await?;
+    if let Some(system) = q.system.as_deref() {
+        if !rules::SYSTEMS.contains(&system) {
+            return Err(unprocessable(&format!(
+                "unknown system {system:?} (allowed: {:?})",
+                rules::SYSTEMS
+            )));
+        }
+        rows.retain(|l| l.system.as_deref() == Some(system));
+    }
+    if let Some(kind) = q.kind.as_deref() {
+        rows.retain(|l| l.kind == kind);
+    }
+    format::json(rows)
 }
 
 /// `POST /api/plans/{pid}/links/{lpid}/delete` (and `DELETE`).

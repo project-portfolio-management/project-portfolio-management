@@ -18,6 +18,10 @@ pub struct Model {
     pub kind: String,
     pub url: String,
     pub label: String,
+    /// The work-tracking system the link points into (`jira`, `trello`, ...), when it points into one.
+    pub system: Option<String>,
+    /// That system's own identifier for the thing (a Jira key, a board id).
+    pub external_id: Option<String>,
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }

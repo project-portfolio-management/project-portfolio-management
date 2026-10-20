@@ -61,7 +61,10 @@ mutation (§10.2).
   duplicate's payload, plus a tally of re-homed sub-resources).
 - **`plan_links`** (built, LT-8) — typed external links on a plan:
   `plan_pid`, `kind` (CHECK in `docs`/`repo`/`ticket`/`design`/`chat`/
-  `other`), `url`, `label`, `created_by?`, `deleted_at`; partial unique
+  `tracker`/`other`), `url`, `label`, `system?` (CHECK in `jira`/`trello`/`asana`/
+  `linear`/`monday`/`clickup`/`azure_devops`/`github`/`other`; a `tracker` link must
+  have one), `external_id?` (that system's own key or board id, migration
+  `m20261020_000081`), `created_by?`, `deleted_at`; partial unique
   index `plan_links_one (plan_pid, url)` among live rows (migration
   `m20261003_000020`).
 - **`frameworks`** and **`plan_frameworks`** (built, FR-52) — named, reusable

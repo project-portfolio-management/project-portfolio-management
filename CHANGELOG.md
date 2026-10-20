@@ -17,6 +17,19 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Links to external systems.** A plan can link to its project or board, and to single issues, in Jira, Trello, Asana,
+  Linear and monday.com (and ClickUp, Azure DevOps, GitHub, other): `kind` `tracker` or `ticket` with a `system` and
+  the system's own `external_id`, listed with `?system=`. Built on the existing plan links, so the safe-URL rules,
+  one link per URL, soft delete and audit all apply. Verified: lint, unit tests (1043), the full database suite (179,
+  incl. a test that links one plan into all five named systems and refuses seven kinds of mistake) and every
+  real-token binary. **Not done, and worth knowing:** this is links only, with no sync, no import of issues from these
+  tools, no status shown, and the service never fetches the link; tasks cannot yet link to an external issue by this
+  route (they have `external_ref`, set only by the Jira and Asana CSV imports); there is no screen for plan links at
+  all (there was none before); no portfolio-wide "which plans use this Jira project" query. The domain check for
+  hosted systems is by name only: a self-hosted or regional address for Trello, Asana, Linear, monday.com or ClickUp
+  would be refused (use `other`). Whether the hosts I listed are complete (for example EU or enterprise Asana
+  domains) is not verified against those vendors.
+
 - **Ways of working and governance frameworks (FR-52).** Every project can follow a ways of working and a governance
   framework: its own, a shared one (organisation-wide, or a programme's), or the nearest ancestor's by inheritance
   down the plan tree, resolved on read so a programme's choice reaches its projects without copying. Built as one

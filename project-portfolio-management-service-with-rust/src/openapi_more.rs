@@ -762,10 +762,10 @@ fn link_paths() -> Value {
     json!({
         "/api/plans/{pid}/links": {
             "post": op("links", "Link a plan to where its real documents live",
-                "Kinds: docs, repo, ticket, design, chat, other. The service stores the link and never fetches or renders it. Only absolute http and https URLs with a host are accepted - never javascript:, data:, file: or a URL with embedded credentials. A URL can be linked once per plan, and a plan holds at most 100 links.",
-                pid.clone(), &[("200", "The link"), ("404", "Unknown plan"), ("409", "Already linked"), ("422", "Unknown kind, an unsafe or over-long URL, a blank label, or too many links")]),
+                "Kinds: docs, repo, ticket, design, chat, tracker, other. A link into a work-tracking tool also names its `system` (jira, trello, asana, linear, monday, clickup, azure_devops, github, other) and may carry that system's own `external_id` (a Jira key, a board id): `tracker` is a project or board and must name its system, `ticket` is a single issue, and no other kind takes a system. A hosted system's link must be on its own domain (trello.com, asana.com, linear.app, monday.com, clickup.com, dev.azure.com or visualstudio.com), so a Trello board cannot be recorded as an Asana project; Jira, GitHub and `other` accept any host because they are often self-hosted. The service stores the link and never fetches or renders it, and does not sync with the system. Only absolute http and https URLs with a host are accepted - never javascript:, data:, file: or a URL with embedded credentials. A URL can be linked once per plan, and a plan holds at most 100 links.",
+                pid.clone(), &[("200", "The link"), ("404", "Unknown plan"), ("409", "Already linked"), ("422", "Unknown kind or system, a system without a tracker or ticket link, a tracker without a system, a hosted system on the wrong domain, a bad external_id, an unsafe or over-long URL, a blank label, or too many links")]),
             "get": op("links", "A plan's links",
-                "Plain list of the plan's live links.", pid, &[("200", "Links"), ("404", "Unknown plan")])
+                "The plan's live links, oldest first. `?system=` keeps only the links into one tracker (for example jira); `?kind=` one kind.", { let mut p = pid; p.push(query("system", false, "One of the tracker systems")); p.push(query("kind", false, "One link kind")); p }, &[("200", "Links"), ("404", "Unknown plan"), ("422", "Unknown system")])
         },
         "/api/plans/{pid}/links/{lpid}": {
             "delete": op("links", "Remove a link (soft-delete)", "Audited.", with_link.clone(),

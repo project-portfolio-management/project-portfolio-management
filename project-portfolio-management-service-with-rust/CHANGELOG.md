@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Links into work-tracking tools: a plan link may be a `tracker` (a project or board) or a `ticket` (one issue) in Jira, Trello, Asana, Linear, monday.com, ClickUp, Azure DevOps, GitHub or `other`, with the system's own `external_id` (migration `m20261020_000081_link_systems`). A hosted system's link must be on its own domain; Jira, GitHub and `other` accept any host (self-hosted). `GET /api/plans/{pid}/links` takes `?system=` and `?kind=`. Nothing is fetched or synced.
+
 - Ways of working and governance frameworks (FR-52): named, reusable records, organisation-wide or owned by a plan, that a plan follows (`PUT /api/plans/{pid}/ways-of-working` and `…/governance-framework`) or inherits from its nearest ancestor (resolved on read). `POST/GET /api/ways-of-working`, `/api/governance-frameworks`, `GET/PUT/DELETE …/{pid}`. Migration `m20261020_000080_frameworks` (`frameworks`, `plan_frameworks`); one implementation for both families (`src/frameworks.rs`, `controllers/frameworks.rs`).
 
 - Control action to issue (T-26): `POST /api/actions/{pid}/convert?to=issue` raises an issue on the control's plan (kind `concern`, severity `med`, owner and due date from the action, the description as title and in the text) and records `converted_issue_pid`; the default and `?to=task` are unchanged, and an action converts once, to one or the other. Test: the existing convert request test, extended.

@@ -17,6 +17,19 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Ways of working and governance frameworks (FR-52).** Every project can follow a ways of working and a governance
+  framework: its own, a shared one (organisation-wide, or a programme's), or the nearest ancestor's by inheritance
+  down the plan tree, resolved on read so a programme's choice reaches its projects without copying. Built as one
+  implementation for both families. Verified: lint, unit tests (1040, incl. 5 new), the full database suite (178, incl. 2
+  new), every real-token binary; the private-plan census now seeds a plan-owned record of each family and shows a
+  non-member's lists unchanged. Decisions I made for you: the two families' fields (methodology, cadence, WIP limit,
+  definitions of ready and done, ceremonies; decision model, review and reporting cadence, escalation path, decision
+  rights, forums) and the value lists are my proposal, easy to change; a record plans follow can be edited in place with
+  no versions; any caller who can write may create or link one (no special right). Not done: no screen; nothing checks
+  that a plan's actual practice matches what it declares (for example its WIP limit against the board's); the
+  family-specific values are checked by the service, not by database constraints; the existing `governance` module
+  (gate reviews, change requests) is unrelated and not linked to this.
+
 - **Code quality: three more shared error helpers.** `conflict`, `forbidden` and `refuse(status, code, message)` join
   `db_err` and `unprocessable` in `controllers/mod.rs`, replacing 37 identical copies in 32 files (156 fewer lines).
   No behaviour change. Verified: lint, unit tests, the full database suite (176) and every real-token test binary.

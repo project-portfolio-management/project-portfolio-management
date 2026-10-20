@@ -63,6 +63,8 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("person_availabilities", "person_ref"),
     ("phase_transitions", "actor"),
     ("plan_links", "created_by"),
+    ("frameworks", "created_by"),
+    ("plan_frameworks", "set_by"),
     ("plan_templates", "created_by"),
     ("planned_slots", "sub"),
     ("process_execution_logs", "actor"),

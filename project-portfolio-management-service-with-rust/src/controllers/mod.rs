@@ -293,6 +293,7 @@ pub mod drum;
 pub mod earned_value;
 pub mod email_deliveries;
 pub mod feeds;
+pub mod frameworks;
 pub mod goals;
 pub mod guests;
 pub mod hammock;

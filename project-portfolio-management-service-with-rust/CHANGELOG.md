@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Ways of working and governance frameworks (FR-52): named, reusable records, organisation-wide or owned by a plan, that a plan follows (`PUT /api/plans/{pid}/ways-of-working` and `…/governance-framework`) or inherits from its nearest ancestor (resolved on read). `POST/GET /api/ways-of-working`, `/api/governance-frameworks`, `GET/PUT/DELETE …/{pid}`. Migration `m20261020_000080_frameworks` (`frameworks`, `plan_frameworks`); one implementation for both families (`src/frameworks.rs`, `controllers/frameworks.rs`).
+
 - Control action to issue (T-26): `POST /api/actions/{pid}/convert?to=issue` raises an issue on the control's plan (kind `concern`, severity `med`, owner and due date from the action, the description as title and in the text) and records `converted_issue_pid`; the default and `?to=task` are unchanged, and an action converts once, to one or the other. Test: the existing convert request test, extended.
 
 - Role drill-down (PJ-12): `GET /api/resource-plan/role-tasks?role=` lists each person whose primary role it is with their open tasks, in plans the caller can read (others counted in `omitted_unreadable`). Admins and resource managers only (403 otherwise); the unclassified row is refused (422).

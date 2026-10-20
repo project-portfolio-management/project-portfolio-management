@@ -64,6 +64,15 @@ mutation (§10.2).
   `other`), `url`, `label`, `created_by?`, `deleted_at`; partial unique
   index `plan_links_one (plan_pid, url)` among live rows (migration
   `m20261003_000020`).
+- **`frameworks`** and **`plan_frameworks`** (built, FR-52) — named, reusable
+  ways of working and governance frameworks. `frameworks`: `family` (CHECK
+  `ways_of_working`/`governance`), `name` (1 to 120 characters), `description?`, `body`
+  (JSONB, the family's own fields, validated by the service), `owner_plan_pid?` (null
+  is organisation-wide), `created_by?`, `deleted_at`; partial unique index
+  `frameworks_name_once (family, owner or none, lower(name))` among live rows.
+  `plan_frameworks`: `plan_pid`, `family`, `framework_pid`, `set_by?`, unique
+  `(plan_pid, family)`. A plan with no row for a family inherits the nearest
+  ancestor's, resolved on read (migration `m20261020_000080`).
 - **`entity_links`** — **not built (T-7).** No migration, entity or
   route exists. The cross-service write-side table in
   `agents/share/cross-service-linking.md` §4.1

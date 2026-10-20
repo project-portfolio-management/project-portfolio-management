@@ -19,6 +19,7 @@ mod effort;
 mod email;
 mod event_outbox;
 mod financials;
+mod frameworks;
 mod goals;
 mod governance;
 mod includes;

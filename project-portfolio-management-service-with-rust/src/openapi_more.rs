@@ -94,6 +94,7 @@ pub fn paths() -> Value {
     merge(&mut all, bulk_paths());
     merge(&mut all, guest_paths());
     merge(&mut all, goal_paths());
+    merge(&mut all, framework_paths());
     merge(&mut all, link_paths());
     merge(&mut all, pdf_paths());
     merge(&mut all, sink_paths());
@@ -649,6 +650,76 @@ fn guest_paths() -> Value {
                 with_grant, &[("200", "Revoked"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan or grant")])
         }
     })
+}
+
+/// Frameworks a plan can follow (ways of working, governance): records, the plan link, and inheritance.
+fn framework_paths() -> Value {
+    let mut all = serde_json::Map::new();
+    let families = [
+        (
+            "ways-of-working",
+            "/plans/{pid}/ways-of-working",
+            "ways of working",
+            "ways_of_working",
+            "A named description of how work is done: `methodology` (scrum, kanban, scrumban, waterfall, safe, xp, lean, hybrid, other), `cadence_days` (1-366), `wip_limit` (1-1000), `definition_of_ready`, `definition_of_done` and up to 20 `ceremonies` `{name, cadence, purpose?}`.",
+        ),
+        (
+            "governance-frameworks",
+            "/plans/{pid}/governance-framework",
+            "governance framework",
+            "governance_framework",
+            "A named description of how work is governed: `decision_model` (sponsor, steering_committee, product_owner, delegated, consensus, other), `review_cadence_days` and `reporting_cadence_days` (1-366), an `escalation_path` of `{level, body, trigger}` (distinct levels), `decision_rights` `{decision, decides, consulted?}` and `forums` `{name, cadence, purpose?}` (up to 20 of each).",
+        ),
+    ];
+    for (collection, plan_path, noun, key, fields) in families {
+        let pid = vec![uuid_param("pid")];
+        let tag = collection;
+        let base = format!("/api/{collection}");
+        let one = format!("/api/{collection}/{{pid}}");
+        let plan = format!("/api{plan_path}");
+        let unknown_fields =
+            "An unknown field, or a value out of range, is 422 with every problem named.";
+        let mut put_item = |path: String, value: Value| {
+            all.insert(path, value);
+        };
+        put_item(
+            base,
+            json!({
+                "post": op(tag, &format!("Define a {noun}"),
+                    &format!("{fields} Organisation-wide by default; with `plan_pid` it is owned by that plan and the plan is linked to it. A name is unique per owner (409). {unknown_fields}"),
+                    vec![], &[("200", "The record"), ("404", "Unknown plan_pid"), ("409", "That owner already has one with the name"), ("422", "A field is wrong")]),
+                "get": op(tag, &format!("List {noun} records"),
+                    "Organisation-wide records and those owned by plans the caller can read (others are absent, not masked); `?plan=` limits to one plan's own. Each carries `plans_using`.",
+                    vec![query("plan", false, "Only the records owned by this plan")], &[("200", "Records"), ("422", "plan is not a plan pid")])
+            }),
+        );
+        put_item(
+            one.clone(),
+            json!({
+                "get": op(tag, &format!("One {noun} record"), "404 for a record owned by a plan the caller cannot read.", pid.clone(), &[("200", "The record"), ("404", "Unknown or not readable")]),
+                "put": op(tag, &format!("Replace a {noun} record"), &format!("Replaces the fields; the owner does not change. Plans following it see the change at once (no versions). {unknown_fields}"), pid.clone(), &[("200", "The record"), ("404", "Unknown or not readable"), ("409", "Name taken"), ("422", "A field is wrong")]),
+                "delete": op(tag, &format!("Delete a {noun} record (soft)"), "Refused (409) while any plan follows it.", pid.clone(), &[("200", "Deleted"), ("404", "Unknown or not readable"), ("409", "Plans still follow it")])
+            }),
+        );
+        put_item(
+            format!("{one}/delete"),
+            json!({
+                "post": op(tag, &format!("Delete a {noun} record (POST twin)"), "The POST twin of DELETE: under the default policy DELETE needs the admin attribute.", pid.clone(), &[("200", "Deleted"), ("404", "Unknown or not readable"), ("409", "Plans still follow it")])
+            }),
+        );
+        put_item(
+            plan,
+            json!({
+                "get": op(tag, &format!("The {noun} in force for a plan"),
+                    &format!("`source` is `own` (the plan's link), `inherited` (the nearest ancestor's, with `from_plan_pid`) or `none` (nothing declared: `{key}` is null with a `reason`, never invented defaults). Resolved on read, never stored, so changing a programme's link changes every project beneath it that has none of its own. An inherited record from a plan the caller cannot read is withheld with a reason."),
+                    pid.clone(), &[("200", "source, from_plan_pid, the record, reason"), ("404", "Unknown plan")]),
+                "put": op(tag, &format!("Link a plan to a {noun}, or unlink"),
+                    "Body `{framework_pid}`: an organisation-wide record, the plan's own, or one owned by another plan the caller can read (for example a programme's). Null unlinks, and the plan then inherits. Answers like GET.",
+                    pid, &[("200", "What is now in force"), ("404", "Unknown plan"), ("422", "The record does not exist or cannot be read")])
+            }),
+        );
+    }
+    Value::Object(all)
 }
 
 /// Goals under a plan (FR-12).

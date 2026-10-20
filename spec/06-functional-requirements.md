@@ -592,6 +592,24 @@ across currencies.
   `comms=publish` (otherwise `403`); severity `info`, `important`,
   `urgent`; optional expiry after publication; `?include=all`
   (publishers only) also lists scheduled and expired ones.
+- **FR-52 Ways of working and governance frameworks.** Every plan can follow a
+  **ways of working** (how the team works: `methodology`, `cadence_days`, `wip_limit`,
+  `definition_of_ready`, `definition_of_done`, `ceremonies`) and a **governance
+  framework** (how the work is governed: `decision_model`, `review_cadence_days`,
+  `reporting_cadence_days`, `escalation_path`, `decision_rights`, `forums`), each as a
+  named, reusable record. A record is organisation-wide, or owned by one plan
+  (`plan_pid` on create). `POST/GET /api/ways-of-working` and
+  `/api/governance-frameworks`, `GET/PUT/DELETE …/{pid}` (and a POST delete twin).
+  A plan links to one record per family with `PUT /api/plans/{pid}/ways-of-working`
+  or `…/governance-framework` (`{framework_pid}`, null to unlink), and reads what is
+  **in force** with `GET` on the same path: its own link, else the **nearest
+  ancestor's** (`source: inherited`, with `from_plan_pid`), else `none` with a reason,
+  never invented defaults. The inheritance is resolved on read and never stored, so
+  changing a programme's link changes every project beneath it that has none of its
+  own. An unknown field is `422`, not dropped; a name is unique per family and owner
+  (`409`); a record plans still follow cannot be deleted (`409`). A record owned by a
+  plan the caller cannot read is `404` and absent from lists, and an inherited record
+  from such a plan is withheld with a reason.
 
 ### 6.5 Cross-service links & bulk — service
 

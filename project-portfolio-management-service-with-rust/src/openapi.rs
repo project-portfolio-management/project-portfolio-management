@@ -72,6 +72,8 @@ fn paths() -> Value {
 /// (and that the ones it cannot reach are named, with a reason), so a new list
 /// cannot go undocumented.
 pub const PAGED_LISTS: &[&str] = &[
+    "/api/governance-frameworks",
+    "/api/ways-of-working",
     "/api/approvals",
     "/api/attachments",
     "/api/automations",
@@ -2174,6 +2176,7 @@ mod tests {
             crate::controllers::guests::routes(),
             crate::controllers::goals::routes(),
             crate::controllers::plan_links::routes(),
+            crate::controllers::frameworks::routes(),
             crate::controllers::role_tasks::routes(),
             crate::controllers::pdf::routes(),
             crate::controllers::sinks::routes(),

@@ -292,6 +292,7 @@ pub mod deployment_moves;
 pub mod drum;
 pub mod earned_value;
 pub mod email_deliveries;
+pub mod escalations;
 pub mod feeds;
 pub mod frameworks;
 pub mod goals;

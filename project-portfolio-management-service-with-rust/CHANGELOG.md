@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Project escalations (FR-54): `POST/GET /api/plans/{pid}/escalations`, `GET …/{epid}` (with history), `POST …/{epid}/acknowledge|raise-level|resolve|withdraw`, `GET /api/escalations`. Raised at a level of the governance framework's escalation path (own, else the nearest ancestor's); an append-only history protected by a trigger. Tolerances report `open_escalations` and `escalation_needed`. Migration `m20261020_000083_escalations`. `controllers::frameworks::in_force` and `escalation_path` expose the framework in force to other controllers.
+
 - Tolerances (FR-53): `GET /api/plans/{pid}/tolerances`, `PUT` and `DELETE`/`POST …/delete` on `…/tolerances/{dimension}`, `GET /api/tolerances`. Per-plan limits on time, cost, risk and resources (own, else the nearest ancestor's), measured from the schedule, budget baseline, risk register and bookings and shown as red/amber/green; a limit that cannot be measured is `unknown`, never green. Migration `m20261020_000082_plan_tolerances`. The nearest-ancestor rule moved from `frameworks` to a shared `inherit` module.
 
 - Links into work-tracking tools: a plan link may be a `tracker` (a project or board) or a `ticket` (one issue) in Jira, Trello, Asana, Linear, monday.com, ClickUp, Azure DevOps, GitHub or `other`, with the system's own `external_id` (migration `m20261020_000081_link_systems`). A hosted system's link must be on its own domain; Jira, GitHub and `other` accept any host (self-hosted). `GET /api/plans/{pid}/links` takes `?system=` and `?kind=`. Nothing is fetched or synced.

@@ -370,13 +370,27 @@ async fn link(
     effective(&ctx, &caller, family, plan.pid).await
 }
 
-/// The framework of `family` in force for `plan`.
-async fn effective(
+/// What is in force for a plan, before it is turned into an answer.
+pub(crate) struct InForce {
+    /// Where it came from.
+    pub source: Source,
+    /// The plan whose link it is, when it is shown.
+    pub from_plan: Option<Uuid>,
+    /// The record, unless it is withheld (from a plan the caller cannot read) or gone.
+    pub record: Option<frameworks::Model>,
+    /// The record exists but comes from a plan the caller cannot read.
+    pub withheld: bool,
+    /// The plan follows a record that has since been deleted.
+    pub deleted: bool,
+}
+
+/// Resolve the framework of `family` in force for `plan`: its own link, else the nearest ancestor's, else none.
+pub(crate) async fn in_force(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     family: Family,
     plan: Uuid,
-) -> Result<Response> {
+) -> Result<InForce> {
     let ancestors = PlanModel::ancestor_pids(&ctx.db, plan)
         .await
         .map_err(Error::Model)?;
@@ -417,8 +431,41 @@ async fn effective(
         super::plan_access::readable_plans(ctx, caller, &guarded).await
     };
     let withheld = guarded.iter().any(|p| !readable.contains(p));
-    let shown = if withheld { None } else { record.as_ref() };
-    let reason = match (r.source, withheld, r.value.is_some() && record.is_none()) {
+    Ok(InForce {
+        source: r.source,
+        from_plan: if withheld { None } else { r.from_plan },
+        deleted: r.value.is_some() && record.is_none(),
+        record: if withheld { None } else { record },
+        withheld,
+    })
+}
+
+/// The escalation path of the governance framework in force for `plan`, lowest level first; empty when there is
+/// none, or it is withheld, or it declares no path.
+pub(crate) async fn escalation_path(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+) -> Result<Vec<crate::frameworks::Escalation>> {
+    let f = in_force(ctx, caller, Family::Governance, plan).await?;
+    let mut path: Vec<crate::frameworks::Escalation> = f
+        .record
+        .and_then(|r| serde_json::from_value::<crate::frameworks::Governance>(r.body).ok())
+        .map(|g| g.escalation_path)
+        .unwrap_or_default();
+    path.sort_by_key(|e| e.level);
+    Ok(path)
+}
+
+/// The framework of `family` in force for `plan`, as the answer.
+async fn effective(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    family: Family,
+    plan: Uuid,
+) -> Result<Response> {
+    let f = in_force(ctx, caller, family, plan).await?;
+    let reason = match (f.source, f.withheld, f.deleted) {
         (_, true, _) => Some("it comes from a plan you cannot read".to_string()),
         (Source::None, _, _) => Some(format!(
             "neither this plan nor any plan above it declares a {}",
@@ -427,7 +474,7 @@ async fn effective(
         (_, _, true) => Some("the record this plan follows has been deleted".to_string()),
         _ => None,
     };
-    let plans_using = match shown {
+    let plans_using = match &f.record {
         Some(x) => using(ctx, x.pid).await?,
         None => 0,
     };
@@ -435,19 +482,18 @@ async fn effective(
     out.insert("plan_pid".into(), serde_json::json!(plan));
     out.insert(
         "source".into(),
-        serde_json::json!(if withheld {
+        serde_json::json!(if f.withheld {
             Source::Inherited
         } else {
-            r.source
+            f.source
         }),
     );
-    out.insert(
-        "from_plan_pid".into(),
-        serde_json::json!(if withheld { None } else { r.from_plan }),
-    );
+    out.insert("from_plan_pid".into(), serde_json::json!(f.from_plan));
     out.insert(
         family.key().into(),
-        shown.map_or(Value::Null, |x| view(x, plans_using)),
+        f.record
+            .as_ref()
+            .map_or(Value::Null, |x| view(x, plans_using)),
     );
     out.insert("reason".into(), serde_json::json!(reason));
     format::json(Value::Object(out))

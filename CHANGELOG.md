@@ -17,6 +17,15 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Project escalations (API).** A project can escalate something at a level of the escalation path its governance
+  framework declares (its own or inherited), acknowledge it, take it up a level with a reason, and resolve or withdraw
+  it, with an append-only history. A red tolerance now says whether anyone has escalated it (`escalation_needed`).
+  Verified: lint, unit tests (1052), the full database suite (182, incl. an escalation walked through its whole life
+  and the red-tolerance flag), every real-token binary (the private-plan census seeds an escalation on the private
+  plan). **Not done:** no screen; no notification (nobody is told something was escalated to them); nothing checks who
+  may acknowledge or resolve; nothing raises an escalation by itself when a tolerance turns red (it only flags the
+  gap); the existing delivery exceptions and the risk "escalate" flag are separate and not linked to these.
+
 - **Tolerances are visible.** Two screens for FR-53: the board at `/tolerances` (every readable plan with a tolerance, worst
   first) and `/plans/[pid]/tolerances` (set, remove, read), each colour shown as a word and a shape, "not measurable"
   distinct from green. Verified: type check, unit tests (722), 2 new browser tests with an axe audit. **The full

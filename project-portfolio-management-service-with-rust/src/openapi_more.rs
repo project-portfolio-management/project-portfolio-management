@@ -96,6 +96,7 @@ pub fn paths() -> Value {
     merge(&mut all, goal_paths());
     merge(&mut all, framework_paths());
     merge(&mut all, tolerance_paths());
+    merge(&mut all, escalation_paths());
     merge(&mut all, link_paths());
     merge(&mut all, pdf_paths());
     merge(&mut all, sink_paths());
@@ -649,6 +650,43 @@ fn guest_paths() -> Value {
             "post": op("guests", "Revoke a guest grant",
                 "Effective on the guest's very next request (the guard reads the grants every time). Idempotent and audited.",
                 with_grant, &[("200", "Revoked"), ("401", "Missing or invalid bearer token"), ("404", "Unknown plan or grant")])
+        }
+    })
+}
+
+/// Project escalations: referring something upward at a level of the governance escalation path.
+fn escalation_paths() -> Value {
+    let pid = vec![uuid_param("pid")];
+    let mut with_e = pid.clone();
+    with_e.push(uuid_param("epid"));
+    json!({
+        "/api/plans/{pid}/escalations": {
+            "post": op("escalations", "Raise an escalation",
+                "Body `{title, description?, reason_kind?, tolerance_dimension?, level?, escalated_to?, owner_ref?, respond_by?}`. `reason_kind`: tolerance, risk, issue, dependency, decision, resource, other (default other); `tolerance_dimension` (time, cost, risk, resources) only with `tolerance`. `level` is a level of the escalation path of the governance framework in force for the plan (its own, else the nearest ancestor's); it defaults to the first level, and a level not on the path is 422. With no declared path any level 1 to 9 is allowed. `escalated_to` defaults to the body the path names at that level. The escalation starts `open`. Nothing is notified.",
+                pid.clone(), &[("200", "The escalation"), ("404", "Unknown plan"), ("422", "A field is wrong, or the level is not on the path")]),
+            "get": op("escalations", "A plan's escalations", "Newest first. `?status=` open, acknowledged, resolved, withdrawn, or `live` (open and acknowledged). Each carries `age_days` and `overdue` (a live escalation past `respond_by`).",
+                { let mut p = pid.clone(); p.push(query("status", false, "open, acknowledged, resolved, withdrawn or live")); p }, &[("200", "plan_pid, escalations"), ("404", "Unknown plan"), ("422", "Unknown status")])
+        },
+        "/api/plans/{pid}/escalations/{epid}": {
+            "get": op("escalations", "One escalation with its history", "`events` is the append-only history: raised, acknowledged, level_raised, resolved, withdrawn, each with the level, who, and the note. A database trigger refuses any change to it.", with_e.clone(), &[("200", "The escalation and its events"), ("404", "Unknown plan or escalation")])
+        },
+        "/api/plans/{pid}/escalations/{epid}/acknowledge": {
+            "post": op("escalations", "Acknowledge an escalation", "Open to acknowledged. Body `{note?}`.", with_e.clone(), &[("200", "The escalation"), ("404", "Unknown"), ("409", "Already acknowledged or finished")])
+        },
+        "/api/plans/{pid}/escalations/{epid}/raise-level": {
+            "post": op("escalations", "Take an escalation up a level", "Body `{note}` of at least 10 characters saying why. Moves to the next level of the path (the next one it declares, skipping levels it does not have) and back to `open`, since the new level has not seen it; `escalated_to` follows the path. 409 at the top of the path (or level 9 with none) or when finished.", with_e.clone(), &[("200", "The escalation"), ("404", "Unknown"), ("409", "At the top, or finished"), ("422", "No note")])
+        },
+        "/api/plans/{pid}/escalations/{epid}/resolve": {
+            "post": op("escalations", "Resolve an escalation", "Body `{outcome, response}`: outcome decided, guidance_given or rejected; a written response of at least 10 characters. Nothing checks who resolves it.", with_e.clone(), &[("200", "The escalation"), ("404", "Unknown"), ("409", "Already finished"), ("422", "Bad outcome or response")])
+        },
+        "/api/plans/{pid}/escalations/{epid}/withdraw": {
+            "post": op("escalations", "Withdraw an escalation", "Body `{note?}`. Open or acknowledged only.", with_e, &[("200", "The escalation"), ("404", "Unknown"), ("409", "Already finished")])
+        },
+        "/api/escalations": {
+            "get": op("escalations", "The escalation register",
+                "Escalations of the plans the caller can read, newest first, with `counts` by status and `overdue`. `?status=` (including `live`), `?plan=`, `?overdue=true`.",
+                vec![query("status", false, "open, acknowledged, resolved, withdrawn or live"), query("plan", false, "One plan"), query("overdue", false, "true to keep only live escalations past respond_by")],
+                &[("200", "escalations, counts, overdue"), ("422", "Unknown status or plan")])
         }
     })
 }

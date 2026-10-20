@@ -17,6 +17,7 @@ mod custom_fields;
 mod discussion;
 mod effort;
 mod email;
+mod escalations;
 mod event_outbox;
 mod financials;
 mod frameworks;

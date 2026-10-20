@@ -80,6 +80,12 @@ mutation (§10.2).
   `time`/`cost`/`risk`/`resources`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
   `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan
   with no row for a dimension inherits the nearest ancestor's, resolved on read (migration `m20261020_000082`).
+- **`escalations`** and **`escalation_events`** (built, FR-54) — `escalations`: `plan_pid`, `title`, `description?`,
+  `reason_kind` (CHECK), `tolerance_dimension?` (CHECK: only with a tolerance reason), `level` (CHECK 1 to 9),
+  `escalated_to?`, `owner_ref?`, `status` (CHECK open/acknowledged/resolved/withdrawn), `raised_by?`, `raised_on`,
+  `respond_by?`, `outcome?`, `response?`, `resolved_on?` (CHECK: resolved needs all three), `deleted_at`.
+  `escalation_events`: `escalation_pid`, `event`, `level`, `actor?`, `note?`, **append-only** by trigger
+  (migration `m20261020_000083`).
 - **`entity_links`** — **not built (T-7).** No migration, entity or
   route exists. The cross-service write-side table in
   `agents/share/cross-service-linking.md` §4.1

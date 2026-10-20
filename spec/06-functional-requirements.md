@@ -624,6 +624,20 @@ across currencies.
   amber from there up to it, red beyond it; zero or favourable is green; a limit that could not be measured is
   `unknown` with a reason and is never green (absent evidence is not good news); `overall` is the worst, with
   unknown ranking above green; `not_set` when there is no limit here or above. A zero limit means zero tolerance.
+- **FR-54 Project escalations.** A project can refer something upward. `POST /api/plans/{pid}/escalations`
+  raises one (`title`, `reason_kind` of tolerance, risk, issue, dependency, decision, resource or other,
+  `tolerance_dimension` only for a tolerance, `level`, `escalated_to`, `owner_ref`, `respond_by`) at a **level of the
+  escalation path of the governance framework in force for the plan** (FR-52: its own, else the nearest ancestor's):
+  the level defaults to the path's first, a level not on the path is `422`, `escalated_to` defaults to the body the
+  path names, and with no declared path any level 1 to 9 is allowed. It is `open`, then `acknowledged`; **raising
+  it a level** (`…/raise-level`, with a reason of at least 10 characters) moves to the next level the path declares and
+  back to `open`; it ends `resolved` (`…/resolve`, an outcome of decided, guidance_given or rejected and a written
+  response of at least 10 characters) or `withdrawn`. A finished escalation accepts nothing more (`409`). Every step is
+  kept in an append-only history that a database trigger protects. `GET /api/plans/{pid}/escalations` (`?status=` incl.
+  `live`), `GET …/{epid}` with the history, and `GET /api/escalations` across the plans the caller can read, with
+  `counts` and `overdue` (a live escalation past its `respond_by`). **Tolerances (FR-53) point here:** each dimension
+  reports its `open_escalations`, and a red one with none is `escalation_needed`. Nothing is notified, and nothing
+  checks who acknowledges or resolves.
 
 ### 6.5 Cross-service links & bulk — service
 

@@ -24,7 +24,7 @@ use super::governance::find_item;
 use super::{db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::inherit::{Source, resolve};
-use crate::models::_entities::{allocations, plan_tolerances, plans, risks};
+use crate::models::_entities::{allocations, escalations, plan_tolerances, plans, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::tolerances::{self as rules, Dimension, Status};
@@ -197,6 +197,22 @@ async fn picture(
     chain.extend(&ancestors);
     let rows = rows_for(ctx, chain).await?;
     let today = chrono::Utc::now().date_naive();
+    // Live escalations that cite a tolerance dimension, so a red one nobody has escalated is visible.
+    let mut escalated: HashMap<String, usize> = HashMap::new();
+    for e in escalations::Entity::find()
+        .filter(escalations::Column::PlanPid.eq(plan.pid))
+        .filter(escalations::Column::DeletedAt.is_null())
+        .filter(escalations::Column::ReasonKind.eq("tolerance"))
+        .filter(escalations::Column::Status.is_in(["open", "acknowledged"]))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        if let Some(d) = e.tolerance_dimension {
+            *escalated.entry(d).or_insert(0) += 1;
+        }
+    }
+    let mut needs_escalation = false;
     let mut dimensions = Vec::new();
     let mut statuses = Vec::new();
     for dim in Dimension::ALL {
@@ -230,6 +246,9 @@ async fn picture(
             i64::from(row.amber_from_percent),
         );
         statuses.push(status);
+        let open_escalations = escalated.get(dim.token()).copied().unwrap_or(0);
+        let escalation_needed = status == Status::Red && open_escalations == 0;
+        needs_escalation |= escalation_needed;
         let from = r.from_plan.filter(|p| *p != plan.pid);
         let from_readable = match from {
             Some(p) => super::plan_access::readable_plans(ctx, caller, &[p])
@@ -243,10 +262,12 @@ async fn picture(
             "measured": measure.value, "usage_percent": used, "reason": measure.reason,
             "source": r.source, "from_plan_pid": if from_readable { from } else { None },
             "note": row.note,
+            "open_escalations": open_escalations, "escalation_needed": escalation_needed,
         }));
     }
     Ok(json!({
         "plan_pid": plan.pid, "plan_name": plan.name, "overall": rules::overall(&statuses),
+        "escalation_needed": needs_escalation,
         "as_of": chrono::Utc::now(), "dimensions": dimensions,
         "how_to_read": "Green: below amber_from_percent of the limit. Amber: from there up to the limit. Red: beyond it. \
     Unknown: a limit is set but could not be measured (the reason says why); it is never shown as green. not_set: no limit here or above.",

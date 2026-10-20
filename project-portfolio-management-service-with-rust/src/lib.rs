@@ -88,6 +88,7 @@ pub mod earned_value;
 pub mod effort;
 pub mod email;
 pub mod engineering;
+pub mod escalations;
 pub mod evm;
 pub mod extract;
 pub mod feeds;

@@ -473,8 +473,16 @@ async fn seed(
     post(format!("/api/plans/{p}/issues"), json!({ "title": format!("{name} issue"), "kind": "blocker", "severity": "high", "owner_ref": PERSON, "raised_on": "2026-10-01" })).await;
     post(format!("/api/plans/{p}/access-records"), json!({ "person_ref": PERSON, "access": format!("{name} repo"), "action": "granted", "recorded_on": "2026-01-05" })).await;
     // A framework owned by the plan: a non-member must not see it in either list.
-    post("/api/ways-of-working".into(), json!({ "name": format!("{name} way"), "methodology": "kanban", "plan_pid": p })).await;
-    post("/api/governance-frameworks".into(), json!({ "name": format!("{name} board"), "decision_model": "sponsor", "plan_pid": p })).await;
+    post(
+        "/api/ways-of-working".into(),
+        json!({ "name": format!("{name} way"), "methodology": "kanban", "plan_pid": p }),
+    )
+    .await;
+    post(
+        "/api/governance-frameworks".into(),
+        json!({ "name": format!("{name} board"), "decision_model": "sponsor", "plan_pid": p }),
+    )
+    .await;
     post(format!("/api/plans/{p}/sprints"), json!({ "name": format!("{name} sprint"), "starts_on": "2026-10-05", "ends_on": "2026-10-19" })).await;
     post("/api/devops/events".into(), json!({ "plan_pid": p, "kind": "deploy", "environment": "prod", "version": format!("{name}-1.0") })).await;
     post(

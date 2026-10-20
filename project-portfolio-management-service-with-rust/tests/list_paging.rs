@@ -78,6 +78,10 @@ fn admin(kid: &str) -> (axum::http::HeaderName, axum::http::HeaderValue) {
 /// is unreachable fails the test.
 const UNREACHED: &[(&str, &str)] = &[
     (
+        "/api/resource-plan/role-tasks",
+        "one role's people with their open tasks (an object, not a list); needs `?role=`, which names a role this census does not create",
+    ),
+    (
         "/api/funding-allocations/{pid}/trace",
         "one allocation's trace (an object with lists inside, bounded by the lines drawing on it); needs an allocation this census does not create",
     ),

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — tolerances with red / amber / green (FR-53, 2026-10-20)
+
+`/tolerances` lists every plan you can read that has a tolerance, worst first, with its overall colour and the colour of time, cost, risk and resources; `/plans/[pid]/tolerances` shows each dimension's limit (set on the plan or inherited), what was measured, how, and the colour, and lets you set or remove the plan's own limit (cost is typed in percent, stored in basis points). A colour is always a word and a shape as well; "not measurable" (a limit that could not be measured) and "no limit set" are their own states and never green. Linked from the navigation and from each plan. Tests: 4 unit groups, 2 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: a tolerance cannot be set from the board; the how-it-is-measured sentences come from the service in English only; nothing here raises an escalation when a dimension is red.
+
 ### Added — approval processes page (PL-2, 2026-10-20)
 
 `/approval-processes` (the path `/processes` is the plan-kind collection): the defined processes, a form to define one (up to 20 approve, to-do and notify steps, checked in words before it is sent), a form to start a run on a plan, task or other subject by its id, and your runs with each step's state and the log, with the buttons for marking your to-do step done, cancelling, and checking an approval again. The service decides who may do what; a refusal is shown as a message. Tests: 3 unit groups, 2 e2e (one with axe). Welsh strings are machine-written, unreviewed. Not done: editing or deleting a definition, choosing a subject from a list, and showing which approval request a waiting step is blocked on.

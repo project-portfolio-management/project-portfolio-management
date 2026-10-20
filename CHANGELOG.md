@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Tolerances are visible.** Two screens for FR-53: the board at `/tolerances` (every readable plan with a tolerance, worst
+  first) and `/plans/[pid]/tolerances` (set, remove, read), each colour shown as a word and a shape, "not measurable"
+  distinct from green. Verified: type check, unit tests (722), 2 new browser tests with an axe audit. **The full
+  Playwright run failed intermittently on other pages**: a colour-contrast complaint about the data grid's export
+  buttons, on ledger and organizations in one run and on email deliveries (Welsh) in the next (619 and 620 of 621
+  passed). Each passes alone three times in a row and with my changes stashed, so I believe it is load-related
+  flakiness, but I have not found the cause; CI is the second opinion.
+
 - **Tolerances with red/amber/green (API).** Each project can set how far it may drift on time, cost, risk and
   resources (its own limits, or a programme's by inheritance), and the service measures each from data it already
   holds and colours it: green below 75 percent of the limit (adjustable), amber up to it, red beyond. A limit it cannot

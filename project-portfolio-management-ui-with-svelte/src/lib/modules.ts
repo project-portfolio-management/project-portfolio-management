@@ -11,6 +11,7 @@
 export const PLAN_LINKS = [
   { key: "governance", module: "governance" },
   { key: "tolerances", module: "governance" },
+  { key: "escalations", module: "governance" },
   { key: "board", module: "tasks" },
   { key: "schedule", module: "milestones" },
   { key: "flow", module: "tasks" },

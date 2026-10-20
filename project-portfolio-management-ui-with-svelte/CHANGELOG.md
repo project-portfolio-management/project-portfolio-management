@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — escalations (FR-54, 2026-10-20)
+
+`/plans/[pid]/escalations` raises an escalation (title, why, which tolerance, level, who it goes to, the person it is for, an answer-by date) and works the ones raised: acknowledge, take it up a level (a reason of ten characters is required), resolve (an outcome and a written response) or withdraw, each with its history. `/escalations` lists every escalation on the plans you can read, with a filter for those still open and for the overdue. A red tolerance with no escalation says so and links to a pre-filled form. Each state is a word and a shape; overdue is said in words. Tests: 3 unit groups, 3 e2e (one with an axe audit of each page). Welsh strings are machine-written, unreviewed. Not done: it does not suggest the level or the body from the governance path (the service fills those in when left blank); no notification.
+
 ### Added — tolerances with red / amber / green (FR-53, 2026-10-20)
 
 `/tolerances` lists every plan you can read that has a tolerance, worst first, with its overall colour and the colour of time, cost, risk and resources; `/plans/[pid]/tolerances` shows each dimension's limit (set on the plan or inherited), what was measured, how, and the colour, and lets you set or remove the plan's own limit (cost is typed in percent, stored in basis points). A colour is always a word and a shape as well; "not measurable" (a limit that could not be measured) and "no limit set" are their own states and never green. Linked from the navigation and from each plan. Tests: 4 unit groups, 2 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: a tolerance cannot be set from the board; the how-it-is-measured sentences come from the service in English only; nothing here raises an escalation when a dimension is red.

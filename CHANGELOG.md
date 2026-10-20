@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Escalation screens.** A project page to raise and work escalations (acknowledge, take up a level with a reason,
+  resolve, withdraw, with history), a register of every escalation you can read with an overdue filter, and a link from
+  a red tolerance that nobody has escalated. Verified: type check, unit tests (731), 3 new browser tests with axe audits.
+  **The full Playwright run again failed one or two unrelated accessibility audits** (the data grid's export buttons,
+  colour contrast; a different page each run: 1 or 2 of 632). Each passes alone; this machine's load average was
+  about 10 to 12 with dozens of other projects' browsers running, which fits a timing flake in an animated control, but
+  I have not proved the cause. CI (a quieter machine) has passed the same suite on the last two pushes.
+
 - **Project escalations (API).** A project can escalate something at a level of the escalation path its governance
   framework declares (its own or inherited), acknowledge it, take it up a level with a reason, and resolve or withdraw
   it, with an append-only history. A red tolerance now says whether anyone has escalated it (`escalation_needed`).

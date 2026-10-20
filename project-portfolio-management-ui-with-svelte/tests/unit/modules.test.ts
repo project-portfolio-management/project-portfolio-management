@@ -27,7 +27,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "wbs",
       "import",
     ]);
-    expect(visiblePlanLinks(["governance"])).toEqual(["governance", "tolerances", "cutover"]);
+    expect(visiblePlanLinks(["governance"])).toEqual(["governance", "tolerances", "escalations", "cutover"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
       "board",
       "schedule",

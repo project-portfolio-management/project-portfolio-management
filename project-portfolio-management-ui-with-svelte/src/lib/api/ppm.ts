@@ -284,6 +284,40 @@ export interface ResourcePeriod {
   total_proposed_fte: number;
 }
 
+export type EscalationStatus = "open" | "acknowledged" | "resolved" | "withdrawn";
+
+/** One escalation (`/api/plans/{pid}/escalations`, `/api/escalations`). */
+export interface Escalation {
+  pid: string;
+  plan_pid: string;
+  plan_name?: string | null;
+  title: string;
+  description: string | null;
+  reason_kind: string;
+  tolerance_dimension: string | null;
+  level: number;
+  escalated_to: string | null;
+  owner_ref: string | null;
+  status: EscalationStatus;
+  raised_by: string | null;
+  raised_on: string;
+  respond_by: string | null;
+  outcome: string | null;
+  response: string | null;
+  resolved_on: string | null;
+  age_days: number;
+  overdue: boolean;
+  /** Only on the single-escalation read. */
+  events?: { event: string; level: number; actor: string | null; note: string | null; at: string }[];
+}
+
+/** `GET /api/escalations`. */
+export interface EscalationRegister {
+  escalations: Escalation[];
+  counts: Record<string, number>;
+  overdue: number;
+}
+
 export type ToleranceStatus = "green" | "amber" | "red" | "unknown" | "not_set";
 
 /** One dimension of a plan's tolerances (`GET /api/plans/{pid}/tolerances`). */
@@ -300,6 +334,10 @@ export interface ToleranceDimension {
   source: "own" | "inherited" | "none";
   from_plan_pid?: string | null;
   note?: string | null;
+  /** Live escalations that cite this dimension. */
+  open_escalations?: number;
+  /** Red, and nobody has escalated it. */
+  escalation_needed?: boolean;
 }
 
 /** A plan's tolerances in force, measured and coloured. */
@@ -307,6 +345,8 @@ export interface TolerancePicture {
   plan_pid: string;
   plan_name: string;
   overall: ToleranceStatus;
+  /** Some red dimension has no live escalation. */
+  escalation_needed?: boolean;
   as_of: string;
   dimensions: ToleranceDimension[];
   how_to_read: string;
@@ -3020,6 +3060,25 @@ export class PpmClient {
     },
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
+  }
+  planEscalations(pid: string, status?: string): Promise<{ plan_pid: string; escalations: Escalation[] }> {
+    return this.http.get(`/api/plans/${pid}/escalations${status ? `?status=${status}` : ""}`);
+  }
+  escalation(pid: string, epid: string): Promise<Escalation> {
+    return this.http.get(`/api/plans/${pid}/escalations/${epid}`);
+  }
+  raiseEscalation(pid: string, body: Record<string, unknown>): Promise<Escalation> {
+    return this.http.post(`/api/plans/${pid}/escalations`, { body });
+  }
+  escalationAction(pid: string, epid: string, action: "acknowledge" | "raise-level" | "resolve" | "withdraw", body: Record<string, unknown> = {}): Promise<Escalation> {
+    return this.http.post(`/api/plans/${pid}/escalations/${epid}/${action}`, { body });
+  }
+  escalationRegister(params: { status?: string; overdue?: boolean } = {}): Promise<EscalationRegister> {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.overdue) q.set("overdue", "true");
+    const qs = q.toString();
+    return this.http.get(`/api/escalations${qs ? `?${qs}` : ""}`);
   }
   planTolerances(pid: string): Promise<TolerancePicture> {
     return this.http.get(`/api/plans/${pid}/tolerances`);

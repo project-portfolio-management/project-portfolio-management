@@ -212,6 +212,7 @@
     { href: "/documents", get label() { return t("p.documents.documents"); } },
     { href: "/approval-processes", get label() { return t("p.processes.processes"); } },
     { href: "/tolerances", get label() { return t("p.tolerances.tolerances"); } },
+    { href: "/escalations", get label() { return t("p.escalations.escalations"); } },
     { href: "/tour", label: t("nav.tour") },
   ];
 

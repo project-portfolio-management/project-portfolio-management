@@ -78,6 +78,7 @@ export const KNOWN_NAV_HREFS = [
   "/documents",
   "/approval-processes",
   "/tolerances",
+  "/escalations",
 ] as const;
 
 /**

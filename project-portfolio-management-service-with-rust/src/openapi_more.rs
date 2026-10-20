@@ -1926,6 +1926,12 @@ fn portfolio_resource_paths() -> Value {
                 vec![query("from", false, "YYYY-MM-DD, default today"), query("to", false, "default from + 89 calendar days"), query("period", false, "week or month (default)"), query("group_by", false, "role (default) or skill"), query("scenario", false, "a scenario pid")],
                 &[("200", "periods with rows, by_plan, placeholders, people_by_role"), ("404", "Unknown scenario"), ("422", "A bad window, period or group_by")])
         },
+        "/api/resource-plan/role-tasks": {
+            "get": op("resources", "The open tasks of the people in a role",
+                "Drill-down from the resource breakdown: for `?role=`, each person whose primary role it is (PUT /api/resource-roles) with their open (not done) tasks across plans. Needs the right to manage people (403 otherwise), because it lists what named people work on. Tasks in plans the caller cannot read are counted in omitted_unreadable and not shown; at most 500 tasks are read (truncated). The unclassified row has no list of people (422). Skills have no people, so there is no skill drill-down.",
+                vec![query("role", true, "The role, as in the resource plan rows")],
+                &[("200", "role, people with their tasks, counts"), ("403", "May not manage people"), ("422", "The unclassified row")])
+        },
         "/api/resource-plan/hours": {
             "get": op("resources", "Planned against actual hours per plan and person",
                 "Planned is a named, committed allocation's percent of an 8-hour day on each Monday to Friday of the window (placeholder demand is reported apart); actual is recorded time entries, whether or not the week is approved. A plan with nothing recorded is null with actual_reason no_actuals, never zero hours. Time recorded by someone with no allocation on that plan in the window is listed under unplanned_actuals (per person for a manager, per plan with a count for anyone else). Plans the caller cannot read are left out.",

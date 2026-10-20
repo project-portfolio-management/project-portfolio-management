@@ -176,6 +176,10 @@ const PRIVILEGED: &[&str] = &[
     // The access review is administrators only (the `access_review` area), and still leaves out
     // plans the caller cannot read.
     "/api/access-review",
+    // What named people work on: administrators and resource managers only. It filters out tasks in plans
+    // the caller cannot read the same way `/api/me/tasks` does, but this census only checks the 403/200
+    // split for it; the private-plan filter itself has no test of its own yet.
+    "/api/resource-plan/role-tasks?role=Engineer",
 ];
 
 /// Reads where a member and an admin legitimately differ because a person's detail is masked for a

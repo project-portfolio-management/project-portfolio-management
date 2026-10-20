@@ -169,3 +169,75 @@ test("a task moves one place among its siblings and the order is sent to the ser
   await expect(tree.getByRole("listitem").nth(1)).toContainText("C3");
   await audit(page);
 });
+
+test("a role opens onto the open tasks of its people", async ({ page }) => {
+  const row = {
+    key: "Engineer",
+    demand_fte: 1,
+    named_fte: 1,
+    placeholder_fte: 0,
+    proposed_fte: 0,
+    supply_fte: 2,
+    gap_fte: null,
+    headcount: 2,
+  };
+  const plan = (group: string) => ({
+    scope: { kind: "all" },
+    from: "2026-10-01",
+    to: "2026-12-31",
+    period: "month",
+    group_by: group,
+    overlapping: group === "skill",
+    periods: [
+      {
+        from: "2026-10-01",
+        to: "2026-10-31",
+        days: 31,
+        rows: group === "role" ? [row] : [],
+        total_demand_fte: 1,
+        total_placeholder_fte: 0,
+        total_proposed_fte: 0,
+      },
+    ],
+    placeholders: [],
+    people_by_role: group === "role" ? { Engineer: ["person:x", "person:y"] } : null,
+    masked: false,
+    note: "",
+  });
+  await page.route("**/api/resource-plan?**", (r) =>
+    r.fulfill({
+      json: plan(new URL(r.request().url()).searchParams.get("group_by") ?? "role"),
+    }),
+  );
+  await page.route("**/api/resource-plan/role-tasks?**", (r) =>
+    r.fulfill({
+      json: {
+        role: "Engineer",
+        people: [
+          {
+            person_ref: "person:x",
+            tasks: [
+              { pid: "t1", title: "Fix the build", status: "todo", due_date: null, plan_pid: PID, plan_name: "Apollo" },
+            ],
+          },
+          { person_ref: "person:y", tasks: [] },
+        ],
+        tasks: 1,
+        omitted_unreadable: 2,
+        truncated: false,
+      },
+    }),
+  );
+  await page.goto("/en-001/resources/rbs");
+  const button = page.getByRole("button", { name: "Show the open tasks of Engineer" });
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await button.click();
+  const region = page.getByRole("region", { name: "Show the open tasks of Engineer" });
+  await expect(region.getByRole("link", { name: "Fix the build" })).toHaveAttribute("href", /\/plans\/.*\/tasks\/t1$/);
+  await expect(region).toContainText("no open tasks");
+  await expect(region).toContainText("2 in plans you cannot read are not shown.");
+  await expect(page.getByRole("button", { name: "Hide the open tasks of Engineer" })).toHaveAttribute("aria-expanded", "true");
+  await audit(page);
+  await page.getByRole("button", { name: "Hide the open tasks of Engineer" }).click();
+  await expect(region).toHaveCount(0);
+});

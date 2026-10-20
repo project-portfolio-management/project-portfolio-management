@@ -278,6 +278,7 @@ pub mod programme_profile;
 pub mod raci;
 pub mod register;
 pub mod report_schedules;
+pub mod role_tasks;
 pub mod schedule_baselines;
 pub mod schedule_health;
 pub mod schedule_risk;

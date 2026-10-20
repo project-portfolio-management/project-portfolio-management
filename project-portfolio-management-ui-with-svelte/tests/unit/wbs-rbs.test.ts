@@ -6,7 +6,7 @@ import {
   taskHref,
   type WbsInput,
 } from "../../src/lib/wbs";
-import { buildRbs, roleText } from "../../src/lib/rbs";
+import { buildRbs, canDrill, roleText } from "../../src/lib/rbs";
 import {
   diagramFits,
   NETWORK_DIAGRAM_LIMIT,
@@ -279,5 +279,21 @@ describe("WBS sibling order", () => {
     expect(siblingMove(tasks, "b", "down")).toBeNull();
     expect(siblingMove(tasks, "nope", "up")).toBeNull();
     expect(siblingMove(tasks, "x", "up")).toBeNull();
+  });
+});
+
+describe("RBS drill-down", () => {
+  const role = (name: string, people: string[]) => ({
+    role: name,
+    people: people.map((ref) => ({ ref })),
+    headcount: people.length,
+    demand_fte: 1,
+    supply_fte: null,
+  });
+  it("opens a real role with named people, never a masked or unclassified row", () => {
+    expect(canDrill(role("Engineer", ["person:x"]), false)).toBe(true);
+    expect(canDrill(role("Engineer", ["person:x"]), true)).toBe(false);
+    expect(canDrill(role("Engineer", []), false)).toBe(false);
+    expect(canDrill(role("unclassified", ["person:x"]), false)).toBe(false);
   });
 });

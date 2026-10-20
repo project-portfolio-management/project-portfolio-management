@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **RBS drill-down.** `GET /api/resource-plan/role-tasks?role=` and a button per role on the resource breakdown page
+  open the open tasks of the people in a role. Admins and resource managers only. Verified: lint, unit tests, the full
+  database suite (176), the full Playwright run (605), and the real-token census (`private_aggregates`: 403 for a
+  non-admin, 200 for an admin). **Not tested: that a private plan's tasks are left out for a resource manager who is not
+  a member**: the endpoint uses the same filter as `/api/me/tasks`, but nothing here proves it for this route.
+  Skills and the unclassified row have no drill-down; the tasks shown are open tasks assigned to the role's people by
+  `assignee_ref`, not the bookings that produce the demand figure, so the two need not agree.
+
 - **MS Project (MSPDI) export.** `GET /api/plans/{pid}/export/mspdi` writes a plan as MSPDI XML that the importer reads
   back; imported tasks keep their UIDs; the file says what it leaves out (assignees and resources, partial progress,
   baselines, other relations). Also corrected three documents that still said there was no export (and the roadmap's

@@ -35,6 +35,7 @@ mod plan_links;
 mod plan_templates;
 mod plans;
 mod retention;
+mod role_tasks;
 mod scale;
 mod strategy;
 mod subjects;

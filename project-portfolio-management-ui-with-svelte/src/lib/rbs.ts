@@ -85,6 +85,14 @@ export function buildRbs(
   };
 }
 
+/**
+ * Whether a role row can be drilled into: the reader sees names, the role has people, and it is
+ * a real role (the "unclassified" row has no list of people to ask about).
+ */
+export function canDrill(r: RbsRole, masked: boolean): boolean {
+  return !masked && r.people.length > 0 && r.role !== "unclassified";
+}
+
 /** A role in words: "Engineer: 3 people, demand 2.5 FTE, supply 3 FTE". */
 export function roleText(r: RbsRole, masked: boolean): string {
   const people = masked

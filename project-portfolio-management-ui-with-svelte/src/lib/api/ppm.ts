@@ -284,6 +284,26 @@ export interface ResourcePeriod {
   total_proposed_fte: number;
 }
 
+/** `GET /api/resource-plan/role-tasks`: the open tasks of the people in a role. */
+export interface RoleTasks {
+  role: string;
+  people: {
+    person_ref: string;
+    tasks: {
+      pid: string;
+      title: string;
+      status: string;
+      due_date: string | null;
+      plan_pid: string;
+      plan_name: string;
+    }[];
+  }[];
+  tasks: number;
+  /** Tasks in plans the reader cannot read: counted, never shown. */
+  omitted_unreadable: number;
+  truncated: boolean;
+}
+
 /** `GET /api/resource-plan`. */
 export interface ResourcePlan {
   scope: { kind: string; name?: string };
@@ -2933,6 +2953,12 @@ export class PpmClient {
     },
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
+  }
+  /** What the people in a role are working on (needs the right to manage people). */
+  roleTasks(role: string): Promise<RoleTasks> {
+    return this.http.get(
+      `/api/resource-plan/role-tasks?role=${encodeURIComponent(role)}`,
+    );
   }
   resourcePlan(
     params: {

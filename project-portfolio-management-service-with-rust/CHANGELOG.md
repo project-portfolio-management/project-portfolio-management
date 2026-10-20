@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Role drill-down (PJ-12): `GET /api/resource-plan/role-tasks?role=` lists each person whose primary role it is with their open tasks, in plans the caller can read (others counted in `omitted_unreadable`). Admins and resource managers only (403 otherwise); the unclassified row is refused (422).
+
 - MS Project export (PJ-10): `GET /api/plans/{pid}/export/mspdi` writes the plan as MSPDI XML (`mspdi::write`, `controllers/mspdi_export.rs`): outline in sibling order, dates, business-day durations, constraints, deadlines, notes, done as 100 percent, dependencies (plan links with kind and lag, `precedes` relations as finish-to-start) and the plan calendar. Imported tasks keep their UID. Refused above 5000 tasks. Audited as `mspdi_export`. The file lists what it does not carry in a comment.
 
 - Sibling order of tasks (PJ-12): `PUT /api/plans/{pid}/task-order` with `{parent_task_pid?, order: [pids]}` sets the order of one parent's children (migration `m20261020_000079_task_sibling_position`, column `tasks.sibling_position`). The body must name exactly the live children once each (`409` if not, `422` for an unknown parent or a repeat), so concurrent reorders cannot drop a task. Task lists order positioned siblings first, then by id; `sibling_position` is in the task view. Audited as `task_order_set`.

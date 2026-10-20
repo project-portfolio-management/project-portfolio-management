@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — drill-down from a role to its tasks (PJ-12, 2026-10-20)
+
+On `/resources/rbs`, a role whose people you may see has a button that opens the open tasks of those people, each linked to its task page, with a count of tasks in plans you cannot read and a note if the list was cut off. Tests: 1 unit, 1 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: skills and the unclassified row have no drill-down; there is no per-person button.
+
 ### Added — reorder siblings in the work breakdown (PJ-12, 2026-10-20)
 
 Each task in `/plans/{pid}/wbs` has move-up and move-down buttons (disabled at the edge; none for a "Restricted item"). A move sends the full sibling order to `PUT /api/plans/{pid}/task-order` and reloads, so the codes follow the service's order; a refusal (409, someone else changed the siblings) is shown as a message. Siblings sort by `sibling_position`, then by age. Tests: 3 unit (`siblingMove`, order), 1 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: buttons only, no drag and drop; moving a task to another parent is still the task's own edit; the buttons do not repeat for a hidden sibling, which makes the service refuse (409) rather than reorder blind.

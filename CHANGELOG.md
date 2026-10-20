@@ -17,6 +17,14 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Approval processes page.** `/approval-processes` defines processes, starts runs and follows them; the last open gap
+  in the list (PL-2 had no front-end). Verified: type check, unit tests (714), the full Playwright run (611, incl. 2 new
+  and an axe audit of the opened run). **Found on the way:** my first path, `/processes`, would have shadowed the
+  existing plan-kind collection of that name, which a layout unit test caught; the page is at `/approval-processes`.
+  Not done: editing or deleting a definition, picking a subject from a list, showing the approval a waiting step is
+  blocked on; not tried against a running service, only with the API stubbed, so the page's request shapes are checked
+  against the controller by reading it, not by a test. Welsh strings are machine-written and unreviewed.
+
 - **RBS drill-down.** `GET /api/resource-plan/role-tasks?role=` and a button per role on the resource breakdown page
   open the open tasks of the people in a role. Admins and resource managers only. Verified: lint, unit tests, the full
   database suite (176), the full Playwright run (605), and the real-token census (`private_aggregates`: 403 for a

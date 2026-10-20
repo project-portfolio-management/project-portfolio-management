@@ -76,6 +76,7 @@ export const KNOWN_NAV_HREFS = [
   "/reports",
   "/onboarding",
   "/documents",
+  "/approval-processes",
 ] as const;
 
 /**

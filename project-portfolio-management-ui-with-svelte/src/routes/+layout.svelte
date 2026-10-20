@@ -210,6 +210,7 @@
     { href: "/reports", label: t("ppm.nav.reports") },
     { href: "/onboarding", get label() { return t("p._layout_svelte.onboarding"); } },
     { href: "/documents", get label() { return t("p.documents.documents"); } },
+    { href: "/approval-processes", get label() { return t("p.processes.processes"); } },
     { href: "/tour", label: t("nav.tour") },
   ];
 

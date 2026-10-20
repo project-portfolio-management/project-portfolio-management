@@ -284,6 +284,37 @@ export interface ResourcePeriod {
   total_proposed_fte: number;
 }
 
+/** An approval process definition (`GET /api/processes`). The list has no `steps`. */
+export interface ProcessDefinition {
+  pid: string;
+  name: string;
+  current_version: number;
+  steps?: { kind: "approve" | "todo" | "notify"; person_ref: string; title: string }[];
+}
+
+/** A run of a process (`GET /api/process-executions`; the detail adds `steps` and `log`). */
+export interface ProcessRun {
+  pid: string;
+  process_pid: string;
+  process_name?: string | null;
+  version: number;
+  subject_kind: string;
+  subject_pid: string;
+  status: "running" | "completed" | "rejected" | "cancelled" | "failed";
+  current_step: number;
+  started_by: string;
+  finished_at: string | null;
+  note?: string | null;
+  steps?: {
+    index: number;
+    kind: "approve" | "todo" | "notify";
+    person_ref: string;
+    title: string;
+    state: "pending" | "waiting" | "completed" | "skipped" | "rejected" | "failed";
+  }[];
+  log?: { step: number | null; event: string; actor: string | null; note: string | null; at: string }[];
+}
+
 /** `GET /api/resource-plan/role-tasks`: the open tasks of the people in a role. */
 export interface RoleTasks {
   role: string;
@@ -2953,6 +2984,33 @@ export class PpmClient {
     },
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
+  }
+  listProcesses(): Promise<ProcessDefinition[]> {
+    return this.http.get("/api/processes");
+  }
+  createProcess(body: {
+    name: string;
+    steps: { kind: string; person_ref: string; title: string }[];
+  }): Promise<ProcessDefinition> {
+    return this.http.post("/api/processes", { body });
+  }
+  startProcess(pid: string, body: { subject_kind: string; subject_pid: string }): Promise<ProcessRun> {
+    return this.http.post(`/api/processes/${pid}/start`, { body });
+  }
+  listProcessRuns(): Promise<ProcessRun[]> {
+    return this.http.get("/api/process-executions");
+  }
+  processRun(pid: string): Promise<ProcessRun> {
+    return this.http.get(`/api/process-executions/${pid}`);
+  }
+  completeProcessStep(pid: string, index: number): Promise<ProcessRun> {
+    return this.http.post(`/api/process-executions/${pid}/steps/${index}/complete`, { body: {} });
+  }
+  cancelProcessRun(pid: string): Promise<ProcessRun> {
+    return this.http.post(`/api/process-executions/${pid}/cancel`, { body: {} });
+  }
+  resumeProcessRun(pid: string): Promise<ProcessRun> {
+    return this.http.post(`/api/process-executions/${pid}/resume`, { body: {} });
   }
   /** What the people in a role are working on (needs the right to manage people). */
   roleTasks(role: string): Promise<RoleTasks> {

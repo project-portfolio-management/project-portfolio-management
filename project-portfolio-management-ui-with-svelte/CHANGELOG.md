@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — approval processes page (PL-2, 2026-10-20)
+
+`/approval-processes` (the path `/processes` is the plan-kind collection): the defined processes, a form to define one (up to 20 approve, to-do and notify steps, checked in words before it is sent), a form to start a run on a plan, task or other subject by its id, and your runs with each step's state and the log, with the buttons for marking your to-do step done, cancelling, and checking an approval again. The service decides who may do what; a refusal is shown as a message. Tests: 3 unit groups, 2 e2e (one with axe). Welsh strings are machine-written, unreviewed. Not done: editing or deleting a definition, choosing a subject from a list, and showing which approval request a waiting step is blocked on.
+
 ### Added — drill-down from a role to its tasks (PJ-12, 2026-10-20)
 
 On `/resources/rbs`, a role whose people you may see has a button that opens the open tasks of those people, each linked to its task page, with a count of tasks in plans you cannot read and a note if the list was cut off. Tests: 1 unit, 1 e2e with axe. Welsh strings are machine-written, unreviewed. Not done: skills and the unclassified row have no drill-down; there is no per-person button.

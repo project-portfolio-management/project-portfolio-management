@@ -38,7 +38,7 @@ fn unprocessable(message: &str) -> Error {
 /// bookings: themselves, a resource manager, an admin — or anyone when
 /// authentication is off.
 pub(crate) fn may_manage_person(caller: &MaybeAuthUser, person_ref: &str) -> bool {
-    caller.claims().is_none_or(|c| {
+    caller.holds_or_open(|c| {
         let has = |key: &str, want: &str| {
             c.attrs
                 .get(key)

@@ -39,7 +39,7 @@ fn unprocessable(message: &str) -> Error {
 
 /// Whether the caller may see and manage people's resource detail.
 pub(crate) fn may_manage_people(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
+    caller.holds_or_open(|c| {
         let has = |key: &str, want: &str| {
             c.attrs
                 .get(key)

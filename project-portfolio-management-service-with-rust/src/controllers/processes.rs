@@ -29,10 +29,7 @@ use crate::models::capabilities as cap_models;
 use crate::processes::{self as rules, Kind, Status, Step};
 
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
-    claims
-        .attrs
-        .get("access")
-        .is_some_and(|v| v.iter().any(|a| a == "admin"))
+    crate::auth::has_attr(claims, "access", "admin")
 }
 
 // ───────────────────────── definitions ─────────────────────────

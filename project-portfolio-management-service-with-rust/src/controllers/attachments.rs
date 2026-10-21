@@ -30,11 +30,7 @@ use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, att
 use crate::models::audit_logs::Model as AuditModel;
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_some_and(|c| {
-        c.attrs
-            .get("access")
-            .is_some_and(|v| v.iter().any(|a| a == "admin"))
-    })
+    super::plan_access::is_admin(caller.claims())
 }
 
 /// `POST /api/attachments` query.

@@ -395,7 +395,7 @@ async fn cosign(
             rules::required_roles()
         )));
     }
-    let holds = caller.claims().is_none_or(|c| {
+    let holds = caller.holds_or_open(|c| {
         c.attrs
             .get("cutover_role")
             .is_some_and(|v| v.iter().any(|r| r.eq_ignore_ascii_case(&role)))

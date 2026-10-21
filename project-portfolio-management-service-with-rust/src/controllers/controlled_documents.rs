@@ -26,10 +26,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
-    claims
-        .attrs
-        .get("access")
-        .is_some_and(|v| v.iter().any(|a| a == "admin"))
+    crate::auth::has_attr(claims, "access", "admin")
 }
 
 /// Documents are read by signed-in people only, whether or not they belong to a plan.

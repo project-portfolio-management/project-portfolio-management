@@ -934,6 +934,34 @@ impl MaybeAuthUser {
     pub fn claims(&self) -> Option<&Claims> {
         self.0.as_ref()
     }
+
+    /// Whether the caller passes `test`, where a route lets **anyone** act when enforcement is off
+    /// (there is no caller to refuse). With enforcement on, no claims is never a pass (CQ-2): the
+    /// guard has already required a token, but one can expire, or its key be retired, between the
+    /// guard and the handler, and that must refuse, not grant.
+    #[must_use]
+    pub fn holds_or_open(&self, test: impl FnOnce(&Claims) -> bool) -> bool {
+        holds_or_open(require_auth(), self.claims(), test)
+    }
+}
+
+/// [`MaybeAuthUser::holds_or_open`] with the enforcement posture passed in. Pure.
+#[must_use]
+pub fn holds_or_open(
+    require_auth: bool,
+    claims: Option<&Claims>,
+    test: impl FnOnce(&Claims) -> bool,
+) -> bool {
+    claims.map_or(!require_auth, test)
+}
+
+/// Whether `claims` carry the attribute `key` with the value `want`.
+#[must_use]
+pub fn has_attr(claims: &Claims, key: &str, want: &str) -> bool {
+    claims
+        .attrs
+        .get(key)
+        .is_some_and(|v| v.iter().any(|a| a == want))
 }
 
 /// The **record-level resource attributes** of a plan for the
@@ -1739,6 +1767,42 @@ mod area_tests {
                 .collect(),
         }
     }
+    /// CQ-2: no claims is a pass only with enforcement off; with it on, a token that expired
+    /// between the guard and the handler is refused, never treated as an administrator.
+    #[test]
+    fn no_claims_passes_only_when_enforcement_is_off() {
+        let admin = |c: &Claims| has_attr(c, "access", "admin");
+        assert!(holds_or_open(false, None, admin));
+        assert!(!holds_or_open(true, None, admin));
+        let a = claims(&[("access", "admin")]);
+        let w = claims(&[("access", "write")]);
+        for on in [true, false] {
+            assert!(holds_or_open(on, Some(&a), admin));
+            assert!(
+                !holds_or_open(on, Some(&w), admin),
+                "a token is judged by its claims"
+            );
+        }
+    }
+
+    /// CQ-2: a route check never treats missing claims as a pass by hand; it goes through
+    /// `holds_or_open`, which knows the enforcement posture.
+    #[test]
+    fn no_controller_treats_missing_claims_as_a_pass() {
+        let needle = format!("claims().{}(", "is_none_or");
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
+        let offenders: Vec<String> = std::fs::read_dir(dir)
+            .expect("read controllers")
+            .map(|e| e.expect("entry").path())
+            .filter(|p| std::fs::read_to_string(p).is_ok_and(|text| text.contains(&needle)))
+            .map(|p| p.display().to_string())
+            .collect();
+        assert!(
+            offenders.is_empty(),
+            "missing claims treated as a pass: {offenders:?}"
+        );
+    }
+
     fn allowed(p: &Policy, c: &Claims, a: Action, area: &str) -> bool {
         let mut r = std::collections::BTreeMap::new();
         r.insert("area".to_string(), vec![area.to_string()]);

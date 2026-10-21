@@ -720,7 +720,7 @@ struct ScheduleBody {
 /// refuse (the deployment's posture for every write); with it on, the token needs
 /// `access=admin` or `scheduling=hard_constraints`.
 pub(crate) fn may_set_hard_constraint(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
+    caller.holds_or_open(|c| {
         let has = |key: &str, want: &str| {
             c.attrs
                 .get(key)

@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Security
 
+- **Missing claims never grant with login on (CQ-2, 2026-10-21).** Nine checks (hard constraints, availability, resource detail, cutover co-signing, milestone sign-off, de-escalation, e-mail deliveries) read "no claims" as a pass so that everyone may act with login off; with login on they would also pass a token that expired or lost its key between the guard and the handler. They now go through `MaybeAuthUser::holds_or_open`, which passes no claims only when enforcement is off; the six `is_admin` copies use one `auth::has_attr`. Unit test of the rule and a source census against the old spelling; the 47 database tests on those routes pass. Not done: the race itself was not reproduced in a request test; the remaining raw attribute reads elsewhere are CQ-7.
+
 - **CSV formula defusing everywhere (CQ-1, 2026-10-21).** Plan export (`/api/bulk` CSV), the auditor evidence pack, timesheet and report CSVs, and the RACI matrix wrote a cell like `=HYPERLINK(…)` as is, so a spreadsheet would run it; only the access review defused. One `src/csv_cell.rs` now writes every CSV cell (the four hand-written escapers are gone, and a unit test fails on a new one), and the plan import strips the prefix so a round trip is exact. Changed behaviour: the access review no longer prefixes a plain number such as `-1`. Not done: CSV the UI builds in the browser was not reviewed; no spreadsheet application was run against the output.
 
 ### Added

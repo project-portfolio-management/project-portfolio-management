@@ -70,19 +70,11 @@ pub fn routes() -> Routes {
 }
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
-        c.attrs
-            .get("access")
-            .is_some_and(|v| v.iter().any(|a| a == "admin"))
-    })
+    caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
 fn has_role(caller: &MaybeAuthUser, role: &str) -> bool {
-    caller.claims().is_none_or(|c| {
-        c.attrs
-            .get("role")
-            .is_some_and(|v| v.iter().any(|r| r == role))
-    })
+    caller.holds_or_open(|c| crate::auth::has_attr(c, "role", role))
 }
 
 async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {

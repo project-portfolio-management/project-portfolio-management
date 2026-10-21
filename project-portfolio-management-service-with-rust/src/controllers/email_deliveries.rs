@@ -195,11 +195,7 @@ async fn list(
     caller: MaybeAuthUser,
     Query(q): Query<ListQuery>,
 ) -> Result<Response> {
-    let admin = caller.claims().is_none_or(|c| {
-        c.attrs
-            .get("access")
-            .is_some_and(|v| v.iter().any(|a| a == "admin"))
-    });
+    let admin = caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"));
     if !admin {
         return Err(Error::NotFound);
     }

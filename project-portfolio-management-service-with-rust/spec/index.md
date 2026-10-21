@@ -444,7 +444,11 @@ enforcement is off, and when enforcement is on with no token verifier. When
 on, any `/api/*` route without a valid token is `401`; the public paths
 `/_health`, `/_ping`, `/api-docs/openapi.json`, `/swagger-ui*` and the calendar
 feeds stay open (via `src/auth.rs::is_public_path`); `/metrics.prom` needs a
-token. Keys/issuer/audience come from
+token. **A handler never reads missing claims as a pass while enforcement is
+on** (CQ-2): a route that lets anyone act with login off asks
+`MaybeAuthUser::holds_or_open`, which passes no claims only when enforcement is
+off, so a token that expires (or whose key is retired) between the guard and the
+handler is refused rather than treated as an administrator. Keys/issuer/audience come from
 `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` (optional URL of the auth-service's published
 key set, e.g. `https://auth…/.well-known/paseto-keys`; set ⇒ fetched over
 HTTP **once at boot** in `App::after_routes` via `auth::init` /

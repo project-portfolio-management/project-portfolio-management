@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **A request with no claims is never treated as an administrator while login is on (CQ-2).** Nine route checks that let everyone act with login off would also have let through a token that expired between the login check and the handler. One rule now decides, and it knows whether login is on. Verified: a unit test, a source census, and the 47 database tests on those routes. **Not done:** the expiry race was not reproduced end to end.
 - **Every CSV export defuses spreadsheet formulas (CQ-1).** Plan export, auditor evidence, timesheets, saved reports and the RACI matrix let a cell such as `=HYPERLINK(…)` through; one shared cell writer now handles every CSV, and plan import reverses it exactly. Verified: unit tests, including a plan whose name is a formula surviving export and re-import, and a test that fails on any new hand-written CSV escaper. **Not done:** CSV built in the browser was not reviewed; no spreadsheet program was opened on the output.
 
 ## 0.2.0 - 2026-10-21

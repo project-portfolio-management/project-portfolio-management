@@ -1641,7 +1641,7 @@ came from grep.
   through each export and finds each defused; a census test fails on a second
   `fn csv_field`.
   **Built 2026-10-21.** `src/csv_cell.rs` (`field`, `read`) replaces four escapers: `bulk.rs`, `visibility.rs` (kept as a re-export for its callers in oversight, timesheets and reports), `access_review.rs`, and a fourth found while building, in `raci.rs`. A plain signed decimal is left as a number; a cell already starting with `'` plus a trigger is prefixed again so the plan import (`decode_csv`) can strip exactly one. Unit tests: every trigger, numbers, the inverse, a plan named as a formula surviving CSV export and import, and a source census that fails on a hand-written `replace('"', "\"\"")`. **Deviation, stated:** the census looks for the quote-doubling idiom, not for every possible escaper; the access review's `-1` is no longer prefixed. **Not done:** browser-built CSV in the UI not reviewed; not checked in a real spreadsheet.
-- [ ] **CQ-2 (S) — One admin check, with the no-claims rule stated.** There are
+- [x] **CQ-2 (S) — One admin check, with the no-claims rule stated.** There are
   eight `is_admin` copies. `milestone_signoffs.rs:123` and
   `deescalation.rs:73,81` (and, per the pass, `cpm.rs`, `cutover.rs`,
   `availability.rs`, `portfolio_resources.rs` and `email_deliveries.rs`) treat
@@ -1653,6 +1653,7 @@ came from grep.
   **Acceptance:** for each route that used a `is_none_or` copy, a request test
   with auth on and no token is refused; a census test fails on a local
   `fn is_admin`.
+  **Built 2026-10-21.** Finding: with login on, the guard (`auth::enforce_request`) already returns 401 without a token, so no claims reaches a handler only when a token expires or its key is retired between the guard and the extractor, a window of milliseconds, in which the nine `is_none_or` checks granted. `MaybeAuthUser::holds_or_open` (pure core `auth::holds_or_open`) passes no claims only with enforcement off, which keeps the login-off behaviour these routes document; `auth::has_attr` replaces the copied attribute test in the six `is_admin` helpers. Unit test of the rule; a census over `src/controllers` fails on `claims().is_none_or(`. **Deviation, stated:** the acceptance's per-route "no token is refused" request test was not added, because the guard's 401 already covers that and the race cannot be produced from a request test; the local `fn is_admin` wrappers remain (one line each, delegating) and are removed with CQ-7, so the census is on the fail-open spelling, not on the wrapper. Owner question §70.1 stays open for the login-off default.
 - [ ] **CQ-3 (M) — Audit writes that cannot be lost silently.** About 220
   `AuditModel::record(..).await.ok()` calls; some audit after `commit()`
   (`controllers/financials.rs:174`). Write the audit inside the write's

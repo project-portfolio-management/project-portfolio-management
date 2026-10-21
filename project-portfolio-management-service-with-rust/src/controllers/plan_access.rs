@@ -41,11 +41,7 @@ fn members_of(row: &plan_access::Model) -> Vec<String> {
 
 /// Whether a set of claims holds `access=admin`.
 pub(crate) fn is_admin(claims: Option<&authentication_verifier::Claims>) -> bool {
-    claims.is_some_and(|c| {
-        c.attrs
-            .get("access")
-            .is_some_and(|v| v.iter().any(|a| a == "admin"))
-    })
+    claims.is_some_and(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
 /// The caller's `clearance` attribute (RG-7): the first value, if any.

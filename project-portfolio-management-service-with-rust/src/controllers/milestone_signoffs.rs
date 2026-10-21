@@ -120,11 +120,7 @@ pub(crate) fn assessment_json(a: &Assessment) -> Value {
 }
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {
-    caller.claims().is_none_or(|c| {
-        c.attrs
-            .get("access")
-            .is_some_and(|v| v.iter().any(|a| a == "admin"))
-    })
+    caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
 #[derive(Debug, Deserialize)]

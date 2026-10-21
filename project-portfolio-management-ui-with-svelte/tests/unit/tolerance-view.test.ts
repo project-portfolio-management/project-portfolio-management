@@ -38,13 +38,14 @@ describe("tolerance words and shapes", () => {
   it("writes each figure in its own unit", () => {
     expect(amountText("time", 1)).toBe("1 day");
     expect(amountText("time", 5)).toBe("5 days");
+    expect(amountText("schedule", 3)).toBe("3 days");
     expect(amountText("cost", 1250)).toBe("12.5%");
     expect(amountText("risk", 20)).toBe("score 20");
     expect(amountText("resources", 30)).toBe("30 points over 100%");
     expect(amountText("time", null)).toBe("");
     expect(dimensionLabel("cost")).toBe("Cost");
     expect(dimensionLabel("other")).toBe("other");
-    expect(DIMENSIONS).toHaveLength(4);
+    expect(DIMENSIONS).toHaveLength(5);
   });
 
   it("converts cost between the percent a person types and the basis points the service stores", () => {

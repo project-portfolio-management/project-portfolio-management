@@ -76,8 +76,12 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
         out.push(format!("reason_kind must be one of {REASONS:?}"));
     }
     match (d.reason_kind, d.tolerance_dimension) {
-        ("tolerance", Some(dim)) if !matches!(dim, "time" | "cost" | "risk" | "resources") => {
-            out.push("tolerance_dimension must be time, cost, risk or resources".to_string());
+        ("tolerance", Some(dim))
+            if !matches!(dim, "time" | "schedule" | "cost" | "risk" | "resources") =>
+        {
+            out.push(
+                "tolerance_dimension must be time, schedule, cost, risk or resources".to_string(),
+            );
         }
         (kind, Some(_)) if kind != "tolerance" => {
             out.push("tolerance_dimension belongs only on a tolerance escalation".to_string());
@@ -239,7 +243,7 @@ mod tests {
         assert!(
             problems(&wrong_dim)
                 .iter()
-                .any(|p| p.contains("time, cost, risk or resources"))
+                .any(|p| p.contains("time, schedule, cost, risk or resources"))
         );
         let dim_on_risk = Draft {
             reason_kind: "risk",

@@ -8,7 +8,7 @@ import { t } from "./i18n.svelte.js";
 
 export const REASONS = ["tolerance", "risk", "issue", "dependency", "decision", "resource", "other"] as const;
 export const OUTCOMES = ["decided", "guidance_given", "rejected"] as const;
-export const DIMENSIONS = ["time", "cost", "risk", "resources"] as const;
+export const DIMENSIONS = ["time", "schedule", "cost", "risk", "resources"] as const;
 /** The shortest written response or reason (the service's rule). */
 export const NOTE_MIN = 10;
 

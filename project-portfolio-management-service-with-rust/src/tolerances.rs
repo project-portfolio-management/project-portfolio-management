@@ -22,8 +22,10 @@ use serde::Serialize;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Dimension {
-    /// Schedule slip.
+    /// Slip against the plan's target date.
     Time,
+    /// Slip against the latest schedule baseline.
+    Schedule,
     /// Budget overrun.
     Cost,
     /// The worst open risk.
@@ -34,13 +36,20 @@ pub enum Dimension {
 
 impl Dimension {
     /// Every dimension, in the order they are shown.
-    pub const ALL: [Self; 4] = [Self::Time, Self::Cost, Self::Risk, Self::Resources];
+    pub const ALL: [Self; 5] = [
+        Self::Time,
+        Self::Schedule,
+        Self::Cost,
+        Self::Risk,
+        Self::Resources,
+    ];
 
     /// The stored and URL token.
     #[must_use]
     pub const fn token(self) -> &'static str {
         match self {
             Self::Time => "time",
+            Self::Schedule => "schedule",
             Self::Cost => "cost",
             Self::Risk => "risk",
             Self::Resources => "resources",
@@ -57,7 +66,7 @@ impl Dimension {
     #[must_use]
     pub const fn unit(self) -> &'static str {
         match self {
-            Self::Time => "calendar_days",
+            Self::Time | Self::Schedule => "calendar_days",
             Self::Cost => "basis_points",
             Self::Risk => "risk_score",
             Self::Resources => "percentage_points",
@@ -68,7 +77,7 @@ impl Dimension {
     #[must_use]
     pub const fn max_limit(self) -> i64 {
         match self {
-            Self::Time => 3_650,
+            Self::Time | Self::Schedule => 3_650,
             Self::Cost => 100_000,
             Self::Risk => 25,
             Self::Resources => 500,
@@ -90,6 +99,9 @@ impl Dimension {
         match self {
             Self::Time => {
                 "calendar days the critical-path forecast finish is after the plan's target_date (zero when on or ahead)"
+            }
+            Self::Schedule => {
+                "calendar days the critical-path forecast finish is after the finish recorded in the plan's latest schedule baseline (zero when on or ahead)"
             }
             Self::Cost => {
                 "basis points the estimate at completion is over the latest approved budget baseline (zero when under)"

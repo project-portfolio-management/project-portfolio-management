@@ -78,7 +78,7 @@ mutation (§10.2).
   `(plan_pid, family)`. A plan with no row for a family inherits the nearest
   ancestor's, resolved on read (migration `m20261020_000080`).
 - **`plan_tolerances`** (built, FR-53) — a plan's limit per dimension: `plan_pid`, `dimension` (CHECK
-  `time`/`cost`/`risk`/`resources`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
+  `time`/`schedule`/`cost`/`risk`/`resources`, widened by `m20261021_000085`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
   `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan
   with no row for a dimension inherits the nearest ancestor's, resolved on read (migration `m20261020_000082`).
 - **`escalations`** and **`escalation_events`** (built, FR-54) — `escalations`: `plan_pid`, `title`, `description?`,

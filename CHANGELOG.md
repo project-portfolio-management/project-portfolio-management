@@ -17,6 +17,13 @@ workflow yet. Dates are 2026.
 
 ### 21 October
 
+- **A fifth tolerance: schedule against the baseline.** `schedule` is the calendar days the forecast finish is after
+  the finish recorded in the plan's latest schedule baseline; `time` is unchanged (slip against the target date). With
+  no baseline it is `unknown`, never green. An escalation can cite it. Verified: one request test (no baseline,
+  on time, slipped, escalation cites it), the tolerance and escalation browser tests, the Welsh page check, unit tests
+  (753). **Not done:** scope, quality and benefits tolerances; comparing cost against anything but the approved budget
+  baseline. Welsh strings machine-written, unreviewed.
+
 - **A task page with its links.** `/plans/[pid]/tasks/[tpid]` (the address the work breakdown already linked to, which
   had no page) shows a task's status, due date, assignee and description, and lets you add and remove its links, such
   as the Jira or Linear issue it is tracked as. The links form is now one component shared with the plan's links page.

@@ -610,14 +610,15 @@ across currencies.
   (`409`); a record plans still follow cannot be deleted (`409`). A record owned by a
   plan the caller cannot read is `404` and absent from lists, and an inherited record
   from such a plan is withheld with a reason.
-- **FR-53 Tolerances.** Every plan can set how far it may drift on four dimensions before it must be
+- **FR-53 Tolerances.** Every plan can set how far it may drift on five dimensions before it must be
   referred upward, and sees how much of each limit is used as **red / amber / green**.
-  `PUT /api/plans/{pid}/tolerances/{dimension}` (`time`, `cost`, `risk`, `resources`; body
+  `PUT /api/plans/{pid}/tolerances/{dimension}` (`time`, `schedule`, `cost`, `risk`, `resources`; body
   `{limit, amber_from_percent?, note?}`), `DELETE` or `POST …/delete` to remove it, `GET /api/plans/{pid}/tolerances`
-  for the four in force, and `GET /api/tolerances?status=&dimension=` for every readable plan with a tolerance,
+  for the five in force, and `GET /api/tolerances?status=&dimension=` for every readable plan with a tolerance,
   worst first. A plan's limit is its own, else the nearest ancestor's (`source: inherited`; resolved on read,
   as for FR-52). **Measured, never entered:** `time` is the calendar days the critical-path forecast finish
-  is after the plan's `target_date`; `cost` is the basis points the estimate at completion is over the latest
+  is after the plan's `target_date`; `schedule` is the calendar days that forecast finish is after the finish
+  recorded in the plan's latest schedule baseline (`unknown`, never green, when there is none); `cost` is the basis points the estimate at completion is over the latest
   approved baseline; `risk` is the highest probability x impact among open and mitigating risks; `resources` is
   the percentage points above 100 that the plan's named, committed people are booked at worst over the next 90 days
   across the plans the caller can read. **Colour:** green below `amber_from_percent` (default 75) of the limit,

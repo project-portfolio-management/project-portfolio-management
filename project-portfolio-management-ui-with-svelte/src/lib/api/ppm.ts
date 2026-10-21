@@ -368,7 +368,7 @@ export type ToleranceStatus = "green" | "amber" | "red" | "unknown" | "not_set";
 
 /** One dimension of a plan's tolerances (`GET /api/plans/{pid}/tolerances`). */
 export interface ToleranceDimension {
-  dimension: "time" | "cost" | "risk" | "resources";
+  dimension: "time" | "schedule" | "cost" | "risk" | "resources";
   unit: string;
   basis: string;
   status: ToleranceStatus;

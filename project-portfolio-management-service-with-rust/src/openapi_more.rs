@@ -662,7 +662,7 @@ fn escalation_paths() -> Value {
     json!({
         "/api/plans/{pid}/escalations": {
             "post": op("escalations", "Raise an escalation",
-                "Body `{title, description?, reason_kind?, tolerance_dimension?, level?, escalated_to?, owner_ref?, respond_by?}`. `reason_kind`: tolerance, risk, issue, dependency, decision, resource, other (default other); `tolerance_dimension` (time, cost, risk, resources) only with `tolerance`. `level` is a level of the escalation path of the governance framework in force for the plan (its own, else the nearest ancestor's); it defaults to the first level, and a level not on the path is 422. With no declared path any level 1 to 9 is allowed. `escalated_to` defaults to the body the path names at that level. The escalation starts `open`. Nothing is notified.",
+                "Body `{title, description?, reason_kind?, tolerance_dimension?, level?, escalated_to?, owner_ref?, respond_by?}`. `reason_kind`: tolerance, risk, issue, dependency, decision, resource, other (default other); `tolerance_dimension` (time, schedule, cost, risk, resources) only with `tolerance`. `level` is a level of the escalation path of the governance framework in force for the plan (its own, else the nearest ancestor's); it defaults to the first level, and a level not on the path is 422. With no declared path any level 1 to 9 is allowed. `escalated_to` defaults to the body the path names at that level. The escalation starts `open`. Nothing is notified.",
                 pid.clone(), &[("200", "The escalation"), ("404", "Unknown plan"), ("422", "A field is wrong, or the level is not on the path")]),
             "get": op("escalations", "A plan's escalations", "Newest first. `?status=` open, acknowledged, resolved, withdrawn, or `live` (open and acknowledged). Each carries `age_days` and `overdue` (a live escalation past `respond_by`).",
                 { let mut p = pid.clone(); p.push(query("status", false, "open, acknowledged, resolved, withdrawn or live")); p }, &[("200", "plan_pid, escalations"), ("404", "Unknown plan"), ("422", "Unknown status")])
@@ -696,11 +696,11 @@ fn tolerance_paths() -> Value {
     let pid = vec![uuid_param("pid")];
     let mut with_dim = pid.clone();
     with_dim.push(json!({"name": "dimension", "in": "path", "required": true,
-        "schema": {"type": "string", "enum": ["time", "cost", "risk", "resources"]}}));
+        "schema": {"type": "string", "enum": ["time", "schedule", "cost", "risk", "resources"]}}));
     json!({
         "/api/plans/{pid}/tolerances": {
             "get": op("tolerances", "The tolerances in force for a plan, with red/amber/green",
-                "One entry per dimension. `time`: calendar days the critical-path forecast finish is after the plan's target_date. `cost`: basis points the estimate at completion is over the latest approved baseline. `risk`: the highest probability x impact among open and mitigating risks. `resources`: percentage points above 100 that the plan's named, committed people are booked at worst in the next 90 days, across the plans the caller can read (so it can differ between callers). The limit is the plan's own, else the nearest ancestor's (`source` own/inherited, `from_plan_pid`; resolved on read). `status`: green below `amber_from_percent` of the limit (default 75), amber from there up to the limit, red beyond it; `unknown` when a limit is set but could not be measured (the `reason` says why: no target date, no baseline, no risks recorded, nobody booked) and never shown as green; `not_set` when there is no limit here or above. `overall` is the worst, with unknown ranking above green.",
+                "One entry per dimension. `time`: calendar days the critical-path forecast finish is after the plan's target_date. `schedule`: calendar days the forecast finish is after the finish recorded in the plan's latest schedule baseline (unknown with no baseline, so it is never green by default). `cost`: basis points the estimate at completion is over the latest approved baseline. `risk`: the highest probability x impact among open and mitigating risks. `resources`: percentage points above 100 that the plan's named, committed people are booked at worst in the next 90 days, across the plans the caller can read (so it can differ between callers). The limit is the plan's own, else the nearest ancestor's (`source` own/inherited, `from_plan_pid`; resolved on read). `status`: green below `amber_from_percent` of the limit (default 75), amber from there up to the limit, red beyond it; `unknown` when a limit is set but could not be measured (the `reason` says why: no target date, no baseline, no risks recorded, nobody booked) and never shown as green; `not_set` when there is no limit here or above. `overall` is the worst, with unknown ranking above green.",
                 pid.clone(), &[("200", "plan_pid, overall, dimensions"), ("404", "Unknown plan")])
         },
         "/api/plans/{pid}/tolerances/escalate": {
@@ -710,7 +710,7 @@ fn tolerance_paths() -> Value {
         },
         "/api/plans/{pid}/tolerances/{dimension}": {
             "put": op("tolerances", "Set the plan's own tolerance for one dimension",
-                "Body `{limit, amber_from_percent?, note?}`. Limits: time 0-3650 days, cost 0-100000 basis points, risk 1-25 (a score), resources 0-500 percentage points; `amber_from_percent` 1-99 (default 75). Zero is a zero-tolerance limit: any slip is red. Replaces an earlier limit for the same dimension. Answers like GET.",
+                "Body `{limit, amber_from_percent?, note?}`. Limits: time and schedule 0-3650 days, cost 0-100000 basis points, risk 1-25 (a score), resources 0-500 percentage points; `amber_from_percent` 1-99 (default 75). Zero is a zero-tolerance limit: any slip is red. Replaces an earlier limit for the same dimension. Answers like GET.",
                 with_dim.clone(), &[("200", "The tolerances now in force"), ("404", "Unknown plan"), ("422", "Unknown dimension or a value out of range")]),
             "delete": op("tolerances", "Remove the plan's own tolerance for one dimension",
                 "The plan then inherits the nearest ancestor's, or has none. Answers like GET.",
@@ -724,7 +724,7 @@ fn tolerance_paths() -> Value {
         "/api/tolerances": {
             "get": op("tolerances", "Every plan with a tolerance, worst first",
                 "The plans the caller can read that have at least one tolerance (their own or inherited), each as in the per-plan answer, red first, then amber, unknown, green. `?status=` keeps one overall colour; `?dimension=` keeps plans with a limit on that dimension. At most 200 plans are measured per request (`truncated` says if more existed).",
-                vec![query("status", false, "green, amber, red, unknown or not_set"), query("dimension", false, "time, cost, risk or resources")],
+                vec![query("status", false, "green, amber, red, unknown or not_set"), query("dimension", false, "time, schedule, cost, risk or resources")],
                 &[("200", "plans, truncated"), ("422", "Unknown status or dimension")])
         }
     })

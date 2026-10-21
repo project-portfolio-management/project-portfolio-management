@@ -73,6 +73,7 @@ test("a plan's tolerances can be set and removed, and an unmeasurable one says w
       timeLimit === null
         ? dimension("time", {})
         : dimension("time", { status: "red", limit: timeLimit, measured: 9, usage_percent: 180, source: "own", amber_from_percent: 75 }),
+      dimension("schedule", { status: "unknown", limit: 5, measured: null, reason: "the plan has no schedule baseline to hold the forecast against", source: "own", amber_from_percent: 75 }),
       dimension("cost", { status: "unknown", limit: 1000, measured: null, reason: "there is no approved budget baseline", source: "inherited", from_plan_pid: "p-prog" }),
       dimension("risk", {}),
       dimension("resources", {}),
@@ -90,6 +91,9 @@ test("a plan's tolerances can be set and removed, and an unmeasurable one says w
   });
   await page.goto(`/en-001/plans/${PID}/tolerances`);
   await expect(page.getByRole("heading", { name: "Tolerances: Apollo" })).toBeVisible();
+  const schedule = page.getByRole("region", { name: /Schedule against baseline/ });
+  await expect(schedule).toContainText("not measurable");
+  await expect(schedule).toContainText("no schedule baseline");
   const cost = page.getByRole("region", { name: /Cost/ });
   await expect(cost).toContainText("not measurable");
   await expect(cost).toContainText("there is no approved budget baseline");

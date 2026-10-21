@@ -1,7 +1,7 @@
 //! Project tolerances: how far a plan may drift on time, cost, risk and resources, and a red/amber/green view of
 //! how much of each limit is used. Rules in [`crate::tolerances`]; inheritance in [`crate::inherit`].
 //!
-//! * `GET /api/plans/{pid}/tolerances`: the four dimensions in force for a plan (its own limit, else the nearest
+//! * `GET /api/plans/{pid}/tolerances`: the five dimensions in force for a plan (its own limit, else the nearest
 //!   ancestor's), each with what was measured, how it was measured, and the colour.
 //! * `PUT /api/plans/{pid}/tolerances/{dimension}`: set the plan's own limit for one dimension.
 //! * `DELETE` (and a POST twin) `/api/plans/{pid}/tolerances/{dimension}`: remove it, so the plan inherits again.
@@ -24,7 +24,9 @@ use super::governance::find_item;
 use super::{db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::inherit::{Source, resolve};
-use crate::models::_entities::{allocations, escalations, plan_tolerances, plans, risks};
+use crate::models::_entities::{
+    allocations, escalations, plan_tolerances, plans, risks, schedule_baselines,
+};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::tolerances::{self as rules, Dimension, Status};
@@ -55,6 +57,19 @@ impl Measure {
     }
 }
 
+/// The critical-path forecast finish of the plan, or why there is none.
+async fn forecast_finish(ctx: &AppContext, plan: Uuid) -> Result<Result<NaiveDate, Measure>> {
+    let net = super::cpm::load_network(ctx, plan).await?;
+    let Ok(result) = net.analyze(0) else {
+        return Ok(Err(Measure::none(
+            "the schedule has a dependency cycle, so there is no forecast finish",
+        )));
+    };
+    Ok(result
+        .project_finish
+        .ok_or_else(|| Measure::none("no task could be scheduled, so there is no forecast finish")))
+}
+
 async fn measure_time(ctx: &AppContext, plan: &plans::Model) -> Result<Measure> {
     let target = plan
         .to_plan()
@@ -66,16 +81,34 @@ async fn measure_time(ctx: &AppContext, plan: &plans::Model) -> Result<Measure> 
             "the plan has no target_date to hold the forecast against",
         ));
     };
-    let net = super::cpm::load_network(ctx, plan.pid).await?;
-    let Ok(result) = net.analyze(0) else {
+    Ok(match forecast_finish(ctx, plan.pid).await? {
+        Ok(finish) => Measure::of(rules::days_late(finish, target)),
+        Err(none) => none,
+    })
+}
+
+/// Slip against the finish the plan's latest schedule baseline recorded.
+async fn measure_schedule(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
+    let latest = schedule_baselines::Entity::find()
+        .filter(schedule_baselines::Column::PlanPid.eq(plan))
+        .order_by_desc(schedule_baselines::Column::Version)
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let Some(baseline) = latest else {
         return Ok(Measure::none(
-            "the schedule has a dependency cycle, so there is no forecast finish",
+            "the plan has no schedule baseline to hold the forecast against",
         ));
     };
-    Ok(result.project_finish.map_or_else(
-        || Measure::none("no task could be scheduled, so there is no forecast finish"),
-        |finish| Measure::of(rules::days_late(finish, target)),
-    ))
+    let Some(baseline_finish) = baseline.project_finish else {
+        return Ok(Measure::none(
+            "the latest schedule baseline could not place a finish date",
+        ));
+    };
+    Ok(match forecast_finish(ctx, plan).await? {
+        Ok(finish) => Measure::of(rules::days_late(finish, baseline_finish)),
+        Err(none) => none,
+    })
 }
 
 async fn measure_cost(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
@@ -183,7 +216,7 @@ async fn rows_for(
         .collect())
 }
 
-/// The four dimensions in force for one plan, measured and coloured.
+/// The five dimensions in force for one plan, measured and coloured.
 async fn picture(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -236,6 +269,7 @@ async fn picture(
         };
         let measure = match dim {
             Dimension::Time => measure_time(ctx, plan).await?,
+            Dimension::Schedule => measure_schedule(ctx, plan.pid).await?,
             Dimension::Cost => measure_cost(ctx, plan.pid).await?,
             Dimension::Risk => measure_risk(ctx, plan.pid).await?,
             Dimension::Resources => measure_resources(allocs, plan.pid, today),
@@ -299,7 +333,7 @@ struct SetBody {
 fn dimension_of(raw: &str) -> Result<Dimension> {
     Dimension::parse(raw).ok_or_else(|| {
         unprocessable(&format!(
-            "dimension must be one of time, cost, risk, resources, not {raw:?}"
+            "dimension must be one of time, schedule, cost, risk, resources, not {raw:?}"
         ))
     })
 }

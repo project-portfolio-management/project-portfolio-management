@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — schedule tolerance (FR-53, 2026-10-21)
+
+The tolerance pages and the escalation form know the `schedule` dimension ("Schedule against baseline"). Welsh machine-written, unreviewed.
+
 ### Added — task page with links (LT-8, 2026-10-21)
 
 `/plans/[pid]/tasks/[tpid]` shows a task and its links (shared `LinksPanel` component). Not built: editing the task, links on the board. Welsh machine-written, unreviewed.

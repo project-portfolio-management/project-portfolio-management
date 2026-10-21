@@ -8,7 +8,7 @@ import { t } from "./i18n.svelte.js";
 
 export type DimensionKey = ToleranceDimension["dimension"];
 
-export const DIMENSIONS: readonly DimensionKey[] = ["time", "cost", "risk", "resources"];
+export const DIMENSIONS: readonly DimensionKey[] = ["time", "schedule", "cost", "risk", "resources"];
 
 /** Worst first, the order the board sorts in. */
 export const STATUS_ORDER: readonly ToleranceStatus[] = ["red", "amber", "unknown", "green", "not_set"];
@@ -34,7 +34,9 @@ export const STATUS_TEXT: Record<ToleranceStatus, string> = {
 export function dimensionLabel(d: string): string {
   return d === "time"
     ? t("l.tolerance.time")
-    : d === "cost"
+    : d === "schedule"
+      ? t("l.tolerance.schedule")
+      : d === "cost"
       ? t("l.tolerance.cost")
       : d === "risk"
         ? t("l.tolerance.risk")
@@ -46,7 +48,7 @@ export function dimensionLabel(d: string): string {
 /** A figure in the dimension's own unit: "5 days", "12.5%", "score 20", "30 points". */
 export function amountText(d: string, value: number | null | undefined): string {
   if (value === null || value === undefined) return "";
-  if (d === "time") return value === 1 ? t("l.tolerance.day_one", { n: value }) : t("l.tolerance.day_other", { n: value });
+  if (d === "time" || d === "schedule") return value === 1 ? t("l.tolerance.day_one", { n: value }) : t("l.tolerance.day_other", { n: value });
   if (d === "cost") return `${value / 100}%`;
   if (d === "risk") return t("l.tolerance.score", { n: value });
   return t("l.tolerance.points", { n: value });
@@ -66,7 +68,9 @@ export function fromApiLimit(d: string, stored: number): number {
 export function limitFieldLabel(d: string): string {
   return d === "time"
     ? t("l.tolerance.field_time")
-    : d === "cost"
+    : d === "schedule"
+      ? t("l.tolerance.field_schedule")
+      : d === "cost"
       ? t("l.tolerance.field_cost")
       : d === "risk"
         ? t("l.tolerance.field_risk")

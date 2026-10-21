@@ -211,3 +211,54 @@ async fn a_project_has_tolerances_it_sets_or_inherits_shown_as_red_amber_green()
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn schedule_slip_is_held_against_the_latest_schedule_baseline() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Baselined" })).await.json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let a: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({ "title": "A", "start_date": "2026-11-02", "duration_days": 5 })).await.json();
+        let b: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({ "title": "B", "duration_days": 5 })).await.json();
+        request
+            .post("/api/dependencies")
+            .json(&json!({ "predecessor_pid": a["pid"], "successor_pid": b["pid"] }))
+            .await
+            .assert_status_ok();
+        let picture = || async { request.get(&format!("/api/plans/{p}/tolerances")).await.json::<Value>() };
+
+        // A limit with no baseline is unknown, never green, and says why.
+        request.put(&format!("/api/plans/{p}/tolerances/schedule")).json(&json!({ "limit": 5 })).await.assert_status_ok();
+        let before = picture().await;
+        let s = dim(&before, "schedule");
+        assert_eq!(s["status"], "unknown");
+        assert!(s["reason"].as_str().is_some_and(|r| r.contains("no schedule baseline")));
+
+        // Baseline the plan, then make the work longer: the forecast finish moves past the baselined one.
+        request.post(&format!("/api/plans/{p}/schedule-baselines")).json(&json!({ "reason": "kickoff" })).await.assert_status_ok();
+        let on_time = picture().await;
+        assert_eq!(dim(&on_time, "schedule")["measured"], 0);
+        assert_eq!(dim(&on_time, "schedule")["status"], "green");
+
+        request
+            .put(&format!("/api/plans/{p}/tasks/{}/schedule", b["pid"].as_str().expect("pid")))
+            .json(&json!({ "duration_days": 15 }))
+            .await
+            .assert_status_ok();
+        let late = picture().await;
+        let s = dim(&late, "schedule");
+        assert!(s["measured"].as_i64().is_some_and(|d| d >= 10), "ten more business days: {s}");
+        assert_eq!(s["status"], "red");
+        assert_eq!(late["escalation_needed"], true);
+
+        // The escalation can cite the dimension.
+        request
+            .post(&format!("/api/plans/{p}/escalations"))
+            .json(&json!({ "title": "Slipped past the baseline", "reason_kind": "tolerance", "tolerance_dimension": "schedule" }))
+            .await
+            .assert_status_ok();
+    })
+    .await;
+}

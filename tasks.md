@@ -1686,6 +1686,7 @@ came from grep.
   rather than 200 with empty data.
   **Acceptance:** a test with the lookup forced to fail sees 503 and the
   metric.
+  **Progress 2026-10-21 (not ticked).** Found while building: `privacy_mw` **failed open**: `if let Ok(Some(row))` skipped the check on a lookup error, so a non-member's request reached the handler. Now `503 unavailable`. `fail_closed()` logs and counts (`visibility_lookup_failed_total`) at all five fail-closed sites (guard: marks, privacy; `hidden_plans`: marks, privacy; `grant_subs`; `readable_plans`). Database test `requests::privacy_lookup_failure` (table renamed for one request ⇒ 503, counted, then 200). **Still to do:** `hidden_plans` and `readable_plans` still answer a set, so an aggregate under a fault is 200 with less, not 503; changing that means a `Result` through 57 callers.
 - [ ] **CQ-7 (M) — One set of controller helpers.** Move `find_plan` (7
   copies), `find_task` (4), `db_err` (26), `unprocessable` (40) and UUID
   parsing (17) into `controllers/mod.rs`. While merging, check that every copy

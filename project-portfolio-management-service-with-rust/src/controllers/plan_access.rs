@@ -39,6 +39,16 @@ fn members_of(row: &plan_access::Model) -> Vec<String> {
     serde_json::from_value(row.members.clone()).unwrap_or_default()
 }
 
+/// Record that a visibility lookup failed and is being answered by hiding (CQ-6): an error log naming
+/// the lookup, and `visibility_lookup_failed_total`. Failing closed stays the rule; failing silently
+/// does not, because a database fault would otherwise look like an empty portfolio.
+fn fail_closed(lookup: &'static str, error: &sea_orm::DbErr) {
+    crate::metrics::Metrics::global()
+        .visibility_lookup_failed_total
+        .inc();
+    tracing::error!(lookup, %error, "visibility lookup failed; hiding what could not be checked");
+}
+
 /// Whether a set of claims holds `access=admin`.
 pub(crate) fn is_admin(claims: Option<&authentication_verifier::Claims>) -> bool {
     claims.is_some_and(|c| crate::auth::has_attr(c, "access", "admin"))
@@ -102,14 +112,18 @@ pub(crate) async fn grant_subs(
     if pids.is_empty() {
         return out;
     }
-    let Ok(rows) = grants::Entity::find()
+    let rows = match grants::Entity::find()
         .filter(grants::Column::PlanPid.is_in(pids.to_vec()))
         .filter(grants::Column::RevokedAt.is_null())
         .filter(grants::Column::ExpiresAt.gt(chrono::Utc::now()))
         .all(&ctx.db)
         .await
-    else {
-        return out;
+    {
+        Ok(rows) => rows,
+        Err(error) => {
+            fail_closed("break_glass_grants", &error);
+            return out;
+        }
     };
     for g in rows {
         out.entry(g.plan_pid).or_default().push(g.sub);
@@ -127,17 +141,25 @@ pub(crate) async fn hidden_plans(
         return HashSet::new();
     }
     // Hidden by handling mark (RG-7): applies to everyone, administrators included.
-    let Ok(by_mark) = mark_hidden(ctx, Some(pids), caller).await else {
-        return pids.iter().copied().collect();
+    let by_mark = match mark_hidden(ctx, Some(pids), caller).await {
+        Ok(hidden) => hidden,
+        Err(error) => {
+            fail_closed("handling_marks", &error);
+            return pids.iter().copied().collect();
+        }
     };
-    let Ok(rows) = plan_access::Entity::find()
+    let rows = match plan_access::Entity::find()
         .filter(plan_access::Column::PlanPid.is_in(pids.to_vec()))
         .filter(plan_access::Column::Private.eq(true))
         .all(&ctx.db)
         .await
-    else {
-        // Fail closed on a lookup error: hide what we could not check.
-        return pids.iter().copied().collect();
+    {
+        Ok(rows) => rows,
+        Err(error) => {
+            // Fail closed on a lookup error: hide what we could not check.
+            fail_closed("plan_access_settings", &error);
+            return pids.iter().copied().collect();
+        }
     };
     let admin = is_admin(caller.claims());
     // A live break-glass grant makes the grantee a temporary member for visibility (RG-10).
@@ -167,13 +189,17 @@ pub(crate) async fn readable_plans(
     if pids.is_empty() {
         return HashSet::new();
     }
-    let Ok(rows) = plans::Entity::find()
+    let rows = match plans::Entity::find()
         .filter(plans::Column::Pid.is_in(pids.to_vec()))
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-    else {
-        return HashSet::new();
+    {
+        Ok(rows) => rows,
+        Err(error) => {
+            fail_closed("readable_plans", &error);
+            return HashSet::new();
+        }
     };
     let hidden = hidden_plans(ctx, pids, caller).await;
     rows.into_iter()
@@ -551,8 +577,9 @@ mod path_tests {
 }
 
 /// The guard layer: a request addressed to a private plan by a non-member is
-/// `404` (existence is not disclosed). Every other request passes untouched,
-/// and a lookup failure fails **closed** for a private plan only.
+/// `404` (existence is not disclosed). Every other request passes untouched.
+/// A failed privacy lookup is `503` for every plan, since whether the plan is
+/// private is the thing that could not be checked (CQ-6).
 pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next) -> AxumResponse {
     let mut label: Option<String> = None;
     if let Some(plan_pid) = plan_pid_of(req.uri().path()) {
@@ -566,7 +593,10 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
             let mark = match &stored {
                 Ok(v) => v.first().map(|(_, m)| m.clone()),
                 // Could not check: say nothing is there.
-                Err(_) => Some(scheme.levels().last().cloned().unwrap_or_default()),
+                Err(error) => {
+                    fail_closed("handling_marks", error);
+                    Some(scheme.levels().last().cloned().unwrap_or_default())
+                }
             };
             if stored.is_err() || !scheme.can_see(mark.as_deref(), clearance.as_deref()) {
                 return (
@@ -582,6 +612,19 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
             .filter(plan_access::Column::Private.eq(true))
             .one(&ctx.db)
             .await;
+        // Could not tell whether the plan is private: refuse rather than pass (CQ-6). This
+        // used to fall through to the handler, which a non-member must not reach.
+        if let Err(error) = &private {
+            fail_closed("plan_access_settings", error);
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                axum::Json(serde_json::json!({
+                    "error": "unavailable",
+                    "description": "could not check who may see this plan; try again",
+                })),
+            )
+                .into_response();
+        }
         if let Ok(Some(row)) = private {
             let claims = crate::auth::request_claims(req.headers()).await.ok();
             let sub = claims.as_ref().map(|c| c.sub.as_str());

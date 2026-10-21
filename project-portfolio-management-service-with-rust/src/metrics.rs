@@ -86,6 +86,10 @@ pub struct Metrics {
     /// Audit rows that could not be written for a write that was kept (CQ-3). Any rise is a
     /// gap in the audit trail and should page someone.
     pub audit_write_failed_total: Counter,
+    /// Visibility lookups (privacy, handling marks, break-glass grants) that failed and were
+    /// answered by hiding what could not be checked (CQ-6). Any rise means people are seeing less
+    /// than they should, and why is in the error log.
+    pub visibility_lookup_failed_total: Counter,
 
     /// HTTP requests handled, labeled by `method`, `path`, and `status`.
     pub http_requests_total: IntCounterVec,
@@ -233,6 +237,12 @@ impl Metrics {
         ))
         .expect("static counter opts are always valid");
 
+        let visibility_lookup_failed_total = Counter::with_opts(Opts::new(
+            "visibility_lookup_failed_total",
+            "Visibility lookups that failed and were answered by hiding (fail closed).",
+        ))
+        .expect("static counter opts are always valid");
+
         let http_requests_total = IntCounterVec::new(
             Opts::new(
                 "http_requests_total",
@@ -248,6 +258,7 @@ impl Metrics {
             Box::new(plan_deleted_total.clone()),
             Box::new(plan_merged_total.clone()),
             Box::new(audit_write_failed_total.clone()),
+            Box::new(visibility_lookup_failed_total.clone()),
         ] {
             registry
                 .register(collector)
@@ -265,6 +276,7 @@ impl Metrics {
             plan_deleted_total,
             plan_merged_total,
             audit_write_failed_total,
+            visibility_lookup_failed_total,
             http_requests_total,
             flow_efficiency: flow.efficiency,
             flow_cycle_time_p85_days: flow.cycle_time_p85_days,

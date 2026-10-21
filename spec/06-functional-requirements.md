@@ -536,8 +536,11 @@ across currencies.
   duplicate checks omit it. Every cross-plan aggregate loads through
   one shared `HiddenScope`, so a hidden plan contributes to no total,
   list, ranking or count; the admin-only bulk reads stay full and
-  answer `403` to others. A failed lookup fails closed for private
-  plans only.
+  answer `403` to others. A failed lookup never fails open: when the
+  guard cannot tell whether a plan is private it answers `503`
+  (`unavailable`), and an aggregate hides what it could not check;
+  either way the failure is logged and counted in
+  `visibility_lookup_failed_total` (CQ-6).
 - **FR-46 Uniform paging and task `include` (RM-12b).** Every `GET`
   answering `200` with a bare JSON array pages: `?limit=` (default and
   ceiling 500), `?offset=` (above 10 000 is `400`), headers

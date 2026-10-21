@@ -1760,13 +1760,14 @@ came from grep.
   **Acceptance:** CI green with the machete job; `pnpm-lock.yaml` has one
   `svelte-headless`.
   **Progress 2026-10-21 (not ticked).** Service: `regex`, `include_dir`, `futures-util`, sea-orm `sqlx-sqlite` and the dev `sha2` removed; clippy with all features and the unit tests pass. UI: the five unused direct picker pins removed; check, vitest, Playwright and build pass. **Correction while building:** `@lilydesignsystem/themes` looked unused to a grep of `src` but is served through the `static/assets/themes` symlink; removing it broke a test, so it stays. **Still to do:** a `cargo machete` CI job; one `svelte-headless` (needs a `svelte-picker-bar` release with current pickers, which is upstream); a decision on `arbitrary_precision`.
-- [ ] **CQ-17 (S) — UI loads run once per change.**
+- [x] **CQ-17 (S) — UI loads run once per change.**
   `calendar/+page.svelte:40,112`, `plans/[pid]/flow/+page.svelte:65,223` and
   `plans/[pid]/board/+page.svelte:71` fetch both from an `$effect` and from the
   handler. Keep one, guard with a request token so a late answer cannot
   overwrite a newer one, and clear `error` on success. Run the board's six
   independent awaits with `Promise.all`.
   **Acceptance:** a Playwright test counts one request per filter change.
+  **Built 2026-10-21.** Calendar and flow: the effect passes the filter to `load(filter)` (so it is tracked), the handler only sets it, a `latest` counter drops stale answers, `error` clears on success. Board: the effect tracked nothing (no double load there); its reads now run as `Promise.all` of four, then of two. `tests/e2e/load-once.spec.ts` (calendar, flow) counts requests; checked that it fails (3, not 2) with the old handler call restored. Full check, vitest and Playwright pass.
 - [ ] **CQ-18 (M) — Param pages follow the URL.** 27 pages load in `onMount`,
   and five hold a non-reactive `pid` (`plans/[pid]/+page.svelte:19` links to
   other plans). Move the loading into `+page.ts` `load`, or key it on a

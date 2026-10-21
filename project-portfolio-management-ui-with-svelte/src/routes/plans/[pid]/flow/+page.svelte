@@ -48,22 +48,28 @@
   let windowDays = $state(60);
   let error = $state<string | null>(null);
 
-  async function load() {
-    error = null;
+  // The effect re-runs when `windowDays` changes, so the window picker needs no load of its own
+  // (CQ-17); a late answer for an older window is dropped rather than shown over a newer one.
+  let latest = 0;
+  async function load(days: number) {
+    const mine = ++latest;
     try {
-      [analysis, aging, constraints, flow, cfd] = await Promise.all([
+      const answers = await Promise.all([
         tba.planTimeAnalysis(pid),
         tba.agingWip(pid),
         tba.constraints(pid),
-        tba.flow(pid, windowDays),
-        tba.cumulativeFlow(pid, windowDays),
+        tba.flow(pid, days),
+        tba.cumulativeFlow(pid, days),
       ]);
+      if (mine !== latest) return;
+      [analysis, aging, constraints, flow, cfd] = answers;
+      error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.flow.could_not_load_flow_data");
+      if (mine === latest) error = err instanceof Error ? err.message : t("p.plans.pid.flow.could_not_load_flow_data");
     }
   }
   $effect(() => {
-    void load();
+    void load(windowDays);
   });
 
   const sle = $derived(analysis?.service_level_expectation ?? null);
@@ -222,7 +228,6 @@
     value={String(windowDays)}
     onchange={(event) => {
       windowDays = Number.parseInt(event.currentTarget.value, 10);
-      void load();
     }}
   >
     <option value="30">{t("p.plans.pid.flow.30_calendar_days")}</option>

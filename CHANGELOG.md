@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Changing a filter on the delivery calendar or the flow page sends its requests once, not twice (CQ-17).** A slower, older answer can no longer replace a newer one, and the sprint board loads its parts in parallel. Verified: browser tests that count requests.
 - **Unused dependencies removed (CQ-16).** Three Rust crates and SQLite support in the service, and five UI picker packages that nothing imported. Verified: clippy and every UI gate. **Not done:** the UI still installs three versions of one Lily library through `svelte-picker-bar`; no unused-dependency check in CI.
 - **Creating or changing a plan no longer blocks a server thread while the search index saves (CQ-10).** Verified: the database suite. **Not done:** not measured under load.
 - **No values formatted into SQL; no database text in error bodies (CQ-12).** Lock keys and the retention cut-off are bound parameters, and the data-subject tool checks its table and column names and stops showing database messages. None was exploitable before; the pattern is gone. Verified: unit tests and the database suites.

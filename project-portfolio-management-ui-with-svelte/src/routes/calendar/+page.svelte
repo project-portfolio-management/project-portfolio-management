@@ -30,15 +30,22 @@
     today = anchorDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   });
 
-  async function load() {
+  // The effect re-runs when `kind` changes, so the filter needs no load of its own (CQ-17); a
+  // late answer for an older filter is dropped rather than shown over a newer one.
+  let latest = 0;
+  async function load(filter: string) {
+    const mine = ++latest;
     try {
-      calendar = await ppm.milestoneCalendar(kind || undefined);
+      const result = await ppm.milestoneCalendar(filter || undefined);
+      if (mine !== latest) return;
+      calendar = result;
+      error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      if (mine === latest) error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   }
   $effect(() => {
-    void load();
+    void load(kind);
   });
 
   const events = $derived<CalendarEvent[]>(
@@ -111,7 +118,6 @@
       value={kind}
       onchange={(event) => {
         kind = event.currentTarget.value;
-        void load();
       }}
     >
       <option value="">{t("p.calendar.all")}</option>

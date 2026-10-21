@@ -50,19 +50,27 @@
 
   async function load() {
     try {
-      const listed = await ppm.listTasks(pid);
+      // Independent reads in parallel, not one after another (CQ-17).
+      const [listed, sprintList, standupNow, velocityNow] = await Promise.all([
+        ppm.listTasks(pid),
+        ppm.listSprints(pid),
+        ppm.standup(pid),
+        ppm.velocity(pid),
+      ]);
       tasks = listed.tasks;
       shownOf = listed.truncated ? { shown: listed.tasks.length, total: listed.total ?? listed.tasks.length } : null;
-      sprints = await ppm.listSprints(pid);
-      standup = await ppm.standup(pid);
-      velocity = await ppm.velocity(pid);
+      sprints = sprintList;
+      standup = standupNow;
+      velocity = velocityNow;
       // Default to the latest sprint so the burndown shows up unprompted.
       if (!selectedSprint && sprints.length > 0) {
         selectedSprint = sprints[0]?.pid ?? "";
       }
       if (selectedSprint) {
-        burndown = await ppm.burndown(pid, selectedSprint);
-        notes = await ppm.listNotes(pid, selectedSprint);
+        [burndown, notes] = await Promise.all([
+          ppm.burndown(pid, selectedSprint),
+          ppm.listNotes(pid, selectedSprint),
+        ]);
       }
     } catch (err) {
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");

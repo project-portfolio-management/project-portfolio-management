@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — a filter change loads once, and a late answer cannot win (CQ-17, 2026-10-21)
+
+The delivery calendar (`/calendar`) and the flow page (`/plans/[pid]/flow`) loaded both from an `$effect` that tracked the filter and from the filter's change handler, so each change sent every request twice and the two could land out of order. The handler call is gone, an older answer is dropped when a newer one is on its way, and the error clears on success. The sprint board's six reads run in two parallel batches instead of one after another. `tests/e2e/load-once.spec.ts` counts the requests per change (and fails, 3 for 2, with the old handler call put back). Not done: the other pages that load in `onMount` were not reviewed for the same race (CQ-18, CQ-20).
+
 ### Removed — unused Lily picker pins (CQ-16, 2026-10-21)
 
 `svelte-link-picker`, `svelte-locale-picker`, `svelte-search-picker`, `svelte-text-size-picker` and `svelte-theme-picker` were direct dependencies that no file imports: the pickers on screen come through `svelte-picker-bar`, which carries its own (older) copies, so the pins only made the bundle look newer than it is. `svelte-headless` stays (a peer of the grid, calendar, Gantt and board) and `themes` stays (`static/assets/themes` links into it). Verified: check, vitest, Playwright, build. Not done: the lockfile still resolves three `svelte-headless` versions, because `svelte-picker-bar` 0.4.0 pins older pickers; a newer picker-bar would collapse them.

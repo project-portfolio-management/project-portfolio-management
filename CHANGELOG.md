@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **A remaining English question in the objectives view is translated, and a test now catches literal text in browser dialogs (CQ-23, part).** Welsh machine-written, unreviewed.
 - **Two earned-value snapshots at the same moment no longer fail (CQ-11, part), and two lists make one query instead of one per row.** Verified: a request test that sends two snapshots at once, and the database suite. **Not done:** three more places the research pass named were not reviewed.
 - **Documents brought back in line with the code (CQ-25).** Corrected: the claim that link routes skip the private-plan check (they do not; a test now proves it), that change requests are not built, that no load test is published, that the director pack, escalation and critical-chain work is unbuilt, that the backup plan and DPIA are open, the UI client's "13 locales" header, and the UI package's old name. `operations/deployment.md` now lists every scheduled task. Verified: the link checker and a unit test.
 - **Opening a duplicate from a plan page now shows that plan (CQ-18).** It used to keep the first plan on screen under the new address. Verified: a browser test that fails on the old page. **Not done:** 25 other plan sub-pages have the same pattern, unreviewed, though none links to another plan.

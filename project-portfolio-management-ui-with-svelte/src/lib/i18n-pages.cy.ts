@@ -2073,6 +2073,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.MilestoneCard.could_not_load_the_history": "Methu llwytho'r hanes",
   "c.ObjectiveCard.that_did_not_work": "Ni weithiodd hynny",
   "c.ObjectiveCard.delete_the_objective_and_its": "Dileu'r amcan “{title}” a'i ganlyniadau allweddol?",
+  "c.ObjectiveCard.delete_the_key_result": "Dileu'r canlyniad allweddol “{title}”?",
   "c.RaciMatrix.accountable_moved_from_to_a": "Symudwyd Atebol o {shortRef} i {shortRef2}: dim ond un sydd gan dasg.",
   "c.RiskInputs.could_not_load_the_plan": "Methu llwytho tasgau'r cynllun",
   "c.RiskInputs.could_not_save": "Methu cadw",

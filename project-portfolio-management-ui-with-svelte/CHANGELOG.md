@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — a key result's delete question in the reader's language (CQ-23, 2026-10-21)
+
+`ObjectiveCard` asked `Delete “…”?` in English whatever the locale; it now uses `c.ObjectiveCard.delete_the_key_result` (Welsh machine-written, unreviewed). The catalogue test walks only template text, so it could not see a dialog's argument; a new check fails on any `confirm`, `alert` or `prompt` called with a literal (it found this one when the old line was put back). Not done: the native dialogs are still native (no Lily dialog); unused catalogue keys and the `as never` key casts were not touched.
+
 ### Fixed — the plan page follows a link to another plan (CQ-18, 2026-10-21)
 
 Following a "Potential duplicates" link from `/plans/A` to `/plans/B` reuses the page, which had read the plan id once and loaded in `onMount`, so plan A stayed on screen under plan B's address. The plan page, its edit page, the sprint board and the flow page now take the id reactively and reload when it changes (the board also forgets the last plan's sprint; the edit form is rebuilt). `tests/e2e/plan-navigation.spec.ts` follows a duplicate link and expects the second plan; it fails on the old page. Not done: 25 other pages under a `[pid]` route still load in `onMount`; none of them links to another plan of the same route, which is why they were left, and they were not tested.

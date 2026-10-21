@@ -43,6 +43,16 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/** The `.ts` source files under `dir`, the catalogues themselves left out. */
+function walkTs(dir: string, out: string[] = []): string[] {
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f);
+    if (statSync(p).isDirectory()) walkTs(p, out);
+    else if (p.endsWith(".ts") && !/i18n/.test(f)) out.push(p);
+  }
+  return out;
+}
+
 describe("the Welsh page catalogue", () => {
   const keys = Object.keys(PAGES_EN) as (keyof typeof PAGES_EN)[];
 
@@ -97,6 +107,24 @@ describe("no visible English outside the catalogue", () => {
     visit(ast.fragment, file.replace(process.cwd() + "/", ""), false);
   }
   it("finds no literal words in templates", () => {
+    expect(found).toEqual([]);
+  });
+});
+
+// CQ-23: a browser dialog's text is not a template node, so the walk above cannot see it. Its first
+// argument must come from the catalogue (`t(...)`), never a literal.
+describe("no literal English in browser dialogs", () => {
+  it("passes every confirm, alert and prompt a catalogue string", () => {
+    const literal = /\b(?:window\.)?(confirm|alert|prompt)\(\s*[`"']/;
+    const found = walk(join(process.cwd(), "src"))
+      .concat(walkTs(join(process.cwd(), "src")))
+      .flatMap((file) =>
+        readFileSync(file, "utf8")
+          .split("\n")
+          .map((line, i) => [line, i] as const)
+          .filter(([line]) => literal.test(line))
+          .map(([line, i]) => `${file.replace(process.cwd() + "/", "")}:${i + 1}: ${line.trim().slice(0, 80)}`),
+      );
     expect(found).toEqual([]);
   });
 });

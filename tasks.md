@@ -1811,6 +1811,7 @@ came from grep.
   dynamic prefixes, and replace the 25 `as never` key casts.
   **Acceptance:** the extended test fails on a literal it would have missed
   before.
+  **Progress 2026-10-21 (not ticked).** `ObjectiveCard.svelte:187` uses a new catalogue key; `catalogue-coverage.test.ts` gains "no literal English in browser dialogs" (any `confirm`/`alert`/`prompt` whose first argument is a string or template literal, in `.svelte` and `.ts`), which fails on the old line. **Still to do:** the Lily dialog in place of the four native dialogs; the unused-key census; the 25 `as never` casts.
 - [ ] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
   `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`,
   critical-path, earned-value and RACI. The axe sweep also audits each page in

@@ -2077,6 +2077,7 @@ export const PAGES_EN = {
   "c.MilestoneCard.could_not_load_the_history": "Could not load the history",
   "c.ObjectiveCard.that_did_not_work": "That did not work",
   "c.ObjectiveCard.delete_the_objective_and_its": "Delete the objective “{title}” and its key results?",
+  "c.ObjectiveCard.delete_the_key_result": "Delete the key result “{title}”?",
   "c.RaciMatrix.accountable_moved_from_to_a": "Accountable moved from {shortRef} to {shortRef2}: a task has one.",
   "c.RiskInputs.could_not_load_the_plan": "Could not load the plan's tasks",
   "c.RiskInputs.could_not_save": "Could not save",

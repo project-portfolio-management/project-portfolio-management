@@ -184,7 +184,7 @@
                 <input type="number" step="1" required bind:value={editTarget[k.pid]} placeholder={String(k.target_value)} />
               </label>
               <button class="button small" type="submit">{t("c.ObjectiveCard.save")}</button>
-              <button class="button small" type="button" onclick={() => confirm(`Delete “${k.title}”?`) && void run(() => ppm.deleteKeyResult(k.pid))}>{t("c.ObjectiveCard.delete")}</button>
+              <button class="button small" type="button" onclick={() => confirm(t("c.ObjectiveCard.delete_the_key_result", { title: k.title })) && void run(() => ppm.deleteKeyResult(k.pid))}>{t("c.ObjectiveCard.delete")}</button>
             </form>
             <p class="small muted">{t("c.ObjectiveCard.the_baseline_metric_and_direction")}</p>
           </details>

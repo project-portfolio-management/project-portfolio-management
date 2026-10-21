@@ -2380,6 +2380,7 @@ c.MilestoneCard.could_not_load_the_plan,Could not load the plan's tasks,Methu ll
 c.MilestoneCard.could_not_load_the_history,Could not load the history,Methu llwytho'r hanes,,,
 c.ObjectiveCard.that_did_not_work,That did not work,Ni weithiodd hynny,,,
 c.ObjectiveCard.delete_the_objective_and_its,Delete the objective “{title}” and its key results?,Dileu'r amcan “{title}” a'i ganlyniadau allweddol?,,,
+c.ObjectiveCard.delete_the_key_result,Delete the key result “{title}”?,Dileu'r canlyniad allweddol “{title}”?,,,
 c.RaciMatrix.accountable_moved_from_to_a,Accountable moved from {shortRef} to {shortRef2}: a task has one.,Symudwyd Atebol o {shortRef} i {shortRef2}: dim ond un sydd gan dasg.,,,
 c.RiskInputs.could_not_load_the_plan,Could not load the plan's tasks,Methu llwytho tasgau'r cynllun,,,
 c.RiskInputs.could_not_save,Could not save,Methu cadw,,,

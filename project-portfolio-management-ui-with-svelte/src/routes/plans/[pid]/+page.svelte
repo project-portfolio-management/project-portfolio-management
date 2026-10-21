@@ -7,7 +7,6 @@
 <script lang="ts">
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple, splitPlanLinks } from "#lib/preferences.js";
-  import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { PlanRepository } from "#lib/api/plans.js";
@@ -16,7 +15,9 @@
   import { PpmClient } from "#lib/api/ppm.js";
   import { visiblePlanLinks } from "#lib/modules.js";
 
-  const pid = page.params.pid ?? "";
+  // Reactive: following a link to another plan (a duplicate below) reuses this page, so the
+  // record must follow the URL, not the plan the page first opened on (CQ-18).
+  const pid = $derived(page.params.pid ?? "");
   const repo = PlanRepository.withFetch();
 
   let record = $state<Plan | null>(null);
@@ -67,19 +68,33 @@
     : k === "schedule" ? t("ppm.common.schedule")
     : (LINK_LABELS[k] ?? k);
 
-  onMount(async () => {
+  let latest = 0;
+  async function load(id: string) {
+    const mine = ++latest;
+    record = null;
+    loading = true;
+    error = null;
+    duplicates = null;
+    modules = null;
     try {
-      record = await repo.get(pid);
+      const found = await repo.get(id);
+      if (mine !== latest) return;
+      record = found;
       // Best effort: a failure leaves `modules` null and every link shown.
       PpmClient.withFetch()
-        .planModules(pid)
-        .then((m) => (modules = m.modules))
+        .planModules(id)
+        .then((m) => {
+          if (mine === latest) modules = m.modules;
+        })
         .catch(() => {});
     } catch (err) {
-      error = err instanceof Error ? err.message : t("detail.notFound");
+      if (mine === latest) error = err instanceof Error ? err.message : t("detail.notFound");
     } finally {
-      loading = false;
+      if (mine === latest) loading = false;
     }
+  }
+  $effect(() => {
+    void load(pid);
   });
 
   async function handleDelete() {

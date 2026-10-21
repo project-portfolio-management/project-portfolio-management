@@ -37,7 +37,8 @@
     type PlanTimeAnalysis,
   } from "#lib/api/tba.js";
 
-  const pid = page.params.pid ?? "";
+  // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
+  const pid = $derived(page.params.pid ?? "");
   const tba = TbaClient.withFetch();
 
   let analysis = $state<PlanTimeAnalysis | null>(null);

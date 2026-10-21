@@ -5,7 +5,6 @@
   record on submit before returning to the detail page.
 -->
 <script lang="ts">
-  import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import PlanForm from "#lib/components/PlanForm.svelte";
@@ -13,21 +12,31 @@
   import type { Plan } from "#lib/api/types.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
 
-  const pid = page.params.pid ?? "";
+  // Reactive, so the form follows the URL to another plan (CQ-18).
+  const pid = $derived(page.params.pid ?? "");
   const repo = PlanRepository.withFetch();
 
   let record = $state<Plan | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  onMount(async () => {
+  let latest = 0;
+  async function load(id: string) {
+    const mine = ++latest;
+    record = null;
+    loading = true;
+    error = null;
     try {
-      record = await repo.get(pid);
+      const found = await repo.get(id);
+      if (mine === latest) record = found;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("edit.notFound");
+      if (mine === latest) error = err instanceof Error ? err.message : t("edit.notFound");
     } finally {
-      loading = false;
+      if (mine === latest) loading = false;
     }
+  }
+  $effect(() => {
+    void load(pid);
   });
 
   async function handleSubmit(updated: Plan) {
@@ -45,5 +54,5 @@
 {:else if error}
   <p class="banner" role="alert">{error}</p>
 {:else if record}
-  <PlanForm initial={record} submitLabel={t("edit.saveChanges")} onsubmit={handleSubmit} />
+  {#key pid}<PlanForm initial={record} submitLabel={t("edit.saveChanges")} onsubmit={handleSubmit} />{/key}
 {/if}

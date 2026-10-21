@@ -26,7 +26,8 @@
   import { t } from "#lib/i18n.svelte.js";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { calendarDays } from "#lib/units.js";
-  const pid = page.params.pid ?? "";
+  // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
+  const pid = $derived(page.params.pid ?? "");
   const ppm = PpmClient.withFetch();
 
   let tasks = $state<Task[] | null>(null);
@@ -76,7 +77,15 @@
       error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
     }
   }
+  // A different plan in the URL starts over: its sprints are not the last plan's (CQ-18).
+  let loadedFor = "";
   $effect(() => {
+    if (pid !== loadedFor) {
+      loadedFor = pid;
+      selectedSprint = "";
+      burndown = null;
+      notes = [];
+    }
     void load();
   });
 

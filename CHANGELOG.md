@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Opening a duplicate from a plan page now shows that plan (CQ-18).** It used to keep the first plan on screen under the new address. Verified: a browser test that fails on the old page. **Not done:** 25 other plan sub-pages have the same pattern, unreviewed, though none links to another plan.
 - **Changing a filter on the delivery calendar or the flow page sends its requests once, not twice (CQ-17).** A slower, older answer can no longer replace a newer one, and the sprint board loads its parts in parallel. Verified: browser tests that count requests.
 - **Unused dependencies removed (CQ-16).** Three Rust crates and SQLite support in the service, and five UI picker packages that nothing imported. Verified: clippy and every UI gate. **Not done:** the UI still installs three versions of one Lily library through `svelte-picker-bar`; no unused-dependency check in CI.
 - **Creating or changing a plan no longer blocks a server thread while the search index saves (CQ-10).** Verified: the database suite. **Not done:** not measured under load.

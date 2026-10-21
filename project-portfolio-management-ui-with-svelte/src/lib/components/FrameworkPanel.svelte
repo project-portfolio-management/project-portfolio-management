@@ -229,3 +229,9 @@
 {:else if !error}
   <p class="muted">{t("p.frameworks.loading")}</p>
 {/if}
+
+<style>
+  .path-row { margin-block-end: 0.5rem; }
+  .path-row button,
+  fieldset > button { min-block-size: 2rem; margin-block: 0.25rem; }
+</style>

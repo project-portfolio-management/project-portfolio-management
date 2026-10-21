@@ -10,7 +10,7 @@ async function audit(page: Page) {
   const r = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
-  expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
+  expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id + ": " + v.nodes.map((n) => n.target.join(" ") + " " + (n.any[0]?.message ?? "")).join(" | "))).toEqual([]);
 }
 
 const scrum = { pid: "w1", name: "Scrum, two weeks", description: null, scope: "organization", owner_plan_pid: null, plans_using: 2, methodology: "scrum", cadence_days: 14 };

@@ -1,6 +1,6 @@
 [package]
 name = "project-portfolio-management-migration"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.96"
 description = "Database migrations for the project portfolio management service (sea-orm-migration on loco-rs)"

@@ -5292,7 +5292,7 @@ dependencies = [
 
 [[package]]
 name = "project-portfolio-management"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -5363,7 +5363,7 @@ dependencies = [
 
 [[package]]
 name = "project-portfolio-management-migration"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "loco-rs",
  "sea-orm-migration",

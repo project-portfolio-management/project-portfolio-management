@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+## 0.2.0 - 2026-10-21
+
+First release cut from the root release workflow: the service crate, migration crate and UI package move from 0.1.0 to 0.2.0 (the matcher keeps its own version). It collects the 32 commits since the v0.1.0 tag; the entries below are the record. Not verified for this release: the Welsh strings are machine-written and none are reviewed; escalations are raised by a person only (no scheduled job, no email or push).
+
 ### 21 October
 
 - **The framework description is editable.** The ways-of-working and governance forms now have a Description field

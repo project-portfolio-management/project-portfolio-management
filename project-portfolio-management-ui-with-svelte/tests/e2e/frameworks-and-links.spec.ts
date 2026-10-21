@@ -153,6 +153,7 @@ test("the ceremonies, definitions and forums of a plan's own framework can be ed
   await page.goto(`/en-001/plans/${PID}/ways-of-working`);
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(page.getByLabel("Definition of done")).toHaveValue("Tested");
+  await page.getByLabel("Description").fill("How the platform team works");
   await page.getByLabel("Definition of ready").fill("Has a clear title");
   await page.getByRole("button", { name: "Add a ceremony" }).click();
   await page.getByLabel("Name").nth(2).fill("Retrospective");
@@ -161,6 +162,7 @@ test("the ceremonies, definitions and forums of a plan's own framework can be ed
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status")).toContainText("Saved.");
   expect(saved).toMatchObject({
+    description: "How the platform team works",
     definition_of_ready: "Has a clear title",
     definition_of_done: "Tested",
     ceremonies: [{ name: "Standup", cadence: "daily", purpose: null }, { name: "Retrospective", cadence: "every two weeks", purpose: null }],

@@ -47,6 +47,7 @@ const wholeDays = (raw: unknown, max: number): boolean => /^\d+$/.test(text(raw)
 
 export interface FrameworkForm {
   name: string;
+  description: string;
   /** Ways of working. */
   methodology: string;
   cadence_days: string;
@@ -75,6 +76,7 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
   const out: string[] = [];
   const name = f.name.trim();
   if (name.length < 1 || name.length > NAME_MAX) out.push(t("p.frameworks.name_problem"));
+  if (f.description.length > TEXT_MAX) out.push(t("p.frameworks.text_problem"));
   const optional = (raw: unknown, max: number) => text(raw) === "" || wholeDays(raw, max);
   if (family === "ways-of-working") {
     if (!optional(f.cadence_days, MAX_DAYS) || !optional(f.wip_limit, 1000)) out.push(t("p.frameworks.number_problem"));
@@ -98,9 +100,9 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
 
 const num = (raw: unknown): number | null => (text(raw) === "" ? null : Number(raw));
 
-/** The body to send. `existing` supplies the description, which this screen does not edit. */
-export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, existing: Framework | null, planPid: string | null): Record<string, unknown> {
-  const body: Record<string, unknown> = { name: f.name.trim(), description: existing?.description ?? null };
+/** The body to send. */
+export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, _existing: Framework | null, planPid: string | null): Record<string, unknown> {
+  const body: Record<string, unknown> = { name: f.name.trim(), description: f.description.trim() || null };
   if (planPid) body.plan_pid = planPid;
   if (family === "ways-of-working") {
     Object.assign(body, {
@@ -129,6 +131,7 @@ export function formOf(f: Framework | null): FrameworkForm {
   const s = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
   return {
     name: f?.name ?? "",
+    description: f?.description ?? "",
     methodology: f?.methodology ?? "other",
     cadence_days: s(f?.cadence_days),
     wip_limit: s(f?.wip_limit),

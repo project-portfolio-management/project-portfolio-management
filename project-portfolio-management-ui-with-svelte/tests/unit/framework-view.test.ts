@@ -26,15 +26,15 @@ describe("frameworkProblems", () => {
 });
 
 describe("frameworkBody", () => {
-  it("sends every list the form holds and keeps the description", () => {
-    const existing = { description: "d" } as Framework;
+  it("sends every list the form holds and the description as typed", () => {
+    const existing = { description: "old" } as Framework;
     const body = frameworkBody(
       "ways-of-working",
-      form({ cadence_days: "7", done: " Tested ", ceremonies: [{ name: " Standup ", cadence: "daily", purpose: "" }] }),
+      form({ description: " For product teams ", cadence_days: "7", done: " Tested ", ceremonies: [{ name: " Standup ", cadence: "daily", purpose: "" }] }),
       existing,
       null,
     );
-    expect(body).toMatchObject({ name: "Standard", cadence_days: 7, wip_limit: null, definition_of_done: "Tested", definition_of_ready: null, description: "d" });
+    expect(body).toMatchObject({ name: "Standard", cadence_days: 7, wip_limit: null, definition_of_done: "Tested", definition_of_ready: null, description: "For product teams" });
     expect(body.ceremonies).toEqual([{ name: "Standup", cadence: "daily", purpose: null }]);
     expect(body).not.toHaveProperty("plan_pid");
   });
@@ -72,6 +72,14 @@ describe("numbers typed into number inputs", () => {
     expect(frameworkBody("ways-of-working", ok, null, null)).toMatchObject({ cadence_days: 7, wip_limit: null });
     const path = form({ path: [{ level: 1 as unknown as string, body: "Sponsor", trigger: "Slip" }] });
     expect(frameworkProblems("governance-frameworks", path)).toEqual([]);
+  });
+});
+
+describe("description", () => {
+  it("is optional, can be cleared, and is capped", () => {
+    expect(frameworkBody("ways-of-working", form({ description: "  " }), { description: "old" } as Framework, null)).toMatchObject({ description: null });
+    expect(frameworkProblems("ways-of-working", form({ description: "x".repeat(10_001) }))).toHaveLength(1);
+    expect(formOf({ description: "About it" } as Framework).description).toBe("About it");
   });
 });
 

@@ -176,6 +176,7 @@
       <h2 id="form-h">{creating ? t("p.frameworks.new_heading") : t("p.frameworks.edit_heading")}</h2>
       <form onsubmit={(e) => save(e, creating)} aria-labelledby="form-h">
         <label>{t("p.frameworks.f_name")} <input bind:value={form.name} maxlength="120" /></label>
+        <label>{t("p.frameworks.f_description")} <textarea bind:value={form.description} rows="3"></textarea></label>
         {#if family === "ways-of-working"}
           <label>{t("p.frameworks.methodology")}
             <select bind:value={form.methodology}>{#each METHODOLOGIES as m (m)}<option value={m}>{methodologyLabel(m)}</option>{/each}</select>

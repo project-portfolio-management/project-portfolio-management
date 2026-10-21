@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — framework description editable (FR-52, 2026-10-21)
+
+A Description field on the ways-of-working and governance forms. Welsh machine-written, unreviewed.
+
 ### Changed — shared frameworks editable and deletable (FR-52, 2026-10-21)
 
 Edit a shared record after confirming how many other plans it reaches; delete one nobody follows. Fixed number inputs crashing the framework form check. Welsh machine-written, unreviewed.

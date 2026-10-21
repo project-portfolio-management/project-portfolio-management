@@ -17,6 +17,11 @@ workflow yet. Dates are 2026.
 
 ### 21 October
 
+- **The framework description is editable.** The ways-of-working and governance forms now have a Description field
+  (optional, up to 10000 characters, can be cleared); before, it was kept but could not be changed. Verified: unit tests
+  (757), the framework browser test (which now sends a description) and the Welsh page check. Welsh text
+  machine-written, unreviewed.
+
 - **Shared frameworks can be edited and deleted from the plan page.** An organisation-wide way of working or governance
   framework can be edited from a plan that follows it, after ticking a box that says how many other plans the change
   also reaches; one nobody follows can be deleted. Also fixed a bug in the framework form: a number typed into a number

@@ -1613,6 +1613,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.new_heading": "Un newydd ar gyfer y cynllun hwn",
   "p.frameworks.edit_heading": "Golygu hwn",
   "p.frameworks.f_name": "Enw",
+  "p.frameworks.f_description": "Disgrifiad",
   "p.frameworks.save": "Cadw",
   "p.frameworks.cancel": "Canslo",
   "p.frameworks.methodology": "Dull",

@@ -1611,6 +1611,7 @@ export const PAGES_EN = {
   "p.frameworks.new_heading": "A new one for this plan",
   "p.frameworks.edit_heading": "Edit this one",
   "p.frameworks.f_name": "Name",
+  "p.frameworks.f_description": "Description",
   "p.frameworks.save": "Save",
   "p.frameworks.cancel": "Cancel",
   "p.frameworks.methodology": "Method",

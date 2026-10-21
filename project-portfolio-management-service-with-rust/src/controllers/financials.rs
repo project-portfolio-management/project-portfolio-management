@@ -168,14 +168,24 @@ async fn list(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<
         .await
         .map_err(db_err)?;
 
+    // Every baseline's periods in one query, grouped here, not one query per baseline (CQ-11).
+    let mut periods_of: std::collections::HashMap<Uuid, Vec<budget_baseline_periods::Model>> =
+        std::collections::HashMap::new();
+    for p in budget_baseline_periods::Entity::find()
+        .filter(
+            budget_baseline_periods::Column::BaselinePid
+                .is_in(baselines.iter().map(|b| b.pid).collect::<Vec<_>>()),
+        )
+        .order_by_asc(budget_baseline_periods::Column::PeriodStart)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        periods_of.entry(p.baseline_pid).or_default().push(p);
+    }
     let mut out = Vec::with_capacity(baselines.len());
     for baseline in baselines {
-        let periods = budget_baseline_periods::Entity::find()
-            .filter(budget_baseline_periods::Column::BaselinePid.eq(baseline.pid))
-            .order_by_asc(budget_baseline_periods::Column::PeriodStart)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let periods = periods_of.remove(&baseline.pid).unwrap_or_default();
         out.push(serde_json::json!({
             "pid": baseline.pid.to_string(),
             "version": baseline.version,

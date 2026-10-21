@@ -1163,6 +1163,11 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
         let snap: Value = request.post(&format!("/api/plans/{p}/earned-value/snapshot")).await.json();
         assert_eq!(snap["snapshotted"], 1);
         request.post(&format!("/api/plans/{p}/earned-value/snapshot")).await.assert_status_ok(); // idempotent per day
+        // CQ-11: two at once neither fail on the day's unique index nor leave two rows.
+        let url = format!("/api/plans/{p}/earned-value/snapshot");
+        let (a, b) = tokio::join!(request.post(&url), request.post(&url));
+        a.assert_status_ok();
+        b.assert_status_ok();
         let after: Value = request.get(&format!("/api/plans/{p}/earned-value/series")).await.json();
         assert_eq!(after["curves"][0]["snapshots"], 1, "a second snapshot the same day replaced the first");
         let today_pt = after["curves"][0]["points"].as_array().unwrap().iter().find(|x| x["date"] == today.to_string().as_str()).cloned().unwrap();

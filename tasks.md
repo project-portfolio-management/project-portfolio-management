@@ -1727,6 +1727,7 @@ came from grep.
   `thresholds.rs:318`, `includes.rs:96` and `task_get.rs:118`.
   **Acceptance:** query counts asserted in a request test; a concurrent test of
   the earned-value snapshot leaves one row.
+  **Progress 2026-10-21 (not ticked).** The snapshot is one `INSERT … ON CONFLICT (plan_pid, currency, as_of) DO UPDATE` per currency (the unique index existed, so the race was a 500, not a duplicate row); the request test sends two at once and the "one snapshot" assertion still holds. Baseline periods: one `is_in` query grouped in memory. Scenario create: one `is_in` per kind. **Still to do:** assert query counts (needs a statement counter in the test harness); review `thresholds.rs:318`, `includes.rs:96`, `task_get.rs:118`.
 - [x] **CQ-12 (S) — Bind SQL parameters; no database text in responses.**
   `retention.rs:162,178` and `sandbox.rs:389` bind `$1` instead of `format!`;
   `controllers/subjects.rs:165,187` assert table and column against a `const`

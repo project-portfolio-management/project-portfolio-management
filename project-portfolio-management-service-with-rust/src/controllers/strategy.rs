@@ -272,28 +272,33 @@ async fn create_scenario(
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     // Every named member must exist (unknown pids listed at once). One the caller may
     // not see is unknown to them too.
+    // One query per kind, not one per named member (CQ-11).
+    let live_plans: std::collections::HashSet<Uuid> = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(payload.plan_pids.clone()))
+        .filter(plans::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|p| p.pid)
+        .collect();
     for pid in &payload.plan_pids {
-        let exists = !fence.plan(pid)
-            && plans::Entity::find()
-                .filter(plans::Column::Pid.eq(*pid))
-                .filter(plans::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .is_some();
-        if !exists {
+        if fence.plan(pid) || !live_plans.contains(pid) {
             problems.push(format!("unknown plan {pid}"));
         }
     }
+    let visible_proposals: std::collections::HashSet<Uuid> = proposals::Entity::find()
+        .filter(proposals::Column::Pid.is_in(payload.proposal_pids.clone()))
+        .filter(proposals::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .filter(|p| !p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)))
+        .map(|p| p.pid)
+        .collect();
     for pid in &payload.proposal_pids {
-        let exists = proposals::Entity::find()
-            .filter(proposals::Column::Pid.eq(*pid))
-            .filter(proposals::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some_and(|p| !p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)));
-        if !exists {
+        if !visible_proposals.contains(pid) {
             problems.push(format!("unknown proposal {pid}"));
         }
     }

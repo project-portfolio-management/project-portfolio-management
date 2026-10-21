@@ -545,42 +545,39 @@ pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize>
     let Outcome::Figures { blocks, .. } = compute(ctx, plan, today).await? else {
         return Ok(0);
     };
+    // One statement per currency, so two snapshots on the same day cannot race into a
+    // unique-index error: the second replaces the first (CQ-11).
+    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     for (currency, version, b) in &blocks {
-        let existing = earned_value_snapshots::Entity::find()
-            .filter(earned_value_snapshots::Column::PlanPid.eq(plan))
-            .filter(earned_value_snapshots::Column::Currency.eq(currency.as_str()))
-            .filter(earned_value_snapshots::Column::AsOf.eq(today))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        match existing {
-            Some(row) => {
-                let mut a: earned_value_snapshots::ActiveModel = row.into();
-                a.baseline_version = ActiveValue::set(*version);
-                a.bac_minor = ActiveValue::set(b.bac_minor);
-                a.pv_minor = ActiveValue::set(b.pv_minor);
-                a.ev_minor = ActiveValue::set(b.ev_minor);
-                a.ac_minor = ActiveValue::set(b.ac_minor);
-                a.update(&ctx.db).await.map_err(db_err)?;
-            }
-            None => {
-                earned_value_snapshots::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    plan_pid: ActiveValue::set(plan),
-                    currency: ActiveValue::set(currency.clone()),
-                    as_of: ActiveValue::set(today),
-                    baseline_version: ActiveValue::set(*version),
-                    bac_minor: ActiveValue::set(b.bac_minor),
-                    pv_minor: ActiveValue::set(b.pv_minor),
-                    ev_minor: ActiveValue::set(b.ev_minor),
-                    ac_minor: ActiveValue::set(b.ac_minor),
-                    ..Default::default()
-                }
-                .insert(&ctx.db)
-                .await
-                .map_err(db_err)?;
-            }
-        }
+        use earned_value_snapshots::Column as C;
+        earned_value_snapshots::Entity::insert(earned_value_snapshots::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            plan_pid: ActiveValue::set(plan),
+            currency: ActiveValue::set(currency.clone()),
+            as_of: ActiveValue::set(today),
+            baseline_version: ActiveValue::set(*version),
+            bac_minor: ActiveValue::set(b.bac_minor),
+            pv_minor: ActiveValue::set(b.pv_minor),
+            ev_minor: ActiveValue::set(b.ev_minor),
+            ac_minor: ActiveValue::set(b.ac_minor),
+            updated_at: ActiveValue::set(now),
+            ..Default::default()
+        })
+        .on_conflict(
+            sea_orm::sea_query::OnConflict::columns([C::PlanPid, C::Currency, C::AsOf])
+                .update_columns([
+                    C::BaselineVersion,
+                    C::BacMinor,
+                    C::PvMinor,
+                    C::EvMinor,
+                    C::AcMinor,
+                    C::UpdatedAt,
+                ])
+                .to_owned(),
+        )
+        .exec(&ctx.db)
+        .await
+        .map_err(db_err)?;
     }
     Ok(blocks.len())
 }

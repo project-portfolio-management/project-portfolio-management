@@ -4,7 +4,9 @@ Derived from [plan.md](plan.md) (research 2026-10-02). Later sections add the
 prefixes `RM-` (Redmine), `PL-` (Platform Collective), `SC-` (scheduling and
 cost canon), `KO-`, `MS-`, `CR-` and `PJ-` (ProjectLibre); as of 2026-10-06
 every checkbox below is ticked, and the "Not built" notes inside an entry are
-the remaining gaps. IDs are `LT-n` so they
+the remaining gaps. The `CQ-` (code quality), `CF-` (correctness carried
+forward) and `NC-` (new capabilities) sections at the end, added 2026-10-21,
+are open. IDs are `LT-n` so they
 do not collide with the numbered build-out in
 [spec/13-tasks.md](spec/13-tasks.md); promote an item there (as `T-29…`) when
 it is scheduled. Sizes: S ≈ one business day, M ≈ a few business days, L ≈ a business week
@@ -1623,3 +1625,325 @@ multi-project pipelining, once listed here, are now taken as CC-n.)
   `GET` and asserts the three paging parameters and the count header; an
   `include` on a task that names an unknown sub-resource is 422 listing the
   allowed names.
+
+## Code quality (CQ-n)
+
+From [plan.md §64–§70](plan.md) (research 2026-10-21). All open. Evidence
+lines are as of that date; check them again before starting, because the counts
+came from grep.
+
+- [ ] **CQ-1 (S) — Defuse spreadsheet formulas in every CSV export.** Keep one
+  `csv_field`, the defusing one from `src/access_review.rs:91` (it prefixes
+  `= + - @ \t \r` with `'`), in a shared module. Delete the copies in
+  `src/bulk.rs:101` and `src/visibility.rs:333`, which serve plan export, the
+  auditor evidence pack and timesheets.
+  **Acceptance:** a unit test sends `=HYPERLINK("x")`, `+1`, `-1` and `@x`
+  through each export and finds each defused; a census test fails on a second
+  `fn csv_field`.
+- [ ] **CQ-2 (S) — One admin check, with the no-claims rule stated.** There are
+  eight `is_admin` copies. `milestone_signoffs.rs:123` and
+  `deescalation.rs:73,81` (and, per the pass, `cpm.rs`, `cutover.rs`,
+  `availability.rs`, `portfolio_resources.rs` and `email_deliveries.rs`) treat
+  "no claims" as admin. `bulk.rs:69`, `plan_access.rs:43` and
+  `attachments.rs:33` treat it as not admin. First find out whether "no
+  claims" is reachable with auth on. Then keep one `plan_access::is_admin`
+  whose auth-off behaviour is explicit (owner question §70.1), and replace the
+  11 raw `.get("access")` checks.
+  **Acceptance:** for each route that used a `is_none_or` copy, a request test
+  with auth on and no token is refused; a census test fails on a local
+  `fn is_admin`.
+- [ ] **CQ-3 (M) — Audit writes that cannot be lost silently.** About 220
+  `AuditModel::record(..).await.ok()` calls; some audit after `commit()`
+  (`controllers/financials.rs:174`). Write the audit inside the write's
+  transaction and use `?`. Where best-effort is intended, use a
+  `record_or_log` helper that logs at error level and counts in a metric.
+  **Acceptance:** a census test fails on `record(..).await.ok()`; a database
+  test that forces the audit insert to fail shows the write is refused, or, on
+  the best-effort path, shows the log line and the metric.
+- [ ] **CQ-4 (S) — The BFF proxy relays the headers the client reads.**
+  `ui/src/routes/api/proxy/[...path]/+server.ts:67-72` copies only
+  `content-type`, so in the browser `X-Total-Count`, `X-Limit` and
+  `X-Offset` (read at `client.ts:220`), as well as `ETag`, `Retry-After`,
+  `Location` and `Content-Disposition`, are dropped and paging totals fall back
+  to the page length. Relay an allow-list.
+  **Acceptance:** a unit test of the proxy handler passes each listed header
+  through and drops `set-cookie` from upstream; one e2e test over the real
+  proxy shows a total larger than the page.
+- [ ] **CQ-5 (S) — Harden the proxy.** Strip a browser-supplied `authorization`
+  when there is no session. Refuse non-GET requests whose `Origin` is not the
+  app's own. Turn an upstream fetch failure into a 502 with a catalogue message
+  instead of an unhandled 500. Reconcile AGENTS.md's "CSRF header" claim with
+  `client.ts`, which sends none.
+  **Acceptance:** unit tests for each of the three behaviours.
+- [ ] **CQ-6 (S) — Visibility lookups fail closed loudly.**
+  `controllers/plan_access.rs:134,137,174` return an empty scope without a log.
+  Keep failing closed, but log at error level, count a metric, and answer 503
+  rather than 200 with empty data.
+  **Acceptance:** a test with the lookup forced to fail sees 503 and the
+  metric.
+- [ ] **CQ-7 (M) — One set of controller helpers.** Move `find_plan` (7
+  copies), `find_task` (4), `db_err` (26), `unprocessable` (40) and UUID
+  parsing (17) into `controllers/mod.rs`. While merging, check that every copy
+  applies the same `deleted_at` and readability filters; a copy that differs is
+  a bug, fixed and recorded. Add `unprocessable_entity()` beside
+  `unprocessable()` until §70.3 is decided.
+  **Acceptance:** `cargo test --lib` and the database tests pass; a census test
+  bans local copies.
+- [ ] **CQ-8 (L) — The OpenAPI document covers request and response bodies.**
+  There are 7 `requestBody` entries over about 5,100 lines, and
+  `KNOWN_UNDOCUMENTED` lists 52 paths. Derive schemas from the DTOs (utoipa
+  `ToSchema` or `schemars`), or at minimum document each body by hand. Move
+  each `*_paths()` from `openapi_more.rs` into its controller, so a route and
+  its documentation change together.
+  **Acceptance:** a census test fails on any POST, PUT or PATCH without a
+  `requestBody`; `KNOWN_UNDOCUMENTED` is shorter, and every remaining entry has
+  a reason.
+- [ ] **CQ-9 (M) — The UI client is checked against the service.** As a first
+  step, a test compares the path templates and methods in `src/lib/api/*.ts`
+  with the OpenAPI document. After CQ-8, generate the TypeScript types from the
+  document and type-check `ppm.ts` against them. Split `ppm.ts` (4,094 lines)
+  by domain.
+  **Acceptance:** the census fails on a client path the service does not
+  mount; `pnpm run check` passes against the generated types.
+- [ ] **CQ-10 (S) — Index writes off the async runtime.**
+  `streaming.rs:359,372` run tantivy's index and delete calls, with
+  `commit()`, synchronously under a `std::sync::Mutex`. Use `spawn_blocking`,
+  or a single indexing task fed by a channel.
+  **Acceptance:** a test still finds a new plan by search; the load test's p99
+  for `POST /api/plans` is recorded before and after in `BENCHMARKS.md`.
+- [ ] **CQ-11 (M) — Remove the read N+1s, and the racy upsert.**
+  `financials.rs:184` (periods per baseline) and `strategy.rs:283` (one
+  existence query per pid) become `is_in` queries. In `earned_value.rs:557`,
+  the select-then-insert per currency becomes
+  `INSERT … ON CONFLICT (plan_pid, currency, as_of) DO UPDATE`. Also look at
+  `thresholds.rs:318`, `includes.rs:96` and `task_get.rs:118`.
+  **Acceptance:** query counts asserted in a request test; a concurrent test of
+  the earned-value snapshot leaves one row.
+- [ ] **CQ-12 (S) — Bind SQL parameters; no database text in responses.**
+  `retention.rs:162,178` and `sandbox.rs:389` bind `$1` instead of `format!`;
+  `controllers/subjects.rs:165,187` assert table and column against a `const`
+  allow-list; `subjects.rs:181` stops putting `DbErr` text into a 409 body.
+  **Acceptance:** unit test of the allow-list; a request test checks the 409
+  body carries no database message.
+- [ ] **CQ-13 (M) — "Today" in the deployment's zone.** There are 93
+  `Utc::now().date_naive()` calls against 14 uses of `tz::local_today`. Audit
+  each `today` or `as_of` default against the spec, move the ones that should
+  follow the zone to `tz::local_today`, and add a `clippy.toml` disallowed
+  method so new ones need a reason.
+  **Acceptance:** a unit test with the zone set to UTC−10 near midnight, for
+  each moved default.
+- [ ] **CQ-14 (S) — Lints reach the tests, and stale allows show.** Move the
+  lints to a `[lints]` table in `Cargo.toml`, so the integration tests get
+  pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove
+  the 174 `#[allow(missing_docs)]` or document the items.
+  **Acceptance:** the clippy gate stays green with no new allows.
+- [ ] **CQ-15 (M each) — Split the largest modules.** Split `tba.rs` along its
+  11 existing sections, `controllers/engineering.rs` by route group, and
+  `controllers/visibility.rs` by dependencies, schedule, milestones,
+  allocations and reports, giving the last its first unit tests. `auth.rs`
+  splits into verifier, ABAC and areas. These are pure moves.
+  **Acceptance:** no behavioural diff; the OpenAPI census and all gates pass.
+- [ ] **CQ-16 (S) — Trim dependencies.** Remove `regex`, `include_dir` and
+  `futures-util` if unused, sea-orm's `sqlx-sqlite` feature, and the second
+  `sha2`; confirm serde_json's `arbitrary_precision` is needed. Add
+  `cargo machete` to CI. In the UI, drop the unused direct Lily pins or bump
+  `svelte-picker-bar`, then run `pnpm dedupe`.
+  **Acceptance:** CI green with the machete job; `pnpm-lock.yaml` has one
+  `svelte-headless`.
+- [ ] **CQ-17 (S) — UI loads run once per change.**
+  `calendar/+page.svelte:40,112`, `plans/[pid]/flow/+page.svelte:65,223` and
+  `plans/[pid]/board/+page.svelte:71` fetch both from an `$effect` and from the
+  handler. Keep one, guard with a request token so a late answer cannot
+  overwrite a newer one, and clear `error` on success. Run the board's six
+  independent awaits with `Promise.all`.
+  **Acceptance:** a Playwright test counts one request per filter change.
+- [ ] **CQ-18 (M) — Param pages follow the URL.** 27 pages load in `onMount`,
+  and five hold a non-reactive `pid` (`plans/[pid]/+page.svelte:19` links to
+  other plans). Move the loading into `+page.ts` `load`, or key it on a
+  `$derived` pid.
+  **Acceptance:** an e2e test follows a duplicate link from one plan to another
+  and sees the second plan's name.
+- [ ] **CQ-19 (S–M) — No silent UI failures.** WBS link counts
+  (`wbs/+page.svelte:30`), plan modules (`plans/[pid]/+page.svelte:77`), the
+  Gantt calendar, the announcements downgrade on any error, the
+  **handling-mark banner** (`+layout.svelte:49`, where failure hides the mark;
+  this is a security item), and security headers when the response is immutable
+  (`hooks.server.ts:53`). Show a "could not load …" note, and catch only the
+  statuses that are expected. A failed mark lookup shows an "unknown marking"
+  banner, not none.
+  **Acceptance:** an e2e test per page with the endpoint failing.
+- [ ] **CQ-20 (M) — Shared load and error helpers in the UI.** A
+  `resource(fn)` rune helper (`{data, error, loading, reload}`) and
+  `errorText(err, key)` replace the 173 copies of
+  `err instanceof Error ? err.message : t(..)`. Map statuses, or a service
+  error code, to catalogue keys so service English stops reaching
+  Welsh-speaking users. Ask the service for structured data where
+  `lib/pack-view.ts:106` parses English sentences.
+  **Acceptance:** the copy count is near zero; a test with the Welsh locale and
+  a 409 shows Welsh text.
+- [ ] **CQ-21 (M) — Typed DataTable.** Use `<script generics="T">` on
+  `DataTable.svelte`, or a typed `columns<T>()` helper; 180 of the 182
+  `as unknown as` casts are column accessors.
+  **Acceptance:** `grep -c 'as unknown as'` is under 10 and `pnpm run check`
+  is clean.
+- [ ] **CQ-22 (S) — UI lint and format gate.** Add ESLint with
+  `eslint-plugin-svelte` and Prettier, format the 51 files in their own commit,
+  and add both to CI.
+  **Acceptance:** CI runs both and is green.
+- [ ] **CQ-23 (S) — Close the i18n leaks.** Translate
+  `ObjectiveCard.svelte:187`'s `confirm()`, and replace the native confirms
+  with the Lily dialog. Extend the catalogue test to string and template
+  literals inside expressions. Add an unused-key census with an allow-list for
+  dynamic prefixes, and replace the 25 `as never` key casts.
+  **Acceptance:** the extended test fails on a literal it would have missed
+  before.
+- [ ] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
+  `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`,
+  critical-path, earned-value and RACI. The axe sweep also audits each page in
+  its populated state, not only in its error state.
+  **Acceptance:** each route has a spec that asserts its content; axe runs on
+  populated pages.
+- [ ] **CQ-25 (S) — Correct the documentation drift.** Fix these:
+  - the CHANGELOG note that link routes skip the private check (`privacy_mw`
+    guards them; add a census test that proves it);
+  - the CHANGELOG note on `style-src-attr 'unsafe-inline'` (now a hash);
+  - COMPARISONS.md on change requests;
+  - the "Planned, not built" list and the HD-6/HD-7 state in `spec/15`;
+  - the `ppm.ts` header ("13 locales");
+  - the UI package description ("Case Service (Main X Index)");
+  - `operations/deployment.md`, which names only `retention_purge` of the four
+    cargo tasks.
+
+  **Acceptance:** each statement matches the code; the link checker passes.
+
+## Correctness carried forward (CF-n)
+
+Gaps that earlier entries record only as "Not done", lifted here because each
+can give a wrong answer ([plan.md §66](plan.md)).
+
+- [ ] **CF-1 (M) — Large plans are never silently truncated.** The WBS and
+  earned-value pages read the first 2,000 tasks without saying so (RG-15).
+  Page them, or compute earned value in the service over every task. The
+  critical-path page offers `?only=critical` on a 413 instead of showing the
+  message (RG-16).
+  **Acceptance:** an e2e test with a stubbed 2,001-task plan shows the right
+  totals or a truncation notice; a 413 test shows the critical part.
+- [ ] **CF-2 (S) — Goals by id with `If-Match`** (OQ-5, CHANGELOG 0.2.0).
+  **Acceptance:** a concurrent delete test removes the intended goal or gets a
+  412.
+- [ ] **CF-3 (S) — A database constraint for availability overlap** (an
+  exclusion constraint on the date range per resource, PJ-3).
+  **Acceptance:** two concurrent overlapping inserts leave one row.
+- [ ] **CF-4 (M) — Who may acknowledge or resolve an escalation, and who may
+  edit a shared framework.** Name a role or ABAC area for each, and give shared
+  frameworks a version, so one plan's edit does not change every plan that
+  follows it.
+  **Acceptance:** request tests for the refused callers; editing a framework
+  creates a new version, and the plans that follow it keep theirs until they
+  move.
+- [ ] **CF-5 (S) — Privacy on the EX-13 "new asks" and the RBS drill-down.**
+  **Acceptance:** the private-aggregates census covers both, and a non-member's
+  answer is byte-identical before and after a private proposal or task appears.
+
+## New capabilities (NC-n)
+
+From [plan.md §67](plan.md). Ranked. Sources are cited there; most were read
+only as search snippets.
+
+- [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
+  About 98 backlog notes say "no screen". Slice order: issues raise and edit,
+  plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding
+  (IR-4); task editing and links on the board; notification sinks and
+  preferences (LT-6, PL-5) and `/api/me/inbox`; comments, attachments and
+  watchers (LT-4, LT-5, RM-3); timesheets and approval (LT-11); access review
+  and break-glass (RG-9, RG-10); plan module settings (RM-7); canvases and
+  templates (LT-1, LT-2); MSPDI export; then the director-pack and escalation
+  inputs (DP-, EX-).
+  **Acceptance, per slice:** a route, catalogue text with Welsh marked
+  machine-written, an e2e test, and an axe pass.
+- [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
+  schedule and pack reads as MCP tools that call the existing API with the
+  caller's token, so ABAC, privacy and handling marks apply unchanged. It runs
+  no model (see plan.md §16 and §68). Plan text reaches agents unfiltered, which
+  is stated in the docs as a prompt-injection channel. Depends on NC-15. Owner
+  question §70.4.
+  **Acceptance:** a test that a non-member's tool calls never return a private
+  plan; the tool list is pinned in a test; no write tool.
+- [ ] **NC-3 (M) — UK Programme and Project Data Standard export and
+  validation.** A versioned mapping table (v1 now, v2 expected early 2027) from
+  plans, risks, issues, benefits, milestones and costs to the standard's
+  attributes, and a validation report that names each missing or non-conforming
+  field, with the reason. No schema change. Owner question §70.5.
+  **Acceptance:** a fixture portfolio exports and validates; each rule in the
+  mapping has a test.
+- [ ] **NC-4 (S–M) — Status updates on a cadence.** Each plan gets an
+  on-track / at-risk / off-track update with a narrative, a due cadence, a
+  reminder when due, an overdue flag, and history. The latest update feeds the
+  director pack.
+  **Acceptance:** request tests for due and overdue; the pack shows the update
+  as at its cut-off.
+- [ ] **NC-5 (M) — The service runs its own scheduled jobs (opt-in).** An
+  in-process scheduler for `tolerance_escalations`, `exception_breaches`,
+  `director_pack_schedule`, `retention_purge` and the three sweeps. One runner
+  across replicas, held by a PostgreSQL advisory lock. Each run is audited and
+  counted in a metric. A notice goes to the plan lead on an automatic
+  escalation. Owner question §70.6.
+  **Acceptance:** a test with two schedulers shows one run; a disabled
+  scheduler runs nothing.
+- [ ] **NC-6 (S) — WSJF and RICE scoring models.** Selectable beside the
+  Smart Score, with each component explained. Absent input is `null` with a
+  reason, never zero.
+  **Acceptance:** unit tests of each formula; ranking by each model through the
+  API.
+- [ ] **NC-7 (S) — Efficient frontier.** Re-run the existing scenario
+  generator over a sweep of budget caps and return value against cost, each
+  point with its explainable selection.
+  **Acceptance:** the frontier is monotone on a fixture; each point equals a
+  single-cap run.
+- [ ] **NC-8 (S) — Lessons-learned register.** Entries are recorded at gates
+  and closure. At intake, the matcher surfaces lessons from similar past plans.
+  **Acceptance:** a new proposal similar to a closed plan lists that plan's
+  lessons with the match evidence.
+- [ ] **NC-9 (S) — Portfolio balance view.** A bubble chart of value, risk and
+  cost by category or strategic aim, with stated imbalance flags.
+  **Acceptance:** unit test of the flags; an e2e test of the chart and its
+  table alternative.
+- [ ] **NC-10 (S) — Impact/effort matrix and Now / Next / Later over ideas and
+  proposals.**
+  **Acceptance:** e2e test; the matrix has a keyboard-usable table
+  alternative.
+- [ ] **NC-11 (S) — CloudEvents option for webhooks, and an AsyncAPI
+  document.** An opt-in envelope per target; HMAC signing is unchanged. An
+  AsyncAPI document describes the SSE and webhook events.
+  **Acceptance:** a delivery in CloudEvents binary or structured mode
+  validates against the spec; the AsyncAPI document lints.
+- [ ] **NC-12 (M) — Blueprint sync.** Show the plans made from a template what
+  changed in it, as a diff, and apply the change per plan with consent. Local
+  edits are never overwritten without a decision.
+  **Acceptance:** a test where a template change is applied to one plan and
+  refused for another.
+- [ ] **NC-13 (M) — Multi-project import from Project Online exports.** Many
+  MSPDI files in one job, a shared resource pool, and enterprise custom fields
+  mapped to custom fields, with a preview and a stated reason for everything
+  left out.
+  **Acceptance:** a fixture of three linked projects imports with resources
+  merged once.
+- [ ] **NC-14 (M) — Meetings.** An agenda, minutes and outcomes linked to plan
+  items and the decision log, exported as PDF, and kept under retention.
+  **Acceptance:** request tests; a PDF golden test.
+- [ ] **NC-15 (S–M) — Service accounts or scoped tokens for integrations.**
+  Mostly in the authentication service. Here: a stated scope claim the ABAC
+  policy understands.
+  **Acceptance:** a token with a read scope is refused on writes.
+- [ ] **NC-16 (M, only on demand) — Lean budgets with guardrails and
+  participatory budgeting rounds** (SAFe LPM).
+- [ ] **NC-17 (S) — Weekly portfolio-exceptions digest** from the existing
+  thresholds, tolerances and escalations, through the existing sinks.
+  **Acceptance:** a digest test with one item of each kind.
+
+## Not taken (this pass)
+
+SCIM provisioning (it belongs to the authentication service); AI copilots or
+generated content inside the service; claiming conformance with ISO 21503/21504
+or the PMI portfolio standard; a separate SAFe portfolio kanban. Reasons are in
+[plan.md §68](plan.md).

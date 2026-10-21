@@ -10,7 +10,8 @@
 > across ten research passes (Leantime, Redmine, Platform Collective, scheduling
 > and cost canon, ProjectLibre, owner decisions, director pack, escalation,
 > production readiness, critical chain); the "Where we already match" tables are
-> as of each pass's date and are not re-verified.
+> as of each pass's date and are not re-verified. **2026-10-21:** §64–§70 add a
+> pass on new capabilities and code quality (`NC-`, `CQ-`); those items are open.
 
 Research date: 2026-10-02. Subject: [leantime/leantime](https://github.com/leantime/leantime)
 (v3.10.1; PHP / MySQL; AGPLv3; ~11.7k stars).
@@ -1379,3 +1380,191 @@ RG-1, RG-2, RG-3, RG-5 and RG-14 first (small, independent); RG-4 after RG-3
 because the purge needs the audit protection's controlled-delete path. RG-6 needs
 RG-4's list of what is personal. RG-7 and RG-8 are independent. RG-11 before any
 claim about capacity.
+
+# Research: new capabilities and code quality (NC-n, CQ-n)
+
+Research date: 2026-10-21, after the 0.2.0 release. Two questions: what do
+comparable tools and standards offer that this trio lacks, and where is the
+code itself weakest. The items are `NC-` (new capability) and `CQ-` (code
+quality) in [tasks.md](tasks.md).
+
+**Evidence base, stated plainly.** There were four read-only passes: the
+service and matcher code, the UI code, the "Not built" and "Not done" notes in
+this repository, and an online search. Online, two pages were read in full:
+OpenProject's features page and the admin guide for its MCP server. The SAFe
+Lean Portfolio Management page is behind a login, so only its definition was
+read. Everything else about other products comes from search-result snippets,
+much of it vendor or training copy, and should be treated as pointers to
+verify. ISO 21502/21503/21504, the PMI portfolio standard, and the SCIM and MCP
+specifications were not read. Taiga, Odoo and GitLab were not researched. In
+the code, counts come from grep and are heuristic. `cargo clippy -W
+clippy::pedantic` was run on the service. No gate, database test or browser
+test was run. Where a finding below says *confirmed*, the code was read again
+after the pass reported it.
+
+## 64. Verdict
+
+The scheduling, cost and governance core is broad. The service code is in
+better shape than its size suggests: no panics in request paths, pedantic lints
+on, and an OpenAPI route census. The UI has no Svelte 4 leftovers, runs axe on
+every route, and checks English/Welsh key parity. The weak points are these.
+
+1. **Silent failure.** About 220 audit writes discard their error
+   (`AuditModel::record(..).await.ok()`). The UI swallows best-effort loads,
+   including the handling-mark banner. Visibility lookups fail closed but log
+   nothing.
+2. **Copied helpers that have drifted.** There are three CSV escapers and only
+   one of them defuses spreadsheet formulas. There are eight `is_admin` copies:
+   three treat "no claims" as admin, two as not admin. There are seven
+   `find_plan` copies, and 40 local `unprocessable` helpers emit two different
+   error codes.
+3. **No contract between the UI and the service beyond paths.** The OpenAPI
+   document is hand-written: 7 `requestBody` entries over about 5,100 lines,
+   and 52 paths are known to be undocumented. The 4,094-line `ppm.ts` client
+   is hand-written too, and the e2e tests stub the API, so the client, the
+   stubs and the service can all drift apart.
+4. **The BFF proxy drops response headers** (confirmed). `+server.ts` relays
+   only `content-type`. In the browser, paging totals (`X-Total-Count`),
+   `ETag`, `Retry-After`, `Location` and `Content-Disposition` never arrive.
+5. **About 98 service features have no screen.** This is the largest
+   capability gap, and it is mostly already built at the API.
+
+The new capabilities with the most value are machine access for AI agents (an
+MCP adapter), the UK Programme and Project Data Standard, and a regular status
+update with a due date.
+
+## 65. Code-quality findings (CQ-n)
+
+| ID | Finding | Evidence | Risk |
+|---|---|---|---|
+| CQ-1 | CSV formula injection in plan export, auditor evidence and timesheets | `src/bulk.rs:101` and `src/visibility.rs:333` quote but do not defuse `= + - @`; `src/access_review.rs:91` does (confirmed) | Security |
+| CQ-2 | `is_admin` copies disagree on "no claims" | `milestone_signoffs.rs:123`, `deescalation.rs:73` use `is_none_or` (no claims ⇒ admin); `bulk.rs:69`, `plan_access.rs:43`, `attachments.rs:33` use `is_some_and` (confirmed). Whether "no claims" is reachable with auth on was **not** checked | Security, to verify |
+| CQ-3 | Audit writes discard errors | ~220 `AuditModel::record(..).await.ok()`; e.g. `controllers/financials.rs:174` audits after `commit()` | Correctness: AGENTS.md promises an audit row per write |
+| CQ-4 | BFF proxy relays only `content-type` | `ui/src/routes/api/proxy/[...path]/+server.ts:67-72` vs `client.ts:220` (confirmed) | Correctness: paging totals wrong in the browser |
+| CQ-5 | Proxy forwards a browser `Authorization`; no Origin check on mutations; upstream failure is an unhandled 500 | `+server.ts:28`; `server/session.ts:17` SameSite=Lax is the only CSRF defence | Security, low |
+| CQ-6 | Visibility lookups fail closed silently (200 with empty data during an outage) | `controllers/plan_access.rs:134,137,174` | Operability |
+| CQ-7 | Copied controller helpers | 40 `unprocessable`, 26 `db_err`, 7 `find_plan`, 4 `find_task`, 17 open-coded `Uuid::parse_str`; `"unprocessable_entity"` ×51 vs `"unprocessable"` ×7 | Drift |
+| CQ-8 | OpenAPI checks paths, not bodies | 7 `requestBody`; `KNOWN_UNDOCUMENTED` 52; census at `openapi.rs:2290` compares path and method only | Contract drift |
+| CQ-9 | UI client and e2e stubs are unchecked against the service | `ppm.ts` ~250 methods, 169 not unit-tested; `page.route` stubs | Contract drift |
+| CQ-10 | Full-text index writes block the async runtime | `streaming.rs:359,372` call tantivy sync under `std::sync::Mutex` with `commit()` | Latency |
+| CQ-11 | Queries in loops, one of them racy | `financials.rs:184`, `strategy.rs:283`, `earned_value.rs:557` (select-then-upsert per currency, no transaction) | Performance, correctness |
+| CQ-12 | `format!` SQL, and raw `DbErr` text in a 409 body | `retention.rs:162,178`, `controllers/subjects.rs:165,181,187`, `sandbox.rs:389` | Fragility, information leak |
+| CQ-13 | "Today" computed in UTC | `Utc::now().date_naive()` ×93 vs `tz::local_today` ×14 | Off-by-one near midnight |
+| CQ-14 | Lints do not reach the tests; stale allows hide | 64 `too_many_lines`, 174 `missing_docs` allows; ~150 pedantic warnings in `tests/` | Hygiene |
+| CQ-15 | Large modules | `tba.rs` 3,401 lines, `controllers/engineering.rs` 1,649, `controllers/visibility.rs` 1,612 with no tests, `openapi_more.rs` 2,611 | Maintainability |
+| CQ-16 | Probably unused dependencies | `regex`, `include_dir`, `futures-util`, sea-orm `sqlx-sqlite`; `sha2` listed twice; UI Lily pickers pinned but resolved as older duplicates | Supply chain |
+| CQ-17 | UI effect-driven loads fetch twice and race | `calendar/+page.svelte:40,112`, `flow/+page.svelte:65,223`, `board/+page.svelte:71` | Stale data |
+| CQ-18 | Param pages go stale on same-route navigation | 27 pages load in `onMount`; `plans/[pid]/+page.svelte:19` holds a non-reactive `pid` and links to other plans | Wrong record shown |
+| CQ-19 | UI silent failures | WBS link counts, plan modules, Gantt calendar, announcements downgrade, **handling-mark banner** (`+layout.svelte:49`), security headers in `hooks.server.ts:53` | Correctness, one security |
+| CQ-20 | Load/error boilerplate copied | `err instanceof Error ? err.message : t(..)` ×173 in 89 files; 84 `let error = $state` | Maintainability; untranslated service English reaches users |
+| CQ-21 | DataTable is untyped | 180 of 182 `as unknown as` are column accessors (`DataTable.svelte:51-53`) | Type safety |
+| CQ-22 | No UI lint or format gate | no ESLint, no Prettier config; 51 files unformatted | Hygiene |
+| CQ-23 | i18n leaks | `ObjectiveCard.svelte:187` English `confirm()`; catalogue test skips strings in expressions; ~480 page keys possibly unused; 25 `as never` key casts | Locale quality |
+| CQ-24 | Thin e2e for nine routes | `/announcements`, `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`, critical-path, earned-value, RACI | Coverage |
+| CQ-25 | Documentation drift | CHANGELOG says link routes skip the private check, but `privacy_mw` guards `/api/plans/{pid}/…`; CHANGELOG l.339 says `style-src-attr 'unsafe-inline'`, but `vite.config.ts:32` now uses a hash; `COMPARISONS.md` says change requests are not built (IR-4 built them); `spec/15` "Planned, not built" lists DP/EX/CC; `ppm.ts` header says 13 locales; package description says "Case Service (Main X Index)" | Honesty of the docs |
+
+**Corrections made while writing this.** The UI pass reported that "the service
+has no OpenAPI". That is wrong: the document is hand-written (`src/openapi.rs`),
+not derived. The harvest pass read the CSP note in the CHANGELOG as a live gap.
+The CSP has since been tightened, so it is drift (CQ-25), not a risk.
+
+## 66. Correctness gaps already recorded in the backlog notes
+
+These are gaps the backlog entries already mention in passing. They are worth
+lifting into their own items because each can give a wrong answer, not just
+leave a feature missing:
+
+- The WBS and earned-value pages read only the first 2,000 tasks and do not say
+  so. Earned value can be silently wrong on a large plan (RG-15).
+- Goals are addressed by position with no `If-Match` (OQ-5). Availability
+  overlap is checked in the service, not by a constraint, so it can race
+  (PJ-3).
+- Nothing checks who may acknowledge or resolve an escalation. Any writer may
+  edit a shared framework, in place, for every plan that follows it.
+- The EX-13 "new asks" section is not filtered for private plans. RBS
+  drill-down privacy is unproven.
+- No one is notified of an automatic escalation. No scheduler runs the three
+  cargo tasks (`tolerance_escalations`, `exception_breaches`,
+  `director_pack_schedule`), and `operations/deployment.md` names only
+  `retention_purge`.
+- The critical-path page shows the 413 message instead of offering
+  `?only=critical`.
+
+## 67. New capabilities (NC-n), ranked
+
+| ID | Capability | Who has it (source) | Here today | Size |
+|---|---|---|---|---|
+| NC-1 | Screens for the service features that have none (canvases, templates, comments, attachments, watchers, notification sinks and preferences, task relations, bulk edit, timesheets, MSPDI export, access review, break-glass, change-request drafting, issue raising, module settings …) | — (repository notes) | API only, ~98 notes | L, in slices |
+| NC-2 | Read-only MCP adapter over the existing API, under the caller's own ABAC and handling marks; runs no model | OpenProject MCP server (openproject.org/docs/system-admin-guide/integrations/mcp-server/), Atlassian Rovo MCP, Plane, Planview Anvi (snippets) | None | M |
+| NC-3 | Export to and validation against the UK Programme and Project Data Standard (v1 on trial to 31 Dec 2026; v2 early 2027) | projectdelivery.gov.uk (snippets), APM blog | Data mostly exists; no mapping | M |
+| NC-4 | Status updates on a cadence: an on-track / at-risk / off-track narrative per plan, due reminders, an overdue follow-up, and a feed into the director pack | Linear initiative and project updates (snippets) | Confidence assessments and packs; no per-plan update | S–M |
+| NC-5 | Scheduler for the cargo tasks and sweeps (an in-process cron, opt-in, one runner via an advisory lock), plus notification on automatic escalation | — (repository notes) | Operator must schedule | M |
+| NC-6 | WSJF / cost of delay and RICE as selectable scoring models beside the Smart Score, absent input = null | SAFe (snippet), Jira Product Discovery (snippet) | Seven-component weighted score | S |
+| NC-7 | Efficient frontier: re-run the explainable scenario generator over a sweep of budget caps | Planisware glossary, Planview (snippets) | One cap | S |
+| NC-8 | Lessons-learned register fed at gates and closure, surfaced at intake by the matcher | PRINCE2 lessons log (not read); no tool cited | Vocabulary only (`spec/01:244`) | S |
+| NC-9 | Portfolio balance view: value, risk and cost bubbles by category or strategic aim, with imbalance flags (MoP "balance") | MoP course outline (snippet) | `distribution.rs` is flow work type, not investment | S |
+| NC-10 | Impact/effort matrix and Now / Next / Later views over ideas and proposals | Jira Product Discovery views (snippet) | Kanban, pipeline, Gantt | S |
+| NC-11 | CloudEvents envelope option per webhook target, and an AsyncAPI document for the event stream | CloudEvents spec; Fatture in Cloud (snippet) | Own envelope, HMAC | S |
+| NC-12 | Blueprint sync: offer template changes to the plans made from it, with a diff and per-plan consent | Smartsheet Control Center (snippet) | One-shot instantiate | M |
+| NC-13 | Multi-project import from Project Online exports: many MSPDI files, the enterprise resource pool, enterprise custom fields | Project Online retired 30 Sep 2026 (snippet) | One plan at a time | M |
+| NC-14 | Meetings: agenda, minutes and outcomes linked to plan items, with a PDF | OpenProject 16.0 / 16.1 (release notes, snippet) | Decision log, ceremonies | M |
+| NC-15 | Service accounts or scoped API tokens for integrations (needed by NC-2) | OpenProject (doc read) | PASETO from the auth service only | S–M, mostly in the auth service |
+| NC-16 | Lean budgets with guardrails and participatory budgeting rounds | SAFe LPM (Cprime, Lean Wisdom; snippets) | Funding sources, tranches | M, only on demand |
+| NC-17 | A weekly "portfolio exceptions" digest from the existing deterministic rules | monday.com risk agents (vendor copy) | Thresholds, tolerances, escalations | S |
+
+**Already here (checked, not proposed):** iCalendar and Atom feeds, baselines
+and schedule variance, scenario evaluation and generation, the intake pipeline
+with votes, gates and tranches, sprints, timesheets, custom fields, templates,
+automations, signed webhooks, OpenAPI, NDJSON bulk export, the KPI surface, the
+decision log, RACI, skill pools, delivery confidence, OKRs and benefits.
+
+## 68. Deliberately not taken (this pass)
+
+- **SCIM provisioning.** Identity belongs to the authentication service, as
+  with LDAP, OIDC and 2FA. At most, a deprovision webhook could revoke plan
+  access and guest grants here.
+- **AI copilots, sentiment analysis and generated scenarios inside the
+  service.** Already refused in §16; they break "it says why". NC-2 is a
+  protocol adapter that runs no model.
+- **Claiming conformance with ISO 21503/21504 or the PMI portfolio standard.**
+  They are guidance. At most, a coverage map belongs in `governance/`, as with
+  P3M3.
+- **A separate SAFe portfolio kanban.** The proposals pipeline covers it. A WIP
+  limit per stage would be a small amendment.
+- **Real-time co-editing, a plugin marketplace, inbound email.** Already not
+  taken.
+
+## 69. Sequencing
+
+1. **Security and correctness first, each small:** CQ-1, CQ-2 (check first,
+   then fix), CQ-4, CQ-5, the handling-mark part of CQ-19, CQ-3.
+2. **Then the shared helpers that stop the drift from recurring:** CQ-7 with a
+   census that bans local copies, CQ-20 (`resource()` / `errorText()`), which
+   also closes CQ-17 and most of CQ-19, and CQ-6.
+3. **Then the contract:** CQ-8 (request bodies documented and tested), then
+   CQ-9 (generate or census the TS client against the document).
+4. **Capabilities:** NC-5 and NC-4, which are small and make existing rules
+   work; NC-1 in slices, ordered by the backlog's own correctness notes (§66);
+   NC-6, NC-7, NC-9 and NC-10 together, since they share the selection screens;
+   NC-2 after NC-15; NC-3 once the owner names UK government as a first buyer
+   (§62 question 1).
+5. **Hygiene, any time:** CQ-14, CQ-15, CQ-16, CQ-21, CQ-22, CQ-23, CQ-24,
+   CQ-25.
+
+## 70. Open questions for the owner (this pass)
+
+1. **"No claims" when auth is off.** Should it mean admin (the convenient
+   development behaviour) or not admin? CQ-2 needs one rule, written down.
+   Recommended: not admin, with an explicit development flag.
+2. **Audit failure.** Is a write whose audit row fails to land refused (same
+   transaction), or kept and logged loudly? Recommended: refused, with a
+   best-effort path only for reads that are audited.
+3. **Error code.** At the next API version, should it be `unprocessable_entity`
+   or `unprocessable`?
+4. **NC-2.** Is AI-agent access wanted at all, given §16? If yes, read-only
+   only, or with writes later?
+5. **NC-3.** Is UK government a first buyer, which would make the data standard
+   worth tracking through its v2?
+6. **NC-5.** Should the service schedule its own jobs (an in-process cron),
+   which is simpler for small deployers, or should that stay the operator's
+   job?

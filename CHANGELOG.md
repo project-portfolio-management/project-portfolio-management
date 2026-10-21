@@ -17,6 +17,11 @@ workflow yet. Dates are 2026.
 
 ### 20 October
 
+- **Dependency advisories.** `cargo deny` began failing on three new advisories (RUSTSEC-2026-0381, -0382, -0383:
+  certificate roots and verification in `rustls-webpki`, `webpki-root-certs`, `webpki-roots`). Updated the three in the
+  service's `Cargo.lock` to the patched 0.103.16 / 1.0.10 releases; `cargo deny check advisories` passes locally.
+  The failure was in the dependencies, not in the escalation notification commit it was reported on.
+
 - **Escalations tell people.** The person an escalation names as responsible and the person who raised it now get an
   in-app inbox notification (kind `escalation`, can be switched off) when it is raised, acknowledged, taken up a level,
   resolved or withdrawn, except the person who acted. Verified: one request test (the named person hears of the raise

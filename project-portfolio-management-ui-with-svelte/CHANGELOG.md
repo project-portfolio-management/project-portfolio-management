@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security — the proxy refuses cross-site writes and the browser's own bearer (CQ-5, 2026-10-21)
+
+`/api/proxy` forwarded every browser header except four, so a page script without a session could send its own `Authorization` to the service, and nothing but the SameSite=Lax cookie stood between another site and a state-changing call. It now drops `Authorization` from the browser, refuses with 403 a `POST`/`PUT`/`PATCH`/`DELETE` whose `Origin` is not the app's (or, with no `Origin`, whose `Sec-Fetch-Site` names another site), and answers 502 `bad_gateway` instead of an unhandled 500 when the service is unreachable. AGENTS.md and the spec claimed an `X-CSRF-Token` the client never sent; corrected. Unit tests (`proxy-guard.test.ts`) and two Playwright tests against the real proxy route. Not done: the 502 path has no browser test (a test would need the service address to be known-closed, which a shared machine cannot promise); a write with neither header passes, as non-browser clients do.
+
 ### Fixed — the proxy relays the response headers the client reads (CQ-4, 2026-10-21)
 
 `/api/proxy` copied only `content-type`, so in the browser `getPage` totals fell back to the page length and `ETag`, `Retry-After`, `Location`, `Content-Disposition` and `X-Handling-Mark` were lost. An allow-list in `src/lib/server/proxy-headers.ts` now relays them; unit tests for what passes and what does not (`set-cookie`, hop-by-hop, unnamed). Not done: no browser test goes through the real proxy (the e2e suite stubs the API in the browser), so the fix is proven at the function, not end to end.

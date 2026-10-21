@@ -295,7 +295,8 @@ keys fall back to `en`.
     holds the session and attaches a short-lived PASETO server-side when
     calling the portfolio service through the same-origin
     `/api/proxy/[...path]` route; the browser never calls the service
-    directly. Mutating browser→BFF calls carry a CSRF token; **Sign out**
+    directly. Mutating browser→BFF calls from another origin are refused
+    (`Origin` / `Sec-Fetch-Site`, CQ-5; there is no CSRF token); **Sign out**
     revokes the session. This lets operator traffic through once the
     service turns on blanket enforcement
     (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`, on by default since HD-3). Per
@@ -339,7 +340,11 @@ body and an allow-list of response headers (`src/lib/server/proxy-headers.ts`,
 CQ-4): `content-type`, `content-disposition`, `cache-control`, `etag`,
 `last-modified`, `location`, `retry-after`, `link`, the paging headers
 `x-total-count` / `x-limit` / `x-offset`, `x-handling-mark` and the
-`ratelimit-*` trio; never `set-cookie` or a hop-by-hop header. `PlanForm` builds a `Plan` from the
+`ratelimit-*` trio; never `set-cookie` or a hop-by-hop header. Before
+forwarding it refuses (403) a state-changing request whose `Origin` is not the
+app's, or whose `Sec-Fetch-Site` names another site, drops a browser-supplied
+`Authorization`, and answers 502 `bad_gateway` when the service cannot be
+reached (`src/lib/server/proxy-guard.ts`, CQ-5). `PlanForm` builds a `Plan` from the
 inputs (comma lists split, blanks nulled, goals / identifiers /
 relationships as editable rows; empty rows dropped on submit; a seeded
 `Custom` enum collapses to "—"; `kind` is an optional select,
@@ -409,7 +414,7 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 (`tests/unit/`, 8 files / 62 tests as of 2026-08-03) cover:
 
 - `client.test.ts` — the `ApiClient` (verb / body / headers /
-  cookie-credentials / CSRF / error-classification / empty-body, incl.
+  cookie-credentials / error-classification / empty-body, incl.
   `PATCH`);
 - `plans.test.ts` (12 tests) — every `PlanRepository` method's path +
   verb: `list()` (incl. the `?parent=` roll-up query, though no route
@@ -693,7 +698,9 @@ links are **never** a match signal (entity spec §1).
   `src/lib/server/{auth,session,config}.ts` read the
   `__Host-mxi_session` cookie, exchange it for a short-lived PASETO
   server-side, and attach it when calling the portfolio service via
-  `src/routes/api/proxy/[...path]`; CSRF on mutating browser→BFF calls.
+  `src/routes/api/proxy/[...path]`; cross-site mutating browser→BFF calls
+  refused by an `Origin` / `Sec-Fetch-Site` check (CQ-5, 2026-10-21; the CSRF
+  token this line once claimed was never built).
   Sign-in is this app's own `signin/` + `verify/` routes, not a redirect
   to a central authentication front-end. No `mxi_access_token` /
   `localStorage` bearer, no fragment handoff (per

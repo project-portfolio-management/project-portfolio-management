@@ -15,6 +15,15 @@ import { accessTokenFor, providerMetadata } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
 import { demoEnabled } from "#lib/server/demo.js";
 import { relayResponseHeaders } from "#lib/server/proxy-headers.js";
+import { crossSiteRefusal, forwardedRequestHeaders } from "#lib/server/proxy-guard.js";
+
+/** A JSON error in the service's own shape (`error`, `description`). */
+function problem(status: number, error: string, description: string): Response {
+  return new Response(JSON.stringify({ error, description }), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
 
 const proxy: RequestHandler = async ({
   request,
@@ -23,15 +32,14 @@ const proxy: RequestHandler = async ({
   locals,
   fetch,
 }) => {
+  const refusal = crossSiteRefusal(request.method, request.headers, url.origin);
+  if (refusal) return problem(403, "forbidden", refusal);
+
   const target = `${PROJECT_PORTFOLIO_MANAGEMENT_API_URL}/${params.path}${url.search}`;
 
-  // Copy request headers, but drop hop-by-hop / origin-specific ones and
-  // never forward the browser's cookie to the entity service.
-  const headers = new Headers(request.headers);
-  headers.delete("cookie");
-  headers.delete("host");
-  headers.delete("connection");
-  headers.delete("content-length");
+  // Copy request headers, but drop hop-by-hop / origin-specific ones, the
+  // browser's cookie and any bearer the browser chose (see proxy-guard.ts).
+  const headers = forwardedRequestHeaders(request.headers);
 
   // Negotiate the API version via header, not the URL (URLs are
   // version-free). See `agents/share/api-versioning.md` §6.4.
@@ -64,7 +72,13 @@ const proxy: RequestHandler = async ({
     init.body = await request.arrayBuffer();
   }
 
-  const upstream = await fetch(target, init);
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, init);
+  } catch {
+    // The service is down or unreachable: say so, rather than an unhandled 500.
+    return problem(502, "bad_gateway", "the portfolio service could not be reached");
+  }
 
   // Relay status + body, and the response headers the client reads (an allow-list).
   return new Response(upstream.body, {

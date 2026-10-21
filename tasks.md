@@ -1672,12 +1672,13 @@ came from grep.
   through and drops `set-cookie` from upstream; one e2e test over the real
   proxy shows a total larger than the page.
   **Built 2026-10-21.** `src/lib/server/proxy-headers.ts` (`relayResponseHeaders`, 15 headers, which also covers `link`, `cache-control`, `last-modified` and the `ratelimit-*` trio the service sends); the proxy uses it. Unit tests: each listed header passes, `set-cookie`, hop-by-hop, encoding, length, CSP and unnamed headers do not. **Not done, stated:** the e2e half of the acceptance: the Playwright suite stubs the API in the browser and never reaches the proxy, so a test over the real proxy needs a running service, which the suite does not start.
-- [ ] **CQ-5 (S) — Harden the proxy.** Strip a browser-supplied `authorization`
+- [x] **CQ-5 (S) — Harden the proxy.** Strip a browser-supplied `authorization`
   when there is no session. Refuse non-GET requests whose `Origin` is not the
   app's own. Turn an upstream fetch failure into a 502 with a catalogue message
   instead of an unhandled 500. Reconcile AGENTS.md's "CSRF header" claim with
   `client.ts`, which sends none.
   **Acceptance:** unit tests for each of the three behaviours.
+  **Built 2026-10-21.** `src/lib/server/proxy-guard.ts`: `forwardedRequestHeaders` also drops `authorization`; `crossSiteRefusal` refuses a non-safe method whose `Origin` differs from `url.origin`, or, with no `Origin`, whose `Sec-Fetch-Site` is not `same-origin`/`none`; the proxy answers 502 `{error: "bad_gateway"}` on a fetch failure. AGENTS.md and the UI spec corrected (no CSRF token exists). Unit tests for the first two; two Playwright tests against the real route (403 by `Origin`, 403 by `Sec-Fetch-Site`). **Deviations, stated:** the 502 is covered by reading only (no test: the service address on a shared machine may be held by another project); a write carrying neither header passes, deliberately, because only non-browser clients omit both; the defence is an `Origin` check plus the SameSite cookie, not a token; whether that is enough for a given deployment is the deployer's assessment.
 - [ ] **CQ-6 (S) — Visibility lookups fail closed loudly.**
   `controllers/plan_access.rs:134,137,174` return an empty scope without a log.
   Keep failing closed, but log at error level, count a metric, and answer 503

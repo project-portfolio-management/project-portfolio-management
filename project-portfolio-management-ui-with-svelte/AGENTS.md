@@ -119,7 +119,7 @@ src/
 │   ├── *-view.ts, wbs.ts, rbs.ts  pure view modules (no runes, no `$app/*`): ceo-view, ev-view, cpm-view, whatif-view, work-view, onboarding-view, … — tested in `tests/unit/`
 │   ├── glossary.ts                plain-language glosses for acronyms; rendered by `components/Term.svelte`
 │   ├── api/
-│   │   ├── client.ts              lean fetch wrapper (get/post/put/patch/delete + ApiError); credentials: 'include' (cookie) + CSRF header
+│   │   ├── client.ts              lean fetch wrapper (get/post/put/patch/delete + ApiError); same-origin, so the session cookie goes with it
 │   │   ├── types.ts               Plan + PlanKind + PlanStatus + Goal + Task + Issue (+ IssueKind/IssueSeverity/IssueStatus) + Relationship + RelationKind + PlanIdentifier + IdentifierScheme + PlanRef + ScoredRef + MergeRequest + MergeResponse + MergeRecordRow. No MatchBreakdown / AuditEntry / PlanEvent / TimelineRow / BurndownPoint type — those capabilities are not built (see the Status note above).
 │   │   ├── capabilities.ts        CapabilityClient (reviews, assignees, notifications, automations, scheduled actions, Smart Score, lifecycle)
 │   │   ├── ppm.ts                 `PpmClient` — typed endpoints for the dashboards and the scheduling, cost, work, what-if, onboarding and WBS pages (the largest module)
@@ -260,7 +260,9 @@ a server-side **cookie session** (`__Host-mxi_session`, httpOnly), the
 browser talks only to this front-end's own SvelteKit server (BFF), and
 the BFF exchanges the session for a short-lived **PASETO v4.public**
 token and calls the portfolio service server-side. Mutating requests are
-CSRF-protected; there is no `localStorage` and no `mxi_access_token`.
+protected against cross-site forgery by an `Origin` / `Sec-Fetch-Site` check in
+the proxy (`src/lib/server/proxy-guard.ts`) on top of the SameSite=Lax cookie;
+there is no `localStorage` and no `mxi_access_token`.
 Service-side enforcement (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`) is
 on by default, so the BFF must send the operator bearer on every call.
 
@@ -287,9 +289,11 @@ stylesheet (see `settle()` in `tests/e2e/fixtures.ts`), not an injected
   service. There is no client-held session store
   (`$lib/auth.svelte.ts` does not exist).
 - **`ApiClient`** — browser→BFF calls (`API_BASE_URL` = same-origin
-  `/api/proxy`) send the cookie (`credentials: 'include'`); state-changing
-  requests carry a **CSRF token** (`X-CSRF-Token`). Safe `GET`/`HEAD` are
-  CSRF-exempt.
+  `/api/proxy`) send the cookie because they are same-origin. There is **no
+  CSRF token** (an earlier version of this file said `X-CSRF-Token`; the
+  client never sent one): the proxy refuses a `POST`/`PUT`/`PATCH`/`DELETE`
+  whose `Origin` is not the app's, or whose `Sec-Fetch-Site` says another site
+  (CQ-5), and never forwards a browser-supplied `Authorization`.
 - **`currentUser()`** (T-28f, repo `tasks.md` EV-1) — `src/lib/server/auth.ts`
   exchanges the session for a bearer, then calls the auth service's
   `GET /api/auth/me`, which now returns `attrs` (the caller's own live

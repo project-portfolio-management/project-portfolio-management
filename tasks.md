@@ -1662,6 +1662,7 @@ came from grep.
   **Acceptance:** a census test fails on `record(..).await.ok()`; a database
   test that forces the audit insert to fail shows the write is refused, or, on
   the best-effort path, shows the log line and the metric.
+  **Progress 2026-10-21 (not ticked).** `AuditModel::record_or_log` (error log + `audit_write_failed_total`) replaces all 226 `record(..).await.ok()` calls in 75 files, by a mechanical rewrite; the other 70 calls already propagate. Unit census on `Model::record(..).ok()`; database test `requests::audit_failure` (aborted transaction ⇒ counted once; a good write is not counted); full database suite green (188). **Still to do, waiting on plan §70.2:** refuse the write when its audit fails, by moving each audit into the write's transaction (e.g. `controllers/financials.rs:174` audits after `commit()`). The log line was not asserted in a test (only the metric).
 - [x] **CQ-4 (S) — The BFF proxy relays the headers the client reads.**
   `ui/src/routes/api/proxy/[...path]/+server.ts:67-72` copies only
   `content-type`, so in the browser `X-Total-Count`, `X-Limit` and

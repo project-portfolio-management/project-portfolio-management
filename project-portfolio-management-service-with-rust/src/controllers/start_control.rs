@@ -292,15 +292,14 @@ pub(crate) async fn gate(
         .insert(&ctx.db)
         .await
         .map_err(|x| db_err(&x))?;
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             plan.pid,
             "start_override",
             caller.actor(),
             Some(json!({ "refusals": e.refusals })),
         )
-        .await
-        .ok();
+        .await;
         return started(entry).await;
     }
     let position = if let Some(q) = entry {
@@ -345,15 +344,14 @@ pub(crate) async fn gate(
         })
         .collect::<Vec<_>>()
         .join("; ");
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "start_refused",
         caller.actor(),
         Some(json!({ "refusals": e.refusals, "queue_position": place })),
     )
-    .await
-    .ok();
+    .await;
     Err(Error::CustomError(
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new(
@@ -384,15 +382,14 @@ async fn withdraw(
     a.status = ActiveValue::set("withdrawn".to_string());
     a.resolved_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "start_queue_withdrawn",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "withdrawn": plan.pid }))
 }
 

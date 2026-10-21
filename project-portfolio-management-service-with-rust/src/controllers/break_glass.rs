@@ -255,9 +255,7 @@ async fn revoke(
     a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
     a.revoked_by = ActiveValue::set(Some(sub.clone()));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "break_glass_revoked", Some(&sub), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "break_glass_revoked", Some(&sub), None).await;
     format::json(view(&row, Utc::now()))
 }
 

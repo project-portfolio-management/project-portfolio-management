@@ -194,15 +194,14 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "change_request_drafted",
         caller.actor(),
         Some(serde_json::json!({ "plan_pid": plan.pid, "title": row.title, "kind": row.kind })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row, None))
 }
 
@@ -248,15 +247,14 @@ async fn update(
     );
     a.edits = ActiveValue::set(edits_json(&b));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "change_request_edited",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -345,15 +343,14 @@ async fn step(
     a.status = ActiveValue::set(to.to_string());
     edit(&mut a);
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         &format!("change_request_{to}"),
         caller.actor(),
         Some(serde_json::json!({ "from": from, "to": to, "decision_reason": row.decision_reason })),
     )
-    .await
-    .ok();
+    .await;
     let links = links_of(ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -589,15 +586,14 @@ async fn put_links(
         .map_err(|e| db_err(&e))?;
     }
     tx.commit().await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "change_request_relinked",
         caller.actor(),
         Some(serde_json::json!({ "issues": b.issue_pids.len(), "risks": b.risk_pids.len() })),
     )
-    .await
-    .ok();
+    .await;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -668,15 +664,14 @@ async fn baseline(
     let mut a: change_requests::ActiveModel = row.into();
     a.baseline_pid = ActiveValue::set(Some(taken.pid));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "change_request_baselined",
         caller.actor(),
         Some(serde_json::json!({ "baseline_pid": taken.pid, "version": taken.version })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "change_request_pid": row.pid, "baseline_pid": taken.pid, "baseline_version": taken.version,
     }))

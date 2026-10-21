@@ -175,15 +175,14 @@ async fn upsert(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "key_person_recorded",
         caller.actor(),
         Some(json!({ "kind": row.subject_kind, "readiness": row.readiness })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row))
 }
 
@@ -203,9 +202,7 @@ async fn remove(
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)?;
     row.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, pid, "key_person_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, "key_person_removed", caller.actor(), None).await;
     format::json(json!({ "removed": pid }))
 }
 
@@ -247,15 +244,14 @@ async fn set_contingent(
         }
         _ => {}
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         Uuid::new_v4(),
         "contingent_worker_set",
         caller.actor(),
         Some(json!({ "contingent": b.contingent })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "person_ref": b.person_ref, "contingent": b.contingent }))
 }
 

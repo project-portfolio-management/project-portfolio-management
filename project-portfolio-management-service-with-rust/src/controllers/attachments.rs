@@ -76,15 +76,14 @@ async fn upload(
     match content_check::scan(&body).await {
         content_check::Verdict::NotConfigured | content_check::Verdict::Clean => {}
         content_check::Verdict::Infected(name) => {
-            AuditModel::record(
+            AuditModel::record_or_log(
                 &ctx.db,
                 subject.pid,
                 "attachment_refused_by_scan",
                 caller.actor(),
                 Some(serde_json::json!({ "subject_kind": p.subject_kind, "signature": name })),
             )
-            .await
-            .ok();
+            .await;
             return Err(unprocessable("the file was refused by the malware scan"));
         }
         content_check::Verdict::Unavailable(why) => {
@@ -134,7 +133,7 @@ async fn upload(
     .await
     .map_err(db_err)?;
     index_text(&ctx, row.pid, declared, &body).await;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "attachment_added",
@@ -144,8 +143,7 @@ async fn upload(
                                   "filename": filename, "sha256": sha }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": row.pid, "filename": filename, "content_type": artifact.content_type,
         "size_bytes": size, "sha256": sha,
@@ -380,9 +378,7 @@ async fn delete_one(
     let mut active: attachments::ActiveModel = att.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, att_pid, "attachment_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, att_pid, "attachment_removed", caller.actor(), None).await;
     format::empty_json()
 }
 

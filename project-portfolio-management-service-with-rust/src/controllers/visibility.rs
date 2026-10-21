@@ -176,9 +176,7 @@ async fn create_dependency(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "dependency_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "dependency_added", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -257,9 +255,7 @@ async fn delete_dependency(
         .exec(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, "dependency_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "dependency_removed", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -432,9 +428,7 @@ async fn create_milestone(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "milestone_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "milestone_added", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -528,15 +522,14 @@ async fn reschedule_milestone(
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "milestone_rescheduled",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
 
     if old_due != payload.due {
         super::automation::fire(
@@ -624,7 +617,7 @@ async fn complete_milestone(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "milestone_completed",
@@ -633,8 +626,7 @@ async fn complete_milestone(
             .as_ref()
             .map(|r| serde_json::json!({ "reason": r, "open_linked_tasks": open })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -751,9 +743,7 @@ async fn create_allocation(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "allocation_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "allocation_added", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -880,7 +870,7 @@ async fn commit_allocation(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "allocation_committed",
@@ -890,8 +880,7 @@ async fn commit_allocation(
                                   "peak_percent": load.peak_demand }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "pid": row_pid, "booking": "committed", "over_capacity": over }),
     )
@@ -917,9 +906,7 @@ async fn delete_allocation(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, "allocation_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "allocation_removed", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -1123,9 +1110,7 @@ async fn create_report(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "report_saved", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "report_saved", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1157,9 +1142,7 @@ async fn delete_report(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, "report_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "report_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 

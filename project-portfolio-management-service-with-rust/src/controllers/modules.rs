@@ -154,15 +154,14 @@ pub(crate) async fn set_modules(
                 .map_err(db_err)?;
         }
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan_pid,
         "plan_modules_changed",
         actor,
         Some(serde_json::json!({ "before": before, "after": new })),
     )
-    .await
-    .ok();
+    .await;
     Ok(())
 }
 

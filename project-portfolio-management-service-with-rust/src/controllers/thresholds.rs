@@ -105,15 +105,14 @@ async fn set_triage(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "programme_triaged",
         caller.actor(),
         Some(json!({ "outcome": b.outcome })),
     )
-    .await
-    .ok();
+    .await;
     format::json(triage_view(&row))
 }
 
@@ -182,15 +181,14 @@ async fn set_threshold(
         if let Some(e) = existing {
             e.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
         }
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             plan.pid,
             "threshold_removed",
             caller.actor(),
             Some(json!({ "kind": b.kind })),
         )
-        .await
-        .ok();
+        .await;
         return format::json(json!({ "removed": b.kind }));
     }
     let (count, date, amount, currency) = match b.kind.as_str() {
@@ -233,15 +231,14 @@ async fn set_threshold(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "threshold_set",
         caller.actor(),
         Some(threshold_view(&row)),
     )
-    .await
-    .ok();
+    .await;
     format::json(threshold_view(&row))
 }
 
@@ -395,15 +392,14 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     _ => cause.clone(),
                 }));
                 a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-                AuditModel::record(
+                AuditModel::record_or_log(
                     &ctx.db,
                     o.pid,
                     "threshold_attached_to_exception",
                     actor.as_deref(),
                     Some(json!({ "kind": t.kind })),
                 )
-                .await
-                .ok();
+                .await;
                 row["outcome"] = json!("attached_to_open_exception");
                 row["exception_pid"] = json!(o.pid);
             }
@@ -428,15 +424,14 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                 .insert(&ctx.db)
                 .await
                 .map_err(|e| db_err(&e))?;
-                AuditModel::record(
+                AuditModel::record_or_log(
                     &ctx.db,
                     e.pid,
                     "threshold_exception_opened",
                     actor.as_deref(),
                     Some(json!({ "kind": t.kind })),
                 )
-                .await
-                .ok();
+                .await;
                 row["outcome"] = json!("opened");
                 row["exception_pid"] = json!(e.pid);
             }

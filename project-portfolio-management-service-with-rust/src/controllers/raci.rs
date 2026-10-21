@@ -220,15 +220,14 @@ async fn set_row(
         .iter()
         .map(|e| (e.person_ref.clone(), e.roles.iter().collect()))
         .collect();
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         task.pid,
         "raci_set",
         caller.actor(),
         Some(serde_json::json!({ "plan_pid": plan.pid, "before": before, "after": after })),
     )
-    .await
-    .ok();
+    .await;
     crate::live::publish(
         plan.pid,
         "raci_updated",

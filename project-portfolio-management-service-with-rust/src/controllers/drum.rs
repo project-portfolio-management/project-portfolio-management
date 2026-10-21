@@ -89,15 +89,14 @@ async fn set_drum(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "portfolio_drum_set",
         caller.actor(),
         Some(json!({ "skill_pool_pid": b.skill_pool_pid })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "skill_pool_pid": row.skill_pool_pid, "declared_on": row.declared_on }))
 }
 

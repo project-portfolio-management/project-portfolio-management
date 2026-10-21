@@ -119,9 +119,7 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "scorecard_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "scorecard_created", caller.actor(), None).await;
     format::json(
         json!({ "pid": row.pid, "name": row.name, "for_deescalation": row.for_deescalation }),
     )
@@ -199,15 +197,14 @@ async fn set_kpis(
         .await
         .map_err(|e| db_err(&e))?;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         sc.pid,
         "scorecard_kpis_set",
         caller.actor(),
         Some(json!({ "count": wanted.len() })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": wanted }))
 }
 
@@ -286,15 +283,14 @@ async fn from_template(
         .map_err(|e| db_err(&e))?;
         made.push(k.pid);
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         sc.pid,
         "scorecard_from_template",
         caller.actor(),
         Some(json!({ "created": made.len() })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": made }))
 }
 
@@ -431,15 +427,14 @@ async fn set_level(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "escalation_level_set",
         caller.actor(),
         Some(json!({ "level": row.level })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
@@ -467,15 +462,14 @@ async fn add_criterion(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "deescalation_criterion_added",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
@@ -538,15 +532,14 @@ async fn set_evidence(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         c.pid,
         "deescalation_evidence_recorded",
         caller.actor(),
         Some(json!({ "quarter": q.label(), "met": b.met })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "criterion_pid": c.pid, "quarter": q.label(), "met": b.met }))
 }
 

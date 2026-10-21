@@ -268,9 +268,7 @@ async fn create_comment(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "comment_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "comment_added", caller.actor(), None).await;
     if let Some(plan_pid) = subject.plan_pid {
         crate::live::publish(
             plan_pid,
@@ -440,15 +438,14 @@ async fn delete_comment(
     let mut active: comments::ActiveModel = comment.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         comment_pid,
         "comment_deleted",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

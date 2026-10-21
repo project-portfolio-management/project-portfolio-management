@@ -115,15 +115,14 @@ async fn put_mark(
         }
         (None, None) => {}
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "handling_mark_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.mark })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(plan.pid, b.mark.as_deref()))
 }
 

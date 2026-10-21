@@ -143,9 +143,7 @@ async fn record(
     .await
     .map_err(db_err)?;
 
-    AuditModel::record(&ctx.db, plan.pid, "tpc_recorded", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan.pid, "tpc_recorded", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

@@ -449,15 +449,14 @@ async fn set_role(
             return format::json(serde_json::json!({ "person_ref": b.person_ref, "role": null }));
         }
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         pid,
         "resource_role_set",
         caller.actor(),
         Some(serde_json::json!({ "person_ref": b.person_ref, "from": was, "to": role })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "person_ref": b.person_ref, "role": role }))
 }
 
@@ -564,15 +563,14 @@ async fn resolve_placeholder(
     let mut active: allocations::ActiveModel = allocation.into();
     active.person_ref = ActiveValue::set(b.person_ref.clone());
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "allocation_resolved",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.person_ref, "over_capacity": over })),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "pid": row_pid, "person_ref": b.person_ref, "over_capacity": over }),
     )

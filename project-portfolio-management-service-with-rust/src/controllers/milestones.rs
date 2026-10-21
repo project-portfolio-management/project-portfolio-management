@@ -549,7 +549,7 @@ async fn set_links(
     });
     a.update(&txn).await.map_err(db_err)?;
     txn.commit().await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         m.pid,
         "milestone_links_set",
@@ -559,8 +559,7 @@ async fn set_links(
             "to": { "tasks": b.task_pids, "mode": mode } }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "pid": m.pid, "completion_mode": mode, "task_pids": b.task_pids }),
     )
@@ -611,15 +610,14 @@ async fn reopen(
     a.done_at = ActiveValue::set(None);
     a.done_reason = ActiveValue::set(None);
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "milestone_reopened",
         caller.actor(),
         Some(serde_json::json!({ "reason": reason, "was_done_at": was.0, "was_reason": was.1 })),
     )
-    .await
-    .ok();
+    .await;
     let still = rules::achieved(mode, false, &progress) == Achieved::Tasks;
     format::json(serde_json::json!({ "pid": row.pid, "done": row.done, "achieved": still }))
 }

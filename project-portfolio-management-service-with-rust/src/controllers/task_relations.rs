@@ -265,15 +265,14 @@ async fn create_relation(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "task_relation_added",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -378,15 +377,14 @@ async fn delete_relation(
     let mut active: task_relations::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         r_pid,
         "task_relation_removed",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

@@ -200,7 +200,12 @@ is expressed by `parent_ref`, never by a collection boundary.
    `GET /api/plans/events/recent` — in-memory event stream. Each
    create/update/delete/merge (plan and sub-resource) writes an
    `audit_logs` row and publishes a `created`/`updated`/
-   `deleted`/`merged` (and `linked`/`unlinked`) event.
+   `deleted`/`merged` (and `linked`/`unlinked`) event. An audit write either
+   fails the request (`?`, inside the write's transaction where there is one)
+   or, where the write is kept regardless, goes through
+   `AuditModel::record_or_log`, which logs the failure at error level and
+   counts it in `audit_write_failed_total` (CQ-3); no audit error is discarded
+   silently, and a unit test fails on a `record(..).await.ok()`.
 13. `GET /api/plans/whoami` — echo verified bearer-token claims (`401`
    without a valid token); proves offline PASETO verification.
 14. `GET /api-docs/openapi.json` + `GET /swagger-ui` — OpenAPI 3

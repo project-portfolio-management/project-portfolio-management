@@ -148,15 +148,14 @@ async fn set(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "delivery_model_set",
         caller.actor(),
         Some(json!({ "from": was["delivery_model"], "to": b.delivery_model, "owner": b.delivery_owner_organization_pid })),
     )
-    .await
-    .ok();
+    .await;
     let (_, names) = all(&ctx, &HashSet::from([plan.pid])).await?;
     format::json(view(Some(&row), &names))
 }
@@ -214,15 +213,14 @@ async fn set_method(
         .map_err(|e| db_err(&e))?
     };
     if was != b.method {
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             plan.pid,
             "reporting_method_changed",
             caller.actor(),
             Some(json!({ "from": was, "to": b.method })),
         )
-        .await
-        .ok();
+        .await;
     }
     format::json(json!({ "plan_pid": plan.pid, "reporting_method": row.method }))
 }

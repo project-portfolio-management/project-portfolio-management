@@ -181,15 +181,14 @@ async fn set_order(
         }
     }
     txn.commit().await.map_err(db_err)?;
-    crate::models::audit_logs::Model::record(
+    crate::models::audit_logs::Model::record_or_log(
         &ctx.db,
         plan.pid,
         "task_order_set",
         caller.actor(),
         Some(serde_json::json!({ "parent_task_pid": body.parent_task_pid, "order": body.order })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "parent_task_pid": body.parent_task_pid,
         "order": body.order,

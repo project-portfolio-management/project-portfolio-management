@@ -229,15 +229,14 @@ async fn remove_link(
         .exec(&ctx.db)
         .await
         .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         link.pid,
         "hammock_link_removed",
         caller.actor(),
         Some(serde_json::json!({ "hammock_pid": hammock.pid, "member_pid": member })),
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

@@ -5,6 +5,7 @@
 
 mod access_review;
 mod attachments;
+mod audit_failure;
 mod audit_protection;
 mod bulk;
 mod canvas;

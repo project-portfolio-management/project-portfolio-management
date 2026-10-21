@@ -253,15 +253,14 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
                 a.last_status = ActiveValue::set(Some("failed".to_string()));
                 a.last_error = ActiveValue::set(Some(why.clone()));
                 let _ = a.update(&ctx.db).await;
-                AuditModel::record(
+                AuditModel::record_or_log(
                     &ctx.db,
                     s.pid,
                     "report_run_failed",
                     Some(&s.owner),
                     Some(serde_json::json!({ "report_pid": s.report_pid, "error": why })),
                 )
-                .await
-                .ok();
+                .await;
             }
         }
     }

@@ -331,15 +331,14 @@ async fn create(
 
     let workflow = persist(&ctx, &payload, &def).await?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         payload.plan_pid.unwrap_or(workflow.pid),
         "workflow_registered",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
 }
 
@@ -411,15 +410,14 @@ async fn remove(
     let mut active: workflows::ActiveModel = workflow.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan_pid,
         "workflow_withdrawn",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

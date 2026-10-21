@@ -133,9 +133,7 @@ async fn set_phase(
     active.data = ActiveValue::set(data);
     active.update(&ctx.db).await.map_err(db_err)?;
 
-    AuditModel::record(&ctx.db, plan_pid, "phase_changed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan_pid, "phase_changed", caller.actor(), None).await;
 
     // Workflow automation (FR-32). The phase change is already
     // committed, so a rule that fails is logged as a failed run and

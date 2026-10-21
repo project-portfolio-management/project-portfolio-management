@@ -101,7 +101,7 @@ async fn set(
             .map_err(db_err)?;
         }
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         t_pid,
         "task_ccpm_estimate_set",
@@ -111,8 +111,7 @@ async fn set(
             "to": { "aggressive_days": b.aggressive_days, "safe_days": b.safe_days },
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({
         "task_pid": t_pid, "aggressive_days": b.aggressive_days, "safe_days": b.safe_days,
         "likely_days": task.duration_days,

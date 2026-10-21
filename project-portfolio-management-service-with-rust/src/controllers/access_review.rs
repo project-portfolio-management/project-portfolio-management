@@ -100,15 +100,14 @@ async fn review(
         .collect();
     let today = Utc::now().date_naive();
     let standing = rules::standing(&entries, today, stale);
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         Uuid::nil(),
         "access_review_read",
         caller.actor(),
         Some(serde_json::json!({ "grants": standing.len(), "older_than_days": stale })),
     )
-    .await
-    .ok();
+    .await;
     if csv {
         return Ok((
             [

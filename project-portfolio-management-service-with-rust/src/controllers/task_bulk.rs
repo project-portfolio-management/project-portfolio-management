@@ -220,9 +220,7 @@ pub(super) async fn edit_one(
     if let Err(e) = active.update(&ctx.db).await {
         return ItemResult::refused(pid, e.to_string());
     }
-    AuditModel::record(&ctx.db, pid, audit_kind, caller.actor(), audit_detail)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, audit_kind, caller.actor(), audit_detail).await;
     if let Change::Set(who) = assignee {
         cap_models::notify(
             &ctx.db,

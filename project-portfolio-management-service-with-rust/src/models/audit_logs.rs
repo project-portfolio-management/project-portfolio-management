@@ -62,6 +62,25 @@ impl Model {
         Ok(entry)
     }
 
+    /// [`Self::record`] for a write that is kept even when its audit row cannot be written (CQ-3).
+    /// The failure is never dropped silently: it is logged at error level, with the entity and the
+    /// action, and counted in `audit_write_failed_total`, which an operator can alert on. Whether
+    /// such a write should be refused instead is plan §70 question 2.
+    pub async fn record_or_log<C: ConnectionTrait>(
+        db: &C,
+        entity_pid: Uuid,
+        action: &str,
+        actor: Option<&str>,
+        snapshot: Option<serde_json::Value>,
+    ) {
+        if let Err(error) = Self::record(db, entity_pid, action, actor, snapshot).await {
+            crate::metrics::Metrics::global()
+                .audit_write_failed_total
+                .inc();
+            tracing::error!(%entity_pid, action, %error, "audit row not written");
+        }
+    }
+
     /// Most-recent audit entries, capped at `limit`.
     ///
     /// # Errors
@@ -88,5 +107,39 @@ impl Model {
             .all(db)
             .await?;
         Ok(rows)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// CQ-3: no audit write throws its error away. A call either passes the error on (`?`,
+    /// `map_err`) or goes through `record_or_log`, which logs it and counts it.
+    #[test]
+    fn no_source_file_discards_an_audit_error() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut stack = vec![root];
+        let mut offenders = Vec::new();
+        while let Some(dir) = stack.pop() {
+            for entry in std::fs::read_dir(&dir).expect("read src") {
+                let path = entry.expect("entry").path();
+                if path.is_dir() {
+                    stack.push(path);
+                    continue;
+                }
+                if path.extension().is_none_or(|e| e != "rs") {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).expect("read file");
+                for (at, _) in text.match_indices("Model::record(") {
+                    let statement = text[at..].split(';').next().unwrap_or("");
+                    let squashed: String = statement.split_whitespace().collect();
+                    if squashed.ends_with(".ok()") {
+                        let line = text[..at].matches('\n').count() + 1;
+                        offenders.push(format!("{}:{line}", path.display()));
+                    }
+                }
+            }
+        }
+        assert!(offenders.is_empty(), "audit error discarded: {offenders:?}");
     }
 }

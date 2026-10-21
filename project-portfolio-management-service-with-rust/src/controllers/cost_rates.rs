@@ -195,7 +195,7 @@ async fn create_table(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "cost_rate_table_created",
@@ -205,8 +205,7 @@ async fn create_table(
             "role": row.role, "currency": row.currency }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -311,7 +310,7 @@ async fn add_rate(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         table.pid,
         "cost_rate_added",
@@ -319,8 +318,7 @@ async fn add_rate(
         Some(serde_json::json!({ "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor,
             "currency": table.currency })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid, "table_pid": table.pid,
         "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor, "currency": table.currency }))
 }
@@ -428,7 +426,7 @@ async fn add_task_cost(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "task_cost_added",
@@ -436,8 +434,7 @@ async fn add_task_cost(
         Some(serde_json::json!({ "task_pid": task.pid, "kind": row.kind, "amount_minor": row.amount_minor,
             "currency": row.currency, "accrual": row.accrual })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -488,9 +485,7 @@ async fn delete_task_cost(
     let mut a: task_costs::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, row_pid, "task_cost_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "task_cost_removed", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -829,7 +824,7 @@ async fn record_labour(
         .map_err(db_err)?;
         recorded += 1;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "labour_costs_recorded",
@@ -839,8 +834,7 @@ async fn record_labour(
             "no_rate": no_rate.len(), "table": table }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "recorded": recorded, "already_recorded": already, "no_rate": no_rate,
         "note": "A recorded cost keeps the rate it was priced at. Recording again never changes one; it prices only entries that have none yet.",

@@ -123,15 +123,14 @@ async fn put_template(
             .pid
         }
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         pid,
         "onboarding_template_set",
         caller.actor(),
         Some(serde_json::json!({ "kind": kind.token(), "items": b.items.len() })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "kind": kind.token(), "custom": true, "items": b.items }))
 }
 
@@ -486,7 +485,7 @@ async fn put_item(
         Some(_) => return Err(unprocessable("resolution must be done, skipped or open")),
     }
     let updated = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         updated.pid,
         "onboarding_item_updated",
@@ -497,8 +496,7 @@ async fn put_item(
                     "resolution": updated.resolution, "note": updated.note } }),
         ),
     )
-    .await
-    .ok();
+    .await;
     case_view(&ctx, &caller, &case).await
 }
 
@@ -568,15 +566,14 @@ async fn close(
     a.closed_at = ActiveValue::set(Some(Utc::now().into()));
     a.closed_reason = ActiveValue::set(reason.clone());
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         &format!("onboarding_case_{status}"),
         caller.actor(),
         Some(serde_json::json!({ "reason": reason })),
     )
-    .await
-    .ok();
+    .await;
     case_view(ctx, caller, &row).await
 }
 
@@ -650,7 +647,7 @@ async fn record_access(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "access_recorded",
@@ -660,8 +657,7 @@ async fn record_access(
             "access": row.access, "action": row.action }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 

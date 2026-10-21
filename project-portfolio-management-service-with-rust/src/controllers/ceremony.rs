@@ -101,15 +101,14 @@ async fn create_ceremony(
     .await
     .map_err(db_err)?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         sprint.plan_pid,
         "ceremony_held",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -188,15 +187,14 @@ async fn commit_sprint(
         .map_err(db_err)?;
     }
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         sprint.plan_pid,
         "sprint_committed",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "committed": current.len() }))
 }
 

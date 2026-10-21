@@ -248,9 +248,8 @@ async fn request_move(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() })))
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() })))
+        .await;
     format::json(view(&row))
 }
 
@@ -327,15 +326,14 @@ async fn decide(
         let mut a: tasks::ActiveModel = task.into();
         a.start_date = ActiveValue::set(Some(m.to_start));
         a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             m.task_pid,
             "deployment_go_live_moved",
             caller.actor(),
             Some(json!({ "from": m.from_start, "to": m.to_start, "move": m.pid })),
         )
-        .await
-        .ok();
+        .await;
     }
     let mut a: moves::ActiveModel = m.into();
     a.status = ActiveValue::set(if approve { "approved" } else { "refused" }.to_string());
@@ -343,7 +341,7 @@ async fn decide(
     a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         if approve {
@@ -354,8 +352,7 @@ async fn decide(
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row))
 }
 

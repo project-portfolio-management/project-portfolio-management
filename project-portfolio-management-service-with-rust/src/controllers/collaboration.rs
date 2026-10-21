@@ -183,7 +183,7 @@ async fn invite_review(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "review_invited",
@@ -195,8 +195,7 @@ async fn invite_review(
             "reviewer_scope": scope,
         })),
     )
-    .await
-    .ok();
+    .await;
     // The reviewer learns they have been asked.
     cap_models::notify(
         &ctx.db,
@@ -314,15 +313,14 @@ async fn respond_review(
     active.status = ActiveValue::set(target.to_string());
     active.responded_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         review_pid,
         &format!("review_{target}"),
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -383,7 +381,7 @@ async fn submit_review(
     active.comment = ActiveValue::set(payload.comment.clone());
     active.submitted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         review_pid,
         "review_submitted",
@@ -393,8 +391,7 @@ async fn submit_review(
             "score": row.score,
         })),
     )
-    .await
-    .ok();
+    .await;
     // Tell whoever delegated it that the verdict has landed.
     if let Some(invited_by) = invited_by.as_deref()
         && valid_actor_ref(invited_by)
@@ -449,15 +446,14 @@ async fn withdraw_review(
     active.status = ActiveValue::set("withdrawn".to_string());
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         review_pid,
         "review_withdrawn",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 
@@ -552,15 +548,14 @@ async fn assign_task(
     let mut active: tasks::ActiveModel = task.into();
     active.assignee_ref = ActiveValue::set(assignee.map(std::string::ToString::to_string));
     let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         task_pid,
         "task_assigned",
         caller.actor(),
         Some(serde_json::json!({ "from": previous, "to": row.assignee_ref })),
     )
-    .await
-    .ok();
+    .await;
     if let Some(assignee) = row.assignee_ref.as_deref() {
         cap_models::notify(
             &ctx.db,

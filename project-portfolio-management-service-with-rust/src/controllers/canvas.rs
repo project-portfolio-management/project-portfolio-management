@@ -112,9 +112,7 @@ async fn create_canvas(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "canvas_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "canvas_created", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -253,9 +251,7 @@ async fn add_item(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "canvas_item_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "canvas_item_added", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -306,15 +302,14 @@ async fn update_item(
         active.position = ActiveValue::set(position);
     }
     let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         item_pid,
         "canvas_item_updated",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -331,15 +326,14 @@ async fn delete_item(
     let mut active: canvas_items::ActiveModel = item.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         item_pid,
         "canvas_item_deleted",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

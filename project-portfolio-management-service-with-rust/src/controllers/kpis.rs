@@ -203,9 +203,7 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "kpi_defined", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "kpi_defined", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -369,7 +367,7 @@ async fn update(
     a.owner_ref = ActiveValue::set(b.owner_ref.clone());
     a.objective_pid = ActiveValue::set(b.objective_pid);
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "kpi_updated",
@@ -377,8 +375,7 @@ async fn update(
         Some(serde_json::json!({ "from": was, "to": { "name": row.name, "target_value": row.target_value,
             "red_value": row.red_value, "cadence": row.cadence, "owner_ref": row.owner_ref } })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -394,9 +391,7 @@ async fn remove(
     let mut a: kpis::ActiveModel = k.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, row_pid, "kpi_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "kpi_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -448,15 +443,14 @@ async fn add_reading(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         k.pid,
         "kpi_reading_added",
         caller.actor(),
         Some(serde_json::json!({ "value": b.value, "observed_on": on })),
     )
-    .await
-    .ok();
+    .await;
     let readings = load_readings(&ctx, &[k.pid]).await?;
     let (_, v) = view(&k, &readings, today);
     format::json(serde_json::json!({ "reading_pid": row.pid, "kpi": v }))

@@ -104,15 +104,14 @@ async fn create_def(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "custom_field_declared",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -161,9 +160,7 @@ async fn delete_def(
     let mut active: custom_field_defs::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, pid, "custom_field_withdrawn", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, "custom_field_withdrawn", caller.actor(), None).await;
     format::empty_json()
 }
 

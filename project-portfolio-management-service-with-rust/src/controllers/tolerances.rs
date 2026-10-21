@@ -390,15 +390,14 @@ async fn set_one(
         .await
         .map_err(db_err)?;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "tolerance_set",
         caller.actor(),
         Some(json!({ "dimension": dim.token(), "limit": b.limit, "amber_from_percent": amber })),
     )
-    .await
-    .ok();
+    .await;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }
@@ -420,15 +419,14 @@ async fn remove_one(
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     row.delete(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "tolerance_removed",
         caller.actor(),
         Some(json!({ "dimension": dim.token() })),
     )
-    .await
-    .ok();
+    .await;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }

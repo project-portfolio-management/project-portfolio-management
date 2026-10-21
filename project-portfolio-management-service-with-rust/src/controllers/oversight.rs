@@ -374,15 +374,14 @@ async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> 
     let row = crate::snapshots::capture(&ctx.db)
         .await
         .map_err(Error::Model)?;
-    crate::models::audit_logs::Model::record(
+    crate::models::audit_logs::Model::record_or_log(
         &ctx.db,
         Uuid::new_v4(),
         "snapshot_taken",
         caller.actor(),
         Some(serde_json::json!({ "snapshot_id": row.id })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 

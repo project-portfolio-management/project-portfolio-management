@@ -155,15 +155,14 @@ async fn create(
     }
     txn.commit().await.map_err(db_err)?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "budget_baseline_approved",
         caller.actor(),
         Some(serde_json::json!({ "version": version })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string(), "version": version }))
 }
 

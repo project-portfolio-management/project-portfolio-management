@@ -90,15 +90,14 @@ async fn create_target(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "business_case_target_set",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -156,9 +155,7 @@ async fn create_value_point(
             db_err(e)
         }
     })?;
-    AuditModel::record(&ctx.db, plan.pid, "value_observed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan.pid, "value_observed", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -210,9 +207,7 @@ async fn create_adoption(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan.pid, "adoption_recorded", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan.pid, "adoption_recorded", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -259,15 +254,14 @@ async fn create_satisfaction(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "satisfaction_recorded",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

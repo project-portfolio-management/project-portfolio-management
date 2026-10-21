@@ -160,10 +160,9 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "announcement_published", caller.actor(),
+    AuditModel::record_or_log(&ctx.db, row.pid, "announcement_published", caller.actor(),
         Some(serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned })))
-        .await
-        .ok();
+        .await;
     format::json(view(&row, Utc::now()))
 }
 
@@ -205,7 +204,7 @@ async fn update(
     a.publish_at = ActiveValue::set(publish_at.into());
     a.expires_at = ActiveValue::set(b.expires_at.map(Into::into));
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "announcement_edited",
@@ -213,8 +212,7 @@ async fn update(
         Some(serde_json::json!({ "from": was,
             "to": { "title": row.title, "severity": row.severity, "pinned": row.pinned } })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row, Utc::now()))
 }
 
@@ -233,9 +231,7 @@ async fn retract(
     let mut a: announcements::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, pid, "announcement_retracted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, "announcement_retracted", caller.actor(), None).await;
     format::empty_json()
 }
 

@@ -160,9 +160,7 @@ async fn create_proposal(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "proposal_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "proposal_created", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string(), "status": row.status }))
 }
 
@@ -234,9 +232,7 @@ async fn update_proposal(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, "proposal_updated", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "proposal_updated", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -309,15 +305,14 @@ async fn set_tradeoff(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "proposal_tradeoff_set",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -349,9 +344,7 @@ async fn transition_proposal(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row_pid, action.token(), caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, action.token(), caller.actor(), None).await;
     Ok(row)
 }
 
@@ -407,15 +400,14 @@ async fn promote_proposal(
         "collection": updated.kind_target,
         "provenance": "intake",
     });
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         proposal_pid,
         rules::ProposalAction::Promote.token(),
         caller.actor(),
         Some(snapshot),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": updated.pid.to_string(),
         "status": updated.status,
@@ -682,15 +674,14 @@ async fn create_gate_review(
         "to_stage": new_stage,
         "approver_ref": payload.approver_ref,
     });
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         item_pid,
         "gate_reviewed",
         caller.actor(),
         Some(snapshot),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": review.pid.to_string(),
         "gate": review.gate,
@@ -788,9 +779,7 @@ async fn create_risk(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "risk_raised", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "risk_raised", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -881,9 +870,7 @@ async fn update_risk(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, risk_row_pid, "risk_updated", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, risk_row_pid, "risk_updated", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -912,15 +899,14 @@ async fn escalate_risk(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         risk_row_pid,
         "risk_escalated",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -1005,15 +991,14 @@ async fn create_budget_line(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "budget_line_created",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1105,15 +1090,14 @@ async fn record_actual(
         "actual_minor": next,
         "note": payload.note,
     });
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         line_pid,
         "budget_actual_recorded",
         caller.actor(),
         Some(snapshot),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -1154,15 +1138,14 @@ async fn release_budget_line(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         line_pid,
         "budget_line_released",
         caller.actor(),
         Some(serde_json::json!({ "gate": gate })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 

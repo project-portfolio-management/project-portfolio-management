@@ -212,15 +212,14 @@ async fn grant(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         subject.pid,
         "guest_granted",
         Some(&claims.sub),
         Some(serde_json::json!({ "guest": b.guest_sub, "access": b.access, "expires_at": b.expires_at })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -274,15 +273,14 @@ async fn revoke(
         let mut a: guest_grants::ActiveModel = row.into();
         a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
         a.update(&ctx.db).await.map_err(db_err)?;
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             subject.pid,
             "guest_revoked",
             Some(&claims.sub),
             None,
         )
-        .await
-        .ok();
+        .await;
     }
     format::empty_json()
 }

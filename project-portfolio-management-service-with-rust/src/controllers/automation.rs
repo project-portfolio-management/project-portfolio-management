@@ -123,7 +123,7 @@ async fn create_automation(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "automation_created",
@@ -136,8 +136,7 @@ async fn create_automation(
             "plan_pid": row.plan_pid.map(|p| p.to_string()),
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -219,9 +218,7 @@ async fn set_enabled(
     } else {
         "automation_disabled"
     };
-    AuditModel::record(&ctx.db, row_pid, action, caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, action, caller.actor(), None).await;
     format::json(row)
 }
 
@@ -260,9 +257,7 @@ async fn delete_automation(
     active.enabled = ActiveValue::set(false);
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, row_pid, "automation_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row_pid, "automation_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -795,15 +790,14 @@ async fn act_shift_dependents(
         )
         .await
         .ok();
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             shift.successor_pid,
             "automation_shifted_dependent",
             actor,
             Some(serde_json::json!({ "edge_pid": shift.edge_pid.to_string() })),
         )
-        .await
-        .ok();
+        .await;
         moved.push(shift.successor_pid.to_string());
     }
     (
@@ -916,7 +910,7 @@ async fn apply_rule_actions(
         {
             tracing::warn!("automation run log failed: {err}");
         }
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             subject_pid,
             "automation_fired",
@@ -930,8 +924,7 @@ async fn apply_rule_actions(
                 "detail": detail,
             })),
         )
-        .await
-        .ok();
+        .await;
     }
 }
 
@@ -1122,7 +1115,7 @@ async fn create_scheduled_action(
         },
     )
     .await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "scheduled_action_created",
@@ -1132,8 +1125,7 @@ async fn create_scheduled_action(
             "due_at": row.due_at.to_rfc3339(),
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -1223,15 +1215,14 @@ async fn cancel_scheduled_action(
     active.status = ActiveValue::set("cancelled".to_string());
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "scheduled_action_cancelled",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 
@@ -1281,7 +1272,7 @@ pub async fn sweep_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
             .exec(&ctx.db)
             .await
             .ok();
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             row.pid,
             "scheduled_action_fired",
@@ -1291,8 +1282,7 @@ pub async fn sweep_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
                 "outcome": outcome,
             })),
         )
-        .await
-        .ok();
+        .await;
         fired += 1;
     }
     Ok((fired, skipped, capped))

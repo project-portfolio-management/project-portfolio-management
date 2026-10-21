@@ -316,15 +316,14 @@ async fn import(
         Some(source.pid),
     )
     .await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         job.pid,
         "bulk_import_requested",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     queue_job(&ctx, &job).await?;
     // Re-read: in the foreground profile the job has already run.
     let fresh = find_job(&ctx, &job.pid.to_string(), None)
@@ -525,15 +524,14 @@ async fn cancel_job(
         (running.rows_affected == 1, "bulk_job_cancel_requested")
     };
     if changed {
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             job.pid,
             kind,
             caller.actor(),
             Some(serde_json::json!({ "kind": job.kind })),
         )
-        .await
-        .ok();
+        .await;
     }
     let now_job = find_job(&ctx, &id, None).await?;
     format::json(serde_json::json!({
@@ -1153,15 +1151,14 @@ async fn finish_cancelled(
         .await
         .map(|_| ())
         .map_err(|e| e.to_string())?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         job.pid,
         "bulk_job_cancelled",
         job.cancelled_by.as_deref().or(job.requested_by.as_deref()),
         Some(serde_json::json!({ "counts": c, "not_reached": not_reached })),
     )
-    .await
-    .ok();
+    .await;
     Ok(())
 }
 
@@ -1250,15 +1247,14 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
         .await;
     }
     finish(ctx, job, counters, 0, None, error_artifact).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         job.pid,
         "bulk_import_finished",
         actor,
         Some(serde_json::json!({ "counts": counters })),
     )
-    .await
-    .ok();
+    .await;
     Ok(())
 }
 

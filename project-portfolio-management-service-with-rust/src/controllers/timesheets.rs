@@ -244,15 +244,14 @@ async fn submit(
             }
         })?;
     let row = set_state(&ctx, &person, monday, next, true, None).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "timesheet_submitted",
         Some(&claims.sub),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 
@@ -306,15 +305,14 @@ async fn decide(
         Some((&claims.sub, b.comment.as_deref())),
     )
     .await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         &format!("timesheet_{next}"),
         Some(&claims.sub),
         Some(serde_json::json!({ "person": person, "week_start": monday, "comment": b.comment })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 

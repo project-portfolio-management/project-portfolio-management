@@ -201,15 +201,14 @@ pub(crate) async fn insert(
     .await
     .map_err(db_err)?;
     event(&ctx.db, row.pid, "raised", level, caller.actor(), None).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "escalation_raised",
         caller.actor(),
         Some(json!({ "plan_pid": plan, "level": level, "reason_kind": row.reason_kind })),
     )
-    .await
-    .ok();
+    .await;
     tell(ctx, &row, caller.actor(), false, "has been raised with you").await;
     Ok(row)
 }
@@ -356,15 +355,14 @@ async fn step(
     let row = a.update(&txn).await.map_err(db_err)?;
     event(&txn, pid, event_name, row.level, caller.actor(), note).await?;
     txn.commit().await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         pid,
         &format!("escalation_{event_name}"),
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     let what = match event_name {
         "acknowledged" => "has been acknowledged",
         "level_raised" => "has been taken up a level",

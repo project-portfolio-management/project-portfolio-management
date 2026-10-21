@@ -357,15 +357,14 @@ async fn put_settings(
             .map_err(db_err)?;
         }
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "earned_value_method_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.default_method })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "plan_pid": plan.pid, "default_method": b.default_method }))
 }
 
@@ -437,7 +436,7 @@ async fn put_percent(
     a.percent_manual = ActiveValue::set(manual);
     a.percent_note = ActiveValue::set(note.clone());
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "percent_complete_method_set",
@@ -447,8 +446,7 @@ async fn put_percent(
                                   "to": { "method": b.method, "percent": manual, "note": note } }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "method": row.percent_method,
         "percent": row.percent_manual, "note": row.percent_note }),

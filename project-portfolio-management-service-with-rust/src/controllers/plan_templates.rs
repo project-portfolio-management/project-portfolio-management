@@ -265,15 +265,14 @@ async fn save_as_template(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "plan_template_saved",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": row.pid,
         "name": row.name,
@@ -337,15 +336,14 @@ async fn delete_template(
     let mut active: plan_templates::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         tpl_pid,
         "plan_template_deleted",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 
@@ -394,15 +392,14 @@ async fn from_template(
     let result = build(&ctx, &caller, &snap, &b, &date_of, &mut created).await;
     match result {
         Ok(summary) => {
-            AuditModel::record(
+            AuditModel::record_or_log(
                 &ctx.db,
                 row.pid,
                 "plan_template_instantiated",
                 caller.actor(),
                 Some(serde_json::json!({ "root": created.first() })),
             )
-            .await
-            .ok();
+            .await;
             format::json(summary)
         }
         Err(e) => {

@@ -304,14 +304,13 @@ pub(crate) async fn guard(
             ),
         ));
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         p.pid,
         "register_incomplete_warning",
         caller.actor(),
         Some(json!({ "action": action, "missing": a.missing })),
     )
-    .await
-    .ok();
+    .await;
     Ok(())
 }

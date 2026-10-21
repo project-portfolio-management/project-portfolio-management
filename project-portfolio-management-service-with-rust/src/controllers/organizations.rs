@@ -101,15 +101,14 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "organization_created",
         caller.actor(),
         Some(json!({ "kind": row.kind })),
     )
-    .await
-    .ok();
+    .await;
     format::json(show(&row))
 }
 
@@ -153,15 +152,14 @@ async fn update(
         a.active = ActiveValue::set(v);
     }
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "organization_changed",
         caller.actor(),
         Some(json!({ "active": row.active })),
     )
-    .await
-    .ok();
+    .await;
     format::json(show(&row))
 }
 

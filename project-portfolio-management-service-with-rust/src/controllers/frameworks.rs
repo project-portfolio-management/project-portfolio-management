@@ -201,15 +201,14 @@ async fn create(
     if let Some(plan) = owner {
         set_link(&ctx, plan, family, row.pid, caller.actor()).await?;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "framework_created",
         caller.actor(),
         Some(serde_json::json!({ "family": family.token(), "name": row.name, "owner_plan_pid": owner })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row, u64::from(owner.is_some())))
 }
 
@@ -285,9 +284,7 @@ async fn update(
         .update(&ctx.db)
         .await
         .map_err(|e| name_taken(&e, family))?;
-    AuditModel::record(&ctx.db, row.pid, "framework_updated", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "framework_updated", caller.actor(), None).await;
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
@@ -308,9 +305,7 @@ async fn remove(
     let mut a: frameworks::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, pid, "framework_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, "framework_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -342,28 +337,26 @@ async fn link(
                         other => other,
                     })?;
             set_link(&ctx, plan.pid, family, record.pid, caller.actor()).await?;
-            AuditModel::record(
+            AuditModel::record_or_log(
                 &ctx.db,
                 plan.pid,
                 "framework_linked",
                 caller.actor(),
                 Some(serde_json::json!({ "family": family.token(), "framework_pid": record.pid })),
             )
-            .await
-            .ok();
+            .await;
         }
         None => {
             if let Some(existing) = link_of(&ctx, plan.pid, family).await? {
                 existing.delete(&ctx.db).await.map_err(db_err)?;
-                AuditModel::record(
+                AuditModel::record_or_log(
                     &ctx.db,
                     plan.pid,
                     "framework_unlinked",
                     caller.actor(),
                     Some(serde_json::json!({ "family": family.token() })),
                 )
-                .await
-                .ok();
+                .await;
             }
         }
     }

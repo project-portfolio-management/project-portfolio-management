@@ -83,6 +83,9 @@ pub struct Metrics {
     pub plan_deleted_total: Counter,
     /// Count of plan records merged (`POST /api/plans/merge`).
     pub plan_merged_total: Counter,
+    /// Audit rows that could not be written for a write that was kept (CQ-3). Any rise is a
+    /// gap in the audit trail and should page someone.
+    pub audit_write_failed_total: Counter,
 
     /// HTTP requests handled, labeled by `method`, `path`, and `status`.
     pub http_requests_total: IntCounterVec,
@@ -224,6 +227,11 @@ impl Metrics {
         let plan_merged_total =
             Counter::with_opts(Opts::new("plan_merged_total", "Total plan records merged."))
                 .expect("static counter opts are always valid");
+        let audit_write_failed_total = Counter::with_opts(Opts::new(
+            "audit_write_failed_total",
+            "Audit rows that could not be written for a write that was kept.",
+        ))
+        .expect("static counter opts are always valid");
 
         let http_requests_total = IntCounterVec::new(
             Opts::new(
@@ -239,6 +247,7 @@ impl Metrics {
             Box::new(plan_updated_total.clone()),
             Box::new(plan_deleted_total.clone()),
             Box::new(plan_merged_total.clone()),
+            Box::new(audit_write_failed_total.clone()),
         ] {
             registry
                 .register(collector)
@@ -255,6 +264,7 @@ impl Metrics {
             plan_updated_total,
             plan_deleted_total,
             plan_merged_total,
+            audit_write_failed_total,
             http_requests_total,
             flow_efficiency: flow.efficiency,
             flow_cycle_time_p85_days: flow.cycle_time_p85_days,

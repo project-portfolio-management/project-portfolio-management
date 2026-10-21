@@ -116,9 +116,7 @@ async fn add(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "plan_link_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "plan_link_added", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -248,9 +246,7 @@ async fn remove(
     let mut a: plan_links::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, lpid, "plan_link_removed", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, lpid, "plan_link_removed", caller.actor(), None).await;
     format::empty_json()
 }
 

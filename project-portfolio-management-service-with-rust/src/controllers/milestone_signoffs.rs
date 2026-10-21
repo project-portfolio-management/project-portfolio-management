@@ -185,15 +185,14 @@ async fn set_required(
         .await
         .map_err(db_err)?;
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         m.pid,
         "milestone_signoff_required_set",
         caller.actor(),
         Some(json!({ "organizations": wanted })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 
@@ -268,7 +267,7 @@ async fn act(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         m.pid,
         if b.action == "sign" {
@@ -279,8 +278,7 @@ async fn act(
         caller.actor(),
         Some(json!({ "organization": b.organization_pid, "reason": reason })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "pid": row.pid, "action": row.action, "acted_on": row.acted_on }))
 }
 

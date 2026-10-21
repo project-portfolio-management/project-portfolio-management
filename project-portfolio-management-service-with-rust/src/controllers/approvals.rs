@@ -85,15 +85,14 @@ async fn request_approval(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "approval_requested",
         Some(&claims.sub),
         None,
     )
-    .await
-    .ok();
+    .await;
     cap_models::notify(
         &ctx.db,
         &p.approver_ref,
@@ -220,7 +219,7 @@ async fn decide(
         Some(claims.sub.clone()),
     )
     .await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         request_pid,
         &format!("approval_{status}"),
@@ -231,8 +230,7 @@ async fn decide(
             "comment": p.comment,
         })),
     )
-    .await
-    .ok();
+    .await;
     // An approval that belongs to a process moves that process on (or ends it).
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
@@ -266,15 +264,14 @@ async fn withdraw(
     let status = rules::withdraw(&row.status).map_err(|r| conflict(&r.message()))?;
     let request_pid = row.pid;
     let updated = settle(&ctx, request_pid, status, None, None).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         request_pid,
         "approval_withdrawn",
         Some(&claims.sub),
         None,
     )
-    .await
-    .ok();
+    .await;
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
     format::json(updated)

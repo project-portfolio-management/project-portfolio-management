@@ -191,7 +191,7 @@ async fn upsert(
         .await
         .map_err(db_err)?,
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "calendar_set",
@@ -201,8 +201,7 @@ async fn upsert(
                                   "holidays": holidays.len(), "at": Utc::now() }),
         ),
     )
-    .await
-    .ok();
+    .await;
     Ok(row)
 }
 

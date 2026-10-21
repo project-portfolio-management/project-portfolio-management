@@ -90,9 +90,7 @@ async fn create_component(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "component_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "component_created", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -134,9 +132,7 @@ async fn update_component(
     active.name = ActiveValue::set(payload.name.trim().to_string());
     active.lead_ref = ActiveValue::set(payload.lead_ref.clone());
     let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, comp_pid, "component_updated", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, comp_pid, "component_updated", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -165,9 +161,7 @@ async fn delete_component(
     let mut active: components::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, comp_pid, "component_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, comp_pid, "component_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 

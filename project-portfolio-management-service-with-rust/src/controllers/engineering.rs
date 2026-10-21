@@ -316,9 +316,7 @@ async fn create_task(
     txn.commit()
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "task_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "task_created", caller.actor(), None).await;
     if let Some(sub) = caller.actor() {
         super::watchers::ensure_watching(&ctx.db, "task", row.pid, sub).await;
     }
@@ -469,9 +467,7 @@ async fn update_task(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, task_pid, "task_updated", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, task_pid, "task_updated", caller.actor(), None).await;
     crate::live::publish(
         item.pid,
         "task_updated",
@@ -654,15 +650,14 @@ async fn move_task(
     txn.commit()
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         task_pid,
         "task_moved",
         caller.actor(),
         Some(serde_json::json!({ "from": from, "to": payload.status })),
     )
-    .await
-    .ok();
+    .await;
     crate::live::publish(
         item.pid,
         "task_moved",
@@ -715,9 +710,7 @@ async fn delete_task(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, task_pid, "task_deleted", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, task_pid, "task_deleted", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -757,9 +750,7 @@ async fn create_sprint(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "sprint_created", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "sprint_created", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -960,9 +951,7 @@ async fn create_note(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&ctx.db, row.pid, "sprint_note_added", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "sprint_note_added", caller.actor(), None).await;
     format::json(row)
 }
 
@@ -1043,15 +1032,14 @@ async fn convert_note(
         .update(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         note_pid,
         "sprint_note_converted",
         caller.actor(),
         Some(serde_json::json!({ "task_pid": task.pid })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "note": updated, "task": task_view(&task) }))
 }
 
@@ -1202,15 +1190,14 @@ async fn ingest_devops_event(
     .insert(&ctx.db)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "devops_event_ingested",
         caller.actor(),
         Some(serde_json::json!({ "kind": row.kind })),
     )
-    .await
-    .ok();
+    .await;
     format::json(row)
 }
 

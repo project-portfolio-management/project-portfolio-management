@@ -218,7 +218,7 @@ async fn set_assignment(
         a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
     }
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "task_assignment_set",
@@ -228,8 +228,7 @@ async fn set_assignment(
                     "units_percent": row.units_percent, "work_minutes": row.work_minutes },
             "derived": outcome.map(|r| field_name(r.derived)), "exact": outcome.map(|r| r.exact) })),
     )
-    .await
-    .ok();
+    .await;
 
     // Does the result ask more of the assignee than they can give, on any day?
     let capacity = capacity_check(&ctx, plan.pid, &row, &person).await?;
@@ -323,7 +322,7 @@ async fn set_contour(
         _ => None,
     });
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "task_contour_set",
@@ -331,8 +330,7 @@ async fn set_contour(
         Some(serde_json::json!({ "from": was,
             "to": { "contour": row.contour, "custom": row.contour_custom }, "work_minutes": work })),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "contour": row.contour,
         "custom": row.contour_custom, "work_minutes": row.work_minutes,

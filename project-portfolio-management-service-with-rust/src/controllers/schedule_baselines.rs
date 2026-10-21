@@ -165,7 +165,7 @@ pub(crate) async fn take(
         .map_err(db_err)?;
     }
     txn.commit().await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "schedule_baselined",
@@ -175,8 +175,7 @@ pub(crate) async fn take(
                                   "tasks": snaps.len(), "at": Utc::now() }),
         ),
     )
-    .await
-    .ok();
+    .await;
     Ok(row)
 }
 

@@ -145,15 +145,14 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "funding_allocation_recorded",
         caller.actor(),
         Some(json!({ "amount_minor": row.amount_minor, "currency": row.currency })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row, &src.name))
 }
 
@@ -254,15 +253,14 @@ async fn attach(
     let mut a: budget_lines::ActiveModel = row.into();
     a.funding_allocation_pid = ActiveValue::set(b.funding_allocation_pid);
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "budget_line_allocation_set",
         caller.actor(),
         Some(json!({ "line": line, "allocation": b.funding_allocation_pid })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "line": line, "funding_allocation_pid": b.funding_allocation_pid }))
 }
 
@@ -443,15 +441,14 @@ async fn map_code(
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "cost_code_mapped",
         caller.actor(),
         Some(json!({ "line": line.pid })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "cost_code": row.cost_code, "budget_line_pid": row.budget_line_pid }))
 }
 

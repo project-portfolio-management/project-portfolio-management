@@ -428,7 +428,7 @@ async fn import(
                 report.note("calendar", None, "the project calendar could not be imported (no business day, or dates out of range)");
             }
         }
-        AuditModel::record(
+        AuditModel::record_or_log(
             &ctx.db,
             plan.pid,
             "mspdi_import",
@@ -438,8 +438,7 @@ async fn import(
                 "links_created": links_created, "unmapped": report.unmapped.len() }),
             ),
         )
-        .await
-        .ok();
+        .await;
     } else if let Some(cal) = &parsed.calendar {
         if super::calendars::plan_has_calendar(&ctx, plan.pid).await? {
             report.note(

@@ -298,15 +298,14 @@ async fn create(
         .await
         .map_err(register_error)?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "control_registered",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
         "permitted_response": rules::permitted_response(timing),
@@ -475,15 +474,14 @@ async fn register_standard(
         }));
     }
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "standard_controls_registered",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
 
     format::json(serde_json::json!({ "controls": outcomes }))
 }
@@ -516,9 +514,7 @@ async fn remove(
     let mut active: controls::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, plan_pid, "control_withdrawn", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan_pid, "control_withdrawn", caller.actor(), None).await;
     format::empty_json()
 }
 
@@ -564,15 +560,14 @@ async fn add_reading(
     .await
     .map_err(db_err)?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         control.plan_pid,
         "control_reading_recorded",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
 
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
@@ -653,15 +648,14 @@ async fn add_action(
         active.update(&ctx.db).await.map_err(db_err)?;
     }
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         reading.control_pid,
         "control_action_recorded",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -719,7 +713,7 @@ async fn convert_to_issue(
     active.converted_issue_pid = ActiveValue::set(Some(issue.pid));
     active.update(&txn).await.map_err(db_err)?;
     txn.commit().await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         control.pid,
         "control_action_converted",
@@ -729,8 +723,7 @@ async fn convert_to_issue(
             "issue_pid": issue.pid.to_string(),
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
         "issue_pid": issue.pid.to_string(),
@@ -844,7 +837,7 @@ async fn convert_action(
     active.update(&txn).await.map_err(db_err)?;
     txn.commit().await.map_err(db_err)?;
 
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         control.pid,
         "control_action_converted",
@@ -854,8 +847,7 @@ async fn convert_action(
             "task_pid": task.pid.to_string(),
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
         "task_pid": task.pid.to_string(),

@@ -99,7 +99,7 @@ async fn set_estimate(
     a.duration_optimistic_days = ActiveValue::set(b.optimistic_days);
     a.duration_pessimistic_days = ActiveValue::set(b.pessimistic_days);
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "task_estimate_set",
@@ -109,8 +109,7 @@ async fn set_estimate(
             "to": { "optimistic_days": b.optimistic_days, "pessimistic_days": b.pessimistic_days },
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({
         "task_pid": row.pid, "optimistic_days": row.duration_optimistic_days,
         "likely_days": row.duration_days, "pessimistic_days": row.duration_pessimistic_days,
@@ -184,15 +183,14 @@ async fn set_impact(
     let row = a.update(&ctx.db).await.map_err(db_err)?;
     let now = serde_json::json!({ "task_pid": row.task_pid, "impact_days": row.schedule_impact_days,
         "probability_percent": row.schedule_probability_percent });
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "risk_schedule_impact_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": now })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "risk_pid": row.pid, "schedule": now }))
 }
 

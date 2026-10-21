@@ -167,7 +167,7 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "availability_set",
@@ -177,8 +177,7 @@ async fn create(
             "to": row.to_date, "max_percent": row.max_percent }),
         ),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row))
 }
 
@@ -233,15 +232,14 @@ async fn remove(
     let mut a: person_availabilities::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row_pid,
         "availability_removed",
         caller.actor(),
         Some(serde_json::json!({ "person_ref": person })),
     )
-    .await
-    .ok();
+    .await;
     format::empty_json()
 }
 

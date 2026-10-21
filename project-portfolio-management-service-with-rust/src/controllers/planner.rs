@@ -68,9 +68,7 @@ async fn create_slot(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&ctx.db, row.pid, "slot_planned", Some(&claims.sub), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, "slot_planned", Some(&claims.sub), None).await;
     format::json(row)
 }
 
@@ -94,9 +92,7 @@ async fn delete_slot(
     let mut active: planned_slots::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(&ctx.db, pid, "slot_removed", Some(&claims.sub), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, pid, "slot_removed", Some(&claims.sub), None).await;
     format::empty_json()
 }
 

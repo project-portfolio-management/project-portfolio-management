@@ -77,7 +77,8 @@ full contract; this is the map. One module per area in
 | Collaboration / automation | `/reviews` · `/assignees/workload` · `/notifications` · `/automations` · `/scheduled-actions` (+ `sweep`) · `/automations/milestones/sweep` (a rule/milestone pair fires once, ever) · saved views, canvases, comments, attachments, custom fields, components, templates, timesheets, `/my-work`, report schedules, notification sinks |
 | Audit / auth / docs | `/plans/audit/recent` · `/plans/{pid}/audit` · `/plans/events/recent` · `GET /plans/whoami` · `/api-docs/openapi.json` · `/swagger-ui` · `/metrics.prom` · loco `/_health`, `/_ping` |
 
-Every plan/record write writes an `audit_logs` row and publishes a
+Every plan/record write writes an `audit_logs` row (or, if that insert fails, logs it and counts it in
+`audit_write_failed_total` via `AuditModel::record_or_log`; never `record(..).await.ok()`, CQ-3) and publishes a
 `created`/`updated`/`deleted` (and `merged`) event. **Not wired** (spec
 §13): `POST /plans/deduplicate`, `/plans/{pid}/{goals,issues}`,
 `/plans/{pid}/timeline`, gRPC, `posts`/`comments`/`members` plan

@@ -182,15 +182,14 @@ async fn create(
         }
     })?;
     put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         d.pid,
         "cutover_decision_drafted",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -239,15 +238,14 @@ async fn replace_criteria(
         .await
         .map_err(|e| db_err(&e))?;
     put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         d.pid,
         "cutover_criteria_edited",
         caller.actor(),
         Some(json!({ "count": items.len() })),
     )
-    .await
-    .ok();
+    .await;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -275,9 +273,7 @@ async fn advance(
         a.opened_on = ActiveValue::set(Some(today));
     }
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&ctx.db, row.pid, action, caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, row.pid, action, caller.actor(), None).await;
     let (c, s) = parts(ctx, &row).await?;
     format::json(view(&row, &c, &s))
 }
@@ -356,15 +352,14 @@ async fn mark(
     a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.marked_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         d.pid,
         "cutover_criterion_marked",
         caller.actor(),
         Some(json!({ "n": n, "met": b.met })),
     )
-    .await
-    .ok();
+    .await;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -426,15 +421,14 @@ async fn cosign(
             db_err(&e)
         }
     })?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         d.pid,
         "cutover_cosigned",
         caller.actor(),
         Some(json!({ "role": role })),
     )
-    .await
-    .ok();
+    .await;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -490,15 +484,14 @@ async fn decide(
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "cutover_decided",
         caller.actor(),
         Some(json!({ "outcome": b.outcome })),
     )
-    .await
-    .ok();
+    .await;
     format::json(view(&row, &c, &s))
 }
 
@@ -560,15 +553,14 @@ async fn new_version(
             .collect::<Vec<_>>(),
     )
     .await?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         nd.pid,
         "cutover_decision_new_version",
         caller.actor(),
         Some(json!({ "supersedes": d.pid })),
     )
-    .await
-    .ok();
+    .await;
     let (c, s) = parts(&ctx, &nd).await?;
     format::json(view(&nd, &c, &s))
 }

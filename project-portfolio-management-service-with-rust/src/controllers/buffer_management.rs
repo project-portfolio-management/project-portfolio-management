@@ -195,15 +195,14 @@ async fn freeze(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "buffer_plan_frozen",
         caller.actor(),
         Some(json!({ "buffer_plan": row.pid })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "pid": row.pid, "taken_on": row.taken_on, "document": doc }))
 }
 
@@ -343,19 +342,16 @@ async fn snapshot(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "buffer_snapshot_taken",
         caller.actor(),
         Some(json!({ "snapshot": snap.pid })),
     )
-    .await
-    .ok();
+    .await;
     for a in alerts(&rs) {
-        AuditModel::record(&ctx.db, plan.pid, "buffer_red", caller.actor(), Some(a))
-            .await
-            .ok();
+        AuditModel::record_or_log(&ctx.db, plan.pid, "buffer_red", caller.actor(), Some(a)).await;
     }
     format::json(json!({ "pid": snap.pid, "taken_on": snap.taken_on, "document": document }))
 }
@@ -414,15 +410,14 @@ async fn add_action(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "buffer_recovery_action_recorded",
         caller.actor(),
         Some(json!({ "action": a.pid, "buffer_key": a.buffer_key })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "pid": a.pid, "buffer_key": a.buffer_key, "status": a.status }))
 }
 
@@ -464,15 +459,14 @@ async fn close_action(
     m.status = ActiveValue::set(b.status.clone());
     m.closed_on = ActiveValue::set(Some(Utc::now().date_naive()));
     let row = m.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "buffer_recovery_action_closed",
         caller.actor(),
         Some(json!({ "action": row.pid, "status": row.status })),
     )
-    .await
-    .ok();
+    .await;
     format::json(json!({ "pid": row.pid, "status": row.status, "closed_on": row.closed_on }))
 }
 

@@ -93,15 +93,14 @@ async fn set_line_estimate(
     a.low_minor = ActiveValue::set(b.low_minor);
     a.high_minor = ActiveValue::set(b.high_minor);
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "budget_line_estimate_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": { "low_minor": row.low_minor, "high_minor": row.high_minor } })),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "line_pid": row.pid, "low_minor": row.low_minor,
         "planned_minor": row.planned_minor, "high_minor": row.high_minor }),
@@ -179,15 +178,14 @@ async fn set_cost_impact(
     let row = a.update(&ctx.db).await.map_err(db_err)?;
     let now = serde_json::json!({ "cost_impact_minor": row.cost_impact_minor,
         "cost_currency": row.cost_currency, "probability_percent": row.schedule_probability_percent });
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "risk_cost_impact_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": now })),
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "risk_pid": row.pid, "cost": now }))
 }
 

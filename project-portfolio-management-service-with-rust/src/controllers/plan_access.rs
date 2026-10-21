@@ -603,7 +603,7 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                     )
                         .into_response();
                 }
-                AuditModel::record(
+                AuditModel::record_or_log(
                     &ctx.db,
                     plan_pid,
                     "break_glass_access",
@@ -612,8 +612,7 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                         "method": req.method().as_str(), "path": req.uri().path(),
                     })),
                 )
-                .await
-                .ok();
+                .await;
             }
         }
     }
@@ -701,7 +700,7 @@ async fn put_access(
             .map_err(db_err)?;
         }
     }
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
         "plan_access_changed",
@@ -711,8 +710,7 @@ async fn put_access(
             "after": { "private": p.private, "members": members },
         })),
     )
-    .await
-    .ok();
+    .await;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "private": p.private, "members": members }),
     )

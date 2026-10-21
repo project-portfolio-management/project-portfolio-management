@@ -114,9 +114,7 @@ async fn create_entry(
     .await
     .map_err(db_err)?;
 
-    AuditModel::record(&ctx.db, plan.pid, "effort_recorded", caller.actor(), None)
-        .await
-        .ok();
+    AuditModel::record_or_log(&ctx.db, plan.pid, "effort_recorded", caller.actor(), None).await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -234,15 +232,14 @@ async fn set_working_time(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "working_time_declared",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -288,15 +285,14 @@ async fn create_non_working(
     .insert(&ctx.db)
     .await
     .map_err(db_err)?;
-    AuditModel::record(
+    AuditModel::record_or_log(
         &ctx.db,
         row.pid,
         "non_working_recorded",
         caller.actor(),
         None,
     )
-    .await
-    .ok();
+    .await;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

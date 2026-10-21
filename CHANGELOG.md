@@ -21,6 +21,12 @@ First release cut from the root release workflow: the service crate, migration c
 
 ### 21 October
 
+- **The work breakdown says which tasks link out.** New `GET /api/plans/{pid}/task-link-counts` and a "· 3 links" mark
+  and a Links column on the WBS page. Verified: a request test (counts, other plan empty, unknown plan 404, removed
+  link gone), the OpenAPI and paging censuses, a browser test on the tree. **Not done:** the board does not show it;
+  counts only, the links themselves are on the task page; if the counts fail to load the page shows none, silently;
+  the endpoint, like the other link routes, does not check whether the plan is private; Welsh machine-written,
+  unreviewed.
 - **Red tolerances can be escalated on a schedule.** `cargo loco task tolerance_escalations` raises one escalation for
   every red tolerance on every live plan that has none open or acknowledged and none raised for that dimension in the
   last 7 days, as `system:tolerance-escalations` (FR-54). The escalation pages say "Raised automatically" on those (unit, register browser test; Welsh machine-written, unreviewed). Verified: a request test that raises once, does not repeat

@@ -3151,6 +3151,10 @@ export class PpmClient {
   planLinks(pid: string, taskPid?: string): Promise<PlanLink[]> {
     return this.http.get(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`);
   }
+  /** How many live links each of a plan's tasks has (tasks with none are absent). */
+  taskLinkCounts(pid: string): Promise<{ plan_pid: string; counts: Record<string, number> }> {
+    return this.http.get(`/api/plans/${pid}/task-link-counts`);
+  }
   addPlanLink(pid: string, body: { kind: string; url: string; label: string; system?: string; external_id?: string }, taskPid?: string): Promise<PlanLink> {
     return this.http.post(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`, { body });
   }

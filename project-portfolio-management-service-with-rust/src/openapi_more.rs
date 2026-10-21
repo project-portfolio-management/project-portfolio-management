@@ -849,6 +849,11 @@ fn link_paths() -> Value {
             "get": op("links", "A plan's links",
                 "The plan's live links, oldest first. `?system=` keeps only the links into one tracker (for example jira); `?kind=` one kind.", { let mut p = pid; p.push(query("system", false, "One of the tracker systems")); p.push(query("kind", false, "One link kind")); p }, &[("200", "Links"), ("404", "Unknown plan"), ("422", "Unknown system")])
         },
+        "/api/plans/{pid}/task-link-counts": {
+            "get": op("links", "How many links each task has",
+                "An object `counts` from task pid to the number of that task's live links; a task with none is absent. Lets a list of tasks mark the ones that link to an external tool without fetching every task's links.", vec![uuid_param("pid")],
+                &[("200", "Counts"), ("404", "Unknown plan")])
+        },
         "/api/plans/{pid}/tasks/{tpid}/links": {
             "post": op("links", "Link a task to its issue in an external tool",
                 "Same body and rules as a plan link (a `ticket` link with a `system` such as jira or linear and the issue's `external_id` is the usual case). The link belongs to the task: it does not appear in the plan's own list, and the same URL may be linked from the plan and from a task. A task holds at most 100 links; the service stores the address and never fetches it or syncs with the tool.",

@@ -175,6 +175,13 @@ async fn a_task_links_to_its_issue_without_touching_the_plans_own_links() {
         assert_eq!(on_plan.as_array().map(Vec::len), Some(0), "a task's link is not the plan's");
         request.post(&format!("/api/plans/{p}/links")).json(&issue).await.assert_status_ok();
 
+        // The counts say which tasks link out, and only this plan's, only live ones.
+        let counts: Value = request.get(&format!("/api/plans/{p}/task-link-counts")).await.json();
+        assert_eq!(counts["counts"][t.as_str()], 1, "{counts}");
+        let none: Value = request.get(&format!("/api/plans/{o}/task-link-counts")).await.json();
+        assert_eq!(none["counts"].as_object().map(serde_json::Map::len), Some(0));
+        assert_eq!(request.get("/api/plans/00000000-0000-0000-0000-000000000000/task-link-counts").await.status_code(), 404);
+
         // The same task cannot be reached through another plan; the rules of a plan link apply.
         assert_eq!(request.get(&format!("/api/plans/{o}/tasks/{t}/links")).await.status_code(), 404);
         let bad = json!({ "kind": "tracker", "url": "https://eviltrello.com/b/x", "label": "x", "system": "trello" });
@@ -186,6 +193,8 @@ async fn a_task_links_to_its_issue_without_touching_the_plans_own_links() {
         request.post(&format!("/api/plans/{p}/tasks/{t}/links/{lpid}/delete")).await.assert_status_ok();
         let after: Value = request.get(&format!("/api/plans/{p}/tasks/{t}/links")).await.json();
         assert_eq!(after.as_array().map(Vec::len), Some(0));
+        let gone: Value = request.get(&format!("/api/plans/{p}/task-link-counts")).await.json();
+        assert!(gone["counts"].get(t.as_str()).is_none(), "{gone}");
     })
     .await;
 }

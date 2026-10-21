@@ -18,12 +18,19 @@
   const pid = $derived(page.params.pid ?? "");
   let tasks = $state<Task[] | null>(null);
   let error = $state<string | null>(null);
+  /** Links per task; empty when they could not be loaded, which only hides the counts. */
+  let linkCounts = $state<Record<string, number>>({});
 
   onMount(async () => {
     try {
       tasks = (await ppm.listTasks(pid)).tasks;
     } catch (err) {
       error = err instanceof Error ? err.message : t("p.plans.pid.wbs.could_not_load_the_tasks");
+    }
+    try {
+      linkCounts = (await ppm.taskLinkCounts(pid)).counts;
+    } catch {
+      linkCounts = {};
     }
   });
 
@@ -42,7 +49,7 @@
     }
   }
 
-  const rows = $derived(buildWbs(tasks ?? []));
+  const rows = $derived(buildWbs(tasks ?? []).map((r) => ({ ...r, links: r.restricted ? 0 : (linkCounts[r.key] ?? 0) })));
   const tooBig = $derived(rows.length > WBS_TREE_LIMIT);
 
   const columns: DataGridColumn[] = $derived([
@@ -50,6 +57,7 @@
     { id: "title", header: t("p.plans.pid.wbs.task") },
     { id: "depth", header: t("p.plans.pid.wbs.level"), align: "end", format: (v) => String(Number(v) + 1) },
     { id: "children", header: t("p.plans.pid.wbs.sub_tasks"), align: "end" },
+    { id: "links", header: t("p.plans.pid.wbs.links"), align: "end" },
   ]);
 </script>
 
@@ -74,6 +82,7 @@
             <span class="code">{r.code}</span>
             {#if r.restricted}<em>{r.title}</em>{:else}<a href={localeHref(`/plans/${pid}/tasks/${r.key}`)}>{r.title}</a>{/if}
             {#if r.children > 0}<span class="small muted"> {(r.children === 1 ? t("p.plans.pid.wbs.sub_task_one", { children: r.children }) : t("p.plans.pid.wbs.sub_task_other", { children: r.children }))}</span>{/if}
+            {#if r.links > 0}<span class="small muted"> {(r.links === 1 ? t("p.plans.pid.wbs.link_one", { links: r.links }) : t("p.plans.pid.wbs.link_other", { links: r.links }))}</span>{/if}
             {#if !r.restricted}
               <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "up")} aria-label={t("p.plans.pid.wbs.move_up", { title: r.title })} onclick={() => move(r.key, r.title, "up")}><span aria-hidden="true">↑</span></button>
               <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "down")} aria-label={t("p.plans.pid.wbs.move_down", { title: r.title })} onclick={() => move(r.key, r.title, "down")}><span aria-hidden="true">↓</span></button>

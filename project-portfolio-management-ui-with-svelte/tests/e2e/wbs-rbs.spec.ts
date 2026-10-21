@@ -54,8 +54,11 @@ test("the WBS shows codes, links by id, and hides what it must", async ({
       },
     }),
   );
+  await page.route(`**/api/plans/${PID}/task-link-counts`, (r) => r.fulfill({ json: { plan_pid: PID, counts: { a1: 1, b2: 3 } } }));
   await page.goto(`/en-001/plans/${PID}/wbs`);
   const tree = page.getByRole("list", { name: "Work breakdown tree" });
+  await expect(tree).toContainText("· 1 link");
+  await expect(tree).toContainText("· 3 links");
   await expect(tree).toContainText("1");
   await expect(tree).toContainText("1.1");
   await expect(tree).toContainText("Restricted item");

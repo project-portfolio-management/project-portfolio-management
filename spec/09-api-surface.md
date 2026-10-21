@@ -342,6 +342,7 @@ and returns it; it never fetches or renders one.
 | GET | `/api/plans/{pid}/links` | List the plan's links |
 | DELETE | `/api/plans/{pid}/links/{lpid}` | Soft-delete (POST twin `…/{lpid}/delete`) |
 | POST / GET | `/api/plans/{pid}/tasks/{tpid}/links` | Add or list a **task's** links (same body and rules; a task's link is not in the plan's list) |
+| GET | `/api/plans/{pid}/task-link-counts` | How many live links each task of the plan has (`counts`: task pid to number; tasks with none absent) |
 | DELETE | `/api/plans/{pid}/tasks/{tpid}/links/{lpid}` | Soft-delete a task's link (POST twin `…/{lpid}/delete`) |
 
 **Not built: the cross-service write-side (T-7).** There is no
@@ -480,7 +481,7 @@ oversight.rs: GET /board/pack; GET /board/investments; POST /board/snapshots; GE
 pdf.rs: GET /board/pack.pdf; GET /plans/{pid}/summary.pdf
 phase.rs: PUT /plans/{pid}/phase; GET /plans/{pid}/phase-history
 plan_access.rs: GET /plans/{pid}/access; PUT /plans/{pid}/access
-plan_links.rs: POST /plans/{pid}/links; GET /plans/{pid}/links; DELETE /plans/{pid}/links/{lpid}; POST /plans/{pid}/links/{lpid}/delete
+plan_links.rs: GET /plans/{pid}/task-link-counts; POST /plans/{pid}/links; GET /plans/{pid}/links; DELETE /plans/{pid}/links/{lpid}; POST /plans/{pid}/links/{lpid}/delete
 plan_templates.rs: POST /plans/{pid}/save-as-template; POST /plans/from-template/{tpl}; GET /plan-templates; GET /plan-templates/{pid}; DELETE /plan-templates/{pid}; POST /plan-templates/{pid}/delete
 planner.rs: POST /me/planned-slots; DELETE /me/planned-slots/{pid}; POST /me/planned-slots/{pid}/delete; GET /me/plan
 plans.rs: POST /; GET /; GET /search; POST /match; POST /check-duplicates; POST /merge; GET /merges/recent; GET /whoami; GET /audit/recent; GET /events/recent; GET /{pid}; PUT /{pid}; DELETE /{pid}; GET /{pid}/masked; GET /{pid}/export; GET /{pid}/audit

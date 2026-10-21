@@ -187,6 +187,32 @@ async fn remove_link(
     remove(&ctx, &caller, plan.pid, None, &lpid).await
 }
 
+/// `GET /api/plans/{pid}/task-link-counts`: how many live links each of the plan's tasks has, so a list of tasks can
+/// say which ones link out without asking for every task's links. Tasks with none are absent.
+#[debug_handler]
+async fn task_link_counts(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    use sea_orm::QuerySelect;
+    let plan = find_item(&ctx, &pid).await?;
+    let tasks: Vec<Option<Uuid>> = plan_links::Entity::find()
+        .select_only()
+        .column(plan_links::Column::TaskPid)
+        .filter(plan_links::Column::PlanPid.eq(plan.pid))
+        .filter(plan_links::Column::TaskPid.is_not_null())
+        .filter(plan_links::Column::DeletedAt.is_null())
+        .into_tuple()
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut counts: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
+    for t in tasks.into_iter().flatten() {
+        *counts.entry(t.to_string()).or_insert(0) += 1;
+    }
+    format::json(serde_json::json!({ "plan_pid": plan.pid, "counts": counts }))
+}
+
 /// `POST /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete` (and `DELETE`).
 #[debug_handler]
 async fn remove_task_link(
@@ -236,6 +262,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/links", get(list_links))
         .add("/plans/{pid}/links/{lpid}", delete(remove_link))
         .add("/plans/{pid}/links/{lpid}/delete", post(remove_link))
+        .add("/plans/{pid}/task-link-counts", get(task_link_counts))
         .add("/plans/{pid}/tasks/{tpid}/links", post(add_task_link))
         .add("/plans/{pid}/tasks/{tpid}/links", get(list_task_links))
         .add(

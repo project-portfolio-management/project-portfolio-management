@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — link counts on the work breakdown (LT-8, 2026-10-21)
+
+`/plans/[pid]/wbs` shows "· N links" beside a task and a Links column, from `taskLinkCounts`. Browser test stubs the counts. Not on the board. Welsh machine-written, unreviewed.
+
 ### Added — "Raised automatically" on escalations (FR-54, 2026-10-21)
 
 The plan escalations page and the register mark an escalation raised by the `tolerance_escalations` task. `automaticText` unit test and register browser test. Welsh is machine-written, unreviewed.

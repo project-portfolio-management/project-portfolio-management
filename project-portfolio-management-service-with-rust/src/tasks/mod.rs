@@ -11,3 +11,6 @@ pub mod retention_purge;
 
 /// `search_reindex` — rebuild the full-text index from the database.
 pub mod search;
+
+/// `tolerance_escalations` — escalate red tolerances nobody has escalated.
+pub mod tolerance_escalations;

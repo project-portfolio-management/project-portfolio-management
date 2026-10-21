@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **`tolerance_escalations` task (FR-54, 2026-10-21).** Raises a tolerance escalation for each red dimension with none live and none raised in the last 7 days, as `system:tolerance-escalations`; `controllers::tolerances::raise_all_needed`. Request test covers once, not while open, quiet period, and again after 10 days. Not scheduled by the service; no notification; the quiet period is fixed.
+
 - Schedule tolerance (FR-53): a fifth dimension `schedule`, the slip against the latest schedule baseline's finish (migration `m20261021_000085` widens the tolerance and escalation dimension checks).
 - Task links (LT-8): `plan_links.task_pid` (migration `m20261021_000084`, replaces the uniqueness index); `POST/GET /api/plans/{pid}/tasks/{tpid}/links` and `DELETE`/POST-twin removal in `controllers/plan_links.rs`. API only; no screen.
 - Escalation notifications (FR-54): `controllers/escalations.rs` `tell` writes an in-app `escalation` notification to the raiser and `owner_ref` on each step (not to the actor); `escalation` added to the notification kinds. No email; no opt-out test.

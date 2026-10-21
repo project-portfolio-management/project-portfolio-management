@@ -560,6 +560,92 @@ async fn escalate(
     )
 }
 
+/// The identity the scheduled task raises escalations as: an administrator by attribute, so it reads every plan
+/// that is not hidden from everyone by a handling mark, and recognisable in the register and the audit log.
+pub(crate) const SYSTEM_ACTOR: &str = "system:tolerance-escalations";
+
+fn system_caller() -> MaybeAuthUser {
+    MaybeAuthUser(Some(authentication_verifier::Claims {
+        sub: SYSTEM_ACTOR.to_string(),
+        email: String::new(),
+        name: "Tolerance escalations task".to_string(),
+        iss: String::new(),
+        aud: String::new(),
+        exp: i64::MAX,
+        iat: 0,
+        nbf: None,
+        sid: String::new(),
+        scope: Vec::new(),
+        roles: Vec::new(),
+        attrs: [("access".to_string(), vec!["admin".to_string()])]
+            .into_iter()
+            .collect(),
+    }))
+}
+
+/// Raise an escalation for every red tolerance on every live plan that has none open or acknowledged and none
+/// raised for that dimension in the last `quiet_days` days (so a resolved escalation on a plan that stays red is
+/// not raised again the next minute). Returns how many were raised. Called by the `tolerance_escalations` task.
+///
+/// # Errors
+///
+/// When a database statement fails.
+pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize> {
+    let caller = system_caller();
+    let today = chrono::Utc::now().date_naive();
+    let since = today - chrono::Duration::days(quiet_days);
+    let plans = plans::Entity::find()
+        .filter(plans::Column::DeletedAt.is_null())
+        .order_by_asc(plans::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let allocs = readable_allocations(ctx, &caller).await?;
+    let mut raised = 0;
+    for plan in &plans {
+        let p = picture(ctx, &caller, plan, &allocs).await?;
+        for d in p["dimensions"].as_array().into_iter().flatten() {
+            if d["escalation_needed"] != true {
+                continue;
+            }
+            let token = d["dimension"].as_str().unwrap_or_default();
+            let recent = escalations::Entity::find()
+                .filter(escalations::Column::PlanPid.eq(plan.pid))
+                .filter(escalations::Column::ReasonKind.eq("tolerance"))
+                .filter(escalations::Column::ToleranceDimension.eq(token))
+                .filter(escalations::Column::RaisedOn.gte(since))
+                .count(&ctx.db)
+                .await
+                .map_err(db_err)?;
+            if recent > 0 {
+                continue;
+            }
+            let unit = d["unit"].as_str().unwrap_or_default();
+            super::escalations::insert(
+                ctx,
+                &caller,
+                plan.pid,
+                super::escalations::New {
+                    title: format!("{token} tolerance exceeded"),
+                    description: Some(format!(
+                        "Raised automatically. Measured {} {unit} against a limit of {} {unit} ({}% of the limit).",
+                        d["measured"], d["limit"], d["usage_percent"]
+                    )),
+                    reason_kind: "tolerance".to_string(),
+                    tolerance_dimension: Some(token.to_string()),
+                    level: None,
+                    escalated_to: None,
+                    owner_ref: None,
+                    respond_by: None,
+                },
+            )
+            .await?;
+            raised += 1;
+        }
+    }
+    Ok(raised)
+}
+
 /// The tolerance routes.
 #[must_use]
 pub fn routes() -> Routes {

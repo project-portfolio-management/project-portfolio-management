@@ -213,6 +213,71 @@ async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is_answered() {
+    use project_portfolio_management::controllers::tolerances::raise_all_needed;
+    use sea_orm::ConnectionTrait;
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Escalated by the task" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        request
+            .post(&format!("/api/plans/{p}/risks"))
+            .json(&json!({ "title": "Vendor", "probability": 5, "impact": 5 }))
+            .await
+            .assert_status_ok();
+        request
+            .put(&format!("/api/plans/{p}/tolerances/risk"))
+            .json(&json!({ "limit": 10 }))
+            .await
+            .assert_status_ok();
+        let count = |request: &axum_test::TestServer| {
+            let url = format!("/api/plans/{p}/escalations");
+            let request = request.get(&url);
+            async move {
+                let v: Value = request.await.json();
+                v["escalations"].as_array().cloned().unwrap_or_default()
+            }
+        };
+
+        assert!(raise_all_needed(&ctx, 7).await.expect("run") >= 1);
+        let first = count(&request).await;
+        assert_eq!(first.len(), 1);
+        assert_eq!(
+            (first[0]["reason_kind"].as_str(), first[0]["tolerance_dimension"].as_str(), first[0]["raised_by"].as_str()),
+            (Some("tolerance"), Some("risk"), Some("system:tolerance-escalations"))
+        );
+        raise_all_needed(&ctx, 7).await.expect("run");
+        assert_eq!(count(&request).await.len(), 1, "an open one is not raised again");
+
+        // Answered, but raised today: the task waits.
+        request
+            .post(&format!("/api/plans/{p}/escalations/{}/resolve", first[0]["pid"].as_str().expect("pid")))
+            .json(&json!({ "outcome": "guidance_given", "response": "Mitigate it first, then report back" }))
+            .await
+            .assert_status_ok();
+        raise_all_needed(&ctx, 7).await.expect("run");
+        assert_eq!(count(&request).await.len(), 1, "a recent one holds it back");
+
+        // Raised ten days ago and still red: it is raised again.
+        ctx.db
+            .execute_unprepared(&format!(
+                "UPDATE escalations SET raised_on = raised_on - 10 WHERE plan_pid = '{p}'"
+            ))
+            .await
+            .expect("backdate");
+        raise_all_needed(&ctx, 7).await.expect("run");
+        assert_eq!(count(&request).await.len(), 2);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn the_person_an_escalation_names_is_told_in_their_inbox() {
     use project_portfolio_management::models::_entities::notifications;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};

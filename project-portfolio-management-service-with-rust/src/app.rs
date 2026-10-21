@@ -385,6 +385,7 @@ impl Hooks for App {
         tasks.register(crate::tasks::search::SearchReindex);
         tasks.register(crate::tasks::retention_purge::RetentionPurge);
         tasks.register(crate::tasks::exception_breaches::ExceptionBreaches);
+        tasks.register(crate::tasks::tolerance_escalations::ToleranceEscalations);
         tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
         // tasks-inject (do not remove)
     }

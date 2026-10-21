@@ -21,6 +21,13 @@ First release cut from the root release workflow: the service crate, migration c
 
 ### 21 October
 
+- **Red tolerances can be escalated on a schedule.** `cargo loco task tolerance_escalations` raises one escalation for
+  every red tolerance on every live plan that has none open or acknowledged and none raised for that dimension in the
+  last 7 days, as `system:tolerance-escalations` (FR-54). Verified: a request test that raises once, does not repeat
+  while open, waits after it is answered, and raises again once the old one is 10 days old. **Not done:** nothing
+  schedules the task (the operator must); no one is notified of an automatic escalation (no owner is named, and the
+  service sends no email or push); plans hidden from everyone by a handling mark are skipped; the 7 days are fixed,
+  not configurable; a private plan's escalation is raised by the task's administrator identity.
 - **The framework description is editable.** The ways-of-working and governance forms now have a Description field
   (optional, up to 10000 characters, can be cleared); before, it was kept but could not be changed. Verified: unit tests
   (757), the framework browser test (which now sends a description) and the Welsh page check. Welsh text

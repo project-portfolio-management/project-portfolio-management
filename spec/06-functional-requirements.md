@@ -639,7 +639,11 @@ across currencies.
   `counts` and `overdue` (a live escalation past its `respond_by`). **Tolerances (FR-53) point here:** each dimension
   reports its `open_escalations`, and a red one with none is `escalation_needed`. `POST /api/plans/{pid}/tolerances/escalate`
   raises one `tolerance` escalation at the path's first level for every such dimension (asking again raises nothing new).
-  It happens only when a person asks: nothing raises an escalation on its own. The person it names as responsible (`owner_ref`) and the person who raised it are told in their in-app
+  A person asking is one way; the other is the task `cargo loco task tolerance_escalations` (schedule it daily), which
+  does the same for every live plan as the identity `system:tolerance-escalations`, marks each description "Raised
+  automatically", and skips a dimension that has a live escalation or one raised in the last 7 days, so an answered
+  escalation on a plan that stays red is not raised again at once. Nothing runs the task unless the operator schedules
+  it. The person it names as responsible (`owner_ref`) and the person who raised it are told in their in-app
   inbox (kind `escalation`, which a person can switch off) when it is raised, acknowledged, taken up a level, resolved
   or withdrawn, never the person who acted; no email or push is sent. Nothing
   checks who acknowledges or resolves.

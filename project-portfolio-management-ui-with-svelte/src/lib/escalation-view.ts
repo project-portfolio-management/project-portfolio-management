@@ -80,6 +80,13 @@ export function raiseProblems(d: { title: string; reason_kind: string; tolerance
 /** Whether a note or response is long enough to count. */
 export const noteOk = (s: string): boolean => [...s.trim()].length >= NOTE_MIN;
 
+/** Who the service records as the raiser of an escalation raised by the `tolerance_escalations` task. */
+export const AUTOMATIC_RAISER = "system:tolerance-escalations";
+
+/** "Raised automatically" for one the scheduled task raised, else empty. */
+export const automaticText = (e: Pick<Escalation, "raised_by">): string =>
+  e.raised_by === AUTOMATIC_RAISER ? t("l.escalation.automatic") : "";
+
 /** "Level 2: Sponsor" or just "Level 2". */
 export function levelText(e: Pick<Escalation, "level" | "escalated_to">): string {
   return e.escalated_to ? t("l.escalation.level_to", { level: e.level, to: e.escalated_to }) : t("l.escalation.level", { level: e.level });

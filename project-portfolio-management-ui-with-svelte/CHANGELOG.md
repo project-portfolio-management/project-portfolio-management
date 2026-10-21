@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — "Raised automatically" on escalations (FR-54, 2026-10-21)
+
+The plan escalations page and the register mark an escalation raised by the `tolerance_escalations` task. `automaticText` unit test and register browser test. Welsh is machine-written, unreviewed.
+
 ### Changed — framework description editable (FR-52, 2026-10-21)
 
 A Description field on the ways-of-working and governance forms. Welsh machine-written, unreviewed.

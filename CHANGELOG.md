@@ -23,7 +23,7 @@ First release cut from the root release workflow: the service crate, migration c
 
 - **Red tolerances can be escalated on a schedule.** `cargo loco task tolerance_escalations` raises one escalation for
   every red tolerance on every live plan that has none open or acknowledged and none raised for that dimension in the
-  last 7 days, as `system:tolerance-escalations` (FR-54). Verified: a request test that raises once, does not repeat
+  last 7 days, as `system:tolerance-escalations` (FR-54). The escalation pages say "Raised automatically" on those (unit, register browser test; Welsh machine-written, unreviewed). Verified: a request test that raises once, does not repeat
   while open, waits after it is answered, and raises again once the old one is 10 days old. **Not done:** nothing
   schedules the task (the operator must); no one is notified of an automatic escalation (no owner is named, and the
   service sends no email or push); plans hidden from everyone by a handling mark are skipped; the 7 days are fixed,

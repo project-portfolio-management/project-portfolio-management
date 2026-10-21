@@ -1545,6 +1545,7 @@ export const PAGES_EN = {
   "l.escalation.open_for": "Open for {n} days",
   "l.escalation.took": "Took {n} days",
   "l.escalation.overdue": "overdue",
+  "l.escalation.automatic": "Raised automatically",
   "p.escalations.escalations": "Escalations",
   "p.escalations.escalations_ppm": "Escalations — PPM",
   "p.escalations.plan_link": "Escalations",

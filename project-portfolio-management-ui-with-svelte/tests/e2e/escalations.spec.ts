@@ -102,7 +102,7 @@ test("an escalation is raised, taken up a level and resolved", async ({ page }) 
 test("the register shows state as words and shapes and flags the overdue", async ({ page }) => {
   const rows = [
     esc({ pid: "a", title: "Vendor slips", plan_name: "Apollo", overdue: true, age_days: 21 }),
-    esc({ pid: "b", title: "Scope change", plan_name: "Gemini", status: "acknowledged", level: 2, escalated_to: "Sponsor" }),
+    esc({ pid: "b", title: "Scope change", plan_name: "Gemini", status: "acknowledged", level: 2, escalated_to: "Sponsor", raised_by: "system:tolerance-escalations" }),
   ];
   await page.route("**/api/escalations**", (r) => {
     const url = new URL(r.request().url());
@@ -115,6 +115,8 @@ test("the register shows state as words and shapes and flags the overdue", async
   await expect(body.nth(1)).toContainText("Vendor slips");
   await expect(body.nth(1)).toContainText("overdue");
   await expect(body.nth(2)).toContainText("acknowledged");
+  await expect(body.nth(2)).toContainText("Raised automatically");
+  await expect(body.nth(1)).not.toContainText("Raised automatically");
   await expect(page.getByRole("link", { name: "Vendor slips" })).toHaveAttribute("href", /\/plans\/.*\/escalations$/);
   await audit(page);
   await page.getByLabel("Show").selectOption("overdue");

@@ -1547,6 +1547,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.escalation.open_for": "Ar agor ers {n} diwrnod",
   "l.escalation.took": "Cymerodd {n} diwrnod",
   "l.escalation.overdue": "hwyr",
+  "l.escalation.automatic": "Wedi'i godi'n awtomatig",
   "p.escalations.escalations": "Uwchgyfeirio",
   "p.escalations.escalations_ppm": "Uwchgyfeirio — PPM",
   "p.escalations.plan_link": "Uwchgyfeirio",

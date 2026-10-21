@@ -6,6 +6,7 @@ import {
   STATUS_SYMBOL,
   STATUS_TEXT,
   ageText,
+  automaticText,
   eventLabel,
   isLive,
   levelText,
@@ -18,6 +19,12 @@ import {
 const draft = { title: "Cost is over", reason_kind: "tolerance", tolerance_dimension: "cost", level: "", owner_ref: "" };
 
 describe("escalation words and shapes", () => {
+  it("says so when the scheduled task raised it", () => {
+    expect(automaticText({ raised_by: "system:tolerance-escalations" })).toBe("Raised automatically");
+    expect(automaticText({ raised_by: "u" })).toBe("");
+    expect(automaticText({ raised_by: null })).toBe("");
+  });
+
   it("gives every state a word and its own shape", () => {
     for (const s of STATUS_ORDER) {
       expect(STATUS_TEXT[s]).toBeTruthy();

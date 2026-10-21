@@ -6,7 +6,7 @@
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EscalationRegister } from "#lib/api/ppm.js";
-  import { STATUS_SYMBOL, STATUS_TEXT, ageText, levelText, reasonLabel } from "#lib/escalation-view.js";
+  import { STATUS_SYMBOL, STATUS_TEXT, ageText, automaticText, levelText, reasonLabel } from "#lib/escalation-view.js";
 
   const ppm = PpmClient.withFetch();
   let register = $state<EscalationRegister | null>(null);
@@ -64,7 +64,7 @@
       <tbody>
         {#each register.escalations as e (e.pid)}
           <tr>
-            <th scope="row"><a href={localeHref(`/plans/${e.plan_pid}/escalations`)}>{e.title}</a> <span class="small muted">({reasonLabel(e.reason_kind)})</span></th>
+            <th scope="row"><a href={localeHref(`/plans/${e.plan_pid}/escalations`)}>{e.title}</a> <span class="small muted">({reasonLabel(e.reason_kind)}{automaticText(e) ? `, ${automaticText(e)}` : ""})</span></th>
             <td>{e.plan_name ?? ""}</td>
             <td class={`esc esc-${e.status}`}><span aria-hidden="true">{STATUS_SYMBOL[e.status]}</span> {STATUS_TEXT[e.status]}</td>
             <td>{levelText(e)}</td>

@@ -16,6 +16,7 @@
     STATUS_SYMBOL,
     STATUS_TEXT,
     ageText,
+    automaticText,
     eventLabel,
     isLive,
     levelText,
@@ -174,6 +175,7 @@
           — <span aria-hidden="true">{STATUS_SYMBOL[e.status]}</span> {STATUS_TEXT[e.status]},
           {levelText(e)}, <span class="small">{ageText(e)}</span>
           {#if e.reason_kind === "tolerance" && e.tolerance_dimension}<span class="small muted"> · {dimensionLabel(e.tolerance_dimension)}</span>{/if}
+          {#if automaticText(e)}<span class="small muted"> · {automaticText(e)}</span>{/if}
           <button type="button" aria-expanded={open !== undefined} onclick={() => toggle(e)}>{open ? t("p.escalations.hide", { title: e.title }) : t("p.escalations.show", { title: e.title })}</button>
           {#if open}
             <div role="region" aria-label={t("p.escalations.show", { title: e.title })}>

@@ -59,10 +59,12 @@ sections 1 to 31.
 
 - No mobile app and no desktop application.
 - No real-time co-editing.
-- A single maintainer and a young codebase: no long production history, no
-  third-party audit, and no published load test ([BENCHMARKS.md](BENCHMARKS.md)).
+- A single maintainer and a young codebase: no long production history and no
+  third-party audit. A load and soak test is published ([BENCHMARKS.md](BENCHMARKS.md)),
+  but on one machine, so it is an order of magnitude, not a capacity plan.
 - The Welsh and other translations are drafts awaiting review.
-- Change requests are specified but not built ([`plan.md`](plan.md) §57).
+- Change requests are built in the service (IR-4), but there is no screen yet for
+  drafting or deciding one ([`tasks.md`](tasks.md) NC-1).
 - Plugin and marketplace ecosystems that mature products have.
 
 ## Correcting this page

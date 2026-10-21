@@ -1498,7 +1498,7 @@ leave a feature missing:
 | NC-2 | Read-only MCP adapter over the existing API, under the caller's own ABAC and handling marks; runs no model | OpenProject MCP server (openproject.org/docs/system-admin-guide/integrations/mcp-server/), Atlassian Rovo MCP, Plane, Planview Anvi (snippets) | None | M |
 | NC-3 | Export to and validation against the UK Programme and Project Data Standard (v1 on trial to 31 Dec 2026; v2 early 2027) | projectdelivery.gov.uk (snippets), APM blog | Data mostly exists; no mapping | M |
 | NC-4 | Status updates on a cadence: an on-track / at-risk / off-track narrative per plan, due reminders, an overdue follow-up, and a feed into the director pack | Linear initiative and project updates (snippets) | Confidence assessments and packs; no per-plan update | S–M |
-| NC-5 | Scheduler for the cargo tasks and sweeps (an in-process cron, opt-in, one runner via an advisory lock), plus notification on automatic escalation | — (repository notes) | Operator must schedule | M |
+| NC-5 | Extend the existing in-process ticker (`SCHEDULER_MINUTES`, which already runs scheduled actions, report schedules, director-pack drafting and milestone sweeps) to the other cargo tasks and the threshold sweep, one runner via an advisory lock, plus notification on automatic escalation | — (repository notes) | Partly: four of the jobs | M |
 | NC-6 | WSJF / cost of delay and RICE as selectable scoring models beside the Smart Score, absent input = null | SAFe (snippet), Jira Product Discovery (snippet) | Seven-component weighted score | S |
 | NC-7 | Efficient frontier: re-run the explainable scenario generator over a sweep of budget caps | Planisware glossary, Planview (snippets) | One cap | S |
 | NC-8 | Lessons-learned register fed at gates and closure, surfaced at intake by the matcher | PRINCE2 lessons log (not read); no tool cited | Vocabulary only (`spec/01:244`) | S |
@@ -1565,6 +1565,6 @@ decision log, RACI, skill pools, delivery confidence, OKRs and benefits.
    only, or with writes later?
 5. **NC-3.** Is UK government a first buyer, which would make the data standard
    worth tracking through its v2?
-6. **NC-5.** Should the service schedule its own jobs (an in-process cron),
+6. **NC-5.** Should the service schedule the rest of its jobs (the ticker already exists and is opt-in),
    which is simpler for small deployers, or should that stay the operator's
    job?

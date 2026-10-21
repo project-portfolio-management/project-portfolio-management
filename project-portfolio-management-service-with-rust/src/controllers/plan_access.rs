@@ -574,6 +574,29 @@ mod path_tests {
             assert_eq!(plan_pid_of(path), None, "{path}");
         }
     }
+
+    /// CQ-25: every plan-link and task-link route sits under `/api/plans/{pid}/`, so the guard
+    /// above decides privacy for all of them (the CHANGELOG once said they skip the check).
+    /// Read from the controller's own route table, so a link route added elsewhere fails here.
+    #[test]
+    fn every_link_route_is_behind_the_privacy_guard() {
+        let source = include_str!("plan_links.rs");
+        assert!(source.contains(".prefix(\"/api\")"));
+        let routes: Vec<&str> = source
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix(".add(\""))
+            .filter_map(|l| l.split('"').next())
+            .collect();
+        assert!(routes.len() >= 7, "{routes:?}");
+        let want = Uuid::parse_str(P).ok();
+        for route in routes {
+            let path = format!("/api{route}")
+                .replace("{pid}", P)
+                .replace("{lpid}", P)
+                .replace("{tpid}", P);
+            assert_eq!(plan_pid_of(&path), want, "{route} is not under the guard");
+        }
+    }
 }
 
 /// The guard layer: a request addressed to a private plan by a non-member is

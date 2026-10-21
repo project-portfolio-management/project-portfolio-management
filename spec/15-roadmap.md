@@ -210,12 +210,14 @@ rewritten.
 
 ### Planned, not built
 
-Open in [`tasks.md`](../tasks.md) and absent from the code (no route,
-migration or page yet); each group is planned work, not delivered capability.
-
-- **Monthly director pack (DP-1 … DP-12):** the issued, versioned pack per audience, delivery confidence, exceptions and the 48-hour red rule, gate decisions, funding sources, buffer fever chart, validated benefits, capacity heatmap by skill pool, rendering and the monthly rhythm.
-- **Escalation-driven capabilities (EX-1 … EX-14):** register completeness, delivery-model typology, partner organizations and sign-off, deployment-date change control, go / no-go, triage thresholds, start control, the outcome scorecard, key-person register and portfolio ledger.
-- **Critical chain buffers (CC-1 … CC-6):** the critical chain, aggressive and safe estimates, project / feeding / resource buffers, buffer management, drum and pipelining, and the front-end.
+The director pack (DP-1 … DP-12), the escalation-driven capabilities
+(EX-1 … EX-14) and critical chain buffers (CC-1 … CC-6), once listed here,
+are **built at the API** ([§14](14-implementation-status.md)); what they lack is
+mostly screens. Open work is in [`tasks.md`](../tasks.md): the code-quality
+items (`CQ-`), the correctness items carried forward (`CF-`) and the new
+capabilities (`NC-`) of the 2026-10-21 research pass ([`plan.md`](../plan.md)
+§64–§70), with NC-1 (screens for features built only at the API) the largest.
+(Corrected 2026-10-21, CQ-25.)
 
 ### Release and operations
 
@@ -227,6 +229,11 @@ rate limiting (HD-5); and documents that match the code (HD-9: the generated
 block in [§14.0](14-implementation-status.md#140-generated-facts), the link
 checker `scripts/check-links.py` with `lychee.toml`, and this reconciliation).
 Built but not yet proven on GitHub: CI at the repository root (HD-2) and the
-release pipeline with pinnable version tags (HD-8). Open: a backup plan with
-stated RPO and RTO (HD-6) and a data protection impact assessment (HD-7).
+release pipeline with pinnable version tags (HD-8). The backup plan with
+stated RPO and RTO (HD-6) and the data protection impact assessment (HD-7)
+were folded into the operations pack (HD-10) and the information governance
+pack (HD-11), both built; the assessments only a deployer can make (a
+penetration test, DPO sign-off, a restore exercise on their own estate) are
+open in [`governance/assurance-checklist.md`](../governance/assurance-checklist.md).
 Until those close, treat a deployment as not yet fully production-hardened.
+(Corrected 2026-10-21, CQ-25: this paragraph called HD-6 and HD-7 open.)

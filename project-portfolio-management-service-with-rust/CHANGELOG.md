@@ -31,7 +31,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- **`GET /api/plans/{pid}/task-link-counts` (LT-8, 2026-10-21).** Live link count per task of a plan. Request test extended. Like the other link routes it does not check plan privacy.
+- **`GET /api/plans/{pid}/task-link-counts` (LT-8, 2026-10-21).** Live link count per task of a plan. Request test extended. (Corrected 2026-10-21, CQ-25: this entry said it does not check plan privacy; it does, through `privacy_mw`, like every `/api/plans/{pid}/…` route, and `every_link_route_is_behind_the_privacy_guard` proves it.)
 
 - **`tolerance_escalations` task (FR-54, 2026-10-21).** Raises a tolerance escalation for each red dimension with none live and none raised in the last 7 days, as `system:tolerance-escalations`; `controllers::tolerances::raise_all_needed`. Request test covers once, not while open, quiet period, and again after 10 days. Not scheduled by the service; no notification; the quiet period is fixed.
 

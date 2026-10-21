@@ -1816,7 +1816,7 @@ came from grep.
   its populated state, not only in its error state.
   **Acceptance:** each route has a spec that asserts its content; axe runs on
   populated pages.
-- [ ] **CQ-25 (S) — Correct the documentation drift.** Fix these:
+- [x] **CQ-25 (S) — Correct the documentation drift.** Fix these:
   - the CHANGELOG note that link routes skip the private check (`privacy_mw`
     guards them; add a census test that proves it);
   - the CHANGELOG note on `style-src-attr 'unsafe-inline'` (now a hash);
@@ -1828,6 +1828,7 @@ came from grep.
     cargo tasks.
 
   **Acceptance:** each statement matches the code; the link checker passes.
+  **Built 2026-10-21.** The link-route privacy notes in the root and service CHANGELOGs are struck through with a correction, and `plan_access::path_tests::every_link_route_is_behind_the_privacy_guard` reads `plan_links.rs`'s route table and checks each route is under the guard (`privacy_mw` wraps the whole router, `app.rs`). COMPARISONS.md: change requests built, load test published. `spec/15`: "Planned, not built" and HD-6/HD-7 corrected. `ppm.ts` header and the UI package description fixed. `operations/deployment.md` lists the three newer cargo tasks and which one the in-process ticker also runs. **No change needed:** the CSP note — the UI CHANGELOG entry that set `style-src-attr 'unsafe-inline'` is history, and the root CHANGELOG already records its removal (2026-10-18). **Found while doing it:** `src/scheduler.rs` already runs four kinds of job, so NC-5 is narrower than first written (amended).
 
 ## Correctness carried forward (CF-n)
 
@@ -1895,9 +1896,12 @@ only as search snippets.
   director pack.
   **Acceptance:** request tests for due and overdue; the pack shows the update
   as at its cut-off.
-- [ ] **NC-5 (M) — The service runs its own scheduled jobs (opt-in).** An
-  in-process scheduler for `tolerance_escalations`, `exception_breaches`,
-  `director_pack_schedule`, `retention_purge` and the three sweeps. One runner
+- [ ] **NC-5 (M) — The service runs its own scheduled jobs (opt-in).** Extend
+  the existing in-process ticker (`src/scheduler.rs`, `SCHEDULER_MINUTES`, which
+  already runs scheduled actions, report schedules, director-pack drafting and
+  milestone sweeps; found 2026-10-21 while correcting the docs) to
+  `tolerance_escalations`, `exception_breaches`, `retention_purge` and the
+  threshold sweep. One runner
   across replicas, held by a PostgreSQL advisory lock. Each run is audited and
   counted in a metric. A notice goes to the plan lead on an automatic
   escalation. Owner question §70.6.

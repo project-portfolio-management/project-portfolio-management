@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Documents brought back in line with the code (CQ-25).** Corrected: the claim that link routes skip the private-plan check (they do not; a test now proves it), that change requests are not built, that no load test is published, that the director pack, escalation and critical-chain work is unbuilt, that the backup plan and DPIA are open, the UI client's "13 locales" header, and the UI package's old name. `operations/deployment.md` now lists every scheduled task. Verified: the link checker and a unit test.
 - **Opening a duplicate from a plan page now shows that plan (CQ-18).** It used to keep the first plan on screen under the new address. Verified: a browser test that fails on the old page. **Not done:** 25 other plan sub-pages have the same pattern, unreviewed, though none links to another plan.
 - **Changing a filter on the delivery calendar or the flow page sends its requests once, not twice (CQ-17).** A slower, older answer can no longer replace a newer one, and the sprint board loads its parts in parallel. Verified: browser tests that count requests.
 - **Unused dependencies removed (CQ-16).** Three Rust crates and SQLite support in the service, and five UI picker packages that nothing imported. Verified: clippy and every UI gate. **Not done:** the UI still installs three versions of one Lily library through `svelte-picker-bar`; no unused-dependency check in CI.
@@ -44,7 +45,9 @@ First release cut from the root release workflow: the service crate, migration c
   and a Links column on the WBS page. Verified: a request test (counts, other plan empty, unknown plan 404, removed
   link gone), the OpenAPI and paging censuses, a browser test on the tree. **Not done:** the board does not show it;
   counts only, the links themselves are on the task page; if the counts fail to load the page shows none, silently;
-  the endpoint, like the other link routes, does not check whether the plan is private; Welsh machine-written,
+  ~~the endpoint, like the other link routes, does not check whether the plan is private~~ (corrected 2026-10-21,
+  CQ-25: it does; the privacy guard covers every `/api/plans/{pid}/…` path, and a unit test now proves it for each
+  link route); Welsh machine-written,
   unreviewed.
 - **Red tolerances can be escalated on a schedule.** `cargo loco task tolerance_escalations` raises one escalation for
   every red tolerance on every live plan that has none open or acknowledged and none raised for that dimension in the

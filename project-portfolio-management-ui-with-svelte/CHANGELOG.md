@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Removed — unused Lily picker pins (CQ-16, 2026-10-21)
+
+`svelte-link-picker`, `svelte-locale-picker`, `svelte-search-picker`, `svelte-text-size-picker` and `svelte-theme-picker` were direct dependencies that no file imports: the pickers on screen come through `svelte-picker-bar`, which carries its own (older) copies, so the pins only made the bundle look newer than it is. `svelte-headless` stays (a peer of the grid, calendar, Gantt and board) and `themes` stays (`static/assets/themes` links into it). Verified: check, vitest, Playwright, build. Not done: the lockfile still resolves three `svelte-headless` versions, because `svelte-picker-bar` 0.4.0 pins older pickers; a newer picker-bar would collapse them.
+
 ### Security — a failed handling-mark lookup says so (CQ-19, 2026-10-21)
 
 On a plan page, a failed `GET /api/plans/{pid}/handling-mark` used to show no banner, which reads as "unmarked". A 404 or 403 still shows none (the plan is not there for this reader), but any other failure now shows "Handling mark: could not be checked. Treat this plan as marked until it is." (`p._layout_svelte.handling_mark_unknown`; Welsh machine-written, unreviewed). The RG-7 browser test that asserted no banner on a 500 now asserts the notice, and a new one covers 404. Not done: the other silent failures in CQ-19 (link counts, modules, calendar shading, announcements, security headers).

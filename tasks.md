@@ -1759,6 +1759,7 @@ came from grep.
   `svelte-picker-bar`, then run `pnpm dedupe`.
   **Acceptance:** CI green with the machete job; `pnpm-lock.yaml` has one
   `svelte-headless`.
+  **Progress 2026-10-21 (not ticked).** Service: `regex`, `include_dir`, `futures-util`, sea-orm `sqlx-sqlite` and the dev `sha2` removed; clippy with all features and the unit tests pass. UI: the five unused direct picker pins removed; check, vitest, Playwright and build pass. **Correction while building:** `@lilydesignsystem/themes` looked unused to a grep of `src` but is served through the `static/assets/themes` symlink; removing it broke a test, so it stays. **Still to do:** a `cargo machete` CI job; one `svelte-headless` (needs a `svelte-picker-bar` release with current pickers, which is upstream); a decision on `arbitrary_precision`.
 - [ ] **CQ-17 (S) — UI loads run once per change.**
   `calendar/+page.svelte:40,112`, `plans/[pid]/flow/+page.svelte:65,223` and
   `plans/[pid]/board/+page.svelte:71` fetch both from an `$effect` and from the

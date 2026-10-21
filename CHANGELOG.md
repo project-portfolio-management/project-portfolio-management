@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Unused dependencies removed (CQ-16).** Three Rust crates and SQLite support in the service, and five UI picker packages that nothing imported. Verified: clippy and every UI gate. **Not done:** the UI still installs three versions of one Lily library through `svelte-picker-bar`; no unused-dependency check in CI.
 - **Creating or changing a plan no longer blocks a server thread while the search index saves (CQ-10).** Verified: the database suite. **Not done:** not measured under load.
 - **No values formatted into SQL; no database text in error bodies (CQ-12).** Lock keys and the retention cut-off are bound parameters, and the data-subject tool checks its table and column names and stops showing database messages. None was exploitable before; the pattern is gone. Verified: unit tests and the database suites.
 - **Copied controller helpers merged into one place (CQ-7).** About 160 copies of five small helpers (error responses, plan and task lookups, id parsing) are now defined once, and a test fails on a new copy. Checked: the copies all behaved alike, so no response changed. Verified: the full database suite. **Not done:** the two different 422 error codes remain (owner question, plan §70.3).

@@ -4002,7 +4002,6 @@ version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1f111c8c41e7c61a49cd34e44c7619462967221a6443b0ec299e0ac30cfb9b1"
 dependencies = [
- "cc",
  "pkg-config",
  "vcpkg",
 ]
@@ -5305,8 +5304,6 @@ dependencies = [
  "criterion",
  "ed25519-dalek 3.0.0",
  "fluvio",
- "futures-util",
- "include_dir",
  "insta",
  "integrity-mac",
  "jsonwebtoken",
@@ -5320,7 +5317,6 @@ dependencies = [
  "project-portfolio-management-matcher",
  "project-portfolio-management-migration",
  "prometheus",
- "regex",
  "reqwest 0.13.5",
  "roxmltree",
  "rstest",

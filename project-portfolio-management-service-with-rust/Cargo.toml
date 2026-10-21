@@ -53,18 +53,15 @@ zip = { version = "9", default-features = false, features = ["deflate"] }
 roxmltree = "0.21"
 # Server-sent events (PL-3): a stream built from the broadcast receiver.
 async-stream = { version = "0.3" }
-futures-util = { version = "0.3", default-features = false }
 async-trait = { version = "0.1" }
 axum = { version = "0.8" }
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-regex = { version = "1.13" }
 # Embedded full-text search index (see src/search/). Same version as the
 # rest of the family, so one index format.
 tantivy = { version = "0.26" }
 project-portfolio-management-migration = { version = "0.2.0", path = "migration" }
 sea-orm = { version = "2.0", features = [
-  "sqlx-sqlite",
   "sqlx-postgres",
   "runtime-tokio-rustls",
   "macros",
@@ -74,7 +71,6 @@ chrono = { version = "0.4" }
 chrono-tz = { version = "0.10" }
 validator = { version = "0.21" }
 uuid = { version = "1.26", features = ["v4", "serde"] }
-include_dir = { version = "0.7" }
 mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }
 
@@ -161,7 +157,6 @@ insta = { version = "1.48", features = ["redactions", "yaml", "filters"] }
 # happy path is verified un-gated (no auth-service / network dependency).
 ed25519-dalek = { version = "3.0" }
 rusty_paseto = { version = "0.10", default-features = false, features = ["v4_public", "serde_json"] }
-sha2 = { version = "0.11" }
 base64 = { version = "0.23" }
 # Temp directories for the search-index tests.
 tempfile = { version = "3" }

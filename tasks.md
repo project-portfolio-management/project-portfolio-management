@@ -1851,6 +1851,7 @@ can give a wrong answer ([plan.md §66](plan.md)).
 - [ ] **CF-3 (S) — A database constraint for availability overlap** (an
   exclusion constraint on the date range per resource, PJ-3).
   **Acceptance:** two concurrent overlapping inserts leave one row.
+  **Progress 2026-10-21 (not ticked: the race is not reproduced).** Built with a lock, not a constraint (an exclusion constraint on a date range per text key needs `btree_gist`): `create` reads, checks and inserts in one transaction under `advisory_lock("availability", person_ref)`. A request test sends two overlapping ranges with `tokio::join!` and expects one 200 and one 409, but it also passed with the lock removed (20 rounds), because the in-process server serialises them. **Still to do:** a test that really overlaps the two transactions (two database connections, or a multi-threaded runtime), or the constraint if `btree_gist` is acceptable to deployers.
 - [ ] **CF-4 (M) — Who may acknowledge or resolve an escalation, and who may
   edit a shared framework.** Name a role or ABAC area for each, and give shared
   frameworks a version, so one plan's edit does not change every plan that

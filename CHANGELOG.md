@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Two availability ranges for one person sent at the same moment can no longer both pass the overlap check (CF-3).** The check and the write now hold a lock per person. **Not proven by a test:** the test harness runs the two requests one after the other, so the race is not reproduced.
 - **A goal edit or delete can no longer hit the wrong goal when the list changed meanwhile (CF-2).** Clients that send `If-Match` get 412 instead. Verified: a request test with two readers. **Not done:** the UI does not send it yet.
 - **The monthly pack no longer names a private plan's work through an external ask (CF-5).** An ask that has become a private plan is left out with the plan. The resource drill-down was already correct and is now tested. Verified: both database tests, and the first fails without the fix.
 - **A remaining English question in the objectives view is translated, and a test now catches literal text in browser dialogs (CQ-23, part).** Welsh machine-written, unreviewed.

@@ -8,10 +8,10 @@
 //! existence is not confirmed.
 //!
 //! Ranges for one person may not overlap (409). That is checked in the service,
-//! not by a database exclusion constraint, so two simultaneous requests could both
-//! pass; the second would then be read as the first match, which is the same
-//! answer on every day it covers (the capacity of a day is read from the first
-//! range found).
+//! inside one transaction that holds an advisory lock on the person (CF-3), so two
+//! simultaneous requests for the same person take turns: the second sees the
+//! first's range and is refused. (A database exclusion constraint would need the
+//! `btree_gist` extension, which not every deployment may install.)
 
 use super::db_err;
 use axum::http::StatusCode;
@@ -76,11 +76,16 @@ pub(crate) fn own_ref(caller: &MaybeAuthUser) -> Option<String> {
 
 /// A person's ranges, as pure [`Range`]s.
 pub(crate) async fn ranges_for(ctx: &AppContext, person_ref: &str) -> Result<Vec<Range>> {
+    ranges_on(&ctx.db, person_ref).await
+}
+
+/// [`ranges_for`] on a given connection or transaction.
+async fn ranges_on<C: sea_orm::ConnectionTrait>(db: &C, person_ref: &str) -> Result<Vec<Range>> {
     Ok(person_availabilities::Entity::find()
         .filter(person_availabilities::Column::PersonRef.eq(person_ref))
         .filter(person_availabilities::Column::DeletedAt.is_null())
         .order_by_asc(person_availabilities::Column::FromDate)
-        .all(&ctx.db)
+        .all(db)
         .await
         .map_err(db_err)?
         .into_iter()
@@ -139,7 +144,10 @@ async fn create(
     if !may_manage_person(&caller, &person_ref) {
         return Err(Error::NotFound);
     }
-    if rules::overlaps(&ranges_for(&ctx, &person_ref).await?, b.from, b.to) {
+    // Check and insert under one lock per person, so two requests cannot both pass the check.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    super::advisory_lock(&txn, "availability", &person_ref).await?;
+    if rules::overlaps(&ranges_on(&txn, &person_ref).await?, b.from, b.to) {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new(
@@ -158,9 +166,10 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
+    txn.commit().await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,

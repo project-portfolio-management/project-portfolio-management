@@ -567,6 +567,17 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
         let part_time: Value = post(json!({ "person_ref": who, "from": "2026-10-12", "to": "2026-10-18", "max_percent": 40, "note": "part-time" })).await.json();
         assert_eq!(post(json!({ "person_ref": who, "from": "2026-10-18", "to": "2026-10-20", "max_percent": 50 })).await.status_code(), 409, "touching on the 18th overlaps");
         post(json!({ "person_ref": who, "from": "2026-10-19", "to": "2026-10-20", "max_percent": 0, "note": "leave" })).await.assert_status_ok();
+        // CF-3: two overlapping ranges for one person sent together: one is kept, one refused.
+        // The in-process test server runs them one after the other, so this checks the outcome,
+        // not the race itself (the lock was removed and this still passed).
+        let racer = format!("person:{}", uuid::Uuid::new_v4());
+        let (a, b) = tokio::join!(
+            post(json!({ "person_ref": racer, "from": "2026-11-02", "to": "2026-11-08", "max_percent": 50 })),
+            post(json!({ "person_ref": racer, "from": "2026-11-05", "to": "2026-11-12", "max_percent": 20 })),
+        );
+        let mut codes = [a.status_code().as_u16(), b.status_code().as_u16()];
+        codes.sort_unstable();
+        assert_eq!(codes, [200, 409], "{} / {}", a.text(), b.text());
 
         // Capacity is per day: the 40% week is over, the full-capacity week is not, and the sum is unchanged.
         let c = cap("2026-10-05", "2026-10-18").await;

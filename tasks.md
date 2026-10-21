@@ -1718,6 +1718,7 @@ came from grep.
   or a single indexing task fed by a channel.
   **Acceptance:** a test still finds a new plan by search; the load test's p99
   for `POST /api/plans` is recorded before and after in `BENCHMARKS.md`.
+  **Progress 2026-10-21 (not ticked: no measurement).** `index_best_effort` and `deindex_best_effort` are async and run the write in `spawn_blocking`, still awaited by the request, so search sees a new plan when its create answers; the request suite (189) passes. **Still to do:** the before and after p99 in `BENCHMARKS.md` (needs the load-test setup: a seeded database and `oha`).
 - [ ] **CQ-11 (M) — Remove the read N+1s, and the racy upsert.**
   `financials.rs:184` (periods per baseline) and `strategy.rs:283` (one
   existence query per pid) become `is_in` queries. In `earned_value.rs:557`,

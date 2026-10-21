@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **Creating or changing a plan no longer blocks a server thread while the search index saves (CQ-10).** Verified: the database suite. **Not done:** not measured under load.
 - **No values formatted into SQL; no database text in error bodies (CQ-12).** Lock keys and the retention cut-off are bound parameters, and the data-subject tool checks its table and column names and stops showing database messages. None was exploitable before; the pattern is gone. Verified: unit tests and the database suites.
 - **Copied controller helpers merged into one place (CQ-7).** About 160 copies of five small helpers (error responses, plan and task lookups, id parsing) are now defined once, and a test fails on a new copy. Checked: the copies all behaved alike, so no response changed. Verified: the full database suite. **Not done:** the two different 422 error codes remain (owner question, plan §70.3).
 - **A database fault can no longer let a non-member into a private plan (CQ-6).** When the service could not check whether a plan was private, it let the request through. It now answers 503, and every visibility lookup that fails is logged and counted. Verified: a database test that breaks the lookup for one request. **Not done:** aggregate views still answer with what they could check, not 503.

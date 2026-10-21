@@ -356,24 +356,37 @@ async fn audit_best_effort(
 /// the duplicate detector that blocks on the index — is silent until
 /// someone notices a missing hit. The repair is
 /// `cargo loco task search_reindex`.
-fn index_best_effort(pid: Uuid, plan: &Plan) {
+///
+/// The index write takes the writer lock and commits (an fsync), so it runs on the blocking pool,
+/// not on an async worker (CQ-10). The request still waits for it, so a plan is searchable as soon
+/// as its create answers, as before.
+async fn index_best_effort(pid: Uuid, plan: &Plan) {
     let Some(engine) = crate::search::engine() else {
         return;
     };
-    if let Err(err) = engine.index_plan(pid, plan) {
-        tracing::error!(%pid, error = %err, "failed to index plan; search will miss it until reindex");
+    let plan = plan.clone();
+    match tokio::task::spawn_blocking(move || engine.index_plan(pid, &plan)).await {
+        Ok(Ok(())) => {}
+        Ok(Err(err)) => {
+            tracing::error!(%pid, error = %err, "failed to index plan; search will miss it until reindex");
+        }
+        Err(err) => {
+            tracing::error!(%pid, error = %err, "index task did not finish; search will miss it until reindex");
+        }
     }
 }
 
 /// Remove a record from the full-text index, best-effort (same posture
 /// as [`index_best_effort`]). Called on soft-delete and on the duplicate
 /// side of a merge, so a retired plan stops being a search hit.
-fn deindex_best_effort(pid: Uuid) {
+async fn deindex_best_effort(pid: Uuid) {
     let Some(engine) = crate::search::engine() else {
         return;
     };
-    if let Err(err) = engine.delete_plan(pid) {
-        tracing::error!(%pid, error = %err, "failed to remove plan from index");
+    match tokio::task::spawn_blocking(move || engine.delete_plan(pid)).await {
+        Ok(Ok(())) => {}
+        Ok(Err(err)) => tracing::error!(%pid, error = %err, "failed to remove plan from index"),
+        Err(err) => tracing::error!(%pid, error = %err, "deindex task did not finish"),
     }
 }
 
@@ -422,7 +435,7 @@ pub async fn create_and_emit(
     };
     // Index only after the write is durable, so the index never
     // advertises a record a rolled-back transaction never created.
-    index_best_effort(model.pid, wi);
+    index_best_effort(model.pid, wi).await;
     Ok(model)
 }
 
@@ -482,7 +495,7 @@ pub async fn update_and_emit(
         }
     };
     // Replaces the prior document, so a superseded name stops matching.
-    index_best_effort(updated.pid, wi);
+    index_best_effort(updated.pid, wi).await;
     Ok(updated)
 }
 
@@ -517,7 +530,7 @@ pub async fn delete_and_emit(
     }
     // A soft-deleted row is invisible to lookups, so it must stop being
     // a search hit too.
-    deindex_best_effort(pid);
+    deindex_best_effort(pid).await;
     Ok((pid, name))
 }
 
@@ -584,8 +597,8 @@ pub async fn merge_and_emit(
     // is re-indexed with the merged payload; the duplicate is
     // soft-deleted and leaves the index. Doing only one of the two would
     // let a merged pair keep matching as two records.
-    index_best_effort(outcome.0.pid, merged_wi);
-    deindex_best_effort(outcome.1);
+    index_best_effort(outcome.0.pid, merged_wi).await;
+    deindex_best_effort(outcome.1).await;
     Ok(outcome)
 }
 

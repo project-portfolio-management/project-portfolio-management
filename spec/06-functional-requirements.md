@@ -123,6 +123,12 @@ hang off **any** plan.
   `index`; a delete moves the later goals down one, and an index past the
   end is `404`. Writes rewrite the plan like `PUT /api/plans/{pid}` (same
   validation, so a blank title is `422`, same audit row and event).
+  Because a position moves, every answer carries a weak `ETag` of the goal
+  list; a `PUT` or delete that sends `If-Match` with an older tag is `412`
+  (`precondition_failed`) and changes nothing, so the caller re-reads instead
+  of editing whatever goal now sits at that position (CF-2). Without
+  `If-Match` the write goes ahead, as before. A list page that is the whole
+  list keeps its `ETag`; a page that leaves rows out drops it.
 - **FR-13 Tasks.** CRUD tasks under a plan
   (`/api/plans/{pid}/tasks`). `Task { pid, parent_pid, title,
   description?, assignee_ref? (EntityRef), status:

@@ -4,8 +4,14 @@
 //! same validation, audit row and event. A `Goal` has no identifier, so a
 //! goal is addressed by its zero-based position; a delete shifts the ones
 //! after it down.
+//!
+//! Because a position moves when another goal is removed, every answer carries
+//! an `ETag` of the goal list, and a replace or delete that sends `If-Match` is
+//! refused with `412` when the list has changed since (CF-2): the caller re-reads
+//! instead of editing the wrong goal. Without `If-Match` the write goes ahead as
+//! before.
 
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode, header};
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use project_portfolio_management_matcher::Goal;
@@ -44,6 +50,45 @@ async fn load(
     Ok((model, plan))
 }
 
+/// The goal list's entity tag: a digest of the goals as stored, so it changes
+/// whenever a goal is added, edited, moved or removed.
+fn goals_etag(goals: &[Goal]) -> String {
+    let hex = crate::artifacts::sha256_hex(&serde_json::to_vec(goals).unwrap_or_default());
+    format!("W/\"{}\"", &hex[..16])
+}
+
+/// The goals as JSON with their `ETag`.
+fn with_etag(goals: Vec<Goal>) -> Result<Response> {
+    let tag = goals_etag(&goals);
+    let mut res = format::json(indexed(goals))?;
+    if let Ok(v) = header::HeaderValue::from_str(&tag) {
+        res.headers_mut().insert(header::ETAG, v);
+    }
+    Ok(res)
+}
+
+/// Refuse with `412` when the caller sent `If-Match` for a goal list that has changed.
+fn check_if_match(headers: &HeaderMap, goals: &[Goal]) -> Result<()> {
+    let Some(sent) = headers.get(header::IF_MATCH).and_then(|v| v.to_str().ok()) else {
+        return Ok(());
+    };
+    let current = goals_etag(goals);
+    let matches = sent.split(',').map(str::trim).any(|t| {
+        t == "*" || t == current || t.trim_start_matches("W/") == current.trim_start_matches("W/")
+    });
+    if matches {
+        Ok(())
+    } else {
+        Err(Error::CustomError(
+            StatusCode::PRECONDITION_FAILED,
+            ErrorDetail::new(
+                "precondition_failed",
+                "the plan's goals changed since you read them; read them again, then retry",
+            ),
+        ))
+    }
+}
+
 /// Write the changed plan back and answer with the goals.
 async fn save(
     ctx: &AppContext,
@@ -60,7 +105,7 @@ async fn save(
     .map_err(super::record_rejection)?;
     let updated = streaming::update_and_emit(&ctx.db, model, &plan, caller.actor()).await?;
     Metrics::global().plan_updated_total.inc();
-    format::json(indexed(updated.to_plan().map_err(Error::Model)?.goals))
+    with_etag(updated.to_plan().map_err(Error::Model)?.goals)
 }
 
 fn no_such_goal() -> Error {
@@ -74,7 +119,7 @@ fn no_such_goal() -> Error {
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let (_, plan) = load(&ctx, &pid).await?;
-    format::json(indexed(plan.goals))
+    with_etag(plan.goals)
 }
 
 /// `POST /api/plans/{pid}/goals`: append a goal.
@@ -95,10 +140,12 @@ async fn add(
 async fn replace(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    headers: HeaderMap,
     Path((pid, index)): Path<(String, usize)>,
     Json(goal): Json<Goal>,
 ) -> Result<Response> {
     let (model, mut plan) = load(&ctx, &pid).await?;
+    check_if_match(&headers, &plan.goals)?;
     *plan.goals.get_mut(index).ok_or_else(no_such_goal)? = goal;
     save(&ctx, &caller, model, plan).await
 }
@@ -108,9 +155,11 @@ async fn replace(
 async fn remove(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    headers: HeaderMap,
     Path((pid, index)): Path<(String, usize)>,
 ) -> Result<Response> {
     let (model, mut plan) = load(&ctx, &pid).await?;
+    check_if_match(&headers, &plan.goals)?;
     if index >= plan.goals.len() {
         return Err(no_such_goal());
     }

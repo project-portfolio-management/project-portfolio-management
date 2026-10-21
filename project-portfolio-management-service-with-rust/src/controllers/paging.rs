@@ -111,9 +111,14 @@ pub async fn paging_mw(req: Request, next: Next) -> Response {
         .skip(usize::try_from(offset).unwrap_or(usize::MAX))
         .take(usize::try_from(limit).unwrap_or(usize::MAX))
         .collect();
+    let whole = offset == 0 && total <= limit;
     let body = serde_json::to_vec(&page).unwrap_or_default();
     parts.headers.remove(header::CONTENT_LENGTH);
-    parts.headers.remove(header::ETAG);
+    // A tag describes the whole list; a page that leaves rows out is not it. A page
+    // that is the whole list keeps it, so `If-Match` works on a list (CF-2).
+    if !whole {
+        parts.headers.remove(header::ETAG);
+    }
     for (name, value) in [
         ("x-total-count", total),
         ("x-limit", limit),

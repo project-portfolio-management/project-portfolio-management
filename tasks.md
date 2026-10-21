@@ -1844,9 +1844,10 @@ can give a wrong answer ([plan.md §66](plan.md)).
   message (RG-16).
   **Acceptance:** an e2e test with a stubbed 2,001-task plan shows the right
   totals or a truncation notice; a 413 test shows the critical part.
-- [ ] **CF-2 (S) — Goals by id with `If-Match`** (OQ-5, CHANGELOG 0.2.0).
+- [x] **CF-2 (S) — Goals by id with `If-Match`** (OQ-5, CHANGELOG 0.2.0).
   **Acceptance:** a concurrent delete test removes the intended goal or gets a
   412.
+  **Built 2026-10-21, by tag rather than by id.** A `Goal` is a matcher type with no id, and adding one would change the matchable payload; instead `controllers/goals.rs` sends `ETag: W/"<16 hex of SHA-256 of the goals>"` on every answer and refuses a stale `If-Match` with 412 on replace and delete. `paging_mw` keeps an `ETag` when the page is the whole list. Request test in `requests::goals`. **Deviations, stated:** goals are still addressed by position; `If-Match` is optional (old clients unchanged); the read-check-write is not atomic; the UI was not changed to send `If-Match`.
 - [ ] **CF-3 (S) — A database constraint for availability overlap** (an
   exclusion constraint on the date range per resource, PJ-3).
   **Acceptance:** two concurrent overlapping inserts leave one row.

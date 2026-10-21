@@ -243,12 +243,7 @@ async fn commit(
     // The freshness check is made through the transaction that writes, behind a lock
     // on the plan, so a second commit waits and then sees the first one's changes.
     let txn = ctx.db.begin().await.map_err(db_err)?;
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('handover:{}'))",
-        plan.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "handover", plan.pid).await?;
     let h = holdings(&txn, plan.pid, &b.from_person, &def, today).await?;
     if etag(&b.from_person, to, &h) != expected {
         return Err(stale());

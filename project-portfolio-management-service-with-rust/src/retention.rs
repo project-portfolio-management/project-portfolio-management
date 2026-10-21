@@ -103,14 +103,13 @@ pub fn parse_days(name: &str, raw: &str) -> Result<i64, String> {
 pub const MAX_DAYS: i64 = 36_500;
 
 impl Rule {
-    /// The `WHERE` clause for rows past `cutoff`.
+    /// The `WHERE` clause for rows past the cut-off, which is bound as `$1` (CQ-12): only the
+    /// rule's own fixed identifiers are written into the SQL.
     #[must_use]
-    pub fn condition(&self, cutoff: DateTime<Utc>) -> String {
+    pub fn condition(&self) -> String {
         let mut c = format!(
-            "{} IS NOT NULL AND {} < '{}'",
-            self.age_column,
-            self.age_column,
-            cutoff.to_rfc3339()
+            "{} IS NOT NULL AND {} < $1",
+            self.age_column, self.age_column
         );
         if !self.also.is_empty() {
             c.push_str(" AND ");
@@ -157,13 +156,17 @@ pub async fn run(
             .find(|(n, _)| n == rule.name)
             .map_or(rule.default_days, |(_, d)| *d);
         let cut = cutoff(now, days);
-        let where_clause = rule.condition(cut);
+        let where_clause = rule.condition();
         let count_sql = format!(
             "SELECT COUNT(*) AS n FROM {} WHERE {where_clause}",
             rule.table
         );
         let matched = db
-            .query_one_raw(Statement::from_string(DatabaseBackend::Postgres, count_sql))
+            .query_one_raw(Statement::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                count_sql,
+                [sea_orm::Value::from(cut)],
+            ))
             .await
             .map_err(|e| db_err(&e))?
             .map_or(0, |r| r.try_get::<i64>("", "n").unwrap_or(0));
@@ -175,7 +178,11 @@ pub async fn run(
                 .await
                 .map_err(|e| db_err(&e))?;
             deleted = tx
-                .execute_unprepared(&format!("DELETE FROM {} WHERE {where_clause}", rule.table))
+                .execute_raw(Statement::from_sql_and_values(
+                    DatabaseBackend::Postgres,
+                    format!("DELETE FROM {} WHERE {where_clause}", rule.table),
+                    [sea_orm::Value::from(cut)],
+                ))
                 .await
                 .map_err(|e| db_err(&e))?
                 .rows_affected();
@@ -243,13 +250,25 @@ mod tests {
 
     #[test]
     fn a_rule_selects_only_old_rows_that_have_a_date() {
-        let c = RULES[0].condition(at(1));
-        assert!(
-            c.starts_with("read_at IS NOT NULL AND read_at < '2026-10-01T12:00:00"),
-            "{c}"
-        );
-        let c = RULES[2].condition(at(1));
+        let c = RULES[0].condition();
+        assert_eq!(c, "read_at IS NOT NULL AND read_at < $1");
+        let c = RULES[2].condition();
         assert!(c.ends_with("AND next_attempt_at IS NULL"), "{c}");
+    }
+
+    /// CQ-12: what is written into the SQL is the rules' own fixed identifiers, never data.
+    #[test]
+    fn rule_identifiers_are_plain_names() {
+        let plain = |s: &str| {
+            !s.is_empty()
+                && s.bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+        };
+        for r in RULES {
+            assert!(plain(r.table), "{}", r.table);
+            assert!(plain(r.age_column), "{}", r.age_column);
+            assert!(!r.also.contains(['\'', ';', '$']), "{}", r.also);
+        }
     }
 
     #[test]

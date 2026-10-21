@@ -13,6 +13,17 @@
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+/// Whether `name` is a plain SQL identifier (lower-case letters, digits, `_`), as every table and
+/// column in [`COLUMNS`] is. The only names written into the subjects SQL are these (CQ-12).
+#[must_use]
+pub fn is_plain_identifier(name: &str) -> bool {
+    !name.is_empty()
+        && !name.starts_with(|c: char| c.is_ascii_digit())
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+}
+
 /// Every `(table, column)` that holds a **person reference** (a token subject, or a
 /// `person:`/`worker:` reference). A test keeps this in step with
 /// `governance/personal-data-inventory.csv`.
@@ -232,6 +243,19 @@ pub fn is_pseudonym(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// CQ-12: every name the subjects SQL is built from is a plain identifier, and the check
+    /// refuses anything that could close a quote or start a second statement.
+    #[test]
+    fn every_listed_name_is_a_plain_identifier() {
+        for (table, column) in COLUMNS {
+            assert!(is_plain_identifier(table), "{table}");
+            assert!(is_plain_identifier(column), "{column}");
+        }
+        for bad in ["", "a\"b", "a;drop", "A", "1a", "a b", "a-b"] {
+            assert!(!is_plain_identifier(bad), "{bad}");
+        }
+    }
 
     #[test]
     fn every_form_of_a_reference_names_the_same_person() {

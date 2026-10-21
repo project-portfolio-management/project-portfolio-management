@@ -384,12 +384,7 @@ pub(crate) async fn commit(
     let txn = ctx.db.begin().await.map_err(db_err)?;
     // One commit at a time per plan: a second waits here, then re-reads the plan
     // through this transaction and is refused as stale if the first changed it.
-    sea_orm::ConnectionTrait::execute_unprepared(
-        &txn,
-        &format!("SELECT pg_advisory_xact_lock(hashtext('sandbox:{plan}'))"),
-    )
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "sandbox", plan).await?;
     let rows = read_rows(&txn, plan).await?;
     let pids: HashSet<Uuid> = rows.iter().map(|r| r.pid).collect();
     let edges = read_edges(&txn, &pids).await?;

@@ -358,12 +358,7 @@ async fn new_version(
     }
     let txn = ctx.db.begin().await.map_err(db_err)?;
     // Serialize per document so two people cannot both open "the next draft".
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
-        doc.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "document", doc.pid).await?;
     let vs = versions_of(&txn, doc.pid).await?;
     if vs.iter().any(|v| {
         matches!(
@@ -476,12 +471,7 @@ async fn submit(
     }
     let txn = ctx.db.begin().await.map_err(db_err)?;
     // Serialize per document, then re-read: two submits cannot both pass the draft check.
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
-        doc.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "document", doc.pid).await?;
     let v = versions_of(&txn, doc.pid)
         .await?
         .into_iter()
@@ -595,12 +585,7 @@ async fn make_effective(
     let doc = find_doc(&ctx, &caller, &pid).await?;
     owner_only(&doc, &claims)?;
     let txn = ctx.db.begin().await.map_err(db_err)?;
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('document:{}'))",
-        doc.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "document", doc.pid).await?;
     let vs = versions_of(&txn, doc.pid).await?;
     let v = vs
         .iter()

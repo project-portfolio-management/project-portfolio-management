@@ -20,7 +20,6 @@ use axum::http::StatusCode;
 use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
-use sea_orm::ConnectionTrait;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -803,12 +802,7 @@ async fn set_schedule(
     // The change and its audit row (with the reason) land together or not at all.
     let txn = ctx.db.begin().await.map_err(db_err)?;
     // The same lock a what-if commit holds: a plain edit cannot slip in between its freshness check and its writes.
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('sandbox:{}'))",
-        plan.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "sandbox", plan.pid).await?;
     let row = a.update(&txn).await.map_err(db_err)?;
     AuditModel::record(
         &txn,

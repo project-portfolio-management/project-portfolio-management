@@ -168,6 +168,29 @@ pub(crate) async fn find_live_task(
         .ok_or(loco_rs::Error::NotFound)
 }
 
+/// Take the transaction-scoped advisory lock for `scope` and `pid` (CQ-12): the key is
+/// `hashtext('<scope>:<pid>')`, bound as a parameter rather than formatted into the SQL. Two
+/// places that must exclude each other (a what-if commit and a plain schedule edit share
+/// `sandbox`) use the same scope.
+///
+/// # Errors
+///
+/// `500` when the lock statement fails.
+pub(crate) async fn advisory_lock<C: sea_orm::ConnectionTrait>(
+    txn: &C,
+    scope: &'static str,
+    pid: uuid::Uuid,
+) -> loco_rs::Result<()> {
+    txn.execute_raw(sea_orm::Statement::from_sql_and_values(
+        sea_orm::DatabaseBackend::Postgres,
+        "SELECT pg_advisory_xact_lock(hashtext($1))",
+        [sea_orm::Value::from(format!("{scope}:{pid}"))],
+    ))
+    .await
+    .map_err(db_err)?;
+    Ok(())
+}
+
 /// `409 Conflict` with the error code `conflict` and `message`.
 #[must_use]
 pub(crate) fn conflict(message: &str) -> loco_rs::Error {

@@ -1726,12 +1726,13 @@ came from grep.
   `thresholds.rs:318`, `includes.rs:96` and `task_get.rs:118`.
   **Acceptance:** query counts asserted in a request test; a concurrent test of
   the earned-value snapshot leaves one row.
-- [ ] **CQ-12 (S) — Bind SQL parameters; no database text in responses.**
+- [x] **CQ-12 (S) — Bind SQL parameters; no database text in responses.**
   `retention.rs:162,178` and `sandbox.rs:389` bind `$1` instead of `format!`;
   `controllers/subjects.rs:165,187` assert table and column against a `const`
   allow-list; `subjects.rs:181` stops putting `DbErr` text into a 409 body.
   **Acceptance:** unit test of the allow-list; a request test checks the 409
   body carries no database message.
+  **Built 2026-10-21.** `controllers::advisory_lock(txn, scope, pid)` replaces seven formatted lock statements (the pass named only `sandbox.rs`; there were seven); retention's `condition()` writes `$1` and the count and delete bind the cut-off; `subjects::is_plain_identifier` guards `touch()`; the 409 logs the `DbErr` and says only which column. Unit tests for the identifiers and the condition. **Deviation, stated:** no request test makes the pseudonymisation update fail to inspect the 409 body (the failure needs a constraint violation the fixtures do not produce); the change is a removed interpolation, read in review.
 - [ ] **CQ-13 (M) — "Today" in the deployment's zone.** There are 93
   `Utc::now().date_naive()` calls against 14 uses of `tz::local_today`. Audit
   each `today` or `as_of` default against the spec, move the ones that should

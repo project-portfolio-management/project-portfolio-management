@@ -15,7 +15,6 @@ use std::collections::HashMap;
 
 use chrono::NaiveDate;
 use loco_rs::prelude::*;
-use sea_orm::ConnectionTrait;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -153,12 +152,7 @@ async fn add_link(
         .map_err(|_| unprocessable("a hammock links to a task of the same plan"))?;
     // One link at a time per plan: two simultaneous A→B and B→A cannot both pass the cycle check.
     let txn = ctx.db.begin().await.map_err(db_err)?;
-    txn.execute_unprepared(&format!(
-        "SELECT pg_advisory_xact_lock(hashtext('hammock:{}'))",
-        plan.pid
-    ))
-    .await
-    .map_err(db_err)?;
+    super::advisory_lock(&txn, "hammock", plan.pid).await?;
     let all: Vec<(Uuid, Uuid)> = hammock_links::Entity::find()
         .all(&txn)
         .await

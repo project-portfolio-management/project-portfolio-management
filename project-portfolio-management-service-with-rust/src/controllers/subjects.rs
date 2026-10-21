@@ -148,6 +148,10 @@ async fn touch(
     pseudo: Uuid,
     apply: bool,
 ) -> Result<u64> {
+    // Only the fixed names in `subjects::COLUMNS` reach the SQL; refuse anything else outright.
+    if !rules::is_plain_identifier(table) || !rules::is_plain_identifier(column) {
+        return Err(Error::string("not a known table or column"));
+    }
     let mut n: u64 = 0;
     for form in forms {
         if apply {
@@ -163,12 +167,15 @@ async fn touch(
                     ],
                 ))
                 .await
-                .map_err(|e| {
+                .map_err(|error| {
+                    // The database's own text stays in the log: it can name constraints and
+                    // values (CQ-12).
+                    tracing::error!(table, column, %error, "pseudonymisation update refused");
                     Error::CustomError(
                         StatusCode::CONFLICT,
                         ErrorDetail::new(
                             "conflict",
-                            format!("{table}.{column} could not be changed: {e}"),
+                            format!("{table}.{column} could not be changed; nothing was changed"),
                         ),
                     )
                 })?

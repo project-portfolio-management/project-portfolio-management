@@ -1662,7 +1662,7 @@ came from grep.
   **Acceptance:** a census test fails on `record(..).await.ok()`; a database
   test that forces the audit insert to fail shows the write is refused, or, on
   the best-effort path, shows the log line and the metric.
-- [ ] **CQ-4 (S) — The BFF proxy relays the headers the client reads.**
+- [x] **CQ-4 (S) — The BFF proxy relays the headers the client reads.**
   `ui/src/routes/api/proxy/[...path]/+server.ts:67-72` copies only
   `content-type`, so in the browser `X-Total-Count`, `X-Limit` and
   `X-Offset` (read at `client.ts:220`), as well as `ETag`, `Retry-After`,
@@ -1671,6 +1671,7 @@ came from grep.
   **Acceptance:** a unit test of the proxy handler passes each listed header
   through and drops `set-cookie` from upstream; one e2e test over the real
   proxy shows a total larger than the page.
+  **Built 2026-10-21.** `src/lib/server/proxy-headers.ts` (`relayResponseHeaders`, 15 headers, which also covers `link`, `cache-control`, `last-modified` and the `ratelimit-*` trio the service sends); the proxy uses it. Unit tests: each listed header passes, `set-cookie`, hop-by-hop, encoding, length, CSP and unnamed headers do not. **Not done, stated:** the e2e half of the acceptance: the Playwright suite stubs the API in the browser and never reaches the proxy, so a test over the real proxy needs a running service, which the suite does not start.
 - [ ] **CQ-5 (S) — Harden the proxy.** Strip a browser-supplied `authorization`
   when there is no session. Refuse non-GET requests whose `Origin` is not the
   app's own. Turn an upstream fetch failure into a 502 with a catalogue message

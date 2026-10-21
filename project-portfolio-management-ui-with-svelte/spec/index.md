@@ -334,7 +334,12 @@ model (§6.15) the browser carries only the `__Host-mxi_session` cookie;
 `ApiClient`'s base URL is the same-origin `/api/proxy`, and the
 SvelteKit server (`src/routes/api/proxy/[...path]`) attaches the
 short-lived PASETO server-side when forwarding to the service — no token
-is read or attached in browser JS. `PlanForm` builds a `Plan` from the
+is read or attached in browser JS. On the way back it relays the status, the
+body and an allow-list of response headers (`src/lib/server/proxy-headers.ts`,
+CQ-4): `content-type`, `content-disposition`, `cache-control`, `etag`,
+`last-modified`, `location`, `retry-after`, `link`, the paging headers
+`x-total-count` / `x-limit` / `x-offset`, `x-handling-mark` and the
+`ratelimit-*` trio; never `set-cookie` or a hop-by-hop header. `PlanForm` builds a `Plan` from the
 inputs (comma lists split, blanks nulled, goals / identifiers /
 relationships as editable rows; empty rows dropped on submit; a seeded
 `Custom` enum collapses to "—"; `kind` is an optional select,

@@ -14,6 +14,7 @@ import { oidcConfig } from "#lib/server/config.js";
 import { accessTokenFor, providerMetadata } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
 import { demoEnabled } from "#lib/server/demo.js";
+import { relayResponseHeaders } from "#lib/server/proxy-headers.js";
 
 const proxy: RequestHandler = async ({
   request,
@@ -65,13 +66,10 @@ const proxy: RequestHandler = async ({
 
   const upstream = await fetch(target, init);
 
-  // Relay status + body; copy a safe subset of response headers.
-  const responseHeaders = new Headers();
-  const contentType = upstream.headers.get("content-type");
-  if (contentType) responseHeaders.set("content-type", contentType);
+  // Relay status + body, and the response headers the client reads (an allow-list).
   return new Response(upstream.body, {
     status: upstream.status,
-    headers: responseHeaders,
+    headers: relayResponseHeaders(upstream.headers),
   });
 };
 

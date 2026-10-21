@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the proxy relays the response headers the client reads (CQ-4, 2026-10-21)
+
+`/api/proxy` copied only `content-type`, so in the browser `getPage` totals fell back to the page length and `ETag`, `Retry-After`, `Location`, `Content-Disposition` and `X-Handling-Mark` were lost. An allow-list in `src/lib/server/proxy-headers.ts` now relays them; unit tests for what passes and what does not (`set-cookie`, hop-by-hop, unnamed). Not done: no browser test goes through the real proxy (the e2e suite stubs the API in the browser), so the fix is proven at the function, not end to end.
+
 ### Added — link counts on the work breakdown (LT-8, 2026-10-21)
 
 `/plans/[pid]/wbs` shows "· N links" beside a task and a Links column, from `taskLinkCounts`. Browser test stubs the counts. Not on the board. Welsh machine-written, unreviewed.

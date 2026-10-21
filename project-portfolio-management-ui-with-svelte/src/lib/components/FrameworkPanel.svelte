@@ -35,8 +35,11 @@
   let problems = $state<string[]>([]);
 
   const record = $derived(recordOf(family, inForce));
-  /** Only a record this plan owns can be edited here: a shared one belongs to other plans too. */
-  const editable = $derived(!!record && record.owner_plan_pid === pid && inForce?.source === "own");
+  /** A record this plan owns, or an organisation-wide one (which other plans may follow too: see `sharedWith`). */
+  const editable = $derived(!!record && (record.owner_plan_pid === pid || record.scope === "organization"));
+  /** How many other plans an edit would also change. */
+  const sharedWith = $derived(record ? Math.max(0, record.plans_using - (inForce?.source === "own" ? 1 : 0)) : 0);
+  let confirmShared = $state(false);
 
   async function load() {
     try {
@@ -78,6 +81,7 @@
   }
 
   function startEdit() {
+    confirmShared = false;
     form = formOf(record);
     problems = [];
     creating = false;
@@ -87,6 +91,7 @@
   async function save(e: SubmitEvent, isNew: boolean) {
     e.preventDefault();
     problems = frameworkProblems(family, form);
+    if (!isNew && sharedWith > 0 && !confirmShared) problems = [...problems, t("p.frameworks.confirm_problem", { n: sharedWith })];
     if (problems.length > 0) return;
     try {
       if (isNew) {
@@ -102,6 +107,21 @@
     }
   }
   const others = $derived(all.filter((f) => f.pid !== record?.pid));
+  const chosenRecord = $derived(others.find((f) => f.pid === chosen));
+  /** Nobody follows it, and it is the organisation's or this plan's own. */
+  const deletable = $derived(!!chosenRecord && chosenRecord.plans_using === 0 && (chosenRecord.scope === "organization" || chosenRecord.owner_plan_pid === pid));
+
+  async function destroy() {
+    if (!chosenRecord) return;
+    try {
+      await ppm.deleteFramework(family, chosenRecord.pid);
+      notice = t("p.frameworks.deleted", { name: chosenRecord.name });
+      chosen = "";
+      await load();
+    } catch (err) {
+      notice = message(err);
+    }
+  }
 </script>
 
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.frameworks.back")}</a></p>
@@ -146,6 +166,7 @@
         </select>
       </label>
       <button type="button" disabled={!chosen} onclick={follow}>{t("p.frameworks.follow")}</button>
+      {#if deletable}<button type="button" onclick={destroy}>{t("p.frameworks.delete", { name: chosenRecord?.name ?? "" })}</button>{/if}
     {/if}
     <p><button type="button" onclick={startNew}>{t("p.frameworks.write_new")}</button></p>
   </section>
@@ -217,6 +238,9 @@
             {/each}
             <button type="button" onclick={() => form.forums.push({ name: "", cadence: "", purpose: "" })}>{t("p.frameworks.forum_add")}</button>
           </fieldset>
+        {/if}
+        {#if !creating && sharedWith > 0}
+          <label class="shared"><input type="checkbox" bind:checked={confirmShared} /> {t("p.frameworks.confirm_shared", { n: sharedWith })}</label>
         {/if}
         {#if problems.length > 0}<ul class="banner" role="alert">{#each problems as m (m)}<li>{m}</li>{/each}</ul>{/if}
         <span class="actions">

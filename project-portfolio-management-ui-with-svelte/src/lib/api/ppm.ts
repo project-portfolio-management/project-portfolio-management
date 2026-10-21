@@ -3135,6 +3135,9 @@ export class PpmClient {
   updateFramework(family: FrameworkFamily, pid: string, body: Record<string, unknown>): Promise<Framework> {
     return this.http.put(`/api/${family}/${pid}`, { body });
   }
+  deleteFramework(family: FrameworkFamily, pid: string): Promise<unknown> {
+    return this.http.post(`/api/${family}/${pid}/delete`, { body: {} });
+  }
   frameworkInForce(family: FrameworkFamily, pid: string): Promise<FrameworkInForce> {
     return this.http.get(`/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`);
   }

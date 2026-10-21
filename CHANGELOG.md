@@ -17,6 +17,15 @@ workflow yet. Dates are 2026.
 
 ### 21 October
 
+- **Shared frameworks can be edited and deleted from the plan page.** An organisation-wide way of working or governance
+  framework can be edited from a plan that follows it, after ticking a box that says how many other plans the change
+  also reaches; one nobody follows can be deleted. Also fixed a bug in the framework form: a number typed into a number
+  field (iteration length, review cadence, an escalation level) crashed the check, because the field binds a number and
+  the check expected text. The earlier tests never typed one; a new unit test and the browser test now do. Verified:
+  unit tests (756), browser tests with an axe audit. **Seen once:** the "follow a shared way of working" browser test
+  failed in a run alongside the Welsh checks and passed alone and in two further runs; I take it for load, not proven.
+  Welsh strings machine-written, unreviewed.
+
 - **Edit every list on a framework.** The ways-of-working and governance pages now edit ceremonies, the definitions of
   ready and done, decision rights and forums, as well as the escalation path (previously shown but kept, not editable).
   Verified: unit tests (755), a browser test with an axe audit that checks every list is sent on save, the Welsh page

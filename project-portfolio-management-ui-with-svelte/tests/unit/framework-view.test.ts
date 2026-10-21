@@ -63,6 +63,18 @@ describe("frameworkBody", () => {
   });
 });
 
+describe("numbers typed into number inputs", () => {
+  it("arrive as numbers and are still checked and sent", () => {
+    const typed = form({ cadence_days: 7 as unknown as string, wip_limit: 0 as unknown as string });
+    expect(frameworkProblems("ways-of-working", typed)).toHaveLength(1);
+    const ok = form({ cadence_days: 7 as unknown as string, wip_limit: null as unknown as string });
+    expect(frameworkProblems("ways-of-working", ok)).toEqual([]);
+    expect(frameworkBody("ways-of-working", ok, null, null)).toMatchObject({ cadence_days: 7, wip_limit: null });
+    const path = form({ path: [{ level: 1 as unknown as string, body: "Sponsor", trigger: "Slip" }] });
+    expect(frameworkProblems("governance-frameworks", path)).toEqual([]);
+  });
+});
+
 describe("list rows", () => {
   it("need a name and a cadence, or the decision and who decides", () => {
     expect(frameworkProblems("ways-of-working", form({ ceremonies: [{ name: "Standup", cadence: "", purpose: "" }] }))).toHaveLength(1);

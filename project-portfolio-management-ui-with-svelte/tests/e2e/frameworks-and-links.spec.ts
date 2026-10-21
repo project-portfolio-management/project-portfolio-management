@@ -166,3 +166,37 @@ test("the ceremonies, definitions and forums of a plan's own framework can be ed
     ceremonies: [{ name: "Standup", cadence: "daily", purpose: null }, { name: "Retrospective", cadence: "every two weeks", purpose: null }],
   });
 });
+
+test("a shared way of working asks for confirmation before it is changed for other plans, and an unused one can be deleted", async ({ page }) => {
+  let saved: unknown = null;
+  let removed = false;
+  const shared = { pid: "w1", name: "Scrum, two weeks", description: null, scope: "organization", owner_plan_pid: null, plans_using: 3, methodology: "scrum", cadence_days: 14 };
+  const unused = { pid: "w3", name: "Old kanban", description: null, scope: "organization", owner_plan_pid: null, plans_using: 0, methodology: "kanban" };
+  await page.route("**/api/ways-of-working", (r) => r.fulfill({ json: removed ? [shared] : [shared, unused] }));
+  await page.route("**/api/ways-of-working/w1", (r) => {
+    saved = r.request().postDataJSON();
+    return r.fulfill({ json: { ...shared, ...(saved as object) } });
+  });
+  await page.route("**/api/ways-of-working/w3/delete", (r) => {
+    removed = true;
+    return r.fulfill({ json: {} });
+  });
+  await page.route(`**/api/plans/${PID}/ways-of-working`, (r) =>
+    r.fulfill({ json: { plan_pid: PID, source: "own", from_plan_pid: null, ways_of_working: shared, reason: null } }),
+  );
+  await page.goto(`/en-001/plans/${PID}/ways-of-working`);
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByLabel("Iteration length (days)").fill("7");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("alert")).toContainText("Tick the box to confirm the change for 2 other plan(s).");
+  expect(saved).toBeNull();
+  await page.getByLabel("This is shared: saving changes it for 2 other plan(s) too.").check();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved.");
+  expect(saved).toMatchObject({ cadence_days: 7 });
+
+  await page.getByLabel("Shared or existing").selectOption("w3");
+  await page.getByRole("button", { name: "Delete Old kanban (nobody follows it)" }).click();
+  await expect(page.getByRole("status")).toContainText("Deleted Old kanban.");
+  await audit(page);
+});

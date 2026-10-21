@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — shared frameworks editable and deletable (FR-52, 2026-10-21)
+
+Edit a shared record after confirming how many other plans it reaches; delete one nobody follows. Fixed number inputs crashing the framework form check. Welsh machine-written, unreviewed.
+
 ### Changed — framework lists are editable (FR-52, 2026-10-21)
 
 Ceremonies, definitions of ready/done, decision rights and forums can now be edited on the framework pages. Not built: editing shared records, the description. Welsh machine-written, unreviewed.

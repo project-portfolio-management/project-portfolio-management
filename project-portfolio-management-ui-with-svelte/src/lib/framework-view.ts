@@ -41,7 +41,9 @@ export function sourceText(r: Pick<FrameworkInForce, "source">): string {
   return t("p.frameworks.source_none");
 }
 
-const wholeDays = (raw: string, max: number): boolean => /^\d+$/.test(raw.trim()) && Number(raw) >= 1 && Number(raw) <= max;
+/** A number input binds a number (or nothing), not a string, so every check goes through a string first. */
+const text = (raw: unknown): string => String(raw ?? "").trim();
+const wholeDays = (raw: unknown, max: number): boolean => /^\d+$/.test(text(raw)) && Number(raw) >= 1 && Number(raw) <= max;
 
 export interface FrameworkForm {
   name: string;
@@ -73,7 +75,7 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
   const out: string[] = [];
   const name = f.name.trim();
   if (name.length < 1 || name.length > NAME_MAX) out.push(t("p.frameworks.name_problem"));
-  const optional = (raw: string, max: number) => raw.trim() === "" || wholeDays(raw, max);
+  const optional = (raw: unknown, max: number) => text(raw) === "" || wholeDays(raw, max);
   if (family === "ways-of-working") {
     if (!optional(f.cadence_days, MAX_DAYS) || !optional(f.wip_limit, 1000)) out.push(t("p.frameworks.number_problem"));
     if (f.ready.length > TEXT_MAX || f.done.length > TEXT_MAX) out.push(t("p.frameworks.text_problem"));
@@ -84,17 +86,17 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
     if (f.rights.length > LIST_MAX || f.rights.some((r) => r.decision.trim() === "" || r.decides.trim() === "")) out.push(t("p.frameworks.rights_problem"));
     const levels = new Set<string>();
     for (const row of f.path) {
-      if (!wholeDays(row.level, 9) || row.body.trim() === "" || row.trigger.trim() === "" || levels.has(row.level.trim())) {
+      if (!wholeDays(row.level, 9) || row.body.trim() === "" || row.trigger.trim() === "" || levels.has(text(row.level))) {
         out.push(t("p.frameworks.path_problem"));
         break;
       }
-      levels.add(row.level.trim());
+      levels.add(text(row.level));
     }
   }
   return out;
 }
 
-const num = (raw: string): number | null => (raw.trim() === "" ? null : Number(raw));
+const num = (raw: unknown): number | null => (text(raw) === "" ? null : Number(raw));
 
 /** The body to send. `existing` supplies the description, which this screen does not edit. */
 export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, existing: Framework | null, planPid: string | null): Record<string, unknown> {

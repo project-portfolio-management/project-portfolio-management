@@ -21,6 +21,9 @@ First release cut from the root release workflow: the service crate, migration c
 
 ### 21 October
 
+- **The spec states the API versioning rule (§9.0).** Paths stay under `/api` with no `/api/v1` or `/api/v2`; a client
+  picks the version with the `Accepts-version` header. This records what `src/version.rs` already does; no code
+  changed. Header spelled as in the code (`Accepts-version`, not the more usual `Accept-Version`).
 - **The work breakdown says which tasks link out.** New `GET /api/plans/{pid}/task-link-counts` and a "· 3 links" mark
   and a Links column on the WBS page. Verified: a request test (counts, other plan empty, unknown plan 404, removed
   link gone), the OpenAPI and paging censuses, a browser test on the tree. **Not done:** the board does not show it;

@@ -8,6 +8,22 @@ tables in §9.2–§9.2c keep their original FR-oriented shape and carry
 verified corrections where the mounted route differs. The documented
 OpenAPI surface is `src/openapi.rs` + `src/openapi_more.rs`.
 
+### 9.0 API versioning
+
+The API is versioned with a request header, never with the URL.
+
+- Every path stays under `/api`. A path never carries a version segment: **do not** use `/api/v1`, `/api/v2` or
+  any similar prefix, now or for a future version.
+- A client selects the representation version with the `Accepts-version` request header (for example
+  `Accepts-version: 1.0`; a bare major such as `1` stands for that major's current minor). The header name is
+  case-insensitive on the wire.
+- With no header the current version (`1.0`) is served. A version the service does not support is `406 Not
+  Acceptable`. The version served is stamped on the response in the same header.
+- A new version is added to `SUPPORTED_API_VERSIONS` in `src/version.rs`, not to the URL space, so existing links,
+  bookmarks and the route inventory (§9.7) stay valid across versions.
+
+Source: `src/version.rs`.
+
 ### 9.1 Service REST API — plans (thin record)
 
 The single collection `/api/plans` exposes the surface below; all

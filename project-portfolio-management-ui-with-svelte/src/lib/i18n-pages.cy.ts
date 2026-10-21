@@ -2813,6 +2813,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.signin.oidc_idle": "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
   "p.plans.pid.board.only_first_tasks": "Mae gan y cynllun hwn {total} tasg; mae'r bwrdd yn dangos y {shown} cyntaf. Cyfyngwch yn ôl cydran, neu darllenwch y gweddill drwy'r API.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",
+  "p._layout_svelte.handling_mark_unknown": "Marc trin: ni ellid ei wirio. Trinwch y cynllun hwn fel un wedi'i farcio nes ei fod wedi'i wirio.",
   "l.enum.cr_status.draft": "drafft",
   "l.enum.cr_status.submitted": "cyflwynwyd",
   "l.enum.cr_status.under_review": "dan adolygiad",

@@ -1776,6 +1776,7 @@ came from grep.
   statuses that are expected. A failed mark lookup shows an "unknown marking"
   banner, not none.
   **Acceptance:** an e2e test per page with the endpoint failing.
+  **Progress 2026-10-21 (not ticked).** The handling-mark banner: a 404 or 403 shows none; any other failure shows "could not be checked" (new catalogue key, Welsh machine-written); the RG-7 browser test changed from "nothing on 500" to the notice, and a 404 test was added. **Still to do:** WBS link counts, plan modules, Gantt calendar shading, the announcements downgrade, security headers in `hooks.server.ts`.
 - [ ] **CQ-20 (M) — Shared load and error helpers in the UI.** A
   `resource(fn)` rune helper (`{data, error, loading, reload}`) and
   `errorText(err, key)` replace the 173 copies of

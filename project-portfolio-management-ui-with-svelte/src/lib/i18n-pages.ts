@@ -2817,6 +2817,7 @@ export const PAGES_EN = {
   "p.signin.oidc_idle": "You were signed out because you were inactive for a while. Please sign in again.",
   "p.plans.pid.board.only_first_tasks": "This plan has {total} tasks; the board shows the first {shown}. Narrow it by component, or read the rest through the API.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",
+  "p._layout_svelte.handling_mark_unknown": "Handling mark: could not be checked. Treat this plan as marked until it is.",
   "l.enum.cr_status.draft": "draft",
   "l.enum.cr_status.submitted": "submitted",
   "l.enum.cr_status.under_review": "under review",

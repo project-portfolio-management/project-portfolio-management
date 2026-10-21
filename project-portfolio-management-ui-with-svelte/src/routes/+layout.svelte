@@ -19,6 +19,7 @@
   import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { COLLECTIONS } from "#lib/api/types.js";
   import { PpmClient } from "#lib/api/ppm.js";
+  import { ApiError } from "#lib/api/client.js";
   import { orderNavForView } from "#lib/nav.js";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
@@ -31,23 +32,27 @@
   // function so it stays in sync with that page's own <svelte:head>
   // <title> without SharePicker having to read the DOM).
   // The handling mark (security classification) of the plan being looked at, when the deployment
-  // has a scheme (RG-7). Nothing is shown otherwise, and a failed lookup shows nothing rather than a guess.
+  // has a scheme (RG-7). Nothing is shown when there is no scheme, or when the plan is not there for
+  // this reader (404, 403). Any other failure says the mark could not be checked (CQ-19): hiding the
+  // banner then would read as "unmarked", and showing a mark would be a guess.
   const ppmClient = PpmClient.withFetch();
   let handlingMark = $state<string | null>(null);
+  let handlingMarkUnknown = $state(false);
   $effect(() => {
     const pid = page.params?.pid;
-    if (!browser || !pid) {
-      handlingMark = null;
-      return;
-    }
+    handlingMark = null;
+    handlingMarkUnknown = false;
+    if (!browser || !pid) return;
     let live = true;
     ppmClient
       .planHandlingMark(pid)
       .then((r) => {
         if (live) handlingMark = r.scheme.length > 0 ? r.effective : null;
       })
-      .catch(() => {
-        if (live) handlingMark = null;
+      .catch((err: unknown) => {
+        if (!live) return;
+        const absent = err instanceof ApiError && (err.status === 404 || err.status === 403);
+        handlingMarkUnknown = !absent;
       });
     return () => {
       live = false;
@@ -371,7 +376,7 @@
       />
     </div>
   </header>
-  {#if handlingMark}<p class="handling-mark" role="note" data-testid="handling-mark">{t("p._layout_svelte.handling_mark", { mark: handlingMark })}</p>{/if}
+  {#if handlingMark}<p class="handling-mark" role="note" data-testid="handling-mark">{t("p._layout_svelte.handling_mark", { mark: handlingMark })}</p>{:else if handlingMarkUnknown}<p class="handling-mark" role="note" data-testid="handling-mark">{t("p._layout_svelte.handling_mark_unknown")}</p>{/if}
   {#if data.demo}
     <p class="demo-banner" role="note">{t("p.demo.banner")} <a href={localeHref("/demo")}>{t("p.demo.banner_tour")}</a></p>
   {/if}

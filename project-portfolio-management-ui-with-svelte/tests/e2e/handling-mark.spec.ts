@@ -29,15 +29,24 @@ test.describe("handling mark banner", () => {
     await expect(page.getByTestId("handling-mark")).toHaveCount(0);
   });
 
-  test("a failed lookup shows nothing rather than a guess, and the page still passes axe", async ({ page }) => {
+  test("a failed lookup says the mark could not be checked, never a guess, and passes axe", async ({ page }) => {
+    // CQ-19: this once showed nothing, which reads as "unmarked".
     await stubPlansApi(page);
     await page.route("**/api/plans/*/handling-mark", (route) => route.fulfill({ status: 500, json: { error: "x" } }));
     await page.goto(`/en-001/plans/${PID}`, { waitUntil: "networkidle" });
-    await expect(page.getByTestId("handling-mark")).toHaveCount(0);
+    await expect(page.getByTestId("handling-mark")).toHaveText(/could not be checked/);
+    await expect(page.getByTestId("handling-mark")).not.toContainText("OFFICIAL");
     const { default: AxeBuilder } = await import("@axe-core/playwright");
     await expect(page.locator("h1").first()).toBeVisible();
     await settle(page);
     const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
     expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
+  });
+
+  test("a plan the reader cannot see (404) shows no banner", async ({ page }) => {
+    await stubPlansApi(page);
+    await page.route("**/api/plans/*/handling-mark", (route) => route.fulfill({ status: 404, json: { error: "not_found" } }));
+    await page.goto(`/en-001/plans/${PID}`, { waitUntil: "networkidle" });
+    await expect(page.getByTestId("handling-mark")).toHaveCount(0);
   });
 });

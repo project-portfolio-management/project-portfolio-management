@@ -344,7 +344,13 @@ CQ-4): `content-type`, `content-disposition`, `cache-control`, `etag`,
 forwarding it refuses (403) a state-changing request whose `Origin` is not the
 app's, or whose `Sec-Fetch-Site` names another site, drops a browser-supplied
 `Authorization`, and answers 502 `bad_gateway` when the service cannot be
-reached (`src/lib/server/proxy-guard.ts`, CQ-5). `PlanForm` builds a `Plan` from the
+reached (`src/lib/server/proxy-guard.ts`, CQ-5).
+
+On any page under `/plans/[pid]` the layout shows the plan's **handling mark**
+(RG-7) when the deployment has a scheme, and nothing when it has none or when
+the plan is not there for the reader (404, 403: a plan above the reader's
+clearance is 404). Any other failed lookup shows "Handling mark: could not be
+checked", never no banner, because no banner reads as unmarked (CQ-19). `PlanForm` builds a `Plan` from the
 inputs (comma lists split, blanks nulled, goals / identifiers /
 relationships as editable rows; empty rows dropped on submit; a seeded
 `Custom` enum collapses to "—"; `kind` is an optional select,

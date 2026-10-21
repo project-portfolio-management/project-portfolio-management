@@ -327,7 +327,7 @@ async fn find_case(
     caller: &MaybeAuthUser,
     pid: &str,
 ) -> Result<onboarding_cases::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let c = onboarding_cases::Entity::find()
         .filter(onboarding_cases::Column::Pid.eq(pid))
         .one(&ctx.db)
@@ -430,7 +430,7 @@ async fn put_item(
     if case.status != "open" {
         return Err(conflict("this checklist is closed"));
     }
-    let item_pid = Uuid::parse_str(&item).map_err(|_| Error::NotFound)?;
+    let item_pid = super::parse_pid(&item)?;
     let row = onboarding_items::Entity::find()
         .filter(onboarding_items::Column::Pid.eq(item_pid))
         .filter(onboarding_items::Column::CasePid.eq(case.pid))

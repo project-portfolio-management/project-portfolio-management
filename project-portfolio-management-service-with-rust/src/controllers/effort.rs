@@ -25,9 +25,10 @@ use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::effort as rules;
-use crate::models::_entities::{non_working_periods, plans, time_entries, working_time_configs};
+use crate::models::_entities::{non_working_periods, time_entries, working_time_configs};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Rows scanned per read.
@@ -35,17 +36,6 @@ const MAX_ROWS: u64 = 5000;
 
 /// Default window for a utilization read.
 const DEFAULT_WINDOW_DAYS: i64 = 28;
-
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 /// `POST /api/plans/{pid}/time-entries` body.
 #[derive(Debug, Deserialize)]

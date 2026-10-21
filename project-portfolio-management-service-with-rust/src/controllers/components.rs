@@ -32,7 +32,7 @@ async fn live_components(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<compone
 }
 
 async fn find_component(ctx: &AppContext, plan_pid: Uuid, pid: &str) -> Result<components::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     components::Entity::find()
         .filter(components::Column::Pid.eq(pid))
         .filter(components::Column::PlanPid.eq(plan_pid))

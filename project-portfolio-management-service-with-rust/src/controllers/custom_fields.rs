@@ -149,7 +149,7 @@ async fn delete_def(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = custom_field_defs::Entity::find()
         .filter(custom_field_defs::Column::Pid.eq(pid))
         .filter(custom_field_defs::Column::DeletedAt.is_null())

@@ -21,6 +21,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::milestone_signoff::{self as rules, Assessment, Required};
 use crate::models::_entities::{
@@ -28,13 +29,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -130,7 +124,7 @@ struct Required_ {
 
 async fn the_milestone(ctx: &AppContext, pid: &str, m_pid: &str) -> Result<milestones::Model> {
     let plan = super::governance::find_item(ctx, pid).await?;
-    let m_pid = Uuid::parse_str(m_pid).map_err(|_| Error::NotFound)?;
+    let m_pid = super::parse_pid(m_pid)?;
     let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if m.plan_pid == plan.pid {
         Ok(m)

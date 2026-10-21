@@ -12,6 +12,7 @@ use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use super::governance::find_item;
 use super::plan_access::clearance_of;
 use crate::auth::MaybeAuthUser;
@@ -19,16 +20,12 @@ use crate::handling_marks::scheme;
 use crate::models::_entities::plan_handling_marks as marks;
 use crate::models::audit_logs::Model as AuditModel;
 
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
-
 async fn current(ctx: &AppContext, plan: Uuid) -> Result<Option<marks::Model>> {
     marks::Entity::find()
         .filter(marks::Column::PlanPid.eq(plan))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))
+        .map_err(db_err)
 }
 
 fn view(plan: Uuid, stored: Option<&str>) -> serde_json::Value {
@@ -93,13 +90,13 @@ async fn put_mark(
             let mut a: marks::ActiveModel = row.into();
             a.mark = ActiveValue::set(new.to_string());
             a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-            a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+            a.update(&ctx.db).await.map_err(db_err)?;
         }
         (Some(row), None) => {
             marks::Entity::delete_by_id(row.id)
                 .exec(&ctx.db)
                 .await
-                .map_err(|e| db_err(&e))?;
+                .map_err(db_err)?;
         }
         (None, Some(new)) => {
             marks::ActiveModel {
@@ -111,7 +108,7 @@ async fn put_mark(
             }
             .insert(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         }
         (None, None) => {}
     }

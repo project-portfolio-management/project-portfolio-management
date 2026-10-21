@@ -4,28 +4,17 @@
 
 use std::collections::{HashMap, HashSet};
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::delivery_model as rules;
 use crate::models::_entities::{organizations, programme_profiles as profiles};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -51,7 +40,7 @@ async fn find(ctx: &AppContext, plan: Uuid) -> Result<Option<profiles::Model>> {
         .filter(profiles::Column::PlanPid.eq(plan))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))
+        .map_err(db_err)
 }
 
 /// A profile as JSON, with the owner's name.
@@ -77,7 +66,7 @@ pub(crate) async fn all(
     let rows: HashMap<Uuid, profiles::Model> = profiles::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|p| plans.contains(&p.plan_pid))
         .map(|p| (p.plan_pid, p))
@@ -85,7 +74,7 @@ pub(crate) async fn all(
     let names = organizations::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|o| (o.pid, o.name))
         .collect();
@@ -120,7 +109,7 @@ async fn set(
             .filter(organizations::Column::Active.eq(true))
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .is_some();
         if !ok {
             return Err(unprocessable(
@@ -134,7 +123,7 @@ async fn set(
         let mut a: profiles::ActiveModel = e.into();
         a.delivery_model = ActiveValue::set(b.delivery_model.clone());
         a.delivery_organization_pid = ActiveValue::set(b.delivery_owner_organization_pid);
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        a.update(&ctx.db).await.map_err(db_err)?
     } else {
         profiles::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -146,7 +135,7 @@ async fn set(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     };
     AuditModel::record_or_log(
         &ctx.db,
@@ -200,7 +189,7 @@ async fn set_method(
     let row = if let Some(e) = existing {
         let mut a: profiles::ActiveModel = e.into();
         a.method = ActiveValue::set(b.method.clone());
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        a.update(&ctx.db).await.map_err(db_err)?
     } else {
         profiles::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -210,7 +199,7 @@ async fn set_method(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     };
     if was != b.method {
         AuditModel::record_or_log(

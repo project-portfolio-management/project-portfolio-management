@@ -25,7 +25,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
 async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     approval_requests::Entity::find()
         .filter(approval_requests::Column::Pid.eq(pid))
         .one(&ctx.db)

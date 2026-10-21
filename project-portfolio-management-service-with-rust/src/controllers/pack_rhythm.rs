@@ -17,7 +17,9 @@ use sea_orm::{QueryOrder, sea_query::Expr};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use super::director_packs::{caller_audiences, caller_power, find, insert_draft, need};
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::director_pack::{self as rules, Power};
 use crate::models::_entities::{
@@ -25,18 +27,6 @@ use crate::models::_entities::{
     director_packs as packs,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -117,7 +107,7 @@ async fn create_schedule(
                 "that audience already has a schedule; change it instead",
             )
         } else {
-            db_err(&e)
+            db_err(e)
         }
     })?;
     AuditModel::record(
@@ -140,7 +130,7 @@ async fn list_schedules(State(ctx): State<AppContext>, caller: MaybeAuthUser) ->
         .order_by_asc(schedules::Column::Audience)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     format::json(
         serde_json::json!({ "schedules": rows.iter().map(schedule_json).collect::<Vec<_>>() }),
     )
@@ -167,7 +157,7 @@ async fn update_schedule(
         .filter(schedules::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     let mut a: schedules::ActiveModel = row.into();
     if let Some(e) = b.enabled {
@@ -184,7 +174,7 @@ async fn update_schedule(
             first_run(d, Utc::now().date_naive()).ok_or_else(|| unprocessable("no such day"))?,
         );
     }
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         row.pid,
@@ -218,7 +208,7 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
         .order_by_asc(schedules::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut out = Swept::default();
     for s in due {
         // Claim first: only the sweep that moves the date does the work.
@@ -230,7 +220,7 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
             .filter(schedules::Column::NextRunDate.eq(s.next_run_date))
             .exec(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         if claimed.rows_affected == 0 {
             continue;
         }
@@ -251,7 +241,7 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
             .filter(schedules::Column::Pid.eq(s.pid))
             .exec(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
     }
     Ok(out)
 }
@@ -262,7 +252,7 @@ async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Resu
         .filter(packs::Column::Audience.eq(audience))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .is_some();
     if exists {
         return Ok(None);
@@ -290,7 +280,7 @@ async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Resu
         .filter(packs::Column::Status.eq("draft"))
         .exec(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     Ok(Some(row.pid))
 }
 
@@ -328,7 +318,7 @@ async fn review(
         .filter(packs::Column::ReviewedAt.is_null())
         .exec(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if done.rows_affected == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -413,7 +403,7 @@ async fn set_subscription(
         ))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     match (existing, b.subscribed) {
         (None, true) => {
             subs::ActiveModel {
@@ -424,13 +414,13 @@ async fn set_subscription(
             }
             .insert(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         }
         (Some(e), false) => {
             subs::Entity::delete_by_id(e.id)
                 .exec(&ctx.db)
                 .await
-                .map_err(|e| db_err(&e))?;
+                .map_err(db_err)?;
         }
         _ => {}
     }
@@ -457,7 +447,7 @@ async fn list_subscriptions(
         .order_by_asc(subs::Column::Audience)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mine: Vec<&str> = rows
         .iter()
         .filter(|r| {
@@ -480,7 +470,7 @@ pub(crate) async fn notify_issued(ctx: &AppContext, pack: &packs::Model) -> Resu
         .filter(subs::Column::Audience.eq(pack.audience.as_str()))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let message = format!(
         "The {} director pack for {} (version {}) has been issued. Open it: /director-packs/{}",
         pack.period, pack.audience, pack.version, pack.pid

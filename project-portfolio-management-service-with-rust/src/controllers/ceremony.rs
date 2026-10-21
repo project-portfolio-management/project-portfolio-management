@@ -35,7 +35,7 @@ use crate::models::audit_logs::Model as AuditModel;
 pub const CEREMONY_KINDS: &[&str] = &["planning", "daily", "review", "retrospective"];
 
 async fn find_sprint(ctx: &AppContext, raw: &str) -> Result<sprints::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(raw)?;
     sprints::Entity::find()
         .filter(sprints::Column::Pid.eq(pid))
         .filter(sprints::Column::DeletedAt.is_null())

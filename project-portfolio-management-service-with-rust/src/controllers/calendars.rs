@@ -10,25 +10,17 @@
 use super::db_err;
 use std::collections::HashMap;
 
-use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::{AuthUser, MaybeAuthUser};
 use crate::calendars as rules;
 use crate::cpm::WorkCalendar;
 use crate::models::_entities::{non_working_periods, work_calendars};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {
     serde_json::from_value::<Vec<String>>(row.holidays.clone())

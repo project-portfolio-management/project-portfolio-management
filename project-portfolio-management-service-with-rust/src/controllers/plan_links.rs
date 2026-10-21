@@ -230,7 +230,7 @@ async fn remove(
     task: Option<Uuid>,
     lpid: &str,
 ) -> Result<Response> {
-    let lpid = Uuid::parse_str(lpid).map_err(|_| Error::NotFound)?;
+    let lpid = super::parse_pid(lpid)?;
     let row = plan_links::Entity::find()
         .filter(plan_links::Column::Pid.eq(lpid))
         .filter(plan_links::Column::PlanPid.eq(plan))

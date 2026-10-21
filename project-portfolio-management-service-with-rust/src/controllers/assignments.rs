@@ -12,26 +12,18 @@
 use super::db_err;
 use std::collections::BTreeMap;
 
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{plans, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 pub(crate) use crate::scheduling_rules::Recomputed;
 use crate::scheduling_rules::{self as rules, Field, Rule, Triple};
 use crate::work_profile::{self as wp, Contour, Grain, Unplaced};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn field_name(f: Field) -> &'static str {
     match f {
@@ -114,7 +106,7 @@ async fn set_assignment(
     Json(b): Json<AssignmentBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let t_pid = super::parse_pid(&t_pid)?;
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(t_pid))
         .filter(tasks::Column::PlanPid.eq(plan.pid))
@@ -303,7 +295,7 @@ async fn set_contour(
     Json(b): Json<ContourBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let t_pid = super::parse_pid(&t_pid)?;
     let contour = wp::parse(&b.contour, b.custom.as_deref()).map_err(|m| unprocessable(&m))?;
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(t_pid))

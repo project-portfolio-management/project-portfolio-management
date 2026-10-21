@@ -365,7 +365,7 @@ async fn remove(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let workflow_pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let workflow_pid = super::parse_pid(&pid)?;
     let workflow = workflows::Entity::find()
         .filter(workflows::Column::Pid.eq(workflow_pid))
         .filter(workflows::Column::DeletedAt.is_null())
@@ -437,7 +437,7 @@ async fn plan_workflow(
     Query(params): Query<InForceParams>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let plan_pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let plan_pid = super::parse_pid(&pid)?;
     let plan = plans::Entity::find()
         .filter(plans::Column::Pid.eq(plan_pid))
         .filter(plans::Column::DeletedAt.is_null())

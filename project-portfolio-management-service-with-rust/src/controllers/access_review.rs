@@ -14,14 +14,11 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use crate::access_review::{self as rules, DEFAULT_STALE_DAYS, Entry};
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::access_records;
 use crate::models::audit_logs::Model as AuditModel;
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 #[derive(Debug, Deserialize)]
 struct Params {
@@ -79,7 +76,7 @@ async fn review(
         .order_by_asc(access_records::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();

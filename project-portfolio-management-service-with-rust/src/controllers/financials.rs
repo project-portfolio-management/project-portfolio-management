@@ -20,6 +20,7 @@ use sea_orm::{QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::financials as rules;
 use crate::models::_entities::{
@@ -31,18 +32,6 @@ use crate::validation::{MAX_ARRAY_LEN, MAX_TEXT_LEN};
 /// Plans scanned to build the containment map for the portfolio-wide
 /// rollup (mirrors `controllers::tba::rollup`'s own cap).
 const MAX_PLANS_SCANNED: u64 = 1000;
-
-/// Find one live plan by public id, or `404`.
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 fn valid_currency(raw: &str) -> Option<String> {
     let currency = raw.trim().to_uppercase();

@@ -17,6 +17,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::deescalation::{self as rules, Input, Quarter, QuarterState};
 use crate::kpi::{self, Direction, Status};
@@ -25,13 +26,6 @@ use crate::models::_entities::{
     kpi_readings, kpis, plans, scorecard_kpis as members, scorecards,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
@@ -144,7 +138,7 @@ struct SetKpis {
 }
 
 async fn find_scorecard(ctx: &AppContext, pid: &str) -> Result<scorecards::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     scorecards::Entity::find()
         .filter(scorecards::Column::Pid.eq(pid))
         .one(&ctx.db)
@@ -491,7 +485,7 @@ async fn set_evidence(
     Path(pid): Path<String>,
     Json(b): Json<EvidenceBody>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let c = crits::Entity::find()
         .filter(crits::Column::Pid.eq(pid))
         .one(&ctx.db)

@@ -16,6 +16,7 @@ use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::capacity_heatmap::{self as rules, Inputs};
 use crate::models::_entities::{
@@ -24,14 +25,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::{self as pr, Grain, GroupBy, Person};
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();

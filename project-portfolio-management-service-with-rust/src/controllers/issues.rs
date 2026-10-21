@@ -14,17 +14,11 @@ use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
 use crate::models::_entities::{issues, plans, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn today() -> NaiveDate {
     Utc::now().date_naive()
@@ -45,7 +39,7 @@ fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
 }
 
 async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
-    let pid = Uuid::parse_str(plan).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(plan)?;
     plans::Entity::find()
         .filter(plans::Column::Pid.eq(pid))
         .filter(plans::Column::DeletedAt.is_null())
@@ -57,7 +51,7 @@ async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
 }
 
 async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     issues::Entity::find()
         .filter(issues::Column::Pid.eq(pid))
         .filter(issues::Column::PlanPid.eq(plan))
@@ -529,7 +523,7 @@ async fn from_risk(
     Path((plan, risk_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
-    let risk_pid = Uuid::parse_str(&risk_pid).map_err(|_| Error::NotFound)?;
+    let risk_pid = super::parse_pid(&risk_pid)?;
     let risk = risks::Entity::find()
         .filter(risks::Column::Pid.eq(risk_pid))
         .filter(risks::Column::PlanPid.eq(plan))
@@ -568,7 +562,7 @@ async fn from_task(
     Path((plan, task_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
-    let task_pid = Uuid::parse_str(&task_pid).map_err(|_| Error::NotFound)?;
+    let task_pid = super::parse_pid(&task_pid)?;
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(task_pid))
         .filter(tasks::Column::PlanPid.eq(plan))

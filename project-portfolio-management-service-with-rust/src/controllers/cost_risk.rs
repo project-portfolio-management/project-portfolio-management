@@ -18,26 +18,18 @@
 use super::db_err;
 use std::collections::{HashMap, HashSet};
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cost_risk::{self as sim, CostEvent, Line};
 use crate::joint_risk::{self as joint, JointError};
 use crate::models::_entities::{budget_lines, plans, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self, Distribution, RunError};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 #[derive(Debug, Deserialize)]
 struct EstimateBody {
@@ -59,7 +51,7 @@ async fn set_line_estimate(
     Json(b): Json<EstimateBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let l_pid = Uuid::parse_str(&l_pid).map_err(|_| Error::NotFound)?;
+    let l_pid = super::parse_pid(&l_pid)?;
     let line = budget_lines::Entity::find()
         .filter(budget_lines::Column::Pid.eq(l_pid))
         .filter(budget_lines::Column::PlanPid.eq(plan.pid))
@@ -132,7 +124,7 @@ async fn set_cost_impact(
     Json(b): Json<CostImpactBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let r_pid = Uuid::parse_str(&r_pid).map_err(|_| Error::NotFound)?;
+    let r_pid = super::parse_pid(&r_pid)?;
     let risk = risks::Entity::find()
         .filter(risks::Column::Pid.eq(r_pid))
         .filter(risks::Column::PlanPid.eq(plan.pid))

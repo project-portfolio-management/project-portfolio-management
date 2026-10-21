@@ -22,17 +22,11 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::availability::{self as rules, Range};
 use crate::models::_entities::person_availabilities;
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// Whether the caller may read or change `person_ref`'s availability and
 /// bookings: themselves, a resource manager, an admin — or anyone when
@@ -219,7 +213,7 @@ async fn remove(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = person_availabilities::Entity::find()
         .filter(person_availabilities::Column::Pid.eq(pid))
         .filter(person_availabilities::Column::DeletedAt.is_null())

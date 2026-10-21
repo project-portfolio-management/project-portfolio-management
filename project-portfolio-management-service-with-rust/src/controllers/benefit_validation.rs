@@ -14,6 +14,8 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::benefit_validation::{self as rules, Financial};
 use crate::models::_entities::{
@@ -21,18 +23,6 @@ use crate::models::_entities::{
     plan_access_settings, plans, raci_assignments, tasks,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -57,7 +47,7 @@ async fn find_benefit(ctx: &AppContext, plan: Uuid, pid: Uuid) -> Result<benefit
         .filter(benefits::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)
 }
 
@@ -117,7 +107,7 @@ async fn classify(
             .filter(kpis::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .is_some();
         if !exists {
             problems.push("kpi_pid is not a KPI".to_string());
@@ -131,7 +121,7 @@ async fn classify(
     a.annualized_minor = ActiveValue::set(b.annualized_minor);
     a.classification = ActiveValue::set(b.classification.clone());
     a.kpi_pid = ActiveValue::set(b.kpi_pid);
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         plan.pid,
@@ -153,7 +143,7 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     // The nearest programme above the plan, else the plan itself.
     let mut root = plan.pid;
@@ -196,7 +186,7 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
             .filter(allocations::Column::PlanPid.is_in(ids.clone()))
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .map(|a| a.person_ref),
     );
@@ -206,7 +196,7 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
             .filter(raci_assignments::Column::PlanPid.is_in(ids.clone()))
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .map(|a| a.person_ref),
     );
@@ -217,7 +207,7 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
             .filter(tasks::Column::AssigneeRef.is_not_null())
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .filter_map(|t| t.assignee_ref),
     );
@@ -225,7 +215,7 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
         .filter(plan_access_settings::Column::PlanPid.is_in(ids))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     {
         if let Some(m) = s.members.as_array() {
             refs.extend(m.iter().filter_map(|v| v.as_str().map(str::to_string)));
@@ -268,7 +258,7 @@ async fn validate(
             .filter(attachments::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .is_some_and(|a| a.subject_pid == row.pid || a.subject_pid == plan.pid);
         if !ok {
             return Err(unprocessable(
@@ -305,7 +295,7 @@ async fn validate(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         plan.pid,
@@ -334,7 +324,7 @@ async fn history(
         .order_by_asc(validations::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let latest = rows.last().map(|v| v.amount_minor);
     format::json(serde_json::json!({
         "benefit": row.pid, "claimed_minor": row.realized_minor, "validated_minor": latest,
@@ -388,20 +378,20 @@ pub(crate) async fn benefits_section(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     let rows = benefits::Entity::find()
         .filter(benefits::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let latest: HashMap<Uuid, i64> = {
         let mut m = HashMap::new();
         for v in validations::Entity::find()
             .order_by_asc(validations::Column::Id)
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
         {
             m.insert(v.benefit_pid, v.amount_minor);
         }
@@ -411,13 +401,13 @@ pub(crate) async fn benefits_section(
         .filter(kpis::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let readings = kpi_readings::Entity::find()
         .order_by_asc(kpi_readings::Column::ObservedOn)
         .order_by_asc(kpi_readings::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut last_reading: HashMap<Uuid, i64> = HashMap::new();
     for r in &readings {
         last_reading.insert(r.kpi_pid, r.value);
@@ -517,7 +507,7 @@ async fn live(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();

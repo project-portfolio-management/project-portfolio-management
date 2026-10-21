@@ -24,6 +24,7 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{phase_transitions, plans};
 use crate::models::audit_logs::Model as AuditModel;
@@ -47,17 +48,6 @@ fn refuse(detail: &rules::Refusal) -> Error {
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new("unprocessable", &message),
     )
-}
-
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
 }
 
 /// `PUT /api/plans/{pid}/phase` body.

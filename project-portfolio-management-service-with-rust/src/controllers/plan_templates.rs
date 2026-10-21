@@ -308,7 +308,7 @@ async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
 }
 
 async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_templates::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     plan_templates::Entity::find()
         .filter(plan_templates::Column::Pid.eq(pid))
         .filter(plan_templates::Column::DeletedAt.is_null())

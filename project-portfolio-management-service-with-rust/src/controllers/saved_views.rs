@@ -102,7 +102,7 @@ async fn list_saved_views(
 /// user's view — or an unknown pid — is `404`, identically: a saved
 /// view's existence is not disclosed across users.
 async fn find_own(ctx: &AppContext, sub: &str, pid: &str) -> Result<saved_views::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     saved_views::Entity::find()
         .filter(saved_views::Column::Pid.eq(pid))
         .filter(saved_views::Column::Sub.eq(sub))

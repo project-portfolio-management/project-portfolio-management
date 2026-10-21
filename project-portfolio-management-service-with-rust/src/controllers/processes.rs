@@ -54,7 +54,7 @@ fn check_definition(name: Option<&str>, steps: &[Step]) -> Result<()> {
 }
 
 async fn find_process(ctx: &AppContext, pid: &str) -> Result<processes::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     processes::Entity::find()
         .filter(processes::Column::Pid.eq(pid))
         .filter(processes::Column::DeletedAt.is_null())
@@ -614,7 +614,7 @@ async fn execution_response(ctx: &AppContext, pid: Uuid) -> Result<Response> {
 }
 
 async fn find_execution(ctx: &AppContext, pid: &str) -> Result<process_executions::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     process_executions::Entity::find()
         .filter(process_executions::Column::Pid.eq(pid))
         .one(&ctx.db)

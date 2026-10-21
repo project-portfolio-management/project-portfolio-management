@@ -8,25 +8,17 @@
 use super::db_err;
 use std::collections::HashMap;
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::ccpm_estimates::{self as est, State as EstState};
 use crate::models::_entities::{task_ccpm_estimates as rows, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// Most tasks one answer lists.
 const MAX_LIMIT: u64 = 1_000;
@@ -50,7 +42,7 @@ async fn set(
     Json(b): Json<Body>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let t_pid = super::parse_pid(&t_pid)?;
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(t_pid))
         .filter(tasks::Column::PlanPid.eq(plan.pid))

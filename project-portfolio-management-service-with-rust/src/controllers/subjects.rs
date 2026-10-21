@@ -12,6 +12,8 @@ use sea_orm::{ConnectionTrait, DatabaseBackend, Statement, TransactionTrait, Val
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::subjects::{self as rules, COLUMNS};
@@ -27,17 +29,6 @@ fn forbidden() -> Error {
         StatusCode::FORBIDDEN,
         ErrorDetail::new("forbidden", "data-subject requests need access=admin"),
     )
-}
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
 }
 
 fn allowed(caller: &MaybeAuthUser) -> bool {
@@ -96,7 +87,7 @@ async fn export(
                 values.clone(),
             ))
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         if found.is_empty() {
             continue;
         }
@@ -191,7 +182,7 @@ async fn touch(
                     vec![Value::from(form.clone())],
                 ))
                 .await
-                .map_err(|e| db_err(&e))?;
+                .map_err(db_err)?;
             n += u64::try_from(
                 row.and_then(|r| r.try_get::<i64>("", "n").ok())
                     .unwrap_or(0),
@@ -224,10 +215,10 @@ async fn pseudonymise(
     let salt = std::env::var(SALT_ENV).unwrap_or_default();
     let pseudo = rules::pseudonym(&subject, &salt);
     let apply = q.apply == Some(true);
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)")
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut changed = Vec::new();
     let mut total: u64 = 0;
     for (table, column) in COLUMNS {
@@ -249,9 +240,9 @@ async fn pseudonymise(
         )
         .await
         .map_err(|e| Error::string(&e.to_string()))?;
-        tx.commit().await.map_err(|e| db_err(&e))?;
+        tx.commit().await.map_err(db_err)?;
     } else {
-        tx.rollback().await.map_err(|e| db_err(&e))?;
+        tx.rollback().await.map_err(db_err)?;
     }
     format::json(serde_json::json!({
         "applied": apply,

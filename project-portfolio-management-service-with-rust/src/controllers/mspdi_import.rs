@@ -20,25 +20,17 @@ use std::collections::HashMap;
 
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, ConstraintKind};
 use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsConstraint};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 #[derive(Debug, Deserialize)]
 struct ImportParams {

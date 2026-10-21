@@ -20,22 +20,13 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Options};
 use crate::deployment_moves as rules;
 use crate::models::_entities::{deployment_moves as moves, plans, programme_profiles, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -74,7 +65,7 @@ async fn programme_of(ctx: &AppContext, plan: &plans::Model) -> Result<Option<pl
             .filter(plans::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
         else {
             return Ok(None);
         };
@@ -119,7 +110,7 @@ async fn request_move(
         .filter(programme_profiles::Column::PlanPid.eq(programme.pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .and_then(|p| p.delivery_model);
     if model.as_deref() != Some(rules::CONTROLLED_MODEL) {
         return Err(unprocessable(
@@ -137,7 +128,7 @@ async fn request_move(
         .filter(tasks::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or_else(|| unprocessable("task_pid is not a task of this deployment"))?;
     let Some(from) = task.start_date else {
         return Err(unprocessable("the go-live task has no start date to move"));
@@ -158,7 +149,7 @@ async fn request_move(
         .filter(moves::Column::Status.eq("requested"))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .is_some()
     {
         return Err(Error::CustomError(
@@ -247,7 +238,7 @@ async fn request_move(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record_or_log(&ctx.db, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() })))
         .await;
     format::json(view(&row))
@@ -269,13 +260,13 @@ async fn decide(
     Json(b): Json<Decision>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let mpid = Uuid::parse_str(&mpid).map_err(|_| Error::NotFound)?;
+    let mpid = super::parse_pid(&mpid)?;
     let m = moves::Entity::find()
         .filter(moves::Column::Pid.eq(mpid))
         .filter(moves::Column::PlanPid.eq(plan.pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     if !["approve", "refuse"].contains(&b.decision.as_str()) {
         return Err(unprocessable("decision must be approve or refuse"));
@@ -312,7 +303,7 @@ async fn decide(
             .filter(tasks::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .ok_or(Error::NotFound)?;
         if task.start_date != Some(m.from_start) {
             return Err(Error::CustomError(
@@ -325,7 +316,7 @@ async fn decide(
         }
         let mut a: tasks::ActiveModel = task.into();
         a.start_date = ActiveValue::set(Some(m.to_start));
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+        a.update(&ctx.db).await.map_err(db_err)?;
         AuditModel::record_or_log(
             &ctx.db,
             m.task_pid,
@@ -340,7 +331,7 @@ async fn decide(
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -365,7 +356,7 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
         .order_by_desc(moves::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     // The knock-on cost recorded against each requester (all requests, whatever their outcome).
     let mut by: BTreeMap<String, (usize, BTreeMap<String, i64>)> = BTreeMap::new();
     for r in &rows {

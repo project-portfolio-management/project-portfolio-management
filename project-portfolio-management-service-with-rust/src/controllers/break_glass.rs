@@ -14,16 +14,13 @@ use sea_orm::{PaginatorTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::break_glass as rules;
 use crate::models::_entities::{
     break_glass_grants as grants, plan_access_settings as plan_access, plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 fn view(g: &grants::Model, now: chrono::DateTime<Utc>) -> serde_json::Value {
     serde_json::json!({
@@ -58,14 +55,14 @@ async fn preconditions(
         .filter(plans::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     let private = plan_access::Entity::find()
         .filter(plan_access::Column::PlanPid.eq(plan.pid))
         .filter(plan_access::Column::Private.eq(true))
         .count(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         > 0;
     if !private {
         return Err(refuse(
@@ -79,7 +76,7 @@ async fn preconditions(
         .filter(grants::Column::CreatedAt.gt(now - chrono::Duration::days(1)))
         .count(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if recent >= rules::MAX_PER_DAY {
         return Err(refuse(
             StatusCode::TOO_MANY_REQUESTS,
@@ -94,7 +91,7 @@ async fn preconditions(
         .filter(grants::Column::ExpiresAt.gt(now))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if let Some(g) = live {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -146,7 +143,7 @@ async fn open(
     let expires = rules::expires_at(now, b.minutes);
     let minutes = b.minutes.unwrap_or(rules::DEFAULT_MINUTES);
     // The grant and the notice stand or fall together.
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let row = grants::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -160,7 +157,7 @@ async fn open(
     }
     .insert(&tx)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     let told = crate::models::capabilities::notify(
         &tx,
         &row.notify_ref,
@@ -171,7 +168,7 @@ async fn open(
     )
     .await?;
     if told.is_none() {
-        tx.rollback().await.map_err(|e| db_err(&e))?;
+        tx.rollback().await.map_err(db_err)?;
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",
@@ -190,7 +187,7 @@ async fn open(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "pid": row.pid, "plan_pid": plan.pid, "expires_at": expires, "notified": true,
     }))
@@ -215,7 +212,7 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .limit(500)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let now = Utc::now();
     format::json(serde_json::json!({
         "grants": rows.iter().map(|g| view(g, now)).collect::<Vec<_>>(),
@@ -237,12 +234,12 @@ async fn revoke(
             "sign in first",
         ));
     };
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = grants::Entity::find()
         .filter(grants::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     // Someone else's grant does not exist for you (unless you administer).
     if row.sub != sub && !super::plan_access::is_admin(caller.claims()) {
@@ -254,7 +251,7 @@ async fn revoke(
     let mut a: grants::ActiveModel = row.into();
     a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
     a.revoked_by = ActiveValue::set(Some(sub.clone()));
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(&ctx.db, row.pid, "break_glass_revoked", Some(&sub), None).await;
     format::json(view(&row, Utc::now()))
 }

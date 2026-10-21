@@ -19,7 +19,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
 
 async fn find_canvas(ctx: &AppContext, pid: &str) -> Result<canvases::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     canvases::Entity::find()
         .filter(canvases::Column::Pid.eq(pid))
         .filter(canvases::Column::DeletedAt.is_null())
@@ -35,7 +35,7 @@ async fn find_item_of(
     canvas: &canvases::Model,
     item_pid: &str,
 ) -> Result<canvas_items::Model> {
-    let pid = Uuid::parse_str(item_pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(item_pid)?;
     canvas_items::Entity::find()
         .filter(canvas_items::Column::Pid.eq(pid))
         .filter(canvas_items::Column::CanvasPid.eq(canvas.pid))

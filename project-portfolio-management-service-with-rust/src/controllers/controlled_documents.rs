@@ -41,7 +41,7 @@ fn require_signed_in(caller: &MaybeAuthUser) -> Result<()> {
 /// A document the caller may read: live, and not in a private plan they are outside.
 async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result<docs::Model> {
     require_signed_in(caller)?;
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let doc = docs::Entity::find()
         .filter(docs::Column::Pid.eq(pid))
         .filter(docs::Column::DeletedAt.is_null())

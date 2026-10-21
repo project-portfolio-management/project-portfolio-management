@@ -11,13 +11,10 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::director_summary::{self as rules, ChangeLite, IssueLite};
 use crate::models::_entities::{change_requests, issues};
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 #[derive(Deserialize)]
 struct Params {
@@ -43,13 +40,13 @@ async fn summary(
         .order_by_asc(issues::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let change_rows = change_requests::Entity::find()
         .filter(change_requests::Column::DeletedAt.is_null())
         .order_by_asc(change_requests::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut plans: Vec<Uuid> = issue_rows
         .iter()
         .map(|i| i.plan_pid)

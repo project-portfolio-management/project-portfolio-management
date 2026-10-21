@@ -241,7 +241,7 @@ async fn delete_dependency(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = vis_models::find_dependency(&ctx.db, pid).await?;
     // Removing a link needs to be able to read both ends; otherwise it is as if it were not there.
     let readable =
@@ -270,7 +270,7 @@ async fn portfolio_schedule(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let parent_pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let parent_pid = super::parse_pid(&pid)?;
     let portfolio = find_any_item(&ctx, parent_pid).await?;
     let members = plans::Entity::find()
         .filter(plans::Column::ParentPid.eq(parent_pid))
@@ -480,7 +480,7 @@ async fn reschedule_milestone(
     Json(payload): Json<MilestoneReschedulePayload>,
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let m_pid = Uuid::parse_str(&m_pid).map_err(|_| Error::NotFound)?;
+    let m_pid = super::parse_pid(&m_pid)?;
     let milestone = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
@@ -577,7 +577,7 @@ async fn complete_milestone(
             .map_err(|_| unprocessable("body must be JSON like {\"reason\": \"…\"}"))?
     };
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let m_pid = Uuid::parse_str(&m_pid).map_err(|_| Error::NotFound)?;
+    let m_pid = super::parse_pid(&m_pid)?;
     let milestone = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
@@ -813,7 +813,7 @@ async fn commit_allocation(
 ) -> Result<Response> {
     let confirm = body.confirm;
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let a_pid = Uuid::parse_str(&a_pid).map_err(|_| Error::NotFound)?;
+    let a_pid = super::parse_pid(&a_pid)?;
     let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
     if allocation.plan_pid != item.pid
         || !super::availability::may_manage_person(&caller, &allocation.person_ref)
@@ -894,7 +894,7 @@ async fn delete_allocation(
     Path((pid, a_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let a_pid = Uuid::parse_str(&a_pid).map_err(|_| Error::NotFound)?;
+    let a_pid = super::parse_pid(&a_pid)?;
     let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
     if allocation.plan_pid != item.pid {
         return Err(Error::NotFound);
@@ -1133,7 +1133,7 @@ async fn delete_report(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = vis_models::find_report(&ctx.db, pid).await?;
     let row_pid = row.pid;
     let mut active: report_definitions::ActiveModel = row.into();
@@ -1183,7 +1183,7 @@ async fn run_report(
     Path(pid): Path<String>,
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let def = vis_models::find_report(&ctx.db, pid).await?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     execute_report(&ctx, &def, params.format.as_deref(), &scope).await

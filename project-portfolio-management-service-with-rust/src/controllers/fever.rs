@@ -5,34 +5,22 @@
 //! and the baselined *critical path* (the baseline's tasks with no total float). Each entry says which
 //! (`source`), and the pack says so.
 
-use super::refuse;
 use std::collections::{HashMap, HashSet};
 
-use axum::http::StatusCode;
 use chrono::Utc;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::fever::{self as rules, Absent, Lines};
 use crate::models::_entities::{
     plans, programme_buffers as buffers, schedule_baseline_tasks, schedule_baselines,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -55,7 +43,7 @@ async fn baselined_chain(
         .order_by_desc(schedule_baselines::Column::Version)
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     else {
         return Ok(None);
     };
@@ -63,7 +51,7 @@ async fn baselined_chain(
         .filter(schedule_baseline_tasks::Column::BaselinePid.eq(b.pid))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let chain = tasks
         .into_iter()
         .filter(|t| t.total_float == Some(0))
@@ -151,7 +139,7 @@ async fn set_buffer(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         plan.pid,
@@ -175,7 +163,7 @@ async fn get_buffer(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
         .order_by_asc(buffers::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let (lines, bad) = rules::configured_lines();
     let now = one(&ctx, &plan, &lines, None).await?;
     format::json(serde_json::json!({
@@ -220,7 +208,7 @@ async fn one(
         .order_by_desc(buffers::Column::Id)
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let chain = baselined_chain(ctx, plan.pid).await?;
     let mut entry = serde_json::json!({ "plan_pid": plan.pid, "plan": plan.name });
     let absent = |why: Absent| serde_json::json!({ "code": why, "reason": why.reason() });
@@ -323,7 +311,7 @@ pub(crate) async fn fever_section(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
         .collect();
@@ -360,7 +348,7 @@ async fn live(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();

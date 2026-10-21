@@ -19,6 +19,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
     delivery_exceptions as exceptions, director_packs, plans, programme_thresholds as thresholds,
@@ -26,17 +28,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::thresholds as rules;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -104,7 +95,7 @@ async fn set_triage(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
@@ -125,7 +116,7 @@ async fn get_triage(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
         .order_by_desc(triages::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     format::json(
         json!({ "triage": rows.first().map(triage_view), "history": rows.iter().map(triage_view).collect::<Vec<_>>() }),
     )
@@ -176,10 +167,10 @@ async fn set_threshold(
         .filter(thresholds::Column::Kind.eq(&b.kind))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if b.remove {
         if let Some(e) = existing {
-            e.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
+            e.delete(&ctx.db).await.map_err(db_err)?;
         }
         AuditModel::record_or_log(
             &ctx.db,
@@ -215,7 +206,7 @@ async fn set_threshold(
         a.date_value = ActiveValue::set(date);
         a.amount_minor = ActiveValue::set(amount);
         a.currency = ActiveValue::set(currency);
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        a.update(&ctx.db).await.map_err(db_err)?
     } else {
         thresholds::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -229,7 +220,7 @@ async fn set_threshold(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     };
     AuditModel::record_or_log(
         &ctx.db,
@@ -254,7 +245,7 @@ async fn get_thresholds(
         .order_by_asc(thresholds::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     format::json(json!({ "thresholds": rows.iter().map(threshold_view).collect::<Vec<_>>() }))
 }
 
@@ -269,7 +260,7 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
         .order_by_desc(director_packs::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut seen: HashSet<(String, String)> = HashSet::new();
     let mut out: HashMap<String, Vec<bool>> = HashMap::new();
     for p in packs {
@@ -305,7 +296,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
         .order_by_asc(thresholds::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let reds = red_history(&ctx).await?;
     let mut results = Vec::new();
     for t in &all {
@@ -314,7 +305,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             .filter(plans::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
         else {
             continue;
         };
@@ -365,7 +356,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             .filter(decisions::Column::Expiry.gt(today))
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         if active_override.is_some() {
             row["outcome"] = json!("suppressed_by_override");
             results.push(row);
@@ -376,7 +367,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             .filter(exceptions::Column::Status.eq("open"))
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         let cause = format!("Threshold crossed: {detail}.");
         let actor = caller.actor().map(str::to_string);
         match open {
@@ -391,7 +382,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     Some(c) if !c.trim().is_empty() => format!("{c} {cause}"),
                     _ => cause.clone(),
                 }));
-                a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+                a.update(&ctx.db).await.map_err(db_err)?;
                 AuditModel::record_or_log(
                     &ctx.db,
                     o.pid,
@@ -423,7 +414,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                 }
                 .insert(&ctx.db)
                 .await
-                .map_err(|e| db_err(&e))?;
+                .map_err(db_err)?;
                 AuditModel::record_or_log(
                     &ctx.db,
                     e.pid,
@@ -474,7 +465,7 @@ async fn decide(
         return Err(unprocessable(&problems.join("; ")));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let text = format!("{}: {}", b.action, b.reason.trim());
     let mut a: exceptions::ActiveModel = row.clone().into();
     if row.status != "open" {
@@ -487,7 +478,7 @@ async fn decide(
     a.closed_at = ActiveValue::set(Some(Utc::now().into()));
     a.decision = ActiveValue::set(Some(text));
     a.decided_by = ActiveValue::set(Some(actor.clone()));
-    a.update(&tx).await.map_err(|e| db_err(&e))?;
+    a.update(&tx).await.map_err(db_err)?;
     let d = decisions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         exception_pid: ActiveValue::set(row.pid),
@@ -502,7 +493,7 @@ async fn decide(
     }
     .insert(&tx)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record(
         &tx,
         row.pid,
@@ -512,7 +503,7 @@ async fn decide(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(
         json!({ "pid": d.pid, "exception_pid": row.pid, "action": d.action, "expiry": d.expiry, "decided_on": d.decided_on }),
     )
@@ -535,7 +526,7 @@ pub(crate) async fn pack_section(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|p| include.contains(&p.pid) && p.kind.as_deref() == Some("Program"))
         .map(|p| (p.pid, p.name))
@@ -545,7 +536,7 @@ pub(crate) async fn pack_section(
         .order_by_asc(triages::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     {
         if names.contains_key(&t.plan_pid) {
             latest.insert(t.plan_pid, t);
@@ -562,7 +553,7 @@ pub(crate) async fn pack_section(
         .order_by_asc(decisions::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|d| names.contains_key(&d.plan_pid))
         .collect();
@@ -582,7 +573,7 @@ pub(crate) async fn pack_section(
         .filter(exceptions::Column::ThresholdKind.is_not_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|e| names.contains_key(&e.plan_pid))
         .count();

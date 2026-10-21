@@ -53,22 +53,8 @@ fn valid_person_ref(value: &str) -> bool {
     })
 }
 
-/// Find one live task of one plan, or 404.
-pub(crate) async fn find_task(
-    ctx: &AppContext,
-    plan_pid: Uuid,
-    t_pid: &str,
-) -> Result<tasks::Model> {
-    let t_pid = Uuid::parse_str(t_pid).map_err(|_| Error::NotFound)?;
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-        .filter(|task| task.plan_pid == plan_pid)
-        .ok_or(Error::NotFound)
-}
+/// Find one live task of one plan, or 404 (the shared definition, CQ-7).
+pub(crate) use super::find_live_task as find_task;
 
 /// The task wire view (adds blocked-age calendar days to the stored row).
 pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
@@ -901,7 +887,7 @@ async fn standup(
 
 /// Find one live sprint of one plan, or 404.
 async fn find_sprint(ctx: &AppContext, plan_pid: Uuid, s_pid: &str) -> Result<sprints::Model> {
-    let s_pid = Uuid::parse_str(s_pid).map_err(|_| Error::NotFound)?;
+    let s_pid = super::parse_pid(s_pid)?;
     sprints::Entity::find()
         .filter(sprints::Column::Pid.eq(s_pid))
         .filter(sprints::Column::DeletedAt.is_null())
@@ -986,7 +972,7 @@ async fn convert_note(
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
     let sprint = find_sprint(&ctx, item.pid, &s_pid).await?;
-    let n_pid = Uuid::parse_str(&n_pid).map_err(|_| Error::NotFound)?;
+    let n_pid = super::parse_pid(&n_pid)?;
     let note = sprint_notes::Entity::find()
         .filter(sprint_notes::Column::Pid.eq(n_pid))
         .filter(sprint_notes::Column::DeletedAt.is_null())

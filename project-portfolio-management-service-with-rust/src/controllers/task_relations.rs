@@ -215,7 +215,7 @@ async fn create_relation(
     Json(p): Json<RelationPayload>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let from = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let from = super::parse_pid(&t_pid)?;
     let from_task = live_task(&ctx, from).await?;
     if from_task.plan_pid != plan.pid {
         return Err(Error::NotFound);
@@ -286,7 +286,7 @@ async fn list_relations(
     Path((pid, t_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let task = live_task(&ctx, Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?).await?;
+    let task = live_task(&ctx, super::parse_pid(&t_pid)?).await?;
     if task.plan_pid != plan.pid {
         return Err(Error::NotFound);
     }
@@ -357,11 +357,11 @@ async fn delete_relation(
     Path((pid, t_pid, r_pid)): Path<(String, String, String)>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let task = live_task(&ctx, Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?).await?;
+    let task = live_task(&ctx, super::parse_pid(&t_pid)?).await?;
     if task.plan_pid != plan.pid {
         return Err(Error::NotFound);
     }
-    let r_pid = Uuid::parse_str(&r_pid).map_err(|_| Error::NotFound)?;
+    let r_pid = super::parse_pid(&r_pid)?;
     let row = task_relations::Entity::find()
         .filter(task_relations::Column::Pid.eq(r_pid))
         .filter(task_relations::Column::DeletedAt.is_null())

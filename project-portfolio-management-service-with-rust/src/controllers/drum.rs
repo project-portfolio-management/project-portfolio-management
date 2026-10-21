@@ -11,15 +11,14 @@
 use super::db_err;
 use std::collections::{HashMap, HashSet};
 
-use axum::http::StatusCode;
 use chrono::{Datelike, NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::drum::{self as rules, Project, Segment};
 use crate::models::_entities::{
@@ -28,13 +27,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::is_placeholder;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn buffer_days() -> (i64, bool) {
     match std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_DRUM_BUFFER_DAYS") {

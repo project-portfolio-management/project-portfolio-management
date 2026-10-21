@@ -261,7 +261,7 @@ async fn revoke(
 ) -> Result<Response> {
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
-    let grant = Uuid::parse_str(&grant).map_err(|_| Error::NotFound)?;
+    let grant = super::parse_pid(&grant)?;
     let row = guest_grants::Entity::find()
         .filter(guest_grants::Column::Pid.eq(grant))
         .filter(guest_grants::Column::SubjectPid.eq(subject.pid))

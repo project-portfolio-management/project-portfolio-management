@@ -1687,7 +1687,7 @@ came from grep.
   **Acceptance:** a test with the lookup forced to fail sees 503 and the
   metric.
   **Progress 2026-10-21 (not ticked).** Found while building: `privacy_mw` **failed open**: `if let Ok(Some(row))` skipped the check on a lookup error, so a non-member's request reached the handler. Now `503 unavailable`. `fail_closed()` logs and counts (`visibility_lookup_failed_total`) at all five fail-closed sites (guard: marks, privacy; `hidden_plans`: marks, privacy; `grant_subs`; `readable_plans`). Database test `requests::privacy_lookup_failure` (table renamed for one request ⇒ 503, counted, then 200). **Still to do:** `hidden_plans` and `readable_plans` still answer a set, so an aggregate under a fault is 200 with less, not 503; changing that means a `Result` through 57 callers.
-- [ ] **CQ-7 (M) — One set of controller helpers.** Move `find_plan` (7
+- [x] **CQ-7 (M) — One set of controller helpers.** Move `find_plan` (7
   copies), `find_task` (4), `db_err` (26), `unprocessable` (40) and UUID
   parsing (17) into `controllers/mod.rs`. While merging, check that every copy
   applies the same `deleted_at` and readability filters; a copy that differs is
@@ -1695,6 +1695,7 @@ came from grep.
   `unprocessable()` until §70.3 is decided.
   **Acceptance:** `cargo test --lib` and the database tests pass; a census test
   bans local copies.
+  **Built 2026-10-21.** `controllers/mod.rs`: `unprocessable_entity`, `parse_pid`, `find_live_plan`, `find_live_task`; files import them under their old local names (`use super::find_live_plan as find_plan;`), so call sites did not change. Removed: 38 `unprocessable`, 20 `db_err` (call sites `|e| db_err(&e)` became `db_err`), 7 `find_plan`, 4 `find_task`, `controls::find_plan_pid`, and 89 hand-parsed pids. **Filter check:** all copies applied `deleted_at IS NULL` and the plan match (engineering's `find_task` filtered the plan in memory, same result); none differed, so no bug was found. Census `controllers::helper_census` with an allow-list of six (five `db_err`s that turn a named constraint into a 409, governance's `validation` 422). Clippy, lib tests and the full database suite (189) pass. **Not done, stated:** the two 422 codes remain (plan §70.3); the CQ-2 `is_admin` wrappers remain; `db_err` copies outside `src/controllers` (`retention.rs`) were not in scope.
 - [ ] **CQ-8 (L) — The OpenAPI document covers request and response bodies.**
   There are 7 `requestBody` entries over about 5,100 lines, and
   `KNOWN_UNDOCUMENTED` lists 52 paths. Derive schemas from the DTOs (utoipa

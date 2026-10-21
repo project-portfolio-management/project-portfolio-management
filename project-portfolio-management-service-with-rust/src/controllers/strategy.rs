@@ -27,7 +27,7 @@ use crate::validation::MAX_TEXT_LEN;
 macro_rules! find_active {
     ($fn_name:ident, $module:ident) => {
         async fn $fn_name(ctx: &AppContext, pid: &str) -> Result<$module::Model> {
-            let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+            let pid = super::parse_pid(pid)?;
             $module::Entity::find()
                 .filter($module::Column::Pid.eq(pid))
                 .filter($module::Column::DeletedAt.is_null())
@@ -596,7 +596,7 @@ async fn compare_scenarios(
     caller: MaybeAuthUser,
 ) -> Result<Response> {
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let load = |pid: &str| -> Result<Uuid> { Uuid::parse_str(pid).map_err(|_| Error::NotFound) };
+    let load = |pid: &str| -> Result<Uuid> { super::parse_pid(pid) };
     let (a_pid, b_pid) = (load(&query.a)?, load(&query.b)?);
     let mut pair = Vec::new();
     for pid in [a_pid, b_pid] {

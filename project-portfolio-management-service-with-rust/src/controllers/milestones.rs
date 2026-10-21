@@ -18,14 +18,13 @@ use super::conflict;
 use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::milestones::{self as rules, Achieved, Mode, ScheduleState, Slip};
 use crate::models::_entities::{milestone_slips, milestone_tasks, milestones, tasks};
@@ -39,13 +38,6 @@ const MAX_LINKS: usize = 100;
 const DUE_SOON_DAYS: i64 = 14;
 /// Default risk window, in business days between the forecast and the due date.
 const AT_RISK_DAYS: i64 = 5;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// The tasks each milestone waits for, as pids.
 async fn links_of(ctx: &AppContext, milestone_pids: &[Uuid]) -> Result<HashMap<Uuid, Vec<Uuid>>> {
@@ -450,7 +442,7 @@ async fn get_one(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let m = vis_models::find_milestone(&ctx.db, pid).await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &[m.plan_pid]).await;
     if !readable.contains(&m.plan_pid) {
@@ -482,7 +474,7 @@ async fn set_links(
     Json(b): Json<LinksBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let m_pid = Uuid::parse_str(&m_pid).map_err(|_| Error::NotFound)?;
+    let m_pid = super::parse_pid(&m_pid)?;
     let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if m.plan_pid != plan.pid {
         return Err(Error::NotFound);
@@ -583,7 +575,7 @@ async fn reopen(
     Json(b): Json<ReopenBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let m_pid = Uuid::parse_str(&m_pid).map_err(|_| Error::NotFound)?;
+    let m_pid = super::parse_pid(&m_pid)?;
     let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
     if m.plan_pid != plan.pid {
         return Err(Error::NotFound);

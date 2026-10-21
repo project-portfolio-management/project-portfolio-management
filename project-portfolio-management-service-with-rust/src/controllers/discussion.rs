@@ -42,7 +42,7 @@ pub(crate) async fn resolve_subject(
     kind: &str,
     pid: &str,
 ) -> Result<Subject> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let subject = match kind {
         "plan" => {
             let row = plans::Entity::find()
@@ -330,7 +330,7 @@ async fn list_comments(
 }
 
 async fn find_comment(ctx: &AppContext, pid: &str) -> Result<comments::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     comments::Entity::find()
         .filter(comments::Column::Pid.eq(pid))
         .filter(comments::Column::DeletedAt.is_null())

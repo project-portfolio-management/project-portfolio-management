@@ -29,6 +29,7 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::controls as rules;
 use crate::models::_entities::{control_actions, control_readings, controls, plans, tasks};
@@ -58,20 +59,7 @@ pub const KNOWN_METRICS: &[&str] = &[
     "time_to_value",
 ];
 
-fn find_plan_pid(raw: &str) -> Result<Uuid> {
-    Uuid::parse_str(raw).map_err(|_| Error::NotFound)
-}
-
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = find_plan_pid(raw)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
+use super::parse_pid as find_plan_pid;
 
 async fn find_control(ctx: &AppContext, raw: &str) -> Result<controls::Model> {
     let pid = find_plan_pid(raw)?;

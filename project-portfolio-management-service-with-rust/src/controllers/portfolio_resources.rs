@@ -19,6 +19,7 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{allocations, resource_roles, scenarios, time_entries};
 use crate::models::audit_logs::Model as AuditModel;
@@ -29,13 +30,6 @@ use crate::portfolio_resources::{
 
 /// Time entries read per call.
 const ROW_CAP: u64 = 20_000;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// Whether the caller may see and manage people's resource detail.
 pub(crate) fn may_manage_people(caller: &MaybeAuthUser) -> bool {
@@ -72,7 +66,7 @@ async fn scoped_allocations(
     let mut rows = vis_models::all_allocations_with_placeholders(&ctx.db).await?;
     let mut scope = serde_json::json!({ "kind": "portfolio" });
     if let Some(raw) = scenario {
-        let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
+        let pid = super::parse_pid(raw)?;
         let s = scenarios::Entity::find()
             .filter(scenarios::Column::Pid.eq(pid))
             .filter(scenarios::Column::DeletedAt.is_null())
@@ -511,7 +505,7 @@ async fn resolve_placeholder(
         return Err(unprocessable("person_ref must be a person:/worker: URN"));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let a_pid = Uuid::parse_str(&a_pid).map_err(|_| Error::NotFound)?;
+    let a_pid = super::parse_pid(&a_pid)?;
     let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
     if allocation.plan_pid != item.pid {
         return Err(Error::NotFound);

@@ -52,7 +52,7 @@ async fn path_of(
 }
 
 async fn find_escalation(ctx: &AppContext, plan: Uuid, epid: &str) -> Result<escalations::Model> {
-    let pid = Uuid::parse_str(epid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(epid)?;
     escalations::Entity::find()
         .filter(escalations::Column::Pid.eq(pid))
         .filter(escalations::Column::PlanPid.eq(plan))

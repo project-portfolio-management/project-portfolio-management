@@ -138,7 +138,7 @@ pub(crate) async fn read_artifact(
 }
 
 async fn find_job(ctx: &AppContext, pid: &str, kind: Option<&str>) -> Result<bulk_jobs::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let job = bulk_jobs::Entity::find()
         .filter(bulk_jobs::Column::Pid.eq(pid))
         .one(&ctx.db)
@@ -733,7 +733,7 @@ async fn list_queue(
 }
 
 async fn find_item(ctx: &AppContext, pid: &str) -> Result<review_queue_items::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     review_queue_items::Entity::find()
         .filter(review_queue_items::Column::Pid.eq(pid))
         .one(&ctx.db)

@@ -66,7 +66,7 @@ async fn create(
     Path(pid): Path<String>,
     Json(b): Json<ScheduleBody>,
 ) -> Result<Response> {
-    let report = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let report = super::parse_pid(&pid)?;
     report_definitions::Entity::find()
         .filter(report_definitions::Column::Pid.eq(report))
         .filter(report_definitions::Column::DeletedAt.is_null())
@@ -142,7 +142,7 @@ async fn list(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Resu
 }
 
 async fn own(ctx: &AppContext, owner: &str, pid: &str) -> Result<report_schedules::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     report_schedules::Entity::find()
         .filter(report_schedules::Column::Pid.eq(pid))
         .filter(report_schedules::Column::Owner.eq(owner))

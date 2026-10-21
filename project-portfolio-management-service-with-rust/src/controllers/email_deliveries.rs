@@ -14,13 +14,10 @@ use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::email::{self, Message, SendError};
 use crate::models::_entities::email_deliveries as rows;
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -73,7 +70,7 @@ pub async fn deliver(
         ))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if existing.as_ref().is_some_and(|e| e.status == "sent") {
         return Ok(Delivered::Sent);
     }
@@ -115,7 +112,7 @@ pub async fn deliver(
             a.sender = ActiveValue::set(Some(sender.name().to_string()));
             a.next_attempt_at = ActiveValue::set(after.next.map(Into::into));
             a.sent_at = ActiveValue::set((after.status == "sent").then(|| now.into()));
-            a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+            a.update(&ctx.db).await.map_err(db_err)?;
         }
         None => {
             rows::ActiveModel {
@@ -135,7 +132,7 @@ pub async fn deliver(
             }
             .insert(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         }
     }
     Ok(match (after.status, error) {
@@ -160,7 +157,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
         .limit(limit)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut sent = 0;
     for d in due {
         if deliver(
@@ -213,11 +210,7 @@ async fn list(
         }
         find = find.filter(rows::Column::Status.eq(s.as_str()));
     }
-    let list = find
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let list = find.limit(limit).all(&ctx.db).await.map_err(db_err)?;
     let count = |s: &str| {
         let ctx = ctx.clone();
         let s = s.to_string();

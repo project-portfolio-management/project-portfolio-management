@@ -108,7 +108,7 @@ async fn load_readings(ctx: &AppContext, pids: &[Uuid]) -> Result<Vec<kpi_readin
 }
 
 async fn find_kpi(ctx: &AppContext, caller: &MaybeAuthUser, raw: &str) -> Result<kpis::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(raw)?;
     let k = kpis::Entity::find()
         .filter(kpis::Column::Pid.eq(pid))
         .filter(kpis::Column::DeletedAt.is_null())

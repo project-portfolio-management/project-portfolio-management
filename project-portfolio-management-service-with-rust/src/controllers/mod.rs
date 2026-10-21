@@ -106,6 +106,68 @@ pub(crate) fn unprocessable(message: &str) -> loco_rs::Error {
     )
 }
 
+/// `422 Unprocessable Entity` with the error code `unprocessable_entity` and `message`: the code most
+/// controllers answer with (CQ-7). Which of the two codes survives is plan §70 question 3; until then
+/// both exist, defined once each.
+#[must_use]
+pub(crate) fn unprocessable_entity(message: &str) -> loco_rs::Error {
+    loco_rs::Error::CustomError(
+        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+        loco_rs::controller::ErrorDetail::new("unprocessable_entity", message),
+    )
+}
+
+/// A pid from the path, or `404` when it is not a UUID (a malformed id names nothing).
+///
+/// # Errors
+///
+/// `404` when `raw` is not a UUID.
+pub(crate) fn parse_pid(raw: &str) -> loco_rs::Result<uuid::Uuid> {
+    uuid::Uuid::parse_str(raw).map_err(|_| loco_rs::Error::NotFound)
+}
+
+/// A live (not deleted) plan by its path pid, or `404` (CQ-7: one definition for every controller).
+///
+/// # Errors
+///
+/// `404` when the pid is malformed or names no live plan; `500` on a database error.
+pub(crate) async fn find_live_plan(
+    ctx: &loco_rs::app::AppContext,
+    raw: &str,
+) -> loco_rs::Result<crate::models::_entities::plans::Model> {
+    use crate::models::_entities::plans;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    plans::Entity::find()
+        .filter(plans::Column::Pid.eq(parse_pid(raw)?))
+        .filter(plans::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(loco_rs::Error::NotFound)
+}
+
+/// A live task of `plan` by its path pid, or `404`; a task of another plan is `404` too.
+///
+/// # Errors
+///
+/// `404` when the pid is malformed or names no live task of `plan`; `500` on a database error.
+pub(crate) async fn find_live_task(
+    ctx: &loco_rs::app::AppContext,
+    plan: uuid::Uuid,
+    raw: &str,
+) -> loco_rs::Result<crate::models::_entities::tasks::Model> {
+    use crate::models::_entities::tasks;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    tasks::Entity::find()
+        .filter(tasks::Column::Pid.eq(parse_pid(raw)?))
+        .filter(tasks::Column::PlanPid.eq(plan))
+        .filter(tasks::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(loco_rs::Error::NotFound)
+}
+
 /// `409 Conflict` with the error code `conflict` and `message`.
 #[must_use]
 pub(crate) fn conflict(message: &str) -> loco_rs::Error {
@@ -338,3 +400,53 @@ pub mod timesheets;
 pub mod tolerances;
 pub mod tracker_import;
 pub mod watchers;
+
+#[cfg(test)]
+mod helper_census {
+    /// CQ-7: the shared helpers are defined once, here. A controller that needs one imports it
+    /// (`use super::find_live_plan as find_plan;`) instead of copying it, so a fix lands everywhere.
+    #[test]
+    fn controllers_do_not_copy_the_shared_helpers() {
+        // A `db_err` that maps a named database constraint to a 409 before falling back is not a
+        // copy; nor is governance's validation 422, which answers a different code.
+        let allowed: &[(&str, &str)] = &[
+            ("capacity_heatmap.rs", "fn db_err("),
+            ("deescalation.rs", "fn db_err("),
+            ("ledger.rs", "fn db_err("),
+            ("organizations.rs", "fn db_err("),
+            ("programme_gates.rs", "fn db_err("),
+            ("governance.rs", "fn unprocessable("),
+        ];
+        let needles = [
+            "fn db_err(",
+            "fn unprocessable(",
+            "fn find_plan(",
+            "fn find_task(",
+            "fn find_plan_pid(",
+        ];
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
+        let mut offenders = Vec::new();
+        for entry in std::fs::read_dir(dir).expect("read controllers") {
+            let path = entry.expect("entry").path();
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if name == "mod.rs" || path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).expect("read file");
+            for needle in needles {
+                if text.contains(needle) && !allowed.contains(&(name, needle)) {
+                    offenders.push(format!("{name}: {needle}"));
+                }
+            }
+            // A path pid parsed by hand: `parse_pid` says what a malformed id means, once.
+            if text
+                .lines()
+                .any(|l| l.contains("Uuid::parse_str(") && l.contains("Error::NotFound"))
+            {
+                offenders.push(format!("{name}: Uuid::parse_str(..) to Error::NotFound"));
+            }
+        }
+        offenders.sort();
+        assert!(offenders.is_empty(), "copied helpers: {offenders:?}");
+    }
+}

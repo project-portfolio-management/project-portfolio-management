@@ -18,6 +18,7 @@ use sea_orm::QuerySelect;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::distribution as rules;
 use crate::models::_entities::{plans, risks, tasks};
 use crate::tba;
@@ -28,17 +29,6 @@ const DEFAULT_WINDOW_DAYS: i64 = 90;
 /// Rows scanned per read, so an unbounded estate cannot become an
 /// unbounded query.
 const MAX_ROWS: u64 = 5000;
-
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 /// The deployment's declared intended mix, or `None`.
 ///

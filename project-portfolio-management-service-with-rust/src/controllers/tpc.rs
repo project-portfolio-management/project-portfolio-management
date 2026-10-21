@@ -23,25 +23,14 @@ use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plans, total_project_control as tpc_rows};
+use crate::models::_entities::total_project_control as tpc_rows;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::tpc as rules;
 
 /// Plans scanned for the portfolio triage read.
 const MAX_PLANS_SCANNED: u64 = 1000;
-
-/// Find one live plan by public id, or `404`.
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 /// A stored `NUMERIC` as `i64` minor units / basis points.
 ///

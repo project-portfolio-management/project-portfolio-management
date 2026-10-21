@@ -15,6 +15,7 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::gate_decisions::{self as rules, Decision, Planned, Review};
 use crate::governance as gov_rules;
@@ -23,14 +24,6 @@ use crate::models::_entities::{
     programme_status_decisions as decisions,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let text = e.to_string();

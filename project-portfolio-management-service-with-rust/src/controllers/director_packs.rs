@@ -15,6 +15,7 @@ use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::director_pack::{self as rules, Power};
 use crate::director_summary::{self as summary, ChangeLite, IssueLite};
@@ -23,10 +24,6 @@ use crate::models::_entities::{
     plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// What the caller may do. With login off everyone is trusted, as for every other write.
 pub(crate) fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
@@ -95,7 +92,7 @@ async fn inputs(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();
@@ -103,7 +100,7 @@ async fn inputs(
         .filter(plan_access_settings::Column::Private.eq(true))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|r| r.plan_pid)
         .collect();
@@ -111,7 +108,7 @@ async fn inputs(
         plan_handling_marks::Entity::find()
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .map(|r| r.plan_pid),
     );
@@ -126,7 +123,7 @@ async fn inputs(
         .order_by_asc(issues::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|i| included.contains(&i.plan_pid) && i.raised_on <= day)
         .map(|i| IssueLite {
@@ -144,7 +141,7 @@ async fn inputs(
         .order_by_asc(change_requests::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|c| included.contains(&c.plan_pid) && c.requested_on <= day)
         .map(|c| ChangeLite {
@@ -193,7 +190,7 @@ async fn compute_body(
         .order_by_desc(packs::Column::Version)
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let prev_body = previous.as_ref().map(|p| p.body.as_str());
     let before = |path: &[&str]| prev_body.and_then(|b| count_in(b, path));
     let what_changed = vec![
@@ -309,7 +306,7 @@ pub(crate) async fn insert_draft(
         ctx, pid, period, audience, version, supersedes, cut_off, note,
     )
     .await?;
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let row = packs::ActiveModel {
         pid: ActiveValue::set(pid),
         period: ActiveValue::set(period.to_string()),
@@ -336,7 +333,7 @@ pub(crate) async fn insert_draft(
                 "a draft or that version of this pack already exists",
             )
         } else {
-            db_err(&e)
+            db_err(e)
         }
     })?;
     AuditModel::record(
@@ -350,7 +347,7 @@ pub(crate) async fn insert_draft(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     Ok(row)
 }
 
@@ -393,7 +390,7 @@ async fn draft(
         .filter(packs::Column::Audience.eq(b.audience.as_str()))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if let Some(e) = existing {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -428,12 +425,12 @@ async fn draft(
 }
 
 pub(crate) async fn find(ctx: &AppContext, pid: &str) -> Result<packs::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     packs::Entity::find()
         .filter(packs::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)
 }
 
@@ -455,7 +452,7 @@ async fn issue(
             "this draft was made by the monthly schedule; the portfolio office must review it before it is issued",
         ));
     }
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let done = packs::Entity::update_many()
         .col_expr(packs::Column::Status, Expr::value("issued"))
         .col_expr(packs::Column::IssuedBy, Expr::value(actor.clone()))
@@ -464,7 +461,7 @@ async fn issue(
         .filter(packs::Column::Status.eq("draft"))
         .exec(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if done.rows_affected == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -481,7 +478,7 @@ async fn issue(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     let now = find(&ctx, &pid).await?;
     // Tell the audience's subscribers, with a link and never the body. A notice that cannot be made does
     // not undo the issue: the pack is issued either way.
@@ -530,7 +527,7 @@ async fn reissue(
         .order_by_desc(packs::Column::Version)
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     if latest.pid != row.pid {
         return Err(refuse(
@@ -568,7 +565,7 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .order_by_desc(packs::Column::Version)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let shown: Vec<serde_json::Value> = rows
         .iter()
         .filter(|p| may_read(&caller, p))

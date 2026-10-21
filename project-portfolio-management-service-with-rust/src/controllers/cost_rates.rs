@@ -23,28 +23,21 @@ use super::conflict;
 use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_task as find_task;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cost_rates::{self as rules, Accrual, Rate};
 use crate::models::_entities::{
-    cost_rate_tables, cost_rates, resource_roles, task_costs, tasks, time_entries, time_entry_costs,
+    cost_rate_tables, cost_rates, resource_roles, task_costs, time_entries, time_entry_costs,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::work_profile as wp;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// Whether the caller may see or change rates and the costs derived from them.
 pub(crate) fn may_see_rates(caller: &MaybeAuthUser) -> bool {
@@ -269,7 +262,7 @@ async fn add_rate(
     Json(b): Json<RateBody>,
 ) -> Result<Response> {
     finance_only(&caller)?;
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let table = cost_rate_tables::Entity::find()
         .filter(cost_rate_tables::Column::Pid.eq(pid))
         .filter(cost_rate_tables::Column::DeletedAt.is_null())
@@ -369,18 +362,6 @@ struct TaskCostBody {
     accrual: String,
 }
 
-async fn find_task(ctx: &AppContext, plan: Uuid, raw: &str) -> Result<tasks::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
-
 /// `POST /api/plans/{pid}/tasks/{t_pid}/costs` — a material or fixed-cost expense.
 #[debug_handler]
 async fn add_task_cost(
@@ -472,7 +453,7 @@ async fn delete_task_cost(
     finance_only(&caller)?;
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, plan.pid, &t_pid).await?;
-    let c_pid = Uuid::parse_str(&c_pid).map_err(|_| Error::NotFound)?;
+    let c_pid = super::parse_pid(&c_pid)?;
     let row = task_costs::Entity::find()
         .filter(task_costs::Column::Pid.eq(c_pid))
         .filter(task_costs::Column::TaskPid.eq(task.pid))

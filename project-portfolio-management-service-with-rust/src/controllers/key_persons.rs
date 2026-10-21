@@ -8,31 +8,20 @@
 
 use std::collections::{HashMap, HashSet};
 
-use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
     contingent_workers, key_person_entries as entries, resource_roles, skill_pool_members,
     skill_pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -69,12 +58,12 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .order_by_asc(entries::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let contingent: Vec<String> = contingent_workers::Entity::find()
         .order_by_asc(contingent_workers::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|c| c.person_ref)
         .collect();
@@ -135,7 +124,7 @@ async fn upsert(
             .filter(skill_pools::Column::Pid.eq(p))
             .one(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .is_none()
     {
         return Err(unprocessable("skill_pool_pid is not a skill pool"));
@@ -148,7 +137,7 @@ async fn upsert(
         ))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let note = b
         .note
         .map(|n| n.trim().to_string())
@@ -159,7 +148,7 @@ async fn upsert(
         a.readiness = ActiveValue::set(b.readiness.clone());
         a.skill_pool_pid = ActiveValue::set(b.skill_pool_pid);
         a.note = ActiveValue::set(note);
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        a.update(&ctx.db).await.map_err(db_err)?
     } else {
         entries::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -173,7 +162,7 @@ async fn upsert(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     };
     AuditModel::record_or_log(
         &ctx.db,
@@ -194,14 +183,14 @@ async fn remove(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     managers_only(&caller)?;
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = entries::Entity::find()
         .filter(entries::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    row.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
+    row.delete(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(&ctx.db, pid, "key_person_removed", caller.actor(), None).await;
     format::json(json!({ "removed": pid }))
 }
@@ -227,7 +216,7 @@ async fn set_contingent(
         .filter(contingent_workers::Column::PersonRef.eq(&b.person_ref))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     match (existing, b.contingent) {
         (None, true) => {
             contingent_workers::ActiveModel {
@@ -237,10 +226,10 @@ async fn set_contingent(
             }
             .insert(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         }
         (Some(e), false) => {
-            e.delete(&ctx.db).await.map_err(|e| db_err(&e))?;
+            e.delete(&ctx.db).await.map_err(db_err)?;
         }
         _ => {}
     }
@@ -262,30 +251,27 @@ async fn set_contingent(
 ///
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext) -> Result<Value> {
-    let rows = entries::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let rows = entries::Entity::find().all(&ctx.db).await.map_err(db_err)?;
     let count = |f: &dyn Fn(&entries::Model) -> bool| rows.iter().filter(|r| f(r)).count();
     let pools = skill_pools::Entity::find()
         .filter(skill_pools::Column::Active.eq(true))
         .order_by_asc(skill_pools::Column::Name)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let members = skill_pool_members::Entity::find()
         .filter(skill_pool_members::Column::Kind.eq("role"))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let roles: Vec<resource_roles::Model> = resource_roles::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let contingent: HashSet<String> = contingent_workers::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|c| c.person_ref)
         .collect();

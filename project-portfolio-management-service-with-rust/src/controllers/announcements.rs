@@ -167,7 +167,7 @@ async fn create(
 }
 
 async fn find(ctx: &AppContext, pid: &str) -> Result<announcements::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     announcements::Entity::find()
         .filter(announcements::Column::Pid.eq(pid))
         .filter(announcements::Column::DeletedAt.is_null())

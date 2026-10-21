@@ -77,7 +77,7 @@ async fn rollup(
     Path((pid, t_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let t_pid = super::parse_pid(&t_pid)?;
     let all = plan_tasks(&ctx, plan.pid).await?;
     if !all.iter().any(|t| t.pid == t_pid) {
         return Err(Error::NotFound);

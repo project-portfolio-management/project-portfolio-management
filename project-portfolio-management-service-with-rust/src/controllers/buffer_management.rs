@@ -22,6 +22,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::buffer_management::{self as rules, Reading, Spec};
 use crate::fever;
@@ -29,13 +30,6 @@ use crate::models::_entities::{
     buffer_plans, buffer_recovery_actions as actions, buffer_snapshots,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn json_err(e: &serde_json::Error) -> Error {
     Error::string(&e.to_string())
@@ -435,7 +429,7 @@ async fn close_action(
     Json(b): Json<StatusBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let aid = Uuid::parse_str(&aid).map_err(|_| Error::NotFound)?;
+    let aid = super::parse_pid(&aid)?;
     if !["done", "dropped"].contains(&b.status.as_str()) {
         return Err(unprocessable("status must be done or dropped"));
     }

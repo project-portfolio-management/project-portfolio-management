@@ -383,7 +383,7 @@ async fn list_sinks(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -
 }
 
 async fn own_sink(ctx: &AppContext, sub: &str, pid: &str) -> Result<notification_sinks::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     notification_sinks::Entity::find()
         .filter(notification_sinks::Column::Pid.eq(pid))
         .filter(notification_sinks::Column::Sub.eq(sub))

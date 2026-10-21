@@ -12,6 +12,7 @@ use loco_rs::prelude::*;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
     budget_lines, capacity_commitments, delivery_confidence_assessments as assessments,
@@ -20,10 +21,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::register_completeness::{self as rules, Assessment, Facts};
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// What is gathered per programme.
 #[derive(Default)]
@@ -57,7 +54,7 @@ pub(crate) async fn assess_programmes(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut programmes: Vec<&plans::Model> = all
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
@@ -85,40 +82,37 @@ pub(crate) async fn assess_programmes(
         .filter(budget_lines::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
-    let risk_rows = risks::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
+    let risk_rows = risks::Entity::find().all(&ctx.db).await.map_err(db_err)?;
     let assessed: HashSet<Uuid> = assessments::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|a| a.plan_pid)
         .collect();
     let baselined: HashSet<Uuid> = schedule_baselines::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|b| b.plan_pid)
         .collect();
     let deps = plan_dependencies::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let commitments: Vec<(Uuid, bool)> = capacity_commitments::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|c| (c.plan_pid, c.organization_pid.is_some()))
         .collect();
     let required_ms: HashSet<Uuid> = milestone_signoff_requirements::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|r| r.milestone_pid)
         .collect();
@@ -126,7 +120,7 @@ pub(crate) async fn assess_programmes(
         .filter(milestones::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|m| required_ms.contains(&m.pid))
         .map(|m| m.plan_pid)
@@ -134,7 +128,7 @@ pub(crate) async fn assess_programmes(
     let models: HashMap<Uuid, Option<String>> = programme_profiles::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| (p.plan_pid, p.delivery_model))
         .collect();
@@ -239,7 +233,7 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();
@@ -270,7 +264,7 @@ pub(crate) async fn guard(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let by: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     let mut cur = Some(plan);
     let mut prog = None;

@@ -14,19 +14,13 @@ use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::organizations as orgs;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The kinds of organization.
 pub const KINDS: [&str; 4] = ["delivery", "partner", "sponsor", "supplier"];
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     if e.to_string().contains("org_name_once") {
@@ -130,7 +124,7 @@ async fn update(
     Path(pid): Path<String>,
     Json(b): Json<Change>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = orgs::Entity::find()
         .filter(orgs::Column::Pid.eq(pid))
         .one(&ctx.db)

@@ -25,17 +25,11 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Edge, Kind, Node, Options, WorkCalendar};
 use crate::models::_entities::{plan_dependencies, plans, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 /// A plan's task network, ready for [`cpm::analyze`].
 pub(crate) struct Network {
@@ -741,7 +735,7 @@ async fn set_schedule(
     Json(b): Json<ScheduleBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let t_pid = Uuid::parse_str(&t_pid).map_err(|_| Error::NotFound)?;
+    let t_pid = super::parse_pid(&t_pid)?;
     let mut problems = cpm::schedule_problems(b.start_date, b.duration_days);
     problems.extend(cpm::constraint_problems(
         b.constraint_kind.as_deref(),

@@ -144,7 +144,7 @@ async fn unwatch(
     AuthUser(claims): AuthUser,
     Query(p): Query<SubjectParams>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&p.subject_pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&p.subject_pid)?;
     watchers::Entity::delete_many()
         .filter(watchers::Column::SubjectKind.eq(p.subject_kind.as_str()))
         .filter(watchers::Column::SubjectPid.eq(pid))

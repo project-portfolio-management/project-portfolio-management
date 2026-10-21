@@ -18,26 +18,15 @@ use sea_orm::QuerySelect;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    adoption_snapshots, budget_lines, business_case_targets, plans, satisfaction_responses,
-    value_points,
+    adoption_snapshots, budget_lines, business_case_targets, satisfaction_responses, value_points,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::value as rules;
 
 const MAX_ROWS: u64 = 5000;
-
-async fn find_plan(ctx: &AppContext, raw: &str) -> Result<plans::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 /// `POST /api/plans/{pid}/business-case` body.
 #[derive(Debug, Deserialize)]

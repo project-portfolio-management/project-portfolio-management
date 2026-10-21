@@ -80,7 +80,7 @@ async fn delete_slot(
     AuthUser(claims): AuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let row = planned_slots::Entity::find()
         .filter(planned_slots::Column::Pid.eq(pid))
         .filter(planned_slots::Column::Sub.eq(claims.sub.as_str()))

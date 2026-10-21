@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- **Controller helpers defined once (CQ-7, 2026-10-21).** `controllers/mod.rs` gains `unprocessable_entity`, `parse_pid`, `find_live_plan` and `find_live_task`; 38 local `unprocessable`, 20 `db_err`, 7 `find_plan`, 4 `find_task` (including `engineering::find_task`, now a re-export) and 89 hand-written `Uuid::parse_str(..).map_err(|_| Error::NotFound)` are gone. Checked while merging: every copy applied the same live-record filter and the same 404; the local `db_err` used `Error::string` and the shared one `Error::Model`, which loco renders as the same generic 500 and logs alike, so no response changed. A unit census in `controllers/mod.rs` fails on a new copy (five `db_err`s that map a named constraint to a 409, and governance's `validation` 422, are listed as different, with the reason). Verified: clippy, `cargo test --lib`, the full database suite (189). Not done: the two 422 codes (`unprocessable` ×7, `unprocessable_entity` the rest) remain, pending plan §70 question 3; the one-line `is_admin` wrappers from CQ-2 remain.
+
 ### Security
 
 - **The privacy guard no longer fails open (CQ-6, 2026-10-21).** In `privacy_mw`, an error looking up whether a plan is private skipped the check, so a non-member's request reached the handler. It now answers `503 unavailable`. Every fail-closed visibility lookup (privacy settings, handling marks, break-glass grants, readable plans) logs at error level and increments the new `visibility_lookup_failed_total`. Database test: with the privacy table renamed for one request, `GET /api/plans/{pid}` is 503 and counted, and 200 again afterwards. Not done: the aggregates still answer 200 with what they could check (hidden-when-unsure), not 503, because 57 callers take a set, not a result; the break-glass audit and log paths were not tested under failure.

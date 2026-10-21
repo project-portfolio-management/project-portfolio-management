@@ -22,6 +22,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cutover as rules;
 use crate::models::_entities::{
@@ -29,17 +31,6 @@ use crate::models::_entities::{
     plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -70,13 +61,13 @@ pub fn routes() -> Routes {
 
 async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, decisions::Model)> {
     let plan = super::governance::find_item(ctx, pid).await?;
-    let did = Uuid::parse_str(did).map_err(|_| Error::NotFound)?;
+    let did = super::parse_pid(did)?;
     let d = decisions::Entity::find()
         .filter(decisions::Column::Pid.eq(did))
         .filter(decisions::Column::PlanPid.eq(plan.pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     Ok((plan, d))
 }
@@ -90,13 +81,13 @@ async fn parts(
         .order_by_asc(criteria::Column::Position)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let s = cosigs::Entity::find()
         .filter(cosigs::Column::DecisionPid.eq(d.pid))
         .order_by_asc(cosigs::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     Ok((c, s))
 }
 
@@ -140,7 +131,7 @@ async fn put_criteria(ctx: &AppContext, decision: Uuid, items: &[String]) -> Res
         }
         .insert(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     }
     Ok(())
 }
@@ -178,7 +169,7 @@ async fn create(
         if e.to_string().contains("cd_version") {
             conflict("a decision with that title exists for this plan: make a new version of it")
         } else {
-            db_err(&e)
+            db_err(e)
         }
     })?;
     put_criteria(&ctx, d.pid, &items).await?;
@@ -203,7 +194,7 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
         .order_by_desc(decisions::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut out = Vec::new();
     for d in &rows {
         let (c, s) = parts(&ctx, d).await?;
@@ -236,7 +227,7 @@ async fn replace_criteria(
         .filter(criteria::Column::DecisionPid.eq(d.pid))
         .exec(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     put_criteria(&ctx, d.pid, &items).await?;
     AuditModel::record_or_log(
         &ctx.db,
@@ -272,7 +263,7 @@ async fn advance(
     } else {
         a.opened_on = ActiveValue::set(Some(today));
     }
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(&ctx.db, row.pid, action, caller.actor(), None).await;
     let (c, s) = parts(ctx, &row).await?;
     format::json(view(&row, &c, &s))
@@ -344,14 +335,14 @@ async fn mark(
         .filter(criteria::Column::Position.eq(n))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     let mut a: criteria::ActiveModel = c.into();
     a.met = ActiveValue::set(Some(b.met));
     a.evidence = ActiveValue::set(Some(b.evidence.trim().to_string()));
     a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.marked_on = ActiveValue::set(Some(Utc::now().date_naive()));
-    a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         d.pid,
@@ -418,7 +409,7 @@ async fn cosign(
         if e.to_string().contains("ccs_once") {
             conflict("that role has already co-signed")
         } else {
-            db_err(&e)
+            db_err(e)
         }
     })?;
     AuditModel::record_or_log(
@@ -483,7 +474,7 @@ async fn decide(
     a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -521,7 +512,7 @@ async fn new_version(
         .order_by_desc(decisions::Column::Version)
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     if latest.pid != d.pid {
         return Err(conflict("there is already a newer version"));
@@ -530,7 +521,7 @@ async fn new_version(
     if d.status != "decided" {
         let mut a: decisions::ActiveModel = d.clone().into();
         a.status = ActiveValue::set("superseded".to_string());
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+        a.update(&ctx.db).await.map_err(db_err)?;
     }
     let nd = decisions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -543,7 +534,7 @@ async fn new_version(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     put_criteria(
         &ctx,
         nd.pid,
@@ -580,7 +571,7 @@ pub(crate) async fn pack_section(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|p| include.contains(&p.pid))
         .map(|p| (p.pid, p.name))
@@ -590,7 +581,7 @@ pub(crate) async fn pack_section(
         .order_by_asc(decisions::Column::DecidedOn)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|d| {
             names.contains_key(&d.plan_pid)

@@ -23,17 +23,11 @@ use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
 
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::leveling::{self, Demand, Input, Params, Proposal, Resource};
 use crate::models::visibility as vis_models;
 use crate::workflow::{Category, category_of};
-
-fn unprocessable(message: &str) -> Error {
-    Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable_entity", message),
-    )
-}
 
 fn conflict(code: &str, message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new(code, message))

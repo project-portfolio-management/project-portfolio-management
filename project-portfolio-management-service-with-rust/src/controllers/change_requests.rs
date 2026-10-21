@@ -16,23 +16,14 @@ use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
 use super::governance::find_item;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::change_requests::{self as rules, Action};
 use crate::models::_entities::{change_request_risks, change_requests, issues, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Edit};
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 fn actor_of(caller: &MaybeAuthUser) -> String {
     caller
@@ -46,14 +37,14 @@ fn checks_apply() -> bool {
 }
 
 async fn find_cr(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<change_requests::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     change_requests::Entity::find()
         .filter(change_requests::Column::Pid.eq(pid))
         .filter(change_requests::Column::PlanPid.eq(plan))
         .filter(change_requests::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)
 }
 
@@ -63,7 +54,7 @@ async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> 
         .filter(issues::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|i| i.pid)
         .collect();
@@ -71,7 +62,7 @@ async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> 
         .filter(change_request_risks::Column::ChangeRequestPid.eq(cr))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|r| r.risk_pid)
         .collect();
@@ -193,7 +184,7 @@ async fn create(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -246,7 +237,7 @@ async fn update(
             .filter(|s| !s.is_empty()),
     );
     a.edits = ActiveValue::set(edits_json(&b));
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -303,7 +294,7 @@ async fn list(
         .limit(1000)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
         "change_requests": rows.iter().map(|c| view(c, None)).collect::<Vec<_>>(),
@@ -342,7 +333,7 @@ async fn step(
     let mut a: change_requests::ActiveModel = row.into();
     a.status = ActiveValue::set(to.to_string());
     edit(&mut a);
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -518,7 +509,7 @@ async fn put_links(
     if b.issue_pids.len() > 200 || b.risk_pids.len() > 200 {
         return Err(unprocessable("at most 200 issues and 200 risks"));
     }
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     // Every issue and risk must belong to this plan and exist.
     for i in &b.issue_pids {
         let found = issues::Entity::find()
@@ -527,7 +518,7 @@ async fn put_links(
             .filter(issues::Column::DeletedAt.is_null())
             .one(&tx)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .ok_or_else(|| unprocessable(&format!("issue {i} is not an issue of this plan")))?;
         if found.change_request_pid.is_some_and(|c| c != row.pid) {
             return Err(refuse(
@@ -543,7 +534,7 @@ async fn put_links(
         .filter(risks::Column::Pid.is_in(b.risk_pids.clone()))
         .count(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let distinct_risks: std::collections::HashSet<_> = b.risk_pids.iter().collect();
     if known_risks != distinct_risks.len() as u64 {
         return Err(unprocessable("every risk must be a risk of this plan"));
@@ -558,7 +549,7 @@ async fn put_links(
         .filter(issues::Column::Pid.is_not_in(b.issue_pids.clone()))
         .exec(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if !b.issue_pids.is_empty() {
         issues::Entity::update_many()
             .col_expr(
@@ -568,13 +559,13 @@ async fn put_links(
             .filter(issues::Column::Pid.is_in(b.issue_pids.clone()))
             .exec(&tx)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
     }
     change_request_risks::Entity::delete_many()
         .filter(change_request_risks::Column::ChangeRequestPid.eq(row.pid))
         .exec(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     for r in distinct_risks {
         change_request_risks::ActiveModel {
             change_request_pid: ActiveValue::set(row.pid),
@@ -583,9 +574,9 @@ async fn put_links(
         }
         .insert(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     }
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -663,7 +654,7 @@ async fn baseline(
     let taken = super::schedule_baselines::take(&ctx, &caller, plan.pid, reason).await?;
     let mut a: change_requests::ActiveModel = row.into();
     a.baseline_pid = ActiveValue::set(Some(taken.pid));
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,
@@ -706,7 +697,7 @@ async fn portfolio(
         .order_by_asc(change_requests::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();

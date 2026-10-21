@@ -102,7 +102,7 @@ async fn find_visible(
     family: Family,
     pid: &str,
 ) -> Result<frameworks::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let row = frameworks::Entity::find()
         .filter(frameworks::Column::Pid.eq(pid))
         .filter(frameworks::Column::Family.eq(family.token()))

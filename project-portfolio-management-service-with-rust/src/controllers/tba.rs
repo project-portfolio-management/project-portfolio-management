@@ -18,6 +18,7 @@ use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
+use super::find_live_task as find_task;
 use crate::models::_entities::{plans, task_transitions, tasks};
 use crate::tba;
 
@@ -88,19 +89,6 @@ fn refuse(reason: &str) -> Error {
         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
         loco_rs::controller::ErrorDetail::new("unprocessable_entity", reason),
     )
-}
-
-/// Find one live task of one plan, or `404`.
-async fn find_task(ctx: &AppContext, plan_pid: Uuid, raw: &str) -> Result<tasks::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-        .ok_or(Error::NotFound)
 }
 
 /// The task's clock: created and (first) finished.

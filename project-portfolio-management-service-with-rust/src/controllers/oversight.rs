@@ -487,7 +487,7 @@ async fn auditor_trail(
         find = find.filter(audit_logs::Column::Action.eq(action));
     }
     if let Some(entity) = query.entity.as_deref() {
-        let pid = Uuid::parse_str(entity).map_err(|_| Error::NotFound)?;
+        let pid = super::parse_pid(entity)?;
         find = find.filter(audit_logs::Column::EntityPid.eq(pid));
     }
     if let Some(from) = query

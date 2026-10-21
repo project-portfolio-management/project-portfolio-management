@@ -66,7 +66,7 @@ fn fact_of(row: &key_results::Model) -> Option<rules::KeyResultFact> {
 }
 
 async fn find_objective(ctx: &AppContext, raw: &str) -> Result<objectives::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(raw)?;
     objectives::Entity::find()
         .filter(objectives::Column::Pid.eq(pid))
         .filter(objectives::Column::DeletedAt.is_null())
@@ -77,7 +77,7 @@ async fn find_objective(ctx: &AppContext, raw: &str) -> Result<objectives::Model
 }
 
 async fn find_key_result(ctx: &AppContext, raw: &str) -> Result<key_results::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(raw)?;
     key_results::Entity::find()
         .filter(key_results::Column::Pid.eq(pid))
         .filter(key_results::Column::DeletedAt.is_null())
@@ -319,7 +319,7 @@ async fn plan_okr(
     State(ctx): State<AppContext>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let plan_pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let plan_pid = super::parse_pid(&pid)?;
     let plan = plans::Entity::find()
         .filter(plans::Column::Pid.eq(plan_pid))
         .filter(plans::Column::DeletedAt.is_null())

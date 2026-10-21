@@ -14,22 +14,12 @@ use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::financial_year::{self as rules, Line, Row};
 use crate::models::_entities::{budget_lines, funding_sources, plans};
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -64,7 +54,7 @@ async fn create_source(
     let dup = funding_sources::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .any(|s| s.name.to_lowercase() == name.to_lowercase());
     if dup {
@@ -83,7 +73,7 @@ async fn create_source(
     }
     .insert(&ctx.db)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         row.pid,
@@ -102,7 +92,7 @@ async fn list_sources(State(ctx): State<AppContext>) -> Result<Response> {
     let mut rows = funding_sources::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     rows.sort_by_key(|r| r.name.to_lowercase());
     format::json(serde_json::json!({
         "funding_sources": rows.iter().map(|r| serde_json::json!({
@@ -127,11 +117,11 @@ async fn update_source(
         .filter(funding_sources::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     let mut a: funding_sources::ActiveModel = row.into();
     a.active = ActiveValue::set(b.active);
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         row.pid,
@@ -160,7 +150,7 @@ pub(crate) async fn check_source(ctx: &AppContext, pid: Uuid) -> Result<()> {
         .filter(funding_sources::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .is_some_and(|s| s.active);
     if ok {
         Ok(())
@@ -186,14 +176,14 @@ async fn set_line_source(
         .filter(budget_lines::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     if let Some(s) = b.funding_source_pid {
         check_source(&ctx, s).await?;
     }
     let mut a: budget_lines::ActiveModel = row.into();
     a.funding_source_pid = ActiveValue::set(b.funding_source_pid);
-    a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record(
         &ctx.db,
         plan.pid,
@@ -227,7 +217,7 @@ async fn portfolio_money(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();
@@ -289,12 +279,12 @@ pub(crate) async fn money_section(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     let names: HashMap<Uuid, String> = funding_sources::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|s| (s.pid, s.name))
         .collect();
@@ -302,7 +292,7 @@ pub(crate) async fn money_section(
         .filter(budget_lines::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut lines: Vec<Line> = Vec::new();
     let mut unsourced: Vec<serde_json::Value> = Vec::new();
     for b in rows.iter().filter(|b| include.contains(&b.plan_pid)) {

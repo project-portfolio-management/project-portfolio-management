@@ -17,6 +17,8 @@ use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::db_err;
+use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::delivery_confidence::{self as rules, Assessment, Parts};
 use crate::models::_entities::{
@@ -24,18 +26,6 @@ use crate::models::_entities::{
     delivery_exceptions as exceptions, objective_links, objectives, plans, risks, strategic_aims,
 };
 use crate::models::audit_logs::Model as AuditModel;
-
-fn unprocessable(message: &str) -> Error {
-    refuse(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "unprocessable_entity",
-        message,
-    )
-}
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     super::plan_access::is_admin(caller.claims())
@@ -126,13 +116,13 @@ async fn set_confidence(
         ));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let previous = assessments::Entity::find()
         .filter(assessments::Column::PlanPid.eq(plan.pid))
         .order_by_desc(assessments::Column::Id)
         .one(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let row = assessments::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -145,7 +135,7 @@ async fn set_confidence(
     }
     .insert(&tx)
     .await
-    .map_err(|e| db_err(&e))?;
+    .map_err(db_err)?;
     AuditModel::record(
         &tx,
         row.pid,
@@ -167,14 +157,14 @@ async fn set_confidence(
             .filter(exceptions::Column::Status.eq("open"))
             .one(&tx)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         let now = Utc::now();
         exception = Some(if let Some(open) = open {
             if rules::worsens(&open.worst_value, &b.value) {
                 let mut a: exceptions::ActiveModel = open.clone().into();
                 a.worst_value = ActiveValue::set(b.value.clone());
                 a.worsened_count = ActiveValue::set(open.worsened_count + 1);
-                let updated = a.update(&tx).await.map_err(|e| db_err(&e))?;
+                let updated = a.update(&tx).await.map_err(db_err)?;
                 AuditModel::record(
                     &tx,
                     updated.pid,
@@ -202,7 +192,7 @@ async fn set_confidence(
             }
             .insert(&tx)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
             AuditModel::record(
                 &tx,
                 opened.pid,
@@ -215,7 +205,7 @@ async fn set_confidence(
             opened
         });
     }
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "assessment": assessment_json(&row),
         "exception": exception.map(|e| exception_json(&e, Utc::now(), rules::window_hours())),
@@ -234,7 +224,7 @@ async fn get_confidence(
         .order_by_asc(assessments::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let history: Vec<Assessment> = rows.iter().map(lite).collect();
     let period = Utc::now().format("%Y-%m").to_string();
     let shown = rules::shown(&history).map(|s| {
@@ -290,7 +280,7 @@ async fn list_exceptions(
         .limit(1000)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();
@@ -311,12 +301,12 @@ pub(crate) async fn find_exception(
     caller: &MaybeAuthUser,
     pid: &str,
 ) -> Result<exceptions::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     let row = exceptions::Entity::find()
         .filter(exceptions::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     // The same answer as an exception that does not exist when its plan is hidden from the caller.
     if !super::plan_access::readable_plans(ctx, caller, &[row.plan_pid])
@@ -381,8 +371,8 @@ async fn complete_exception(
     if let Some(d) = b.decide_by {
         a.decide_by = ActiveValue::set(Some(d));
     }
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
-    let merged = a.update(&tx).await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
+    let merged = a.update(&tx).await.map_err(db_err)?;
     let parts = Parts {
         cause: merged.cause.as_deref(),
         decision_needed: merged.decision_needed.as_deref(),
@@ -393,7 +383,7 @@ async fn complete_exception(
     let saved = if done && merged.completed_at.is_none() {
         let mut a: exceptions::ActiveModel = merged.into();
         a.completed_at = ActiveValue::set(Some(Utc::now().into()));
-        a.update(&tx).await.map_err(|e| db_err(&e))?
+        a.update(&tx).await.map_err(db_err)?
     } else {
         merged
     };
@@ -406,7 +396,7 @@ async fn complete_exception(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(exception_json(&saved, Utc::now(), rules::window_hours()))
 }
 
@@ -435,7 +425,7 @@ async fn decide_exception(
         ));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let done = exceptions::Entity::update_many()
         .col_expr(exceptions::Column::Status, Expr::value("closed"))
         .col_expr(exceptions::Column::ClosedAt, Expr::value(Utc::now()))
@@ -448,7 +438,7 @@ async fn decide_exception(
         .filter(exceptions::Column::Status.eq("open"))
         .exec(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if done.rows_affected == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -465,12 +455,12 @@ async fn decide_exception(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     let now = exceptions::Entity::find()
         .filter(exceptions::Column::Pid.eq(row.pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     format::json(exception_json(&now, Utc::now(), rules::window_hours()))
 }
@@ -492,20 +482,20 @@ async fn mark_aim(
     Path(pid): Path<String>,
     Json(b): Json<AimBody>,
 ) -> Result<Response> {
-    let pid = Uuid::parse_str(&pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(&pid)?;
     let objective = objectives::Entity::find()
         .filter(objectives::Column::Pid.eq(pid))
         .filter(objectives::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     let existing = strategic_aims::Entity::find()
         .filter(strategic_aims::Column::ObjectivePid.eq(objective.pid))
         .one(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     match (b.strategic, existing) {
         (true, None) => {
             strategic_aims::ActiveModel {
@@ -516,7 +506,7 @@ async fn mark_aim(
             }
             .insert(&tx)
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(db_err)?;
         }
         (false, Some(row)) => {
             // Unmarking also clears the primary flag of every programme that pointed at it.
@@ -525,8 +515,8 @@ async fn mark_aim(
                 .filter(objective_links::Column::ObjectivePid.eq(objective.pid))
                 .exec(&tx)
                 .await
-                .map_err(|e| db_err(&e))?;
-            row.delete(&tx).await.map_err(|e| db_err(&e))?;
+                .map_err(db_err)?;
+            row.delete(&tx).await.map_err(db_err)?;
         }
         _ => {}
     }
@@ -543,7 +533,7 @@ async fn mark_aim(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({ "objective_pid": objective.pid, "strategic": b.strategic }))
 }
 
@@ -566,30 +556,30 @@ async fn set_primary(
         .filter(strategic_aims::Column::ObjectivePid.eq(b.objective_pid))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .is_some();
     if !is_aim {
         return Err(unprocessable(
             "that objective is not marked as a strategic aim",
         ));
     }
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let tx = ctx.db.begin().await.map_err(db_err)?;
     objective_links::Entity::update_many()
         .col_expr(objective_links::Column::IsPrimary, Expr::value(false))
         .filter(objective_links::Column::PlanPid.eq(plan.pid))
         .exec(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let existing = objective_links::Entity::find()
         .filter(objective_links::Column::PlanPid.eq(plan.pid))
         .filter(objective_links::Column::ObjectivePid.eq(b.objective_pid))
         .one(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     if let Some(link) = existing {
         let mut a: objective_links::ActiveModel = link.into();
         a.is_primary = ActiveValue::set(true);
-        a.update(&tx).await.map_err(|e| db_err(&e))?;
+        a.update(&tx).await.map_err(db_err)?;
     } else {
         objective_links::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -601,7 +591,7 @@ async fn set_primary(
         }
         .insert(&tx)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     }
     AuditModel::record(
         &tx,
@@ -612,7 +602,7 @@ async fn set_primary(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(|e| db_err(&e))?;
+    tx.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({ "plan_pid": plan.pid, "primary_aim": b.objective_pid }))
 }
 
@@ -652,19 +642,16 @@ pub(crate) async fn build_map(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let programmes: Vec<&plans::Model> = all_plans
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
         .collect();
-    let risk_rows = risks::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let risk_rows = risks::Entity::find().all(&ctx.db).await.map_err(db_err)?;
     let budget_rows = budget_lines::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let deps = crate::models::visibility::all_dependencies(&ctx.db).await?;
     let scoped: Vec<plans::Model> = all_plans
         .iter()
@@ -676,7 +663,7 @@ pub(crate) async fn build_map(
         let marked: HashSet<Uuid> = strategic_aims::Entity::find()
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .map(|a| a.objective_pid)
             .collect();
@@ -684,7 +671,7 @@ pub(crate) async fn build_map(
             .filter(objectives::Column::DeletedAt.is_null())
             .all(&ctx.db)
             .await
-            .map_err(|e| db_err(&e))?
+            .map_err(db_err)?
             .into_iter()
             .filter(|o| marked.contains(&o.pid))
             .map(|o| (o.pid, o.title))
@@ -693,14 +680,14 @@ pub(crate) async fn build_map(
     let links = objective_links::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let statuses = super::programme_gates::status_map(ctx, today).await?;
     let (profiles, org_names) = super::programme_profile::all(ctx, include).await?;
     let history = assessments::Entity::find()
         .order_by_asc(assessments::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let mut by_plan: HashMap<Uuid, Vec<Assessment>> = HashMap::new();
     for h in &history {
         by_plan.entry(h.plan_pid).or_default().push(lite(h));
@@ -805,7 +792,7 @@ async fn portfolio_map(
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| p.pid)
         .collect();
@@ -828,7 +815,7 @@ pub(crate) async fn exceptions_section(
     let names: HashMap<Uuid, String> = plans::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| (p.pid, p.name))
         .collect();
@@ -836,7 +823,7 @@ pub(crate) async fn exceptions_section(
         .order_by_asc(exceptions::Column::OpenedAt)
         .all(ctx_db(ctx))
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .filter(|r| include.contains(&r.plan_pid))
         .collect();

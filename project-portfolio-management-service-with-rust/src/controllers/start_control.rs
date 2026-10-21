@@ -18,6 +18,7 @@ use sea_orm::QueryOrder;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
     allocations, plans, resource_roles, skill_pool_members as members, skill_pools,
@@ -25,10 +26,6 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::start_control::{self as rules, Refusal};
-
-fn db_err(e: &sea_orm::DbErr) -> Error {
-    Error::string(&e.to_string())
-}
 
 /// The routes.
 pub fn routes() -> Routes {
@@ -57,7 +54,7 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?;
+        .map_err(db_err)?;
     let statuses = super::programme_gates::status_map(ctx, today).await?;
     let in_delivery: Vec<(Uuid, String)> = all
         .iter()
@@ -115,7 +112,7 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     let pool_names: HashMap<Uuid, String> = skill_pools::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| (p.pid, p.name))
         .collect();
@@ -123,14 +120,14 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
         .filter(members::Column::Kind.eq("role"))
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|m| (m.value.to_lowercase(), m.pool_pid))
         .collect();
     let role_of: HashMap<String, String> = resource_roles::Entity::find()
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|r| (r.person_ref, r.role.to_lowercase()))
         .collect();
@@ -139,7 +136,7 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
         .filter(allocations::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
     {
         if !tree.contains(&a.plan_pid) || a.booking == "proposed" {
             continue;
@@ -205,7 +202,7 @@ async fn waiting(ctx: &AppContext) -> Result<Vec<queue::Model>> {
         .order_by_asc(queue::Column::Id)
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))
+        .map_err(db_err)
 }
 
 /// `GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing.
@@ -262,13 +259,13 @@ pub(crate) async fn gate(
         .filter(queue::Column::Status.eq("waiting"))
         .one(&ctx.db)
         .await
-        .map_err(|x| db_err(&x))?;
+        .map_err(db_err)?;
     let started = |entry: Option<queue::Model>| async move {
         if let Some(q) = entry {
             let mut a: queue::ActiveModel = q.into();
             a.status = ActiveValue::set("started".to_string());
             a.resolved_on = ActiveValue::set(Some(today));
-            a.update(&ctx.db).await.map_err(|x| db_err(&x))?;
+            a.update(&ctx.db).await.map_err(db_err)?;
         }
         Ok::<(), Error>(())
     };
@@ -291,7 +288,7 @@ pub(crate) async fn gate(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|x| db_err(&x))?;
+        .map_err(db_err)?;
         AuditModel::record_or_log(
             &ctx.db,
             plan.pid,
@@ -305,7 +302,7 @@ pub(crate) async fn gate(
     let position = if let Some(q) = entry {
         let mut a: queue::ActiveModel = q.clone().into();
         a.refusals = ActiveValue::set(text);
-        a.update(&ctx.db).await.map_err(|x| db_err(&x))?;
+        a.update(&ctx.db).await.map_err(db_err)?;
         q.id
     } else {
         queue::ActiveModel {
@@ -318,7 +315,7 @@ pub(crate) async fn gate(
         }
         .insert(&ctx.db)
         .await
-        .map_err(|x| db_err(&x))?
+        .map_err(db_err)?
         .id
     };
     // The place among the programmes the caller may read: a private plan is not counted for anyone else.
@@ -376,12 +373,12 @@ async fn withdraw(
         .filter(queue::Column::Status.eq("waiting"))
         .one(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .ok_or(Error::NotFound)?;
     let mut a: queue::ActiveModel = q.into();
     a.status = ActiveValue::set("withdrawn".to_string());
     a.resolved_on = ActiveValue::set(Some(Utc::now().date_naive()));
-    a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
+    a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         plan.pid,
@@ -403,7 +400,7 @@ async fn list_queue(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
-        .map_err(|e| db_err(&e))?
+        .map_err(db_err)?
         .into_iter()
         .map(|p| (p.pid, p.name))
         .collect();

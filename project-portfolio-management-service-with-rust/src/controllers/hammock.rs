@@ -20,22 +20,11 @@ use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use super::find_live_task as find_task;
 use crate::auth::MaybeAuthUser;
 use crate::hammock::{self as rules, Span};
 use crate::models::_entities::{hammock_links, plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
-
-async fn find_task(ctx: &AppContext, plan: Uuid, raw: &str) -> Result<tasks::Model> {
-    let pid = Uuid::parse_str(raw).map_err(|_| Error::NotFound)?;
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
-}
 
 #[derive(Debug, Deserialize)]
 struct EnableBody {
@@ -217,7 +206,7 @@ async fn remove_link(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let hammock = find_task(&ctx, plan.pid, &h_pid).await?;
-    let member = Uuid::parse_str(&member).map_err(|_| Error::NotFound)?;
+    let member = super::parse_pid(&member)?;
     let link = hammock_links::Entity::find()
         .filter(hammock_links::Column::HammockPid.eq(hammock.pid))
         .filter(hammock_links::Column::MemberPid.eq(member))

@@ -292,7 +292,7 @@ async fn list(
 }
 
 async fn find_attachment(ctx: &AppContext, pid: &str) -> Result<attachments::Model> {
-    let pid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+    let pid = super::parse_pid(pid)?;
     attachments::Entity::find()
         .filter(attachments::Column::Pid.eq(pid))
         .filter(attachments::Column::DeletedAt.is_null())

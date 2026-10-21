@@ -242,7 +242,14 @@ async fn update_proposal(
 /// # Errors
 ///
 /// When a database read fails.
-pub(crate) async fn asks_section(ctx: &AppContext, period: &str) -> Result<serde_json::Value> {
+/// An ask already promoted to a plan the pack leaves out (private or marked) is left out with it
+/// (CF-5): its title would otherwise name the hidden plan's work. An ask with no plan yet is
+/// portfolio-wide and stays.
+pub(crate) async fn asks_section(
+    ctx: &AppContext,
+    period: &str,
+    included: &std::collections::HashSet<Uuid>,
+) -> Result<serde_json::Value> {
     let rows = proposals::Entity::find()
         .filter(proposals::Column::ExternalAsk.eq(true))
         .filter(proposals::Column::DeletedAt.is_null())
@@ -252,6 +259,10 @@ pub(crate) async fn asks_section(ctx: &AppContext, period: &str) -> Result<serde
     let mut asks: Vec<serde_json::Value> = rows
         .iter()
         .filter(|p| p.created_at.format("%Y-%m").to_string() == period)
+        .filter(|p| {
+            p.promoted_plan_pid
+                .is_none_or(|plan| included.contains(&plan))
+        })
         .map(|p| {
             serde_json::json!({
                 "title": p.title, "status": p.status, "tradeoff": p.tradeoff,

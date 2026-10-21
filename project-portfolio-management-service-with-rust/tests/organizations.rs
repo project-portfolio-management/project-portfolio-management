@@ -306,6 +306,22 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(asks["asks"].as_array().unwrap().len(), 1, "{asks}");
         assert_eq!(asks["asks"][0]["tradeoff"], "Displaces the records migration by one quarter");
         assert_eq!(asks["without_named_tradeoff"], 0);
+        // CF-5: once the ask is a plan and that plan is private, the pack leaves the ask out with it.
+        let promoted: Value = with!(request.post(&format!("/api/proposals/{ap}/promote")), writer).await.json();
+        let ask_plan = promoted["plan_pid"].as_str().unwrap().to_string();
+        with!(request.put(&format!("/api/plans/{ask_plan}/access")), writer).json(&json!({ "private": true, "members": [] })).await.assert_status_ok();
+        // Another audience: this month's executive pack is still a draft, and the test drafts the
+        // escalation board's below.
+        let d4: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "partner" })).await.json();
+        let pack4: Value = with!(request.get(&format!("/api/director-packs/{}", d4["pid"].as_str().unwrap_or_else(|| panic!("{d4}")))), issuer).await.json();
+        assert_eq!(pack4["body"]["external_asks"]["asks"].as_array().unwrap().len(), 0, "{}", pack4["body"]["external_asks"]);
+        {
+            // Remove this extra draft so the partner pack drafted below is the month's first.
+            use project_portfolio_management::models::_entities::director_packs;
+            use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+            let d4_pid = uuid::Uuid::parse_str(d4["pid"].as_str().unwrap()).unwrap();
+            director_packs::Entity::delete_many().filter(director_packs::Column::Pid.eq(d4_pid)).exec(&_ctx.db).await.unwrap();
+        }
 
         // ── EX-1: register completeness, and "no register, no money" ──
         let reg: Value = with!(request.get("/api/register-completeness"), writer).await.json();
@@ -341,7 +357,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(reg["enforced"], true);
         unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED") };
         let d4: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "escalation_board" })).await.json();
-        let pack4: Value = with!(request.get(&format!("/api/director-packs/{}", d4["pid"].as_str().unwrap())), issuer).await.json();
+        let pack4: Value = with!(request.get(&format!("/api/director-packs/{}", d4["pid"].as_str().unwrap_or_else(|| panic!("{d4}")))), issuer).await.json();
         let rc = &pack4["body"]["data_quality"]["register_completeness"];
         assert!(rc["incomplete"].as_array().unwrap().iter().any(|p| p["name"] == "Care"), "the data-quality panel lists it: {rc}");
 

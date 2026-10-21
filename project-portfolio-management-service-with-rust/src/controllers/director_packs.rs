@@ -218,7 +218,7 @@ async fn compute_body(
     let benefits_view = super::benefit_validation::benefits_section(ctx, &included_set).await?;
     let heatmap = super::capacity_heatmap::pack_section(ctx, &included_set, cut_off).await?;
     let signoffs = super::milestone_signoffs::pack_section(ctx, &included_set).await?;
-    let asks = super::governance::asks_section(ctx, period).await?;
+    let asks = super::governance::asks_section(ctx, period, &included_set).await?;
     let register = super::register::pack_section(ctx, &included_set).await?;
     let key_persons = super::key_persons::pack_section(ctx).await?;
     let triage = super::thresholds::pack_section(ctx, &included_set, period).await?;

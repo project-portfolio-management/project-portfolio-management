@@ -1857,9 +1857,10 @@ can give a wrong answer ([plan.md §66](plan.md)).
   **Acceptance:** request tests for the refused callers; editing a framework
   creates a new version, and the plans that follow it keep theirs until they
   move.
-- [ ] **CF-5 (S) — Privacy on the EX-13 "new asks" and the RBS drill-down.**
+- [x] **CF-5 (S) — Privacy on the EX-13 "new asks" and the RBS drill-down.**
   **Acceptance:** the private-aggregates census covers both, and a non-member's
   answer is byte-identical before and after a private proposal or task appears.
+  **Built 2026-10-21.** Asks: `asks_section(ctx, period, included)` drops an ask whose `promoted_plan_pid` the pack leaves out; tested in `tests/organizations.rs` (fails with the filter removed). Drill-down: no code change (it already used `hidden_plans`); tested at the end of `tests/private_aggregates.rs` with a resource-manager token. **Deviation, stated:** checked by "not present" rather than byte-identical before/after, because the pack is a drafted document (versions, dates) and the drill-down's answer for a person with tasks in both plans necessarily differs from an empty one; an ask not yet promoted has no plan and stays in every pack.
 
 ## New capabilities (NC-n)
 

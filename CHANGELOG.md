@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 21 October (after 0.2.0)
 
+- **The monthly pack no longer names a private plan's work through an external ask (CF-5).** An ask that has become a private plan is left out with the plan. The resource drill-down was already correct and is now tested. Verified: both database tests, and the first fails without the fix.
 - **A remaining English question in the objectives view is translated, and a test now catches literal text in browser dialogs (CQ-23, part).** Welsh machine-written, unreviewed.
 - **Two earned-value snapshots at the same moment no longer fail (CQ-11, part), and two lists make one query instead of one per row.** Verified: a request test that sends two snapshots at once, and the database suite. **Not done:** three more places the research pass named were not reviewed.
 - **Documents brought back in line with the code (CQ-25).** Corrected: the claim that link routes skip the private-plan check (they do not; a test now proves it), that change requests are not built, that no load test is published, that the director pack, escalation and critical-chain work is unbuilt, that the backup plan and DPIA are open, the UI client's "13 locales" header, and the UI package's old name. `operations/deployment.md` now lists every scheduled task. Verified: the link checker and a unit test.

@@ -181,8 +181,8 @@ const PRIVILEGED: &[&str] = &[
     // plans the caller cannot read.
     "/api/access-review",
     // What named people work on: administrators and resource managers only. It filters out tasks in plans
-    // the caller cannot read the same way `/api/me/tasks` does, but this census only checks the 403/200
-    // split for it; the private-plan filter itself has no test of its own yet.
+    // the caller cannot read the same way `/api/me/tasks` does; this census checks the 403/200 split, and
+    // the end of the test checks the private-plan filter itself (CF-5).
     "/api/resource-plan/role-tasks?role=Engineer",
 ];
 
@@ -658,6 +658,23 @@ async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
         let proposals = request.get("/api/proposals").add_header(bob.0.clone(), bob.1.clone()).await.text();
         assert!(!proposals.contains("Secret proposal"), "{proposals}");
         let _ = (public.task, secret.task);
+
+        // CF-5: the role drill-down shows a resource manager who is not a member none of the
+        // private plan's tasks; an administrator sees them.
+        let rm = auth_header(&mint(&kid, "3f2c6b7e-0000-4000-8000-0000000000c5", &["write"], &["resource_manager"]));
+        let drilled = format!("person:{}", uuid::Uuid::new_v4());
+        request.put("/api/resource-roles").add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "person_ref": drilled, "role": "cf5-drill" })).await.assert_status_ok();
+        for (plan, title) in [(&public.plan, "CF5 public task"), (&secret.plan, "CF5 secret task")] {
+            request.post(&format!("/api/plans/{plan}/tasks")).add_header(admin.0.clone(), admin.1.clone())
+                .json(&json!({ "title": title, "assignee_ref": drilled })).await.assert_status_ok();
+        }
+        let for_rm = request.get("/api/resource-plan/role-tasks?role=cf5-drill").add_header(rm.0.clone(), rm.1.clone()).await;
+        assert_eq!(for_rm.status_code(), 200, "{}", for_rm.text());
+        assert!(for_rm.text().contains("CF5 public task"), "{}", for_rm.text());
+        assert!(!for_rm.text().contains("CF5 secret task") && !for_rm.text().contains(&secret.plan), "{}", for_rm.text());
+        let for_admin = request.get("/api/resource-plan/role-tasks?role=cf5-drill").add_header(admin.0.clone(), admin.1.clone()).await.text();
+        assert!(for_admin.contains("CF5 secret task"), "{for_admin}");
     })
     .await;
 }

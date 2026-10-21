@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 21 October
 
+- **A task page with its links.** `/plans/[pid]/tasks/[tpid]` (the address the work breakdown already linked to, which
+  had no page) shows a task's status, due date, assignee and description, and lets you add and remove its links, such
+  as the Jira or Linear issue it is tracked as. The links form is now one component shared with the plan's links page.
+  Verified: type check, unit tests (753), a browser test with an axe audit, and the Welsh page check. **Not built:**
+  editing the task here, links shown on the board, or any sync with the tool. Welsh strings are machine-written and unreviewed.
+
 - **Links on a task.** `POST/GET /api/plans/{pid}/tasks/{tpid}/links` and `DELETE …/{lpid}` (POST twin) give a task its
   own links, the usual case being the Jira, Linear or other issue it is tracked as (`ticket` with `system` and
   `external_id`). Same rules as a plan link; a task's links are not in the plan's list, the same URL may sit on the plan

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — task page with links (LT-8, 2026-10-21)
+
+`/plans/[pid]/tasks/[tpid]` shows a task and its links (shared `LinksPanel` component). Not built: editing the task, links on the board. Welsh machine-written, unreviewed.
+
 ### Added — ways of working, governance framework and links pages (FR-52, LT-8, 2026-10-20)
 
 `/plans/[pid]/ways-of-working`, `/governance-framework` and `/links`, from the plan page. Not built: editing ceremonies, definitions, decision rights and forums (kept on save, not editable); editing shared records. Welsh machine-written, unreviewed.

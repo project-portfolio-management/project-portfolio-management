@@ -3144,14 +3144,18 @@ export class PpmClient {
       body: { framework_pid: frameworkPid },
     });
   }
-  planLinks(pid: string): Promise<PlanLink[]> {
-    return this.http.get(`/api/plans/${pid}/links`);
+  /** A plan's links, or a task's when `taskPid` is given. */
+  planLinks(pid: string, taskPid?: string): Promise<PlanLink[]> {
+    return this.http.get(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`);
   }
-  addPlanLink(pid: string, body: { kind: string; url: string; label: string; system?: string; external_id?: string }): Promise<PlanLink> {
-    return this.http.post(`/api/plans/${pid}/links`, { body });
+  addPlanLink(pid: string, body: { kind: string; url: string; label: string; system?: string; external_id?: string }, taskPid?: string): Promise<PlanLink> {
+    return this.http.post(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`, { body });
   }
-  removePlanLink(pid: string, lpid: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${pid}/links/${lpid}/delete`, { body: {} });
+  removePlanLink(pid: string, lpid: string, taskPid?: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links/${lpid}/delete`, { body: {} });
+  }
+  getTask(pid: string, taskPid: string): Promise<Task> {
+    return this.http.get(`/api/plans/${pid}/tasks/${taskPid}`);
   }
   planTolerances(pid: string): Promise<TolerancePicture> {
     return this.http.get(`/api/plans/${pid}/tolerances`);

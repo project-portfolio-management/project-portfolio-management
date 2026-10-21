@@ -109,3 +109,32 @@ test("links to Jira and Trello are added, kept on their own domain, and removed"
   await page.getByRole("button", { name: "Remove Delivery board" }).click();
   await expect(page.getByText("No links yet.")).toBeVisible();
 });
+
+test("a task shows its status and keeps its own links to the issue it is tracked as", async ({ page }) => {
+  const TASK = "33333333-3333-4333-8333-333333333333";
+  let links: unknown[] = [];
+  let sent: unknown = null;
+  await page.route(`**/api/plans/${PID}/tasks/${TASK}`, (r) =>
+    r.fulfill({ json: { pid: TASK, title: "Fix login", description: null, status: "in_progress", assignee_ref: null, points: null, due_date: "2026-11-01", sprint_pid: null, created_at: "2026-10-01T00:00:00Z", status_changed_at: "2026-10-01T00:00:00Z", done_at: null, blocked_days: null } }),
+  );
+  await page.route(`**/api/plans/${PID}/tasks/${TASK}/links`, (r) => {
+    if (r.request().method() === "POST") {
+      sent = r.request().postDataJSON();
+      links = [{ pid: "l9", ...(sent as object) }];
+      return r.fulfill({ json: links[0] });
+    }
+    return r.fulfill({ json: links });
+  });
+  await page.goto(`/en-001/plans/${PID}/tasks/${TASK}`);
+  await expect(page.getByRole("heading", { name: "Fix login" })).toBeVisible();
+  await expect(page.getByText("In progress")).toBeVisible();
+  await page.getByLabel("Label").fill("PPM-7");
+  await page.getByLabel("Address (http or https)").fill("https://acme.atlassian.net/browse/PPM-7");
+  await page.getByLabel("Kind").selectOption("ticket");
+  await page.getByLabel("External tool").selectOption("jira");
+  await page.getByLabel("Its identifier there").fill("PPM-7");
+  await page.getByRole("button", { name: "Add the link" }).click();
+  expect(sent).toEqual({ kind: "ticket", url: "https://acme.atlassian.net/browse/PPM-7", label: "PPM-7", system: "jira", external_id: "PPM-7" });
+  await expect(page.getByRole("link", { name: "PPM-7" })).toBeVisible();
+  await audit(page);
+});

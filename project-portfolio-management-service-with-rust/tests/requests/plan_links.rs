@@ -150,3 +150,42 @@ async fn a_plan_links_into_jira_trello_asana_linear_and_monday() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_task_links_to_its_issue_without_touching_the_plans_own_links() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Task links" })).await.json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let other: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Elsewhere" })).await.json();
+        let o = other["pid"].as_str().expect("pid").to_string();
+        let task: Value = request.post(&format!("/api/plans/{p}/tasks")).json(&json!({ "title": "Fix login" })).await.json();
+        let t = task["pid"].as_str().expect("task pid").to_string();
+        let issue = json!({ "kind": "ticket", "url": "https://acme.atlassian.net/browse/PPM-7", "label": "PPM-7", "system": "jira", "external_id": "PPM-7" });
+
+        let made: Value = request.post(&format!("/api/plans/{p}/tasks/{t}/links")).json(&issue).await.json();
+        assert_eq!((made["system"].as_str(), made["external_id"].as_str(), made["task_pid"].as_str()), (Some("jira"), Some("PPM-7"), Some(t.as_str())));
+        assert_eq!(request.post(&format!("/api/plans/{p}/tasks/{t}/links")).json(&issue).await.status_code(), 409, "once per task");
+
+        let on_task: Value = request.get(&format!("/api/plans/{p}/tasks/{t}/links")).await.json();
+        assert_eq!(on_task.as_array().map(Vec::len), Some(1));
+        let on_plan: Value = request.get(&format!("/api/plans/{p}/links")).await.json();
+        assert_eq!(on_plan.as_array().map(Vec::len), Some(0), "a task's link is not the plan's");
+        request.post(&format!("/api/plans/{p}/links")).json(&issue).await.assert_status_ok();
+
+        // The same task cannot be reached through another plan; the rules of a plan link apply.
+        assert_eq!(request.get(&format!("/api/plans/{o}/tasks/{t}/links")).await.status_code(), 404);
+        let bad = json!({ "kind": "tracker", "url": "https://eviltrello.com/b/x", "label": "x", "system": "trello" });
+        assert_eq!(request.post(&format!("/api/plans/{p}/tasks/{t}/links")).json(&bad).await.status_code(), 422);
+
+        // Removing it from the plan's list finds nothing; from the task's, removes it.
+        let lpid = made["pid"].as_str().expect("link pid");
+        assert_eq!(request.post(&format!("/api/plans/{p}/links/{lpid}/delete")).await.status_code(), 404);
+        request.post(&format!("/api/plans/{p}/tasks/{t}/links/{lpid}/delete")).await.assert_status_ok();
+        let after: Value = request.get(&format!("/api/plans/{p}/tasks/{t}/links")).await.json();
+        assert_eq!(after.as_array().map(Vec::len), Some(0));
+    })
+    .await;
+}

@@ -2397,6 +2397,7 @@ mod tests {
         "/api/comments",
         "/api/comments/{pid}/history",
         "/api/plans/{pid}/links",
+        "/api/plans/{pid}/tasks/{tpid}/links",
         "/api/plans/{pid}/goals",
     ];
 

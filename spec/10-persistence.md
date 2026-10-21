@@ -64,9 +64,10 @@ mutation (§10.2).
   `tracker`/`other`), `url`, `label`, `system?` (CHECK in `jira`/`trello`/`asana`/
   `linear`/`monday`/`clickup`/`azure_devops`/`github`/`other`; a `tracker` link must
   have one), `external_id?` (that system's own key or board id, migration
-  `m20261020_000081`), `created_by?`, `deleted_at`; partial unique
-  index `plan_links_one (plan_pid, url)` among live rows (migration
-  `m20261003_000020`).
+  `m20261020_000081`), `task_pid?` (the task of the plan the link belongs to; null for a plan's own link,
+  migration `m20261021_000084`), `created_by?`, `deleted_at`; partial unique
+  index `plan_links_one (plan_pid, coalesce(task_pid, nil), url)` among live rows (created by
+  `m20261003_000020`, replaced by `m20261021_000084`).
 - **`frameworks`** and **`plan_frameworks`** (built, FR-52) — named, reusable
   ways of working and governance frameworks. `frameworks`: `family` (CHECK
   `ways_of_working`/`governance`), `name` (1 to 120 characters), `description?`, `body`

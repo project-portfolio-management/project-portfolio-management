@@ -341,6 +341,8 @@ and returns it; it never fetches or renders one.
 | POST | `/api/plans/{pid}/links` | Add a typed link |
 | GET | `/api/plans/{pid}/links` | List the plan's links |
 | DELETE | `/api/plans/{pid}/links/{lpid}` | Soft-delete (POST twin `…/{lpid}/delete`) |
+| POST / GET | `/api/plans/{pid}/tasks/{tpid}/links` | Add or list a **task's** links (same body and rules; a task's link is not in the plan's list) |
+| DELETE | `/api/plans/{pid}/tasks/{tpid}/links/{lpid}` | Soft-delete a task's link (POST twin `…/{lpid}/delete`) |
 
 **Not built: the cross-service write-side (T-7).** There is no
 `entity_links` entity, table or route and no `linked` / `unlinked`

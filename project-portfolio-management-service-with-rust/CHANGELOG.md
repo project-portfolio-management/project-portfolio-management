@@ -11,6 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Task links (LT-8): `plan_links.task_pid` (migration `m20261021_000084`, replaces the uniqueness index); `POST/GET /api/plans/{pid}/tasks/{tpid}/links` and `DELETE`/POST-twin removal in `controllers/plan_links.rs`. API only; no screen.
 - Escalation notifications (FR-54): `controllers/escalations.rs` `tell` writes an in-app `escalation` notification to the raiser and `owner_ref` on each step (not to the actor); `escalation` added to the notification kinds. No email; no opt-out test.
 - Escalate red tolerances (FR-54): `POST /api/plans/{pid}/tolerances/escalate` raises one `tolerance` escalation per red dimension with none live, at the first governance-path level; idempotent; a person asks, nothing raises one on its own. `controllers/escalations.rs` gained a shared `insert`. Not done: automatic raising, notification.
 - Project escalations (FR-54): `POST/GET /api/plans/{pid}/escalations`, `GET …/{epid}` (with history), `POST …/{epid}/acknowledge|raise-level|resolve|withdraw`, `GET /api/escalations`. Raised at a level of the governance framework's escalation path (own, else the nearest ancestor's); an append-only history protected by a trigger. Tolerances report `open_escalations` and `escalation_needed`. Migration `m20261020_000083_escalations`. `controllers::frameworks::in_force` and `escalation_path` expose the framework in force to other controllers.

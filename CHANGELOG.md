@@ -15,6 +15,15 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 21 October
+
+- **Links on a task.** `POST/GET /api/plans/{pid}/tasks/{tpid}/links` and `DELETE …/{lpid}` (POST twin) give a task its
+  own links, the usual case being the Jira, Linear or other issue it is tracked as (`ticket` with `system` and
+  `external_id`). Same rules as a plan link; a task's links are not in the plan's list, the same URL may sit on the plan
+  and on a task, and a task holds at most 100. Verified: one request test; the OpenAPI, paging and private-data
+  censuses pass. **Not built:** a screen for them (API only); showing a task's links on the board or WBS; any sync
+  with the external tool (the service stores the address and never fetches it).
+
 ### 20 October
 
 - **Dependency advisories.** `cargo deny` began failing on three new advisories (RUSTSEC-2026-0381, -0382, -0383:

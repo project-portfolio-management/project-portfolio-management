@@ -22,6 +22,8 @@ pub struct Model {
     pub system: Option<String>,
     /// That system's own identifier for the thing (a Jira key, a board id).
     pub external_id: Option<String>,
+    /// The task of the plan this link belongs to, when it is a task's link rather than the plan's.
+    pub task_pid: Option<Uuid>,
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }

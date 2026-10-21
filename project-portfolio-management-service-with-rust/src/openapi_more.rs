@@ -837,6 +837,10 @@ fn link_paths() -> Value {
     let pid = vec![uuid_param("pid")];
     let mut with_link = pid.clone();
     with_link.push(uuid_param("lpid"));
+    let mut task_pid = pid.clone();
+    task_pid.push(uuid_param("tpid"));
+    let mut task_with_link = task_pid.clone();
+    task_with_link.push(uuid_param("lpid"));
     json!({
         "/api/plans/{pid}/links": {
             "post": op("links", "Link a plan to where its real documents live",
@@ -844,6 +848,22 @@ fn link_paths() -> Value {
                 pid.clone(), &[("200", "The link"), ("404", "Unknown plan"), ("409", "Already linked"), ("422", "Unknown kind or system, a system without a tracker or ticket link, a tracker without a system, a hosted system on the wrong domain, a bad external_id, an unsafe or over-long URL, a blank label, or too many links")]),
             "get": op("links", "A plan's links",
                 "The plan's live links, oldest first. `?system=` keeps only the links into one tracker (for example jira); `?kind=` one kind.", { let mut p = pid; p.push(query("system", false, "One of the tracker systems")); p.push(query("kind", false, "One link kind")); p }, &[("200", "Links"), ("404", "Unknown plan"), ("422", "Unknown system")])
+        },
+        "/api/plans/{pid}/tasks/{tpid}/links": {
+            "post": op("links", "Link a task to its issue in an external tool",
+                "Same body and rules as a plan link (a `ticket` link with a `system` such as jira or linear and the issue's `external_id` is the usual case). The link belongs to the task: it does not appear in the plan's own list, and the same URL may be linked from the plan and from a task. A task holds at most 100 links; the service stores the address and never fetches it or syncs with the tool.",
+                task_pid.clone(), &[("200", "The link"), ("404", "Unknown plan or task"), ("409", "Already linked from the task"), ("422", "As for a plan link, or too many links")]),
+            "get": op("links", "A task's links",
+                "The task's live links, oldest first. `?system=` and `?kind=` narrow as for a plan.", { let mut p = task_pid.clone(); p.push(query("system", false, "One of the tracker systems")); p.push(query("kind", false, "One link kind")); p }, &[("200", "Links"), ("404", "Unknown plan or task"), ("422", "Unknown system")])
+        },
+        "/api/plans/{pid}/tasks/{tpid}/links/{lpid}": {
+            "delete": op("links", "Remove a task's link (soft-delete)", "Audited.", task_with_link.clone(),
+                &[("200", "Removed"), ("404", "Unknown plan, task or link")])
+        },
+        "/api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete": {
+            "post": op("links", "Remove a task's link (POST twin)",
+                "The POST twin of DELETE: under the default policy DELETE needs the admin attribute. Same behaviour.", task_with_link,
+                &[("200", "Removed"), ("404", "Unknown plan, task or link")])
         },
         "/api/plans/{pid}/links/{lpid}": {
             "delete": op("links", "Remove a link (soft-delete)", "Audited.", with_link.clone(),

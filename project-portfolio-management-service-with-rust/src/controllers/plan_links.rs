@@ -1,4 +1,4 @@
-//! Typed links on a plan (LT-8). Pure rules in [`crate::plan_links`]. The
+//! Typed links on a plan, or on one of its tasks (LT-8). Pure rules in [`crate::plan_links`]. The
 //! service stores a link and returns it; it never fetches or renders one.
 
 use super::{db_err, unprocessable};
@@ -15,9 +15,14 @@ use crate::models::_entities::plan_links;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::plan_links as rules;
 
-async fn live(ctx: &AppContext, plan: Uuid) -> Result<Vec<plan_links::Model>> {
+/// The live links of a plan (`task` is `None`) or of one of its tasks.
+async fn live(ctx: &AppContext, plan: Uuid, task: Option<Uuid>) -> Result<Vec<plan_links::Model>> {
     plan_links::Entity::find()
         .filter(plan_links::Column::PlanPid.eq(plan))
+        .filter(match task {
+            Some(t) => plan_links::Column::TaskPid.eq(t),
+            None => plan_links::Column::TaskPid.is_null(),
+        })
         .filter(plan_links::Column::DeletedAt.is_null())
         .order_by_asc(plan_links::Column::Id)
         .all(&ctx.db)
@@ -48,6 +53,29 @@ async fn add_link(
     Json(b): Json<LinkBody>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
+    add(&ctx, &caller, plan.pid, None, b).await
+}
+
+/// `POST /api/plans/{pid}/tasks/{tpid}/links`.
+#[debug_handler]
+async fn add_task_link(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, tpid)): Path<(String, String)>,
+    Json(b): Json<LinkBody>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let task = super::engineering::find_task(&ctx, plan.pid, &tpid).await?;
+    add(&ctx, &caller, plan.pid, Some(task.pid), b).await
+}
+
+async fn add(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    task: Option<Uuid>,
+    b: LinkBody,
+) -> Result<Response> {
     let problems = rules::problems(
         &b.kind,
         &b.url,
@@ -58,10 +86,11 @@ async fn add_link(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let existing = live(&ctx, plan.pid).await?;
+    let existing = live(ctx, plan, task).await?;
     if existing.len() >= rules::MAX_PER_PLAN {
         return Err(unprocessable(&format!(
-            "a plan holds at most {} links",
+            "{} holds at most {} links",
+            if task.is_some() { "a task" } else { "a plan" },
             rules::MAX_PER_PLAN
         )));
     }
@@ -73,7 +102,8 @@ async fn add_link(
     }
     let row = plan_links::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
+        plan_pid: ActiveValue::set(plan),
+        task_pid: ActiveValue::set(task),
         kind: ActiveValue::set(b.kind.clone()),
         url: ActiveValue::set(b.url.clone()),
         label: ActiveValue::set(b.label.trim().to_string()),
@@ -109,7 +139,28 @@ async fn list_links(
     Query(q): Query<ListQuery>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let mut rows = live(&ctx, plan.pid).await?;
+    filtered(&ctx, plan.pid, None, &q).await
+}
+
+/// `GET /api/plans/{pid}/tasks/{tpid}/links?system=&kind=`.
+#[debug_handler]
+async fn list_task_links(
+    State(ctx): State<AppContext>,
+    Path((pid, tpid)): Path<(String, String)>,
+    Query(q): Query<ListQuery>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let task = super::engineering::find_task(&ctx, plan.pid, &tpid).await?;
+    filtered(&ctx, plan.pid, Some(task.pid), &q).await
+}
+
+async fn filtered(
+    ctx: &AppContext,
+    plan: Uuid,
+    task: Option<Uuid>,
+    q: &ListQuery,
+) -> Result<Response> {
+    let mut rows = live(ctx, plan, task).await?;
     if let Some(system) = q.system.as_deref() {
         if !rules::SYSTEMS.contains(&system) {
             return Err(unprocessable(&format!(
@@ -133,10 +184,36 @@ async fn remove_link(
     Path((pid, lpid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let lpid = Uuid::parse_str(&lpid).map_err(|_| Error::NotFound)?;
+    remove(&ctx, &caller, plan.pid, None, &lpid).await
+}
+
+/// `POST /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete` (and `DELETE`).
+#[debug_handler]
+async fn remove_task_link(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, tpid, lpid)): Path<(String, String, String)>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let task = super::engineering::find_task(&ctx, plan.pid, &tpid).await?;
+    remove(&ctx, &caller, plan.pid, Some(task.pid), &lpid).await
+}
+
+async fn remove(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    task: Option<Uuid>,
+    lpid: &str,
+) -> Result<Response> {
+    let lpid = Uuid::parse_str(lpid).map_err(|_| Error::NotFound)?;
     let row = plan_links::Entity::find()
         .filter(plan_links::Column::Pid.eq(lpid))
-        .filter(plan_links::Column::PlanPid.eq(plan.pid))
+        .filter(plan_links::Column::PlanPid.eq(plan))
+        .filter(match task {
+            Some(t) => plan_links::Column::TaskPid.eq(t),
+            None => plan_links::Column::TaskPid.is_null(),
+        })
         .filter(plan_links::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
@@ -159,4 +236,14 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/links", get(list_links))
         .add("/plans/{pid}/links/{lpid}", delete(remove_link))
         .add("/plans/{pid}/links/{lpid}/delete", post(remove_link))
+        .add("/plans/{pid}/tasks/{tpid}/links", post(add_task_link))
+        .add("/plans/{pid}/tasks/{tpid}/links", get(list_task_links))
+        .add(
+            "/plans/{pid}/tasks/{tpid}/links/{lpid}",
+            delete(remove_task_link),
+        )
+        .add(
+            "/plans/{pid}/tasks/{tpid}/links/{lpid}/delete",
+            post(remove_task_link),
+        )
 }

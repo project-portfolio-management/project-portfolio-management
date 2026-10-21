@@ -17,6 +17,12 @@ workflow yet. Dates are 2026.
 
 ### 21 October
 
+- **Edit every list on a framework.** The ways-of-working and governance pages now edit ceremonies, the definitions of
+  ready and done, decision rights and forums, as well as the escalation path (previously shown but kept, not editable).
+  Verified: unit tests (755), a browser test with an axe audit that checks every list is sent on save, the Welsh page
+  check. **Not built:** editing or deleting a shared organisation-wide record; the free-text description. Welsh strings
+  machine-written, unreviewed.
+
 - **A fifth tolerance: schedule against the baseline.** `schedule` is the calendar days the forecast finish is after
   the finish recorded in the plan's latest schedule baseline; `time` is unchanged (slip against the target date). With
   no baseline it is `unknown`, never green. An escalation can cite it. Verified: one request test (no baseline,

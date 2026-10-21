@@ -138,3 +138,31 @@ test("a task shows its status and keeps its own links to the issue it is tracked
   await expect(page.getByRole("link", { name: "PPM-7" })).toBeVisible();
   await audit(page);
 });
+
+test("the ceremonies, definitions and forums of a plan's own framework can be edited and are all sent", async ({ page }) => {
+  let saved: Record<string, unknown> | null = null;
+  const own = { pid: "w9", name: "Our way", description: null, scope: "plan", owner_plan_pid: PID, plans_using: 1, methodology: "scrum", ceremonies: [{ name: "Standup", cadence: "daily" }], definition_of_done: "Tested" };
+  await page.route("**/api/ways-of-working", (r) => r.fulfill({ json: [own] }));
+  await page.route("**/api/ways-of-working/w9", (r) => {
+    saved = r.request().postDataJSON();
+    return r.fulfill({ json: { ...own, ...saved } });
+  });
+  await page.route(`**/api/plans/${PID}/ways-of-working`, (r) =>
+    r.fulfill({ json: { plan_pid: PID, source: "own", from_plan_pid: null, ways_of_working: saved ? { ...own, ...saved } : own, reason: null } }),
+  );
+  await page.goto(`/en-001/plans/${PID}/ways-of-working`);
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(page.getByLabel("Definition of done")).toHaveValue("Tested");
+  await page.getByLabel("Definition of ready").fill("Has a clear title");
+  await page.getByRole("button", { name: "Add a ceremony" }).click();
+  await page.getByLabel("Name").nth(2).fill("Retrospective");
+  await page.getByLabel("How often").nth(1).fill("every two weeks");
+  await audit(page);
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved.");
+  expect(saved).toMatchObject({
+    definition_of_ready: "Has a clear title",
+    definition_of_done: "Tested",
+    ceremonies: [{ name: "Standup", cadence: "daily", purpose: null }, { name: "Retrospective", cadence: "every two weeks", purpose: null }],
+  });
+});

@@ -55,7 +55,18 @@ export interface FrameworkForm {
   reporting_cadence_days: string;
   /** Escalation path rows. */
   path: { level: string; body: string; trigger: string }[];
+  /** Ways of working: the definitions and the recurring practices. */
+  ready: string;
+  done: string;
+  ceremonies: { name: string; cadence: string; purpose: string }[];
+  /** Governance: who decides what, and the standing meetings. */
+  rights: { decision: string; decides: string; consulted: string }[];
+  forums: { name: string; cadence: string; purpose: string }[];
 }
+
+/** Most entries in any one list (the service's rule). */
+export const LIST_MAX = 20;
+const TEXT_MAX = 10_000;
 
 /** What is wrong with a form, in words; empty when it can be sent. */
 export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): string[] {
@@ -65,8 +76,12 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
   const optional = (raw: string, max: number) => raw.trim() === "" || wholeDays(raw, max);
   if (family === "ways-of-working") {
     if (!optional(f.cadence_days, MAX_DAYS) || !optional(f.wip_limit, 1000)) out.push(t("p.frameworks.number_problem"));
+    if (f.ready.length > TEXT_MAX || f.done.length > TEXT_MAX) out.push(t("p.frameworks.text_problem"));
+    if (f.ceremonies.length > LIST_MAX || f.ceremonies.some((c) => c.name.trim() === "" || c.cadence.trim() === "")) out.push(t("p.frameworks.practice_problem"));
   } else {
     if (!optional(f.review_cadence_days, MAX_DAYS) || !optional(f.reporting_cadence_days, MAX_DAYS)) out.push(t("p.frameworks.number_problem"));
+    if (f.forums.length > LIST_MAX || f.forums.some((x) => x.name.trim() === "" || x.cadence.trim() === "")) out.push(t("p.frameworks.practice_problem"));
+    if (f.rights.length > LIST_MAX || f.rights.some((r) => r.decision.trim() === "" || r.decides.trim() === "")) out.push(t("p.frameworks.rights_problem"));
     const levels = new Set<string>();
     for (const row of f.path) {
       if (!wholeDays(row.level, 9) || row.body.trim() === "" || row.trigger.trim() === "" || levels.has(row.level.trim())) {
@@ -81,10 +96,7 @@ export function frameworkProblems(family: FrameworkFamily, f: FrameworkForm): st
 
 const num = (raw: string): number | null => (raw.trim() === "" ? null : Number(raw));
 
-/**
- * The body to send. Fields this screen does not edit (ceremonies, definitions, decision rights, forums) are carried
- * over from `existing` so saving an edit never drops them.
- */
+/** The body to send. `existing` supplies the description, which this screen does not edit. */
 export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, existing: Framework | null, planPid: string | null): Record<string, unknown> {
   const body: Record<string, unknown> = { name: f.name.trim(), description: existing?.description ?? null };
   if (planPid) body.plan_pid = planPid;
@@ -93,9 +105,9 @@ export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, existin
       methodology: f.methodology,
       cadence_days: num(f.cadence_days),
       wip_limit: num(f.wip_limit),
-      definition_of_ready: existing?.definition_of_ready ?? null,
-      definition_of_done: existing?.definition_of_done ?? null,
-      ceremonies: existing?.ceremonies ?? [],
+      definition_of_ready: f.ready.trim() || null,
+      definition_of_done: f.done.trim() || null,
+      ceremonies: f.ceremonies.map((c) => ({ name: c.name.trim(), cadence: c.cadence.trim(), purpose: c.purpose.trim() || null })),
     });
   } else {
     Object.assign(body, {
@@ -103,8 +115,8 @@ export function frameworkBody(family: FrameworkFamily, f: FrameworkForm, existin
       review_cadence_days: num(f.review_cadence_days),
       reporting_cadence_days: num(f.reporting_cadence_days),
       escalation_path: f.path.map((r) => ({ level: Number(r.level), body: r.body.trim(), trigger: r.trigger.trim() })),
-      decision_rights: existing?.decision_rights ?? [],
-      forums: existing?.forums ?? [],
+      decision_rights: f.rights.map((r) => ({ decision: r.decision.trim(), decides: r.decides.trim(), consulted: r.consulted.trim() || null })),
+      forums: f.forums.map((x) => ({ name: x.name.trim(), cadence: x.cadence.trim(), purpose: x.purpose.trim() || null })),
     });
   }
   return body;
@@ -122,6 +134,11 @@ export function formOf(f: Framework | null): FrameworkForm {
     review_cadence_days: s(f?.review_cadence_days),
     reporting_cadence_days: s(f?.reporting_cadence_days),
     path: (f?.escalation_path ?? []).map((e) => ({ level: String(e.level), body: e.body, trigger: e.trigger })),
+    ready: f?.definition_of_ready ?? "",
+    done: f?.definition_of_done ?? "",
+    ceremonies: (f?.ceremonies ?? []).map((c) => ({ name: c.name, cadence: c.cadence, purpose: c.purpose ?? "" })),
+    rights: (f?.decision_rights ?? []).map((r) => ({ decision: r.decision, decides: r.decides, consulted: r.consulted ?? "" })),
+    forums: (f?.forums ?? []).map((x) => ({ name: x.name, cadence: x.cadence, purpose: x.purpose ?? "" })),
   };
 }
 

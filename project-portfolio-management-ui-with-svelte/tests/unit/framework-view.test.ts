@@ -26,16 +26,49 @@ describe("frameworkProblems", () => {
 });
 
 describe("frameworkBody", () => {
-  it("carries over what the screen does not edit", () => {
-    const existing = { definition_of_done: "Tested", ceremonies: [{ name: "Standup", cadence: "daily" }], description: "d" } as Framework;
-    const body = frameworkBody("ways-of-working", form({ cadence_days: "7" }), existing, null);
-    expect(body).toMatchObject({ name: "Standard", cadence_days: 7, wip_limit: null, definition_of_done: "Tested", description: "d" });
-    expect(body.ceremonies).toEqual([{ name: "Standup", cadence: "daily" }]);
+  it("sends every list the form holds and keeps the description", () => {
+    const existing = { description: "d" } as Framework;
+    const body = frameworkBody(
+      "ways-of-working",
+      form({ cadence_days: "7", done: " Tested ", ceremonies: [{ name: " Standup ", cadence: "daily", purpose: "" }] }),
+      existing,
+      null,
+    );
+    expect(body).toMatchObject({ name: "Standard", cadence_days: 7, wip_limit: null, definition_of_done: "Tested", definition_of_ready: null, description: "d" });
+    expect(body.ceremonies).toEqual([{ name: "Standup", cadence: "daily", purpose: null }]);
     expect(body).not.toHaveProperty("plan_pid");
   });
-  it("owns a new record by the plan", () => {
-    const body = frameworkBody("governance-frameworks", form({ path: [{ level: "2", body: " Board ", trigger: " Cost " }] }), null, "p1");
-    expect(body).toMatchObject({ plan_pid: "p1", escalation_path: [{ level: 2, body: "Board", trigger: "Cost" }], forums: [] });
+  it("owns a new record by the plan, with its path, rights and forums", () => {
+    const body = frameworkBody(
+      "governance-frameworks",
+      form({
+        path: [{ level: "2", body: " Board ", trigger: " Cost " }],
+        rights: [{ decision: "Scope", decides: "Sponsor", consulted: "" }],
+        forums: [{ name: "Steering", cadence: "monthly", purpose: "Review" }],
+      }),
+      null,
+      "p1",
+    );
+    expect(body).toMatchObject({
+      plan_pid: "p1",
+      escalation_path: [{ level: 2, body: "Board", trigger: "Cost" }],
+      decision_rights: [{ decision: "Scope", decides: "Sponsor", consulted: null }],
+      forums: [{ name: "Steering", cadence: "monthly", purpose: "Review" }],
+    });
+  });
+  it("round-trips a record through the form", () => {
+    const rec = { name: "R", methodology: "scrum", ceremonies: [{ name: "Retro", cadence: "fortnightly", purpose: "Learn" }], definition_of_ready: "Ready" } as Framework;
+    const body = frameworkBody("ways-of-working", formOf(rec), rec, null);
+    expect(body).toMatchObject({ methodology: "scrum", definition_of_ready: "Ready", ceremonies: [{ name: "Retro", cadence: "fortnightly", purpose: "Learn" }] });
+  });
+});
+
+describe("list rows", () => {
+  it("need a name and a cadence, or the decision and who decides", () => {
+    expect(frameworkProblems("ways-of-working", form({ ceremonies: [{ name: "Standup", cadence: "", purpose: "" }] }))).toHaveLength(1);
+    expect(frameworkProblems("governance-frameworks", form({ forums: [{ name: "", cadence: "monthly", purpose: "" }] }))).toHaveLength(1);
+    expect(frameworkProblems("governance-frameworks", form({ rights: [{ decision: "Scope", decides: "", consulted: "" }] }))).toHaveLength(1);
+    expect(frameworkProblems("governance-frameworks", form({ rights: [{ decision: "Scope", decides: "Sponsor", consulted: "" }] }))).toEqual([]);
   });
 });
 

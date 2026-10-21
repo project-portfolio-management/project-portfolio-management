@@ -1,8 +1,7 @@
 <!--
   A plan's ways of working or governance framework: what is in force and where it came from (this plan's own, or
   inherited from a plan above), follow a different shared one, stop following (then inherit again), or write one for
-  this plan and edit it. Ceremonies, definitions, decision rights and forums are shown but not edited here; saving an
-  edit keeps them.
+  this plan and edit it, with every list on it (ceremonies, escalation path, decision rights, forums).
 -->
 <script lang="ts">
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -162,6 +161,20 @@
           </label>
           <label>{t("p.frameworks.cadence_days")} <input type="number" min="1" max="366" bind:value={form.cadence_days} /></label>
           <label>{t("p.frameworks.wip_limit")} <input type="number" min="1" max="1000" bind:value={form.wip_limit} /></label>
+          <label>{t("p.frameworks.ready")} <textarea bind:value={form.ready} rows="2"></textarea></label>
+          <label>{t("p.frameworks.done")} <textarea bind:value={form.done} rows="2"></textarea></label>
+          <fieldset>
+            <legend>{t("p.frameworks.ceremonies")}</legend>
+            {#each form.ceremonies as row, i (i)}
+              <div class="path-row">
+                <label>{t("p.frameworks.practice_name")} <input bind:value={row.name} maxlength="80" /></label>
+                <label>{t("p.frameworks.practice_cadence")} <input bind:value={row.cadence} maxlength="80" /></label>
+                <label>{t("p.frameworks.practice_purpose")} <input bind:value={row.purpose} maxlength="300" /></label>
+                <button type="button" onclick={() => form.ceremonies.splice(i, 1)}>{t("p.frameworks.row_remove", { n: i + 1 })}</button>
+              </div>
+            {/each}
+            <button type="button" onclick={() => form.ceremonies.push({ name: "", cadence: "", purpose: "" })}>{t("p.frameworks.ceremony_add")}</button>
+          </fieldset>
         {:else}
           <label>{t("p.frameworks.decision_model")}
             <select bind:value={form.decision_model}>{#each DECISION_MODELS as m (m)}<option value={m}>{decisionModelLabel(m)}</option>{/each}</select>
@@ -179,6 +192,30 @@
               </div>
             {/each}
             <button type="button" onclick={() => form.path.push({ level: String(form.path.length + 1), body: "", trigger: "" })}>{t("p.frameworks.path_add")}</button>
+          </fieldset>
+          <fieldset>
+            <legend>{t("p.frameworks.rights")}</legend>
+            {#each form.rights as row, i (i)}
+              <div class="path-row">
+                <label>{t("p.frameworks.right_decision")} <input bind:value={row.decision} maxlength="120" /></label>
+                <label>{t("p.frameworks.right_decides")} <input bind:value={row.decides} maxlength="120" /></label>
+                <label>{t("p.frameworks.right_consulted")} <input bind:value={row.consulted} maxlength="120" /></label>
+                <button type="button" onclick={() => form.rights.splice(i, 1)}>{t("p.frameworks.row_remove", { n: i + 1 })}</button>
+              </div>
+            {/each}
+            <button type="button" onclick={() => form.rights.push({ decision: "", decides: "", consulted: "" })}>{t("p.frameworks.right_add")}</button>
+          </fieldset>
+          <fieldset>
+            <legend>{t("p.frameworks.forums")}</legend>
+            {#each form.forums as row, i (i)}
+              <div class="path-row">
+                <label>{t("p.frameworks.practice_name")} <input bind:value={row.name} maxlength="80" /></label>
+                <label>{t("p.frameworks.practice_cadence")} <input bind:value={row.cadence} maxlength="80" /></label>
+                <label>{t("p.frameworks.practice_purpose")} <input bind:value={row.purpose} maxlength="300" /></label>
+                <button type="button" onclick={() => form.forums.splice(i, 1)}>{t("p.frameworks.row_remove", { n: i + 1 })}</button>
+              </div>
+            {/each}
+            <button type="button" onclick={() => form.forums.push({ name: "", cadence: "", purpose: "" })}>{t("p.frameworks.forum_add")}</button>
           </fieldset>
         {/if}
         {#if problems.length > 0}<ul class="banner" role="alert">{#each problems as m (m)}<li>{m}</li>{/each}</ul>{/if}

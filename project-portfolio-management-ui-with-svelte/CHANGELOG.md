@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — framework lists are editable (FR-52, 2026-10-21)
+
+Ceremonies, definitions of ready/done, decision rights and forums can now be edited on the framework pages. Not built: editing shared records, the description. Welsh machine-written, unreviewed.
+
 ### Added — schedule tolerance (FR-53, 2026-10-21)
 
 The tolerance pages and the escalation form know the `schedule` dimension ("Schedule against baseline"). Welsh machine-written, unreviewed.

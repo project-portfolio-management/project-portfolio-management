@@ -230,16 +230,10 @@ pub fn matrix(tasks: &[(Uuid, String)], assignments: &[(Uuid, String, char)]) ->
 }
 
 /// The matrix as CSV: a header of people, one row per task, cells as letters
-/// (`AR`), fields quoted when they need it.
+/// (`AR`), fields quoted when they need it and formulas defused.
 #[must_use]
 pub fn to_csv(m: &Matrix) -> String {
-    let esc = |s: &str| {
-        if s.contains([',', '"', '\n', '\r']) {
-            format!("\"{}\"", s.replace('"', "\"\""))
-        } else {
-            s.to_string()
-        }
-    };
+    let esc = crate::csv_cell::field;
     let mut out = String::from("task");
     for p in &m.people {
         out.push(',');

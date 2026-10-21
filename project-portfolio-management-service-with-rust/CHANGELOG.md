@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security
+
+- **CSV formula defusing everywhere (CQ-1, 2026-10-21).** Plan export (`/api/bulk` CSV), the auditor evidence pack, timesheet and report CSVs, and the RACI matrix wrote a cell like `=HYPERLINK(…)` as is, so a spreadsheet would run it; only the access review defused. One `src/csv_cell.rs` now writes every CSV cell (the four hand-written escapers are gone, and a unit test fails on a new one), and the plan import strips the prefix so a round trip is exact. Changed behaviour: the access review no longer prefixes a plain number such as `-1`. Not done: CSV the UI builds in the browser was not reviewed; no spreadsheet application was run against the output.
+
 ### Added
 
 - **`GET /api/plans/{pid}/task-link-counts` (LT-8, 2026-10-21).** Live link count per task of a plan. Request test extended. Like the other link routes it does not check plan privacy.

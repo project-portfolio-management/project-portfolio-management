@@ -520,7 +520,12 @@ GET  /api/plans/bulk-jobs       list (filter by kind/status)
 (with `owner_org_id`, same-owner only) or `pid`; keyless rows run the
 normal duplicate detection → review queue (`provenance = import`),
 kind-agnostic. CSV flattens every repeated/nested field to a
-JSON-in-cell. Export is business/ops data (light masking) but **lead /
+JSON-in-cell. **Every CSV the service writes defuses formulas** (CQ-1,
+`src/csv_cell.rs`): a cell starting with `=`, `+`, `-`, `@`, a tab or a
+carriage return is prefixed with `'`, except a plain signed decimal number;
+a cell already starting with `'` and one of those (or another `'`) is
+prefixed too, and the plan import strips exactly that one `'`, so an
+exported plan re-imports unchanged. Export is business/ops data (light masking) but **lead /
 assignee / person refs are personal data**, so any export carrying them
 is audited (even zero-row).
 

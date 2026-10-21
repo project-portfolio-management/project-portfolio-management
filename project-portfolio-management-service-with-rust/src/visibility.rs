@@ -327,16 +327,8 @@ pub fn skill_gap(
         .collect()
 }
 
-/// Escape one CSV field (RFC-4180 style: quote when needed, double
-/// embedded quotes).
-#[must_use]
-pub fn csv_field(value: &str) -> String {
-    if value.contains([',', '"', '\n', '\r']) {
-        format!("\"{}\"", value.replace('"', "\"\""))
-    } else {
-        value.to_string()
-    }
-}
+/// One CSV field, formulas defused: the one rule for every CSV the service writes (CQ-1).
+pub use crate::csv_cell::field as csv_field;
 
 #[cfg(test)]
 mod tests {
@@ -547,15 +539,6 @@ mod tests {
             (30, None, Some(date(2026, 6, 30))),                   // ended before
         ];
         assert_eq!(summed_percent(&allocations, window.0, window.1), 110);
-    }
-
-    /// CSV escaping: plain passes, commas/quotes/newlines quote.
-    #[test]
-    fn csv_escaping() {
-        assert_eq!(csv_field("plain"), "plain");
-        assert_eq!(csv_field("a,b"), "\"a,b\"");
-        assert_eq!(csv_field("say \"hi\""), "\"say \"\"hi\"\"\"");
-        assert_eq!(csv_field("line\nbreak"), "\"line\nbreak\"");
     }
 
     /// Skill gap: a resolved set names covered and missing tags; an

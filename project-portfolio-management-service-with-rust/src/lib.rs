@@ -65,6 +65,7 @@ pub mod cost_rates;
 pub mod cost_risk;
 pub mod cpm;
 pub mod critical_chain;
+pub mod csv_cell;
 pub mod custom_fields;
 pub mod cutover;
 pub mod data;

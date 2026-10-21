@@ -96,22 +96,12 @@ pub fn errors_jsonl(errors: &[RowError]) -> String {
         .collect()
 }
 
-/// Escape one CSV field (RFC 4180): quote when it holds a comma, quote or
-/// line break, doubling any quote.
-fn csv_field(v: &str) -> String {
-    if v.contains([',', '"', '\n', '\r']) {
-        format!("\"{}\"", v.replace('"', "\"\""))
-    } else {
-        v.to_string()
-    }
-}
-
-/// One CSV record, terminated by `\n`.
+/// One CSV record, terminated by `\n`; each cell through [`crate::csv_cell::field`].
 #[must_use]
 pub fn csv_row(cells: &[String]) -> String {
     cells
         .iter()
-        .map(|c| csv_field(c))
+        .map(|c| crate::csv_cell::field(c))
         .collect::<Vec<_>>()
         .join(",")
         + "\n"
@@ -300,7 +290,8 @@ pub fn decode_csv(text: &str) -> Result<Vec<Decoded>, String> {
         let mut errors = Vec::new();
         let mut obj = Map::new();
         for (i, name) in columns.iter().enumerate() {
-            let cell = rec.cells.get(i).map_or("", String::as_str).trim();
+            // The `'` that export put before a formula-like cell is taken off again.
+            let cell = crate::csv_cell::read(rec.cells.get(i).map_or("", String::as_str).trim());
             // An empty cell loses nothing, whatever its column.
             if cell.is_empty() {
                 continue;
@@ -596,6 +587,39 @@ mod tests {
                 "the pid travels"
             );
             assert_eq!(serde_json::to_value(&got).unwrap(), canonical, "lossless");
+        }
+    }
+
+    /// CQ-1: a formula-like name is written defused and comes back unchanged.
+    #[test]
+    fn a_formula_like_name_is_defused_in_csv_and_survives_import() {
+        let pid = Uuid::from_u128(8);
+        for name in [
+            "=HYPERLINK(\"http://x\")",
+            "@SUM(A1)",
+            "'=already quoted",
+            "-1",
+        ] {
+            let mut v = rich();
+            v["name"] = json!(name);
+            v["code"] = json!("+cmd");
+            let plan: Plan = serde_json::from_value(v).unwrap();
+            let canonical = serde_json::to_value(&plan).unwrap();
+            let text = encode_csv(&[(pid, canonical.clone())]);
+            let row = text.lines().nth(1).unwrap();
+            assert!(
+                row.split(',')
+                    .all(|c| !c.trim_start_matches('"').starts_with(['=', '+', '@'])),
+                "{row}"
+            );
+            let (_, got) = decode_csv(&text)
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap()
+                .result
+                .expect("decodes");
+            assert_eq!(serde_json::to_value(&got).unwrap(), canonical, "{name}");
         }
     }
 

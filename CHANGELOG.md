@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 21 October (after 0.2.0)
+
+- **Every CSV export defuses spreadsheet formulas (CQ-1).** Plan export, auditor evidence, timesheets, saved reports and the RACI matrix let a cell such as `=HYPERLINK(…)` through; one shared cell writer now handles every CSV, and plan import reverses it exactly. Verified: unit tests, including a plan whose name is a formula surviving export and re-import, and a test that fails on any new hand-written CSV escaper. **Not done:** CSV built in the browser was not reviewed; no spreadsheet program was opened on the output.
+
 ## 0.2.0 - 2026-10-21
 
 First release cut from the root release workflow: the service crate, migration crate and UI package move from 0.1.0 to 0.2.0 (the matcher keeps its own version). It collects the 32 commits since the v0.1.0 tag; the entries below are the record. Not verified for this release: the Welsh strings are machine-written and none are reviewed; escalations are raised by a person only (no scheduled job, no email or push).

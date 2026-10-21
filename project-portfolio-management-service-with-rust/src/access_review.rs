@@ -85,21 +85,6 @@ pub fn standing(entries: &[Entry], today: NaiveDate, stale_days: i64) -> Vec<Sta
     out
 }
 
-/// A CSV field: quoted when it has a comma, quote, or line break, quotes doubled; a leading `=`,
-/// `+`, `-` or `@` is prefixed with `'` so a spreadsheet does not run it as a formula.
-#[must_use]
-pub fn csv_field(value: &str) -> String {
-    let mut v = value.to_string();
-    if v.starts_with(['=', '+', '-', '@', '\t', '\r']) {
-        v.insert(0, '\'');
-    }
-    if v.contains([',', '"', '\n', '\r']) {
-        format!("\"{}\"", v.replace('"', "\"\""))
-    } else {
-        v
-    }
-}
-
 /// The review as CSV, with a column for the reviewer's decision to be filled in.
 #[must_use]
 pub fn to_csv(rows: &[Standing]) -> String {
@@ -122,7 +107,7 @@ pub fn to_csv(rows: &[Standing]) -> String {
         out.push_str(
             &fields
                 .iter()
-                .map(|f| csv_field(f))
+                .map(|f| crate::csv_cell::field(f))
                 .collect::<Vec<_>>()
                 .join(","),
         );
@@ -208,25 +193,15 @@ mod tests {
 
     #[test]
     fn csv_quotes_and_defuses_formulas() {
-        assert_eq!(csv_field("plain"), "plain");
-        assert_eq!(csv_field("a,b"), "\"a,b\"");
-        assert_eq!(csv_field("say \"hi\""), "\"say \"\"hi\"\"\"");
-        assert_eq!(csv_field("=cmd()"), "'=cmd()");
-        assert_eq!(csv_field("-1"), "'-1");
-        assert_eq!(csv_field("@SUM(A1)"), "'@SUM(A1)");
-        assert_eq!(csv_field("+1+1"), "'+1+1");
-        // A leading tab or carriage return is also read as the start of a formula by some spreadsheets.
-        assert_eq!(csv_field("\t=1"), "'\t=1");
-        assert_eq!(csv_field("\r=1"), "\"'\r=1\"");
-        // A formula hidden behind a quote still starts with the quote, so it is already text.
-        assert_eq!(csv_field("\"=1\""), "\"\"\"=1\"\"\"");
+        // Cell escaping and formula defusing are tested in `csv_cell`; this checks the review's CSV uses them.
         let rows = standing(
-            &[entry(1, "person:a", "edit", "granted", day(1, 1))],
+            &[entry(1, "=cmd()", "edit", "granted", day(1, 1))],
             day(10, 10),
             365,
         );
         let csv = to_csv(&rows);
         assert!(csv.starts_with("plan_pid,person_ref,access,"));
         assert_eq!(csv.lines().count(), 2);
+        assert!(csv.contains(",'=cmd(),"), "{csv}");
     }
 }

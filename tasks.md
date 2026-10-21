@@ -1632,7 +1632,7 @@ From [plan.md §64–§70](plan.md) (research 2026-10-21). All open. Evidence
 lines are as of that date; check them again before starting, because the counts
 came from grep.
 
-- [ ] **CQ-1 (S) — Defuse spreadsheet formulas in every CSV export.** Keep one
+- [x] **CQ-1 (S) — Defuse spreadsheet formulas in every CSV export.** Keep one
   `csv_field`, the defusing one from `src/access_review.rs:91` (it prefixes
   `= + - @ \t \r` with `'`), in a shared module. Delete the copies in
   `src/bulk.rs:101` and `src/visibility.rs:333`, which serve plan export, the
@@ -1640,6 +1640,7 @@ came from grep.
   **Acceptance:** a unit test sends `=HYPERLINK("x")`, `+1`, `-1` and `@x`
   through each export and finds each defused; a census test fails on a second
   `fn csv_field`.
+  **Built 2026-10-21.** `src/csv_cell.rs` (`field`, `read`) replaces four escapers: `bulk.rs`, `visibility.rs` (kept as a re-export for its callers in oversight, timesheets and reports), `access_review.rs`, and a fourth found while building, in `raci.rs`. A plain signed decimal is left as a number; a cell already starting with `'` plus a trigger is prefixed again so the plan import (`decode_csv`) can strip exactly one. Unit tests: every trigger, numbers, the inverse, a plan named as a formula surviving CSV export and import, and a source census that fails on a hand-written `replace('"', "\"\"")`. **Deviation, stated:** the census looks for the quote-doubling idiom, not for every possible escaper; the access review's `-1` is no longer prefixed. **Not done:** browser-built CSV in the UI not reviewed; not checked in a real spreadsheet.
 - [ ] **CQ-2 (S) — One admin check, with the no-claims rule stated.** There are
   eight `is_admin` copies. `milestone_signoffs.rs:123` and
   `deescalation.rs:73,81` (and, per the pass, `cpm.rs`, `cutover.rs`,

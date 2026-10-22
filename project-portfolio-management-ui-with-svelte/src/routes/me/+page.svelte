@@ -9,6 +9,7 @@
   English-first, like the other recent views; localization follows.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
@@ -32,7 +33,7 @@
       work = await ppm.myTasks(tz);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.me.could_not_load_your_tasks");
+      error = errorText(err, "p.me.could_not_load_your_tasks");
     }
   }
   onMount(refresh);

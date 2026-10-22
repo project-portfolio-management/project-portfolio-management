@@ -4,6 +4,7 @@
   and proposed use of the drum are two labelled bars, and a table gives the same dates with the reason.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Pipeline, type SkillPool } from "#lib/api/ppm.js";
@@ -25,7 +26,7 @@
       if (!pick && pools[0]) pick = pools[0].pid;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.critical_chain.could_not_load_pipeline");
+      error = errorText(err, "p.critical_chain.could_not_load_pipeline");
     }
   }
   onMount(() => void load());
@@ -36,7 +37,7 @@
       await ppm.setPortfolioDrum(poolPid);
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.critical_chain.could_not_save");
+      error = errorText(err, "p.critical_chain.could_not_save");
     } finally {
       busy = false;
     }

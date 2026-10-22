@@ -7,6 +7,7 @@
   be placed is listed, never dropped.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -58,7 +59,7 @@
       await loadProfile();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_load_the_plan");
+      error = errorText(err, "p.plans.pid.work.could_not_load_the_plan");
     }
   }
   async function loadProfile() {
@@ -66,7 +67,7 @@
       profile = await ppm.workProfile(pid, { period: grain });
     } catch (err) {
       profile = null;
-      error = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_load_the_work");
+      error = errorText(err, "p.plans.pid.work.could_not_load_the_work");
     }
   }
   onMount(load);
@@ -85,7 +86,7 @@
       said[n.pid] = [resultText(r), capacityText(r.capacity)].filter(Boolean).join(" ");
       await load();
     } catch (err) {
-      said[n.pid] = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_save");
+      said[n.pid] = errorText(err, "p.plans.pid.work.could_not_save");
     }
   }
   async function saveContour(n: CpmNode) {
@@ -105,7 +106,7 @@
       said[n.pid] = t("p.plans.pid.work.contour_saved");
       await loadProfile();
     } catch (err) {
-      said[n.pid] = err instanceof Error ? err.message : t("p.plans.pid.work.could_not_save");
+      said[n.pid] = errorText(err, "p.plans.pid.work.could_not_save");
     }
   }
   const day = (iso: string) => iso.slice(5);

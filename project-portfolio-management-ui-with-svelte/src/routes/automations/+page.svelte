@@ -9,6 +9,7 @@
   per-run cap.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -91,7 +92,7 @@
       scheduledTotal = scheduledPage.total;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.automations.could_not_load_automations");
+      error = errorText(err, "p.automations.could_not_load_automations");
     }
   }
 
@@ -113,7 +114,7 @@
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : t("p.automations.could_not_save_the_rule");
+      error = errorText(err, "p.automations.could_not_save_the_rule");
     }
   }
 
@@ -123,7 +124,7 @@
       error = null;
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.automations.that_action_was_refused");
+      error = errorText(err, "p.automations.that_action_was_refused");
     }
   }
 
@@ -135,7 +136,7 @@
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : t("p.automations.the_sweep_failed");
+      error = errorText(err, "p.automations.the_sweep_failed");
     }
   }
 

@@ -5,6 +5,7 @@
   check-duplicates (kind does not gate matching).
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { isAbsent } from "#lib/absent.js";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple, splitPlanLinks } from "#lib/preferences.js";
@@ -93,7 +94,7 @@
           if (mine === latest) modulesFailed = !isAbsent(err);
         });
     } catch (err) {
-      if (mine === latest) error = err instanceof Error ? err.message : t("detail.notFound");
+      if (mine === latest) error = errorText(err, "detail.notFound");
     } finally {
       if (mine === latest) loading = false;
     }
@@ -114,7 +115,7 @@
       const hits = await repo.checkDuplicates(record);
       duplicates = hits.filter((h: ScoredRef) => h.pid !== pid);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("detail.checkFailed");
+      error = errorText(err, "detail.checkFailed");
     } finally {
       checking = false;
     }

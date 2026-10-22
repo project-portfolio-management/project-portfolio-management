@@ -5,6 +5,7 @@
   gone on the next load.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import KanbanBoard from "@lilydesignsystem/svelte-kanban-board";
   import type { KanbanCard, KanbanColumn } from "@lilydesignsystem/svelte-kanban-board";
   import { t } from "#lib/i18n.svelte.js";
@@ -28,7 +29,7 @@
       omitted = work.omitted_unreadable;
       error = null;
     } catch (err) {
-      error = err instanceof Error && /401|unauthor/i.test(err.message) ? t("p.kanban.sign_in") : err instanceof Error ? err.message : t("p.kanban.could_not_load");
+      error = err instanceof Error && /401|unauthor/i.test(err.message) ? t("p.kanban.sign_in") : errorText(err, "p.kanban.could_not_load");
     }
   }
   onMount(() => void load());

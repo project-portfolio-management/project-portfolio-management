@@ -7,6 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
@@ -34,7 +35,7 @@
       debt = await ppm.technologyDebt();
       flow = await ppm.technologyFlow();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   });
 

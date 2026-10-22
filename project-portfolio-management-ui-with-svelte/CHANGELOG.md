@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — one rule for error text (CQ-20, part, 2026-10-22)
+
+159 copies of `err instanceof Error ? err.message : t("…")` in 88 files are now `errorText(err, "…")` (`src/lib/error-text.ts`). One change of behaviour: a server fault (5xx) shows the page's own catalogue message instead of the server's English "Internal Server Error", so a Welsh reader sees Welsh; a refusal the service explains (4xx) still shows the service's reason. Unit test `tests/unit/error-text.test.ts`; check, vitest and the full Playwright run pass. Not done: 15 variants that fall back to `""` or `String(err)` were left; 4xx reasons are still the service's English; the `resource()` load helper is not built.
+
 ### Fixed — best-effort reads say when they fail (CQ-19, 2026-10-22)
 
 Four pages swallowed a failed read: the WBS link counts, the plan page's tool list (every tool shown), the Gantt working calendar (no shading) and the announcements page, which fell back to the public feed on **any** error. They now stay quiet only for a 404 or 403 (`src/lib/absent.ts`, also used by the handling-mark banner) and otherwise show a note; announcements fall back only when the full list is refused, and show the error otherwise. `hooks.server.ts` set no security headers when a response's headers were immutable; it now copies the response and sets them on the copy. Browser tests (`tests/e2e/best-effort.spec.ts`, all four fail on the old pages) and a unit test for the headers (fails on the old hook). Welsh machine-written, unreviewed.

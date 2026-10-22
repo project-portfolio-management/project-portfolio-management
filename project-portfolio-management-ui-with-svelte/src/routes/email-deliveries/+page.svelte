@@ -3,6 +3,7 @@
   Administrators only (the API answers 404 to anyone else).
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EmailDeliveries } from "#lib/api/ppm.js";
@@ -21,7 +22,7 @@
     } catch (err) {
       error = err instanceof Error && /404|not found/i.test(err.message)
         ? t("p.email_deliveries.not_allowed")
-        : err instanceof Error ? err.message : t("p.email_deliveries.could_not_load");
+        : errorText(err, "p.email_deliveries.could_not_load");
     }
   }
   onMount(() => void load());

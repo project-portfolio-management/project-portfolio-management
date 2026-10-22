@@ -3,6 +3,7 @@
   issue it is tracked as. The service stores a link's address and never fetches it.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -27,7 +28,7 @@
     try {
       task = await ppm.getTask(pid, tpid);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.task.could_not_load");
+      error = errorText(err, "p.task.could_not_load");
     }
   });
 </script>

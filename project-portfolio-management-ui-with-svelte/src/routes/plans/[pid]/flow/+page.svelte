@@ -18,6 +18,7 @@
   English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -66,7 +67,7 @@
       [analysis, aging, constraints, flow, cfd] = answers;
       error = null;
     } catch (err) {
-      if (mine === latest) error = err instanceof Error ? err.message : t("p.plans.pid.flow.could_not_load_flow_data");
+      if (mine === latest) error = errorText(err, "p.plans.pid.flow.could_not_load_flow_data");
     }
   }
   $effect(() => {

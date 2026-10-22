@@ -5,6 +5,7 @@
   box. The plan's name links to its detail route.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { onMount } from "svelte";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -29,7 +30,7 @@
       items = page.items;
       total = page.total;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("list.loadFailed");
+      error = errorText(err, "list.loadFailed");
     } finally {
       loading = false;
     }

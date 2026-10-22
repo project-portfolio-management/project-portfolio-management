@@ -9,6 +9,7 @@
   the last-24h standup digest. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { page } from "$app/state";
@@ -74,7 +75,7 @@
         ]);
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   // A different plan in the URL starts over: its sprints are not the last plan's (CQ-18).
@@ -95,7 +96,7 @@
       await action();
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 
@@ -154,7 +155,7 @@
       try {
         burndown = await ppm.burndown(pid, value);
       } catch (err) {
-        error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+        error = errorText(err, "ppm.common.loadFailed");
       }
     }
   }

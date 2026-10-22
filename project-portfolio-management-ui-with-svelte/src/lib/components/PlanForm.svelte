@@ -14,6 +14,7 @@
                    errors thrown here surface in the inline banner.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { untrack } from "svelte";
   import { ALL_KINDS, ALL_SCHEMES, ALL_STATUSES } from "#lib/api/types.js";
   import type {
@@ -111,7 +112,7 @@
     try {
       await onsubmit(build());
     } catch (err) {
-      error = err instanceof Error ? err.message : t("form.saveFailed");
+      error = errorText(err, "form.saveFailed");
     } finally {
       submitting = false;
     }

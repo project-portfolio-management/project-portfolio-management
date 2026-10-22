@@ -7,6 +7,7 @@
   sees roles and totals only. The whole of it is also available as a long table.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -27,7 +28,7 @@
       plan = await ppm.resourcePlan({ from: from || undefined, to: to || undefined, period, group_by: groupBy });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.resources.could_not_load_the_resource");
+      error = errorText(err, "p.resources.could_not_load_the_resource");
     }
   }
   onMount(() => void load());

@@ -6,6 +6,7 @@
   person decides.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -29,7 +30,7 @@
       error = null;
       if (!form.buffer_key && data.readings?.[0]) form.buffer_key = data.readings[0].key;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.critical_chain.could_not_load_buffers");
+      error = errorText(err, "p.critical_chain.could_not_load_buffers");
     }
   }
   onMount(() => void load());
@@ -40,7 +41,7 @@
       await fn();
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.critical_chain.could_not_save");
+      error = errorText(err, "p.critical_chain.could_not_save");
     } finally {
       busy = false;
     }

@@ -7,6 +7,7 @@
   fallback band; a risk that could not be used is named with the reason.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -42,7 +43,7 @@
       ranOn = new Date().toISOString().slice(0, 10);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.schedule_risk.could_not_run_the_simulation");
+      error = errorText(err, "p.plans.pid.schedule_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }

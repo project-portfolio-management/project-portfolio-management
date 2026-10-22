@@ -4,6 +4,7 @@
   `CostRiskView` for what it shows and what it does not claim.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -26,7 +27,7 @@
       result = await ppm.costRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.cost_risk.could_not_run_the_simulation");
+      error = errorText(err, "p.plans.pid.cost_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }

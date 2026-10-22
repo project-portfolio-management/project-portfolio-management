@@ -4,6 +4,7 @@
   deciding are done through the API.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -22,7 +23,7 @@
       list = await ppm.changeRequests({ status: status || undefined, open: openOnly });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.change_requests.could_not_load");
+      error = errorText(err, "p.change_requests.could_not_load");
     }
   }
   onMount(refresh);

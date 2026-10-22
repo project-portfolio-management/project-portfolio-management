@@ -6,6 +6,7 @@
   critical path honestly, instead of someone promising dates they cannot keep.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type AvailabilityRange, type WorkCalendarView } from "#lib/api/ppm.js";
@@ -35,7 +36,7 @@
       holidays = loaded.holidays;
       ranges = await ppm.availability();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.me.calendar.could_not_load_your_calendar");
+      error = errorText(err, "p.me.calendar.could_not_load_your_calendar");
     }
   });
 
@@ -49,7 +50,7 @@
       loaded = await ppm.setMeCalendar({ weekdays: mask, holidays });
       saved = true;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.me.calendar.could_not_save");
+      error = errorText(err, "p.me.calendar.could_not_save");
     }
   }
 
@@ -62,7 +63,7 @@
       ranges = await ppm.availability();
       rFrom = rTo = rNote = "";
     } catch (err) {
-      rError = err instanceof Error ? err.message : t("p.me.calendar.could_not_save");
+      rError = errorText(err, "p.me.calendar.could_not_save");
     }
   }
 
@@ -72,7 +73,7 @@
       await ppm.removeAvailability(pid);
       ranges = await ppm.availability();
     } catch (err) {
-      rError = err instanceof Error ? err.message : t("p.me.calendar.could_not_remove");
+      rError = errorText(err, "p.me.calendar.could_not_remove");
     }
   }
 </script>

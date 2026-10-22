@@ -3,6 +3,7 @@
   the contingent workers. Resource managers only (the API answers 404 to anyone else).
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KeyPersons } from "#lib/api/ppm.js";
@@ -27,7 +28,7 @@
     } catch (err) {
       error = err instanceof Error && /404|not found/i.test(err.message)
         ? t("p.key_persons.not_allowed")
-        : err instanceof Error ? err.message : t("p.key_persons.could_not_load");
+        : errorText(err, "p.key_persons.could_not_load");
     }
   }
   onMount(() => void load());
@@ -38,7 +39,7 @@
       await job();
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.key_persons.could_not_save");
+      error = errorText(err, "p.key_persons.could_not_save");
     } finally {
       busy = false;
     }

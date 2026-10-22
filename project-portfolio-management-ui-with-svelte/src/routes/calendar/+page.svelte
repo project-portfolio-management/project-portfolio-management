@@ -6,6 +6,7 @@
   completed on their work item. The list below the calendar is the same data as plain text.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import CalendarView from "@lilydesignsystem/svelte-calendar";
   import type { CalendarEvent, CalendarEventField, CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
   import { onMount } from "svelte";
@@ -41,7 +42,7 @@
       calendar = result;
       error = null;
     } catch (err) {
-      if (mine === latest) error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      if (mine === latest) error = errorText(err, "ppm.common.loadFailed");
     }
   }
   $effect(() => {

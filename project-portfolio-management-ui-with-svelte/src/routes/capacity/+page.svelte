@@ -3,6 +3,7 @@
   a window; summed percent over 100 flags over-allocation.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -21,7 +22,7 @@
       view = await ppm.capacity(from || undefined, to || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);

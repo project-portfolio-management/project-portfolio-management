@@ -7,6 +7,7 @@
   may manage people.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -59,7 +60,7 @@
       edges = c.edges;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_load_the_plan");
+      error = errorText(err, "p.plans.pid.what_if.could_not_load_the_plan");
     }
   }
   onMount(load);
@@ -95,7 +96,7 @@
       status = "";
     } catch (err) {
       preview = null;
-      status = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_preview");
+      status = errorText(err, "p.plans.pid.what_if.could_not_preview");
     } finally {
       busy = false;
     }
@@ -115,7 +116,7 @@
         preview = null;
         status = t("p.plans.pid.what_if.the_plan_changed_since_this");
         await load();
-      } else status = err instanceof Error ? err.message : t("p.plans.pid.what_if.could_not_commit");
+      } else status = errorText(err, "p.plans.pid.what_if.could_not_commit");
     } finally {
       busy = false;
     }

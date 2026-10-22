@@ -1796,6 +1796,7 @@ came from grep.
   `lib/pack-view.ts:106` parses English sentences.
   **Acceptance:** the copy count is near zero; a test with the Welsh locale and
   a 409 shows Welsh text.
+  **Progress 2026-10-22 (not ticked).** `src/lib/error-text.ts` (`errorText(err, key, values?)`) replaces 159 of the copies in 88 files, mechanically; a 5xx now shows the catalogue fallback instead of the server's English text, a 4xx keeps the service's reason. Unit test; all UI gates pass. **Still to do:** the `resource()` helper (which would also close CQ-18's 25 pages); 15 variants falling back to `""` or `String(err)`; mapping service error codes to catalogue text; structured data instead of parsing English in `lib/pack-view.ts`.
 - [ ] **CQ-21 (M) — Typed DataTable.** Use `<script generics="T">` on
   `DataTable.svelte`, or a typed `columns<T>()` helper; 180 of the 182
   `as unknown as` casts are column accessors.

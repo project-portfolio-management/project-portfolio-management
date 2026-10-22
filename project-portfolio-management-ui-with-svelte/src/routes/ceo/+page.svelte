@@ -8,6 +8,7 @@
   never colour alone. Touch targets are at least 44 px.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -43,7 +44,7 @@
   const now = new Date();
 
   const fail = (k: string, e: unknown) =>
-    (failed[k] = e instanceof Error ? e.message : t("p.ceo.could_not_load"));
+    (failed[k] = errorText(e, "p.ceo.could_not_load"));
   onMount(() => {
     ppm.executiveHealth().then((v) => (health = v), (e) => fail("health", e));
     ppm.portfolioMilestones().then((v) => (milestones = v), (e) => fail("milestones", e));

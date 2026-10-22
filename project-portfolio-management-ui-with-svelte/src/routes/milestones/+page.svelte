@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneList, type MilestoneStatus } from "#lib/api/ppm.js";
@@ -24,7 +25,7 @@
       list = await ppm.portfolioMilestones(status ? { status } : {});
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.milestones.could_not_load_the_milestones");
+      error = errorText(err, "p.milestones.could_not_load_the_milestones");
     }
   }
   onMount(refresh);

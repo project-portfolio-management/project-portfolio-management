@@ -4,6 +4,7 @@
   table, and the CSV download.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -27,7 +28,7 @@
       reports = await ppm.listReports();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);
@@ -45,7 +46,7 @@
       nameLike = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.reports.save_failed");
+      error = errorText(err, "p.reports.save_failed");
     }
   }
 
@@ -53,7 +54,7 @@
     try {
       runs = { ...runs, [pid]: await ppm.runReport(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.reports.run_failed");
+      error = errorText(err, "p.reports.run_failed");
     }
   }
 

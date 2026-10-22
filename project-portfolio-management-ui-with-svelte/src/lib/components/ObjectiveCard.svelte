@@ -5,6 +5,7 @@
   beside a key result and is not part of any score.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection } from "#lib/api/ppm.js";
   import { percentText, progressValue, keyResultProgress, valueText, confidenceText } from "#lib/okr-view.js";
@@ -29,7 +30,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.ObjectiveCard.that_did_not_work"));
+      onerror(errorText(err, "c.ObjectiveCard.that_did_not_work"));
     }
   }
 

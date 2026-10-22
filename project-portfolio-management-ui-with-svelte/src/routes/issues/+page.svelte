@@ -4,6 +4,7 @@
   happened; a risk is something that might. Age is in calendar days.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -29,7 +30,7 @@
       });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.issues.could_not_load");
+      error = errorText(err, "p.issues.could_not_load");
     }
   }
   onMount(refresh);

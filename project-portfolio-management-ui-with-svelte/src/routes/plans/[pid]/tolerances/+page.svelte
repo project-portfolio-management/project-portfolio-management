@@ -4,6 +4,7 @@
   removed (then the plan inherits again). A colour is always a word and a shape too.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -44,7 +45,7 @@
       fill(picture);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.tolerances.could_not_load");
+      error = errorText(err, "p.tolerances.could_not_load");
     }
   }
   onMount(load);

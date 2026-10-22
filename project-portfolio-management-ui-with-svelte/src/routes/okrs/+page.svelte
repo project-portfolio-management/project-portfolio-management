@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type OkrList } from "#lib/api/ppm.js";
@@ -22,7 +23,7 @@
       list = await ppm.okrs(period.trim() || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.okrs.could_not_load_the_okrs");
+      error = errorText(err, "p.okrs.could_not_load_the_okrs");
     }
   }
   onMount(refresh);
@@ -36,7 +37,7 @@
       title = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.okrs.could_not_create_the_objective");
+      error = errorText(err, "p.okrs.could_not_create_the_objective");
     }
   }
 </script>

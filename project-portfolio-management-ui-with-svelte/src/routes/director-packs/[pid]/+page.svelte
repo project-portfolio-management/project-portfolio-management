@@ -5,6 +5,7 @@
   language, or download the service's English PDF.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -23,7 +24,7 @@
     try {
       pack = await ppm.directorPack(page.params.pid ?? "");
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.director_pack.could_not_load_one");
+      error = errorText(err, "p.director_pack.could_not_load_one");
     }
   });
 

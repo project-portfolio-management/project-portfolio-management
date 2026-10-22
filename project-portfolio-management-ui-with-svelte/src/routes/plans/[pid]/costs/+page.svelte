@@ -6,6 +6,7 @@
   Rates are finance data: someone without access sees a plain note, not an error.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -57,7 +58,7 @@
       status = t("p.plans.pid.costs.expense_added");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.costs.could_not_add_the_expense");
+      status = errorText(err, "p.plans.pid.costs.could_not_add_the_expense");
     }
   }
   async function record() {
@@ -66,7 +67,7 @@
       status = t(r.recorded === 1 ? "p.plans.pid.costs.recorded_one" : "p.plans.pid.costs.recorded_other", { recorded: r.recorded, already_recorded: r.already_recorded, length: r.no_rate.length });
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.costs.could_not_record");
+      status = errorText(err, "p.plans.pid.costs.could_not_record");
     }
   }
   const label = (b: { from: string; to: string }) => (b.from === b.to ? b.from : `${b.from.slice(5)}–${b.to.slice(5)}`);

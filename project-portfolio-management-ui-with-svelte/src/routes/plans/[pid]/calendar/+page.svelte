@@ -6,6 +6,7 @@
   what every plan did before calendars existed.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -31,7 +32,7 @@
       days = maskToWeekdays(loaded.weekdays);
       holidays = loaded.holidays;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.calendar.could_not_load_the_calendar");
+      error = errorText(err, "p.plans.pid.calendar.could_not_load_the_calendar");
     }
   });
 
@@ -45,7 +46,7 @@
       loaded = await ppm.setPlanCalendar(pid, { weekdays: mask, holidays });
       saved = true;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.calendar.could_not_save");
+      error = errorText(err, "p.plans.pid.calendar.could_not_save");
     }
   }
 </script>

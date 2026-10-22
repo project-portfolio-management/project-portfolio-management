@@ -7,6 +7,7 @@
   about a person needs the permission to manage people; without it the page says so.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -56,7 +57,7 @@
       if (open) open = await ppm.onboardingCase(open.pid);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_load");
+      error = errorText(err, "p.plans.pid.onboarding.could_not_load");
     }
   }
   onMount(load);
@@ -65,7 +66,7 @@
     try {
       open = await ppm.onboardingCase(c.pid);
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_open_the_checklist");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_open_the_checklist");
     }
   }
 
@@ -82,7 +83,7 @@
       subject = "";
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_start");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_start");
     }
   }
 
@@ -96,7 +97,7 @@
       status = "";
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_save");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_save");
     }
   }
   async function finish() {
@@ -106,7 +107,7 @@
       status = t("p.plans.pid.onboarding.checklist_completed");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_complete");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_complete");
     }
   }
   let cancelReason = $state("");
@@ -119,7 +120,7 @@
       status = t("p.plans.pid.onboarding.checklist_cancelled");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_cancel");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_cancel");
     }
   }
 
@@ -136,7 +137,7 @@
       status = t("p.plans.pid.earned_value.recorded");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.plans.pid.onboarding.could_not_record");
+      status = errorText(err, "p.plans.pid.onboarding.could_not_record");
     }
   }
 </script>

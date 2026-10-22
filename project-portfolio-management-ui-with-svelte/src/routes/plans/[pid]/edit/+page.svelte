@@ -5,6 +5,7 @@
   record on submit before returning to the detail page.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import PlanForm from "#lib/components/PlanForm.svelte";
@@ -30,7 +31,7 @@
       const found = await repo.get(id);
       if (mine === latest) record = found;
     } catch (err) {
-      if (mine === latest) error = err instanceof Error ? err.message : t("edit.notFound");
+      if (mine === latest) error = errorText(err, "edit.notFound");
     } finally {
       if (mine === latest) loading = false;
     }

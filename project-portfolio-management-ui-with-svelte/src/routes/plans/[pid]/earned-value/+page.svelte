@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
@@ -64,7 +65,7 @@
       ]);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_load_earned_value");
+      error = errorText(err, "p.plans.pid.earned_value.could_not_load_earned_value");
     }
   }
   onMount(() => void load());
@@ -77,7 +78,7 @@
       await ppm.setEarnedValueMethod(pid, value);
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_save");
+      error = errorText(err, "p.plans.pid.earned_value.could_not_save");
     }
   }
 
@@ -89,7 +90,7 @@
       recorded = true;
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_record");
+      error = errorText(err, "p.plans.pid.earned_value.could_not_record");
     }
   }
 
@@ -118,7 +119,7 @@
       editing = null;
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.earned_value.could_not_save");
+      error = errorText(err, "p.plans.pid.earned_value.could_not_save");
     }
   }
 

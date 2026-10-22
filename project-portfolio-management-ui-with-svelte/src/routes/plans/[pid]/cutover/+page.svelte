@@ -4,6 +4,7 @@
   not slippage.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -29,7 +30,7 @@
       decisions = (await ppm.cutoverDecisions(pid)).decisions;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.cutover.could_not_load");
+      error = errorText(err, "p.cutover.could_not_load");
     }
   }
   onMount(() => void load());
@@ -40,7 +41,7 @@
       await job();
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.cutover.could_not_save");
+      error = errorText(err, "p.cutover.could_not_save");
     } finally {
       busy = false;
     }

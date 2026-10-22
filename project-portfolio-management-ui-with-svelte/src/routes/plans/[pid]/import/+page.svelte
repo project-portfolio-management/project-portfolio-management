@@ -6,6 +6,7 @@
   listed with the reason, never dropped quietly.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { page } from "$app/state";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient, type TrackerImportReport } from "#lib/api/ppm.js";
@@ -51,7 +52,7 @@
       }
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.import.the_import_did_not_work");
+      error = errorText(err, "p.plans.pid.import.the_import_did_not_work");
     } finally {
       busy = false;
     }

@@ -6,6 +6,7 @@
   says so; it is never called "on track" by default.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -38,7 +39,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.that_did_not_work"));
+      onerror(errorText(err, "c.MilestoneCard.that_did_not_work"));
     }
   }
 
@@ -83,7 +84,7 @@
       chosen = Object.fromEntries(item.links.map((l) => [l.task_pid, true]));
       mode = item.completion_mode;
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.could_not_load_the_plan"));
+      onerror(errorText(err, "c.MilestoneCard.could_not_load_the_plan"));
     }
   }
   const saveLinks = (e: SubmitEvent) => {
@@ -98,7 +99,7 @@
     try {
       history = (await ppm.milestone(item.pid)).history ?? [];
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.MilestoneCard.could_not_load_the_history"));
+      onerror(errorText(err, "c.MilestoneCard.could_not_load_the_history"));
     }
   }
 

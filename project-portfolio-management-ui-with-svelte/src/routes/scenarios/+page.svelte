@@ -4,6 +4,7 @@
   data, and commit the feasible winner.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -31,7 +32,7 @@
     try {
       comparison = await ppm.compareScenarios(compareA, compareB);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 
@@ -45,7 +46,7 @@
       scenarios = await ppm.listScenarios();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);
@@ -56,7 +57,7 @@
       await action();
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 
@@ -85,7 +86,7 @@
     try {
       evaluations = { ...evaluations, [pid]: await ppm.evaluateScenario(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.scenarios.evaluate_failed");
+      error = errorText(err, "p.scenarios.evaluate_failed");
     }
   }
 

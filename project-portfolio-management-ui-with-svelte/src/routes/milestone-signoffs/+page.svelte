@@ -3,6 +3,7 @@
   organizations have signed them off. Delivered and met are different things, and the gap is shown.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneSignoffs, type Organization } from "#lib/api/ppm.js";
@@ -23,7 +24,7 @@
       orgs = (await ppm.organizations()).organizations.filter((o) => o.active);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.signoffs.could_not_load");
+      error = errorText(err, "p.signoffs.could_not_load");
     }
   }
   onMount(() => void load());
@@ -36,7 +37,7 @@
       await ppm.actOnSignoff(m.plan_pid, m.milestone_pid, org, action, reason[m.milestone_pid]?.trim() || undefined);
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.signoffs.could_not_save");
+      error = errorText(err, "p.signoffs.could_not_save");
     } finally {
       busy = false;
     }

@@ -5,6 +5,7 @@
   `?reason=tolerance&dimension=…` it starts a tolerance escalation.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -54,7 +55,7 @@
       list = (await ppm.planEscalations(pid)).escalations;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.escalations.could_not_load");
+      error = errorText(err, "p.escalations.could_not_load");
     }
   }
   onMount(load);

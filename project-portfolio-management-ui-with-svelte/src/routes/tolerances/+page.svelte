@@ -4,6 +4,7 @@
   that could not be measured is never shown as green.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type ToleranceBoard, type ToleranceStatus } from "#lib/api/ppm.js";
@@ -19,7 +20,7 @@
       board = await ppm.toleranceBoard({ status: status || undefined });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.tolerances.could_not_load");
+      error = errorText(err, "p.tolerances.could_not_load");
     }
   }
   onMount(refresh);

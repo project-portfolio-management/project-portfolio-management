@@ -7,6 +7,7 @@
   then the finish cost is stated.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -34,7 +35,7 @@
       confirmed = false;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.leveling.could_not_propose_a_leveling");
+      error = errorText(err, "p.plans.pid.leveling.could_not_propose_a_leveling");
     }
   }
   onMount(() => void propose());
@@ -55,7 +56,7 @@
       });
       await propose();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.leveling.could_not_apply_the_moves");
+      error = errorText(err, "p.plans.pid.leveling.could_not_apply_the_moves");
     } finally {
       busy = false;
     }

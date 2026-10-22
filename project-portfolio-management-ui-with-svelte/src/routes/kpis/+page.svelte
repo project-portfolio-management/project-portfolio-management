@@ -7,6 +7,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KpiList, type KpiStatus, type KpiDirection, type KpiCadence } from "#lib/api/ppm.js";
@@ -23,7 +24,7 @@
       list = await ppm.kpis(status ? { status } : {});
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.kpis.could_not_load_the_kpis");
+      error = errorText(err, "p.kpis.could_not_load_the_kpis");
     }
   }
   onMount(refresh);
@@ -52,7 +53,7 @@
       red = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.kpis.could_not_define_the_kpi");
+      error = errorText(err, "p.kpis.could_not_define_the_kpi");
     }
   }
 </script>

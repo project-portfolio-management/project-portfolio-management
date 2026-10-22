@@ -3,6 +3,7 @@
   still awaiting an answer and for the overdue ones. Each state is a word and a shape; overdue is said in words.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EscalationRegister } from "#lib/api/ppm.js";
@@ -21,7 +22,7 @@
       });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.escalations.could_not_load");
+      error = errorText(err, "p.escalations.could_not_load");
     }
   }
   onMount(refresh);

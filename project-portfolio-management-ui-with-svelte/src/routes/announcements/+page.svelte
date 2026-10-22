@@ -5,6 +5,7 @@
   without it sees the feed and a plain note, not a broken form.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { isAbsent } from "#lib/absent.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -31,7 +32,7 @@
       }
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.announcements.could_not_load_the_announcements");
+      error = errorText(err, "p.announcements.could_not_load_the_announcements");
     }
   }
   onMount(refresh);
@@ -56,7 +57,7 @@
       pinned = false;
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.announcements.could_not_publish");
+      error = errorText(err, "p.announcements.could_not_publish");
     }
   }
   async function retract(a: Announcement) {
@@ -64,7 +65,7 @@
       await ppm.retractAnnouncement(a.pid);
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.announcements.could_not_retract");
+      error = errorText(err, "p.announcements.could_not_retract");
     }
   }
 </script>

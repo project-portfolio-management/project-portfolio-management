@@ -4,6 +4,7 @@
   stage (idea → proposal → work item).
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -22,7 +23,7 @@
       ideas = await ppm.listIdeas();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);
@@ -33,7 +34,7 @@
       await action();
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 

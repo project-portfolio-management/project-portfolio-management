@@ -6,6 +6,7 @@
   next step is the primary button. "What was in force on" answers for any date.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -31,7 +32,7 @@
       if (v) await select(v);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.documents.pid.could_not_load_the_document");
+      error = errorText(err, "p.documents.pid.could_not_load_the_document");
     }
   }
   async function select(v: DocumentVersion) {
@@ -49,7 +50,7 @@
       await load();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : t("p.documents.pid.that_did_not_work");
+      error = errorText(err, "p.documents.pid.that_did_not_work");
     }
   }
   const next = $derived(doc ? nextAction(doc) : "none");
@@ -82,7 +83,7 @@
     try {
       inForce = await ppm.documentInForce(pid, asOf || undefined);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.documents.pid.could_not_look_that_up");
+      error = errorText(err, "p.documents.pid.could_not_look_that_up");
     }
   }
 </script>

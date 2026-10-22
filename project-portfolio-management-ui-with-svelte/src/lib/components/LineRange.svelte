@@ -5,6 +5,7 @@
   below it.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { money, type PpmClient } from "#lib/api/ppm.js";
   import { lineEstimateProblems, rangeMinor, rangeText } from "#lib/simulation-inputs.js";
@@ -40,7 +41,7 @@
       await ppm.setLineEstimate(pid, line.pid, { low_minor: rangeMinor(low), high_minor: rangeMinor(high) });
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.LineRange.could_not_save"));
+      onerror(errorText(err, "c.LineRange.could_not_save"));
     }
   }
 </script>

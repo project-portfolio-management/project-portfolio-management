@@ -3,6 +3,7 @@
   objective alignment rollups (which items serve it, with weights).
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Alignment, type Objective } from "#lib/api/ppm.js";
@@ -19,7 +20,7 @@
       objectives = await ppm.listObjectives();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);
@@ -32,7 +33,7 @@
       period = "";
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.objectives.create_failed");
+      error = errorText(err, "p.objectives.create_failed");
     }
   }
 
@@ -40,7 +41,7 @@
     try {
       alignments = { ...alignments, [pid]: await ppm.alignment(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.objectives.alignment_failed");
+      error = errorText(err, "p.objectives.alignment_failed");
     }
   }
 </script>

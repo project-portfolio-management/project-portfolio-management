@@ -5,6 +5,7 @@
   green.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -30,7 +31,7 @@
       await action();
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.KpiCard.that_did_not_work"));
+      onerror(errorText(err, "c.KpiCard.that_did_not_work"));
     }
   }
 
@@ -57,7 +58,7 @@
     try {
       history = (await ppm.kpi(k.pid)).history ?? [];
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.KpiCard.could_not_load_the_history"));
+      onerror(errorText(err, "c.KpiCard.could_not_load_the_history"));
     }
   }
 

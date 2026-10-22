@@ -10,6 +10,7 @@
   outsider is a disclosure decision, not an inference.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -54,7 +55,7 @@
       reviewsTotal = page.total;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.reviews.could_not_load_reviews");
+      error = errorText(err, "p.reviews.could_not_load_reviews");
     }
   }
 
@@ -76,7 +77,7 @@
       await refresh();
     } catch (err) {
       notice = null;
-      error = err instanceof Error ? err.message : t("p.reviews.could_not_delegate");
+      error = errorText(err, "p.reviews.could_not_delegate");
     }
   }
 
@@ -105,7 +106,7 @@
       await refresh();
       if (consensusFor) await showConsensus(consensusFor);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.reviews.that_action_was_refused");
+      error = errorText(err, "p.reviews.that_action_was_refused");
     }
   }
 
@@ -114,7 +115,7 @@
     try {
       consensus = await api.consensus(subjectKind, pid);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.reviews.could_not_load_consensus");
+      error = errorText(err, "p.reviews.could_not_load_consensus");
     }
   }
 

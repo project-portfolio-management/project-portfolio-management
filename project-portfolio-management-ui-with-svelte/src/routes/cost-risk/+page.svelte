@@ -4,6 +4,7 @@
   simulated cost beside its budget. Plans you cannot read are not part of it.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type CostRisk } from "#lib/api/ppm.js";
@@ -24,7 +25,7 @@
       result = await ppm.portfolioCostRisk({ iterations, seed, distribution, fallbackBandPercent: band });
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.cost_risk.could_not_run_the_simulation");
+      error = errorText(err, "p.cost_risk.could_not_run_the_simulation");
     } finally {
       busy = false;
     }

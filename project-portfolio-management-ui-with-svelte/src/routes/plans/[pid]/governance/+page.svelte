@@ -6,6 +6,7 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import RiskInputs from "#lib/components/RiskInputs.svelte";
@@ -78,7 +79,7 @@
         ]);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
   onMount(refresh);
@@ -89,7 +90,7 @@
       await action();
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 
@@ -106,7 +107,7 @@
         overCapacity = allocationPid;
         error = err.message;
       } else {
-        error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+        error = errorText(err, "ppm.common.actionFailed");
       }
     }
   }

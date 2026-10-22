@@ -3,6 +3,7 @@
   amount and why.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
@@ -18,7 +19,7 @@
     try {
       allocations = (await ppm.fundingAllocations()).allocations;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.ledger.could_not_load");
+      error = errorText(err, "p.ledger.could_not_load");
     }
   });
 
@@ -27,7 +28,7 @@
       trace = await ppm.traceAllocation(a.pid);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.ledger.could_not_trace");
+      error = errorText(err, "p.ledger.could_not_trace");
     }
   }
   /** Minor units (pence, cents) as a decimal amount. */

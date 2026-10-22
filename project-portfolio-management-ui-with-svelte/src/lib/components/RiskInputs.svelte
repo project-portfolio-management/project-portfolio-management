@@ -6,6 +6,7 @@
   leave it out; what the form would send is decided by `planRiskCalls`.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import type { PpmClient, Risk, Task } from "#lib/api/ppm.js";
   import { formFrom, planRiskCalls, type RiskInputsForm } from "#lib/simulation-inputs.js";
@@ -48,7 +49,7 @@
     try {
       tasks = (await ppm.listTasks(pid)).tasks;
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.RiskInputs.could_not_load_the_plan"));
+      onerror(errorText(err, "c.RiskInputs.could_not_load_the_plan"));
     }
   }
 
@@ -68,7 +69,7 @@
       if (plan.cost) await ppm.setRiskCostImpact(pid, risk.pid, plan.cost);
       onchange();
     } catch (err) {
-      onerror(err instanceof Error ? err.message : t("c.RiskInputs.could_not_save"));
+      onerror(errorText(err, "c.RiskInputs.could_not_save"));
     } finally {
       saving = false;
     }

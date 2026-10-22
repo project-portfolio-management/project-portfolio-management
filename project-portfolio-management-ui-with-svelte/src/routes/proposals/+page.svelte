@@ -5,6 +5,7 @@
   duplicate-demand checks, and promote-to-work-item.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -30,7 +31,7 @@
       proposals = await ppm.listProposals(statusFilter || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   }
 
@@ -42,7 +43,7 @@
       await action();
       await refresh();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.actionFailed");
+      error = errorText(err, "ppm.common.actionFailed");
     }
   }
 
@@ -68,7 +69,7 @@
     try {
       duplicates = { ...duplicates, [pid]: await ppm.proposalDuplicates(pid) };
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.proposals.duplicate_check_failed");
+      error = errorText(err, "p.proposals.duplicate_check_failed");
     }
   }
 

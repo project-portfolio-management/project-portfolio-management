@@ -3,6 +3,7 @@
   (`/search?foo`), so the terms are the whole query string.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { PlanRepository } from "#lib/api/plans.js";
@@ -31,7 +32,7 @@
     if (!q) return;
     repo.search(q).then(
       (r) => { if (asked === q) results = r; },
-      (err) => { if (asked === q) error = err instanceof Error ? err.message : t("p.search.could_not_search"); },
+      (err) => { if (asked === q) error = errorText(err, "p.search.could_not_search"); },
     );
   });
 </script>

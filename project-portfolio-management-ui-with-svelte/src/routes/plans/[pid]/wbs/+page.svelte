@@ -6,6 +6,7 @@
   table alone. A task under a parent you may not see sits under "Restricted item".
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { isAbsent } from "#lib/absent.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -27,7 +28,7 @@
     try {
       tasks = (await ppm.listTasks(pid)).tasks;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.wbs.could_not_load_the_tasks");
+      error = errorText(err, "p.plans.pid.wbs.could_not_load_the_tasks");
     }
     try {
       linkCounts = (await ppm.taskLinkCounts(pid)).counts;

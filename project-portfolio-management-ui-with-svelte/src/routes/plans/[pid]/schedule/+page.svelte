@@ -4,6 +4,7 @@
   members. Any plan may contain children, so this works for any plan.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -19,7 +20,7 @@
     try {
       schedule = await ppm.schedule(pid);
     } catch (err) {
-      error = err instanceof Error ? err.message : t("ppm.common.loadFailed");
+      error = errorText(err, "ppm.common.loadFailed");
     }
   });
 

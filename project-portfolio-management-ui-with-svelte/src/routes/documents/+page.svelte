@@ -4,6 +4,7 @@
   force today; creating a document starts its first draft.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { onMount } from "svelte";
@@ -22,7 +23,7 @@
     try {
       docs = await ppm.documents();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.documents.could_not_load_the_documents");
+      error = errorText(err, "p.documents.could_not_load_the_documents");
     }
   });
 
@@ -35,7 +36,7 @@
       title = body = "";
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.documents.could_not_create_the_document");
+      error = errorText(err, "p.documents.could_not_create_the_document");
     } finally {
       saving = false;
     }

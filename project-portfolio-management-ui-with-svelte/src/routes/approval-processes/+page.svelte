@@ -5,6 +5,7 @@
   an approval again. The service decides who may do what; a refusal is shown as a message.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type ProcessDefinition, type ProcessRun } from "#lib/api/ppm.js";
@@ -44,7 +45,7 @@
       [processes, runs] = await Promise.all([ppm.listProcesses(), ppm.listProcessRuns()]);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.processes.could_not_load");
+      error = errorText(err, "p.processes.could_not_load");
     }
   }
   onMount(load);

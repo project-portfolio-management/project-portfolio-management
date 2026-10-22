@@ -3,6 +3,7 @@
   (the work-in-progress limit, or a constraint pool short of supply). The order never changes.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type StartQueue, type StartRefusal } from "#lib/api/ppm.js";
@@ -19,7 +20,7 @@
       queue = await ppm.startQueue();
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.start_queue.could_not_load");
+      error = errorText(err, "p.start_queue.could_not_load");
     }
   }
   onMount(() => void load());
@@ -30,7 +31,7 @@
       await ppm.withdrawFromStartQueue(planPid);
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.start_queue.could_not_withdraw");
+      error = errorText(err, "p.start_queue.could_not_withdraw");
     } finally {
       busy = false;
     }

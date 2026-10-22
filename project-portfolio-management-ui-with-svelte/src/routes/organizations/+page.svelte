@@ -3,6 +3,7 @@
   portfolio. Add one, retire one or restore it.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Organization } from "#lib/api/ppm.js";
@@ -22,7 +23,7 @@
       orgs = (await ppm.organizations()).organizations;
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.organizations.could_not_load");
+      error = errorText(err, "p.organizations.could_not_load");
     }
   }
   onMount(() => void load());
@@ -33,7 +34,7 @@
       await job();
       await load();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.organizations.could_not_save");
+      error = errorText(err, "p.organizations.could_not_save");
     } finally {
       busy = false;
     }

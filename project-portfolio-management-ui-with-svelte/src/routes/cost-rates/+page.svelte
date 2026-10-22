@@ -5,6 +5,7 @@
   Finance data: someone without access sees a plain note.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -43,7 +44,7 @@
       status = t("p.cost_rates.rate_table_added");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.cost_rates.could_not_add_the_table");
+      status = errorText(err, "p.cost_rates.could_not_add_the_table");
     }
   }
   let from = $state<Record<string, string>>({});
@@ -59,7 +60,7 @@
       status = t("p.cost_rates.rate_added");
       await load();
     } catch (err) {
-      status = err instanceof Error ? err.message : t("p.cost_rates.could_not_add_the_rate");
+      status = errorText(err, "p.cost_rates.could_not_add_the_rate");
     }
   }
 

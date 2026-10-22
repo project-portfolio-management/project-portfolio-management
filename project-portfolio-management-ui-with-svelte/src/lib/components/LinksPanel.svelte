@@ -4,6 +4,7 @@
   in a new tab.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type PlanLink } from "#lib/api/ppm.js";
@@ -22,7 +23,7 @@
       links = await ppm.planLinks(pid, taskPid);
       error = null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.links.could_not_load");
+      error = errorText(err, "p.links.could_not_load");
     }
   }
   onMount(load);

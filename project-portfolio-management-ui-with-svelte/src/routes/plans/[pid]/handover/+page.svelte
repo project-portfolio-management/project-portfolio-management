@@ -7,6 +7,7 @@
   people.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -37,7 +38,7 @@
       status = "";
     } catch (err) {
       preview = null;
-      status = err instanceof ApiError && err.status === 403 ? t("p.plans.pid.handover.handover_is_about_people_so") : err instanceof Error ? err.message : t("p.plans.pid.handover.could_not_preview");
+      status = err instanceof ApiError && err.status === 403 ? t("p.plans.pid.handover.handover_is_about_people_so") : errorText(err, "p.plans.pid.handover.could_not_preview");
     } finally {
       busy = false;
     }
@@ -54,7 +55,7 @@
       if (err instanceof ApiError && err.status === 409) {
         preview = null;
         status = t("p.plans.pid.handover.what_this_person_holds_changed");
-      } else status = err instanceof Error ? err.message : t("p.plans.pid.handover.could_not_commit");
+      } else status = errorText(err, "p.plans.pid.handover.could_not_commit");
     } finally {
       busy = false;
     }

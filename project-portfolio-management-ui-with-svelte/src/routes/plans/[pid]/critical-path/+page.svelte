@@ -7,11 +7,11 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { taskEstimateProblems, taskRangeText } from "#lib/simulation-inputs.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { ApiError } from "#lib/api/client.js";
   import {
     PpmClient,
     type Cpm,
@@ -62,7 +62,7 @@
       variance = await ppm.scheduleVariance(pid, chosen ?? undefined);
       chosen = variance.baseline?.version ?? null;
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_load_the_baselines");
+      error = errorText(err, "p.plans.pid.critical_path.could_not_load_the_baselines");
     }
   }
 
@@ -75,7 +75,7 @@
       chosen = null;
       await loadBaselines();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_take_the_baseline");
+      error = errorText(err, "p.plans.pid.critical_path.could_not_take_the_baseline");
     }
   }
 
@@ -85,7 +85,7 @@
       error = null;
       await loadBaselines();
     } catch (err) {
-      error = err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_load_the_schedule");
+      error = errorText(err, "p.plans.pid.critical_path.could_not_load_the_schedule");
     }
   }
   onMount(() => void load());
@@ -135,7 +135,7 @@
       estimateSaved = true;
       await load();
     } catch (err) {
-      error = err instanceof ApiError || err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_save_the_estimate");
+      error = errorText(err, "p.plans.pid.critical_path.could_not_save_the_estimate");
     }
   }
 
@@ -155,7 +155,7 @@
       });
       await load();
     } catch (err) {
-      error = err instanceof ApiError || err instanceof Error ? err.message : t("p.plans.pid.critical_path.could_not_save");
+      error = errorText(err, "p.plans.pid.critical_path.could_not_save");
     } finally {
       saving = false;
     }

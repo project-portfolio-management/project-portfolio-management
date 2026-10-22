@@ -1786,6 +1786,7 @@ came from grep.
   banner, not none.
   **Acceptance:** an e2e test per page with the endpoint failing.
   **Progress 2026-10-21 (not ticked).** The handling-mark banner: a 404 or 403 shows none; any other failure shows "could not be checked" (new catalogue key, Welsh machine-written); the RG-7 browser test changed from "nothing on 500" to the notice, and a 404 test was added. **Still to do:** WBS link counts, plan modules, Gantt calendar shading, the announcements downgrade, security headers in `hooks.server.ts`.
+  **Completed 2026-10-22.** `src/lib/absent.ts` (`isAbsent`: 404 or 403); WBS, plan page (modules) and Gantt (calendar) show a note on any other failure; announcements fall back to the live feed only on 404/403; `hooks.server.ts` copies a response with immutable headers. `tests/e2e/best-effort.spec.ts` (failure and absence for each page; all four fail on the old pages) and `hooks.test.ts` (fails on the old hook). **Not done, stated:** other best-effort reads elsewhere in the UI were not swept (the four named here were); the note offers no retry.
 - [ ] **CQ-20 (M) — Shared load and error helpers in the UI.** A
   `resource(fn)` rune helper (`{data, error, loading, reload}`) and
   `errorText(err, key)` replace the 173 copies of

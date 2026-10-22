@@ -5,6 +5,7 @@
   without it sees the feed and a plain note, not a broken form.
 -->
 <script lang="ts">
+  import { isAbsent } from "#lib/absent.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Announcement, type AnnouncementSeverity } from "#lib/api/ppm.js";
@@ -22,7 +23,9 @@
       try {
         items = (await ppm.announcements({ include: "all" })).announcements;
         manage = true;
-      } catch {
+      } catch (err) {
+        // Only "you may not see those" falls back to the live feed; a fault is shown (CQ-19).
+        if (!isAbsent(err)) throw err;
         items = (await ppm.announcements()).announcements;
         manage = false;
       }

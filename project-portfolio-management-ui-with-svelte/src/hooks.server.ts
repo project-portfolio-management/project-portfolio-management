@@ -44,15 +44,21 @@ export function negotiateLocale(
 export const handle: Handle = async (input) => {
   const response = await localeHandle(input);
   const { event } = input;
+  const https = isHttps(event.url, event.request.headers.get("x-forwarded-proto"));
   try {
-    applySecurityHeaders(
-      response.headers,
-      isHttps(event.url, event.request.headers.get("x-forwarded-proto")),
-    );
+    applySecurityHeaders(response.headers, https);
+    return response;
   } catch {
-    // Immutable headers (e.g. a redirect response from `fetch`): leave as is.
+    // Immutable headers (e.g. a response passed through from `fetch`): copy the response
+    // and set them on the copy, so no answer leaves without them (CQ-19).
+    const copy = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+    });
+    applySecurityHeaders(copy.headers, https);
+    return copy;
   }
-  return response;
 };
 
 sessions().setIdleSeconds(oidcOptions().idleSeconds);

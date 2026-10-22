@@ -1776,7 +1776,7 @@ came from grep.
   **Acceptance:** an e2e test follows a duplicate link from one plan to another
   and sees the second plan's name.
   **Progress 2026-10-21 (not ticked: 25 pages left).** The five pages that held a constant `pid` now use `$derived`: the plan page and its edit page reload in an `$effect` keyed on it with a stale-answer guard (the edit form sits in `{#key pid}`); board and flow already loaded in an effect, which now tracks the id (the board resets its sprint). `tests/e2e/plan-navigation.spec.ts` passes, and fails (shows "Website replatform") on the old page. **Still to do:** 25 `[pid]` pages load in `onMount`; move them to `+page.ts` `load` or the same effect pattern, best together with CQ-20's `resource()` helper.
-- [ ] **CQ-19 (S–M) — No silent UI failures.** WBS link counts
+- [x] **CQ-19 (S–M) — No silent UI failures.** WBS link counts
   (`wbs/+page.svelte:30`), plan modules (`plans/[pid]/+page.svelte:77`), the
   Gantt calendar, the announcements downgrade on any error, the
   **handling-mark banner** (`+layout.svelte:49`, where failure hides the mark;

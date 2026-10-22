@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 22 October
+
+- **Pages no longer hide a failed read (CQ-19).** The work breakdown, the plan page, the Gantt chart and the announcements page now say when part of their data could not be loaded, instead of looking empty or complete; a response the server could not change now still gets its security headers. Verified: browser tests that fail on the old pages, and a unit test. Welsh machine-written, unreviewed.
+
 ### 21 October (after 0.2.0)
 
 - **Two availability ranges for one person sent at the same moment can no longer both pass the overlap check (CF-3).** The check and the write now hold a lock per person. **Not proven by a test:** the test harness runs the two requests one after the other, so the race is not reproduced.

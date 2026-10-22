@@ -19,7 +19,7 @@
   import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { COLLECTIONS } from "#lib/api/types.js";
   import { PpmClient } from "#lib/api/ppm.js";
-  import { ApiError } from "#lib/api/client.js";
+  import { isAbsent } from "#lib/absent.js";
   import { orderNavForView } from "#lib/nav.js";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
@@ -51,8 +51,7 @@
       })
       .catch((err: unknown) => {
         if (!live) return;
-        const absent = err instanceof ApiError && (err.status === 404 || err.status === 403);
-        handlingMarkUnknown = !absent;
+        handlingMarkUnknown = !isAbsent(err);
       });
     return () => {
       live = false;

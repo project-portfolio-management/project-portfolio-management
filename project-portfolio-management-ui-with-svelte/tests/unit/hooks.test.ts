@@ -87,6 +87,19 @@ describe("negotiateLocale", () => {
 });
 
 describe("handle", () => {
+  it("sets the security headers even on a response whose headers are immutable (CQ-19)", async () => {
+    const url = new URL("http://localhost/api/proxy/x");
+    const passedThrough = Response.redirect("http://localhost/elsewhere", 302);
+    expect(() => passedThrough.headers.set("x-probe", "1")).toThrow();
+    const res = await handle({
+      event: { url, locals: {}, cookies: jar(), request: new Request(url) },
+      resolve: async () => passedThrough,
+    } as never);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("http://localhost/elsewhere");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
   it("does not forward a two-letter prefix to its -001 locale: it is an ordinary bare path", async () => {
     expect(await run("/en/plans?x=1")).toEqual({
       status: 302,

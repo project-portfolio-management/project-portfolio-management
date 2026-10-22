@@ -6,6 +6,7 @@
   table alone. A task under a parent you may not see sits under "Restricted item".
 -->
 <script lang="ts">
+  import { isAbsent } from "#lib/absent.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -18,8 +19,9 @@
   const pid = $derived(page.params.pid ?? "");
   let tasks = $state<Task[] | null>(null);
   let error = $state<string | null>(null);
-  /** Links per task; empty when they could not be loaded, which only hides the counts. */
+  /** Links per task; empty when they could not be loaded, and then the page says so. */
   let linkCounts = $state<Record<string, number>>({});
+  let linkCountsFailed = $state(false);
 
   onMount(async () => {
     try {
@@ -29,8 +31,9 @@
     }
     try {
       linkCounts = (await ppm.taskLinkCounts(pid)).counts;
-    } catch {
+    } catch (err) {
       linkCounts = {};
+      linkCountsFailed = !isAbsent(err);
     }
   });
 
@@ -67,6 +70,7 @@
 <h1>{t("p.plans.pid.wbs.work_breakdown")}</h1>
 <p class="lede">{t("p.plans.pid.wbs.the_plan_s_tasks_each")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
+{#if linkCountsFailed}<p class="banner" role="note" data-testid="link-counts-failed">{t("p.plans.pid.wbs.link_counts_failed")}</p>{/if}
 
 {#if tasks}
   <p class="small" role="status">{notice}</p>

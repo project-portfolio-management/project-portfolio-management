@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — best-effort reads say when they fail (CQ-19, 2026-10-22)
+
+Four pages swallowed a failed read: the WBS link counts, the plan page's tool list (every tool shown), the Gantt working calendar (no shading) and the announcements page, which fell back to the public feed on **any** error. They now stay quiet only for a 404 or 403 (`src/lib/absent.ts`, also used by the handling-mark banner) and otherwise show a note; announcements fall back only when the full list is refused, and show the error otherwise. `hooks.server.ts` set no security headers when a response's headers were immutable; it now copies the response and sets them on the copy. Browser tests (`tests/e2e/best-effort.spec.ts`, all four fail on the old pages) and a unit test for the headers (fails on the old hook). Welsh machine-written, unreviewed.
+
 ### Fixed — a key result's delete question in the reader's language (CQ-23, 2026-10-21)
 
 `ObjectiveCard` asked `Delete “…”?` in English whatever the locale; it now uses `c.ObjectiveCard.delete_the_key_result` (Welsh machine-written, unreviewed). The catalogue test walks only template text, so it could not see a dialog's argument; a new check fails on any `confirm`, `alert` or `prompt` called with a literal (it found this one when the old line was put back). Not done: the native dialogs are still native (no Lily dialog); unused catalogue keys and the `as never` key casts were not touched.

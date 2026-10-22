@@ -6,6 +6,7 @@
   endpoints; the Gantt is a derived visualization, not a second editor.
 -->
 <script lang="ts">
+  import { isAbsent } from "#lib/absent.js";
   import { onMount } from "svelte";
   import GanttView from "#lib/components/GanttView.svelte";
   import { chartTasks } from "#lib/gantt-view.js";
@@ -24,11 +25,14 @@
   let holidays = $state<string[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  /** The calendar read failed for a reason other than "none", so the chart is not shaded. */
+  let calendarFailed = $state(false);
 
   async function loadSchedule(pid: string) {
     if (!pid) return;
     loading = true;
     error = null;
+    calendarFailed = false;
     try {
       schedule = await client.schedule(pid);
       // The plan's own working days shade the chart; without a calendar nothing is shaded.
@@ -36,9 +40,10 @@
         const cal = await client.planCalendar(pid);
         mask = cal.weekdays;
         holidays = cal.holidays;
-      } catch {
+      } catch (err) {
         mask = "";
         holidays = [];
+        calendarFailed = !isAbsent(err);
       }
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
@@ -89,6 +94,9 @@
   </label>
 </p>
 
+{#if calendarFailed}
+  <p class="banner" role="note" data-testid="calendar-failed">{t("p.gantt.calendar_failed")}</p>
+{/if}
 {#if loading}
   <p>{t("list.loading")}</p>
 {:else if error}

@@ -5,6 +5,7 @@
   check-duplicates (kind does not gate matching).
 -->
 <script lang="ts">
+  import { isAbsent } from "#lib/absent.js";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple, splitPlanLinks } from "#lib/preferences.js";
   import { goto } from "$app/navigation";
@@ -27,6 +28,7 @@
   let checking = $state(false);
   // RM-7: the modules this plan exposes; null = unknown ⇒ show every link.
   let modules = $state<string[] | null>(null);
+  let modulesFailed = $state(false);
   const links = $derived(visiblePlanLinks(modules));
   // Simple view keeps governance, board and schedule in front and the rest behind
   // "More tools" — prominence, not capability: the same links, one step away.
@@ -76,17 +78,20 @@
     error = null;
     duplicates = null;
     modules = null;
+    modulesFailed = false;
     try {
       const found = await repo.get(id);
       if (mine !== latest) return;
       record = found;
-      // Best effort: a failure leaves `modules` null and every link shown.
+      // Best effort: a failure leaves `modules` null and every link shown, and says so.
       PpmClient.withFetch()
         .planModules(id)
         .then((m) => {
           if (mine === latest) modules = m.modules;
         })
-        .catch(() => {});
+        .catch((err: unknown) => {
+          if (mine === latest) modulesFailed = !isAbsent(err);
+        });
     } catch (err) {
       if (mine === latest) error = err instanceof Error ? err.message : t("detail.notFound");
     } finally {
@@ -124,6 +129,7 @@
   <p class="banner" role="alert">{error}</p>
 {:else if record}
   <h1>{record.name}</h1>
+  {#if modulesFailed}<p class="banner" role="note" data-testid="modules-failed">{t("p.plans.pid.modules_failed")}</p>{/if}
   <p class="small tools">
     {#each front as k (k)}
       <a class="button small" href={localeHref(`/plans/${pid}/${k}`)}>{linkLabel(k)}</a>

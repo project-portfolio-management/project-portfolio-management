@@ -45,7 +45,10 @@ Routes are under `/api/`; plans at `/api/plans`, plan-scoped resources at
 `/api/plans/{pid}/…`. URLs are version-free; select a version with the
 `Accepts-version` header (default `1.0`, `src/version.rs`). The OpenAPI
 document (`src/openapi.rs` + `src/openapi_more.rs`) is hand-written and
-pinned by tests: **every new route must be added there.** Spec §9 is the
+pinned by tests: **every new route must be added there**, a new write must
+document its `requestBody` (`WRITES_WITHOUT_REQUEST_BODY` only shrinks), and
+`api-routes.txt` (the mounted routes, which the UI's tests check its client
+against) is regenerated with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`. Spec §9 is the
 full contract; this is the map. One module per area in
 `src/controllers/` (77 files), each with a pure-logic sibling in `src/`.
 

@@ -1713,6 +1713,7 @@ came from grep.
   by domain.
   **Acceptance:** the census fails on a client path the service does not
   mount; `pnpm run check` passes against the generated types.
+  **Progress 2026-10-22 (not ticked).** First step built, against the mounted routes rather than the OpenAPI document (the routes are the truth; the document lags by 52 paths): the service keeps `api-routes.txt` current by test, and `tests/unit/client-routes.test.ts` checks all 292 client calls (path and method; union-typed names and written-out choices expanded); a misspelt path and an invented action both fail it. **Still to do:** types generated from the document (needs CQ-8's bodies), and splitting `ppm.ts`.
 - [ ] **CQ-10 (S) — Index writes off the async runtime.**
   `streaming.rs:359,372` run tantivy's index and delete calls, with
   `commit()`, synchronously under a `std::sync::Mutex`. Use `spawn_blocking`,

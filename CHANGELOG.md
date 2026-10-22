@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 22 October
 
+- **The UI's API client is checked against the routes the service really serves (CQ-9, part).** All 292 calls match; a wrong path or method now fails a test. **Not done:** bodies and types are not checked.
 - **New API writes must document their request body (CQ-8, part).** 227 of 260 existing writes lack one; they are listed and the list can only shrink. **Not done:** none documented yet.
 - **One rule for what a page says when something fails (CQ-20, part).** 159 copies in 88 files now share a helper; a server fault now shows the page's own message, in the reader's language, instead of English "Internal Server Error". Verified: a unit test and every UI gate. **Not done:** the shared loading helper; the service's own refusal reasons are still English.
 - **Pages no longer hide a failed read (CQ-19).** The work breakdown, the plan page, the Gantt chart and the announcements page now say when part of their data could not be loaded, instead of looking empty or complete; a response the server could not change now still gets its security headers. Verified: browser tests that fail on the old pages, and a unit test. Welsh machine-written, unreviewed.

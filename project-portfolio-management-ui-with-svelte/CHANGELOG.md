@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the API client is checked against the service's routes (CQ-9, part, 2026-10-22)
+
+`tests/unit/client-routes.test.ts` reads every `this.http.*` call in `src/lib/api/*.ts` (292), works out each path it can produce (choices written in the call are expanded, and so is a parameter typed as a union of words such as `action: "submit" | "approve"`), and requires each to be in the service's `api-routes.txt` with the same method, a value only where the route has a parameter. All 292 match today; a misspelt path and an invented action both fail it. Not done: request and response bodies and types are not checked (types are still hand-written); `ppm.ts` is not split.
+
 ### Changed — one rule for error text (CQ-20, part, 2026-10-22)
 
 159 copies of `err instanceof Error ? err.message : t("…")` in 88 files are now `errorText(err, "…")` (`src/lib/error-text.ts`). One change of behaviour: a server fault (5xx) shows the page's own catalogue message instead of the server's English "Internal Server Error", so a Welsh reader sees Welsh; a refusal the service explains (4xx) still shows the service's reason. Unit test `tests/unit/error-text.test.ts`; check, vitest and the full Playwright run pass. Not done: 15 variants that fall back to `""` or `String(err)` were left; 4xx reasons are still the service's English; the `resource()` load helper is not built.

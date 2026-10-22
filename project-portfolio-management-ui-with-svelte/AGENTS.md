@@ -51,7 +51,9 @@ of the matching surface (except goal titles).
   and [`agents/`](../agents/) describe the API contract. If a field
   changes in `Plan` (the matcher type) in the service, fix
   `src/lib/api/types.ts` here in the **same** change cycle — do not let
-  the front-end drift.
+  the front-end drift. `tests/unit/client-routes.test.ts` checks that every
+  path in `src/lib/api/*.ts` is a route the service mounts (its
+  `api-routes.txt`); it checks paths and methods, not bodies or types.
 - This project has its own [`spec.md`](spec/index.md) (§1–§18) for
   front-end-specific decisions: routes, components, design system,
   build, layout shell, i18n.

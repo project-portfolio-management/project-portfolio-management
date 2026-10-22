@@ -2289,6 +2289,29 @@ mod tests {
         "put /api/ways-of-working/{pid}",
     ];
 
+    /// CQ-9: the mounted routes as `METHOD /path` lines in `api-routes.txt` at the crate root, so
+    /// the UI's tests can check its client's paths against what the service really serves.
+    /// Regenerate with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`.
+    #[test]
+    fn api_routes_file_is_current() {
+        let want = mounted_routes()
+            .iter()
+            .fold(String::new(), |mut out, (path, method)| {
+                use std::fmt::Write;
+                let _ = writeln!(out, "{} {path}", method.to_uppercase());
+                out
+            });
+        let file = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("api-routes.txt");
+        if std::env::var_os("UPDATE_API_ROUTES").is_some() {
+            std::fs::write(&file, &want).expect("write api-routes.txt");
+        }
+        let have = std::fs::read_to_string(&file).unwrap_or_default();
+        assert!(
+            have == want,
+            "api-routes.txt is stale; regenerate with UPDATE_API_ROUTES=1 cargo test --lib api_routes_file"
+        );
+    }
+
     /// CQ-8: every documented write has a `requestBody`, or is on the shrinking list above.
     #[test]
     fn every_documented_write_has_a_request_body_or_is_listed() {

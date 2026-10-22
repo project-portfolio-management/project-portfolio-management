@@ -1705,6 +1705,7 @@ came from grep.
   **Acceptance:** a census test fails on any POST, PUT or PATCH without a
   `requestBody`; `KNOWN_UNDOCUMENTED` is shorter, and every remaining entry has
   a reason.
+  **Progress 2026-10-22 (not ticked).** Measured: 33 of 260 documented writes have a `requestBody`. The 227 others are in `WRITES_WITHOUT_REQUEST_BODY`, and a unit test fails on a new write without a body and on a stale entry. **Still to do:** document the bodies (or derive them), separating writes that take no body from real gaps; response schemas; moving each `*_paths()` next to its controller.
 - [ ] **CQ-9 (M) — The UI client is checked against the service.** As a first
   step, a test compares the path templates and methods in `src/lib/api/*.ts`
   with the OpenAPI document. After CQ-8, generate the TypeScript types from the

@@ -250,7 +250,9 @@ export class ApiClient {
     // A POST carries an Idempotency-Key (a caller's own header wins). The service honours it where it
     // can replay (bulk import) and ignores it elsewhere; sending it is harmless and lets a retry be safe.
     let inflightKey: string | undefined;
-    const hasKey = Object.keys(headers).some((h) => h.toLowerCase() === "idempotency-key");
+    const hasKey = Object.keys(headers).some(
+      (h) => h.toLowerCase() === "idempotency-key",
+    );
     if (method === "POST" && !hasKey && opts.idempotencyKey !== false) {
       if (opts.idempotencyKey) {
         headers["idempotency-key"] = opts.idempotencyKey;
@@ -307,14 +309,20 @@ export class ApiClient {
         // Non-JSON body: only surface it as an error on a failed
         // response (truncated); a non-JSON 2xx body stays `undefined`.
         if (!response.ok) {
-          throw new ApiError(response.status, localizeApiMessage(text.slice(0, 200), response.status));
+          throw new ApiError(
+            response.status,
+            localizeApiMessage(text.slice(0, 200), response.status),
+          );
         }
       }
     }
 
     if (!response.ok) {
       // Prefer a server-supplied message; otherwise a generic status line.
-      const message = localizeApiMessage(extractMessage(parsed), response.status);
+      const message = localizeApiMessage(
+        extractMessage(parsed),
+        response.status,
+      );
       throw new ApiError(response.status, message, parsed);
     }
     return { data: parsed as T, response };
@@ -331,8 +339,12 @@ const API_CODES: Record<string, string> = {
 };
 
 /** A service error code in the reader's language; any other text from the service is shown as sent. */
-function localizeApiMessage(message: string | undefined, status: number): string {
-  if (message === undefined) return t("l.enum.api.http_status" as never, { status });
+function localizeApiMessage(
+  message: string | undefined,
+  status: number,
+): string {
+  if (message === undefined)
+    return t("l.enum.api.http_status" as never, { status });
   const key = API_CODES[message.trim().toLowerCase()];
   return key ? t(key as never) : message;
 }

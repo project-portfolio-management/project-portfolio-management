@@ -10,11 +10,21 @@ import type {
 import { t } from "./i18n.svelte.js";
 
 export const STATUS_TEXT: Record<DocumentStatus, string> = {
-  get draft() { return t("l.document_view.draft"); },
-  get in_review() { return t("l.document_view.in_review"); },
-  get approved() { return t("l.document_view.approved_not_yet_in_force"); },
-  get effective() { return t("p.documents.in_force"); },
-  get superseded() { return t("l.document_view.replaced"); },
+  get draft() {
+    return t("l.document_view.draft");
+  },
+  get in_review() {
+    return t("l.document_view.in_review");
+  },
+  get approved() {
+    return t("l.document_view.approved_not_yet_in_force");
+  },
+  get effective() {
+    return t("p.documents.in_force");
+  },
+  get superseded() {
+    return t("l.document_view.replaced");
+  },
 };
 
 export const STATUS_SYMBOL: Record<DocumentStatus, string> = {
@@ -30,24 +40,48 @@ export type NextAction =
   "send_for_review" | "decide" | "make_effective" | "start_next_draft" | "none";
 
 export const ACTION_LABEL: Record<Exclude<NextAction, "none">, string> = {
-  get send_for_review() { return t("l.document_view.send_for_review"); },
-  get decide() { return t("l.document_view.approve"); },
-  get make_effective() { return t("l.document_view.bring_into_force_today"); },
-  get start_next_draft() { return t("l.document_view.start_the_next_draft"); },
+  get send_for_review() {
+    return t("l.document_view.send_for_review");
+  },
+  get decide() {
+    return t("l.document_view.approve");
+  },
+  get make_effective() {
+    return t("l.document_view.bring_into_force_today");
+  },
+  get start_next_draft() {
+    return t("l.document_view.start_the_next_draft");
+  },
 };
 
 export const STEP_TITLE: Record<Exclude<NextAction, "none">, string> = {
-  get send_for_review() { return t("p.plans.pid.governance.review"); },
-  get decide() { return t("l.document_view.waiting_for_the_approver"); },
-  get make_effective() { return t("l.document_view.approved"); },
-  get start_next_draft() { return t("l.document_view.change_this_document"); },
+  get send_for_review() {
+    return t("p.plans.pid.governance.review");
+  },
+  get decide() {
+    return t("l.document_view.waiting_for_the_approver");
+  },
+  get make_effective() {
+    return t("l.document_view.approved");
+  },
+  get start_next_draft() {
+    return t("l.document_view.change_this_document");
+  },
 };
 
 export const STEP_HELP: Record<Exclude<NextAction, "none">, string> = {
-  get send_for_review() { return t("l.document_view.someone_else_approves_it_you"); },
-  get decide() { return t("l.document_view.only_the_person_asked_can"); },
-  get make_effective() { return t("l.document_view.it_comes_into_force_today"); },
-  get start_next_draft() { return t("l.document_view.the_next_draft_starts_as"); },
+  get send_for_review() {
+    return t("l.document_view.someone_else_approves_it_you");
+  },
+  get decide() {
+    return t("l.document_view.only_the_person_asked_can");
+  },
+  get make_effective() {
+    return t("l.document_view.it_comes_into_force_today");
+  },
+  get start_next_draft() {
+    return t("l.document_view.the_next_draft_starts_as");
+  },
 };
 
 /** The version still being worked on (draft, in review or approved), if any: at most one. */
@@ -76,20 +110,33 @@ export function versionLine(
   v: DocumentVersion,
   all: readonly DocumentVersion[] = [],
 ): string {
-  const base = t("l.document_view.version", { version: v.version, v: STATUS_TEXT[v.status] });
+  const base = t("l.document_view.version", {
+    version: v.version,
+    v: STATUS_TEXT[v.status],
+  });
   if (v.status === "effective" && v.effective_from)
-    return t("l.document_view.since", { base, effective_from: v.effective_from });
+    return t("l.document_view.since", {
+      base,
+      effective_from: v.effective_from,
+    });
   if (v.status === "superseded" && v.superseded_on) {
     const next = all.find((x) => x.pid === v.superseded_by);
-    return t("l.document_view.on", { base, superseded_on: v.superseded_on, v: next ? t("l.document_view.by_version", { version: next.version }) : "" });
+    return t("l.document_view.on", {
+      base,
+      superseded_on: v.superseded_on,
+      v: next ? t("l.document_view.by_version", { version: next.version }) : "",
+    });
   }
   return base;
 }
 
 /** One line for the list: which version is in force, or that none is. */
 export function forceText(doc: ControlledDocument): string {
-  if (doc.in_force_today === null) return t("l.document_view.nothing_in_force_yet");
-  return t("l.document_view.version_in_force", { in_force_today: doc.in_force_today });
+  if (doc.in_force_today === null)
+    return t("l.document_view.nothing_in_force_yet");
+  return t("l.document_view.version_in_force", {
+    in_force_today: doc.in_force_today,
+  });
 }
 
 /** Whether the text of a version may still change. */

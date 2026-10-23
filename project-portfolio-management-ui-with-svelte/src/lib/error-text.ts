@@ -9,7 +9,11 @@ import { ApiError } from "./api/client";
 import { t, type StringKey } from "./i18n.svelte.js";
 
 /** The text to show for `err`, falling back to the catalogue message `key`. */
-export function errorText(err: unknown, key: StringKey, values?: Parameters<typeof t>[1]): string {
+export function errorText(
+  err: unknown,
+  key: StringKey,
+  values?: Parameters<typeof t>[1],
+): string {
   if (err instanceof ApiError && err.status >= 500) return t(key, values);
   return err instanceof Error && err.message ? err.message : t(key, values);
 }

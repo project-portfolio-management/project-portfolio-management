@@ -27,28 +27,56 @@ export interface HealthResult {
 
 /** Pass, fail, or "not computable" — which is never read as a pass. */
 export function healthResult(c: Pick<HealthCheck, "pass">): HealthResult {
-  if (c.pass === true) return { kind: "pass", symbol: "✓", text: t("l.scheduling_view.pass") };
-  if (c.pass === false) return { kind: "fail", symbol: "✗", text: t("l.scheduling_view.fail") };
-  return { kind: "na", symbol: "–", text: t("l.scheduling_view.not_computable") };
+  if (c.pass === true)
+    return { kind: "pass", symbol: "✓", text: t("l.scheduling_view.pass") };
+  if (c.pass === false)
+    return { kind: "fail", symbol: "✗", text: t("l.scheduling_view.fail") };
+  return {
+    kind: "na",
+    symbol: "–",
+    text: t("l.scheduling_view.not_computable"),
+  };
 }
 
 const REASONS: Record<string, string> = {
-  get no_baseline() { return t("l.scheduling_view.no_schedule_baseline_has_been"); },
-  get nothing_baselined_due() { return t("l.scheduling_view.nothing_was_baselined_to_finish"); },
-  get cycle() { return t("l.scheduling_view.the_plan_s_dependencies_contain"); },
-  get no_incomplete_tasks() { return t("l.scheduling_view.there_are_no_incomplete_tasks"); },
-  get no_relationships() { return t("l.scheduling_view.there_are_no_relationships_between"); },
-  get no_scheduled_tasks() { return t("l.scheduling_view.no_incomplete_task_has_dates"); },
-  get no_durations() { return t("l.scheduling_view.no_incomplete_task_has_a"); },
-  get no_tasks() { return t("l.scheduling_view.the_plan_has_no_tasks"); },
-  get no_critical_path() { return t("l.scheduling_view.there_is_no_critical_task"); },
-  get no_remaining_path() { return t("l.scheduling_view.no_path_remains_to_measure"); },
+  get no_baseline() {
+    return t("l.scheduling_view.no_schedule_baseline_has_been");
+  },
+  get nothing_baselined_due() {
+    return t("l.scheduling_view.nothing_was_baselined_to_finish");
+  },
+  get cycle() {
+    return t("l.scheduling_view.the_plan_s_dependencies_contain");
+  },
+  get no_incomplete_tasks() {
+    return t("l.scheduling_view.there_are_no_incomplete_tasks");
+  },
+  get no_relationships() {
+    return t("l.scheduling_view.there_are_no_relationships_between");
+  },
+  get no_scheduled_tasks() {
+    return t("l.scheduling_view.no_incomplete_task_has_dates");
+  },
+  get no_durations() {
+    return t("l.scheduling_view.no_incomplete_task_has_a");
+  },
+  get no_tasks() {
+    return t("l.scheduling_view.the_plan_has_no_tasks");
+  },
+  get no_critical_path() {
+    return t("l.scheduling_view.there_is_no_critical_task");
+  },
+  get no_remaining_path() {
+    return t("l.scheduling_view.no_path_remains_to_measure");
+  },
 };
 
 /** Why a check could not be computed, in a sentence ("not enough data" + reason). */
 export function healthReason(reason: string | null | undefined): string {
   if (!reason) return t("l.scheduling_view.not_enough_data");
-  return t("l.scheduling_view.not_enough_data_2", { reason: REASONS[reason] ?? reason });
+  return t("l.scheduling_view.not_enough_data_2", {
+    reason: REASONS[reason] ?? reason,
+  });
 }
 
 /** What the check was held to, in words. */
@@ -56,8 +84,14 @@ export function thresholdSentence(c: Pick<HealthCheck, "threshold">): string {
   const { op, limit, unit } = c.threshold;
   if (unit === "result")
     return t("l.scheduling_view.must_pass_a_business_day", { v: limit ?? 0 });
-  if (unit === "days") return t("l.scheduling_view.at_least_business_days", { limit });
-  const word = op === "<=" ? t("l.scheduling_view.at_most") : op === ">=" ? t("l.scheduling_view.at_least") : t("l.scheduling_view.exactly");
+  if (unit === "days")
+    return t("l.scheduling_view.at_least_business_days", { limit });
+  const word =
+    op === "<="
+      ? t("l.scheduling_view.at_most")
+      : op === ">="
+        ? t("l.scheduling_view.at_least")
+        : t("l.scheduling_view.exactly");
   if (unit === "milli")
     return `${word[0]?.toUpperCase()}${word.slice(1)} ${((limit ?? 0) / 1000).toFixed(2)}`;
   return `${word[0]?.toUpperCase()}${word.slice(1)} ${limit}%`;
@@ -67,10 +101,22 @@ export function thresholdSentence(c: Pick<HealthCheck, "threshold">): string {
 export function healthValue(c: HealthCheck): string {
   if (c.value === null) return t("l.scheduling_view.no_figure");
   if (c.threshold.unit === "result")
-    return t("l.scheduling_view.finish_moved_of_business_days", { count: c.count, of: c.of });
+    return t("l.scheduling_view.finish_moved_of_business_days", {
+      count: c.count,
+      of: c.of,
+    });
   if (c.threshold.unit === "milli")
-    return t("l.scheduling_view.of", { toFixed: c.value.toFixed(2), count: c.count, of: c.of });
-  return t("l.scheduling_view.of_2", { value: c.value, count: c.count, of: c.of, of_what: c.of_what });
+    return t("l.scheduling_view.of", {
+      toFixed: c.value.toFixed(2),
+      count: c.count,
+      of: c.of,
+    });
+  return t("l.scheduling_view.of_2", {
+    value: c.value,
+    count: c.count,
+    of: c.of,
+    of_what: c.of_what,
+  });
 }
 
 export function healthSummary(r: {
@@ -78,7 +124,11 @@ export function healthSummary(r: {
   failed: number;
   not_computable: number;
 }): string {
-  return t("l.scheduling_view.passed_failed_not_computable", { passed: r.passed, failed: r.failed, not_computable: r.not_computable });
+  return t("l.scheduling_view.passed_failed_not_computable", {
+    passed: r.passed,
+    failed: r.failed,
+    not_computable: r.not_computable,
+  });
 }
 
 /** Where an offender task is shown: the critical-path page, anchored on the task. */
@@ -89,16 +139,30 @@ export function offenderHref(planPid: string, taskPid: string): string {
 // ───────────────────────── leveling (SC-6) ─────────────────────────
 
 const LEVELING_REASON: Record<string, string> = {
-  get fixed_tasks() { return t("l.scheduling_view.every_task_involved_has_already"); },
-  get critical_task() { return t("l.scheduling_view.the_tasks_involved_are_critical"); },
-  get no_float() { return t("l.scheduling_view.delaying_a_task_enough_would"); },
-  get hard_constraint() { return t("l.scheduling_view.a_task_involved_has_a"); },
-  get did_not_move() { return t("l.scheduling_view.the_schedule_would_not_let"); },
-  get limit() { return t("l.scheduling_view.the_search_stopped_at_its"); },
+  get fixed_tasks() {
+    return t("l.scheduling_view.every_task_involved_has_already");
+  },
+  get critical_task() {
+    return t("l.scheduling_view.the_tasks_involved_are_critical");
+  },
+  get no_float() {
+    return t("l.scheduling_view.delaying_a_task_enough_would");
+  },
+  get hard_constraint() {
+    return t("l.scheduling_view.a_task_involved_has_a");
+  },
+  get did_not_move() {
+    return t("l.scheduling_view.the_schedule_would_not_let");
+  },
+  get limit() {
+    return t("l.scheduling_view.the_search_stopped_at_its");
+  },
 };
 
 export function levelingReason(reason: string | null | undefined): string {
-  return reason ? (LEVELING_REASON[reason] ?? reason) : t("l.scheduling_view.not_resolved");
+  return reason
+    ? (LEVELING_REASON[reason] ?? reason)
+    : t("l.scheduling_view.not_resolved");
 }
 
 const days = businessDays;
@@ -106,19 +170,34 @@ const days = businessDays;
 /** One proposed move, as a sentence. */
 export function moveText(m: LevelingMove): string {
   const who = m.masked ? m.person : (m.person_ref ?? m.person);
-  const crit = m.critical
-    ? t("l.scheduling_view.it_is_on_the_critical")
-    : "";
-  return t("l.scheduling_view.starts_later_finishes_instead_of", { pid: m.title ?? m.pid, who, from_start: m.from_start, scheduled_start: m.scheduled_start, days: days(m.delay_days), to_finish: m.to_finish, from_finish: m.from_finish, crit });
+  const crit = m.critical ? t("l.scheduling_view.it_is_on_the_critical") : "";
+  return t("l.scheduling_view.starts_later_finishes_instead_of", {
+    pid: m.title ?? m.pid,
+    who,
+    from_start: m.from_start,
+    scheduled_start: m.scheduled_start,
+    days: days(m.delay_days),
+    to_finish: m.to_finish,
+    from_finish: m.from_finish,
+    crit,
+  });
 }
 
 /** An over-allocation run, as a sentence; masked callers get no numbers. */
 export function runText(r: LevelingRun): string {
-  const span = r.from === r.to ? r.from : t("l.scheduling_view.to", { from: r.from, to: r.to });
+  const span =
+    r.from === r.to
+      ? r.from
+      : t("l.scheduling_view.to", { from: r.from, to: r.to });
   const who = r.masked ? r.person : (r.person_ref ?? r.person);
   if (r.demand === null || r.capacity === null)
     return t("l.scheduling_view.is_over_capacity_on", { who, span });
-  return t("l.scheduling_view.is_asked_for_on_and", { who, demand: r.demand, span, capacity: r.capacity });
+  return t("l.scheduling_view.is_asked_for_on_and", {
+    who,
+    demand: r.demand,
+    span,
+    capacity: r.capacity,
+  });
 }
 
 /** The finish effect of applying all moves, in a sentence. */
@@ -128,8 +207,13 @@ export function finishEffectText(
   delay: number,
 ): string {
   if (!before || !after) return t("l.scheduling_view.no_project_finish_can_be");
-  if (delay === 0) return t("l.scheduling_view.the_project_finish_stays", { before });
-  return t("l.scheduling_view.the_project_finish_moves_from", { before, after, days: days(delay) });
+  if (delay === 0)
+    return t("l.scheduling_view.the_project_finish_stays", { before });
+  return t("l.scheduling_view.the_project_finish_moves_from", {
+    before,
+    after,
+    days: days(delay),
+  });
 }
 
 // ───────────────────────── resource heatmap (SC-7) ─────────────────────────
@@ -160,7 +244,9 @@ export function gapCell(
     return {
       kind: "unknown",
       symbol: "?",
-      text: t("l.scheduling_view.demand_fte_supply_not_known", { demand_fte: row.demand_fte }),
+      text: t("l.scheduling_view.demand_fte_supply_not_known", {
+        demand_fte: row.demand_fte,
+      }),
       level: 0,
     };
   }
@@ -179,7 +265,12 @@ export function gapCell(
       text: t("l.scheduling_view.spare_fte", { gap_fte: row.gap_fte }),
       level,
     };
-  return { kind: "balanced", symbol: "●", text: t("l.scheduling_view.balanced"), level: 0 };
+  return {
+    kind: "balanced",
+    symbol: "●",
+    text: t("l.scheduling_view.balanced"),
+    level: 0,
+  };
 }
 
 /** The largest absolute gap across all cells (for scaling colour). */
@@ -289,25 +380,41 @@ export function criticalityText(bp: number): string {
 export function sensitivityText(r: number | null): string {
   if (r === null) return t("l.scheduling_view.no_variation");
   const strength =
-    Math.abs(r) >= 0.7 ? t("l.scheduling_view.strength_strong") : Math.abs(r) >= 0.4 ? t("l.scheduling_view.strength_moderate") : t("l.scheduling_view.strength_weak");
+    Math.abs(r) >= 0.7
+      ? t("l.scheduling_view.strength_strong")
+      : Math.abs(r) >= 0.4
+        ? t("l.scheduling_view.strength_moderate")
+        : t("l.scheduling_view.strength_weak");
   return `${r.toFixed(2)} (${strength})`;
 }
 
 /** The estimate source in words, flagging a fallback loudly. */
 export function sourceText(task: Pick<RiskTask, "source" | "widened">): string {
-  if (task.source === "fallback") return t("l.scheduling_view.no_estimate_using_the_fallback");
-  if (task.source === "milestone") return t("l.scheduling_view.milestone_no_spread");
+  if (task.source === "fallback")
+    return t("l.scheduling_view.no_estimate_using_the_fallback");
+  if (task.source === "milestone")
+    return t("l.scheduling_view.milestone_no_spread");
   return task.widened
     ? t("l.scheduling_view.estimated_widened_to_include_the")
     : t("l.scheduling_view.estimated");
 }
 
 const EVENT_REASON: Record<string, string> = {
-  get no_probability() { return t("l.scheduling_view.no_probability"); },
-  get no_task() { return t("l.scheduling_view.no_task_named"); },
-  get no_impact() { return t("l.scheduling_view.no_impact_in_business_days"); },
-  get closed() { return t("l.scheduling_view.the_risk_is_not_open"); },
-  get task_not_scheduled() { return t("l.scheduling_view.its_task_is_not_on"); },
+  get no_probability() {
+    return t("l.scheduling_view.no_probability");
+  },
+  get no_task() {
+    return t("l.scheduling_view.no_task_named");
+  },
+  get no_impact() {
+    return t("l.scheduling_view.no_impact_in_business_days");
+  },
+  get closed() {
+    return t("l.scheduling_view.the_risk_is_not_open");
+  },
+  get task_not_scheduled() {
+    return t("l.scheduling_view.its_task_is_not_on");
+  },
   incomplete: "incomplete",
 };
 
@@ -395,13 +502,22 @@ export function costHistogramGeometry(
 
 /** How likely the budget is, in words. `budgetText` is the formatted budget. */
 export function budgetConfidenceText(bp: number, budgetText: string): string {
-  return t("l.scheduling_view.of_the_simulated_outcomes_cost", { round: Math.round(bp / 100), budgetText });
+  return t("l.scheduling_view.of_the_simulated_outcomes_cost", {
+    round: Math.round(bp / 100),
+    budgetText,
+  });
 }
 
 const COST_SKIPPED: Record<string, string> = {
-  get no_probability() { return t("l.scheduling_view.no_probability"); },
-  get closed() { return t("l.scheduling_view.the_risk_is_not_open"); },
-  get no_budget_in_currency() { return t("l.scheduling_view.the_plan_has_no_budget"); },
+  get no_probability() {
+    return t("l.scheduling_view.no_probability");
+  },
+  get closed() {
+    return t("l.scheduling_view.the_risk_is_not_open");
+  },
+  get no_budget_in_currency() {
+    return t("l.scheduling_view.the_plan_has_no_budget");
+  },
   incomplete: "incomplete",
 };
 
@@ -414,7 +530,8 @@ export function lineSourceText(l: {
   source: "estimated" | "fallback";
   widened: boolean;
 }): string {
-  if (l.source === "fallback") return t("l.scheduling_view.no_estimate_using_the_fallback");
+  if (l.source === "fallback")
+    return t("l.scheduling_view.no_estimate_using_the_fallback");
   return l.widened
     ? t("l.scheduling_view.estimated_widened_to_include_the_2")
     : t("l.scheduling_view.estimated");
@@ -422,7 +539,10 @@ export function lineSourceText(l: {
 
 /** The stated probability against how often the event actually struck. */
 export function eventHitText(probabilityBp: number, hitBp: number): string {
-  return t("l.scheduling_view.stated_struck_in_of_runs", { round: Math.round(probabilityBp / 100), toFixed: (hitBp / 100).toFixed(1) });
+  return t("l.scheduling_view.stated_struck_in_of_runs", {
+    round: Math.round(probabilityBp / 100),
+    toFixed: (hitBp / 100).toFixed(1),
+  });
 }
 
 export interface QuadrantRow {
@@ -482,7 +602,11 @@ export function jointConfidenceText(c: {
   joint_bp: number;
 }): string {
   const pct = (bp: number): string => `${Math.round(bp / 100)}%`;
-  return t("l.scheduling_view.both_within_budget_and_on", { pct: pct(c.joint_bp), pct2: pct(c.budget_bp), pct3: pct(c.finish_bp) });
+  return t("l.scheduling_view.both_within_budget_and_on", {
+    pct: pct(c.joint_bp),
+    pct2: pct(c.budget_bp),
+    pct3: pct(c.finish_bp),
+  });
 }
 
 export interface Scatter {
@@ -537,5 +661,7 @@ export function delayCostText(
 ): string {
   return perDayMinor === 0
     ? t("l.scheduling_view.a_late_finish_costs_nothing")
-    : t("l.scheduling_view.each_business_day_late_adds", { format: format(perDayMinor, currency) });
+    : t("l.scheduling_view.each_business_day_late_adds", {
+        format: format(perDayMinor, currency),
+      });
 }

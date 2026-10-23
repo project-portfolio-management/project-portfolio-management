@@ -27,7 +27,8 @@ export function oidcConfig(): OidcConfig | null {
     issuer,
     clientId,
     clientSecret: (env.OIDC_CLIENT_SECRET ?? "").trim() || undefined,
-    scopes: (env.OIDC_SCOPES ?? "").trim() || "openid profile email offline_access",
+    scopes:
+      (env.OIDC_SCOPES ?? "").trim() || "openid profile email offline_access",
     tenantId: (env.OIDC_TENANT_ID ?? "").trim() || undefined,
     idpHint: (env.OIDC_IDP_HINT ?? "").trim() || undefined,
   };
@@ -48,8 +49,13 @@ export function oidcOptions(): {
   const hours = Number.parseFloat(env.OIDC_SESSION_HOURS ?? "");
   return {
     redirectUri: (env.OIDC_REDIRECT_URI ?? "").trim() || undefined,
-    sessionSeconds: Math.round((Number.isFinite(hours) && hours > 0 ? hours : 8) * 3600),
-    idleSeconds: Math.round((Number.isFinite(idleMinutes) && idleMinutes >= 0 ? idleMinutes : 30) * 60),
+    sessionSeconds: Math.round(
+      (Number.isFinite(hours) && hours > 0 ? hours : 8) * 3600,
+    ),
+    idleSeconds: Math.round(
+      (Number.isFinite(idleMinutes) && idleMinutes >= 0 ? idleMinutes : 30) *
+        60,
+    ),
     endProviderSession: (env.OIDC_END_SESSION ?? "").trim() === "true",
   };
 }

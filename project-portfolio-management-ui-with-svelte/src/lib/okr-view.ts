@@ -10,7 +10,8 @@ import { t } from "./i18n.svelte.js";
 
 /** "40%" for 4000 basis points; "Not measured" for `null`. */
 export function percentText(basisPoints: number | null | undefined): string {
-  if (basisPoints === null || basisPoints === undefined) return t("l.okr_view.not_measured");
+  if (basisPoints === null || basisPoints === undefined)
+    return t("l.okr_view.not_measured");
   const pct = basisPoints / 100;
   return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
 }
@@ -24,9 +25,15 @@ export function progressValue(
 }
 
 const REASONS: Record<string, string> = {
-  get NoRange() { return t("l.okr_view.not_measurable_the_start_and"); },
-  get NoTolerance() { return t("l.okr_view.not_measurable_a_maintain_key"); },
-  get Overflow() { return t("l.okr_view.not_measurable_the_numbers_are"); },
+  get NoRange() {
+    return t("l.okr_view.not_measurable_the_start_and");
+  },
+  get NoTolerance() {
+    return t("l.okr_view.not_measurable_a_maintain_key");
+  },
+  get Overflow() {
+    return t("l.okr_view.not_measurable_the_numbers_are");
+  },
 };
 
 /** Why a key result has no progress, in a sentence. */

@@ -15,7 +15,10 @@ import { accessTokenFor, providerMetadata } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
 import { demoEnabled } from "#lib/server/demo.js";
 import { relayResponseHeaders } from "#lib/server/proxy-headers.js";
-import { crossSiteRefusal, forwardedRequestHeaders } from "#lib/server/proxy-guard.js";
+import {
+  crossSiteRefusal,
+  forwardedRequestHeaders,
+} from "#lib/server/proxy-guard.js";
 
 /** A JSON error in the service's own shape (`error`, `description`). */
 function problem(status: number, error: string, description: string): Response {
@@ -59,7 +62,11 @@ const proxy: RequestHandler = async ({
     if (cfg) {
       try {
         const meta = await providerMetadata(fetch, cfg.issuer);
-        const token = await accessTokenFor(sessions(), locals.oidc, { fetchFn: fetch, cfg, meta });
+        const token = await accessTokenFor(sessions(), locals.oidc, {
+          fetchFn: fetch,
+          cfg,
+          meta,
+        });
         if (token) headers.set("authorization", `Bearer ${token}`);
       } catch {
         // Provider unreachable: forward without a token; the API answers 401.
@@ -77,7 +84,11 @@ const proxy: RequestHandler = async ({
     upstream = await fetch(target, init);
   } catch {
     // The service is down or unreachable: say so, rather than an unhandled 500.
-    return problem(502, "bad_gateway", "the portfolio service could not be reached");
+    return problem(
+      502,
+      "bad_gateway",
+      "the portfolio service could not be reached",
+    );
   }
 
   // Relay status + body, and the response headers the client reads (an allow-list).

@@ -17,7 +17,10 @@ export const load: LayoutServerLoad = async (event) => {
   return { ...data, demo: demoEnabled() };
 };
 
-const loadSession = async ({ locals, fetch }: Parameters<LayoutServerLoad>[0]) => {
+const loadSession = async ({
+  locals,
+  fetch,
+}: Parameters<LayoutServerLoad>[0]) => {
   if (!locals.sessionId && locals.oidc) {
     // A direct OpenID Connect sign-in: no authentication-service session to ask
     // about attributes, so the default landing route applies.

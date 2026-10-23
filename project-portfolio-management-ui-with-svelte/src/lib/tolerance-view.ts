@@ -8,10 +8,22 @@ import { t } from "./i18n.svelte.js";
 
 export type DimensionKey = ToleranceDimension["dimension"];
 
-export const DIMENSIONS: readonly DimensionKey[] = ["time", "schedule", "cost", "risk", "resources"];
+export const DIMENSIONS: readonly DimensionKey[] = [
+  "time",
+  "schedule",
+  "cost",
+  "risk",
+  "resources",
+];
 
 /** Worst first, the order the board sorts in. */
-export const STATUS_ORDER: readonly ToleranceStatus[] = ["red", "amber", "unknown", "green", "not_set"];
+export const STATUS_ORDER: readonly ToleranceStatus[] = [
+  "red",
+  "amber",
+  "unknown",
+  "green",
+  "not_set",
+];
 
 /** A decorative shape per status (hidden from screen readers; the word is there). */
 export const STATUS_SYMBOL: Record<ToleranceStatus, string> = {
@@ -23,11 +35,21 @@ export const STATUS_SYMBOL: Record<ToleranceStatus, string> = {
 };
 
 export const STATUS_TEXT: Record<ToleranceStatus, string> = {
-  get green() { return t("l.tolerance.green"); },
-  get amber() { return t("l.tolerance.amber"); },
-  get red() { return t("l.tolerance.red"); },
-  get unknown() { return t("l.tolerance.unknown"); },
-  get not_set() { return t("l.tolerance.not_set"); },
+  get green() {
+    return t("l.tolerance.green");
+  },
+  get amber() {
+    return t("l.tolerance.amber");
+  },
+  get red() {
+    return t("l.tolerance.red");
+  },
+  get unknown() {
+    return t("l.tolerance.unknown");
+  },
+  get not_set() {
+    return t("l.tolerance.not_set");
+  },
 };
 
 /** The name of a dimension. */
@@ -37,18 +59,24 @@ export function dimensionLabel(d: string): string {
     : d === "schedule"
       ? t("l.tolerance.schedule")
       : d === "cost"
-      ? t("l.tolerance.cost")
-      : d === "risk"
-        ? t("l.tolerance.risk")
-        : d === "resources"
-          ? t("l.tolerance.resources")
-          : d;
+        ? t("l.tolerance.cost")
+        : d === "risk"
+          ? t("l.tolerance.risk")
+          : d === "resources"
+            ? t("l.tolerance.resources")
+            : d;
 }
 
 /** A figure in the dimension's own unit: "5 days", "12.5%", "score 20", "30 points". */
-export function amountText(d: string, value: number | null | undefined): string {
+export function amountText(
+  d: string,
+  value: number | null | undefined,
+): string {
   if (value === null || value === undefined) return "";
-  if (d === "time" || d === "schedule") return value === 1 ? t("l.tolerance.day_one", { n: value }) : t("l.tolerance.day_other", { n: value });
+  if (d === "time" || d === "schedule")
+    return value === 1
+      ? t("l.tolerance.day_one", { n: value })
+      : t("l.tolerance.day_other", { n: value });
   if (d === "cost") return `${value / 100}%`;
   if (d === "risk") return t("l.tolerance.score", { n: value });
   return t("l.tolerance.points", { n: value });
@@ -71,17 +99,19 @@ export function limitFieldLabel(d: string): string {
     : d === "schedule"
       ? t("l.tolerance.field_schedule")
       : d === "cost"
-      ? t("l.tolerance.field_cost")
-      : d === "risk"
-        ? t("l.tolerance.field_risk")
-        : t("l.tolerance.field_resources");
+        ? t("l.tolerance.field_cost")
+        : d === "risk"
+          ? t("l.tolerance.field_risk")
+          : t("l.tolerance.field_resources");
 }
 
 /** "Used 80% of the limit" or the reason there is nothing to compare. */
 export function usageText(dim: ToleranceDimension): string {
   if (dim.status === "not_set") return t("l.tolerance.no_limit");
-  if (dim.status === "unknown") return dim.reason ?? t("l.tolerance.could_not_measure");
-  if (dim.usage_percent === null || dim.usage_percent === undefined) return t("l.tolerance.zero_tolerance");
+  if (dim.status === "unknown")
+    return dim.reason ?? t("l.tolerance.could_not_measure");
+  if (dim.usage_percent === null || dim.usage_percent === undefined)
+    return t("l.tolerance.zero_tolerance");
   return t("l.tolerance.used", { percent: dim.usage_percent });
 }
 

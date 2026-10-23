@@ -126,16 +126,25 @@ export class OidcStore {
 
   private sweep(): void {
     const t = this.now();
-    for (const [k, v] of this.transactions) if (v.expiresAt <= t) this.transactions.delete(k);
-    for (const [k, v] of this.sessions) if (v.expiresAt <= t) this.sessions.delete(k);
-    for (const map of [this.sessions, this.transactions] as Map<string, unknown>[]) {
+    for (const [k, v] of this.transactions)
+      if (v.expiresAt <= t) this.transactions.delete(k);
+    for (const [k, v] of this.sessions)
+      if (v.expiresAt <= t) this.sessions.delete(k);
+    for (const map of [this.sessions, this.transactions] as Map<
+      string,
+      unknown
+    >[]) {
       // Bounded memory: drop the oldest (insertion order) beyond the cap.
-      while (map.size > this.maxEntries) map.delete(map.keys().next().value as string);
+      while (map.size > this.maxEntries)
+        map.delete(map.keys().next().value as string);
     }
   }
 
   /** Remember a login in flight under its `state`. */
-  startTransaction(state: string, tx: Omit<LoginTransaction, "expiresAt">): void {
+  startTransaction(
+    state: string,
+    tx: Omit<LoginTransaction, "expiresAt">,
+  ): void {
     this.transactions.set(state, { ...tx, expiresAt: this.now() + TX_TTL_MS });
     this.sweep(); // after the insert, so the cap holds exactly
   }
@@ -169,7 +178,8 @@ export class OidcStore {
     if (this.idleMs > 0 && t - s.lastSeenAt >= this.idleMs) {
       this.sessions.delete(id);
       this.idleEnded.add(id);
-      while (this.idleEnded.size > 1000) this.idleEnded.delete(this.idleEnded.values().next().value as string);
+      while (this.idleEnded.size > 1000)
+        this.idleEnded.delete(this.idleEnded.values().next().value as string);
       return null;
     }
     s.lastSeenAt = t;
@@ -207,13 +217,19 @@ export async function accessTokenFor(
   },
 ): Promise<string | null> {
   const now = (deps.now ?? Date.now)();
-  if (session.accessExpiresAt - REFRESH_MARGIN_MS > now) return session.accessToken;
+  if (session.accessExpiresAt - REFRESH_MARGIN_MS > now)
+    return session.accessToken;
   if (!session.refreshToken) {
     await store.delete(session.id);
     return null;
   }
   try {
-    const t = await refreshTokens(deps.fetchFn, deps.meta, deps.cfg, session.refreshToken);
+    const t = await refreshTokens(
+      deps.fetchFn,
+      deps.meta,
+      deps.cfg,
+      session.refreshToken,
+    );
     session.accessToken = t.access_token;
     if (t.refresh_token) session.refreshToken = t.refresh_token;
     session.accessExpiresAt = now + (t.expires_in ?? 300) * 1000;
@@ -228,7 +244,8 @@ export async function accessTokenFor(
 
 /** Provider metadata and keys, cached for ten minutes (keys re-read on demand). */
 const CACHE_MS = 10 * 60 * 1000;
-let metaCache: { issuer: string; at: number; meta: ProviderMetadata } | null = null;
+let metaCache: { issuer: string; at: number; meta: ProviderMetadata } | null =
+  null;
 let keyCache: { uri: string; at: number; keys: Jwk[] } | null = null;
 
 export async function providerMetadata(
@@ -236,7 +253,11 @@ export async function providerMetadata(
   issuer: string,
   now = Date.now(),
 ): Promise<ProviderMetadata> {
-  if (metaCache && metaCache.issuer === issuer && now - metaCache.at < CACHE_MS) {
+  if (
+    metaCache &&
+    metaCache.issuer === issuer &&
+    now - metaCache.at < CACHE_MS
+  ) {
     return metaCache.meta;
   }
   const meta = await discover(fetchFn, issuer);
@@ -251,7 +272,12 @@ export async function signingKeys(
   refresh = false,
   now = Date.now(),
 ): Promise<Jwk[]> {
-  if (!refresh && keyCache && keyCache.uri === meta.jwks_uri && now - keyCache.at < CACHE_MS) {
+  if (
+    !refresh &&
+    keyCache &&
+    keyCache.uri === meta.jwks_uri &&
+    now - keyCache.at < CACHE_MS
+  ) {
     return keyCache.keys;
   }
   const keys = await fetchJwks(fetchFn, meta);

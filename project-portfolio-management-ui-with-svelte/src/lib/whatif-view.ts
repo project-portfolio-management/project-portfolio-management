@@ -14,20 +14,42 @@ export type EditKind =
   "move" | "duration" | "constraint" | "add_link" | "remove_link";
 
 export const EDIT_TEXT: Record<EditKind, string> = {
-  get move() { return t("l.whatif_view.move_a_task_set_its"); },
-  get duration() { return t("l.whatif_view.change_a_task_s_duration"); },
-  get constraint() { return t("l.whatif_view.change_a_task_s_constraint"); },
-  get add_link() { return t("l.whatif_view.add_a_link"); },
-  get remove_link() { return t("l.whatif_view.remove_a_link"); },
+  get move() {
+    return t("l.whatif_view.move_a_task_set_its");
+  },
+  get duration() {
+    return t("l.whatif_view.change_a_task_s_duration");
+  },
+  get constraint() {
+    return t("l.whatif_view.change_a_task_s_constraint");
+  },
+  get add_link() {
+    return t("l.whatif_view.add_a_link");
+  },
+  get remove_link() {
+    return t("l.whatif_view.remove_a_link");
+  },
 };
 
 export const CONSTRAINTS: Record<string, string> = {
-  get snet() { return t("p.plans.pid.critical_path.start_no_earlier_than"); },
-  get snlt() { return t("p.plans.pid.critical_path.start_no_later_than"); },
-  get fnet() { return t("p.plans.pid.critical_path.finish_no_earlier_than"); },
-  get fnlt() { return t("p.plans.pid.critical_path.finish_no_later_than"); },
-  get mso() { return t("l.whatif_view.must_start_on_hard"); },
-  get mfo() { return t("l.whatif_view.must_finish_on_hard"); },
+  get snet() {
+    return t("p.plans.pid.critical_path.start_no_earlier_than");
+  },
+  get snlt() {
+    return t("p.plans.pid.critical_path.start_no_later_than");
+  },
+  get fnet() {
+    return t("p.plans.pid.critical_path.finish_no_earlier_than");
+  },
+  get fnlt() {
+    return t("p.plans.pid.critical_path.finish_no_later_than");
+  },
+  get mso() {
+    return t("l.whatif_view.must_start_on_hard");
+  },
+  get mfo() {
+    return t("l.whatif_view.must_finish_on_hard");
+  },
 };
 
 /** What the edit form holds. */
@@ -54,15 +76,15 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
   switch (f.kind) {
     case "move":
       if (blank(f.task)) return { error: t("l.whatif_view.choose_a_task") };
-      if (!isDate(str(f.start))) return { error: t("l.whatif_view.give_the_new_start_date") };
+      if (!isDate(str(f.start)))
+        return { error: t("l.whatif_view.give_the_new_start_date") };
       return { op: "move", task_pid: str(f.task), start_date: str(f.start) };
     case "duration": {
       if (blank(f.task)) return { error: t("l.whatif_view.choose_a_task") };
       const n = Number(str(f.days));
       if (blank(f.days) || !Number.isInteger(n) || n < 0 || n > 3650)
         return {
-          error:
-            t("l.whatif_view.duration_must_be_a_whole"),
+          error: t("l.whatif_view.duration_must_be_a_whole"),
         };
       return { op: "duration", task_pid: str(f.task), duration_days: n };
     }
@@ -76,7 +98,8 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
           constraint_date: null,
         };
       const kind = str(f.constraint);
-      if (!(kind in CONSTRAINTS)) return { error: t("l.whatif_view.choose_a_constraint") };
+      if (!(kind in CONSTRAINTS))
+        return { error: t("l.whatif_view.choose_a_constraint") };
       if (!isDate(str(f.constraintDate)))
         return { error: t("l.whatif_view.a_constraint_needs_a_date") };
       const hard = kind === "mso" || kind === "mfo";
@@ -91,14 +114,14 @@ export function buildEdit(f: EditForm): SandboxEdit | { error: string } {
       };
     }
     case "add_link": {
-      if (blank(f.from) || blank(f.to)) return { error: t("l.whatif_view.choose_both_tasks") };
+      if (blank(f.from) || blank(f.to))
+        return { error: t("l.whatif_view.choose_both_tasks") };
       if (str(f.from) === str(f.to))
         return { error: t("l.whatif_view.a_task_cannot_depend_on") };
       const lag = blank(f.lag) ? 0 : Number(str(f.lag));
       if (!Number.isInteger(lag) || lag < -3650 || lag > 3650)
         return {
-          error:
-            t("l.whatif_view.lag_must_be_a_whole"),
+          error: t("l.whatif_view.lag_must_be_a_whole"),
         };
       return {
         op: "add_link",
@@ -121,19 +144,41 @@ export function describeEdit(
 ): string {
   switch (e.op) {
     case "move":
-      return t("l.whatif_view.start_on", { name: name(e.task_pid), start_date: e.start_date });
+      return t("l.whatif_view.start_on", {
+        name: name(e.task_pid),
+        start_date: e.start_date,
+      });
     case "duration":
       return e.duration_days === 0
         ? t("l.whatif_view.make_a_milestone", { name: name(e.task_pid) })
-        : t(e.duration_days === 1 ? "l.whatif_view.set_duration_one" : "l.whatif_view.set_duration_other", { name: name(e.task_pid), duration_days: e.duration_days });
+        : t(
+            e.duration_days === 1
+              ? "l.whatif_view.set_duration_one"
+              : "l.whatif_view.set_duration_other",
+            { name: name(e.task_pid), duration_days: e.duration_days },
+          );
     case "constraint":
       return e.constraint_kind
-        ? t("l.whatif_view.for", { constraint_kind: CONSTRAINTS[e.constraint_kind] ?? e.constraint_kind, constraint_date: e.constraint_date, name: name(e.task_pid) })
-        : t("l.whatif_view.clear_the_constraint_on", { name: name(e.task_pid) });
+        ? t("l.whatif_view.for", {
+            constraint_kind:
+              CONSTRAINTS[e.constraint_kind] ?? e.constraint_kind,
+            constraint_date: e.constraint_date,
+            name: name(e.task_pid),
+          })
+        : t("l.whatif_view.clear_the_constraint_on", {
+            name: name(e.task_pid),
+          });
     case "add_link":
-      return t("l.whatif_view.follows", { name: name(e.successor_pid), name2: name(e.predecessor_pid), toUpperCase: (e.kind ?? "fs").toUpperCase(), v: e.lag_days ? t("l.whatif_view.lag", { lag_days: e.lag_days }) : "" });
+      return t("l.whatif_view.follows", {
+        name: name(e.successor_pid),
+        name2: name(e.predecessor_pid),
+        toUpperCase: (e.kind ?? "fs").toUpperCase(),
+        v: e.lag_days ? t("l.whatif_view.lag", { lag_days: e.lag_days }) : "",
+      });
     case "remove_link":
-      return t("l.whatif_view.remove_the_link", { slice: e.link_pid.slice(0, 8) });
+      return t("l.whatif_view.remove_the_link", {
+        slice: e.link_pid.slice(0, 8),
+      });
   }
 }
 

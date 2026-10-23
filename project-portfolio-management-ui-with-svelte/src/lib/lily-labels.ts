@@ -4,7 +4,11 @@
 // list). The other languages used to fall back to English for every widget label; they now get the package's
 // pack. Every pack but English is a machine draft that no native speaker has read (`pack.reviewed` is false),
 // so these labels are unreviewed.
-import { labelsFor, type LabelHelper, type LabelPack } from "@lilydesignsystem/svelte-locale-translations";
+import {
+  labelsFor,
+  type LabelHelper,
+  type LabelPack,
+} from "@lilydesignsystem/svelte-locale-translations";
 import type { Locale } from "./locales";
 
 /** Locales whose widget words this app writes itself (see `i18n-pages`). */
@@ -40,7 +44,10 @@ const PACKS: Record<string, () => Promise<{ default: unknown }>> = {
 export const hasOwnWidgetWords = (locale: Locale): boolean => OWN.has(locale);
 
 /** The pack's `labels` for a widget in this locale, or `{}` when the app supplies its own words (or the pack cannot load). */
-export async function packLabels(helper: LabelHelper, locale: Locale): Promise<Record<string, unknown>> {
+export async function packLabels(
+  helper: LabelHelper,
+  locale: Locale,
+): Promise<Record<string, unknown>> {
   if (hasOwnWidgetWords(locale)) return {};
   try {
     const load = PACKS[PACK_OF[locale]];

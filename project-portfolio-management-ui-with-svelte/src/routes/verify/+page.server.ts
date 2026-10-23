@@ -24,7 +24,10 @@ import { verifyMagicLink } from "#lib/server/auth.js";
 export const load: PageServerLoad = async ({ url, fetch, cookies, locals }) => {
   const token = url.searchParams.get("token");
   if (!token) {
-    return { error: "missingToken" as const, title: pageTitle(url, "p.verify.sign_in_link") };
+    return {
+      error: "missingToken" as const,
+      title: pageTitle(url, "p.verify.sign_in_link"),
+    };
   }
   // A network-level failure (the authentication service unreachable,
   // timed out, DNS failure, connection reset, …) is a different failure
@@ -44,11 +47,17 @@ export const load: PageServerLoad = async ({ url, fetch, cookies, locals }) => {
     return { error: "serviceUnavailable" as const };
   }
   if (!upstream.ok) {
-    return { error: "invalidToken" as const, title: pageTitle(url, "p.verify.sign_in_link") };
+    return {
+      error: "invalidToken" as const,
+      title: pageTitle(url, "p.verify.sign_in_link"),
+    };
   }
   const sid = sessionIdFromResponse(upstream);
   if (!sid) {
-    return { error: "noSession" as const, title: pageTitle(url, "p.verify.sign_in_link") };
+    return {
+      error: "noSession" as const,
+      title: pageTitle(url, "p.verify.sign_in_link"),
+    };
   }
   cookies.set(SESSION_COOKIE, sid, SESSION_COOKIE_OPTIONS);
   redirect(303, localizePath("/", locals.locale ?? DEFAULT_LOCALE));

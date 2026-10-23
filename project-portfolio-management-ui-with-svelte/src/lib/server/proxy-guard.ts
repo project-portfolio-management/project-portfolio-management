@@ -9,7 +9,13 @@
 //   defence does not rest on the cookie attribute alone.
 
 /** Request headers never forwarded to the service. */
-const DROPPED_REQUEST_HEADERS = ["cookie", "host", "connection", "content-length", "authorization"];
+const DROPPED_REQUEST_HEADERS = [
+  "cookie",
+  "host",
+  "connection",
+  "content-length",
+  "authorization",
+];
 
 /** The browser's request headers, as the proxy forwards them (before it adds its own). */
 export function forwardedRequestHeaders(browser: Headers): Headers {
@@ -28,11 +34,17 @@ function safeMethod(method: string): boolean {
  * `appOrigin` is the origin the app is served from (SvelteKit's `url.origin`,
  * which honours `ORIGIN` behind a reverse proxy).
  */
-export function crossSiteRefusal(method: string, headers: Headers, appOrigin: string): string | null {
+export function crossSiteRefusal(
+  method: string,
+  headers: Headers,
+  appOrigin: string,
+): string | null {
   if (safeMethod(method)) return null;
   const origin = headers.get("origin");
   if (origin !== null) {
-    return origin === appOrigin ? null : "cross-site request refused: Origin does not match";
+    return origin === appOrigin
+      ? null
+      : "cross-site request refused: Origin does not match";
   }
   const site = headers.get("sec-fetch-site");
   if (site !== null && site !== "same-origin" && site !== "none") {

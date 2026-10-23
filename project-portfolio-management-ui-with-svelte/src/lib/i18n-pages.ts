@@ -29,7 +29,8 @@ export const PAGES_EN = {
   "p.calendar.due": "Due",
   "p.plans.pid.board.assignee": "Assignee",
   "p.plans.pid.board.moving": "Moving {title} to {column}…",
-  "p.plans.pid.board.move_failed": "Could not move {title} to {column}; it is back where it was.",
+  "p.plans.pid.board.move_failed":
+    "Could not move {title} to {column}; it is back where it was.",
   "p.plans.pid.board.empty_column": "No tasks",
   "p.plans.pid.board.search": "Search the board",
   "p.plans.pid.board.export": "Export the board",
@@ -39,7 +40,8 @@ export const PAGES_EN = {
   "p.plans.pid.board.task": "Task",
   "p.plans.pid.board.status": "Status",
   "c.GanttView.holiday": "Holiday",
-  "c.GanttView.shaded": "Shaded columns are days off: weekends and holidays in this plan's working calendar.",
+  "c.GanttView.shaded":
+    "Shaded columns are days off: weekends and holidays in this plan's working calendar.",
   "c.GanttView.kind": "Kind",
   "c.GanttView.stage": "Stage",
   "c.GanttView.task": "Task",
@@ -72,25 +74,32 @@ export const PAGES_EN = {
   "c.CostRiskView.assumptions": "Assumptions",
   "c.CostRiskView.budget": "budget",
   "c.CostRiskView.budget_2": "Budget",
-  "c.CostRiskView.budget_sum_of_planned_amounts": "Budget (sum of planned amounts)",
+  "c.CostRiskView.budget_sum_of_planned_amounts":
+    "Budget (sum of planned amounts)",
   "c.CostRiskView.by_plan": "By plan",
   "c.CostRiskView.cost": "Cost",
-  "c.CostRiskView.cost_at_each_percentile": "{currency} cost at each percentile",
+  "c.CostRiskView.cost_at_each_percentile":
+    "{currency} cost at each percentile",
   "c.CostRiskView.cost_from": "Cost from",
-  "c.CostRiskView.each_bar_is_a_cost": "Each bar is a cost range; taller means more simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the budget.",
-  "c.CostRiskView.each_plan_s_budget_and": "Each plan's budget and mean simulated cost in {currency}",
+  "c.CostRiskView.each_bar_is_a_cost":
+    "Each bar is a cost range; taller means more simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the budget.",
+  "c.CostRiskView.each_plan_s_budget_and":
+    "Each plan's budget and mean simulated cost in {currency}",
   "c.CostRiskView.estimate": "Estimate",
   "c.CostRiskView.independence": "Independence.",
   "c.CostRiskView.left_out": "Left out:",
   "c.CostRiskView.line": "Line",
   "c.CostRiskView.low_planned_high": "Low / planned / high",
   "c.CostRiskView.mean_simulated_cost": "Mean simulated cost",
-  "c.CostRiskView.no_register_risk_was_used": "No register risk was used as a cost event.",
+  "c.CostRiskView.no_register_risk_was_used":
+    "No register risk was used as a cost event.",
   "c.CostRiskView.outcome": "Outcome",
-  "c.CostRiskView.per_line_estimate_and_sensitivity": "Per-line estimate and sensitivity in {currency}",
+  "c.CostRiskView.per_line_estimate_and_sensitivity":
+    "Per-line estimate and sensitivity in {currency}",
   "c.CostRiskView.plan": "Plan",
   "c.CostRiskView.risks_that_added_cost": "Risks that added cost",
-  "c.CostRiskView.seed_the_same_seed_gives": "Seed {seed}: the same seed gives the same result. Up to {max_iterations} iterations.",
+  "c.CostRiskView.seed_the_same_seed_gives":
+    "Seed {seed}: the same seed gives the same result. Up to {max_iterations} iterations.",
   "c.CostRiskView.sensitivity": "Sensitivity",
   "c.CostRiskView.simulations": "Simulations",
   "c.CostRiskView.spent": "Spent",
@@ -98,14 +107,19 @@ export const PAGES_EN = {
   "c.CostRiskView.to": "to",
   "c.CostRiskView.to_of": "{money} to {money2}: {count} of {iterations}",
   "c.CostRiskView.what_drives_it": "What drives it",
-  "c.CpmGantt.cannot_meet_a_constraint_or": "cannot meet a constraint or deadline (the line marks the limit)",
-  "c.CpmGantt.critical_any_slip_moves_the": "critical: any slip moves the finish",
+  "c.CpmGantt.cannot_meet_a_constraint_or":
+    "cannot meet a constraint or deadline (the line marks the limit)",
+  "c.CpmGantt.critical_any_slip_moves_the":
+    "critical: any slip moves the finish",
   "c.CpmGantt.has_float_the_hatched_tail": "has float (the hatched tail)",
   "c.CpmGantt.legend": "Legend",
   "c.CpmGantt.near_critical": "near-critical",
-  "c.CpmGantt.no_scheduled_tasks_to_draw": "No scheduled tasks to draw yet. Give a task a duration (and a start date or a predecessor).",
-  "c.CpmGantt.the_outline_under_a_bar": "the outline under a bar is where it was baselined",
-  "c.CpmGantt.to_float_is_counted_in": "{from} to {to}. Float is counted in the plan's business days; bars are drawn in calendar days.",
+  "c.CpmGantt.no_scheduled_tasks_to_draw":
+    "No scheduled tasks to draw yet. Give a task a duration (and a start date or a predecessor).",
+  "c.CpmGantt.the_outline_under_a_bar":
+    "the outline under a bar is where it was baselined",
+  "c.CpmGantt.to_float_is_counted_in":
+    "{from} to {to}. Float is counted in the plan's business days; bars are drawn in calendar days.",
   "c.CpmTable.calendar": "Calendar",
   "c.CpmTable.constraint": "Constraint",
   "c.CpmTable.deadline": "Deadline",
@@ -117,17 +131,22 @@ export const PAGES_EN = {
   "c.CpmTable.starts": "Starts",
   "c.CpmTable.state": "State",
   "c.CpmTable.task": "Task",
-  "c.CpmTable.task_schedule_with_float_in": "Task schedule with float, in the plan's business days",
+  "c.CpmTable.task_schedule_with_float_in":
+    "Task schedule with float, in the plan's business days",
   "c.CpmTable.total_float": "Total float",
   "c.CpmTable.untitled": "(untitled)",
   "c.CumulativeFlow.cumulative_flow": "Cumulative flow",
   "c.CumulativeFlow.day": "Day",
-  "c.CumulativeFlow.every_value_in_the_chart": "Every value in the chart. {note}",
+  "c.CumulativeFlow.every_value_in_the_chart":
+    "Every value in the chart. {note}",
   "c.CumulativeFlow.no_samples_in_this_window": "No samples in this window.",
-  "c.CumulativeFlow.the_vertical_gap_above_done": "the vertical gap above “Done” is work in progress; the horizontal gap to it is roughly the cycle time",
+  "c.CumulativeFlow.the_vertical_gap_above_done":
+    "the vertical gap above “Done” is work in progress; the horizontal gap to it is roughly the cycle time",
   "c.CumulativeFlow.total": "Total",
-  "c.CumulativeFlow.total_in_progress_done": "{total} total · {work_in_progress} in progress · {done} done",
-  "c.EvBars.the_double_line_is_the": "The double line is the budget at completion: {money}.",
+  "c.CumulativeFlow.total_in_progress_done":
+    "{total} total · {work_in_progress} in progress · {done} done",
+  "c.EvBars.the_double_line_is_the":
+    "The double line is the budget at completion: {money}.",
   "c.EvBars.unknown": "unknown",
   "c.KpiCard.add_a_reading": "Add a reading",
   "c.KpiCard.cadence": "Cadence",
@@ -154,14 +173,16 @@ export const PAGES_EN = {
   "c.KpiCard.unit": "Unit",
   "c.KpiCard.value": "Value",
   "c.KpiCard.weekly": "Weekly",
-  "c.KpiCard.which_way_is_good_cannot": "Which way is good ({v}) cannot be changed: it would re-colour every past reading.",
+  "c.KpiCard.which_way_is_good_cannot":
+    "Which way is good ({v}) cannot be changed: it would re-colour every past reading.",
   "c.LilyGanttTable.critical_path": "critical path",
   "c.LilyGanttTable.day": "Day",
   "c.LilyGanttTable.month": "Month",
   "c.LilyGanttTable.no_dated_tasks_to_show": "No dated tasks to show.",
   "c.LilyGanttTable.no_usable_dates": "No usable dates:",
   "c.LilyGanttTable.task": "Task",
-  "c.LilyGanttTable.that_range_is_too_long": "That range is too long for one column per {unit}; showing one per {unit2}.",
+  "c.LilyGanttTable.that_range_is_too_long":
+    "That range is too long for one column per {unit}; showing one per {unit2}.",
   "c.LilyGanttTable.time_scale": "Time scale",
   "c.LilyGanttTable.week": "Week",
   "c.LilyKanbanTable.move_to": "Move {title} to",
@@ -169,7 +190,8 @@ export const PAGES_EN = {
   "c.LilyKanbanTable.unknown_status": "Unknown status:",
   "c.LineRange.high": "High",
   "c.LineRange.low": "Low",
-  "c.LineRange.planned_is_the_likely_cost": "Planned is {money}, the likely cost. Leave a field empty to clear it.",
+  "c.LineRange.planned_is_the_likely_cost":
+    "Planned is {money}, the likely cost. Leave a field empty to clear it.",
   "c.LineRange.save_range": "Save range",
   "c.MilestoneCard.by": "By",
   "c.MilestoneCard.by_hand_only": "By hand only",
@@ -177,7 +199,8 @@ export const PAGES_EN = {
   "c.MilestoneCard.completes": "Completes",
   "c.MilestoneCard.done": "Done",
   "c.MilestoneCard.due": "Due {due} · {kind}",
-  "c.MilestoneCard.every_move_is_kept_in": "Every move is kept in the history: the old date, the new one, why, and who.",
+  "c.MilestoneCard.every_move_is_kept_in":
+    "Every move is kept in the history: the old date, the new one, why, and who.",
   "c.MilestoneCard.forecast": "· forecast {early_finish}",
   "c.MilestoneCard.from": "From",
   "c.MilestoneCard.loading": "Loading…",
@@ -187,14 +210,16 @@ export const PAGES_EN = {
   "c.MilestoneCard.new_due_date": "New due date",
   "c.MilestoneCard.no_reason_given": "no reason given",
   "c.MilestoneCard.open": "Open",
-  "c.MilestoneCard.pick_the_tasks_that_must": "Pick the tasks that must be done",
+  "c.MilestoneCard.pick_the_tasks_that_must":
+    "Pick the tasks that must be done",
   "c.MilestoneCard.reason_required": "Reason (required)",
   "c.MilestoneCard.reopen": "Reopen",
   "c.MilestoneCard.reschedule": "Reschedule",
   "c.MilestoneCard.save": "Save",
   "c.MilestoneCard.slip_history": "Slip history ({reschedules})",
   "c.MilestoneCard.tasks_it_waits_for": "Tasks it waits for",
-  "c.MilestoneCard.tasks_this_milestone_waits_for": "Tasks this milestone waits for",
+  "c.MilestoneCard.tasks_this_milestone_waits_for":
+    "Tasks this milestone waits for",
   "c.MilestoneCard.this_plan_has_no_tasks": "This plan has no tasks yet.",
   "c.MilestoneCard.to": "To",
   "c.MilestoneCard.view_plan": "View plan",
@@ -202,8 +227,10 @@ export const PAGES_EN = {
   "c.MilestoneCard.why": "Why",
   "c.NetworkDiagram.float": "{slice} → {slice2} · float {total_float}",
   "c.NetworkDiagram.no_dependencies": "No dependencies.",
-  "c.NetworkDiagram.no_scheduled_tasks_to_draw": "No scheduled tasks to draw yet.",
-  "c.NetworkDiagram.task_network_boxes_are_tasks": "Task network: boxes are tasks, arrows are dependencies",
+  "c.NetworkDiagram.no_scheduled_tasks_to_draw":
+    "No scheduled tasks to draw yet.",
+  "c.NetworkDiagram.task_network_boxes_are_tasks":
+    "Task network: boxes are tasks, arrows are dependencies",
   "c.NetworkDiagram.the_same_network_as_a": "The same network as a list",
   "c.ObjectiveCard.add_a_key_result": "Add a key result",
   "c.ObjectiveCard.add_key_result": "Add key result",
@@ -215,11 +242,14 @@ export const PAGES_EN = {
   "c.ObjectiveCard.delete": "Delete",
   "c.ObjectiveCard.direction": "Direction",
   "c.ObjectiveCard.edit_or_delete": "Edit or delete",
-  "c.ObjectiveCard.edit_or_delete_this_objective": "Edit or delete this objective",
+  "c.ObjectiveCard.edit_or_delete_this_objective":
+    "Edit or delete this objective",
   "c.ObjectiveCard.from": "{valueText} (from {start_value})",
   "c.ObjectiveCard.increase": "Increase",
-  "c.ObjectiveCard.it_has_no_measurable_key": "— it has no measurable key result yet, so it has no score (not zero).",
-  "c.ObjectiveCard.key_results_in_more_than": "Key results in more than one currency are scored separately; currencies are never converted.",
+  "c.ObjectiveCard.it_has_no_measurable_key":
+    "— it has no measurable key result yet, so it has no score (not zero).",
+  "c.ObjectiveCard.key_results_in_more_than":
+    "Key results in more than one currency are scored separately; currencies are never converted.",
   "c.ObjectiveCard.last_check_in": "· last check-in {slice}",
   "c.ObjectiveCard.maintain": "Maintain",
   "c.ObjectiveCard.metric": "Metric",
@@ -232,7 +262,8 @@ export const PAGES_EN = {
   "c.ObjectiveCard.save": "Save",
   "c.ObjectiveCard.start": "Start",
   "c.ObjectiveCard.target": "Target",
-  "c.ObjectiveCard.the_baseline_metric_and_direction": "The baseline, metric and direction cannot be changed: progress from a moving baseline is not progress.",
+  "c.ObjectiveCard.the_baseline_metric_and_direction":
+    "The baseline, metric and direction cannot be changed: progress from a moving baseline is not progress.",
   "c.ObjectiveCard.title": "Title",
   "c.ObjectiveCard.tolerance": "· tolerance ±{tolerance}",
   "c.ObjectiveCard.tolerance_2": "Tolerance",
@@ -245,14 +276,16 @@ export const PAGES_EN = {
   "c.RaciMatrix.complete": "complete",
   "c.RaciMatrix.gaps": "Gaps",
   "c.RaciMatrix.task": "Task",
-  "c.RaciMatrix.who_does_what_raci_matrix": "Who does what (RACI matrix): who is Responsible, Accountable, Consulted and Informed on each task",
+  "c.RaciMatrix.who_does_what_raci_matrix":
+    "Who does what (RACI matrix): who is Responsible, Accountable, Consulted and Informed on each task",
   "c.RiskInputs.adds_cost": "Adds cost",
   "c.RiskInputs.by_business_days": "by (business days)",
   "c.RiskInputs.currency": "Currency",
   "c.RiskInputs.delays_task": "Delays task",
   "c.RiskInputs.gbp": "GBP",
   "c.RiskInputs.none": "None",
-  "c.RiskInputs.one_probability_covers_both_effects": "One probability covers both effects: a risk that delays a task and adds cost strikes once and does both. Leave a part empty to leave it out.",
+  "c.RiskInputs.one_probability_covers_both_effects":
+    "One probability covers both effects: a risk that delays a task and adds cost strikes once and does both. Leave a part empty to leave it out.",
   "c.RiskInputs.probability": "Probability (%)",
   "c.RiskInputs.save": "Save",
   "c.RiskInputs.saving": "Saving…",
@@ -260,22 +293,26 @@ export const PAGES_EN = {
   "c.SCurve.actual": "Actual",
   "c.SCurve.date": "Date",
   "c.SCurve.earned": "Earned",
-  "c.SCurve.line_planned_value_to_earned": "Line: planned value ({from} to {to}). ● earned value and ■ actual cost, only on days recorded ({snapshots} so far). Dashed: budget at completion, {money}.",
+  "c.SCurve.line_planned_value_to_earned":
+    "Line: planned value ({from} to {to}). ● earned value and ■ actual cost, only on days recorded ({snapshots} so far). Dashed: budget at completion, {money}.",
   "c.SCurve.no_curve_to_draw": "No curve to draw.",
   "c.SCurve.not_recorded": "not recorded",
   "c.SCurve.planned": "Planned",
-  "c.SCurve.s_curve_planned_value_over": "S-curve: planned value over time, with recorded earned value and actual cost",
+  "c.SCurve.s_curve_planned_value_over":
+    "S-curve: planned value over time, with recorded earned value and actual cost",
   "c.SCurve.the_same_figures_as_a": "The same figures as a table",
   "c.VarianceTable.baselined": "Baselined",
   "c.VarianceTable.duration": "Duration Δ",
   "c.VarianceTable.finish": "Finish Δ",
   "c.VarianceTable.now": "Now",
-  "c.VarianceTable.schedule_variance_against_the_baseli": "Schedule variance against the baseline, in business days",
+  "c.VarianceTable.schedule_variance_against_the_baseli":
+    "Schedule variance against the baseline, in business days",
   "c.VarianceTable.standing": "Standing",
   "c.VarianceTable.start": "Start Δ",
   "c.VarianceTable.task": "Task",
   "c.VarianceTable.the_plan_s_finish_is": "The plan's finish is unchanged.",
-  "c.VarianceTable.the_plan_s_own_finish": "The plan's own finish cannot be compared.",
+  "c.VarianceTable.the_plan_s_own_finish":
+    "The plan's own finish cannot be compared.",
   "p.announcements.announcements": "Announcements",
   "p.announcements.announcements_ppm": "Announcements — PPM",
   "p.announcements.expires_optional": "Expires (optional)",
@@ -288,7 +325,8 @@ export const PAGES_EN = {
   "p.announcements.pinned": "· Pinned",
   "p.announcements.publish": "Publish",
   "p.announcements.publish_an_announcement": "Publish an announcement",
-  "p.announcements.publishing_needs_the_announcements_p": "Publishing needs the announcements permission.",
+  "p.announcements.publishing_needs_the_announcements_p":
+    "Publishing needs the announcements permission.",
   "p.announcements.retract": "Retract",
   "p.announcements.severity": "Severity",
   "p.announcements.title": "Title",
@@ -307,9 +345,11 @@ export const PAGES_EN = {
   "p.auditor.no_audit_rows_match": "No audit rows match.",
   "p.auditor.no_findings": "No findings.",
   "p.auditor.ppm": "{t} — PPM",
-  "p.auditor.rows_distinct_actors_actor_less": "{returned} rows · {distinct_actors} distinct actors · {actorless} actor-less",
+  "p.auditor.rows_distinct_actors_actor_less":
+    "{returned} rows · {distinct_actors} distinct actors · {actorless} actor-less",
   "p.auditor.rule": "Rule",
-  "p.auditor.submitted_without_a_verified_token": "(submitted without a verified token)",
+  "p.auditor.submitted_without_a_verified_token":
+    "(submitted without a verified token)",
   "p.auditor.when": "When",
   "p.automations.action": "action",
   "p.automations.action_2": "Action",
@@ -321,8 +361,10 @@ export const PAGES_EN = {
   "p.automations.automations_ppm": "Automations — PPM",
   "p.automations.blank_every_plan": "blank = every plan",
   "p.automations.cancel": "Cancel",
-  "p.automations.claim_based_so_a_deadline": "Claim-based, so a deadline fires exactly once even if the ticker and a manual sweep race.",
-  "p.automations.configure_a_rule_once_as": "Configure a rule once; as items move across the board the platform applies it. Rules never block the move that triggered them — a failure is recorded as a failed run, not an undo.",
+  "p.automations.claim_based_so_a_deadline":
+    "Claim-based, so a deadline fires exactly once even if the ticker and a manual sweep race.",
+  "p.automations.configure_a_rule_once_as":
+    "Configure a rule once; as items move across the board the platform applies it. Rules never block the move that triggered them — a failure is recorded as a failed run, not an undo.",
   "p.automations.delete": "Delete",
   "p.automations.detail": "Detail",
   "p.automations.disable": "Disable",
@@ -379,7 +421,8 @@ export const PAGES_EN = {
   "p.board.kind": "Kind",
   "p.board.milestones_completed": "milestones completed",
   "p.board.no_decisions_in_the_window": "No decisions in the window.",
-  "p.board.no_investment_decisions_recorded": "No investment decisions recorded.",
+  "p.board.no_investment_decisions_recorded":
+    "No investment decisions recorded.",
   "p.board.no_snapshots_captured_yet": "No snapshots captured yet.",
   "p.board.open_exposure": "Open exposure",
   "p.board.portfolios": "Portfolios",
@@ -403,15 +446,18 @@ export const PAGES_EN = {
   "p.calendar.ppm": "{t} — PPM",
   "p.capacity.capacity_ppm": "Capacity — PPM",
   "p.capacity.from": "from",
-  "p.capacity.hatched_extension_proposed_not_count": "hatched extension: proposed, not counted",
+  "p.capacity.hatched_extension_proposed_not_count":
+    "hatched extension: proposed, not counted",
   "p.capacity.legend": "Legend",
   "p.capacity.over": "over",
-  "p.capacity.over_capacity_solid_bar_firm": "over capacity (solid bar: firm bookings; line: capacity in force)",
+  "p.capacity.over_capacity_solid_bar_firm":
+    "over capacity (solid bar: firm bookings; line: capacity in force)",
   "p.capacity.proposed": "Proposed",
   "p.capacity.to": "to",
   "p.capacity.window": "window: {from} → {to}",
   "p.capacity.within_capacity": "within capacity",
-  "p.capacity.within_capacity_but_committing_the": "within capacity, but committing the proposed bookings would exceed it",
+  "p.capacity.within_capacity_but_committing_the":
+    "within capacity, but committing the proposed bookings would exceed it",
   "p.ceo.all_announcements": "All announcements",
   "p.ceo.all_key_measures": "All key measures",
   "p.ceo.all_milestones": "All milestones",
@@ -443,7 +489,8 @@ export const PAGES_EN = {
   "p.compliance.conformance_findings": "Conformance findings",
   "p.compliance.detail": "Detail",
   "p.compliance.exposure": "Exposure",
-  "p.compliance.gate_review_recency_threshold_calend": "gate-review recency threshold: {review_days} calendar days",
+  "p.compliance.gate_review_recency_threshold_calend":
+    "gate-review recency threshold: {review_days} calendar days",
   "p.compliance.item": "Item",
   "p.compliance.no_compliance_risks_recorded": "No compliance risks recorded.",
   "p.compliance.no_conformance_findings": "No conformance findings.",
@@ -459,7 +506,8 @@ export const PAGES_EN = {
   "p.cost_rates.add_rate": "Add rate",
   "p.cost_rates.add_table": "Add table",
   "p.cost_rates.cost_rates": "Cost rates",
-  "p.cost_rates.cost_rates_are_finance_data": "Cost rates are finance data. You do not have access to them.",
+  "p.cost_rates.cost_rates_are_finance_data":
+    "Cost rates are finance data. You do not have access to them.",
   "p.cost_rates.cost_rates_ppm": "Cost rates — PPM",
   "p.cost_rates.currency": "Currency",
   "p.cost_rates.effective_from": "Effective from",
@@ -467,7 +515,8 @@ export const PAGES_EN = {
   "p.cost_rates.from": "From",
   "p.cost_rates.name": "Name",
   "p.cost_rates.no_rate_tables_yet": "No rate tables yet.",
-  "p.cost_rates.no_rate_yet_work_by": "No rate yet: work by this {v} is not costed.",
+  "p.cost_rates.no_rate_yet_work_by":
+    "No rate yet: work by this {v} is not costed.",
   "p.cost_rates.per_hour": "Per hour",
   "p.cost_rates.person_person_reference": "Person (person:… reference)",
   "p.cost_rates.role": "Role",
@@ -483,20 +532,26 @@ export const PAGES_EN = {
   "p.cost_risk.seed": "Seed",
   "p.cost_risk.shows_people_instead": "shows people instead.",
   "p.cost_risk.triangular": "Triangular",
-  "p.cost_risk.what_all_your_plans_together": "What all your plans together could cost, given each budget line's range and the risks that add cost. Each currency is on its own; they are never added.",
+  "p.cost_risk.what_all_your_plans_together":
+    "What all your plans together could cost, given each budget line's range and the risks that add cost. Each currency is on its own; they are never added.",
   "p.dashboard.dashboard_ppm": "Dashboard — PPM",
   "p.display.display": "Display",
   "p.display.display_ppm": "Display — PPM",
   "p.display.dyslexia_friendly_font": "Dyslexia-friendly font",
   "p.display.go_back_to_the_default": "Go back to the default for my role",
-  "p.display.how_the_app_looks_and": "How the app looks and reads. These never change what you can do.",
-  "p.display.keeps_the_everyday_pages_in": "Keeps the everyday pages in front (My work, Plans, Board, Calendar, Tour) and puts the rest behind a “More” link. Every page is still there and still works.",
-  "p.display.sign_in_to_keep_these": "Sign in to keep these on your account as well as on this device.",
+  "p.display.how_the_app_looks_and":
+    "How the app looks and reads. These never change what you can do.",
+  "p.display.keeps_the_everyday_pages_in":
+    "Keeps the everyday pages in front (My work, Plans, Board, Calendar, Tour) and puts the rest behind a “More” link. Every page is still there and still works.",
+  "p.display.sign_in_to_keep_these":
+    "Sign in to keep these on your account as well as on this device.",
   "p.display.simple_view": "Simple view",
-  "p.display.this_is_the_default_for": "This is the default for your role: {v}.",
+  "p.display.this_is_the_default_for":
+    "This is the default for your role: {v}.",
   "p.display.use_simple_view": "Use simple view",
   "p.display.use_the_dyslexia_friendly_font": "Use the dyslexia-friendly font",
-  "p.display.uses_the_opendyslexic_typeface_with": "Uses the OpenDyslexic typeface, with wider spacing between letters, words and lines.",
+  "p.display.uses_the_opendyslexic_typeface_with":
+    "Uses the OpenDyslexic typeface, with wider spacing between letters, words and lines.",
   "p.display.you_chose_this": "You chose this.",
   "p.documents.controlled_documents": "Controlled documents",
   "p.documents.create_document": "Create document",
@@ -518,13 +573,16 @@ export const PAGES_EN = {
   "p.documents.pid.save_draft": "Save draft",
   "p.documents.pid.send_back": "Send back",
   "p.documents.pid.text": "Text",
-  "p.documents.pid.this_version_s_text_is": "This version's text is final. A change goes in the next draft.",
+  "p.documents.pid.this_version_s_text_is":
+    "This version's text is final. A change goes in the next draft.",
   "p.documents.pid.version": "Version {version}",
-  "p.documents.pid.version_was_in_force_on": "Version {version} was in force on {on}.",
+  "p.documents.pid.version_was_in_force_on":
+    "Version {version} was in force on {on}.",
   "p.documents.pid.versions": "Versions",
   "p.documents.pid.what_changed": "What changed",
   "p.documents.pid.what_was_in_force_on": "What was in force on a date",
-  "p.documents.policies_and_procedures_a_new": "Policies and procedures. A new version is reviewed and approved before it comes into force, and a version in force never changes.",
+  "p.documents.policies_and_procedures_a_new":
+    "Policies and procedures. A new version is reviewed and approved before it comes into force, and a version in force never changes.",
   "p.documents.title": "Title",
   "p.documents.versions": "Versions",
   "p.engineering.assignee": "Assignee",
@@ -536,12 +594,15 @@ export const PAGES_EN = {
   "p.engineering.devops_metrics": "DevOps metrics",
   "p.engineering.environment": "Environment",
   "p.engineering.incidents": "incidents",
-  "p.engineering.incidents_unresolved_counted_never_t": "{unresolved_incidents} incidents unresolved (counted, never timed).",
+  "p.engineering.incidents_unresolved_counted_never_t":
+    "{unresolved_incidents} incidents unresolved (counted, never timed).",
   "p.engineering.item": "Item",
-  "p.engineering.items_carry_no_moscow_tag": "{untagged} items carry no moscow tag.",
+  "p.engineering.items_carry_no_moscow_tag":
+    "{untagged} items carry no moscow tag.",
   "p.engineering.median_recovery_h": "median recovery (h)",
   "p.engineering.moscow_scope": "MoSCoW scope",
-  "p.engineering.no_deploy_events_ingested_yet": "No deploy events ingested yet.",
+  "p.engineering.no_deploy_events_ingested_yet":
+    "No deploy events ingested yet.",
   "p.engineering.no_externally_tracked_items": "No externally tracked items.",
   "p.engineering.nothing_blocked_ship_it": "Nothing blocked. Ship it.",
   "p.engineering.ppm": "{t} — PPM",
@@ -624,10 +685,13 @@ export const PAGES_EN = {
   "p.kpis.read_how_often": "Read how often",
   "p.kpis.red_line": "Red line",
   "p.kpis.show": "Show",
-  "p.kpis.something_you_track_over_time": "Something you track over time against a target, so you can see early whether you are on course.",
-  "p.kpis.standing_measures_green_is_at": "Standing measures. Green is at or better than the target; red is at or worse than the red line; amber is between. A KPI nobody has read yet shows “No data yet”.",
+  "p.kpis.something_you_track_over_time":
+    "Something you track over time against a target, so you can see early whether you are on course.",
+  "p.kpis.standing_measures_green_is_at":
+    "Standing measures. Green is at or better than the target; red is at or worse than the red line; amber is between. A KPI nobody has read yet shows “No data yet”.",
   "p.kpis.target": "Target",
-  "p.kpis.the_red_line_must_be": "The red line must be on the worse side of the target. Scale values to whole numbers (basis points, pence).",
+  "p.kpis.the_red_line_must_be":
+    "The red line must be on the worse side of the target. Scale values to whole numbers (basis points, pence).",
   "p.kpis.unit": "Unit",
   "p.kpis.watch": "Watch",
   "p.kpis.weekly": "Weekly",
@@ -640,11 +704,13 @@ export const PAGES_EN = {
   "p.lifecycle.lifecycle": "Lifecycle",
   "p.lifecycle.lifecycle_ppm": "Lifecycle — PPM",
   "p.lifecycle.live": "Live",
-  "p.lifecycle.live_item_s_stall_threshold": "{total} live item(s) · stall threshold {stall_days} calendar day(s)",
+  "p.lifecycle.live_item_s_stall_threshold":
+    "{total} live item(s) · stall threshold {stall_days} calendar day(s)",
   "p.lifecycle.phase": "Phase",
   "p.lifecycle.share": "Share",
   "p.lifecycle.stalled": "Stalled",
-  "p.lifecycle.where_everything_sits_across_the": "Where everything sits across the challenge lifecycle, so the next phase is never a surprise. Stalled counts items that have sat in a phase longer than the threshold.",
+  "p.lifecycle.where_everything_sits_across_the":
+    "Where everything sits across the challenge lifecycle, so the next phase is never a surprise. Stalled counts items that have sat in a phase longer than the threshold.",
   "p.me.calendar.add": "Add",
   "p.me.calendar.at_least_one_weekday_must": "At least one weekday must work.",
   "p.me.calendar.from": "From",
@@ -661,11 +727,13 @@ export const PAGES_EN = {
   "p.me.calendar.save": "Save",
   "p.me.calendar.saved": "Saved.",
   "p.me.calendar.the_days_i_work": "The days I work",
-  "p.me.calendar.the_most_of_your_time": "The most of your time you can commit between two dates: 60 for a part-time spell, 0 for leave. Outside these dates it is 100. Capacity is read day by day, so a short spell is never averaged away.",
+  "p.me.calendar.the_most_of_your_time":
+    "The most of your time you can commit between two dates: 60 for a part-time spell, 0 for leave. Outside these dates it is 100. Capacity is read day by day, so a short spell is never averaged away.",
   "p.me.calendar.to": "{from} to {to}: {max_percent}%{v}",
   "p.me.calendar.to_2": "To",
   "p.me.due": "· due {due_date}",
-  "p.me.in_plans_you_cannot_read": "· {omitted_unreadable} in plans you cannot read",
+  "p.me.in_plans_you_cannot_read":
+    "· {omitted_unreadable} in plans you cannot read",
   "p.me.loading": "Loading…",
   "p.me.my_calendar": "My calendar",
   "p.me.my_work": "My work",
@@ -674,8 +742,10 @@ export const PAGES_EN = {
   "p.me.open": "{today} ({tz}) · {total} open",
   "p.me.showing_the_first_500": "· showing the first 500",
   "p.me.the_days_you_work_so": "— the days you work, so your dates are honest.",
-  "p.me.your_sign_in_identity_cannot": "Your sign-in identity cannot be matched to task assignments, so nothing can be listed here yet.",
-  "p.milestones.a_milestone_is_a_dated": "A milestone is a dated promise. Tie it to the tasks it waits for and it is achieved when they are done, with a forecast from the schedule; leave it unlinked and a person marks it done.",
+  "p.me.your_sign_in_identity_cannot":
+    "Your sign-in identity cannot be matched to task assignments, so nothing can be listed here yet.",
+  "p.milestones.a_milestone_is_a_dated":
+    "A milestone is a dated promise. Tie it to the tasks it waits for and it is achieved when they are done, with a forecast from the schedule; leave it unlinked and a person marks it done.",
   "p.milestones.achieved": "Achieved",
   "p.milestones.all": "All",
   "p.milestones.due_soon": "Due soon",
@@ -690,17 +760,20 @@ export const PAGES_EN = {
   "p.objectives.objectives_ppm": "Objectives — PPM",
   "p.objectives.period_e_g_2026_h2": "Period (e.g. 2026-H2)",
   "p.okrs.2026_q4_blank_for_all": "2026-Q4 (blank for all)",
-  "p.okrs.a_goal_with_a_few": "A goal, with a few measurable results that show whether you reached it.",
+  "p.okrs.a_goal_with_a_few":
+    "A goal, with a few measurable results that show whether you reached it.",
   "p.okrs.create": "Create",
   "p.okrs.goals_and_key_results_okrs": "Goals and key results (OKRs)",
   "p.okrs.loading": "Loading…",
   "p.okrs.new_objective": "New objective",
-  "p.okrs.objectives_and_key_results_scores": "Objectives and key results. Scores are worked out from the check-ins every time you look; nothing is stored that could go stale.",
+  "p.okrs.objectives_and_key_results_scores":
+    "Objectives and key results. Scores are worked out from the check-ins every time you look; nothing is stored that could go stale.",
   "p.okrs.okrs_ppm": "OKRs — PPM",
   "p.okrs.period": "Period",
   "p.okrs.show": "Show",
   "p.okrs.title": "Title",
-  "p.onboarding.a_role_by_role_first": "A role-by-role first-hour walkthrough. Each step names the page it lands on. This is a suggested order, not a measured \"you'll be productive in N minutes\" claim — nobody has timed it.",
+  "p.onboarding.a_role_by_role_first":
+    'A role-by-role first-hour walkthrough. Each step names the page it lands on. This is a suggested order, not a measured "you\'ll be productive in N minutes" claim — nobody has timed it.',
   "p.onboarding.onboarding_ppm": "Onboarding — PPM",
   "p.onboarding.operator_onboarding": "Operator onboarding",
   "p.plans.main_x": "{t} — Main X",
@@ -715,7 +788,8 @@ export const PAGES_EN = {
   "p.plans.pid.board.board_view": "Board view",
   "p.plans.pid.board.burndown": "Burndown — {name}",
   "p.plans.pid.board.convert_to_task": "Convert to task",
-  "p.plans.pid.board.created_moves_blocked_now": "{length} created · {length2} moves · {length3} blocked now",
+  "p.plans.pid.board.created_moves_blocked_now":
+    "{length} created · {length2} moves · {length3} blocked now",
   "p.plans.pid.board.date": "Date",
   "p.plans.pid.board.feedback": "feedback",
   "p.plans.pid.board.improve": "improve",
@@ -742,24 +816,29 @@ export const PAGES_EN = {
   "p.plans.pid.board.unpointed": "Unpointed",
   "p.plans.pid.board.velocity": "Velocity",
   "p.plans.pid.board.went_well": "went well",
-  "p.plans.pid.calendar.at_least_one_weekday_must": "At least one weekday must work.",
+  "p.plans.pid.calendar.at_least_one_weekday_must":
+    "At least one weekday must work.",
   "p.plans.pid.calendar.critical_path": "← Critical path",
   "p.plans.pid.calendar.holidays": "Holidays",
   "p.plans.pid.calendar.loading": "Loading…",
   "p.plans.pid.calendar.my_calendar": "My calendar",
   "p.plans.pid.calendar.save_calendar": "Save calendar",
   "p.plans.pid.calendar.saved": "Saved.",
-  "p.plans.pid.calendar.their_work_then_happens_only": "); their work then happens only on days both calendars work.",
+  "p.plans.pid.calendar.their_work_then_happens_only":
+    "); their work then happens only on days both calendars work.",
   "p.plans.pid.calendar.working_calendar": "Working calendar",
   "p.plans.pid.calendar.working_calendar_ppm": "Working calendar — PPM",
   "p.plans.pid.calendar.working_weekdays": "Working weekdays",
-  "p.plans.pid.cost_risk.band_for_lines_with_no": "Band for lines with no estimate (± %)",
-  "p.plans.pid.cost_risk.cost_and_schedule_together": "Cost and schedule together",
+  "p.plans.pid.cost_risk.band_for_lines_with_no":
+    "Band for lines with no estimate (± %)",
+  "p.plans.pid.cost_risk.cost_and_schedule_together":
+    "Cost and schedule together",
   "p.plans.pid.cost_risk.cost_risk": "Cost risk",
   "p.plans.pid.cost_risk.cost_risk_ppm": "Cost risk — PPM",
   "p.plans.pid.cost_risk.distribution": "Distribution",
   "p.plans.pid.cost_risk.iterations": "Iterations",
-  "p.plans.pid.cost_risk.many_what_if_runs_of": "Many what-if runs of the budget show the range of final costs and how likely each one is.",
+  "p.plans.pid.cost_risk.many_what_if_runs_of":
+    "Many what-if runs of the budget show the range of final costs and how likely each one is.",
   "p.plans.pid.cost_risk.pert": "PERT",
   "p.plans.pid.cost_risk.plan": "← Plan",
   "p.plans.pid.cost_risk.run": "Run",
@@ -767,17 +846,20 @@ export const PAGES_EN = {
   "p.plans.pid.cost_risk.seed": "Seed",
   "p.plans.pid.cost_risk.triangular": "Triangular",
   "p.plans.pid.cost_risk.whole_portfolio": "Whole portfolio",
-  "p.plans.pid.costs.a_recorded_cost_keeps_the": "A recorded cost keeps the rate it was priced at; a later rate change never rewrites it.",
+  "p.plans.pid.costs.a_recorded_cost_keeps_the":
+    "A recorded cost keeps the rate it was priced at; a later rate change never rewrites it.",
   "p.plans.pid.costs.add_an_expense": "Add an expense",
   "p.plans.pid.costs.add_expense": "Add expense",
   "p.plans.pid.costs.all_at_the_end": "All at the end",
   "p.plans.pid.costs.all_at_the_start": "All at the start",
   "p.plans.pid.costs.amount": "Amount",
-  "p.plans.pid.costs.an_expense_of_so_it": "▲ An expense of {money} {reason}, so it is not in the periods.",
+  "p.plans.pid.costs.an_expense_of_so_it":
+    "▲ An expense of {money} {reason}, so it is not in the periods.",
   "p.plans.pid.costs.choose": "Choose…",
   "p.plans.pid.costs.cost_rates": "Cost rates",
   "p.plans.pid.costs.costs": "Costs",
-  "p.plans.pid.costs.costs_and_rates_are_finance": "Costs and rates are finance data. You do not have access to them.",
+  "p.plans.pid.costs.costs_and_rates_are_finance":
+    "Costs and rates are finance data. You do not have access to them.",
   "p.plans.pid.costs.costs_ppm": "Costs — PPM",
   "p.plans.pid.costs.currency": "Currency",
   "p.plans.pid.costs.description": "Description",
@@ -787,18 +869,22 @@ export const PAGES_EN = {
   "p.plans.pid.costs.kind": "Kind",
   "p.plans.pid.costs.material": "Material",
   "p.plans.pid.costs.no_time_has_been_costed": "No time has been costed yet.",
-  "p.plans.pid.costs.nothing_could_be_costed_yet": "Nothing could be costed yet: add rates for the people doing the work, or add an expense.",
+  "p.plans.pid.costs.nothing_could_be_costed_yet":
+    "Nothing could be costed yet: add rates for the people doing the work, or add an expense.",
   "p.plans.pid.costs.per_period": "{currency}, per period",
   "p.plans.pid.costs.plan": "← Plan",
   "p.plans.pid.costs.planned_cost": "Planned cost",
   "p.plans.pid.costs.record_labour_costs": "Record labour costs",
   "p.plans.pid.costs.recorded_labour_cost": "Recorded labour cost",
-  "p.plans.pid.costs.so_its_labour_is_not": "▲ {title} ({hoursText}): {reason}, so its labour is not costed.",
+  "p.plans.pid.costs.so_its_labour_is_not":
+    "▲ {title} ({hoursText}): {reason}, so its labour is not costed.",
   "p.plans.pid.costs.task": "Task",
-  "p.plans.pid.costs.time_entries_are_not_costed": "▲ {entries} time entries ({hoursText}) are not costed: not recorded yet, or no rate. Their cost is unknown, not zero.",
+  "p.plans.pid.costs.time_entries_are_not_costed":
+    "▲ {entries} time entries ({hoursText}) are not costed: not recorded yet, or no rate. Their cost is unknown, not zero.",
   "p.plans.pid.costs.total": "Total",
   "p.plans.pid.costs.work": "Work",
-  "p.plans.pid.critical_path.a_baseline_is_a_numbered": "A baseline is a numbered snapshot of the schedule, kept for good: re-baselining makes the next version and never replaces one.",
+  "p.plans.pid.critical_path.a_baseline_is_a_numbered":
+    "A baseline is a numbered snapshot of the schedule, kept for good: re-baselining makes the next version and never replaces one.",
   "p.plans.pid.critical_path.baselines": "Baselines",
   "p.plans.pid.critical_path.business_days": "business days",
   "p.plans.pid.critical_path.compare_with": "Compare with",
@@ -807,77 +893,104 @@ export const PAGES_EN = {
   "p.plans.pid.critical_path.critical_chains": "{count} critical chains{more}.",
   "p.plans.pid.critical_path.critical_path": "Critical path",
   "p.plans.pid.critical_path.critical_path_ppm": "Critical path — PPM",
-  "p.plans.pid.critical_path.deadline_a_goal_it_shows": "Deadline (a goal: it shows as negative float, it never moves the task)",
-  "p.plans.pid.critical_path.duration_business_days_0_is": "Duration (business days; 0 is a milestone)",
+  "p.plans.pid.critical_path.deadline_a_goal_it_shows":
+    "Deadline (a goal: it shows as negative float, it never moves the task)",
+  "p.plans.pid.critical_path.duration_business_days_0_is":
+    "Duration (business days; 0 is a milestone)",
   "p.plans.pid.critical_path.finish_no_earlier_than": "Finish no earlier than",
   "p.plans.pid.critical_path.finish_no_later_than": "Finish no later than",
   "p.plans.pid.critical_path.gantt": "Gantt",
   "p.plans.pid.critical_path.loading": "Loading…",
-  "p.plans.pid.critical_path.must_finish_on_overrides_logic": "Must finish on (overrides logic)",
-  "p.plans.pid.critical_path.must_start_on_overrides_logic": "Must start on (overrides logic)",
+  "p.plans.pid.critical_path.must_finish_on_overrides_logic":
+    "Must finish on (overrides logic)",
+  "p.plans.pid.critical_path.must_start_on_overrides_logic":
+    "Must start on (overrides logic)",
   "p.plans.pid.critical_path.near_critical_within": "Near-critical within",
   "p.plans.pid.critical_path.network": "Network",
-  "p.plans.pid.critical_path.no_baseline_yet_so_nothing": "No baseline yet, so nothing can be said about slip.",
-  "p.plans.pid.critical_path.none_as_soon_as_possible": "None (as soon as possible)",
+  "p.plans.pid.critical_path.no_baseline_yet_so_nothing":
+    "No baseline yet, so nothing can be said about slip.",
+  "p.plans.pid.critical_path.none_as_soon_as_possible":
+    "None (as soon as possible)",
   "p.plans.pid.critical_path.not_scheduled": "Not scheduled",
-  "p.plans.pid.critical_path.optimistic_business_days": "Optimistic (business days)",
-  "p.plans.pid.critical_path.pessimistic_business_days": "Pessimistic (business days)",
+  "p.plans.pid.critical_path.optimistic_business_days":
+    "Optimistic (business days)",
+  "p.plans.pid.critical_path.pessimistic_business_days":
+    "Pessimistic (business days)",
   "p.plans.pid.critical_path.plan": "← Plan",
   "p.plans.pid.critical_path.planned_start": "Planned start",
-  "p.plans.pid.critical_path.range_for_schedule_risk": "Range for schedule risk",
+  "p.plans.pid.critical_path.range_for_schedule_risk":
+    "Range for schedule risk",
   "p.plans.pid.critical_path.range_saved": "Range saved.",
-  "p.plans.pid.critical_path.reason_required_this_overrides_the": "Reason (required: this overrides the schedule's logic)",
+  "p.plans.pid.critical_path.reason_required_this_overrides_the":
+    "Reason (required: this overrides the schedule's logic)",
   "p.plans.pid.critical_path.save_range": "Save range",
   "p.plans.pid.critical_path.save_schedule": "Save schedule",
   "p.plans.pid.critical_path.saved_moved": "Saved. Moved:",
-  "p.plans.pid.critical_path.saved_nothing_else_moved": "Saved. Nothing else moved.",
+  "p.plans.pid.critical_path.saved_nothing_else_moved":
+    "Saved. Nothing else moved.",
   "p.plans.pid.critical_path.saving": "Saving…",
-  "p.plans.pid.critical_path.show_the_baseline_under_each": "Show the baseline under each bar",
+  "p.plans.pid.critical_path.show_the_baseline_under_each":
+    "Show the baseline under each bar",
   "p.plans.pid.critical_path.start_no_earlier_than": "Start no earlier than",
   "p.plans.pid.critical_path.start_no_later_than": "Start no later than",
   "p.plans.pid.critical_path.table": "Table",
   "p.plans.pid.critical_path.take_baseline": "Take baseline",
   "p.plans.pid.critical_path.task": "Task",
-  "p.plans.pid.critical_path.the_duration_above_is_the": "{taskRangeText}. The duration above is the likely value.",
-  "p.plans.pid.critical_path.the_longest_chain_of_tasks": "The longest chain of tasks, which sets the finish date. A delay to any task on it delays the whole plan.",
-  "p.plans.pid.critical_path.these_assignees_share_no_business": "These assignees share no business day with the plan's calendar, so the plan's calendar was used for them: {join}.",
-  "p.plans.pid.critical_path.this_network_has_tasks_too": "This network has {length} tasks, too many to draw usefully. The table below says the same thing.",
+  "p.plans.pid.critical_path.the_duration_above_is_the":
+    "{taskRangeText}. The duration above is the likely value.",
+  "p.plans.pid.critical_path.the_longest_chain_of_tasks":
+    "The longest chain of tasks, which sets the finish date. A delay to any task on it delays the whole plan.",
+  "p.plans.pid.critical_path.these_assignees_share_no_business":
+    "These assignees share no business day with the plan's calendar, so the plan's calendar was used for them: {join}.",
+  "p.plans.pid.critical_path.this_network_has_tasks_too":
+    "This network has {length} tasks, too many to draw usefully. The table below says the same thing.",
   "p.plans.pid.critical_path.untitled": "(untitled)",
   "p.plans.pid.critical_path.version": "Version {version}: {reason} ({slice})",
   "p.plans.pid.critical_path.view": "View",
   "p.plans.pid.critical_path.why_a_baseline_now": "Why a baseline now?",
   "p.plans.pid.critical_path.working_calendar": "Working calendar",
-  "p.plans.pid.earned_value.a_percent_i_enter_flagged": "A percent I enter (flagged)",
+  "p.plans.pid.earned_value.a_percent_i_enter_flagged":
+    "A percent I enter (flagged)",
   "p.plans.pid.earned_value.actual_cost": "Actual cost",
   "p.plans.pid.earned_value.against_the_budget_vac": "Against the budget (VAC)",
-  "p.plans.pid.earned_value.baseline_version": "baseline version {baseline_version}",
+  "p.plans.pid.earned_value.baseline_version":
+    "baseline version {baseline_version}",
   "p.plans.pid.earned_value.budget_at_completion": "Budget at completion",
-  "p.plans.pid.earned_value.budget_lines_in_have_no": "Budget lines in {join} have no baseline, so they are not part of any figure above and are never added to another currency.",
-  "p.plans.pid.earned_value.by_story_points_when_finished": "by story points, when finished",
+  "p.plans.pid.earned_value.budget_lines_in_have_no":
+    "Budget lines in {join} have no baseline, so they are not part of any figure above and are never added to another currency.",
+  "p.plans.pid.earned_value.by_story_points_when_finished":
+    "by story points, when finished",
   "p.plans.pid.earned_value.cancel": "Cancel",
   "p.plans.pid.earned_value.change": "Change",
   "p.plans.pid.earned_value.complete": "{round}% complete",
   "p.plans.pid.earned_value.cost_index": "Cost index (",
   "p.plans.pid.earned_value.cost_is": "Cost is {word}.",
   "p.plans.pid.earned_value.cost_variance_ev_ac": "Cost variance (EV − AC)",
-  "p.plans.pid.earned_value.count_a_task_another_way": "Count a task another way",
+  "p.plans.pid.earned_value.count_a_task_another_way":
+    "Count a task another way",
   "p.plans.pid.earned_value.count_tasks": "Count tasks",
   "p.plans.pid.earned_value.critical_path": "Critical path",
   "p.plans.pid.earned_value.earned_value": "Earned value",
-  "p.plans.pid.earned_value.earned_value_figures": "{currency} earned value figures",
+  "p.plans.pid.earned_value.earned_value_figures":
+    "{currency} earned value figures",
   "p.plans.pid.earned_value.earned_value_ppm": "Earned value — PPM",
   "p.plans.pid.earned_value.final_cost_eac": "Final cost (EAC)",
   "p.plans.pid.earned_value.finished_only": "finished only",
   "p.plans.pid.earned_value.forecast": "Forecast",
-  "p.plans.pid.earned_value.forecast_final_cost": "· forecast final cost {money}",
-  "p.plans.pid.earned_value.forecasts_of_the_final_cost": "{currency} forecasts of the final cost, each by its own formula",
+  "p.plans.pid.earned_value.forecast_final_cost":
+    "· forecast final cost {money}",
+  "p.plans.pid.earned_value.forecasts_of_the_final_cost":
+    "{currency} forecasts of the final cost, each by its own formula",
   "p.plans.pid.earned_value.governance": "← Governance",
   "p.plans.pid.earned_value.half_for_started": "half for started",
-  "p.plans.pid.earned_value.is_the_work_finished_worth": "Is the work finished worth what was planned by now, and what did it cost? An index above 1.00 is better than planned.",
-  "p.plans.pid.earned_value.leading_with_that_one_because": "Leading with that one because {why}. The others are shown beside it: which is right depends on whether past overruns will continue.",
+  "p.plans.pid.earned_value.is_the_work_finished_worth":
+    "Is the work finished worth what was planned by now, and what did it cost? An index above 1.00 is better than planned.",
+  "p.plans.pid.earned_value.leading_with_that_one_because":
+    "Leading with that one because {why}. The others are shown beside it: which is right depends on whether past overruns will continue.",
   "p.plans.pid.earned_value.loading": "Loading…",
   "p.plans.pid.earned_value.manual": "manual",
-  "p.plans.pid.earned_value.measured_as_of_percent_complete": "Measured as of {as_of}. Percent complete is work finished, not time elapsed.",
+  "p.plans.pid.earned_value.measured_as_of_percent_complete":
+    "Measured as of {as_of}. Percent complete is work finished, not time elapsed.",
   "p.plans.pid.earned_value.method": "Method",
   "p.plans.pid.earned_value.only_when_finished": "only when finished",
   "p.plans.pid.earned_value.only_when_finished_2": "Only when finished",
@@ -885,23 +998,30 @@ export const PAGES_EN = {
   "p.plans.pid.earned_value.percent_complete": "Percent complete",
   "p.plans.pid.earned_value.planned_value": "Planned value",
   "p.plans.pid.earned_value.plans": "{plans} plans",
-  "p.plans.pid.earned_value.progress_against_budget_earned_value": "Progress against budget (earned value)",
-  "p.plans.pid.earned_value.record_today_s_figures_now": "Record today's figures now",
+  "p.plans.pid.earned_value.progress_against_budget_earned_value":
+    "Progress against budget (earned value)",
+  "p.plans.pid.earned_value.record_today_s_figures_now":
+    "Record today's figures now",
   "p.plans.pid.earned_value.recorded": "Recorded.",
   "p.plans.pid.earned_value.save": "Save",
   "p.plans.pid.earned_value.schedule_index": "Schedule index (",
   "p.plans.pid.earned_value.schedule_index_by_time": "Schedule index by time (",
   "p.plans.pid.earned_value.schedule_is": "Schedule is {word}.",
-  "p.plans.pid.earned_value.schedule_variance_ev_pv": "Schedule variance (EV − PV)",
+  "p.plans.pid.earned_value.schedule_variance_ev_pv":
+    "Schedule variance (EV − PV)",
   "p.plans.pid.earned_value.spi": "SPI {ratioOrReason} ·",
-  "p.plans.pid.earned_value.started_work_counts_half": "started work counts half",
-  "p.plans.pid.earned_value.started_work_counts_half_2": "Started work counts half",
+  "p.plans.pid.earned_value.started_work_counts_half":
+    "started work counts half",
+  "p.plans.pid.earned_value.started_work_counts_half_2":
+    "Started work counts half",
   "p.plans.pid.earned_value.still_to_spend_etc": "Still to spend (ETC)",
   "p.plans.pid.earned_value.task": "(task)",
   "p.plans.pid.earned_value.task_2": "Task",
   "p.plans.pid.earned_value.the_one_to_lead_with": "— the one to lead with",
-  "p.plans.pid.earned_value.the_scheduler_also_records_them": "The scheduler also records them daily.",
-  "p.plans.pid.earned_value.this_plan_and_everything_beneath": "This plan and everything beneath it",
+  "p.plans.pid.earned_value.the_scheduler_also_records_them":
+    "The scheduler also records them daily.",
+  "p.plans.pid.earned_value.this_plan_and_everything_beneath":
+    "This plan and everything beneath it",
   "p.plans.pid.earned_value.unknown": "unknown",
   "p.plans.pid.earned_value.use_the_plan_s_method": "Use the plan's method",
   "p.plans.pid.earned_value.where_it_is_heading": "Where it is heading",
@@ -923,7 +1043,8 @@ export const PAGES_EN = {
   "p.plans.pid.flow.constraints": "Constraints",
   "p.plans.pid.flow.count": "Count",
   "p.plans.pid.flow.cumulative_flow": "Cumulative flow",
-  "p.plans.pid.flow.cycle_time_is_work_in": "Cycle time is work in progress divided by throughput, so lowering a cap shortens it without anyone working faster.",
+  "p.plans.pid.flow.cycle_time_is_work_in":
+    "Cycle time is work in progress divided by throughput, so lowering a cap shortens it without anyone working faster.",
   "p.plans.pid.flow.detail": "Detail",
   "p.plans.pid.flow.distributions": "Distributions",
   "p.plans.pid.flow.first_pass_yield": "First pass yield",
@@ -931,7 +1052,8 @@ export const PAGES_EN = {
   "p.plans.pid.flow.flow_efficiency": "Flow efficiency",
   "p.plans.pid.flow.flow_ppm": "Flow — PPM",
   "p.plans.pid.flow.how_long_work_takes": "How long work takes",
-  "p.plans.pid.flow.how_long_work_takes_to": "How long work takes to get done, and how much is in progress at once.",
+  "p.plans.pid.flow.how_long_work_takes_to":
+    "How long work takes to get done, and how much is in progress at once.",
   "p.plans.pid.flow.implied_cycle_time": "Implied cycle time",
   "p.plans.pid.flow.item": "Item",
   "p.plans.pid.flow.limit": "Limit",
@@ -942,14 +1064,20 @@ export const PAGES_EN = {
   "p.plans.pid.flow.no_cap": "no cap",
   "p.plans.pid.flow.no_expectation_yet": "no expectation yet",
   "p.plans.pid.flow.no_findings_yet": "No findings yet.",
-  "p.plans.pid.flow.no_finished_work_to_measure": "No finished work to measure yet.",
-  "p.plans.pid.flow.not_enough_finished_items_yet": "Not enough finished items yet.",
-  "p.plans.pid.flow.not_started_finished_of": "{not_started} not started · {finished} finished of {tasks}",
+  "p.plans.pid.flow.no_finished_work_to_measure":
+    "No finished work to measure yet.",
+  "p.plans.pid.flow.not_enough_finished_items_yet":
+    "Not enough finished items yet.",
+  "p.plans.pid.flow.not_started_finished_of":
+    "{not_started} not started · {finished} finished of {tasks}",
   "p.plans.pid.flow.nothing_in_progress": "Nothing in progress.",
   "p.plans.pid.flow.observed_median": "Observed median",
-  "p.plans.pid.flow.of_the_calendar_time_these": "Of the calendar time these items took, how much of it was somebody working on them? Flow efficiency in knowledge work typically measures 5–15%, so a low figure is normal — the queue is the finding, not the effort.",
-  "p.plans.pid.flow.of_the_transitions_behind_these": "{percent} of the transitions behind these figures were synthesized when the log was introduced, not observed. They firm up as real board moves accumulate.",
-  "p.plans.pid.flow.percentiles_are_nearest_rank_so": "Percentiles are nearest-rank, so every one is a real item. Cycle time is what the team controls; lead time is what the requester waits, and the difference between them is how long work sat in the backlog.",
+  "p.plans.pid.flow.of_the_calendar_time_these":
+    "Of the calendar time these items took, how much of it was somebody working on them? Flow efficiency in knowledge work typically measures 5–15%, so a low figure is normal — the queue is the finding, not the effort.",
+  "p.plans.pid.flow.of_the_transitions_behind_these":
+    "{percent} of the transitions behind these figures were synthesized when the log was introduced, not observed. They firm up as real board moves accumulate.",
+  "p.plans.pid.flow.percentiles_are_nearest_rank_so":
+    "Percentiles are nearest-rank, so every one is a real item. Cycle time is what the team controls; lead time is what the requester waits, and the difference between them is how long work sat in the backlog.",
   "p.plans.pid.flow.recoverable": "Recoverable",
   "p.plans.pid.flow.rework": "Rework",
   "p.plans.pid.flow.rule": "Rule",
@@ -957,13 +1085,16 @@ export const PAGES_EN = {
   "p.plans.pid.flow.status": "Status",
   "p.plans.pid.flow.strong_against_the_5_15": "Strong against the 5–15% norm.",
   "p.plans.pid.flow.subject": "Subject",
-  "p.plans.pid.flow.the_mean_is_shown_for": "The mean is shown for completeness and describes no actual item — quote the p85.",
-  "p.plans.pid.flow.the_plan_s_overall_ratio": ": the plan's overall ratio ({percent}) is well away from the typical item's ({percent2}). Most items flow; a minority are stuck. That is a different fix from uniformly slow delivery — find those items rather than reworking the process.",
+  "p.plans.pid.flow.the_mean_is_shown_for":
+    "The mean is shown for completeness and describes no actual item — quote the p85.",
+  "p.plans.pid.flow.the_plan_s_overall_ratio":
+    ": the plan's overall ratio ({percent}) is well away from the typical item's ({percent2}). Most items flow; a minority are stuck. That is a different fix from uniformly slow delivery — find those items rather than reworking the process.",
   "p.plans.pid.flow.the_waste_is": "The waste is",
   "p.plans.pid.flow.throughput": "Throughput (μ)",
   "p.plans.pid.flow.typical_median_item": "Typical. Median item: {percent}.",
   "p.plans.pid.flow.unassigned": "unassigned",
-  "p.plans.pid.flow.unusually_high_this_usually_means": "Unusually high — this usually means the board is not being kept up to date rather than that the queue has gone.",
+  "p.plans.pid.flow.unusually_high_this_usually_means":
+    "Unusually high — this usually means the board is not being kept up to date rather than that the queue has gone.",
   "p.plans.pid.flow.utilization": "Utilization (ρ)",
   "p.plans.pid.flow.vs_expectation": "vs expectation",
   "p.plans.pid.flow.window": "Window",
@@ -979,7 +1110,8 @@ export const PAGES_EN = {
   "p.plans.pid.governance.choose_objective": "choose objective…",
   "p.plans.pid.governance.commit": "Commit",
   "p.plans.pid.governance.commit_anyway": "Commit anyway",
-  "p.plans.pid.governance.committing_this_puts_them_over": "Committing this puts them over capacity.",
+  "p.plans.pid.governance.committing_this_puts_them_over":
+    "Committing this puts them over capacity.",
   "p.plans.pid.governance.compliance": "compliance",
   "p.plans.pid.governance.cost_saving": "cost_saving",
   "p.plans.pid.governance.currency": "Currency",
@@ -999,9 +1131,11 @@ export const PAGES_EN = {
   "p.plans.pid.governance.opex": "opex",
   "p.plans.pid.governance.other": "other",
   "p.plans.pid.governance.planned": "Planned",
-  "p.plans.pid.governance.planned_actual_variance": ": planned {money} · actual {money2} · variance {money3}",
+  "p.plans.pid.governance.planned_actual_variance":
+    ": planned {money} · actual {money2} · variance {money3}",
   "p.plans.pid.governance.planned_major": "Planned (major)",
-  "p.plans.pid.governance.proposed_does_not_count_until": "proposed (does not count until committed)",
+  "p.plans.pid.governance.proposed_does_not_count_until":
+    "proposed (does not count until committed)",
   "p.plans.pid.governance.quality": "quality",
   "p.plans.pid.governance.range_for_cost_risk": "Range for cost risk",
   "p.plans.pid.governance.realized": "Realized",
@@ -1016,7 +1150,8 @@ export const PAGES_EN = {
   "p.plans.pid.governance.status": "Status",
   "p.plans.pid.governance.target": "Target",
   "p.plans.pid.governance.target_major": "Target (major)",
-  "p.plans.pid.governance.target_realized_spend": ": target {money} · realized {money2} · spend {money3}",
+  "p.plans.pid.governance.target_realized_spend":
+    ": target {money} · realized {money2} · spend {money3}",
   "p.plans.pid.governance.weight": "weight",
   "p.plans.pid.governance.worker_uuid": "worker:<uuid>",
   "p.plans.pid.handover.discard": "Discard",
@@ -1025,19 +1160,25 @@ export const PAGES_EN = {
   "p.plans.pid.handover.handover": "Handover",
   "p.plans.pid.handover.handover_ppm": "Handover — PPM",
   "p.plans.pid.handover.kind": "Kind",
-  "p.plans.pid.handover.onboarding_and_offboarding": "Onboarding and offboarding",
+  "p.plans.pid.handover.onboarding_and_offboarding":
+    "Onboarding and offboarding",
   "p.plans.pid.handover.person": "person:…",
-  "p.plans.pid.handover.person_empty_releases_the_work": "person:… (empty releases the work)",
+  "p.plans.pid.handover.person_empty_releases_the_work":
+    "person:… (empty releases the work)",
   "p.plans.pid.handover.plan": "← Plan",
   "p.plans.pid.handover.preview": "Preview",
-  "p.plans.pid.handover.reason_recorded_with_each_item": "Reason (recorded with each item)",
+  "p.plans.pid.handover.reason_recorded_with_each_item":
+    "Reason (recorded with each item)",
   "p.plans.pid.handover.release": "Release",
-  "p.plans.pid.handover.the_new_person_s_capacity": "The new person's capacity is not checked here.",
+  "p.plans.pid.handover.the_new_person_s_capacity":
+    "The new person's capacity is not checked here.",
   "p.plans.pid.handover.to": "To",
   "p.plans.pid.handover.what": "What",
-  "p.plans.pid.handover.what_holds_that_is_still": "What {from_person} holds that is still live",
+  "p.plans.pid.handover.what_holds_that_is_still":
+    "What {from_person} holds that is still live",
   "p.plans.pid.handover.who_is_handing_over": "Who is handing over?",
-  "p.plans.pid.import.bring_tasks_in_from_jira": "Bring tasks in from Jira, Asana or Microsoft Project. You see what would happen first; nothing is written until you confirm.",
+  "p.plans.pid.import.bring_tasks_in_from_jira":
+    "Bring tasks in from Jira, Asana or Microsoft Project. You see what would happen first; nothing is written until you confirm.",
   "p.plans.pid.import.choose_another_file": "Choose another file",
   "p.plans.pid.import.file": "File",
   "p.plans.pid.import.import": "Import",
@@ -1047,71 +1188,97 @@ export const PAGES_EN = {
   "p.plans.pid.import.preview": "Preview",
   "p.plans.pid.import.tracker": "Tracker",
   "p.plans.pid.import.where_from": "Where from",
-  "p.plans.pid.joint_risk.a_late_project_usually_costs": "A late project usually costs more too, so this runs cost and schedule together.",
+  "p.plans.pid.joint_risk.a_late_project_usually_costs":
+    "A late project usually costs more too, so this runs cost and schedule together.",
   "p.plans.pid.joint_risk.assumptions": "Assumptions",
-  "p.plans.pid.joint_risk.band_when_there_is_no": "Band when there is no estimate (± %)",
+  "p.plans.pid.joint_risk.band_when_there_is_no":
+    "Band when there is no estimate (± %)",
   "p.plans.pid.joint_risk.both_at_once": "Both at once",
   "p.plans.pid.joint_risk.budget": "budget",
   "p.plans.pid.joint_risk.budget_2": "Budget",
-  "p.plans.pid.joint_risk.budget_lines_in_are_not": "Budget lines in {join} are not part of this run; currencies are never added.",
-  "p.plans.pid.joint_risk.business_days_late": "{days} business days late, {money}",
+  "p.plans.pid.joint_risk.budget_lines_in_are_not":
+    "Budget lines in {join} are not part of this run; currencies are never added.",
+  "p.plans.pid.joint_risk.business_days_late":
+    "{days} business days late, {money}",
   "p.plans.pid.joint_risk.business_days_late_2": "business days late →",
   "p.plans.pid.joint_risk.cost": "Cost",
   "p.plans.pid.joint_risk.cost_2": "Cost — {title}: {costSkippedText}",
-  "p.plans.pid.joint_risk.cost_and_schedule_risk_ppm": "Cost and schedule risk — PPM",
-  "p.plans.pid.joint_risk.cost_and_schedule_together": "Cost and schedule together",
+  "p.plans.pid.joint_risk.cost_and_schedule_risk_ppm":
+    "Cost and schedule risk — PPM",
+  "p.plans.pid.joint_risk.cost_and_schedule_together":
+    "Cost and schedule together",
   "p.plans.pid.joint_risk.cost_lines": "Cost lines",
-  "p.plans.pid.joint_risk.cost_of_each_business_day": "Cost of each business day late (major units)",
+  "p.plans.pid.joint_risk.cost_of_each_business_day":
+    "Cost of each business day late (major units)",
   "p.plans.pid.joint_risk.cost_risk": "Cost risk",
-  "p.plans.pid.joint_risk.critical_path_finish_the_plan": "Critical-path finish (the plan's own date)",
-  "p.plans.pid.joint_risk.currency_if_the_plan_has": "Currency (if the plan has several)",
+  "p.plans.pid.joint_risk.critical_path_finish_the_plan":
+    "Critical-path finish (the plan's own date)",
+  "p.plans.pid.joint_risk.currency_if_the_plan_has":
+    "Currency (if the plan has several)",
   "p.plans.pid.joint_risk.distribution": "Distribution",
-  "p.plans.pid.joint_risk.each_dot_is_one_simulation": "Each dot is one simulation (a thinned sample). Right of the on-time line is late; above the budget line is over budget. The table above has the full counts.",
+  "p.plans.pid.joint_risk.each_dot_is_one_simulation":
+    "Each dot is one simulation (a thinned sample). Right of the on-time line is late; above the budget line is over budget. The table above has the full counts.",
   "p.plans.pid.joint_risk.estimate": "Estimate",
   "p.plans.pid.joint_risk.finish": "Finish",
-  "p.plans.pid.joint_risk.finish_date_at_each_percentile": "Finish date at each percentile",
+  "p.plans.pid.joint_risk.finish_date_at_each_percentile":
+    "Finish date at each percentile",
   "p.plans.pid.joint_risk.gbp": "GBP",
-  "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall": "How the simulated outcomes fall around the budget and the critical-path finish",
+  "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall":
+    "How the simulated outcomes fall around the budget and the critical-path finish",
   "p.plans.pid.joint_risk.independence": "Independence.",
   "p.plans.pid.joint_risk.iterations": "Iterations",
   "p.plans.pid.joint_risk.line": "Line",
   "p.plans.pid.joint_risk.low_planned_high": "Low / planned / high",
-  "p.plans.pid.joint_risk.mean_delay_cost_included": "Mean (delay cost included)",
-  "p.plans.pid.joint_risk.no_register_risk_was_used": "No register risk was used in this run.",
+  "p.plans.pid.joint_risk.mean_delay_cost_included":
+    "Mean (delay cost included)",
+  "p.plans.pid.joint_risk.no_register_risk_was_used":
+    "No register risk was used in this run.",
   "p.plans.pid.joint_risk.not_enough_data": "not enough data",
-  "p.plans.pid.joint_risk.of_which_delay_cost_on": "Of which delay cost, on average",
+  "p.plans.pid.joint_risk.of_which_delay_cost_on":
+    "Of which delay cost, on average",
   "p.plans.pid.joint_risk.on_time": "on time",
   "p.plans.pid.joint_risk.outcome": "Outcome",
-  "p.plans.pid.joint_risk.per_line_estimate_in": "Per-line estimate in {currency}",
+  "p.plans.pid.joint_risk.per_line_estimate_in":
+    "Per-line estimate in {currency}",
   "p.plans.pid.joint_risk.pert": "PERT",
   "p.plans.pid.joint_risk.plan": "← Plan",
   "p.plans.pid.joint_risk.risks": "Risks",
   "p.plans.pid.joint_risk.run": "Run",
   "p.plans.pid.joint_risk.running": "Running…",
-  "p.plans.pid.joint_risk.scatter_of_simulated_total_cost": "Scatter of simulated total cost against business days late, with the budget and the on-time line",
+  "p.plans.pid.joint_risk.scatter_of_simulated_total_cost":
+    "Scatter of simulated total cost against business days late, with the budget and the on-time line",
   "p.plans.pid.joint_risk.schedule": "Schedule — {title}: {skippedReasonText}",
   "p.plans.pid.joint_risk.schedule_risk": "Schedule risk",
   "p.plans.pid.joint_risk.seed": "Seed",
-  "p.plans.pid.joint_risk.seed_the_same_seed_gives": "Seed {seed}: the same seed gives the same result.",
+  "p.plans.pid.joint_risk.seed_the_same_seed_gives":
+    "Seed {seed}: the same seed gives the same result.",
   "p.plans.pid.joint_risk.share": "Share",
   "p.plans.pid.joint_risk.simulations": "Simulations",
-  "p.plans.pid.joint_risk.total_cost_delay_cost_included": "Total cost, delay cost included",
+  "p.plans.pid.joint_risk.total_cost_delay_cost_included":
+    "Total cost, delay cost included",
   "p.plans.pid.joint_risk.triangular": "Triangular",
-  "p.plans.pid.leveling.allow_critical_tasks_to_move": "Allow critical tasks to move (this can delay the finish)",
+  "p.plans.pid.leveling.allow_critical_tasks_to_move":
+    "Allow critical tasks to move (this can delay the finish)",
   "p.plans.pid.leveling.apply": "Apply",
   "p.plans.pid.leveling.apply_the_ticked_moves": "Apply the ticked moves",
-  "p.plans.pid.leveling.balance_workloads_resource_leveling": "Balance workloads (resource leveling)",
+  "p.plans.pid.leveling.balance_workloads_resource_leveling":
+    "Balance workloads (resource leveling)",
   "p.plans.pid.leveling.could_not_be_fixed": "Could not be fixed",
   "p.plans.pid.leveling.critical": "critical",
-  "p.plans.pid.leveling.each_start_date_the_proposal": "Each start date the proposal would change",
+  "p.plans.pid.leveling.each_start_date_the_proposal":
+    "Each start date the proposal would change",
   "p.plans.pid.leveling.finish": "Finish",
   "p.plans.pid.leveling.float": "Float",
-  "p.plans.pid.leveling.i_have_read_the_proposal": "I have read the proposal and want these start dates changed",
+  "p.plans.pid.leveling.i_have_read_the_proposal":
+    "I have read the proposal and want these start dates changed",
   "p.plans.pid.leveling.later_by": "Later by",
-  "p.plans.pid.leveling.load_per_task_of_a": "Load per task (% of a person's day)",
+  "p.plans.pid.leveling.load_per_task_of_a":
+    "Load per task (% of a person's day)",
   "p.plans.pid.leveling.loading": "Loading…",
-  "p.plans.pid.leveling.no_start_date_would_change": "No start date would change.",
-  "p.plans.pid.leveling.nobody_is_over_allocated_so": "Nobody is over-allocated, so there is nothing to level.",
+  "p.plans.pid.leveling.no_start_date_would_change":
+    "No start date would change.",
+  "p.plans.pid.leveling.nobody_is_over_allocated_so":
+    "Nobody is over-allocated, so there is nothing to level.",
   "p.plans.pid.leveling.over_allocated_now": "Over-allocated now",
   "p.plans.pid.leveling.person": "Person",
   "p.plans.pid.leveling.plan": "← Plan",
@@ -1120,12 +1287,17 @@ export const PAGES_EN = {
   "p.plans.pid.leveling.refused": "Refused: {note}",
   "p.plans.pid.leveling.resource_leveling_ppm": "Resource leveling — PPM",
   "p.plans.pid.leveling.start": "Start",
-  "p.plans.pid.leveling.start_finish_business_days": "{pid}: start {v}{start_days}, finish {v2}{finish_days} business days",
-  "p.plans.pid.leveling.suggests_moving_tasks_so_that": "Suggests moving tasks so that nobody is booked for more than they can do. Nothing changes until you confirm.",
+  "p.plans.pid.leveling.start_finish_business_days":
+    "{pid}: start {v}{start_days}, finish {v2}{finish_days} business days",
+  "p.plans.pid.leveling.suggests_moving_tasks_so_that":
+    "Suggests moving tasks so that nobody is booked for more than they can do. Nothing changes until you confirm.",
   "p.plans.pid.leveling.task": "Task",
-  "p.plans.pid.leveling.the_search_stopped_at_its": "the search stopped at its limit",
-  "p.plans.pid.leveling.this_is_advice_nothing_changes": "This is advice. Nothing changes until you choose moves below and apply them.",
-  "p.plans.pid.leveling.why_kept_with_each_audit": "Why (kept with each audit entry)",
+  "p.plans.pid.leveling.the_search_stopped_at_its":
+    "the search stopped at its limit",
+  "p.plans.pid.leveling.this_is_advice_nothing_changes":
+    "This is advice. Nothing changes until you choose moves below and apply them.",
+  "p.plans.pid.leveling.why_kept_with_each_audit":
+    "Why (kept with each audit entry)",
   "p.plans.pid.leveling.working_calendar": "Working calendar",
   "p.plans.pid.more_tools": "More tools",
   "p.plans.pid.onboarding.access": "Access",
@@ -1135,14 +1307,19 @@ export const PAGES_EN = {
   "p.plans.pid.onboarding.checklists": "Checklists",
   "p.plans.pid.onboarding.complete_checklist": "Complete checklist",
   "p.plans.pid.onboarding.done": "Done",
-  "p.plans.pid.onboarding.effective": "{status}{v} · effective {effective_date} · {progressText}",
-  "p.plans.pid.onboarding.from": "{status} · from {effective_date} · {progressText}",
+  "p.plans.pid.onboarding.effective":
+    "{status}{v} · effective {effective_date} · {progressText}",
+  "p.plans.pid.onboarding.from":
+    "{status} · from {effective_date} · {progressText}",
   "p.plans.pid.onboarding.granted": "Granted",
   "p.plans.pid.onboarding.hand_over_someone_s_work": "Hand over someone's work",
-  "p.plans.pid.onboarding.no_access_is_outstanding": "● No access is outstanding.",
+  "p.plans.pid.onboarding.no_access_is_outstanding":
+    "● No access is outstanding.",
   "p.plans.pid.onboarding.none_yet": "None yet.",
-  "p.plans.pid.onboarding.onboarding_and_offboarding": "Onboarding and offboarding",
-  "p.plans.pid.onboarding.onboarding_and_offboarding_ppm": "Onboarding and offboarding — PPM",
+  "p.plans.pid.onboarding.onboarding_and_offboarding":
+    "Onboarding and offboarding",
+  "p.plans.pid.onboarding.onboarding_and_offboarding_ppm":
+    "Onboarding and offboarding — PPM",
   "p.plans.pid.onboarding.person": "person:…",
   "p.plans.pid.onboarding.person_2": "Person",
   "p.plans.pid.onboarding.plan": "← Plan",
@@ -1155,37 +1332,48 @@ export const PAGES_EN = {
   "p.plans.pid.onboarding.repo_write": "repo write",
   "p.plans.pid.onboarding.revoked": "Revoked",
   "p.plans.pid.onboarding.save": "Save",
-  "p.plans.pid.onboarding.since": "▲ {person_ref}: {access} (since {granted_on})",
+  "p.plans.pid.onboarding.since":
+    "▲ {person_ref}: {access} (since {granted_on})",
   "p.plans.pid.onboarding.skip": "Skip",
   "p.plans.pid.onboarding.start": "Start",
   "p.plans.pid.onboarding.start_a_checklist": "Start a checklist",
   "p.plans.pid.onboarding.takes_effect": "Takes effect",
   "p.plans.pid.onboarding.what": "What",
-  "p.plans.pid.onboarding.who_holds_what_access_is": "Who holds what access is about people, so it needs the permission to manage people.",
+  "p.plans.pid.onboarding.who_holds_what_access_is":
+    "Who holds what access is about people, so it needs the permission to manage people.",
   "p.plans.pid.onboarding.why_skip": "Why skip?",
-  "p.plans.pid.raci.add_a_person_person_or": "Add a person (person:… or worker:…)",
-  "p.plans.pid.raci.add_a_person_to_start": "Add a person to start assigning letters.",
+  "p.plans.pid.raci.add_a_person_person_or":
+    "Add a person (person:… or worker:…)",
+  "p.plans.pid.raci.add_a_person_to_start":
+    "Add a person to start assigning letters.",
   "p.plans.pid.raci.add_column": "Add column",
   "p.plans.pid.raci.export_to_a_spreadsheet": "Export to a spreadsheet",
-  "p.plans.pid.raci.for_each_task_who_does": "For each task: who does it, who signs it off, who is asked, and who is told.",
-  "p.plans.pid.raci.have_nobody_accountable": "{missing_accountable} have nobody accountable.",
-  "p.plans.pid.raci.have_nobody_responsible": "{missing_responsible} have nobody responsible.",
-  "p.plans.pid.raci.how_many_tasks_each_person": "How many tasks each person holds each letter on",
+  "p.plans.pid.raci.for_each_task_who_does":
+    "For each task: who does it, who signs it off, who is asked, and who is told.",
+  "p.plans.pid.raci.have_nobody_accountable":
+    "{missing_accountable} have nobody accountable.",
+  "p.plans.pid.raci.have_nobody_responsible":
+    "{missing_responsible} have nobody responsible.",
+  "p.plans.pid.raci.how_many_tasks_each_person":
+    "How many tasks each person holds each letter on",
   "p.plans.pid.raci.legend": "Legend",
   "p.plans.pid.raci.load_by_person": "Load by person",
   "p.plans.pid.raci.loading": "Loading…",
-  "p.plans.pid.raci.of_tasks_are_complete_one": "{complete} of {tasks} tasks are complete (one accountable, at least one responsible).",
+  "p.plans.pid.raci.of_tasks_are_complete_one":
+    "{complete} of {tasks} tasks are complete (one accountable, at least one responsible).",
   "p.plans.pid.raci.person": "Person",
   "p.plans.pid.raci.plan": "← Plan",
   "p.plans.pid.raci.raci_ppm": "RACI — PPM",
   "p.plans.pid.raci.this_plan_has_no_tasks": "This plan has no tasks yet.",
   "p.plans.pid.raci.who_does_what_raci_matrix": "Who does what (RACI matrix)",
-  "p.plans.pid.schedule.dependency_violated_successor_starts": "Dependency violated: successor starts {actual_start} but may start no earlier than {earliest_start}.",
+  "p.plans.pid.schedule.dependency_violated_successor_starts":
+    "Dependency violated: successor starts {actual_start} but may start no earlier than {earliest_start}.",
   "p.plans.pid.schedule.schedule_ppm": "Schedule — PPM",
   "p.plans.pid.schedule_health.as_of": "As of {as_of} ·",
   "p.plans.pid.schedule_health.baseline_version": "baseline version {version}",
   "p.plans.pid.schedule_health.check": "Check",
-  "p.plans.pid.schedule_health.checks_the_schedule_for_common": "Checks the schedule for common problems, such as tasks with no links or no estimate.",
+  "p.plans.pid.schedule_health.checks_the_schedule_for_common":
+    "Checks the schedule for common problems, such as tasks with no links or no estimate.",
   "p.plans.pid.schedule_health.critical_path": "Critical path",
   "p.plans.pid.schedule_health.held_to": "Held to",
   "p.plans.pid.schedule_health.loading": "Loading…",
@@ -1197,51 +1385,67 @@ export const PAGES_EN = {
   "p.plans.pid.schedule_health.schedule_health_ppm": "Schedule health — PPM",
   "p.plans.pid.schedule_health.see_the_note": "See the note",
   "p.plans.pid.schedule_health.status_date": "Status date",
-  "p.plans.pid.schedule_health.the_fourteen_schedule_health_checks": "The fourteen schedule health checks",
+  "p.plans.pid.schedule_health.the_fourteen_schedule_health_checks":
+    "The fourteen schedule health checks",
   "p.plans.pid.schedule_health.to_fix": "To fix",
   "p.plans.pid.schedule_health.what_was_found": "What was found",
   "p.plans.pid.schedule_risk.assumptions": "Assumptions",
-  "p.plans.pid.schedule_risk.band_for_tasks_with_no": "Band for tasks with no estimate (± %)",
+  "p.plans.pid.schedule_risk.band_for_tasks_with_no":
+    "Band for tasks with no estimate (± %)",
   "p.plans.pid.schedule_risk.critical_in": "Critical in",
   "p.plans.pid.schedule_risk.critical_path": "Critical path",
-  "p.plans.pid.schedule_risk.critical_path_finish_the_plan": "Critical-path finish (the plan's own date)",
+  "p.plans.pid.schedule_risk.critical_path_finish_the_plan":
+    "Critical-path finish (the plan's own date)",
   "p.plans.pid.schedule_risk.distribution": "Distribution",
-  "p.plans.pid.schedule_risk.each_bar_is_a_finish": "Each bar is a finish date; taller means more of the simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the plan's own date.",
-  "p.plans.pid.schedule_risk.earliest_latest": "{join}. Earliest {earliest}, latest {latest}.",
+  "p.plans.pid.schedule_risk.each_bar_is_a_finish":
+    "Each bar is a finish date; taller means more of the simulations ended there. Solid lines are P50, P80 and P90 (labelled); the dashed line is the plan's own date.",
+  "p.plans.pid.schedule_risk.earliest_latest":
+    "{join}. Earliest {earliest}, latest {latest}.",
   "p.plans.pid.schedule_risk.estimate": "Estimate",
   "p.plans.pid.schedule_risk.finish": "Finish",
   "p.plans.pid.schedule_risk.finish_date": "Finish date",
-  "p.plans.pid.schedule_risk.finish_date_at_each_percentile": "Finish date at each percentile",
-  "p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates": "Histogram of simulated finish dates, with P50, P80 and P90 marked",
+  "p.plans.pid.schedule_risk.finish_date_at_each_percentile":
+    "Finish date at each percentile",
+  "p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates":
+    "Histogram of simulated finish dates, with P50, P80 and P90 marked",
   "p.plans.pid.schedule_risk.independence": "Independence.",
   "p.plans.pid.schedule_risk.iterations": "Iterations",
   "p.plans.pid.schedule_risk.left_out": "Left out:",
-  "p.plans.pid.schedule_risk.many_what_if_runs_of": "Many what-if runs of the schedule show the range of finish dates and how likely each one is.",
-  "p.plans.pid.schedule_risk.no_register_risk_was_used": "No register risk was used as a schedule event.",
+  "p.plans.pid.schedule_risk.many_what_if_runs_of":
+    "Many what-if runs of the schedule show the range of finish dates and how likely each one is.",
+  "p.plans.pid.schedule_risk.no_register_risk_was_used":
+    "No register risk was used as a schedule event.",
   "p.plans.pid.schedule_risk.not_enough_data": "not enough data",
-  "p.plans.pid.schedule_risk.not_simulated_because_the_schedule": "Not simulated, because the schedule cannot place them: {join}.",
+  "p.plans.pid.schedule_risk.not_simulated_because_the_schedule":
+    "Not simulated, because the schedule cannot place them: {join}.",
   "p.plans.pid.schedule_risk.of": "{date}: {count} of {iterations}",
   "p.plans.pid.schedule_risk.of_runs": "{criticalityText} of runs",
-  "p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine": "Optimistic / likely / pessimistic (business days)",
+  "p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine":
+    "Optimistic / likely / pessimistic (business days)",
   "p.plans.pid.schedule_risk.outcome": "Outcome",
-  "p.plans.pid.schedule_risk.per_task_estimate_criticality_and": "Per-task estimate, criticality and sensitivity",
+  "p.plans.pid.schedule_risk.per_task_estimate_criticality_and":
+    "Per-task estimate, criticality and sensitivity",
   "p.plans.pid.schedule_risk.plan": "← Plan",
   "p.plans.pid.schedule_risk.plan_2": "plan",
   "p.plans.pid.schedule_risk.risks_used": "Risks used",
   "p.plans.pid.schedule_risk.run": "Run",
-  "p.plans.pid.schedule_risk.run_on_against_the_plan": "Run on {ranOn} against the plan as it stands · seed {seed} · {iterations} iterations · {distributionText} · calendar {calendar}",
+  "p.plans.pid.schedule_risk.run_on_against_the_plan":
+    "Run on {ranOn} against the plan as it stands · seed {seed} · {iterations} iterations · {distributionText} · calendar {calendar}",
   "p.plans.pid.schedule_risk.running": "Running…",
   "p.plans.pid.schedule_risk.schedule_risk": "Schedule risk",
   "p.plans.pid.schedule_risk.schedule_risk_ppm": "Schedule risk — PPM",
   "p.plans.pid.schedule_risk.seed": "Seed",
-  "p.plans.pid.schedule_risk.seed_the_same_seed_gives": "Seed {seed}: the same seed gives the same result. Up to {max_iterations} iterations.",
+  "p.plans.pid.schedule_risk.seed_the_same_seed_gives":
+    "Seed {seed}: the same seed gives the same result. Up to {max_iterations} iterations.",
   "p.plans.pid.schedule_risk.sensitivity": "Sensitivity",
   "p.plans.pid.schedule_risk.share": "Share",
   "p.plans.pid.schedule_risk.simulations": "Simulations",
   "p.plans.pid.schedule_risk.task": "Task",
-  "p.plans.pid.schedule_risk.the_same_figures_as_a": "The same figures as a table",
+  "p.plans.pid.schedule_risk.the_same_figures_as_a":
+    "The same figures as a table",
   "p.plans.pid.schedule_risk.triangular": "Triangular",
-  "p.plans.pid.schedule_risk.weighted_towards_the_likely_value": "Weighted towards the likely value (PERT)",
+  "p.plans.pid.schedule_risk.weighted_towards_the_likely_value":
+    "Weighted towards the likely value (PERT)",
   "p.plans.pid.schedule_risk.what_drives_it": "What drives it",
   "p.plans.pid.schedule_risk.when_it_finishes": "When it finishes",
   "p.plans.pid.wbs.code": "Code",
@@ -1250,8 +1454,10 @@ export const PAGES_EN = {
   "p.plans.pid.wbs.plan": "← Plan",
   "p.plans.pid.wbs.sub_tasks": "Sub-tasks",
   "p.plans.pid.wbs.task": "Task",
-  "p.plans.pid.wbs.tasks_is_too_many_to": "{length} tasks is too many to nest usefully; the table shows them all.",
-  "p.plans.pid.wbs.the_plan_s_tasks_each": "The plan's tasks, each broken into its sub-tasks. The code on each line is for reading: it changes when work is added or moved.",
+  "p.plans.pid.wbs.tasks_is_too_many_to":
+    "{length} tasks is too many to nest usefully; the table shows them all.",
+  "p.plans.pid.wbs.the_plan_s_tasks_each":
+    "The plan's tasks, each broken into its sub-tasks. The code on each line is for reading: it changes when work is added or moved.",
   "p.plans.pid.wbs.work_breakdown": "Work breakdown",
   "p.plans.pid.wbs.work_breakdown_as_a_table": "Work breakdown as a table",
   "p.plans.pid.wbs.work_breakdown_ppm": "Work breakdown — PPM",
@@ -1271,7 +1477,8 @@ export const PAGES_EN = {
   "p.plans.pid.what_if.finish_to_start": "Finish to start",
   "p.plans.pid.what_if.float": "Float",
   "p.plans.pid.what_if.follows": "{name} follows {name2} ({toUpperCase})",
-  "p.plans.pid.what_if.joins_the_critical_path": "Joins the critical path: {join}.",
+  "p.plans.pid.what_if.joins_the_critical_path":
+    "Joins the critical path: {join}.",
   "p.plans.pid.what_if.lag_business_days": "Lag (business days)",
   "p.plans.pid.what_if.leaves_it": "Leaves it: {join}.",
   "p.plans.pid.what_if.link": "Link",
@@ -1279,14 +1486,18 @@ export const PAGES_EN = {
   "p.plans.pid.what_if.no_task_s_dates_or": "No task's dates or float change.",
   "p.plans.pid.what_if.none_clear_it": "None (clear it)",
   "p.plans.pid.what_if.none_yet": "None yet.",
-  "p.plans.pid.what_if.now_takes_of_the_day": "“{name}” now takes {units_percent}% of the day for {hoursText} of work (worked out from its scheduling rule).",
-  "p.plans.pid.what_if.of_work_has_no_rate": "▲ {hoursText} of work has no rate, so it is not costed.",
+  "p.plans.pid.what_if.now_takes_of_the_day":
+    "“{name}” now takes {units_percent}% of the day for {hoursText} of work (worked out from its scheduling rule).",
+  "p.plans.pid.what_if.of_work_has_no_rate":
+    "▲ {hoursText} of work has no rate, so it is not costed.",
   "p.plans.pid.what_if.plan": "← Plan",
-  "p.plans.pid.what_if.planned_labour_cost": "Planned labour cost: {deltaText} ({deltaText2} → {deltaText3}).",
+  "p.plans.pid.what_if.planned_labour_cost":
+    "Planned labour cost: {deltaText} ({deltaText2} → {deltaText3}).",
   "p.plans.pid.what_if.predecessor": "Predecessor",
   "p.plans.pid.what_if.preview": "Preview",
   "p.plans.pid.what_if.reason": "Reason",
-  "p.plans.pid.what_if.reason_recorded_with_each_change": "Reason (recorded with each change)",
+  "p.plans.pid.what_if.reason_recorded_with_each_change":
+    "Reason (recorded with each change)",
   "p.plans.pid.what_if.remove": "Remove",
   "p.plans.pid.what_if.stage_an_edit": "Stage an edit",
   "p.plans.pid.what_if.stage_edit": "Stage edit",
@@ -1295,23 +1506,31 @@ export const PAGES_EN = {
   "p.plans.pid.what_if.start_to_start": "Start to start",
   "p.plans.pid.what_if.successor": "Successor",
   "p.plans.pid.what_if.task": "Task",
-  "p.plans.pid.what_if.tasks_whose_dates_float_or": "Tasks whose dates, float or critical status change",
-  "p.plans.pid.what_if.try_changes_on_a_copy": "Try changes on a copy. Nothing is saved until you commit.",
+  "p.plans.pid.what_if.tasks_whose_dates_float_or":
+    "Tasks whose dates, float or critical status change",
+  "p.plans.pid.what_if.try_changes_on_a_copy":
+    "Try changes on a copy. Nothing is saved until you commit.",
   "p.plans.pid.what_if.type": "Type",
   "p.plans.pid.what_if.what_if": "What-if",
   "p.plans.pid.what_if.what_if_ppm": "What-if — PPM",
-  "p.plans.pid.work.business_days_of_a_day": "{duration_days} business days · {units_percent}% of a day · {hoursText} of work · {v}",
+  "p.plans.pid.work.business_days_of_a_day":
+    "{duration_days} business days · {units_percent}% of a day · {hoursText} of work · {v}",
   "p.plans.pid.work.change": "Change",
   "p.plans.pid.work.costs": "Costs",
   "p.plans.pid.work.day": "Day",
   "p.plans.pid.work.duration_business_days": "Duration (business days)",
   "p.plans.pid.work.edit_assignment": "Edit assignment",
-  "p.plans.pid.work.falls_outside_this_window": "{hoursText} falls outside this window.",
-  "p.plans.pid.work.hours_per_each_row_adds": "Hours per {grain}; each row adds up to the task's work, the last row to the plan's.",
-  "p.plans.pid.work.how_long_each_task_takes": "How long each task takes, how much of a person's day it uses, and how much work that adds up to.",
+  "p.plans.pid.work.falls_outside_this_window":
+    "{hoursText} falls outside this window.",
+  "p.plans.pid.work.hours_per_each_row_adds":
+    "Hours per {grain}; each row adds up to the task's work, the last row to the plan's.",
+  "p.plans.pid.work.how_long_each_task_takes":
+    "How long each task takes, how much of a person's day it uses, and how much work that adds up to.",
   "p.plans.pid.work.month": "Month",
-  "p.plans.pid.work.no_assignment_yet_give_a": "No assignment yet. Give a duration and units and the work is worked out.",
-  "p.plans.pid.work.no_task_carries_work_yet": "No task carries work yet, so there is nothing to spread.",
+  "p.plans.pid.work.no_assignment_yet_give_a":
+    "No assignment yet. Give a duration and units and the work is worked out.",
+  "p.plans.pid.work.no_task_carries_work_yet":
+    "No task carries work yet, so there is nothing to spread.",
   "p.plans.pid.work.not_placed": "(not placed)",
   "p.plans.pid.work.percentages": "Percentages",
   "p.plans.pid.work.period": "Period",
@@ -1320,11 +1539,13 @@ export const PAGES_EN = {
   "p.plans.pid.work.rule": "Rule",
   "p.plans.pid.work.save_assignment": "Save assignment",
   "p.plans.pid.work.save_contour": "Save contour",
-  "p.plans.pid.work.so_its_work_is_not": "▲ {title} ({hoursText}) {reason}, so its work is not in the buckets.",
+  "p.plans.pid.work.so_its_work_is_not":
+    "▲ {title} ({hoursText}) {reason}, so its work is not in the buckets.",
   "p.plans.pid.work.spread": "Spread",
   "p.plans.pid.work.task": "Task",
   "p.plans.pid.work.tasks": "Tasks",
-  "p.plans.pid.work.this_plan_has_no_scheduled": "This plan has no scheduled tasks yet.",
+  "p.plans.pid.work.this_plan_has_no_scheduled":
+    "This plan has no scheduled tasks yet.",
   "p.plans.pid.work.total": "Total",
   "p.plans.pid.work.units": "Units (%)",
   "p.plans.pid.work.units_of_the_day": "Units (% of the day)",
@@ -1347,7 +1568,8 @@ export const PAGES_EN = {
   "p.prioritization.low": "low",
   "p.prioritization.medium": "medium",
   "p.prioritization.missing_evidence": "Missing evidence",
-  "p.prioritization.no_evidence_for_any_component": "No evidence for any component — this plan is unscored.",
+  "p.prioritization.no_evidence_for_any_component":
+    "No evidence for any component — this plan is unscored.",
   "p.prioritization.no_plans_match_that_filter": "No plans match that filter.",
   "p.prioritization.none": "none",
   "p.prioritization.of_plan_s": "{length} of {scored_of} plan(s)",
@@ -1356,8 +1578,10 @@ export const PAGES_EN = {
   "p.prioritization.prioritization": "Prioritization",
   "p.prioritization.prioritization_ppm": "Prioritization — PPM",
   "p.prioritization.score": "Score",
-  "p.prioritization.shows_how_much_of_the": "shows how much of the score was actually backed by data.",
-  "p.prioritization.smart_score_over_roi_strategic": "Smart Score over ROI, strategic alignment, expert review, risk, demand, MoSCoW priority, and momentum. Components with no evidence are dropped and the rest renormalized —",
+  "p.prioritization.shows_how_much_of_the":
+    "shows how much of the score was actually backed by data.",
+  "p.prioritization.smart_score_over_roi_strategic":
+    "Smart Score over ROI, strategic alignment, expert review, risk, demand, MoSCoW priority, and momentum. Components with no evidence are dropped and the rest renormalized —",
   "p.prioritization.unscored": "unscored",
   "p.prioritization.value": "Value",
   "p.prioritization.weight": "Weight",
@@ -1378,7 +1602,8 @@ export const PAGES_EN = {
   "p.regulator.currency": "Currency",
   "p.regulator.gate_decisions": "· Gate decisions:",
   "p.regulator.members": "Members:",
-  "p.regulator.names_withheld_abac_mask_obligation": "Names withheld (ABAC mask obligation).",
+  "p.regulator.names_withheld_abac_mask_obligation":
+    "Names withheld (ABAC mask obligation).",
   "p.regulator.no_budget_lines": "No budget lines.",
   "p.regulator.no_portfolios_recorded": "No portfolios recorded.",
   "p.regulator.none": "none",
@@ -1391,14 +1616,17 @@ export const PAGES_EN = {
   "p.reports.fields_comma_separated": "fields (comma separated)",
   "p.reports.name_contains": "name contains…",
   "p.reports.reports_ppm": "Reports — PPM",
-  "p.resources.a_multi_skill_booking_counts": "A multi-skill booking counts fully toward each of its skills, so skill rows overlap and do not add up to the total.",
+  "p.resources.a_multi_skill_booking_counts":
+    "A multi-skill booking counts fully toward each of its skills, so skill rows overlap and do not add up to the total.",
   "p.resources.by": "By",
   "p.resources.demand_fte": "Demand FTE",
-  "p.resources.demand_supply_and_gap_by": "Demand, supply and gap by period and {group_by}",
+  "p.resources.demand_supply_and_gap_by":
+    "Demand, supply and gap by period and {group_by}",
   "p.resources.every_figure_as_a_table": "Every figure as a table",
   "p.resources.from": "From",
   "p.resources.gap_fte": "Gap FTE",
-  "p.resources.gap_per_in_fte_supply": "Gap per {period}, in FTE (supply minus demand)",
+  "p.resources.gap_per_in_fte_supply":
+    "Gap per {period}, in FTE (supply minus demand)",
   "p.resources.loading": "Loading…",
   "p.resources.month": "Month",
   "p.resources.no_demand_or_supply_in": "No demand or supply in this window.",
@@ -1406,13 +1634,16 @@ export const PAGES_EN = {
   "p.resources.of_which_unassigned": "Of which unassigned",
   "p.resources.people": "People",
   "p.resources.per": "Per",
-  "p.resources.per_by_scope": "{periodLabel} · per {period} · by {group_by} · scope: {kind}",
+  "p.resources.per_by_scope":
+    "{periodLabel} · per {period} · by {group_by} · scope: {kind}",
   "p.resources.period": "Period",
   "p.resources.proposed_fte": "Proposed FTE",
   "l.processes.name_problem": "Give the process a name of 1 to 120 characters.",
   "l.processes.steps_problem": "A process has 1 to {max} steps.",
-  "l.processes.title_problem": "Step {n}: give it a title of 1 to 200 characters.",
-  "l.processes.person_problem": "Step {n}: the person must be a person: or worker: reference.",
+  "l.processes.title_problem":
+    "Step {n}: give it a title of 1 to 200 characters.",
+  "l.processes.person_problem":
+    "Step {n}: the person must be a person: or worker: reference.",
   "l.processes.kind_approve": "Approve",
   "l.processes.kind_todo": "To do",
   "l.processes.kind_notify": "Notify",
@@ -1429,7 +1660,8 @@ export const PAGES_EN = {
   "l.processes.run_failed": "failed",
   "p.processes.processes": "Approval processes",
   "p.processes.processes_ppm": "Approval processes — PPM",
-  "p.processes.intro": "A process is a list of steps, run one after another: ask someone to approve, hand someone a to-do, or tell someone. A rejection ends the run and skips the steps after it. Editing a process never changes a run already under way.",
+  "p.processes.intro":
+    "A process is a list of steps, run one after another: ask someone to approve, hand someone a to-do, or tell someone. A rejection ends the run and skips the steps after it. Editing a process never changes a run already under way.",
   "p.processes.definitions": "Processes",
   "p.processes.none_defined": "No processes are defined yet.",
   "p.processes.steps_one": "{n} step",
@@ -1492,15 +1724,18 @@ export const PAGES_EN = {
   "p.tolerances.tolerances": "Tolerances",
   "p.tolerances.tolerances_ppm": "Tolerances — PPM",
   "p.tolerances.plan_link": "Tolerances",
-  "p.tolerances.intro": "How far each project may drift on time, cost, risk and resources before it must be referred upward, and how much of each limit is used. Within the limit but near it is amber; beyond it is red; a limit that cannot be measured is shown as not measurable, never as green.",
-  "p.tolerances.board_intro": "Every plan you can read that has a tolerance, worst first.",
+  "p.tolerances.intro":
+    "How far each project may drift on time, cost, risk and resources before it must be referred upward, and how much of each limit is used. Within the limit but near it is amber; beyond it is red; a limit that cannot be measured is shown as not measurable, never as green.",
+  "p.tolerances.board_intro":
+    "Every plan you can read that has a tolerance, worst first.",
   "p.tolerances.none": "No plan has a tolerance yet.",
   "p.tolerances.none_match": "No plan matches.",
   "p.tolerances.show": "Show",
   "p.tolerances.all_statuses": "All colours",
   "p.tolerances.plan": "Plan",
   "p.tolerances.overall": "Overall",
-  "p.tolerances.truncated": "Only the first {n} plans were measured, so this list may be incomplete.",
+  "p.tolerances.truncated":
+    "Only the first {n} plans were measured, so this list may be incomplete.",
   "p.tolerances.loading": "Loading…",
   "p.tolerances.could_not_load": "Could not load the tolerances",
   "p.tolerances.back": "← Plan",
@@ -1539,7 +1774,8 @@ export const PAGES_EN = {
   "l.escalation.title_problem": "Give it a title of 1 to 200 characters.",
   "l.escalation.dimension_problem": "Say which tolerance it is about.",
   "l.escalation.level_problem": "The level is a whole number from 1 to 9.",
-  "l.escalation.owner_problem": "The person must be a person: or worker: reference.",
+  "l.escalation.owner_problem":
+    "The person must be a person: or worker: reference.",
   "l.escalation.level_to": "Level {level}: {to}",
   "l.escalation.level": "Level {level}",
   "l.escalation.open_for": "Open for {n} days",
@@ -1563,7 +1799,8 @@ export const PAGES_EN = {
   "p.task.s_in_review": "In review",
   "p.task.s_done": "Done",
   "p.task.s_blocked": "Blocked",
-  "p.task.links_intro": "Where this task lives in other tools, such as the Jira or Linear issue it is tracked as. The address is stored and shown; it is never fetched and nothing is synchronised.",
+  "p.task.links_intro":
+    "Where this task lives in other tools, such as the Jira or Linear issue it is tracked as. The address is stored and shown; it is never fetched and nothing is synchronised.",
   "l.link.kind_docs": "Documents",
   "l.link.kind_repo": "Code repository",
   "l.link.kind_ticket": "Ticket",
@@ -1585,8 +1822,10 @@ export const PAGES_EN = {
   "p.frameworks.wow_ppm": "Ways of working — PPM",
   "p.frameworks.gov": "Governance framework",
   "p.frameworks.gov_ppm": "Governance framework — PPM",
-  "p.frameworks.intro_wow": "How the team works: method, iteration length, work-in-progress limit. A plan follows one, shared or its own; with none it inherits the nearest plan above's.",
-  "p.frameworks.intro_gov": "How the work is governed: who decides, how often it is reviewed, and the escalation path that escalations follow. A plan follows one, shared or its own; with none it inherits the nearest plan above's.",
+  "p.frameworks.intro_wow":
+    "How the team works: method, iteration length, work-in-progress limit. A plan follows one, shared or its own; with none it inherits the nearest plan above's.",
+  "p.frameworks.intro_gov":
+    "How the work is governed: who decides, how often it is reviewed, and the escalation path that escalations follow. A plan follows one, shared or its own; with none it inherits the nearest plan above's.",
   "p.frameworks.back": "Back to the plan",
   "p.frameworks.loading": "Loading…",
   "p.frameworks.could_not_load": "Could not load this.",
@@ -1634,15 +1873,21 @@ export const PAGES_EN = {
   "p.frameworks.path_add": "Add a level",
   "p.frameworks.path_remove": "Remove level {n}",
   "p.frameworks.name_problem": "Give it a name of 1 to 120 characters.",
-  "p.frameworks.number_problem": "Days are whole numbers from 1 to 366 and the limit from 1 to 1000.",
-  "p.frameworks.path_problem": "Each escalation level is a different whole number from 1 to 9, with who hears it and what sends it there.",
-  "p.frameworks.confirm_shared": "This is shared: saving changes it for {n} other plan(s) too.",
-  "p.frameworks.confirm_problem": "Tick the box to confirm the change for {n} other plan(s).",
+  "p.frameworks.number_problem":
+    "Days are whole numbers from 1 to 366 and the limit from 1 to 1000.",
+  "p.frameworks.path_problem":
+    "Each escalation level is a different whole number from 1 to 9, with who hears it and what sends it there.",
+  "p.frameworks.confirm_shared":
+    "This is shared: saving changes it for {n} other plan(s) too.",
+  "p.frameworks.confirm_problem":
+    "Tick the box to confirm the change for {n} other plan(s).",
   "p.frameworks.deleted": "Deleted {name}.",
   "p.frameworks.delete": "Delete {name} (nobody follows it)",
   "p.frameworks.text_problem": "A definition is at most 10000 characters.",
-  "p.frameworks.practice_problem": "Each ceremony or forum needs a name and how often it happens, and there are at most 20.",
-  "p.frameworks.rights_problem": "Each decision right needs the decision and who decides it, and there are at most 20.",
+  "p.frameworks.practice_problem":
+    "Each ceremony or forum needs a name and how often it happens, and there are at most 20.",
+  "p.frameworks.rights_problem":
+    "Each decision right needs the decision and who decides it, and there are at most 20.",
   "p.frameworks.practice_name": "Name",
   "p.frameworks.practice_cadence": "How often",
   "p.frameworks.practice_purpose": "What it is for",
@@ -1655,7 +1900,8 @@ export const PAGES_EN = {
   "p.frameworks.right_add": "Add a decision right",
   "p.links.links": "Links",
   "p.links.links_ppm": "Links — PPM",
-  "p.links.intro": "Where this plan's documents and work live, including its Jira, Trello, Asana, Linear or Monday board. The address is stored and shown; it is never fetched.",
+  "p.links.intro":
+    "Where this plan's documents and work live, including its Jira, Trello, Asana, Linear or Monday board. The address is stored and shown; it is never fetched.",
   "p.links.back": "Back to the plan",
   "p.links.loading": "Loading…",
   "p.links.could_not_load": "Could not load the links.",
@@ -1672,13 +1918,15 @@ export const PAGES_EN = {
   "p.links.f_kind": "Kind",
   "p.links.f_system": "External tool",
   "p.links.f_id": "Its identifier there",
-  "p.links.url_problem": "The address must start with http:// or https:// and name a host.",
+  "p.links.url_problem":
+    "The address must start with http:// or https:// and name a host.",
   "p.links.label_problem": "Give it a label.",
   "p.links.system_problem": "A tracker link must name its tool.",
   "p.links.system_kind_problem": "Only a tracker or ticket link names a tool.",
   "p.links.id_problem": "An identifier needs a tool and has no spaces.",
   "p.links.domain_problem": "That tool's links are on {domains}.",
-  "p.escalations.intro": "Refer something upward when the project cannot or should not settle it itself. It is raised at a level of the escalation path in the project's governance framework, acknowledged, taken up a level if nobody answers, and ends resolved or withdrawn. The person it names as responsible and the person who raised it are told in their inbox (no email is sent).",
+  "p.escalations.intro":
+    "Refer something upward when the project cannot or should not settle it itself. It is raised at a level of the escalation path in the project's governance framework, acknowledged, taken up a level if nobody answers, and ends resolved or withdrawn. The person it names as responsible and the person who raised it are told in their inbox (no email is sent).",
   "p.escalations.register_intro": "Every escalation on the plans you can read.",
   "p.escalations.none": "No escalations yet.",
   "p.escalations.none_match": "No escalation matches.",
@@ -1720,10 +1968,12 @@ export const PAGES_EN = {
   "p.escalations.back": "← Plan",
   "p.escalations.register_link": "All escalations",
   "p.escalations.escalated_for": "About: {title}",
-  "p.tolerances.needs_escalation": "This is over tolerance and nobody has escalated it.",
+  "p.tolerances.needs_escalation":
+    "This is over tolerance and nobody has escalated it.",
   "p.tolerances.raise_one": "Raise an escalation",
   "p.tolerances.escalate_all": "Escalate every red tolerance",
-  "p.tolerances.escalate_all_intro": "Every dimension that is over tolerance and not yet escalated gets an escalation at the first level of the escalation path. Nothing is escalated on its own.",
+  "p.tolerances.escalate_all_intro":
+    "Every dimension that is over tolerance and not yet escalated gets an escalation at the first level of the escalation path. Nothing is escalated on its own.",
   "p.tolerances.escalated": "Raised {n} escalation(s).",
   "p.tolerances.escalations_one": "{n} open escalation",
   "p.tolerances.escalations_other": "{n} open escalations",
@@ -1731,8 +1981,10 @@ export const PAGES_EN = {
   "p.resources.rbs.show_tasks": "Show the open tasks of {role}",
   "p.resources.rbs.hide_tasks": "Hide the open tasks of {role}",
   "p.resources.rbs.no_open_tasks": "no open tasks",
-  "p.resources.rbs.tasks_in_plans_you_cannot_read": "{count} in plans you cannot read are not shown.",
-  "p.resources.rbs.only_the_first_500_tasks": "Only the first 500 tasks were read, so this list may be incomplete.",
+  "p.resources.rbs.tasks_in_plans_you_cannot_read":
+    "{count} in plans you cannot read are not shown.",
+  "p.resources.rbs.only_the_first_500_tasks":
+    "Only the first 500 tasks were read, so this list may be incomplete.",
   "p.resources.rbs.could_not_load_tasks": "Could not load the tasks: {reason}",
   "p.resources.rbs.by_skill": "By skill",
   "p.resources.rbs.demand_by_skill": "Demand by skill",
@@ -1744,16 +1996,19 @@ export const PAGES_EN = {
   "p.resources.rbs.resource_breakdown": "Resource breakdown",
   "p.resources.rbs.resource_breakdown_ppm": "Resource breakdown — PPM",
   "p.resources.rbs.role": "Role",
-  "p.resources.rbs.roles_with_people_demand_and": "Roles with people, demand and supply",
+  "p.resources.rbs.roles_with_people_demand_and":
+    "Roles with people, demand and supply",
   "p.resources.rbs.skill": "Skill",
   "p.resources.rbs.supply_fte": "Supply FTE",
-  "p.resources.rbs.you_can_see_headcounts_only": "You can see headcounts only, not names.",
+  "p.resources.rbs.you_can_see_headcounts_only":
+    "You can see headcounts only, not names.",
   "p.resources.resources": "Resources",
   "p.resources.resources_ppm": "Resources — PPM",
   "p.resources.role": "Role",
   "p.resources.roles_and_totals_only": "roles and totals only",
   "p.resources.roles_asked_for_with_no": "Roles asked for with no person yet",
-  "p.resources.short_spare_balanced_supply_not": "▼ short · ▲ spare · ● balanced · ? supply not known. Shading only shows how large the gap is.",
+  "p.resources.short_spare_balanced_supply_not":
+    "▼ short · ▲ spare · ● balanced · ? supply not known. Shading only shows how large the gap is.",
   "p.resources.show": "Show",
   "p.resources.skill": "Skill",
   "p.resources.skill_demand_only": "Skill (demand only)",
@@ -1761,7 +2016,8 @@ export const PAGES_EN = {
   "p.resources.to": "To",
   "p.resources.unclassified": "unclassified",
   "p.resources.week": "Week",
-  "p.resources.what_the_plans_ask_for": "What the plans ask for against what the people in each role can give, in full-time equivalents. Proposed bookings are kept apart and never counted.",
+  "p.resources.what_the_plans_ask_for":
+    "What the plans ask for against what the people in each role can give, in full-time equivalents. Proposed bookings are kept apart and never counted.",
   "p.reviews.accept": "Accept",
   "p.reviews.accepted": "accepted",
   "p.reviews.actions": "Actions",
@@ -1773,7 +2029,8 @@ export const PAGES_EN = {
   "p.reviews.decline": "Decline",
   "p.reviews.declined": "declined",
   "p.reviews.delegate": "Delegate",
-  "p.reviews.delegate_a_specific_item_to": "Delegate a specific item to the right expert. Only a reviewer who accepted can submit a verdict, so an unanswered invitation never becomes evidence.",
+  "p.reviews.delegate_a_specific_item_to":
+    "Delegate a specific item to the right expert. Only a reviewer who accepted can submit a verdict, so an unanswered invitation never becomes evidence.",
   "p.reviews.due": "due",
   "p.reviews.e_g_clinical_safety": "e.g. clinical safety",
   "p.reviews.expertise": "expertise",
@@ -1801,7 +2058,8 @@ export const PAGES_EN = {
   "p.reviews.subject_2": "Subject",
   "p.reviews.subject_pid": "subject pid",
   "p.reviews.submitted": "submitted",
-  "p.reviews.submitted_outstanding_declined_exter": "{submitted} submitted · {outstanding} outstanding · {declined} declined · {external_submitted} external",
+  "p.reviews.submitted_outstanding_declined_exter":
+    "{submitted} submitted · {outstanding} outstanding · {declined} declined · {external_submitted} external",
   "p.reviews.uuid": "uuid",
   "p.reviews.verdict": "Verdict",
   "p.reviews.withdraw": "Withdraw",
@@ -1840,13 +2098,16 @@ export const PAGES_EN = {
   "p.scenarios.scenario": "Scenario",
   "p.scenarios.scenarios_ppm": "Scenarios — PPM",
   "p.scenarios.status": "Status",
-  "p.scenarios.work_item_pids_space_comma": "work-item pids (space/comma separated)",
+  "p.scenarios.work_item_pids_space_comma":
+    "work-item pids (space/comma separated)",
   "p.scenarios.yes": "yes",
   "p.security.exposure": "Exposure",
   "p.security.item": "Item",
-  "p.security.late_stage_items_with_no": "Late-stage items with no security risk recorded",
+  "p.security.late_stage_items_with_no":
+    "Late-stage items with no security risk recorded",
   "p.security.no_security_risks_recorded": "No security risks recorded.",
-  "p.security.none_every_late_stage_item": "None — every late-stage item has a recorded security risk.",
+  "p.security.none_every_late_stage_item":
+    "None — every late-stage item has a recorded security risk.",
   "p.security.open_exposure": "{note} · open exposure {open_exposure}",
   "p.security.owner": "Owner",
   "p.security.ppm": "{t} — PPM",
@@ -1854,35 +2115,42 @@ export const PAGES_EN = {
   "p.security.security_risk_register": "Security risk register",
   "p.security.status": "Status",
   "p.signin.check_your_email_for_a": "Check your email for a sign-in link.",
-  "p.signin.could_not_send_the_sign": "Could not send the sign-in link. Please try again.",
+  "p.signin.could_not_send_the_sign":
+    "Could not send the sign-in link. Please try again.",
   "p.signin.email": "Email",
   "p.signin.send_magic_link": "Send magic link",
   "p.signin.sign_in": "Sign in",
   "p.technology.as_of": "as of {as_of} · {convention}",
   "p.technology.as_of_edges": "as of {as_of} · {edges} edges",
   "p.technology.calendar_days": "{median_lead_days} calendar days",
-  "p.technology.completed_before_timing_existed_unti": "· {undated_completions} completed before timing existed (untimed)",
+  "p.technology.completed_before_timing_existed_unti":
+    "· {undated_completions} completed before timing existed (untimed)",
   "p.technology.cross_portfolio_edges": "Cross-portfolio edges",
   "p.technology.delivery_flow": "Delivery flow",
   "p.technology.dependency_risk": "Dependency risk",
   "p.technology.dependents": "Dependents",
-  "p.technology.edges_importing_risk_from_a": "Edges importing risk from a red predecessor",
+  "p.technology.edges_importing_risk_from_a":
+    "Edges importing risk from a red predecessor",
   "p.technology.exposure": "Exposure",
   "p.technology.item": "Item",
   "p.technology.kind": "Kind",
   "p.technology.median_lead": "Median lead:",
   "p.technology.milestones_completed": "Milestones completed",
   "p.technology.month": "Month",
-  "p.technology.most_depended_on_single_point": "Most depended-on (single-point-of-failure candidates)",
+  "p.technology.most_depended_on_single_point":
+    "Most depended-on (single-point-of-failure candidates)",
   "p.technology.no_dependencies_recorded_yet": "No dependencies recorded yet.",
   "p.technology.no_tech_debt_risks_recorded": "No tech_debt risks recorded.",
   "p.technology.no_tech_tags_recorded_yet": "No `tech:*` tags recorded yet.",
   "p.technology.no_timed_completions": "no timed completions",
-  "p.technology.no_timed_completions_in_the": "No timed completions in the window.",
-  "p.technology.none_all_edges_stay_within": "None — all edges stay within one portfolio.",
+  "p.technology.no_timed_completions_in_the":
+    "No timed completions in the window.",
+  "p.technology.none_all_edges_stay_within":
+    "None — all edges stay within one portfolio.",
   "p.technology.none_no_red_predecessors": "None — no red predecessors.",
   "p.technology.open_exposure": "{note} · open exposure {open_exposure}",
-  "p.technology.over_timed_completions": "over {timed_completions} timed completions",
+  "p.technology.over_timed_completions":
+    "over {timed_completions} timed completions",
   "p.technology.owner": "Owner",
   "p.technology.ppm": "{t} — PPM",
   "p.technology.predecessor": "Predecessor",
@@ -1898,37 +2166,60 @@ export const PAGES_EN = {
   "p.verify.request_a_new_link": "Request a new link",
   "p.verify.sign_in_link": "Sign-in link",
   "p.milestones.milestone_by_due_date_one": "{length} milestone, by due date",
-  "p.milestones.milestone_by_due_date_other": "{length} milestones, by due date",
-  "p.okrs.objective_least_progressed_first_one": "{length} objective, least progressed first",
-  "p.okrs.objective_least_progressed_first_other": "{length} objectives, least progressed first",
-  "p.plans.pid.board.blocked_calendar_day_one": "blocked {blocked_days} calendar day",
-  "p.plans.pid.board.blocked_calendar_day_other": "blocked {blocked_days} calendar days",
+  "p.milestones.milestone_by_due_date_other":
+    "{length} milestones, by due date",
+  "p.okrs.objective_least_progressed_first_one":
+    "{length} objective, least progressed first",
+  "p.okrs.objective_least_progressed_first_other":
+    "{length} objectives, least progressed first",
+  "p.plans.pid.board.blocked_calendar_day_one":
+    "blocked {blocked_days} calendar day",
+  "p.plans.pid.board.blocked_calendar_day_other":
+    "blocked {blocked_days} calendar days",
   "p.plans.pid.calendar.holiday_one": "{length} holiday: {join}",
   "p.plans.pid.calendar.holiday_other": "{length} holidays: {join}",
-  "p.plans.pid.costs.for_across_one": "{money} for {hoursText} across {entries} entry.",
-  "p.plans.pid.costs.for_across_other": "{money} for {hoursText} across {entries} entries.",
-  "p.plans.pid.earned_value.plan_below_have_no_figures_one": "{plans_without_figures} plan below have no figures yet (no baseline or nothing to measure) and are not guessed at.",
-  "p.plans.pid.earned_value.plan_below_have_no_figures_other": "{plans_without_figures} plans below have no figures yet (no baseline or nothing to measure) and are not guessed at.",
-  "p.plans.pid.flow.finished_without_ever_moving_backwar_one": "finished without ever moving backwards ({rework_count} backwards move). Read this beside throughput: rising throughput with falling yield is work being shipped back to itself.",
-  "p.plans.pid.flow.finished_without_ever_moving_backwar_other": "finished without ever moving backwards ({rework_count} backwards moves). Read this beside throughput: rising throughput with falling yield is work being shipped back to itself.",
-  "p.plans.pid.flow.of_items_finish_within_this_one": "{percent} of items finish within this, from {sample} finished item",
-  "p.plans.pid.flow.of_items_finish_within_this_other": "{percent} of items finish within this, from {sample} finished items",
-  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_one": "{length} risk affect both the schedule and the cost: each strikes once and drives both.",
-  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_other": "{length} risks affect both the schedule and the cost: each strikes once and drives both.",
+  "p.plans.pid.costs.for_across_one":
+    "{money} for {hoursText} across {entries} entry.",
+  "p.plans.pid.costs.for_across_other":
+    "{money} for {hoursText} across {entries} entries.",
+  "p.plans.pid.earned_value.plan_below_have_no_figures_one":
+    "{plans_without_figures} plan below have no figures yet (no baseline or nothing to measure) and are not guessed at.",
+  "p.plans.pid.earned_value.plan_below_have_no_figures_other":
+    "{plans_without_figures} plans below have no figures yet (no baseline or nothing to measure) and are not guessed at.",
+  "p.plans.pid.flow.finished_without_ever_moving_backwar_one":
+    "finished without ever moving backwards ({rework_count} backwards move). Read this beside throughput: rising throughput with falling yield is work being shipped back to itself.",
+  "p.plans.pid.flow.finished_without_ever_moving_backwar_other":
+    "finished without ever moving backwards ({rework_count} backwards moves). Read this beside throughput: rising throughput with falling yield is work being shipped back to itself.",
+  "p.plans.pid.flow.of_items_finish_within_this_one":
+    "{percent} of items finish within this, from {sample} finished item",
+  "p.plans.pid.flow.of_items_finish_within_this_other":
+    "{percent} of items finish within this, from {sample} finished items",
+  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_one":
+    "{length} risk affect both the schedule and the cost: each strikes once and drives both.",
+  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_other":
+    "{length} risks affect both the schedule and the cost: each strikes once and drives both.",
   "p.plans.pid.leveling.apply_move_one": "Apply {length} move",
   "p.plans.pid.leveling.apply_move_other": "Apply {length} moves",
   "p.plans.pid.leveling.business_day_one": "{delay_days} business day",
   "p.plans.pid.leveling.business_day_other": "{delay_days} business days",
-  "p.plans.pid.leveling.other_task_would_be_pushed_one": "{length} other task would be pushed as a result",
-  "p.plans.pid.leveling.other_task_would_be_pushed_other": "{length} other tasks would be pushed as a result",
-  "p.plans.pid.onboarding.checklist_about_people_not_shown_one": "{hidden} checklist about people is not shown to you.",
-  "p.plans.pid.onboarding.checklist_about_people_not_shown_other": "{hidden} checklists about people are not shown to you.",
-  "p.plans.pid.schedule_health.preset_thresholds_task_one": "· preset {preset} (thresholds: {source}) · {tasks} task",
-  "p.plans.pid.schedule_health.preset_thresholds_task_other": "· preset {preset} (thresholds: {source}) · {tasks} tasks",
+  "p.plans.pid.leveling.other_task_would_be_pushed_one":
+    "{length} other task would be pushed as a result",
+  "p.plans.pid.leveling.other_task_would_be_pushed_other":
+    "{length} other tasks would be pushed as a result",
+  "p.plans.pid.onboarding.checklist_about_people_not_shown_one":
+    "{hidden} checklist about people is not shown to you.",
+  "p.plans.pid.onboarding.checklist_about_people_not_shown_other":
+    "{hidden} checklists about people are not shown to you.",
+  "p.plans.pid.schedule_health.preset_thresholds_task_one":
+    "· preset {preset} (thresholds: {source}) · {tasks} task",
+  "p.plans.pid.schedule_health.preset_thresholds_task_other":
+    "· preset {preset} (thresholds: {source}) · {tasks} tasks",
   "p.plans.pid.schedule_health.task_one": "{length} task",
   "p.plans.pid.schedule_health.task_other": "{length} tasks",
-  "p.plans.pid.schedule_risk.chance_of_adding_business_day_one": "{title}: {probability_percent}% chance of adding {impact_days} business day",
-  "p.plans.pid.schedule_risk.chance_of_adding_business_day_other": "{title}: {probability_percent}% chance of adding {impact_days} business days",
+  "p.plans.pid.schedule_risk.chance_of_adding_business_day_one":
+    "{title}: {probability_percent}% chance of adding {impact_days} business day",
+  "p.plans.pid.schedule_risk.chance_of_adding_business_day_other":
+    "{title}: {probability_percent}% chance of adding {impact_days} business days",
   "p.plans.pid.wbs.move_up": "Move {title} up",
   "p.plans.pid.wbs.move_down": "Move {title} down",
   "p.plans.pid.wbs.moved": "Moved {title}.",
@@ -1944,92 +2235,128 @@ export const PAGES_EN = {
   "p.common.role_word": "role",
   "p.common.person_word": "person",
   "c.NetworkDiagram.task_fallback": "task",
-  "c.NetworkDiagram.task_summary": "{title}, {early_start} to {early_finish}, {total_float} business days of float",
-  "c.NetworkDiagram.task_summary_critical": "{title}, {early_start} to {early_finish}, {total_float} business days of float, on the critical path",
+  "c.NetworkDiagram.task_summary":
+    "{title}, {early_start} to {early_finish}, {total_float} business days of float",
+  "c.NetworkDiagram.task_summary_critical":
+    "{title}, {early_start} to {early_finish}, {total_float} business days of float, on the critical path",
   "c.NetworkDiagram.lag_one": ", lag {lag_days} business day",
   "c.NetworkDiagram.lag_other": ", lag {lag_days} business days",
   "c.KpiCard.direction_higher": "higher",
   "c.KpiCard.direction_lower": "lower",
-  "c.CalendarMonth.legend": "– not a business day   ✕ holiday   A recorded absence",
-  "c.CalendarMonth.legend_editable": " · select a business day to mark or clear a holiday",
-  "c.CostRiskView.run_summary": "seed {seed} · {iterations} iterations · {distribution}",
+  "c.CalendarMonth.legend":
+    "– not a business day   ✕ holiday   A recorded absence",
+  "c.CalendarMonth.legend_editable":
+    " · select a business day to mark or clear a holiday",
+  "c.CostRiskView.run_summary":
+    "seed {seed} · {iterations} iterations · {distribution}",
   "c.CostRiskView.dist_pert": "PERT",
   "c.CostRiskView.dist_triangular": "Triangular",
-  "c.CostRiskView.risks_without_cost_one": "{count} register risk has no cost fields and is not part of this.",
-  "c.CostRiskView.risks_without_cost_other": "{count} register risks have no cost fields and are not part of this.",
+  "c.CostRiskView.risks_without_cost_one":
+    "{count} register risk has no cost fields and is not part of this.",
+  "c.CostRiskView.risks_without_cost_other":
+    "{count} register risks have no cost fields and are not part of this.",
   "c.CumulativeFlow.hide_the_numbers": "Hide the numbers",
   "c.CumulativeFlow.show_the_numbers": "Show the numbers",
   "c.CostRiskView.scope_all_one": "All {plans} plan you can read",
   "c.CostRiskView.scope_all_other": "All {plans} plans you can read",
   "c.CostRiskView.scope_this_plan": "This plan",
   "c.MilestoneCard.reason": "Reason",
-  "c.MilestoneCard.reason_required_open": " (required: tasks it waits for are still open)",
+  "c.MilestoneCard.reason_required_open":
+    " (required: tasks it waits for are still open)",
   "c.MilestoneCard.reason_optional": " (optional)",
-  "c.VarianceTable.matched_of_baselined": "{matched} of {baseline_tasks} baselined tasks are still in the plan:",
-  "c.VarianceTable.slipped_pulled_on": "{slipped} slipped, {pulled_in} pulled in, {on_baseline} on baseline{unmeasurable}.",
+  "c.VarianceTable.matched_of_baselined":
+    "{matched} of {baseline_tasks} baselined tasks are still in the plan:",
+  "c.VarianceTable.slipped_pulled_on":
+    "{slipped} slipped, {pulled_in} pulled in, {on_baseline} on baseline{unmeasurable}.",
   "c.VarianceTable.cannot_be_measured": ", {unmeasurable} cannot be measured",
   "c.VarianceTable.added_removed": "{added} added and {removed} removed since.",
-  "c.VarianceTable.finish_later_one": "The plan's finish is {days} business day later than baselined{note}.",
-  "c.VarianceTable.finish_later_other": "The plan's finish is {days} business days later than baselined{note}.",
-  "c.VarianceTable.finish_earlier_one": "The plan's finish is {days} business day earlier than baselined{note}.",
-  "c.VarianceTable.finish_earlier_other": "The plan's finish is {days} business days earlier than baselined{note}.",
-  "c.VarianceTable.check_removed": " (check the removed tasks: deleting work is not an improvement)",
+  "c.VarianceTable.finish_later_one":
+    "The plan's finish is {days} business day later than baselined{note}.",
+  "c.VarianceTable.finish_later_other":
+    "The plan's finish is {days} business days later than baselined{note}.",
+  "c.VarianceTable.finish_earlier_one":
+    "The plan's finish is {days} business day earlier than baselined{note}.",
+  "c.VarianceTable.finish_earlier_other":
+    "The plan's finish is {days} business days earlier than baselined{note}.",
+  "c.VarianceTable.check_removed":
+    " (check the removed tasks: deleting work is not an improvement)",
   "p.plans.pid.critical_path.finishes": "Finishes {date}.",
   "p.plans.pid.critical_path.nothing_scheduled": "Nothing is scheduled yet.",
   "p.plans.pid.critical_path.calendar_label": "Calendar: {calendar}.",
   "p.plans.pid.critical_path.calendar_plan": "this plan's",
   "p.plans.pid.critical_path.calendar_default": "default (every day works)",
   "p.plans.pid.critical_path.more_not_shown": " (more not shown)",
-  "p.plans.pid.critical_path.pushed_later": "Its predecessors push it {days} business days later than planned.",
-  "p.plans.pid.earned_value.manual_percent_banner": "Some of this figure rests on a person-entered percent, not on finished work: {tasks}.",
+  "p.plans.pid.critical_path.pushed_later":
+    "Its predecessors push it {days} business days later than planned.",
+  "p.plans.pid.earned_value.manual_percent_banner":
+    "Some of this figure rests on a person-entered percent, not on finished work: {tasks}.",
   "p.plans.pid.earned_value.a_task": "a task",
   "p.plans.pid.earned_value.overrun": " (overrun)",
   "p.plans.pid.earned_value.target_budget": "the budget",
   "p.plans.pid.earned_value.target_forecast": "the forecast",
-  "p.plans.pid.earned_value.lights_use": "Lights use {which}: {values} (basis points).",
+  "p.plans.pid.earned_value.lights_use":
+    "Lights use {which}: {values} (basis points).",
   "p.plans.pid.earned_value.thresholds_default": "the default thresholds",
-  "p.plans.pid.earned_value.thresholds_deployment": "this deployment's thresholds",
-  "p.plans.pid.earned_value.rollup_money": "Budget {bac}; planned {pv}; earned {ev}; spent {ac}{unknown}.",
-  "p.plans.pid.earned_value.cost_unknown_for": " (cost unknown for {plans} plans)",
+  "p.plans.pid.earned_value.thresholds_deployment":
+    "this deployment's thresholds",
+  "p.plans.pid.earned_value.rollup_money":
+    "Budget {bac}; planned {pv}; earned {ev}; spent {ac}{unknown}.",
+  "p.plans.pid.earned_value.cost_unknown_for":
+    " (cost unknown for {plans} plans)",
   "p.plans.pid.earned_value.cpi_value": "CPI {value}",
-  "p.plans.pid.earned_value.cpi_not_stated": "not stated: cost is unknown for some plans",
+  "p.plans.pid.earned_value.cpi_not_stated":
+    "not stated: cost is unknown for some plans",
   "p.plans.pid.earned_value.weight_points": ", {weight} points",
-  "p.plans.pid.critical_path.moved_line": "{title}: {moved}{finish}{start} business days",
+  "p.plans.pid.critical_path.moved_line":
+    "{title}: {moved}{finish}{start} business days",
   "p.plans.pid.critical_path.moved_both": "start and finish",
   "p.plans.pid.critical_path.moved_start": "start",
   "p.plans.pid.critical_path.moved_finish": "finish",
   "p.plans.pid.critical_path.moved_finish_by": " finish {days}",
   "p.plans.pid.critical_path.moved_start_by": " start {days}",
-  "p.plans.pid.flow.overdue_one": "{count} item is already past the expectation. An aging item is the one thing on this page you can still change the outcome of.",
-  "p.plans.pid.flow.overdue_other": "{count} items are already past the expectation. An aging item is the one thing on this page you can still change the outcome of.",
+  "p.plans.pid.flow.overdue_one":
+    "{count} item is already past the expectation. An aging item is the one thing on this page you can still change the outcome of.",
+  "p.plans.pid.flow.overdue_other":
+    "{count} items are already past the expectation. An aging item is the one thing on this page you can still change the outcome of.",
   "p.plans.pid.flow.classified_with": "Classified with {map}:",
   "p.plans.pid.flow.map_override": "a deployment override",
   "p.plans.pid.flow.map_default": "the default map",
-  "p.plans.pid.governance.proposed_not_counted": "proposed{requested} — not counted",
+  "p.plans.pid.governance.proposed_not_counted":
+    "proposed{requested} — not counted",
   "p.plans.pid.governance.requested": ", requested",
-  "p.plans.pid.joint_risk.run_summary": "{currency} · seed {seed} · {iterations} iterations · {distribution} · calendar {calendar}",
+  "p.plans.pid.joint_risk.run_summary":
+    "{currency} · seed {seed} · {iterations} iterations · {distribution} · calendar {calendar}",
   "p.plans.pid.joint_risk.dist_pert": "PERT",
   "p.plans.pid.joint_risk.dist_triangular": "Triangular",
-  "p.plans.pid.leveling.applied_one": "Applied {ok} of {requested} move{refused}.",
-  "p.plans.pid.leveling.applied_other": "Applied {ok} of {requested} moves{refused}.",
+  "p.plans.pid.leveling.applied_one":
+    "Applied {ok} of {requested} move{refused}.",
+  "p.plans.pid.leveling.applied_other":
+    "Applied {ok} of {requested} moves{refused}.",
   "p.plans.pid.leveling.applied_refused": "; {refused} refused",
-  "p.plans.pid.leveling.proposal_summary": "Calendar: {calendar} · load {load}% per task · critical tasks {critical} move",
+  "p.plans.pid.leveling.proposal_summary":
+    "Calendar: {calendar} · load {load}% per task · critical tasks {critical} move",
   "p.plans.pid.leveling.may": "may",
   "p.plans.pid.leveling.may_not": "may not",
   "p.plans.pid.onboarding.due": ", due {date}",
-  "p.plans.pid.schedule_risk.risks_without_schedule_one": "{count} register risk has no schedule fields and is not part of this.",
-  "p.plans.pid.schedule_risk.risks_without_schedule_other": "{count} register risks have no schedule fields and are not part of this.",
+  "p.plans.pid.schedule_risk.risks_without_schedule_one":
+    "{count} register risk has no schedule fields and is not part of this.",
+  "p.plans.pid.schedule_risk.risks_without_schedule_other":
+    "{count} register risks have no schedule fields and are not part of this.",
   "p.resources.from_date": "from {date}",
   "p.resources.to_date": "to {date}",
   "p.kpis.none": "No KPIs yet.",
   "p.kpis.none_with_status": "No KPIs with that status yet.",
-  "p.milestones.none": "No milestones yet. Add them from a plan's governance page.",
-  "p.milestones.none_with_status": "No milestones with that status yet. Add them from a plan's governance page.",
+  "p.milestones.none":
+    "No milestones yet. Add them from a plan's governance page.",
+  "p.milestones.none_with_status":
+    "No milestones with that status yet. Add them from a plan's governance page.",
   "p.okrs.none": "No objectives yet.",
   "p.okrs.none_for_period": "No objectives for {period} yet.",
   "p.me.calendar.own_set": "Your own calendar is set.",
-  "p.me.calendar.plan_applies": "No personal calendar: the plan's calendar applies to you.",
-  "p.me.calendar.leave_counts": "Leave recorded for you already counts as days off.",
+  "p.me.calendar.plan_applies":
+    "No personal calendar: the plan's calendar applies to you.",
+  "p.me.calendar.leave_counts":
+    "Leave recorded for you already counts as days off.",
   "p.documents.pid.page_title": "{title} — PPM",
   "p.documents.pid.document_fallback": "Document",
   "p.plans.pid.page_title": "{name} — Main X",
@@ -2037,8 +2364,10 @@ export const PAGES_EN = {
   "p.plans.pid.custom_scheme": "Custom({name})",
   "p.plans.pid.calendar.own_calendar": "This plan has its own calendar.",
   "p.plans.pid.calendar.no_calendar": "No calendar set: every day works.",
-  "p.plans.pid.calendar.each_person_can_set": "Each person can also set their own (",
-  "p.reviews.consensus_line": "mean score: {mean} · majority: {majority} · {state}",
+  "p.plans.pid.calendar.each_person_can_set":
+    "Each person can also set their own (",
+  "p.reviews.consensus_line":
+    "mean score: {mean} · majority: {majority} · {state}",
   "p.reviews.no_majority": "no majority",
   "p.reviews.everyone_answered": "everyone has answered",
   "p.reviews.still_waiting": "still waiting",
@@ -2049,62 +2378,80 @@ export const PAGES_EN = {
   "l.announcement_view.scheduled": "scheduled",
   "l.announcement_view.expired": "Expired",
   "l.api_ppm.task": "task {uid}",
-  "l.api_ppm.the_project_calendar_comes_across": " The project calendar comes across.",
+  "l.api_ppm.the_project_calendar_comes_across":
+    " The project calendar comes across.",
   "l.api_tba.calendar_days": "{toFixed} calendar days",
   "l.api_tba.work_in_progress_is_growing": "Work in progress is growing",
   "l.api_tba.steady_state": "Steady state",
   "l.api_tba.queue_draining": "Queue draining",
   "l.api_tba.not_enough_data": "Not enough data",
-  "l.capacity_view.committed_against_a_capacity_as": "{committed}% committed against a capacity as low as {capacity}%",
+  "l.capacity_view.committed_against_a_capacity_as":
+    "{committed}% committed against a capacity as low as {capacity}%",
   "l.capacity_view.committed": "{committed}% committed",
   "l.capacity_view.to": " to {to}",
-  "l.capacity_view.over_capacity_from_asked_available": "over capacity from {from}{v} ({demand}% asked, {capacity}% available)",
+  "l.capacity_view.over_capacity_from_asked_available":
+    "over capacity from {from}{v} ({demand}% asked, {capacity}% available)",
   "l.capacity_view.over_capacity": "over capacity",
-  "l.capacity_view.committing_it_would_put_them": "; committing it would put them over capacity",
+  "l.capacity_view.committing_it_would_put_them":
+    "; committing it would put them over capacity",
   "l.capacity_view.proposed_not_counted": "{percent}% proposed, not counted{v}",
-  "l.capacity_view.asked_available": "{from}{v}: {demand}% asked, {capacity}% available",
+  "l.capacity_view.asked_available":
+    "{from}{v}: {demand}% asked, {capacity}% available",
   "l.ceo_view.no_portfolios_to_report_on": "No portfolios to report on yet.",
-  "l.ceo_view.portfolios_exist_but_hold_no": "Portfolios exist but hold no plans yet.",
-  "l.ceo_view.of_plans_are_red_amber": "{red} of {n} plans are red, {amber} amber, {green} green.",
+  "l.ceo_view.portfolios_exist_but_hold_no":
+    "Portfolios exist but hold no plans yet.",
+  "l.ceo_view.of_plans_are_red_amber":
+    "{red} of {n} plans are red, {amber} amber, {green} green.",
   "c.CalendarMonth.not_a_business_day": "not a business day",
   "c.CalendarMonth.business_day": "business day",
   "c.KpiCard.that_did_not_work": "That did not work",
   "c.KpiCard.could_not_load_the_history": "Could not load the history",
-  "c.KpiCard.delete_the_kpi_its_readings": "Delete the KPI “{name}”? Its readings are kept.",
+  "c.KpiCard.delete_the_kpi_its_readings":
+    "Delete the KPI “{name}”? Its readings are kept.",
   "c.LineRange.could_not_save": "Could not save",
   "c.MilestoneCard.that_did_not_work": "That did not work",
   "c.MilestoneCard.could_not_load_the_plan": "Could not load the plan's tasks",
   "c.MilestoneCard.could_not_load_the_history": "Could not load the history",
   "c.ObjectiveCard.that_did_not_work": "That did not work",
-  "c.ObjectiveCard.delete_the_objective_and_its": "Delete the objective “{title}” and its key results?",
+  "c.ObjectiveCard.delete_the_objective_and_its":
+    "Delete the objective “{title}” and its key results?",
   "c.ObjectiveCard.delete_the_key_result": "Delete the key result “{title}”?",
-  "c.RaciMatrix.accountable_moved_from_to_a": "Accountable moved from {shortRef} to {shortRef2}: a task has one.",
+  "c.RaciMatrix.accountable_moved_from_to_a":
+    "Accountable moved from {shortRef} to {shortRef2}: a task has one.",
   "c.RiskInputs.could_not_load_the_plan": "Could not load the plan's tasks",
   "c.RiskInputs.could_not_save": "Could not save",
   "c.RiskInputs.chance": "{probability_percent}% chance",
-  "c.RiskInputs.adds_business_days_to_a": "adds {schedule_impact_days} business days to a task",
+  "c.RiskInputs.adds_business_days_to_a":
+    "adds {schedule_impact_days} business days to a task",
   "c.RiskInputs.adds": "adds {toFixed} {cost_currency}",
   "c.RiskInputs.not_used_in_the_simulations": "Not used in the simulations",
   "l.cpm_view.business_day": "business day",
-  "l.cpm_view.cannot_meet_its_constraint_or": "Cannot meet its constraint or deadline: {plural} short",
-  "l.cpm_view.on_the_critical_path_any": "On the critical path: any slip moves the finish",
+  "l.cpm_view.cannot_meet_its_constraint_or":
+    "Cannot meet its constraint or deadline: {plural} short",
+  "l.cpm_view.on_the_critical_path_any":
+    "On the critical path: any slip moves the finish",
   "l.cpm_view.of_float_near_critical": "{d} of float (near-critical)",
   "l.cpm_view.of_float": "{d} of float",
   "l.cpm_view.baselined_to": ". Baselined {start} to {finish}",
   "l.cpm_view.to": "{v}: {early_start} to {early_finish}. {floatLabel}{v2}",
   "l.cpm_view.has_no_duration_yet": "has no duration yet",
-  "l.cpm_view.has_no_start_date_and": "has no start date and nothing before it is scheduled",
+  "l.cpm_view.has_no_start_date_and":
+    "has no start date and nothing before it is scheduled",
   "l.cpm_view.has_a_date_outside_the": "has a date outside the supported range",
   "l.cpm_view.slipped": "Slipped",
-  "l.cpm_view.finishes_later_than_baselined": "finishes {d} later than baselined",
+  "l.cpm_view.finishes_later_than_baselined":
+    "finishes {d} later than baselined",
   "l.cpm_view.pulled_in": "Pulled in",
-  "l.cpm_view.finishes_earlier_than_baselined": "finishes {d} earlier than baselined",
+  "l.cpm_view.finishes_earlier_than_baselined":
+    "finishes {d} earlier than baselined",
   "l.cpm_view.on_baseline": "On baseline",
-  "l.cpm_view.finishes_when_it_was_baselined": "finishes when it was baselined to",
+  "l.cpm_view.finishes_when_it_was_baselined":
+    "finishes when it was baselined to",
   "l.cpm_view.added": "Added",
   "l.cpm_view.not_in_the_baseline_so": "not in the baseline, so it has no slip",
   "l.cpm_view.removed": "Removed",
-  "l.cpm_view.was_in_the_baseline_and": "was in the baseline and is gone; its baselined dates are kept",
+  "l.cpm_view.was_in_the_baseline_and":
+    "was in the baseline and is gone; its baselined dates are kept",
   "l.cpm_view.cannot_say": "Cannot say",
   "l.cpm_view.it_had_no_schedule_when": "it had no schedule when baselined",
   "l.cpm_view.it_has_no_schedule_now": "it has no schedule now",
@@ -2127,22 +2474,32 @@ export const PAGES_EN = {
   "l.ev_view.under_budget": "Under budget",
   "l.ev_view.over_budget": "Over budget",
   "l.ev_view.on_budget": "On budget",
-  "l.ev_view.earned_schedule_no_ratio": "Earned schedule: no ratio, {absentText}.",
-  "l.ev_view.by_earned_schedule_the_work": "By earned schedule the work is {word}: it has earned in {days} what the plan expected after {days2} (SPI(t) {ratioText}).",
-  "l.ev_view.finished_work_counts_for_its": "finished work counts for its story points",
+  "l.ev_view.earned_schedule_no_ratio":
+    "Earned schedule: no ratio, {absentText}.",
+  "l.ev_view.by_earned_schedule_the_work":
+    "By earned schedule the work is {word}: it has earned in {days} what the plan expected after {days2} (SPI(t) {ratioText}).",
+  "l.ev_view.finished_work_counts_for_its":
+    "finished work counts for its story points",
   "l.ev_view.only_finished_work_counts": "only finished work counts",
   "l.ev_view.by_story_points": "by story points",
-  "l.ev_view.counted_by_a_person_entered": "{length} counted by a person-entered percent (manual)",
-  "l.ev_view.with_no_points_carry_no": "{length} with no points carry no weight",
+  "l.ev_view.counted_by_a_person_entered":
+    "{length} counted by a person-entered percent (manual)",
+  "l.ev_view.with_no_points_carry_no":
+    "{length} with no points carry no weight",
   "l.ev_view.no_actual_cost_is_recorded": "no actual cost is recorded",
-  "l.ev_view.the_ratio_it_divides_by": "the ratio it divides by is not defined yet",
-  "l.ev_view.no_estimate_to_complete_has": "no estimate to complete has been entered",
+  "l.ev_view.the_ratio_it_divides_by":
+    "the ratio it divides by is not defined yet",
+  "l.ev_view.no_estimate_to_complete_has":
+    "no estimate to complete has been entered",
   "l.ev_view.the_budget_is_already_spent": "the budget is already spent",
   "l.ev_view.no_cost_remains": "no cost remains",
-  "l.ev_view.against_the_money_is_already": "Against {target}: the money is already spent, so no efficiency can deliver the remaining work within it.",
+  "l.ev_view.against_the_money_is_already":
+    "Against {target}: the money is already spent, so no efficiency can deliver the remaining work within it.",
   "l.ev_view.against": "Against {target}: {amountAbsentText}.",
-  "l.ev_view.against_the_remaining_work_must": "Against {target}: the remaining work must be done {ratioText} times as efficiently as the work so far (TCPI {ratioText2}), which needs improved efficiency.",
-  "l.ev_view.against_the_remaining_work_can": "Against {target}: the remaining work can be done at {ratioText} of the cost efficiency of the work so far (TCPI {ratioText2}).",
+  "l.ev_view.against_the_remaining_work_must":
+    "Against {target}: the remaining work must be done {ratioText} times as efficiently as the work so far (TCPI {ratioText2}), which needs improved efficiency.",
+  "l.ev_view.against_the_remaining_work_can":
+    "Against {target}: the remaining work can be done at {ratioText} of the cost efficiency of the work so far (TCPI {ratioText2}).",
   "l.ev_view.earned": "{date}: earned {ev_minor}",
   "l.ev_view.spent": "{date}: spent {ac_minor}",
   "l.import_view.would_create": "Would create",
@@ -2150,38 +2507,54 @@ export const PAGES_EN = {
   "l.import_view.and": "{verb} {plural} and {upd} {tasks_updated}{tail}.",
   "l.import_view.preview_the_import": "Preview the import",
   "l.import_view.import": "Import {plural}",
-  "l.kpi_view.target_or_more_red_at": "Target {target_value} or more; red at {red_value} or less{u}",
-  "l.kpi_view.target_or_less_red_at": "Target {target_value} or less; red at {red_value} or more{u}",
-  "l.kpi_view.no_reading_within_twice_its": "No reading within twice its {cadence} cadence",
+  "l.kpi_view.target_or_more_red_at":
+    "Target {target_value} or more; red at {red_value} or less{u}",
+  "l.kpi_view.target_or_less_red_at":
+    "Target {target_value} or less; red at {red_value} or more{u}",
+  "l.kpi_view.no_reading_within_twice_its":
+    "No reading within twice its {cadence} cadence",
   "l.kpi_view.no_reading_yet": "no reading yet",
   "l.milestone_view.there_is_no_forecast": "There is no forecast.",
-  "l.milestone_view.some_open_tasks_cannot_be": " (some open tasks cannot be placed, so this may be early)",
-  "l.milestone_view.forecast_to_finish_after_it": "Forecast to finish {forecast}, {businessDays} after it is due ({due}){partial}.",
-  "l.milestone_view.forecast_to_finish_on_the": "Forecast to finish on the due date, {due}{partial}.",
-  "l.milestone_view.forecast_to_finish_before_it": "Forecast to finish {forecast}, {businessDays} before it is due ({due}){partial}.",
+  "l.milestone_view.some_open_tasks_cannot_be":
+    " (some open tasks cannot be placed, so this may be early)",
+  "l.milestone_view.forecast_to_finish_after_it":
+    "Forecast to finish {forecast}, {businessDays} after it is due ({due}){partial}.",
+  "l.milestone_view.forecast_to_finish_on_the":
+    "Forecast to finish on the due date, {due}{partial}.",
+  "l.milestone_view.forecast_to_finish_before_it":
+    "Forecast to finish {forecast}, {businessDays} before it is due ({due}){partial}.",
   "l.milestone_view.of_them_later": ", {later_moves} of them later",
   "l.milestone_view.back_on_its_original_date": "back on its original date",
-  "l.milestone_view.later_than_the_original": "{calendarDays} later than the original {original_due}",
-  "l.milestone_view.earlier_than_the_original": "{calendarDays} earlier than the original {original_due}",
-  "l.milestone_view.originally_due_now": "Originally due {original_due}; {times}{later}; now {net}.",
+  "l.milestone_view.later_than_the_original":
+    "{calendarDays} later than the original {original_due}",
+  "l.milestone_view.earlier_than_the_original":
+    "{calendarDays} earlier than the original {original_due}",
+  "l.milestone_view.originally_due_now":
+    "Originally due {original_due}; {times}{later}; now {net}.",
   "l.milestone_view.on": " on {achieved_on}",
-  "l.milestone_view.achieved_every_task_it_waits": "Achieved{on}: every task it waits for is done.",
+  "l.milestone_view.achieved_every_task_it_waits":
+    "Achieved{on}: every task it waits for is done.",
   "l.milestone_view.reason": " Reason: {done_reason}",
   "l.milestone_view.marked_done": "Marked done{on}.{why}",
   "l.milestone_view.due": "{name}: {toLowerCase}, due {due}{state}",
-  "l.my_work_view.this_is_already_late_for": "This is already late for the plan ({days} behind).",
+  "l.my_work_view.this_is_already_late_for":
+    "This is already late for the plan ({days} behind).",
   "l.my_work_view.on_the_critical_path": "On the critical path",
   "l.my_work_view.of_float": "{days} of float",
   "l.okr_view.not_measured": "Not measured",
   "l.okr_view.not_measurable": "Not measurable ({reason}).",
   "l.okr_view.of": "{current} of {target}{u}",
-  "l.okr_view.confidence_not_part_of_the": "Confidence {confidence}% (not part of the score)",
+  "l.okr_view.confidence_not_part_of_the":
+    "Confidence {confidence}% (not part of the score)",
   "l.onboarding_view.give_the_date_it_takes": "Give the date it takes effect.",
-  "l.onboarding_view.give_the_person_as_person": "Give the person as person:… (or worker:…).",
+  "l.onboarding_view.give_the_person_as_person":
+    "Give the person as person:… (or worker:…).",
   "l.onboarding_view.say_what_access_in_words": "Say what access, in words.",
   "l.onboarding_view.choose_granted_or_revoked": "Choose granted or revoked.",
-  "l.onboarding_view.give_who_is_handing_over": "Give who is handing over, as person:…",
-  "l.onboarding_view.give_who_takes_over_as": "Give who takes over as person:… (or leave it empty to release the work).",
+  "l.onboarding_view.give_who_is_handing_over":
+    "Give who is handing over, as person:…",
+  "l.onboarding_view.give_who_takes_over_as":
+    "Give who takes over as person:… (or leave it empty to release the work).",
   "l.onboarding_view.hand_over_to_someone_else": "Hand over to someone else.",
   "l.onboarding_view.no_items": "No items",
   "l.onboarding_view.of_done": "{done} of {total} done",
@@ -2189,16 +2562,19 @@ export const PAGES_EN = {
   "l.onboarding_view.overdue": "{overdue} overdue",
   "l.onboarding_view.skipped_2": "Skipped",
   "l.onboarding_view.overdue_2": "Overdue",
-  "l.onboarding_view.nothing_is_left_open_this": "Nothing is left open. This plan is ready to close.",
+  "l.onboarding_view.nothing_is_left_open_this":
+    "Nothing is left open. This plan is ready to close.",
   "l.onboarding_view.not_ready_to_close": "Not ready to close: {join}.",
-  "l.onboarding_view.this_person_holds_nothing_live": "This person holds nothing live on this plan.",
+  "l.onboarding_view.this_person_holds_nothing_live":
+    "This person holds nothing live on this plan.",
   "l.raci_view.nobody_is_accountable": "Nobody is accountable",
   "l.raci_view.nobody_is_responsible": "Nobody is responsible",
   "l.raci_view.more_than_one_person_is": "More than one person is accountable",
   "l.raci_view.has_no_role": "{task}: {who} has no role",
   "l.raci_view.and": " and ",
   "l.raci_view.is": "{task}: {who} is {join}",
-  "l.rbs.a_booking_that_needs_several": "A booking that needs several skills counts fully toward each, so skills overlap and do not add up. Supply and people are not known for skills.",
+  "l.rbs.a_booking_that_needs_several":
+    "A booking that needs several skills counts fully toward each, so skills overlap and do not add up. Supply and people are not known for skills.",
   "l.rbs.named": "{length} named",
   "l.rbs.supply_not_known": "supply not known",
   "l.rbs.supply_fte": "supply {supply_fte} FTE",
@@ -2208,73 +2584,111 @@ export const PAGES_EN = {
   "l.scheduling_view.not_computable": "Not computable",
   "l.scheduling_view.not_enough_data": "Not enough data.",
   "l.scheduling_view.not_enough_data_2": "Not enough data: {reason}",
-  "l.scheduling_view.must_pass_a_business_day": "Must pass: a {v}-business-day delay has to move the finish",
+  "l.scheduling_view.must_pass_a_business_day":
+    "Must pass: a {v}-business-day delay has to move the finish",
   "l.scheduling_view.at_least_business_days": "At least {limit} business days",
   "l.scheduling_view.at_most": "at most",
   "l.scheduling_view.at_least": "at least",
   "l.scheduling_view.no_figure": "No figure",
-  "l.scheduling_view.finish_moved_of_business_days": "Finish moved {count} of {of} business days",
+  "l.scheduling_view.finish_moved_of_business_days":
+    "Finish moved {count} of {of} business days",
   "l.scheduling_view.of": "{toFixed} ({count} of {of})",
   "l.scheduling_view.of_2": "{value}% ({count} of {of} {of_what})",
-  "l.scheduling_view.passed_failed_not_computable": "{passed} passed, {failed} failed, {not_computable} not computable",
+  "l.scheduling_view.passed_failed_not_computable":
+    "{passed} passed, {failed} failed, {not_computable} not computable",
   "l.scheduling_view.not_resolved": "Not resolved.",
-  "l.scheduling_view.it_is_on_the_critical": " It is on the critical path, so the project finish moves.",
-  "l.scheduling_view.starts_later_finishes_instead_of": "{pid} ({who}) starts {from_start} → {scheduled_start}, {days} later; finishes {to_finish} instead of {from_finish}.{crit}",
+  "l.scheduling_view.it_is_on_the_critical":
+    " It is on the critical path, so the project finish moves.",
+  "l.scheduling_view.starts_later_finishes_instead_of":
+    "{pid} ({who}) starts {from_start} → {scheduled_start}, {days} later; finishes {to_finish} instead of {from_finish}.{crit}",
   "l.scheduling_view.to": "{from} to {to}",
   "l.scheduling_view.is_over_capacity_on": "{who} is over capacity on {span}.",
-  "l.scheduling_view.is_asked_for_on_and": "{who} is asked for {demand}% on {span} and can give {capacity}%.",
-  "l.scheduling_view.no_project_finish_can_be": "No project finish can be computed.",
-  "l.scheduling_view.the_project_finish_stays": "The project finish stays {before}.",
-  "l.scheduling_view.the_project_finish_moves_from": "The project finish moves from {before} to {after} ({days} later).",
+  "l.scheduling_view.is_asked_for_on_and":
+    "{who} is asked for {demand}% on {span} and can give {capacity}%.",
+  "l.scheduling_view.no_project_finish_can_be":
+    "No project finish can be computed.",
+  "l.scheduling_view.the_project_finish_stays":
+    "The project finish stays {before}.",
+  "l.scheduling_view.the_project_finish_moves_from":
+    "The project finish moves from {before} to {after} ({days} later).",
   "l.scheduling_view.no_demand_or_supply": "No demand or supply",
-  "l.scheduling_view.demand_fte_supply_not_known": "Demand {demand_fte} FTE; supply not known",
+  "l.scheduling_view.demand_fte_supply_not_known":
+    "Demand {demand_fte} FTE; supply not known",
   "l.scheduling_view.short_fte": "Short {abs} FTE",
   "l.scheduling_view.spare_fte": "Spare {gap_fte} FTE",
   "l.scheduling_view.balanced": "Balanced",
   "l.scheduling_view.the_critical_path_finish": "the critical-path finish",
-  "l.scheduling_view.of_the_simulated_outcomes_finish": "{pct}% of the simulated outcomes finish on or before {date}.",
+  "l.scheduling_view.of_the_simulated_outcomes_finish":
+    "{pct}% of the simulated outcomes finish on or before {date}.",
   "l.scheduling_view.no_variation": "No variation",
-  "l.scheduling_view.no_estimate_using_the_fallback": "No estimate: using the fallback band",
+  "l.scheduling_view.no_estimate_using_the_fallback":
+    "No estimate: using the fallback band",
   "l.scheduling_view.milestone_no_spread": "Milestone: no spread",
-  "l.scheduling_view.estimated_widened_to_include_the": "Estimated (widened to include the likely value)",
+  "l.scheduling_view.estimated_widened_to_include_the":
+    "Estimated (widened to include the likely value)",
   "l.scheduling_view.estimated": "Estimated",
-  "l.scheduling_view.pert_favours_the_likely_value": "PERT (favours the likely value)",
-  "l.scheduling_view.of_the_simulated_outcomes_cost": "{round}% of the simulated outcomes cost no more than the budget ({budgetText}).",
-  "l.scheduling_view.estimated_widened_to_include_the_2": "Estimated (widened to include the planned amount)",
-  "l.scheduling_view.stated_struck_in_of_runs": "stated {round}%, struck in {toFixed}% of runs",
+  "l.scheduling_view.pert_favours_the_likely_value":
+    "PERT (favours the likely value)",
+  "l.scheduling_view.of_the_simulated_outcomes_cost":
+    "{round}% of the simulated outcomes cost no more than the budget ({budgetText}).",
+  "l.scheduling_view.estimated_widened_to_include_the_2":
+    "Estimated (widened to include the planned amount)",
+  "l.scheduling_view.stated_struck_in_of_runs":
+    "stated {round}%, struck in {toFixed}% of runs",
   "l.scheduling_view.within_budget_and_on_time": "Within budget and on time",
   "l.scheduling_view.within_budget_but_late": "Within budget but late",
   "l.scheduling_view.on_time_but_over_budget": "On time but over budget",
   "l.scheduling_view.over_budget_and_late": "Over budget and late",
-  "l.scheduling_view.both_within_budget_and_on": "Both within budget and on time: {pct} (within budget alone {pct2}; on time alone {pct3}).",
-  "l.scheduling_view.a_late_finish_costs_nothing": "A late finish costs nothing extra in this run (delay cost per business day is 0).",
-  "l.scheduling_view.each_business_day_late_adds": "Each business day late adds {format}; finishing early earns nothing back.",
-  "l.simulation_inputs.the_probability_must_be_a": "The probability must be a whole number from 0 to 100.",
-  "l.simulation_inputs.name_the_task_and_the": "Name the task and the business days it adds together, or leave both empty.",
-  "l.simulation_inputs.the_business_days_a_risk": "The business days a risk adds must be a whole number from 1 to 365.",
-  "l.simulation_inputs.give_the_cost_and_its": "Give the cost and its currency together, or leave both empty.",
-  "l.simulation_inputs.the_cost_must_be_an": "The cost must be an amount above zero.",
-  "l.simulation_inputs.the_currency_must_be_a": "The currency must be a 3-letter code such as GBP.",
-  "l.simulation_inputs.a_risk_that_changes_the": "A risk that changes the schedule or the cost needs a probability.",
-  "l.simulation_inputs.amounts_must_be_numbers_zero": "Amounts must be numbers, zero or more.",
-  "l.simulation_inputs.the_low_amount_cannot_be": "The low amount cannot be above the planned amount.",
-  "l.simulation_inputs.the_high_amount_cannot_be": "The high amount cannot be below the planned amount.",
-  "l.simulation_inputs.business_days_must_be_whole": "Business days must be whole numbers from 0 to 3650.",
-  "l.simulation_inputs.give_the_task_a_duration": "Give the task a duration first: that is its likely value.",
-  "l.simulation_inputs.optimistic_cannot_be_above_the": "Optimistic cannot be above the likely duration ({likely}).",
-  "l.simulation_inputs.pessimistic_cannot_be_below_the": "Pessimistic cannot be below the likely duration ({likely}).",
-  "l.simulation_inputs.no_range_the_simulation_uses": "No range: the simulation uses its fallback band",
+  "l.scheduling_view.both_within_budget_and_on":
+    "Both within budget and on time: {pct} (within budget alone {pct2}; on time alone {pct3}).",
+  "l.scheduling_view.a_late_finish_costs_nothing":
+    "A late finish costs nothing extra in this run (delay cost per business day is 0).",
+  "l.scheduling_view.each_business_day_late_adds":
+    "Each business day late adds {format}; finishing early earns nothing back.",
+  "l.simulation_inputs.the_probability_must_be_a":
+    "The probability must be a whole number from 0 to 100.",
+  "l.simulation_inputs.name_the_task_and_the":
+    "Name the task and the business days it adds together, or leave both empty.",
+  "l.simulation_inputs.the_business_days_a_risk":
+    "The business days a risk adds must be a whole number from 1 to 365.",
+  "l.simulation_inputs.give_the_cost_and_its":
+    "Give the cost and its currency together, or leave both empty.",
+  "l.simulation_inputs.the_cost_must_be_an":
+    "The cost must be an amount above zero.",
+  "l.simulation_inputs.the_currency_must_be_a":
+    "The currency must be a 3-letter code such as GBP.",
+  "l.simulation_inputs.a_risk_that_changes_the":
+    "A risk that changes the schedule or the cost needs a probability.",
+  "l.simulation_inputs.amounts_must_be_numbers_zero":
+    "Amounts must be numbers, zero or more.",
+  "l.simulation_inputs.the_low_amount_cannot_be":
+    "The low amount cannot be above the planned amount.",
+  "l.simulation_inputs.the_high_amount_cannot_be":
+    "The high amount cannot be below the planned amount.",
+  "l.simulation_inputs.business_days_must_be_whole":
+    "Business days must be whole numbers from 0 to 3650.",
+  "l.simulation_inputs.give_the_task_a_duration":
+    "Give the task a duration first: that is its likely value.",
+  "l.simulation_inputs.optimistic_cannot_be_above_the":
+    "Optimistic cannot be above the likely duration ({likely}).",
+  "l.simulation_inputs.pessimistic_cannot_be_below_the":
+    "Pessimistic cannot be below the likely duration ({likely}).",
+  "l.simulation_inputs.no_range_the_simulation_uses":
+    "No range: the simulation uses its fallback band",
   "l.simulation_inputs.to": "{fmt} to {fmt2}",
   "l.wbs.restricted_item": "Restricted item",
   "l.whatif_view.choose_a_task": "Choose a task.",
   "l.whatif_view.give_the_new_start_date": "Give the new start date.",
-  "l.whatif_view.duration_must_be_a_whole": "Duration must be a whole number of business days from 0 to 3650.",
+  "l.whatif_view.duration_must_be_a_whole":
+    "Duration must be a whole number of business days from 0 to 3650.",
   "l.whatif_view.choose_a_constraint": "Choose a constraint.",
   "l.whatif_view.a_constraint_needs_a_date": "A constraint needs a date.",
-  "l.whatif_view.a_hard_constraint_needs_a": "A hard constraint needs a reason.",
+  "l.whatif_view.a_hard_constraint_needs_a":
+    "A hard constraint needs a reason.",
   "l.whatif_view.choose_both_tasks": "Choose both tasks.",
   "l.whatif_view.a_task_cannot_depend_on": "A task cannot depend on itself.",
-  "l.whatif_view.lag_must_be_a_whole": "Lag must be a whole number of business days (negative is a lead).",
+  "l.whatif_view.lag_must_be_a_whole":
+    "Lag must be a whole number of business days (negative is a lead).",
   "l.whatif_view.choose_a_link": "Choose a link.",
   "l.whatif_view.start_on": "Start “{name}” on {start_date}",
   "l.whatif_view.make_a_milestone": "Make “{name}” a milestone",
@@ -2286,34 +2700,50 @@ export const PAGES_EN = {
   "l.whatif_view.the_plan_has_no_finish": "The plan has no finish date yet.",
   "l.whatif_view.the_finish_stays": "The finish stays {after}.",
   "l.whatif_view.the_finish_becomes": "The finish becomes {after}.",
-  "l.whatif_view.the_plan_no_longer_has": "The plan no longer has a finish date (was {before}).",
-  "l.whatif_view.the_finish_moves_from_to": "The finish moves from {before} to {after}.",
-  "l.whatif_view.cost_impact_is_finance_data": "Cost impact is finance data, so it is not shown to you.",
-  "l.whatif_view.no_task_with_work_has": "No task with work has a rate, so there is no cost to compare.",
-  "l.work_view.work_must_be_a_number": "Work must be a number of hours above zero.",
-  "l.work_view.duration_must_be_a_whole": "Duration must be a whole number of business days from 1 to 3650.",
-  "l.work_view.units_must_be_a_whole": "Units must be a whole percent of a day from 1 to 1000.",
+  "l.whatif_view.the_plan_no_longer_has":
+    "The plan no longer has a finish date (was {before}).",
+  "l.whatif_view.the_finish_moves_from_to":
+    "The finish moves from {before} to {after}.",
+  "l.whatif_view.cost_impact_is_finance_data":
+    "Cost impact is finance data, so it is not shown to you.",
+  "l.whatif_view.no_task_with_work_has":
+    "No task with work has a rate, so there is no cost to compare.",
+  "l.work_view.work_must_be_a_number":
+    "Work must be a number of hours above zero.",
+  "l.work_view.duration_must_be_a_whole":
+    "Duration must be a whole number of business days from 1 to 3650.",
+  "l.work_view.units_must_be_a_whole":
+    "Units must be a whole percent of a day from 1 to 1000.",
   "l.work_view.give_the_units_too": "Give the units too.",
-  "l.work_view.business_days_at_is": "{duration_days} business days at {units_percent}% is {hoursText}",
+  "l.work_view.business_days_at_is":
+    "{duration_days} business days at {units_percent}% is {hoursText}",
   "l.work_view.the_duration_was_worked_out": "The duration was worked out.",
   "l.work_view.the_share_of_the_day": "The share of the day was worked out.",
   "l.work_view.the_work_was_worked_out": "The work was worked out.",
-  "l.work_view.rounded_the_three_do_not": " Rounded: the three do not match to the minute.",
-  "l.work_view.capacity_not_checked_the_task": "Capacity not checked: the task has no dates yet.",
+  "l.work_view.rounded_the_three_do_not":
+    " Rounded: the three do not match to the minute.",
+  "l.work_view.capacity_not_checked_the_task":
+    "Capacity not checked: the task has no dates yet.",
   "l.work_view.within_the_person_s_capacity": "Within the person's capacity.",
-  "l.work_view.give_1_to_40_whole": "Give 1 to 40 whole percentages, separated by commas.",
-  "l.work_view.the_percentages_add_up_to": "The percentages add up to {sum}, not 100.",
+  "l.work_view.give_1_to_40_whole":
+    "Give 1 to 40 whole percentages, separated by commas.",
+  "l.work_view.the_percentages_add_up_to":
+    "The percentages add up to {sum}, not 100.",
   "p.home.main_x_plans": "Main X · Plans",
-  "p.announcements.could_not_load_the_announcements": "Could not load the announcements",
+  "p.announcements.could_not_load_the_announcements":
+    "Could not load the announcements",
   "p.announcements.could_not_publish": "Could not publish",
   "p.announcements.could_not_retract": "Could not retract",
   "p.auditor.auditor_ppm": "Auditor — PPM",
   "p.automations.could_not_load_automations": "Could not load automations",
-  "p.automations.rule_saved_it_fires_from": "Rule saved — it fires from the next matching move",
+  "p.automations.rule_saved_it_fires_from":
+    "Rule saved — it fires from the next matching move",
   "p.automations.could_not_save_the_rule": "Could not save the rule",
   "p.automations.that_action_was_refused": "That action was refused",
-  "p.automations.capped_at_run_again_for": " (capped at {cap} — run again for the rest)",
-  "p.automations.swept_fired_already_claimed": "Swept: {fired} fired, {skipped_already_claimed} already claimed{v}",
+  "p.automations.capped_at_run_again_for":
+    " (capped at {cap} — run again for the rest)",
+  "p.automations.swept_fired_already_claimed":
+    "Swept: {fired} fired, {skipped_already_claimed} already claimed{v}",
   "p.automations.the_sweep_failed": "The sweep failed",
   "p.board.board_ppm": "Board — PPM",
   "p.calendar.calendar_ppm": "Calendar — PPM",
@@ -2322,7 +2752,8 @@ export const PAGES_EN = {
   "p.cost_rates.could_not_load_the_rate": "Could not load the rate tables",
   "p.cost_rates.rate_table_added": "Rate table added.",
   "p.cost_rates.could_not_add_the_table": "Could not add the table",
-  "p.cost_rates.give_a_date_and_an": "Give a date and an hourly rate of zero or more.",
+  "p.cost_rates.give_a_date_and_an":
+    "Give a date and an hourly rate of zero or more.",
   "p.cost_rates.rate_added": "Rate added.",
   "p.cost_rates.could_not_add_the_rate": "Could not add the rate",
   "p.cost_risk.could_not_run_the_simulation": "Could not run the simulation",
@@ -2330,7 +2761,8 @@ export const PAGES_EN = {
   "p.documents.could_not_create_the_document": "Could not create the document",
   "p.documents.pid.could_not_load_the_document": "Could not load the document",
   "p.documents.pid.that_did_not_work": "That did not work",
-  "p.documents.pid.enter_the_approver_s_id": "Enter the approver's id (a person id, not yourself).",
+  "p.documents.pid.enter_the_approver_s_id":
+    "Enter the approver's id (a person id, not yourself).",
   "p.documents.pid.sent_for_review": "Sent for review.",
   "p.documents.pid.needs_changes": "Needs changes",
   "p.documents.pid.approved": "Approved.",
@@ -2342,7 +2774,8 @@ export const PAGES_EN = {
   "p.executive.executive_ppm": "Executive — PPM",
   "p.financials.financials_ppm": "Financials — PPM",
   "p.gantt.gantt_main_x": "Gantt — Main X",
-  "p.gantt.calendar_failed": "The working calendar could not be loaded, so non-working days are not shaded.",
+  "p.gantt.calendar_failed":
+    "The working calendar could not be loaded, so non-working days are not shaded.",
   "p.kpis.could_not_load_the_kpis": "Could not load the KPIs",
   "p.kpis.could_not_define_the_kpi": "Could not define the KPI",
   "p.lifecycle.could_not_load_the_funnel": "Could not load the funnel",
@@ -2359,60 +2792,84 @@ export const PAGES_EN = {
   "p.plans.pid.main_x": "{v} — Main X",
   "p.plans.pid.board.pt": " · {points}pt",
   "p.plans.pid.board.board_ppm": "Board — PPM",
-  "p.plans.pid.calendar.could_not_load_the_calendar": "Could not load the calendar",
+  "p.plans.pid.calendar.could_not_load_the_calendar":
+    "Could not load the calendar",
   "p.plans.pid.calendar.could_not_save": "Could not save",
-  "p.plans.pid.cost_risk.could_not_run_the_simulation": "Could not run the simulation",
+  "p.plans.pid.cost_risk.could_not_run_the_simulation":
+    "Could not run the simulation",
   "p.plans.pid.costs.could_not_load_the_costs": "Could not load the costs",
   "p.plans.pid.costs.choose_a_task": "Choose a task.",
-  "p.plans.pid.costs.the_amount_must_be_above": "The amount must be above zero.",
-  "p.plans.pid.costs.the_currency_must_be_a": "The currency must be a 3-letter code such as GBP.",
+  "p.plans.pid.costs.the_amount_must_be_above":
+    "The amount must be above zero.",
+  "p.plans.pid.costs.the_currency_must_be_a":
+    "The currency must be a 3-letter code such as GBP.",
   "p.plans.pid.costs.expense_added": "Expense added.",
   "p.plans.pid.costs.could_not_add_the_expense": "Could not add the expense",
   "p.plans.pid.costs.could_not_record": "Could not record",
-  "p.plans.pid.critical_path.could_not_load_the_baselines": "Could not load the baselines",
-  "p.plans.pid.critical_path.could_not_take_the_baseline": "Could not take the baseline",
-  "p.plans.pid.critical_path.could_not_load_the_schedule": "Could not load the schedule",
-  "p.plans.pid.critical_path.could_not_save_the_estimate": "Could not save the estimate",
+  "p.plans.pid.critical_path.could_not_load_the_baselines":
+    "Could not load the baselines",
+  "p.plans.pid.critical_path.could_not_take_the_baseline":
+    "Could not take the baseline",
+  "p.plans.pid.critical_path.could_not_load_the_schedule":
+    "Could not load the schedule",
+  "p.plans.pid.critical_path.could_not_save_the_estimate":
+    "Could not save the estimate",
   "p.plans.pid.critical_path.could_not_save": "Could not save",
-  "p.plans.pid.earned_value.could_not_load_earned_value": "Could not load earned value",
+  "p.plans.pid.earned_value.could_not_load_earned_value":
+    "Could not load earned value",
   "p.plans.pid.earned_value.could_not_save": "Could not save",
   "p.plans.pid.earned_value.could_not_record": "Could not record",
   "p.plans.pid.edit.edit_case_main_x": "Edit case — Main X",
   "p.plans.pid.flow.could_not_load_flow_data": "Could not load flow data.",
-  "p.plans.pid.handover.handover_is_about_people_so": "Handover is about people, so it needs the permission to manage people.",
+  "p.plans.pid.handover.handover_is_about_people_so":
+    "Handover is about people, so it needs the permission to manage people.",
   "p.plans.pid.handover.could_not_preview": "Could not preview",
-  "p.plans.pid.handover.what_this_person_holds_changed": "What this person holds changed since the preview, so nothing was changed. Preview again, then commit.",
+  "p.plans.pid.handover.what_this_person_holds_changed":
+    "What this person holds changed since the preview, so nothing was changed. Preview again, then commit.",
   "p.plans.pid.handover.could_not_commit": "Could not commit",
-  "p.plans.pid.handover.discarded_nothing_was_changed": "Discarded. Nothing was changed.",
+  "p.plans.pid.handover.discarded_nothing_was_changed":
+    "Discarded. Nothing was changed.",
   "p.plans.pid.import.choose_the_file_first": "Choose the file first.",
   "p.plans.pid.import.the_import_did_not_work": "The import did not work",
-  "p.plans.pid.joint_risk.could_not_run_the_simulation": "Could not run the simulation",
-  "p.plans.pid.leveling.could_not_propose_a_leveling": "Could not propose a leveling",
+  "p.plans.pid.joint_risk.could_not_run_the_simulation":
+    "Could not run the simulation",
+  "p.plans.pid.leveling.could_not_propose_a_leveling":
+    "Could not propose a leveling",
   "p.plans.pid.leveling.could_not_apply_the_moves": "Could not apply the moves",
   "p.plans.pid.onboarding.could_not_load": "Could not load",
-  "p.plans.pid.onboarding.could_not_open_the_checklist": "Could not open the checklist",
+  "p.plans.pid.onboarding.could_not_open_the_checklist":
+    "Could not open the checklist",
   "p.plans.pid.onboarding.checklist_started": "Checklist started.",
   "p.plans.pid.onboarding.could_not_start": "Could not start",
   "p.plans.pid.onboarding.could_not_save": "Could not save",
   "p.plans.pid.onboarding.checklist_completed": "Checklist completed.",
   "p.plans.pid.onboarding.could_not_complete": "Could not complete",
-  "p.plans.pid.onboarding.say_why_you_are_cancelling": "Say why you are cancelling.",
+  "p.plans.pid.onboarding.say_why_you_are_cancelling":
+    "Say why you are cancelling.",
   "p.plans.pid.onboarding.checklist_cancelled": "Checklist cancelled.",
   "p.plans.pid.onboarding.could_not_cancel": "Could not cancel",
   "p.plans.pid.onboarding.could_not_record": "Could not record",
   "p.plans.pid.raci.could_not_load_who_does": "Could not load who does what",
   "p.plans.pid.raci.could_not_save": "Could not save",
-  "p.plans.pid.raci.use_a_person_or_worker": "Use a person: or worker: reference with a UUID.",
-  "p.plans.pid.schedule_health.could_not_run_the_schedule": "Could not run the schedule health checks",
-  "p.plans.pid.schedule_risk.could_not_run_the_simulation": "Could not run the simulation",
+  "p.plans.pid.raci.use_a_person_or_worker":
+    "Use a person: or worker: reference with a UUID.",
+  "p.plans.pid.schedule_health.could_not_run_the_schedule":
+    "Could not run the schedule health checks",
+  "p.plans.pid.schedule_risk.could_not_run_the_simulation":
+    "Could not run the simulation",
   "p.plans.pid.wbs.could_not_load_the_tasks": "Could not load the tasks",
-  "p.plans.pid.wbs.link_counts_failed": "How many links each task has could not be loaded, so no counts are shown.",
+  "p.plans.pid.wbs.link_counts_failed":
+    "How many links each task has could not be loaded, so no counts are shown.",
   "p.plans.pid.what_if.could_not_load_the_plan": "Could not load the plan",
-  "p.plans.pid.what_if.at_most_edits_at_a": "At most {MAX_EDITS} edits at a time.",
-  "p.plans.pid.what_if.edit_staged_preview_to_see": "Edit staged. Preview to see what it does.",
-  "p.plans.pid.what_if.discarded_nothing_was_changed": "Discarded. Nothing was changed.",
+  "p.plans.pid.what_if.at_most_edits_at_a":
+    "At most {MAX_EDITS} edits at a time.",
+  "p.plans.pid.what_if.edit_staged_preview_to_see":
+    "Edit staged. Preview to see what it does.",
+  "p.plans.pid.what_if.discarded_nothing_was_changed":
+    "Discarded. Nothing was changed.",
   "p.plans.pid.what_if.could_not_preview": "Could not preview",
-  "p.plans.pid.what_if.the_plan_changed_since_this": "The plan changed since this preview, so nothing was applied. Preview again, then commit.",
+  "p.plans.pid.what_if.the_plan_changed_since_this":
+    "The plan changed since this preview, so nothing was applied. Preview again, then commit.",
   "p.plans.pid.what_if.could_not_commit": "Could not commit",
   "p.plans.pid.what_if.to": "{early_start} to {early_finish}",
   "p.plans.pid.what_if.not_scheduled": "not scheduled",
@@ -2443,8 +2900,10 @@ export const PAGES_EN = {
   "p.technology.technology_ppm": "Technology — PPM",
   "p.tour.tour_main_x_plans": "Tour · Main X Plans",
   "p.verify.this_sign_in_link_is": "This sign-in link is missing its token.",
-  "p.verify.we_could_not_reach_the": "We could not reach the sign-in service. Please try again in a moment.",
-  "p.verify.this_sign_in_link_is_2": "This sign-in link is invalid or has expired.",
+  "p.verify.we_could_not_reach_the":
+    "We could not reach the sign-in service. Please try again in a moment.",
+  "p.verify.this_sign_in_link_is_2":
+    "This sign-in link is invalid or has expired.",
   "l.ceo_view.gate_review": "Gate review",
   "l.ceo_view.scenario_committed": "Scenario committed",
   "l.ceo_view.proposal": "Proposal",
@@ -2463,29 +2922,48 @@ export const PAGES_EN = {
   "l.document_view.waiting_for_the_approver": "Waiting for the approver",
   "l.document_view.approved": "Approved",
   "l.document_view.change_this_document": "Change this document",
-  "l.document_view.someone_else_approves_it_you": "Someone else approves it: you cannot approve your own document.",
-  "l.document_view.only_the_person_asked_can": "Only the person asked can decide.",
-  "l.document_view.it_comes_into_force_today": "It comes into force today and replaces the version now in force.",
-  "l.document_view.the_next_draft_starts_as": "The next draft starts as a copy of the latest text.",
+  "l.document_view.someone_else_approves_it_you":
+    "Someone else approves it: you cannot approve your own document.",
+  "l.document_view.only_the_person_asked_can":
+    "Only the person asked can decide.",
+  "l.document_view.it_comes_into_force_today":
+    "It comes into force today and replaces the version now in force.",
+  "l.document_view.the_next_draft_starts_as":
+    "The next draft starts as a copy of the latest text.",
   "l.ev_view.on_track": "on track",
   "l.ev_view.off_plan": "off plan",
   "l.ev_view.not_yet_known": "not yet known",
-  "l.glossary.schedule_performance_index_work_done": "Schedule performance index: work done compared with work planned by now. Above 1.00 is ahead of plan.",
-  "l.glossary.cost_performance_index_value_of": "Cost performance index: value of the work done compared with what it cost. Above 1.00 is under budget.",
-  "l.glossary.schedule_index_by_time_how": "Schedule index by time: how far along the plan we are in time, which stays truthful even when a project finishes late.",
-  "l.glossary.earned_value_the_budget_for": "Earned value: the budget for the work actually finished.",
-  "l.glossary.planned_value_the_budget_for": "Planned value: the budget for the work that should be finished by now.",
-  "l.glossary.actual_cost_what_has_really": "Actual cost: what has really been spent.",
-  "l.glossary.estimate_at_completion_the_expected": "Estimate at completion: the expected final cost.",
-  "l.glossary.estimate_to_complete_what_is": "Estimate to complete: what is still expected to be spent.",
-  "l.glossary.variance_at_completion_the_expected": "Variance at completion: the expected final cost against the budget.",
+  "l.glossary.schedule_performance_index_work_done":
+    "Schedule performance index: work done compared with work planned by now. Above 1.00 is ahead of plan.",
+  "l.glossary.cost_performance_index_value_of":
+    "Cost performance index: value of the work done compared with what it cost. Above 1.00 is under budget.",
+  "l.glossary.schedule_index_by_time_how":
+    "Schedule index by time: how far along the plan we are in time, which stays truthful even when a project finishes late.",
+  "l.glossary.earned_value_the_budget_for":
+    "Earned value: the budget for the work actually finished.",
+  "l.glossary.planned_value_the_budget_for":
+    "Planned value: the budget for the work that should be finished by now.",
+  "l.glossary.actual_cost_what_has_really":
+    "Actual cost: what has really been spent.",
+  "l.glossary.estimate_at_completion_the_expected":
+    "Estimate at completion: the expected final cost.",
+  "l.glossary.estimate_to_complete_what_is":
+    "Estimate to complete: what is still expected to be spent.",
+  "l.glossary.variance_at_completion_the_expected":
+    "Variance at completion: the expected final cost against the budget.",
   "l.glossary.red_amber_or_green_a": "Red, amber or green: a status light.",
-  "l.glossary.responsible_accountable_consulted_in": "Responsible, Accountable, Consulted, Informed: who does the work, who signs it off, who is asked and who is told.",
-  "l.glossary.a_way_of_weighting_the": "A way of weighting the likely estimate more than the best and worst cases.",
-  "l.glossary.key_performance_indicator_a_measure": "Key performance indicator: a measure tracked over time against a target.",
-  "l.glossary.key_performance_indicators_measures_": "Key performance indicators: measures tracked over time against a target.",
-  "l.glossary.objective_and_key_results_a": "Objective and key results: a goal with a few measurable results.",
-  "l.glossary.objectives_and_key_results_goals": "Objectives and key results: goals with a few measurable results.",
+  "l.glossary.responsible_accountable_consulted_in":
+    "Responsible, Accountable, Consulted, Informed: who does the work, who signs it off, who is asked and who is told.",
+  "l.glossary.a_way_of_weighting_the":
+    "A way of weighting the likely estimate more than the best and worst cases.",
+  "l.glossary.key_performance_indicator_a_measure":
+    "Key performance indicator: a measure tracked over time against a target.",
+  "l.glossary.key_performance_indicators_measures_":
+    "Key performance indicators: measures tracked over time against a target.",
+  "l.glossary.objective_and_key_results_a":
+    "Objective and key results: a goal with a few measurable results.",
+  "l.glossary.objectives_and_key_results_goals":
+    "Objectives and key results: goals with a few measurable results.",
   "l.import_view.jira_csv_export": "Jira (CSV export)",
   "l.import_view.asana_csv_export": "Asana (CSV export)",
   "l.import_view.microsoft_project_xml_file": "Microsoft Project (XML file)",
@@ -2496,7 +2974,8 @@ export const PAGES_EN = {
   "l.import_view.dates_not_understood": "Dates not understood",
   "l.import_view.fields_shortened": "Fields shortened",
   "l.import_view.status_notes": "Status notes",
-  "l.import_view.resources_not_matched_to_people": "Resources not matched to people",
+  "l.import_view.resources_not_matched_to_people":
+    "Resources not matched to people",
   "l.import_view.costs_not_imported": "Costs not imported",
   "l.import_view.schedules_not_imported": "Schedules not imported",
   "l.import_view.constraints_not_imported": "Constraints not imported",
@@ -2508,95 +2987,148 @@ export const PAGES_EN = {
   "l.milestone_view.at_risk": "At risk",
   "l.milestone_view.forecast_late": "Forecast late",
   "l.milestone_view.no_forecast": "No forecast",
-  "l.milestone_view.it_is_not_linked_to": "It is not linked to any task, so there is nothing to forecast from.",
-  "l.milestone_view.its_open_tasks_have_no": "Its open tasks have no dates the schedule can place (give them a duration and a start or a predecessor).",
-  "l.milestone_view.the_plan_s_dependencies_contain": "The plan's dependencies contain a cycle, so no forecast can be made.",
-  "l.okr_view.not_measurable_the_start_and": "Not measurable: the start and the target are the same, so there is no distance to travel.",
-  "l.okr_view.not_measurable_a_maintain_key": "Not measurable: a maintain key result needs a tolerance band.",
-  "l.okr_view.not_measurable_the_numbers_are": "Not measurable: the numbers are too large to score.",
+  "l.milestone_view.it_is_not_linked_to":
+    "It is not linked to any task, so there is nothing to forecast from.",
+  "l.milestone_view.its_open_tasks_have_no":
+    "Its open tasks have no dates the schedule can place (give them a duration and a start or a predecessor).",
+  "l.milestone_view.the_plan_s_dependencies_contain":
+    "The plan's dependencies contain a cycle, so no forecast can be made.",
+  "l.okr_view.not_measurable_the_start_and":
+    "Not measurable: the start and the target are the same, so there is no distance to travel.",
+  "l.okr_view.not_measurable_a_maintain_key":
+    "Not measurable: a maintain key result needs a tolerance band.",
+  "l.okr_view.not_measurable_the_numbers_are":
+    "Not measurable: the numbers are too large to score.",
   "l.onboarding_view.someone_joins_this_plan": "Someone joins this plan",
   "l.onboarding_view.someone_leaves_this_plan": "Someone leaves this plan",
   "l.onboarding_view.take_this_plan_in": "Take this plan in",
   "l.onboarding_view.close_this_plan_out": "Close this plan out",
   "l.onboarding_view.booking": "Booking",
   "l.onboarding.executive": "Executive",
-  "l.onboarding.outcomes_and_exposure_across_the": "Outcomes and exposure across the whole estate, not any one plan.",
+  "l.onboarding.outcomes_and_exposure_across_the":
+    "Outcomes and exposure across the whole estate, not any one plan.",
   "l.onboarding.read_the_executive_summary": "Read the executive summary",
-  "l.onboarding.health_decisions_benefits_realized_a": "Health, decisions, benefits realized, and strategic alignment in one view.",
+  "l.onboarding.health_decisions_benefits_realized_a":
+    "Health, decisions, benefits realized, and strategic alignment in one view.",
   "l.onboarding.open_the_at_a_glance": "Open the at-a-glance dashboard",
-  "l.onboarding.the_whole_estate_s_rag": "The whole estate's RAG status and schedule violations at once.",
+  "l.onboarding.the_whole_estate_s_rag":
+    "The whole estate's RAG status and schedule violations at once.",
   "l.onboarding.review_the_board_pack": "Review the board pack",
-  "l.onboarding.the_pack_a_board_meeting": "The pack a board meeting would actually be handed: investments and trends.",
-  "l.onboarding.check_budget_variance_and_exposure": "Check budget variance and exposure",
-  "l.onboarding.where_spend_is_diverging_from": "Where spend is diverging from plan, per currency — currencies are never summed together.",
-  "l.onboarding.compare_two_candidate_portfolios": "Compare two candidate portfolios",
-  "l.onboarding.what_if_scenarios_side_by": "What-if scenarios side by side, before committing funding to either.",
-  "l.onboarding.see_what_s_ranked_highest": "See what's ranked highest, and why",
-  "l.onboarding.the_smart_score_queue_every": "The Smart Score queue — every score shows the evidence behind it, or says it has none.",
+  "l.onboarding.the_pack_a_board_meeting":
+    "The pack a board meeting would actually be handed: investments and trends.",
+  "l.onboarding.check_budget_variance_and_exposure":
+    "Check budget variance and exposure",
+  "l.onboarding.where_spend_is_diverging_from":
+    "Where spend is diverging from plan, per currency — currencies are never summed together.",
+  "l.onboarding.compare_two_candidate_portfolios":
+    "Compare two candidate portfolios",
+  "l.onboarding.what_if_scenarios_side_by":
+    "What-if scenarios side by side, before committing funding to either.",
+  "l.onboarding.see_what_s_ranked_highest":
+    "See what's ranked highest, and why",
+  "l.onboarding.the_smart_score_queue_every":
+    "The Smart Score queue — every score shows the evidence behind it, or says it has none.",
   "l.onboarding.pmo_portfolio_manager": "PMO / portfolio manager",
-  "l.onboarding.intake_governance_and_the_schedule": "Intake, governance, and the schedule across every plan.",
+  "l.onboarding.intake_governance_and_the_schedule":
+    "Intake, governance, and the schedule across every plan.",
   "l.onboarding.open_the_intake_pipeline": "Open the intake pipeline",
-  "l.onboarding.every_proposal_s_stage_from": "Every proposal's stage, from draft through approval.",
+  "l.onboarding.every_proposal_s_stage_from":
+    "Every proposal's stage, from draft through approval.",
   "l.onboarding.register_a_plan": "Register a plan",
-  "l.onboarding.the_first_plan_you_create": "The first plan you create is a good way to see the whole payload shape.",
+  "l.onboarding.the_first_plan_you_create":
+    "The first plan you create is a good way to see the whole payload shape.",
   "l.onboarding.browse_the_plan_registry": "Browse the plan registry",
-  "l.onboarding.one_recursive_collection_kind_is": "One recursive collection — `kind` is a label, not a gate.",
+  "l.onboarding.one_recursive_collection_kind_is":
+    "One recursive collection — `kind` is a label, not a gate.",
   "l.onboarding.open_a_plan_s_governance": "Open a plan's governance tab",
-  "l.onboarding.gate_reviews_risks_and_budget": "Gate reviews, risks, and budget lines for that one plan.",
+  "l.onboarding.gate_reviews_risks_and_budget":
+    "Gate reviews, risks, and budget lines for that one plan.",
   "l.onboarding.look_at_the_cross_plan": "Look at the cross-plan schedule",
-  "l.onboarding.dependencies_the_critical_path_and": "Dependencies, the critical path, and any slipping successor.",
+  "l.onboarding.dependencies_the_critical_path_and":
+    "Dependencies, the critical path, and any slipping successor.",
   "l.onboarding.check_the_risk_register": "Check the risk register",
-  "l.onboarding.everything_open_or_mitigating_ranked": "Everything open or mitigating, ranked by exposure.",
-  "l.onboarding.review_the_compliance_register": "Review the compliance register",
-  "l.onboarding.standing_findings_across_the_estate": "Standing findings across the estate, not just one plan's.",
+  "l.onboarding.everything_open_or_mitigating_ranked":
+    "Everything open or mitigating, ranked by exposure.",
+  "l.onboarding.review_the_compliance_register":
+    "Review the compliance register",
+  "l.onboarding.standing_findings_across_the_estate":
+    "Standing findings across the estate, not just one plan's.",
   "l.onboarding.run_a_saved_report": "Run a saved report",
-  "l.onboarding.a_filter_field_projection_saved": "A filter + field projection saved for reuse, run on demand.",
+  "l.onboarding.a_filter_field_projection_saved":
+    "A filter + field projection saved for reuse, run on demand.",
   "l.onboarding.resource_manager": "Resource manager",
-  "l.onboarding.who_is_allocated_where_and": "Who is allocated where, and how delivery is actually flowing.",
+  "l.onboarding.who_is_allocated_where_and":
+    "Who is allocated where, and how delivery is actually flowing.",
   "l.onboarding.check_the_capacity_rollup": "Check the capacity rollup",
-  "l.onboarding.who_is_over_allocated_this": "Who is over-allocated this window, summed across every plan they're on.",
+  "l.onboarding.who_is_over_allocated_this":
+    "Who is over-allocated this window, summed across every plan they're on.",
   "l.onboarding.open_a_plan_s_task": "Open a plan's task board",
-  "l.onboarding.the_kanban_board_that_task": "The Kanban board that task-level work actually moves through.",
+  "l.onboarding.the_kanban_board_that_task":
+    "The Kanban board that task-level work actually moves through.",
   "l.onboarding.read_that_plan_s_flow": "Read that plan's flow figures",
-  "l.onboarding.cycle_time_lead_time_and": "Cycle time, lead time, and flow efficiency — derived from the board's own history.",
-  "l.onboarding.scan_blocked_items_and_the": "Scan blocked items and the delivery mix",
-  "l.onboarding.what_s_stuck_the_moscow": "What's stuck, the MoSCoW mix, and the milestone calendar in one view.",
-  "l.onboarding.look_at_the_milestone_calendar": "Look at the milestone calendar",
-  "l.onboarding.every_milestone_across_every_plan": "Every milestone across every plan, due dates included.",
-  "l.onboarding.see_what_automations_are_configured": "See what automations are configured",
-  "l.onboarding.what_fires_on_a_field": "What fires on a field change, and what it does when it does.",
+  "l.onboarding.cycle_time_lead_time_and":
+    "Cycle time, lead time, and flow efficiency — derived from the board's own history.",
+  "l.onboarding.scan_blocked_items_and_the":
+    "Scan blocked items and the delivery mix",
+  "l.onboarding.what_s_stuck_the_moscow":
+    "What's stuck, the MoSCoW mix, and the milestone calendar in one view.",
+  "l.onboarding.look_at_the_milestone_calendar":
+    "Look at the milestone calendar",
+  "l.onboarding.every_milestone_across_every_plan":
+    "Every milestone across every plan, due dates included.",
+  "l.onboarding.see_what_automations_are_configured":
+    "See what automations are configured",
+  "l.onboarding.what_fires_on_a_field":
+    "What fires on a field change, and what it does when it does.",
   "l.onboarding.open_collaborative_reviews": "Open collaborative reviews",
-  "l.onboarding.where_a_plan_gets_a": "Where a plan gets a second opinion before a decision is made on it.",
+  "l.onboarding.where_a_plan_gets_a":
+    "Where a plan gets a second opinion before a decision is made on it.",
   "l.raci_view.responsible": "Responsible",
   "l.raci_view.accountable": "Accountable",
   "l.raci_view.consulted": "Consulted",
   "l.raci_view.informed": "Informed",
   "l.raci_view.does_the_work": "does the work",
-  "l.raci_view.answers_for_it_and_signs": "answers for it and signs it off (one per task)",
+  "l.raci_view.answers_for_it_and_signs":
+    "answers for it and signs it off (one per task)",
   "l.raci_view.is_asked_before": "is asked before",
   "l.raci_view.is_told_after": "is told after",
-  "l.scheduling_view.no_schedule_baseline_has_been": "No schedule baseline has been taken for this plan.",
-  "l.scheduling_view.nothing_was_baselined_to_finish": "Nothing was baselined to finish by the status date.",
-  "l.scheduling_view.the_plan_s_dependencies_contain": "The plan's dependencies contain a cycle.",
-  "l.scheduling_view.there_are_no_incomplete_tasks": "There are no incomplete tasks to measure.",
-  "l.scheduling_view.there_are_no_relationships_between": "There are no relationships between tasks to measure.",
-  "l.scheduling_view.no_incomplete_task_has_dates": "No incomplete task has dates the schedule can place.",
-  "l.scheduling_view.no_incomplete_task_has_a": "No incomplete task has a duration.",
+  "l.scheduling_view.no_schedule_baseline_has_been":
+    "No schedule baseline has been taken for this plan.",
+  "l.scheduling_view.nothing_was_baselined_to_finish":
+    "Nothing was baselined to finish by the status date.",
+  "l.scheduling_view.the_plan_s_dependencies_contain":
+    "The plan's dependencies contain a cycle.",
+  "l.scheduling_view.there_are_no_incomplete_tasks":
+    "There are no incomplete tasks to measure.",
+  "l.scheduling_view.there_are_no_relationships_between":
+    "There are no relationships between tasks to measure.",
+  "l.scheduling_view.no_incomplete_task_has_dates":
+    "No incomplete task has dates the schedule can place.",
+  "l.scheduling_view.no_incomplete_task_has_a":
+    "No incomplete task has a duration.",
   "l.scheduling_view.the_plan_has_no_tasks": "The plan has no tasks.",
-  "l.scheduling_view.there_is_no_critical_task": "There is no critical task to test.",
+  "l.scheduling_view.there_is_no_critical_task":
+    "There is no critical task to test.",
   "l.scheduling_view.no_path_remains_to_measure": "No path remains to measure.",
-  "l.scheduling_view.every_task_involved_has_already": "Every task involved has already started, so none may move.",
-  "l.scheduling_view.the_tasks_involved_are_critical": "The tasks involved are critical; moving one would move the finish. Allow critical tasks to see that cost.",
-  "l.scheduling_view.delaying_a_task_enough_would": "Delaying a task enough would break the schedule (negative float or a later finish).",
-  "l.scheduling_view.a_task_involved_has_a": "A task involved has a hard constraint and cannot be moved.",
-  "l.scheduling_view.the_schedule_would_not_let": "The schedule would not let the task start any later.",
-  "l.scheduling_view.the_search_stopped_at_its": "The search stopped at its limit before resolving this.",
+  "l.scheduling_view.every_task_involved_has_already":
+    "Every task involved has already started, so none may move.",
+  "l.scheduling_view.the_tasks_involved_are_critical":
+    "The tasks involved are critical; moving one would move the finish. Allow critical tasks to see that cost.",
+  "l.scheduling_view.delaying_a_task_enough_would":
+    "Delaying a task enough would break the schedule (negative float or a later finish).",
+  "l.scheduling_view.a_task_involved_has_a":
+    "A task involved has a hard constraint and cannot be moved.",
+  "l.scheduling_view.the_schedule_would_not_let":
+    "The schedule would not let the task start any later.",
+  "l.scheduling_view.the_search_stopped_at_its":
+    "The search stopped at its limit before resolving this.",
   "l.scheduling_view.no_probability": "no probability",
   "l.scheduling_view.no_task_named": "no task named",
   "l.scheduling_view.no_impact_in_business_days": "no impact in business days",
   "l.scheduling_view.the_risk_is_not_open": "the risk is not open",
   "l.scheduling_view.its_task_is_not_on": "its task is not on the schedule",
-  "l.scheduling_view.the_plan_has_no_budget": "the plan has no budget line in its currency",
+  "l.scheduling_view.the_plan_has_no_budget":
+    "the plan has no budget line in its currency",
   "l.whatif_view.move_a_task_set_its": "Move a task (set its start)",
   "l.whatif_view.change_a_task_s_duration": "Change a task's duration",
   "l.whatif_view.change_a_task_s_constraint": "Change a task's constraint",
@@ -2607,18 +3139,23 @@ export const PAGES_EN = {
   "l.work_view.fixed_units": "Fixed units",
   "l.work_view.fixed_duration": "Fixed duration",
   "l.work_view.fixed_work": "Fixed work",
-  "l.work_view.changing_the_work_changes_how": "Changing the work changes how long it takes; the share of the day stays.",
-  "l.work_view.changing_the_work_changes_the": "Changing the work changes the share of the day; the duration stays.",
-  "l.work_view.changing_the_duration_or_the": "Changing the duration or the share of the day changes the other; the work stays.",
+  "l.work_view.changing_the_work_changes_how":
+    "Changing the work changes how long it takes; the share of the day stays.",
+  "l.work_view.changing_the_work_changes_the":
+    "Changing the work changes the share of the day; the duration stays.",
+  "l.work_view.changing_the_duration_or_the":
+    "Changing the duration or the share of the day changes the other; the work stays.",
   "l.work_view.flat_the_same_each_day": "Flat: the same each day",
   "l.work_view.front_loaded_more_at_the": "Front loaded: more at the start",
   "l.work_view.back_loaded_more_at_the": "Back loaded: more at the end",
   "l.work_view.bell_most_in_the_middle": "Bell: most in the middle",
-  "l.work_view.turtle_ramps_up_holds_ramps": "Turtle: ramps up, holds, ramps down",
+  "l.work_view.turtle_ramps_up_holds_ramps":
+    "Turtle: ramps up, holds, ramps down",
   "l.work_view.custom_percentages": "Custom percentages",
   "l.work_view.has_no_dates_yet": "has no dates yet",
   "l.work_view.has_no_business_day_to": "has no business day to fall on",
-  "l.work_view.has_a_contour_that_gives": "has a contour that gives it no weight",
+  "l.work_view.has_a_contour_that_gives":
+    "has a contour that gives it no weight",
   "l.work_view.no_rate_applies": "no rate applies",
   "l.work_view.no_rate_applied_on_some": "no rate applied on some days",
   "l.work_view.has_nobody_assigned": "has nobody assigned",
@@ -2630,8 +3167,10 @@ export const PAGES_EN = {
   "p.ceo.amber": "Amber",
   "p.ceo.green": "Green",
   "p.display.saved_on_this_device": "Saved on this device.",
-  "p.display.saved_to_your_account_so": "Saved to your account, so it follows you to other browsers.",
-  "p.display.could_not_save_to_your": "Could not save to your account just now; it is kept on this device.",
+  "p.display.saved_to_your_account_so":
+    "Saved to your account, so it follows you to other browsers.",
+  "p.display.could_not_save_to_your":
+    "Could not save to your account just now; it is kept on this device.",
   "p.me.today": "Today",
   "p.me.this_week": "This week",
   "p.me.later": "Later",
@@ -2647,10 +3186,14 @@ export const PAGES_EN = {
   "p.common.calendar_day_other": "{n} calendar days",
   "l.milestone_view.rescheduled_one": "rescheduled {count} time",
   "l.milestone_view.rescheduled_other": "rescheduled {count} times",
-  "l.milestone_view.open_of_linked_one": "{open_tasks} of {linked_tasks} task still open",
-  "l.milestone_view.open_of_linked_other": "{open_tasks} of {linked_tasks} tasks still open",
-  "l.cpm_view.restricted_one": "{n} dependency to a plan you cannot see is left out of these dates.",
-  "l.cpm_view.restricted_other": "{n} dependencies to a plan you cannot see are left out of these dates.",
+  "l.milestone_view.open_of_linked_one":
+    "{open_tasks} of {linked_tasks} task still open",
+  "l.milestone_view.open_of_linked_other":
+    "{open_tasks} of {linked_tasks} tasks still open",
+  "l.cpm_view.restricted_one":
+    "{n} dependency to a plan you cannot see is left out of these dates.",
+  "l.cpm_view.restricted_other":
+    "{n} dependencies to a plan you cannot see are left out of these dates.",
   "l.cpm_view.monday": "Monday",
   "l.cpm_view.tuesday": "Tuesday",
   "l.cpm_view.wednesday": "Wednesday",
@@ -2660,25 +3203,38 @@ export const PAGES_EN = {
   "l.cpm_view.sunday": "Sunday",
   "l.ev_view.gap_more": "{money} more value earned than planned by now",
   "l.ev_view.gap_less": "{money} less value earned than planned by now",
-  "l.ev_view.cost_line_less": "{word}: CPI {ratio}, {money} less spent than the work earned.",
-  "l.ev_view.cost_line_more": "{word}: CPI {ratio}, {money} more spent than the work earned.",
-  "l.ev_view.tasks_counted_one": "{count} task counted, weighted {weighting}; {how}",
-  "l.ev_view.tasks_counted_other": "{count} tasks counted, weighted {weighting}; {how}",
+  "l.ev_view.cost_line_less":
+    "{word}: CPI {ratio}, {money} less spent than the work earned.",
+  "l.ev_view.cost_line_more":
+    "{word}: CPI {ratio}, {money} more spent than the work earned.",
+  "l.ev_view.tasks_counted_one":
+    "{count} task counted, weighted {weighting}; {how}",
+  "l.ev_view.tasks_counted_other":
+    "{count} tasks counted, weighted {weighting}; {how}",
   "l.ev_view.equally": "equally",
   "l.onboarding_view.would_move_one": "{n} item would move to {to}.",
   "l.onboarding_view.would_move_other": "{n} items would move to {to}.",
-  "l.onboarding_view.would_release_one": "{n} item would be released: tasks and risks unassigned, bookings and roles removed.",
-  "l.onboarding_view.would_release_other": "{n} items would be released: tasks and risks unassigned, bookings and roles removed.",
-  "l.whatif_view.set_duration_one": "Set “{name}” to {duration_days} business day",
-  "l.whatif_view.set_duration_other": "Set “{name}” to {duration_days} business days",
-  "l.work_view.over_capacity_one": "Over capacity on {days_over} calendar day ({from} to {to}): this asks more than the person can give.",
-  "l.work_view.over_capacity_other": "Over capacity on {days_over} calendar days ({from} to {to}): this asks more than the person can give.",
+  "l.onboarding_view.would_release_one":
+    "{n} item would be released: tasks and risks unassigned, bookings and roles removed.",
+  "l.onboarding_view.would_release_other":
+    "{n} items would be released: tasks and risks unassigned, bookings and roles removed.",
+  "l.whatif_view.set_duration_one":
+    "Set “{name}” to {duration_days} business day",
+  "l.whatif_view.set_duration_other":
+    "Set “{name}” to {duration_days} business days",
+  "l.work_view.over_capacity_one":
+    "Over capacity on {days_over} calendar day ({from} to {to}): this asks more than the person can give.",
+  "l.work_view.over_capacity_other":
+    "Over capacity on {days_over} calendar days ({from} to {to}): this asks more than the person can give.",
   "p.plans.pid.board.blocked_for": " · blocked {days}",
-  "p.plans.pid.handover.done_one": "Done: {count} item handed over and recorded.",
-  "p.plans.pid.handover.done_other": "Done: {count} items handed over and recorded.",
+  "p.plans.pid.handover.done_one":
+    "Done: {count} item handed over and recorded.",
+  "p.plans.pid.handover.done_other":
+    "Done: {count} items handed over and recorded.",
   "p.plans.pid.what_if.committed_one": "Committed: {count} change recorded.",
   "p.plans.pid.what_if.committed_other": "Committed: {count} changes recorded.",
-  "l.import_view.mspdi_hint": "In Microsoft Project use File → Save As → XML Format. A .mpp file cannot be read.",
+  "l.import_view.mspdi_hint":
+    "In Microsoft Project use File → Save As → XML Format. A .mpp file cannot be read.",
   "c.CalendarMonth.january": "January",
   "c.CalendarMonth.february": "February",
   "c.CalendarMonth.march": "March",
@@ -2713,10 +3269,14 @@ export const PAGES_EN = {
   "l.scheduling_view.strength_weak": "weak",
   "l.simulation_inputs.planned_word": "planned",
   "p.plans.pid.board.unassigned": "unassigned",
-  "p.plans.pid.costs.recorded_one": "Recorded {recorded} time entry; {already_recorded} were already recorded; {length} have no rate.",
-  "p.plans.pid.costs.recorded_other": "Recorded {recorded} time entries; {already_recorded} were already recorded; {length} have no rate.",
-  "c.CostRiskView.histogram_label": "Histogram of simulated {currency} cost, with P50, P80, P90 and the budget marked",
-  "c.CumulativeFlow.chart_label": "Cumulative flow over {days} calendar days, peaking at {peak} tasks",
+  "p.plans.pid.costs.recorded_one":
+    "Recorded {recorded} time entry; {already_recorded} were already recorded; {length} have no rate.",
+  "p.plans.pid.costs.recorded_other":
+    "Recorded {recorded} time entries; {already_recorded} were already recorded; {length} have no rate.",
+  "c.CostRiskView.histogram_label":
+    "Histogram of simulated {currency} cost, with P50, P80, P90 and the budget marked",
+  "c.CumulativeFlow.chart_label":
+    "Cumulative flow over {days} calendar days, peaking at {peak} tasks",
   "p.plans.pid.onboarding.owner_of": "Owner of {title}",
   "p.plans.pid.onboarding.due_date_of": "Due date of {title}",
   "p.plans.pid.onboarding.why_skip_title": "Why skip {title}",
@@ -2724,7 +3284,8 @@ export const PAGES_EN = {
   "c.LilyGanttTable.cell_active": "{name}: {start} to {end}{ends}",
   "c.LilyGanttTable.ends_here": " (ends here)",
   "c.LilyGanttTable.cell_not_scheduled": "{name}: not scheduled",
-  "l.simulation_inputs.range_business_days": "{optimistic} / {likely} / {pessimistic} business days (optimistic / likely / pessimistic)",
+  "l.simulation_inputs.range_business_days":
+    "{optimistic} / {likely} / {pessimistic} business days (optimistic / likely / pessimistic)",
   "l.enum.task_status.todo": "todo",
   "l.enum.task_status.in_progress": "in_progress",
   "l.enum.task_status.in_review": "in_review",
@@ -2775,7 +3336,8 @@ export const PAGES_EN = {
   "p.error.back": "Back to the start",
   "p.issues.issues_ppm": "Issues register — PPM",
   "p.issues.issues": "Issues register",
-  "p.issues.intro": "An issue is something that has already happened and needs managing; a risk is something that might. Most serious first, then oldest. Age is in calendar days since the issue was raised.",
+  "p.issues.intro":
+    "An issue is something that has already happened and needs managing; a risk is something that might. Most serious first, then oldest. Age is in calendar days since the issue was raised.",
   "p.issues.could_not_load": "Could not load the issues",
   "p.issues.by_severity": "Issues by severity",
   "p.issues.overdue_count": "Overdue",
@@ -2791,7 +3353,8 @@ export const PAGES_EN = {
   "p.issues.loading": "Loading…",
   "p.issues.count_one": "{n} issue, most serious first",
   "p.issues.count_other": "{n} issues, most serious first",
-  "p.issues.truncated": "Showing the first {n}; narrow the filters to see the rest.",
+  "p.issues.truncated":
+    "Showing the first {n}; narrow the filters to see the rest.",
   "p.issues.title_col": "Issue",
   "p.issues.kind_col": "Kind",
   "p.issues.severity_col": "Severity",
@@ -2817,11 +3380,15 @@ export const PAGES_EN = {
   "l.enum.issue_kind.question": "question",
   "l.enum.issue_kind.improvement": "improvement",
   "l.enum.issue_kind.concern": "concern",
-  "p.signin.oidc_idle": "You were signed out because you were inactive for a while. Please sign in again.",
-  "p.plans.pid.board.only_first_tasks": "This plan has {total} tasks; the board shows the first {shown}. Narrow it by component, or read the rest through the API.",
-  "p.plans.pid.modules_failed": "Which tools this plan uses could not be checked, so every tool is listed.",
+  "p.signin.oidc_idle":
+    "You were signed out because you were inactive for a while. Please sign in again.",
+  "p.plans.pid.board.only_first_tasks":
+    "This plan has {total} tasks; the board shows the first {shown}. Narrow it by component, or read the rest through the API.",
+  "p.plans.pid.modules_failed":
+    "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",
-  "p._layout_svelte.handling_mark_unknown": "Handling mark: could not be checked. Treat this plan as marked until it is.",
+  "p._layout_svelte.handling_mark_unknown":
+    "Handling mark: could not be checked. Treat this plan as marked until it is.",
   "l.enum.cr_status.draft": "draft",
   "l.enum.cr_status.submitted": "submitted",
   "l.enum.cr_status.under_review": "under review",
@@ -2836,11 +3403,13 @@ export const PAGES_EN = {
   "l.enum.cr_kind.other": "other",
   "p.change_requests.change_requests_ppm": "Change requests — PPM",
   "p.change_requests.change_requests": "Change requests",
-  "p.change_requests.intro": "A change request is a controlled proposal to change an approved baseline. One named approver, who is not the requester, decides and gives a reason. Impacts are what the requester stated; a forecast is shown only when what-if edits are attached.",
+  "p.change_requests.intro":
+    "A change request is a controlled proposal to change an approved baseline. One named approver, who is not the requester, decides and gives a reason. Impacts are what the requester stated; a forecast is shown only when what-if edits are attached.",
   "p.change_requests.could_not_load": "Could not load the change requests",
   "p.change_requests.by_status": "Change requests by status",
   "p.change_requests.awaiting": "Awaiting a decision",
-  "p.change_requests.oldest_open": "Oldest open: {title} ({days} calendar days)",
+  "p.change_requests.oldest_open":
+    "Oldest open: {title} ({days} calendar days)",
   "p.change_requests.show": "Show",
   "p.change_requests.all_statuses": "All statuses",
   "p.change_requests.open_only": "Open ones only",
@@ -2861,7 +3430,8 @@ export const PAGES_EN = {
   "p.change_requests.plan_link": "Open the plan's governance page",
   "p.director_pack.director_packs_ppm": "Director packs — PPM",
   "p.director_pack.director_packs": "Director packs",
-  "p.director_pack.intro": "A director pack is the month's report to directors, drafted once, issued by a named person and then frozen: an issued pack never changes, and a correction is a new version with a note. Each figure below is read from the issued pack; nothing is recalculated here.",
+  "p.director_pack.intro":
+    "A director pack is the month's report to directors, drafted once, issued by a named person and then frozen: an issued pack never changes, and a correction is a new version with a note. Each figure below is read from the issued pack; nothing is recalculated here.",
   "p.director_pack.could_not_load": "Could not load the director packs",
   "p.director_pack.could_not_load_one": "Could not load this director pack",
   "p.director_pack.loading": "Loading…",
@@ -2873,17 +3443,23 @@ export const PAGES_EN = {
   "p.director_pack.col_issued": "Issued",
   "p.director_pack.status_draft": "draft",
   "p.director_pack.status_issued": "issued",
-  "p.director_pack.open_pack": "Open the pack for {period}, {audience}, version {version}",
+  "p.director_pack.open_pack":
+    "Open the pack for {period}, {audience}, version {version}",
   "p.director_pack.all_packs": "All director packs",
   "p.director_pack.pack_heading": "Director pack {period} — {audience}",
-  "p.director_pack.version_line": "Version {version} · {status} · cut-off {cutoff}",
+  "p.director_pack.version_line":
+    "Version {version} · {status} · cut-off {cutoff}",
   "p.director_pack.issued_on": "Issued {when}",
-  "p.director_pack.draft_note": "This is a draft. It is not yet issued, so it is not frozen.",
+  "p.director_pack.draft_note":
+    "This is a draft. It is not yet issued, so it is not frozen.",
   "p.director_pack.change_note": "Change note: {note}",
-  "p.director_pack.previous_pack": "Compared with the {period} pack, version {version}.",
+  "p.director_pack.previous_pack":
+    "Compared with the {period} pack, version {version}.",
   "p.director_pack.download_pdf": "Download as PDF",
-  "p.director_pack.pdf_note": "The PDF has the same figures but its fixed words are in English. To keep another language, print this page.",
-  "p.director_pack.basis": "The records are as they stood when the pack was drafted, dated on or before the cut-off. Issues and change requests keep no status history, so one closed after the cut-off but before drafting shows as closed. A section with nothing to show says so; absence is never shown as zero or green.",
+  "p.director_pack.pdf_note":
+    "The PDF has the same figures but its fixed words are in English. To keep another language, print this page.",
+  "p.director_pack.basis":
+    "The records are as they stood when the pack was drafted, dated on or before the cut-off. Issues and change requests keep no status history, so one closed after the cut-off but before drafting shows as closed. A section with nothing to show says so; absence is never shown as zero or green.",
   "p.director_pack.s_quality": "Data quality",
   "p.director_pack.s_changed": "What changed",
   "p.director_pack.s_map": "Portfolio map",
@@ -2897,12 +3473,14 @@ export const PAGES_EN = {
   "p.director_pack.s_issues": "Issues",
   "p.director_pack.s_changes": "Change requests",
   "p.director_pack.plans_included": "Plans included: {n}",
-  "p.director_pack.plans_left_out": "Plans left out because they are private or marked: {n}",
+  "p.director_pack.plans_left_out":
+    "Plans left out because they are private or marked: {n}",
   "p.director_pack.sections_missing": "Sections not yet built: {list}",
   "p.director_pack.all_sections": "Every section of the pack is present.",
   "p.director_pack.nothing_here": "Nothing to show in this section.",
   "p.director_pack.changed_issues": "Open issues: {now}, {change}",
-  "p.director_pack.changed_changes": "Change requests waiting for a decision: {now}, {change}",
+  "p.director_pack.changed_changes":
+    "Change requests waiting for a decision: {now}, {change}",
   "p.director_pack.changed_was": "was {before}",
   "p.director_pack.changed_unchanged": "unchanged",
   "p.director_pack.changed_first": "no earlier pack to compare with",
@@ -2922,7 +3500,8 @@ export const PAGES_EN = {
   "p.director_pack.c_owner_role": "Owner (role)",
   "p.director_pack.c_decide_by": "Decide by",
   "p.director_pack.c_hours_open": "Hours open",
-  "p.director_pack.ex_window": "An exception that is not complete within {hours} hours of opening is breached.",
+  "p.director_pack.ex_window":
+    "An exception that is not complete within {hours} hours of opening is breached.",
   "p.director_pack.ex_open": "Open: {n}",
   "p.director_pack.ex_breached": "Breached: {n}",
   "p.director_pack.ex_closed": "Closed in the period: {n}",
@@ -2940,15 +3519,18 @@ export const PAGES_EN = {
   "p.director_pack.c_allocs": "Allocations flagged",
   "p.director_pack.reason_hold": "reviewed as hold",
   "p.director_pack.reason_no_review": "planned date passed without a review",
-  "p.director_pack.fy_line": "Financial year {label}, {start} to {end}. Capital and revenue are shown apart, and currencies are never added together.",
+  "p.director_pack.fy_line":
+    "Financial year {label}, {start} to {end}. Capital and revenue are shown apart, and currencies are never added together.",
   "p.director_pack.c_source": "Funding source",
   "p.director_pack.c_class": "Class",
   "p.director_pack.c_budget": "Budget",
   "p.director_pack.c_spend": "Spend to date",
   "p.director_pack.c_variance": "Variance",
   "p.director_pack.no_funding_source": "no funding source",
-  "p.director_pack.forecast_line": "Whole-life forecast in {currency}: actual {actual}, estimate at completion {eac}",
-  "p.director_pack.unfunded_lines": "Lines with no funding source: {n}. Lines with no dates: {dated}.",
+  "p.director_pack.forecast_line":
+    "Whole-life forecast in {currency}: actual {actual}, estimate at completion {eac}",
+  "p.director_pack.unfunded_lines":
+    "Lines with no funding source: {n}. Lines with no dates: {dated}.",
   "p.director_pack.c_chain": "Chain completed (%)",
   "p.director_pack.c_buffer": "Buffer consumed (%)",
   "p.director_pack.c_zone": "Zone",
@@ -2957,25 +3539,33 @@ export const PAGES_EN = {
   "p.director_pack.c_previous": "Previous pack",
   "p.director_pack.edge_below": "recovery: drawn at the lower edge",
   "p.director_pack.edge_above": "overrun: drawn at the upper edge",
-  "p.director_pack.fever_none_no_buffer": "no fever-chart point: no project buffer is declared",
-  "p.director_pack.fever_none_no_baseline": "no fever-chart point: no schedule baseline",
-  "p.director_pack.fever_none_no_chain": "no fever-chart point: no critical work with a duration to measure",
-  "p.director_pack.fever_none_no_forecast": "no fever-chart point: the schedule cannot be forecast now",
-  "p.director_pack.fever_lines": "Zone lines (buffer consumed % at 0 % and at 100 % chain completed): green to amber {ga0} to {ga1}; amber to red {ar0} to {ar1}.",
+  "p.director_pack.fever_none_no_buffer":
+    "no fever-chart point: no project buffer is declared",
+  "p.director_pack.fever_none_no_baseline":
+    "no fever-chart point: no schedule baseline",
+  "p.director_pack.fever_none_no_chain":
+    "no fever-chart point: no critical work with a duration to measure",
+  "p.director_pack.fever_none_no_forecast":
+    "no fever-chart point: the schedule cannot be forecast now",
+  "p.director_pack.fever_lines":
+    "Zone lines (buffer consumed % at 0 % and at 100 % chain completed): green to amber {ga0} to {ga1}; amber to red {ar0} to {ar1}.",
   "p.director_pack.c_bac": "Budget at completion",
   "p.director_pack.c_ev": "Earned value",
   "p.director_pack.c_ac": "Actual cost",
   "p.director_pack.c_spi": "SPI",
   "p.director_pack.c_cpi": "CPI",
-  "p.director_pack.below_threshold": "Below the earned-value threshold: budget at completion {bac}",
+  "p.director_pack.below_threshold":
+    "Below the earned-value threshold: budget at completion {bac}",
   "p.director_pack.no_baseline": "no baseline",
-  "p.director_pack.evm_ratio_note": "SPI and CPI are shown to two places; blank means not defined, not zero.",
+  "p.director_pack.evm_ratio_note":
+    "SPI and CPI are shown to two places; blank means not defined, not zero.",
   "p.director_pack.c_recurrence": "Recurrence",
   "p.director_pack.c_classification": "Classification",
   "p.director_pack.c_claimed": "Claimed",
   "p.director_pack.c_validated": "Validated",
   "p.director_pack.c_unvalidated": "Claimed, not validated",
-  "p.director_pack.benefits_note": "Realized but not validated is a claim, not a validated benefit. Recurring amounts are yearly and are never added to one-off amounts.",
+  "p.director_pack.benefits_note":
+    "Realized but not validated is a claim, not a validated benefit. Recurring amounts are yearly and are never added to one-off amounts.",
   "p.director_pack.c_pool": "Skill pool",
   "p.director_pack.c_demand": "Demand (FTE)",
   "p.director_pack.c_supply": "Supply (FTE)",
@@ -2983,7 +3573,8 @@ export const PAGES_EN = {
   "p.director_pack.c_month": "Month",
   "p.director_pack.c_reading": "Reading",
   "p.director_pack.no_pool": "no pool assigned",
-  "p.director_pack.capacity_note": "Each cell has a word and a symbol as well as a colour. No supply recorded is not zero capacity.",
+  "p.director_pack.capacity_note":
+    "Each cell has a word and a symbol as well as a colour. No supply recorded is not zero capacity.",
   "p.director_pack.partners_short": "partner delivery below commitment",
   "p.director_pack.open_issues": "Open issues: {n}",
   "p.director_pack.awaiting": "Change requests awaiting a decision: {n}",
@@ -3043,28 +3634,38 @@ export const PAGES_EN = {
   "p.critical_chain.outcome_staggered": "start later",
   "p.critical_chain.outcome_exceeds_drum": "asks more than the drum has",
   "p.critical_chain.outcome_no_slot": "no start fits",
-  "p.critical_chain.advice": "This is advice. Nothing has been changed, and a person decides what to do.",
+  "p.critical_chain.advice":
+    "This is advice. Nothing has been changed, and a person decides what to do.",
   "p.critical_chain.link_plan": "Plan",
   "p.critical_chain.link_buffers": "Buffer management",
   "p.critical_chain.link_chain": "Critical chain",
   "p.critical_chain.link_critical_path": "Critical path",
   "p.critical_chain.nav_pipeline": "Drum and pipeline",
   "p.critical_chain.chain_h1": "Critical chain and buffers",
-  "p.critical_chain.chain_lede": "The critical chain is the longest run of tasks once people's time is respected: it follows dependencies and the waits for a person who is busy on another task. It is shown beside the critical path, which follows dependencies alone; the two are never blended.",
+  "p.critical_chain.chain_lede":
+    "The critical chain is the longest run of tasks once people's time is respected: it follows dependencies and the waits for a person who is busy on another task. It is shown beside the critical path, which follows dependencies alone; the two are never blended.",
   "p.critical_chain.chain_h2": "The critical chain",
   "p.critical_chain.no_chain": "There is no critical chain: {reason}",
-  "p.critical_chain.reason_no_assignments": "nobody is assigned to an unfinished task, so there are no waits for people to follow",
+  "p.critical_chain.reason_no_assignments":
+    "nobody is assigned to an unfinished task, so there are no waits for people to follow",
   "p.critical_chain.reason_no_scheduled_tasks": "no task has a schedule",
   "p.critical_chain.chain_work": "Business days of work on the chain: {days}",
   "p.critical_chain.chain_tasks_count": "Tasks on the chain: {tasks}",
-  "p.critical_chain.chain_finish": "Once people's time is respected the plan finishes on {finish}.",
-  "p.critical_chain.chain_delay_none": "That is no later than the critical path's finish.",
-  "p.critical_chain.chain_delay": "Business days later than the critical path's finish: {days}",
-  "p.critical_chain.crosses_yes": "The chain crosses between paths: a person is shared.",
-  "p.critical_chain.crosses_no": "The chain stays on one path: no person is shared.",
-  "p.critical_chain.tied": "Another chain is just as long; this one is shown because it comes first in the plan.",
+  "p.critical_chain.chain_finish":
+    "Once people's time is respected the plan finishes on {finish}.",
+  "p.critical_chain.chain_delay_none":
+    "That is no later than the critical path's finish.",
+  "p.critical_chain.chain_delay":
+    "Business days later than the critical path's finish: {days}",
+  "p.critical_chain.crosses_yes":
+    "The chain crosses between paths: a person is shared.",
+  "p.critical_chain.crosses_no":
+    "The chain stays on one path: no person is shared.",
+  "p.critical_chain.tied":
+    "Another chain is just as long; this one is shown because it comes first in the plan.",
   "p.critical_chain.timeline_label": "The chain on a timeline",
-  "p.critical_chain.timeline_caption": "Each solid bar is a task on the chain. A dashed bar is the project buffer. The table below gives the same figures.",
+  "p.critical_chain.timeline_caption":
+    "Each solid bar is a task on the chain. A dashed bar is the project buffer. The table below gives the same figures.",
   "p.critical_chain.col_task": "Task",
   "p.critical_chain.col_days": "Business days",
   "p.critical_chain.col_start": "Start",
@@ -3079,17 +3680,24 @@ export const PAGES_EN = {
   "p.critical_chain.cp_finish": "The critical path finishes on {finish}.",
   "p.critical_chain.cp_none": "There is no critical path to show.",
   "p.critical_chain.buffers_h2": "Buffers",
-  "p.critical_chain.buffers_lede": "Tasks are scheduled at their aggressive estimates; the safety taken out of each task is pooled into a buffer. Sizes are in business days. The rule: {rule}.",
-  "p.critical_chain.rule_cut_and_paste": "half of the safety removed (cut and paste)",
-  "p.critical_chain.rule_root_sum_squares": "the square root of the sum of the squares of the safety removed",
+  "p.critical_chain.buffers_lede":
+    "Tasks are scheduled at their aggressive estimates; the safety taken out of each task is pooled into a buffer. Sizes are in business days. The rule: {rule}.",
+  "p.critical_chain.rule_cut_and_paste":
+    "half of the safety removed (cut and paste)",
+  "p.critical_chain.rule_root_sum_squares":
+    "the square root of the sum of the squares of the safety removed",
   "p.critical_chain.no_buffers": "There are no buffers to show: {reason}",
-  "p.critical_chain.reason_estimates_missing": "some tasks on the chain have no aggressive and safe estimate yet. Record them through the estimates service; there is no screen for that yet.",
+  "p.critical_chain.reason_estimates_missing":
+    "some tasks on the chain have no aggressive and safe estimate yet. Record them through the estimates service; there is no screen for that yet.",
   "p.critical_chain.missing_h3": "Tasks on the chain without both estimates",
-  "p.critical_chain.project_buffer": "Project buffer: {days} business days, protecting a chain that finishes on {finish}. With the buffer the date is {with}.",
-  "p.critical_chain.project_safety": "Safety removed from the chain's tasks: {days} business days.",
+  "p.critical_chain.project_buffer":
+    "Project buffer: {days} business days, protecting a chain that finishes on {finish}. With the buffer the date is {with}.",
+  "p.critical_chain.project_safety":
+    "Safety removed from the chain's tasks: {days} business days.",
   "p.critical_chain.project_buffer_bar": "Project buffer",
   "p.critical_chain.feeding_h3": "Feeding buffers",
-  "p.critical_chain.feeding_none": "No other chain of tasks joins the critical chain.",
+  "p.critical_chain.feeding_none":
+    "No other chain of tasks joins the critical chain.",
   "p.critical_chain.col_feeding_tasks": "Feeding tasks",
   "p.critical_chain.col_joins": "Joins",
   "p.critical_chain.col_buffer": "Buffer (business days)",
@@ -3098,31 +3706,42 @@ export const PAGES_EN = {
   "p.critical_chain.push_yes": "yes, by {days} business days",
   "p.critical_chain.unsized": "not sized: an estimate is missing",
   "p.critical_chain.resource_h3": "Resource buffers (readiness alerts)",
-  "p.critical_chain.resource_lede": "A resource buffer is not time. It is a reminder that a person must be ready before their task on the chain starts, {lead} business days ahead.",
+  "p.critical_chain.resource_lede":
+    "A resource buffer is not time. It is a reminder that a person must be ready before their task on the chain starts, {lead} business days ahead.",
   "p.critical_chain.col_person": "Person",
   "p.critical_chain.col_alert_on": "Be ready by",
   "p.critical_chain.col_task_starts": "Task starts",
   "p.critical_chain.hidden": "(hidden)",
-  "p.critical_chain.likely_h3": "Scheduled at their likely duration (no aggressive estimate)",
+  "p.critical_chain.likely_h3":
+    "Scheduled at their likely duration (no aggressive estimate)",
   "p.critical_chain.could_not_load_chain": "Could not load the critical chain",
   "p.critical_chain.buffers_h1": "Buffer management",
-  "p.critical_chain.buffers_lede2": "Each buffer is read against the live schedule: how much of the chain is done and how much of the buffer the forecast slip has used. A buffer in the red needs a recovery action, which a person agrees and records.",
-  "p.critical_chain.no_plan": "No buffer plan has been frozen for this plan. Freeze one once the chain and buffers are agreed; later readings are measured against it.",
-  "p.critical_chain.freeze_confirm": "I have read the chain and buffers and want to freeze them as the plan",
+  "p.critical_chain.buffers_lede2":
+    "Each buffer is read against the live schedule: how much of the chain is done and how much of the buffer the forecast slip has used. A buffer in the red needs a recovery action, which a person agrees and records.",
+  "p.critical_chain.no_plan":
+    "No buffer plan has been frozen for this plan. Freeze one once the chain and buffers are agreed; later readings are measured against it.",
+  "p.critical_chain.freeze_confirm":
+    "I have read the chain and buffers and want to freeze them as the plan",
   "p.critical_chain.freeze_button": "Freeze the buffer plan",
-  "p.critical_chain.frozen_on": "Measured against the buffer plan frozen on {date}.",
+  "p.critical_chain.frozen_on":
+    "Measured against the buffer plan frozen on {date}.",
   "p.critical_chain.alerts_h2": "Alerts",
   "p.critical_chain.alerts_none": "No buffer is in the red.",
-  "p.critical_chain.alert_project": "The project buffer is in the red: {consumed}% used. Chain: {chain}.",
-  "p.critical_chain.alert_feeding": "A feeding buffer is in the red: {consumed}% used. Chain: {chain}, joining {joins}.",
-  "p.critical_chain.needs_action": "No open recovery action is recorded for: {buffers}.",
+  "p.critical_chain.alert_project":
+    "The project buffer is in the red: {consumed}% used. Chain: {chain}.",
+  "p.critical_chain.alert_feeding":
+    "A feeding buffer is in the red: {consumed}% used. Chain: {chain}, joining {joins}.",
+  "p.critical_chain.needs_action":
+    "No open recovery action is recorded for: {buffers}.",
   "p.critical_chain.charts_h2": "Fever charts",
   "p.critical_chain.project_label": "Project buffer",
   "p.critical_chain.feeding_label": "Feeding buffer: {chain}",
   "p.critical_chain.axis_x": "Chain completed (%)",
   "p.critical_chain.axis_y": "Buffer used (%)",
-  "p.critical_chain.chart_caption": "{buffer}: {zone}; {consumed}% of the buffer used; {done}% of the chain done.",
-  "p.critical_chain.beyond_edge": "The true figure is outside the chart, so the point is drawn on the edge.",
+  "p.critical_chain.chart_caption":
+    "{buffer}: {zone}; {consumed}% of the buffer used; {done}% of the chain done.",
+  "p.critical_chain.beyond_edge":
+    "The true figure is outside the chart, so the point is drawn on the edge.",
   "p.critical_chain.table_h2": "The same figures as a table",
   "p.critical_chain.col_size": "Buffer (business days)",
   "p.critical_chain.col_done": "Chain done (%)",
@@ -3155,21 +3774,27 @@ export const PAGES_EN = {
   "p.critical_chain.could_not_load_buffers": "Could not load buffer management",
   "p.critical_chain.could_not_save": "Could not save that",
   "p.critical_chain.pipeline_h1": "Drum and pipeline",
-  "p.critical_chain.pipeline_lede": "The drum is the skill pool the portfolio depends on most. Projects that need it at the same time are staggered: the service proposes later starts, with a capacity buffer between projects, and explains each. It never moves a date.",
+  "p.critical_chain.pipeline_lede":
+    "The drum is the skill pool the portfolio depends on most. Projects that need it at the same time are staggered: the service proposes later starts, with a capacity buffer between projects, and explains each. It never moves a date.",
   "p.critical_chain.drum_h2": "The drum",
-  "p.critical_chain.drum_named": "The drum is {name}: named by the portfolio office.",
-  "p.critical_chain.drum_overloaded": "The drum is {name}: no pool is named, and this one has the largest shortfall.",
+  "p.critical_chain.drum_named":
+    "The drum is {name}: named by the portfolio office.",
+  "p.critical_chain.drum_overloaded":
+    "The drum is {name}: no pool is named, and this one has the largest shortfall.",
   "p.critical_chain.no_drum": "There is no drum: {why}",
   "p.critical_chain.set_h3": "Name the drum",
   "p.critical_chain.pick_pool": "Skill pool",
   "p.critical_chain.set_button": "Name it as the drum",
   "p.critical_chain.clear_button": "Clear the naming",
-  "p.critical_chain.capacity": "Capacity of the drum: {fte} FTE. Capacity buffer between projects: {days} days.",
-  "p.critical_chain.no_capacity": "The drum has no supply recorded in the window, so there is nothing to stagger against.",
+  "p.critical_chain.capacity":
+    "Capacity of the drum: {fte} FTE. Capacity buffer between projects: {days} days.",
+  "p.critical_chain.no_capacity":
+    "The drum has no supply recorded in the window, so there is nothing to stagger against.",
   "p.critical_chain.projects_h2": "Proposed starts",
   "p.critical_chain.projects_none": "No project needs the drum in this window.",
   "p.critical_chain.pipeline_timeline": "Drum use now and as proposed",
-  "p.critical_chain.pipeline_timeline_caption": "For each project the upper bar is when it uses the drum now and the lower bar is when it would, as proposed. The table below gives the same dates.",
+  "p.critical_chain.pipeline_timeline_caption":
+    "For each project the upper bar is when it uses the drum now and the lower bar is when it would, as proposed. The table below gives the same dates.",
   "p.critical_chain.bar_now": "now",
   "p.critical_chain.bar_proposed": "proposed",
   "p.critical_chain.col_project": "Project",
@@ -3183,7 +3808,8 @@ export const PAGES_EN = {
   "p.start_queue.nav": "Start queue",
   "p.start_queue.title": "Start queue — PPM",
   "p.start_queue.h1": "Start queue",
-  "p.start_queue.lede": "Programmes that asked to start delivery and were refused, in the order they asked. A programme is refused when the work-in-progress limit is full or when the constraint pool is short of supply in the months ahead. The order never changes, and a start can still go ahead with a recorded override and a reason.",
+  "p.start_queue.lede":
+    "Programmes that asked to start delivery and were refused, in the order they asked. A programme is refused when the work-in-progress limit is full or when the constraint pool is short of supply in the months ahead. The order never changes, and a start can still go ahead with a recorded override and a reason.",
   "p.start_queue.loading": "Loading the queue…",
   "p.start_queue.none": "No programme is waiting to start.",
   "p.start_queue.col_pos": "Place",
@@ -3191,8 +3817,10 @@ export const PAGES_EN = {
   "p.start_queue.col_asked": "Asked on",
   "p.start_queue.col_why": "Why it was refused",
   "p.start_queue.col_act": "Action",
-  "p.start_queue.limit": "All {limit} places are taken: {in_delivery} programmes are in delivery.",
-  "p.start_queue.pool": "The constraint pool {pool} is short of supply in: {months}.",
+  "p.start_queue.limit":
+    "All {limit} places are taken: {in_delivery} programmes are in delivery.",
+  "p.start_queue.pool":
+    "The constraint pool {pool} is short of supply in: {months}.",
   "p.start_queue.withdraw": "Withdraw {name} from the queue",
   "p.start_queue.withdraw_short": "Withdraw",
   "p.start_queue.could_not_load": "Could not load the start queue",
@@ -3231,11 +3859,14 @@ export const PAGES_EN = {
   "p.table.empty": "Nothing to show.",
   "p.demo.tour_title": "Demonstration tour — PPM",
   "p.demo.tour_h1": "Demonstration tour",
-  "p.demo.tour_lede": "You are signed in as Example Person. Everything here is fictitious: the Northgate Transport Authority, its people, its money and its dates were made up for this demonstration. Pick any feature below and use it: you can change things, and nothing is real.",
+  "p.demo.tour_lede":
+    "You are signed in as Example Person. Everything here is fictitious: the Northgate Transport Authority, its people, its money and its dates were made up for this demonstration. Pick any feature below and use it: you can change things, and nothing is real.",
   "p.demo.tour_story_h2": "The story",
-  "p.demo.tour_story": "The Northgate Transport Authority is modernising its rail network: new signalling, step-free stations and a digital depot. Ten plans, eight people, four organizations, and a few things going wrong on purpose, so the screens have something to show.",
+  "p.demo.tour_story":
+    "The Northgate Transport Authority is modernising its rail network: new signalling, step-free stations and a digital depot. Ten plans, eight people, four organizations, and a few things going wrong on purpose, so the screens have something to show.",
   "p.demo.tour_open": "Open",
-  "p.demo.tour_no_plan": "The North Line plan was not found, so the links to its pages are hidden. Run the seed again.",
+  "p.demo.tour_no_plan":
+    "The North Line plan was not found, so the links to its pages are hidden. Run the seed again.",
   "p.demo.tour_toc": "Features",
   "p.demo.g_overview": "The portfolio at a glance",
   "p.demo.g_delivery": "Delivering one project (North Line interlocking)",
@@ -3247,91 +3878,127 @@ export const PAGES_EN = {
   "p.demo.g_chain": "Critical chain",
   "p.demo.g_tools": "Tools",
   "p.demo.f_kanban_t": "My kanban board",
-  "p.demo.f_kanban_d": "Your own open tasks, in columns by status, from every project. Move one with the mouse or its menu; the task's status changes for everyone.",
+  "p.demo.f_kanban_d":
+    "Your own open tasks, in columns by status, from every project. Move one with the mouse or its menu; the task's status changes for everyone.",
   "p.demo.f_me_t": "My work",
-  "p.demo.f_me_d": "The same tasks by due date in your own time zone: overdue, today, this week, later.",
+  "p.demo.f_me_d":
+    "The same tasks by due date in your own time zone: overdue, today, this week, later.",
   "p.demo.f_plans_t": "Plans",
-  "p.demo.f_plans_d": "Ten fictitious plans: one portfolio, three programmes and six projects for the Northgate Transport Authority. Open any one.",
+  "p.demo.f_plans_d":
+    "Ten fictitious plans: one portfolio, three programmes and six projects for the Northgate Transport Authority. Open any one.",
   "p.demo.f_dashboard_t": "Portfolio dashboard",
-  "p.demo.f_dashboard_d": "Status by kind and stage, with red, amber and green counts.",
+  "p.demo.f_dashboard_d":
+    "Status by kind and stage, with red, amber and green counts.",
   "p.demo.f_gantt_t": "Gantt",
   "p.demo.f_gantt_d": "Every project's schedule on one timeline.",
   "p.demo.f_milestones_t": "Milestones",
-  "p.demo.f_milestones_d": "Design approved, equipment delivered and go-live for each project.",
+  "p.demo.f_milestones_d":
+    "Design approved, equipment delivered and go-live for each project.",
   "p.demo.f_calendar_t": "Calendar",
   "p.demo.f_calendar_d": "Milestones and due dates by month.",
   "p.demo.f_board_t": "Task board",
-  "p.demo.f_board_d": "Eight tasks from survey to hand-over, in columns by status. One is blocked on the safety assurance.",
+  "p.demo.f_board_d":
+    "Eight tasks from survey to hand-over, in columns by status. One is blocked on the safety assurance.",
   "p.demo.f_critical_path_t": "Critical path",
-  "p.demo.f_critical_path_d": "The chain of dependent tasks that sets the finish date.",
+  "p.demo.f_critical_path_d":
+    "The chain of dependent tasks that sets the finish date.",
   "p.demo.f_earned_value_t": "Earned value",
-  "p.demo.f_earned_value_d": "Planned value, earned value and cost, with the schedule and cost indices.",
+  "p.demo.f_earned_value_d":
+    "Planned value, earned value and cost, with the schedule and cost indices.",
   "p.demo.f_schedule_health_t": "Schedule health",
-  "p.demo.f_schedule_health_d": "Checks on the plan's logic: missing links, long tasks, constraints.",
+  "p.demo.f_schedule_health_d":
+    "Checks on the plan's logic: missing links, long tasks, constraints.",
   "p.demo.f_wbs_t": "Work breakdown",
   "p.demo.f_wbs_d": "The project broken into work packages.",
   "p.demo.f_risk_t": "Risk register",
-  "p.demo.f_risk_d": "Three risks on each project, scored by probability and impact.",
+  "p.demo.f_risk_d":
+    "Three risks on each project, scored by probability and impact.",
   "p.demo.f_issues_t": "Issues",
-  "p.demo.f_issues_d": "A blocked cable route, a double-booked test rig and a delayed permit.",
+  "p.demo.f_issues_d":
+    "A blocked cable route, a double-booked test rig and a delayed permit.",
   "p.demo.f_change_requests_t": "Change requests",
-  "p.demo.f_change_requests_d": "A request to move go-live by two weeks, with its schedule and cost impact, waiting for the programme director.",
+  "p.demo.f_change_requests_d":
+    "A request to move go-live by two weeks, with its schedule and cost impact, waiting for the programme director.",
   "p.demo.f_joint_risk_t": "Cost and schedule risk together",
-  "p.demo.f_joint_risk_d": "What the risks do to the finish date and the cost, together.",
+  "p.demo.f_joint_risk_d":
+    "What the risks do to the finish date and the cost, together.",
   "p.demo.f_financials_t": "Financials",
-  "p.demo.f_financials_d": "Budget, actual spend and variance across the portfolio.",
+  "p.demo.f_financials_d":
+    "Budget, actual spend and variance across the portfolio.",
   "p.demo.f_cost_risk_t": "Cost risk",
-  "p.demo.f_cost_risk_d": "The spread of likely cost, with the P50 and the P80.",
+  "p.demo.f_cost_risk_d":
+    "The spread of likely cost, with the P50 and the P80.",
   "p.demo.f_ledger_t": "Funding ledger",
-  "p.demo.f_ledger_d": "A grant and a reserve, traced to the budget lines that draw on them. Money not yet planned on a line is shown as untraced.",
+  "p.demo.f_ledger_d":
+    "A grant and a reserve, traced to the budget lines that draw on them. Money not yet planned on a line is shown as untraced.",
   "p.demo.f_costs_t": "Costs on a project",
-  "p.demo.f_costs_d": "Labour costs from the rate tables, and other costs by task.",
+  "p.demo.f_costs_d":
+    "Labour costs from the rate tables, and other costs by task.",
   "p.demo.f_resources_t": "Resources",
-  "p.demo.f_resources_d": "Eight fictitious people, their roles and what they are booked on.",
+  "p.demo.f_resources_d":
+    "Eight fictitious people, their roles and what they are booked on.",
   "p.demo.f_capacity_t": "Capacity heatmap",
-  "p.demo.f_capacity_d": "Supply and demand by skill pool and month. Red months show where the signalling engineers are short.",
+  "p.demo.f_capacity_d":
+    "Supply and demand by skill pool and month. Red months show where the signalling engineers are short.",
   "p.demo.f_key_persons_t": "Key people",
-  "p.demo.f_key_persons_d": "Single points of failure: one engineer who nobody can replace yet, and a role with a ready successor.",
+  "p.demo.f_key_persons_d":
+    "Single points of failure: one engineer who nobody can replace yet, and a role with a ready successor.",
   "p.demo.f_objectives_t": "Objectives",
-  "p.demo.f_objectives_d": "Three objectives, each tied to the plans that serve it.",
+  "p.demo.f_objectives_d":
+    "Three objectives, each tied to the plans that serve it.",
   "p.demo.f_okrs_t": "Goals and key results",
   "p.demo.f_okrs_d": "Key results with check-ins and confidence.",
   "p.demo.f_kpis_t": "Key measures",
-  "p.demo.f_kpis_d": "Delay minutes, passenger satisfaction and spend against plan, with a reading each month.",
+  "p.demo.f_kpis_d":
+    "Delay minutes, passenger satisfaction and spend against plan, with a reading each month.",
   "p.demo.f_proposals_t": "Work intake",
-  "p.demo.f_proposals_d": "Five proposals at different stages, from drafted to approved and rejected.",
+  "p.demo.f_proposals_d":
+    "Five proposals at different stages, from drafted to approved and rejected.",
   "p.demo.f_ideas_t": "Ideas",
   "p.demo.f_ideas_d": "Four ideas with votes. Convert one into a proposal.",
   "p.demo.f_scenarios_t": "Scenarios",
-  "p.demo.f_scenarios_d": "What fits under a budget cap if the signalling work comes first.",
+  "p.demo.f_scenarios_d":
+    "What fits under a budget cap if the signalling work comes first.",
   "p.demo.f_director_packs_t": "Director packs",
-  "p.demo.f_director_packs_d": "Executive and board packs for September, assembled from the live data. Open one to see every section.",
+  "p.demo.f_director_packs_d":
+    "Executive and board packs for September, assembled from the live data. Open one to see every section.",
   "p.demo.f_organizations_t": "Partner organizations",
-  "p.demo.f_organizations_d": "The authority, its delivery firm, a partner and a supplier.",
+  "p.demo.f_organizations_d":
+    "The authority, its delivery firm, a partner and a supplier.",
   "p.demo.f_milestone_signoffs_t": "Milestone sign-off",
-  "p.demo.f_milestone_signoffs_d": "Go-live needs the partner and the supplier to sign. The supplier has; the partner has not, so go-live is delivered but not met.",
+  "p.demo.f_milestone_signoffs_d":
+    "Go-live needs the partner and the supplier to sign. The supplier has; the partner has not, so go-live is delivered but not met.",
   "p.demo.f_cutover_t": "Cutover go/no-go",
-  "p.demo.f_cutover_d": "Three stop criteria, one met, one co-signature in. Go would be refused, and the screen says why.",
+  "p.demo.f_cutover_d":
+    "Three stop criteria, one met, one co-signature in. Go would be refused, and the screen says why.",
   "p.demo.f_deployment_moves_t": "Deployment moves",
-  "p.demo.f_deployment_moves_d": "A request to move the installation start by two weeks, with the knock-on on other tasks and its labour cost, waiting for approval.",
+  "p.demo.f_deployment_moves_d":
+    "A request to move the installation start by two weeks, with the knock-on on other tasks and its labour cost, waiting for approval.",
   "p.demo.f_start_queue_t": "Start queue",
-  "p.demo.f_start_queue_d": "Two programmes are in delivery and the limit is two, so the third waits in the queue, in order.",
+  "p.demo.f_start_queue_d":
+    "Two programmes are in delivery and the limit is two, so the third waits in the queue, in order.",
   "p.demo.f_critical_chain_t": "Critical chain",
-  "p.demo.f_critical_chain_d": "The chain through the dependent tasks and the people they share, with aggressive and safe estimates.",
+  "p.demo.f_critical_chain_d":
+    "The chain through the dependent tasks and the people they share, with aggressive and safe estimates.",
   "p.demo.f_buffers_t": "Buffer management",
-  "p.demo.f_buffers_d": "The frozen buffer plan, fever charts and a recovery action.",
+  "p.demo.f_buffers_d":
+    "The frozen buffer plan, fever charts and a recovery action.",
   "p.demo.f_pipeline_t": "Drum and pipeline",
-  "p.demo.f_pipeline_d": "The skill pool the portfolio depends on most, and proposed staggered starts.",
+  "p.demo.f_pipeline_d":
+    "The skill pool the portfolio depends on most, and proposed staggered starts.",
   "p.demo.f_search_t": "Search",
-  "p.demo.f_search_d": "Type in the magnifying-glass in the header. This link searches for “signal”.",
+  "p.demo.f_search_d":
+    "Type in the magnifying-glass in the header. This link searches for “signal”.",
   "p.demo.f_email_deliveries_t": "Email deliveries",
-  "p.demo.f_email_deliveries_d": "Every email the service tried to send. Nothing is sent from the demonstration, so this list is empty.",
+  "p.demo.f_email_deliveries_d":
+    "Every email the service tried to send. Nothing is sent from the demonstration, so this list is empty.",
   "p.demo.f_display_t": "Display settings",
   "p.demo.f_display_d": "Text size, themes, simple view and language.",
   "p.kanban.nav": "My kanban",
   "p.kanban.title": "My kanban board — PPM",
   "p.kanban.h1": "My kanban board",
-  "p.kanban.lede": "Your open tasks across every plan, in columns by status. Move a card with the mouse, or press Enter on a card to choose a column from a menu. A move changes the task's status for everyone.",
+  "p.kanban.lede":
+    "Your open tasks across every plan, in columns by status. Move a card with the mouse, or press Enter on a card to choose a column from a menu. A move changes the task's status for everyone.",
   "p.kanban.board_label": "Your tasks by status",
   "p.kanban.loading": "Loading your board…",
   "p.kanban.none": "You have no open tasks.",
@@ -3349,17 +4016,21 @@ export const PAGES_EN = {
   "p.kanban.sign_in": "Sign in to see your board.",
   "p.kanban.could_not_load": "Could not load your board",
   "p.kanban.could_not_move": "Could not move the task; the board is as it was.",
-  "p.kanban.hidden": "{n} tasks are not shown because their plans are not readable by you.",
+  "p.kanban.hidden":
+    "{n} tasks are not shown because their plans are not readable by you.",
   "p.dashboard.my_home": "My Home Page",
-  "p.demo.banner": "This is a demonstration with fictitious data. Nothing here is real.",
+  "p.demo.banner":
+    "This is a demonstration with fictitious data. Nothing here is real.",
   "p.demo.banner_tour": "Take the tour",
   "p.demo.signin_h2": "Demonstration",
-  "p.demo.signin_lede": "This site is a demonstration. Sign in with example@example.com to see every feature with fictitious data. No email is sent.",
+  "p.demo.signin_lede":
+    "This site is a demonstration. Sign in with example@example.com to see every feature with fictitious data. No email is sent.",
   "p.demo.signin_button": "Sign in to the demonstration",
   "p.demo.signin_wrong": "The demonstration accepts only example@example.com.",
   "p.search.title": "Search — PPM",
   "p.search.h1": "Search plans",
-  "p.search.lede": "Plans whose name, identifiers, keywords or tags match your search. Plans you may not read are not listed.",
+  "p.search.lede":
+    "Plans whose name, identifiers, keywords or tags match your search. Plans you may not read are not listed.",
   "p.search.none_asked": "Type something in the search box in the header.",
   "p.search.searching": "Searching…",
   "p.search.results": "{n} plans match “{q}”.",
@@ -3377,12 +4048,14 @@ export const PAGES_EN = {
   "p.cutover.link": "Cutover go/no-go",
   "p.cutover.title": "Cutover go/no-go — PPM",
   "p.cutover.h1": "Cutover go/no-go",
-  "p.cutover.lede": "The decision to cut over a safety-critical system. The stop criteria are written and published first, and are then frozen: changing them makes a new version. Go needs every criterion met and every required co-signature. A no-go, or a delay for safety, is a decision taken on the criteria; it is not slippage.",
+  "p.cutover.lede":
+    "The decision to cut over a safety-critical system. The stop criteria are written and published first, and are then frozen: changing them makes a new version. Go needs every criterion met and every required co-signature. A no-go, or a delay for safety, is a decision taken on the criteria; it is not slippage.",
   "p.cutover.loading": "Loading the decisions…",
   "p.cutover.none": "No cutover decision has been drafted.",
   "p.cutover.new_h2": "Draft a cutover decision",
   "p.cutover.new_title": "Title",
-  "p.cutover.new_criteria": "Stop criteria, one on each line (5 to 500 characters each)",
+  "p.cutover.new_criteria":
+    "Stop criteria, one on each line (5 to 500 characters each)",
   "p.cutover.draft": "Draft the decision",
   "p.cutover.version": "version {n}",
   "p.cutover.status_draft": "draft",
@@ -3426,7 +4099,8 @@ export const PAGES_EN = {
   "p.moves.link": "Deployment moves",
   "p.moves.title": "Deployment moves — PPM",
   "p.moves.h1": "Deployment moves",
-  "p.moves.lede": "A request to move a task's start. Nothing changes until the approver approves it. The knock-on on other tasks, and the labour cost of it, was worked out when the move was asked, by running the schedule with the moved date.",
+  "p.moves.lede":
+    "A request to move a task's start. Nothing changes until the approver approves it. The knock-on on other tasks, and the labour cost of it, was worked out when the move was asked, by running the schedule with the moved date.",
   "p.moves.loading": "Loading the moves…",
   "p.moves.none": "No move has been requested.",
   "p.moves.request_h2": "Request a move",
@@ -3461,8 +4135,10 @@ export const PAGES_EN = {
   "p.ledger.nav": "Funding ledger",
   "p.ledger.title": "Funding ledger — PPM",
   "p.ledger.h1": "Funding ledger",
-  "p.ledger.lede": "Each funding allocation, traced to the budget lines that draw on it, their gates, the milestones met and the benefits validated. Money allocated but not planned on any line you may read is untraced, and is shown with its amount.",
-  "p.ledger.scope": "Creating allocations, mapping cost codes and reconciling a finance export are done through the API; this screen reads the ledger.",
+  "p.ledger.lede":
+    "Each funding allocation, traced to the budget lines that draw on it, their gates, the milestones met and the benefits validated. Money allocated but not planned on any line you may read is untraced, and is shown with its amount.",
+  "p.ledger.scope":
+    "Creating allocations, mapping cost codes and reconciling a finance export are done through the API; this screen reads the ledger.",
   "p.ledger.loading": "Loading the ledger…",
   "p.ledger.none": "No funding allocation has been recorded.",
   "p.ledger.col_source": "Funding source",
@@ -3476,7 +4152,8 @@ export const PAGES_EN = {
   "p.ledger.trace": "Trace {name}",
   "p.ledger.trace_short": "Trace",
   "p.ledger.trace_h2": "What {name} bought",
-  "p.ledger.money": "Allocated {allocated}, planned on lines {planned}, spent {spent}, untraced {untraced} ({currency}).",
+  "p.ledger.money":
+    "Allocated {allocated}, planned on lines {planned}, spent {spent}, untraced {untraced} ({currency}).",
   "p.ledger.gates": "Lines with a gate: {gated}. Released: {released}.",
   "p.ledger.milestones_met": "Milestones met: {met} of {total}.",
   "p.ledger.benefits": "Benefits recorded: {n}.",
@@ -3495,10 +4172,12 @@ export const PAGES_EN = {
   "p.signoffs.nav": "Milestone sign-off",
   "p.signoffs.title": "Milestone sign-off — PPM",
   "p.signoffs.h1": "Milestone sign-off",
-  "p.signoffs.lede": "Some milestones are met only when the partner organizations they name have signed them off. Delivered is the delivery organization saying it is done; met is delivered with every sign-off in force. A sign-off that is withdrawn counts as outstanding again.",
+  "p.signoffs.lede":
+    "Some milestones are met only when the partner organizations they name have signed them off. Delivered is the delivery organization saying it is done; met is delivered with every sign-off in force. A sign-off that is withdrawn counts as outstanding again.",
   "p.signoffs.loading": "Loading the sign-offs…",
   "p.signoffs.none": "No milestone needs a partner's sign-off.",
-  "p.signoffs.totals": "Needing sign-off: {n}. Delivered: {delivered}. Met: {met}. Delivered but not met: {gap}. Met, as a share of those delivered: {share}.",
+  "p.signoffs.totals":
+    "Needing sign-off: {n}. Delivered: {delivered}. Met: {met}. Delivered but not met: {gap}. Met, as a share of those delivered: {share}.",
   "p.signoffs.no_share": "not measured",
   "p.signoffs.col_milestone": "Milestone",
   "p.signoffs.col_due": "Due",
@@ -3516,16 +4195,19 @@ export const PAGES_EN = {
   "p.signoffs.withdraw": "Withdraw",
   "p.signoffs.sign_for": "Sign {name} as the chosen organization",
   "p.signoffs.withdraw_for": "Withdraw the sign-off for {name}",
-  "p.signoffs.not_built": "Choosing which organizations a milestone needs is done through the API; this screen shows and records the sign-offs.",
+  "p.signoffs.not_built":
+    "Choosing which organizations a milestone needs is done through the API; this screen shows and records the sign-offs.",
   "p.signoffs.could_not_load": "Could not load the sign-offs",
   "p.signoffs.could_not_save": "Could not record the sign-off",
   "p.key_persons.nav": "Key people",
   "p.key_persons.title": "Key people — PPM",
   "p.key_persons.h1": "Key people and single points of failure",
-  "p.key_persons.lede": "The people and roles the portfolio cannot lose without harm, who would take over, and how ready they are. Only resource managers can read this, because it concerns named people.",
+  "p.key_persons.lede":
+    "The people and roles the portfolio cannot lose without harm, who would take over, and how ready they are. Only resource managers can read this, because it concerns named people.",
   "p.key_persons.loading": "Loading…",
   "p.key_persons.none": "No key person or role has been recorded.",
-  "p.key_persons.not_allowed": "Only resource managers can read the key people.",
+  "p.key_persons.not_allowed":
+    "Only resource managers can read the key people.",
   "p.key_persons.add_h2": "Record a key person or role",
   "p.key_persons.subject_kind": "Person or role",
   "p.key_persons.kind_person": "person",
@@ -3547,7 +4229,8 @@ export const PAGES_EN = {
   "p.key_persons.remove_short": "Remove",
   "p.key_persons.no_successor": "no successor named",
   "p.key_persons.contingent_h2": "Contingent workers",
-  "p.key_persons.contingent_note": "People marked as contingent labour, who can leave at short notice.",
+  "p.key_persons.contingent_note":
+    "People marked as contingent labour, who can leave at short notice.",
   "p.key_persons.contingent_none": "Nobody is marked as contingent.",
   "p.key_persons.contingent_add": "Mark a person as contingent",
   "p.key_persons.contingent_person": "Person reference",
@@ -3559,7 +4242,8 @@ export const PAGES_EN = {
   "p.organizations.nav": "Organizations",
   "p.organizations.title": "Organizations — PPM",
   "p.organizations.h1": "Partner organizations",
-  "p.organizations.lede": "The organizations that deliver, sponsor, supply or partner on the portfolio. A pack can be addressed to an organization, a milestone can need its sign-off, and capacity can be committed by it. Retiring an organization keeps its history.",
+  "p.organizations.lede":
+    "The organizations that deliver, sponsor, supply or partner on the portfolio. A pack can be addressed to an organization, a milestone can need its sign-off, and capacity can be committed by it. Retiring an organization keeps its history.",
   "p.organizations.loading": "Loading the organizations…",
   "p.organizations.none": "No organization has been added yet.",
   "p.organizations.add_h2": "Add an organization",
@@ -3586,10 +4270,12 @@ export const PAGES_EN = {
   "p.email_deliveries.nav": "Email deliveries",
   "p.email_deliveries.title": "Email deliveries — PPM",
   "p.email_deliveries.h1": "Email deliveries",
-  "p.email_deliveries.lede": "Every email the service tried to send, one row for each recipient: whether it was sent, is waiting to try again, or failed for good, how many attempts were made, and the last error. Only administrators can read this, because it holds email addresses.",
+  "p.email_deliveries.lede":
+    "Every email the service tried to send, one row for each recipient: whether it was sent, is waiting to try again, or failed for good, how many attempts were made, and the last error. Only administrators can read this, because it holds email addresses.",
   "p.email_deliveries.loading": "Loading the deliveries…",
   "p.email_deliveries.none": "No email has been sent or attempted.",
-  "p.email_deliveries.counts": "Sent: {sent}. Waiting to retry: {retry}. Failed for good: {failed}.",
+  "p.email_deliveries.counts":
+    "Sent: {sent}. Waiting to retry: {retry}. Failed for good: {failed}.",
   "p.email_deliveries.filter": "Show",
   "p.email_deliveries.all": "All",
   "p.email_deliveries.col_recipient": "Recipient",
@@ -3603,11 +4289,14 @@ export const PAGES_EN = {
   "p.email_deliveries.status_retry": "will retry",
   "p.email_deliveries.status_sent": "sent",
   "p.email_deliveries.status_failed": "failed",
-  "p.email_deliveries.not_allowed": "Only administrators can read email deliveries.",
+  "p.email_deliveries.not_allowed":
+    "Only administrators can read email deliveries.",
   "p.email_deliveries.could_not_load": "Could not load the email deliveries",
   "p.director_pack.s_signoffs": "Milestone sign-off",
-  "p.director_pack.signoffs_note": "Some milestones are met only when the partner organizations they name have signed them off. Delivered is the delivery organization saying it is done; met is delivered with every sign-off in force. A sign-off that is withdrawn counts as outstanding.",
-  "p.director_pack.signoffs_totals": "Needing sign-off: {n}. Delivered: {delivered}. Met: {met}. Delivered but not met: {gap}. Met, as a share of those delivered: {share}.",
+  "p.director_pack.signoffs_note":
+    "Some milestones are met only when the partner organizations they name have signed them off. Delivered is the delivery organization saying it is done; met is delivered with every sign-off in force. A sign-off that is withdrawn counts as outstanding.",
+  "p.director_pack.signoffs_totals":
+    "Needing sign-off: {n}. Delivered: {delivered}. Met: {met}. Delivered but not met: {gap}. Met, as a share of those delivered: {share}.",
   "p.director_pack.so_met": "met",
   "p.director_pack.so_delivered_not_met": "delivered, not met",
   "p.director_pack.so_not_delivered": "not delivered",
@@ -3620,8 +4309,10 @@ export const PAGES_EN = {
   "p.director_pack.c_delivery": "Delivery",
   "p.director_pack.dm_not_stated": "not stated",
   "p.director_pack.dm_central_product": "central product",
-  "p.director_pack.dm_central_platform_local_deployment": "central platform, local deployment",
-  "p.director_pack.dm_local_programme_central_standards": "local programme, central standards",
+  "p.director_pack.dm_central_platform_local_deployment":
+    "central platform, local deployment",
+  "p.director_pack.dm_local_programme_central_standards":
+    "local programme, central standards",
   "p.director_pack.dm_owner": "owner: {name}",
   "p.director_pack.dm_not_ours": "not delivered by the organization",
   "p.director_pack.s_flow": "Burn-up and flow (product programmes)",
@@ -3630,16 +4321,22 @@ export const PAGES_EN = {
   "p.director_pack.c_open": "Tasks open",
   "p.director_pack.c_throughput": "Finished per week (last four weeks)",
   "p.director_pack.c_burnup": "Finished, week by week (oldest first)",
-  "p.director_pack.no_flow": "{name}: a product programme with no tasks yet, so no burn-up or flow.",
+  "p.director_pack.no_flow":
+    "{name}: a product programme with no tasks yet, so no burn-up or flow.",
   "p.director_pack.s_asks": "External asks and their trade-offs",
-  "p.director_pack.asks_note": "An ask from the sponsor cannot be approved until it names what it displaces. This lists the asks raised in the period.",
-  "p.director_pack.asks_count": "Asks raised in the period: {n}. Without a named trade-off yet: {without}.",
+  "p.director_pack.asks_note":
+    "An ask from the sponsor cannot be approved until it names what it displaces. This lists the asks raised in the period.",
+  "p.director_pack.asks_count":
+    "Asks raised in the period: {n}. Without a named trade-off yet: {without}.",
   "p.director_pack.ask_none": "no trade-off named yet",
   "p.director_pack.c_ask": "Ask",
   "p.director_pack.c_tradeoff": "What it displaces",
-  "p.director_pack.register_line": "Programmes with a complete register: {complete} of {n}.",
-  "p.director_pack.register_enforced": "A budget line is not released, and no firm allocation is booked, on a programme with an incomplete register.",
-  "p.director_pack.register_not_enforced": "An incomplete register is a warning, not a bar: money can still move, and the warning is audited.",
+  "p.director_pack.register_line":
+    "Programmes with a complete register: {complete} of {n}.",
+  "p.director_pack.register_enforced":
+    "A budget line is not released, and no firm allocation is booked, on a programme with an incomplete register.",
+  "p.director_pack.register_not_enforced":
+    "An incomplete register is a warning, not a bar: money can still move, and the warning is audited.",
   "p.director_pack.s_register": "Programmes with an incomplete register",
   "p.director_pack.c_score": "Complete",
   "p.director_pack.c_missing": "Missing",
@@ -3654,28 +4351,37 @@ export const PAGES_EN = {
   "p.director_pack.rf_top_risks": "top risks",
   "p.director_pack.rf_dependencies": "dependencies",
   "p.director_pack.s_watermelon": "Watermelon measures",
-  "p.director_pack.wm_note": "Green on the outside, red inside. These are read from this pack and the previous issued pack as stored, not recalculated. A measure with nothing to measure says why; it is not zero.",
+  "p.director_pack.wm_note":
+    "Green on the outside, red inside. These are read from this pack and the previous issued pack as stored, not recalculated. A measure with nothing to measure says why; it is not zero.",
   "p.director_pack.wm_gap": "Self-assessed and independent confidence disagree",
-  "p.director_pack.wm_late": "Late discovery: red or amber-red now, green in the previous pack",
+  "p.director_pack.wm_late":
+    "Late discovery: red or amber-red now, green in the previous pack",
   "p.director_pack.wm_red": "Red with no decision recorded in the period",
-  "p.director_pack.wm_signoff": "Milestones met with sign-off, of those delivered",
+  "p.director_pack.wm_signoff":
+    "Milestones met with sign-off, of those delivered",
   "p.director_pack.wm_signoff_of": "{met} met of {delivered} delivered",
   "p.director_pack.wm_not_measured": "not measured",
   "p.director_pack.c_measure": "Measure",
   "p.director_pack.c_programmes": "Programmes, or why not measured",
   "p.director_pack.wm_count": "Programmes: {n}",
   "p.director_pack.s_keypeople": "Key people and contingent labour",
-  "p.director_pack.kp_note": "Single points of failure are counted here and never named; the register itself is for resource managers.",
-  "p.director_pack.kp_counts": "Single points of failure: {n} ({people} people, {roles} roles). Without a successor: {nosucc}. Successor ready: {ready}; partly ready: {partly}; not ready: {none}.",
+  "p.director_pack.kp_note":
+    "Single points of failure are counted here and never named; the register itself is for resource managers.",
+  "p.director_pack.kp_counts":
+    "Single points of failure: {n} ({people} people, {roles} roles). Without a successor: {nosucc}. Successor ready: {ready}; partly ready: {partly}; not ready: {none}.",
   "p.director_pack.kp_no_people": "nobody in this pool",
   "p.director_pack.c_headcount": "People",
   "p.director_pack.c_contingent": "Contingent",
   "p.director_pack.c_contingent_share": "Contingent share",
   "p.director_pack.s_triage": "Triage and thresholds",
-  "p.director_pack.tr_note": "Each programme's latest triage is shown. A threshold crossing opens an exception that needs a pause, reset, stop or an override with an expiry; nothing is paused or stopped automatically.",
-  "p.director_pack.tr_decisions": "Decisions this period: pause {pause}, reset {reset}, stop {stop}, override {override}.",
-  "p.director_pack.tr_open": "Threshold exceptions waiting for a decision: {n}.",
-  "p.director_pack.tr_override_line": "Override in force for {programme} until {expiry}.",
+  "p.director_pack.tr_note":
+    "Each programme's latest triage is shown. A threshold crossing opens an exception that needs a pause, reset, stop or an override with an expiry; nothing is paused or stopped automatically.",
+  "p.director_pack.tr_decisions":
+    "Decisions this period: pause {pause}, reset {reset}, stop {stop}, override {override}.",
+  "p.director_pack.tr_open":
+    "Threshold exceptions waiting for a decision: {n}.",
+  "p.director_pack.tr_override_line":
+    "Override in force for {programme} until {expiry}.",
   "p.director_pack.tr_finish": "finish",
   "p.director_pack.tr_fix": "fix",
   "p.director_pack.tr_pause": "pause",
@@ -3684,8 +4390,10 @@ export const PAGES_EN = {
   "p.director_pack.c_triaged_on": "Triaged on",
   "l.enum.pk_conf.threshold": "threshold crossed",
   "p.director_pack.s_cutovers": "Cutover decisions",
-  "p.director_pack.co_note": "A cutover is decided against stop criteria that were published before the decision. A no-go or a delay for safety is a decision taken on those criteria, and is not counted as slippage.",
-  "p.director_pack.co_counts": "Decided in the period: go {go}, no-go {nogo}, delay for safety {delay}.",
+  "p.director_pack.co_note":
+    "A cutover is decided against stop criteria that were published before the decision. A no-go or a delay for safety is a decision taken on those criteria, and is not counted as slippage.",
+  "p.director_pack.co_counts":
+    "Decided in the period: go {go}, no-go {nogo}, delay for safety {delay}.",
   "p.director_pack.co_go": "go ahead",
   "p.director_pack.co_no_go": "no-go",
   "p.director_pack.co_delay_for_safety": "delay for safety",
@@ -3693,11 +4401,14 @@ export const PAGES_EN = {
   "p.director_pack.c_decision": "Decision",
   "p.director_pack.c_decided_on": "Decided on",
   "p.director_pack.s_outcomes": "Outcomes and de-escalation",
-  "p.director_pack.oc_note": "The escalation level is what the sponsor set, and is never worked out here. The run below counts finished quarters in which every scorecard measure and every criterion is met; it is offered to the person who decides.",
+  "p.director_pack.oc_note":
+    "The escalation level is what the sponsor set, and is never worked out here. The run below counts finished quarters in which every scorecard measure and every criterion is met; it is offered to the person who decides.",
   "p.director_pack.oc_level": "Escalation level: {level}, set on {on}.",
   "p.director_pack.oc_no_level": "No escalation level has been recorded.",
-  "p.director_pack.oc_run": "Consecutive quarters met: {n}. The rule asks for {need}.",
-  "p.director_pack.oc_rule_yes": "The rule is satisfied. Whether to come down a level is for the sponsor.",
+  "p.director_pack.oc_run":
+    "Consecutive quarters met: {n}. The rule asks for {need}.",
+  "p.director_pack.oc_rule_yes":
+    "The rule is satisfied. Whether to come down a level is for the sponsor.",
   "p.director_pack.oc_rule_no": "The rule is not yet satisfied.",
   "p.director_pack.oc_met": "met",
   "p.director_pack.oc_not_met": "not met",

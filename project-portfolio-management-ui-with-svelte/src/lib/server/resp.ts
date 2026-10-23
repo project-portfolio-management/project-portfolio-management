@@ -34,7 +34,9 @@ export class RespParser {
 
   private line(at: number): { text: string; end: number } | null {
     const i = this.buf.indexOf("\r\n", at);
-    return i < 0 ? null : { text: this.buf.toString("utf8", at, i), end: i + 2 };
+    return i < 0
+      ? null
+      : { text: this.buf.toString("utf8", at, i), end: i + 2 };
   }
 
   private parseOne(at: number): { value: Resp; end: number } | null {
@@ -51,14 +53,19 @@ export class RespParser {
         return { value: Number(l.text), end: l.end };
       case "$": {
         const n = Number(l.text);
-        if (!Number.isInteger(n) || n > MAX_BULK) throw new Error("unreasonable bulk length");
+        if (!Number.isInteger(n) || n > MAX_BULK)
+          throw new Error("unreasonable bulk length");
         if (n < 0) return { value: null, end: l.end };
         if (this.buf.length < l.end + n + 2) return null;
-        return { value: this.buf.toString("utf8", l.end, l.end + n), end: l.end + n + 2 };
+        return {
+          value: this.buf.toString("utf8", l.end, l.end + n),
+          end: l.end + n + 2,
+        };
       }
       case "*": {
         const n = Number(l.text);
-        if (!Number.isInteger(n) || n > MAX_ARRAY) throw new Error("unreasonable array length");
+        if (!Number.isInteger(n) || n > MAX_ARRAY)
+          throw new Error("unreasonable array length");
         if (n < 0) return { value: null, end: l.end };
         const items: Resp[] = [];
         let p = l.end;
@@ -96,9 +103,19 @@ export interface RedisOptions {
 export class RedisClient {
   private socket: net.Socket | tls.TLSSocket | null = null;
   private parser = new RespParser();
-  private waiting: { resolve: (v: Resp) => void; reject: (e: Error) => void }[] = [];
+  private waiting: {
+    resolve: (v: Resp) => void;
+    reject: (e: Error) => void;
+  }[] = [];
   private chain: Promise<unknown> = Promise.resolve();
-  private readonly cfg: { host: string; port: number; tls: boolean; user?: string; password?: string; db?: number };
+  private readonly cfg: {
+    host: string;
+    port: number;
+    tls: boolean;
+    user?: string;
+    password?: string;
+    db?: number;
+  };
   private readonly timeoutMs: number;
 
   constructor(opts: RedisOptions) {
@@ -140,13 +157,17 @@ export class RedisClient {
   private async ensure(): Promise<void> {
     if (this.socket) return;
     const { host, port } = this.cfg;
-    const socket = await new Promise<net.Socket | tls.TLSSocket>((resolve, reject) => {
-      const s = this.cfg.tls
-        ? tls.connect({ host, port, servername: host }, () => resolve(s))
-        : net.connect({ host, port }, () => resolve(s));
-      s.once("error", reject);
-      s.setTimeout(this.timeoutMs, () => reject(new Error("Redis connect timed out")));
-    });
+    const socket = await new Promise<net.Socket | tls.TLSSocket>(
+      (resolve, reject) => {
+        const s = this.cfg.tls
+          ? tls.connect({ host, port, servername: host }, () => resolve(s))
+          : net.connect({ host, port }, () => resolve(s));
+        s.once("error", reject);
+        s.setTimeout(this.timeoutMs, () =>
+          reject(new Error("Redis connect timed out")),
+        );
+      },
+    );
     socket.setTimeout(0);
     socket.removeAllListeners("error");
     socket.on("error", (e) => this.drop(e));
@@ -168,7 +189,11 @@ export class RedisClient {
     });
     this.socket = socket;
     if (this.cfg.password) {
-      await this.raw(this.cfg.user ? ["AUTH", this.cfg.user, this.cfg.password] : ["AUTH", this.cfg.password]);
+      await this.raw(
+        this.cfg.user
+          ? ["AUTH", this.cfg.user, this.cfg.password]
+          : ["AUTH", this.cfg.password],
+      );
     }
     if (this.cfg.db !== undefined) await this.raw(["SELECT", this.cfg.db]);
   }
@@ -177,7 +202,10 @@ export class RedisClient {
     return new Promise<Resp>((resolve, reject) => {
       const socket = this.socket;
       if (!socket) return reject(new Error("not connected"));
-      const timer = setTimeout(() => this.drop(new Error("Redis command timed out")), this.timeoutMs);
+      const timer = setTimeout(
+        () => this.drop(new Error("Redis command timed out")),
+        this.timeoutMs,
+      );
       this.waiting.push({
         resolve: (v) => (clearTimeout(timer), resolve(v)),
         reject: (e) => (clearTimeout(timer), reject(e)),

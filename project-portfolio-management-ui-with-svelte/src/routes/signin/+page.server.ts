@@ -8,7 +8,12 @@ import { redirect } from "@sveltejs/kit";
 import { requestMagicLink } from "#lib/server/auth.js";
 import { pageTitle } from "#lib/i18n.svelte.js";
 import { DEFAULT_LOCALE, localizePath } from "#lib/locales.js";
-import { demoClaims, demoEnabled, isDemoEmail, mintDemoToken } from "#lib/server/demo.js";
+import {
+  demoClaims,
+  demoEnabled,
+  isDemoEmail,
+  mintDemoToken,
+} from "#lib/server/demo.js";
 import { OIDC_COOKIE, OIDC_COOKIE_OPTIONS } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
 import { oidcOptions } from "#lib/server/config.js";
@@ -38,7 +43,10 @@ export const actions: Actions = {
         sessionSeconds: oidcOptions().sessionSeconds,
         claims: demoClaims(now),
       });
-      cookies.set(OIDC_COOKIE, session.id, { ...OIDC_COOKIE_OPTIONS, maxAge: oidcOptions().sessionSeconds });
+      cookies.set(OIDC_COOKIE, session.id, {
+        ...OIDC_COOKIE_OPTIONS,
+        maxAge: oidcOptions().sessionSeconds,
+      });
       redirect(303, localizePath("/demo", locals.locale ?? DEFAULT_LOCALE));
     }
     // Return to this app's own origin so the emailed link lands on our

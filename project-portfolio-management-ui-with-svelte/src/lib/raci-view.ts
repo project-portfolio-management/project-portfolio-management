@@ -13,18 +13,34 @@ export type Letter = "R" | "A" | "C" | "I";
 export const LETTERS: readonly Letter[] = ["R", "A", "C", "I"];
 
 export const LETTER_WORD: Record<Letter, string> = {
-  get R() { return t("l.raci_view.responsible"); },
-  get A() { return t("l.raci_view.accountable"); },
-  get C() { return t("l.raci_view.consulted"); },
-  get I() { return t("l.raci_view.informed"); },
+  get R() {
+    return t("l.raci_view.responsible");
+  },
+  get A() {
+    return t("l.raci_view.accountable");
+  },
+  get C() {
+    return t("l.raci_view.consulted");
+  },
+  get I() {
+    return t("l.raci_view.informed");
+  },
 };
 
 /** One-line meaning of each letter, for the legend. */
 export const LETTER_MEANING: Record<Letter, string> = {
-  get R() { return t("l.raci_view.does_the_work"); },
-  get A() { return t("l.raci_view.answers_for_it_and_signs"); },
-  get C() { return t("l.raci_view.is_asked_before"); },
-  get I() { return t("l.raci_view.is_told_after"); },
+  get R() {
+    return t("l.raci_view.does_the_work");
+  },
+  get A() {
+    return t("l.raci_view.answers_for_it_and_signs");
+  },
+  get C() {
+    return t("l.raci_view.is_asked_before");
+  },
+  get I() {
+    return t("l.raci_view.is_told_after");
+  },
 };
 
 /** The letters of a cell, normalized to R-A-C-I order. */
@@ -108,7 +124,11 @@ export function cellSentence(
   const who = shortRef(person);
   return words.length === 0
     ? t("l.raci_view.has_no_role", { task, who })
-    : t("l.raci_view.is", { task, who, join: words.join(t("l.raci_view.and")) });
+    : t("l.raci_view.is", {
+        task,
+        who,
+        join: words.join(t("l.raci_view.and")),
+      });
 }
 
 /** A person reference the page will accept as a new column. */

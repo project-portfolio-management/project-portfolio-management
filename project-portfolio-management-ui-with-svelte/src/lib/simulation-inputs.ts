@@ -103,8 +103,7 @@ export function planRiskCalls(
   const hasDays = !blank(form.impactDays);
   if (hasTask !== hasDays) {
     return {
-      error:
-        t("l.simulation_inputs.name_the_task_and_the"),
+      error: t("l.simulation_inputs.name_the_task_and_the"),
     };
   }
   let days: number | null = null;
@@ -139,8 +138,7 @@ export function planRiskCalls(
   const wantsCost = hasCost && hasCurrency;
   if ((wantsSchedule || wantsCost) && probability === null) {
     return {
-      error:
-        t("l.simulation_inputs.a_risk_that_changes_the"),
+      error: t("l.simulation_inputs.a_risk_that_changes_the"),
     };
   }
 
@@ -222,9 +220,13 @@ export function taskEstimateProblems(
     return [t("l.simulation_inputs.give_the_task_a_duration")];
   }
   if (likely !== null && o !== null && o > likely)
-    out.push(t("l.simulation_inputs.optimistic_cannot_be_above_the", { likely }));
+    out.push(
+      t("l.simulation_inputs.optimistic_cannot_be_above_the", { likely }),
+    );
   if (likely !== null && p !== null && p < likely)
-    out.push(t("l.simulation_inputs.pessimistic_cannot_be_below_the", { likely }));
+    out.push(
+      t("l.simulation_inputs.pessimistic_cannot_be_below_the", { likely }),
+    );
   return out;
 }
 
@@ -236,7 +238,14 @@ export function rangeText(
 ): string {
   if (lowMinor === null && highMinor === null)
     return t("l.simulation_inputs.no_range_the_simulation_uses");
-  return t("l.simulation_inputs.to", { fmt: lowMinor === null ? t("l.simulation_inputs.planned_word") : fmt(lowMinor), fmt2: highMinor === null ? t("l.simulation_inputs.planned_word") : fmt(highMinor) });
+  return t("l.simulation_inputs.to", {
+    fmt:
+      lowMinor === null ? t("l.simulation_inputs.planned_word") : fmt(lowMinor),
+    fmt2:
+      highMinor === null
+        ? t("l.simulation_inputs.planned_word")
+        : fmt(highMinor),
+  });
 }
 
 /** A task's range as words. */
@@ -247,5 +256,9 @@ export function taskRangeText(
 ): string {
   if ((o ?? null) === null && (p ?? null) === null)
     return t("l.simulation_inputs.no_range_the_simulation_uses");
-  return t("l.simulation_inputs.range_business_days", { optimistic: o ?? likely ?? "?", likely: likely ?? "?", pessimistic: p ?? likely ?? "?" });
+  return t("l.simulation_inputs.range_business_days", {
+    optimistic: o ?? likely ?? "?",
+    likely: likely ?? "?",
+    pessimistic: p ?? likely ?? "?",
+  });
 }

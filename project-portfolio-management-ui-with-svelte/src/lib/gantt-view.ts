@@ -25,18 +25,28 @@ export interface ChartTask {
  * schedule is left out. (The service's lag is in business days, which the chart's day-based lag cannot say, so
  * it is not passed.)
  */
-export function chartTasks(schedule: Pick<ScheduleView, "items" | "edges">): ChartTask[] {
+export function chartTasks(
+  schedule: Pick<ScheduleView, "items" | "edges">,
+): ChartTask[] {
   const known = new Set(schedule.items.map((i) => i.pid));
   const preds = new Map<string, string[]>();
   for (const e of schedule.edges) {
-    if (!known.has(e.predecessor_pid) || e.predecessor_pid === e.successor_pid) continue;
-    preds.set(e.successor_pid, [...(preds.get(e.successor_pid) ?? []), e.predecessor_pid]);
+    if (!known.has(e.predecessor_pid) || e.predecessor_pid === e.successor_pid)
+      continue;
+    preds.set(e.successor_pid, [
+      ...(preds.get(e.successor_pid) ?? []),
+      e.predecessor_pid,
+    ]);
   }
   return schedule.items.map((i) => {
     const s = dayNumber(i.start);
     const e = dayNumber(i.end);
     const dated = s !== null && e !== null && e >= s;
-    const task: ChartTask = { id: i.pid, label: i.name, critical: i.on_critical_path };
+    const task: ChartTask = {
+      id: i.pid,
+      label: i.name,
+      critical: i.on_critical_path,
+    };
     task.values = { kind: i.kind, stage: i.stage ?? "" };
     if (dated) {
       task.start = dateOf(s);
@@ -60,9 +70,12 @@ export function chartRange(
   today?: string,
   pad = 3,
 ): { start: string; end: string } | null {
-  const days = tasks.flatMap((t) => [dayNumber(t.start), dayNumber(t.end)]).filter((d): d is number => d !== null);
+  const days = tasks
+    .flatMap((t) => [dayNumber(t.start), dayNumber(t.end)])
+    .filter((d): d is number => d !== null);
   const t = dayNumber(today);
-  if (days.length === 0) return t === null ? null : { start: dateOf(t - 14), end: dateOf(t + 14) };
+  if (days.length === 0)
+    return t === null ? null : { start: dateOf(t - 14), end: dateOf(t + 14) };
   let first = Math.min(...days);
   let last = Math.max(...days);
   if (t !== null && t >= first - 60 && t <= last + 60) {
@@ -78,11 +91,16 @@ export function chartRange(
  */
 export function nonWorkingWeekdays(mask: string): number[] {
   if (!/^[01]{7}$/.test(mask)) return [];
-  return [0, 1, 2, 3, 4, 5, 6].filter((weekday) => mask[(weekday + 6) % 7] === "0");
+  return [0, 1, 2, 3, 4, 5, 6].filter(
+    (weekday) => mask[(weekday + 6) % 7] === "0",
+  );
 }
 
 /** A plan's holidays as the chart's unavailable days, each with its visible word. */
-export function holidayRanges(holidays: readonly string[], label: string): { start: string; kind: string; label: string }[] {
+export function holidayRanges(
+  holidays: readonly string[],
+  label: string,
+): { start: string; kind: string; label: string }[] {
   return holidays.map((start) => ({ start, kind: "holiday", label }));
 }
 
@@ -93,15 +111,24 @@ export type GanttColumnId = (typeof GANTT_COLUMNS)[number];
 export const DEFAULT_GANTT_COLUMNS: readonly GanttColumnId[] = ["start", "end"];
 
 /** `shown` with `id` switched on or off, always in the columns' own order. */
-export function toggleGanttColumn(shown: readonly GanttColumnId[], id: GanttColumnId, on: boolean): GanttColumnId[] {
+export function toggleGanttColumn(
+  shown: readonly GanttColumnId[],
+  id: GanttColumnId,
+  on: boolean,
+): GanttColumnId[] {
   return GANTT_COLUMNS.filter((c) => (c === id ? on : shown.includes(c)));
 }
 
 /** A remembered choice, read safely: anything that is not a list of known columns means "use the default". */
-export function parseGanttColumns(raw: string | null | undefined): GanttColumnId[] {
+export function parseGanttColumns(
+  raw: string | null | undefined,
+): GanttColumnId[] {
   try {
     const v: unknown = JSON.parse(raw ?? "null");
-    if (Array.isArray(v) && v.every((c) => (GANTT_COLUMNS as readonly unknown[]).includes(c))) {
+    if (
+      Array.isArray(v) &&
+      v.every((c) => (GANTT_COLUMNS as readonly unknown[]).includes(c))
+    ) {
       return GANTT_COLUMNS.filter((c) => v.includes(c));
     }
   } catch {

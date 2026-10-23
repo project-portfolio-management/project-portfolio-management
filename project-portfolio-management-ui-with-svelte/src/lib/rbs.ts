@@ -80,8 +80,7 @@ export function buildRbs(
     roles,
     skills,
     masked: byRole.masked,
-    skillNote:
-      t("l.rbs.a_booking_that_needs_several"),
+    skillNote: t("l.rbs.a_booking_that_needs_several"),
   };
 }
 
@@ -96,9 +95,18 @@ export function canDrill(r: RbsRole, masked: boolean): boolean {
 /** A role in words: "Engineer: 3 people, demand 2.5 FTE, supply 3 FTE". */
 export function roleText(r: RbsRole, masked: boolean): string {
   const people = masked
-    ? t(r.headcount === 1 ? "l.rbs.headcount_one" : "l.rbs.headcount_other", { headcount: r.headcount })
+    ? t(r.headcount === 1 ? "l.rbs.headcount_one" : "l.rbs.headcount_other", {
+        headcount: r.headcount,
+      })
     : t("l.rbs.named", { length: r.people.length });
   const supply =
-    r.supply_fte === null ? t("l.rbs.supply_not_known") : t("l.rbs.supply_fte", { supply_fte: r.supply_fte });
-  return t("l.rbs.demand_fte", { role: r.role, people, demand_fte: r.demand_fte, supply });
+    r.supply_fte === null
+      ? t("l.rbs.supply_not_known")
+      : t("l.rbs.supply_fte", { supply_fte: r.supply_fte });
+  return t("l.rbs.demand_fte", {
+    role: r.role,
+    people,
+    demand_fte: r.demand_fte,
+    supply,
+  });
 }

@@ -74,8 +74,11 @@ export function scheduleSentence(
   money: (minor: number) => string,
 ): string {
   const h = health(b.spi.bp);
-  if (b.spi.bp === null) return t("l.ev_view.schedule_no_ratio", { absentText: absentText(b.spi) });
-  const gap = t(b.sv_minor >= 0 ? "l.ev_view.gap_more" : "l.ev_view.gap_less", { money: money(Math.abs(b.sv_minor)) });
+  if (b.spi.bp === null)
+    return t("l.ev_view.schedule_no_ratio", { absentText: absentText(b.spi) });
+  const gap = t(b.sv_minor >= 0 ? "l.ev_view.gap_more" : "l.ev_view.gap_less", {
+    money: money(Math.abs(b.sv_minor)),
+  });
   const word =
     h === "ahead"
       ? t("l.ev_view.ahead_of_schedule")
@@ -99,17 +102,32 @@ export function costSentence(
       : h === "behind"
         ? t("l.ev_view.over_budget")
         : t("l.ev_view.on_budget");
-  return t(b.cv_minor >= 0 ? "l.ev_view.cost_line_less" : "l.ev_view.cost_line_more", { word, ratio: ratioText(b.cpi.bp), money: money(Math.abs(b.cv_minor)) });
+  return t(
+    b.cv_minor >= 0 ? "l.ev_view.cost_line_less" : "l.ev_view.cost_line_more",
+    { word, ratio: ratioText(b.cpi.bp), money: money(Math.abs(b.cv_minor)) },
+  );
 }
 
 /** The sentence for earned schedule, which still says so when a project is late and finished. */
 export function earnedScheduleSentence(b: EvBlock): string {
   if (b.spi_t.bp === null || b.earned_schedule_days === null)
-    return t("l.ev_view.earned_schedule_no_ratio", { absentText: absentText(b.spi_t) });
+    return t("l.ev_view.earned_schedule_no_ratio", {
+      absentText: absentText(b.spi_t),
+    });
   const days = calendarDays;
   const h = health(b.spi_t.bp);
-  const word = h === "ahead" ? t("l.ev_view.word_ahead") : h === "behind" ? t("l.ev_view.word_behind") : t("p.plans.pid.joint_risk.on_time");
-  return t("l.ev_view.by_earned_schedule_the_work", { word, days: days(b.actual_days), days2: days(b.earned_schedule_days), ratioText: ratioText(b.spi_t.bp) });
+  const word =
+    h === "ahead"
+      ? t("l.ev_view.word_ahead")
+      : h === "behind"
+        ? t("l.ev_view.word_behind")
+        : t("p.plans.pid.joint_risk.on_time");
+  return t("l.ev_view.by_earned_schedule_the_work", {
+    word,
+    days: days(b.actual_days),
+    days2: days(b.earned_schedule_days),
+    ratioText: ratioText(b.spi_t.bp),
+  });
 }
 
 /** One bar of the PV / EV / AC chart, as a percent of the budget at completion. */
@@ -168,22 +186,60 @@ export function methodSentence(pc: {
         ? t("l.ev_view.finished_work_counts_for_its")
         : t("l.ev_view.only_finished_work_counts");
   const parts = [
-    t(pc.tasks_counted === 1 ? "l.ev_view.tasks_counted_one" : "l.ev_view.tasks_counted_other", { count: pc.tasks_counted, weighting: pc.weighting === "points" ? t("l.ev_view.by_story_points") : t("l.ev_view.equally"), how }),
+    t(
+      pc.tasks_counted === 1
+        ? "l.ev_view.tasks_counted_one"
+        : "l.ev_view.tasks_counted_other",
+      {
+        count: pc.tasks_counted,
+        weighting:
+          pc.weighting === "points"
+            ? t("l.ev_view.by_story_points")
+            : t("l.ev_view.equally"),
+        how,
+      },
+    ),
   ];
   if (pc.manual_tasks.length > 0)
     parts.push(
-      t("l.ev_view.counted_by_a_person_entered", { length: pc.manual_tasks.length }),
+      t("l.ev_view.counted_by_a_person_entered", {
+        length: pc.manual_tasks.length,
+      }),
     );
   if (pc.unweighted_tasks.length > 0)
-    parts.push(t("l.ev_view.with_no_points_carry_no", { length: pc.unweighted_tasks.length }));
+    parts.push(
+      t("l.ev_view.with_no_points_carry_no", {
+        length: pc.unweighted_tasks.length,
+      }),
+    );
   return parts.join("; ");
 }
 
 const RAG: Record<EvRag, { marker: string; word: string }> = {
-  green: { marker: "●", get word() { return t("l.ev_view.on_track"); } },
-  amber: { marker: "◐", get word() { return t("l.ev_view.slipping"); } },
-  red: { marker: "✖", get word() { return t("l.ev_view.off_plan"); } },
-  unknown: { marker: "?", get word() { return t("l.ev_view.not_yet_known"); } },
+  green: {
+    marker: "●",
+    get word() {
+      return t("l.ev_view.on_track");
+    },
+  },
+  amber: {
+    marker: "◐",
+    get word() {
+      return t("l.ev_view.slipping");
+    },
+  },
+  red: {
+    marker: "✖",
+    get word() {
+      return t("l.ev_view.off_plan");
+    },
+  },
+  unknown: {
+    marker: "?",
+    get word() {
+      return t("l.ev_view.not_yet_known");
+    },
+  },
 };
 
 /** A marker and a word for a traffic light, so the colour is never the only signal. */
@@ -214,12 +270,26 @@ export function tcpiSentence(tcpi: EvTcpi, target: string): string {
   if (tcpi.bp === null) {
     return tcpi.absent === "budget_exhausted"
       ? t("l.ev_view.against_the_money_is_already", { target })
-      : t("l.ev_view.against", { target, amountAbsentText: amountAbsentText({ minor: null, absent: tcpi.absent }) });
+      : t("l.ev_view.against", {
+          target,
+          amountAbsentText: amountAbsentText({
+            minor: null,
+            absent: tcpi.absent,
+          }),
+        });
   }
   if (tcpi.needs_improved_efficiency) {
-    return t("l.ev_view.against_the_remaining_work_must", { target, ratioText: ratioText(tcpi.bp), ratioText2: ratioText(tcpi.bp) });
+    return t("l.ev_view.against_the_remaining_work_must", {
+      target,
+      ratioText: ratioText(tcpi.bp),
+      ratioText2: ratioText(tcpi.bp),
+    });
   }
-  return t("l.ev_view.against_the_remaining_work_can", { target, ratioText: ratioText(tcpi.bp), ratioText2: ratioText(tcpi.bp) });
+  return t("l.ev_view.against_the_remaining_work_can", {
+    target,
+    ratioText: ratioText(tcpi.bp),
+    ratioText2: ratioText(tcpi.bp),
+  });
 }
 
 /** The S-curve's drawing data for one currency, in SVG user units. */

@@ -41,12 +41,12 @@ const byAge = (a: WbsInput, b: WbsInput) =>
       ? -1
       : 1
     : a.created_at < b.created_at
-    ? -1
-    : a.created_at > b.created_at
-      ? 1
-      : a.pid < b.pid
-        ? -1
-        : 1;
+      ? -1
+      : a.created_at > b.created_at
+        ? 1
+        : a.pid < b.pid
+          ? -1
+          : 1;
 
 /** The tasks in tree order with their generated codes. */
 export function buildWbs(tasks: readonly WbsInput[]): WbsRow[] {

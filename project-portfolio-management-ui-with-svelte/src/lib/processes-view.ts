@@ -18,22 +18,37 @@ export const MAX_STEPS = 20;
 export const STEP_KINDS: readonly StepKind[] = ["approve", "todo", "notify"];
 
 /** A new, empty step. */
-export const blankStep = (): StepDraft => ({ kind: "approve", person_ref: "", title: "" });
+export const blankStep = (): StepDraft => ({
+  kind: "approve",
+  person_ref: "",
+  title: "",
+});
 
 /** Whether `ref` is a `person:` or `worker:` URN with something after the colon. */
 export function isPersonRef(ref: string): boolean {
   const at = ref.indexOf(":");
-  return at > 0 && ["person", "worker"].includes(ref.slice(0, at)) && ref.slice(at + 1).trim() !== "";
+  return (
+    at > 0 &&
+    ["person", "worker"].includes(ref.slice(0, at)) &&
+    ref.slice(at + 1).trim() !== ""
+  );
 }
 
 /** What is wrong with a draft definition, in words; empty when it can be sent. */
-export function definitionProblems(name: string, steps: readonly StepDraft[]): string[] {
+export function definitionProblems(
+  name: string,
+  steps: readonly StepDraft[],
+): string[] {
   const out: string[] = [];
-  if (name.trim() === "" || [...name].length > 120) out.push(t("l.processes.name_problem"));
-  if (steps.length === 0 || steps.length > MAX_STEPS) out.push(t("l.processes.steps_problem", { max: MAX_STEPS }));
+  if (name.trim() === "" || [...name].length > 120)
+    out.push(t("l.processes.name_problem"));
+  if (steps.length === 0 || steps.length > MAX_STEPS)
+    out.push(t("l.processes.steps_problem", { max: MAX_STEPS }));
   steps.forEach((s, i) => {
-    if (s.title.trim() === "" || [...s.title].length > 200) out.push(t("l.processes.title_problem", { n: i + 1 }));
-    if (!isPersonRef(s.person_ref.trim())) out.push(t("l.processes.person_problem", { n: i + 1 }));
+    if (s.title.trim() === "" || [...s.title].length > 200)
+      out.push(t("l.processes.title_problem", { n: i + 1 }));
+    if (!isPersonRef(s.person_ref.trim()))
+      out.push(t("l.processes.person_problem", { n: i + 1 }));
   });
   return out;
 }

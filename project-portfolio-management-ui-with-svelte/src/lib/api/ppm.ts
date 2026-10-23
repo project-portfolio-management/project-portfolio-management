@@ -304,7 +304,11 @@ export interface Framework {
   review_cadence_days?: number | null;
   reporting_cadence_days?: number | null;
   escalation_path?: { level: number; body: string; trigger: string }[];
-  decision_rights?: { decision: string; decides: string; consulted?: string | null }[];
+  decision_rights?: {
+    decision: string;
+    decides: string;
+    consulted?: string | null;
+  }[];
   forums?: { name: string; cadence: string; purpose?: string | null }[];
 }
 
@@ -330,7 +334,8 @@ export interface PlanLink {
 
 export type FrameworkFamily = "ways-of-working" | "governance-frameworks";
 
-export type EscalationStatus = "open" | "acknowledged" | "resolved" | "withdrawn";
+export type EscalationStatus =
+  "open" | "acknowledged" | "resolved" | "withdrawn";
 
 /** One escalation (`/api/plans/{pid}/escalations`, `/api/escalations`). */
 export interface Escalation {
@@ -354,7 +359,13 @@ export interface Escalation {
   age_days: number;
   overdue: boolean;
   /** Only on the single-escalation read. */
-  events?: { event: string; level: number; actor: string | null; note: string | null; at: string }[];
+  events?: {
+    event: string;
+    level: number;
+    actor: string | null;
+    note: string | null;
+    at: string;
+  }[];
 }
 
 /** `GET /api/escalations`. */
@@ -411,7 +422,11 @@ export interface ProcessDefinition {
   pid: string;
   name: string;
   current_version: number;
-  steps?: { kind: "approve" | "todo" | "notify"; person_ref: string; title: string }[];
+  steps?: {
+    kind: "approve" | "todo" | "notify";
+    person_ref: string;
+    title: string;
+  }[];
 }
 
 /** A run of a process (`GET /api/process-executions`; the detail adds `steps` and `log`). */
@@ -432,9 +447,16 @@ export interface ProcessRun {
     kind: "approve" | "todo" | "notify";
     person_ref: string;
     title: string;
-    state: "pending" | "waiting" | "completed" | "skipped" | "rejected" | "failed";
+    state:
+      "pending" | "waiting" | "completed" | "skipped" | "rejected" | "failed";
   }[];
-  log?: { step: number | null; event: string; actor: string | null; note: string | null; at: string }[];
+  log?: {
+    step: number | null;
+    event: string;
+    actor: string | null;
+    note: string | null;
+    at: string;
+  }[];
 }
 
 /** `GET /api/resource-plan/role-tasks`: the open tasks of the people in a role. */
@@ -774,7 +796,14 @@ export interface ChangeRequest {
     summary: string | null;
     has_forecast_edits: boolean;
   };
-  status: "draft" | "submitted" | "under_review" | "approved" | "rejected" | "implemented" | "withdrawn";
+  status:
+    | "draft"
+    | "submitted"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "implemented"
+    | "withdrawn";
   requested_by: string;
   requested_on: string;
   /** Calendar days since requested. */
@@ -862,7 +891,12 @@ export interface ChainBuffers {
   scheduled_at_likely_duration?: TitledRef[];
   chain_days_at_aggressive?: number;
   chain?: TitledRef[];
-  project_buffer?: { days: number; safety_removed_days: number; chain_finish: string; finish_with_buffer: string };
+  project_buffer?: {
+    days: number;
+    safety_removed_days: number;
+    chain_finish: string;
+    finish_with_buffer: string;
+  };
   feeding_buffers?: FeedingBuffer[];
   resource_buffers?: ResourceBuffer[];
   note: string;
@@ -916,10 +950,20 @@ export interface BufferManagement {
   buffer_plan?: { pid: string; taken_on: string };
   lines?: FeverLines;
   readings?: BufferReading[];
-  alerts?: { kind: string; buffer_key: string; chain: string[]; joins: string | null; buffer_consumed_pct: number | null }[];
+  alerts?: {
+    kind: string;
+    buffer_key: string;
+    chain: string[];
+    joins: string | null;
+    buffer_consumed_pct: number | null;
+  }[];
   red_without_open_recovery_action?: string[];
   recovery_actions?: RecoveryAction[];
-  snapshots?: { pid: string; taken_on: string; zones: Record<string, string | null> }[];
+  snapshots?: {
+    pid: string;
+    taken_on: string;
+    zones: Record<string, string | null>;
+  }[];
   note?: string;
 }
 
@@ -1337,12 +1381,17 @@ export function mspdiReport(r: Record<string, unknown>): TrackerImportReport {
     links_already_present: Number(r.links_already_present ?? 0),
     unmapped: un.map((u) => ({
       what: u.what ?? "field",
-      key: u.uid === null || u.uid === undefined ? null : t("l.api_ppm.task", { uid: u.uid }),
+      key:
+        u.uid === null || u.uid === undefined
+          ? null
+          : t("l.api_ppm.task", { uid: u.uid }),
       reason: u.reason ?? "",
     })),
     note:
       String(r.note ?? "") +
-      (r.calendar_imported ? t("l.api_ppm.the_project_calendar_comes_across") : ""),
+      (r.calendar_imported
+        ? t("l.api_ppm.the_project_calendar_comes_across")
+        : ""),
   };
 }
 
@@ -2808,7 +2857,9 @@ export class PpmClient {
     return this.http.get(`/api/milestones${qs ? `?${qs}` : ""}`);
   }
   /** Change requests across the plans the caller can read. */
-  changeRequests(params: { status?: string; open?: boolean } = {}): Promise<ChangeRequestList> {
+  changeRequests(
+    params: { status?: string; open?: boolean } = {},
+  ): Promise<ChangeRequestList> {
     const q = new URLSearchParams();
     if (params.status) q.set("status", params.status);
     if (params.open) q.set("open", "true");
@@ -2817,67 +2868,141 @@ export class PpmClient {
   }
   /** The critical chain beside the critical path (advice only). */
   criticalChain(pid: string): Promise<CriticalChain> {
-    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/critical-chain`);
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(pid)}/critical-chain`,
+    );
   }
   /** Project, feeding and resource buffers for the chain (advice only). */
   chainBuffers(pid: string): Promise<ChainBuffers> {
-    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/critical-chain-buffers`);
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(pid)}/critical-chain-buffers`,
+    );
   }
   /** Freeze the chain and buffers as planned. */
   freezeBufferPlan(pid: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-plan`, { body: {} });
+    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-plan`, {
+      body: {},
+    });
   }
   /** Every buffer against the live schedule. */
   bufferManagement(pid: string): Promise<BufferManagement> {
-    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/buffer-management`);
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(pid)}/buffer-management`,
+    );
   }
   /** Record every buffer's reading now. */
   takeBufferSnapshot(pid: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-management/snapshots`, { body: {} });
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/buffer-management/snapshots`,
+      { body: {} },
+    );
   }
   /** Record what was agreed to do about a buffer. */
   addRecoveryAction(
     pid: string,
-    body: { buffer_key: string; action: string; owner_ref: string; due_date?: string },
+    body: {
+      buffer_key: string;
+      action: string;
+      owner_ref: string;
+      due_date?: string;
+    },
   ): Promise<unknown> {
-    return this.http.post(`/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions`, { body });
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions`,
+      { body },
+    );
   }
   /** Close an open recovery action as done or dropped. */
-  closeRecoveryAction(pid: string, actionPid: string, status: "done" | "dropped"): Promise<unknown> {
+  closeRecoveryAction(
+    pid: string,
+    actionPid: string,
+    status: "done" | "dropped",
+  ): Promise<unknown> {
     return this.http.put(
       `/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions/${encodeURIComponent(actionPid)}/status`,
       { body: { status } },
     );
   }
   /** The cutover go/no-go decisions of a plan, newest first. */
-  cutoverDecisions(planPid: string): Promise<{ decisions: CutoverDecision[]; required_cosigners: string[] }> {
+  cutoverDecisions(
+    planPid: string,
+  ): Promise<{ decisions: CutoverDecision[]; required_cosigners: string[] }> {
     return this.http.get(`/api/plans/${planPid}/cutover-decisions`);
   }
-  createCutoverDecision(planPid: string, title: string, criteria: string[]): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/cutover-decisions`, { body: { title, criteria } });
+  createCutoverDecision(
+    planPid: string,
+    title: string,
+    criteria: string[],
+  ): Promise<unknown> {
+    return this.http.post(`/api/plans/${planPid}/cutover-decisions`, {
+      body: { title, criteria },
+    });
   }
   /** One step on a decision: publish, open or new-version. */
-  cutoverStep(planPid: string, did: string, step: "publish" | "open" | "new-version"): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/${step}`, { body: {} });
+  cutoverStep(
+    planPid: string,
+    did: string,
+    step: "publish" | "open" | "new-version",
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${planPid}/cutover-decisions/${did}/${step}`,
+      { body: {} },
+    );
   }
-  markCutoverCriterion(planPid: string, did: string, n: number, met: boolean, evidence: string): Promise<unknown> {
-    return this.http.put(`/api/plans/${planPid}/cutover-decisions/${did}/criteria/${n}/mark`, { body: { met, evidence } });
+  markCutoverCriterion(
+    planPid: string,
+    did: string,
+    n: number,
+    met: boolean,
+    evidence: string,
+  ): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${planPid}/cutover-decisions/${did}/criteria/${n}/mark`,
+      { body: { met, evidence } },
+    );
   }
   cosignCutover(planPid: string, did: string, role: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/cosign`, { body: { role } });
+    return this.http.post(
+      `/api/plans/${planPid}/cutover-decisions/${did}/cosign`,
+      { body: { role } },
+    );
   }
-  decideCutover(planPid: string, did: string, outcome: string, reason: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/cutover-decisions/${did}/decide`, { body: { outcome, reason } });
+  decideCutover(
+    planPid: string,
+    did: string,
+    outcome: string,
+    reason: string,
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${planPid}/cutover-decisions/${did}/decide`,
+      { body: { outcome, reason } },
+    );
   }
   /** Requests to move a task's start, with the knock-on worked out when each was asked. */
   deploymentMoves(planPid: string): Promise<DeploymentMoves> {
     return this.http.get(`/api/plans/${planPid}/deployment-moves`);
   }
-  requestDeploymentMove(planPid: string, body: { task_pid: string; new_start: string; reason: string; approver_ref?: string }): Promise<unknown> {
+  requestDeploymentMove(
+    planPid: string,
+    body: {
+      task_pid: string;
+      new_start: string;
+      reason: string;
+      approver_ref?: string;
+    },
+  ): Promise<unknown> {
     return this.http.post(`/api/plans/${planPid}/deployment-moves`, { body });
   }
-  decideDeploymentMove(planPid: string, movePid: string, decision: "approve" | "refuse", reason: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/deployment-moves/${movePid}/decision`, { body: { decision, reason } });
+  decideDeploymentMove(
+    planPid: string,
+    movePid: string,
+    decision: "approve" | "refuse",
+    reason: string,
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${planPid}/deployment-moves/${movePid}/decision`,
+      { body: { decision, reason } },
+    );
   }
   /** The funding allocations, each with the money on lines that draw on it and what is untraced. */
   fundingAllocations(): Promise<{ allocations: FundingAllocation[] }> {
@@ -2892,23 +3017,44 @@ export class PpmClient {
     return this.http.get("/api/milestone-signoffs");
   }
   /** An organization signs a milestone off, or withdraws its sign-off. */
-  actOnSignoff(planPid: string, milestonePid: string, organizationPid: string, action: "sign" | "withdraw", reason?: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/milestones/${milestonePid}/signoffs`, {
-      body: { organization_pid: organizationPid, action, ...(reason ? { reason } : {}) },
-    });
+  actOnSignoff(
+    planPid: string,
+    milestonePid: string,
+    organizationPid: string,
+    action: "sign" | "withdraw",
+    reason?: string,
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${planPid}/milestones/${milestonePid}/signoffs`,
+      {
+        body: {
+          organization_pid: organizationPid,
+          action,
+          ...(reason ? { reason } : {}),
+        },
+      },
+    );
   }
   /** Key people and roles, and the contingent workers (resource managers only). */
   keyPersons(): Promise<KeyPersons> {
     return this.http.get("/api/key-persons");
   }
-  recordKeyPerson(entry: { subject_kind: string; subject: string; successor_ref?: string; readiness: string; note?: string }): Promise<unknown> {
+  recordKeyPerson(entry: {
+    subject_kind: string;
+    subject: string;
+    successor_ref?: string;
+    readiness: string;
+    note?: string;
+  }): Promise<unknown> {
     return this.http.put("/api/key-persons", { body: entry });
   }
   removeKeyPerson(pid: string): Promise<unknown> {
     return this.http.delete(`/api/key-persons/${pid}`);
   }
   setContingent(personRef: string, contingent: boolean): Promise<unknown> {
-    return this.http.put("/api/key-persons/contingent", { body: { person_ref: personRef, contingent } });
+    return this.http.put("/api/key-persons/contingent", {
+      body: { person_ref: personRef, contingent },
+    });
   }
   /** The partner organizations. */
   organizations(): Promise<{ organizations: Organization[] }> {
@@ -2918,12 +3064,17 @@ export class PpmClient {
     return this.http.post("/api/organizations", { body: { name, kind } });
   }
   /** Rename, change kind, retire (`active: false`) or restore an organization. */
-  changeOrganization(pid: string, change: { name?: string; kind?: string; active?: boolean }): Promise<unknown> {
+  changeOrganization(
+    pid: string,
+    change: { name?: string; kind?: string; active?: boolean },
+  ): Promise<unknown> {
     return this.http.put(`/api/organizations/${pid}`, { body: change });
   }
   /** Email delivery rows, one for each recipient (administrators only). */
   emailDeliveries(status?: string): Promise<EmailDeliveries> {
-    return this.http.get(`/api/email-deliveries${status ? `?status=${encodeURIComponent(status)}` : ""}`);
+    return this.http.get(
+      `/api/email-deliveries${status ? `?status=${encodeURIComponent(status)}` : ""}`,
+    );
   }
   /** Programmes refused a start, in the order they asked. */
   startQueue(): Promise<StartQueue> {
@@ -2931,15 +3082,22 @@ export class PpmClient {
   }
   /** Take a programme out of the start queue. */
   withdrawFromStartQueue(planPid: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${planPid}/start-queue/withdraw`, { body: {} });
+    return this.http.post(`/api/plans/${planPid}/start-queue/withdraw`, {
+      body: {},
+    });
   }
   /** Which skill pool is the portfolio's drum, and why. */
-  portfolioDrum(): Promise<{ drum: DrumView; history: { skill_pool_pid: string | null; declared_on: string }[] }> {
+  portfolioDrum(): Promise<{
+    drum: DrumView;
+    history: { skill_pool_pid: string | null; declared_on: string }[];
+  }> {
     return this.http.get("/api/portfolio-drum");
   }
   /** Name the drum, or clear the naming with null. */
   setPortfolioDrum(skillPoolPid: string | null): Promise<unknown> {
-    return this.http.put("/api/portfolio-drum", { body: { skill_pool_pid: skillPoolPid } });
+    return this.http.put("/api/portfolio-drum", {
+      body: { skill_pool_pid: skillPoolPid },
+    });
   }
   /** Proposed staggered starts for the projects that need the drum. */
   portfolioPipeline(): Promise<Pipeline> {
@@ -3107,19 +3265,36 @@ export class PpmClient {
   ): Promise<LevelingApplyResult> {
     return this.http.post(`/api/plans/${pid}/leveling/apply`, { body });
   }
-  planEscalations(pid: string, status?: string): Promise<{ plan_pid: string; escalations: Escalation[] }> {
-    return this.http.get(`/api/plans/${pid}/escalations${status ? `?status=${status}` : ""}`);
+  planEscalations(
+    pid: string,
+    status?: string,
+  ): Promise<{ plan_pid: string; escalations: Escalation[] }> {
+    return this.http.get(
+      `/api/plans/${pid}/escalations${status ? `?status=${status}` : ""}`,
+    );
   }
   escalation(pid: string, epid: string): Promise<Escalation> {
     return this.http.get(`/api/plans/${pid}/escalations/${epid}`);
   }
-  raiseEscalation(pid: string, body: Record<string, unknown>): Promise<Escalation> {
+  raiseEscalation(
+    pid: string,
+    body: Record<string, unknown>,
+  ): Promise<Escalation> {
     return this.http.post(`/api/plans/${pid}/escalations`, { body });
   }
-  escalationAction(pid: string, epid: string, action: "acknowledge" | "raise-level" | "resolve" | "withdraw", body: Record<string, unknown> = {}): Promise<Escalation> {
-    return this.http.post(`/api/plans/${pid}/escalations/${epid}/${action}`, { body });
+  escalationAction(
+    pid: string,
+    epid: string,
+    action: "acknowledge" | "raise-level" | "resolve" | "withdraw",
+    body: Record<string, unknown> = {},
+  ): Promise<Escalation> {
+    return this.http.post(`/api/plans/${pid}/escalations/${epid}/${action}`, {
+      body,
+    });
   }
-  escalationRegister(params: { status?: string; overdue?: boolean } = {}): Promise<EscalationRegister> {
+  escalationRegister(
+    params: { status?: string; overdue?: boolean } = {},
+  ): Promise<EscalationRegister> {
     const q = new URLSearchParams();
     if (params.status) q.set("status", params.status);
     if (params.overdue) q.set("overdue", "true");
@@ -3129,37 +3304,80 @@ export class PpmClient {
   frameworks(family: FrameworkFamily): Promise<Framework[]> {
     return this.http.get(`/api/${family}`);
   }
-  createFramework(family: FrameworkFamily, body: Record<string, unknown>): Promise<Framework> {
+  createFramework(
+    family: FrameworkFamily,
+    body: Record<string, unknown>,
+  ): Promise<Framework> {
     return this.http.post(`/api/${family}`, { body });
   }
-  updateFramework(family: FrameworkFamily, pid: string, body: Record<string, unknown>): Promise<Framework> {
+  updateFramework(
+    family: FrameworkFamily,
+    pid: string,
+    body: Record<string, unknown>,
+  ): Promise<Framework> {
     return this.http.put(`/api/${family}/${pid}`, { body });
   }
   deleteFramework(family: FrameworkFamily, pid: string): Promise<unknown> {
     return this.http.post(`/api/${family}/${pid}/delete`, { body: {} });
   }
-  frameworkInForce(family: FrameworkFamily, pid: string): Promise<FrameworkInForce> {
-    return this.http.get(`/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`);
+  frameworkInForce(
+    family: FrameworkFamily,
+    pid: string,
+  ): Promise<FrameworkInForce> {
+    return this.http.get(
+      `/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`,
+    );
   }
   /** Follow `frameworkPid`, or follow none of its own (the plan then inherits) with null. */
-  linkFramework(family: FrameworkFamily, pid: string, frameworkPid: string | null): Promise<FrameworkInForce> {
-    return this.http.put(`/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`, {
-      body: { framework_pid: frameworkPid },
-    });
+  linkFramework(
+    family: FrameworkFamily,
+    pid: string,
+    frameworkPid: string | null,
+  ): Promise<FrameworkInForce> {
+    return this.http.put(
+      `/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`,
+      {
+        body: { framework_pid: frameworkPid },
+      },
+    );
   }
   /** A plan's links, or a task's when `taskPid` is given. */
   planLinks(pid: string, taskPid?: string): Promise<PlanLink[]> {
-    return this.http.get(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`);
+    return this.http.get(
+      `/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`,
+    );
   }
   /** How many live links each of a plan's tasks has (tasks with none are absent). */
-  taskLinkCounts(pid: string): Promise<{ plan_pid: string; counts: Record<string, number> }> {
+  taskLinkCounts(
+    pid: string,
+  ): Promise<{ plan_pid: string; counts: Record<string, number> }> {
     return this.http.get(`/api/plans/${pid}/task-link-counts`);
   }
-  addPlanLink(pid: string, body: { kind: string; url: string; label: string; system?: string; external_id?: string }, taskPid?: string): Promise<PlanLink> {
-    return this.http.post(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`, { body });
+  addPlanLink(
+    pid: string,
+    body: {
+      kind: string;
+      url: string;
+      label: string;
+      system?: string;
+      external_id?: string;
+    },
+    taskPid?: string,
+  ): Promise<PlanLink> {
+    return this.http.post(
+      `/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links`,
+      { body },
+    );
   }
-  removePlanLink(pid: string, lpid: string, taskPid?: string): Promise<unknown> {
-    return this.http.post(`/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links/${lpid}/delete`, { body: {} });
+  removePlanLink(
+    pid: string,
+    lpid: string,
+    taskPid?: string,
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${pid}${taskPid ? `/tasks/${taskPid}` : ""}/links/${lpid}/delete`,
+      { body: {} },
+    );
   }
   getTask(pid: string, taskPid: string): Promise<Task> {
     return this.http.get(`/api/plans/${pid}/tasks/${taskPid}`);
@@ -3175,13 +3393,22 @@ export class PpmClient {
     return this.http.put(`/api/plans/${pid}/tolerances/${dimension}`, { body });
   }
   /** Raise one escalation for every red dimension that has no live one; asking again raises nothing new. */
-  escalateTolerances(pid: string): Promise<{ raised: { pid: string; tolerance_dimension: string | null }[]; tolerances: TolerancePicture }> {
-    return this.http.post(`/api/plans/${pid}/tolerances/escalate`, { body: {} });
+  escalateTolerances(pid: string): Promise<{
+    raised: { pid: string; tolerance_dimension: string | null }[];
+    tolerances: TolerancePicture;
+  }> {
+    return this.http.post(`/api/plans/${pid}/tolerances/escalate`, {
+      body: {},
+    });
   }
   removeTolerance(pid: string, dimension: string): Promise<TolerancePicture> {
-    return this.http.post(`/api/plans/${pid}/tolerances/${dimension}/delete`, { body: {} });
+    return this.http.post(`/api/plans/${pid}/tolerances/${dimension}/delete`, {
+      body: {},
+    });
   }
-  toleranceBoard(params: { status?: string; dimension?: string } = {}): Promise<ToleranceBoard> {
+  toleranceBoard(
+    params: { status?: string; dimension?: string } = {},
+  ): Promise<ToleranceBoard> {
     const q = new URLSearchParams();
     if (params.status) q.set("status", params.status);
     if (params.dimension) q.set("dimension", params.dimension);
@@ -3197,7 +3424,10 @@ export class PpmClient {
   }): Promise<ProcessDefinition> {
     return this.http.post("/api/processes", { body });
   }
-  startProcess(pid: string, body: { subject_kind: string; subject_pid: string }): Promise<ProcessRun> {
+  startProcess(
+    pid: string,
+    body: { subject_kind: string; subject_pid: string },
+  ): Promise<ProcessRun> {
     return this.http.post(`/api/processes/${pid}/start`, { body });
   }
   listProcessRuns(): Promise<ProcessRun[]> {
@@ -3207,13 +3437,20 @@ export class PpmClient {
     return this.http.get(`/api/process-executions/${pid}`);
   }
   completeProcessStep(pid: string, index: number): Promise<ProcessRun> {
-    return this.http.post(`/api/process-executions/${pid}/steps/${index}/complete`, { body: {} });
+    return this.http.post(
+      `/api/process-executions/${pid}/steps/${index}/complete`,
+      { body: {} },
+    );
   }
   cancelProcessRun(pid: string): Promise<ProcessRun> {
-    return this.http.post(`/api/process-executions/${pid}/cancel`, { body: {} });
+    return this.http.post(`/api/process-executions/${pid}/cancel`, {
+      body: {},
+    });
   }
   resumeProcessRun(pid: string): Promise<ProcessRun> {
-    return this.http.post(`/api/process-executions/${pid}/resume`, { body: {} });
+    return this.http.post(`/api/process-executions/${pid}/resume`, {
+      body: {},
+    });
   }
   /** What the people in a role are working on (needs the right to manage people). */
   roleTasks(role: string): Promise<RoleTasks> {
@@ -3913,9 +4150,7 @@ export class PpmClient {
   }> {
     return this.http.get(`/api/plans/${pid}/handling-mark`);
   }
-  listTasks(
-    pid: string,
-  ): Promise<{
+  listTasks(pid: string): Promise<{
     tasks: Task[];
     counts: Record<string, number>;
     /** Every task that matches, not just those returned. */
@@ -4014,15 +4249,29 @@ export type StartRefusal =
   | { reason: "constraint_pool_over"; pool: string; months: string[] };
 
 export interface StartQueue {
-  queue: { position: number; plan_pid: string; name: string | null; queued_on: string; refusals: StartRefusal[] }[];
+  queue: {
+    position: number;
+    plan_pid: string;
+    name: string | null;
+    queued_on: string;
+    refusals: StartRefusal[];
+  }[];
   note: string;
 }
 
 export interface EmailDeliveries {
   deliveries: {
-    pid: string; kind: string; subject_ref: string; recipient: string; subject: string;
-    status: "queued" | "retry" | "sent" | "failed"; attempts: number; last_error: string | null;
-    sender: string | null; next_attempt_at: string | null; sent_at: string | null;
+    pid: string;
+    kind: string;
+    subject_ref: string;
+    recipient: string;
+    subject: string;
+    status: "queued" | "retry" | "sent" | "failed";
+    attempts: number;
+    last_error: string | null;
+    sender: string | null;
+    next_attempt_at: string | null;
+    sent_at: string | null;
   }[];
   counts: { retry: number; sent: number; failed: number };
 }
@@ -4038,57 +4287,152 @@ export interface Organization {
 
 export interface KeyPersons {
   entries: {
-    pid: string; subject_kind: "person" | "role"; subject: string; successor_ref: string | null;
-    readiness: "ready" | "partly" | "none"; skill_pool_pid: string | null; note: string | null;
+    pid: string;
+    subject_kind: "person" | "role";
+    subject: string;
+    successor_ref: string | null;
+    readiness: "ready" | "partly" | "none";
+    skill_pool_pid: string | null;
+    note: string | null;
   }[];
   contingent: string[];
 }
 
 export interface MilestoneSignoffs {
-  totals: { requiring_signoff: number; delivered: number; met: number; delivered_not_met: number; met_share_of_delivered_bp: number | null };
+  totals: {
+    requiring_signoff: number;
+    delivered: number;
+    met: number;
+    delivered_not_met: number;
+    met_share_of_delivered_bp: number | null;
+  };
   milestones: {
-    milestone_pid: string; plan_pid: string; name: string; due: string | null;
-    signoff: { state: "met" | "delivered_not_met" | "not_delivered" | "not_required"; delivered_on: string | null; met_on: string | null; outstanding: string[] };
+    milestone_pid: string;
+    plan_pid: string;
+    name: string;
+    due: string | null;
+    signoff: {
+      state: "met" | "delivered_not_met" | "not_delivered" | "not_required";
+      delivered_on: string | null;
+      met_on: string | null;
+      outstanding: string[];
+    };
   }[];
   note: string;
 }
 
 export interface FundingAllocation {
-  pid: string; funding_source_pid: string; funding_source: string; amount_minor: number; currency: string;
-  allocated_on: string; reference: string | null; planned_on_lines_minor: number; untraced_minor: number; lines: number;
+  pid: string;
+  funding_source_pid: string;
+  funding_source: string;
+  amount_minor: number;
+  currency: string;
+  allocated_on: string;
+  reference: string | null;
+  planned_on_lines_minor: number;
+  untraced_minor: number;
+  lines: number;
 }
 
 export interface AllocationTrace {
   allocation: FundingAllocation;
   currency: string;
-  lines: { line_pid: string; plan_pid: string; plan: string | null; description: string; category: string; planned_minor: number; actual_minor: number; gate: string | null; released: boolean }[];
-  money: { allocated_minor: number; planned_on_lines_minor: number; spent_minor: number; untraced_minor: number; untraced_reason: string | null };
+  lines: {
+    line_pid: string;
+    plan_pid: string;
+    plan: string | null;
+    description: string;
+    category: string;
+    planned_minor: number;
+    actual_minor: number;
+    gate: string | null;
+    released: boolean;
+  }[];
+  money: {
+    allocated_minor: number;
+    planned_on_lines_minor: number;
+    spent_minor: number;
+    untraced_minor: number;
+    untraced_reason: string | null;
+  };
   gates: { lines_with_a_gate: number; released: number };
-  milestones: { met: number; total: number; items: { plan: string | null; name: string; due: string | null; met: boolean; met_on: string | null }[] };
-  benefits: { validated_by_currency: { currency: string; validated_minor: number }[]; planned_by_currency: { currency: string; planned_minor: number }[]; benefits: number };
+  milestones: {
+    met: number;
+    total: number;
+    items: {
+      plan: string | null;
+      name: string;
+      due: string | null;
+      met: boolean;
+      met_on: string | null;
+    }[];
+  };
+  benefits: {
+    validated_by_currency: { currency: string; validated_minor: number }[];
+    planned_by_currency: { currency: string; planned_minor: number }[];
+    benefits: number;
+  };
   note: string;
 }
 
 export interface DeploymentMove {
-  pid: string; plan_pid: string; task_pid: string; from_start: string; to_start: string; reason: string;
-  requested_by: string | null; approver_ref: string; status: "requested" | "approved" | "refused";
-  decided_by: string | null; decided_on: string | null; decision_reason: string | null;
-  knock_on: { task_pid: string; title: string; plan_pid: string; other_deployment: boolean; moved: boolean; start_days: number; finish_days: number }[];
+  pid: string;
+  plan_pid: string;
+  task_pid: string;
+  from_start: string;
+  to_start: string;
+  reason: string;
+  requested_by: string | null;
+  approver_ref: string;
+  status: "requested" | "approved" | "refused";
+  decided_by: string | null;
+  decided_on: string | null;
+  decision_reason: string | null;
+  knock_on: {
+    task_pid: string;
+    title: string;
+    plan_pid: string;
+    other_deployment: boolean;
+    moved: boolean;
+    start_days: number;
+    finish_days: number;
+  }[];
   knock_on_cost: { labour?: { currency: string; delta_minor: number }[] };
 }
 
 export interface DeploymentMoves {
   moves: DeploymentMove[];
-  cost_by_requester: { requested_by: string; requests: number; knock_on_labour: { currency: string; delta_minor: number }[] }[];
+  cost_by_requester: {
+    requested_by: string;
+    requests: number;
+    knock_on_labour: { currency: string; delta_minor: number }[];
+  }[];
   note: string;
 }
 
 export interface CutoverDecision {
-  pid: string; plan_pid: string; title: string; version: number; supersedes_pid: string | null;
+  pid: string;
+  plan_pid: string;
+  title: string;
+  version: number;
+  supersedes_pid: string | null;
   status: "draft" | "published" | "open" | "decided" | "superseded";
-  published_on: string | null; opened_on: string | null;
-  outcome: "go" | "no_go" | "delay_for_safety" | null; decided_on: string | null; decision_reason: string | null;
-  criteria: { n: number; criterion: string; met: boolean; evidence: string | null; marked_on: string | null }[];
-  cosignatures: { required: string[]; signed: { role: string; signed_on: string }[]; missing: string[] };
+  published_on: string | null;
+  opened_on: string | null;
+  outcome: "go" | "no_go" | "delay_for_safety" | null;
+  decided_on: string | null;
+  decision_reason: string | null;
+  criteria: {
+    n: number;
+    criterion: string;
+    met: boolean;
+    evidence: string | null;
+    marked_on: string | null;
+  }[];
+  cosignatures: {
+    required: string[];
+    signed: { role: string; signed_on: string }[];
+    missing: string[];
+  };
   go_would_be_refused_because: string[];
 }

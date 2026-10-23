@@ -21,5 +21,9 @@ export const load: PageLoad = async ({ params, fetch, url }) => {
   } catch {
     // ignore — see comment above
   }
-  return { title: pageTitle(url, "p.plans.pid.main_x", { v: name ?? t("p.plans.pid.plan_fallback") }) };
+  return {
+    title: pageTitle(url, "p.plans.pid.main_x", {
+      v: name ?? t("p.plans.pid.plan_fallback"),
+    }),
+  };
 };

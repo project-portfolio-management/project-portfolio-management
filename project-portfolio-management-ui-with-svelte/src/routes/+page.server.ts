@@ -37,9 +37,13 @@ export const actions: Actions = {
         try {
           const meta = await providerMetadata(fetch, cfg.issuer);
           if (meta.end_session_endpoint) {
-            const q = new URLSearchParams({ post_logout_redirect_uri: `${url.origin}${home}` });
+            const q = new URLSearchParams({
+              post_logout_redirect_uri: `${url.origin}${home}`,
+            });
             if (idToken) q.set("id_token_hint", idToken);
-            redirect(303, `${meta.end_session_endpoint}?${q.toString()}`, { external: true });
+            redirect(303, `${meta.end_session_endpoint}?${q.toString()}`, {
+              external: true,
+            });
           }
         } catch (e) {
           if (e && typeof e === "object" && "status" in e) throw e; // a redirect

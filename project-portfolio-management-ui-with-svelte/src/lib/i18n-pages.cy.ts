@@ -25,7 +25,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.calendar.due": "Dyddiad cyflawni",
   "p.plans.pid.board.assignee": "Aseinai",
   "p.plans.pid.board.moving": "Symud {title} i {column}…",
-  "p.plans.pid.board.move_failed": "Methu symud {title} i {column}; mae wedi dychwelyd i'w le.",
+  "p.plans.pid.board.move_failed":
+    "Methu symud {title} i {column}; mae wedi dychwelyd i'w le.",
   "p.plans.pid.board.empty_column": "Dim tasgau",
   "p.plans.pid.board.search": "Chwilio'r bwrdd",
   "p.plans.pid.board.export": "Allforio'r bwrdd",
@@ -35,7 +36,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.board.task": "Tasg",
   "p.plans.pid.board.status": "Statws",
   "c.GanttView.holiday": "Gwyliau",
-  "c.GanttView.shaded": "Mae'r colofnau cysgodol yn ddiwrnodau i ffwrdd: penwythnosau a gwyliau yng nghalendr gwaith y cynllun hwn.",
+  "c.GanttView.shaded":
+    "Mae'r colofnau cysgodol yn ddiwrnodau i ffwrdd: penwythnosau a gwyliau yng nghalendr gwaith y cynllun hwn.",
   "c.GanttView.kind": "Math",
   "c.GanttView.stage": "Cam",
   "c.GanttView.task": "Tasg",
@@ -68,25 +70,31 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.CostRiskView.assumptions": "Tybiaethau",
   "c.CostRiskView.budget": "cyllideb",
   "c.CostRiskView.budget_2": "Cyllideb",
-  "c.CostRiskView.budget_sum_of_planned_amounts": "Cyllideb (cyfanswm y symiau cynlluniedig)",
+  "c.CostRiskView.budget_sum_of_planned_amounts":
+    "Cyllideb (cyfanswm y symiau cynlluniedig)",
   "c.CostRiskView.by_plan": "Fesul cynllun",
   "c.CostRiskView.cost": "Cost",
   "c.CostRiskView.cost_at_each_percentile": "Cost {currency} ar bob canraneg",
   "c.CostRiskView.cost_from": "Cost o",
-  "c.CostRiskView.each_bar_is_a_cost": "Mae pob bar yn amrediad cost; mae talach yn golygu bod mwy o efelychiadau wedi gorffen yno. Llinellau solet yw P50, P80 a P90 (wedi'u labelu); y llinell doredig yw'r gyllideb.",
-  "c.CostRiskView.each_plan_s_budget_and": "Cyllideb pob cynllun a chost efelychiedig cymedrig yn {currency}",
+  "c.CostRiskView.each_bar_is_a_cost":
+    "Mae pob bar yn amrediad cost; mae talach yn golygu bod mwy o efelychiadau wedi gorffen yno. Llinellau solet yw P50, P80 a P90 (wedi'u labelu); y llinell doredig yw'r gyllideb.",
+  "c.CostRiskView.each_plan_s_budget_and":
+    "Cyllideb pob cynllun a chost efelychiedig cymedrig yn {currency}",
   "c.CostRiskView.estimate": "Amcangyfrif",
   "c.CostRiskView.independence": "Annibyniaeth.",
   "c.CostRiskView.left_out": "Wedi'u gadael allan:",
   "c.CostRiskView.line": "Llinell",
   "c.CostRiskView.low_planned_high": "Isel / cynlluniedig / uchel",
   "c.CostRiskView.mean_simulated_cost": "Cost efelychiedig gymedrig",
-  "c.CostRiskView.no_register_risk_was_used": "Ni ddefnyddiwyd unrhyw risg cofrestr fel digwyddiad cost.",
+  "c.CostRiskView.no_register_risk_was_used":
+    "Ni ddefnyddiwyd unrhyw risg cofrestr fel digwyddiad cost.",
   "c.CostRiskView.outcome": "Canlyniad",
-  "c.CostRiskView.per_line_estimate_and_sensitivity": "Amcangyfrif fesul llinell a sensitifrwydd yn {currency}",
+  "c.CostRiskView.per_line_estimate_and_sensitivity":
+    "Amcangyfrif fesul llinell a sensitifrwydd yn {currency}",
   "c.CostRiskView.plan": "Cynllun",
   "c.CostRiskView.risks_that_added_cost": "Risgiau a ychwanegodd gost",
-  "c.CostRiskView.seed_the_same_seed_gives": "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad. Hyd at {max_iterations} ailadroddiad.",
+  "c.CostRiskView.seed_the_same_seed_gives":
+    "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad. Hyd at {max_iterations} ailadroddiad.",
   "c.CostRiskView.sensitivity": "Sensitifrwydd",
   "c.CostRiskView.simulations": "Efelychiadau",
   "c.CostRiskView.spent": "Gwariwyd",
@@ -94,14 +102,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.CostRiskView.to": "i",
   "c.CostRiskView.to_of": "{money} i {money2}: {count} o {iterations}",
   "c.CostRiskView.what_drives_it": "Beth sy'n ei yrru",
-  "c.CpmGantt.cannot_meet_a_constraint_or": "ni all fodloni cyfyngiad na therfyn amser (mae'r llinell yn nodi'r terfyn)",
-  "c.CpmGantt.critical_any_slip_moves_the": "critigol: mae unrhyw lithriad yn symud y diwedd",
-  "c.CpmGantt.has_float_the_hatched_tail": "mae ganddi lac (y gynffon â llinellau)",
+  "c.CpmGantt.cannot_meet_a_constraint_or":
+    "ni all fodloni cyfyngiad na therfyn amser (mae'r llinell yn nodi'r terfyn)",
+  "c.CpmGantt.critical_any_slip_moves_the":
+    "critigol: mae unrhyw lithriad yn symud y diwedd",
+  "c.CpmGantt.has_float_the_hatched_tail":
+    "mae ganddi lac (y gynffon â llinellau)",
   "c.CpmGantt.legend": "Allwedd",
   "c.CpmGantt.near_critical": "bron yn gritigol",
-  "c.CpmGantt.no_scheduled_tasks_to_draw": "Dim tasgau wedi'u hamserlennu i'w tynnu eto. Rhowch hyd i dasg (a dyddiad dechrau neu ragflaenydd).",
-  "c.CpmGantt.the_outline_under_a_bar": "y amlinell o dan far yw lle'r oedd ar y llinell sylfaen",
-  "c.CpmGantt.to_float_is_counted_in": "{from} i {to}. Cyfrifir llac yn niwrnodau gwaith y cynllun; tynnir bariau mewn diwrnodau calendr.",
+  "c.CpmGantt.no_scheduled_tasks_to_draw":
+    "Dim tasgau wedi'u hamserlennu i'w tynnu eto. Rhowch hyd i dasg (a dyddiad dechrau neu ragflaenydd).",
+  "c.CpmGantt.the_outline_under_a_bar":
+    "y amlinell o dan far yw lle'r oedd ar y llinell sylfaen",
+  "c.CpmGantt.to_float_is_counted_in":
+    "{from} i {to}. Cyfrifir llac yn niwrnodau gwaith y cynllun; tynnir bariau mewn diwrnodau calendr.",
   "c.CpmTable.calendar": "Calendr",
   "c.CpmTable.constraint": "Cyfyngiad",
   "c.CpmTable.deadline": "Terfyn amser",
@@ -113,17 +127,22 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.CpmTable.starts": "Yn dechrau",
   "c.CpmTable.state": "Cyflwr",
   "c.CpmTable.task": "Tasg",
-  "c.CpmTable.task_schedule_with_float_in": "Amserlen tasgau gyda llac, yn niwrnodau gwaith y cynllun",
+  "c.CpmTable.task_schedule_with_float_in":
+    "Amserlen tasgau gyda llac, yn niwrnodau gwaith y cynllun",
   "c.CpmTable.total_float": "Llac cyfan",
   "c.CpmTable.untitled": "(dienw)",
   "c.CumulativeFlow.cumulative_flow": "Llif cronnus",
   "c.CumulativeFlow.day": "Diwrnod",
   "c.CumulativeFlow.every_value_in_the_chart": "Pob gwerth yn y siart. {note}",
-  "c.CumulativeFlow.no_samples_in_this_window": "Dim samplau yn y ffenestr hon.",
-  "c.CumulativeFlow.the_vertical_gap_above_done": "y bwlch fertigol uwchlaw “Wedi'i wneud” yw gwaith ar y gweill; y bwlch llorweddol iddo yw'r amser beicio fwy neu lai",
+  "c.CumulativeFlow.no_samples_in_this_window":
+    "Dim samplau yn y ffenestr hon.",
+  "c.CumulativeFlow.the_vertical_gap_above_done":
+    "y bwlch fertigol uwchlaw “Wedi'i wneud” yw gwaith ar y gweill; y bwlch llorweddol iddo yw'r amser beicio fwy neu lai",
   "c.CumulativeFlow.total": "Cyfanswm",
-  "c.CumulativeFlow.total_in_progress_done": "{total} cyfanswm · {work_in_progress} ar y gweill · {done} wedi'u gwneud",
-  "c.EvBars.the_double_line_is_the": "Y llinell ddwbl yw'r gyllideb ar gwblhau: {money}.",
+  "c.CumulativeFlow.total_in_progress_done":
+    "{total} cyfanswm · {work_in_progress} ar y gweill · {done} wedi'u gwneud",
+  "c.EvBars.the_double_line_is_the":
+    "Y llinell ddwbl yw'r gyllideb ar gwblhau: {money}.",
   "c.EvBars.unknown": "anhysbys",
   "c.KpiCard.add_a_reading": "Ychwanegu darlleniad",
   "c.KpiCard.cadence": "Amlder",
@@ -150,14 +169,17 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.KpiCard.unit": "Uned",
   "c.KpiCard.value": "Gwerth",
   "c.KpiCard.weekly": "Wythnosol",
-  "c.KpiCard.which_way_is_good_cannot": "Ni ellir newid pa ffordd sy'n dda ({v}): byddai'n ail-liwio pob darlleniad yn y gorffennol.",
+  "c.KpiCard.which_way_is_good_cannot":
+    "Ni ellir newid pa ffordd sy'n dda ({v}): byddai'n ail-liwio pob darlleniad yn y gorffennol.",
   "c.LilyGanttTable.critical_path": "llwybr critigol",
   "c.LilyGanttTable.day": "Diwrnod",
   "c.LilyGanttTable.month": "Mis",
-  "c.LilyGanttTable.no_dated_tasks_to_show": "Dim tasgau â dyddiadau i'w dangos.",
+  "c.LilyGanttTable.no_dated_tasks_to_show":
+    "Dim tasgau â dyddiadau i'w dangos.",
   "c.LilyGanttTable.no_usable_dates": "Dim dyddiadau defnyddiadwy:",
   "c.LilyGanttTable.task": "Tasg",
-  "c.LilyGanttTable.that_range_is_too_long": "Mae'r amrediad hwnnw'n rhy hir ar gyfer un golofn fesul {unit}; dangosir un fesul {unit2}.",
+  "c.LilyGanttTable.that_range_is_too_long":
+    "Mae'r amrediad hwnnw'n rhy hir ar gyfer un golofn fesul {unit}; dangosir un fesul {unit2}.",
   "c.LilyGanttTable.time_scale": "Graddfa amser",
   "c.LilyGanttTable.week": "Wythnos",
   "c.LilyKanbanTable.move_to": "Symud {title} i",
@@ -165,7 +187,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.LilyKanbanTable.unknown_status": "Statws anhysbys:",
   "c.LineRange.high": "Uchel",
   "c.LineRange.low": "Isel",
-  "c.LineRange.planned_is_the_likely_cost": "Y gost debygol yw'r swm cynlluniedig, {money}. Gadewch faes yn wag i'w glirio.",
+  "c.LineRange.planned_is_the_likely_cost":
+    "Y gost debygol yw'r swm cynlluniedig, {money}. Gadewch faes yn wag i'w glirio.",
   "c.LineRange.save_range": "Cadw'r amrediad",
   "c.MilestoneCard.by": "Gan",
   "c.MilestoneCard.by_hand_only": "Â llaw yn unig",
@@ -173,7 +196,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.MilestoneCard.completes": "Yn cwblhau",
   "c.MilestoneCard.done": "Wedi'i wneud",
   "c.MilestoneCard.due": "Dyledus {due} · {kind}",
-  "c.MilestoneCard.every_move_is_kept_in": "Cedwir pob symudiad yn yr hanes: yr hen ddyddiad, yr un newydd, pam, a phwy.",
+  "c.MilestoneCard.every_move_is_kept_in":
+    "Cedwir pob symudiad yn yr hanes: yr hen ddyddiad, yr un newydd, pam, a phwy.",
   "c.MilestoneCard.forecast": "· rhagolwg {early_finish}",
   "c.MilestoneCard.from": "O",
   "c.MilestoneCard.loading": "Yn llwytho…",
@@ -183,23 +207,29 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.MilestoneCard.new_due_date": "Dyddiad dyledus newydd",
   "c.MilestoneCard.no_reason_given": "ni roddwyd rheswm",
   "c.MilestoneCard.open": "Agored",
-  "c.MilestoneCard.pick_the_tasks_that_must": "Dewiswch y tasgau y mae'n rhaid eu gwneud",
+  "c.MilestoneCard.pick_the_tasks_that_must":
+    "Dewiswch y tasgau y mae'n rhaid eu gwneud",
   "c.MilestoneCard.reason_required": "Rheswm (gofynnol)",
   "c.MilestoneCard.reopen": "Ailagor",
   "c.MilestoneCard.reschedule": "Aildrefnu",
   "c.MilestoneCard.save": "Cadw",
   "c.MilestoneCard.slip_history": "Hanes llithriad ({reschedules})",
   "c.MilestoneCard.tasks_it_waits_for": "Tasgau y mae'n aros amdanynt",
-  "c.MilestoneCard.tasks_this_milestone_waits_for": "Tasgau y mae'r garreg filltir hon yn aros amdanynt",
-  "c.MilestoneCard.this_plan_has_no_tasks": "Nid oes tasgau gan y cynllun hwn eto.",
+  "c.MilestoneCard.tasks_this_milestone_waits_for":
+    "Tasgau y mae'r garreg filltir hon yn aros amdanynt",
+  "c.MilestoneCard.this_plan_has_no_tasks":
+    "Nid oes tasgau gan y cynllun hwn eto.",
   "c.MilestoneCard.to": "I",
   "c.MilestoneCard.view_plan": "Gweld y cynllun",
-  "c.MilestoneCard.when_all_those_tasks_are": "Pan fydd yr holl dasgau hynny wedi'u gwneud",
+  "c.MilestoneCard.when_all_those_tasks_are":
+    "Pan fydd yr holl dasgau hynny wedi'u gwneud",
   "c.MilestoneCard.why": "Pam",
   "c.NetworkDiagram.float": "{slice} → {slice2} · llac {total_float}",
   "c.NetworkDiagram.no_dependencies": "Dim dibyniaethau.",
-  "c.NetworkDiagram.no_scheduled_tasks_to_draw": "Dim tasgau wedi'u hamserlennu i'w tynnu eto.",
-  "c.NetworkDiagram.task_network_boxes_are_tasks": "Rhwydwaith tasgau: blychau yw tasgau, saethau yw dibyniaethau",
+  "c.NetworkDiagram.no_scheduled_tasks_to_draw":
+    "Dim tasgau wedi'u hamserlennu i'w tynnu eto.",
+  "c.NetworkDiagram.task_network_boxes_are_tasks":
+    "Rhwydwaith tasgau: blychau yw tasgau, saethau yw dibyniaethau",
   "c.NetworkDiagram.the_same_network_as_a": "Yr un rhwydwaith fel rhestr",
   "c.ObjectiveCard.add_a_key_result": "Ychwanegu canlyniad allweddol",
   "c.ObjectiveCard.add_key_result": "Ychwanegu canlyniad allweddol",
@@ -211,11 +241,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.ObjectiveCard.delete": "Dileu",
   "c.ObjectiveCard.direction": "Cyfeiriad",
   "c.ObjectiveCard.edit_or_delete": "Golygu neu ddileu",
-  "c.ObjectiveCard.edit_or_delete_this_objective": "Golygu neu ddileu'r amcan hwn",
+  "c.ObjectiveCard.edit_or_delete_this_objective":
+    "Golygu neu ddileu'r amcan hwn",
   "c.ObjectiveCard.from": "{valueText} (o {start_value})",
   "c.ObjectiveCard.increase": "Cynyddu",
-  "c.ObjectiveCard.it_has_no_measurable_key": "— nid oes ganddo ganlyniad allweddol mesuradwy eto, felly nid oes ganddo sgôr (nid sero).",
-  "c.ObjectiveCard.key_results_in_more_than": "Caiff canlyniadau allweddol mewn mwy nag un arian cyfred eu sgorio ar wahân; ni chaiff arian cyfred byth ei drosi.",
+  "c.ObjectiveCard.it_has_no_measurable_key":
+    "— nid oes ganddo ganlyniad allweddol mesuradwy eto, felly nid oes ganddo sgôr (nid sero).",
+  "c.ObjectiveCard.key_results_in_more_than":
+    "Caiff canlyniadau allweddol mewn mwy nag un arian cyfred eu sgorio ar wahân; ni chaiff arian cyfred byth ei drosi.",
   "c.ObjectiveCard.last_check_in": "· cofrestriad diwethaf {slice}",
   "c.ObjectiveCard.maintain": "Cynnal",
   "c.ObjectiveCard.metric": "Metrig",
@@ -228,7 +261,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.ObjectiveCard.save": "Cadw",
   "c.ObjectiveCard.start": "Dechrau",
   "c.ObjectiveCard.target": "Targed",
-  "c.ObjectiveCard.the_baseline_metric_and_direction": "Ni ellir newid y llinell sylfaen, y metrig na'r cyfeiriad: nid yw cynnydd o linell sylfaen sy'n symud yn gynnydd.",
+  "c.ObjectiveCard.the_baseline_metric_and_direction":
+    "Ni ellir newid y llinell sylfaen, y metrig na'r cyfeiriad: nid yw cynnydd o linell sylfaen sy'n symud yn gynnydd.",
   "c.ObjectiveCard.title": "Teitl",
   "c.ObjectiveCard.tolerance": "· goddefiant ±{tolerance}",
   "c.ObjectiveCard.tolerance_2": "Goddefiant",
@@ -241,14 +275,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.RaciMatrix.complete": "cyflawn",
   "c.RaciMatrix.gaps": "Bylchau",
   "c.RaciMatrix.task": "Tasg",
-  "c.RaciMatrix.who_does_what_raci_matrix": "Pwy sy'n gwneud beth (matrics RACI): pwy sy'n Gyfrifol, yn Atebol, wedi Ymgynghori ac wedi'i Hysbysu ar bob tasg",
+  "c.RaciMatrix.who_does_what_raci_matrix":
+    "Pwy sy'n gwneud beth (matrics RACI): pwy sy'n Gyfrifol, yn Atebol, wedi Ymgynghori ac wedi'i Hysbysu ar bob tasg",
   "c.RiskInputs.adds_cost": "Yn ychwanegu cost",
   "c.RiskInputs.by_business_days": "erbyn (diwrnodau gwaith)",
   "c.RiskInputs.currency": "Arian cyfred",
   "c.RiskInputs.delays_task": "Yn gohirio tasg",
   "c.RiskInputs.gbp": "GBP",
   "c.RiskInputs.none": "Dim",
-  "c.RiskInputs.one_probability_covers_both_effects": "Mae un tebygolrwydd yn cwmpasu'r ddau effaith: mae risg sy'n gohirio tasg ac yn ychwanegu cost yn taro unwaith ac yn gwneud y ddau. Gadewch ran yn wag i'w gadael allan.",
+  "c.RiskInputs.one_probability_covers_both_effects":
+    "Mae un tebygolrwydd yn cwmpasu'r ddau effaith: mae risg sy'n gohirio tasg ac yn ychwanegu cost yn taro unwaith ac yn gwneud y ddau. Gadewch ran yn wag i'w gadael allan.",
   "c.RiskInputs.probability": "Tebygolrwydd (%)",
   "c.RiskInputs.save": "Cadw",
   "c.RiskInputs.saving": "Yn cadw…",
@@ -256,22 +292,26 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.SCurve.actual": "Gwirioneddol",
   "c.SCurve.date": "Dyddiad",
   "c.SCurve.earned": "Enillwyd",
-  "c.SCurve.line_planned_value_to_earned": "Llinell: gwerth cynlluniedig ({from} i {to}). ● gwerth enilledig a ■ cost gwirioneddol, dim ond ar ddiwrnodau a gofnodwyd ({snapshots} hyd yma). Toredig: cyllideb ar gwblhau, {money}.",
+  "c.SCurve.line_planned_value_to_earned":
+    "Llinell: gwerth cynlluniedig ({from} i {to}). ● gwerth enilledig a ■ cost gwirioneddol, dim ond ar ddiwrnodau a gofnodwyd ({snapshots} hyd yma). Toredig: cyllideb ar gwblhau, {money}.",
   "c.SCurve.no_curve_to_draw": "Dim cromlin i'w thynnu.",
   "c.SCurve.not_recorded": "heb ei gofnodi",
   "c.SCurve.planned": "Cynlluniedig",
-  "c.SCurve.s_curve_planned_value_over": "Cromlin-S: gwerth cynlluniedig dros amser, gyda gwerth enilledig a chost gwirioneddol a gofnodwyd",
+  "c.SCurve.s_curve_planned_value_over":
+    "Cromlin-S: gwerth cynlluniedig dros amser, gyda gwerth enilledig a chost gwirioneddol a gofnodwyd",
   "c.SCurve.the_same_figures_as_a": "Yr un ffigurau fel tabl",
   "c.VarianceTable.baselined": "Llinell sylfaen",
   "c.VarianceTable.duration": "Hyd Δ",
   "c.VarianceTable.finish": "Gorffen Δ",
   "c.VarianceTable.now": "Nawr",
-  "c.VarianceTable.schedule_variance_against_the_baseli": "Amrywiant amserlen yn erbyn y llinell sylfaen, mewn diwrnodau gwaith",
+  "c.VarianceTable.schedule_variance_against_the_baseli":
+    "Amrywiant amserlen yn erbyn y llinell sylfaen, mewn diwrnodau gwaith",
   "c.VarianceTable.standing": "Safle",
   "c.VarianceTable.start": "Dechrau Δ",
   "c.VarianceTable.task": "Tasg",
   "c.VarianceTable.the_plan_s_finish_is": "Nid yw diwedd y cynllun wedi newid.",
-  "c.VarianceTable.the_plan_s_own_finish": "Ni ellir cymharu diwedd y cynllun ei hun.",
+  "c.VarianceTable.the_plan_s_own_finish":
+    "Ni ellir cymharu diwedd y cynllun ei hun.",
   "p.announcements.announcements": "Cyhoeddiadau",
   "p.announcements.announcements_ppm": "Cyhoeddiadau — PPM",
   "p.announcements.expires_optional": "Daw i ben (dewisol)",
@@ -284,14 +324,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.announcements.pinned": "· Wedi'i binio",
   "p.announcements.publish": "Cyhoeddi",
   "p.announcements.publish_an_announcement": "Cyhoeddi cyhoeddiad",
-  "p.announcements.publishing_needs_the_announcements_p": "Mae cyhoeddi angen y caniatâd cyhoeddiadau.",
+  "p.announcements.publishing_needs_the_announcements_p":
+    "Mae cyhoeddi angen y caniatâd cyhoeddiadau.",
   "p.announcements.retract": "Tynnu'n ôl",
   "p.announcements.severity": "Difrifoldeb",
   "p.announcements.title": "Teitl",
   "p.announcements.urgent": "Brys",
   "p.auditor.action": "Gweithred",
   "p.auditor.actor": "Gweithredwr",
-  "p.auditor.actor_less_recorded_actions": "Gweithredoedd a gofnodwyd heb weithredwr:",
+  "p.auditor.actor_less_recorded_actions":
+    "Gweithredoedd a gofnodwyd heb weithredwr:",
   "p.auditor.audit_trail": "Llwybr archwilio",
   "p.auditor.bearer_sub": "is y daliwr",
   "p.auditor.detail": "Manylion",
@@ -303,9 +345,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.auditor.no_audit_rows_match": "Nid oes unrhyw resi archwilio'n cyfateb.",
   "p.auditor.no_findings": "Dim canfyddiadau.",
   "p.auditor.ppm": "{t} — PPM",
-  "p.auditor.rows_distinct_actors_actor_less": "{returned} rhes · {distinct_actors} gweithredwr gwahanol · {actorless} heb weithredwr",
+  "p.auditor.rows_distinct_actors_actor_less":
+    "{returned} rhes · {distinct_actors} gweithredwr gwahanol · {actorless} heb weithredwr",
   "p.auditor.rule": "Rheol",
-  "p.auditor.submitted_without_a_verified_token": "(cyflwynwyd heb docyn wedi'i ddilysu)",
+  "p.auditor.submitted_without_a_verified_token":
+    "(cyflwynwyd heb docyn wedi'i ddilysu)",
   "p.auditor.when": "Pryd",
   "p.automations.action": "gweithred",
   "p.automations.action_2": "Gweithred",
@@ -317,8 +361,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.automations.automations_ppm": "Awtomeiddio — PPM",
   "p.automations.blank_every_plan": "gwag = pob cynllun",
   "p.automations.cancel": "Canslo",
-  "p.automations.claim_based_so_a_deadline": "Yn seiliedig ar hawlio, felly mae terfyn amser yn tanio unwaith yn unig hyd yn oed os bydd y tician a sgubo â llaw yn rasio.",
-  "p.automations.configure_a_rule_once_as": "Ffurfweddwch reol unwaith; wrth i eitemau symud ar draws y bwrdd mae'r platfform yn ei chymhwyso. Nid yw rheolau byth yn rhwystro'r symudiad a'u sbardunodd — cofnodir methiant fel rhediad a fethodd, nid dadwneud.",
+  "p.automations.claim_based_so_a_deadline":
+    "Yn seiliedig ar hawlio, felly mae terfyn amser yn tanio unwaith yn unig hyd yn oed os bydd y tician a sgubo â llaw yn rasio.",
+  "p.automations.configure_a_rule_once_as":
+    "Ffurfweddwch reol unwaith; wrth i eitemau symud ar draws y bwrdd mae'r platfform yn ei chymhwyso. Nid yw rheolau byth yn rhwystro'r symudiad a'u sbardunodd — cofnodir methiant fel rhediad a fethodd, nid dadwneud.",
   "p.automations.delete": "Dileu",
   "p.automations.detail": "Manylion",
   "p.automations.disable": "Analluogi",
@@ -375,7 +421,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.board.kind": "Math",
   "p.board.milestones_completed": "cerrig milltir wedi'u cwblhau",
   "p.board.no_decisions_in_the_window": "Dim penderfyniadau yn y ffenestr.",
-  "p.board.no_investment_decisions_recorded": "Dim penderfyniadau buddsoddi wedi'u cofnodi.",
+  "p.board.no_investment_decisions_recorded":
+    "Dim penderfyniadau buddsoddi wedi'u cofnodi.",
   "p.board.no_snapshots_captured_yet": "Dim cipluniau wedi'u cipio eto.",
   "p.board.open_exposure": "Amlygiad agored",
   "p.board.portfolios": "Portffolios",
@@ -387,7 +434,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.board.taken": "Cymerwyd",
   "p.board.tranches_released": "cyfrannau a ryddhawyd",
   "p.board.trends": "Tueddiadau",
-  "p.board.unattributed_events": "({unattributed_events} digwyddiad heb ei briodoli)",
+  "p.board.unattributed_events":
+    "({unattributed_events} digwyddiad heb ei briodoli)",
   "p.board.what": "Beth",
   "p.board.when": "Pryd",
   "p.board.window": "ffenestr {from} → {to}",
@@ -399,15 +447,18 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.calendar.ppm": "{t} — PPM",
   "p.capacity.capacity_ppm": "Capasiti — PPM",
   "p.capacity.from": "o",
-  "p.capacity.hatched_extension_proposed_not_count": "estyniad â llinellau: arfaethedig, heb ei gyfrif",
+  "p.capacity.hatched_extension_proposed_not_count":
+    "estyniad â llinellau: arfaethedig, heb ei gyfrif",
   "p.capacity.legend": "Allwedd",
   "p.capacity.over": "dros",
-  "p.capacity.over_capacity_solid_bar_firm": "dros y capasiti (bar solet: archebion cadarn; llinell: capasiti mewn grym)",
+  "p.capacity.over_capacity_solid_bar_firm":
+    "dros y capasiti (bar solet: archebion cadarn; llinell: capasiti mewn grym)",
   "p.capacity.proposed": "Cynigiwyd",
   "p.capacity.to": "i",
   "p.capacity.window": "ffenestr: {from} → {to}",
   "p.capacity.within_capacity": "o fewn y capasiti",
-  "p.capacity.within_capacity_but_committing_the": "o fewn y capasiti, ond byddai ymrwymo i'r archebion arfaethedig yn ei ragori",
+  "p.capacity.within_capacity_but_committing_the":
+    "o fewn y capasiti, ond byddai ymrwymo i'r archebion arfaethedig yn ei ragori",
   "p.ceo.all_announcements": "Pob cyhoeddiad",
   "p.ceo.all_key_measures": "Pob mesur allweddol",
   "p.ceo.all_milestones": "Pob carreg filltir",
@@ -429,7 +480,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ceo.no_portfolio_is_over_budget": "● Nid oes portffolio dros y gyllideb",
   "p.ceo.nothing_has_been_announced": "Ni chyhoeddwyd dim.",
   "p.ceo.over_budget": "▲ Dros y gyllideb: {join}",
-  "p.ceo.overdue_milestones": "{overdueMilestones} carreg filltir sydd wedi mynd heibio'r dyddiad",
+  "p.ceo.overdue_milestones":
+    "{overdueMilestones} carreg filltir sydd wedi mynd heibio'r dyddiad",
   "p.ceo.portfolio_health": "Iechyd portffolio",
   "p.ceo.recent_decisions": "Penderfyniadau diweddar",
   "p.ceo.red_amber_green": "■ {red} coch · ▲ {amber} ambr · ● {green} gwyrdd",
@@ -439,9 +491,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.compliance.conformance_findings": "Canfyddiadau cydymffurfio",
   "p.compliance.detail": "Manylion",
   "p.compliance.exposure": "Amlygiad",
-  "p.compliance.gate_review_recency_threshold_calend": "trothwy diweddarwch adolygiad porth: {review_days} diwrnod calendr",
+  "p.compliance.gate_review_recency_threshold_calend":
+    "trothwy diweddarwch adolygiad porth: {review_days} diwrnod calendr",
   "p.compliance.item": "Eitem",
-  "p.compliance.no_compliance_risks_recorded": "Dim risgiau cydymffurfiaeth wedi'u cofnodi.",
+  "p.compliance.no_compliance_risks_recorded":
+    "Dim risgiau cydymffurfiaeth wedi'u cofnodi.",
   "p.compliance.no_conformance_findings": "Dim canfyddiadau cydymffurfio.",
   "p.compliance.open_exposure": "{note} · amlygiad agored {open_exposure}",
   "p.compliance.owner": "Perchennog",
@@ -455,7 +509,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cost_rates.add_rate": "Ychwanegu cyfradd",
   "p.cost_rates.add_table": "Ychwanegu tabl",
   "p.cost_rates.cost_rates": "Cyfraddau cost",
-  "p.cost_rates.cost_rates_are_finance_data": "Data cyllid yw cyfraddau cost. Nid oes gennych fynediad atynt.",
+  "p.cost_rates.cost_rates_are_finance_data":
+    "Data cyllid yw cyfraddau cost. Nid oes gennych fynediad atynt.",
   "p.cost_rates.cost_rates_ppm": "Cyfraddau cost — PPM",
   "p.cost_rates.currency": "Arian cyfred",
   "p.cost_rates.effective_from": "Yn effeithiol o",
@@ -463,11 +518,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cost_rates.from": "O",
   "p.cost_rates.name": "Enw",
   "p.cost_rates.no_rate_tables_yet": "Dim tablau cyfraddau eto.",
-  "p.cost_rates.no_rate_yet_work_by": "Dim cyfradd eto: nid yw gwaith gan y {v} hwn yn cael ei gostio.",
+  "p.cost_rates.no_rate_yet_work_by":
+    "Dim cyfradd eto: nid yw gwaith gan y {v} hwn yn cael ei gostio.",
   "p.cost_rates.per_hour": "Fesul awr",
   "p.cost_rates.person_person_reference": "Person (cyfeirnod person:…)",
   "p.cost_rates.role": "Rôl",
-  "p.cost_risk.band_for_lines_with_no": "Band ar gyfer llinellau heb amcangyfrif (± %)",
+  "p.cost_risk.band_for_lines_with_no":
+    "Band ar gyfer llinellau heb amcangyfrif (± %)",
   "p.cost_risk.distribution": "Dosbarthiad",
   "p.cost_risk.iterations": "Ailadroddiadau",
   "p.cost_risk.pert": "PERT",
@@ -479,20 +536,28 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cost_risk.seed": "Hedyn",
   "p.cost_risk.shows_people_instead": "yn dangos pobl yn lle hynny.",
   "p.cost_risk.triangular": "Trionglog",
-  "p.cost_risk.what_all_your_plans_together": "Beth allai eich holl gynlluniau gyda'i gilydd gostio, o ystyried amrediad pob llinell gyllideb a'r risgiau sy'n ychwanegu cost. Mae pob arian cyfred ar ei ben ei hun; ni chânt byth eu hadio.",
+  "p.cost_risk.what_all_your_plans_together":
+    "Beth allai eich holl gynlluniau gyda'i gilydd gostio, o ystyried amrediad pob llinell gyllideb a'r risgiau sy'n ychwanegu cost. Mae pob arian cyfred ar ei ben ei hun; ni chânt byth eu hadio.",
   "p.dashboard.dashboard_ppm": "Dangosfwrdd — PPM",
   "p.display.display": "Arddangos",
   "p.display.display_ppm": "Arddangos — PPM",
   "p.display.dyslexia_friendly_font": "Ffont cyfeillgar i ddyslecsia",
-  "p.display.go_back_to_the_default": "Dychwelyd i'r rhagosodiad ar gyfer fy rôl",
-  "p.display.how_the_app_looks_and": "Sut mae'r ap yn edrych ac yn darllen. Nid yw'r rhain byth yn newid yr hyn y gallwch ei wneud.",
-  "p.display.keeps_the_everyday_pages_in": "Yn cadw'r tudalennau bob dydd o'ch blaen (Fy ngwaith, Cynlluniau, Bwrdd, Calendr, Taith) ac yn rhoi'r gweddill y tu ôl i ddolen “Rhagor”. Mae pob tudalen yno o hyd ac yn dal i weithio.",
-  "p.display.sign_in_to_keep_these": "Mewngofnodwch i gadw'r rhain ar eich cyfrif yn ogystal ag ar y ddyfais hon.",
+  "p.display.go_back_to_the_default":
+    "Dychwelyd i'r rhagosodiad ar gyfer fy rôl",
+  "p.display.how_the_app_looks_and":
+    "Sut mae'r ap yn edrych ac yn darllen. Nid yw'r rhain byth yn newid yr hyn y gallwch ei wneud.",
+  "p.display.keeps_the_everyday_pages_in":
+    "Yn cadw'r tudalennau bob dydd o'ch blaen (Fy ngwaith, Cynlluniau, Bwrdd, Calendr, Taith) ac yn rhoi'r gweddill y tu ôl i ddolen “Rhagor”. Mae pob tudalen yno o hyd ac yn dal i weithio.",
+  "p.display.sign_in_to_keep_these":
+    "Mewngofnodwch i gadw'r rhain ar eich cyfrif yn ogystal ag ar y ddyfais hon.",
   "p.display.simple_view": "Golwg syml",
-  "p.display.this_is_the_default_for": "Dyma'r rhagosodiad ar gyfer eich rôl: {v}.",
+  "p.display.this_is_the_default_for":
+    "Dyma'r rhagosodiad ar gyfer eich rôl: {v}.",
   "p.display.use_simple_view": "Defnyddio golwg syml",
-  "p.display.use_the_dyslexia_friendly_font": "Defnyddio'r ffont cyfeillgar i ddyslecsia",
-  "p.display.uses_the_opendyslexic_typeface_with": "Yn defnyddio'r wynebfath OpenDyslexic, gyda bylchau ehangach rhwng llythrennau, geiriau a llinellau.",
+  "p.display.use_the_dyslexia_friendly_font":
+    "Defnyddio'r ffont cyfeillgar i ddyslecsia",
+  "p.display.uses_the_opendyslexic_typeface_with":
+    "Yn defnyddio'r wynebfath OpenDyslexic, gyda bylchau ehangach rhwng llythrennau, geiriau a llinellau.",
   "p.display.you_chose_this": "Chi a ddewisodd hyn.",
   "p.documents.controlled_documents": "Dogfennau a reolir",
   "p.documents.create_document": "Creu dogfen",
@@ -514,13 +579,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.documents.pid.save_draft": "Cadw'r drafft",
   "p.documents.pid.send_back": "Anfon yn ôl",
   "p.documents.pid.text": "Testun",
-  "p.documents.pid.this_version_s_text_is": "Mae testun y fersiwn hon yn derfynol. Mae newid yn mynd i'r drafft nesaf.",
+  "p.documents.pid.this_version_s_text_is":
+    "Mae testun y fersiwn hon yn derfynol. Mae newid yn mynd i'r drafft nesaf.",
   "p.documents.pid.version": "Fersiwn {version}",
-  "p.documents.pid.version_was_in_force_on": "Roedd fersiwn {version} mewn grym ar {on}.",
+  "p.documents.pid.version_was_in_force_on":
+    "Roedd fersiwn {version} mewn grym ar {on}.",
   "p.documents.pid.versions": "Fersiynau",
   "p.documents.pid.what_changed": "Beth a newidiodd",
   "p.documents.pid.what_was_in_force_on": "Beth oedd mewn grym ar ddyddiad",
-  "p.documents.policies_and_procedures_a_new": "Polisïau a gweithdrefnau. Caiff fersiwn newydd ei hadolygu a'i chymeradwyo cyn iddi ddod i rym, ac nid yw fersiwn mewn grym byth yn newid.",
+  "p.documents.policies_and_procedures_a_new":
+    "Polisïau a gweithdrefnau. Caiff fersiwn newydd ei hadolygu a'i chymeradwyo cyn iddi ddod i rym, ac nid yw fersiwn mewn grym byth yn newid.",
   "p.documents.title": "Teitl",
   "p.documents.versions": "Fersiynau",
   "p.engineering.assignee": "Neilltuwyd i",
@@ -532,13 +600,17 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.engineering.devops_metrics": "Metrigau DevOps",
   "p.engineering.environment": "Amgylchedd",
   "p.engineering.incidents": "digwyddiadau",
-  "p.engineering.incidents_unresolved_counted_never_t": "{unresolved_incidents} digwyddiad heb eu datrys (wedi'u cyfrif, byth wedi'u hamseru).",
+  "p.engineering.incidents_unresolved_counted_never_t":
+    "{unresolved_incidents} digwyddiad heb eu datrys (wedi'u cyfrif, byth wedi'u hamseru).",
   "p.engineering.item": "Eitem",
-  "p.engineering.items_carry_no_moscow_tag": "Nid oes tag moscow gan {untagged} eitem.",
+  "p.engineering.items_carry_no_moscow_tag":
+    "Nid oes tag moscow gan {untagged} eitem.",
   "p.engineering.median_recovery_h": "adferiad canolrifol (awr)",
   "p.engineering.moscow_scope": "Cwmpas MoSCoW",
-  "p.engineering.no_deploy_events_ingested_yet": "Dim digwyddiadau defnyddio wedi'u hamlyncu eto.",
-  "p.engineering.no_externally_tracked_items": "Dim eitemau a olrheinir yn allanol.",
+  "p.engineering.no_deploy_events_ingested_yet":
+    "Dim digwyddiadau defnyddio wedi'u hamlyncu eto.",
+  "p.engineering.no_externally_tracked_items":
+    "Dim eitemau a olrheinir yn allanol.",
   "p.engineering.nothing_blocked_ship_it": "Dim wedi'i rwystro. Ewch ati.",
   "p.engineering.ppm": "{t} — PPM",
   "p.engineering.releases": "Fersiynau rhyddhau",
@@ -552,7 +624,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.executive.as_of": "ar {as_of} · {derivation}",
   "p.executive.benefits": "Buddion",
   "p.executive.benefits_realization": "Gwireddu buddion",
-  "p.executive.calendar_days_since_update": "Diwrnodau calendr ers y diweddariad",
+  "p.executive.calendar_days_since_update":
+    "Diwrnodau calendr ers y diweddariad",
   "p.executive.collection": "Casgliad",
   "p.executive.currency": "Arian cyfred",
   "p.executive.decision": "Penderfyniad",
@@ -561,11 +634,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.executive.kind": "Math",
   "p.executive.largest_unaligned_items": "Yr eitemau mwyaf heb eu halinio",
   "p.executive.members": "Aelodau",
-  "p.executive.no_decisions_recorded_yet": "Dim penderfyniadau wedi'u cofnodi eto.",
+  "p.executive.no_decisions_recorded_yet":
+    "Dim penderfyniadau wedi'u cofnodi eto.",
   "p.executive.no_target": "dim targed",
   "p.executive.non_financial_only": "anariannol yn unig ({non_financial})",
   "p.executive.open_exposure": "Amlygiad agored",
-  "p.executive.overdue_milestones": "Cerrig milltir sydd wedi mynd heibio'r dyddiad",
+  "p.executive.overdue_milestones":
+    "Cerrig milltir sydd wedi mynd heibio'r dyddiad",
   "p.executive.overrun_currencies": "Arian cyfred â gorwariant",
   "p.executive.planned_with_no_objective": "cynlluniedig heb amcan",
   "p.executive.portfolio": "Portffolio",
@@ -586,7 +661,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.financials.currency": "Arian cyfred",
   "p.financials.currency_exposure": "Amlygiad i arian cyfred",
   "p.financials.lines": "Llinellau",
-  "p.financials.no_budget_lines_recorded_yet": "Dim llinellau cyllideb wedi'u cofnodi eto.",
+  "p.financials.no_budget_lines_recorded_yet":
+    "Dim llinellau cyllideb wedi'u cofnodi eto.",
   "p.financials.planned": "Cynlluniedig",
   "p.financials.ppm": "{t} — PPM",
   "p.financials.remaining": "Yn weddill",
@@ -620,10 +696,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.kpis.read_how_often": "Darllen pa mor aml",
   "p.kpis.red_line": "Llinell goch",
   "p.kpis.show": "Dangos",
-  "p.kpis.something_you_track_over_time": "Rhywbeth rydych yn ei olrhain dros amser yn erbyn targed, fel y gallwch weld yn gynnar a ydych ar y trywydd iawn.",
-  "p.kpis.standing_measures_green_is_at": "Mesurau parhaol. Mae gwyrdd ar y targed neu'n well; mae coch ar y llinell goch neu'n waeth; mae ambr rhyngddynt. Mae KPI nad oes neb wedi'i ddarllen eto yn dangos “Dim data eto”.",
+  "p.kpis.something_you_track_over_time":
+    "Rhywbeth rydych yn ei olrhain dros amser yn erbyn targed, fel y gallwch weld yn gynnar a ydych ar y trywydd iawn.",
+  "p.kpis.standing_measures_green_is_at":
+    "Mesurau parhaol. Mae gwyrdd ar y targed neu'n well; mae coch ar y llinell goch neu'n waeth; mae ambr rhyngddynt. Mae KPI nad oes neb wedi'i ddarllen eto yn dangos “Dim data eto”.",
   "p.kpis.target": "Targed",
-  "p.kpis.the_red_line_must_be": "Rhaid i'r llinell goch fod ar ochr waeth y targed. Graddiwch werthoedd i rifau cyfan (pwyntiau sail, ceiniogau).",
+  "p.kpis.the_red_line_must_be":
+    "Rhaid i'r llinell goch fod ar ochr waeth y targed. Graddiwch werthoedd i rifau cyfan (pwyntiau sail, ceiniogau).",
   "p.kpis.unit": "Uned",
   "p.kpis.watch": "Gwylio",
   "p.kpis.weekly": "Wythnosol",
@@ -636,13 +715,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.lifecycle.lifecycle": "Cylch bywyd",
   "p.lifecycle.lifecycle_ppm": "Cylch bywyd — PPM",
   "p.lifecycle.live": "Byw",
-  "p.lifecycle.live_item_s_stall_threshold": "{total} eitem fyw · trothwy aros yn ei unfan {stall_days} diwrnod calendr",
+  "p.lifecycle.live_item_s_stall_threshold":
+    "{total} eitem fyw · trothwy aros yn ei unfan {stall_days} diwrnod calendr",
   "p.lifecycle.phase": "Cam",
   "p.lifecycle.share": "Rhannu",
   "p.lifecycle.stalled": "Wedi aros yn ei unfan",
-  "p.lifecycle.where_everything_sits_across_the": "Lle mae popeth yn eistedd ar draws cylch bywyd yr her, fel nad yw'r cam nesaf byth yn syndod. Mae Wedi aros yn ei unfan yn cyfrif eitemau sydd wedi aros mewn cam yn hirach na'r trothwy.",
+  "p.lifecycle.where_everything_sits_across_the":
+    "Lle mae popeth yn eistedd ar draws cylch bywyd yr her, fel nad yw'r cam nesaf byth yn syndod. Mae Wedi aros yn ei unfan yn cyfrif eitemau sydd wedi aros mewn cam yn hirach na'r trothwy.",
   "p.me.calendar.add": "Ychwanegu",
-  "p.me.calendar.at_least_one_weekday_must": "Rhaid i o leiaf un diwrnod yr wythnos weithio.",
+  "p.me.calendar.at_least_one_weekday_must":
+    "Rhaid i o leiaf un diwrnod yr wythnos weithio.",
   "p.me.calendar.from": "O",
   "p.me.calendar.loading": "Yn llwytho…",
   "p.me.calendar.most_i_can_commit": "Y mwyaf y gallaf ymrwymo iddo (%)",
@@ -657,11 +739,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.me.calendar.save": "Cadw",
   "p.me.calendar.saved": "Cadwyd.",
   "p.me.calendar.the_days_i_work": "Y diwrnodau rwy'n gweithio",
-  "p.me.calendar.the_most_of_your_time": "Y mwyaf o'ch amser y gallwch ymrwymo iddo rhwng dau ddyddiad: 60 ar gyfer cyfnod rhan-amser, 0 ar gyfer gwyliau. Y tu allan i'r dyddiadau hyn mae'n 100. Darllenir capasiti ddiwrnod wrth ddiwrnod, felly ni chaiff cyfnod byr byth ei gyfartaleddu i ffwrdd.",
+  "p.me.calendar.the_most_of_your_time":
+    "Y mwyaf o'ch amser y gallwch ymrwymo iddo rhwng dau ddyddiad: 60 ar gyfer cyfnod rhan-amser, 0 ar gyfer gwyliau. Y tu allan i'r dyddiadau hyn mae'n 100. Darllenir capasiti ddiwrnod wrth ddiwrnod, felly ni chaiff cyfnod byr byth ei gyfartaleddu i ffwrdd.",
   "p.me.calendar.to": "{from} i {to}: {max_percent}%{v}",
   "p.me.calendar.to_2": "I",
   "p.me.due": "· dyledus {due_date}",
-  "p.me.in_plans_you_cannot_read": "· {omitted_unreadable} mewn cynlluniau na allwch eu darllen",
+  "p.me.in_plans_you_cannot_read":
+    "· {omitted_unreadable} mewn cynlluniau na allwch eu darllen",
   "p.me.loading": "Yn llwytho…",
   "p.me.my_calendar": "Fy nghalendr",
   "p.me.my_work": "Fy ngwaith",
@@ -669,9 +753,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.me.nothing_assigned_to_you_enjoy": "Dim wedi'i neilltuo i chi. Mwynhewch.",
   "p.me.open": "{today} ({tz}) · {total} ar agor",
   "p.me.showing_the_first_500": "· yn dangos y 500 cyntaf",
-  "p.me.the_days_you_work_so": "— y diwrnodau rydych yn gweithio, fel bod eich dyddiadau yn onest.",
-  "p.me.your_sign_in_identity_cannot": "Ni ellir paru eich hunaniaeth mewngofnodi â neilltuo tasgau, felly ni ellir rhestru dim yma eto.",
-  "p.milestones.a_milestone_is_a_dated": "Addewid â dyddiad yw carreg filltir. Cysylltwch hi â'r tasgau y mae'n aros amdanynt a chyflawnir hi pan fyddant wedi'u gwneud, gyda rhagolwg o'r amserlen; gadewch hi heb ei chysylltu ac mae person yn ei marcio'n gyflawn.",
+  "p.me.the_days_you_work_so":
+    "— y diwrnodau rydych yn gweithio, fel bod eich dyddiadau yn onest.",
+  "p.me.your_sign_in_identity_cannot":
+    "Ni ellir paru eich hunaniaeth mewngofnodi â neilltuo tasgau, felly ni ellir rhestru dim yma eto.",
+  "p.milestones.a_milestone_is_a_dated":
+    "Addewid â dyddiad yw carreg filltir. Cysylltwch hi â'r tasgau y mae'n aros amdanynt a chyflawnir hi pan fyddant wedi'u gwneud, gyda rhagolwg o'r amserlen; gadewch hi heb ei chysylltu ac mae person yn ei marcio'n gyflawn.",
   "p.milestones.achieved": "Cyflawnwyd",
   "p.milestones.all": "Pob un",
   "p.milestones.due_soon": "Dyledus yn fuan",
@@ -686,17 +773,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.objectives.objectives_ppm": "Amcanion — PPM",
   "p.objectives.period_e_g_2026_h2": "Cyfnod (e.e. 2026-H2)",
   "p.okrs.2026_q4_blank_for_all": "2026-Q4 (gwag ar gyfer pob un)",
-  "p.okrs.a_goal_with_a_few": "Nod, gydag ychydig o ganlyniadau mesuradwy sy'n dangos a gyrhaeddoch chi ef.",
+  "p.okrs.a_goal_with_a_few":
+    "Nod, gydag ychydig o ganlyniadau mesuradwy sy'n dangos a gyrhaeddoch chi ef.",
   "p.okrs.create": "Creu",
   "p.okrs.goals_and_key_results_okrs": "Nodau a chanlyniadau allweddol (OKRau)",
   "p.okrs.loading": "Yn llwytho…",
   "p.okrs.new_objective": "Amcan newydd",
-  "p.okrs.objectives_and_key_results_scores": "Amcanion a chanlyniadau allweddol. Cyfrifir y sgorau o'r cofrestriadau bob tro y byddwch yn edrych; ni chaiff dim ei storio a allai ddyddio.",
+  "p.okrs.objectives_and_key_results_scores":
+    "Amcanion a chanlyniadau allweddol. Cyfrifir y sgorau o'r cofrestriadau bob tro y byddwch yn edrych; ni chaiff dim ei storio a allai ddyddio.",
   "p.okrs.okrs_ppm": "OKRau — PPM",
   "p.okrs.period": "Cyfnod",
   "p.okrs.show": "Dangos",
   "p.okrs.title": "Teitl",
-  "p.onboarding.a_role_by_role_first": "Taith gerdded awr gyntaf, rôl wrth rôl. Mae pob cam yn enwi'r dudalen y mae'n glanio arni. Trefn awgrymedig yw hon, nid hawliad wedi'i fesur o \"byddwch yn gynhyrchiol mewn N munud\" — nid oes neb wedi'i amseru.",
+  "p.onboarding.a_role_by_role_first":
+    "Taith gerdded awr gyntaf, rôl wrth rôl. Mae pob cam yn enwi'r dudalen y mae'n glanio arni. Trefn awgrymedig yw hon, nid hawliad wedi'i fesur o \"byddwch yn gynhyrchiol mewn N munud\" — nid oes neb wedi'i amseru.",
   "p.onboarding.onboarding_ppm": "Ymsefydlu — PPM",
   "p.onboarding.operator_onboarding": "Ymsefydlu gweithredwyr",
   "p.plans.main_x": "{t} — Main X",
@@ -711,12 +801,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.board.board_view": "Golwg bwrdd",
   "p.plans.pid.board.burndown": "Llosgi i lawr — {name}",
   "p.plans.pid.board.convert_to_task": "Trosi'n dasg",
-  "p.plans.pid.board.created_moves_blocked_now": "{length} wedi'u creu · {length2} symudiad · {length3} wedi'u rhwystro nawr",
+  "p.plans.pid.board.created_moves_blocked_now":
+    "{length} wedi'u creu · {length2} symudiad · {length3} wedi'u rhwystro nawr",
   "p.plans.pid.board.date": "Dyddiad",
   "p.plans.pid.board.feedback": "adborth",
   "p.plans.pid.board.improve": "gwella",
   "p.plans.pid.board.new_task_title": "Teitl tasg newydd",
-  "p.plans.pid.board.no_notes_for_this_sprint": "Dim nodiadau ar gyfer y sbrint hwn eto.",
+  "p.plans.pid.board.no_notes_for_this_sprint":
+    "Dim nodiadau ar gyfer y sbrint hwn eto.",
   "p.plans.pid.board.none": "(dim)",
   "p.plans.pid.board.note": "Nodyn",
   "p.plans.pid.board.note_body": "Corff y nodyn",
@@ -738,24 +830,29 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.board.unpointed": "Heb bwyntiau",
   "p.plans.pid.board.velocity": "Cyflymder",
   "p.plans.pid.board.went_well": "aeth yn dda",
-  "p.plans.pid.calendar.at_least_one_weekday_must": "Rhaid i o leiaf un diwrnod yr wythnos weithio.",
+  "p.plans.pid.calendar.at_least_one_weekday_must":
+    "Rhaid i o leiaf un diwrnod yr wythnos weithio.",
   "p.plans.pid.calendar.critical_path": "← Llwybr critigol",
   "p.plans.pid.calendar.holidays": "Gwyliau",
   "p.plans.pid.calendar.loading": "Yn llwytho…",
   "p.plans.pid.calendar.my_calendar": "Fy nghalendr",
   "p.plans.pid.calendar.save_calendar": "Cadw'r calendr",
   "p.plans.pid.calendar.saved": "Cadwyd.",
-  "p.plans.pid.calendar.their_work_then_happens_only": "); yna dim ond ar ddiwrnodau pan fo'r ddau galendr yn gweithio y bydd eu gwaith yn digwydd.",
+  "p.plans.pid.calendar.their_work_then_happens_only":
+    "); yna dim ond ar ddiwrnodau pan fo'r ddau galendr yn gweithio y bydd eu gwaith yn digwydd.",
   "p.plans.pid.calendar.working_calendar": "Calendr gwaith",
   "p.plans.pid.calendar.working_calendar_ppm": "Calendr gwaith — PPM",
   "p.plans.pid.calendar.working_weekdays": "Diwrnodau'r wythnos sy'n gweithio",
-  "p.plans.pid.cost_risk.band_for_lines_with_no": "Band ar gyfer llinellau heb amcangyfrif (± %)",
-  "p.plans.pid.cost_risk.cost_and_schedule_together": "Cost ac amserlen gyda'i gilydd",
+  "p.plans.pid.cost_risk.band_for_lines_with_no":
+    "Band ar gyfer llinellau heb amcangyfrif (± %)",
+  "p.plans.pid.cost_risk.cost_and_schedule_together":
+    "Cost ac amserlen gyda'i gilydd",
   "p.plans.pid.cost_risk.cost_risk": "Risg cost",
   "p.plans.pid.cost_risk.cost_risk_ppm": "Risg cost — PPM",
   "p.plans.pid.cost_risk.distribution": "Dosbarthiad",
   "p.plans.pid.cost_risk.iterations": "Ailadroddiadau",
-  "p.plans.pid.cost_risk.many_what_if_runs_of": "Mae llawer o redeg-os y gyllideb yn dangos amrediad y costau terfynol a pha mor debygol yw pob un.",
+  "p.plans.pid.cost_risk.many_what_if_runs_of":
+    "Mae llawer o redeg-os y gyllideb yn dangos amrediad y costau terfynol a pha mor debygol yw pob un.",
   "p.plans.pid.cost_risk.pert": "PERT",
   "p.plans.pid.cost_risk.plan": "← Cynllun",
   "p.plans.pid.cost_risk.run": "Rhedeg",
@@ -763,17 +860,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.cost_risk.seed": "Hedyn",
   "p.plans.pid.cost_risk.triangular": "Trionglog",
   "p.plans.pid.cost_risk.whole_portfolio": "Y portffolio cyfan",
-  "p.plans.pid.costs.a_recorded_cost_keeps_the": "Mae cost a gofnodwyd yn cadw'r gyfradd y'i prisiwyd arni; nid yw newid cyfradd diweddarach byth yn ei hailysgrifennu.",
+  "p.plans.pid.costs.a_recorded_cost_keeps_the":
+    "Mae cost a gofnodwyd yn cadw'r gyfradd y'i prisiwyd arni; nid yw newid cyfradd diweddarach byth yn ei hailysgrifennu.",
   "p.plans.pid.costs.add_an_expense": "Ychwanegu cost",
   "p.plans.pid.costs.add_expense": "Ychwanegu cost",
   "p.plans.pid.costs.all_at_the_end": "Y cyfan ar y diwedd",
   "p.plans.pid.costs.all_at_the_start": "Y cyfan ar y dechrau",
   "p.plans.pid.costs.amount": "Swm",
-  "p.plans.pid.costs.an_expense_of_so_it": "▲ Mae cost o {money} {reason}, felly nid yw yn y cyfnodau.",
+  "p.plans.pid.costs.an_expense_of_so_it":
+    "▲ Mae cost o {money} {reason}, felly nid yw yn y cyfnodau.",
   "p.plans.pid.costs.choose": "Dewiswch…",
   "p.plans.pid.costs.cost_rates": "Cyfraddau cost",
   "p.plans.pid.costs.costs": "Costau",
-  "p.plans.pid.costs.costs_and_rates_are_finance": "Data cyllid yw costau a chyfraddau. Nid oes gennych fynediad atynt.",
+  "p.plans.pid.costs.costs_and_rates_are_finance":
+    "Data cyllid yw costau a chyfraddau. Nid oes gennych fynediad atynt.",
   "p.plans.pid.costs.costs_ppm": "Costau — PPM",
   "p.plans.pid.costs.currency": "Arian cyfred",
   "p.plans.pid.costs.description": "Disgrifiad",
@@ -782,19 +882,24 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.costs.fixed_cost": "Cost sefydlog",
   "p.plans.pid.costs.kind": "Math",
   "p.plans.pid.costs.material": "Sylweddol",
-  "p.plans.pid.costs.no_time_has_been_costed": "Nid oes amser wedi'i gostio eto.",
-  "p.plans.pid.costs.nothing_could_be_costed_yet": "Ni ellid costio dim eto: ychwanegwch gyfraddau ar gyfer y bobl sy'n gwneud y gwaith, neu ychwanegwch gost.",
+  "p.plans.pid.costs.no_time_has_been_costed":
+    "Nid oes amser wedi'i gostio eto.",
+  "p.plans.pid.costs.nothing_could_be_costed_yet":
+    "Ni ellid costio dim eto: ychwanegwch gyfraddau ar gyfer y bobl sy'n gwneud y gwaith, neu ychwanegwch gost.",
   "p.plans.pid.costs.per_period": "{currency}, fesul cyfnod",
   "p.plans.pid.costs.plan": "← Cynllun",
   "p.plans.pid.costs.planned_cost": "Cost gynlluniedig",
   "p.plans.pid.costs.record_labour_costs": "Cofnodi costau llafur",
   "p.plans.pid.costs.recorded_labour_cost": "Cost llafur a gofnodwyd",
-  "p.plans.pid.costs.so_its_labour_is_not": "▲ {title} ({hoursText}): {reason}, felly nid yw ei lafur wedi'i gostio.",
+  "p.plans.pid.costs.so_its_labour_is_not":
+    "▲ {title} ({hoursText}): {reason}, felly nid yw ei lafur wedi'i gostio.",
   "p.plans.pid.costs.task": "Tasg",
-  "p.plans.pid.costs.time_entries_are_not_costed": "▲ Nid yw {entries} cofnod amser ({hoursText}) wedi'u costio: heb eu cofnodi eto, neu heb gyfradd. Mae eu cost yn anhysbys, nid sero.",
+  "p.plans.pid.costs.time_entries_are_not_costed":
+    "▲ Nid yw {entries} cofnod amser ({hoursText}) wedi'u costio: heb eu cofnodi eto, neu heb gyfradd. Mae eu cost yn anhysbys, nid sero.",
   "p.plans.pid.costs.total": "Cyfanswm",
   "p.plans.pid.costs.work": "Gwaith",
-  "p.plans.pid.critical_path.a_baseline_is_a_numbered": "Cipolwg wedi'i rifo o'r amserlen yw llinell sylfaen, a gedwir am byth: mae ailosod y llinell sylfaen yn creu'r fersiwn nesaf ac nid yw byth yn disodli un.",
+  "p.plans.pid.critical_path.a_baseline_is_a_numbered":
+    "Cipolwg wedi'i rifo o'r amserlen yw llinell sylfaen, a gedwir am byth: mae ailosod y llinell sylfaen yn creu'r fersiwn nesaf ac nid yw byth yn disodli un.",
   "p.plans.pid.critical_path.baselines": "Llinellau sylfaen",
   "p.plans.pid.critical_path.business_days": "diwrnodau gwaith",
   "p.plans.pid.critical_path.compare_with": "Cymharu â",
@@ -803,101 +908,141 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.critical_path.critical_chains": "{count} cadwyn gritigol{more}.",
   "p.plans.pid.critical_path.critical_path": "Llwybr critigol",
   "p.plans.pid.critical_path.critical_path_ppm": "Llwybr critigol — PPM",
-  "p.plans.pid.critical_path.deadline_a_goal_it_shows": "Terfyn amser (nod: mae'n ymddangos fel llithriad negyddol, nid yw byth yn symud y dasg)",
-  "p.plans.pid.critical_path.duration_business_days_0_is": "Hyd (diwrnodau gwaith; mae 0 yn garreg filltir)",
-  "p.plans.pid.critical_path.finish_no_earlier_than": "Gorffen dim cynharach na",
+  "p.plans.pid.critical_path.deadline_a_goal_it_shows":
+    "Terfyn amser (nod: mae'n ymddangos fel llithriad negyddol, nid yw byth yn symud y dasg)",
+  "p.plans.pid.critical_path.duration_business_days_0_is":
+    "Hyd (diwrnodau gwaith; mae 0 yn garreg filltir)",
+  "p.plans.pid.critical_path.finish_no_earlier_than":
+    "Gorffen dim cynharach na",
   "p.plans.pid.critical_path.finish_no_later_than": "Gorffen dim hwyrach na",
   "p.plans.pid.critical_path.gantt": "Gantt",
   "p.plans.pid.critical_path.loading": "Yn llwytho…",
-  "p.plans.pid.critical_path.must_finish_on_overrides_logic": "Rhaid gorffen ar (yn diystyru rhesymeg)",
-  "p.plans.pid.critical_path.must_start_on_overrides_logic": "Rhaid dechrau ar (yn diystyru rhesymeg)",
+  "p.plans.pid.critical_path.must_finish_on_overrides_logic":
+    "Rhaid gorffen ar (yn diystyru rhesymeg)",
+  "p.plans.pid.critical_path.must_start_on_overrides_logic":
+    "Rhaid dechrau ar (yn diystyru rhesymeg)",
   "p.plans.pid.critical_path.near_critical_within": "Bron yn gritigol o fewn",
   "p.plans.pid.critical_path.network": "Rhwydwaith",
-  "p.plans.pid.critical_path.no_baseline_yet_so_nothing": "Dim llinell sylfaen eto, felly ni ellir dweud dim am lithriad.",
-  "p.plans.pid.critical_path.none_as_soon_as_possible": "Dim (cyn gynted â phosibl)",
+  "p.plans.pid.critical_path.no_baseline_yet_so_nothing":
+    "Dim llinell sylfaen eto, felly ni ellir dweud dim am lithriad.",
+  "p.plans.pid.critical_path.none_as_soon_as_possible":
+    "Dim (cyn gynted â phosibl)",
   "p.plans.pid.critical_path.not_scheduled": "Heb ei amserlennu",
-  "p.plans.pid.critical_path.optimistic_business_days": "Optimistaidd (diwrnodau gwaith)",
-  "p.plans.pid.critical_path.pessimistic_business_days": "Pesimistaidd (diwrnodau gwaith)",
+  "p.plans.pid.critical_path.optimistic_business_days":
+    "Optimistaidd (diwrnodau gwaith)",
+  "p.plans.pid.critical_path.pessimistic_business_days":
+    "Pesimistaidd (diwrnodau gwaith)",
   "p.plans.pid.critical_path.plan": "← Cynllun",
   "p.plans.pid.critical_path.planned_start": "Dechrau cynlluniedig",
-  "p.plans.pid.critical_path.range_for_schedule_risk": "Amrediad ar gyfer risg amserlen",
+  "p.plans.pid.critical_path.range_for_schedule_risk":
+    "Amrediad ar gyfer risg amserlen",
   "p.plans.pid.critical_path.range_saved": "Cadwyd yr amrediad.",
-  "p.plans.pid.critical_path.reason_required_this_overrides_the": "Rheswm (gofynnol: mae hyn yn diystyru rhesymeg yr amserlen)",
+  "p.plans.pid.critical_path.reason_required_this_overrides_the":
+    "Rheswm (gofynnol: mae hyn yn diystyru rhesymeg yr amserlen)",
   "p.plans.pid.critical_path.save_range": "Cadw'r amrediad",
   "p.plans.pid.critical_path.save_schedule": "Cadw'r amserlen",
   "p.plans.pid.critical_path.saved_moved": "Cadwyd. Symudodd:",
-  "p.plans.pid.critical_path.saved_nothing_else_moved": "Cadwyd. Ni symudodd dim arall.",
+  "p.plans.pid.critical_path.saved_nothing_else_moved":
+    "Cadwyd. Ni symudodd dim arall.",
   "p.plans.pid.critical_path.saving": "Yn cadw…",
-  "p.plans.pid.critical_path.show_the_baseline_under_each": "Dangos y llinell sylfaen o dan bob bar",
+  "p.plans.pid.critical_path.show_the_baseline_under_each":
+    "Dangos y llinell sylfaen o dan bob bar",
   "p.plans.pid.critical_path.start_no_earlier_than": "Dechrau dim cynharach na",
   "p.plans.pid.critical_path.start_no_later_than": "Dechrau dim hwyrach na",
   "p.plans.pid.critical_path.table": "Tabl",
   "p.plans.pid.critical_path.take_baseline": "Cymryd llinell sylfaen",
   "p.plans.pid.critical_path.task": "Tasg",
-  "p.plans.pid.critical_path.the_duration_above_is_the": "{taskRangeText}. Y hyd uchod yw'r gwerth tebygol.",
-  "p.plans.pid.critical_path.the_longest_chain_of_tasks": "Y gadwyn hiraf o dasgau, sy'n gosod y dyddiad gorffen. Mae oedi i unrhyw dasg arni yn gohirio'r cynllun cyfan.",
-  "p.plans.pid.critical_path.these_assignees_share_no_business": "Nid yw'r neilltuwyr hyn yn rhannu unrhyw ddiwrnod gwaith â chalendr y cynllun, felly defnyddiwyd calendr y cynllun ar eu cyfer: {join}.",
-  "p.plans.pid.critical_path.this_network_has_tasks_too": "Mae gan y rhwydwaith hwn {length} tasg, gormod i'w tynnu'n ddefnyddiol. Mae'r tabl isod yn dweud yr un peth.",
+  "p.plans.pid.critical_path.the_duration_above_is_the":
+    "{taskRangeText}. Y hyd uchod yw'r gwerth tebygol.",
+  "p.plans.pid.critical_path.the_longest_chain_of_tasks":
+    "Y gadwyn hiraf o dasgau, sy'n gosod y dyddiad gorffen. Mae oedi i unrhyw dasg arni yn gohirio'r cynllun cyfan.",
+  "p.plans.pid.critical_path.these_assignees_share_no_business":
+    "Nid yw'r neilltuwyr hyn yn rhannu unrhyw ddiwrnod gwaith â chalendr y cynllun, felly defnyddiwyd calendr y cynllun ar eu cyfer: {join}.",
+  "p.plans.pid.critical_path.this_network_has_tasks_too":
+    "Mae gan y rhwydwaith hwn {length} tasg, gormod i'w tynnu'n ddefnyddiol. Mae'r tabl isod yn dweud yr un peth.",
   "p.plans.pid.critical_path.untitled": "(dienw)",
   "p.plans.pid.critical_path.version": "Fersiwn {version}: {reason} ({slice})",
   "p.plans.pid.critical_path.view": "Gweld",
   "p.plans.pid.critical_path.why_a_baseline_now": "Pam llinell sylfaen nawr?",
   "p.plans.pid.critical_path.working_calendar": "Calendr gwaith",
-  "p.plans.pid.earned_value.a_percent_i_enter_flagged": "Canran a roddaf i (wedi'i nodi)",
+  "p.plans.pid.earned_value.a_percent_i_enter_flagged":
+    "Canran a roddaf i (wedi'i nodi)",
   "p.plans.pid.earned_value.actual_cost": "Cost gwirioneddol",
-  "p.plans.pid.earned_value.against_the_budget_vac": "O'i gymharu â'r gyllideb (VAC)",
-  "p.plans.pid.earned_value.baseline_version": "fersiwn llinell sylfaen {baseline_version}",
+  "p.plans.pid.earned_value.against_the_budget_vac":
+    "O'i gymharu â'r gyllideb (VAC)",
+  "p.plans.pid.earned_value.baseline_version":
+    "fersiwn llinell sylfaen {baseline_version}",
   "p.plans.pid.earned_value.budget_at_completion": "Cyllideb ar gwblhau",
-  "p.plans.pid.earned_value.budget_lines_in_have_no": "Nid oes llinell sylfaen gan linellau cyllideb yn {join}, felly nid ydynt yn rhan o unrhyw ffigur uchod ac ni chânt byth eu hadio at arian cyfred arall.",
-  "p.plans.pid.earned_value.by_story_points_when_finished": "yn ôl pwyntiau stori, pan fyddant wedi gorffen",
+  "p.plans.pid.earned_value.budget_lines_in_have_no":
+    "Nid oes llinell sylfaen gan linellau cyllideb yn {join}, felly nid ydynt yn rhan o unrhyw ffigur uchod ac ni chânt byth eu hadio at arian cyfred arall.",
+  "p.plans.pid.earned_value.by_story_points_when_finished":
+    "yn ôl pwyntiau stori, pan fyddant wedi gorffen",
   "p.plans.pid.earned_value.cancel": "Canslo",
   "p.plans.pid.earned_value.change": "Newid",
   "p.plans.pid.earned_value.complete": "{round}% wedi'i gwblhau",
   "p.plans.pid.earned_value.cost_index": "Mynegai cost (",
   "p.plans.pid.earned_value.cost_is": "Mae'r gost {word}.",
   "p.plans.pid.earned_value.cost_variance_ev_ac": "Amrywiant cost (EV − AC)",
-  "p.plans.pid.earned_value.count_a_task_another_way": "Cyfrif tasg mewn ffordd arall",
+  "p.plans.pid.earned_value.count_a_task_another_way":
+    "Cyfrif tasg mewn ffordd arall",
   "p.plans.pid.earned_value.count_tasks": "Cyfrif tasgau",
   "p.plans.pid.earned_value.critical_path": "Llwybr critigol",
   "p.plans.pid.earned_value.earned_value": "Gwerth enilledig",
-  "p.plans.pid.earned_value.earned_value_figures": "Ffigurau gwerth enilledig {currency}",
+  "p.plans.pid.earned_value.earned_value_figures":
+    "Ffigurau gwerth enilledig {currency}",
   "p.plans.pid.earned_value.earned_value_ppm": "Gwerth enilledig — PPM",
   "p.plans.pid.earned_value.final_cost_eac": "Cost derfynol (EAC)",
   "p.plans.pid.earned_value.finished_only": "wedi gorffen yn unig",
   "p.plans.pid.earned_value.forecast": "Rhagolwg",
-  "p.plans.pid.earned_value.forecast_final_cost": "· cost derfynol ragolygedig {money}",
-  "p.plans.pid.earned_value.forecasts_of_the_final_cost": "Rhagolygon {currency} o'r gost derfynol, pob un yn ôl ei fformiwla ei hun",
+  "p.plans.pid.earned_value.forecast_final_cost":
+    "· cost derfynol ragolygedig {money}",
+  "p.plans.pid.earned_value.forecasts_of_the_final_cost":
+    "Rhagolygon {currency} o'r gost derfynol, pob un yn ôl ei fformiwla ei hun",
   "p.plans.pid.earned_value.governance": "← Llywodraethu",
-  "p.plans.pid.earned_value.half_for_started": "hanner ar gyfer rhai a ddechreuwyd",
-  "p.plans.pid.earned_value.is_the_work_finished_worth": "A yw'r gwaith a orffennwyd yn werth yr hyn a gynlluniwyd erbyn hyn, a beth gostiodd? Mae mynegai uwchlaw 1.00 yn well na'r cynllun.",
-  "p.plans.pid.earned_value.leading_with_that_one_because": "Dechrau gyda'r un honno oherwydd {why}. Dangosir y lleill wrth ei hochr: mae pa un sy'n gywir yn dibynnu a fydd gorwariant y gorffennol yn parhau.",
+  "p.plans.pid.earned_value.half_for_started":
+    "hanner ar gyfer rhai a ddechreuwyd",
+  "p.plans.pid.earned_value.is_the_work_finished_worth":
+    "A yw'r gwaith a orffennwyd yn werth yr hyn a gynlluniwyd erbyn hyn, a beth gostiodd? Mae mynegai uwchlaw 1.00 yn well na'r cynllun.",
+  "p.plans.pid.earned_value.leading_with_that_one_because":
+    "Dechrau gyda'r un honno oherwydd {why}. Dangosir y lleill wrth ei hochr: mae pa un sy'n gywir yn dibynnu a fydd gorwariant y gorffennol yn parhau.",
   "p.plans.pid.earned_value.loading": "Yn llwytho…",
   "p.plans.pid.earned_value.manual": "â llaw",
-  "p.plans.pid.earned_value.measured_as_of_percent_complete": "Mesurwyd ar {as_of}. Mae canran gyflawn yn waith a orffennwyd, nid amser a aeth heibio.",
+  "p.plans.pid.earned_value.measured_as_of_percent_complete":
+    "Mesurwyd ar {as_of}. Mae canran gyflawn yn waith a orffennwyd, nid amser a aeth heibio.",
   "p.plans.pid.earned_value.method": "Dull",
-  "p.plans.pid.earned_value.only_when_finished": "dim ond pan fydd wedi gorffen",
-  "p.plans.pid.earned_value.only_when_finished_2": "Dim ond pan fydd wedi gorffen",
+  "p.plans.pid.earned_value.only_when_finished":
+    "dim ond pan fydd wedi gorffen",
+  "p.plans.pid.earned_value.only_when_finished_2":
+    "Dim ond pan fydd wedi gorffen",
   "p.plans.pid.earned_value.over_time": "Dros amser",
   "p.plans.pid.earned_value.percent_complete": "Canran gyflawn",
   "p.plans.pid.earned_value.planned_value": "Gwerth cynlluniedig",
   "p.plans.pid.earned_value.plans": "{plans} cynllun",
-  "p.plans.pid.earned_value.progress_against_budget_earned_value": "Cynnydd yn erbyn y gyllideb (gwerth enilledig)",
-  "p.plans.pid.earned_value.record_today_s_figures_now": "Cofnodi ffigurau heddiw nawr",
+  "p.plans.pid.earned_value.progress_against_budget_earned_value":
+    "Cynnydd yn erbyn y gyllideb (gwerth enilledig)",
+  "p.plans.pid.earned_value.record_today_s_figures_now":
+    "Cofnodi ffigurau heddiw nawr",
   "p.plans.pid.earned_value.recorded": "Cofnodwyd.",
   "p.plans.pid.earned_value.save": "Cadw",
   "p.plans.pid.earned_value.schedule_index": "Mynegai amserlen (",
-  "p.plans.pid.earned_value.schedule_index_by_time": "Mynegai amserlen yn ôl amser (",
+  "p.plans.pid.earned_value.schedule_index_by_time":
+    "Mynegai amserlen yn ôl amser (",
   "p.plans.pid.earned_value.schedule_is": "Mae'r amserlen {word}.",
-  "p.plans.pid.earned_value.schedule_variance_ev_pv": "Amrywiant amserlen (EV − PV)",
+  "p.plans.pid.earned_value.schedule_variance_ev_pv":
+    "Amrywiant amserlen (EV − PV)",
   "p.plans.pid.earned_value.spi": "SPI {ratioOrReason} ·",
-  "p.plans.pid.earned_value.started_work_counts_half": "mae gwaith a ddechreuwyd yn cyfrif hanner",
-  "p.plans.pid.earned_value.started_work_counts_half_2": "Mae gwaith a ddechreuwyd yn cyfrif hanner",
+  "p.plans.pid.earned_value.started_work_counts_half":
+    "mae gwaith a ddechreuwyd yn cyfrif hanner",
+  "p.plans.pid.earned_value.started_work_counts_half_2":
+    "Mae gwaith a ddechreuwyd yn cyfrif hanner",
   "p.plans.pid.earned_value.still_to_spend_etc": "Eto i'w wario (ETC)",
   "p.plans.pid.earned_value.task": "(tasg)",
   "p.plans.pid.earned_value.task_2": "Tasg",
   "p.plans.pid.earned_value.the_one_to_lead_with": "— yr un i arwain gyda hi",
-  "p.plans.pid.earned_value.the_scheduler_also_records_them": "Mae'r trefnydd hefyd yn eu cofnodi bob dydd.",
-  "p.plans.pid.earned_value.this_plan_and_everything_beneath": "Y cynllun hwn a phopeth oddi tano",
+  "p.plans.pid.earned_value.the_scheduler_also_records_them":
+    "Mae'r trefnydd hefyd yn eu cofnodi bob dydd.",
+  "p.plans.pid.earned_value.this_plan_and_everything_beneath":
+    "Y cynllun hwn a phopeth oddi tano",
   "p.plans.pid.earned_value.unknown": "anhysbys",
   "p.plans.pid.earned_value.use_the_plan_s_method": "Defnyddio dull y cynllun",
   "p.plans.pid.earned_value.where_it_is_heading": "I ble mae'n mynd",
@@ -908,7 +1053,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.flow.60_calendar_days": "60 diwrnod calendr",
   "p.plans.pid.flow.90_calendar_days": "90 diwrnod calendr",
   "p.plans.pid.flow.age": "Oed",
-  "p.plans.pid.flow.aging_work_in_progress": "Gwaith ar y gweill sy'n heneiddio",
+  "p.plans.pid.flow.aging_work_in_progress":
+    "Gwaith ar y gweill sy'n heneiddio",
   "p.plans.pid.flow.arrival_rate": "Cyfradd cyrraedd (λ)",
   "p.plans.pid.flow.assignee": "Neilltuwyd i",
   "p.plans.pid.flow.blocked": "Wedi'i rwystro",
@@ -919,15 +1065,18 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.flow.constraints": "Cyfyngiadau",
   "p.plans.pid.flow.count": "Cyfrif",
   "p.plans.pid.flow.cumulative_flow": "Llif cronnus",
-  "p.plans.pid.flow.cycle_time_is_work_in": "Amser beicio yw gwaith ar y gweill wedi'i rannu â'r trwybwn, felly mae gostwng cap yn ei fyrhau heb i neb weithio'n gyflymach.",
+  "p.plans.pid.flow.cycle_time_is_work_in":
+    "Amser beicio yw gwaith ar y gweill wedi'i rannu â'r trwybwn, felly mae gostwng cap yn ei fyrhau heb i neb weithio'n gyflymach.",
   "p.plans.pid.flow.detail": "Manylion",
   "p.plans.pid.flow.distributions": "Dosbarthiadau",
   "p.plans.pid.flow.first_pass_yield": "Cynnyrch pasio cyntaf",
   "p.plans.pid.flow.flow": "Llif",
   "p.plans.pid.flow.flow_efficiency": "Effeithlonrwydd llif",
   "p.plans.pid.flow.flow_ppm": "Llif — PPM",
-  "p.plans.pid.flow.how_long_work_takes": "Pa mor hir y mae gwaith yn ei gymryd",
-  "p.plans.pid.flow.how_long_work_takes_to": "Pa mor hir y mae gwaith yn ei gymryd i'w gwblhau, a faint sydd ar y gweill ar unwaith.",
+  "p.plans.pid.flow.how_long_work_takes":
+    "Pa mor hir y mae gwaith yn ei gymryd",
+  "p.plans.pid.flow.how_long_work_takes_to":
+    "Pa mor hir y mae gwaith yn ei gymryd i'w gwblhau, a faint sydd ar y gweill ar unwaith.",
   "p.plans.pid.flow.implied_cycle_time": "Amser beicio ymhlyg",
   "p.plans.pid.flow.item": "Eitem",
   "p.plans.pid.flow.limit": "Terfyn",
@@ -938,14 +1087,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.flow.no_cap": "dim cap",
   "p.plans.pid.flow.no_expectation_yet": "dim disgwyliad eto",
   "p.plans.pid.flow.no_findings_yet": "Dim canfyddiadau eto.",
-  "p.plans.pid.flow.no_finished_work_to_measure": "Dim gwaith gorffenedig i'w fesur eto.",
-  "p.plans.pid.flow.not_enough_finished_items_yet": "Dim digon o eitemau gorffenedig eto.",
-  "p.plans.pid.flow.not_started_finished_of": "{not_started} heb ddechrau · {finished} wedi gorffen o {tasks}",
+  "p.plans.pid.flow.no_finished_work_to_measure":
+    "Dim gwaith gorffenedig i'w fesur eto.",
+  "p.plans.pid.flow.not_enough_finished_items_yet":
+    "Dim digon o eitemau gorffenedig eto.",
+  "p.plans.pid.flow.not_started_finished_of":
+    "{not_started} heb ddechrau · {finished} wedi gorffen o {tasks}",
   "p.plans.pid.flow.nothing_in_progress": "Dim ar y gweill.",
   "p.plans.pid.flow.observed_median": "Canolrif a arsylwyd",
-  "p.plans.pid.flow.of_the_calendar_time_these": "O'r amser calendr a gymerodd yr eitemau hyn, faint ohono oedd rhywun yn gweithio arnynt? Mae effeithlonrwydd llif mewn gwaith gwybodaeth fel arfer yn mesur 5–15%, felly mae ffigur isel yn normal — y ciw yw'r canfyddiad, nid yr ymdrech.",
-  "p.plans.pid.flow.of_the_transitions_behind_these": "Cafodd {percent} o'r trawsnewidiadau y tu ôl i'r ffigurau hyn eu syntheseiddio pan gyflwynwyd y log, nid eu harsylwi. Maent yn cadarnhau wrth i symudiadau bwrdd go iawn gronni.",
-  "p.plans.pid.flow.percentiles_are_nearest_rank_so": "Mae canraneg yn agosaf-ei-safle, felly mae pob un yn eitem go iawn. Amser beicio yw'r hyn y mae'r tîm yn ei reoli; amser arweiniol yw'r hyn y mae'r gofynnwr yn aros amdano, a'r gwahaniaeth rhyngddynt yw pa mor hir y bu gwaith yn y ôl-groniad.",
+  "p.plans.pid.flow.of_the_calendar_time_these":
+    "O'r amser calendr a gymerodd yr eitemau hyn, faint ohono oedd rhywun yn gweithio arnynt? Mae effeithlonrwydd llif mewn gwaith gwybodaeth fel arfer yn mesur 5–15%, felly mae ffigur isel yn normal — y ciw yw'r canfyddiad, nid yr ymdrech.",
+  "p.plans.pid.flow.of_the_transitions_behind_these":
+    "Cafodd {percent} o'r trawsnewidiadau y tu ôl i'r ffigurau hyn eu syntheseiddio pan gyflwynwyd y log, nid eu harsylwi. Maent yn cadarnhau wrth i symudiadau bwrdd go iawn gronni.",
+  "p.plans.pid.flow.percentiles_are_nearest_rank_so":
+    "Mae canraneg yn agosaf-ei-safle, felly mae pob un yn eitem go iawn. Amser beicio yw'r hyn y mae'r tîm yn ei reoli; amser arweiniol yw'r hyn y mae'r gofynnwr yn aros amdano, a'r gwahaniaeth rhyngddynt yw pa mor hir y bu gwaith yn y ôl-groniad.",
   "p.plans.pid.flow.recoverable": "Adferadwy",
   "p.plans.pid.flow.rework": "Ailwneud",
   "p.plans.pid.flow.rule": "Rheol",
@@ -953,13 +1108,17 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.flow.status": "Statws",
   "p.plans.pid.flow.strong_against_the_5_15": "Cryf yn erbyn y norm o 5–15%.",
   "p.plans.pid.flow.subject": "Pwnc",
-  "p.plans.pid.flow.the_mean_is_shown_for": "Dangosir y cymedr er cyflawnrwydd ac nid yw'n disgrifio unrhyw eitem wirioneddol — dyfynnwch y p85.",
-  "p.plans.pid.flow.the_plan_s_overall_ratio": ": mae cymhareb gyffredinol y cynllun ({percent}) ymhell o un yr eitem arferol ({percent2}). Mae'r rhan fwyaf o'r eitemau'n llifo; mae lleiafrif yn sownd. Mae hynny'n ateb gwahanol i ddarpariaeth sy'n araf yn unffurf — dewch o hyd i'r eitemau hynny yn hytrach nag ailwampio'r broses.",
+  "p.plans.pid.flow.the_mean_is_shown_for":
+    "Dangosir y cymedr er cyflawnrwydd ac nid yw'n disgrifio unrhyw eitem wirioneddol — dyfynnwch y p85.",
+  "p.plans.pid.flow.the_plan_s_overall_ratio":
+    ": mae cymhareb gyffredinol y cynllun ({percent}) ymhell o un yr eitem arferol ({percent2}). Mae'r rhan fwyaf o'r eitemau'n llifo; mae lleiafrif yn sownd. Mae hynny'n ateb gwahanol i ddarpariaeth sy'n araf yn unffurf — dewch o hyd i'r eitemau hynny yn hytrach nag ailwampio'r broses.",
   "p.plans.pid.flow.the_waste_is": "Y gwastraff yw",
   "p.plans.pid.flow.throughput": "Trwybwn (μ)",
-  "p.plans.pid.flow.typical_median_item": "Nodweddiadol. Eitem ganolrifol: {percent}.",
+  "p.plans.pid.flow.typical_median_item":
+    "Nodweddiadol. Eitem ganolrifol: {percent}.",
   "p.plans.pid.flow.unassigned": "heb ei neilltuo",
-  "p.plans.pid.flow.unusually_high_this_usually_means": "Anarferol o uchel — fel arfer mae hyn yn golygu nad yw'r bwrdd yn cael ei gadw'n gyfredol yn hytrach na bod y ciw wedi diflannu.",
+  "p.plans.pid.flow.unusually_high_this_usually_means":
+    "Anarferol o uchel — fel arfer mae hyn yn golygu nad yw'r bwrdd yn cael ei gadw'n gyfredol yn hytrach na bod y ciw wedi diflannu.",
   "p.plans.pid.flow.utilization": "Defnydd (ρ)",
   "p.plans.pid.flow.vs_expectation": "o'i gymharu â'r disgwyliad",
   "p.plans.pid.flow.window": "Ffenestr",
@@ -967,7 +1126,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.flow.work_in_progress_2": "Gwaith ar y gweill (κ)",
   "p.plans.pid.governance.actual": "Gwirioneddol",
   "p.plans.pid.governance.approved": "cymeradwywyd",
-  "p.plans.pid.governance.approved_with_conditions": "cymeradwywyd gydag amodau",
+  "p.plans.pid.governance.approved_with_conditions":
+    "cymeradwywyd gydag amodau",
   "p.plans.pid.governance.benefit": "Budd",
   "p.plans.pid.governance.benefit_category": "Categori budd",
   "p.plans.pid.governance.capex": "capex",
@@ -975,7 +1135,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.governance.choose_objective": "dewis amcan…",
   "p.plans.pid.governance.commit": "Ymrwymo",
   "p.plans.pid.governance.commit_anyway": "Ymrwymo beth bynnag",
-  "p.plans.pid.governance.committing_this_puts_them_over": "Mae ymrwymo i hyn yn eu rhoi dros eu capasiti.",
+  "p.plans.pid.governance.committing_this_puts_them_over":
+    "Mae ymrwymo i hyn yn eu rhoi dros eu capasiti.",
   "p.plans.pid.governance.compliance": "cydymffurfiaeth",
   "p.plans.pid.governance.cost_saving": "arbed costau",
   "p.plans.pid.governance.currency": "Arian cyfred",
@@ -995,9 +1156,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.governance.opex": "opex",
   "p.plans.pid.governance.other": "arall",
   "p.plans.pid.governance.planned": "Cynlluniedig",
-  "p.plans.pid.governance.planned_actual_variance": ": cynlluniedig {money} · gwirioneddol {money2} · amrywiant {money3}",
+  "p.plans.pid.governance.planned_actual_variance":
+    ": cynlluniedig {money} · gwirioneddol {money2} · amrywiant {money3}",
   "p.plans.pid.governance.planned_major": "Cynlluniedig (unedau mawr)",
-  "p.plans.pid.governance.proposed_does_not_count_until": "arfaethedig (nid yw'n cyfrif nes ymrwymo)",
+  "p.plans.pid.governance.proposed_does_not_count_until":
+    "arfaethedig (nid yw'n cyfrif nes ymrwymo)",
   "p.plans.pid.governance.quality": "ansawdd",
   "p.plans.pid.governance.range_for_cost_risk": "Amrediad ar gyfer risg cost",
   "p.plans.pid.governance.realized": "Gwireddwyd",
@@ -1012,7 +1175,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.governance.status": "Statws",
   "p.plans.pid.governance.target": "Targed",
   "p.plans.pid.governance.target_major": "Targed (unedau mawr)",
-  "p.plans.pid.governance.target_realized_spend": ": targed {money} · gwireddwyd {money2} · gwariant {money3}",
+  "p.plans.pid.governance.target_realized_spend":
+    ": targed {money} · gwireddwyd {money2} · gwariant {money3}",
   "p.plans.pid.governance.weight": "pwysau",
   "p.plans.pid.governance.worker_uuid": "worker:<uuid>",
   "p.plans.pid.handover.discard": "Taflu",
@@ -1023,17 +1187,22 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.handover.kind": "Math",
   "p.plans.pid.handover.onboarding_and_offboarding": "Ymsefydlu a gadael",
   "p.plans.pid.handover.person": "person:…",
-  "p.plans.pid.handover.person_empty_releases_the_work": "person:… (mae gwag yn rhyddhau'r gwaith)",
+  "p.plans.pid.handover.person_empty_releases_the_work":
+    "person:… (mae gwag yn rhyddhau'r gwaith)",
   "p.plans.pid.handover.plan": "← Cynllun",
   "p.plans.pid.handover.preview": "Rhagolwg",
-  "p.plans.pid.handover.reason_recorded_with_each_item": "Rheswm (wedi'i gofnodi gyda phob eitem)",
+  "p.plans.pid.handover.reason_recorded_with_each_item":
+    "Rheswm (wedi'i gofnodi gyda phob eitem)",
   "p.plans.pid.handover.release": "Rhyddhau",
-  "p.plans.pid.handover.the_new_person_s_capacity": "Ni wirir capasiti'r person newydd yma.",
+  "p.plans.pid.handover.the_new_person_s_capacity":
+    "Ni wirir capasiti'r person newydd yma.",
   "p.plans.pid.handover.to": "I",
   "p.plans.pid.handover.what": "Beth",
-  "p.plans.pid.handover.what_holds_that_is_still": "Yr hyn y mae {from_person} yn ei ddal sy'n dal yn fyw",
+  "p.plans.pid.handover.what_holds_that_is_still":
+    "Yr hyn y mae {from_person} yn ei ddal sy'n dal yn fyw",
   "p.plans.pid.handover.who_is_handing_over": "Pwy sy'n trosglwyddo?",
-  "p.plans.pid.import.bring_tasks_in_from_jira": "Dewch â thasgau i mewn o Jira, Asana neu Microsoft Project. Rydych yn gweld beth fyddai'n digwydd yn gyntaf; ni ysgrifennir dim nes i chi gadarnhau.",
+  "p.plans.pid.import.bring_tasks_in_from_jira":
+    "Dewch â thasgau i mewn o Jira, Asana neu Microsoft Project. Rydych yn gweld beth fyddai'n digwydd yn gyntaf; ni ysgrifennir dim nes i chi gadarnhau.",
   "p.plans.pid.import.choose_another_file": "Dewis ffeil arall",
   "p.plans.pid.import.file": "Ffeil",
   "p.plans.pid.import.import": "Mewnforio",
@@ -1043,71 +1212,98 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.import.preview": "Rhagolwg",
   "p.plans.pid.import.tracker": "Tracwr",
   "p.plans.pid.import.where_from": "O ble",
-  "p.plans.pid.joint_risk.a_late_project_usually_costs": "Mae prosiect hwyr fel arfer yn costio mwy hefyd, felly mae hyn yn rhedeg cost ac amserlen gyda'i gilydd.",
+  "p.plans.pid.joint_risk.a_late_project_usually_costs":
+    "Mae prosiect hwyr fel arfer yn costio mwy hefyd, felly mae hyn yn rhedeg cost ac amserlen gyda'i gilydd.",
   "p.plans.pid.joint_risk.assumptions": "Tybiaethau",
-  "p.plans.pid.joint_risk.band_when_there_is_no": "Band pan nad oes amcangyfrif (± %)",
+  "p.plans.pid.joint_risk.band_when_there_is_no":
+    "Band pan nad oes amcangyfrif (± %)",
   "p.plans.pid.joint_risk.both_at_once": "Y ddau ar unwaith",
   "p.plans.pid.joint_risk.budget": "cyllideb",
   "p.plans.pid.joint_risk.budget_2": "Cyllideb",
-  "p.plans.pid.joint_risk.budget_lines_in_are_not": "Nid yw llinellau cyllideb yn {join} yn rhan o'r rhediad hwn; ni chaiff arian cyfred byth ei adio.",
-  "p.plans.pid.joint_risk.business_days_late": "{days} diwrnod gwaith yn hwyr, {money}",
+  "p.plans.pid.joint_risk.budget_lines_in_are_not":
+    "Nid yw llinellau cyllideb yn {join} yn rhan o'r rhediad hwn; ni chaiff arian cyfred byth ei adio.",
+  "p.plans.pid.joint_risk.business_days_late":
+    "{days} diwrnod gwaith yn hwyr, {money}",
   "p.plans.pid.joint_risk.business_days_late_2": "diwrnodau gwaith yn hwyr →",
   "p.plans.pid.joint_risk.cost": "Cost",
   "p.plans.pid.joint_risk.cost_2": "Cost — {title}: {costSkippedText}",
-  "p.plans.pid.joint_risk.cost_and_schedule_risk_ppm": "Risg cost ac amserlen — PPM",
-  "p.plans.pid.joint_risk.cost_and_schedule_together": "Cost ac amserlen gyda'i gilydd",
+  "p.plans.pid.joint_risk.cost_and_schedule_risk_ppm":
+    "Risg cost ac amserlen — PPM",
+  "p.plans.pid.joint_risk.cost_and_schedule_together":
+    "Cost ac amserlen gyda'i gilydd",
   "p.plans.pid.joint_risk.cost_lines": "Llinellau cost",
-  "p.plans.pid.joint_risk.cost_of_each_business_day": "Cost pob diwrnod gwaith yn hwyr (unedau mawr)",
+  "p.plans.pid.joint_risk.cost_of_each_business_day":
+    "Cost pob diwrnod gwaith yn hwyr (unedau mawr)",
   "p.plans.pid.joint_risk.cost_risk": "Risg cost",
-  "p.plans.pid.joint_risk.critical_path_finish_the_plan": "Diwedd y llwybr critigol (dyddiad y cynllun ei hun)",
-  "p.plans.pid.joint_risk.currency_if_the_plan_has": "Arian cyfred (os oes sawl un yn y cynllun)",
+  "p.plans.pid.joint_risk.critical_path_finish_the_plan":
+    "Diwedd y llwybr critigol (dyddiad y cynllun ei hun)",
+  "p.plans.pid.joint_risk.currency_if_the_plan_has":
+    "Arian cyfred (os oes sawl un yn y cynllun)",
   "p.plans.pid.joint_risk.distribution": "Dosbarthiad",
-  "p.plans.pid.joint_risk.each_dot_is_one_simulation": "Mae pob dot yn un efelychiad (sampl wedi'i theneuo). I'r dde o'r llinell ar amser mae'n hwyr; uwchlaw'r llinell gyllideb mae dros y gyllideb. Mae'r tabl uchod yn dangos y cyfrifon llawn.",
+  "p.plans.pid.joint_risk.each_dot_is_one_simulation":
+    "Mae pob dot yn un efelychiad (sampl wedi'i theneuo). I'r dde o'r llinell ar amser mae'n hwyr; uwchlaw'r llinell gyllideb mae dros y gyllideb. Mae'r tabl uchod yn dangos y cyfrifon llawn.",
   "p.plans.pid.joint_risk.estimate": "Amcangyfrif",
   "p.plans.pid.joint_risk.finish": "Gorffen",
-  "p.plans.pid.joint_risk.finish_date_at_each_percentile": "Dyddiad gorffen ar bob canraneg",
+  "p.plans.pid.joint_risk.finish_date_at_each_percentile":
+    "Dyddiad gorffen ar bob canraneg",
   "p.plans.pid.joint_risk.gbp": "GBP",
-  "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall": "Sut mae'r canlyniadau efelychiedig yn disgyn o gwmpas y gyllideb a diwedd y llwybr critigol",
+  "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall":
+    "Sut mae'r canlyniadau efelychiedig yn disgyn o gwmpas y gyllideb a diwedd y llwybr critigol",
   "p.plans.pid.joint_risk.independence": "Annibyniaeth.",
   "p.plans.pid.joint_risk.iterations": "Ailadroddiadau",
   "p.plans.pid.joint_risk.line": "Llinell",
   "p.plans.pid.joint_risk.low_planned_high": "Isel / cynlluniedig / uchel",
-  "p.plans.pid.joint_risk.mean_delay_cost_included": "Cymedr (gan gynnwys cost oedi)",
-  "p.plans.pid.joint_risk.no_register_risk_was_used": "Ni ddefnyddiwyd unrhyw risg cofrestr yn y rhediad hwn.",
+  "p.plans.pid.joint_risk.mean_delay_cost_included":
+    "Cymedr (gan gynnwys cost oedi)",
+  "p.plans.pid.joint_risk.no_register_risk_was_used":
+    "Ni ddefnyddiwyd unrhyw risg cofrestr yn y rhediad hwn.",
   "p.plans.pid.joint_risk.not_enough_data": "dim digon o ddata",
-  "p.plans.pid.joint_risk.of_which_delay_cost_on": "Ac o hynny cost oedi, ar gyfartaledd",
+  "p.plans.pid.joint_risk.of_which_delay_cost_on":
+    "Ac o hynny cost oedi, ar gyfartaledd",
   "p.plans.pid.joint_risk.on_time": "ar amser",
   "p.plans.pid.joint_risk.outcome": "Canlyniad",
-  "p.plans.pid.joint_risk.per_line_estimate_in": "Amcangyfrif fesul llinell yn {currency}",
+  "p.plans.pid.joint_risk.per_line_estimate_in":
+    "Amcangyfrif fesul llinell yn {currency}",
   "p.plans.pid.joint_risk.pert": "PERT",
   "p.plans.pid.joint_risk.plan": "← Cynllun",
   "p.plans.pid.joint_risk.risks": "Risgiau",
   "p.plans.pid.joint_risk.run": "Rhedeg",
   "p.plans.pid.joint_risk.running": "Yn rhedeg…",
-  "p.plans.pid.joint_risk.scatter_of_simulated_total_cost": "Gwasgariad cyfanswm cost efelychiedig yn erbyn diwrnodau gwaith yn hwyr, gyda'r gyllideb a'r llinell ar amser",
+  "p.plans.pid.joint_risk.scatter_of_simulated_total_cost":
+    "Gwasgariad cyfanswm cost efelychiedig yn erbyn diwrnodau gwaith yn hwyr, gyda'r gyllideb a'r llinell ar amser",
   "p.plans.pid.joint_risk.schedule": "Amserlen — {title}: {skippedReasonText}",
   "p.plans.pid.joint_risk.schedule_risk": "Risg amserlen",
   "p.plans.pid.joint_risk.seed": "Hedyn",
-  "p.plans.pid.joint_risk.seed_the_same_seed_gives": "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad.",
+  "p.plans.pid.joint_risk.seed_the_same_seed_gives":
+    "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad.",
   "p.plans.pid.joint_risk.share": "Rhannu",
   "p.plans.pid.joint_risk.simulations": "Efelychiadau",
-  "p.plans.pid.joint_risk.total_cost_delay_cost_included": "Cyfanswm y gost, gan gynnwys cost oedi",
+  "p.plans.pid.joint_risk.total_cost_delay_cost_included":
+    "Cyfanswm y gost, gan gynnwys cost oedi",
   "p.plans.pid.joint_risk.triangular": "Trionglog",
-  "p.plans.pid.leveling.allow_critical_tasks_to_move": "Caniatáu i dasgau critigol symud (gall hyn ohirio'r diwedd)",
+  "p.plans.pid.leveling.allow_critical_tasks_to_move":
+    "Caniatáu i dasgau critigol symud (gall hyn ohirio'r diwedd)",
   "p.plans.pid.leveling.apply": "Gweithredu",
-  "p.plans.pid.leveling.apply_the_ticked_moves": "Gweithredu'r symudiadau a diciwyd",
-  "p.plans.pid.leveling.balance_workloads_resource_leveling": "Cydbwyso llwythi gwaith (lefelu adnoddau)",
+  "p.plans.pid.leveling.apply_the_ticked_moves":
+    "Gweithredu'r symudiadau a diciwyd",
+  "p.plans.pid.leveling.balance_workloads_resource_leveling":
+    "Cydbwyso llwythi gwaith (lefelu adnoddau)",
   "p.plans.pid.leveling.could_not_be_fixed": "Methu ei drwsio",
   "p.plans.pid.leveling.critical": "critigol",
-  "p.plans.pid.leveling.each_start_date_the_proposal": "Pob dyddiad dechrau y byddai'r cynnig yn ei newid",
+  "p.plans.pid.leveling.each_start_date_the_proposal":
+    "Pob dyddiad dechrau y byddai'r cynnig yn ei newid",
   "p.plans.pid.leveling.finish": "Gorffen",
   "p.plans.pid.leveling.float": "Llac",
-  "p.plans.pid.leveling.i_have_read_the_proposal": "Rwyf wedi darllen y cynnig ac eisiau newid y dyddiadau dechrau hyn",
+  "p.plans.pid.leveling.i_have_read_the_proposal":
+    "Rwyf wedi darllen y cynnig ac eisiau newid y dyddiadau dechrau hyn",
   "p.plans.pid.leveling.later_by": "Yn ddiweddarach o",
-  "p.plans.pid.leveling.load_per_task_of_a": "Llwyth fesul tasg (% o ddiwrnod person)",
+  "p.plans.pid.leveling.load_per_task_of_a":
+    "Llwyth fesul tasg (% o ddiwrnod person)",
   "p.plans.pid.leveling.loading": "Yn llwytho…",
-  "p.plans.pid.leveling.no_start_date_would_change": "Ni fyddai unrhyw ddyddiad dechrau yn newid.",
-  "p.plans.pid.leveling.nobody_is_over_allocated_so": "Does neb wedi'i or-neilltuo, felly nid oes dim i'w lefelu.",
+  "p.plans.pid.leveling.no_start_date_would_change":
+    "Ni fyddai unrhyw ddyddiad dechrau yn newid.",
+  "p.plans.pid.leveling.nobody_is_over_allocated_so":
+    "Does neb wedi'i or-neilltuo, felly nid oes dim i'w lefelu.",
   "p.plans.pid.leveling.over_allocated_now": "Wedi'u gor-neilltuo nawr",
   "p.plans.pid.leveling.person": "Person",
   "p.plans.pid.leveling.plan": "← Cynllun",
@@ -1116,12 +1312,17 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.leveling.refused": "Gwrthodwyd: {note}",
   "p.plans.pid.leveling.resource_leveling_ppm": "Lefelu adnoddau — PPM",
   "p.plans.pid.leveling.start": "Dechrau",
-  "p.plans.pid.leveling.start_finish_business_days": "{pid}: dechrau {v}{start_days}, gorffen {v2}{finish_days} diwrnod gwaith",
-  "p.plans.pid.leveling.suggests_moving_tasks_so_that": "Yn awgrymu symud tasgau fel nad oes neb wedi'i archebu am fwy nag y gall ei wneud. Ni newidir dim nes i chi gadarnhau.",
+  "p.plans.pid.leveling.start_finish_business_days":
+    "{pid}: dechrau {v}{start_days}, gorffen {v2}{finish_days} diwrnod gwaith",
+  "p.plans.pid.leveling.suggests_moving_tasks_so_that":
+    "Yn awgrymu symud tasgau fel nad oes neb wedi'i archebu am fwy nag y gall ei wneud. Ni newidir dim nes i chi gadarnhau.",
   "p.plans.pid.leveling.task": "Tasg",
-  "p.plans.pid.leveling.the_search_stopped_at_its": "stopiodd y chwiliad yn ei derfyn",
-  "p.plans.pid.leveling.this_is_advice_nothing_changes": "Cyngor yw hwn. Ni newidir dim nes i chi ddewis symudiadau isod a'u gweithredu.",
-  "p.plans.pid.leveling.why_kept_with_each_audit": "Pam (wedi'i gadw gyda phob cofnod archwilio)",
+  "p.plans.pid.leveling.the_search_stopped_at_its":
+    "stopiodd y chwiliad yn ei derfyn",
+  "p.plans.pid.leveling.this_is_advice_nothing_changes":
+    "Cyngor yw hwn. Ni newidir dim nes i chi ddewis symudiadau isod a'u gweithredu.",
+  "p.plans.pid.leveling.why_kept_with_each_audit":
+    "Pam (wedi'i gadw gyda phob cofnod archwilio)",
   "p.plans.pid.leveling.working_calendar": "Calendr gwaith",
   "p.plans.pid.more_tools": "Rhagor o offer",
   "p.plans.pid.onboarding.access": "Mynediad",
@@ -1131,14 +1332,19 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.onboarding.checklists": "Rhestrau gwirio",
   "p.plans.pid.onboarding.complete_checklist": "Cwblhau'r rhestr wirio",
   "p.plans.pid.onboarding.done": "Wedi'i wneud",
-  "p.plans.pid.onboarding.effective": "{status}{v} · yn effeithiol {effective_date} · {progressText}",
-  "p.plans.pid.onboarding.from": "{status} · o {effective_date} · {progressText}",
+  "p.plans.pid.onboarding.effective":
+    "{status}{v} · yn effeithiol {effective_date} · {progressText}",
+  "p.plans.pid.onboarding.from":
+    "{status} · o {effective_date} · {progressText}",
   "p.plans.pid.onboarding.granted": "Rhoddwyd",
-  "p.plans.pid.onboarding.hand_over_someone_s_work": "Trosglwyddo gwaith rhywun",
-  "p.plans.pid.onboarding.no_access_is_outstanding": "● Nid oes mynediad heb ei ddatrys.",
+  "p.plans.pid.onboarding.hand_over_someone_s_work":
+    "Trosglwyddo gwaith rhywun",
+  "p.plans.pid.onboarding.no_access_is_outstanding":
+    "● Nid oes mynediad heb ei ddatrys.",
   "p.plans.pid.onboarding.none_yet": "Dim eto.",
   "p.plans.pid.onboarding.onboarding_and_offboarding": "Ymsefydlu a gadael",
-  "p.plans.pid.onboarding.onboarding_and_offboarding_ppm": "Ymsefydlu a gadael — PPM",
+  "p.plans.pid.onboarding.onboarding_and_offboarding_ppm":
+    "Ymsefydlu a gadael — PPM",
   "p.plans.pid.onboarding.person": "person:…",
   "p.plans.pid.onboarding.person_2": "Person",
   "p.plans.pid.onboarding.plan": "← Cynllun",
@@ -1157,35 +1363,49 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.onboarding.start_a_checklist": "Dechrau rhestr wirio",
   "p.plans.pid.onboarding.takes_effect": "Yn dod i rym",
   "p.plans.pid.onboarding.what": "Beth",
-  "p.plans.pid.onboarding.who_holds_what_access_is": "Mae pwy sy'n dal pa fynediad yn ymwneud â phobl, felly mae angen y caniatâd i reoli pobl.",
+  "p.plans.pid.onboarding.who_holds_what_access_is":
+    "Mae pwy sy'n dal pa fynediad yn ymwneud â phobl, felly mae angen y caniatâd i reoli pobl.",
   "p.plans.pid.onboarding.why_skip": "Pam hepgor?",
-  "p.plans.pid.raci.add_a_person_person_or": "Ychwanegu person (person:… neu worker:…)",
-  "p.plans.pid.raci.add_a_person_to_start": "Ychwanegwch berson i ddechrau neilltuo llythrennau.",
+  "p.plans.pid.raci.add_a_person_person_or":
+    "Ychwanegu person (person:… neu worker:…)",
+  "p.plans.pid.raci.add_a_person_to_start":
+    "Ychwanegwch berson i ddechrau neilltuo llythrennau.",
   "p.plans.pid.raci.add_column": "Ychwanegu colofn",
   "p.plans.pid.raci.export_to_a_spreadsheet": "Allforio i daenlen",
-  "p.plans.pid.raci.for_each_task_who_does": "Ar gyfer pob tasg: pwy sy'n ei gwneud, pwy sy'n ei chymeradwyo, pwy a ofynnir ac i bwy yr hysbysir.",
-  "p.plans.pid.raci.have_nobody_accountable": "Nid oes neb atebol ar gyfer {missing_accountable}.",
-  "p.plans.pid.raci.have_nobody_responsible": "Nid oes neb cyfrifol ar gyfer {missing_responsible}.",
-  "p.plans.pid.raci.how_many_tasks_each_person": "Faint o dasgau y mae pob person yn dal pob llythyren arnynt",
+  "p.plans.pid.raci.for_each_task_who_does":
+    "Ar gyfer pob tasg: pwy sy'n ei gwneud, pwy sy'n ei chymeradwyo, pwy a ofynnir ac i bwy yr hysbysir.",
+  "p.plans.pid.raci.have_nobody_accountable":
+    "Nid oes neb atebol ar gyfer {missing_accountable}.",
+  "p.plans.pid.raci.have_nobody_responsible":
+    "Nid oes neb cyfrifol ar gyfer {missing_responsible}.",
+  "p.plans.pid.raci.how_many_tasks_each_person":
+    "Faint o dasgau y mae pob person yn dal pob llythyren arnynt",
   "p.plans.pid.raci.legend": "Allwedd",
   "p.plans.pid.raci.load_by_person": "Llwyth fesul person",
   "p.plans.pid.raci.loading": "Yn llwytho…",
-  "p.plans.pid.raci.of_tasks_are_complete_one": "Mae {complete} o {tasks} tasg wedi'u cwblhau (un atebol, o leiaf un cyfrifol).",
+  "p.plans.pid.raci.of_tasks_are_complete_one":
+    "Mae {complete} o {tasks} tasg wedi'u cwblhau (un atebol, o leiaf un cyfrifol).",
   "p.plans.pid.raci.person": "Person",
   "p.plans.pid.raci.plan": "← Cynllun",
   "p.plans.pid.raci.raci_ppm": "RACI — PPM",
-  "p.plans.pid.raci.this_plan_has_no_tasks": "Nid oes tasgau gan y cynllun hwn eto.",
-  "p.plans.pid.raci.who_does_what_raci_matrix": "Pwy sy'n gwneud beth (matrics RACI)",
-  "p.plans.pid.schedule.dependency_violated_successor_starts": "Torrwyd y ddibyniaeth: mae'r olynydd yn dechrau ar {actual_start} ond ni all ddechrau cyn {earliest_start}.",
+  "p.plans.pid.raci.this_plan_has_no_tasks":
+    "Nid oes tasgau gan y cynllun hwn eto.",
+  "p.plans.pid.raci.who_does_what_raci_matrix":
+    "Pwy sy'n gwneud beth (matrics RACI)",
+  "p.plans.pid.schedule.dependency_violated_successor_starts":
+    "Torrwyd y ddibyniaeth: mae'r olynydd yn dechrau ar {actual_start} ond ni all ddechrau cyn {earliest_start}.",
   "p.plans.pid.schedule.schedule_ppm": "Amserlen — PPM",
   "p.plans.pid.schedule_health.as_of": "Ar {as_of} ·",
-  "p.plans.pid.schedule_health.baseline_version": "fersiwn llinell sylfaen {version}",
+  "p.plans.pid.schedule_health.baseline_version":
+    "fersiwn llinell sylfaen {version}",
   "p.plans.pid.schedule_health.check": "Gwirio",
-  "p.plans.pid.schedule_health.checks_the_schedule_for_common": "Yn gwirio'r amserlen am broblemau cyffredin, megis tasgau heb unrhyw ddolenni neu heb amcangyfrif.",
+  "p.plans.pid.schedule_health.checks_the_schedule_for_common":
+    "Yn gwirio'r amserlen am broblemau cyffredin, megis tasgau heb unrhyw ddolenni neu heb amcangyfrif.",
   "p.plans.pid.schedule_health.critical_path": "Llwybr critigol",
   "p.plans.pid.schedule_health.held_to": "Yn cael ei ddal at",
   "p.plans.pid.schedule_health.loading": "Yn llwytho…",
-  "p.plans.pid.schedule_health.no_baseline_taken": "dim llinell sylfaen wedi'i chymryd",
+  "p.plans.pid.schedule_health.no_baseline_taken":
+    "dim llinell sylfaen wedi'i chymryd",
   "p.plans.pid.schedule_health.plan": "← Cynllun",
   "p.plans.pid.schedule_health.re_run": "Ail-redeg",
   "p.plans.pid.schedule_health.result": "Canlyniad",
@@ -1193,51 +1413,66 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.schedule_health.schedule_health_ppm": "Iechyd yr amserlen — PPM",
   "p.plans.pid.schedule_health.see_the_note": "Gweld y nodyn",
   "p.plans.pid.schedule_health.status_date": "Dyddiad y statws",
-  "p.plans.pid.schedule_health.the_fourteen_schedule_health_checks": "Y pedwar gwiriad ar ddeg ar iechyd yr amserlen",
+  "p.plans.pid.schedule_health.the_fourteen_schedule_health_checks":
+    "Y pedwar gwiriad ar ddeg ar iechyd yr amserlen",
   "p.plans.pid.schedule_health.to_fix": "I'w drwsio",
   "p.plans.pid.schedule_health.what_was_found": "Beth a ganfuwyd",
   "p.plans.pid.schedule_risk.assumptions": "Tybiaethau",
-  "p.plans.pid.schedule_risk.band_for_tasks_with_no": "Band ar gyfer tasgau heb amcangyfrif (± %)",
+  "p.plans.pid.schedule_risk.band_for_tasks_with_no":
+    "Band ar gyfer tasgau heb amcangyfrif (± %)",
   "p.plans.pid.schedule_risk.critical_in": "Critigol yn",
   "p.plans.pid.schedule_risk.critical_path": "Llwybr critigol",
-  "p.plans.pid.schedule_risk.critical_path_finish_the_plan": "Diwedd y llwybr critigol (dyddiad y cynllun ei hun)",
+  "p.plans.pid.schedule_risk.critical_path_finish_the_plan":
+    "Diwedd y llwybr critigol (dyddiad y cynllun ei hun)",
   "p.plans.pid.schedule_risk.distribution": "Dosbarthiad",
-  "p.plans.pid.schedule_risk.each_bar_is_a_finish": "Mae pob bar yn ddyddiad gorffen; mae talach yn golygu bod mwy o'r efelychiadau wedi gorffen yno. Llinellau solet yw P50, P80 a P90 (wedi'u labelu); y llinell doredig yw dyddiad y cynllun ei hun.",
-  "p.plans.pid.schedule_risk.earliest_latest": "{join}. Cynharaf {earliest}, diweddaraf {latest}.",
+  "p.plans.pid.schedule_risk.each_bar_is_a_finish":
+    "Mae pob bar yn ddyddiad gorffen; mae talach yn golygu bod mwy o'r efelychiadau wedi gorffen yno. Llinellau solet yw P50, P80 a P90 (wedi'u labelu); y llinell doredig yw dyddiad y cynllun ei hun.",
+  "p.plans.pid.schedule_risk.earliest_latest":
+    "{join}. Cynharaf {earliest}, diweddaraf {latest}.",
   "p.plans.pid.schedule_risk.estimate": "Amcangyfrif",
   "p.plans.pid.schedule_risk.finish": "Gorffen",
   "p.plans.pid.schedule_risk.finish_date": "Dyddiad gorffen",
-  "p.plans.pid.schedule_risk.finish_date_at_each_percentile": "Dyddiad gorffen ar bob canraneg",
-  "p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates": "Histogram o ddyddiadau gorffen efelychiedig, gyda P50, P80 a P90 wedi'u marcio",
+  "p.plans.pid.schedule_risk.finish_date_at_each_percentile":
+    "Dyddiad gorffen ar bob canraneg",
+  "p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates":
+    "Histogram o ddyddiadau gorffen efelychiedig, gyda P50, P80 a P90 wedi'u marcio",
   "p.plans.pid.schedule_risk.independence": "Annibyniaeth.",
   "p.plans.pid.schedule_risk.iterations": "Ailadroddiadau",
   "p.plans.pid.schedule_risk.left_out": "Wedi'u gadael allan:",
-  "p.plans.pid.schedule_risk.many_what_if_runs_of": "Mae llawer o redeg-os yr amserlen yn dangos amrediad y dyddiadau gorffen a pha mor debygol yw pob un.",
-  "p.plans.pid.schedule_risk.no_register_risk_was_used": "Ni ddefnyddiwyd unrhyw risg cofrestr fel digwyddiad amserlen.",
+  "p.plans.pid.schedule_risk.many_what_if_runs_of":
+    "Mae llawer o redeg-os yr amserlen yn dangos amrediad y dyddiadau gorffen a pha mor debygol yw pob un.",
+  "p.plans.pid.schedule_risk.no_register_risk_was_used":
+    "Ni ddefnyddiwyd unrhyw risg cofrestr fel digwyddiad amserlen.",
   "p.plans.pid.schedule_risk.not_enough_data": "dim digon o ddata",
-  "p.plans.pid.schedule_risk.not_simulated_because_the_schedule": "Heb eu hefelychu, oherwydd na all yr amserlen eu gosod: {join}.",
+  "p.plans.pid.schedule_risk.not_simulated_because_the_schedule":
+    "Heb eu hefelychu, oherwydd na all yr amserlen eu gosod: {join}.",
   "p.plans.pid.schedule_risk.of": "{date}: {count} o {iterations}",
   "p.plans.pid.schedule_risk.of_runs": "{criticalityText} o'r rhediadau",
-  "p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine": "Optimistaidd / tebygol / pesimistaidd (diwrnodau gwaith)",
+  "p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine":
+    "Optimistaidd / tebygol / pesimistaidd (diwrnodau gwaith)",
   "p.plans.pid.schedule_risk.outcome": "Canlyniad",
-  "p.plans.pid.schedule_risk.per_task_estimate_criticality_and": "Amcangyfrif fesul tasg, critigedd a sensitifrwydd",
+  "p.plans.pid.schedule_risk.per_task_estimate_criticality_and":
+    "Amcangyfrif fesul tasg, critigedd a sensitifrwydd",
   "p.plans.pid.schedule_risk.plan": "← Cynllun",
   "p.plans.pid.schedule_risk.plan_2": "cynllun",
   "p.plans.pid.schedule_risk.risks_used": "Risgiau a ddefnyddiwyd",
   "p.plans.pid.schedule_risk.run": "Rhedeg",
-  "p.plans.pid.schedule_risk.run_on_against_the_plan": "Rhedwyd ar {ranOn} yn erbyn y cynllun fel y mae · hedyn {seed} · {iterations} ailadroddiad · {distributionText} · calendr {calendar}",
+  "p.plans.pid.schedule_risk.run_on_against_the_plan":
+    "Rhedwyd ar {ranOn} yn erbyn y cynllun fel y mae · hedyn {seed} · {iterations} ailadroddiad · {distributionText} · calendr {calendar}",
   "p.plans.pid.schedule_risk.running": "Yn rhedeg…",
   "p.plans.pid.schedule_risk.schedule_risk": "Risg amserlen",
   "p.plans.pid.schedule_risk.schedule_risk_ppm": "Risg amserlen — PPM",
   "p.plans.pid.schedule_risk.seed": "Hedyn",
-  "p.plans.pid.schedule_risk.seed_the_same_seed_gives": "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad. Hyd at {max_iterations} ailadroddiad.",
+  "p.plans.pid.schedule_risk.seed_the_same_seed_gives":
+    "Hedyn {seed}: mae'r un hedyn yn rhoi'r un canlyniad. Hyd at {max_iterations} ailadroddiad.",
   "p.plans.pid.schedule_risk.sensitivity": "Sensitifrwydd",
   "p.plans.pid.schedule_risk.share": "Rhannu",
   "p.plans.pid.schedule_risk.simulations": "Efelychiadau",
   "p.plans.pid.schedule_risk.task": "Tasg",
   "p.plans.pid.schedule_risk.the_same_figures_as_a": "Yr un ffigurau fel tabl",
   "p.plans.pid.schedule_risk.triangular": "Trionglog",
-  "p.plans.pid.schedule_risk.weighted_towards_the_likely_value": "Wedi'i bwysoli tuag at y gwerth tebygol (PERT)",
+  "p.plans.pid.schedule_risk.weighted_towards_the_likely_value":
+    "Wedi'i bwysoli tuag at y gwerth tebygol (PERT)",
   "p.plans.pid.schedule_risk.what_drives_it": "Beth sy'n ei yrru",
   "p.plans.pid.schedule_risk.when_it_finishes": "Pryd mae'n gorffen",
   "p.plans.pid.wbs.code": "Cod",
@@ -1246,8 +1481,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.wbs.plan": "← Cynllun",
   "p.plans.pid.wbs.sub_tasks": "Is-dasgau",
   "p.plans.pid.wbs.task": "Tasg",
-  "p.plans.pid.wbs.tasks_is_too_many_to": "Mae {length} tasg yn ormod i'w nythu'n ddefnyddiol; mae'r tabl yn eu dangos i gyd.",
-  "p.plans.pid.wbs.the_plan_s_tasks_each": "Tasgau'r cynllun, pob un wedi'i rannu'n is-dasgau. Mae'r cod ar bob llinell i'w ddarllen: mae'n newid pan ychwanegir neu symudir gwaith.",
+  "p.plans.pid.wbs.tasks_is_too_many_to":
+    "Mae {length} tasg yn ormod i'w nythu'n ddefnyddiol; mae'r tabl yn eu dangos i gyd.",
+  "p.plans.pid.wbs.the_plan_s_tasks_each":
+    "Tasgau'r cynllun, pob un wedi'i rannu'n is-dasgau. Mae'r cod ar bob llinell i'w ddarllen: mae'n newid pan ychwanegir neu symudir gwaith.",
   "p.plans.pid.wbs.work_breakdown": "Dadansoddiad gwaith",
   "p.plans.pid.wbs.work_breakdown_as_a_table": "Dadansoddiad gwaith fel tabl",
   "p.plans.pid.wbs.work_breakdown_ppm": "Dadansoddiad gwaith — PPM",
@@ -1267,22 +1504,28 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.what_if.finish_to_start": "Gorffen i ddechrau",
   "p.plans.pid.what_if.float": "Llac",
   "p.plans.pid.what_if.follows": "Mae {name} yn dilyn {name2} ({toUpperCase})",
-  "p.plans.pid.what_if.joins_the_critical_path": "Yn ymuno â'r llwybr critigol: {join}.",
+  "p.plans.pid.what_if.joins_the_critical_path":
+    "Yn ymuno â'r llwybr critigol: {join}.",
   "p.plans.pid.what_if.lag_business_days": "Oediad (diwrnodau gwaith)",
   "p.plans.pid.what_if.leaves_it": "Yn ei adael: {join}.",
   "p.plans.pid.what_if.link": "Dolen",
   "p.plans.pid.what_if.new_start": "Dechrau newydd",
-  "p.plans.pid.what_if.no_task_s_dates_or": "Nid yw dyddiadau na llac unrhyw dasg yn newid.",
+  "p.plans.pid.what_if.no_task_s_dates_or":
+    "Nid yw dyddiadau na llac unrhyw dasg yn newid.",
   "p.plans.pid.what_if.none_clear_it": "Dim (ei glirio)",
   "p.plans.pid.what_if.none_yet": "Dim eto.",
-  "p.plans.pid.what_if.now_takes_of_the_day": "Mae “{name}” bellach yn cymryd {units_percent}% o'r diwrnod am {hoursText} o waith (wedi'i gyfrifo o'i rheol amserlennu).",
-  "p.plans.pid.what_if.of_work_has_no_rate": "▲ Nid oes cyfradd ar gyfer {hoursText} o waith, felly nid yw wedi'i gostio.",
+  "p.plans.pid.what_if.now_takes_of_the_day":
+    "Mae “{name}” bellach yn cymryd {units_percent}% o'r diwrnod am {hoursText} o waith (wedi'i gyfrifo o'i rheol amserlennu).",
+  "p.plans.pid.what_if.of_work_has_no_rate":
+    "▲ Nid oes cyfradd ar gyfer {hoursText} o waith, felly nid yw wedi'i gostio.",
   "p.plans.pid.what_if.plan": "← Cynllun",
-  "p.plans.pid.what_if.planned_labour_cost": "Cost llafur cynlluniedig: {deltaText} ({deltaText2} → {deltaText3}).",
+  "p.plans.pid.what_if.planned_labour_cost":
+    "Cost llafur cynlluniedig: {deltaText} ({deltaText2} → {deltaText3}).",
   "p.plans.pid.what_if.predecessor": "Rhagflaenydd",
   "p.plans.pid.what_if.preview": "Rhagolwg",
   "p.plans.pid.what_if.reason": "Rheswm",
-  "p.plans.pid.what_if.reason_recorded_with_each_change": "Rheswm (wedi'i gofnodi gyda phob newid)",
+  "p.plans.pid.what_if.reason_recorded_with_each_change":
+    "Rheswm (wedi'i gofnodi gyda phob newid)",
   "p.plans.pid.what_if.remove": "Tynnu",
   "p.plans.pid.what_if.stage_an_edit": "Llwyfannu golygiad",
   "p.plans.pid.what_if.stage_edit": "Llwyfannu golygiad",
@@ -1291,23 +1534,31 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.what_if.start_to_start": "Dechrau i ddechrau",
   "p.plans.pid.what_if.successor": "Olynydd",
   "p.plans.pid.what_if.task": "Tasg",
-  "p.plans.pid.what_if.tasks_whose_dates_float_or": "Tasgau y mae eu dyddiadau, llac neu statws critigol yn newid",
-  "p.plans.pid.what_if.try_changes_on_a_copy": "Rhowch gynnig ar newidiadau ar gopi. Ni chaiff dim ei gadw nes i chi ymrwymo.",
+  "p.plans.pid.what_if.tasks_whose_dates_float_or":
+    "Tasgau y mae eu dyddiadau, llac neu statws critigol yn newid",
+  "p.plans.pid.what_if.try_changes_on_a_copy":
+    "Rhowch gynnig ar newidiadau ar gopi. Ni chaiff dim ei gadw nes i chi ymrwymo.",
   "p.plans.pid.what_if.type": "Math",
   "p.plans.pid.what_if.what_if": "Rhedeg-os",
   "p.plans.pid.what_if.what_if_ppm": "Rhedeg-os — PPM",
-  "p.plans.pid.work.business_days_of_a_day": "{duration_days} diwrnod gwaith · {units_percent}% o ddiwrnod · {hoursText} o waith · {v}",
+  "p.plans.pid.work.business_days_of_a_day":
+    "{duration_days} diwrnod gwaith · {units_percent}% o ddiwrnod · {hoursText} o waith · {v}",
   "p.plans.pid.work.change": "Newid",
   "p.plans.pid.work.costs": "Costau",
   "p.plans.pid.work.day": "Diwrnod",
   "p.plans.pid.work.duration_business_days": "Hyd (diwrnodau gwaith)",
   "p.plans.pid.work.edit_assignment": "Golygu'r neilltuo",
-  "p.plans.pid.work.falls_outside_this_window": "Mae {hoursText} y tu allan i'r ffenestr hon.",
-  "p.plans.pid.work.hours_per_each_row_adds": "Oriau fesul {grain}; mae pob rhes yn adio i waith y dasg, y rhes olaf i waith y cynllun.",
-  "p.plans.pid.work.how_long_each_task_takes": "Pa mor hir y mae pob tasg yn ei gymryd, faint o ddiwrnod person y mae'n ei ddefnyddio, a faint o waith y mae hynny'n ei adio i fyny.",
+  "p.plans.pid.work.falls_outside_this_window":
+    "Mae {hoursText} y tu allan i'r ffenestr hon.",
+  "p.plans.pid.work.hours_per_each_row_adds":
+    "Oriau fesul {grain}; mae pob rhes yn adio i waith y dasg, y rhes olaf i waith y cynllun.",
+  "p.plans.pid.work.how_long_each_task_takes":
+    "Pa mor hir y mae pob tasg yn ei gymryd, faint o ddiwrnod person y mae'n ei ddefnyddio, a faint o waith y mae hynny'n ei adio i fyny.",
   "p.plans.pid.work.month": "Mis",
-  "p.plans.pid.work.no_assignment_yet_give_a": "Dim neilltuo eto. Rhowch hyd ac unedau a chyfrifir y gwaith.",
-  "p.plans.pid.work.no_task_carries_work_yet": "Nid oes unrhyw dasg yn cario gwaith eto, felly nid oes dim i'w ledaenu.",
+  "p.plans.pid.work.no_assignment_yet_give_a":
+    "Dim neilltuo eto. Rhowch hyd ac unedau a chyfrifir y gwaith.",
+  "p.plans.pid.work.no_task_carries_work_yet":
+    "Nid oes unrhyw dasg yn cario gwaith eto, felly nid oes dim i'w ledaenu.",
   "p.plans.pid.work.not_placed": "(heb ei osod)",
   "p.plans.pid.work.percentages": "Canrannau",
   "p.plans.pid.work.period": "Cyfnod",
@@ -1316,11 +1567,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.work.rule": "Rheol",
   "p.plans.pid.work.save_assignment": "Cadw'r neilltuo",
   "p.plans.pid.work.save_contour": "Cadw'r cyfuchlin",
-  "p.plans.pid.work.so_its_work_is_not": "▲ {title} ({hoursText}) {reason}, felly nid yw ei waith yn y bwcedi.",
+  "p.plans.pid.work.so_its_work_is_not":
+    "▲ {title} ({hoursText}) {reason}, felly nid yw ei waith yn y bwcedi.",
   "p.plans.pid.work.spread": "Lledaeniad",
   "p.plans.pid.work.task": "Tasg",
   "p.plans.pid.work.tasks": "Tasgau",
-  "p.plans.pid.work.this_plan_has_no_scheduled": "Nid oes tasgau wedi'u hamserlennu gan y cynllun hwn eto.",
+  "p.plans.pid.work.this_plan_has_no_scheduled":
+    "Nid oes tasgau wedi'u hamserlennu gan y cynllun hwn eto.",
   "p.plans.pid.work.total": "Cyfanswm",
   "p.plans.pid.work.units": "Unedau (%)",
   "p.plans.pid.work.units_of_the_day": "Unedau (% o'r diwrnod)",
@@ -1343,8 +1596,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.prioritization.low": "isel",
   "p.prioritization.medium": "canolig",
   "p.prioritization.missing_evidence": "Tystiolaeth ar goll",
-  "p.prioritization.no_evidence_for_any_component": "Dim tystiolaeth ar gyfer unrhyw gydran — mae'r cynllun hwn heb ei sgorio.",
-  "p.prioritization.no_plans_match_that_filter": "Nid oes unrhyw gynlluniau'n cyfateb i'r hidlydd hwnnw.",
+  "p.prioritization.no_evidence_for_any_component":
+    "Dim tystiolaeth ar gyfer unrhyw gydran — mae'r cynllun hwn heb ei sgorio.",
+  "p.prioritization.no_plans_match_that_filter":
+    "Nid oes unrhyw gynlluniau'n cyfateb i'r hidlydd hwnnw.",
   "p.prioritization.none": "dim",
   "p.prioritization.of_plan_s": "{length} o {scored_of} cynllun",
   "p.prioritization.plan": "Cynllun",
@@ -1352,8 +1607,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.prioritization.prioritization": "Blaenoriaethu",
   "p.prioritization.prioritization_ppm": "Blaenoriaethu — PPM",
   "p.prioritization.score": "Sgôr",
-  "p.prioritization.shows_how_much_of_the": "yn dangos faint o'r sgôr a gefnogwyd gan ddata mewn gwirionedd.",
-  "p.prioritization.smart_score_over_roi_strategic": "Sgôr Clyfar dros ROI, aliniad strategol, adolygiad arbenigol, risg, galw, blaenoriaeth MoSCoW, a momentwm. Caiff cydrannau heb dystiolaeth eu gollwng ac ailnormaleiddir y gweddill —",
+  "p.prioritization.shows_how_much_of_the":
+    "yn dangos faint o'r sgôr a gefnogwyd gan ddata mewn gwirionedd.",
+  "p.prioritization.smart_score_over_roi_strategic":
+    "Sgôr Clyfar dros ROI, aliniad strategol, adolygiad arbenigol, risg, galw, blaenoriaeth MoSCoW, a momentwm. Caiff cydrannau heb dystiolaeth eu gollwng ac ailnormaleiddir y gweddill —",
   "p.prioritization.unscored": "heb ei sgorio",
   "p.prioritization.value": "Gwerth",
   "p.prioritization.weight": "Pwysau",
@@ -1374,7 +1631,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.regulator.currency": "Arian cyfred",
   "p.regulator.gate_decisions": "· Penderfyniadau porth:",
   "p.regulator.members": "Aelodau:",
-  "p.regulator.names_withheld_abac_mask_obligation": "Enwau wedi'u dal yn ôl (rhwymedigaeth masg ABAC).",
+  "p.regulator.names_withheld_abac_mask_obligation":
+    "Enwau wedi'u dal yn ôl (rhwymedigaeth masg ABAC).",
   "p.regulator.no_budget_lines": "Dim llinellau cyllideb.",
   "p.regulator.no_portfolios_recorded": "Dim portffolios wedi'u cofnodi.",
   "p.regulator.none": "dim",
@@ -1387,34 +1645,42 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.reports.fields_comma_separated": "meysydd (wedi'u gwahanu gan atalnodau)",
   "p.reports.name_contains": "enw'n cynnwys…",
   "p.reports.reports_ppm": "Adroddiadau — PPM",
-  "p.resources.a_multi_skill_booking_counts": "Mae archeb aml-sgil yn cyfrif yn llawn tuag at bob un o'i sgiliau, felly mae rhesi sgiliau'n gorgyffwrdd ac nid ydynt yn adio i'r cyfanswm.",
+  "p.resources.a_multi_skill_booking_counts":
+    "Mae archeb aml-sgil yn cyfrif yn llawn tuag at bob un o'i sgiliau, felly mae rhesi sgiliau'n gorgyffwrdd ac nid ydynt yn adio i'r cyfanswm.",
   "p.resources.by": "Gan",
   "p.resources.demand_fte": "FTE galw",
-  "p.resources.demand_supply_and_gap_by": "Galw, cyflenwad a bwlch fesul cyfnod ac yn ôl {group_by}",
+  "p.resources.demand_supply_and_gap_by":
+    "Galw, cyflenwad a bwlch fesul cyfnod ac yn ôl {group_by}",
   "p.resources.every_figure_as_a_table": "Pob ffigur fel tabl",
   "p.resources.from": "O",
   "p.resources.gap_fte": "FTE bwlch",
-  "p.resources.gap_per_in_fte_supply": "Bwlch fesul {period}, mewn FTE (cyflenwad namyn galw)",
+  "p.resources.gap_per_in_fte_supply":
+    "Bwlch fesul {period}, mewn FTE (cyflenwad namyn galw)",
   "p.resources.loading": "Yn llwytho…",
   "p.resources.month": "Mis",
-  "p.resources.no_demand_or_supply_in": "Dim galw na chyflenwad yn y ffenestr hon.",
+  "p.resources.no_demand_or_supply_in":
+    "Dim galw na chyflenwad yn y ffenestr hon.",
   "p.resources.not_known": "ddim yn hysbys",
   "p.resources.of_which_unassigned": "Ac o hynny heb eu neilltuo",
   "p.resources.people": "Pobl",
   "p.resources.per": "Fesul",
-  "p.resources.per_by_scope": "{periodLabel} · fesul {period} · yn ôl {group_by} · cwmpas: {kind}",
+  "p.resources.per_by_scope":
+    "{periodLabel} · fesul {period} · yn ôl {group_by} · cwmpas: {kind}",
   "p.resources.period": "Cyfnod",
   "p.resources.proposed_fte": "FTE arfaethedig",
   "p.resources.rbs.show_tasks": "Dangos tasgau agored {role}",
   "p.resources.rbs.hide_tasks": "Cuddio tasgau agored {role}",
   "p.resources.rbs.no_open_tasks": "dim tasgau agored",
-  "p.resources.rbs.tasks_in_plans_you_cannot_read": "Ni ddangosir {count} mewn cynlluniau na allwch eu darllen.",
-  "p.resources.rbs.only_the_first_500_tasks": "Dim ond y 500 tasg gyntaf a ddarllenwyd, felly gall y rhestr hon fod yn anghyflawn.",
+  "p.resources.rbs.tasks_in_plans_you_cannot_read":
+    "Ni ddangosir {count} mewn cynlluniau na allwch eu darllen.",
+  "p.resources.rbs.only_the_first_500_tasks":
+    "Dim ond y 500 tasg gyntaf a ddarllenwyd, felly gall y rhestr hon fod yn anghyflawn.",
   "p.resources.rbs.could_not_load_tasks": "Methu llwytho'r tasgau: {reason}",
   "l.processes.name_problem": "Rhowch enw i'r broses o 1 i 120 nod.",
   "l.processes.steps_problem": "Mae gan broses 1 i {max} cam.",
   "l.processes.title_problem": "Cam {n}: rhowch deitl o 1 i 200 nod iddo.",
-  "l.processes.person_problem": "Cam {n}: rhaid i'r unigolyn fod yn gyfeiriad person: neu worker:.",
+  "l.processes.person_problem":
+    "Cam {n}: rhaid i'r unigolyn fod yn gyfeiriad person: neu worker:.",
   "l.processes.kind_approve": "Cymeradwyo",
   "l.processes.kind_todo": "I'w wneud",
   "l.processes.kind_notify": "Hysbysu",
@@ -1431,7 +1697,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.processes.run_failed": "wedi methu",
   "p.processes.processes": "Prosesau cymeradwyo",
   "p.processes.processes_ppm": "Prosesau cymeradwyo — PPM",
-  "p.processes.intro": "Rhestr o gamau yw proses, a redir fesul un: gofyn i rywun gymeradwyo, rhoi tasg i rywun, neu hysbysu rhywun. Mae gwrthod yn dod â'r rhediad i ben ac yn hepgor y camau ar ei ôl. Nid yw golygu proses byth yn newid rhediad sydd eisoes ar y gweill.",
+  "p.processes.intro":
+    "Rhestr o gamau yw proses, a redir fesul un: gofyn i rywun gymeradwyo, rhoi tasg i rywun, neu hysbysu rhywun. Mae gwrthod yn dod â'r rhediad i ben ac yn hepgor y camau ar ei ôl. Nid yw golygu proses byth yn newid rhediad sydd eisoes ar y gweill.",
   "p.processes.definitions": "Prosesau",
   "p.processes.none_defined": "Nid oes prosesau wedi'u diffinio eto.",
   "p.processes.steps_one": "{n} cam",
@@ -1481,28 +1748,34 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.tolerance.score": "sgôr {n}",
   "l.tolerance.points": "{n} pwynt dros 100%",
   "l.tolerance.field_time": "Terfyn (diwrnodau calendr yn hwyr)",
-  "l.tolerance.field_schedule": "Terfyn (diwrnodau calendr yn hwyrach na'r llinell sylfaen)",
+  "l.tolerance.field_schedule":
+    "Terfyn (diwrnodau calendr yn hwyrach na'r llinell sylfaen)",
   "l.tolerance.field_cost": "Terfyn (canran dros y gyllideb gymeradwy)",
-  "l.tolerance.field_risk": "Terfyn (y sgôr risg uchaf y gellir ei dderbyn, 1 i 25)",
+  "l.tolerance.field_risk":
+    "Terfyn (y sgôr risg uchaf y gellir ei dderbyn, 1 i 25)",
   "l.tolerance.field_resources": "Terfyn (pwyntiau canran o or-archebu)",
   "l.tolerance.no_limit": "Nid oes terfyn wedi'i osod yma nac uwchben.",
   "l.tolerance.could_not_measure": "Ni ellid ei fesur.",
-  "l.tolerance.zero_tolerance": "Goddefgarwch sero: mae unrhyw wyriad dros y terfyn.",
+  "l.tolerance.zero_tolerance":
+    "Goddefgarwch sero: mae unrhyw wyriad dros y terfyn.",
   "l.tolerance.used": "{percent}% o'r terfyn wedi'i ddefnyddio",
   "l.tolerance.own": "Wedi'i osod ar y cynllun hwn",
   "l.tolerance.inherited": "Wedi'i etifeddu o gynllun uwchben",
   "p.tolerances.tolerances": "Goddefgarwch",
   "p.tolerances.tolerances_ppm": "Goddefgarwch — PPM",
   "p.tolerances.plan_link": "Goddefgarwch",
-  "p.tolerances.intro": "Pa mor bell y caiff pob prosiect grwydro o ran amser, cost, risg ac adnoddau cyn bod rhaid ei gyfeirio i fyny, a faint o bob terfyn a ddefnyddir. Mae o fewn y terfyn ond yn agos ato yn oren; mae y tu hwnt iddo yn goch; dangosir terfyn na ellir ei fesur fel un na ellir ei fesur, byth fel gwyrdd.",
-  "p.tolerances.board_intro": "Pob cynllun y gallwch ei ddarllen sydd â goddefgarwch, y gwaethaf yn gyntaf.",
+  "p.tolerances.intro":
+    "Pa mor bell y caiff pob prosiect grwydro o ran amser, cost, risg ac adnoddau cyn bod rhaid ei gyfeirio i fyny, a faint o bob terfyn a ddefnyddir. Mae o fewn y terfyn ond yn agos ato yn oren; mae y tu hwnt iddo yn goch; dangosir terfyn na ellir ei fesur fel un na ellir ei fesur, byth fel gwyrdd.",
+  "p.tolerances.board_intro":
+    "Pob cynllun y gallwch ei ddarllen sydd â goddefgarwch, y gwaethaf yn gyntaf.",
   "p.tolerances.none": "Nid oes gan unrhyw gynllun oddefgarwch eto.",
   "p.tolerances.none_match": "Nid oes cynllun yn cyfateb.",
   "p.tolerances.show": "Dangos",
   "p.tolerances.all_statuses": "Pob lliw",
   "p.tolerances.plan": "Cynllun",
   "p.tolerances.overall": "Cyffredinol",
-  "p.tolerances.truncated": "Dim ond y {n} cynllun cyntaf a fesurwyd, felly gall y rhestr hon fod yn anghyflawn.",
+  "p.tolerances.truncated":
+    "Dim ond y {n} cynllun cyntaf a fesurwyd, felly gall y rhestr hon fod yn anghyflawn.",
   "p.tolerances.loading": "Wrthi'n llwytho…",
   "p.tolerances.could_not_load": "Methu llwytho'r goddefgarwch",
   "p.tolerances.back": "← Cynllun",
@@ -1539,9 +1812,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.escalation.event_resolved": "Datryswyd",
   "l.escalation.event_withdrawn": "Tynnwyd yn ôl",
   "l.escalation.title_problem": "Rhowch deitl o 1 i 200 nod iddo.",
-  "l.escalation.dimension_problem": "Dywedwch pa oddefgarwch y mae'n ymwneud ag ef.",
+  "l.escalation.dimension_problem":
+    "Dywedwch pa oddefgarwch y mae'n ymwneud ag ef.",
   "l.escalation.level_problem": "Mae'r lefel yn rhif cyfan o 1 i 9.",
-  "l.escalation.owner_problem": "Rhaid i'r unigolyn fod yn gyfeiriad person: neu worker:.",
+  "l.escalation.owner_problem":
+    "Rhaid i'r unigolyn fod yn gyfeiriad person: neu worker:.",
   "l.escalation.level_to": "Lefel {level}: {to}",
   "l.escalation.level": "Lefel {level}",
   "l.escalation.open_for": "Ar agor ers {n} diwrnod",
@@ -1565,7 +1840,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.task.s_in_review": "Dan adolygiad",
   "p.task.s_done": "Wedi'i wneud",
   "p.task.s_blocked": "Wedi'i rwystro",
-  "p.task.links_intro": "Lle mae'r dasg hon mewn offer eraill, megis y mater Jira neu Linear y caiff ei holrhain fel. Caiff y cyfeiriad ei storio a'i ddangos; ni chaiff byth ei nôl ac ni chaiff dim ei gydamseru.",
+  "p.task.links_intro":
+    "Lle mae'r dasg hon mewn offer eraill, megis y mater Jira neu Linear y caiff ei holrhain fel. Caiff y cyfeiriad ei storio a'i ddangos; ni chaiff byth ei nôl ac ni chaiff dim ei gydamseru.",
   "l.link.kind_docs": "Dogfennau",
   "l.link.kind_repo": "Storfa cod",
   "l.link.kind_ticket": "Tocyn",
@@ -1587,8 +1863,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.wow_ppm": "Ffyrdd o weithio — PPM",
   "p.frameworks.gov": "Fframwaith llywodraethu",
   "p.frameworks.gov_ppm": "Fframwaith llywodraethu — PPM",
-  "p.frameworks.intro_wow": "Sut mae'r tîm yn gweithio: dull, hyd iteriad, terfyn gwaith ar y gweill. Mae cynllun yn dilyn un, a rennir neu ei hun; heb un mae'n etifeddu un y cynllun agosaf uwch ei ben.",
-  "p.frameworks.intro_gov": "Sut mae'r gwaith yn cael ei lywodraethu: pwy sy'n penderfynu, pa mor aml yr adolygir, a'r llwybr uwchgyfeirio. Mae cynllun yn dilyn un, a rennir neu ei hun; heb un mae'n etifeddu un y cynllun agosaf uwch ei ben.",
+  "p.frameworks.intro_wow":
+    "Sut mae'r tîm yn gweithio: dull, hyd iteriad, terfyn gwaith ar y gweill. Mae cynllun yn dilyn un, a rennir neu ei hun; heb un mae'n etifeddu un y cynllun agosaf uwch ei ben.",
+  "p.frameworks.intro_gov":
+    "Sut mae'r gwaith yn cael ei lywodraethu: pwy sy'n penderfynu, pa mor aml yr adolygir, a'r llwybr uwchgyfeirio. Mae cynllun yn dilyn un, a rennir neu ei hun; heb un mae'n etifeddu un y cynllun agosaf uwch ei ben.",
   "p.frameworks.back": "Yn ôl i'r cynllun",
   "p.frameworks.loading": "Wrthi'n llwytho…",
   "p.frameworks.could_not_load": "Methu llwytho hwn.",
@@ -1609,7 +1887,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.follow": "Dilyn hwn",
   "p.frameworks.write_new": "Ysgrifennu un newydd ar gyfer y cynllun hwn",
   "p.frameworks.followed": "Yn ei ddilyn nawr.",
-  "p.frameworks.unfollowed": "Wedi rhoi'r gorau i ddilyn; mae'r cynllun yn etifeddu eto.",
+  "p.frameworks.unfollowed":
+    "Wedi rhoi'r gorau i ddilyn; mae'r cynllun yn etifeddu eto.",
   "p.frameworks.saved": "Wedi'i gadw.",
   "p.frameworks.new_heading": "Un newydd ar gyfer y cynllun hwn",
   "p.frameworks.edit_heading": "Golygu hwn",
@@ -1636,15 +1915,21 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.path_add": "Ychwanegu lefel",
   "p.frameworks.path_remove": "Dileu lefel {n}",
   "p.frameworks.name_problem": "Rhowch enw o 1 i 120 nod iddo.",
-  "p.frameworks.number_problem": "Mae diwrnodau'n rhifau cyfan o 1 i 366 a'r terfyn o 1 i 1000.",
-  "p.frameworks.path_problem": "Mae pob lefel uwchgyfeirio'n rhif cyfan gwahanol o 1 i 9, gyda phwy sy'n ei glywed a beth sy'n ei anfon yno.",
-  "p.frameworks.confirm_shared": "Mae hwn wedi'i rannu: mae cadw'n ei newid ar gyfer {n} cynllun arall hefyd.",
-  "p.frameworks.confirm_problem": "Ticiwch y blwch i gadarnhau'r newid ar gyfer {n} cynllun arall.",
+  "p.frameworks.number_problem":
+    "Mae diwrnodau'n rhifau cyfan o 1 i 366 a'r terfyn o 1 i 1000.",
+  "p.frameworks.path_problem":
+    "Mae pob lefel uwchgyfeirio'n rhif cyfan gwahanol o 1 i 9, gyda phwy sy'n ei glywed a beth sy'n ei anfon yno.",
+  "p.frameworks.confirm_shared":
+    "Mae hwn wedi'i rannu: mae cadw'n ei newid ar gyfer {n} cynllun arall hefyd.",
+  "p.frameworks.confirm_problem":
+    "Ticiwch y blwch i gadarnhau'r newid ar gyfer {n} cynllun arall.",
   "p.frameworks.deleted": "Dilëwyd {name}.",
   "p.frameworks.delete": "Dileu {name} (nid oes neb yn ei ddilyn)",
   "p.frameworks.text_problem": "Mae diffiniad hyd at 10000 o nodau.",
-  "p.frameworks.practice_problem": "Mae angen enw a pha mor aml y mae'n digwydd ar bob seremoni neu fforwm, a hyd at 20.",
-  "p.frameworks.rights_problem": "Mae angen y penderfyniad a phwy sy'n penderfynu ar bob hawl penderfynu, a hyd at 20.",
+  "p.frameworks.practice_problem":
+    "Mae angen enw a pha mor aml y mae'n digwydd ar bob seremoni neu fforwm, a hyd at 20.",
+  "p.frameworks.rights_problem":
+    "Mae angen y penderfyniad a phwy sy'n penderfynu ar bob hawl penderfynu, a hyd at 20.",
   "p.frameworks.practice_name": "Enw",
   "p.frameworks.practice_cadence": "Pa mor aml",
   "p.frameworks.practice_purpose": "At ba ddiben",
@@ -1657,7 +1942,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.right_add": "Ychwanegu hawl penderfynu",
   "p.links.links": "Dolenni",
   "p.links.links_ppm": "Dolenni — PPM",
-  "p.links.intro": "Lle mae dogfennau a gwaith y cynllun hwn, gan gynnwys ei fwrdd Jira, Trello, Asana, Linear neu Monday. Caiff y cyfeiriad ei storio a'i ddangos; ni chaiff byth ei nôl.",
+  "p.links.intro":
+    "Lle mae dogfennau a gwaith y cynllun hwn, gan gynnwys ei fwrdd Jira, Trello, Asana, Linear neu Monday. Caiff y cyfeiriad ei storio a'i ddangos; ni chaiff byth ei nôl.",
   "p.links.back": "Yn ôl i'r cynllun",
   "p.links.loading": "Wrthi'n llwytho…",
   "p.links.could_not_load": "Methu llwytho'r dolenni.",
@@ -1674,14 +1960,18 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.links.f_kind": "Math",
   "p.links.f_system": "Offeryn",
   "p.links.f_id": "Ei ddynodydd yn yr offeryn hwnnw",
-  "p.links.url_problem": "Rhaid i'r cyfeiriad ddechrau gyda http:// neu https:// a enwi gwesteiwr.",
+  "p.links.url_problem":
+    "Rhaid i'r cyfeiriad ddechrau gyda http:// neu https:// a enwi gwesteiwr.",
   "p.links.label_problem": "Rhowch label iddi.",
   "p.links.system_problem": "Rhaid i ddolen olrhain enwi ei hofferyn.",
-  "p.links.system_kind_problem": "Dim ond dolen olrhain neu docyn sy'n enwi offeryn.",
+  "p.links.system_kind_problem":
+    "Dim ond dolen olrhain neu docyn sy'n enwi offeryn.",
   "p.links.id_problem": "Mae dynodydd angen offeryn ac nid oes ganddo fylchau.",
   "p.links.domain_problem": "Mae dolenni'r offeryn hwnnw ar {domains}.",
-  "p.escalations.intro": "Cyfeirio rhywbeth i fyny pan na all y prosiect ei setlo ei hun, neu na ddylai. Mae'n cael ei godi ar lefel o'r llwybr uwchgyfeirio yn fframwaith llywodraethu'r prosiect, ei gydnabod, ei godi lefel os na fydd neb yn ateb, a daw i ben wedi'i ddatrys neu ei dynnu'n ôl. Dywedir wrth y person a enwir fel un cyfrifol a'r person a'i cododd yn eu mewnflwch (ni anfonir e-bost).",
-  "p.escalations.register_intro": "Pob uwchgyfeiriad ar y cynlluniau y gallwch eu darllen.",
+  "p.escalations.intro":
+    "Cyfeirio rhywbeth i fyny pan na all y prosiect ei setlo ei hun, neu na ddylai. Mae'n cael ei godi ar lefel o'r llwybr uwchgyfeirio yn fframwaith llywodraethu'r prosiect, ei gydnabod, ei godi lefel os na fydd neb yn ateb, a daw i ben wedi'i ddatrys neu ei dynnu'n ôl. Dywedir wrth y person a enwir fel un cyfrifol a'r person a'i cododd yn eu mewnflwch (ni anfonir e-bost).",
+  "p.escalations.register_intro":
+    "Pob uwchgyfeiriad ar y cynlluniau y gallwch eu darllen.",
   "p.escalations.none": "Dim uwchgyfeirio eto.",
   "p.escalations.none_match": "Nid oes uwchgyfeiriad yn cyfateb.",
   "p.escalations.raise_heading": "Codi uwchgyfeiriad",
@@ -1690,7 +1980,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.escalations.f_dimension": "Pa oddefgarwch",
   "p.escalations.f_level": "Lefel (gwag ar gyfer lefel gyntaf y llwybr)",
   "p.escalations.f_to": "Uwchgyfeirio i (gwag i ddefnyddio'r llwybr)",
-  "p.escalations.f_owner": "Yr unigolyn y mae ar ei gyfer (person:… neu worker:…)",
+  "p.escalations.f_owner":
+    "Yr unigolyn y mae ar ei gyfer (person:… neu worker:…)",
   "p.escalations.f_respond": "Ateb wedi'i ddymuno erbyn",
   "p.escalations.f_description": "Beth a pham",
   "p.escalations.raise": "Ei godi",
@@ -1722,10 +2013,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.escalations.back": "← Cynllun",
   "p.escalations.register_link": "Pob uwchgyfeiriad",
   "p.escalations.escalated_for": "Ynghylch: {title}",
-  "p.tolerances.needs_escalation": "Mae hyn dros y goddefgarwch ac nid oes neb wedi'i uwchgyfeirio.",
+  "p.tolerances.needs_escalation":
+    "Mae hyn dros y goddefgarwch ac nid oes neb wedi'i uwchgyfeirio.",
   "p.tolerances.raise_one": "Codi uwchgyfeiriad",
   "p.tolerances.escalate_all": "Uwchgyfeirio pob goddefgarwch coch",
-  "p.tolerances.escalate_all_intro": "Mae pob dimensiwn sydd dros y goddefgarwch heb ei uwchgyfeirio yn cael uwchgyfeiriad ar lefel gyntaf y llwybr uwchgyfeirio. Ni chaiff dim ei uwchgyfeirio ar ei ben ei hun.",
+  "p.tolerances.escalate_all_intro":
+    "Mae pob dimensiwn sydd dros y goddefgarwch heb ei uwchgyfeirio yn cael uwchgyfeiriad ar lefel gyntaf y llwybr uwchgyfeirio. Ni chaiff dim ei uwchgyfeirio ar ei ben ei hun.",
   "p.tolerances.escalated": "Codwyd {n} uwchgyfeiriad.",
   "p.tolerances.escalations_one": "{n} uwchgyfeiriad ar agor",
   "p.tolerances.escalations_other": "{n} uwchgyfeiriad ar agor",
@@ -1734,22 +2027,27 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.resources.rbs.demand_by_skill": "Galw fesul sgil",
   "p.resources.rbs.demand_fte": "FTE galw",
   "p.resources.rbs.no_roles_in_this_window": "Dim rolau yn y ffenestr hon.",
-  "p.resources.rbs.no_skill_demand_in_this": "Dim galw am sgiliau yn y ffenestr hon.",
+  "p.resources.rbs.no_skill_demand_in_this":
+    "Dim galw am sgiliau yn y ffenestr hon.",
   "p.resources.rbs.not_known": "ddim yn hysbys",
   "p.resources.rbs.people": "Pobl",
   "p.resources.rbs.resource_breakdown": "Dadansoddiad adnoddau",
   "p.resources.rbs.resource_breakdown_ppm": "Dadansoddiad adnoddau — PPM",
   "p.resources.rbs.role": "Rôl",
-  "p.resources.rbs.roles_with_people_demand_and": "Rolau gyda phobl, galw a chyflenwad",
+  "p.resources.rbs.roles_with_people_demand_and":
+    "Rolau gyda phobl, galw a chyflenwad",
   "p.resources.rbs.skill": "Sgil",
   "p.resources.rbs.supply_fte": "FTE cyflenwad",
-  "p.resources.rbs.you_can_see_headcounts_only": "Gallwch weld penddyfiaid yn unig, nid enwau.",
+  "p.resources.rbs.you_can_see_headcounts_only":
+    "Gallwch weld penddyfiaid yn unig, nid enwau.",
   "p.resources.resources": "Adnoddau",
   "p.resources.resources_ppm": "Adnoddau — PPM",
   "p.resources.role": "Rôl",
   "p.resources.roles_and_totals_only": "rolau a chyfansymiau yn unig",
-  "p.resources.roles_asked_for_with_no": "Rolau y gofynnwyd amdanynt heb berson eto",
-  "p.resources.short_spare_balanced_supply_not": "▼ yn brin · ▲ dros ben · ● cytbwys · ? cyflenwad heb ei wybod. Mae'r cysgodi'n dangos pa mor fawr yw'r bwlch yn unig.",
+  "p.resources.roles_asked_for_with_no":
+    "Rolau y gofynnwyd amdanynt heb berson eto",
+  "p.resources.short_spare_balanced_supply_not":
+    "▼ yn brin · ▲ dros ben · ● cytbwys · ? cyflenwad heb ei wybod. Mae'r cysgodi'n dangos pa mor fawr yw'r bwlch yn unig.",
   "p.resources.show": "Dangos",
   "p.resources.skill": "Sgil",
   "p.resources.skill_demand_only": "Sgil (galw yn unig)",
@@ -1757,7 +2055,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.resources.to": "I",
   "p.resources.unclassified": "heb ei ddosbarthu",
   "p.resources.week": "Wythnos",
-  "p.resources.what_the_plans_ask_for": "Yr hyn y mae'r cynlluniau yn gofyn amdano yn erbyn yr hyn y gall y bobl ym mhob rôl ei roi, mewn cyfwerth ag amser llawn. Cedwir archebion arfaethedig ar wahân ac ni chânt eu cyfrif byth.",
+  "p.resources.what_the_plans_ask_for":
+    "Yr hyn y mae'r cynlluniau yn gofyn amdano yn erbyn yr hyn y gall y bobl ym mhob rôl ei roi, mewn cyfwerth ag amser llawn. Cedwir archebion arfaethedig ar wahân ac ni chânt eu cyfrif byth.",
   "p.reviews.accept": "Derbyn",
   "p.reviews.accepted": "derbyniwyd",
   "p.reviews.actions": "Gweithredoedd",
@@ -1769,7 +2068,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.reviews.decline": "Gwrthod",
   "p.reviews.declined": "gwrthodwyd",
   "p.reviews.delegate": "Dirprwyo",
-  "p.reviews.delegate_a_specific_item_to": "Dirprwyo eitem benodol i'r arbenigwr cywir. Dim ond adolygwr a dderbyniodd all gyflwyno dyfarniad, felly ni fydd gwahoddiad heb ei ateb byth yn dod yn dystiolaeth.",
+  "p.reviews.delegate_a_specific_item_to":
+    "Dirprwyo eitem benodol i'r arbenigwr cywir. Dim ond adolygwr a dderbyniodd all gyflwyno dyfarniad, felly ni fydd gwahoddiad heb ei ateb byth yn dod yn dystiolaeth.",
   "p.reviews.due": "dyledus",
   "p.reviews.e_g_clinical_safety": "e.e. diogelwch clinigol",
   "p.reviews.expertise": "arbenigedd",
@@ -1797,7 +2097,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.reviews.subject_2": "Pwnc",
   "p.reviews.subject_pid": "pid y pwnc",
   "p.reviews.submitted": "cyflwynwyd",
-  "p.reviews.submitted_outstanding_declined_exter": "{submitted} wedi'u cyflwyno · {outstanding} heb eu hateb · {declined} wedi'u gwrthod · {external_submitted} allanol",
+  "p.reviews.submitted_outstanding_declined_exter":
+    "{submitted} wedi'u cyflwyno · {outstanding} heb eu hateb · {declined} wedi'u gwrthod · {external_submitted} allanol",
   "p.reviews.uuid": "uuid",
   "p.reviews.verdict": "Dyfarniad",
   "p.reviews.withdraw": "Tynnu'n ôl",
@@ -1809,10 +2110,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.risk.heatmap": "Map gwres",
   "p.risk.item": "Eitem",
   "p.risk.materialized": "Wedi digwydd",
-  "p.risk.max_estate_max_single_risk": "— mwyafswm yr ystad {v}, y risg unigol fwyaf {v2}",
+  "p.risk.max_estate_max_single_risk":
+    "— mwyafswm yr ystad {v}, y risg unigol fwyaf {v2}",
   "p.risk.no_open_risks": "Dim risgiau agored.",
   "p.risk.open_exposure": "Amlygiad agored",
-  "p.risk.open_risks_estate_open_exposure": "risgiau agored · amlygiad agored yr ystad",
+  "p.risk.open_risks_estate_open_exposure":
+    "risgiau agored · amlygiad agored yr ystad",
   "p.risk.overdue_reviews": "Adolygiadau sydd wedi mynd heibio'r dyddiad",
   "p.risk.portfolio": "Portffolio",
   "p.risk.posture_by_portfolio": "Ystum fesul portffolio",
@@ -1836,49 +2139,64 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.scenarios.scenario": "Senario",
   "p.scenarios.scenarios_ppm": "Senarios — PPM",
   "p.scenarios.status": "Statws",
-  "p.scenarios.work_item_pids_space_comma": "pids eitemau gwaith (wedi'u gwahanu gan fwlch/atalnod)",
+  "p.scenarios.work_item_pids_space_comma":
+    "pids eitemau gwaith (wedi'u gwahanu gan fwlch/atalnod)",
   "p.scenarios.yes": "ie",
   "p.security.exposure": "Amlygiad",
   "p.security.item": "Eitem",
-  "p.security.late_stage_items_with_no": "Eitemau cam hwyr heb unrhyw risg diogelwch wedi'i chofnodi",
-  "p.security.no_security_risks_recorded": "Dim risgiau diogelwch wedi'u cofnodi.",
-  "p.security.none_every_late_stage_item": "Dim — mae gan bob eitem cam hwyr risg diogelwch wedi'i chofnodi.",
+  "p.security.late_stage_items_with_no":
+    "Eitemau cam hwyr heb unrhyw risg diogelwch wedi'i chofnodi",
+  "p.security.no_security_risks_recorded":
+    "Dim risgiau diogelwch wedi'u cofnodi.",
+  "p.security.none_every_late_stage_item":
+    "Dim — mae gan bob eitem cam hwyr risg diogelwch wedi'i chofnodi.",
   "p.security.open_exposure": "{note} · amlygiad agored {open_exposure}",
   "p.security.owner": "Perchennog",
   "p.security.ppm": "{t} — PPM",
   "p.security.risk": "Risg",
   "p.security.security_risk_register": "Cofrestr risgiau diogelwch",
   "p.security.status": "Statws",
-  "p.signin.check_your_email_for_a": "Gwiriwch eich e-bost am ddolen mewngofnodi.",
-  "p.signin.could_not_send_the_sign": "Methu anfon y ddolen mewngofnodi. Rhowch gynnig arall arni.",
+  "p.signin.check_your_email_for_a":
+    "Gwiriwch eich e-bost am ddolen mewngofnodi.",
+  "p.signin.could_not_send_the_sign":
+    "Methu anfon y ddolen mewngofnodi. Rhowch gynnig arall arni.",
   "p.signin.email": "E-bost",
   "p.signin.send_magic_link": "Anfon dolen hud",
   "p.signin.sign_in": "Mewngofnodi",
   "p.technology.as_of": "ar {as_of} · {convention}",
   "p.technology.as_of_edges": "ar {as_of} · {edges} ymyl",
   "p.technology.calendar_days": "{median_lead_days} diwrnod calendr",
-  "p.technology.completed_before_timing_existed_unti": "· {undated_completions} wedi'u cwblhau cyn i amseru fodoli (heb eu hamseru)",
+  "p.technology.completed_before_timing_existed_unti":
+    "· {undated_completions} wedi'u cwblhau cyn i amseru fodoli (heb eu hamseru)",
   "p.technology.cross_portfolio_edges": "Ymylon traws-bortffolio",
   "p.technology.delivery_flow": "Llif darparu",
   "p.technology.dependency_risk": "Risg dibyniaeth",
   "p.technology.dependents": "Dibynwyr",
-  "p.technology.edges_importing_risk_from_a": "Ymylon sy'n mewnforio risg o ragflaenydd coch",
+  "p.technology.edges_importing_risk_from_a":
+    "Ymylon sy'n mewnforio risg o ragflaenydd coch",
   "p.technology.exposure": "Amlygiad",
   "p.technology.item": "Eitem",
   "p.technology.kind": "Math",
   "p.technology.median_lead": "Amser arweiniol canolrifol:",
   "p.technology.milestones_completed": "Cerrig milltir wedi'u cwblhau",
   "p.technology.month": "Mis",
-  "p.technology.most_depended_on_single_point": "Y rhai y dibynnir fwyaf arnynt (ymgeiswyr pwynt methiant unigol)",
-  "p.technology.no_dependencies_recorded_yet": "Dim dibyniaethau wedi'u cofnodi eto.",
-  "p.technology.no_tech_debt_risks_recorded": "Dim risgiau tech_debt wedi'u cofnodi.",
-  "p.technology.no_tech_tags_recorded_yet": "Dim tagiau `tech:*` wedi'u cofnodi eto.",
+  "p.technology.most_depended_on_single_point":
+    "Y rhai y dibynnir fwyaf arnynt (ymgeiswyr pwynt methiant unigol)",
+  "p.technology.no_dependencies_recorded_yet":
+    "Dim dibyniaethau wedi'u cofnodi eto.",
+  "p.technology.no_tech_debt_risks_recorded":
+    "Dim risgiau tech_debt wedi'u cofnodi.",
+  "p.technology.no_tech_tags_recorded_yet":
+    "Dim tagiau `tech:*` wedi'u cofnodi eto.",
   "p.technology.no_timed_completions": "dim cwblhau amseredig",
-  "p.technology.no_timed_completions_in_the": "Dim cwblhau amseredig yn y ffenestr.",
-  "p.technology.none_all_edges_stay_within": "Dim — mae pob ymyl yn aros o fewn un portffolio.",
+  "p.technology.no_timed_completions_in_the":
+    "Dim cwblhau amseredig yn y ffenestr.",
+  "p.technology.none_all_edges_stay_within":
+    "Dim — mae pob ymyl yn aros o fewn un portffolio.",
   "p.technology.none_no_red_predecessors": "Dim — dim rhagflaenwyr coch.",
   "p.technology.open_exposure": "{note} · amlygiad agored {open_exposure}",
-  "p.technology.over_timed_completions": "dros {timed_completions} cwblhad amseredig",
+  "p.technology.over_timed_completions":
+    "dros {timed_completions} cwblhad amseredig",
   "p.technology.owner": "Perchennog",
   "p.technology.ppm": "{t} — PPM",
   "p.technology.predecessor": "Rhagflaenydd",
@@ -1893,38 +2211,62 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.technology.technology_radar": "Radar technoleg",
   "p.verify.request_a_new_link": "Gofyn am ddolen newydd",
   "p.verify.sign_in_link": "Dolen mewngofnodi",
-  "p.milestones.milestone_by_due_date_one": "{length} carreg filltir, yn ôl dyddiad dyledus",
-  "p.milestones.milestone_by_due_date_other": "{length} carreg filltir, yn ôl dyddiad dyledus",
-  "p.okrs.objective_least_progressed_first_one": "{length} amcan, y lleiaf datblygedig yn gyntaf",
-  "p.okrs.objective_least_progressed_first_other": "{length} amcan, y lleiaf datblygedig yn gyntaf",
-  "p.plans.pid.board.blocked_calendar_day_one": "wedi'i rwystro {blocked_days} diwrnod calendr",
-  "p.plans.pid.board.blocked_calendar_day_other": "wedi'i rwystro {blocked_days} diwrnod calendr",
+  "p.milestones.milestone_by_due_date_one":
+    "{length} carreg filltir, yn ôl dyddiad dyledus",
+  "p.milestones.milestone_by_due_date_other":
+    "{length} carreg filltir, yn ôl dyddiad dyledus",
+  "p.okrs.objective_least_progressed_first_one":
+    "{length} amcan, y lleiaf datblygedig yn gyntaf",
+  "p.okrs.objective_least_progressed_first_other":
+    "{length} amcan, y lleiaf datblygedig yn gyntaf",
+  "p.plans.pid.board.blocked_calendar_day_one":
+    "wedi'i rwystro {blocked_days} diwrnod calendr",
+  "p.plans.pid.board.blocked_calendar_day_other":
+    "wedi'i rwystro {blocked_days} diwrnod calendr",
   "p.plans.pid.calendar.holiday_one": "{length} gwyliau: {join}",
   "p.plans.pid.calendar.holiday_other": "{length} gwyliau: {join}",
-  "p.plans.pid.costs.for_across_one": "{money} am {hoursText} ar draws {entries} cofnod.",
-  "p.plans.pid.costs.for_across_other": "{money} am {hoursText} ar draws {entries} cofnod.",
-  "p.plans.pid.earned_value.plan_below_have_no_figures_one": "Nid oes ffigurau eto gan {plans_without_figures} cynllun isod (dim llinell sylfaen na dim i'w fesur) ac ni chânt eu dyfalu.",
-  "p.plans.pid.earned_value.plan_below_have_no_figures_other": "Nid oes ffigurau eto gan {plans_without_figures} cynllun isod (dim llinell sylfaen na dim i'w fesur) ac ni chânt eu dyfalu.",
-  "p.plans.pid.flow.finished_without_ever_moving_backwar_one": "wedi gorffen heb symud yn ôl erioed ({rework_count} symudiad yn ôl). Darllenwch hyn ochr yn ochr â'r trwybwn: mae trwybwn cynyddol gyda chynnyrch sy'n gostwng yn waith a anfonir yn ôl ato'i hun.",
-  "p.plans.pid.flow.finished_without_ever_moving_backwar_other": "wedi gorffen heb symud yn ôl erioed ({rework_count} symudiad yn ôl). Darllenwch hyn ochr yn ochr â'r trwybwn: mae trwybwn cynyddol gyda chynnyrch sy'n gostwng yn waith a anfonir yn ôl ato'i hun.",
-  "p.plans.pid.flow.of_items_finish_within_this_one": "Mae {percent} o eitemau'n gorffen o fewn hyn, o {sample} eitem orffenedig",
-  "p.plans.pid.flow.of_items_finish_within_this_other": "Mae {percent} o eitemau'n gorffen o fewn hyn, o {sample} eitem orffenedig",
-  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_one": "Mae {length} risg yn effeithio ar yr amserlen a'r gost: mae pob un yn taro unwaith ac yn gyrru'r ddau.",
-  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_other": "Mae {length} risg yn effeithio ar yr amserlen a'r gost: mae pob un yn taro unwaith ac yn gyrru'r ddau.",
+  "p.plans.pid.costs.for_across_one":
+    "{money} am {hoursText} ar draws {entries} cofnod.",
+  "p.plans.pid.costs.for_across_other":
+    "{money} am {hoursText} ar draws {entries} cofnod.",
+  "p.plans.pid.earned_value.plan_below_have_no_figures_one":
+    "Nid oes ffigurau eto gan {plans_without_figures} cynllun isod (dim llinell sylfaen na dim i'w fesur) ac ni chânt eu dyfalu.",
+  "p.plans.pid.earned_value.plan_below_have_no_figures_other":
+    "Nid oes ffigurau eto gan {plans_without_figures} cynllun isod (dim llinell sylfaen na dim i'w fesur) ac ni chânt eu dyfalu.",
+  "p.plans.pid.flow.finished_without_ever_moving_backwar_one":
+    "wedi gorffen heb symud yn ôl erioed ({rework_count} symudiad yn ôl). Darllenwch hyn ochr yn ochr â'r trwybwn: mae trwybwn cynyddol gyda chynnyrch sy'n gostwng yn waith a anfonir yn ôl ato'i hun.",
+  "p.plans.pid.flow.finished_without_ever_moving_backwar_other":
+    "wedi gorffen heb symud yn ôl erioed ({rework_count} symudiad yn ôl). Darllenwch hyn ochr yn ochr â'r trwybwn: mae trwybwn cynyddol gyda chynnyrch sy'n gostwng yn waith a anfonir yn ôl ato'i hun.",
+  "p.plans.pid.flow.of_items_finish_within_this_one":
+    "Mae {percent} o eitemau'n gorffen o fewn hyn, o {sample} eitem orffenedig",
+  "p.plans.pid.flow.of_items_finish_within_this_other":
+    "Mae {percent} o eitemau'n gorffen o fewn hyn, o {sample} eitem orffenedig",
+  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_one":
+    "Mae {length} risg yn effeithio ar yr amserlen a'r gost: mae pob un yn taro unwaith ac yn gyrru'r ddau.",
+  "p.plans.pid.joint_risk.risk_affect_both_the_schedule_other":
+    "Mae {length} risg yn effeithio ar yr amserlen a'r gost: mae pob un yn taro unwaith ac yn gyrru'r ddau.",
   "p.plans.pid.leveling.apply_move_one": "Gweithredu {length} symudiad",
   "p.plans.pid.leveling.apply_move_other": "Gweithredu {length} symudiad",
   "p.plans.pid.leveling.business_day_one": "{delay_days} diwrnod gwaith",
   "p.plans.pid.leveling.business_day_other": "{delay_days} diwrnod gwaith",
-  "p.plans.pid.leveling.other_task_would_be_pushed_one": "Byddai {length} tasg arall yn cael ei gwthio o ganlyniad",
-  "p.plans.pid.leveling.other_task_would_be_pushed_other": "Byddai {length} tasg arall yn cael eu gwthio o ganlyniad",
-  "p.plans.pid.onboarding.checklist_about_people_not_shown_one": "Nid yw {hidden} rhestr wirio am bobl yn cael ei dangos i chi.",
-  "p.plans.pid.onboarding.checklist_about_people_not_shown_other": "Nid yw {hidden} rhestr wirio am bobl yn cael eu dangos i chi.",
-  "p.plans.pid.schedule_health.preset_thresholds_task_one": "· rhagosodiad {preset} (trothwyon: {source}) · {tasks} tasg",
-  "p.plans.pid.schedule_health.preset_thresholds_task_other": "· rhagosodiad {preset} (trothwyon: {source}) · {tasks} tasg",
+  "p.plans.pid.leveling.other_task_would_be_pushed_one":
+    "Byddai {length} tasg arall yn cael ei gwthio o ganlyniad",
+  "p.plans.pid.leveling.other_task_would_be_pushed_other":
+    "Byddai {length} tasg arall yn cael eu gwthio o ganlyniad",
+  "p.plans.pid.onboarding.checklist_about_people_not_shown_one":
+    "Nid yw {hidden} rhestr wirio am bobl yn cael ei dangos i chi.",
+  "p.plans.pid.onboarding.checklist_about_people_not_shown_other":
+    "Nid yw {hidden} rhestr wirio am bobl yn cael eu dangos i chi.",
+  "p.plans.pid.schedule_health.preset_thresholds_task_one":
+    "· rhagosodiad {preset} (trothwyon: {source}) · {tasks} tasg",
+  "p.plans.pid.schedule_health.preset_thresholds_task_other":
+    "· rhagosodiad {preset} (trothwyon: {source}) · {tasks} tasg",
   "p.plans.pid.schedule_health.task_one": "{length} tasg",
   "p.plans.pid.schedule_health.task_other": "{length} tasg",
-  "p.plans.pid.schedule_risk.chance_of_adding_business_day_one": "{title}: {probability_percent}% o siawns o ychwanegu {impact_days} diwrnod gwaith",
-  "p.plans.pid.schedule_risk.chance_of_adding_business_day_other": "{title}: {probability_percent}% o siawns o ychwanegu {impact_days} diwrnod gwaith",
+  "p.plans.pid.schedule_risk.chance_of_adding_business_day_one":
+    "{title}: {probability_percent}% o siawns o ychwanegu {impact_days} diwrnod gwaith",
+  "p.plans.pid.schedule_risk.chance_of_adding_business_day_other":
+    "{title}: {probability_percent}% o siawns o ychwanegu {impact_days} diwrnod gwaith",
   "p.plans.pid.wbs.move_up": "Symud {title} i fyny",
   "p.plans.pid.wbs.move_down": "Symud {title} i lawr",
   "p.plans.pid.wbs.moved": "Symudwyd {title}.",
@@ -1940,101 +2282,146 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.common.role_word": "rôl",
   "p.common.person_word": "person",
   "c.NetworkDiagram.task_fallback": "tasg",
-  "c.NetworkDiagram.task_summary": "{title}, {early_start} i {early_finish}, {total_float} diwrnod gwaith o lac",
-  "c.NetworkDiagram.task_summary_critical": "{title}, {early_start} i {early_finish}, {total_float} diwrnod gwaith o lac, ar y llwybr critigol",
+  "c.NetworkDiagram.task_summary":
+    "{title}, {early_start} i {early_finish}, {total_float} diwrnod gwaith o lac",
+  "c.NetworkDiagram.task_summary_critical":
+    "{title}, {early_start} i {early_finish}, {total_float} diwrnod gwaith o lac, ar y llwybr critigol",
   "c.NetworkDiagram.lag_one": ", oediad o {lag_days} diwrnod gwaith",
   "c.NetworkDiagram.lag_other": ", oediad o {lag_days} diwrnod gwaith",
   "c.KpiCard.direction_higher": "uwch",
   "c.KpiCard.direction_lower": "is",
-  "c.CalendarMonth.legend": "– nid yw'n ddiwrnod gwaith   ✕ gwyliau   Absenoldeb a gofnodwyd",
-  "c.CalendarMonth.legend_editable": " · dewiswch ddiwrnod gwaith i nodi neu glirio gwyliau",
-  "c.CostRiskView.run_summary": "hedyn {seed} · {iterations} ailadroddiad · {distribution}",
+  "c.CalendarMonth.legend":
+    "– nid yw'n ddiwrnod gwaith   ✕ gwyliau   Absenoldeb a gofnodwyd",
+  "c.CalendarMonth.legend_editable":
+    " · dewiswch ddiwrnod gwaith i nodi neu glirio gwyliau",
+  "c.CostRiskView.run_summary":
+    "hedyn {seed} · {iterations} ailadroddiad · {distribution}",
   "c.CostRiskView.dist_pert": "PERT",
   "c.CostRiskView.dist_triangular": "Trionglog",
-  "c.CostRiskView.risks_without_cost_one": "Nid oes meysydd cost gan {count} risg cofrestr ac nid yw'n rhan o hyn.",
-  "c.CostRiskView.risks_without_cost_other": "Nid oes meysydd cost gan {count} risg cofrestr ac nid ydynt yn rhan o hyn.",
+  "c.CostRiskView.risks_without_cost_one":
+    "Nid oes meysydd cost gan {count} risg cofrestr ac nid yw'n rhan o hyn.",
+  "c.CostRiskView.risks_without_cost_other":
+    "Nid oes meysydd cost gan {count} risg cofrestr ac nid ydynt yn rhan o hyn.",
   "c.CumulativeFlow.hide_the_numbers": "Cuddio'r rhifau",
   "c.CumulativeFlow.show_the_numbers": "Dangos y rhifau",
-  "c.CostRiskView.scope_all_one": "Yr holl {plans} cynllun y gallwch eu darllen",
-  "c.CostRiskView.scope_all_other": "Yr holl {plans} cynllun y gallwch eu darllen",
+  "c.CostRiskView.scope_all_one":
+    "Yr holl {plans} cynllun y gallwch eu darllen",
+  "c.CostRiskView.scope_all_other":
+    "Yr holl {plans} cynllun y gallwch eu darllen",
   "c.CostRiskView.scope_this_plan": "Y cynllun hwn",
   "c.MilestoneCard.reason": "Rheswm",
-  "c.MilestoneCard.reason_required_open": " (gofynnol: mae'r tasgau y mae'n aros amdanynt yn dal ar agor)",
+  "c.MilestoneCard.reason_required_open":
+    " (gofynnol: mae'r tasgau y mae'n aros amdanynt yn dal ar agor)",
   "c.MilestoneCard.reason_optional": " (dewisol)",
-  "c.VarianceTable.matched_of_baselined": "Mae {matched} o {baseline_tasks} tasg a osodwyd ar y llinell sylfaen yn dal yn y cynllun:",
-  "c.VarianceTable.slipped_pulled_on": "{slipped} wedi llithro, {pulled_in} wedi'u tynnu i mewn, {on_baseline} ar y llinell sylfaen{unmeasurable}.",
+  "c.VarianceTable.matched_of_baselined":
+    "Mae {matched} o {baseline_tasks} tasg a osodwyd ar y llinell sylfaen yn dal yn y cynllun:",
+  "c.VarianceTable.slipped_pulled_on":
+    "{slipped} wedi llithro, {pulled_in} wedi'u tynnu i mewn, {on_baseline} ar y llinell sylfaen{unmeasurable}.",
   "c.VarianceTable.cannot_be_measured": ", ni ellir mesur {unmeasurable}",
-  "c.VarianceTable.added_removed": "ychwanegwyd {added} a thynnwyd {removed} ers hynny.",
-  "c.VarianceTable.finish_later_one": "Mae diwedd y cynllun {days} diwrnod gwaith yn hwyrach na'r llinell sylfaen{note}.",
-  "c.VarianceTable.finish_later_other": "Mae diwedd y cynllun {days} diwrnod gwaith yn hwyrach na'r llinell sylfaen{note}.",
-  "c.VarianceTable.finish_earlier_one": "Mae diwedd y cynllun {days} diwrnod gwaith yn gynharach na'r llinell sylfaen{note}.",
-  "c.VarianceTable.finish_earlier_other": "Mae diwedd y cynllun {days} diwrnod gwaith yn gynharach na'r llinell sylfaen{note}.",
-  "c.VarianceTable.check_removed": " (gwiriwch y tasgau a dynnwyd: nid yw dileu gwaith yn welliant)",
+  "c.VarianceTable.added_removed":
+    "ychwanegwyd {added} a thynnwyd {removed} ers hynny.",
+  "c.VarianceTable.finish_later_one":
+    "Mae diwedd y cynllun {days} diwrnod gwaith yn hwyrach na'r llinell sylfaen{note}.",
+  "c.VarianceTable.finish_later_other":
+    "Mae diwedd y cynllun {days} diwrnod gwaith yn hwyrach na'r llinell sylfaen{note}.",
+  "c.VarianceTable.finish_earlier_one":
+    "Mae diwedd y cynllun {days} diwrnod gwaith yn gynharach na'r llinell sylfaen{note}.",
+  "c.VarianceTable.finish_earlier_other":
+    "Mae diwedd y cynllun {days} diwrnod gwaith yn gynharach na'r llinell sylfaen{note}.",
+  "c.VarianceTable.check_removed":
+    " (gwiriwch y tasgau a dynnwyd: nid yw dileu gwaith yn welliant)",
   "p.plans.pid.critical_path.finishes": "Yn gorffen {date}.",
-  "p.plans.pid.critical_path.nothing_scheduled": "Nid oes dim wedi'i amserlennu eto.",
+  "p.plans.pid.critical_path.nothing_scheduled":
+    "Nid oes dim wedi'i amserlennu eto.",
   "p.plans.pid.critical_path.calendar_label": "Calendr: {calendar}.",
   "p.plans.pid.critical_path.calendar_plan": "eiddo'r cynllun hwn",
-  "p.plans.pid.critical_path.calendar_default": "rhagosodiad (mae pob diwrnod yn gweithio)",
+  "p.plans.pid.critical_path.calendar_default":
+    "rhagosodiad (mae pob diwrnod yn gweithio)",
   "p.plans.pid.critical_path.more_not_shown": " (rhagor heb eu dangos)",
-  "p.plans.pid.critical_path.pushed_later": "Mae ei ragflaenwyr yn ei wthio {days} diwrnod gwaith yn hwyrach na'r bwriad.",
-  "p.plans.pid.earned_value.manual_percent_banner": "Mae rhan o'r ffigur hwn yn seiliedig ar ganran a roddwyd gan berson, nid ar waith gorffenedig: {tasks}.",
+  "p.plans.pid.critical_path.pushed_later":
+    "Mae ei ragflaenwyr yn ei wthio {days} diwrnod gwaith yn hwyrach na'r bwriad.",
+  "p.plans.pid.earned_value.manual_percent_banner":
+    "Mae rhan o'r ffigur hwn yn seiliedig ar ganran a roddwyd gan berson, nid ar waith gorffenedig: {tasks}.",
   "p.plans.pid.earned_value.a_task": "tasg",
   "p.plans.pid.earned_value.overrun": " (gorwariant)",
   "p.plans.pid.earned_value.target_budget": "y gyllideb",
   "p.plans.pid.earned_value.target_forecast": "y rhagolwg",
-  "p.plans.pid.earned_value.lights_use": "Mae'r goleuadau'n defnyddio {which}: {values} (pwyntiau sail).",
+  "p.plans.pid.earned_value.lights_use":
+    "Mae'r goleuadau'n defnyddio {which}: {values} (pwyntiau sail).",
   "p.plans.pid.earned_value.thresholds_default": "y trothwyon rhagosodedig",
-  "p.plans.pid.earned_value.thresholds_deployment": "trothwyon y defnyddiad hwn",
-  "p.plans.pid.earned_value.rollup_money": "Cyllideb {bac}; cynlluniedig {pv}; enillwyd {ev}; gwariwyd {ac}{unknown}.",
-  "p.plans.pid.earned_value.cost_unknown_for": " (cost anhysbys ar gyfer {plans} cynllun)",
+  "p.plans.pid.earned_value.thresholds_deployment":
+    "trothwyon y defnyddiad hwn",
+  "p.plans.pid.earned_value.rollup_money":
+    "Cyllideb {bac}; cynlluniedig {pv}; enillwyd {ev}; gwariwyd {ac}{unknown}.",
+  "p.plans.pid.earned_value.cost_unknown_for":
+    " (cost anhysbys ar gyfer {plans} cynllun)",
   "p.plans.pid.earned_value.cpi_value": "CPI {value}",
-  "p.plans.pid.earned_value.cpi_not_stated": "heb ei nodi: mae'r gost yn anhysbys ar gyfer rhai cynlluniau",
+  "p.plans.pid.earned_value.cpi_not_stated":
+    "heb ei nodi: mae'r gost yn anhysbys ar gyfer rhai cynlluniau",
   "p.plans.pid.earned_value.weight_points": ", {weight} pwynt",
-  "p.plans.pid.critical_path.moved_line": "{title}: {moved}{finish}{start} diwrnod gwaith",
+  "p.plans.pid.critical_path.moved_line":
+    "{title}: {moved}{finish}{start} diwrnod gwaith",
   "p.plans.pid.critical_path.moved_both": "dechrau a gorffen",
   "p.plans.pid.critical_path.moved_start": "dechrau",
   "p.plans.pid.critical_path.moved_finish": "gorffen",
   "p.plans.pid.critical_path.moved_finish_by": " gorffen {days}",
   "p.plans.pid.critical_path.moved_start_by": " dechrau {days}",
-  "p.plans.pid.flow.overdue_one": "Mae {count} eitem eisoes wedi mynd heibio'r disgwyliad. Eitem sy'n heneiddio yw'r un peth ar y dudalen hon y gallwch barhau i newid ei chanlyniad.",
-  "p.plans.pid.flow.overdue_other": "Mae {count} eitem eisoes wedi mynd heibio'r disgwyliad. Eitem sy'n heneiddio yw'r un peth ar y dudalen hon y gallwch barhau i newid ei chanlyniad.",
+  "p.plans.pid.flow.overdue_one":
+    "Mae {count} eitem eisoes wedi mynd heibio'r disgwyliad. Eitem sy'n heneiddio yw'r un peth ar y dudalen hon y gallwch barhau i newid ei chanlyniad.",
+  "p.plans.pid.flow.overdue_other":
+    "Mae {count} eitem eisoes wedi mynd heibio'r disgwyliad. Eitem sy'n heneiddio yw'r un peth ar y dudalen hon y gallwch barhau i newid ei chanlyniad.",
   "p.plans.pid.flow.classified_with": "Dosbarthwyd gyda {map}:",
   "p.plans.pid.flow.map_override": "diystyriad defnyddio",
   "p.plans.pid.flow.map_default": "y map rhagosodedig",
-  "p.plans.pid.governance.proposed_not_counted": "arfaethedig{requested} — heb ei gyfrif",
+  "p.plans.pid.governance.proposed_not_counted":
+    "arfaethedig{requested} — heb ei gyfrif",
   "p.plans.pid.governance.requested": ", y gofynnwyd amdano",
-  "p.plans.pid.joint_risk.run_summary": "{currency} · hedyn {seed} · {iterations} ailadroddiad · {distribution} · calendr {calendar}",
+  "p.plans.pid.joint_risk.run_summary":
+    "{currency} · hedyn {seed} · {iterations} ailadroddiad · {distribution} · calendr {calendar}",
   "p.plans.pid.joint_risk.dist_pert": "PERT",
   "p.plans.pid.joint_risk.dist_triangular": "Trionglog",
-  "p.plans.pid.leveling.applied_one": "Gweithredwyd {ok} o {requested} symudiad{refused}.",
-  "p.plans.pid.leveling.applied_other": "Gweithredwyd {ok} o {requested} symudiad{refused}.",
+  "p.plans.pid.leveling.applied_one":
+    "Gweithredwyd {ok} o {requested} symudiad{refused}.",
+  "p.plans.pid.leveling.applied_other":
+    "Gweithredwyd {ok} o {requested} symudiad{refused}.",
   "p.plans.pid.leveling.applied_refused": "; gwrthodwyd {refused}",
-  "p.plans.pid.leveling.proposal_summary": "Calendr: {calendar} · llwyth {load}% fesul tasg · {critical} i dasgau critigol symud",
+  "p.plans.pid.leveling.proposal_summary":
+    "Calendr: {calendar} · llwyth {load}% fesul tasg · {critical} i dasgau critigol symud",
   "p.plans.pid.leveling.may": "caiff",
   "p.plans.pid.leveling.may_not": "ni chaiff",
   "p.plans.pid.onboarding.due": ", i'w gwblhau erbyn {date}",
-  "p.plans.pid.schedule_risk.risks_without_schedule_one": "Nid oes meysydd amserlen gan {count} risg cofrestr ac nid yw'n rhan o hyn.",
-  "p.plans.pid.schedule_risk.risks_without_schedule_other": "Nid oes meysydd amserlen gan {count} risg cofrestr ac nid ydynt yn rhan o hyn.",
+  "p.plans.pid.schedule_risk.risks_without_schedule_one":
+    "Nid oes meysydd amserlen gan {count} risg cofrestr ac nid yw'n rhan o hyn.",
+  "p.plans.pid.schedule_risk.risks_without_schedule_other":
+    "Nid oes meysydd amserlen gan {count} risg cofrestr ac nid ydynt yn rhan o hyn.",
   "p.resources.from_date": "o {date}",
   "p.resources.to_date": "tan {date}",
   "p.kpis.none": "Dim KPIau eto.",
   "p.kpis.none_with_status": "Dim KPIau â'r statws hwnnw eto.",
-  "p.milestones.none": "Dim cerrig milltir eto. Ychwanegwch nhw o dudalen llywodraethu cynllun.",
-  "p.milestones.none_with_status": "Dim cerrig milltir â'r statws hwnnw eto. Ychwanegwch nhw o dudalen llywodraethu cynllun.",
+  "p.milestones.none":
+    "Dim cerrig milltir eto. Ychwanegwch nhw o dudalen llywodraethu cynllun.",
+  "p.milestones.none_with_status":
+    "Dim cerrig milltir â'r statws hwnnw eto. Ychwanegwch nhw o dudalen llywodraethu cynllun.",
   "p.okrs.none": "Dim amcanion eto.",
   "p.okrs.none_for_period": "Dim amcanion ar gyfer {period} eto.",
   "p.me.calendar.own_set": "Mae eich calendr eich hun wedi'i osod.",
-  "p.me.calendar.plan_applies": "Dim calendr personol: mae calendr y cynllun yn berthnasol i chi.",
-  "p.me.calendar.leave_counts": "Mae gwyliau a gofnodwyd i chi eisoes yn cyfrif fel diwrnodau i ffwrdd.",
+  "p.me.calendar.plan_applies":
+    "Dim calendr personol: mae calendr y cynllun yn berthnasol i chi.",
+  "p.me.calendar.leave_counts":
+    "Mae gwyliau a gofnodwyd i chi eisoes yn cyfrif fel diwrnodau i ffwrdd.",
   "p.documents.pid.page_title": "{title} — PPM",
   "p.documents.pid.document_fallback": "Dogfen",
   "p.plans.pid.page_title": "{name} — Main X",
   "p.plans.pid.plan_fallback": "Cynllun",
   "p.plans.pid.custom_scheme": "Personol({name})",
-  "p.plans.pid.calendar.own_calendar": "Mae gan y cynllun hwn ei galendr ei hun.",
-  "p.plans.pid.calendar.no_calendar": "Dim calendr wedi'i osod: mae pob diwrnod yn gweithio.",
-  "p.plans.pid.calendar.each_person_can_set": "Gall pob person hefyd osod eu calendr eu hunain (",
-  "p.reviews.consensus_line": "sgôr cymedrig: {mean} · mwyafrif: {majority} · {state}",
+  "p.plans.pid.calendar.own_calendar":
+    "Mae gan y cynllun hwn ei galendr ei hun.",
+  "p.plans.pid.calendar.no_calendar":
+    "Dim calendr wedi'i osod: mae pob diwrnod yn gweithio.",
+  "p.plans.pid.calendar.each_person_can_set":
+    "Gall pob person hefyd osod eu calendr eu hunain (",
+  "p.reviews.consensus_line":
+    "sgôr cymedrig: {mean} · mwyafrif: {majority} · {state}",
   "p.reviews.no_majority": "dim mwyafrif",
   "p.reviews.everyone_answered": "mae pawb wedi ateb",
   "p.reviews.still_waiting": "yn dal i aros",
@@ -2045,64 +2432,89 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.announcement_view.scheduled": "amserlennwyd",
   "l.announcement_view.expired": "Daeth i ben",
   "l.api_ppm.task": "tasg {uid}",
-  "l.api_ppm.the_project_calendar_comes_across": " Mae calendr y prosiect yn dod drosodd.",
+  "l.api_ppm.the_project_calendar_comes_across":
+    " Mae calendr y prosiect yn dod drosodd.",
   "l.api_tba.calendar_days": "{toFixed} diwrnod calendr",
   "l.api_tba.work_in_progress_is_growing": "Mae gwaith ar y gweill yn tyfu",
   "l.api_tba.steady_state": "Cyflwr sefydlog",
   "l.api_tba.queue_draining": "Ciw yn gwagio",
   "l.api_tba.not_enough_data": "Dim digon o ddata",
-  "l.capacity_view.committed_against_a_capacity_as": "{committed}% wedi'i ymrwymo yn erbyn capasiti mor isel â {capacity}%",
+  "l.capacity_view.committed_against_a_capacity_as":
+    "{committed}% wedi'i ymrwymo yn erbyn capasiti mor isel â {capacity}%",
   "l.capacity_view.committed": "{committed}% wedi'i ymrwymo",
   "l.capacity_view.to": " tan {to}",
-  "l.capacity_view.over_capacity_from_asked_available": "dros y capasiti o {from}{v} (gofynnwyd am {demand}%, {capacity}% ar gael)",
+  "l.capacity_view.over_capacity_from_asked_available":
+    "dros y capasiti o {from}{v} (gofynnwyd am {demand}%, {capacity}% ar gael)",
   "l.capacity_view.over_capacity": "dros y capasiti",
-  "l.capacity_view.committing_it_would_put_them": "; byddai ymrwymo iddo yn eu rhoi dros eu capasiti",
-  "l.capacity_view.proposed_not_counted": "{percent}% arfaethedig, heb ei gyfrif{v}",
-  "l.capacity_view.asked_available": "{from}{v}: gofynnwyd am {demand}%, {capacity}% ar gael",
-  "l.ceo_view.no_portfolios_to_report_on": "Dim portffolios i adrodd arnynt eto.",
-  "l.ceo_view.portfolios_exist_but_hold_no": "Mae portffolios yn bodoli ond nid ydynt yn dal unrhyw gynlluniau eto.",
-  "l.ceo_view.of_plans_are_red_amber": "Mae {red} o {n} cynllun yn goch, {amber} yn ambr, {green} yn wyrdd.",
+  "l.capacity_view.committing_it_would_put_them":
+    "; byddai ymrwymo iddo yn eu rhoi dros eu capasiti",
+  "l.capacity_view.proposed_not_counted":
+    "{percent}% arfaethedig, heb ei gyfrif{v}",
+  "l.capacity_view.asked_available":
+    "{from}{v}: gofynnwyd am {demand}%, {capacity}% ar gael",
+  "l.ceo_view.no_portfolios_to_report_on":
+    "Dim portffolios i adrodd arnynt eto.",
+  "l.ceo_view.portfolios_exist_but_hold_no":
+    "Mae portffolios yn bodoli ond nid ydynt yn dal unrhyw gynlluniau eto.",
+  "l.ceo_view.of_plans_are_red_amber":
+    "Mae {red} o {n} cynllun yn goch, {amber} yn ambr, {green} yn wyrdd.",
   "c.CalendarMonth.not_a_business_day": "nid yw'n ddiwrnod gwaith",
   "c.CalendarMonth.business_day": "diwrnod gwaith",
   "c.KpiCard.that_did_not_work": "Ni weithiodd hynny",
   "c.KpiCard.could_not_load_the_history": "Methu llwytho'r hanes",
-  "c.KpiCard.delete_the_kpi_its_readings": "Dileu'r KPI “{name}”? Cedwir ei ddarlleniadau.",
+  "c.KpiCard.delete_the_kpi_its_readings":
+    "Dileu'r KPI “{name}”? Cedwir ei ddarlleniadau.",
   "c.LineRange.could_not_save": "Methu cadw",
   "c.MilestoneCard.that_did_not_work": "Ni weithiodd hynny",
   "c.MilestoneCard.could_not_load_the_plan": "Methu llwytho tasgau'r cynllun",
   "c.MilestoneCard.could_not_load_the_history": "Methu llwytho'r hanes",
   "c.ObjectiveCard.that_did_not_work": "Ni weithiodd hynny",
-  "c.ObjectiveCard.delete_the_objective_and_its": "Dileu'r amcan “{title}” a'i ganlyniadau allweddol?",
-  "c.ObjectiveCard.delete_the_key_result": "Dileu'r canlyniad allweddol “{title}”?",
-  "c.RaciMatrix.accountable_moved_from_to_a": "Symudwyd Atebol o {shortRef} i {shortRef2}: dim ond un sydd gan dasg.",
+  "c.ObjectiveCard.delete_the_objective_and_its":
+    "Dileu'r amcan “{title}” a'i ganlyniadau allweddol?",
+  "c.ObjectiveCard.delete_the_key_result":
+    "Dileu'r canlyniad allweddol “{title}”?",
+  "c.RaciMatrix.accountable_moved_from_to_a":
+    "Symudwyd Atebol o {shortRef} i {shortRef2}: dim ond un sydd gan dasg.",
   "c.RiskInputs.could_not_load_the_plan": "Methu llwytho tasgau'r cynllun",
   "c.RiskInputs.could_not_save": "Methu cadw",
   "c.RiskInputs.chance": "{probability_percent}% o siawns",
-  "c.RiskInputs.adds_business_days_to_a": "yn ychwanegu {schedule_impact_days} diwrnod gwaith at dasg",
+  "c.RiskInputs.adds_business_days_to_a":
+    "yn ychwanegu {schedule_impact_days} diwrnod gwaith at dasg",
   "c.RiskInputs.adds": "yn ychwanegu {toFixed} {cost_currency}",
-  "c.RiskInputs.not_used_in_the_simulations": "Heb ei ddefnyddio yn yr efelychiadau",
+  "c.RiskInputs.not_used_in_the_simulations":
+    "Heb ei ddefnyddio yn yr efelychiadau",
   "l.cpm_view.business_day": "diwrnod gwaith",
-  "l.cpm_view.cannot_meet_its_constraint_or": "Ni all fodloni ei gyfyngiad na'i derfyn amser: {plural} yn brin",
-  "l.cpm_view.on_the_critical_path_any": "Ar y llwybr critigol: mae unrhyw lithriad yn symud y diwedd",
+  "l.cpm_view.cannot_meet_its_constraint_or":
+    "Ni all fodloni ei gyfyngiad na'i derfyn amser: {plural} yn brin",
+  "l.cpm_view.on_the_critical_path_any":
+    "Ar y llwybr critigol: mae unrhyw lithriad yn symud y diwedd",
   "l.cpm_view.of_float_near_critical": "{d} o lac (bron yn gritigol)",
   "l.cpm_view.of_float": "{d} o lac",
   "l.cpm_view.baselined_to": ". Llinell sylfaen {start} i {finish}",
   "l.cpm_view.to": "{v}: {early_start} i {early_finish}. {floatLabel}{v2}",
   "l.cpm_view.has_no_duration_yet": "nid oes ganddi hyd eto",
-  "l.cpm_view.has_no_start_date_and": "nid oes ganddi ddyddiad dechrau ac nid oes dim o'i blaen wedi'i amserlennu",
-  "l.cpm_view.has_a_date_outside_the": "mae ganddi ddyddiad y tu allan i'r amrediad a gefnogir",
+  "l.cpm_view.has_no_start_date_and":
+    "nid oes ganddi ddyddiad dechrau ac nid oes dim o'i blaen wedi'i amserlennu",
+  "l.cpm_view.has_a_date_outside_the":
+    "mae ganddi ddyddiad y tu allan i'r amrediad a gefnogir",
   "l.cpm_view.slipped": "Llithrodd",
-  "l.cpm_view.finishes_later_than_baselined": "yn gorffen {d} yn hwyrach na'r llinell sylfaen",
+  "l.cpm_view.finishes_later_than_baselined":
+    "yn gorffen {d} yn hwyrach na'r llinell sylfaen",
   "l.cpm_view.pulled_in": "Wedi'i dynnu i mewn",
-  "l.cpm_view.finishes_earlier_than_baselined": "yn gorffen {d} yn gynharach na'r llinell sylfaen",
+  "l.cpm_view.finishes_earlier_than_baselined":
+    "yn gorffen {d} yn gynharach na'r llinell sylfaen",
   "l.cpm_view.on_baseline": "Ar y llinell sylfaen",
-  "l.cpm_view.finishes_when_it_was_baselined": "yn gorffen pan gafodd ei osod ar linell sylfaen",
+  "l.cpm_view.finishes_when_it_was_baselined":
+    "yn gorffen pan gafodd ei osod ar linell sylfaen",
   "l.cpm_view.added": "Ychwanegwyd",
-  "l.cpm_view.not_in_the_baseline_so": "nid yw yn y llinell sylfaen, felly nid oes llithriad iddi",
+  "l.cpm_view.not_in_the_baseline_so":
+    "nid yw yn y llinell sylfaen, felly nid oes llithriad iddi",
   "l.cpm_view.removed": "Tynnwyd",
-  "l.cpm_view.was_in_the_baseline_and": "roedd yn y llinell sylfaen ac mae wedi mynd; cedwir ei ddyddiadau llinell sylfaen",
+  "l.cpm_view.was_in_the_baseline_and":
+    "roedd yn y llinell sylfaen ac mae wedi mynd; cedwir ei ddyddiadau llinell sylfaen",
   "l.cpm_view.cannot_say": "Methu dweud",
-  "l.cpm_view.it_had_no_schedule_when": "nid oedd ganddi amserlen pan osodwyd y llinell sylfaen",
+  "l.cpm_view.it_had_no_schedule_when":
+    "nid oedd ganddi amserlen pan osodwyd y llinell sylfaen",
   "l.cpm_view.it_has_no_schedule_now": "nid oes ganddi amserlen nawr",
   "l.document_view.version": "Fersiwn {version} — {v}",
   "l.document_view.since": "{base} ers {effective_from}",
@@ -2112,7 +2524,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.document_view.version_in_force": "Fersiwn {in_force_today} mewn grym",
   "l.ev_view.nothing_was_planned_to_be": "ni chynlluniwyd gwneud dim eto",
   "l.ev_view.no_cost_has_been_recorded": "nid oes cost wedi'i chofnodi eto",
-  "l.ev_view.the_baseline_plans_no_value": "nid yw'r llinell sylfaen yn cynllunio unrhyw werth",
+  "l.ev_view.the_baseline_plans_no_value":
+    "nid yw'r llinell sylfaen yn cynllunio unrhyw werth",
   "l.ev_view.not_available": "ddim ar gael",
   "l.ev_view.schedule_no_ratio": "Amserlen: dim cymhareb, {absentText}.",
   "l.ev_view.ahead_of_schedule": "Ar y blaen i'r amserlen",
@@ -2123,22 +2536,35 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.ev_view.under_budget": "O dan y gyllideb",
   "l.ev_view.over_budget": "Dros y gyllideb",
   "l.ev_view.on_budget": "O fewn y gyllideb",
-  "l.ev_view.earned_schedule_no_ratio": "Amserlen enilledig: dim cymhareb, {absentText}.",
-  "l.ev_view.by_earned_schedule_the_work": "Yn ôl yr amserlen enilledig mae'r gwaith {word}: mae wedi ennill mewn {days} yr hyn yr oedd y cynllun yn ei ddisgwyl ar ôl {days2} (SPI(t) {ratioText}).",
-  "l.ev_view.finished_work_counts_for_its": "mae gwaith gorffenedig yn cyfrif am ei bwyntiau stori",
-  "l.ev_view.only_finished_work_counts": "dim ond gwaith gorffenedig sy'n cyfrif",
+  "l.ev_view.earned_schedule_no_ratio":
+    "Amserlen enilledig: dim cymhareb, {absentText}.",
+  "l.ev_view.by_earned_schedule_the_work":
+    "Yn ôl yr amserlen enilledig mae'r gwaith {word}: mae wedi ennill mewn {days} yr hyn yr oedd y cynllun yn ei ddisgwyl ar ôl {days2} (SPI(t) {ratioText}).",
+  "l.ev_view.finished_work_counts_for_its":
+    "mae gwaith gorffenedig yn cyfrif am ei bwyntiau stori",
+  "l.ev_view.only_finished_work_counts":
+    "dim ond gwaith gorffenedig sy'n cyfrif",
   "l.ev_view.by_story_points": "yn ôl pwyntiau stori",
-  "l.ev_view.counted_by_a_person_entered": "{length} wedi'u cyfrif yn ôl canran a roddwyd gan berson (â llaw)",
-  "l.ev_view.with_no_points_carry_no": "Nid oes pwysau gan {length} heb bwyntiau",
-  "l.ev_view.no_actual_cost_is_recorded": "nid oes cost gwirioneddol wedi'i chofnodi",
-  "l.ev_view.the_ratio_it_divides_by": "nid yw'r gymhareb y mae'n ei rhannu â hi wedi'i diffinio eto",
-  "l.ev_view.no_estimate_to_complete_has": "nid oes amcangyfrif i gwblhau wedi'i roi",
-  "l.ev_view.the_budget_is_already_spent": "mae'r gyllideb eisoes wedi'i gwario",
+  "l.ev_view.counted_by_a_person_entered":
+    "{length} wedi'u cyfrif yn ôl canran a roddwyd gan berson (â llaw)",
+  "l.ev_view.with_no_points_carry_no":
+    "Nid oes pwysau gan {length} heb bwyntiau",
+  "l.ev_view.no_actual_cost_is_recorded":
+    "nid oes cost gwirioneddol wedi'i chofnodi",
+  "l.ev_view.the_ratio_it_divides_by":
+    "nid yw'r gymhareb y mae'n ei rhannu â hi wedi'i diffinio eto",
+  "l.ev_view.no_estimate_to_complete_has":
+    "nid oes amcangyfrif i gwblhau wedi'i roi",
+  "l.ev_view.the_budget_is_already_spent":
+    "mae'r gyllideb eisoes wedi'i gwario",
   "l.ev_view.no_cost_remains": "nid oes cost yn weddill",
-  "l.ev_view.against_the_money_is_already": "O'i gymharu â {target}: mae'r arian eisoes wedi'i wario, felly ni all unrhyw effeithlonrwydd gyflawni'r gwaith sy'n weddill o'i fewn.",
+  "l.ev_view.against_the_money_is_already":
+    "O'i gymharu â {target}: mae'r arian eisoes wedi'i wario, felly ni all unrhyw effeithlonrwydd gyflawni'r gwaith sy'n weddill o'i fewn.",
   "l.ev_view.against": "O'i gymharu â {target}: {amountAbsentText}.",
-  "l.ev_view.against_the_remaining_work_must": "O'i gymharu â {target}: rhaid gwneud y gwaith sy'n weddill {ratioText} gwaith mor effeithlon â'r gwaith hyd yma (TCPI {ratioText2}), sy'n galw am well effeithlonrwydd.",
-  "l.ev_view.against_the_remaining_work_can": "O'i gymharu â {target}: gellir gwneud y gwaith sy'n weddill ar {ratioText} o effeithlonrwydd cost y gwaith hyd yma (TCPI {ratioText2}).",
+  "l.ev_view.against_the_remaining_work_must":
+    "O'i gymharu â {target}: rhaid gwneud y gwaith sy'n weddill {ratioText} gwaith mor effeithlon â'r gwaith hyd yma (TCPI {ratioText2}), sy'n galw am well effeithlonrwydd.",
+  "l.ev_view.against_the_remaining_work_can":
+    "O'i gymharu â {target}: gellir gwneud y gwaith sy'n weddill ar {ratioText} o effeithlonrwydd cost y gwaith hyd yma (TCPI {ratioText2}).",
   "l.ev_view.earned": "{date}: enillwyd {ev_minor}",
   "l.ev_view.spent": "{date}: gwariwyd {ac_minor}",
   "l.import_view.would_create": "Byddai'n creu",
@@ -2146,38 +2572,57 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.import_view.and": "{verb} {plural} a {upd} {tasks_updated}{tail}.",
   "l.import_view.preview_the_import": "Rhagweld y mewnforio",
   "l.import_view.import": "Mewnforio {plural}",
-  "l.kpi_view.target_or_more_red_at": "Targed {target_value} neu fwy; coch ar {red_value} neu lai{u}",
-  "l.kpi_view.target_or_less_red_at": "Targed {target_value} neu lai; coch ar {red_value} neu fwy{u}",
-  "l.kpi_view.no_reading_within_twice_its": "Dim darlleniad o fewn dwywaith ei amlder {cadence}",
+  "l.kpi_view.target_or_more_red_at":
+    "Targed {target_value} neu fwy; coch ar {red_value} neu lai{u}",
+  "l.kpi_view.target_or_less_red_at":
+    "Targed {target_value} neu lai; coch ar {red_value} neu fwy{u}",
+  "l.kpi_view.no_reading_within_twice_its":
+    "Dim darlleniad o fewn dwywaith ei amlder {cadence}",
   "l.kpi_view.no_reading_yet": "dim darlleniad eto",
   "l.milestone_view.there_is_no_forecast": "Nid oes rhagolwg.",
-  "l.milestone_view.some_open_tasks_cannot_be": " (ni ellir gosod rhai tasgau agored, felly gall hyn fod yn gynnar)",
-  "l.milestone_view.forecast_to_finish_after_it": "Rhagolwg i orffen {forecast}, {businessDays} ar ôl y dyddiad dyledus ({due}){partial}.",
-  "l.milestone_view.forecast_to_finish_on_the": "Rhagolwg i orffen ar y dyddiad dyledus, {due}{partial}.",
-  "l.milestone_view.forecast_to_finish_before_it": "Rhagolwg i orffen {forecast}, {businessDays} cyn y dyddiad dyledus ({due}){partial}.",
+  "l.milestone_view.some_open_tasks_cannot_be":
+    " (ni ellir gosod rhai tasgau agored, felly gall hyn fod yn gynnar)",
+  "l.milestone_view.forecast_to_finish_after_it":
+    "Rhagolwg i orffen {forecast}, {businessDays} ar ôl y dyddiad dyledus ({due}){partial}.",
+  "l.milestone_view.forecast_to_finish_on_the":
+    "Rhagolwg i orffen ar y dyddiad dyledus, {due}{partial}.",
+  "l.milestone_view.forecast_to_finish_before_it":
+    "Rhagolwg i orffen {forecast}, {businessDays} cyn y dyddiad dyledus ({due}){partial}.",
   "l.milestone_view.of_them_later": ", {later_moves} ohonynt yn ddiweddarach",
-  "l.milestone_view.back_on_its_original_date": "yn ôl ar ei ddyddiad gwreiddiol",
-  "l.milestone_view.later_than_the_original": "{calendarDays} yn hwyrach na'r dyddiad gwreiddiol {original_due}",
-  "l.milestone_view.earlier_than_the_original": "{calendarDays} yn gynharach na'r dyddiad gwreiddiol {original_due}",
-  "l.milestone_view.originally_due_now": "Dyledus yn wreiddiol {original_due}; {times}{later}; nawr {net}.",
+  "l.milestone_view.back_on_its_original_date":
+    "yn ôl ar ei ddyddiad gwreiddiol",
+  "l.milestone_view.later_than_the_original":
+    "{calendarDays} yn hwyrach na'r dyddiad gwreiddiol {original_due}",
+  "l.milestone_view.earlier_than_the_original":
+    "{calendarDays} yn gynharach na'r dyddiad gwreiddiol {original_due}",
+  "l.milestone_view.originally_due_now":
+    "Dyledus yn wreiddiol {original_due}; {times}{later}; nawr {net}.",
   "l.milestone_view.on": " ar {achieved_on}",
-  "l.milestone_view.achieved_every_task_it_waits": "Cyflawnwyd{on}: mae pob tasg y mae'n aros amdani wedi'i gwneud.",
+  "l.milestone_view.achieved_every_task_it_waits":
+    "Cyflawnwyd{on}: mae pob tasg y mae'n aros amdani wedi'i gwneud.",
   "l.milestone_view.reason": " Rheswm: {done_reason}",
   "l.milestone_view.marked_done": "Marciwyd yn gyflawn{on}.{why}",
   "l.milestone_view.due": "{name}: {toLowerCase}, dyledus {due}{state}",
-  "l.my_work_view.this_is_already_late_for": "Mae hyn eisoes yn hwyr i'r cynllun ({days} ar ei hôl hi).",
+  "l.my_work_view.this_is_already_late_for":
+    "Mae hyn eisoes yn hwyr i'r cynllun ({days} ar ei hôl hi).",
   "l.my_work_view.on_the_critical_path": "Ar y llwybr critigol",
   "l.my_work_view.of_float": "{days} o lac",
   "l.okr_view.not_measured": "Heb ei fesur",
   "l.okr_view.not_measurable": "Methu mesur ({reason}).",
   "l.okr_view.of": "{current} o {target}{u}",
-  "l.okr_view.confidence_not_part_of_the": "Hyder {confidence}% (nid yw'n rhan o'r sgôr)",
+  "l.okr_view.confidence_not_part_of_the":
+    "Hyder {confidence}% (nid yw'n rhan o'r sgôr)",
   "l.onboarding_view.give_the_date_it_takes": "Rhowch y dyddiad y daw i rym.",
-  "l.onboarding_view.give_the_person_as_person": "Rhowch y person fel person:… (neu worker:…).",
-  "l.onboarding_view.say_what_access_in_words": "Dywedwch pa fynediad, mewn geiriau.",
-  "l.onboarding_view.choose_granted_or_revoked": "Dewiswch a roddwyd neu a ddiddymwyd.",
-  "l.onboarding_view.give_who_is_handing_over": "Rhowch bwy sy'n trosglwyddo, fel person:…",
-  "l.onboarding_view.give_who_takes_over_as": "Rhowch bwy sy'n cymryd drosodd fel person:… (neu gadewch yn wag i ryddhau'r gwaith).",
+  "l.onboarding_view.give_the_person_as_person":
+    "Rhowch y person fel person:… (neu worker:…).",
+  "l.onboarding_view.say_what_access_in_words":
+    "Dywedwch pa fynediad, mewn geiriau.",
+  "l.onboarding_view.choose_granted_or_revoked":
+    "Dewiswch a roddwyd neu a ddiddymwyd.",
+  "l.onboarding_view.give_who_is_handing_over":
+    "Rhowch bwy sy'n trosglwyddo, fel person:…",
+  "l.onboarding_view.give_who_takes_over_as":
+    "Rhowch bwy sy'n cymryd drosodd fel person:… (neu gadewch yn wag i ryddhau'r gwaith).",
   "l.onboarding_view.hand_over_to_someone_else": "Trosglwyddo i rywun arall.",
   "l.onboarding_view.no_items": "Dim eitemau",
   "l.onboarding_view.of_done": "{done} o {total} wedi'u gwneud",
@@ -2185,16 +2630,19 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.onboarding_view.overdue": "{overdue} wedi mynd heibio'r dyddiad",
   "l.onboarding_view.skipped_2": "Hepgorwyd",
   "l.onboarding_view.overdue_2": "Wedi mynd heibio'r dyddiad",
-  "l.onboarding_view.nothing_is_left_open_this": "Nid oes dim ar ôl yn agored. Mae'r cynllun hwn yn barod i'w gau.",
+  "l.onboarding_view.nothing_is_left_open_this":
+    "Nid oes dim ar ôl yn agored. Mae'r cynllun hwn yn barod i'w gau.",
   "l.onboarding_view.not_ready_to_close": "Ddim yn barod i gau: {join}.",
-  "l.onboarding_view.this_person_holds_nothing_live": "Nid yw'r person hwn yn dal dim byw ar y cynllun hwn.",
+  "l.onboarding_view.this_person_holds_nothing_live":
+    "Nid yw'r person hwn yn dal dim byw ar y cynllun hwn.",
   "l.raci_view.nobody_is_accountable": "Does neb yn atebol",
   "l.raci_view.nobody_is_responsible": "Does neb yn gyfrifol",
   "l.raci_view.more_than_one_person_is": "Mae mwy nag un person yn atebol",
   "l.raci_view.has_no_role": "{task}: nid oes rôl gan {who}",
   "l.raci_view.and": " a ",
   "l.raci_view.is": "{task}: mae {who} yn {join}",
-  "l.rbs.a_booking_that_needs_several": "Mae archeb sydd angen sawl sgil yn cyfrif yn llawn tuag at bob un, felly mae sgiliau'n gorgyffwrdd ac nid ydynt yn adio. Nid yw'r cyflenwad na'r bobl yn hysbys ar gyfer sgiliau.",
+  "l.rbs.a_booking_that_needs_several":
+    "Mae archeb sydd angen sawl sgil yn cyfrif yn llawn tuag at bob un, felly mae sgiliau'n gorgyffwrdd ac nid ydynt yn adio. Nid yw'r cyflenwad na'r bobl yn hysbys ar gyfer sgiliau.",
   "l.rbs.named": "{length} wedi'u henwi",
   "l.rbs.supply_not_known": "cyflenwad heb ei wybod",
   "l.rbs.supply_fte": "cyflenwad {supply_fte} FTE",
@@ -2204,73 +2652,113 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.scheduling_view.not_computable": "Methu cyfrifo",
   "l.scheduling_view.not_enough_data": "Dim digon o ddata.",
   "l.scheduling_view.not_enough_data_2": "Dim digon o ddata: {reason}",
-  "l.scheduling_view.must_pass_a_business_day": "Rhaid pasio: mae oedi o {v} diwrnod gwaith yn gorfod symud y diwedd",
+  "l.scheduling_view.must_pass_a_business_day":
+    "Rhaid pasio: mae oedi o {v} diwrnod gwaith yn gorfod symud y diwedd",
   "l.scheduling_view.at_least_business_days": "O leiaf {limit} diwrnod gwaith",
   "l.scheduling_view.at_most": "hyd at",
   "l.scheduling_view.at_least": "o leiaf",
   "l.scheduling_view.no_figure": "Dim ffigur",
-  "l.scheduling_view.finish_moved_of_business_days": "Symudodd y diwedd {count} o {of} diwrnod gwaith",
+  "l.scheduling_view.finish_moved_of_business_days":
+    "Symudodd y diwedd {count} o {of} diwrnod gwaith",
   "l.scheduling_view.of": "{toFixed} ({count} o {of})",
   "l.scheduling_view.of_2": "{value}% ({count} o {of} {of_what})",
-  "l.scheduling_view.passed_failed_not_computable": "{passed} wedi llwyddo, {failed} wedi methu, {not_computable} ni ellir eu cyfrifo",
+  "l.scheduling_view.passed_failed_not_computable":
+    "{passed} wedi llwyddo, {failed} wedi methu, {not_computable} ni ellir eu cyfrifo",
   "l.scheduling_view.not_resolved": "Heb ei ddatrys.",
-  "l.scheduling_view.it_is_on_the_critical": " Mae ar y llwybr critigol, felly mae diwedd y prosiect yn symud.",
-  "l.scheduling_view.starts_later_finishes_instead_of": "Mae {pid} ({who}) yn dechrau {from_start} → {scheduled_start}, {days} yn hwyrach; yn gorffen {to_finish} yn lle {from_finish}.{crit}",
+  "l.scheduling_view.it_is_on_the_critical":
+    " Mae ar y llwybr critigol, felly mae diwedd y prosiect yn symud.",
+  "l.scheduling_view.starts_later_finishes_instead_of":
+    "Mae {pid} ({who}) yn dechrau {from_start} → {scheduled_start}, {days} yn hwyrach; yn gorffen {to_finish} yn lle {from_finish}.{crit}",
   "l.scheduling_view.to": "{from} i {to}",
-  "l.scheduling_view.is_over_capacity_on": "Mae {who} dros y capasiti ar {span}.",
-  "l.scheduling_view.is_asked_for_on_and": "Gofynnir i {who} am {demand}% ar {span} a gall roi {capacity}%.",
-  "l.scheduling_view.no_project_finish_can_be": "Ni ellir cyfrifo diwedd y prosiect.",
-  "l.scheduling_view.the_project_finish_stays": "Mae diwedd y prosiect yn aros yn {before}.",
-  "l.scheduling_view.the_project_finish_moves_from": "Mae diwedd y prosiect yn symud o {before} i {after} ({days} yn hwyrach).",
+  "l.scheduling_view.is_over_capacity_on":
+    "Mae {who} dros y capasiti ar {span}.",
+  "l.scheduling_view.is_asked_for_on_and":
+    "Gofynnir i {who} am {demand}% ar {span} a gall roi {capacity}%.",
+  "l.scheduling_view.no_project_finish_can_be":
+    "Ni ellir cyfrifo diwedd y prosiect.",
+  "l.scheduling_view.the_project_finish_stays":
+    "Mae diwedd y prosiect yn aros yn {before}.",
+  "l.scheduling_view.the_project_finish_moves_from":
+    "Mae diwedd y prosiect yn symud o {before} i {after} ({days} yn hwyrach).",
   "l.scheduling_view.no_demand_or_supply": "Dim galw na chyflenwad",
-  "l.scheduling_view.demand_fte_supply_not_known": "Galw {demand_fte} FTE; cyflenwad heb ei wybod",
+  "l.scheduling_view.demand_fte_supply_not_known":
+    "Galw {demand_fte} FTE; cyflenwad heb ei wybod",
   "l.scheduling_view.short_fte": "{abs} FTE yn brin",
   "l.scheduling_view.spare_fte": "{gap_fte} FTE dros ben",
   "l.scheduling_view.balanced": "Cytbwys",
   "l.scheduling_view.the_critical_path_finish": "diwedd y llwybr critigol",
-  "l.scheduling_view.of_the_simulated_outcomes_finish": "Mae {pct}% o'r canlyniadau efelychiedig yn gorffen ar neu cyn {date}.",
+  "l.scheduling_view.of_the_simulated_outcomes_finish":
+    "Mae {pct}% o'r canlyniadau efelychiedig yn gorffen ar neu cyn {date}.",
   "l.scheduling_view.no_variation": "Dim amrywiad",
-  "l.scheduling_view.no_estimate_using_the_fallback": "Dim amcangyfrif: defnyddio'r band wrth gefn",
+  "l.scheduling_view.no_estimate_using_the_fallback":
+    "Dim amcangyfrif: defnyddio'r band wrth gefn",
   "l.scheduling_view.milestone_no_spread": "Carreg filltir: dim lledaeniad",
-  "l.scheduling_view.estimated_widened_to_include_the": "Amcangyfrifwyd (wedi'i ehangu i gynnwys y gwerth tebygol)",
+  "l.scheduling_view.estimated_widened_to_include_the":
+    "Amcangyfrifwyd (wedi'i ehangu i gynnwys y gwerth tebygol)",
   "l.scheduling_view.estimated": "Amcangyfrifwyd",
-  "l.scheduling_view.pert_favours_the_likely_value": "PERT (yn ffafrio'r gwerth tebygol)",
-  "l.scheduling_view.of_the_simulated_outcomes_cost": "Mae {round}% o'r canlyniadau efelychiedig yn costio dim mwy na'r gyllideb ({budgetText}).",
-  "l.scheduling_view.estimated_widened_to_include_the_2": "Amcangyfrifwyd (wedi'i ehangu i gynnwys y swm cynlluniedig)",
-  "l.scheduling_view.stated_struck_in_of_runs": "nodwyd {round}%, trawodd mewn {toFixed}% o'r rhediadau",
-  "l.scheduling_view.within_budget_and_on_time": "O fewn y gyllideb ac ar amser",
+  "l.scheduling_view.pert_favours_the_likely_value":
+    "PERT (yn ffafrio'r gwerth tebygol)",
+  "l.scheduling_view.of_the_simulated_outcomes_cost":
+    "Mae {round}% o'r canlyniadau efelychiedig yn costio dim mwy na'r gyllideb ({budgetText}).",
+  "l.scheduling_view.estimated_widened_to_include_the_2":
+    "Amcangyfrifwyd (wedi'i ehangu i gynnwys y swm cynlluniedig)",
+  "l.scheduling_view.stated_struck_in_of_runs":
+    "nodwyd {round}%, trawodd mewn {toFixed}% o'r rhediadau",
+  "l.scheduling_view.within_budget_and_on_time":
+    "O fewn y gyllideb ac ar amser",
   "l.scheduling_view.within_budget_but_late": "O fewn y gyllideb ond yn hwyr",
   "l.scheduling_view.on_time_but_over_budget": "Ar amser ond dros y gyllideb",
   "l.scheduling_view.over_budget_and_late": "Dros y gyllideb ac yn hwyr",
-  "l.scheduling_view.both_within_budget_and_on": "O fewn y gyllideb ac ar amser: {pct} (o fewn y gyllideb yn unig {pct2}; ar amser yn unig {pct3}).",
-  "l.scheduling_view.a_late_finish_costs_nothing": "Nid yw gorffen yn hwyr yn costio dim ychwanegol yn y rhediad hwn (cost oedi fesul diwrnod gwaith yw 0).",
-  "l.scheduling_view.each_business_day_late_adds": "Mae pob diwrnod gwaith yn hwyr yn ychwanegu {format}; nid yw gorffen yn gynnar yn ennill dim yn ôl.",
-  "l.simulation_inputs.the_probability_must_be_a": "Rhaid i'r tebygolrwydd fod yn rhif cyfan o 0 i 100.",
-  "l.simulation_inputs.name_the_task_and_the": "Enwch y dasg a'r diwrnodau gwaith y mae'n eu hadio, neu gadewch y ddau yn wag.",
-  "l.simulation_inputs.the_business_days_a_risk": "Rhaid i'r diwrnodau gwaith y mae risg yn eu hychwanegu fod yn rhif cyfan o 1 i 365.",
-  "l.simulation_inputs.give_the_cost_and_its": "Rhowch y gost a'i harian cyfred gyda'i gilydd, neu gadewch y ddau yn wag.",
-  "l.simulation_inputs.the_cost_must_be_an": "Rhaid i'r gost fod yn swm uwch na sero.",
-  "l.simulation_inputs.the_currency_must_be_a": "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
-  "l.simulation_inputs.a_risk_that_changes_the": "Mae risg sy'n newid yr amserlen neu'r gost angen tebygolrwydd.",
-  "l.simulation_inputs.amounts_must_be_numbers_zero": "Rhaid i symiau fod yn rhifau, sero neu fwy.",
-  "l.simulation_inputs.the_low_amount_cannot_be": "Ni all y swm isel fod yn uwch na'r swm cynlluniedig.",
-  "l.simulation_inputs.the_high_amount_cannot_be": "Ni all y swm uchel fod yn is na'r swm cynlluniedig.",
-  "l.simulation_inputs.business_days_must_be_whole": "Rhaid i ddiwrnodau gwaith fod yn rhifau cyfan o 0 i 3650.",
-  "l.simulation_inputs.give_the_task_a_duration": "Rhowch hyd i'r dasg yn gyntaf: dyna ei gwerth tebygol.",
-  "l.simulation_inputs.optimistic_cannot_be_above_the": "Ni all optimistaidd fod yn uwch na'r hyd tebygol ({likely}).",
-  "l.simulation_inputs.pessimistic_cannot_be_below_the": "Ni all pesimistaidd fod yn is na'r hyd tebygol ({likely}).",
-  "l.simulation_inputs.no_range_the_simulation_uses": "Dim amrediad: mae'r efelychiad yn defnyddio'i fand wrth gefn",
+  "l.scheduling_view.both_within_budget_and_on":
+    "O fewn y gyllideb ac ar amser: {pct} (o fewn y gyllideb yn unig {pct2}; ar amser yn unig {pct3}).",
+  "l.scheduling_view.a_late_finish_costs_nothing":
+    "Nid yw gorffen yn hwyr yn costio dim ychwanegol yn y rhediad hwn (cost oedi fesul diwrnod gwaith yw 0).",
+  "l.scheduling_view.each_business_day_late_adds":
+    "Mae pob diwrnod gwaith yn hwyr yn ychwanegu {format}; nid yw gorffen yn gynnar yn ennill dim yn ôl.",
+  "l.simulation_inputs.the_probability_must_be_a":
+    "Rhaid i'r tebygolrwydd fod yn rhif cyfan o 0 i 100.",
+  "l.simulation_inputs.name_the_task_and_the":
+    "Enwch y dasg a'r diwrnodau gwaith y mae'n eu hadio, neu gadewch y ddau yn wag.",
+  "l.simulation_inputs.the_business_days_a_risk":
+    "Rhaid i'r diwrnodau gwaith y mae risg yn eu hychwanegu fod yn rhif cyfan o 1 i 365.",
+  "l.simulation_inputs.give_the_cost_and_its":
+    "Rhowch y gost a'i harian cyfred gyda'i gilydd, neu gadewch y ddau yn wag.",
+  "l.simulation_inputs.the_cost_must_be_an":
+    "Rhaid i'r gost fod yn swm uwch na sero.",
+  "l.simulation_inputs.the_currency_must_be_a":
+    "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
+  "l.simulation_inputs.a_risk_that_changes_the":
+    "Mae risg sy'n newid yr amserlen neu'r gost angen tebygolrwydd.",
+  "l.simulation_inputs.amounts_must_be_numbers_zero":
+    "Rhaid i symiau fod yn rhifau, sero neu fwy.",
+  "l.simulation_inputs.the_low_amount_cannot_be":
+    "Ni all y swm isel fod yn uwch na'r swm cynlluniedig.",
+  "l.simulation_inputs.the_high_amount_cannot_be":
+    "Ni all y swm uchel fod yn is na'r swm cynlluniedig.",
+  "l.simulation_inputs.business_days_must_be_whole":
+    "Rhaid i ddiwrnodau gwaith fod yn rhifau cyfan o 0 i 3650.",
+  "l.simulation_inputs.give_the_task_a_duration":
+    "Rhowch hyd i'r dasg yn gyntaf: dyna ei gwerth tebygol.",
+  "l.simulation_inputs.optimistic_cannot_be_above_the":
+    "Ni all optimistaidd fod yn uwch na'r hyd tebygol ({likely}).",
+  "l.simulation_inputs.pessimistic_cannot_be_below_the":
+    "Ni all pesimistaidd fod yn is na'r hyd tebygol ({likely}).",
+  "l.simulation_inputs.no_range_the_simulation_uses":
+    "Dim amrediad: mae'r efelychiad yn defnyddio'i fand wrth gefn",
   "l.simulation_inputs.to": "{fmt} i {fmt2}",
   "l.wbs.restricted_item": "Eitem gyfyngedig",
   "l.whatif_view.choose_a_task": "Dewiswch dasg.",
   "l.whatif_view.give_the_new_start_date": "Rhowch y dyddiad dechrau newydd.",
-  "l.whatif_view.duration_must_be_a_whole": "Rhaid i'r hyd fod yn nifer cyfan o ddiwrnodau gwaith o 0 i 3650.",
+  "l.whatif_view.duration_must_be_a_whole":
+    "Rhaid i'r hyd fod yn nifer cyfan o ddiwrnodau gwaith o 0 i 3650.",
   "l.whatif_view.choose_a_constraint": "Dewiswch gyfyngiad.",
   "l.whatif_view.a_constraint_needs_a_date": "Mae cyfyngiad angen dyddiad.",
-  "l.whatif_view.a_hard_constraint_needs_a": "Mae cyfyngiad caled angen rheswm.",
+  "l.whatif_view.a_hard_constraint_needs_a":
+    "Mae cyfyngiad caled angen rheswm.",
   "l.whatif_view.choose_both_tasks": "Dewiswch y ddwy dasg.",
   "l.whatif_view.a_task_cannot_depend_on": "Ni all tasg ddibynnu arni ei hun.",
-  "l.whatif_view.lag_must_be_a_whole": "Rhaid i'r oediad fod yn nifer cyfan o ddiwrnodau gwaith (mae negyddol yn flaenoriaeth).",
+  "l.whatif_view.lag_must_be_a_whole":
+    "Rhaid i'r oediad fod yn nifer cyfan o ddiwrnodau gwaith (mae negyddol yn flaenoriaeth).",
   "l.whatif_view.choose_a_link": "Dewiswch ddolen.",
   "l.whatif_view.start_on": "Dechrau “{name}” ar {start_date}",
   "l.whatif_view.make_a_milestone": "Gwneud “{name}” yn garreg filltir",
@@ -2279,37 +2767,54 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.whatif_view.lag": ", oediad {lag_days}",
   "l.whatif_view.follows": "Mae “{name}” yn dilyn “{name2}” ({toUpperCase}{v})",
   "l.whatif_view.remove_the_link": "Tynnu'r ddolen {slice}",
-  "l.whatif_view.the_plan_has_no_finish": "Nid oes dyddiad gorffen gan y cynllun eto.",
+  "l.whatif_view.the_plan_has_no_finish":
+    "Nid oes dyddiad gorffen gan y cynllun eto.",
   "l.whatif_view.the_finish_stays": "Mae'r diwedd yn aros yn {after}.",
   "l.whatif_view.the_finish_becomes": "Daw'r diwedd yn {after}.",
-  "l.whatif_view.the_plan_no_longer_has": "Nid oes dyddiad gorffen gan y cynllun mwyach (roedd yn {before}).",
-  "l.whatif_view.the_finish_moves_from_to": "Mae'r diwedd yn symud o {before} i {after}.",
-  "l.whatif_view.cost_impact_is_finance_data": "Data cyllid yw'r effaith ar gost, felly nid yw'n cael ei ddangos i chi.",
-  "l.whatif_view.no_task_with_work_has": "Nid oes gan unrhyw dasg â gwaith gyfradd, felly nid oes cost i'w chymharu.",
-  "l.work_view.work_must_be_a_number": "Rhaid i'r gwaith fod yn nifer o oriau uwchlaw sero.",
-  "l.work_view.duration_must_be_a_whole": "Rhaid i'r hyd fod yn nifer cyfan o ddiwrnodau gwaith o 1 i 3650.",
-  "l.work_view.units_must_be_a_whole": "Rhaid i unedau fod yn ganran gyfan o ddiwrnod o 1 i 1000.",
+  "l.whatif_view.the_plan_no_longer_has":
+    "Nid oes dyddiad gorffen gan y cynllun mwyach (roedd yn {before}).",
+  "l.whatif_view.the_finish_moves_from_to":
+    "Mae'r diwedd yn symud o {before} i {after}.",
+  "l.whatif_view.cost_impact_is_finance_data":
+    "Data cyllid yw'r effaith ar gost, felly nid yw'n cael ei ddangos i chi.",
+  "l.whatif_view.no_task_with_work_has":
+    "Nid oes gan unrhyw dasg â gwaith gyfradd, felly nid oes cost i'w chymharu.",
+  "l.work_view.work_must_be_a_number":
+    "Rhaid i'r gwaith fod yn nifer o oriau uwchlaw sero.",
+  "l.work_view.duration_must_be_a_whole":
+    "Rhaid i'r hyd fod yn nifer cyfan o ddiwrnodau gwaith o 1 i 3650.",
+  "l.work_view.units_must_be_a_whole":
+    "Rhaid i unedau fod yn ganran gyfan o ddiwrnod o 1 i 1000.",
   "l.work_view.give_the_units_too": "Rhowch yr unedau hefyd.",
-  "l.work_view.business_days_at_is": "{duration_days} diwrnod gwaith ar {units_percent}% yw {hoursText}",
+  "l.work_view.business_days_at_is":
+    "{duration_days} diwrnod gwaith ar {units_percent}% yw {hoursText}",
   "l.work_view.the_duration_was_worked_out": "Cyfrifwyd y hyd.",
   "l.work_view.the_share_of_the_day": "Cyfrifwyd cyfran y diwrnod.",
   "l.work_view.the_work_was_worked_out": "Cyfrifwyd y gwaith.",
-  "l.work_view.rounded_the_three_do_not": " Talgrynnwyd: nid yw'r tri yn cyfateb i'r funud.",
-  "l.work_view.capacity_not_checked_the_task": "Heb wirio'r capasiti: nid oes gan y dasg unrhyw ddyddiadau eto.",
+  "l.work_view.rounded_the_three_do_not":
+    " Talgrynnwyd: nid yw'r tri yn cyfateb i'r funud.",
+  "l.work_view.capacity_not_checked_the_task":
+    "Heb wirio'r capasiti: nid oes gan y dasg unrhyw ddyddiadau eto.",
   "l.work_view.within_the_person_s_capacity": "O fewn capasiti'r person.",
-  "l.work_view.give_1_to_40_whole": "Rhowch 1 i 40 canran gyfan, wedi'u gwahanu gan atalnodau.",
-  "l.work_view.the_percentages_add_up_to": "Mae'r canrannau'n adio i {sum}, nid 100.",
+  "l.work_view.give_1_to_40_whole":
+    "Rhowch 1 i 40 canran gyfan, wedi'u gwahanu gan atalnodau.",
+  "l.work_view.the_percentages_add_up_to":
+    "Mae'r canrannau'n adio i {sum}, nid 100.",
   "p.home.main_x_plans": "Main X · Cynlluniau",
-  "p.announcements.could_not_load_the_announcements": "Methu llwytho'r cyhoeddiadau",
+  "p.announcements.could_not_load_the_announcements":
+    "Methu llwytho'r cyhoeddiadau",
   "p.announcements.could_not_publish": "Methu cyhoeddi",
   "p.announcements.could_not_retract": "Methu tynnu'n ôl",
   "p.auditor.auditor_ppm": "Archwilydd — PPM",
   "p.automations.could_not_load_automations": "Methu llwytho'r awtomeiddio",
-  "p.automations.rule_saved_it_fires_from": "Cadwyd y rheol — mae'n tanio o'r symudiad nesaf sy'n cyfateb",
+  "p.automations.rule_saved_it_fires_from":
+    "Cadwyd y rheol — mae'n tanio o'r symudiad nesaf sy'n cyfateb",
   "p.automations.could_not_save_the_rule": "Methu cadw'r rheol",
   "p.automations.that_action_was_refused": "Gwrthodwyd y weithred honno",
-  "p.automations.capped_at_run_again_for": " (cyfyngwyd i {cap} — rhedwch eto ar gyfer y gweddill)",
-  "p.automations.swept_fired_already_claimed": "Sgubwyd: tanio {fired}, {skipped_already_claimed} eisoes wedi'u hawlio{v}",
+  "p.automations.capped_at_run_again_for":
+    " (cyfyngwyd i {cap} — rhedwch eto ar gyfer y gweddill)",
+  "p.automations.swept_fired_already_claimed":
+    "Sgubwyd: tanio {fired}, {skipped_already_claimed} eisoes wedi'u hawlio{v}",
   "p.automations.the_sweep_failed": "Methodd y sgubo",
   "p.board.board_ppm": "Bwrdd — PPM",
   "p.calendar.calendar_ppm": "Calendr — PPM",
@@ -2318,7 +2823,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cost_rates.could_not_load_the_rate": "Methu llwytho'r tablau cyfraddau",
   "p.cost_rates.rate_table_added": "Ychwanegwyd y tabl cyfraddau.",
   "p.cost_rates.could_not_add_the_table": "Methu ychwanegu'r tabl",
-  "p.cost_rates.give_a_date_and_an": "Rhowch ddyddiad a chyfradd yr awr o sero neu fwy.",
+  "p.cost_rates.give_a_date_and_an":
+    "Rhowch ddyddiad a chyfradd yr awr o sero neu fwy.",
   "p.cost_rates.rate_added": "Ychwanegwyd y gyfradd.",
   "p.cost_rates.could_not_add_the_rate": "Methu ychwanegu'r gyfradd",
   "p.cost_risk.could_not_run_the_simulation": "Methu rhedeg yr efelychiad",
@@ -2326,7 +2832,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.documents.could_not_create_the_document": "Methu creu'r ddogfen",
   "p.documents.pid.could_not_load_the_document": "Methu llwytho'r ddogfen",
   "p.documents.pid.that_did_not_work": "Ni weithiodd hynny",
-  "p.documents.pid.enter_the_approver_s_id": "Rhowch ID y cymeradwywr (ID person, nid chi eich hun).",
+  "p.documents.pid.enter_the_approver_s_id":
+    "Rhowch ID y cymeradwywr (ID person, nid chi eich hun).",
   "p.documents.pid.sent_for_review": "Anfonwyd i'w adolygu.",
   "p.documents.pid.needs_changes": "Angen newidiadau",
   "p.documents.pid.approved": "Cymeradwywyd.",
@@ -2338,7 +2845,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.executive.executive_ppm": "Gweithredol — PPM",
   "p.financials.financials_ppm": "Cyllid — PPM",
   "p.gantt.gantt_main_x": "Gantt — Main X",
-  "p.gantt.calendar_failed": "Nid oedd modd llwytho'r calendr gwaith, felly nid yw diwrnodau heb waith wedi'u lliwio.",
+  "p.gantt.calendar_failed":
+    "Nid oedd modd llwytho'r calendr gwaith, felly nid yw diwrnodau heb waith wedi'u lliwio.",
   "p.kpis.could_not_load_the_kpis": "Methu llwytho'r KPIau",
   "p.kpis.could_not_define_the_kpi": "Methu diffinio'r KPI",
   "p.lifecycle.could_not_load_the_funnel": "Methu llwytho'r twndis",
@@ -2346,7 +2854,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.me.calendar.could_not_load_your_calendar": "Methu llwytho eich calendr",
   "p.me.calendar.could_not_save": "Methu cadw",
   "p.me.calendar.could_not_remove": "Methu tynnu",
-  "p.milestones.could_not_load_the_milestones": "Methu llwytho'r cerrig milltir",
+  "p.milestones.could_not_load_the_milestones":
+    "Methu llwytho'r cerrig milltir",
   "p.objectives.create_failed": "methodd y creu",
   "p.objectives.alignment_failed": "methodd yr aliniad",
   "p.okrs.could_not_load_the_okrs": "Methu llwytho'r OKRau",
@@ -2357,58 +2866,82 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.board.board_ppm": "Bwrdd — PPM",
   "p.plans.pid.calendar.could_not_load_the_calendar": "Methu llwytho'r calendr",
   "p.plans.pid.calendar.could_not_save": "Methu cadw",
-  "p.plans.pid.cost_risk.could_not_run_the_simulation": "Methu rhedeg yr efelychiad",
+  "p.plans.pid.cost_risk.could_not_run_the_simulation":
+    "Methu rhedeg yr efelychiad",
   "p.plans.pid.costs.could_not_load_the_costs": "Methu llwytho'r costau",
   "p.plans.pid.costs.choose_a_task": "Dewiswch dasg.",
-  "p.plans.pid.costs.the_amount_must_be_above": "Rhaid i'r swm fod yn uwch na sero.",
-  "p.plans.pid.costs.the_currency_must_be_a": "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
+  "p.plans.pid.costs.the_amount_must_be_above":
+    "Rhaid i'r swm fod yn uwch na sero.",
+  "p.plans.pid.costs.the_currency_must_be_a":
+    "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
   "p.plans.pid.costs.expense_added": "Ychwanegwyd y gost.",
   "p.plans.pid.costs.could_not_add_the_expense": "Methu ychwanegu'r gost",
   "p.plans.pid.costs.could_not_record": "Methu cofnodi",
-  "p.plans.pid.critical_path.could_not_load_the_baselines": "Methu llwytho'r llinellau sylfaen",
-  "p.plans.pid.critical_path.could_not_take_the_baseline": "Methu cymryd y llinell sylfaen",
-  "p.plans.pid.critical_path.could_not_load_the_schedule": "Methu llwytho'r amserlen",
-  "p.plans.pid.critical_path.could_not_save_the_estimate": "Methu cadw'r amcangyfrif",
+  "p.plans.pid.critical_path.could_not_load_the_baselines":
+    "Methu llwytho'r llinellau sylfaen",
+  "p.plans.pid.critical_path.could_not_take_the_baseline":
+    "Methu cymryd y llinell sylfaen",
+  "p.plans.pid.critical_path.could_not_load_the_schedule":
+    "Methu llwytho'r amserlen",
+  "p.plans.pid.critical_path.could_not_save_the_estimate":
+    "Methu cadw'r amcangyfrif",
   "p.plans.pid.critical_path.could_not_save": "Methu cadw",
-  "p.plans.pid.earned_value.could_not_load_earned_value": "Methu llwytho gwerth enilledig",
+  "p.plans.pid.earned_value.could_not_load_earned_value":
+    "Methu llwytho gwerth enilledig",
   "p.plans.pid.earned_value.could_not_save": "Methu cadw",
   "p.plans.pid.earned_value.could_not_record": "Methu cofnodi",
   "p.plans.pid.edit.edit_case_main_x": "Golygu achos — Main X",
   "p.plans.pid.flow.could_not_load_flow_data": "Methu llwytho data llif.",
-  "p.plans.pid.handover.handover_is_about_people_so": "Mae trosglwyddo'n ymwneud â phobl, felly mae angen y caniatâd i reoli pobl.",
+  "p.plans.pid.handover.handover_is_about_people_so":
+    "Mae trosglwyddo'n ymwneud â phobl, felly mae angen y caniatâd i reoli pobl.",
   "p.plans.pid.handover.could_not_preview": "Methu rhagweld",
-  "p.plans.pid.handover.what_this_person_holds_changed": "Newidiodd yr hyn y mae'r person hwn yn ei ddal ers y rhagolwg, felly ni newidiwyd dim. Rhagwelwch eto, yna ymrwymwch.",
+  "p.plans.pid.handover.what_this_person_holds_changed":
+    "Newidiodd yr hyn y mae'r person hwn yn ei ddal ers y rhagolwg, felly ni newidiwyd dim. Rhagwelwch eto, yna ymrwymwch.",
   "p.plans.pid.handover.could_not_commit": "Methu ymrwymo",
-  "p.plans.pid.handover.discarded_nothing_was_changed": "Taflwyd. Ni newidiwyd dim.",
+  "p.plans.pid.handover.discarded_nothing_was_changed":
+    "Taflwyd. Ni newidiwyd dim.",
   "p.plans.pid.import.choose_the_file_first": "Dewiswch y ffeil yn gyntaf.",
   "p.plans.pid.import.the_import_did_not_work": "Ni weithiodd y mewnforio",
-  "p.plans.pid.joint_risk.could_not_run_the_simulation": "Methu rhedeg yr efelychiad",
+  "p.plans.pid.joint_risk.could_not_run_the_simulation":
+    "Methu rhedeg yr efelychiad",
   "p.plans.pid.leveling.could_not_propose_a_leveling": "Methu cynnig lefelu",
-  "p.plans.pid.leveling.could_not_apply_the_moves": "Methu gweithredu'r symudiadau",
+  "p.plans.pid.leveling.could_not_apply_the_moves":
+    "Methu gweithredu'r symudiadau",
   "p.plans.pid.onboarding.could_not_load": "Methu llwytho",
-  "p.plans.pid.onboarding.could_not_open_the_checklist": "Methu agor y rhestr wirio",
+  "p.plans.pid.onboarding.could_not_open_the_checklist":
+    "Methu agor y rhestr wirio",
   "p.plans.pid.onboarding.checklist_started": "Dechreuwyd y rhestr wirio.",
   "p.plans.pid.onboarding.could_not_start": "Methu dechrau",
   "p.plans.pid.onboarding.could_not_save": "Methu cadw",
   "p.plans.pid.onboarding.checklist_completed": "Cwblhawyd y rhestr wirio.",
   "p.plans.pid.onboarding.could_not_complete": "Methu cwblhau",
-  "p.plans.pid.onboarding.say_why_you_are_cancelling": "Dywedwch pam eich bod yn canslo.",
+  "p.plans.pid.onboarding.say_why_you_are_cancelling":
+    "Dywedwch pam eich bod yn canslo.",
   "p.plans.pid.onboarding.checklist_cancelled": "Canslwyd y rhestr wirio.",
   "p.plans.pid.onboarding.could_not_cancel": "Methu canslo",
   "p.plans.pid.onboarding.could_not_record": "Methu cofnodi",
-  "p.plans.pid.raci.could_not_load_who_does": "Methu llwytho pwy sy'n gwneud beth",
+  "p.plans.pid.raci.could_not_load_who_does":
+    "Methu llwytho pwy sy'n gwneud beth",
   "p.plans.pid.raci.could_not_save": "Methu cadw",
-  "p.plans.pid.raci.use_a_person_or_worker": "Defnyddiwch gyfeirnod person: neu worker: gydag UUID.",
-  "p.plans.pid.schedule_health.could_not_run_the_schedule": "Methu rhedeg gwiriadau iechyd yr amserlen",
-  "p.plans.pid.schedule_risk.could_not_run_the_simulation": "Methu rhedeg yr efelychiad",
+  "p.plans.pid.raci.use_a_person_or_worker":
+    "Defnyddiwch gyfeirnod person: neu worker: gydag UUID.",
+  "p.plans.pid.schedule_health.could_not_run_the_schedule":
+    "Methu rhedeg gwiriadau iechyd yr amserlen",
+  "p.plans.pid.schedule_risk.could_not_run_the_simulation":
+    "Methu rhedeg yr efelychiad",
   "p.plans.pid.wbs.could_not_load_the_tasks": "Methu llwytho'r tasgau",
-  "p.plans.pid.wbs.link_counts_failed": "Nid oedd modd llwytho faint o ddolenni sydd gan bob tasg, felly ni ddangosir cyfrifon.",
+  "p.plans.pid.wbs.link_counts_failed":
+    "Nid oedd modd llwytho faint o ddolenni sydd gan bob tasg, felly ni ddangosir cyfrifon.",
   "p.plans.pid.what_if.could_not_load_the_plan": "Methu llwytho'r cynllun",
-  "p.plans.pid.what_if.at_most_edits_at_a": "Hyd at {MAX_EDITS} golygiad ar y tro.",
-  "p.plans.pid.what_if.edit_staged_preview_to_see": "Golygiad wedi'i lwyfannu. Rhagwelwch i weld beth mae'n ei wneud.",
-  "p.plans.pid.what_if.discarded_nothing_was_changed": "Taflwyd. Ni newidiwyd dim.",
+  "p.plans.pid.what_if.at_most_edits_at_a":
+    "Hyd at {MAX_EDITS} golygiad ar y tro.",
+  "p.plans.pid.what_if.edit_staged_preview_to_see":
+    "Golygiad wedi'i lwyfannu. Rhagwelwch i weld beth mae'n ei wneud.",
+  "p.plans.pid.what_if.discarded_nothing_was_changed":
+    "Taflwyd. Ni newidiwyd dim.",
   "p.plans.pid.what_if.could_not_preview": "Methu rhagweld",
-  "p.plans.pid.what_if.the_plan_changed_since_this": "Newidiodd y cynllun ers y rhagolwg hwn, felly ni weithredwyd dim. Rhagwelwch eto, yna ymrwymwch.",
+  "p.plans.pid.what_if.the_plan_changed_since_this":
+    "Newidiodd y cynllun ers y rhagolwg hwn, felly ni weithredwyd dim. Rhagwelwch eto, yna ymrwymwch.",
   "p.plans.pid.what_if.could_not_commit": "Methu ymrwymo",
   "p.plans.pid.what_if.to": "{early_start} i {early_finish}",
   "p.plans.pid.what_if.not_scheduled": "heb ei amserlennu",
@@ -2438,9 +2971,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.security.security_ppm": "Diogelwch — PPM",
   "p.technology.technology_ppm": "Technoleg — PPM",
   "p.tour.tour_main_x_plans": "Taith · Cynlluniau Main X",
-  "p.verify.this_sign_in_link_is": "Mae tocyn ar goll o'r ddolen mewngofnodi hon.",
-  "p.verify.we_could_not_reach_the": "Methwyd cyrraedd y gwasanaeth mewngofnodi. Rhowch gynnig arall arni ymhen munud.",
-  "p.verify.this_sign_in_link_is_2": "Mae'r ddolen mewngofnodi hon yn annilys neu wedi dod i ben.",
+  "p.verify.this_sign_in_link_is":
+    "Mae tocyn ar goll o'r ddolen mewngofnodi hon.",
+  "p.verify.we_could_not_reach_the":
+    "Methwyd cyrraedd y gwasanaeth mewngofnodi. Rhowch gynnig arall arni ymhen munud.",
+  "p.verify.this_sign_in_link_is_2":
+    "Mae'r ddolen mewngofnodi hon yn annilys neu wedi dod i ben.",
   "l.ceo_view.gate_review": "Adolygiad porth",
   "l.ceo_view.scenario_committed": "Ymrwymwyd i'r senario",
   "l.ceo_view.proposal": "Cynnig",
@@ -2450,7 +2986,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.CumulativeFlow.todo": "I'w wneud",
   "l.document_view.draft": "Drafft",
   "l.document_view.in_review": "Dan adolygiad",
-  "l.document_view.approved_not_yet_in_force": "Cymeradwywyd, ddim mewn grym eto",
+  "l.document_view.approved_not_yet_in_force":
+    "Cymeradwywyd, ddim mewn grym eto",
   "l.document_view.replaced": "Disodlwyd",
   "l.document_view.send_for_review": "Anfon i'w adolygu",
   "l.document_view.approve": "Cymeradwyo",
@@ -2459,29 +2996,48 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.document_view.waiting_for_the_approver": "Yn aros am y cymeradwywr",
   "l.document_view.approved": "Cymeradwywyd",
   "l.document_view.change_this_document": "Newid y ddogfen hon",
-  "l.document_view.someone_else_approves_it_you": "Mae rhywun arall yn ei gymeradwyo: ni allwch gymeradwyo eich dogfen eich hun.",
-  "l.document_view.only_the_person_asked_can": "Dim ond y person y gofynnwyd iddo all benderfynu.",
-  "l.document_view.it_comes_into_force_today": "Daw i rym heddiw ac mae'n disodli'r fersiwn sydd mewn grym ar hyn o bryd.",
-  "l.document_view.the_next_draft_starts_as": "Mae'r drafft nesaf yn dechrau fel copi o'r testun diweddaraf.",
+  "l.document_view.someone_else_approves_it_you":
+    "Mae rhywun arall yn ei gymeradwyo: ni allwch gymeradwyo eich dogfen eich hun.",
+  "l.document_view.only_the_person_asked_can":
+    "Dim ond y person y gofynnwyd iddo all benderfynu.",
+  "l.document_view.it_comes_into_force_today":
+    "Daw i rym heddiw ac mae'n disodli'r fersiwn sydd mewn grym ar hyn o bryd.",
+  "l.document_view.the_next_draft_starts_as":
+    "Mae'r drafft nesaf yn dechrau fel copi o'r testun diweddaraf.",
   "l.ev_view.on_track": "ar y trywydd iawn",
   "l.ev_view.off_plan": "oddi ar y cynllun",
   "l.ev_view.not_yet_known": "ddim yn hysbys eto",
-  "l.glossary.schedule_performance_index_work_done": "Mynegai perfformiad amserlen: gwaith a wnaed o'i gymharu â'r gwaith a gynlluniwyd erbyn hyn. Mae uwchlaw 1.00 ar y blaen i'r cynllun.",
-  "l.glossary.cost_performance_index_value_of": "Mynegai perfformiad cost: gwerth y gwaith a wnaed o'i gymharu â'r hyn a gostiodd. Mae uwchlaw 1.00 yn golygu o dan y gyllideb.",
-  "l.glossary.schedule_index_by_time_how": "Mynegai amserlen yn ôl amser: pa mor bell ar hyd y cynllun ydym o ran amser, sy'n aros yn wir hyd yn oed pan fydd prosiect yn gorffen yn hwyr.",
-  "l.glossary.earned_value_the_budget_for": "Gwerth enilledig: y gyllideb ar gyfer y gwaith a gwblhawyd mewn gwirionedd.",
-  "l.glossary.planned_value_the_budget_for": "Gwerth cynlluniedig: y gyllideb ar gyfer y gwaith a ddylai fod wedi gorffen erbyn hyn.",
-  "l.glossary.actual_cost_what_has_really": "Cost gwirioneddol: yr hyn a wariwyd mewn gwirionedd.",
-  "l.glossary.estimate_at_completion_the_expected": "Amcangyfrif wrth gwblhau: y gost derfynol ddisgwyliedig.",
-  "l.glossary.estimate_to_complete_what_is": "Amcangyfrif i gwblhau: yr hyn y disgwylir ei wario o hyd.",
-  "l.glossary.variance_at_completion_the_expected": "Amrywiant ar gwblhau: y gost derfynol ddisgwyliedig yn erbyn y gyllideb.",
+  "l.glossary.schedule_performance_index_work_done":
+    "Mynegai perfformiad amserlen: gwaith a wnaed o'i gymharu â'r gwaith a gynlluniwyd erbyn hyn. Mae uwchlaw 1.00 ar y blaen i'r cynllun.",
+  "l.glossary.cost_performance_index_value_of":
+    "Mynegai perfformiad cost: gwerth y gwaith a wnaed o'i gymharu â'r hyn a gostiodd. Mae uwchlaw 1.00 yn golygu o dan y gyllideb.",
+  "l.glossary.schedule_index_by_time_how":
+    "Mynegai amserlen yn ôl amser: pa mor bell ar hyd y cynllun ydym o ran amser, sy'n aros yn wir hyd yn oed pan fydd prosiect yn gorffen yn hwyr.",
+  "l.glossary.earned_value_the_budget_for":
+    "Gwerth enilledig: y gyllideb ar gyfer y gwaith a gwblhawyd mewn gwirionedd.",
+  "l.glossary.planned_value_the_budget_for":
+    "Gwerth cynlluniedig: y gyllideb ar gyfer y gwaith a ddylai fod wedi gorffen erbyn hyn.",
+  "l.glossary.actual_cost_what_has_really":
+    "Cost gwirioneddol: yr hyn a wariwyd mewn gwirionedd.",
+  "l.glossary.estimate_at_completion_the_expected":
+    "Amcangyfrif wrth gwblhau: y gost derfynol ddisgwyliedig.",
+  "l.glossary.estimate_to_complete_what_is":
+    "Amcangyfrif i gwblhau: yr hyn y disgwylir ei wario o hyd.",
+  "l.glossary.variance_at_completion_the_expected":
+    "Amrywiant ar gwblhau: y gost derfynol ddisgwyliedig yn erbyn y gyllideb.",
   "l.glossary.red_amber_or_green_a": "Coch, ambr neu wyrdd: golau statws.",
-  "l.glossary.responsible_accountable_consulted_in": "Cyfrifol, Atebol, Ymgynghorwyd, Hysbyswyd: pwy sy'n gwneud y gwaith, pwy sy'n ei gymeradwyo, pwy a ofynnir a phwy a hysbysir.",
-  "l.glossary.a_way_of_weighting_the": "Ffordd o roi mwy o bwys ar yr amcangyfrif tebygol nag ar yr achosion gorau a gwaethaf.",
-  "l.glossary.key_performance_indicator_a_measure": "Dangosydd perfformiad allweddol: mesur a olrheinir dros amser yn erbyn targed.",
-  "l.glossary.key_performance_indicators_measures_": "Dangosyddion perfformiad allweddol: mesurau a olrheinir dros amser yn erbyn targed.",
-  "l.glossary.objective_and_key_results_a": "Amcan a chanlyniadau allweddol: nod gydag ychydig o ganlyniadau mesuradwy.",
-  "l.glossary.objectives_and_key_results_goals": "Amcanion a chanlyniadau allweddol: nodau gydag ychydig o ganlyniadau mesuradwy.",
+  "l.glossary.responsible_accountable_consulted_in":
+    "Cyfrifol, Atebol, Ymgynghorwyd, Hysbyswyd: pwy sy'n gwneud y gwaith, pwy sy'n ei gymeradwyo, pwy a ofynnir a phwy a hysbysir.",
+  "l.glossary.a_way_of_weighting_the":
+    "Ffordd o roi mwy o bwys ar yr amcangyfrif tebygol nag ar yr achosion gorau a gwaethaf.",
+  "l.glossary.key_performance_indicator_a_measure":
+    "Dangosydd perfformiad allweddol: mesur a olrheinir dros amser yn erbyn targed.",
+  "l.glossary.key_performance_indicators_measures_":
+    "Dangosyddion perfformiad allweddol: mesurau a olrheinir dros amser yn erbyn targed.",
+  "l.glossary.objective_and_key_results_a":
+    "Amcan a chanlyniadau allweddol: nod gydag ychydig o ganlyniadau mesuradwy.",
+  "l.glossary.objectives_and_key_results_goals":
+    "Amcanion a chanlyniadau allweddol: nodau gydag ychydig o ganlyniadau mesuradwy.",
   "l.import_view.jira_csv_export": "Jira (allforio CSV)",
   "l.import_view.asana_csv_export": "Asana (allforio CSV)",
   "l.import_view.microsoft_project_xml_file": "Microsoft Project (ffeil XML)",
@@ -2492,7 +3048,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.import_view.dates_not_understood": "Dyddiadau heb eu deall",
   "l.import_view.fields_shortened": "Meysydd a fyrhawyd",
   "l.import_view.status_notes": "Nodiadau statws",
-  "l.import_view.resources_not_matched_to_people": "Adnoddau heb eu paru â phobl",
+  "l.import_view.resources_not_matched_to_people":
+    "Adnoddau heb eu paru â phobl",
   "l.import_view.costs_not_imported": "Costau heb eu mewnforio",
   "l.import_view.schedules_not_imported": "Amserlenni heb eu mewnforio",
   "l.import_view.constraints_not_imported": "Cyfyngiadau heb eu mewnforio",
@@ -2504,95 +3061,152 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.milestone_view.at_risk": "Mewn perygl",
   "l.milestone_view.forecast_late": "Rhagolwg hwyr",
   "l.milestone_view.no_forecast": "Dim rhagolwg",
-  "l.milestone_view.it_is_not_linked_to": "Nid yw wedi'i gysylltu ag unrhyw dasg, felly nid oes dim i'w ragweld ohono.",
-  "l.milestone_view.its_open_tasks_have_no": "Nid oes gan ei thasgau agored unrhyw ddyddiadau y gall yr amserlen eu gosod (rhowch hyd a dyddiad dechrau neu ragflaenydd iddynt).",
-  "l.milestone_view.the_plan_s_dependencies_contain": "Mae dibyniaethau'r cynllun yn cynnwys cylch, felly ni ellir gwneud unrhyw ragolwg.",
-  "l.okr_view.not_measurable_the_start_and": "Methu mesur: mae'r dechrau a'r targed yr un fath, felly nid oes pellter i'w deithio.",
-  "l.okr_view.not_measurable_a_maintain_key": "Methu mesur: mae canlyniad allweddol cynnal angen band goddefiant.",
-  "l.okr_view.not_measurable_the_numbers_are": "Methu mesur: mae'r rhifau'n rhy fawr i'w sgorio.",
-  "l.onboarding_view.someone_joins_this_plan": "Mae rhywun yn ymuno â'r cynllun hwn",
-  "l.onboarding_view.someone_leaves_this_plan": "Mae rhywun yn gadael y cynllun hwn",
+  "l.milestone_view.it_is_not_linked_to":
+    "Nid yw wedi'i gysylltu ag unrhyw dasg, felly nid oes dim i'w ragweld ohono.",
+  "l.milestone_view.its_open_tasks_have_no":
+    "Nid oes gan ei thasgau agored unrhyw ddyddiadau y gall yr amserlen eu gosod (rhowch hyd a dyddiad dechrau neu ragflaenydd iddynt).",
+  "l.milestone_view.the_plan_s_dependencies_contain":
+    "Mae dibyniaethau'r cynllun yn cynnwys cylch, felly ni ellir gwneud unrhyw ragolwg.",
+  "l.okr_view.not_measurable_the_start_and":
+    "Methu mesur: mae'r dechrau a'r targed yr un fath, felly nid oes pellter i'w deithio.",
+  "l.okr_view.not_measurable_a_maintain_key":
+    "Methu mesur: mae canlyniad allweddol cynnal angen band goddefiant.",
+  "l.okr_view.not_measurable_the_numbers_are":
+    "Methu mesur: mae'r rhifau'n rhy fawr i'w sgorio.",
+  "l.onboarding_view.someone_joins_this_plan":
+    "Mae rhywun yn ymuno â'r cynllun hwn",
+  "l.onboarding_view.someone_leaves_this_plan":
+    "Mae rhywun yn gadael y cynllun hwn",
   "l.onboarding_view.take_this_plan_in": "Cymryd y cynllun hwn i mewn",
   "l.onboarding_view.close_this_plan_out": "Cau'r cynllun hwn",
   "l.onboarding_view.booking": "Archeb",
   "l.onboarding.executive": "Gweithredol",
-  "l.onboarding.outcomes_and_exposure_across_the": "Canlyniadau ac amlygiad ar draws yr ystad gyfan, nid unrhyw un cynllun.",
+  "l.onboarding.outcomes_and_exposure_across_the":
+    "Canlyniadau ac amlygiad ar draws yr ystad gyfan, nid unrhyw un cynllun.",
   "l.onboarding.read_the_executive_summary": "Darllen y crynodeb gweithredol",
-  "l.onboarding.health_decisions_benefits_realized_a": "Iechyd, penderfyniadau, buddion a wireddwyd, ac aliniad strategol mewn un olwg.",
+  "l.onboarding.health_decisions_benefits_realized_a":
+    "Iechyd, penderfyniadau, buddion a wireddwyd, ac aliniad strategol mewn un olwg.",
   "l.onboarding.open_the_at_a_glance": "Agor y dangosfwrdd cipolwg",
-  "l.onboarding.the_whole_estate_s_rag": "Statws RAG yr ystad gyfan a thorri amserlen ar unwaith.",
+  "l.onboarding.the_whole_estate_s_rag":
+    "Statws RAG yr ystad gyfan a thorri amserlen ar unwaith.",
   "l.onboarding.review_the_board_pack": "Adolygu'r pecyn bwrdd",
-  "l.onboarding.the_pack_a_board_meeting": "Y pecyn y byddai cyfarfod bwrdd yn ei gael mewn gwirionedd: buddsoddiadau a thueddiadau.",
-  "l.onboarding.check_budget_variance_and_exposure": "Gwirio amrywiant cyllideb ac amlygiad",
-  "l.onboarding.where_spend_is_diverging_from": "Lle mae gwariant yn gwyro oddi wrth y cynllun, fesul arian cyfred — ni chaiff arian cyfred byth ei adio at ei gilydd.",
-  "l.onboarding.compare_two_candidate_portfolios": "Cymharu dau bortffolio ymgeisiol",
-  "l.onboarding.what_if_scenarios_side_by": "Senarios rhedeg-os ochr yn ochr, cyn ymrwymo cyllid i'r naill neu'r llall.",
-  "l.onboarding.see_what_s_ranked_highest": "Gweld beth sydd â'r safle uchaf, a pham",
-  "l.onboarding.the_smart_score_queue_every": "Ciw'r Sgôr Clyfar — mae pob sgôr yn dangos y dystiolaeth y tu ôl iddo, neu'n dweud nad oes ganddo ddim.",
+  "l.onboarding.the_pack_a_board_meeting":
+    "Y pecyn y byddai cyfarfod bwrdd yn ei gael mewn gwirionedd: buddsoddiadau a thueddiadau.",
+  "l.onboarding.check_budget_variance_and_exposure":
+    "Gwirio amrywiant cyllideb ac amlygiad",
+  "l.onboarding.where_spend_is_diverging_from":
+    "Lle mae gwariant yn gwyro oddi wrth y cynllun, fesul arian cyfred — ni chaiff arian cyfred byth ei adio at ei gilydd.",
+  "l.onboarding.compare_two_candidate_portfolios":
+    "Cymharu dau bortffolio ymgeisiol",
+  "l.onboarding.what_if_scenarios_side_by":
+    "Senarios rhedeg-os ochr yn ochr, cyn ymrwymo cyllid i'r naill neu'r llall.",
+  "l.onboarding.see_what_s_ranked_highest":
+    "Gweld beth sydd â'r safle uchaf, a pham",
+  "l.onboarding.the_smart_score_queue_every":
+    "Ciw'r Sgôr Clyfar — mae pob sgôr yn dangos y dystiolaeth y tu ôl iddo, neu'n dweud nad oes ganddo ddim.",
   "l.onboarding.pmo_portfolio_manager": "PMO / rheolwr portffolio",
-  "l.onboarding.intake_governance_and_the_schedule": "Derbyn, llywodraethu, a'r amserlen ar draws pob cynllun.",
+  "l.onboarding.intake_governance_and_the_schedule":
+    "Derbyn, llywodraethu, a'r amserlen ar draws pob cynllun.",
   "l.onboarding.open_the_intake_pipeline": "Agor y biblinell dderbyn",
-  "l.onboarding.every_proposal_s_stage_from": "Cam pob cynnig, o ddrafft hyd at gymeradwyo.",
+  "l.onboarding.every_proposal_s_stage_from":
+    "Cam pob cynnig, o ddrafft hyd at gymeradwyo.",
   "l.onboarding.register_a_plan": "Cofrestru cynllun",
-  "l.onboarding.the_first_plan_you_create": "Y cynllun cyntaf y byddwch yn ei greu yw ffordd dda o weld siâp y llwyth cyfan.",
+  "l.onboarding.the_first_plan_you_create":
+    "Y cynllun cyntaf y byddwch yn ei greu yw ffordd dda o weld siâp y llwyth cyfan.",
   "l.onboarding.browse_the_plan_registry": "Pori'r gofrestr cynlluniau",
-  "l.onboarding.one_recursive_collection_kind_is": "Un casgliad ailadroddus — label yw `kind`, nid giât.",
+  "l.onboarding.one_recursive_collection_kind_is":
+    "Un casgliad ailadroddus — label yw `kind`, nid giât.",
   "l.onboarding.open_a_plan_s_governance": "Agor tab llywodraethu cynllun",
-  "l.onboarding.gate_reviews_risks_and_budget": "Adolygiadau porth, risgiau a llinellau cyllideb ar gyfer y cynllun hwnnw.",
+  "l.onboarding.gate_reviews_risks_and_budget":
+    "Adolygiadau porth, risgiau a llinellau cyllideb ar gyfer y cynllun hwnnw.",
   "l.onboarding.look_at_the_cross_plan": "Edrych ar yr amserlen drawsgynllun",
-  "l.onboarding.dependencies_the_critical_path_and": "Dibyniaethau, y llwybr critigol, ac unrhyw olynydd sy'n llithro.",
+  "l.onboarding.dependencies_the_critical_path_and":
+    "Dibyniaethau, y llwybr critigol, ac unrhyw olynydd sy'n llithro.",
   "l.onboarding.check_the_risk_register": "Gwirio'r gofrestr risgiau",
-  "l.onboarding.everything_open_or_mitigating_ranked": "Popeth sy'n agored neu'n cael ei liniaru, wedi'i restru yn ôl amlygiad.",
-  "l.onboarding.review_the_compliance_register": "Adolygu'r gofrestr cydymffurfiaeth",
-  "l.onboarding.standing_findings_across_the_estate": "Canfyddiadau parhaol ar draws yr ystad, nid dim ond un cynllun.",
+  "l.onboarding.everything_open_or_mitigating_ranked":
+    "Popeth sy'n agored neu'n cael ei liniaru, wedi'i restru yn ôl amlygiad.",
+  "l.onboarding.review_the_compliance_register":
+    "Adolygu'r gofrestr cydymffurfiaeth",
+  "l.onboarding.standing_findings_across_the_estate":
+    "Canfyddiadau parhaol ar draws yr ystad, nid dim ond un cynllun.",
   "l.onboarding.run_a_saved_report": "Rhedeg adroddiad wedi'i gadw",
-  "l.onboarding.a_filter_field_projection_saved": "Hidlydd + dewis meysydd wedi'u cadw i'w hailddefnyddio, a'u rhedeg ar gais.",
+  "l.onboarding.a_filter_field_projection_saved":
+    "Hidlydd + dewis meysydd wedi'u cadw i'w hailddefnyddio, a'u rhedeg ar gais.",
   "l.onboarding.resource_manager": "Rheolwr adnoddau",
-  "l.onboarding.who_is_allocated_where_and": "Pwy sydd wedi'i neilltuo ble, a sut mae darpariaeth yn llifo mewn gwirionedd.",
+  "l.onboarding.who_is_allocated_where_and":
+    "Pwy sydd wedi'i neilltuo ble, a sut mae darpariaeth yn llifo mewn gwirionedd.",
   "l.onboarding.check_the_capacity_rollup": "Gwirio crynodeb y capasiti",
-  "l.onboarding.who_is_over_allocated_this": "Pwy sydd wedi'i or-neilltuo yn y ffenestr hon, wedi'u hadio ar draws pob cynllun y maent arno.",
+  "l.onboarding.who_is_over_allocated_this":
+    "Pwy sydd wedi'i or-neilltuo yn y ffenestr hon, wedi'u hadio ar draws pob cynllun y maent arno.",
   "l.onboarding.open_a_plan_s_task": "Agor bwrdd tasgau cynllun",
-  "l.onboarding.the_kanban_board_that_task": "Y bwrdd Kanban y mae gwaith lefel tasg yn symud drwyddo mewn gwirionedd.",
+  "l.onboarding.the_kanban_board_that_task":
+    "Y bwrdd Kanban y mae gwaith lefel tasg yn symud drwyddo mewn gwirionedd.",
   "l.onboarding.read_that_plan_s_flow": "Darllen ffigurau llif y cynllun hwnnw",
-  "l.onboarding.cycle_time_lead_time_and": "Amser beicio, amser arweiniol ac effeithlonrwydd llif — wedi'u deillio o hanes y bwrdd ei hun.",
-  "l.onboarding.scan_blocked_items_and_the": "Sganio eitemau a rwystrwyd a'r gymysgedd ddarparu",
-  "l.onboarding.what_s_stuck_the_moscow": "Beth sy'n sownd, y gymysgedd MoSCoW, a'r calendr cerrig milltir mewn un olwg.",
-  "l.onboarding.look_at_the_milestone_calendar": "Edrych ar y calendr cerrig milltir",
-  "l.onboarding.every_milestone_across_every_plan": "Pob carreg filltir ar draws pob cynllun, gan gynnwys dyddiadau dyledus.",
-  "l.onboarding.see_what_automations_are_configured": "Gweld pa awtomeiddio sydd wedi'i ffurfweddu",
-  "l.onboarding.what_fires_on_a_field": "Beth sy'n tanio pan fydd maes yn newid, a beth mae'n ei wneud pan fydd yn gwneud hynny.",
+  "l.onboarding.cycle_time_lead_time_and":
+    "Amser beicio, amser arweiniol ac effeithlonrwydd llif — wedi'u deillio o hanes y bwrdd ei hun.",
+  "l.onboarding.scan_blocked_items_and_the":
+    "Sganio eitemau a rwystrwyd a'r gymysgedd ddarparu",
+  "l.onboarding.what_s_stuck_the_moscow":
+    "Beth sy'n sownd, y gymysgedd MoSCoW, a'r calendr cerrig milltir mewn un olwg.",
+  "l.onboarding.look_at_the_milestone_calendar":
+    "Edrych ar y calendr cerrig milltir",
+  "l.onboarding.every_milestone_across_every_plan":
+    "Pob carreg filltir ar draws pob cynllun, gan gynnwys dyddiadau dyledus.",
+  "l.onboarding.see_what_automations_are_configured":
+    "Gweld pa awtomeiddio sydd wedi'i ffurfweddu",
+  "l.onboarding.what_fires_on_a_field":
+    "Beth sy'n tanio pan fydd maes yn newid, a beth mae'n ei wneud pan fydd yn gwneud hynny.",
   "l.onboarding.open_collaborative_reviews": "Agor adolygiadau cydweithredol",
-  "l.onboarding.where_a_plan_gets_a": "Lle mae cynllun yn cael ail farn cyn gwneud penderfyniad arno.",
+  "l.onboarding.where_a_plan_gets_a":
+    "Lle mae cynllun yn cael ail farn cyn gwneud penderfyniad arno.",
   "l.raci_view.responsible": "Cyfrifol",
   "l.raci_view.accountable": "Atebol",
   "l.raci_view.consulted": "Ymgynghorwyd",
   "l.raci_view.informed": "Hysbyswyd",
   "l.raci_view.does_the_work": "yn gwneud y gwaith",
-  "l.raci_view.answers_for_it_and_signs": "yn ateb drosti ac yn ei chymeradwyo (un fesul tasg)",
+  "l.raci_view.answers_for_it_and_signs":
+    "yn ateb drosti ac yn ei chymeradwyo (un fesul tasg)",
   "l.raci_view.is_asked_before": "gofynnir iddo o'r blaen",
   "l.raci_view.is_told_after": "hysbysir ar ôl",
-  "l.scheduling_view.no_schedule_baseline_has_been": "Nid oes llinell sylfaen amserlen wedi'i chymryd ar gyfer y cynllun hwn.",
-  "l.scheduling_view.nothing_was_baselined_to_finish": "Ni osodwyd llinell sylfaen i ddim orffen erbyn dyddiad y statws.",
-  "l.scheduling_view.the_plan_s_dependencies_contain": "Mae dibyniaethau'r cynllun yn cynnwys cylch.",
-  "l.scheduling_view.there_are_no_incomplete_tasks": "Nid oes tasgau anghyflawn i'w mesur.",
-  "l.scheduling_view.there_are_no_relationships_between": "Nid oes perthnasoedd rhwng tasgau i'w mesur.",
-  "l.scheduling_view.no_incomplete_task_has_dates": "Nid oes gan unrhyw dasg anghyflawn ddyddiadau y gall yr amserlen eu gosod.",
-  "l.scheduling_view.no_incomplete_task_has_a": "Nid oes gan unrhyw dasg anghyflawn hyd.",
+  "l.scheduling_view.no_schedule_baseline_has_been":
+    "Nid oes llinell sylfaen amserlen wedi'i chymryd ar gyfer y cynllun hwn.",
+  "l.scheduling_view.nothing_was_baselined_to_finish":
+    "Ni osodwyd llinell sylfaen i ddim orffen erbyn dyddiad y statws.",
+  "l.scheduling_view.the_plan_s_dependencies_contain":
+    "Mae dibyniaethau'r cynllun yn cynnwys cylch.",
+  "l.scheduling_view.there_are_no_incomplete_tasks":
+    "Nid oes tasgau anghyflawn i'w mesur.",
+  "l.scheduling_view.there_are_no_relationships_between":
+    "Nid oes perthnasoedd rhwng tasgau i'w mesur.",
+  "l.scheduling_view.no_incomplete_task_has_dates":
+    "Nid oes gan unrhyw dasg anghyflawn ddyddiadau y gall yr amserlen eu gosod.",
+  "l.scheduling_view.no_incomplete_task_has_a":
+    "Nid oes gan unrhyw dasg anghyflawn hyd.",
   "l.scheduling_view.the_plan_has_no_tasks": "Nid oes tasgau gan y cynllun.",
-  "l.scheduling_view.there_is_no_critical_task": "Nid oes tasg critigol i'w phrofi.",
-  "l.scheduling_view.no_path_remains_to_measure": "Nid oes unrhyw lwybr ar ôl i'w fesur.",
-  "l.scheduling_view.every_task_involved_has_already": "Mae pob tasg dan sylw eisoes wedi dechrau, felly ni all yr un symud.",
-  "l.scheduling_view.the_tasks_involved_are_critical": "Mae'r tasgau dan sylw yn gritigol; byddai symud un yn symud y diwedd. Caniatewch dasgau critigol i weld y gost honno.",
-  "l.scheduling_view.delaying_a_task_enough_would": "Byddai gohirio tasg ddigon yn torri'r amserlen (llithriad negyddol neu ddiwedd diweddarach).",
-  "l.scheduling_view.a_task_involved_has_a": "Mae gan dasg dan sylw gyfyngiad caled ac ni ellir ei symud.",
-  "l.scheduling_view.the_schedule_would_not_let": "Ni fyddai'r amserlen yn gadael i'r dasg ddechrau'n hwyrach.",
-  "l.scheduling_view.the_search_stopped_at_its": "Stopiodd y chwiliad yn ei derfyn cyn datrys hyn.",
+  "l.scheduling_view.there_is_no_critical_task":
+    "Nid oes tasg critigol i'w phrofi.",
+  "l.scheduling_view.no_path_remains_to_measure":
+    "Nid oes unrhyw lwybr ar ôl i'w fesur.",
+  "l.scheduling_view.every_task_involved_has_already":
+    "Mae pob tasg dan sylw eisoes wedi dechrau, felly ni all yr un symud.",
+  "l.scheduling_view.the_tasks_involved_are_critical":
+    "Mae'r tasgau dan sylw yn gritigol; byddai symud un yn symud y diwedd. Caniatewch dasgau critigol i weld y gost honno.",
+  "l.scheduling_view.delaying_a_task_enough_would":
+    "Byddai gohirio tasg ddigon yn torri'r amserlen (llithriad negyddol neu ddiwedd diweddarach).",
+  "l.scheduling_view.a_task_involved_has_a":
+    "Mae gan dasg dan sylw gyfyngiad caled ac ni ellir ei symud.",
+  "l.scheduling_view.the_schedule_would_not_let":
+    "Ni fyddai'r amserlen yn gadael i'r dasg ddechrau'n hwyrach.",
+  "l.scheduling_view.the_search_stopped_at_its":
+    "Stopiodd y chwiliad yn ei derfyn cyn datrys hyn.",
   "l.scheduling_view.no_probability": "dim tebygolrwydd",
   "l.scheduling_view.no_task_named": "dim tasg wedi'i henwi",
-  "l.scheduling_view.no_impact_in_business_days": "dim effaith mewn diwrnodau gwaith",
+  "l.scheduling_view.no_impact_in_business_days":
+    "dim effaith mewn diwrnodau gwaith",
   "l.scheduling_view.the_risk_is_not_open": "nid yw'r risg yn agored",
   "l.scheduling_view.its_task_is_not_on": "nid yw ei thasg ar yr amserlen",
-  "l.scheduling_view.the_plan_has_no_budget": "nid oes llinell gyllideb gan y cynllun yn ei arian cyfred",
+  "l.scheduling_view.the_plan_has_no_budget":
+    "nid oes llinell gyllideb gan y cynllun yn ei arian cyfred",
   "l.whatif_view.move_a_task_set_its": "Symud tasg (gosod ei dechrau)",
   "l.whatif_view.change_a_task_s_duration": "Newid hyd tasg",
   "l.whatif_view.change_a_task_s_constraint": "Newid cyfyngiad tasg",
@@ -2603,20 +3217,29 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.work_view.fixed_units": "Unedau sefydlog",
   "l.work_view.fixed_duration": "Hyd sefydlog",
   "l.work_view.fixed_work": "Gwaith sefydlog",
-  "l.work_view.changing_the_work_changes_how": "Mae newid y gwaith yn newid pa mor hir y mae'n ei gymryd; mae cyfran y diwrnod yn aros yr un fath.",
-  "l.work_view.changing_the_work_changes_the": "Mae newid y gwaith yn newid cyfran y diwrnod; mae'r hyd yn aros yr un fath.",
-  "l.work_view.changing_the_duration_or_the": "Mae newid y hyd neu gyfran y diwrnod yn newid y llall; mae'r gwaith yn aros yr un fath.",
+  "l.work_view.changing_the_work_changes_how":
+    "Mae newid y gwaith yn newid pa mor hir y mae'n ei gymryd; mae cyfran y diwrnod yn aros yr un fath.",
+  "l.work_view.changing_the_work_changes_the":
+    "Mae newid y gwaith yn newid cyfran y diwrnod; mae'r hyd yn aros yr un fath.",
+  "l.work_view.changing_the_duration_or_the":
+    "Mae newid y hyd neu gyfran y diwrnod yn newid y llall; mae'r gwaith yn aros yr un fath.",
   "l.work_view.flat_the_same_each_day": "Gwastad: yr un faint bob dydd",
-  "l.work_view.front_loaded_more_at_the": "Wedi'i lwytho tua'r dechrau: mwy ar y dechrau",
-  "l.work_view.back_loaded_more_at_the": "Wedi'i lwytho tua'r diwedd: mwy ar y diwedd",
+  "l.work_view.front_loaded_more_at_the":
+    "Wedi'i lwytho tua'r dechrau: mwy ar y dechrau",
+  "l.work_view.back_loaded_more_at_the":
+    "Wedi'i lwytho tua'r diwedd: mwy ar y diwedd",
   "l.work_view.bell_most_in_the_middle": "Cloch: y rhan fwyaf yn y canol",
-  "l.work_view.turtle_ramps_up_holds_ramps": "Crwban: yn codi, yn dal, yn gostwng",
+  "l.work_view.turtle_ramps_up_holds_ramps":
+    "Crwban: yn codi, yn dal, yn gostwng",
   "l.work_view.custom_percentages": "Canrannau personol",
   "l.work_view.has_no_dates_yet": "nid oes ganddi ddyddiadau eto",
-  "l.work_view.has_no_business_day_to": "nid oes diwrnod gwaith iddi ddisgyn arno",
-  "l.work_view.has_a_contour_that_gives": "mae ganddi gyfuchlin nad yw'n rhoi pwysau iddi",
+  "l.work_view.has_no_business_day_to":
+    "nid oes diwrnod gwaith iddi ddisgyn arno",
+  "l.work_view.has_a_contour_that_gives":
+    "mae ganddi gyfuchlin nad yw'n rhoi pwysau iddi",
   "l.work_view.no_rate_applies": "nid oes cyfradd yn berthnasol",
-  "l.work_view.no_rate_applied_on_some": "ni chymhwyswyd cyfradd ar rai diwrnodau",
+  "l.work_view.no_rate_applied_on_some":
+    "ni chymhwyswyd cyfradd ar rai diwrnodau",
   "l.work_view.has_nobody_assigned": "nid oes neb wedi'i neilltuo",
   "p._layout_svelte.reviews": "Adolygiadau",
   "p._layout_svelte.automations": "Awtomeiddio",
@@ -2626,8 +3249,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ceo.amber": "Ambr",
   "p.ceo.green": "Gwyrdd",
   "p.display.saved_on_this_device": "Cadwyd ar y ddyfais hon.",
-  "p.display.saved_to_your_account_so": "Cadwyd i'ch cyfrif, felly mae'n eich dilyn i borwyr eraill.",
-  "p.display.could_not_save_to_your": "Methu cadw i'ch cyfrif ar hyn o bryd; mae'n cael ei gadw ar y ddyfais hon.",
+  "p.display.saved_to_your_account_so":
+    "Cadwyd i'ch cyfrif, felly mae'n eich dilyn i borwyr eraill.",
+  "p.display.could_not_save_to_your":
+    "Methu cadw i'ch cyfrif ar hyn o bryd; mae'n cael ei gadw ar y ddyfais hon.",
   "p.me.today": "Heddiw",
   "p.me.this_week": "Yr wythnos hon",
   "p.me.later": "Yn ddiweddarach",
@@ -2643,10 +3268,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.common.calendar_day_other": "{n} diwrnod calendr",
   "l.milestone_view.rescheduled_one": "aildrefnwyd {count} gwaith",
   "l.milestone_view.rescheduled_other": "aildrefnwyd {count} gwaith",
-  "l.milestone_view.open_of_linked_one": "{open_tasks} o {linked_tasks} tasg yn dal ar agor",
-  "l.milestone_view.open_of_linked_other": "{open_tasks} o {linked_tasks} tasg yn dal ar agor",
-  "l.cpm_view.restricted_one": "Mae {n} dibyniaeth ar gynllun na allwch ei weld wedi'i gadael allan o'r dyddiadau hyn.",
-  "l.cpm_view.restricted_other": "Mae {n} dibyniaeth ar gynllun na allwch ei weld wedi'u gadael allan o'r dyddiadau hyn.",
+  "l.milestone_view.open_of_linked_one":
+    "{open_tasks} o {linked_tasks} tasg yn dal ar agor",
+  "l.milestone_view.open_of_linked_other":
+    "{open_tasks} o {linked_tasks} tasg yn dal ar agor",
+  "l.cpm_view.restricted_one":
+    "Mae {n} dibyniaeth ar gynllun na allwch ei weld wedi'i gadael allan o'r dyddiadau hyn.",
+  "l.cpm_view.restricted_other":
+    "Mae {n} dibyniaeth ar gynllun na allwch ei weld wedi'u gadael allan o'r dyddiadau hyn.",
   "l.cpm_view.monday": "Dydd Llun",
   "l.cpm_view.tuesday": "Dydd Mawrth",
   "l.cpm_view.wednesday": "Dydd Mercher",
@@ -2654,27 +3283,42 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.cpm_view.friday": "Dydd Gwener",
   "l.cpm_view.saturday": "Dydd Sadwrn",
   "l.cpm_view.sunday": "Dydd Sul",
-  "l.ev_view.gap_more": "{money} yn fwy o werth wedi'i ennill na'r cynllun erbyn hyn",
-  "l.ev_view.gap_less": "{money} yn llai o werth wedi'i ennill na'r cynllun erbyn hyn",
-  "l.ev_view.cost_line_less": "{word}: CPI {ratio}, {money} yn llai wedi'i wario na'r gwaith a enillwyd.",
-  "l.ev_view.cost_line_more": "{word}: CPI {ratio}, {money} yn fwy wedi'i wario na'r gwaith a enillwyd.",
-  "l.ev_view.tasks_counted_one": "Cyfrifwyd {count} tasg, wedi'u pwysoli {weighting}; {how}",
-  "l.ev_view.tasks_counted_other": "Cyfrifwyd {count} tasg, wedi'u pwysoli {weighting}; {how}",
+  "l.ev_view.gap_more":
+    "{money} yn fwy o werth wedi'i ennill na'r cynllun erbyn hyn",
+  "l.ev_view.gap_less":
+    "{money} yn llai o werth wedi'i ennill na'r cynllun erbyn hyn",
+  "l.ev_view.cost_line_less":
+    "{word}: CPI {ratio}, {money} yn llai wedi'i wario na'r gwaith a enillwyd.",
+  "l.ev_view.cost_line_more":
+    "{word}: CPI {ratio}, {money} yn fwy wedi'i wario na'r gwaith a enillwyd.",
+  "l.ev_view.tasks_counted_one":
+    "Cyfrifwyd {count} tasg, wedi'u pwysoli {weighting}; {how}",
+  "l.ev_view.tasks_counted_other":
+    "Cyfrifwyd {count} tasg, wedi'u pwysoli {weighting}; {how}",
   "l.ev_view.equally": "yn gyfartal",
   "l.onboarding_view.would_move_one": "Byddai {n} eitem yn symud i {to}.",
   "l.onboarding_view.would_move_other": "Byddai {n} eitem yn symud i {to}.",
-  "l.onboarding_view.would_release_one": "Byddai {n} eitem yn cael ei rhyddhau: tasgau a risgiau heb eu neilltuo, archebion a rolau wedi'u tynnu.",
-  "l.onboarding_view.would_release_other": "Byddai {n} eitem yn cael eu rhyddhau: tasgau a risgiau heb eu neilltuo, archebion a rolau wedi'u tynnu.",
-  "l.whatif_view.set_duration_one": "Gosod “{name}” i {duration_days} diwrnod gwaith",
-  "l.whatif_view.set_duration_other": "Gosod “{name}” i {duration_days} diwrnod gwaith",
-  "l.work_view.over_capacity_one": "Dros y capasiti am {days_over} diwrnod calendr ({from} i {to}): mae hyn yn gofyn am fwy nag y gall y person ei roi.",
-  "l.work_view.over_capacity_other": "Dros y capasiti am {days_over} diwrnod calendr ({from} i {to}): mae hyn yn gofyn am fwy nag y gall y person ei roi.",
+  "l.onboarding_view.would_release_one":
+    "Byddai {n} eitem yn cael ei rhyddhau: tasgau a risgiau heb eu neilltuo, archebion a rolau wedi'u tynnu.",
+  "l.onboarding_view.would_release_other":
+    "Byddai {n} eitem yn cael eu rhyddhau: tasgau a risgiau heb eu neilltuo, archebion a rolau wedi'u tynnu.",
+  "l.whatif_view.set_duration_one":
+    "Gosod “{name}” i {duration_days} diwrnod gwaith",
+  "l.whatif_view.set_duration_other":
+    "Gosod “{name}” i {duration_days} diwrnod gwaith",
+  "l.work_view.over_capacity_one":
+    "Dros y capasiti am {days_over} diwrnod calendr ({from} i {to}): mae hyn yn gofyn am fwy nag y gall y person ei roi.",
+  "l.work_view.over_capacity_other":
+    "Dros y capasiti am {days_over} diwrnod calendr ({from} i {to}): mae hyn yn gofyn am fwy nag y gall y person ei roi.",
   "p.plans.pid.board.blocked_for": " · wedi'i rwystro {days}",
-  "p.plans.pid.handover.done_one": "Wedi'i wneud: trosglwyddwyd a chofnodwyd {count} eitem.",
-  "p.plans.pid.handover.done_other": "Wedi'i wneud: trosglwyddwyd a chofnodwyd {count} eitem.",
+  "p.plans.pid.handover.done_one":
+    "Wedi'i wneud: trosglwyddwyd a chofnodwyd {count} eitem.",
+  "p.plans.pid.handover.done_other":
+    "Wedi'i wneud: trosglwyddwyd a chofnodwyd {count} eitem.",
   "p.plans.pid.what_if.committed_one": "Ymrwymwyd: cofnodwyd {count} newid.",
   "p.plans.pid.what_if.committed_other": "Ymrwymwyd: cofnodwyd {count} newid.",
-  "l.import_view.mspdi_hint": "Yn Microsoft Project defnyddiwch Ffeil → Cadw Fel → Fformat XML. Ni ellir darllen ffeil .mpp.",
+  "l.import_view.mspdi_hint":
+    "Yn Microsoft Project defnyddiwch Ffeil → Cadw Fel → Fformat XML. Ni ellir darllen ffeil .mpp.",
   "c.CalendarMonth.january": "Ionawr",
   "c.CalendarMonth.february": "Chwefror",
   "c.CalendarMonth.march": "Mawrth",
@@ -2709,10 +3353,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.scheduling_view.strength_weak": "gwan",
   "l.simulation_inputs.planned_word": "cynlluniedig",
   "p.plans.pid.board.unassigned": "heb ei neilltuo",
-  "p.plans.pid.costs.recorded_one": "Cofnodwyd {recorded} cofnod amser; roedd {already_recorded} eisoes wedi'u cofnodi; nid oes cyfradd gan {length}.",
-  "p.plans.pid.costs.recorded_other": "Cofnodwyd {recorded} cofnod amser; roedd {already_recorded} eisoes wedi'u cofnodi; nid oes cyfradd gan {length}.",
-  "c.CostRiskView.histogram_label": "Histogram o gost {currency} efelychiedig, gyda P50, P80, P90 a'r gyllideb wedi'u marcio",
-  "c.CumulativeFlow.chart_label": "Llif cronnus dros {days} diwrnod calendr, gan gyrraedd uchafswm o {peak} tasg",
+  "p.plans.pid.costs.recorded_one":
+    "Cofnodwyd {recorded} cofnod amser; roedd {already_recorded} eisoes wedi'u cofnodi; nid oes cyfradd gan {length}.",
+  "p.plans.pid.costs.recorded_other":
+    "Cofnodwyd {recorded} cofnod amser; roedd {already_recorded} eisoes wedi'u cofnodi; nid oes cyfradd gan {length}.",
+  "c.CostRiskView.histogram_label":
+    "Histogram o gost {currency} efelychiedig, gyda P50, P80, P90 a'r gyllideb wedi'u marcio",
+  "c.CumulativeFlow.chart_label":
+    "Llif cronnus dros {days} diwrnod calendr, gan gyrraedd uchafswm o {peak} tasg",
   "p.plans.pid.onboarding.owner_of": "Perchennog {title}",
   "p.plans.pid.onboarding.due_date_of": "Dyddiad dyledus {title}",
   "p.plans.pid.onboarding.why_skip_title": "Pam hepgor {title}",
@@ -2720,7 +3368,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.LilyGanttTable.cell_active": "{name}: {start} i {end}{ends}",
   "c.LilyGanttTable.ends_here": " (yn gorffen yma)",
   "c.LilyGanttTable.cell_not_scheduled": "{name}: heb ei amserlennu",
-  "l.simulation_inputs.range_business_days": "{optimistic} / {likely} / {pessimistic} diwrnod gwaith (optimistaidd / tebygol / pesimistaidd)",
+  "l.simulation_inputs.range_business_days":
+    "{optimistic} / {likely} / {pessimistic} diwrnod gwaith (optimistaidd / tebygol / pesimistaidd)",
   "l.enum.task_status.todo": "I'w wneud",
   "l.enum.task_status.in_progress": "Ar y gweill",
   "l.enum.task_status.in_review": "Dan adolygiad",
@@ -2758,11 +3407,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.band.medium": "canolig",
   "l.enum.band.low": "isel",
   "l.enum.band.unscored": "heb ei sgorio",
-  "l.enum.api.unauthorized": "Nid ydych wedi mewngofnodi, neu mae eich sesiwn wedi dod i ben.",
+  "l.enum.api.unauthorized":
+    "Nid ydych wedi mewngofnodi, neu mae eich sesiwn wedi dod i ben.",
   "l.enum.api.forbidden": "Nid oes gennych ganiatâd i wneud hynny.",
   "l.enum.api.not_found": "Heb ei ganfod.",
-  "l.enum.api.internal_error": "Gwall mewnol ar y gweinydd. Rhowch gynnig arall arni.",
-  "l.enum.api.rate_limited": "Gormod o geisiadau. Arhoswch eiliad a rhowch gynnig arall arni.",
+  "l.enum.api.internal_error":
+    "Gwall mewnol ar y gweinydd. Rhowch gynnig arall arni.",
+  "l.enum.api.rate_limited":
+    "Gormod o geisiadau. Arhoswch eiliad a rhowch gynnig arall arni.",
   "l.enum.api.http_status": "Gwall HTTP {status}",
   "p.error.not_found": "Nid yw'r dudalen honno'n bodoli.",
   "p.error.not_allowed": "Ni chaniateir i chi weld y dudalen honno.",
@@ -2771,11 +3423,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.error.back": "Yn ôl i'r dechrau",
   "p.issues.issues_ppm": "Cofrestr materion — PPM",
   "p.issues.issues": "Cofrestr materion",
-  "p.issues.intro": "Mater yw rhywbeth sydd eisoes wedi digwydd ac sydd angen ei reoli; risg yw rhywbeth a allai ddigwydd. Y mwyaf difrifol yn gyntaf, yna'r hynaf. Mae oedran mewn diwrnodau calendr ers codi'r mater.",
+  "p.issues.intro":
+    "Mater yw rhywbeth sydd eisoes wedi digwydd ac sydd angen ei reoli; risg yw rhywbeth a allai ddigwydd. Y mwyaf difrifol yn gyntaf, yna'r hynaf. Mae oedran mewn diwrnodau calendr ers codi'r mater.",
   "p.issues.could_not_load": "Methu llwytho'r materion",
   "p.issues.by_severity": "Materion yn ôl difrifoldeb",
   "p.issues.overdue_count": "Wedi mynd heibio'r dyddiad",
-  "p.issues.oldest_open": "Yr hynaf sydd ar agor: {title} ({days} diwrnod calendr)",
+  "p.issues.oldest_open":
+    "Yr hynaf sydd ar agor: {title} ({days} diwrnod calendr)",
   "p.issues.show": "Dangos",
   "p.issues.all_statuses": "Pob statws",
   "p.issues.open_only": "Agored ac ar y gweill yn unig",
@@ -2787,7 +3441,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.issues.loading": "Yn llwytho…",
   "p.issues.count_one": "{n} mater, y mwyaf difrifol yn gyntaf",
   "p.issues.count_other": "{n} mater, y mwyaf difrifol yn gyntaf",
-  "p.issues.truncated": "Yn dangos y {n} cyntaf; cyfyngwch yr hidlyddion i weld y gweddill.",
+  "p.issues.truncated":
+    "Yn dangos y {n} cyntaf; cyfyngwch yr hidlyddion i weld y gweddill.",
   "p.issues.title_col": "Mater",
   "p.issues.kind_col": "Math",
   "p.issues.severity_col": "Difrifoldeb",
@@ -2813,11 +3468,15 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.issue_kind.question": "cwestiwn",
   "l.enum.issue_kind.improvement": "gwelliant",
   "l.enum.issue_kind.concern": "pryder",
-  "p.signin.oidc_idle": "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
-  "p.plans.pid.board.only_first_tasks": "Mae gan y cynllun hwn {total} tasg; mae'r bwrdd yn dangos y {shown} cyntaf. Cyfyngwch yn ôl cydran, neu darllenwch y gweddill drwy'r API.",
-  "p.plans.pid.modules_failed": "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
+  "p.signin.oidc_idle":
+    "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
+  "p.plans.pid.board.only_first_tasks":
+    "Mae gan y cynllun hwn {total} tasg; mae'r bwrdd yn dangos y {shown} cyntaf. Cyfyngwch yn ôl cydran, neu darllenwch y gweddill drwy'r API.",
+  "p.plans.pid.modules_failed":
+    "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",
-  "p._layout_svelte.handling_mark_unknown": "Marc trin: ni ellid ei wirio. Trinwch y cynllun hwn fel un wedi'i farcio nes ei fod wedi'i wirio.",
+  "p._layout_svelte.handling_mark_unknown":
+    "Marc trin: ni ellid ei wirio. Trinwch y cynllun hwn fel un wedi'i farcio nes ei fod wedi'i wirio.",
   "l.enum.cr_status.draft": "drafft",
   "l.enum.cr_status.submitted": "cyflwynwyd",
   "l.enum.cr_status.under_review": "dan adolygiad",
@@ -2832,11 +3491,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.cr_kind.other": "arall",
   "p.change_requests.change_requests_ppm": "Ceisiadau newid — PPM",
   "p.change_requests.change_requests": "Ceisiadau newid",
-  "p.change_requests.intro": "Cynnig rheoledig i newid llinell sylfaen gymeradwy yw cais newid. Mae un cymeradwywr a enwyd, nad yw'n gwneud y cais, yn penderfynu ac yn rhoi rheswm. Yr effeithiau yw'r hyn a nododd y ceisydd; dangosir rhagolwg dim ond pan fydd golygiadau beth-os ynghlwm.",
+  "p.change_requests.intro":
+    "Cynnig rheoledig i newid llinell sylfaen gymeradwy yw cais newid. Mae un cymeradwywr a enwyd, nad yw'n gwneud y cais, yn penderfynu ac yn rhoi rheswm. Yr effeithiau yw'r hyn a nododd y ceisydd; dangosir rhagolwg dim ond pan fydd golygiadau beth-os ynghlwm.",
   "p.change_requests.could_not_load": "Methu llwytho'r ceisiadau newid",
   "p.change_requests.by_status": "Ceisiadau newid yn ôl statws",
   "p.change_requests.awaiting": "Yn aros am benderfyniad",
-  "p.change_requests.oldest_open": "Yr hynaf sydd ar agor: {title} ({days} diwrnod calendr)",
+  "p.change_requests.oldest_open":
+    "Yr hynaf sydd ar agor: {title} ({days} diwrnod calendr)",
   "p.change_requests.show": "Dangos",
   "p.change_requests.all_statuses": "Pob statws",
   "p.change_requests.open_only": "Y rhai agored yn unig",
@@ -2857,9 +3518,11 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.change_requests.plan_link": "Agor tudalen llywodraethu'r cynllun",
   "p.director_pack.director_packs_ppm": "Pecynnau cyfarwyddwyr — PPM",
   "p.director_pack.director_packs": "Pecynnau cyfarwyddwyr",
-  "p.director_pack.intro": "Pecyn cyfarwyddwyr yw adroddiad y mis i gyfarwyddwyr, wedi'i ddrafftio unwaith, ei gyhoeddi gan unigolyn a enwir ac yna ei rewi: nid yw pecyn a gyhoeddwyd byth yn newid, a chywiriad yw fersiwn newydd gyda nodyn. Darllenir pob ffigur isod o'r pecyn a gyhoeddwyd; nid oes dim yn cael ei ailgyfrifo yma.",
+  "p.director_pack.intro":
+    "Pecyn cyfarwyddwyr yw adroddiad y mis i gyfarwyddwyr, wedi'i ddrafftio unwaith, ei gyhoeddi gan unigolyn a enwir ac yna ei rewi: nid yw pecyn a gyhoeddwyd byth yn newid, a chywiriad yw fersiwn newydd gyda nodyn. Darllenir pob ffigur isod o'r pecyn a gyhoeddwyd; nid oes dim yn cael ei ailgyfrifo yma.",
   "p.director_pack.could_not_load": "Methwyd llwytho'r pecynnau cyfarwyddwyr",
-  "p.director_pack.could_not_load_one": "Methwyd llwytho'r pecyn cyfarwyddwyr hwn",
+  "p.director_pack.could_not_load_one":
+    "Methwyd llwytho'r pecyn cyfarwyddwyr hwn",
   "p.director_pack.loading": "Wrthi'n llwytho…",
   "p.director_pack.none": "Nid oes pecyn cyfarwyddwyr ar gael i chi.",
   "p.director_pack.col_period": "Cyfnod",
@@ -2869,17 +3532,23 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.col_issued": "Cyhoeddwyd",
   "p.director_pack.status_draft": "drafft",
   "p.director_pack.status_issued": "cyhoeddwyd",
-  "p.director_pack.open_pack": "Agor y pecyn ar gyfer {period}, {audience}, fersiwn {version}",
+  "p.director_pack.open_pack":
+    "Agor y pecyn ar gyfer {period}, {audience}, fersiwn {version}",
   "p.director_pack.all_packs": "Pob pecyn cyfarwyddwyr",
   "p.director_pack.pack_heading": "Pecyn cyfarwyddwyr {period} — {audience}",
-  "p.director_pack.version_line": "Fersiwn {version} · {status} · toriad {cutoff}",
+  "p.director_pack.version_line":
+    "Fersiwn {version} · {status} · toriad {cutoff}",
   "p.director_pack.issued_on": "Cyhoeddwyd {when}",
-  "p.director_pack.draft_note": "Drafft yw hwn. Nid yw wedi'i gyhoeddi eto, felly nid yw wedi'i rewi.",
+  "p.director_pack.draft_note":
+    "Drafft yw hwn. Nid yw wedi'i gyhoeddi eto, felly nid yw wedi'i rewi.",
   "p.director_pack.change_note": "Nodyn newid: {note}",
-  "p.director_pack.previous_pack": "O'i gymharu â phecyn {period}, fersiwn {version}.",
+  "p.director_pack.previous_pack":
+    "O'i gymharu â phecyn {period}, fersiwn {version}.",
   "p.director_pack.download_pdf": "Lawrlwytho fel PDF",
-  "p.director_pack.pdf_note": "Mae gan y PDF yr un ffigurau ond mae ei eiriau sefydlog yn Saesneg. I gadw iaith arall, argraffwch y dudalen hon.",
-  "p.director_pack.basis": "Mae'r cofnodion fel yr oeddent pan ddrafftiwyd y pecyn, wedi'u dyddio ar neu cyn y toriad. Nid oes hanes statws gan faterion a cheisiadau newid, felly mae un a gaewyd ar ôl y toriad ond cyn drafftio yn ymddangos fel un caeedig. Mae adran heb ddim i'w ddangos yn dweud hynny; ni ddangosir absenoldeb byth fel sero na gwyrdd.",
+  "p.director_pack.pdf_note":
+    "Mae gan y PDF yr un ffigurau ond mae ei eiriau sefydlog yn Saesneg. I gadw iaith arall, argraffwch y dudalen hon.",
+  "p.director_pack.basis":
+    "Mae'r cofnodion fel yr oeddent pan ddrafftiwyd y pecyn, wedi'u dyddio ar neu cyn y toriad. Nid oes hanes statws gan faterion a cheisiadau newid, felly mae un a gaewyd ar ôl y toriad ond cyn drafftio yn ymddangos fel un caeedig. Mae adran heb ddim i'w ddangos yn dweud hynny; ni ddangosir absenoldeb byth fel sero na gwyrdd.",
   "p.director_pack.s_quality": "Ansawdd data",
   "p.director_pack.s_changed": "Beth sydd wedi newid",
   "p.director_pack.s_map": "Map y portffolio",
@@ -2893,12 +3562,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.s_issues": "Materion",
   "p.director_pack.s_changes": "Ceisiadau newid",
   "p.director_pack.plans_included": "Cynlluniau a gynhwyswyd: {n}",
-  "p.director_pack.plans_left_out": "Cynlluniau a adawyd allan am eu bod yn breifat neu wedi'u marcio: {n}",
+  "p.director_pack.plans_left_out":
+    "Cynlluniau a adawyd allan am eu bod yn breifat neu wedi'u marcio: {n}",
   "p.director_pack.sections_missing": "Adrannau heb eu hadeiladu eto: {list}",
   "p.director_pack.all_sections": "Mae pob adran o'r pecyn yn bresennol.",
   "p.director_pack.nothing_here": "Dim i'w ddangos yn yr adran hon.",
   "p.director_pack.changed_issues": "Materion agored: {now}, {change}",
-  "p.director_pack.changed_changes": "Ceisiadau newid yn aros am benderfyniad: {now}, {change}",
+  "p.director_pack.changed_changes":
+    "Ceisiadau newid yn aros am benderfyniad: {now}, {change}",
   "p.director_pack.changed_was": "oedd {before}",
   "p.director_pack.changed_unchanged": "dim newid",
   "p.director_pack.changed_first": "dim pecyn cynharach i'w gymharu ag ef",
@@ -2918,7 +3589,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_owner_role": "Perchennog (rôl)",
   "p.director_pack.c_decide_by": "Penderfynu erbyn",
   "p.director_pack.c_hours_open": "Oriau ar agor",
-  "p.director_pack.ex_window": "Mae eithriad nad yw'n gyflawn o fewn {hours} awr i agor wedi'i dorri.",
+  "p.director_pack.ex_window":
+    "Mae eithriad nad yw'n gyflawn o fewn {hours} awr i agor wedi'i dorri.",
   "p.director_pack.ex_open": "Ar agor: {n}",
   "p.director_pack.ex_breached": "Wedi'u torri: {n}",
   "p.director_pack.ex_closed": "Wedi'u cau yn y cyfnod: {n}",
@@ -2935,16 +3607,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_since": "Ers",
   "p.director_pack.c_allocs": "Dyraniadau wedi'u nodi",
   "p.director_pack.reason_hold": "adolygwyd fel dal",
-  "p.director_pack.reason_no_review": "aeth y dyddiad a gynlluniwyd heibio heb adolygiad",
-  "p.director_pack.fy_line": "Blwyddyn ariannol {label}, {start} i {end}. Dangosir cyfalaf a refeniw ar wahân, ac ni chaiff arian cyfred byth eu hadio at ei gilydd.",
+  "p.director_pack.reason_no_review":
+    "aeth y dyddiad a gynlluniwyd heibio heb adolygiad",
+  "p.director_pack.fy_line":
+    "Blwyddyn ariannol {label}, {start} i {end}. Dangosir cyfalaf a refeniw ar wahân, ac ni chaiff arian cyfred byth eu hadio at ei gilydd.",
   "p.director_pack.c_source": "Ffynhonnell ariannu",
   "p.director_pack.c_class": "Dosbarth",
   "p.director_pack.c_budget": "Cyllideb",
   "p.director_pack.c_spend": "Gwariant hyd yma",
   "p.director_pack.c_variance": "Amrywiant",
   "p.director_pack.no_funding_source": "dim ffynhonnell ariannu",
-  "p.director_pack.forecast_line": "Rhagolwg oes gyfan mewn {currency}: gwirioneddol {actual}, amcangyfrif wrth gwblhau {eac}",
-  "p.director_pack.unfunded_lines": "Llinellau heb ffynhonnell ariannu: {n}. Llinellau heb ddyddiadau: {dated}.",
+  "p.director_pack.forecast_line":
+    "Rhagolwg oes gyfan mewn {currency}: gwirioneddol {actual}, amcangyfrif wrth gwblhau {eac}",
+  "p.director_pack.unfunded_lines":
+    "Llinellau heb ffynhonnell ariannu: {n}. Llinellau heb ddyddiadau: {dated}.",
   "p.director_pack.c_chain": "Cadwyn wedi'i chwblhau (%)",
   "p.director_pack.c_buffer": "Clustog wedi'i ddefnyddio (%)",
   "p.director_pack.c_zone": "Parth",
@@ -2953,25 +3629,33 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_previous": "Pecyn blaenorol",
   "p.director_pack.edge_below": "adferiad: wedi'i dynnu ar yr ymyl isaf",
   "p.director_pack.edge_above": "gorwario: wedi'i dynnu ar yr ymyl uchaf",
-  "p.director_pack.fever_none_no_buffer": "dim pwynt siart twymyn: nid oes clustog prosiect wedi'i ddatgan",
-  "p.director_pack.fever_none_no_baseline": "dim pwynt siart twymyn: dim llinell sylfaen amserlen",
-  "p.director_pack.fever_none_no_chain": "dim pwynt siart twymyn: dim gwaith critigol â hyd i'w fesur",
-  "p.director_pack.fever_none_no_forecast": "dim pwynt siart twymyn: ni ellir rhagweld yr amserlen nawr",
-  "p.director_pack.fever_lines": "Llinellau parth (% clustog a ddefnyddiwyd ar 0 % ac ar 100 % o'r gadwyn wedi'i chwblhau): gwyrdd i ambr {ga0} i {ga1}; ambr i goch {ar0} i {ar1}.",
+  "p.director_pack.fever_none_no_buffer":
+    "dim pwynt siart twymyn: nid oes clustog prosiect wedi'i ddatgan",
+  "p.director_pack.fever_none_no_baseline":
+    "dim pwynt siart twymyn: dim llinell sylfaen amserlen",
+  "p.director_pack.fever_none_no_chain":
+    "dim pwynt siart twymyn: dim gwaith critigol â hyd i'w fesur",
+  "p.director_pack.fever_none_no_forecast":
+    "dim pwynt siart twymyn: ni ellir rhagweld yr amserlen nawr",
+  "p.director_pack.fever_lines":
+    "Llinellau parth (% clustog a ddefnyddiwyd ar 0 % ac ar 100 % o'r gadwyn wedi'i chwblhau): gwyrdd i ambr {ga0} i {ga1}; ambr i goch {ar0} i {ar1}.",
   "p.director_pack.c_bac": "Cyllideb wrth gwblhau",
   "p.director_pack.c_ev": "Gwerth enilledig",
   "p.director_pack.c_ac": "Cost gwirioneddol",
   "p.director_pack.c_spi": "SPI",
   "p.director_pack.c_cpi": "CPI",
-  "p.director_pack.below_threshold": "O dan y trothwy gwerth enilledig: cyllideb wrth gwblhau {bac}",
+  "p.director_pack.below_threshold":
+    "O dan y trothwy gwerth enilledig: cyllideb wrth gwblhau {bac}",
   "p.director_pack.no_baseline": "dim llinell sylfaen",
-  "p.director_pack.evm_ratio_note": "Dangosir SPI a CPI i ddau le; mae gwag yn golygu heb ei ddiffinio, nid sero.",
+  "p.director_pack.evm_ratio_note":
+    "Dangosir SPI a CPI i ddau le; mae gwag yn golygu heb ei ddiffinio, nid sero.",
   "p.director_pack.c_recurrence": "Cylchedd",
   "p.director_pack.c_classification": "Dosbarthiad",
   "p.director_pack.c_claimed": "Hawliwyd",
   "p.director_pack.c_validated": "Wedi'u dilysu",
   "p.director_pack.c_unvalidated": "Hawliwyd, heb eu dilysu",
-  "p.director_pack.benefits_note": "Hawliad yw'r hyn a wireddwyd ond na chafodd ei ddilysu, nid budd wedi'i ddilysu. Mae symiau cylchol yn flynyddol ac ni chânt byth eu hadio at symiau untro.",
+  "p.director_pack.benefits_note":
+    "Hawliad yw'r hyn a wireddwyd ond na chafodd ei ddilysu, nid budd wedi'i ddilysu. Mae symiau cylchol yn flynyddol ac ni chânt byth eu hadio at symiau untro.",
   "p.director_pack.c_pool": "Cronfa sgiliau",
   "p.director_pack.c_demand": "Galw (FTE)",
   "p.director_pack.c_supply": "Cyflenwad (FTE)",
@@ -2979,7 +3663,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_month": "Mis",
   "p.director_pack.c_reading": "Darlleniad",
   "p.director_pack.no_pool": "dim cronfa wedi'i neilltuo",
-  "p.director_pack.capacity_note": "Mae gan bob cell air a symbol yn ogystal â lliw. Nid yw dim cyflenwad wedi'i gofnodi yr un peth â dim capasiti.",
+  "p.director_pack.capacity_note":
+    "Mae gan bob cell air a symbol yn ogystal â lliw. Nid yw dim cyflenwad wedi'i gofnodi yr un peth â dim capasiti.",
   "p.director_pack.partners_short": "darpariaeth partner o dan yr ymrwymiad",
   "p.director_pack.open_issues": "Materion agored: {n}",
   "p.director_pack.awaiting": "Ceisiadau newid yn aros am benderfyniad: {n}",
@@ -3039,28 +3724,39 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.critical_chain.outcome_staggered": "dechrau'n hwyrach",
   "p.critical_chain.outcome_exceeds_drum": "gofyn am fwy nag sydd gan y drwm",
   "p.critical_chain.outcome_no_slot": "dim dechrau'n ffitio",
-  "p.critical_chain.advice": "Cyngor yw hwn. Nid oes dim wedi'i newid, ac unigolyn sy'n penderfynu beth i'w wneud.",
+  "p.critical_chain.advice":
+    "Cyngor yw hwn. Nid oes dim wedi'i newid, ac unigolyn sy'n penderfynu beth i'w wneud.",
   "p.critical_chain.link_plan": "Cynllun",
   "p.critical_chain.link_buffers": "Rheoli byfferau",
   "p.critical_chain.link_chain": "Cadwyn gritigol",
   "p.critical_chain.link_critical_path": "Llwybr critigol",
   "p.critical_chain.nav_pipeline": "Drwm a phiblinell",
   "p.critical_chain.chain_h1": "Cadwyn gritigol a byfferau",
-  "p.critical_chain.chain_lede": "Y gadwyn gritigol yw'r rhediad hiraf o dasgau pan barchir amser pobl: mae'n dilyn dibyniaethau a'r aros am unigolyn sy'n brysur ar dasg arall. Dangosir hi ochr yn ochr â'r llwybr critigol, sy'n dilyn dibyniaethau'n unig; ni chymysgir y ddau byth.",
+  "p.critical_chain.chain_lede":
+    "Y gadwyn gritigol yw'r rhediad hiraf o dasgau pan barchir amser pobl: mae'n dilyn dibyniaethau a'r aros am unigolyn sy'n brysur ar dasg arall. Dangosir hi ochr yn ochr â'r llwybr critigol, sy'n dilyn dibyniaethau'n unig; ni chymysgir y ddau byth.",
   "p.critical_chain.chain_h2": "Y gadwyn gritigol",
   "p.critical_chain.no_chain": "Nid oes cadwyn gritigol: {reason}",
-  "p.critical_chain.reason_no_assignments": "nid oes neb wedi'i neilltuo i dasg anorffenedig, felly nid oes aros am bobl i'w ddilyn",
-  "p.critical_chain.reason_no_scheduled_tasks": "nid oes amserlen gan unrhyw dasg",
+  "p.critical_chain.reason_no_assignments":
+    "nid oes neb wedi'i neilltuo i dasg anorffenedig, felly nid oes aros am bobl i'w ddilyn",
+  "p.critical_chain.reason_no_scheduled_tasks":
+    "nid oes amserlen gan unrhyw dasg",
   "p.critical_chain.chain_work": "Diwrnodau gwaith o waith ar y gadwyn: {days}",
   "p.critical_chain.chain_tasks_count": "Tasgau ar y gadwyn: {tasks}",
-  "p.critical_chain.chain_finish": "Pan barchir amser pobl, mae'r cynllun yn gorffen ar {finish}.",
-  "p.critical_chain.chain_delay_none": "Nid yw hynny'n hwyrach na diwedd y llwybr critigol.",
-  "p.critical_chain.chain_delay": "Diwrnodau gwaith yn hwyrach na diwedd y llwybr critigol: {days}",
-  "p.critical_chain.crosses_yes": "Mae'r gadwyn yn croesi rhwng llwybrau: rhennir unigolyn.",
-  "p.critical_chain.crosses_no": "Mae'r gadwyn yn aros ar un llwybr: ni rennir unrhyw unigolyn.",
-  "p.critical_chain.tied": "Mae cadwyn arall yr un mor hir; dangosir y gadwyn hon am ei bod yn dod gyntaf yn y cynllun.",
+  "p.critical_chain.chain_finish":
+    "Pan barchir amser pobl, mae'r cynllun yn gorffen ar {finish}.",
+  "p.critical_chain.chain_delay_none":
+    "Nid yw hynny'n hwyrach na diwedd y llwybr critigol.",
+  "p.critical_chain.chain_delay":
+    "Diwrnodau gwaith yn hwyrach na diwedd y llwybr critigol: {days}",
+  "p.critical_chain.crosses_yes":
+    "Mae'r gadwyn yn croesi rhwng llwybrau: rhennir unigolyn.",
+  "p.critical_chain.crosses_no":
+    "Mae'r gadwyn yn aros ar un llwybr: ni rennir unrhyw unigolyn.",
+  "p.critical_chain.tied":
+    "Mae cadwyn arall yr un mor hir; dangosir y gadwyn hon am ei bod yn dod gyntaf yn y cynllun.",
   "p.critical_chain.timeline_label": "Y gadwyn ar linell amser",
-  "p.critical_chain.timeline_caption": "Mae pob bar solet yn dasg ar y gadwyn. Bar toredig yw'r byffer prosiect. Mae'r tabl isod yn rhoi'r un ffigurau.",
+  "p.critical_chain.timeline_caption":
+    "Mae pob bar solet yn dasg ar y gadwyn. Bar toredig yw'r byffer prosiect. Mae'r tabl isod yn rhoi'r un ffigurau.",
   "p.critical_chain.col_task": "Tasg",
   "p.critical_chain.col_days": "Diwrnodau gwaith",
   "p.critical_chain.col_start": "Dechrau",
@@ -3075,17 +3771,24 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.critical_chain.cp_finish": "Mae'r llwybr critigol yn gorffen ar {finish}.",
   "p.critical_chain.cp_none": "Nid oes llwybr critigol i'w ddangos.",
   "p.critical_chain.buffers_h2": "Byfferau",
-  "p.critical_chain.buffers_lede": "Amserlennir tasgau ar eu hamcangyfrifon ymosodol; cesglir y diogelwch a gymerir o bob tasg yn fyffer. Mae meintiau mewn diwrnodau gwaith. Y rheol: {rule}.",
-  "p.critical_chain.rule_cut_and_paste": "hanner y diogelwch a dynnwyd (torri a gludo)",
-  "p.critical_chain.rule_root_sum_squares": "gwreiddyn sgwâr swm sgwariau'r diogelwch a dynnwyd",
+  "p.critical_chain.buffers_lede":
+    "Amserlennir tasgau ar eu hamcangyfrifon ymosodol; cesglir y diogelwch a gymerir o bob tasg yn fyffer. Mae meintiau mewn diwrnodau gwaith. Y rheol: {rule}.",
+  "p.critical_chain.rule_cut_and_paste":
+    "hanner y diogelwch a dynnwyd (torri a gludo)",
+  "p.critical_chain.rule_root_sum_squares":
+    "gwreiddyn sgwâr swm sgwariau'r diogelwch a dynnwyd",
   "p.critical_chain.no_buffers": "Nid oes byfferau i'w dangos: {reason}",
-  "p.critical_chain.reason_estimates_missing": "nid oes amcangyfrif ymosodol a diogel eto gan rai tasgau ar y gadwyn. Cofnodwch hwy drwy'r gwasanaeth amcangyfrifon; nid oes sgrin ar gyfer hynny eto.",
+  "p.critical_chain.reason_estimates_missing":
+    "nid oes amcangyfrif ymosodol a diogel eto gan rai tasgau ar y gadwyn. Cofnodwch hwy drwy'r gwasanaeth amcangyfrifon; nid oes sgrin ar gyfer hynny eto.",
   "p.critical_chain.missing_h3": "Tasgau ar y gadwyn heb y ddau amcangyfrif",
-  "p.critical_chain.project_buffer": "Byffer prosiect: {days} diwrnod gwaith, yn gwarchod cadwyn sy'n gorffen ar {finish}. Gyda'r byffer y dyddiad yw {with}.",
-  "p.critical_chain.project_safety": "Diogelwch a dynnwyd o dasgau'r gadwyn: {days} diwrnod gwaith.",
+  "p.critical_chain.project_buffer":
+    "Byffer prosiect: {days} diwrnod gwaith, yn gwarchod cadwyn sy'n gorffen ar {finish}. Gyda'r byffer y dyddiad yw {with}.",
+  "p.critical_chain.project_safety":
+    "Diogelwch a dynnwyd o dasgau'r gadwyn: {days} diwrnod gwaith.",
   "p.critical_chain.project_buffer_bar": "Byffer prosiect",
   "p.critical_chain.feeding_h3": "Byfferau bwydo",
-  "p.critical_chain.feeding_none": "Nid oes cadwyn arall o dasgau'n ymuno â'r gadwyn gritigol.",
+  "p.critical_chain.feeding_none":
+    "Nid oes cadwyn arall o dasgau'n ymuno â'r gadwyn gritigol.",
   "p.critical_chain.col_feeding_tasks": "Tasgau bwydo",
   "p.critical_chain.col_joins": "Yn ymuno â",
   "p.critical_chain.col_buffer": "Byffer (diwrnodau gwaith)",
@@ -3094,31 +3797,42 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.critical_chain.push_yes": "byddai, o {days} diwrnod gwaith",
   "p.critical_chain.unsized": "heb ei feintioli: mae amcangyfrif ar goll",
   "p.critical_chain.resource_h3": "Byfferau adnoddau (rhybuddion parodrwydd)",
-  "p.critical_chain.resource_lede": "Nid amser yw byffer adnoddau. Nodyn atgoffa ydyw bod yn rhaid i unigolyn fod yn barod cyn i'w dasg ar y gadwyn ddechrau, {lead} diwrnod gwaith ymlaen llaw.",
+  "p.critical_chain.resource_lede":
+    "Nid amser yw byffer adnoddau. Nodyn atgoffa ydyw bod yn rhaid i unigolyn fod yn barod cyn i'w dasg ar y gadwyn ddechrau, {lead} diwrnod gwaith ymlaen llaw.",
   "p.critical_chain.col_person": "Unigolyn",
   "p.critical_chain.col_alert_on": "Byddwch yn barod erbyn",
   "p.critical_chain.col_task_starts": "Mae'r dasg yn dechrau",
   "p.critical_chain.hidden": "(cuddiedig)",
-  "p.critical_chain.likely_h3": "Wedi'u hamserlennu ar eu hyd tebygol (dim amcangyfrif ymosodol)",
+  "p.critical_chain.likely_h3":
+    "Wedi'u hamserlennu ar eu hyd tebygol (dim amcangyfrif ymosodol)",
   "p.critical_chain.could_not_load_chain": "Methu llwytho'r gadwyn gritigol",
   "p.critical_chain.buffers_h1": "Rheoli byfferau",
-  "p.critical_chain.buffers_lede2": "Darllenir pob byffer yn erbyn yr amserlen fyw: faint o'r gadwyn sydd wedi'i wneud a faint o'r byffer y mae'r llithriad a ragwelir wedi'i ddefnyddio. Mae byffer yn y coch angen gweithred adfer, y mae unigolyn yn cytuno arni ac yn ei chofnodi.",
-  "p.critical_chain.no_plan": "Nid oes cynllun byfferau wedi'i rewi ar gyfer y cynllun hwn. Rhewch un pan gytunir ar y gadwyn a'r byfferau; mesurir darlleniadau diweddarach yn ei erbyn.",
-  "p.critical_chain.freeze_confirm": "Rwyf wedi darllen y gadwyn a'r byfferau ac eisiau eu rhewi fel y cynllun",
+  "p.critical_chain.buffers_lede2":
+    "Darllenir pob byffer yn erbyn yr amserlen fyw: faint o'r gadwyn sydd wedi'i wneud a faint o'r byffer y mae'r llithriad a ragwelir wedi'i ddefnyddio. Mae byffer yn y coch angen gweithred adfer, y mae unigolyn yn cytuno arni ac yn ei chofnodi.",
+  "p.critical_chain.no_plan":
+    "Nid oes cynllun byfferau wedi'i rewi ar gyfer y cynllun hwn. Rhewch un pan gytunir ar y gadwyn a'r byfferau; mesurir darlleniadau diweddarach yn ei erbyn.",
+  "p.critical_chain.freeze_confirm":
+    "Rwyf wedi darllen y gadwyn a'r byfferau ac eisiau eu rhewi fel y cynllun",
   "p.critical_chain.freeze_button": "Rhewi'r cynllun byfferau",
-  "p.critical_chain.frozen_on": "Mesurir yn erbyn y cynllun byfferau a rewyd ar {date}.",
+  "p.critical_chain.frozen_on":
+    "Mesurir yn erbyn y cynllun byfferau a rewyd ar {date}.",
   "p.critical_chain.alerts_h2": "Rhybuddion",
   "p.critical_chain.alerts_none": "Nid oes unrhyw fyffer yn y coch.",
-  "p.critical_chain.alert_project": "Mae'r byffer prosiect yn y coch: {consumed}% wedi'i ddefnyddio. Cadwyn: {chain}.",
-  "p.critical_chain.alert_feeding": "Mae byffer bwydo yn y coch: {consumed}% wedi'i ddefnyddio. Cadwyn: {chain}, yn ymuno â {joins}.",
-  "p.critical_chain.needs_action": "Ni chofnodwyd unrhyw weithred adfer agored ar gyfer: {buffers}.",
+  "p.critical_chain.alert_project":
+    "Mae'r byffer prosiect yn y coch: {consumed}% wedi'i ddefnyddio. Cadwyn: {chain}.",
+  "p.critical_chain.alert_feeding":
+    "Mae byffer bwydo yn y coch: {consumed}% wedi'i ddefnyddio. Cadwyn: {chain}, yn ymuno â {joins}.",
+  "p.critical_chain.needs_action":
+    "Ni chofnodwyd unrhyw weithred adfer agored ar gyfer: {buffers}.",
   "p.critical_chain.charts_h2": "Siartiau twymyn",
   "p.critical_chain.project_label": "Byffer prosiect",
   "p.critical_chain.feeding_label": "Byffer bwydo: {chain}",
   "p.critical_chain.axis_x": "Cadwyn wedi'i chwblhau (%)",
   "p.critical_chain.axis_y": "Byffer wedi'i ddefnyddio (%)",
-  "p.critical_chain.chart_caption": "{buffer}: {zone}; {consumed}% o'r byffer wedi'i ddefnyddio; {done}% o'r gadwyn wedi'i wneud.",
-  "p.critical_chain.beyond_edge": "Mae'r gwir ffigur y tu allan i'r siart, felly tynnir y pwynt ar yr ymyl.",
+  "p.critical_chain.chart_caption":
+    "{buffer}: {zone}; {consumed}% o'r byffer wedi'i ddefnyddio; {done}% o'r gadwyn wedi'i wneud.",
+  "p.critical_chain.beyond_edge":
+    "Mae'r gwir ffigur y tu allan i'r siart, felly tynnir y pwynt ar yr ymyl.",
   "p.critical_chain.table_h2": "Yr un ffigurau fel tabl",
   "p.critical_chain.col_size": "Byffer (diwrnodau gwaith)",
   "p.critical_chain.col_done": "Cadwyn wedi'i gwneud (%)",
@@ -3151,21 +3865,29 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.critical_chain.could_not_load_buffers": "Methu llwytho rheoli byfferau",
   "p.critical_chain.could_not_save": "Methu cadw hynny",
   "p.critical_chain.pipeline_h1": "Drwm a phiblinell",
-  "p.critical_chain.pipeline_lede": "Y drwm yw'r gronfa sgiliau y mae'r portffolio'n dibynnu fwyaf arni. Mae prosiectau sydd â'i hangen ar yr un pryd yn cael eu hamrywio: mae'r gwasanaeth yn cynnig dechreuadau hwyrach, gyda byffer capasiti rhwng prosiectau, ac yn esbonio pob un. Nid yw byth yn symud dyddiad.",
+  "p.critical_chain.pipeline_lede":
+    "Y drwm yw'r gronfa sgiliau y mae'r portffolio'n dibynnu fwyaf arni. Mae prosiectau sydd â'i hangen ar yr un pryd yn cael eu hamrywio: mae'r gwasanaeth yn cynnig dechreuadau hwyrach, gyda byffer capasiti rhwng prosiectau, ac yn esbonio pob un. Nid yw byth yn symud dyddiad.",
   "p.critical_chain.drum_h2": "Y drwm",
-  "p.critical_chain.drum_named": "Y drwm yw {name}: a enwyd gan y swyddfa portffolio.",
-  "p.critical_chain.drum_overloaded": "Y drwm yw {name}: ni enwir cronfa, a'r un hon sydd â'r diffyg mwyaf.",
+  "p.critical_chain.drum_named":
+    "Y drwm yw {name}: a enwyd gan y swyddfa portffolio.",
+  "p.critical_chain.drum_overloaded":
+    "Y drwm yw {name}: ni enwir cronfa, a'r un hon sydd â'r diffyg mwyaf.",
   "p.critical_chain.no_drum": "Nid oes drwm: {why}",
   "p.critical_chain.set_h3": "Enwi'r drwm",
   "p.critical_chain.pick_pool": "Cronfa sgiliau",
   "p.critical_chain.set_button": "Ei enwi'n drwm",
   "p.critical_chain.clear_button": "Clirio'r enwi",
-  "p.critical_chain.capacity": "Capasiti'r drwm: {fte} FTE. Byffer capasiti rhwng prosiectau: {days} diwrnod.",
-  "p.critical_chain.no_capacity": "Nid oes cyflenwad wedi'i gofnodi ar gyfer y drwm yn y ffenestr, felly nid oes dim i amrywio yn ei erbyn.",
+  "p.critical_chain.capacity":
+    "Capasiti'r drwm: {fte} FTE. Byffer capasiti rhwng prosiectau: {days} diwrnod.",
+  "p.critical_chain.no_capacity":
+    "Nid oes cyflenwad wedi'i gofnodi ar gyfer y drwm yn y ffenestr, felly nid oes dim i amrywio yn ei erbyn.",
   "p.critical_chain.projects_h2": "Dechreuadau arfaethedig",
-  "p.critical_chain.projects_none": "Nid oes angen y drwm ar unrhyw brosiect yn y ffenestr hon.",
-  "p.critical_chain.pipeline_timeline": "Defnydd o'r drwm nawr ac fel y cynigir",
-  "p.critical_chain.pipeline_timeline_caption": "Ar gyfer pob prosiect, y bar uchaf yw pryd mae'n defnyddio'r drwm nawr a'r bar isaf yw pryd y byddai, fel y cynigir. Mae'r tabl isod yn rhoi'r un dyddiadau.",
+  "p.critical_chain.projects_none":
+    "Nid oes angen y drwm ar unrhyw brosiect yn y ffenestr hon.",
+  "p.critical_chain.pipeline_timeline":
+    "Defnydd o'r drwm nawr ac fel y cynigir",
+  "p.critical_chain.pipeline_timeline_caption":
+    "Ar gyfer pob prosiect, y bar uchaf yw pryd mae'n defnyddio'r drwm nawr a'r bar isaf yw pryd y byddai, fel y cynigir. Mae'r tabl isod yn rhoi'r un dyddiadau.",
   "p.critical_chain.bar_now": "nawr",
   "p.critical_chain.bar_proposed": "arfaethedig",
   "p.critical_chain.col_project": "Prosiect",
@@ -3179,7 +3901,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.start_queue.nav": "Ciw dechrau",
   "p.start_queue.title": "Ciw dechrau — PPM",
   "p.start_queue.h1": "Ciw dechrau",
-  "p.start_queue.lede": "Rhaglenni a ofynnodd i ddechrau cyflawni ac a gafodd eu gwrthod, yn y drefn y gofynasant. Gwrthodir rhaglen pan fo'r terfyn gwaith ar y gweill yn llawn neu pan fo'r gronfa gyfyngedig yn brin o gyflenwad yn y misoedd i ddod. Nid yw'r drefn byth yn newid, a gall cychwyn fynd rhagddo o hyd gyda diystyru wedi'i gofnodi a rheswm.",
+  "p.start_queue.lede":
+    "Rhaglenni a ofynnodd i ddechrau cyflawni ac a gafodd eu gwrthod, yn y drefn y gofynasant. Gwrthodir rhaglen pan fo'r terfyn gwaith ar y gweill yn llawn neu pan fo'r gronfa gyfyngedig yn brin o gyflenwad yn y misoedd i ddod. Nid yw'r drefn byth yn newid, a gall cychwyn fynd rhagddo o hyd gyda diystyru wedi'i gofnodi a rheswm.",
   "p.start_queue.loading": "Wrthi'n llwytho'r ciw…",
   "p.start_queue.none": "Nid oes rhaglen yn aros i ddechrau.",
   "p.start_queue.col_pos": "Safle",
@@ -3187,8 +3910,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.start_queue.col_asked": "Gofynnwyd ar",
   "p.start_queue.col_why": "Pam y gwrthodwyd",
   "p.start_queue.col_act": "Gweithred",
-  "p.start_queue.limit": "Mae pob un o'r {limit} safle wedi'u cymryd: mae {in_delivery} rhaglen ar y gweill.",
-  "p.start_queue.pool": "Mae'r gronfa gyfyngedig {pool} yn brin o gyflenwad yn: {months}.",
+  "p.start_queue.limit":
+    "Mae pob un o'r {limit} safle wedi'u cymryd: mae {in_delivery} rhaglen ar y gweill.",
+  "p.start_queue.pool":
+    "Mae'r gronfa gyfyngedig {pool} yn brin o gyflenwad yn: {months}.",
   "p.start_queue.withdraw": "Tynnu'n ôl {name} o'r ciw",
   "p.start_queue.withdraw_short": "Tynnu'n ôl",
   "p.start_queue.could_not_load": "Methu llwytho'r ciw dechrau",
@@ -3227,11 +3952,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.table.empty": "Dim i'w ddangos.",
   "p.demo.tour_title": "Taith arddangos — PPM",
   "p.demo.tour_h1": "Taith arddangos",
-  "p.demo.tour_lede": "Rydych wedi mewngofnodi fel Example Person. Mae popeth yma'n ddychmygol: gwnaed Awdurdod Trafnidiaeth Northgate, ei bobl, ei arian a'i ddyddiadau ar gyfer yr arddangosiad hwn. Dewiswch unrhyw nodwedd isod a'i defnyddio: gallwch newid pethau, ac nid oes dim yn real.",
+  "p.demo.tour_lede":
+    "Rydych wedi mewngofnodi fel Example Person. Mae popeth yma'n ddychmygol: gwnaed Awdurdod Trafnidiaeth Northgate, ei bobl, ei arian a'i ddyddiadau ar gyfer yr arddangosiad hwn. Dewiswch unrhyw nodwedd isod a'i defnyddio: gallwch newid pethau, ac nid oes dim yn real.",
   "p.demo.tour_story_h2": "Y stori",
-  "p.demo.tour_story": "Mae Awdurdod Trafnidiaeth Northgate yn moderneiddio ei rwydwaith rheilffyrdd: signalau newydd, gorsafoedd heb risiau a depo digidol. Deg cynllun, wyth person, pedwar sefydliad, ac ychydig o bethau'n mynd o chwith yn fwriadol, fel bod gan y sgriniau rywbeth i'w ddangos.",
+  "p.demo.tour_story":
+    "Mae Awdurdod Trafnidiaeth Northgate yn moderneiddio ei rwydwaith rheilffyrdd: signalau newydd, gorsafoedd heb risiau a depo digidol. Deg cynllun, wyth person, pedwar sefydliad, ac ychydig o bethau'n mynd o chwith yn fwriadol, fel bod gan y sgriniau rywbeth i'w ddangos.",
   "p.demo.tour_open": "Agor",
-  "p.demo.tour_no_plan": "Ni chafwyd hyd i gynllun y Llinell Ogleddol, felly mae'r dolenni i'w dudalennau wedi'u cuddio. Rhedwch yr hadu eto.",
+  "p.demo.tour_no_plan":
+    "Ni chafwyd hyd i gynllun y Llinell Ogleddol, felly mae'r dolenni i'w dudalennau wedi'u cuddio. Rhedwch yr hadu eto.",
   "p.demo.tour_toc": "Nodweddion",
   "p.demo.g_overview": "Y portffolio ar un olwg",
   "p.demo.g_delivery": "Cyflawni un prosiect (cydgloi'r Llinell Ogleddol)",
@@ -3243,91 +3971,127 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.demo.g_chain": "Cadwyn gritigol",
   "p.demo.g_tools": "Offer",
   "p.demo.f_kanban_t": "Fy mwrdd kanban",
-  "p.demo.f_kanban_d": "Eich tasgau agored eich hun, mewn colofnau yn ôl statws, o bob prosiect. Symudwch un â'r llygoden neu ei ddewislen; mae statws y dasg yn newid i bawb.",
+  "p.demo.f_kanban_d":
+    "Eich tasgau agored eich hun, mewn colofnau yn ôl statws, o bob prosiect. Symudwch un â'r llygoden neu ei ddewislen; mae statws y dasg yn newid i bawb.",
   "p.demo.f_me_t": "Fy ngwaith",
-  "p.demo.f_me_d": "Yr un tasgau yn ôl dyddiad dyledus yn eich parth amser eich hun: hwyr, heddiw, yr wythnos hon, yn nes ymlaen.",
+  "p.demo.f_me_d":
+    "Yr un tasgau yn ôl dyddiad dyledus yn eich parth amser eich hun: hwyr, heddiw, yr wythnos hon, yn nes ymlaen.",
   "p.demo.f_plans_t": "Cynlluniau",
-  "p.demo.f_plans_d": "Deg cynllun dychmygol: un portffolio, tair rhaglen a chwe phrosiect ar gyfer Awdurdod Trafnidiaeth Northgate. Agorwch unrhyw un.",
+  "p.demo.f_plans_d":
+    "Deg cynllun dychmygol: un portffolio, tair rhaglen a chwe phrosiect ar gyfer Awdurdod Trafnidiaeth Northgate. Agorwch unrhyw un.",
   "p.demo.f_dashboard_t": "Dangosfwrdd y portffolio",
-  "p.demo.f_dashboard_d": "Statws yn ôl math a cham, gyda chyfrif coch, ambr a gwyrdd.",
+  "p.demo.f_dashboard_d":
+    "Statws yn ôl math a cham, gyda chyfrif coch, ambr a gwyrdd.",
   "p.demo.f_gantt_t": "Gantt",
   "p.demo.f_gantt_d": "Amserlen pob prosiect ar un llinell amser.",
   "p.demo.f_milestones_t": "Cerrig milltir",
-  "p.demo.f_milestones_d": "Cymeradwyo'r dyluniad, danfon yr offer a mynd yn fyw ar gyfer pob prosiect.",
+  "p.demo.f_milestones_d":
+    "Cymeradwyo'r dyluniad, danfon yr offer a mynd yn fyw ar gyfer pob prosiect.",
   "p.demo.f_calendar_t": "Calendr",
   "p.demo.f_calendar_d": "Cerrig milltir a dyddiadau cau fesul mis.",
   "p.demo.f_board_t": "Bwrdd tasgau",
-  "p.demo.f_board_d": "Wyth tasg o'r arolwg i'r trosglwyddo, mewn colofnau yn ôl statws. Mae un wedi'i rhwystro gan y sicrwydd diogelwch.",
+  "p.demo.f_board_d":
+    "Wyth tasg o'r arolwg i'r trosglwyddo, mewn colofnau yn ôl statws. Mae un wedi'i rhwystro gan y sicrwydd diogelwch.",
   "p.demo.f_critical_path_t": "Llwybr critigol",
-  "p.demo.f_critical_path_d": "Y gadwyn o dasgau dibynnol sy'n gosod y dyddiad gorffen.",
+  "p.demo.f_critical_path_d":
+    "Y gadwyn o dasgau dibynnol sy'n gosod y dyddiad gorffen.",
   "p.demo.f_earned_value_t": "Gwerth enilledig",
-  "p.demo.f_earned_value_d": "Gwerth a gynlluniwyd, gwerth enilledig a chost, gyda'r mynegeion amserlen a chost.",
+  "p.demo.f_earned_value_d":
+    "Gwerth a gynlluniwyd, gwerth enilledig a chost, gyda'r mynegeion amserlen a chost.",
   "p.demo.f_schedule_health_t": "Iechyd yr amserlen",
-  "p.demo.f_schedule_health_d": "Gwiriadau ar resymeg y cynllun: dolenni coll, tasgau hir, cyfyngiadau.",
+  "p.demo.f_schedule_health_d":
+    "Gwiriadau ar resymeg y cynllun: dolenni coll, tasgau hir, cyfyngiadau.",
   "p.demo.f_wbs_t": "Dadansoddiad gwaith",
   "p.demo.f_wbs_d": "Y prosiect wedi'i rannu'n becynnau gwaith.",
   "p.demo.f_risk_t": "Cofrestr risg",
-  "p.demo.f_risk_d": "Tri risg ar bob prosiect, wedi'u sgorio yn ôl tebygolrwydd ac effaith.",
+  "p.demo.f_risk_d":
+    "Tri risg ar bob prosiect, wedi'u sgorio yn ôl tebygolrwydd ac effaith.",
   "p.demo.f_issues_t": "Materion",
-  "p.demo.f_issues_d": "Llwybr cebl wedi'i rwystro, rig prawf wedi'i archebu ddwywaith a thrwydded wedi'i gohirio.",
+  "p.demo.f_issues_d":
+    "Llwybr cebl wedi'i rwystro, rig prawf wedi'i archebu ddwywaith a thrwydded wedi'i gohirio.",
   "p.demo.f_change_requests_t": "Ceisiadau am newid",
-  "p.demo.f_change_requests_d": "Cais i symud mynd yn fyw bythefnos, gyda'i effaith ar amserlen a chost, yn aros am gyfarwyddwr y rhaglen.",
+  "p.demo.f_change_requests_d":
+    "Cais i symud mynd yn fyw bythefnos, gyda'i effaith ar amserlen a chost, yn aros am gyfarwyddwr y rhaglen.",
   "p.demo.f_joint_risk_t": "Risg cost ac amserlen gyda'i gilydd",
-  "p.demo.f_joint_risk_d": "Beth mae'r risgiau'n ei wneud i'r dyddiad gorffen a'r gost, gyda'i gilydd.",
+  "p.demo.f_joint_risk_d":
+    "Beth mae'r risgiau'n ei wneud i'r dyddiad gorffen a'r gost, gyda'i gilydd.",
   "p.demo.f_financials_t": "Cyllid",
-  "p.demo.f_financials_d": "Cyllideb, gwariant gwirioneddol a gwahaniaeth ar draws y portffolio.",
+  "p.demo.f_financials_d":
+    "Cyllideb, gwariant gwirioneddol a gwahaniaeth ar draws y portffolio.",
   "p.demo.f_cost_risk_t": "Risg cost",
   "p.demo.f_cost_risk_d": "Ystod y gost debygol, gyda'r P50 a'r P80.",
   "p.demo.f_ledger_t": "Cyfriflyfr cyllid",
-  "p.demo.f_ledger_d": "Grant a chronfa wrth gefn, wedi'u holrhain i'r llinellau cyllideb sy'n tynnu arnynt. Dangosir arian heb ei gynllunio eto ar linell fel un heb ei olrhain.",
+  "p.demo.f_ledger_d":
+    "Grant a chronfa wrth gefn, wedi'u holrhain i'r llinellau cyllideb sy'n tynnu arnynt. Dangosir arian heb ei gynllunio eto ar linell fel un heb ei olrhain.",
   "p.demo.f_costs_t": "Costau ar brosiect",
-  "p.demo.f_costs_d": "Costau llafur o'r tablau cyfraddau, a chostau eraill fesul tasg.",
+  "p.demo.f_costs_d":
+    "Costau llafur o'r tablau cyfraddau, a chostau eraill fesul tasg.",
   "p.demo.f_resources_t": "Adnoddau",
-  "p.demo.f_resources_d": "Wyth o bobl ddychmygol, eu rolau a'r hyn y maent wedi'u harchebu arno.",
+  "p.demo.f_resources_d":
+    "Wyth o bobl ddychmygol, eu rolau a'r hyn y maent wedi'u harchebu arno.",
   "p.demo.f_capacity_t": "Map gwres capasiti",
-  "p.demo.f_capacity_d": "Cyflenwad a galw yn ôl cronfa sgiliau a mis. Mae misoedd coch yn dangos lle mae peirianwyr signalau yn brin.",
+  "p.demo.f_capacity_d":
+    "Cyflenwad a galw yn ôl cronfa sgiliau a mis. Mae misoedd coch yn dangos lle mae peirianwyr signalau yn brin.",
   "p.demo.f_key_persons_t": "Pobl allweddol",
-  "p.demo.f_key_persons_d": "Pwyntiau methiant sengl: un peiriannydd na all neb ei ddisodli eto, a rôl ag olynydd parod.",
+  "p.demo.f_key_persons_d":
+    "Pwyntiau methiant sengl: un peiriannydd na all neb ei ddisodli eto, a rôl ag olynydd parod.",
   "p.demo.f_objectives_t": "Amcanion",
-  "p.demo.f_objectives_d": "Tri amcan, pob un wedi'i glymu wrth y cynlluniau sy'n ei wasanaethu.",
+  "p.demo.f_objectives_d":
+    "Tri amcan, pob un wedi'i glymu wrth y cynlluniau sy'n ei wasanaethu.",
   "p.demo.f_okrs_t": "Nodau a chanlyniadau allweddol",
   "p.demo.f_okrs_d": "Canlyniadau allweddol gyda gwiriadau a hyder.",
   "p.demo.f_kpis_t": "Mesurau allweddol",
-  "p.demo.f_kpis_d": "Munudau oedi, bodlonrwydd teithwyr a gwariant yn erbyn y cynllun, gyda darlleniad bob mis.",
+  "p.demo.f_kpis_d":
+    "Munudau oedi, bodlonrwydd teithwyr a gwariant yn erbyn y cynllun, gyda darlleniad bob mis.",
   "p.demo.f_proposals_t": "Derbyn gwaith",
-  "p.demo.f_proposals_d": "Pum cynnig ar gamau gwahanol, o ddrafftio i gymeradwyo a gwrthod.",
+  "p.demo.f_proposals_d":
+    "Pum cynnig ar gamau gwahanol, o ddrafftio i gymeradwyo a gwrthod.",
   "p.demo.f_ideas_t": "Syniadau",
-  "p.demo.f_ideas_d": "Pedwar syniad gyda phleidleisiau. Trosglwyddwch un yn gynnig.",
+  "p.demo.f_ideas_d":
+    "Pedwar syniad gyda phleidleisiau. Trosglwyddwch un yn gynnig.",
   "p.demo.f_scenarios_t": "Senarios",
-  "p.demo.f_scenarios_d": "Beth sy'n ffitio o dan gap cyllideb os daw'r gwaith signalau yn gyntaf.",
+  "p.demo.f_scenarios_d":
+    "Beth sy'n ffitio o dan gap cyllideb os daw'r gwaith signalau yn gyntaf.",
   "p.demo.f_director_packs_t": "Pecynnau cyfarwyddwyr",
-  "p.demo.f_director_packs_d": "Pecynnau gweithredol a bwrdd ar gyfer Medi, wedi'u cydosod o'r data byw. Agorwch un i weld pob adran.",
+  "p.demo.f_director_packs_d":
+    "Pecynnau gweithredol a bwrdd ar gyfer Medi, wedi'u cydosod o'r data byw. Agorwch un i weld pob adran.",
   "p.demo.f_organizations_t": "Sefydliadau partner",
-  "p.demo.f_organizations_d": "Yr awdurdod, ei gwmni cyflawni, partner a chyflenwr.",
+  "p.demo.f_organizations_d":
+    "Yr awdurdod, ei gwmni cyflawni, partner a chyflenwr.",
   "p.demo.f_milestone_signoffs_t": "Llofnodi cerrig milltir",
-  "p.demo.f_milestone_signoffs_d": "Mae angen i'r partner a'r cyflenwr lofnodi i fynd yn fyw. Mae'r cyflenwr wedi; nid yw'r partner, felly cyflwynwyd mynd yn fyw ond heb ei gwrdd.",
+  "p.demo.f_milestone_signoffs_d":
+    "Mae angen i'r partner a'r cyflenwr lofnodi i fynd yn fyw. Mae'r cyflenwr wedi; nid yw'r partner, felly cyflwynwyd mynd yn fyw ond heb ei gwrdd.",
   "p.demo.f_cutover_t": "Mynd/peidio mynd â'r newid",
-  "p.demo.f_cutover_d": "Tri maen prawf atal, un wedi'i gwrdd, un cyd-lofnod i mewn. Byddai mynd yn cael ei wrthod, ac mae'r sgrin yn dweud pam.",
+  "p.demo.f_cutover_d":
+    "Tri maen prawf atal, un wedi'i gwrdd, un cyd-lofnod i mewn. Byddai mynd yn cael ei wrthod, ac mae'r sgrin yn dweud pam.",
   "p.demo.f_deployment_moves_t": "Symud lleoliadau",
-  "p.demo.f_deployment_moves_d": "Cais i symud dechrau'r gosod bythefnos, gyda'r goblygiadau i dasgau eraill a'i gost llafur, yn aros am gymeradwyaeth.",
+  "p.demo.f_deployment_moves_d":
+    "Cais i symud dechrau'r gosod bythefnos, gyda'r goblygiadau i dasgau eraill a'i gost llafur, yn aros am gymeradwyaeth.",
   "p.demo.f_start_queue_t": "Ciw dechrau",
-  "p.demo.f_start_queue_d": "Mae dwy raglen ar y gweill a'r terfyn yw dau, felly mae'r drydedd yn aros yn y ciw, mewn trefn.",
+  "p.demo.f_start_queue_d":
+    "Mae dwy raglen ar y gweill a'r terfyn yw dau, felly mae'r drydedd yn aros yn y ciw, mewn trefn.",
   "p.demo.f_critical_chain_t": "Cadwyn gritigol",
-  "p.demo.f_critical_chain_d": "Y gadwyn drwy'r tasgau dibynnol a'r bobl y maent yn eu rhannu, gydag amcangyfrifon ymosodol a diogel.",
+  "p.demo.f_critical_chain_d":
+    "Y gadwyn drwy'r tasgau dibynnol a'r bobl y maent yn eu rhannu, gydag amcangyfrifon ymosodol a diogel.",
   "p.demo.f_buffers_t": "Rheoli byfferau",
-  "p.demo.f_buffers_d": "Y cynllun byffer wedi'i rewi, siartiau twymyn a gweithred adfer.",
+  "p.demo.f_buffers_d":
+    "Y cynllun byffer wedi'i rewi, siartiau twymyn a gweithred adfer.",
   "p.demo.f_pipeline_t": "Drwm a phiblinell",
-  "p.demo.f_pipeline_d": "Y gronfa sgiliau y mae'r portffolio'n dibynnu fwyaf arni, a dechreuadau amrywiol arfaethedig.",
+  "p.demo.f_pipeline_d":
+    "Y gronfa sgiliau y mae'r portffolio'n dibynnu fwyaf arni, a dechreuadau amrywiol arfaethedig.",
   "p.demo.f_search_t": "Chwilio",
-  "p.demo.f_search_d": "Teipiwch yn y chwyddwydr yn yr uwchben. Mae'r ddolen hon yn chwilio am “signal”.",
+  "p.demo.f_search_d":
+    "Teipiwch yn y chwyddwydr yn yr uwchben. Mae'r ddolen hon yn chwilio am “signal”.",
   "p.demo.f_email_deliveries_t": "Negeseuon e-bost a ddanfonwyd",
-  "p.demo.f_email_deliveries_d": "Pob e-bost a geisiodd y gwasanaeth ei anfon. Ni anfonir dim o'r arddangosiad, felly mae'r rhestr hon yn wag.",
+  "p.demo.f_email_deliveries_d":
+    "Pob e-bost a geisiodd y gwasanaeth ei anfon. Ni anfonir dim o'r arddangosiad, felly mae'r rhestr hon yn wag.",
   "p.demo.f_display_t": "Gosodiadau arddangos",
   "p.demo.f_display_d": "Maint testun, themâu, golwg syml ac iaith.",
   "p.kanban.nav": "Fy mwrdd kanban",
   "p.kanban.title": "Fy mwrdd kanban — PPM",
   "p.kanban.h1": "Fy mwrdd kanban",
-  "p.kanban.lede": "Eich tasgau agored ar draws pob cynllun, mewn colofnau yn ôl statws. Symudwch gerdyn â'r llygoden, neu pwyswch Enter ar gerdyn i ddewis colofn o ddewislen. Mae symud yn newid statws y dasg i bawb.",
+  "p.kanban.lede":
+    "Eich tasgau agored ar draws pob cynllun, mewn colofnau yn ôl statws. Symudwch gerdyn â'r llygoden, neu pwyswch Enter ar gerdyn i ddewis colofn o ddewislen. Mae symud yn newid statws y dasg i bawb.",
   "p.kanban.board_label": "Eich tasgau yn ôl statws",
   "p.kanban.loading": "Wrthi'n llwytho eich bwrdd…",
   "p.kanban.none": "Nid oes gennych unrhyw dasgau agored.",
@@ -3345,17 +4109,22 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.kanban.sign_in": "Mewngofnodwch i weld eich bwrdd.",
   "p.kanban.could_not_load": "Methu llwytho eich bwrdd",
   "p.kanban.could_not_move": "Methu symud y dasg; mae'r bwrdd fel yr oedd.",
-  "p.kanban.hidden": "Nid yw {n} tasg yn cael eu dangos oherwydd nad oes modd i chi ddarllen eu cynlluniau.",
+  "p.kanban.hidden":
+    "Nid yw {n} tasg yn cael eu dangos oherwydd nad oes modd i chi ddarllen eu cynlluniau.",
   "p.dashboard.my_home": "Fy Nhudalen Hafan",
-  "p.demo.banner": "Arddangosiad yw hwn gyda data dychmygol. Nid oes dim yma'n real.",
+  "p.demo.banner":
+    "Arddangosiad yw hwn gyda data dychmygol. Nid oes dim yma'n real.",
   "p.demo.banner_tour": "Dilyn y daith",
   "p.demo.signin_h2": "Arddangosiad",
-  "p.demo.signin_lede": "Arddangosiad yw'r safle hwn. Mewngofnodwch gydag example@example.com i weld pob nodwedd gyda data dychmygol. Ni anfonir unrhyw e-bost.",
+  "p.demo.signin_lede":
+    "Arddangosiad yw'r safle hwn. Mewngofnodwch gydag example@example.com i weld pob nodwedd gyda data dychmygol. Ni anfonir unrhyw e-bost.",
   "p.demo.signin_button": "Mewngofnodi i'r arddangosiad",
-  "p.demo.signin_wrong": "Dim ond example@example.com y mae'r arddangosiad yn ei dderbyn.",
+  "p.demo.signin_wrong":
+    "Dim ond example@example.com y mae'r arddangosiad yn ei dderbyn.",
   "p.search.title": "Chwilio — PPM",
   "p.search.h1": "Chwilio cynlluniau",
-  "p.search.lede": "Cynlluniau y mae eu henw, eu dynodwyr, eu geiriau allweddol neu eu tagiau yn cyfateb i'ch chwiliad. Nid yw cynlluniau na chewch eu darllen yn cael eu rhestru.",
+  "p.search.lede":
+    "Cynlluniau y mae eu henw, eu dynodwyr, eu geiriau allweddol neu eu tagiau yn cyfateb i'ch chwiliad. Nid yw cynlluniau na chewch eu darllen yn cael eu rhestru.",
   "p.search.none_asked": "Teipiwch rywbeth yn y blwch chwilio yn yr uwchben.",
   "p.search.searching": "Wrthi'n chwilio…",
   "p.search.results": "Mae {n} cynllun yn cyfateb i “{q}”.",
@@ -3373,12 +4142,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cutover.link": "Mynd/peidio mynd â'r newid",
   "p.cutover.title": "Mynd/peidio mynd â'r newid — PPM",
   "p.cutover.h1": "Mynd/peidio mynd â'r newid",
-  "p.cutover.lede": "Y penderfyniad i newid system sy'n hanfodol i ddiogelwch. Mae'r meini prawf atal yn cael eu hysgrifennu a'u cyhoeddi yn gyntaf, ac yna'n cael eu rhewi: mae eu newid yn gwneud fersiwn newydd. Mae mynd angen pob maen prawf wedi'i gwrdd a phob cyd-lofnod gofynnol. Mae peidio mynd, neu oedi er diogelwch, yn benderfyniad a wneir ar y meini prawf; nid yw'n llithriad.",
+  "p.cutover.lede":
+    "Y penderfyniad i newid system sy'n hanfodol i ddiogelwch. Mae'r meini prawf atal yn cael eu hysgrifennu a'u cyhoeddi yn gyntaf, ac yna'n cael eu rhewi: mae eu newid yn gwneud fersiwn newydd. Mae mynd angen pob maen prawf wedi'i gwrdd a phob cyd-lofnod gofynnol. Mae peidio mynd, neu oedi er diogelwch, yn benderfyniad a wneir ar y meini prawf; nid yw'n llithriad.",
   "p.cutover.loading": "Wrthi'n llwytho'r penderfyniadau…",
   "p.cutover.none": "Ni ddrafftiwyd unrhyw benderfyniad ynghylch newid.",
   "p.cutover.new_h2": "Drafftio penderfyniad ynghylch newid",
   "p.cutover.new_title": "Teitl",
-  "p.cutover.new_criteria": "Meini prawf atal, un ar bob llinell (5 i 500 nod yr un)",
+  "p.cutover.new_criteria":
+    "Meini prawf atal, un ar bob llinell (5 i 500 nod yr un)",
   "p.cutover.draft": "Drafftio'r penderfyniad",
   "p.cutover.version": "fersiwn {n}",
   "p.cutover.status_draft": "drafft",
@@ -3407,7 +4178,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cutover.cosign_signed": "Wedi llofnodi: {roles}.",
   "p.cutover.cosign_missing": "Dal ei angen: {roles}.",
   "p.cutover.cosign_none": "dim",
-  "p.cutover.cosign_role": "Rôl i lofnodi fel hi (rhaid i'ch tocyn ei chynnwys)",
+  "p.cutover.cosign_role":
+    "Rôl i lofnodi fel hi (rhaid i'ch tocyn ei chynnwys)",
   "p.cutover.cosign": "Cyd-lofnodi",
   "p.cutover.refused_h3": "Byddai mynd yn cael ei wrthod oherwydd",
   "p.cutover.publish": "Cyhoeddi a rhewi'r meini prawf",
@@ -3422,7 +4194,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.moves.link": "Symud lleoliadau",
   "p.moves.title": "Symud lleoliadau — PPM",
   "p.moves.h1": "Symud lleoliadau",
-  "p.moves.lede": "Cais i symud dechrau tasg. Nid oes dim yn newid nes bod y cymeradwywr yn ei gymeradwyo. Cyfrifwyd y goblygiadau i dasgau eraill, a'r gost lafur, pan ofynnwyd am y symudiad, drwy redeg yr amserlen gyda'r dyddiad newydd.",
+  "p.moves.lede":
+    "Cais i symud dechrau tasg. Nid oes dim yn newid nes bod y cymeradwywr yn ei gymeradwyo. Cyfrifwyd y goblygiadau i dasgau eraill, a'r gost lafur, pan ofynnwyd am y symudiad, drwy redeg yr amserlen gyda'r dyddiad newydd.",
   "p.moves.loading": "Wrthi'n llwytho'r symudiadau…",
   "p.moves.none": "Ni ofynnwyd am unrhyw symudiad.",
   "p.moves.request_h2": "Gofyn am symudiad",
@@ -3457,8 +4230,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ledger.nav": "Cyfriflyfr cyllid",
   "p.ledger.title": "Cyfriflyfr cyllid — PPM",
   "p.ledger.h1": "Cyfriflyfr cyllid",
-  "p.ledger.lede": "Pob dyraniad cyllid, wedi'i olrhain i'r llinellau cyllideb sy'n tynnu arno, eu pyrth, y cerrig milltir a gyrhaeddwyd a'r buddion a ddilyswyd. Mae arian a ddyrannwyd ond heb ei gynllunio ar unrhyw linell y cewch ei darllen heb ei olrhain, a dangosir ei swm.",
-  "p.ledger.scope": "Gwneir creu dyraniadau, mapio codau cost a chysoni allforiad cyllid drwy'r API; mae'r sgrin hon yn darllen y cyfriflyfr.",
+  "p.ledger.lede":
+    "Pob dyraniad cyllid, wedi'i olrhain i'r llinellau cyllideb sy'n tynnu arno, eu pyrth, y cerrig milltir a gyrhaeddwyd a'r buddion a ddilyswyd. Mae arian a ddyrannwyd ond heb ei gynllunio ar unrhyw linell y cewch ei darllen heb ei olrhain, a dangosir ei swm.",
+  "p.ledger.scope":
+    "Gwneir creu dyraniadau, mapio codau cost a chysoni allforiad cyllid drwy'r API; mae'r sgrin hon yn darllen y cyfriflyfr.",
   "p.ledger.loading": "Wrthi'n llwytho'r cyfriflyfr…",
   "p.ledger.none": "Ni chofnodwyd unrhyw ddyraniad cyllid.",
   "p.ledger.col_source": "Ffynhonnell gyllid",
@@ -3472,7 +4247,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ledger.trace": "Olrhain {name}",
   "p.ledger.trace_short": "Olrhain",
   "p.ledger.trace_h2": "Beth brynodd {name}",
-  "p.ledger.money": "Dyrannwyd {allocated}, cynlluniwyd ar linellau {planned}, gwariwyd {spent}, heb ei olrhain {untraced} ({currency}).",
+  "p.ledger.money":
+    "Dyrannwyd {allocated}, cynlluniwyd ar linellau {planned}, gwariwyd {spent}, heb ei olrhain {untraced} ({currency}).",
   "p.ledger.gates": "Llinellau â phorth: {gated}. Wedi'u rhyddhau: {released}.",
   "p.ledger.milestones_met": "Cerrig milltir a gyrhaeddwyd: {met} o {total}.",
   "p.ledger.benefits": "Buddion a gofnodwyd: {n}.",
@@ -3491,10 +4267,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.signoffs.nav": "Llofnodi cerrig milltir",
   "p.signoffs.title": "Llofnodi cerrig milltir — PPM",
   "p.signoffs.h1": "Llofnodi cerrig milltir",
-  "p.signoffs.lede": "Mae rhai cerrig milltir yn cael eu cwrdd dim ond pan fydd y sefydliadau partner a enwir wedi'u llofnodi. Cyflwynwyd yw'r sefydliad cyflawni'n dweud ei fod wedi'i wneud; cwrddwyd yw cyflwynwyd gyda phob llofnod mewn grym. Mae llofnod a dynnir yn ôl yn cyfrif fel un sy'n weddill eto.",
+  "p.signoffs.lede":
+    "Mae rhai cerrig milltir yn cael eu cwrdd dim ond pan fydd y sefydliadau partner a enwir wedi'u llofnodi. Cyflwynwyd yw'r sefydliad cyflawni'n dweud ei fod wedi'i wneud; cwrddwyd yw cyflwynwyd gyda phob llofnod mewn grym. Mae llofnod a dynnir yn ôl yn cyfrif fel un sy'n weddill eto.",
   "p.signoffs.loading": "Wrthi'n llwytho'r llofnodion…",
   "p.signoffs.none": "Nid oes angen llofnod partner ar unrhyw garreg filltir.",
-  "p.signoffs.totals": "Angen llofnod: {n}. Cyflwynwyd: {delivered}. Cwrddwyd: {met}. Cyflwynwyd ond heb ei gwrdd: {gap}. Cwrddwyd, fel cyfran o'r rhai a gyflwynwyd: {share}.",
+  "p.signoffs.totals":
+    "Angen llofnod: {n}. Cyflwynwyd: {delivered}. Cwrddwyd: {met}. Cyflwynwyd ond heb ei gwrdd: {gap}. Cwrddwyd, fel cyfran o'r rhai a gyflwynwyd: {share}.",
   "p.signoffs.no_share": "heb ei fesur",
   "p.signoffs.col_milestone": "Carreg filltir",
   "p.signoffs.col_due": "Dyledus",
@@ -3512,16 +4290,19 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.signoffs.withdraw": "Tynnu'n ôl",
   "p.signoffs.sign_for": "Llofnodi {name} fel y sefydliad a ddewiswyd",
   "p.signoffs.withdraw_for": "Tynnu'n ôl llofnod {name}",
-  "p.signoffs.not_built": "Gwneir dewis pa sefydliadau sydd eu hangen ar garreg filltir drwy'r API; mae'r sgrin hon yn dangos ac yn cofnodi'r llofnodion.",
+  "p.signoffs.not_built":
+    "Gwneir dewis pa sefydliadau sydd eu hangen ar garreg filltir drwy'r API; mae'r sgrin hon yn dangos ac yn cofnodi'r llofnodion.",
   "p.signoffs.could_not_load": "Methu llwytho'r llofnodion",
   "p.signoffs.could_not_save": "Methu cofnodi'r llofnod",
   "p.key_persons.nav": "Pobl allweddol",
   "p.key_persons.title": "Pobl allweddol — PPM",
   "p.key_persons.h1": "Pobl allweddol a phwyntiau methiant sengl",
-  "p.key_persons.lede": "Y bobl a'r rolau na all y portffolio eu colli heb niwed, pwy fyddai'n cymryd drosodd, a pha mor barod ydynt. Gall rheolwyr adnoddau yn unig ddarllen hwn, oherwydd mae'n ymwneud â phobl a enwir.",
+  "p.key_persons.lede":
+    "Y bobl a'r rolau na all y portffolio eu colli heb niwed, pwy fyddai'n cymryd drosodd, a pha mor barod ydynt. Gall rheolwyr adnoddau yn unig ddarllen hwn, oherwydd mae'n ymwneud â phobl a enwir.",
   "p.key_persons.loading": "Wrthi'n llwytho…",
   "p.key_persons.none": "Ni chofnodwyd unrhyw berson na rôl allweddol.",
-  "p.key_persons.not_allowed": "Gall rheolwyr adnoddau yn unig ddarllen y bobl allweddol.",
+  "p.key_persons.not_allowed":
+    "Gall rheolwyr adnoddau yn unig ddarllen y bobl allweddol.",
   "p.key_persons.add_h2": "Cofnodi person neu rôl allweddol",
   "p.key_persons.subject_kind": "Person neu rôl",
   "p.key_persons.kind_person": "person",
@@ -3543,7 +4324,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.key_persons.remove_short": "Dileu",
   "p.key_persons.no_successor": "dim olynydd a enwyd",
   "p.key_persons.contingent_h2": "Gweithwyr wrth gefn",
-  "p.key_persons.contingent_note": "Pobl a nodir fel llafur wrth gefn, a all adael ar fyr rybudd.",
+  "p.key_persons.contingent_note":
+    "Pobl a nodir fel llafur wrth gefn, a all adael ar fyr rybudd.",
   "p.key_persons.contingent_none": "Nid oes neb wedi'i nodi fel un wrth gefn.",
   "p.key_persons.contingent_add": "Nodi person fel un wrth gefn",
   "p.key_persons.contingent_person": "Cyfeirnod person",
@@ -3555,7 +4337,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.organizations.nav": "Sefydliadau",
   "p.organizations.title": "Sefydliadau — PPM",
   "p.organizations.h1": "Sefydliadau partner",
-  "p.organizations.lede": "Y sefydliadau sy'n cyflawni, noddi, cyflenwi neu'n bartner ar y portffolio. Gellir cyfeirio pecyn at sefydliad, gall carreg filltir fod angen ei lofnod, a gall ymrwymo capasiti. Mae ymddeol sefydliad yn cadw ei hanes.",
+  "p.organizations.lede":
+    "Y sefydliadau sy'n cyflawni, noddi, cyflenwi neu'n bartner ar y portffolio. Gellir cyfeirio pecyn at sefydliad, gall carreg filltir fod angen ei lofnod, a gall ymrwymo capasiti. Mae ymddeol sefydliad yn cadw ei hanes.",
   "p.organizations.loading": "Wrthi'n llwytho'r sefydliadau…",
   "p.organizations.none": "Nid oes sefydliad wedi'i ychwanegu eto.",
   "p.organizations.add_h2": "Ychwanegu sefydliad",
@@ -3582,10 +4365,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.email_deliveries.nav": "Negeseuon e-bost a ddanfonwyd",
   "p.email_deliveries.title": "Negeseuon e-bost a ddanfonwyd — PPM",
   "p.email_deliveries.h1": "Negeseuon e-bost a ddanfonwyd",
-  "p.email_deliveries.lede": "Pob e-bost a geisiodd y gwasanaeth ei anfon, un rhes ar gyfer pob derbynnydd: a anfonwyd, a yw'n aros i roi cynnig arall arni, neu a fethodd am byth, sawl ymgais a wnaed, a'r gwall diwethaf. Gall gweinyddwyr yn unig ddarllen hwn, oherwydd mae'n cynnwys cyfeiriadau e-bost.",
+  "p.email_deliveries.lede":
+    "Pob e-bost a geisiodd y gwasanaeth ei anfon, un rhes ar gyfer pob derbynnydd: a anfonwyd, a yw'n aros i roi cynnig arall arni, neu a fethodd am byth, sawl ymgais a wnaed, a'r gwall diwethaf. Gall gweinyddwyr yn unig ddarllen hwn, oherwydd mae'n cynnwys cyfeiriadau e-bost.",
   "p.email_deliveries.loading": "Wrthi'n llwytho'r negeseuon…",
-  "p.email_deliveries.none": "Ni anfonwyd nac ymdrechwyd i anfon unrhyw e-bost.",
-  "p.email_deliveries.counts": "Anfonwyd: {sent}. Yn aros i roi cynnig arall: {retry}. Wedi methu am byth: {failed}.",
+  "p.email_deliveries.none":
+    "Ni anfonwyd nac ymdrechwyd i anfon unrhyw e-bost.",
+  "p.email_deliveries.counts":
+    "Anfonwyd: {sent}. Yn aros i roi cynnig arall: {retry}. Wedi methu am byth: {failed}.",
   "p.email_deliveries.filter": "Dangos",
   "p.email_deliveries.all": "Pob un",
   "p.email_deliveries.col_recipient": "Derbynnydd",
@@ -3599,11 +4385,15 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.email_deliveries.status_retry": "bydd yn ceisio eto",
   "p.email_deliveries.status_sent": "anfonwyd",
   "p.email_deliveries.status_failed": "methwyd",
-  "p.email_deliveries.not_allowed": "Gall gweinyddwyr yn unig ddarllen negeseuon e-bost a ddanfonwyd.",
-  "p.email_deliveries.could_not_load": "Methu llwytho'r negeseuon e-bost a ddanfonwyd",
+  "p.email_deliveries.not_allowed":
+    "Gall gweinyddwyr yn unig ddarllen negeseuon e-bost a ddanfonwyd.",
+  "p.email_deliveries.could_not_load":
+    "Methu llwytho'r negeseuon e-bost a ddanfonwyd",
   "p.director_pack.s_signoffs": "Llofnodi cerrig milltir",
-  "p.director_pack.signoffs_note": "Mae rhai cerrig milltir yn cael eu cwrdd dim ond pan fydd y sefydliadau partner a enwir wedi'u llofnodi. Cyflwynwyd yw'r sefydliad cyflawni'n dweud ei fod wedi'i wneud; cwrddwyd yw cyflwynwyd gyda phob llofnod mewn grym. Mae llofnod a dynnir yn ôl yn cyfrif fel un sy'n weddill.",
-  "p.director_pack.signoffs_totals": "Angen llofnod: {n}. Cyflwynwyd: {delivered}. Cwrddwyd: {met}. Cyflwynwyd ond heb ei gwrdd: {gap}. Cwrddwyd, fel cyfran o'r rhai a gyflwynwyd: {share}.",
+  "p.director_pack.signoffs_note":
+    "Mae rhai cerrig milltir yn cael eu cwrdd dim ond pan fydd y sefydliadau partner a enwir wedi'u llofnodi. Cyflwynwyd yw'r sefydliad cyflawni'n dweud ei fod wedi'i wneud; cwrddwyd yw cyflwynwyd gyda phob llofnod mewn grym. Mae llofnod a dynnir yn ôl yn cyfrif fel un sy'n weddill.",
+  "p.director_pack.signoffs_totals":
+    "Angen llofnod: {n}. Cyflwynwyd: {delivered}. Cwrddwyd: {met}. Cyflwynwyd ond heb ei gwrdd: {gap}. Cwrddwyd, fel cyfran o'r rhai a gyflwynwyd: {share}.",
   "p.director_pack.so_met": "wedi'i gwrdd",
   "p.director_pack.so_delivered_not_met": "wedi'i gyflwyno, heb ei gwrdd",
   "p.director_pack.so_not_delivered": "heb ei gyflwyno",
@@ -3616,26 +4406,36 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_delivery": "Cyflawni",
   "p.director_pack.dm_not_stated": "heb ei nodi",
   "p.director_pack.dm_central_product": "cynnyrch canolog",
-  "p.director_pack.dm_central_platform_local_deployment": "platfform canolog, lleoli lleol",
-  "p.director_pack.dm_local_programme_central_standards": "rhaglen leol, safonau canolog",
+  "p.director_pack.dm_central_platform_local_deployment":
+    "platfform canolog, lleoli lleol",
+  "p.director_pack.dm_local_programme_central_standards":
+    "rhaglen leol, safonau canolog",
   "p.director_pack.dm_owner": "perchennog: {name}",
   "p.director_pack.dm_not_ours": "heb ei gyflawni gan y sefydliad",
   "p.director_pack.s_flow": "Llosgi i fyny a llif (rhaglenni cynnyrch)",
   "p.director_pack.c_scope": "Tasgau a grëwyd",
   "p.director_pack.c_finished": "Tasgau wedi'u gorffen",
   "p.director_pack.c_open": "Tasgau agored",
-  "p.director_pack.c_throughput": "Wedi'u gorffen yr wythnos (pedair wythnos ddiwethaf)",
-  "p.director_pack.c_burnup": "Wedi'u gorffen, wythnos wrth wythnos (hynaf yn gyntaf)",
-  "p.director_pack.no_flow": "{name}: rhaglen cynnyrch heb unrhyw dasgau eto, felly dim llosgi i fyny na llif.",
+  "p.director_pack.c_throughput":
+    "Wedi'u gorffen yr wythnos (pedair wythnos ddiwethaf)",
+  "p.director_pack.c_burnup":
+    "Wedi'u gorffen, wythnos wrth wythnos (hynaf yn gyntaf)",
+  "p.director_pack.no_flow":
+    "{name}: rhaglen cynnyrch heb unrhyw dasgau eto, felly dim llosgi i fyny na llif.",
   "p.director_pack.s_asks": "Ceisiadau allanol a'u cyfaddawdau",
-  "p.director_pack.asks_note": "Ni ellir cymeradwyo cais gan y noddwr nes iddo enwi'r hyn y mae'n ei ddisodli. Mae hyn yn rhestru'r ceisiadau a godwyd yn y cyfnod.",
-  "p.director_pack.asks_count": "Ceisiadau a godwyd yn y cyfnod: {n}. Heb gyfaddawd a enwyd eto: {without}.",
+  "p.director_pack.asks_note":
+    "Ni ellir cymeradwyo cais gan y noddwr nes iddo enwi'r hyn y mae'n ei ddisodli. Mae hyn yn rhestru'r ceisiadau a godwyd yn y cyfnod.",
+  "p.director_pack.asks_count":
+    "Ceisiadau a godwyd yn y cyfnod: {n}. Heb gyfaddawd a enwyd eto: {without}.",
   "p.director_pack.ask_none": "dim cyfaddawd wedi'i enwi eto",
   "p.director_pack.c_ask": "Cais",
   "p.director_pack.c_tradeoff": "Yr hyn y mae'n ei ddisodli",
-  "p.director_pack.register_line": "Rhaglenni â chofrestr gyflawn: {complete} o {n}.",
-  "p.director_pack.register_enforced": "Ni ryddheir llinell gyllideb, ac ni archebir dyraniad cadarn, ar raglen â chofrestr anghyflawn.",
-  "p.director_pack.register_not_enforced": "Rhybudd yw cofrestr anghyflawn, nid rhwystr: gall arian symud o hyd, ac archwilir y rhybudd.",
+  "p.director_pack.register_line":
+    "Rhaglenni â chofrestr gyflawn: {complete} o {n}.",
+  "p.director_pack.register_enforced":
+    "Ni ryddheir llinell gyllideb, ac ni archebir dyraniad cadarn, ar raglen â chofrestr anghyflawn.",
+  "p.director_pack.register_not_enforced":
+    "Rhybudd yw cofrestr anghyflawn, nid rhwystr: gall arian symud o hyd, ac archwilir y rhybudd.",
   "p.director_pack.s_register": "Rhaglenni â chofrestr anghyflawn",
   "p.director_pack.c_score": "Cyflawn",
   "p.director_pack.c_missing": "Ar goll",
@@ -3650,28 +4450,38 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.rf_top_risks": "prif risgiau",
   "p.director_pack.rf_dependencies": "dibyniaethau",
   "p.director_pack.s_watermelon": "Mesurau melon dŵr",
-  "p.director_pack.wm_note": "Gwyrdd ar y tu allan, coch y tu mewn. Darllenir y rhain o'r pecyn hwn a'r pecyn blaenorol a gyhoeddwyd fel y'u storiwyd, heb eu hailgyfrifo. Mae mesur heb ddim i'w fesur yn dweud pam; nid yw'n sero.",
+  "p.director_pack.wm_note":
+    "Gwyrdd ar y tu allan, coch y tu mewn. Darllenir y rhain o'r pecyn hwn a'r pecyn blaenorol a gyhoeddwyd fel y'u storiwyd, heb eu hailgyfrifo. Mae mesur heb ddim i'w fesur yn dweud pam; nid yw'n sero.",
   "p.director_pack.wm_gap": "Hyder hunanasesu ac annibynnol yn anghytuno",
-  "p.director_pack.wm_late": "Darganfod hwyr: coch neu ambr-coch nawr, gwyrdd yn y pecyn blaenorol",
-  "p.director_pack.wm_red": "Coch heb unrhyw benderfyniad wedi'i gofnodi yn y cyfnod",
-  "p.director_pack.wm_signoff": "Cerrig milltir wedi'u cwrdd â llofnod, o'r rhai a gyflwynwyd",
-  "p.director_pack.wm_signoff_of": "{met} wedi'u cwrdd o {delivered} wedi'u cyflwyno",
+  "p.director_pack.wm_late":
+    "Darganfod hwyr: coch neu ambr-coch nawr, gwyrdd yn y pecyn blaenorol",
+  "p.director_pack.wm_red":
+    "Coch heb unrhyw benderfyniad wedi'i gofnodi yn y cyfnod",
+  "p.director_pack.wm_signoff":
+    "Cerrig milltir wedi'u cwrdd â llofnod, o'r rhai a gyflwynwyd",
+  "p.director_pack.wm_signoff_of":
+    "{met} wedi'u cwrdd o {delivered} wedi'u cyflwyno",
   "p.director_pack.wm_not_measured": "heb ei fesur",
   "p.director_pack.c_measure": "Mesur",
   "p.director_pack.c_programmes": "Rhaglenni, neu pam na fesurwyd",
   "p.director_pack.wm_count": "Rhaglenni: {n}",
   "p.director_pack.s_keypeople": "Pobl allweddol a llafur wrth gefn",
-  "p.director_pack.kp_note": "Cyfrifir pwyntiau methiant sengl yma ac ni chânt eu henwi byth; mae'r gofrestr ei hun ar gyfer rheolwyr adnoddau.",
-  "p.director_pack.kp_counts": "Pwyntiau methiant sengl: {n} ({people} o bobl, {roles} o rolau). Heb olynydd: {nosucc}. Olynydd yn barod: {ready}; yn rhannol barod: {partly}; ddim yn barod: {none}.",
+  "p.director_pack.kp_note":
+    "Cyfrifir pwyntiau methiant sengl yma ac ni chânt eu henwi byth; mae'r gofrestr ei hun ar gyfer rheolwyr adnoddau.",
+  "p.director_pack.kp_counts":
+    "Pwyntiau methiant sengl: {n} ({people} o bobl, {roles} o rolau). Heb olynydd: {nosucc}. Olynydd yn barod: {ready}; yn rhannol barod: {partly}; ddim yn barod: {none}.",
   "p.director_pack.kp_no_people": "neb yn y gronfa hon",
   "p.director_pack.c_headcount": "Pobl",
   "p.director_pack.c_contingent": "Wrth gefn",
   "p.director_pack.c_contingent_share": "Cyfran wrth gefn",
   "p.director_pack.s_triage": "Didoli a throthwyon",
-  "p.director_pack.tr_note": "Dangosir didoli diweddaraf pob rhaglen. Mae croesi trothwy yn agor eithriad sydd angen oedi, ailosod, atal neu ddiystyru gyda dyddiad dod i ben; ni chaiff dim ei oedi na'i atal yn awtomatig.",
-  "p.director_pack.tr_decisions": "Penderfyniadau y cyfnod hwn: oedi {pause}, ailosod {reset}, atal {stop}, diystyru {override}.",
+  "p.director_pack.tr_note":
+    "Dangosir didoli diweddaraf pob rhaglen. Mae croesi trothwy yn agor eithriad sydd angen oedi, ailosod, atal neu ddiystyru gyda dyddiad dod i ben; ni chaiff dim ei oedi na'i atal yn awtomatig.",
+  "p.director_pack.tr_decisions":
+    "Penderfyniadau y cyfnod hwn: oedi {pause}, ailosod {reset}, atal {stop}, diystyru {override}.",
   "p.director_pack.tr_open": "Eithriadau trothwy yn aros am benderfyniad: {n}.",
-  "p.director_pack.tr_override_line": "Diystyru mewn grym ar gyfer {programme} tan {expiry}.",
+  "p.director_pack.tr_override_line":
+    "Diystyru mewn grym ar gyfer {programme} tan {expiry}.",
   "p.director_pack.tr_finish": "gorffen",
   "p.director_pack.tr_fix": "trwsio",
   "p.director_pack.tr_pause": "oedi",
@@ -3680,8 +4490,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_triaged_on": "Didolwyd ar",
   "l.enum.pk_conf.threshold": "trothwy wedi'i groesi",
   "p.director_pack.s_cutovers": "Penderfyniadau newid drosodd",
-  "p.director_pack.co_note": "Penderfynir ar newid drosodd yn erbyn meini prawf atal a gyhoeddwyd cyn y penderfyniad. Penderfyniad a wneir ar y meini prawf hynny yw na-fynd neu oedi am resymau diogelwch, ac ni chaiff ei gyfrif fel llithriad.",
-  "p.director_pack.co_counts": "Penderfynwyd yn y cyfnod: mynd {go}, na-fynd {nogo}, oedi am resymau diogelwch {delay}.",
+  "p.director_pack.co_note":
+    "Penderfynir ar newid drosodd yn erbyn meini prawf atal a gyhoeddwyd cyn y penderfyniad. Penderfyniad a wneir ar y meini prawf hynny yw na-fynd neu oedi am resymau diogelwch, ac ni chaiff ei gyfrif fel llithriad.",
+  "p.director_pack.co_counts":
+    "Penderfynwyd yn y cyfnod: mynd {go}, na-fynd {nogo}, oedi am resymau diogelwch {delay}.",
   "p.director_pack.co_go": "mynd ymlaen",
   "p.director_pack.co_no_go": "na-fynd",
   "p.director_pack.co_delay_for_safety": "oedi am resymau diogelwch",
@@ -3689,11 +4501,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.c_decision": "Penderfyniad",
   "p.director_pack.c_decided_on": "Penderfynwyd ar",
   "p.director_pack.s_outcomes": "Canlyniadau a dad-ddwysáu",
-  "p.director_pack.oc_note": "Y lefel ddwysáu yw'r hyn a osododd y noddwr, ac ni chaiff ei gweithio allan yma byth. Mae'r rhediad isod yn cyfrif chwarteri gorffenedig lle mae pob mesur cerdyn sgorio a phob maen prawf wedi'i fodloni; fe'i cynigir i'r sawl sy'n penderfynu.",
+  "p.director_pack.oc_note":
+    "Y lefel ddwysáu yw'r hyn a osododd y noddwr, ac ni chaiff ei gweithio allan yma byth. Mae'r rhediad isod yn cyfrif chwarteri gorffenedig lle mae pob mesur cerdyn sgorio a phob maen prawf wedi'i fodloni; fe'i cynigir i'r sawl sy'n penderfynu.",
   "p.director_pack.oc_level": "Lefel ddwysáu: {level}, wedi'i gosod ar {on}.",
   "p.director_pack.oc_no_level": "Ni chofnodwyd lefel ddwysáu.",
-  "p.director_pack.oc_run": "Chwarteri olynol wedi'u bodloni: {n}. Mae'r rheol yn gofyn am {need}.",
-  "p.director_pack.oc_rule_yes": "Mae'r rheol wedi'i bodloni. Mater i'r noddwr yw penderfynu a ddylid disgyn lefel.",
+  "p.director_pack.oc_run":
+    "Chwarteri olynol wedi'u bodloni: {n}. Mae'r rheol yn gofyn am {need}.",
+  "p.director_pack.oc_rule_yes":
+    "Mae'r rheol wedi'i bodloni. Mater i'r noddwr yw penderfynu a ddylid disgyn lefel.",
   "p.director_pack.oc_rule_no": "Nid yw'r rheol wedi'i bodloni eto.",
   "p.director_pack.oc_met": "wedi'i fodloni",
   "p.director_pack.oc_not_met": "heb ei fodloni",

@@ -15,8 +15,13 @@ import { lazyArray } from "./lazy.js";
 
 /** Monday first; looked up when read, so it follows the language. */
 export const WEEKDAY_NAMES: readonly string[] = lazyArray([
-  "l.cpm_view.monday", "l.cpm_view.tuesday", "l.cpm_view.wednesday", "l.cpm_view.thursday",
-  "l.cpm_view.friday", "l.cpm_view.saturday", "l.cpm_view.sunday",
+  "l.cpm_view.monday",
+  "l.cpm_view.tuesday",
+  "l.cpm_view.wednesday",
+  "l.cpm_view.thursday",
+  "l.cpm_view.friday",
+  "l.cpm_view.saturday",
+  "l.cpm_view.sunday",
 ]);
 
 /** `1111100` → `[true, true, true, true, true, false, false]` (Monday first). Anything malformed is all-working. */
@@ -119,7 +124,13 @@ export function dayState(
   const off = n === null ? false : !maskToWeekdays(mask)[mondayIndex(n)];
   const holiday = holidays.includes(date);
   const absent = absences.includes(date);
-  return { date, holiday, absent, offDay: off, working: !off && !holiday && !absent };
+  return {
+    date,
+    holiday,
+    absent,
+    offDay: off,
+    working: !off && !holiday && !absent,
+  };
 }
 
 /** The (year, month) before / after `(year, month)`. */
@@ -149,11 +160,23 @@ export function floatLabel(n: {
   near_critical: boolean;
 }): string {
   if (n.total_float < 0) {
-    return t("l.cpm_view.cannot_meet_its_constraint_or", { plural: plural(-n.total_float, t("l.cpm_view.business_day"), t("p.plans.pid.critical_path.business_days")) });
+    return t("l.cpm_view.cannot_meet_its_constraint_or", {
+      plural: plural(
+        -n.total_float,
+        t("l.cpm_view.business_day"),
+        t("p.plans.pid.critical_path.business_days"),
+      ),
+    });
   }
   if (n.critical) return t("l.cpm_view.on_the_critical_path_any");
-  const d = plural(n.total_float, t("l.cpm_view.business_day"), t("p.plans.pid.critical_path.business_days"));
-  return n.near_critical ? t("l.cpm_view.of_float_near_critical", { d }) : t("l.cpm_view.of_float", { d });
+  const d = plural(
+    n.total_float,
+    t("l.cpm_view.business_day"),
+    t("p.plans.pid.critical_path.business_days"),
+  );
+  return n.near_critical
+    ? t("l.cpm_view.of_float_near_critical", { d })
+    : t("l.cpm_view.of_float", { d });
 }
 
 /** The task's state for a key and a non-colour marker, so colour is never the only signal. */
@@ -266,9 +289,18 @@ export function cpmBars(
       limitPct: lf < ef ? pct(lf + 1) : null,
       state: st.key,
       marker: st.marker,
-      label: t("l.cpm_view.to", { v: n.title ?? "(untitled)", early_start: n.early_start, early_finish: n.early_finish, floatLabel: floatLabel(n), v2: ghostDays(n)
-          ? t("l.cpm_view.baselined_to", { start: baseline.get(n.pid)?.start, finish: baseline.get(n.pid)?.finish })
-          : "" }),
+      label: t("l.cpm_view.to", {
+        v: n.title ?? "(untitled)",
+        early_start: n.early_start,
+        early_finish: n.early_finish,
+        floatLabel: floatLabel(n),
+        v2: ghostDays(n)
+          ? t("l.cpm_view.baselined_to", {
+              start: baseline.get(n.pid)?.start,
+              finish: baseline.get(n.pid)?.finish,
+            })
+          : "",
+      }),
       ghost: (() => {
         const g = ghostDays(n);
         return g
@@ -414,13 +446,17 @@ export function standingText(r: {
       return {
         marker: "▲",
         word: t("l.cpm_view.slipped"),
-        detail: t("l.cpm_view.finishes_later_than_baselined", { d: d(r.finish_variance_days ?? 0) }),
+        detail: t("l.cpm_view.finishes_later_than_baselined", {
+          d: d(r.finish_variance_days ?? 0),
+        }),
       };
     case "pulled_in":
       return {
         marker: "▼",
         word: t("l.cpm_view.pulled_in"),
-        detail: t("l.cpm_view.finishes_earlier_than_baselined", { d: d(r.finish_variance_days ?? 0) }),
+        detail: t("l.cpm_view.finishes_earlier_than_baselined", {
+          d: d(r.finish_variance_days ?? 0),
+        }),
       };
     case "on_baseline":
       return {
@@ -463,5 +499,7 @@ export function diagramFits(nodeCount: number): boolean {
 /** The sentence for dependencies the reader may not see: how many, never what. */
 export function restrictedText(n: number): string {
   if (n === 0) return "";
-  return n === 1 ? t("l.cpm_view.restricted_one", { n }) : t("l.cpm_view.restricted_other", { n });
+  return n === 1
+    ? t("l.cpm_view.restricted_one", { n })
+    : t("l.cpm_view.restricted_other", { n });
 }

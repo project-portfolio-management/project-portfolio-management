@@ -44,7 +44,10 @@ export function negotiateLocale(
 export const handle: Handle = async (input) => {
   const response = await localeHandle(input);
   const { event } = input;
-  const https = isHttps(event.url, event.request.headers.get("x-forwarded-proto"));
+  const https = isHttps(
+    event.url,
+    event.request.headers.get("x-forwarded-proto"),
+  );
   try {
     applySecurityHeaders(response.headers, https);
     return response;
@@ -77,7 +80,10 @@ const localeHandle: Handle = async ({ event, resolve }) => {
       !pathname.startsWith("/api/") &&
       !pathname.includes("/signin")
     ) {
-      const to = negotiateLocale(event.cookies, event.request.headers.get("accept-language"));
+      const to = negotiateLocale(
+        event.cookies,
+        event.request.headers.get("accept-language"),
+      );
       redirect(303, `${localizePath("/signin", to)}?error=oidc_idle`);
     }
   }

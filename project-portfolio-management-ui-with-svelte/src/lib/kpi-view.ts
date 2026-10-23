@@ -14,10 +14,18 @@ export const STATUS_ORDER: readonly KpiStatus[] = [
 ];
 
 export const STATUS_TEXT: Record<KpiStatus, string> = {
-  get green() { return t("p.kpis.on_target"); },
-  get amber() { return t("p.kpis.watch"); },
-  get red() { return t("p.kpis.off_target"); },
-  get no_data() { return t("p.kpis.no_data_yet"); },
+  get green() {
+    return t("p.kpis.on_target");
+  },
+  get amber() {
+    return t("p.kpis.watch");
+  },
+  get red() {
+    return t("p.kpis.off_target");
+  },
+  get no_data() {
+    return t("p.kpis.no_data_yet");
+  },
 };
 
 /** A decorative shape per status (hide it from screen readers; the word is there). */
@@ -42,14 +50,28 @@ export function thresholdText(
 ): string {
   const u = kpi.unit ? ` ${kpi.unit}` : "";
   return kpi.direction === "higher_better"
-    ? t("l.kpi_view.target_or_more_red_at", { target_value: kpi.target_value, red_value: kpi.red_value, u })
-    : t("l.kpi_view.target_or_less_red_at", { target_value: kpi.target_value, red_value: kpi.red_value, u });
+    ? t("l.kpi_view.target_or_more_red_at", {
+        target_value: kpi.target_value,
+        red_value: kpi.red_value,
+        u,
+      })
+    : t("l.kpi_view.target_or_less_red_at", {
+        target_value: kpi.target_value,
+        red_value: kpi.red_value,
+        u,
+      });
 }
 
 const TREND_TEXT: Record<KpiTrend, string> = {
-  get improving() { return t("l.kpi_view.improving"); },
-  get worsening() { return t("l.kpi_view.getting_worse"); },
-  get flat() { return t("l.kpi_view.no_change"); },
+  get improving() {
+    return t("l.kpi_view.improving");
+  },
+  get worsening() {
+    return t("l.kpi_view.getting_worse");
+  },
+  get flat() {
+    return t("l.kpi_view.no_change");
+  },
 };
 
 export function trendText(trend: KpiTrend | null | undefined): string | null {
@@ -66,7 +88,10 @@ export function staleText(view: Pick<KpiView, "stale" | "kpi">): string | null {
 /** The one-line summary for a KPI row, readable aloud. */
 export function summaryText(view: KpiView): string {
   const latest = view.latest
-    ? t("c.KpiCard.on", { valueText: valueText(view.latest.value, view.kpi.unit), observed_on: view.latest.observed_on })
+    ? t("c.KpiCard.on", {
+        valueText: valueText(view.latest.value, view.kpi.unit),
+        observed_on: view.latest.observed_on,
+      })
     : t("l.kpi_view.no_reading_yet");
   return `${view.kpi.name}: ${STATUS_TEXT[view.status]}, ${latest}`;
 }

@@ -37,7 +37,8 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
   const state = randomToken();
   const nonce = randomToken();
   const { verifier, challenge } = pkcePair();
-  const redirectUri = oidcOptions().redirectUri ?? `${url.origin}/signin/oidc/callback`;
+  const redirectUri =
+    oidcOptions().redirectUri ?? `${url.origin}/signin/oidc/callback`;
   const returnTo = safeReturnPath(url.searchParams.get("return"));
   await sessions().startTransaction(state, {
     nonce,
@@ -47,8 +48,15 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
     redirectUri,
     locale,
   });
-  cookies.set(OIDC_TX_COOKIE, state, { ...OIDC_COOKIE_OPTIONS, maxAge: TX_TTL_MS / 1000 });
-  redirect(303, authorizationUrl(meta, cfg, { state, nonce, challenge, redirectUri }), {
-    external: true,
+  cookies.set(OIDC_TX_COOKIE, state, {
+    ...OIDC_COOKIE_OPTIONS,
+    maxAge: TX_TTL_MS / 1000,
   });
+  redirect(
+    303,
+    authorizationUrl(meta, cfg, { state, nonce, challenge, redirectUri }),
+    {
+      external: true,
+    },
+  );
 };

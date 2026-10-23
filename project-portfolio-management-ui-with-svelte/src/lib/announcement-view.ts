@@ -5,9 +5,15 @@ import type { Announcement, AnnouncementSeverity } from "#lib/api/ppm.js";
 import { t } from "./i18n.svelte.js";
 
 export const SEVERITY_TEXT: Record<AnnouncementSeverity, string> = {
-  get info() { return t("p.announcements.info"); },
-  get important() { return t("p.announcements.important"); },
-  get urgent() { return t("p.announcements.urgent"); },
+  get info() {
+    return t("p.announcements.info");
+  },
+  get important() {
+    return t("p.announcements.important");
+  },
+  get urgent() {
+    return t("p.announcements.urgent");
+  },
 };
 
 /** A decorative shape per severity (hide it from screen readers; the word is there). */
@@ -28,7 +34,9 @@ export function ageText(iso: string, now: Date): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return t("l.announcement_view.h_ago", { hours });
   const days = Math.floor(hours / 24);
-  return days === 1 ? t("l.announcement_view.yesterday") : t("l.announcement_view.calendar_days_ago", { days });
+  return days === 1
+    ? t("l.announcement_view.yesterday")
+    : t("l.announcement_view.calendar_days_ago", { days });
 }
 
 /** The first `max` characters of a body, cut at a word, with an ellipsis only if cut. */

@@ -9,11 +9,21 @@
 // Which one is chosen by `OIDC_SESSION_STORE` (`memory` or `redis`) and `REDIS_URL`; see
 // `session-store-instance.ts`.
 
-import { OidcStore, buildSession, type LoginTransaction, type NewSession, type OidcSession, TX_TTL_MS } from "./oidc-session";
+import {
+  OidcStore,
+  buildSession,
+  type LoginTransaction,
+  type NewSession,
+  type OidcSession,
+  TX_TTL_MS,
+} from "./oidc-session";
 import { RedisClient } from "./resp";
 
 export interface SessionStore {
-  startTransaction(state: string, tx: Omit<LoginTransaction, "expiresAt">): Promise<void>;
+  startTransaction(
+    state: string,
+    tx: Omit<LoginTransaction, "expiresAt">,
+  ): Promise<void>;
   /** Take (and spend) the login transaction for `state`; `null` if unknown, spent or expired. */
   takeTransaction(state: string): Promise<LoginTransaction | null>;
   createSession(p: NewSession): Promise<OidcSession>;
@@ -31,7 +41,10 @@ export interface SessionStore {
 /** The in-process store, as the asynchronous interface. */
 export class MemorySessionStore implements SessionStore {
   constructor(private readonly inner: OidcStore = new OidcStore()) {}
-  async startTransaction(state: string, tx: Omit<LoginTransaction, "expiresAt">): Promise<void> {
+  async startTransaction(
+    state: string,
+    tx: Omit<LoginTransaction, "expiresAt">,
+  ): Promise<void> {
     this.inner.startTransaction(state, tx);
   }
   async takeTransaction(state: string): Promise<LoginTransaction | null> {
@@ -59,7 +72,12 @@ export class MemorySessionStore implements SessionStore {
 
 /** Writes to Redis for "used" at most this often per session (the idle timeout is not that fine). */
 const TOUCH_EVERY_MS = 10_000;
-const KEY = { session: "ppm:sess:", tx: "ppm:tx:", idle: "ppm:idle:", rate: "ppm:txrate:" } as const;
+const KEY = {
+  session: "ppm:sess:",
+  tx: "ppm:tx:",
+  idle: "ppm:idle:",
+  rate: "ppm:txrate:",
+} as const;
 
 /** Random identifiers made by `randomToken` (base64url). Anything else is not one of ours. */
 const TOKEN = /^[A-Za-z0-9_-]{20,128}$/;
@@ -93,14 +111,24 @@ export class RedisSessionStore implements SessionStore {
     this.idleMs = Math.max(0, seconds) * 1000;
   }
 
-  async startTransaction(state: string, tx: Omit<LoginTransaction, "expiresAt">): Promise<void> {
+  async startTransaction(
+    state: string,
+    tx: Omit<LoginTransaction, "expiresAt">,
+  ): Promise<void> {
     if (!TOKEN.test(state)) throw new Error("not a login state");
     const minute = Math.floor(this.now() / 60_000);
     const n = await this.redis.command("INCR", KEY.rate + minute);
     if (n === 1) await this.redis.command("EXPIRE", KEY.rate + minute, 120);
-    if (typeof n === "number" && n > MAX_LOGINS_PER_MINUTE) throw new Error("too many sign-ins started; try again in a minute");
+    if (typeof n === "number" && n > MAX_LOGINS_PER_MINUTE)
+      throw new Error("too many sign-ins started; try again in a minute");
     const full: LoginTransaction = { ...tx, expiresAt: this.now() + TX_TTL_MS };
-    await this.redis.command("SET", KEY.tx + state, JSON.stringify(full), "EX", Math.ceil(TX_TTL_MS / 1000));
+    await this.redis.command(
+      "SET",
+      KEY.tx + state,
+      JSON.stringify(full),
+      "EX",
+      Math.ceil(TX_TTL_MS / 1000),
+    );
   }
 
   async takeTransaction(state: string): Promise<LoginTransaction | null> {
@@ -114,7 +142,13 @@ export class RedisSessionStore implements SessionStore {
 
   async createSession(p: NewSession): Promise<OidcSession> {
     const session = buildSession(p, this.now());
-    await this.redis.command("SET", KEY.session + session.id, JSON.stringify(session), "EX", p.sessionSeconds);
+    await this.redis.command(
+      "SET",
+      KEY.session + session.id,
+      JSON.stringify(session),
+      "EX",
+      p.sessionSeconds,
+    );
     return session;
   }
 
@@ -130,7 +164,11 @@ export class RedisSessionStore implements SessionStore {
     }
     if (typeof raw !== "string") return null;
     const s = parse<OidcSession>(raw);
-    if (!s || typeof s.expiresAt !== "number" || typeof s.accessToken !== "string") {
+    if (
+      !s ||
+      typeof s.expiresAt !== "number" ||
+      typeof s.accessToken !== "string"
+    ) {
       // Not a session we wrote: do not trust it, and do not keep it.
       await this.delete(id);
       return null;
@@ -147,14 +185,26 @@ export class RedisSessionStore implements SessionStore {
     }
     if (t - s.lastSeenAt >= TOUCH_EVERY_MS) {
       s.lastSeenAt = t;
-      await this.redis.command("SET", KEY.session + id, JSON.stringify(s), "XX", "KEEPTTL");
+      await this.redis.command(
+        "SET",
+        KEY.session + id,
+        JSON.stringify(s),
+        "XX",
+        "KEEPTTL",
+      );
     }
     return s;
   }
 
   async save(session: OidcSession): Promise<void> {
     if (!TOKEN.test(session.id)) throw new Error("not a session id");
-    await this.redis.command("SET", KEY.session + session.id, JSON.stringify(session), "XX", "KEEPTTL");
+    await this.redis.command(
+      "SET",
+      KEY.session + session.id,
+      JSON.stringify(session),
+      "XX",
+      "KEEPTTL",
+    );
   }
 
   async delete(id: string | null | undefined): Promise<void> {
@@ -164,7 +214,9 @@ export class RedisSessionStore implements SessionStore {
   async endedIdle(id: string | null | undefined): Promise<boolean> {
     if (!id || !TOKEN.test(id)) return false;
     try {
-      return typeof (await this.redis.command("GETDEL", KEY.idle + id)) === "string";
+      return (
+        typeof (await this.redis.command("GETDEL", KEY.idle + id)) === "string"
+      );
     } catch {
       return false;
     }

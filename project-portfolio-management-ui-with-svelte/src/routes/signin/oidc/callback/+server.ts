@@ -65,11 +65,20 @@ export const GET: RequestHandler = async ({ url, cookies, fetch, locals }) => {
     };
     let claims;
     try {
-      claims = verifyIdToken(tokens.id_token, await signingKeys(fetch, meta), expect);
+      claims = verifyIdToken(
+        tokens.id_token,
+        await signingKeys(fetch, meta),
+        expect,
+      );
     } catch (e) {
       // A key may have rotated since we cached the key set: re-read once.
-      if (!(e instanceof OidcError) || e.message !== "no matching signing key") throw e;
-      claims = verifyIdToken(tokens.id_token, await signingKeys(fetch, meta, true), expect);
+      if (!(e instanceof OidcError) || e.message !== "no matching signing key")
+        throw e;
+      claims = verifyIdToken(
+        tokens.id_token,
+        await signingKeys(fetch, meta, true),
+        expect,
+      );
     }
     session = await sessions().createSession({
       accessToken: tokens.access_token,

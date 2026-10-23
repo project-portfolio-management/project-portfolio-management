@@ -34,10 +34,12 @@ export interface Deps {
 
 type J = Record<string, unknown>;
 
-const obj = (v: unknown): J => (v && typeof v === "object" && !Array.isArray(v) ? (v as J) : {});
+const obj = (v: unknown): J =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as J) : {};
 const arr = (v: unknown): J[] => (Array.isArray(v) ? v.map(obj) : []);
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
-const numOrNull = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+const numOrNull = (v: unknown): number | null =>
+  typeof v === "number" && Number.isFinite(v) ? v : null;
 
 const K = "p.director_pack.";
 
@@ -48,32 +50,51 @@ function deliveryText(dl: Record<string, unknown>, d: Deps): string {
   if (!model) return d.t(`${K}dm_not_stated`);
   const owner = obj(dl.delivery_owner);
   const parts = [d.t(`${K}dm_${model}`)];
-  if (typeof owner.name === "string" && owner.name) parts.push(d.t(`${K}dm_owner`, { name: owner.name }));
-  if (dl.delivered_by_organization === false) parts.push(d.t(`${K}dm_not_ours`));
+  if (typeof owner.name === "string" && owner.name)
+    parts.push(d.t(`${K}dm_owner`, { name: owner.name }));
+  if (dl.delivered_by_organization === false)
+    parts.push(d.t(`${K}dm_not_ours`));
   return parts.join("; ");
 }
 
 export function exponentOf(currency: string, locale: string): number {
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+    return (
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency,
+      }).resolvedOptions().maximumFractionDigits ?? 2
+    );
   } catch {
     return 2;
   }
 }
 
 /** `minor` units of `currency` in the reader's own number format. Always names the currency. */
-export function money(minor: number | null, currency: string, locale: string): string {
+export function money(
+  minor: number | null,
+  currency: string,
+  locale: string,
+): string {
   if (minor === null) return "–";
   const e = exponentOf(currency, locale);
   try {
-    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(minor / 10 ** e);
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+    }).format(minor / 10 ** e);
   } catch {
     return `${currency} ${minor}`;
   }
 }
 
 const fixed = (n: number | null, places: number, locale: string): string =>
-  n === null ? "–" : new Intl.NumberFormat(locale, { minimumFractionDigits: places, maximumFractionDigits: places }).format(n);
+  n === null
+    ? "–"
+    : new Intl.NumberFormat(locale, {
+        minimumFractionDigits: places,
+        maximumFractionDigits: places,
+      }).format(n);
 
 const TONE: Record<string, Tone> = {
   green: "green",
@@ -104,11 +125,23 @@ const plain = (text: string): Cell => ({ text });
 
 /** What changed: the service writes these as English sentences; this reads the three shapes it uses. */
 function changedLine(line: string, d: Deps): string {
-  const m = /^(.+?): (\d+)(?: \(no earlier pack to compare with\)|, unchanged|, was (\d+))$/.exec(line);
+  const m =
+    /^(.+?): (\d+)(?: \(no earlier pack to compare with\)|, unchanged|, was (\d+))$/.exec(
+      line,
+    );
   if (!m) return line;
-  const [, what, now, before] = m as unknown as [string, string, string, string | undefined];
+  const [, what, now, before] = m as unknown as [
+    string,
+    string,
+    string,
+    string | undefined,
+  ];
   const key =
-    what === "Open issues" ? "changed_issues" : what === "Change requests waiting for a decision" ? "changed_changes" : null;
+    what === "Open issues"
+      ? "changed_issues"
+      : what === "Change requests waiting for a decision"
+        ? "changed_changes"
+        : null;
   if (!key) return line;
   const change = line.includes("no earlier pack")
     ? d.t(`${K}changed_first`)
@@ -119,80 +152,162 @@ function changedLine(line: string, d: Deps): string {
 }
 
 /** Build the sections of a pack's body. */
-export function buildPackView(body: Record<string, unknown>, d: Deps): Section[] {
+export function buildPackView(
+  body: Record<string, unknown>,
+  d: Deps,
+): Section[] {
   const out: Section[] = [];
-  const add = (id: string, lines: string[] = [], tables: Table[] = []): Section => {
+  const add = (
+    id: string,
+    lines: string[] = [],
+    tables: Table[] = [],
+  ): Section => {
     const s = { id, title: d.t(`${K}s_${id}`), lines, tables };
     out.push(s);
     return s;
   };
   const dash = "–";
   const dq = obj(body.data_quality);
-  const missing = (Array.isArray(dq.sections_not_yet_built) ? dq.sections_not_yet_built : []).map(String);
+  const missing = (
+    Array.isArray(dq.sections_not_yet_built) ? dq.sections_not_yet_built : []
+  ).map(String);
   // Register completeness: every incomplete programme with each missing field named (EX-1).
   const rc = obj(dq.register_completeness);
   const rcRows: Cell[][] = arr(rc.incomplete).map((r) => [
     plain(str(r.name)),
     plain(`${fixed(numOrNull(r.score_pct), 0, d.locale)}%`),
-    { text: (Array.isArray(r.missing) ? r.missing : []).map((f) => d.t(`${K}rf_${String(f)}`)).join(", "), symbol: "▲", tone: "red" as Tone },
+    {
+      text: (Array.isArray(r.missing) ? r.missing : [])
+        .map((f) => d.t(`${K}rf_${String(f)}`))
+        .join(", "),
+      symbol: "▲",
+      tone: "red" as Tone,
+    },
   ]);
-  add("quality", [
-    d.t(`${K}plans_included`, { n: numOrNull(dq.plans_included) ?? 0 }),
-    d.t(`${K}plans_left_out`, { n: numOrNull(dq.plans_left_out_private_or_marked) ?? 0 }),
-    missing.length ? d.t(`${K}sections_missing`, { list: missing.join(", ") }) : d.t(`${K}all_sections`),
-    d.t(`${K}register_line`, { complete: numOrNull(rc.complete) ?? 0, n: numOrNull(rc.programmes) ?? 0 }),
-    rc.enforced === true ? d.t(`${K}register_enforced`) : d.t(`${K}register_not_enforced`),
-  ], rcRows.length ? [{
-    caption: d.t(`${K}s_register`),
-    columns: ["c_programme", "c_score", "c_missing"].map((k) => d.t(`${K}${k}`)),
-    rows: rcRows,
-  }] : []);
+  add(
+    "quality",
+    [
+      d.t(`${K}plans_included`, { n: numOrNull(dq.plans_included) ?? 0 }),
+      d.t(`${K}plans_left_out`, {
+        n: numOrNull(dq.plans_left_out_private_or_marked) ?? 0,
+      }),
+      missing.length
+        ? d.t(`${K}sections_missing`, { list: missing.join(", ") })
+        : d.t(`${K}all_sections`),
+      d.t(`${K}register_line`, {
+        complete: numOrNull(rc.complete) ?? 0,
+        n: numOrNull(rc.programmes) ?? 0,
+      }),
+      rc.enforced === true
+        ? d.t(`${K}register_enforced`)
+        : d.t(`${K}register_not_enforced`),
+    ],
+    rcRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_register`),
+            columns: ["c_programme", "c_score", "c_missing"].map((k) =>
+              d.t(`${K}${k}`),
+            ),
+            rows: rcRows,
+          },
+        ]
+      : [],
+  );
 
-  const changed = (Array.isArray(body.what_changed) ? body.what_changed : []).map((x) => changedLine(String(x), d));
+  const changed = (
+    Array.isArray(body.what_changed) ? body.what_changed : []
+  ).map((x) => changedLine(String(x), d));
   add("changed", changed.length ? changed : [d.t(`${K}nothing_here`)]);
 
   // The portfolio map.
   const map = obj(body.portfolio_map);
   const mapRows: Cell[][] = [];
   for (const g of arr(map.groups)) {
-    const aim = g.aim_pid === null || g.aim_pid === undefined ? d.t(`${K}no_aim`) : str(g.aim);
+    const aim =
+      g.aim_pid === null || g.aim_pid === undefined
+        ? d.t(`${K}no_aim`)
+        : str(g.aim);
     for (const p of arr(g.programmes)) {
       const c = obj(p.confidence);
       const v = str(c.value);
-      const marks = [c.marked_self === true ? d.t(`${K}self_assessed`) : "", c.stale === true ? d.t(`${K}stale`) : ""].filter(Boolean);
+      const marks = [
+        c.marked_self === true ? d.t(`${K}self_assessed`) : "",
+        c.stale === true ? d.t(`${K}stale`) : "",
+      ].filter(Boolean);
       mapRows.push([
         plain(str(p.name)),
         plain(aim),
         plain(d.label("pk_status", str(p.programme_status) || "active")),
         plain(p.stage ? d.label("pk_gate", str(p.stage)) : dash),
         plain(str(p.phase) || dash),
-        { text: d.label("pk_conf", v) + (marks.length ? ` (${marks.join(", ")})` : ""), symbol: SYMBOL[v] ?? dash, tone: TONE[v] ?? "grey" },
+        {
+          text:
+            d.label("pk_conf", v) +
+            (marks.length ? ` (${marks.join(", ")})` : ""),
+          symbol: SYMBOL[v] ?? dash,
+          tone: TONE[v] ?? "grey",
+        },
         plain(d.label("pk_trend", str(p.trend))),
         plain(deliveryText(obj(p.delivery), d)),
       ]);
     }
   }
-  add("map", [], mapRows.length ? [{
-    caption: d.t(`${K}s_map`),
-    columns: ["c_programme", "c_aim", "c_status", "c_stage", "c_phase", "c_confidence", "c_trend", "c_delivery"].map((k) => d.t(`${K}${k}`)),
-    rows: mapRows,
-  }] : []);
+  add(
+    "map",
+    [],
+    mapRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_map`),
+            columns: [
+              "c_programme",
+              "c_aim",
+              "c_status",
+              "c_stage",
+              "c_phase",
+              "c_confidence",
+              "c_trend",
+              "c_delivery",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: mapRows,
+          },
+        ]
+      : [],
+  );
   if (!mapRows.length) out[out.length - 1]!.lines.push(d.t(`${K}nothing_here`));
 
   // Exceptions.
   const ex = obj(body.exceptions);
-  const exLines = [d.t(`${K}ex_window`, { hours: numOrNull(ex.window_hours) ?? 0 })];
+  const exLines = [
+    d.t(`${K}ex_window`, { hours: numOrNull(ex.window_hours) ?? 0 }),
+  ];
   const exTables: Table[] = [];
-  for (const [key, label] of [["open", "ex_open"], ["breached", "ex_breached"], ["closed_in_period", "ex_closed"]] as const) {
+  for (const [key, label] of [
+    ["open", "ex_open"],
+    ["breached", "ex_breached"],
+    ["closed_in_period", "ex_closed"],
+  ] as const) {
     const rows = arr(ex[key]);
     exLines.push(d.t(`${K}${label}`, { n: rows.length }));
     if (rows.length) {
       exTables.push({
         caption: d.t(`${K}${label}`, { n: rows.length }),
-        columns: ["c_plan", "c_worst", "c_need", "c_owner_role", "c_decide_by", "c_hours_open"].map((k) => d.t(`${K}${k}`)),
+        columns: [
+          "c_plan",
+          "c_worst",
+          "c_need",
+          "c_owner_role",
+          "c_decide_by",
+          "c_hours_open",
+        ].map((k) => d.t(`${K}${k}`)),
         rows: rows.map((e) => [
           plain(str(e.plan)),
-          { text: d.label("pk_conf", str(e.worst_value)), symbol: SYMBOL[str(e.worst_value)] ?? dash, tone: TONE[str(e.worst_value)] ?? "grey" },
+          {
+            text: d.label("pk_conf", str(e.worst_value)),
+            symbol: SYMBOL[str(e.worst_value)] ?? dash,
+            tone: TONE[str(e.worst_value)] ?? "grey",
+          },
           plain(str(e.decision_needed) || dash),
           plain(str(e.owner_role) || dash),
           plain(str(e.decide_by) || dash),
@@ -207,36 +322,60 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   const g = obj(body.gate_decisions);
   const gLines: string[] = [];
   const gTables: Table[] = [];
-  for (const [key, label] of [["passed", "g_passed"], ["failed", "g_failed"], ["deferred", "g_deferred"]] as const) {
+  for (const [key, label] of [
+    ["passed", "g_passed"],
+    ["failed", "g_failed"],
+    ["deferred", "g_deferred"],
+  ] as const) {
     const rows = arr(g[key]);
     gLines.push(d.t(`${K}${label}`, { n: rows.length }));
     if (rows.length) {
       gTables.push({
         caption: d.t(`${K}${label}`, { n: rows.length }),
-        columns: ["c_plan", "c_gate", "c_decided", "c_planned", "c_reason", "c_days_late"].map((k) => d.t(`${K}${k}`)),
+        columns: [
+          "c_plan",
+          "c_gate",
+          "c_decided",
+          "c_planned",
+          "c_reason",
+          "c_days_late",
+        ].map((k) => d.t(`${K}${k}`)),
         rows: rows.map((l) => [
           plain(str(l.plan)),
           plain(d.label("pk_gate", str(l.gate))),
           plain(str(l.decided_on) || dash),
           plain(str(l.planned_on) || dash),
-          plain(l.reason === "reviewed as hold" ? d.t(`${K}reason_hold`) : l.reason === "planned date passed without a review" ? d.t(`${K}reason_no_review`) : dash),
+          plain(
+            l.reason === "reviewed as hold"
+              ? d.t(`${K}reason_hold`)
+              : l.reason === "planned date passed without a review"
+                ? d.t(`${K}reason_no_review`)
+                : dash,
+          ),
           plain(String(numOrNull(l.days_late) ?? dash)),
         ]),
       });
     }
   }
-  for (const [key, label] of [["paused", "g_paused"], ["stopped", "g_stopped"]] as const) {
+  for (const [key, label] of [
+    ["paused", "g_paused"],
+    ["stopped", "g_stopped"],
+  ] as const) {
     const rows = arr(g[key]);
     gLines.push(d.t(`${K}${label}`, { n: rows.length }));
     if (rows.length) {
       gTables.push({
         caption: d.t(`${K}${label}`, { n: rows.length }),
-        columns: ["c_programme", "c_since", "c_reason", "c_allocs"].map((k) => d.t(`${K}${k}`)),
+        columns: ["c_programme", "c_since", "c_reason", "c_allocs"].map((k) =>
+          d.t(`${K}${k}`),
+        ),
         rows: rows.map((p) => [
           plain(str(p.plan)),
           plain(str(p.since) || dash),
           plain(str(p.reason) || dash),
-          plain(String(numOrNull(obj(p.still_held).allocations_flagged) ?? dash)),
+          plain(
+            String(numOrNull(obj(p.still_held).allocations_flagged) ?? dash),
+          ),
         ]),
       });
     }
@@ -246,18 +385,35 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   // Funding.
   const f = obj(body.funding);
   const fy = obj(f.financial_year);
-  const fLines = [d.t(`${K}fy_line`, { label: str(fy.label), start: str(fy.start), end: str(fy.end) })];
+  const fLines = [
+    d.t(`${K}fy_line`, {
+      label: str(fy.label),
+      start: str(fy.start),
+      end: str(fy.end),
+    }),
+  ];
   const fTables: Table[] = [];
   for (const p of arr(f.programmes)) {
     const rows = arr(p.by_funding_source);
     if (rows.length) {
       fTables.push({
         caption: str(p.name),
-        columns: ["c_source", "c_class", "c_budget", "c_spend", "c_variance"].map((k) => d.t(`${K}${k}`)),
+        columns: [
+          "c_source",
+          "c_class",
+          "c_budget",
+          "c_spend",
+          "c_variance",
+        ].map((k) => d.t(`${K}${k}`)),
         rows: rows.map((r) => {
           const cur = str(r.currency);
           return [
-            plain(r.funding_source_pid === null || r.funding_source_pid === undefined ? d.t(`${K}no_funding_source`) : str(r.funding_source)),
+            plain(
+              r.funding_source_pid === null ||
+                r.funding_source_pid === undefined
+                ? d.t(`${K}no_funding_source`)
+                : str(r.funding_source),
+            ),
             plain(d.label("pk_class", str(r.class))),
             plain(money(numOrNull(r.budget_minor), cur, d.locale)),
             plain(money(numOrNull(r.spend_minor), cur, d.locale)),
@@ -268,15 +424,22 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }
     for (const fr of arr(obj(p.whole_life_forecast).rows)) {
       const cur = str(fr.currency);
-      fLines.push(`${str(p.name)}: ${d.t(`${K}forecast_line`, {
-        currency: cur,
-        actual: money(numOrNull(fr.actual_minor), cur, d.locale),
-        eac: money(numOrNull(fr.estimate_at_completion_minor), cur, d.locale),
-      })}`);
+      fLines.push(
+        `${str(p.name)}: ${d.t(`${K}forecast_line`, {
+          currency: cur,
+          actual: money(numOrNull(fr.actual_minor), cur, d.locale),
+          eac: money(numOrNull(fr.estimate_at_completion_minor), cur, d.locale),
+        })}`,
+      );
     }
   }
   const fq = obj(f.data_quality);
-  fLines.push(d.t(`${K}unfunded_lines`, { n: numOrNull(fq.lines_with_no_funding_source) ?? 0, dated: numOrNull(fq.lines_with_no_dates) ?? 0 }));
+  fLines.push(
+    d.t(`${K}unfunded_lines`, {
+      n: numOrNull(fq.lines_with_no_funding_source) ?? 0,
+      dated: numOrNull(fq.lines_with_no_dates) ?? 0,
+    }),
+  );
   add("funding", fLines, fTables);
 
   // Buffer fever chart: a table, which is its own twin.
@@ -287,45 +450,89 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     const pt = obj(p.point);
     if (p.point === null || p.point === undefined) {
       const code = str(obj(p.no_fever_chart_point).code);
-      feverLines.push(`${str(p.plan)}: ${d.t(`${K}fever_none_${code || "no_buffer"}`)}`);
+      feverLines.push(
+        `${str(p.plan)}: ${d.t(`${K}fever_none_${code || "no_buffer"}`)}`,
+      );
       continue;
     }
     const zone = str(pt.zone);
-    const edge = pt.edge === "below" ? ` — ${d.t(`${K}edge_below`)}` : pt.edge === "above" ? ` — ${d.t(`${K}edge_above`)}` : "";
+    const edge =
+      pt.edge === "below"
+        ? ` — ${d.t(`${K}edge_below`)}`
+        : pt.edge === "above"
+          ? ` — ${d.t(`${K}edge_above`)}`
+          : "";
     feverRows.push([
       plain(str(p.plan)),
       plain(fixed(numOrNull(pt.chain_completed_pct), 1, d.locale)),
       plain(fixed(numOrNull(pt.buffer_consumed_pct), 1, d.locale) + edge),
-      { text: d.label("pk_zone", zone), symbol: SYMBOL[zone] ?? dash, tone: TONE[zone] ?? "grey" },
+      {
+        text: d.label("pk_zone", zone),
+        symbol: SYMBOL[zone] ?? dash,
+        tone: TONE[zone] ?? "grey",
+      },
       plain(String(numOrNull(pt.slip_days) ?? dash)),
       plain(String(numOrNull(pt.buffer_days) ?? dash)),
-      plain(p.previous && obj(p.previous).zone ? d.label("pk_zone", str(obj(p.previous).zone)) : dash),
+      plain(
+        p.previous && obj(p.previous).zone
+          ? d.label("pk_zone", str(obj(p.previous).zone))
+          : dash,
+      ),
     ]);
   }
   const lines = obj(fev.lines);
   const ga = obj(lines.green_amber);
   const ar = obj(lines.amber_red);
   if (numOrNull(ga.at_start) !== null) {
-    feverLines.push(d.t(`${K}fever_lines`, {
-      ga0: fixed(numOrNull(ga.at_start), 0, d.locale), ga1: fixed(numOrNull(ga.at_end), 0, d.locale),
-      ar0: fixed(numOrNull(ar.at_start), 0, d.locale), ar1: fixed(numOrNull(ar.at_end), 0, d.locale),
-    }));
+    feverLines.push(
+      d.t(`${K}fever_lines`, {
+        ga0: fixed(numOrNull(ga.at_start), 0, d.locale),
+        ga1: fixed(numOrNull(ga.at_end), 0, d.locale),
+        ar0: fixed(numOrNull(ar.at_start), 0, d.locale),
+        ar1: fixed(numOrNull(ar.at_end), 0, d.locale),
+      }),
+    );
   }
-  add("fever", feverLines, feverRows.length ? [{
-    caption: d.t(`${K}s_fever`),
-    columns: ["c_programme", "c_chain", "c_buffer", "c_zone", "c_slip", "c_buffer_days", "c_previous"].map((k) => d.t(`${K}${k}`)),
-    rows: feverRows,
-  }] : []);
+  add(
+    "fever",
+    feverLines,
+    feverRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_fever`),
+            columns: [
+              "c_programme",
+              "c_chain",
+              "c_buffer",
+              "c_zone",
+              "c_slip",
+              "c_buffer_days",
+              "c_previous",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: feverRows,
+          },
+        ]
+      : [],
+  );
 
   // Earned value.
   const ev = obj(body.earned_value);
   const evRows: Cell[][] = [];
   const flowRows: Cell[][] = [];
   const evLines: string[] = [d.t(`${K}evm_ratio_note`)];
-  const ratio = (v: unknown) => fixed(numOrNull(obj(v).bp) === null ? null : (numOrNull(obj(v).bp) as number) / 10000, 2, d.locale);
+  const ratio = (v: unknown) =>
+    fixed(
+      numOrNull(obj(v).bp) === null
+        ? null
+        : (numOrNull(obj(v).bp) as number) / 10000,
+      2,
+      d.locale,
+    );
   for (const p of arr(ev.programmes)) {
-    if (p.state === "no_baseline") evLines.push(`${str(p.name)}: ${d.t(`${K}no_baseline`)}`);
-    if (p.state === "no_flow_data") evLines.push(d.t(`${K}no_flow`, { name: str(p.name) }));
+    if (p.state === "no_baseline")
+      evLines.push(`${str(p.name)}: ${d.t(`${K}no_baseline`)}`);
+    if (p.state === "no_flow_data")
+      evLines.push(d.t(`${K}no_flow`, { name: str(p.name) }));
     if (p.state === "product") {
       const f = obj(p.flow);
       flowRows.push([
@@ -334,7 +541,11 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
         plain(fixed(numOrNull(f.done), 0, d.locale)),
         plain(fixed(numOrNull(f.open), 0, d.locale)),
         plain(fixed(numOrNull(f.throughput_per_week), 2, d.locale)),
-        plain(arr(f.burn_up).map((b) => fixed(numOrNull(b.done), 0, d.locale)).join(", ")),
+        plain(
+          arr(f.burn_up)
+            .map((b) => fixed(numOrNull(b.done), 0, d.locale))
+            .join(", "),
+        ),
       ]);
     }
     for (const c of arr(p.currencies)) {
@@ -342,14 +553,18 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
       if (c.state === "included") {
         const tot = obj(c.totals);
         evRows.push([
-          plain(str(p.name)), plain(cur),
+          plain(str(p.name)),
+          plain(cur),
           plain(money(numOrNull(tot.bac_minor), cur, d.locale)),
           plain(money(numOrNull(tot.ev_minor), cur, d.locale)),
           plain(money(numOrNull(tot.ac_minor), cur, d.locale)),
-          plain(ratio(c.spi)), plain(ratio(c.cpi)),
+          plain(ratio(c.spi)),
+          plain(ratio(c.cpi)),
         ]);
       } else {
-        evLines.push(`${str(p.name)}: ${d.t(`${K}below_threshold`, { bac: money(numOrNull(c.bac_minor), cur, d.locale) })}`);
+        evLines.push(
+          `${str(p.name)}: ${d.t(`${K}below_threshold`, { bac: money(numOrNull(c.bac_minor), cur, d.locale) })}`,
+        );
       }
     }
   }
@@ -357,14 +572,29 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   if (evRows.length) {
     evTables.push({
       caption: d.t(`${K}s_evm`),
-      columns: ["c_programme", "c_currency", "c_bac", "c_ev", "c_ac", "c_spi", "c_cpi"].map((k) => d.t(`${K}${k}`)),
+      columns: [
+        "c_programme",
+        "c_currency",
+        "c_bac",
+        "c_ev",
+        "c_ac",
+        "c_spi",
+        "c_cpi",
+      ].map((k) => d.t(`${K}${k}`)),
       rows: evRows,
     });
   }
   if (flowRows.length) {
     evTables.push({
       caption: d.t(`${K}s_flow`),
-      columns: ["c_programme", "c_scope", "c_finished", "c_open", "c_throughput", "c_burnup"].map((k) => d.t(`${K}${k}`)),
+      columns: [
+        "c_programme",
+        "c_scope",
+        "c_finished",
+        "c_open",
+        "c_throughput",
+        "c_burnup",
+      ].map((k) => d.t(`${K}${k}`)),
       rows: flowRows,
     });
   }
@@ -384,25 +614,52 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
       plain(money(numOrNull(r.unvalidated_claim_minor), cur, d.locale)),
     ];
   });
-  add("benefits", [d.t(`${K}benefits_note`)], benRows.length ? [{
-    caption: d.t(`${K}s_benefits`),
-    columns: ["c_currency", "c_recurrence", "c_classification", "c_planned", "c_claimed", "c_validated", "c_unvalidated"].map((k) => d.t(`${K}${k}`)),
-    rows: benRows,
-  }] : []);
+  add(
+    "benefits",
+    [d.t(`${K}benefits_note`)],
+    benRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_benefits`),
+            columns: [
+              "c_currency",
+              "c_recurrence",
+              "c_classification",
+              "c_planned",
+              "c_claimed",
+              "c_validated",
+              "c_unvalidated",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: benRows,
+          },
+        ]
+      : [],
+  );
 
   // Capacity: pool by month, a word and a symbol as well as a tone in every cell.
   const cap = obj(body.capacity_heatmap);
   const months = (Array.isArray(cap.months) ? cap.months : []).map(String);
   const capRows: Cell[][] = [];
   for (const p of arr(cap.pools)) {
-    const name = p.pool_pid === null || p.pool_pid === undefined ? d.t(`${K}no_pool`) : str(p.name);
+    const name =
+      p.pool_pid === null || p.pool_pid === undefined
+        ? d.t(`${K}no_pool`)
+        : str(p.name);
     for (const c of arr(p.cells)) {
       const st = str(c.state);
       const h = HEAT[st] ?? { symbol: "", tone: "grey" as Tone };
       capRows.push([
         plain(name),
         plain(str(c.month)),
-        { text: d.label("pk_heat", st) + (c.partner_delivery_short === true ? `; ${d.t(`${K}partners_short`)}` : ""), symbol: h.symbol, tone: h.tone },
+        {
+          text:
+            d.label("pk_heat", st) +
+            (c.partner_delivery_short === true
+              ? `; ${d.t(`${K}partners_short`)}`
+              : ""),
+          symbol: h.symbol,
+          tone: h.tone,
+        },
         plain(fixed(numOrNull(c.demand_fte), 2, d.locale)),
         plain(fixed(numOrNull(c.supply_fte), 2, d.locale)),
         plain(fixed(numOrNull(c.gap_fte), 2, d.locale)),
@@ -410,30 +667,57 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     }
   }
   void months;
-  add("capacity", [d.t(`${K}capacity_note`)], capRows.length ? [{
-    caption: d.t(`${K}s_capacity`),
-    columns: ["c_pool", "c_month", "c_reading", "c_demand", "c_supply", "c_gap"].map((k) => d.t(`${K}${k}`)),
-    rows: capRows,
-  }] : []);
+  add(
+    "capacity",
+    [d.t(`${K}capacity_note`)],
+    capRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_capacity`),
+            columns: [
+              "c_pool",
+              "c_month",
+              "c_reading",
+              "c_demand",
+              "c_supply",
+              "c_gap",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: capRows,
+          },
+        ]
+      : [],
+  );
 
   // Milestones that need partner sign-off: delivered and met are separate, and the gap is a row.
   const so = obj(body.milestone_signoffs);
   const tot = obj(so.totals);
   const SO: Record<string, { key: string; symbol: string; tone: Tone }> = {
     met: { key: "so_met", symbol: "●", tone: "green" },
-    delivered_not_met: { key: "so_delivered_not_met", symbol: "▲", tone: "red" },
+    delivered_not_met: {
+      key: "so_delivered_not_met",
+      symbol: "▲",
+      tone: "red",
+    },
     not_delivered: { key: "so_not_delivered", symbol: "–", tone: "grey" },
   };
   const soRows: Cell[][] = arr(so.milestones).map((m) => {
     const sg = obj(m.signoff);
-    const st = SO[str(sg.state)] ?? { key: "so_not_delivered", symbol: "–", tone: "grey" as Tone };
+    const st = SO[str(sg.state)] ?? {
+      key: "so_not_delivered",
+      symbol: "–",
+      tone: "grey" as Tone,
+    };
     return [
       plain(str(m.name)),
       plain(str(m.due)),
       { text: d.t(`${K}${st.key}`), symbol: st.symbol, tone: st.tone },
       plain(str(sg.delivered_on)),
       plain(str(sg.met_on)),
-      plain(Array.isArray(sg.outstanding) ? sg.outstanding.map(String).join(", ") : ""),
+      plain(
+        Array.isArray(sg.outstanding)
+          ? sg.outstanding.map(String).join(", ")
+          : "",
+      ),
     ];
   });
   const soShare = numOrNull(tot.met_share_of_delivered_bp);
@@ -446,14 +730,28 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
         delivered: numOrNull(tot.delivered) ?? 0,
         met: numOrNull(tot.met) ?? 0,
         gap: numOrNull(tot.delivered_not_met) ?? 0,
-        share: soShare === null ? d.t(`${K}so_no_share`) : `${fixed(soShare / 100, 0, d.locale)}%`,
+        share:
+          soShare === null
+            ? d.t(`${K}so_no_share`)
+            : `${fixed(soShare / 100, 0, d.locale)}%`,
       }),
     ],
-    soRows.length ? [{
-      caption: d.t(`${K}s_signoffs`),
-      columns: ["c_milestone", "c_due", "c_reading", "c_delivered_on", "c_met_on", "c_outstanding"].map((k) => d.t(`${K}${k}`)),
-      rows: soRows,
-    }] : [],
+    soRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_signoffs`),
+            columns: [
+              "c_milestone",
+              "c_due",
+              "c_reading",
+              "c_delivered_on",
+              "c_met_on",
+              "c_outstanding",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: soRows,
+          },
+        ]
+      : [],
   );
 
   // External asks from the sponsor and what each displaces (EX-13).
@@ -467,12 +765,24 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   ]);
   add(
     "asks",
-    [d.t(`${K}asks_note`), d.t(`${K}asks_count`, { n: askRows.length, without: numOrNull(asks.without_named_tradeoff) ?? 0 })],
-    askRows.length ? [{
-      caption: d.t(`${K}s_asks`),
-      columns: ["c_ask", "c_status", "c_tradeoff"].map((k) => d.t(`${K}${k}`)),
-      rows: askRows,
-    }] : [],
+    [
+      d.t(`${K}asks_note`),
+      d.t(`${K}asks_count`, {
+        n: askRows.length,
+        without: numOrNull(asks.without_named_tradeoff) ?? 0,
+      }),
+    ],
+    askRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_asks`),
+            columns: ["c_ask", "c_status", "c_tradeoff"].map((k) =>
+              d.t(`${K}${k}`),
+            ),
+            rows: askRows,
+          },
+        ]
+      : [],
   );
 
   // Key people: counts only, and the contingent share of each skill pool (EX-11).
@@ -483,25 +793,40 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     plain(fixed(numOrNull(r.contingent), 0, d.locale)),
     numOrNull(r.contingent_share_bp) === null
       ? { text: d.t(`${K}kp_no_people`), symbol: dash, tone: "grey" as Tone }
-      : plain(`${fixed((numOrNull(r.contingent_share_bp) as number) / 100, 0, d.locale)}%`),
+      : plain(
+          `${fixed((numOrNull(r.contingent_share_bp) as number) / 100, 0, d.locale)}%`,
+        ),
   ]);
   const rd = obj(kp.readiness);
-  add("keypeople", [
-    d.t(`${K}kp_note`),
-    d.t(`${K}kp_counts`, {
-      n: numOrNull(kp.single_points) ?? 0,
-      people: numOrNull(kp.people) ?? 0,
-      roles: numOrNull(kp.roles) ?? 0,
-      nosucc: numOrNull(kp.without_successor) ?? 0,
-      ready: numOrNull(rd.ready) ?? 0,
-      partly: numOrNull(rd.partly) ?? 0,
-      none: numOrNull(rd.none) ?? 0,
-    }),
-  ], kpRows.length ? [{
-    caption: d.t(`${K}s_keypeople`),
-    columns: ["c_pool", "c_headcount", "c_contingent", "c_contingent_share"].map((k) => d.t(`${K}${k}`)),
-    rows: kpRows,
-  }] : []);
+  add(
+    "keypeople",
+    [
+      d.t(`${K}kp_note`),
+      d.t(`${K}kp_counts`, {
+        n: numOrNull(kp.single_points) ?? 0,
+        people: numOrNull(kp.people) ?? 0,
+        roles: numOrNull(kp.roles) ?? 0,
+        nosucc: numOrNull(kp.without_successor) ?? 0,
+        ready: numOrNull(rd.ready) ?? 0,
+        partly: numOrNull(rd.partly) ?? 0,
+        none: numOrNull(rd.none) ?? 0,
+      }),
+    ],
+    kpRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_keypeople`),
+            columns: [
+              "c_pool",
+              "c_headcount",
+              "c_contingent",
+              "c_contingent_share",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: kpRows,
+          },
+        ]
+      : [],
+  );
 
   // Triage and thresholds (EX-7): a view and counts; nothing here pauses or stops anything.
   const tt = obj(body.triage_and_thresholds);
@@ -512,29 +837,55 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     stop: { symbol: "▲", tone: "red" },
   };
   const ttRows: Cell[][] = arr(tt.triage).map((t) => {
-    const look = trLook[str(t.outcome)] ?? { symbol: dash, tone: "grey" as Tone };
+    const look = trLook[str(t.outcome)] ?? {
+      symbol: dash,
+      tone: "grey" as Tone,
+    };
     return [
       plain(str(t.programme)),
-      { text: d.t(`${K}tr_${str(t.outcome)}`), symbol: look.symbol, tone: look.tone },
+      {
+        text: d.t(`${K}tr_${str(t.outcome)}`),
+        symbol: look.symbol,
+        tone: look.tone,
+      },
       plain(str(t.triaged_on)),
       plain(str(t.reason)),
     ];
   });
   const dp = obj(tt.decisions_in_period);
-  const ov = arr(tt.overrides_in_force).map((o) => d.t(`${K}tr_override_line`, { programme: str(o.programme), expiry: str(o.expiry) }));
+  const ov = arr(tt.overrides_in_force).map((o) =>
+    d.t(`${K}tr_override_line`, {
+      programme: str(o.programme),
+      expiry: str(o.expiry),
+    }),
+  );
   add(
     "triage",
     [
       d.t(`${K}tr_note`),
-      d.t(`${K}tr_decisions`, { pause: numOrNull(dp.pause) ?? 0, reset: numOrNull(dp.reset) ?? 0, stop: numOrNull(dp.stop) ?? 0, override: numOrNull(dp.override) ?? 0 }),
+      d.t(`${K}tr_decisions`, {
+        pause: numOrNull(dp.pause) ?? 0,
+        reset: numOrNull(dp.reset) ?? 0,
+        stop: numOrNull(dp.stop) ?? 0,
+        override: numOrNull(dp.override) ?? 0,
+      }),
       d.t(`${K}tr_open`, { n: numOrNull(tt.open_threshold_exceptions) ?? 0 }),
       ...ov,
     ],
-    ttRows.length ? [{
-      caption: d.t(`${K}s_triage`),
-      columns: ["c_programme", "c_outcome", "c_triaged_on", "c_reason"].map((k) => d.t(`${K}${k}`)),
-      rows: ttRows,
-    }] : [],
+    ttRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_triage`),
+            columns: [
+              "c_programme",
+              "c_outcome",
+              "c_triaged_on",
+              "c_reason",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: ttRows,
+          },
+        ]
+      : [],
   );
 
   // Cutover decisions (EX-6): a no-go or a delay for safety is a decision, not slippage.
@@ -546,11 +897,18 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     delay_for_safety: { symbol: "◆", tone: "amber" },
   };
   const coRows: Cell[][] = arr(co.decisions).map((x) => {
-    const look = coLook[str(x.outcome)] ?? { symbol: dash, tone: "grey" as Tone };
+    const look = coLook[str(x.outcome)] ?? {
+      symbol: dash,
+      tone: "grey" as Tone,
+    };
     return [
       plain(str(x.title)),
       plain(str(x.plan)),
-      { text: d.t(`${K}co_${str(x.outcome)}`), symbol: look.symbol, tone: look.tone },
+      {
+        text: d.t(`${K}co_${str(x.outcome)}`),
+        symbol: look.symbol,
+        tone: look.tone,
+      },
       plain(str(x.decided_on)),
     ];
   });
@@ -558,13 +916,26 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
     "cutovers",
     [
       d.t(`${K}co_note`),
-      d.t(`${K}co_counts`, { go: numOrNull(cc.go) ?? 0, nogo: numOrNull(cc.no_go) ?? 0, delay: numOrNull(cc.delay_for_safety) ?? 0 }),
+      d.t(`${K}co_counts`, {
+        go: numOrNull(cc.go) ?? 0,
+        nogo: numOrNull(cc.no_go) ?? 0,
+        delay: numOrNull(cc.delay_for_safety) ?? 0,
+      }),
     ],
-    coRows.length ? [{
-      caption: d.t(`${K}s_cutovers`),
-      columns: ["c_cutover", "c_programme", "c_decision", "c_decided_on"].map((k) => d.t(`${K}${k}`)),
-      rows: coRows,
-    }] : [],
+    coRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_cutovers`),
+            columns: [
+              "c_cutover",
+              "c_programme",
+              "c_decision",
+              "c_decided_on",
+            ].map((k) => d.t(`${K}${k}`)),
+            rows: coRows,
+          },
+        ]
+      : [],
   );
 
   // Outcomes and de-escalation (EX-10): the level as the sponsor set it, and the run of met quarters.
@@ -579,22 +950,45 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   const ocRows: Cell[][] = qsum.map((q) => {
     const st = obj(q.state);
     const look = qLook[str(st.state)] ?? { symbol: dash, tone: "grey" as Tone };
-    const because = Array.isArray(st.because) ? st.because.map(String).join("; ") : "";
-    return [plain(str(q.quarter)), { text: d.t(`${K}oc_${str(st.state)}`), symbol: look.symbol, tone: look.tone }, plain(because || dash)];
+    const because = Array.isArray(st.because)
+      ? st.because.map(String).join("; ")
+      : "";
+    return [
+      plain(str(q.quarter)),
+      {
+        text: d.t(`${K}oc_${str(st.state)}`),
+        symbol: look.symbol,
+        tone: look.tone,
+      },
+      plain(because || dash),
+    ];
   });
   add(
     "outcomes",
     [
       d.t(`${K}oc_note`),
-      lvl.level ? d.t(`${K}oc_level`, { level: str(lvl.level), on: str(lvl.set_on) }) : d.t(`${K}oc_no_level`),
-      d.t(`${K}oc_run`, { n: numOrNull(oc.consecutive_quarters_met) ?? 0, need: numOrNull(oc.required_quarters) ?? 0 }),
-      oc.rule_satisfied === true ? d.t(`${K}oc_rule_yes`) : d.t(`${K}oc_rule_no`),
+      lvl.level
+        ? d.t(`${K}oc_level`, { level: str(lvl.level), on: str(lvl.set_on) })
+        : d.t(`${K}oc_no_level`),
+      d.t(`${K}oc_run`, {
+        n: numOrNull(oc.consecutive_quarters_met) ?? 0,
+        need: numOrNull(oc.required_quarters) ?? 0,
+      }),
+      oc.rule_satisfied === true
+        ? d.t(`${K}oc_rule_yes`)
+        : d.t(`${K}oc_rule_no`),
     ],
-    ocRows.length ? [{
-      caption: d.t(`${K}s_outcomes`),
-      columns: ["c_quarter", "c_reading", "c_why"].map((k) => d.t(`${K}${k}`)),
-      rows: ocRows,
-    }] : [],
+    ocRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_outcomes`),
+            columns: ["c_quarter", "c_reading", "c_why"].map((k) =>
+              d.t(`${K}${k}`),
+            ),
+            rows: ocRows,
+          },
+        ]
+      : [],
   );
 
   // Watermelon measures, read from the stored packs only (EX-9): a measure with no inputs says why.
@@ -602,31 +996,84 @@ export function buildPackView(body: Record<string, unknown>, d: Deps): Section[]
   const why = obj(wm.reasons_null);
   const wmRows: Cell[][] = [];
   const names = (v: unknown): string => {
-    const l = (Array.isArray(obj(v).programmes) ? (obj(v).programmes as unknown[]) : []).map(String);
+    const l = (
+      Array.isArray(obj(v).programmes) ? (obj(v).programmes as unknown[]) : []
+    ).map(String);
     return l.length ? l.join(", ") : dash;
   };
-  for (const [id, key] of [["self_vs_independent", "wm_gap"], ["late_discovery", "wm_late"], ["red_without_decision", "wm_red"]] as const) {
+  for (const [id, key] of [
+    ["self_vs_independent", "wm_gap"],
+    ["late_discovery", "wm_late"],
+    ["red_without_decision", "wm_red"],
+  ] as const) {
     const v = wm[id];
     if (v === null || v === undefined) {
-      wmRows.push([plain(d.t(`${K}${key}`)), { text: d.t(`${K}wm_not_measured`), symbol: dash, tone: "grey" as Tone }, plain(str(why[id]))]);
+      wmRows.push([
+        plain(d.t(`${K}${key}`)),
+        {
+          text: d.t(`${K}wm_not_measured`),
+          symbol: dash,
+          tone: "grey" as Tone,
+        },
+        plain(str(why[id])),
+      ]);
     } else {
       const n = numOrNull(obj(v).count) ?? 0;
-      wmRows.push([plain(d.t(`${K}${key}`)), { text: d.t(`${K}wm_count`, { n }), symbol: n > 0 ? "▲" : "●", tone: n > 0 ? ("red" as Tone) : ("green" as Tone) }, plain(names(v))]);
+      wmRows.push([
+        plain(d.t(`${K}${key}`)),
+        {
+          text: d.t(`${K}wm_count`, { n }),
+          symbol: n > 0 ? "▲" : "●",
+          tone: n > 0 ? ("red" as Tone) : ("green" as Tone),
+        },
+        plain(names(v)),
+      ]);
     }
   }
   const sg = wm.milestones_met_with_signoff;
   if (sg === null || sg === undefined) {
-    wmRows.push([plain(d.t(`${K}wm_signoff`)), { text: d.t(`${K}wm_not_measured`), symbol: dash, tone: "grey" as Tone }, plain(str(why.milestones_met_with_signoff))]);
+    wmRows.push([
+      plain(d.t(`${K}wm_signoff`)),
+      { text: d.t(`${K}wm_not_measured`), symbol: dash, tone: "grey" as Tone },
+      plain(str(why.milestones_met_with_signoff)),
+    ]);
   } else {
-    wmRows.push([plain(d.t(`${K}wm_signoff`)), plain(`${fixed((numOrNull(obj(sg).met_share_of_delivered_bp) ?? 0) / 100, 0, d.locale)}%`), plain(d.t(`${K}wm_signoff_of`, { met: numOrNull(obj(sg).met) ?? 0, delivered: numOrNull(obj(sg).delivered) ?? 0 }))]);
+    wmRows.push([
+      plain(d.t(`${K}wm_signoff`)),
+      plain(
+        `${fixed((numOrNull(obj(sg).met_share_of_delivered_bp) ?? 0) / 100, 0, d.locale)}%`,
+      ),
+      plain(
+        d.t(`${K}wm_signoff_of`, {
+          met: numOrNull(obj(sg).met) ?? 0,
+          delivered: numOrNull(obj(sg).delivered) ?? 0,
+        }),
+      ),
+    ]);
   }
-  add("watermelon", [d.t(`${K}wm_note`)], wmRows.length ? [{
-    caption: d.t(`${K}s_watermelon`),
-    columns: ["c_measure", "c_reading", "c_programmes"].map((k) => d.t(`${K}${k}`)),
-    rows: wmRows,
-  }] : []);
+  add(
+    "watermelon",
+    [d.t(`${K}wm_note`)],
+    wmRows.length
+      ? [
+          {
+            caption: d.t(`${K}s_watermelon`),
+            columns: ["c_measure", "c_reading", "c_programmes"].map((k) =>
+              d.t(`${K}${k}`),
+            ),
+            rows: wmRows,
+          },
+        ]
+      : [],
+  );
 
-  add("issues", [d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 })]);
-  add("changes", [d.t(`${K}awaiting`, { n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0 })]);
+  add("issues", [
+    d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 }),
+  ]);
+  add("changes", [
+    d.t(`${K}awaiting`, {
+      n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0,
+    }),
+  ]);
   return out;
 }

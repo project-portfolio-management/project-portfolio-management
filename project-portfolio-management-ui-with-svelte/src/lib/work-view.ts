@@ -17,15 +17,27 @@ const str = (v: FieldValue) => (v === null || v === undefined ? "" : String(v));
 const blank = (v: FieldValue) => str(v).trim() === "";
 
 export const RULE_TEXT: Record<SchedulingRule, string> = {
-  get fixed_units() { return t("l.work_view.fixed_units"); },
-  get fixed_duration() { return t("l.work_view.fixed_duration"); },
-  get fixed_work() { return t("l.work_view.fixed_work"); },
+  get fixed_units() {
+    return t("l.work_view.fixed_units");
+  },
+  get fixed_duration() {
+    return t("l.work_view.fixed_duration");
+  },
+  get fixed_work() {
+    return t("l.work_view.fixed_work");
+  },
 };
 
 export const RULE_HELP: Record<SchedulingRule, string> = {
-  get fixed_units() { return t("l.work_view.changing_the_work_changes_how"); },
-  get fixed_duration() { return t("l.work_view.changing_the_work_changes_the"); },
-  get fixed_work() { return t("l.work_view.changing_the_duration_or_the"); },
+  get fixed_units() {
+    return t("l.work_view.changing_the_work_changes_how");
+  },
+  get fixed_duration() {
+    return t("l.work_view.changing_the_work_changes_the");
+  },
+  get fixed_work() {
+    return t("l.work_view.changing_the_duration_or_the");
+  },
 };
 
 /** 90 → "1.5 h"; 0 → "0 h". */
@@ -76,14 +88,12 @@ export function assignmentBody(
   const wantWork = f.changing === "work";
   if (f.first && f.changing === "work") {
     // first assignment with work: give work and units (duration derived)
-    if (work === null)
-      return { error: t("l.work_view.work_must_be_a_number") };
+    if (work === null) return { error: t("l.work_view.work_must_be_a_number") };
   }
   if (wantDays && !(f.first && f.changing === "work")) {
     if (blank(f.duration) || !Number.isInteger(days) || days < 1 || days > 3650)
       return {
-        error:
-          t("l.work_view.duration_must_be_a_whole"),
+        error: t("l.work_view.duration_must_be_a_whole"),
       };
     body.duration_days = days;
   }
@@ -95,8 +105,7 @@ export function assignmentBody(
     body.units_percent = units;
   }
   if (wantWork) {
-    if (work === null)
-      return { error: t("l.work_view.work_must_be_a_number") };
+    if (work === null) return { error: t("l.work_view.work_must_be_a_number") };
     body.work_minutes = work;
   }
   if (f.first && f.changing === "duration" && !wantUnits)
@@ -106,7 +115,11 @@ export function assignmentBody(
 
 /** A sentence saying what the rule did. */
 export function resultText(r: AssignmentResult): string {
-  const parts = t("l.work_view.business_days_at_is", { duration_days: r.duration_days, units_percent: r.units_percent, hoursText: hoursText(r.work_minutes) });
+  const parts = t("l.work_view.business_days_at_is", {
+    duration_days: r.duration_days,
+    units_percent: r.units_percent,
+    hoursText: hoursText(r.work_minutes),
+  });
   const what =
     r.derived === "duration"
       ? t("l.work_view.the_duration_was_worked_out")
@@ -127,17 +140,34 @@ export function capacityText(c: AssignmentResult["capacity"]): string {
       ? t("l.work_view.capacity_not_checked_the_task")
       : "";
   if (c.over_capacity)
-    return t(c.days_over === 1 ? "l.work_view.over_capacity_one" : "l.work_view.over_capacity_other", { days_over: c.days_over, from: c.from, to: c.to });
+    return t(
+      c.days_over === 1
+        ? "l.work_view.over_capacity_one"
+        : "l.work_view.over_capacity_other",
+      { days_over: c.days_over, from: c.from, to: c.to },
+    );
   return t("l.work_view.within_the_person_s_capacity");
 }
 
 export const CONTOUR_TEXT: Record<string, string> = {
-  get flat() { return t("l.work_view.flat_the_same_each_day"); },
-  get front_loaded() { return t("l.work_view.front_loaded_more_at_the"); },
-  get back_loaded() { return t("l.work_view.back_loaded_more_at_the"); },
-  get bell() { return t("l.work_view.bell_most_in_the_middle"); },
-  get turtle() { return t("l.work_view.turtle_ramps_up_holds_ramps"); },
-  get custom() { return t("l.work_view.custom_percentages"); },
+  get flat() {
+    return t("l.work_view.flat_the_same_each_day");
+  },
+  get front_loaded() {
+    return t("l.work_view.front_loaded_more_at_the");
+  },
+  get back_loaded() {
+    return t("l.work_view.back_loaded_more_at_the");
+  },
+  get bell() {
+    return t("l.work_view.bell_most_in_the_middle");
+  },
+  get turtle() {
+    return t("l.work_view.turtle_ramps_up_holds_ramps");
+  },
+  get custom() {
+    return t("l.work_view.custom_percentages");
+  },
 };
 
 /** "10, 20, 70" → [10,20,70]; an error when they are not whole percentages summing to 100. */
@@ -157,13 +187,25 @@ export function customWeights(text: string): number[] | { error: string } {
 }
 
 export const UNPLACED_TEXT: Record<string, string> = {
-  get unscheduled() { return t("l.work_view.has_no_dates_yet"); },
-  get no_working_days() { return t("l.work_view.has_no_business_day_to"); },
-  get no_weight() { return t("l.work_view.has_a_contour_that_gives"); },
+  get unscheduled() {
+    return t("l.work_view.has_no_dates_yet");
+  },
+  get no_working_days() {
+    return t("l.work_view.has_no_business_day_to");
+  },
+  get no_weight() {
+    return t("l.work_view.has_a_contour_that_gives");
+  },
 };
 
 export const NO_RATE_TEXT: Record<string, string> = {
-  get no_rate() { return t("l.work_view.no_rate_applies"); },
-  get no_rate_on_some_days() { return t("l.work_view.no_rate_applied_on_some"); },
-  get no_assignee() { return t("l.work_view.has_nobody_assigned"); },
+  get no_rate() {
+    return t("l.work_view.no_rate_applies");
+  },
+  get no_rate_on_some_days() {
+    return t("l.work_view.no_rate_applied_on_some");
+  },
+  get no_assignee() {
+    return t("l.work_view.has_nobody_assigned");
+  },
 };

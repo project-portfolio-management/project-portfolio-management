@@ -125,7 +125,10 @@ export function authorizationUrl(
   cfg: OidcConfig,
   p: { state: string; nonce: string; challenge: string; redirectUri: string },
 ): string {
-  const scopes = new Set(["openid", ...cfg.scopes.split(/\s+/).filter(Boolean)]);
+  const scopes = new Set([
+    "openid",
+    ...cfg.scopes.split(/\s+/).filter(Boolean),
+  ]);
   const q = new URLSearchParams({
     response_type: "code",
     client_id: cfg.clientId,
@@ -151,9 +154,13 @@ export async function discover(
   try {
     res = await fetchFn(url, { headers: { accept: "application/json" } });
   } catch {
-    throw new OidcError("metadata", "the provider's metadata could not be fetched");
+    throw new OidcError(
+      "metadata",
+      "the provider's metadata could not be fetched",
+    );
   }
-  if (!res.ok) throw new OidcError("metadata", `metadata answered ${res.status}`);
+  if (!res.ok)
+    throw new OidcError("metadata", `metadata answered ${res.status}`);
   const meta = (await res.json()) as Partial<ProviderMetadata>;
   if (typeof meta.issuer !== "string" || meta.issuer.includes("{")) {
     // Entra's "common" and "organizations" metadata carry a `{tenantid}` template.
@@ -163,9 +170,16 @@ export async function discover(
     );
   }
   if (meta.issuer !== issuer.replace(/\/$/, "") && meta.issuer !== issuer) {
-    throw new OidcError("issuer_mismatch", "the provider names a different issuer");
+    throw new OidcError(
+      "issuer_mismatch",
+      "the provider names a different issuer",
+    );
   }
-  for (const f of ["authorization_endpoint", "token_endpoint", "jwks_uri"] as const) {
+  for (const f of [
+    "authorization_endpoint",
+    "token_endpoint",
+    "jwks_uri",
+  ] as const) {
     if (typeof meta[f] !== "string") {
       throw new OidcError("metadata", `metadata has no ${f}`);
     }
@@ -180,13 +194,16 @@ export async function fetchJwks(
 ): Promise<Jwk[]> {
   let res: Response;
   try {
-    res = await fetchFn(meta.jwks_uri, { headers: { accept: "application/json" } });
+    res = await fetchFn(meta.jwks_uri, {
+      headers: { accept: "application/json" },
+    });
   } catch {
     throw new OidcError("jwks", "the signing keys could not be fetched");
   }
   if (!res.ok) throw new OidcError("jwks", `keys answered ${res.status}`);
   const body = (await res.json()) as { keys?: Jwk[] };
-  if (!Array.isArray(body.keys)) throw new OidcError("jwks", "no keys in the key set");
+  if (!Array.isArray(body.keys))
+    throw new OidcError("jwks", "no keys in the key set");
   return body.keys;
 }
 
@@ -223,7 +240,11 @@ export function verifyIdToken(
 ): IdTokenClaims {
   const parts = idToken.split(".");
   if (parts.length !== 3) throw new OidcError("id_token", "not a compact JWS");
-  const [encodedHeader, encodedClaims, encodedSignature] = parts as [string, string, string];
+  const [encodedHeader, encodedClaims, encodedSignature] = parts as [
+    string,
+    string,
+    string,
+  ];
   let header: { alg?: string; kid?: string };
   let claims: IdTokenClaims;
   try {
@@ -261,14 +282,18 @@ export function verifyIdToken(
     throw new OidcError("id_token", "wrong issuer");
   }
   const aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-  if (!aud.includes(expect.audience)) throw new OidcError("id_token", "wrong audience");
+  if (!aud.includes(expect.audience))
+    throw new OidcError("id_token", "wrong audience");
   if (typeof claims.exp !== "number" || claims.exp + skew < now) {
     throw new OidcError("id_token", "expired");
   }
   if (typeof claims.nbf === "number" && claims.nbf - skew > now) {
     throw new OidcError("id_token", "not yet valid");
   }
-  if (typeof claims.nonce !== "string" || !sameString(claims.nonce, expect.nonce)) {
+  if (
+    typeof claims.nonce !== "string" ||
+    !sameString(claims.nonce, expect.nonce)
+  ) {
     throw new OidcError("id_token", "wrong nonce");
   }
   if (typeof claims.sub !== "string" || claims.sub === "") {
@@ -299,9 +324,16 @@ async function tokenRequest(
       body,
     });
   } catch {
-    throw new OidcError("token_endpoint", "the token endpoint could not be reached");
+    throw new OidcError(
+      "token_endpoint",
+      "the token endpoint could not be reached",
+    );
   }
-  if (!res.ok) throw new OidcError("token_endpoint", `token endpoint answered ${res.status}`);
+  if (!res.ok)
+    throw new OidcError(
+      "token_endpoint",
+      `token endpoint answered ${res.status}`,
+    );
   const tokens = (await res.json()) as Partial<TokenResponse>;
   if (typeof tokens.access_token !== "string") {
     throw new OidcError("token_endpoint", "no access token in the response");
@@ -344,7 +376,12 @@ export function refreshTokens(
  * a control character) becomes `/`.
  */
 export function safeReturnPath(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
+  if (
+    !raw ||
+    !raw.startsWith("/") ||
+    raw.startsWith("//") ||
+    raw.startsWith("/\\")
+  ) {
     return "/";
   }
   // eslint-disable-next-line no-control-regex

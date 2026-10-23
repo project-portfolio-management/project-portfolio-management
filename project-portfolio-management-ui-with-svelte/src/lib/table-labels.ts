@@ -8,7 +8,8 @@ export function exportLabels() {
     exportCsv: t("p.table.export_csv"),
     exportTsv: t("p.table.export_tsv"),
     exportExcel: t("p.table.export_excel"),
-    exportAnnouncement: (_format: string, rows: number, file: string) => t("p.table.exported", { rows, file }),
+    exportAnnouncement: (_format: string, rows: number, file: string) =>
+      t("p.table.exported", { rows, file }),
     copy: t("p.table.copy"),
     copyAnnouncement: (rows: number) => t("p.table.copied", { rows }),
     copyFailed: t("p.table.copy_failed"),

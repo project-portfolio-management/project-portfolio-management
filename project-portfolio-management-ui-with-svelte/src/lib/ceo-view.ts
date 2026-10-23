@@ -35,9 +35,15 @@ export function worstStatus(health: ExecutiveHealth): Rag | null {
 export function healthSentence(health: ExecutiveHealth): string {
   const totals = ragTotals(health);
   const n = totals.red + totals.amber + totals.green;
-  if (health.portfolios.length === 0) return t("l.ceo_view.no_portfolios_to_report_on");
+  if (health.portfolios.length === 0)
+    return t("l.ceo_view.no_portfolios_to_report_on");
   if (n === 0) return t("l.ceo_view.portfolios_exist_but_hold_no");
-  return t("l.ceo_view.of_plans_are_red_amber", { red: totals.red, n, amber: totals.amber, green: totals.green });
+  return t("l.ceo_view.of_plans_are_red_amber", {
+    red: totals.red,
+    n,
+    amber: totals.amber,
+    green: totals.green,
+  });
 }
 
 export function escalatedRisks(health: ExecutiveHealth): number {
@@ -101,10 +107,18 @@ export function milestonesToWatch(
 }
 
 const DECISION_TEXT: Record<string, string> = {
-  get gate_review() { return t("l.ceo_view.gate_review"); },
-  get scenario_commit() { return t("l.ceo_view.scenario_committed"); },
-  get proposal() { return t("l.ceo_view.proposal"); },
-  get merge() { return t("l.ceo_view.plans_merged"); },
+  get gate_review() {
+    return t("l.ceo_view.gate_review");
+  },
+  get scenario_commit() {
+    return t("l.ceo_view.scenario_committed");
+  },
+  get proposal() {
+    return t("l.ceo_view.proposal");
+  },
+  get merge() {
+    return t("l.ceo_view.plans_merged");
+  },
 };
 
 /** The `n` newest decisions as one line each ("Gate review: Approved — Apollo"). */

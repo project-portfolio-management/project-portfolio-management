@@ -298,15 +298,19 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
         .await
         .map_err(db_err)?;
     let reds = red_history(&ctx).await?;
+    // One query for every threshold's plan, not one per threshold (CQ-11).
+    let live_plans: std::collections::HashMap<Uuid, plans::Model> = plans::Entity::find()
+        .filter(plans::Column::Pid.is_in(all.iter().map(|t| t.plan_pid).collect::<Vec<_>>()))
+        .filter(plans::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|p| (p.pid, p))
+        .collect();
     let mut results = Vec::new();
     for t in &all {
-        let Some(plan) = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(t.plan_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-        else {
+        let Some(plan) = live_plans.get(&t.plan_pid) else {
             continue;
         };
         let (crossed, detail) = match t.kind.as_str() {

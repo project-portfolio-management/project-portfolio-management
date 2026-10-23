@@ -1,5 +1,5 @@
 //! RM-12b: `include` on a single task read. (Paging of every list is checked, from the
-//! OpenAPI document, by `tests/list_paging.rs`.)
+//! `OpenAPI` document, by `tests/list_paging.rs`.)
 
 use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;

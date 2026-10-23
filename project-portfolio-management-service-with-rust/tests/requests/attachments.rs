@@ -330,7 +330,7 @@ async fn content_that_lies_is_refused_and_a_scanner_has_the_last_word() {
             std::env::set_var(
                 "PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR",
                 "127.0.0.1:1",
-            )
+            );
         };
         let down = upload("later.txt", "text/plain", b"another file").await;
         assert_eq!(down.status_code(), 503);

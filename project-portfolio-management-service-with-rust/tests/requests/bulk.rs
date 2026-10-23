@@ -6,6 +6,11 @@
 //! The test profile runs workers inline (`ForegroundBlocking`), so a job is
 //! finished by the time its `POST` returns. `#[ignore]`d: needs PostgreSQL.
 
+#![expect(
+    clippy::items_after_statements,
+    reason = "request-level test: long, linear, short names; recorded under CQ-14"
+)]
+
 use axum::body::Bytes;
 use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;

@@ -10,6 +10,11 @@
 //!
 //! Its **own test binary** (the verifier is a process-wide `OnceLock`).
 //! `#[ignore]`d — needs PostgreSQL. `cargo test --test private_aggregates -- --ignored`.
+
+#![expect(
+    clippy::too_many_lines,
+    reason = "request-level test: long, linear, short names; recorded under CQ-14"
+)]
 #![cfg(feature = "paseto")]
 
 use base64::Engine;

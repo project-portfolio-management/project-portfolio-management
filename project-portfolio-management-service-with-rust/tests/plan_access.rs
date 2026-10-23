@@ -11,6 +11,11 @@
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `config/test.yaml` / `DATABASE_URL`. Run with
 //! `cargo test --test plan_access -- --ignored`.
+
+#![expect(
+    clippy::too_many_lines,
+    reason = "request-level test: long, linear, short names; recorded under CQ-14"
+)]
 #![cfg(feature = "paseto")]
 
 use base64::Engine;

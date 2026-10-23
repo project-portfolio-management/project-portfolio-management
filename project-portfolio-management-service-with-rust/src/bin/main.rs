@@ -2,7 +2,6 @@
 //! (`project-portfolio-management-service`), wiring the `App` hooks and the database
 //! migrator. See the crate library docs for the service overview.
 
-#![warn(clippy::pedantic)]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 

@@ -1750,6 +1750,7 @@ came from grep.
   pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove
   the 174 `#[allow(missing_docs)]` or document the items.
   **Acceptance:** the clippy gate stays green with no new allows.
+  **Progress 2026-10-23 (not ticked).** Pedantic is in `[lints.clippy]`, so tests get it;       21 test files hold a file-level `#![expect]` with a reason (long functions and naming), `assert_is_empty` allowed globally. **Still to do:** the 174 `missing_docs` allows and `#[allow]` to `#[expect]` elsewhere; the `#![expect]` lines should shrink as tests are split.
 - [ ] **CQ-15 (M each) — Split the largest modules.** Split `tba.rs` along its
   11 existing sections, `controllers/engineering.rs` by route group, and
   `controllers/visibility.rs` by dependencies, schedule, milestones,

@@ -2,7 +2,7 @@
 //! roster (60 plans, allocations across 40 shared people) and proves
 //! `GET /capacity`, `GET /capacity/utilization`, and `GET /at-a-glance`
 //! each run a **bounded** number of SQL queries — measured directly
-//! via a tracing layer over SeaORM's own driver spans, not timed
+//! via a tracing layer over `SeaORM`'s own driver spans, not timed
 //! (timing is noisy under load; a query count is exact and
 //! deterministic).
 //!
@@ -18,7 +18,7 @@ use serde_json::{Value, json};
 use serial_test::serial;
 use tracing_subscriber::layer::{Context, Layer, SubscriberExt};
 
-/// Counts spans SeaORM's own Postgres driver opens for each round trip
+/// Counts spans `SeaORM`'s own Postgres driver opens for each round trip
 /// (`execute`, `query_one`, `query_all`, `stream`, `begin`, …) — every
 /// `#[instrument]`-annotated function in `sea_orm::driver::sqlx_postgres`
 /// (checked against `sea-orm` 2.0.2's own source). Filtering on that
@@ -41,7 +41,7 @@ impl<S: tracing::Subscriber> Layer<S> for QueryCountLayer {
     }
 }
 
-/// Run `f`, returning its result plus the number of SeaORM driver
+/// Run `f`, returning its result plus the number of `SeaORM` driver
 /// round trips made while it ran.
 ///
 /// Uses `tracing::subscriber::set_default` (a thread-local override,

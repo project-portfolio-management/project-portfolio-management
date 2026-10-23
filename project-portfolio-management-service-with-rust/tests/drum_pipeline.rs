@@ -4,6 +4,12 @@
 //!
 //! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
 //! Run with `cargo test --test drum_pipeline -- --ignored`.
+
+#![expect(
+    clippy::items_after_statements,
+    clippy::many_single_char_names,
+    reason = "request-level test: long, linear, short names; recorded under CQ-14"
+)]
 #![cfg(feature = "paseto")]
 
 use base64::Engine;

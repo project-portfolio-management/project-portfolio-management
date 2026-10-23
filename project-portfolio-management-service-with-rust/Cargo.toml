@@ -124,6 +124,15 @@ keycloak = ["authentication-verifier/keycloak"]
 # — lives behind this.
 fluvio = ["dep:fluvio"]
 
+# One place for the lints, so the integration tests and benches get pedantic too.
+# `forbid(unsafe_code)` and `deny(missing_docs)` stay in the crate roots: the tests
+# set environment variables, which needs `unsafe`.
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Rust 1.99 clippy flags `assert!(x.is_empty())` and suggests `assert_eq!(x, [] as [T; 0])`, which reads
+# worse; over a hundred test assertions use the first form.
+assert_is_empty = "allow"
+
 [[bin]]
 name = "project-portfolio-management"
 path = "src/bin/main.rs"

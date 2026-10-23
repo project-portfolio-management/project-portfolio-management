@@ -27,7 +27,7 @@ macro_rules! create_plan {
     }};
 }
 
-/// A person EntityRef URN.
+/// A person `EntityRef` URN.
 fn person(uuid: &str) -> String {
     format!("person:{uuid}")
 }

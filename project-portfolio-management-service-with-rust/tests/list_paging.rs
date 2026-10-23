@@ -1,4 +1,4 @@
-//! RM-12b: every list pages the same way, **driven by the OpenAPI document**. The test
+//! RM-12b: every list pages the same way, **driven by the `OpenAPI` document**. The test
 //! signs in as an admin, seeds one of each kind of record, then calls every documented
 //! `GET` it can reach. Every one that answers `200` with a bare JSON array is a list and
 //! must carry `X-Total-Count` / `X-Limit` / `X-Offset`, honour `limit` and `offset`,
@@ -8,6 +8,12 @@
 //!
 //! Its **own test binary** (the verifier is a process-wide `OnceLock`).
 //! `#[ignore]`d — needs PostgreSQL. `cargo test --test list_paging -- --ignored`.
+
+#![expect(
+    clippy::similar_names,
+    clippy::too_many_lines,
+    reason = "request-level test: long, linear, short names; recorded under CQ-14"
+)]
 #![cfg(feature = "paseto")]
 
 use base64::Engine;
@@ -286,7 +292,7 @@ async fn every_list_pages_the_same_way() {
                     let Some(a) = u.find('{') else { next.push(u.clone()); continue };
                     let b = u[a..].find('}').unwrap() + a;
                     let name = &u[a + 1..b];
-                    for v in pools.get(name).map(Vec::as_slice).unwrap_or(&[]) {
+                    for v in pools.get(name).map_or(&[][..], Vec::as_slice) {
                         let mut url = u.clone();
                         url.replace_range(a..=b, v);
                         next.push(url);

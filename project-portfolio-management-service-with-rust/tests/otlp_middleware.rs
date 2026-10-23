@@ -128,7 +128,11 @@ async fn a_served_request_exports_a_span_and_returns_its_traceparent() {
 
     // The header points at the span that was exported — the whole point of
     // emitting it.
-    let exported_trace_id: String = span.trace_id.iter().map(|b| format!("{b:02x}")).collect();
+    let exported_trace_id: String = span.trace_id.iter().fold(String::new(), |mut s, b| {
+        use std::fmt::Write as _;
+        let _ = write!(s, "{b:02x}");
+        s
+    });
     assert_eq!(
         parts[1], exported_trace_id,
         "the traceparent's trace id does not match the exported span's"

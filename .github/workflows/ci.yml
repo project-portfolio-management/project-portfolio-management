@@ -241,6 +241,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: ${{ env.UI }}/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
       - run: pnpm run check
       - run: pnpm exec vitest run
       - run: pnpm run build

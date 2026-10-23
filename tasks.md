@@ -1807,10 +1807,11 @@ came from grep.
   `as unknown as` casts are column accessors.
   **Acceptance:** `grep -c 'as unknown as'` is under 10 and `pnpm run check`
   is clean.
-- [ ] **CQ-22 (S) — UI lint and format gate.** Add ESLint with
+- [x] **CQ-22 (S) — UI lint and format gate.** Add ESLint with
   `eslint-plugin-svelte` and Prettier, format the 51 files in their own commit,
   and add both to CI.
   **Acceptance:** CI runs both and is green.
+  **Built 2026-10-23.** Prettier format commit; `eslint.config.js`; `pnpm run lint` runs both and is a CI step. **Deviations, stated:** 51 findings are warnings, to be fixed later (unused imports in 20 pages, 19 each-blocks without a key); one rule off for lack of a base path.
 - [ ] **CQ-23 (S) — Close the i18n leaks.** Translate
   `ObjectiveCard.svelte:187`'s `confirm()`, and replace the native confirms
   with the Lily dialog. Extend the catalogue test to string and template

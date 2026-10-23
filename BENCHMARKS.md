@@ -140,7 +140,18 @@ CQ-10 moved the search-index write for a create from the async runtime to `spawn
 
 (Earlier runs with debug logging and OTLP export on were discarded: they measured the logging.)
 
-What it shows: **p99 did not improve** (about 8 to 9 s after; 5.5 to 9 s before), and throughput fell, but the "before" build also answered about a quarter of its requests with `500` (nothing was logged at `warn`; the cause is not known), which the "after" build did not. A single create takes about 87 ms with no concurrency, so the limit is the per-create index `commit()` (it syncs to disk), not which thread runs it. Moving it off the runtime stops a blocked runtime from failing requests; it does not make creates faster. Batching commits is the change that would.
+A third build adds **group commit** (CQ-10): writers add their document under the lock, then share one commit instead of each paying for its own, and each still returns only once its own write is searchable. Same method, with a fresh database (the others had grown):
+
+| Build | Run | Completed | Req/s | p50 ms | p95 ms | p99 ms | Errors |
+|---|---|---|---|---|---|---|---|
+| group commit | 1 | 1118 | 57 | 526 | 608 | 2879 | 0 |
+| group commit | 2 | 1313 | 67 | 371 | 453 | 4232 | 0 |
+| group commit | 3 | 950 | 49 | 555 | 615 | 652 | 0 |
+| group commit | 4 | 1048 | 54 | 560 | 695 | 720 | 0 |
+
+That is about eight times the throughput and a p50 of about half a second instead of three or more seconds. The p99 is 0.65 to 4.2 s (two runs had a slow tail I did not explain), against 8 to 9 s. The comparison is not clean: the database was fresh for this build and had grown for the other two.
+
+What the first two builds show: **p99 did not improve** (about 8 to 9 s after; 5.5 to 9 s before), and throughput fell, but the "before" build also answered about a quarter of its requests with `500` (nothing was logged at `warn`; the cause is not known), which the "after" build did not. A single create takes about 87 ms with no concurrency, so the limit is the per-create index `commit()` (it syncs to disk), not which thread runs it. Moving it off the runtime stops a blocked runtime from failing requests; it does not make creates faster. Batching commits is the change that would, and the third build does it.
 
 What it does not show: only four to six runs, large variance, a growing database, one machine for everything. Treat the direction as indicative, not the figures.
 

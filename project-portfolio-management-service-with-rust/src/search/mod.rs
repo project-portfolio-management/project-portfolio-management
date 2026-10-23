@@ -134,9 +134,20 @@ pub struct SearchEngine {
     /// guessed. It also took and released the index directory's
     /// exclusive writer lock each time, so two concurrent writes could
     /// collide on it; one owner cannot.
-    writer: Mutex<IndexWriter>,
+    writer: Mutex<PendingWriter>,
+    /// How many writes (as counted by [`PendingWriter::added`]) are committed and visible to the
+    /// reader. Held while committing, so writers that arrive during a commit wait here and find
+    /// their write already covered by it (group commit, CQ-10).
+    committed: Mutex<u64>,
     /// Filesystem path the index lives at (diagnostics / reopen).
     pub index_path: String,
+}
+
+/// The writer and a count of the writes made through it, so a commit can say which writes it
+/// covers.
+struct PendingWriter {
+    writer: IndexWriter,
+    added: u64,
 }
 
 impl SearchEngine {
@@ -146,7 +157,7 @@ impl SearchEngine {
     /// guard rather than failing for ever: the only operations held
     /// across it are `delete_term` / `add_document` / `commit`, and a
     /// permanently dead index would be a worse outcome than a retry.
-    fn writer(&self) -> std::sync::MutexGuard<'_, IndexWriter> {
+    fn writer(&self) -> std::sync::MutexGuard<'_, PendingWriter> {
         self.writer
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -163,10 +174,14 @@ impl SearchEngine {
         std::fs::create_dir_all(p).map_err(|e| err(&format!("ensure index dir: {e}")))?;
         let index = PlanIndex::create_or_open(p)?;
         // One writer for the process (see the field's docs).
-        let writer = Mutex::new(index.writer(WRITER_HEAP_MB)?);
+        let writer = Mutex::new(PendingWriter {
+            writer: index.writer(WRITER_HEAP_MB)?,
+            added: 0,
+        });
         Ok(Self {
             index,
             writer,
+            committed: Mutex::new(0),
             index_path: p.to_string_lossy().into_owned(),
         })
     }
@@ -182,7 +197,8 @@ impl SearchEngine {
     ///
     /// When the writer cannot be acquired or the commit fails.
     pub fn index_plan(&self, pid: Uuid, plan: &Plan) -> Result<()> {
-        let mut writer = self.writer();
+        let mut pending = self.writer();
+        let writer = &mut pending.writer;
         let s = self.index.schema();
         let pid_str = pid.to_string();
         // Replace-in-place: same batch, so a crash between the two
@@ -213,8 +229,34 @@ impl SearchEngine {
                 s.active => "true",
             ))
             .map_err(|e| err(&format!("add document: {e}")))?;
-        writer.commit().map_err(|e| err(&format!("commit: {e}")))?;
-        self.index.reload()
+        pending.added += 1;
+        let mine = pending.added;
+        drop(pending);
+        self.commit_through(mine, "commit")
+    }
+
+    /// Make every write up to number `mine` durable and visible to search, committing only if
+    /// no other caller's commit has already covered it. Concurrent writers add their documents
+    /// one after another (quickly) and then share one commit (an fsync), instead of each paying
+    /// for its own. A caller still returns only once its own write is searchable.
+    fn commit_through(&self, mine: u64, what: &str) -> Result<()> {
+        let mut committed = self
+            .committed
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if *committed >= mine {
+            return Ok(());
+        }
+        let mut pending = self.writer();
+        let upto = pending.added;
+        pending
+            .writer
+            .commit()
+            .map_err(|e| err(&format!("{what}: {e}")))?;
+        drop(pending);
+        self.index.reload()?;
+        *committed = upto;
+        Ok(())
     }
 
     /// Remove a plan from the index by public id. Called on soft-delete
@@ -225,13 +267,15 @@ impl SearchEngine {
     ///
     /// When the delete commit fails.
     pub fn delete_plan(&self, pid: Uuid) -> Result<()> {
-        let mut writer = self.writer();
+        let mut pending = self.writer();
         let s = self.index.schema();
-        writer.delete_term(Term::from_field_text(s.pid, &pid.to_string()));
-        writer
-            .commit()
-            .map_err(|e| err(&format!("commit delete: {e}")))?;
-        self.index.reload()
+        pending
+            .writer
+            .delete_term(Term::from_field_text(s.pid, &pid.to_string()));
+        pending.added += 1;
+        let mine = pending.added;
+        drop(pending);
+        self.commit_through(mine, "commit delete")
     }
 
     /// Drop every document. Used by the rebuild task before replaying
@@ -242,14 +286,15 @@ impl SearchEngine {
     ///
     /// When the delete-all commit fails.
     pub fn clear(&self) -> Result<()> {
-        let mut writer = self.writer();
-        writer
+        let mut pending = self.writer();
+        pending
+            .writer
             .delete_all_documents()
             .map_err(|e| err(&format!("delete all: {e}")))?;
-        writer
-            .commit()
-            .map_err(|e| err(&format!("commit clear: {e}")))?;
-        self.index.reload()
+        pending.added += 1;
+        let mine = pending.added;
+        drop(pending);
+        self.commit_through(mine, "commit clear")
     }
 
     /// **Blocking query** for duplicate detection: the candidate set an
@@ -626,6 +671,32 @@ mod tests {
             .unwrap();
         assert_eq!(hits, vec![pid.to_string()]);
         assert_eq!(total, 1);
+    }
+
+    /// Writers that share a commit (CQ-10) still each see their own write once they return, and
+    /// a delete is visible when it returns.
+    #[test]
+    fn concurrent_writers_each_see_their_own_write() {
+        let (engine, _dir) = engine_in_temp();
+        let engine = &engine;
+        std::thread::scope(|scope| {
+            for n in 0..24 {
+                scope.spawn(move || {
+                    let name = format!("Groupcommit{n}x");
+                    let pid = index(engine, &Plan::new(&name));
+                    let (hits, _) = engine
+                        .search_page(&name, SearchMode::Exact, None, 10, 0)
+                        .unwrap();
+                    assert_eq!(hits, vec![pid.to_string()], "write {n} not visible");
+                    engine.delete_plan(pid).unwrap();
+                    let (hits, _) = engine
+                        .search_page(&name, SearchMode::Exact, None, 10, 0)
+                        .unwrap();
+                    assert!(hits.is_empty(), "delete {n} not visible");
+                });
+            }
+        });
+        assert_eq!(engine.stats().unwrap().num_docs, 0);
     }
 
     /// Fuzzy search survives a typo; exact search does not.

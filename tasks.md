@@ -1821,13 +1821,13 @@ came from grep.
   before.
   **Progress 2026-10-21 (not ticked).** `ObjectiveCard.svelte:187` uses a new catalogue key; `catalogue-coverage.test.ts` gains "no literal English in browser dialogs" (any `confirm`/`alert`/`prompt` whose first argument is a string or template literal, in `.svelte` and `.ts`), which fails on the old line. **Still to do:** the Lily dialog in place of the four native dialogs; the unused-key census; the 25 `as never` casts.
   **Progress 2026-10-23 (not ticked).** Unused-key census added (19 known, shrink-only); the run-time key casts use `tDynamic()`. **Still to do:** the Lily dialog in place of the native dialogs; deleting or using the 19 keys.
-- [ ] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
+- [x] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
   `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`,
   critical-path, earned-value and RACI. The axe sweep also audits each page in
   its populated state, not only in its error state.
   **Acceptance:** each route has a spec that asserts its content; axe runs on
   populated pages.
-  **Progress 2026-10-23 (not ticked).** Specs added for `/announcements`, `/lifecycle`, `/verify` and `/reports` (with axe on the populated page). **Still to do:** `/automations`, `/reviews`, critical path, earned value and RACI.
+  **Built 2026-10-23.** `tests/e2e/{announcements,automations,lifecycle,reports,reviews,verify,critical-path,earned-value,raci}.spec.ts`, each with axe on the populated page. **Deviations, stated:** English only; forecast, rollup and the Gantt/network views are not asserted; the shared `a11y.spec.ts` sweep is unchanged.
 - [x] **CQ-25 (S) — Correct the documentation drift.** Fix these:
   - the CHANGELOG note that link routes skip the private check (`privacy_mw`
     guards them; add a census test that proves it);

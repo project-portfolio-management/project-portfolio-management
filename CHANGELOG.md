@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 23 October
+
+- **CI now fails on an unused dependency (CQ-16, part).** A `cargo machete` job covers the service and the matcher and is part of `ci-ok`; it found one more unused crate (`validator`), now removed. Verified: machete is clean locally on both crates, and clippy with all features passes. **Not verified:** the new job has not yet run in CI, and the action version tag is from memory. **Not done:** one `svelte-headless` (waits on an upstream release) and the `arbitrary_precision` decision.
+
 ### 22 October
 
 - **The UI's API client is checked against the routes the service really serves (CQ-9, part).** All 292 calls match; a wrong path or method now fails a test. **Not done:** bodies and types are not checked.

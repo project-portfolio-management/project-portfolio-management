@@ -198,6 +198,21 @@ jobs:
           command: check
           # deny.toml sits next to each Cargo.toml.
 
+  machete:
+    name: cargo machete (unused dependencies)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - project-portfolio-management-service-with-rust
+          - project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@v7
+      - uses: bnjbvr/cargo-machete@v0.9.1
+        with:
+          path: ${{ matrix.crate }}
+
   ui:
     name: UI (check, unit, build, Playwright and axe)
     runs-on: ubuntu-latest
@@ -382,6 +397,7 @@ jobs:
       - restore
       - matcher
       - deny
+      - machete
       - ui
       - docs
       - container

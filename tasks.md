@@ -1827,6 +1827,7 @@ came from grep.
   its populated state, not only in its error state.
   **Acceptance:** each route has a spec that asserts its content; axe runs on
   populated pages.
+  **Progress 2026-10-23 (not ticked).** Specs added for `/announcements`, `/lifecycle`, `/verify` and `/reports` (with axe on the populated page). **Still to do:** `/automations`, `/reviews`, critical path, earned value and RACI.
 - [x] **CQ-25 (S) — Correct the documentation drift.** Fix these:
   - the CHANGELOG note that link routes skip the private check (`privacy_mw`
     guards them; add a census test that proves it);

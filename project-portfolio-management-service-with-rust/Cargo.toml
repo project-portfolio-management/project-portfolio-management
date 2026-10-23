@@ -35,7 +35,7 @@ sha2 = { version = "0.11" }
 sha3 = { version = "0.12" }
 loco-rs = { workspace = true  }
 serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
 tokio = { version = "1.53", default-features = false, features = [
   "rt-multi-thread",
   # `sync` for the live-update broadcast channel (src/live.rs); `time` for

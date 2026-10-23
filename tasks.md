@@ -1720,7 +1720,7 @@ came from grep.
   or a single indexing task fed by a channel.
   **Acceptance:** a test still finds a new plan by search; the load test's p99
   for `POST /api/plans` is recorded before and after in `BENCHMARKS.md`.
-  **Progress 2026-10-21 (not ticked: no measurement).** `index_best_effort` and `deindex_best_effort` are async and run the write in `spawn_blocking`, still awaited by the request, so search sees a new plan when its create answers; the request suite (189) passes. **Still to do:** the before and after p99 in `BENCHMARKS.md` (needs the load-test setup: a seeded database and `oha`).
+  **Progress 2026-10-21 (not ticked: no measurement).** `index_best_effort` and `deindex_best_effort` are async and run the write in `spawn_blocking`, still awaited by the request, so search sees a new plan when its create answers; the request suite (189) passes. **Measured 2026-10-23 (BENCHMARKS.md):** p99 for `POST /api/plans` did not improve (about 8 to 9 s after, 5.5 to 9 s before; about 12 vs 7 req/s), though the before build answered a quarter of requests with an unexplained 500 and the after build none. The limit is the per-create index `commit()` (about 87 ms alone). **Still to do:** batch commits (one indexing task fed by a channel, commit on an interval), and find what the before build's 500s were. Not ticked.
 - [ ] **CQ-11 (M) — Remove the read N+1s, and the racy upsert.**
   `financials.rs:184` (periods per baseline) and `strategy.rs:283` (one
   existence query per pid) become `is_in` queries. In `earned_value.rs:557`,

@@ -125,6 +125,25 @@ please read this table instead.
   failure behaviour when the database is slow or down.
 - `project-portfolio-management-service-with-rust/benches/service_bench.rs` still has no published results.
 
+## Creating a plan, before and after moving index writes to the blocking pool (measured 2026-10-23)
+
+CQ-10 moved the search-index write for a create from the async runtime to `spawn_blocking` (still awaited by the request). Release builds of commit `5ed2c1e` (before) and `00e91fc` (after), one `POST /api/plans`, 32 connections, 20 seconds, `oha`, `container-dev` profile (login and rate limiting off), OTLP export off, log level `warn`, PostgreSQL 18 in a Podman VM on the same Apple M4 Max as the client. The database was empty at first and grew across runs; the same body every time.
+
+| Build | Run | Completed | Req/s | p50 ms | p95 ms | p99 ms | Errors |
+|---|---|---|---|---|---|---|---|
+| before | 1 | 237 | 12 | 3074 | 4562 | 5516 | 56 × 500 |
+| before | 2 | 179 | 11 | 2771 | 8323 | 9172 | 51 × 500 |
+| after | 1 | 126 | 8 | 3677 | 7884 | 8331 | 0 |
+| after | 2 | 99 | 7 | 4311 | 7956 | 8553 | 0 |
+| after | 3 | 128 | 8 | 3902 | 8343 | 8434 | 0 |
+| after | 4 | 83 | 6 | 7856 | 8653 | 9225 | 0 |
+
+(Earlier runs with debug logging and OTLP export on were discarded: they measured the logging.)
+
+What it shows: **p99 did not improve** (about 8 to 9 s after; 5.5 to 9 s before), and throughput fell, but the "before" build also answered about a quarter of its requests with `500` (nothing was logged at `warn`; the cause is not known), which the "after" build did not. A single create takes about 87 ms with no concurrency, so the limit is the per-create index `commit()` (it syncs to disk), not which thread runs it. Moving it off the runtime stops a blocked runtime from failing requests; it does not make creates faster. Batching commits is the change that would.
+
+What it does not show: only four to six runs, large variance, a growing database, one machine for everything. Treat the direction as indicative, not the figures.
+
 ## Limits that are not measurements
 
 - Do not read the matcher numbers as request latency.

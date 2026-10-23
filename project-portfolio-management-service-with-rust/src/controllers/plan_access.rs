@@ -46,7 +46,42 @@ fn fail_closed(lookup: &'static str, error: &sea_orm::DbErr) {
     crate::metrics::Metrics::global()
         .visibility_lookup_failed_total
         .inc();
+    let _ = LOOKUP_FAILED.try_with(|f| f.store(true, std::sync::atomic::Ordering::Relaxed));
     tracing::error!(lookup, %error, "visibility lookup failed; hiding what could not be checked");
+}
+
+tokio::task_local! {
+    /// Set by [`fail_closed`] during a request scoped by [`lookup_fault_mw`].
+    static LOOKUP_FAILED: std::sync::atomic::AtomicBool;
+}
+
+/// A read whose visibility lookup failed answers `503`, not a `200` with less in it (CQ-6).
+///
+/// `hidden_plans` and `readable_plans` return sets, so a fault shows up as an empty one; this
+/// records the fault for the request and replaces a successful read with `503`. Writes are left
+/// alone: the write has already happened and a `503` would invite a retry of it.
+pub async fn lookup_fault_mw(req: Request, next: Next) -> AxumResponse {
+    let is_read = matches!(
+        *req.method(),
+        axum::http::Method::GET | axum::http::Method::HEAD
+    );
+    LOOKUP_FAILED
+        .scope(std::sync::atomic::AtomicBool::new(false), async move {
+            let response = next.run(req).await;
+            let failed = LOOKUP_FAILED.with(|f| f.load(std::sync::atomic::Ordering::Relaxed));
+            if is_read && failed && response.status().is_success() {
+                return (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    axum::Json(serde_json::json!({
+                        "error": "unavailable",
+                        "description": "could not check who may see this; try again",
+                    })),
+                )
+                    .into_response();
+            }
+            response
+        })
+        .await
 }
 
 /// Whether a set of claims holds `access=admin`.

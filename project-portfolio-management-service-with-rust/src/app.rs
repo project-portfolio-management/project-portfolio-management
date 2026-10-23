@@ -320,6 +320,10 @@ impl Hooks for App {
             // Every list pages the same way (RM-12b): innermost of all, so what it
             // slices is exactly what the handler answered.
             .layer(axum::middleware::from_fn(controllers::paging::paging_mw))
+            // A read whose visibility lookup failed answers 503, not a short 200 (CQ-6).
+            .layer(axum::middleware::from_fn(
+                controllers::plan_access::lookup_fault_mw,
+            ))
             // A successful write anywhere orphans every cached response (response_cache.rs).
             .layer(axum::middleware::from_fn_with_state(
                 ctx.clone(),

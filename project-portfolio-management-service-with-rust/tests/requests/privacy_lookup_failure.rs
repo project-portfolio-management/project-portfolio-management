@@ -54,3 +54,41 @@ async fn a_failed_privacy_lookup_refuses_and_is_counted() {
     })
     .await;
 }
+
+/// An aggregate that filters through `hidden_plans` used to answer `200` with fewer rows when the
+/// lookup failed. It now answers `503`; a write is not turned into one.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_failed_lookup_under_a_list_answers_503() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Aggregate failure" }))
+            .await
+            .assert_status_success();
+        request.get("/api/plans").await.assert_status_ok();
+
+        let before = Metrics::global().visibility_lookup_failed_total.get();
+        ctx.db
+            .execute_unprepared(
+                "ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6",
+            )
+            .await
+            .expect("rename");
+        let res = request.get("/api/plans").await;
+        ctx.db
+            .execute_unprepared(
+                "ALTER TABLE plan_access_settings_cq6 RENAME TO plan_access_settings",
+            )
+            .await
+            .expect("rename back");
+
+        assert_eq!(res.status_code(), 503, "{}", res.text());
+        assert_eq!(res.json::<Value>()["error"], "unavailable");
+        assert!(Metrics::global().visibility_lookup_failed_total.get() - before >= 1.0);
+        request.get("/api/plans").await.assert_status_ok();
+    })
+    .await;
+}

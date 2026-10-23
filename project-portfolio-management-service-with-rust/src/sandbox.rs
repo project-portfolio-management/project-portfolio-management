@@ -250,7 +250,7 @@ pub fn placeholder_link_pid(pred: Uuid, succ: Uuid) -> Uuid {
 ///
 /// A sentence naming the first edit that cannot be applied. Nothing is promised
 /// about the state of `nodes` / `edges` after an error.
-#[allow(clippy::too_many_lines, clippy::implicit_hasher)]
+#[expect(clippy::too_many_lines, clippy::implicit_hasher)]
 pub fn apply(
     nodes: &mut [Node],
     edges: &mut Vec<Edge>,

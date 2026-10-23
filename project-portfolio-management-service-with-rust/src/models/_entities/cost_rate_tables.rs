@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `cost_rate_tables`. A named rate table (standard, overtime, …) for one person or one role, in one currency.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `workflow_states`. See entity spec §5.9.1.
 
 // SeaORM-generated entity shape: documented by the migration.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

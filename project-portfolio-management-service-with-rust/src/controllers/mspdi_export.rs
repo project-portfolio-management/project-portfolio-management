@@ -108,7 +108,7 @@ fn file_stem(name: &str) -> String {
 
 /// `GET /api/plans/{pid}/export/mspdi`: the plan's tasks, links and calendar as an MSPDI file.
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // gather, order, number, link, write: one linear read
+#[expect(clippy::too_many_lines)] // gather, order, number, link, write: one linear read
 async fn export(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

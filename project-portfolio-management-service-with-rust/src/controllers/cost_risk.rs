@@ -526,7 +526,7 @@ async fn portfolio_cost_risk(
 
 /// `GET /api/plans/{pid}/joint-risk` — schedule and cost simulated together.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn joint_risk(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,

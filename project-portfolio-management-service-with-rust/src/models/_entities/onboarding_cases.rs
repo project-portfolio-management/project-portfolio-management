@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `onboarding_cases`. One onboarding or offboarding, of a person on a plan or of a plan itself.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `key_person_entries`: a single point of failure, a person or a role (EX-11).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

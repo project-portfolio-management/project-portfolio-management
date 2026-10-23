@@ -128,7 +128,6 @@ pub fn verifier() -> &'static ReloadableVerifier {
 /// verifier is already built.
 // `async` in every feature shape so `app.rs` has one call site; only the
 // `paseto` half awaits (the key fetch).
-#[allow(clippy::unused_async)]
 pub async fn init() {
     #[cfg(feature = "paseto")]
     init_paseto().await;
@@ -380,7 +379,7 @@ fn verifier_configured() -> bool {
 /// # Errors
 ///
 /// See above; the message names the variable to fix.
-#[allow(clippy::fn_params_excessive_bools)] // four independent facts, named at every call
+#[expect(clippy::fn_params_excessive_bools)] // four independent facts, named at every call
 pub fn startup_verdict(
     production: bool,
     require: bool,
@@ -869,7 +868,7 @@ fn bearer_token(headers: &HeaderMap) -> Result<&str, (StatusCode, String)> {
 /// `401` when the header is missing or not a bearer token, the token fails
 /// verification, or no verifier in this build accepts its type.
 // `async` for the Keycloak path (JWKS refresh); a PASETO-only build never awaits.
-#[allow(clippy::unused_async)]
+#[expect(clippy::unused_async)]
 pub async fn request_claims(headers: &HeaderMap) -> Result<Claims, (StatusCode, String)> {
     let token = bearer_token(headers)?;
     #[cfg(feature = "keycloak")]

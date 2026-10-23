@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `plan_templates`. A reusable plan tree (LT-2). The snapshot is self-contained JSON: once saved, a template does not depend on the plan it was captured from. It carries **no person reference and no identity** (leads, identifiers, codes), and every date is an **offset** from a base date.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

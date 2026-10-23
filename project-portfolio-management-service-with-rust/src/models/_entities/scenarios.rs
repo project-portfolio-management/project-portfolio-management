@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `scenarios`. What-if candidate portfolios
 //! (PPM-4): a membership set + constraint knobs, evaluated on read.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -90,7 +90,7 @@ pub enum JointError {
 /// # Errors
 ///
 /// [`JointError`] when either side cannot run, or the work is over the caps.
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+#[expect(clippy::too_many_arguments, clippy::too_many_lines)]
 pub fn simulate<S: std::hash::BuildHasher>(
     nodes: &[Node],
     edges: &[Edge],
@@ -144,7 +144,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
             let mut total = 0_i64;
             for (i, l) in lines.iter().enumerate() {
                 let (lo, m, hi, _, _) = spreads[i];
-                #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
                 let drawn = if hi <= lo {
                     m
                 } else {
@@ -153,7 +153,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
                 };
                 let cost = drawn.max(l.actual);
                 total += cost;
-                #[allow(clippy::cast_precision_loss)]
+                #[expect(clippy::cast_precision_loss)]
                 line_costs[i].push(cost as f64);
             }
             for e in cost_events.iter().filter(|e| e.probability_bp > 0) {
@@ -161,7 +161,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
                 let hit = if schedule_risks.contains(&e.risk) {
                     struck.contains(&e.risk)
                 } else {
-                    #[allow(clippy::cast_precision_loss)]
+                    #[expect(clippy::cast_precision_loss)]
                     let p = e.probability_bp as f64 / 10_000.0;
                     rng.unit() < p
                 };
@@ -191,7 +191,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
     let within = i64::try_from(sorted.iter().filter(|c| **c <= budget).count()).unwrap_or(0);
     let on_time = i64::try_from(delays.iter().filter(|d| **d <= 0).count()).unwrap_or(0);
     let total_f: Vec<f64> = {
-        #[allow(clippy::cast_precision_loss)]
+        #[expect(clippy::cast_precision_loss)]
         let v: Vec<f64> = costs.iter().map(|c| *c as f64).collect();
         v
     };
@@ -298,7 +298,6 @@ mod tests {
             })
             .collect()
     }
-    #[allow(clippy::too_many_arguments)]
     fn run(
         est: &HashMap<Uuid, Estimate>,
         sev: &[Event],

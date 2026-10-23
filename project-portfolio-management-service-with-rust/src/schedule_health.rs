@@ -25,7 +25,7 @@
 //! the DCMA description, so zero unresourced tasks is this preset's own rule.
 
 // Check bodies use short names (c for the check, t for thresholds, r for the run).
-#![allow(clippy::many_single_char_names)]
+#![expect(clippy::many_single_char_names)]
 
 use std::collections::{HashMap, HashSet};
 
@@ -229,21 +229,19 @@ pub struct Report {
 
 /// Tenths of a percent, as a number to one decimal place.
 fn pct_value(count: i64, of: i64) -> f64 {
-    #[allow(clippy::cast_precision_loss)]
     let tenths = (count * 1000 + of / 2) / of;
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     let v = tenths as f64 / 10.0;
     v
 }
 
 fn ratio_value(milli: i64) -> f64 {
     // Round to two places from thousandths.
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     let v = ((milli + 5).div_euclid(10)) as f64 / 100.0;
     v
 }
 
-#[allow(clippy::too_many_arguments)]
 fn make(
     id: u8,
     key: &'static str,
@@ -310,7 +308,7 @@ fn pct_threshold(op: &'static str, limit: i64) -> Threshold {
 
 /// Run the fourteen checks.
 #[must_use]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn assess(input: &Input, t: &Thresholds) -> Report {
     let options = Options {
         near_critical_days: 0,
@@ -789,7 +787,7 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
                                 c.count = moved;
                                 c.of = t.critical_path_test_days;
                                 c.value = {
-                                    #[allow(clippy::cast_precision_loss)]
+                                    #[expect(clippy::cast_precision_loss)]
                                     let v = moved as f64;
                                     Some(v)
                                 };

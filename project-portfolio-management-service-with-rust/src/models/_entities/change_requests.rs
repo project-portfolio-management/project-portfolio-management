@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `change_requests`. A controlled proposal to change an approved baseline.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

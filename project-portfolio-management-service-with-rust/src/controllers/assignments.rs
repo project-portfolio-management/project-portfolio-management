@@ -98,7 +98,7 @@ struct AssignmentBody {
 /// the third is derived. A result whose units exceed the assignee's availability
 /// on any day of the task is **flagged, not clamped**.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn set_assignment(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

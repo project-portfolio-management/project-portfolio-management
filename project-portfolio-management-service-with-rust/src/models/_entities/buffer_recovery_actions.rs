@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `buffer_recovery_actions`. What was agreed about a buffer in the red; closed once, never deleted (CC-4).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

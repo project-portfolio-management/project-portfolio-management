@@ -6,7 +6,7 @@
 //! start; a line with neither is **undated** and sits outside every year. Currencies are never summed,
 //! and capital (`capex`) and revenue (`opex`) are never summed unless the caller asks.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use std::collections::BTreeMap;
 
@@ -178,7 +178,7 @@ mod tests {
     fn d(s: &str) -> NaiveDate {
         NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
     }
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn line(
         prog: Uuid,
         source: Option<Uuid>,

@@ -2,7 +2,7 @@
 //! (PPM-1): the pipeline that stands between an idea and a funded
 //! plan.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

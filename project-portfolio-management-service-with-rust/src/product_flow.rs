@@ -5,7 +5,7 @@
 //! finished, week by week (**burn-up**), and how fast work finishes (**throughput**). Only real creation
 //! and completion stamps count; there is no ideal line and nothing is interpolated. Counts are of tasks.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use chrono::{Duration, NaiveDate};
 use serde::Serialize;
@@ -41,7 +41,7 @@ pub struct Flow {
 /// Burn-up over the last `weeks` weeks (at most 26) and throughput over the last four. `None` when the
 /// programme has no tasks: that is "no flow data", never a flat line.
 #[must_use]
-#[allow(clippy::cast_precision_loss)] // task counts are tiny
+#[expect(clippy::cast_precision_loss)] // task counts are tiny
 pub fn flow(items: &[Item], as_of: NaiveDate, weeks: u32) -> Option<Flow> {
     if items.is_empty() {
         return None;

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `director_packs`. One version of the monthly pack for one audience.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

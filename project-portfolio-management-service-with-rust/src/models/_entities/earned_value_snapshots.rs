@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `earned_value_snapshots`. A day's earned-value figures for one plan in one currency (SC-5): what was planned, earned and spent as of that date. Written once a day by the scheduler (or on request) so the S-curve has a real history to draw: earned value and actual cost are not dated at source, so the past cannot be reconstructed, only recorded going forward. One row per plan, currency and day; a second snapshot the same day replaces the first.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

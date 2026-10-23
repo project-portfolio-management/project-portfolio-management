@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `artifacts`. The artifact store's index (T-8 §7, LT-5): one row per stored file. The bytes live on disk under `storage_key`; the row carries what is needed to serve and verify them — name, declared content type, size and the SHA-256 of the bytes. `expires_at` lets a sweep delete a file while the row remains as a tombstone.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

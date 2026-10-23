@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `scorecards`. A named set of KPIs read by quarter (EX-10).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

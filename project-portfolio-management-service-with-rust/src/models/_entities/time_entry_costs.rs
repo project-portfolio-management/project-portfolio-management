@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `time_entry_costs`. The cost of a recorded time entry as worked out when it was recorded: the rate used is stored with it, so a later rate change never rewrites an actual.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

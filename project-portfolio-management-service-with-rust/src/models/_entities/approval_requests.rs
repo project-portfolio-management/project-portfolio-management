@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `approval_requests`. Ask a named person to approve something, and record their decision (PL-1). Generic over the same subject kinds as comments, plus budget lines and scenarios. A decision is final and carries a comment (required on reject).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

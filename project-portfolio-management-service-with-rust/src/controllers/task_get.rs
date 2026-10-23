@@ -69,7 +69,7 @@ struct Params {
 
 /// `GET /api/plans/{pid}/tasks/{t_pid}[?include=children,relations,transitions,raci,time_entries]`.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn get_task(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

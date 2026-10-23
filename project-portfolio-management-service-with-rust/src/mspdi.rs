@@ -320,7 +320,7 @@ fn span(from: NaiveDate, to: NaiveDate) -> Vec<NaiveDate> {
 ///
 /// [`ParseError`] for an oversized, malformed (or DTD-carrying), non-MSPDI or
 /// too-large document.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
     if xml.len() > MAX_BYTES {
         return Err(ParseError::TooLarge);

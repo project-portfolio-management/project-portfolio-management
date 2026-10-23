@@ -8,7 +8,7 @@
 //! shapes here cannot drift apart without a test noticing (see the tests: every `$ref` resolves, every
 //! attachment names a real operation, every schema is used).
 
-#![allow(clippy::needless_pass_by_value)] // small builders for JSON literals
+#![expect(clippy::needless_pass_by_value)] // small builders for JSON literals
 
 use serde_json::{Value, json};
 
@@ -68,7 +68,7 @@ const CONFIDENCE: &[&str] = &["green", "amber_green", "amber", "amber_red", "red
 
 /// The schemas, by name.
 #[must_use]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn schemas() -> Value {
     json!({
         // ── change requests ──

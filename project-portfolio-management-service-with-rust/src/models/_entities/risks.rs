@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `risks`. Portfolio-level risk records (PPM-12)
 //! alongside a plan; exposure = probability × impact (derived).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

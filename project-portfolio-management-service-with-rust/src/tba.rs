@@ -276,7 +276,7 @@ impl Ratio {
     /// denominator rather than a sentinel zero.
     #[must_use]
     pub fn new(numerator_ms: i64, denominator_ms: i64) -> Self {
-        #[allow(clippy::cast_precision_loss)] // display ratio, not arithmetic
+        #[expect(clippy::cast_precision_loss)] // display ratio, not arithmetic
         let value = (denominator_ms > 0).then(|| numerator_ms as f64 / denominator_ms as f64);
         Self {
             value,
@@ -375,7 +375,7 @@ pub struct TaskAnalysis {
 
 /// Milliseconds as calendar days, rounded to three places for display.
 #[must_use]
-#[allow(clippy::cast_precision_loss)] // display only
+#[expect(clippy::cast_precision_loss)] // display only
 pub fn as_days(ms: i64) -> f64 {
     (ms as f64 / DAY_MS as f64 * 1000.0).round() / 1000.0
 }
@@ -652,7 +652,7 @@ pub fn analyze(
 /// Nearest-rank always returns an observed value, so "which item is the
 /// p85?" has an answer — with interpolation it does not.
 #[must_use]
-#[allow(
+#[expect(
     clippy::cast_precision_loss,
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
@@ -707,7 +707,7 @@ pub fn distribution(values: &[i64]) -> Option<Distribution> {
     sorted.sort_unstable();
     let n = sorted.len();
     let sum = sorted.iter().fold(0i64, |a, v| a.saturating_add(*v));
-    #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_wrap)]
     let mean = sum / (n as i64).max(1);
     let at = |p: f64| percentile(&sorted, p).unwrap_or(0);
     Some(Distribution {
@@ -754,7 +754,7 @@ pub struct ServiceLevelExpectation {
 /// Compute the service level expectation from finished items' cycle
 /// times, optionally scoring an explicit commitment.
 #[must_use]
-#[allow(clippy::cast_precision_loss)] // display ratio over a bounded sample
+#[expect(clippy::cast_precision_loss)] // display ratio over a bounded sample
 pub fn service_level_expectation(
     cycle_times_ms: &[i64],
     percentile_p: f64,
@@ -768,7 +768,7 @@ pub fn service_level_expectation(
 
     let (achieved, met) = match target_days {
         Some(days) if days > 0.0 && !sorted.is_empty() => {
-            #[allow(clippy::cast_possible_truncation)] // bounded by the guard
+            #[expect(clippy::cast_possible_truncation)] // bounded by the guard
             let threshold = (days * DAY_MS as f64) as i64;
             let within_target = sorted.iter().filter(|ms| **ms <= threshold).count();
             let ratio = within_target as f64 / sorted.len() as f64;
@@ -863,7 +863,7 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
         _ => "insufficient_data",
     };
 
-    #[allow(clippy::cast_precision_loss)] // display ratio over bounded counts
+    #[expect(clippy::cast_precision_loss)] // display ratio over bounded counts
     let rfpy = (!finished.is_empty())
         .then(|| finished.iter().filter(|a| a.first_pass).count() as f64 / finished.len() as f64);
 
@@ -895,7 +895,7 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
 
     let total_transitions: usize = analyses.iter().map(|a| a.transitions).sum();
     let total_backfilled: usize = analyses.iter().map(|a| a.backfilled).sum();
-    #[allow(clippy::cast_precision_loss)] // display ratio over bounded counts
+    #[expect(clippy::cast_precision_loss)] // display ratio over bounded counts
     let backfilled_ratio =
         (total_transitions > 0).then(|| total_backfilled as f64 / total_transitions as f64);
 
@@ -963,7 +963,7 @@ fn status_findings(summary: &PlanAnalysis) -> Vec<Finding> {
         .iter()
         .filter(|s| s.category != CATEGORY_VALUE_ADDING && s.ms > 0)
         .map(|s| {
-            #[allow(clippy::cast_precision_loss)] // display ratio
+            #[expect(clippy::cast_precision_loss)] // display ratio
             let share = if non_va > 0 {
                 s.ms as f64 / non_va as f64
             } else {
@@ -1113,7 +1113,7 @@ pub struct AgingItem {
 /// Score one open item's age against the expectation.
 #[must_use]
 pub fn aging(age_ms: i64, sle_ms: Option<i64>) -> AgingItem {
-    #[allow(clippy::cast_precision_loss)] // display ratio
+    #[expect(clippy::cast_precision_loss)] // display ratio
     let ratio = sle_ms
         .filter(|ms| *ms > 0)
         .map(|ms| age_ms as f64 / ms as f64);
@@ -1164,7 +1164,7 @@ pub struct Flow {
 /// Compute flow analysis. `observed_p50_ms` is the median cycle time of
 /// items finished in the window, if any finished.
 #[must_use]
-#[allow(clippy::cast_precision_loss)] // rates over bounded counts
+#[expect(clippy::cast_precision_loss)] // rates over bounded counts
 pub fn flow(
     window_days: i64,
     arrivals: usize,
@@ -1691,7 +1691,7 @@ impl Rng {
 
     /// A uniform index into a slice of length `len` (`len > 0`).
     fn index(&mut self, len: usize) -> usize {
-        #[allow(clippy::cast_possible_truncation)] // modulo of a bounded len
+        #[expect(clippy::cast_possible_truncation)] // modulo of a bounded len
         {
             (self.next() % len as u64) as usize
         }
@@ -1870,7 +1870,7 @@ pub fn forecast_batch(
     }
     results.sort_unstable();
 
-    #[allow(clippy::cast_precision_loss)] // display figures
+    #[expect(clippy::cast_precision_loss)] // display figures
     let as_days = |p: f64| percentile(&results, p).map(|periods| (periods * period_days) as f64);
     BatchForecast {
         p50_days: as_days(0.50),

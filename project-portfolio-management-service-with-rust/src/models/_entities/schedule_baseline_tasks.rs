@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `schedule_baseline_tasks`. One task's row in a schedule baseline (SC-3): its title and, when it was schedulable then, its early start, early finish, working duration and total float. A task that could not be scheduled is kept with null dates and the reason, so it is neither lost nor given a date it never had. Append-only.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

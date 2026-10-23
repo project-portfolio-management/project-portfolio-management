@@ -5,7 +5,6 @@
 
 // SeaORM-generated entity: the field-level shape is documented by the
 // migration and the `event_outbox` table.
-#![allow(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

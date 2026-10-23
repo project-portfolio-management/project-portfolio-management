@@ -14,7 +14,7 @@
 //! squares of each task's safety). Both round up to a whole business day, and a pool with any safety is
 //! never smaller than one day. The rules are conventions of the method, not laws.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use std::collections::{HashMap, HashSet};
 
@@ -95,7 +95,7 @@ pub struct Feeding {
 /// one feeding chain only (the one joining earliest on the chain); a later join whose feeder is already
 /// taken is not repeated. `chain` is in order. The result is in chain order, then input order.
 #[must_use]
-#[allow(clippy::missing_panics_doc, clippy::implicit_hasher)]
+#[expect(clippy::missing_panics_doc, clippy::implicit_hasher)]
 pub fn feeding_chains(
     chain: &[Uuid],
     nodes: &[Uuid],

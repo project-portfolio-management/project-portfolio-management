@@ -24,7 +24,7 @@ use project_portfolio_management_migration::Migrator;
 use std::path::Path;
 use std::sync::OnceLock;
 
-#[allow(unused_imports)]
+#[expect(unused_imports)]
 use crate::{
     auth, controllers,
     models::_entities::{
@@ -157,7 +157,7 @@ impl Hooks for App {
         Ok(vec![])
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[expect(clippy::too_many_lines)]
     fn routes(_ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::plans::routes())
@@ -384,7 +384,6 @@ impl Hooks for App {
         Ok(())
     }
 
-    #[allow(unused_variables)]
     fn register_tasks(tasks: &mut Tasks) {
         tasks.register(crate::tasks::search::SearchReindex);
         tasks.register(crate::tasks::retention_purge::RetentionPurge);

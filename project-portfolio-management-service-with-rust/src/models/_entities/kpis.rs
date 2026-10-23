@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `kpis`. A standing measure with a target and a red line (KPI). Its status is derived on read from the latest reading, never stored.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

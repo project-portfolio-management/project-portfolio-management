@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `canvas_items` (LT-1 strategy canvases).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

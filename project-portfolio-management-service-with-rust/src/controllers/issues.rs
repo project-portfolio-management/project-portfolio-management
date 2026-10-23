@@ -462,7 +462,7 @@ fn already(existing: &issues::Model) -> Error {
     )
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn insert_from_source(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

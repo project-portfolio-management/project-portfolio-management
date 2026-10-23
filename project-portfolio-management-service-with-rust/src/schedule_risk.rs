@@ -24,7 +24,7 @@
 //!   CPM finish exactly.
 
 // The sampling maths uses the standard names (o, m, p, u, a, b, c, d, x, v).
-#![allow(clippy::many_single_char_names)]
+#![expect(clippy::many_single_char_names)]
 
 use std::collections::HashMap;
 
@@ -215,7 +215,7 @@ impl Rng {
 
     /// Uniform in `(0, 1)`.
     pub(crate) fn unit(&mut self) -> f64 {
-        #[allow(clippy::cast_precision_loss)]
+        #[expect(clippy::cast_precision_loss)]
         let v = ((self.next_u64() >> 11) as f64 + 0.5) / (1u64 << 53) as f64;
         v
     }
@@ -295,7 +295,7 @@ fn resolve<S: std::hash::BuildHasher>(
 
 /// Pearson correlation of two series, or `None` when either has no variance.
 pub(crate) fn correlation(x: &[f64], y: &[f64]) -> Option<f64> {
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     let n = x.len() as f64;
     if n < 2.0 {
         return None;
@@ -326,7 +326,6 @@ pub(crate) fn nearest_rank<T: Copy>(sorted: &[T], p: u32) -> T {
 ///
 /// [`RunError`] when the network has a cycle, nothing can be scheduled, or the
 /// requested work is over the caps.
-#[allow(clippy::too_many_lines)]
 pub fn simulate<S: std::hash::BuildHasher>(
     nodes: &[Node],
     edges: &[Edge],
@@ -357,7 +356,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
 /// # Errors
 ///
 /// As [`simulate`].
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+#[expect(clippy::too_many_arguments, clippy::too_many_lines)]
 pub fn simulate_with<
     S: std::hash::BuildHasher,
     H: FnMut(usize, NaiveDate, i64, &[Uuid], &mut Rng),
@@ -412,7 +411,7 @@ pub fn simulate_with<
         let mut drawn: Vec<i64> = Vec::with_capacity(n);
         for (i, node) in trial.iter_mut().enumerate() {
             let (o, m, p, source, _) = spread[i];
-            #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             let d = if source == Source::Milestone || p <= o {
                 m
             } else {
@@ -424,7 +423,7 @@ pub fn simulate_with<
         let mut struck: Vec<Uuid> = Vec::new();
         for e in &events {
             let hit = {
-                #[allow(clippy::cast_precision_loss)]
+                #[expect(clippy::cast_precision_loss)]
                 let p = e.probability_bp as f64 / 10_000.0;
                 rng.unit() < p
             };
@@ -450,7 +449,7 @@ pub fn simulate_with<
                 critical[i] += 1;
             }
         }
-        #[allow(clippy::cast_precision_loss)]
+        #[expect(clippy::cast_precision_loss)]
         for (i, d) in drawn.iter().enumerate() {
             durations[i].push(*d as f64);
         }

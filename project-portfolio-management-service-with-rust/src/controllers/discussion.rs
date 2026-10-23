@@ -35,7 +35,7 @@ pub(crate) struct Subject {
 
 /// Resolve `(kind, pid)` to a live row, or `404`. Applies the owning
 /// plan's record-level read check (`403` when the policy denies it).
-#[allow(clippy::too_many_lines)] // one arm per subject kind
+#[expect(clippy::too_many_lines)] // one arm per subject kind
 pub(crate) async fn resolve_subject(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

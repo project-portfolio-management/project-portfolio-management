@@ -387,7 +387,7 @@ impl HiddenScope {
     /// milestones, bookings, benefits, time entries, sprints, components, controls,
     /// gate reviews, deployments, alignments, RACI rows, checklists): what an audit or
     /// event row about "an entity" must not be shown for.
-    #[allow(clippy::too_many_lines)]
+    #[expect(clippy::too_many_lines)]
     pub(crate) async fn owned_pids(&self, ctx: &AppContext) -> Result<HashSet<Uuid>> {
         let mut out: HashSet<Uuid> = self
             .plans

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `milestone_tasks`. A task a milestone waits for (milestone concept): one row per milestone and task.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

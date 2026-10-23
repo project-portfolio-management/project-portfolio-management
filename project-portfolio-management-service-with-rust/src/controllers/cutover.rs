@@ -10,7 +10,7 @@
 //! Marking and deciding are by anyone who may write to the plan; a co-signature needs the signer's token to
 //! carry the role in its `cutover_role` attribute.
 
-#![allow(clippy::many_single_char_names)]
+#![expect(clippy::many_single_char_names)]
 
 use super::conflict;
 use axum::http::StatusCode;

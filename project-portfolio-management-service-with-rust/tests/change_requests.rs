@@ -81,7 +81,6 @@ const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test change_requests -- --ignored`"]
-#[allow(clippy::too_many_lines)]
 async fn only_the_named_approver_decides_and_never_the_requester() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

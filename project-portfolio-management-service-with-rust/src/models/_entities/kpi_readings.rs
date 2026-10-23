@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `kpi_readings`. One observation of a KPI, dated by when it was observed. Append-only: a correction is a newer reading.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

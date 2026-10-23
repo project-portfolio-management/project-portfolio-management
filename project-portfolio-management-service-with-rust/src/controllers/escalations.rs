@@ -336,7 +336,6 @@ struct ResolveBody {
 }
 
 /// Apply `action` and record the event in one transaction.
-#[allow(clippy::too_many_arguments)] // the whole step: who, what, to which row, with what change
 async fn step(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

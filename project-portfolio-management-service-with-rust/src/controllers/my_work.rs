@@ -39,7 +39,7 @@ struct MyTasksParams {
 
 /// `GET /api/me/tasks` — see the module docs.
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one linear pipeline: resolve, fetch, filter, group
+#[expect(clippy::too_many_lines)] // one linear pipeline: resolve, fetch, filter, group
 async fn my_tasks(
     State(ctx): State<AppContext>,
     AuthUser(claims): AuthUser,

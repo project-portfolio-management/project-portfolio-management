@@ -3,7 +3,7 @@
 //! service sends no email and no push.
 
 // SeaORM-generated entity shape: documented by the migration.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

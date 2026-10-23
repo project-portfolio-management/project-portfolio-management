@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `programme_status_decisions`. Append-only: a programme is active until a
 //! recorded decision pauses or stops it.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

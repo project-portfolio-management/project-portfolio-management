@@ -373,7 +373,7 @@ fn missing(header: &Header, need: &[&'static str]) -> Result<(), ParseError> {
     }
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 fn jira(h: &Header, body: &[Vec<String>], out: &mut Parsed) -> Result<(), ParseError> {
     missing(h, &["issue key", "summary"])?;
     let (key_c, sum_c) = (h.first("issue key"), h.first("summary"));
@@ -530,7 +530,7 @@ fn date_cell(raw: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> Option<Naive
     d
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 fn asana(h: &Header, body: &[Vec<String>], out: &mut Parsed) -> Result<(), ParseError> {
     missing(h, &["task id", "name"])?;
     let (id_c, name_c) = (h.first("task id"), h.first("name"));

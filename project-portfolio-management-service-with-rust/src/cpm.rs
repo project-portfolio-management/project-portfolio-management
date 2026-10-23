@@ -434,7 +434,7 @@ pub fn analyze(
 /// # Errors
 ///
 /// [`CpmError::Cycle`] when the edges contain a cycle.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn analyze_with(
     nodes: &[Node],
     edges: &[Edge],
@@ -1414,7 +1414,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(
+    #[expect(
         clippy::cast_possible_wrap,
         clippy::cast_possible_truncation,
         clippy::cast_lossless
@@ -1513,7 +1513,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(
+    #[expect(
         clippy::cast_possible_wrap,
         clippy::cast_possible_truncation,
         clippy::cast_lossless

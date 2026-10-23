@@ -83,7 +83,6 @@ const REASON: &str = "Incident 4412: the plan owner is unreachable and the relea
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test break_glass -- --ignored`"]
-#[allow(clippy::too_many_lines)]
 async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witness() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

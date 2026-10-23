@@ -368,7 +368,7 @@ fn row_json(r: &rules::Row) -> serde_json::Value {
 /// # Errors
 ///
 /// When a database read fails.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn benefits_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,

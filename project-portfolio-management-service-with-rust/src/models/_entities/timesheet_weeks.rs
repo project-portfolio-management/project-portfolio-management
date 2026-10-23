@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `timesheet_weeks`. The approval state of one person's week of time entries (LT-11). A row exists only once a week has been submitted; no row means the week is open. Approved weeks are locked against new entries. `week_start` is the ISO Monday, a zone-free calendar date.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

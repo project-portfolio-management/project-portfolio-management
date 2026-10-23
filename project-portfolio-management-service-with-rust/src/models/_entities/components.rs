@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `components`. Named groupings of tasks inside a plan (PL-11), corroborated by Redmine's issue categories. A task may name one `component_pid` of its own plan; deleting a component that still has tasks is refused, never silently orphaning them.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

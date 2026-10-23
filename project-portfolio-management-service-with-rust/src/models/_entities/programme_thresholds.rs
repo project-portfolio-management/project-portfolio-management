@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `programme_thresholds`. A programme's pause, reset or stop threshold (EX-7).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

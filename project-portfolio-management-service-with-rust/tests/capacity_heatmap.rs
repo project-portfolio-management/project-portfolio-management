@@ -87,7 +87,7 @@ const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test capacity_heatmap -- --ignored`"]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn the_heatmap_keeps_its_promises() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

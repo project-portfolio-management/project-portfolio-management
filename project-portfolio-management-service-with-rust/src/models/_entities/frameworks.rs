@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `frameworks`. A named, reusable description of how a team works (`ways_of_working`) or is
 //! governed (`governance`), organisation-wide or owned by one plan. The family's fields are in `body`.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -503,7 +503,7 @@ struct CostPlanParams {
 
 /// `GET /api/plans/{pid}/cost-plan` — the planned cost by period, per currency.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn cost_plan(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

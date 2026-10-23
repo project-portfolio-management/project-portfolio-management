@@ -2,7 +2,7 @@
 //! column preset for a front-end route (T-28l). Keyed by the token
 //! `sub` and nothing else identity-shaped.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

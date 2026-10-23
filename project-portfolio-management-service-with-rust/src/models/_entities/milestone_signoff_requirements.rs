@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `milestone_signoff_requirements`. An organization whose sign-off a milestone needs (EX-4).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

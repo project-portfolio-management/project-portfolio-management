@@ -10,7 +10,7 @@
 //! belongs to the kinder zone, and the unit tests below pin it. A figure below 0 % (recovery) or above
 //! 100 % (overrun) is plotted at the edge with its true number alongside.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use serde::Serialize;
 
@@ -164,7 +164,7 @@ pub struct Point {
 /// # Errors
 ///
 /// [`Absent`] when there is no buffer or no critical work to measure against.
-#[allow(clippy::cast_precision_loss)] // day counts are tiny; f64 is exact far beyond them
+#[expect(clippy::cast_precision_loss)] // day counts are tiny; f64 is exact far beyond them
 pub fn point(
     done: i64,
     total: i64,
@@ -208,7 +208,6 @@ pub fn half_of_critical(total_days: i64) -> i64 {
 }
 
 #[cfg(test)]
-#[allow(clippy::float_cmp)] // the figures are exact by construction, and the boundary is the point
 mod tests {
     use super::*;
 

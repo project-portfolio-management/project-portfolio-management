@@ -9,7 +9,7 @@
 //!
 //! Capacity is counted in milli-FTE and days are calendar days, as in the capacity heatmap.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use chrono::{Duration, NaiveDate};
 use serde::Serialize;
@@ -89,7 +89,7 @@ fn fte(m: i64) -> String {
 
 /// Stagger `projects` against a drum of `capacity_milli` with `buffer_days` between successive projects.
 #[must_use]
-#[allow(clippy::missing_panics_doc, clippy::too_many_lines)]
+#[expect(clippy::missing_panics_doc, clippy::too_many_lines)]
 pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> Vec<Placement> {
     let mut order: Vec<&Project> = projects.iter().filter(|p| !p.segments.is_empty()).collect();
     order.sort_by_key(|p| {

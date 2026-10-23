@@ -109,7 +109,7 @@ struct RowBody {
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/raci` — replace a task's RACI row.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 #[debug_handler]
 async fn set_row(
     State(ctx): State<AppContext>,

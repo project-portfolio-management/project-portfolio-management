@@ -367,7 +367,7 @@ pub(crate) struct Committed {
 /// # Errors
 ///
 /// `409` when the plan changed since `expected`; `422`/`403` as the preview.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn commit(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

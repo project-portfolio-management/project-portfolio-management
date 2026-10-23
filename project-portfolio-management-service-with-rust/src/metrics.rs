@@ -341,7 +341,7 @@ impl Metrics {
                     .with_label_values(labels)
                     .set(value);
             }
-            #[allow(clippy::cast_precision_loss)] // bounded counts
+            #[expect(clippy::cast_precision_loss)] // bounded counts
             {
                 self.flow_work_in_progress
                     .with_label_values(labels)
@@ -351,7 +351,7 @@ impl Metrics {
                     .set(row.columns_over_limit as f64);
             }
         }
-        #[allow(clippy::cast_precision_loss)] // bounded counts
+        #[expect(clippy::cast_precision_loss)] // bounded counts
         {
             self.flow_plans_exported.set(set.rows.len() as f64);
             self.flow_plans_suppressed.set(set.suppressed_plans as f64);

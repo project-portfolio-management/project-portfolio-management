@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `criterion_evidence`. Append-only: whether a criterion was met in a quarter, with the evidence (EX-10).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

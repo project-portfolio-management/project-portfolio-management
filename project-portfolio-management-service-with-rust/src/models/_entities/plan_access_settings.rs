@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `plan_access_settings`. Who may see a private plan (RM-8). A row exists only where someone made a plan private; no row means the plan is as visible as it always was. Members are token `sub`s (user pids). Its own table so the plan row and its integrity hash stay untouched.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

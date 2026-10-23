@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `ideas`. The pre-proposal funnel (PPM-2):
 //! schema-thin, voted on, convertible into a proposal.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `strategic_aims`. Objectives marked as strategic aims.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -2,7 +2,7 @@
 //! to a plan over a timeframe (PPM-8). The person is an
 //! `EntityRef` URN — never copied demographics, never a matcher signal.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

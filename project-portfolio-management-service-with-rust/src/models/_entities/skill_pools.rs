@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `skill_pools`. A grouping of roles and skills that a director can read.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

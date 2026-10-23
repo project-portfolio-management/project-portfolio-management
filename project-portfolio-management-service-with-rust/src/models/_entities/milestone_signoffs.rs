@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `milestone_signoffs`. Append-only: a sign-off or a withdrawal of one (EX-4).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

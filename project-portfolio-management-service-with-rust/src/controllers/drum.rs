@@ -261,7 +261,7 @@ async fn show_drum(
 
 /// `GET /api/portfolio-pipeline[?from=YYYY-MM][&months=6]`
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn pipeline(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -302,7 +302,7 @@ async fn pipeline(
         );
         return format::json(out);
     };
-    #[allow(clippy::cast_possible_truncation)] // an FTE count is tiny
+    #[expect(clippy::cast_possible_truncation)] // an FTE count is tiny
     let capacity = (low * 1000.0).round() as i64;
     out["capacity_fte"] = json!(low);
 

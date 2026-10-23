@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `email_deliveries`: one email to one recipient, and how it ended.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

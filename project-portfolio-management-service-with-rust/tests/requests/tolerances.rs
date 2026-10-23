@@ -19,7 +19,6 @@ fn dim<'a>(picture: &'a Value, name: &str) -> &'a Value {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-#[allow(clippy::too_many_lines)] // one board walked through every dimension and colour
 async fn a_project_has_tolerances_it_sets_or_inherits_shown_as_red_amber_green() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

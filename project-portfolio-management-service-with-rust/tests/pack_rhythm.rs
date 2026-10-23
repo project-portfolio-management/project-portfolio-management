@@ -84,7 +84,7 @@ const OTHER: &str = "3f2c6b7e-0000-4000-8000-0000000000d3";
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test pack_rhythm -- --ignored`"]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are_told() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

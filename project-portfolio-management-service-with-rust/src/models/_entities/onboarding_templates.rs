@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `onboarding_templates`. A custom checklist template for one kind; the built-in one applies when none exists.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

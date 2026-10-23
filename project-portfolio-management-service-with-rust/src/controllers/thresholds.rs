@@ -289,7 +289,7 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
 
 /// `POST /api/threshold-sweep` — open an exception for each threshold now crossed. Changes no programme.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let today = crate::tz::utc_today();
     let all = thresholds::Entity::find()

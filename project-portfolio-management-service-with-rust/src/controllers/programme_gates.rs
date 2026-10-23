@@ -385,7 +385,7 @@ pub(crate) async fn status_map(
 }
 
 /// The pack's gate view: gates passed, failed and deferred, and the programmes paused and stopped.
-#[allow(clippy::too_many_lines, clippy::similar_names)]
+#[expect(clippy::too_many_lines, clippy::similar_names)]
 pub(crate) async fn gates_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,

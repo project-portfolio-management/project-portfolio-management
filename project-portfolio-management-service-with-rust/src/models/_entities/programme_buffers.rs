@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `programme_buffers`. Append-only: a programme's project buffer, in business days.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

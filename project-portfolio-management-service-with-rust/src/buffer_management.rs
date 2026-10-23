@@ -12,7 +12,7 @@
 //!
 //! A buffer in the red needs a recovery action; the service records one and never invents one.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use std::collections::HashSet;
 
@@ -56,7 +56,7 @@ impl Reading {
 
 /// Read one buffer. `forecast_finish` is the live schedule's finish of the chain's last task, if it has one.
 #[must_use]
-#[allow(clippy::implicit_hasher)]
+#[expect(clippy::implicit_hasher)]
 pub fn read(
     spec: &Spec,
     done: &HashSet<Uuid>,

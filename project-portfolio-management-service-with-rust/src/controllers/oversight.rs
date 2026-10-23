@@ -180,7 +180,6 @@ pub(crate) async fn authorized_board_pack(
 /// # Errors
 ///
 /// Propagates database errors.
-#[allow(clippy::too_many_lines)] // one pass over the whole estate
 async fn board_pack_body(
     ctx: &AppContext,
     query: &WindowQuery,
@@ -858,7 +857,7 @@ async fn compliance_findings(
 /// concentration (disclosed 25% threshold), review hygiene, and the
 /// declared risk appetite (or an honest "not configured").
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one pass: matrix + posture + hygiene + appetite
+#[expect(clippy::too_many_lines)] // one pass: matrix + posture + hygiene + appetite
 async fn risk_heatmap(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

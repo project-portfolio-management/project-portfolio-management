@@ -2,7 +2,7 @@
 //! typed by a person**, not an observation. See entity spec §5.9.3.
 
 // SeaORM-generated entity shape: documented by the migration.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

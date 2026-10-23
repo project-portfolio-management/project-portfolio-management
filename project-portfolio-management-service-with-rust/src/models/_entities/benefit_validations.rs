@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `benefit_validations`. Append-only: an independent person's statement of the
 //! amount of a benefit validated to date, with the evidence.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

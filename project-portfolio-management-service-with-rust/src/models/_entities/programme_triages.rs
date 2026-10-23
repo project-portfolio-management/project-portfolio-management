@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `programme_triages`. Append-only: a dated triage of a programme (EX-7).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

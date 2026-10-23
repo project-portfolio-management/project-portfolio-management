@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `buffer_snapshots`. Append-only: every buffer's reading at a moment (CC-4).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

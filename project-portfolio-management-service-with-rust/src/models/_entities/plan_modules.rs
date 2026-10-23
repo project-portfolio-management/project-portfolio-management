@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `plan_modules` (RM-7). The feature modules one plan
 //! exposes. No row ⇒ the deployment default.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

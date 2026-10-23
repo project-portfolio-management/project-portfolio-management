@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `review_queue_items`. A row held for a human decision (T-8): a keyless imported plan that the matcher scores as a probable duplicate of an existing one. Nothing is created or merged automatically (spec §5.1). `provenance` is `import` here.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

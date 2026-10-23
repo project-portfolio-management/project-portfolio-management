@@ -6,7 +6,7 @@
 //! commitments) and the gap, and it says so with a **word and a shape** as well as a colour. A pool
 //! with no supplier and no partner commitment is **no supply recorded**, not zero capacity.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 /// Milli-FTE from percent-days over `days` calendar days: `percent_days / (100 × days) × 1000`,
 /// rounded to the nearest whole milli-FTE.

@@ -98,7 +98,7 @@ pub(crate) struct Derived {
     pub(crate) json: Vec<(NaiveDate, i64, serde_json::Value)>,
 }
 
-#[allow(clippy::too_many_lines)] // one linear pipeline: load, classify, forecast, shape
+#[expect(clippy::too_many_lines)] // one linear pipeline: load, classify, forecast, shape
 pub(crate) async fn derive(
     ctx: &AppContext,
     rows: &[milestones::Model],

@@ -1365,7 +1365,7 @@ async fn run_grouped(
 /// per-currency budget variance; site tiles headline the whole
 /// estate. ETag-conditional (the tag excludes `as_of`).
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one pass over the whole estate
+#[expect(clippy::too_many_lines)] // one pass over the whole estate
 async fn at_a_glance(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

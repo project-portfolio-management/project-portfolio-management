@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `custom_field_defs`. Admin-declared, typed custom fields for plans and tasks (RM-1). A definition is soft-deleted, never dropped: values already stored stay readable.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

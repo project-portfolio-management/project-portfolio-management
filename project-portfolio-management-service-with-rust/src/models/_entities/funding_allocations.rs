@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `funding_allocations`. Append-only: money a funding source allocated, on a date (EX-12).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -78,7 +78,6 @@ const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test drum_pipeline -- --ignored`"]
-#[allow(clippy::too_many_lines)]
 async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

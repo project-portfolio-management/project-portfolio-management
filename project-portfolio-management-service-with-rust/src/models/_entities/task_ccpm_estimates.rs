@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `task_ccpm_estimates`: a task's aggressive and safe estimates, in business days (CC-2).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

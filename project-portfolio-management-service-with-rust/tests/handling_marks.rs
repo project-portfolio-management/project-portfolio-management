@@ -76,7 +76,6 @@ fn bearer(
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test handling_marks -- --ignored`"]
-#[allow(clippy::too_many_lines)]
 async fn a_plan_marked_above_your_clearance_does_not_exist_for_you() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier and the scheme.

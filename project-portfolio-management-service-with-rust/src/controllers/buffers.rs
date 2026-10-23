@@ -40,7 +40,7 @@ async fn show(
 
 /// The answer, and (when there are buffers) the plan to freeze: the chain, the buffers and the planned
 /// finishes, with no person in it.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn build(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

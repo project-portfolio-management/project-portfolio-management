@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `planned_slots`. A person's own time-blocking of a task (PL-4). Instants are UTC (`timestamptz`) and are rendered in the caller's zone on read. A slot never changes the task's due date, and overlapping slots are allowed — reported as clashes, not refused.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `watchers`. Who follows a subject (RM-3). One row per (subject, user); unwatching deletes the row. A watcher joins the comment and status-change notification targets; it grants no access of its own.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

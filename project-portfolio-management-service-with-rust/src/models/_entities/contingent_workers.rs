@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `contingent_workers`: people who are contingent labour (EX-11).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

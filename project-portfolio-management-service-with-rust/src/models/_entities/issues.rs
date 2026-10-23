@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `issues`. Something that has already happened and needs managing, under a plan.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

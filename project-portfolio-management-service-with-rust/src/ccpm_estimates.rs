@@ -13,7 +13,7 @@
 //! duration when none was given, and the aggressive estimate to be half the safe one, rounded up. It is
 //! echoed with every answer.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use serde::Serialize;
 

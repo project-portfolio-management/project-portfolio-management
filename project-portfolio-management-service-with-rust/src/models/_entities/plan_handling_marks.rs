@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `plan_handling_marks`. The handling mark (security classification) of a plan; no row means unmarked.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

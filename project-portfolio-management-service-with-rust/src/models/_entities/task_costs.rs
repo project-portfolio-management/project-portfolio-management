@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `task_costs`. A material or fixed-cost expense on a task, with the accrual rule that spreads it over the task.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

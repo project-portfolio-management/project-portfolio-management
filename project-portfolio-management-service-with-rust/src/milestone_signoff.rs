@@ -8,7 +8,7 @@
 //! delivered-not-met. A sign-off can be withdrawn (with a reason, audited), which makes it outstanding
 //! again.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use chrono::NaiveDate;
 use serde::Serialize;

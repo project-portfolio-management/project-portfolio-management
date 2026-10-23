@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `process_executions`. One run of a process on a subject, pinned to a version.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

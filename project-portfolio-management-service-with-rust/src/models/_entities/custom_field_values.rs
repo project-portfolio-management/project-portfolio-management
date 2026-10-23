@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `custom_field_values`. The values of custom fields, one row per (subject, field key). A separate table, not the plan payload: a custom value can never reach the matcher (the matchable / operational partition holds by construction).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

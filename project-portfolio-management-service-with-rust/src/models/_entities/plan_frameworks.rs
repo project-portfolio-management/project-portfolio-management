@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `plan_frameworks`. Which framework a plan follows, per family (at most one of each). A plan
 //! with no row for a family inherits its nearest ancestor's; that is resolved on read and never stored.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

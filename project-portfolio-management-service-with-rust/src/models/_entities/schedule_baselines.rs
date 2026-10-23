@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `schedule_baselines`. A schedule baseline (SC-3): a numbered, append-only snapshot of a plan's task schedule, taken with a reason. Never updated or deleted; a re-baseline is the next version and the earlier one stays. Variance is always measured against a named version.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

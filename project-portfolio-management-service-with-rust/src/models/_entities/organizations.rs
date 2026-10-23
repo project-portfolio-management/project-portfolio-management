@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `organizations`: the delivery organization, a partner, a sponsor or a supplier (EX-3).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

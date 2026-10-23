@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `resource_roles`. A person's one primary role for capacity planning (SC-7): the role whose supply they count toward in the portfolio resource view. One row per person; changing it replaces the row, and the change is audited.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

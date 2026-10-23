@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `delivery_confidence_assessments`. Append-only history of a plan's stated delivery confidence.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

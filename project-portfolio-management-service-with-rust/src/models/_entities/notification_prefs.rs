@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `notification_prefs` (PL-5). Per-user notification
 //! kind × channel choices, keyed by the token `sub`. No row ⇒ the default.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

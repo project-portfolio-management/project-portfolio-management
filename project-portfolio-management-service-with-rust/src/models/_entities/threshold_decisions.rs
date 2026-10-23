@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `threshold_decisions`. Append-only: what was decided when a threshold was crossed (EX-7).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

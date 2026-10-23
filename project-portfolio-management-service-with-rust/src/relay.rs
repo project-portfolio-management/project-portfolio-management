@@ -338,7 +338,7 @@ async fn build_sink(endpoint: Option<&str>) -> Box<dyn EventSink> {
 /// [`LoggingSink`]. Stays `async` (with nothing to await) so both cfg
 /// variants share one call site in [`spawn`].
 #[cfg(not(feature = "fluvio"))]
-#[allow(clippy::unused_async)]
+#[expect(clippy::unused_async)]
 async fn build_sink(_endpoint: Option<&str>) -> Box<dyn EventSink> {
     Box::new(LoggingSink)
 }

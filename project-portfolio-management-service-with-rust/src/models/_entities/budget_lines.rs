@@ -2,7 +2,7 @@
 //! item (PPM-10). Money is integer **minor units** + ISO-4217 code —
 //! exact arithmetic, no floats.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

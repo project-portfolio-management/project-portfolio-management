@@ -95,7 +95,7 @@ fn view(m: &moves::Model) -> Value {
 
 /// `POST /api/plans/{pid}/deployment-moves`
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn request_move(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

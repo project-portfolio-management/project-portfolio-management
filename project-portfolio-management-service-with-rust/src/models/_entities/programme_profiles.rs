@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `programme_profiles`: a programme's delivery model and delivery owner (EX-2), and its
 //! reporting method (EX-14).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

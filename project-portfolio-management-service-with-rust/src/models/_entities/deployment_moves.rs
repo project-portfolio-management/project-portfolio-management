@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `deployment_moves`: a request to move a deployment's go-live (EX-5).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

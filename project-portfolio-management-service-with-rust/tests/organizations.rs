@@ -94,7 +94,7 @@ async fn sweep_call(
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test organizations -- --ignored`"]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn organizations_are_records_and_a_partner_sees_its_own() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

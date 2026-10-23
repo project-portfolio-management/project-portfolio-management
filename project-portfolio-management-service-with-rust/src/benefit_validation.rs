@@ -8,7 +8,7 @@
 //!   the latest one counts and the earlier ones stay on record.
 //! * A non-financial benefit reports the status of its KPI, or **not measured** when it has none.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use std::collections::BTreeMap;
 

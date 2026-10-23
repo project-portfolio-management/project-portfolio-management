@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `planned_gates`. The date a plan expects to be reviewed at a gate.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

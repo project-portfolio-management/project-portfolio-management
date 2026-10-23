@@ -44,7 +44,6 @@ async fn move_task(request: &axum_test::TestServer, plan: &str, task: &str, stat
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-#[allow(clippy::too_many_lines)] // one seeded board, the whole TBA surface
 async fn time_based_analysis_round_trip() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -522,7 +521,6 @@ async fn seed_child(request: &axum_test::TestServer, parent: &str, name: &str) -
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-#[allow(clippy::too_many_lines)] // one seeded tree, the whole rollup surface
 async fn the_rollup_unions_the_tree_and_keeps_the_children_comparable() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -160,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::many_single_char_names)] // a, b, c are just three events in a row
+    #[expect(clippy::many_single_char_names)] // a, b, c are just three events in a row
     fn ids_are_monotonic_and_replay_is_per_plan_and_ordered() {
         let h = Hub::new(10);
         let a = h.publish(p(1), "task_created", json!({}));

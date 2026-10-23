@@ -355,7 +355,7 @@ struct PromotePayload {
 /// item's back-link and **both** audit rows commit together or not at
 /// all. An item already promoted is `409`, never promoted twice.
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one match over three targets, one transaction
+#[expect(clippy::too_many_lines)] // one match over three targets, one transaction
 async fn promote_item(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

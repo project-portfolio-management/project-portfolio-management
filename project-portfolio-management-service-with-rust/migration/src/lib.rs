@@ -10,7 +10,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![warn(clippy::pedantic)]
-#![allow(elided_lifetimes_in_paths)]
+#![expect(elided_lifetimes_in_paths)]
 pub use sea_orm_migration::prelude::*;
 mod m20220101_000001_plans;
 mod m20220101_000002_audit_logs;
@@ -141,7 +141,7 @@ impl MigratorTrait for Migrator {
     /// The ordered migration set. Order matters: `plans` is created
     /// first because the side tables reference its `pid`, then
     /// `audit_logs` and `merge_records`.
-    #[allow(clippy::too_many_lines)]
+    #[expect(clippy::too_many_lines)]
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20220101_000001_plans::Migration),

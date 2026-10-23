@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `milestone_slips`. One reschedule of a milestone: the old and new due dates, why, and who. Append-only: the history is how many times and how far a milestone has moved.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

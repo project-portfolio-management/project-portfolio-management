@@ -71,7 +71,7 @@ fn fte(v: &Value, k: &str) -> String {
 
 /// The lines of the pack. `meta` is the pack's row (period, audience, version, status, dates).
 #[must_use]
-#[allow(clippy::too_many_lines, clippy::many_single_char_names)]
+#[expect(clippy::too_many_lines, clippy::many_single_char_names)]
 pub fn lines(meta: &Value, body: &Value) -> Vec<String> {
     let mut o: Vec<String> = Vec::new();
     let h = |o: &mut Vec<String>, t: &str| {

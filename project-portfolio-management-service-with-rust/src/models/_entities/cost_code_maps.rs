@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `cost_code_maps`. A finance cost code and the budget line it stands for (EX-12).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

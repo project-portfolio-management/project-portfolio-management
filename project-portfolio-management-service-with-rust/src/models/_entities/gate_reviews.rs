@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `gate_reviews`. One phase-gate decision on a
 //! plan (PPM-3); an approved review advances the item's `stage`.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

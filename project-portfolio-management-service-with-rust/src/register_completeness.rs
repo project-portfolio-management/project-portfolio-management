@@ -10,7 +10,7 @@
 //! incomplete programme is then refused, naming the fields. It is off by default; with it off the action
 //! succeeds and the warning is audited.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use serde::Serialize;
 
@@ -30,7 +30,7 @@ pub const FIELDS: [&str; 10] = [
 
 /// What is on record for a programme (and the plans under it).
 #[derive(Debug, Clone, Copy, Default)]
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools)]
 pub struct Facts {
     /// A lead is recorded on the programme.
     pub sro: bool,
@@ -71,7 +71,7 @@ impl Assessment {
 
 /// Assess one programme.
 #[must_use]
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 pub fn assess(f: &Facts) -> Assessment {
     let mut missing = Vec::new();
     let mut not_applicable = Vec::new();

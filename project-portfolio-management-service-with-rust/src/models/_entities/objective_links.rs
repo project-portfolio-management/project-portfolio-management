@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `objective_links`. A weighted plan →
 //! objective mapping (PPM-5); unique per pair.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -61,7 +61,6 @@ pub fn would_cycle(links: &[(Uuid, Uuid)], hammock: Uuid, member: Uuid) -> bool 
     false
 }
 
-#[allow(clippy::implicit_hasher)]
 fn span_of(
     h: Uuid,
     set: &HashSet<Uuid>,
@@ -114,7 +113,7 @@ fn span_of(
 ///
 /// A member that is itself a hammock contributes its own derived span.
 #[must_use]
-#[allow(clippy::implicit_hasher)]
+#[expect(clippy::implicit_hasher)]
 pub fn resolve(
     hammocks: &[Uuid],
     links: &[(Uuid, Uuid)],

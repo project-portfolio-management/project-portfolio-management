@@ -7,7 +7,7 @@
 //! says so), or a recording one for tests. A sender reports an attempt as sent, **transient** (try again) or
 //! **permanent** (do not).
 
-#![allow(clippy::missing_panics_doc)]
+#![expect(clippy::missing_panics_doc)]
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, OnceLock, RwLock};

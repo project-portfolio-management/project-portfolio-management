@@ -14,7 +14,6 @@ const BOB: &str = "person:3f2c6b7e-0000-4000-8000-0000000000b1";
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-#[allow(clippy::too_many_lines)]
 async fn a_change_request_goes_from_draft_to_baseline_and_every_wrong_step_is_refused() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

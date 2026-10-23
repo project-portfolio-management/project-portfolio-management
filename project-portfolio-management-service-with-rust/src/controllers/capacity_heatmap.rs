@@ -254,14 +254,14 @@ fn milli(f: f64) -> Option<i32> {
     if !f.is_finite() || !(0.0..=1000.0).contains(&f) {
         return None;
     }
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     Some((f * 1000.0).round() as i32)
 }
 
 /// `PUT /api/capacity-commitments` — set capacity promised to (supply) or work owed on (demand) a programme
 /// for a pool and a month. One per pool, programme, organization, kind and month; setting it again replaces it.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn set_commitment(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -463,7 +463,7 @@ struct Cell {
 /// # Errors
 ///
 /// When a database read fails, or the window is too long.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn heatmap(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
@@ -570,7 +570,7 @@ pub(crate) async fn heatmap(
             _ => {}
         }
     }
-    #[allow(clippy::cast_precision_loss)] // milli-FTE counts are tiny
+    #[expect(clippy::cast_precision_loss)] // milli-FTE counts are tiny
     let fte = |m: i64| -> f64 { (m as f64) / 1000.0 };
     let names = show_partners();
     let mut pool_list: Vec<(Option<Uuid>, String)> = all_pools

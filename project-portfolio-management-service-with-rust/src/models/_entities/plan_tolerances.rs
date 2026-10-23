@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `plan_tolerances`. How far a plan may drift on one dimension (time, cost, risk, resources)
 //! before it must be referred upward. A plan with no row for a dimension inherits its nearest ancestor's.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

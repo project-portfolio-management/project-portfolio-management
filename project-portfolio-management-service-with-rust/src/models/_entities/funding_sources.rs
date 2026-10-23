@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `funding_sources`. The owner-supplied list of where money comes from.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

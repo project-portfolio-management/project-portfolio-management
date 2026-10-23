@@ -3,7 +3,7 @@
 //! (`status_changed_at`, first `done_at`).
 
 // SeaORM-generated entity shape: documented by the migration.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -266,7 +266,7 @@ fn row_json(r: &Row, names: &HashMap<Uuid, String>) -> serde_json::Value {
 /// # Errors
 ///
 /// When a database read fails.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn money_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,

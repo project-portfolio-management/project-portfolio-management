@@ -1258,7 +1258,7 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     Ok(())
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
     let pids: Vec<Uuid> = job.params["pids"]
         .as_array()

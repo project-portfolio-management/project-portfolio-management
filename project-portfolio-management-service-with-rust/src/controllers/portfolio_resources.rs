@@ -113,7 +113,7 @@ struct PlanParams {
 /// `GET /api/resource-plan` — demand against supply by role (or skill) and
 /// period, in FTE.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn resource_plan(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -248,7 +248,7 @@ struct HoursParams {
 
 /// `GET /api/resource-plan/hours` — planned against actual hours.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn hours(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

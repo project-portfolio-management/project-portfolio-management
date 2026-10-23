@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `earned_value_settings`. A plan's earned-value setting (SC-4): how its tasks are counted by default (`zero_hundred`, `fifty_fifty`, or `points`, which weights by story points). A plan with no row counts `zero_hundred`. Also adds the per-task override columns: a task may be counted another way, or by a person-entered percent with a mandatory note.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

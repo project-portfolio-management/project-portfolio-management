@@ -8,7 +8,7 @@
 //! in the months ahead; or it starts only with a recorded override that gives a reason. Programmes refused
 //! wait in a queue in the order they asked, and the order never changes.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 /// Whether a programme with this phase and status is in active delivery.
 #[must_use]

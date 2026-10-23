@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `scorecard_kpis`. A KPI on a scorecard (EX-10).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

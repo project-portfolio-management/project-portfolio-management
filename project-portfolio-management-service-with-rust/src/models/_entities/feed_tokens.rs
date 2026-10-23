@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `feed_tokens`. Revocable secrets that let a calendar app or feed reader read one person's own feeds without a bearer token (LT-7 / RM-6). Only the SHA-256 of the token is stored, so a database read never yields a usable token; revoking sets `revoked_at` and takes effect on the next fetch.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

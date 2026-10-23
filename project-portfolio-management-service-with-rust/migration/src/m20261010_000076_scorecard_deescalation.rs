@@ -11,7 +11,6 @@ use sea_orm_migration::prelude::*;
 pub struct Migration;
 
 #[async_trait::async_trait]
-#[allow(clippy::too_many_lines)]
 impl MigrationTrait for Migration {
     /// Create the tables, checks and triggers.
     ///

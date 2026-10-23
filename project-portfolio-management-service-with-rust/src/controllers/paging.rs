@@ -48,7 +48,7 @@ pub struct PageQuery {
 }
 
 /// The paging layer. See the module docs.
-#[allow(clippy::result_large_err)]
+#[expect(clippy::result_large_err)]
 pub async fn paging_mw(req: Request, next: Next) -> Response {
     if req.method() != Method::GET {
         return next.run(req).await;

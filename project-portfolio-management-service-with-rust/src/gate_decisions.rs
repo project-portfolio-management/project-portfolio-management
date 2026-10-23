@@ -6,7 +6,7 @@
 //! passed, and was never passed or failed, is also deferred. A programme is `active` unless a
 //! recorded decision made it `paused` or `stopped`; `stopped` is terminal.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use chrono::NaiveDate;
 

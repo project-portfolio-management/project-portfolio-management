@@ -72,7 +72,7 @@ impl Report {
     }
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 #[debug_handler]
 async fn import(
     State(ctx): State<AppContext>,

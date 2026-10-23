@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `raci_assignments`. A RACI assignment: one person's role on one task: Responsible, Accountable, Consulted or Informed. A person may hold several letters on a task (the usual A/R); a task has at most one Accountable (enforced by the service) and should have exactly one (reported when it does not). Replacing a task's row soft-deletes the old assignments, so the history is kept.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

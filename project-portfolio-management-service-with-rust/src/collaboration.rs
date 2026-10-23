@@ -140,7 +140,7 @@ pub fn consensus(verdicts: &[Verdict], outstanding: usize, declined: usize) -> C
         let total: i64 = scores.iter().map(|s| i64::from(*s)).sum();
         // Precision loss here is cosmetic (a mean of 0..=100 over a
         // bounded reviewer count), and the value is rounded to 1dp.
-        #[allow(clippy::cast_precision_loss)]
+        #[expect(clippy::cast_precision_loss)]
         Some(((total as f64 / scores.len() as f64) * 10.0).round() / 10.0)
     };
     let mut recommendations: BTreeMap<String, usize> = BTreeMap::new();

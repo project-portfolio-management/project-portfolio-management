@@ -1057,7 +1057,7 @@ async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
     .await;
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn ev_plan(
     request: &axum_test::TestServer,
     name: &str,

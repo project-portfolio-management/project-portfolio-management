@@ -5,7 +5,7 @@
 //! covers these entries exactly as it covers the rest.
 
 // Builder helpers take owned `Value`s so call sites read as a literal tree.
-#![allow(clippy::needless_pass_by_value)]
+#![expect(clippy::needless_pass_by_value)]
 
 use serde_json::{Value, json};
 

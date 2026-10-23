@@ -127,7 +127,7 @@ fn refs_of(sub: &str) -> Vec<String> {
 /// milestones and sprint dates of the plans those tasks sit in, as all-day
 /// events with stable UIDs.
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one linear pipeline: tasks, plans, milestones, sprints, slots
+#[expect(clippy::too_many_lines)] // one linear pipeline: tasks, plans, milestones, sprints, slots
 async fn calendar(
     State(ctx): State<AppContext>,
     Query(p): Query<TokenParams>,

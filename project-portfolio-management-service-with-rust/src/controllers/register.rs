@@ -24,7 +24,7 @@ use crate::register_completeness::{self as rules, Assessment, Facts};
 
 /// What is gathered per programme.
 #[derive(Default)]
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools)]
 struct Acc {
     any_line: bool,
     unfunded: bool,
@@ -45,7 +45,7 @@ pub fn routes() -> Routes {
 /// # Errors
 ///
 /// When a database read fails.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn assess_programmes(
     ctx: &AppContext,
     include: &HashSet<Uuid>,

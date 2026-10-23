@@ -138,7 +138,7 @@ fn secs_ceil(seconds: f64) -> u64 {
     if seconds <= 0.0 {
         0
     } else {
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let whole = seconds.ceil() as u64;
         whole
     }
@@ -196,9 +196,9 @@ impl Limiter {
         let left = if allowed { have - cost } else { have };
         bucket.tokens = left;
         bucket.last = now;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let remaining = left.floor().max(0.0) as u32;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let burst = limit.burst as u32;
         Verdict {
             allowed,
@@ -224,7 +224,7 @@ impl Limiter {
         if have >= 1.0 {
             return None;
         }
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let burst = limit.burst as u32;
         Some(Verdict {
             allowed: false,

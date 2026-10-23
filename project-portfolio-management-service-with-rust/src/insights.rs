@@ -177,7 +177,7 @@ pub fn realization_ratio(target_minor: i64, realized_minor: i64) -> Option<f64> 
     if target_minor <= 0 {
         return None;
     }
-    #[allow(clippy::cast_precision_loss)] // display ratio, not money math
+    #[expect(clippy::cast_precision_loss)] // display ratio, not money math
     Some(realized_minor as f64 / target_minor as f64)
 }
 

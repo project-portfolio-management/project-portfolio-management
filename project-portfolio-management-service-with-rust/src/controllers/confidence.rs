@@ -91,7 +91,7 @@ fn exception_json(e: &exceptions::Model, now: DateTime<Utc>, window: i64) -> ser
 
 /// `PUT /api/plans/{pid}/delivery-confidence` — append a stated assessment (it never replaces one).
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn set_confidence(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -630,7 +630,7 @@ fn previous_value(body: Option<&str>, plan: Uuid) -> Option<String> {
 /// # Errors
 ///
 /// When a database read fails.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn build_map(
     ctx: &AppContext,
     include: &HashSet<Uuid>,

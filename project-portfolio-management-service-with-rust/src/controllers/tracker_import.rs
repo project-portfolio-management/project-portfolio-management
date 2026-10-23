@@ -63,7 +63,7 @@ fn deadline_of(item: &Item) -> Option<chrono::NaiveDate> {
         .filter(|d| crate::cpm::constraint_problems(None, None, Some(*d)).is_empty())
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn run(
     ctx: AppContext,
     caller: MaybeAuthUser,

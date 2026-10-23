@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `hammock_links`. A hammock's link to a member task (or another hammock).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `start_overrides`. Append-only: a refused start that went ahead on a stated reason (EX-8).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

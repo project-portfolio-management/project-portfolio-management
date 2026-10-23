@@ -259,7 +259,7 @@ async fn attach(
 
 /// `GET /api/funding-allocations/{pid}/trace` — what the allocation bought.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn trace(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

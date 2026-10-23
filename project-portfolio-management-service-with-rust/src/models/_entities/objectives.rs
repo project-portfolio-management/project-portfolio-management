@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `objectives`. The org-level OKR registry
 //! (PPM-5).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

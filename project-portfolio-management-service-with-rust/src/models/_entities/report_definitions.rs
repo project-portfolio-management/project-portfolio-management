@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `report_definitions`. Saved reports (PPM-9):
 //! a named filter + field projection over one collection.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

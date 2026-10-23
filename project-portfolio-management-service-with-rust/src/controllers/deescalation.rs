@@ -541,7 +541,6 @@ async fn set_evidence(
 /// # Errors
 ///
 /// When a database read fails.
-#[allow(clippy::too_many_lines)]
 pub(crate) async fn tracker_view(
     ctx: &AppContext,
     visible: &HashSet<Uuid>,

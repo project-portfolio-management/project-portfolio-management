@@ -19,7 +19,7 @@ pub struct Migration;
 // A migration that creates several related tables is long by nature, and
 // splitting an *already-applied* migration is a schema-history risk with no
 // upside. The length is the table count, not complexity.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     /// Create `reviews`, `automations`, `automation_runs`,

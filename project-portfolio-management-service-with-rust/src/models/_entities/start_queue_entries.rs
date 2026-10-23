@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `start_queue_entries`. A programme waiting to start (EX-8).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

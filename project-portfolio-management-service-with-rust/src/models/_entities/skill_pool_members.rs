@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `skill_pool_members`. A role or skill in a pool; in at most one.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

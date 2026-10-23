@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `benefits`. Value-realization records (PPM-11):
 //! financial targets in minor units, non-financial as notes.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -40,7 +40,7 @@ struct Raw {
     milestones: Vec<milestones::Model>,
 }
 
-#[allow(clippy::too_many_lines)] // one linear pipeline: walk, load, convert
+#[expect(clippy::too_many_lines)] // one linear pipeline: walk, load, convert
 /// Capture the readable subtree under `root` into a snapshot; returns it with
 /// the number of plans left out because the caller cannot read them.
 async fn capture(
@@ -416,7 +416,7 @@ async fn from_template(
     }
 }
 
-#[allow(clippy::too_many_lines)] // one linear pipeline per plan: plan, workflow, components, tasks, milestones
+#[expect(clippy::too_many_lines)] // one linear pipeline per plan: plan, workflow, components, tasks, milestones
 async fn build(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

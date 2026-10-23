@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `plan_dependencies`. Finish-start edges
 //! between plans (PPM-6), with lag; cycle-free (app-enforced).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

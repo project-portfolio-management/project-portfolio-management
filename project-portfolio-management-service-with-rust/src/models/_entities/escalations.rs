@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `escalations`. A project referring something upward at a level of its governance escalation
 //! path. Its history is in `escalation_events`.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

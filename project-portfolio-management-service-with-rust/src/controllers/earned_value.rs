@@ -629,7 +629,7 @@ struct SeriesParams {
     format: Option<String>,
 }
 
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 /// `GET /api/plans/{pid}/earned-value/series[?format=csv]` — the S-curve data: the
 /// planned-value curve from the baseline (complete), and earned value and actual
 /// cost on the days they were **recorded** (never filled in between).

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `task_relations`. Typed relations between tasks (LT-10), with Redmine's concrete behaviours: `blocks` stops the blocked task closing while the blocker is open; `precedes` forbids a successor due on or before its predecessor; `duplicates` closes the duplicate when the primary closes; `related` and `copied_from` are informational. Cross-plan relations are allowed.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `cutover_criteria`. A stop criterion of a cutover decision, published before the decision (EX-6).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

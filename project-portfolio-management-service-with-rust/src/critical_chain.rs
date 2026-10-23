@@ -18,7 +18,7 @@
 //! schedule, but are not chain links); a milestone carries no work and is not a resource link; only the
 //! first of several equally long chains is returned, and `tied_chains` says whether there was another.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use std::collections::{HashMap, HashSet};
 
@@ -77,7 +77,7 @@ pub enum Outcome {
 /// Find the critical chain on a levelled schedule. `people` maps a task to the person doing it (only
 /// assigned, unfinished tasks).
 #[must_use]
-#[allow(clippy::too_many_lines, clippy::implicit_hasher)]
+#[expect(clippy::too_many_lines, clippy::implicit_hasher)]
 pub fn find(
     nodes: &[Node],
     edges: &[Edge],

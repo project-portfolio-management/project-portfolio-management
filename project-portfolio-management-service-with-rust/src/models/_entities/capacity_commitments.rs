@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `capacity_commitments`. Capacity promised to (supply) or work owed on (demand) a
 //! programme, for a pool and a month, by a partner or by the organization itself.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

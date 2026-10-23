@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `deescalation_criteria`. A criterion for coming down from escalation (EX-10).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

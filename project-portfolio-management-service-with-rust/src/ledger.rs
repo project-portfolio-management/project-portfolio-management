@@ -7,7 +7,7 @@
 //! map is **listed as unmatched with its amount**, never dropped; a row in a different currency from its
 //! line is a mismatch, and is not summed into it.
 
-#![allow(missing_docs, clippy::many_single_char_names, clippy::implicit_hasher)]
+#![expect(missing_docs, clippy::many_single_char_names, clippy::implicit_hasher)]
 
 use std::collections::{BTreeMap, HashMap};
 

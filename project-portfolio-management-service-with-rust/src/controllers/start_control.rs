@@ -47,7 +47,7 @@ pub(crate) struct Evaluation {
 }
 
 /// Evaluate a start of `plan` now.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Evaluation> {
     let today = crate::tz::utc_today();
     let all = plans::Entity::find()
@@ -174,7 +174,7 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     }
     let mut by_pool: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for ((pool_name, month), v) in milli {
-        #[allow(clippy::cast_precision_loss)]
+        #[expect(clippy::cast_precision_loss)]
         by_pool
             .entry(pool_name)
             .or_default()
@@ -234,7 +234,7 @@ async fn start_check(
 /// # Errors
 ///
 /// 422 when refused and no override reason was given; a database error otherwise.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn gate(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

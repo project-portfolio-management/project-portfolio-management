@@ -344,7 +344,7 @@ pub fn fte(percent_days: i64, days: i64) -> f64 {
     if days <= 0 {
         return 0.0;
     }
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     let v = percent_days as f64 / (100.0 * days as f64);
     (v * 100.0).round() / 100.0
 }

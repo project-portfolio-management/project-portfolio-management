@@ -11,7 +11,6 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-#[allow(clippy::too_many_lines)] // one escalation walked through its whole life
 async fn a_project_escalates_along_its_governance_path_and_the_history_is_kept() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

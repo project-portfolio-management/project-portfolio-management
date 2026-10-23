@@ -11,7 +11,7 @@
 //! rule asks for is configuration (`PROJECT_PORTFOLIO_MANAGEMENT_DEESCALATION_QUARTERS`, default 2). The
 //! count is a fact offered to the person who decides; it moves no level.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use chrono::{Datelike, NaiveDate};
 

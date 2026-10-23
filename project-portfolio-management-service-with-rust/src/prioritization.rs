@@ -189,7 +189,7 @@ fn clamp01(value: f64) -> f64 {
 }
 
 /// Normalize one fact into `0.0..=1.0`, or `None` when absent.
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 fn normalize(name: &str, facts: &ScoreFacts) -> Option<f64> {
     match name {
         // More return is better; losses (negative bp) floor at 0.
@@ -233,7 +233,6 @@ pub fn band(score: Option<f64>) -> &'static str {
 
 /// Compute the Smart Score for one plan's evidence.
 #[must_use]
-#[allow(clippy::cast_precision_loss)]
 pub fn smart_score(facts: &ScoreFacts, weights: &Weights) -> SmartScore {
     let mut present: Vec<(&'static str, u32, f64)> = Vec::new();
     let mut missing: Vec<&'static str> = Vec::new();

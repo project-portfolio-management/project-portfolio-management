@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `escalation_levels`. Append-only: the escalation level as the sponsor set it (EX-10).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

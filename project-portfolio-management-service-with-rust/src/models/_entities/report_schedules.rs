@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `report_schedules`. A saved report run on a cadence (T-28e): each due run is stored as an expiring artifact and audited like an export, even at zero rows. Dates are UTC calendar dates (a portfolio view, not a personal one).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -4,7 +4,7 @@
 //! §5.9.6 / FR-35.
 
 // SeaORM-generated entity shape: documented by the migration.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

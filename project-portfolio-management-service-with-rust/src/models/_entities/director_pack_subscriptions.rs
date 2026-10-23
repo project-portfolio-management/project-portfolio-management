@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `director_pack_subscriptions`. Who is told, with a link, when a pack is issued.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

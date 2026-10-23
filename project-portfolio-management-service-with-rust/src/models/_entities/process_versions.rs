@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `process_versions`. One immutable version of a process: its ordered steps.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `onboarding_items`. A checklist item of a case.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `change_request_risks`. The risks a change request answers.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

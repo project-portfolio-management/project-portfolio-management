@@ -1,7 +1,7 @@
 //! `SeaORM` Entity — `escalation_events`. The append-only history of an escalation: raised, acknowledged, taken to a
 //! higher level, resolved or withdrawn, with who and why. A database trigger refuses any change or deletion.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

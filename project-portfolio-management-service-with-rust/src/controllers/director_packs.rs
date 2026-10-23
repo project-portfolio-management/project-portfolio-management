@@ -165,7 +165,7 @@ fn count_in(body: &str, path: &[&str]) -> Option<u64> {
 }
 
 /// Compute the body text for a pack. Called once, at drafting.
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 async fn compute_body(
     ctx: &AppContext,
     pid: Uuid,
@@ -289,7 +289,7 @@ pub(crate) fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 pub(crate) async fn insert_draft(
     ctx: &AppContext,
     actor: &str,

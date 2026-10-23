@@ -339,7 +339,7 @@ fn conflicted(r: &CpmResult) -> HashSet<Uuid> {
 /// # Errors
 ///
 /// [`CpmError::Cycle`] when the dependencies contain a cycle.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn propose(input: &Input, params: Params) -> Result<Proposal, CpmError> {
     let base = run(input, &HashMap::new())?;
     let demand_of: HashMap<Uuid, &Demand> = input.demands.iter().map(|d| (d.pid, d)).collect();

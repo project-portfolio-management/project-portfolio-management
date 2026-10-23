@@ -547,7 +547,7 @@ async fn check_wip(
 /// **category** is `done` stamps `done_at` (kept thereafter — the
 /// completion history stays true).
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // the move pipeline: validate, refuse, commit, then side effects
+#[expect(clippy::too_many_lines)] // the move pipeline: validate, refuse, commit, then side effects
 async fn move_task(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -1201,7 +1201,6 @@ struct DevopsMetricsQuery {
 /// timed), and change-failure over **declared-cause** incidents only
 /// (undeclared causation is not guessed).
 #[debug_handler]
-#[allow(clippy::too_many_lines)] // one pass over the event log
 async fn devops_metrics(
     axum::extract::Query(query): axum::extract::Query<DevopsMetricsQuery>,
     State(ctx): State<AppContext>,
@@ -1281,7 +1280,7 @@ async fn devops_metrics(
         Some(recovery_hours[recovery_hours.len() / 2])
     };
 
-    #[allow(clippy::cast_precision_loss)] // display ratio, not money math
+    #[expect(clippy::cast_precision_loss)] // display ratio, not money math
     let change_failure_rate = if deploy_count == 0 {
         None
     } else {

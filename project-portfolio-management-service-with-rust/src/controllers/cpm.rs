@@ -236,7 +236,7 @@ async fn linkable_plans(ctx: &AppContext, caller: &MaybeAuthUser, pids: &[Uuid])
 /// caller may **not** read is left out of the calculation and recorded only as a
 /// [`Restricted`] edge: no name, owner or date of the hidden side is read into the
 /// result, so nothing downstream can show it.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub(crate) async fn load_network_cross(
     ctx: &AppContext,
     plan_pid: Uuid,
@@ -566,7 +566,7 @@ pub fn full_answer_allowed(tasks: usize, max: usize, full: bool, only_critical: 
 /// `GET /api/plans/{pid}/cpm` — float, critical and near-critical tasks, and
 /// every critical chain.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn plan_cpm(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
@@ -726,7 +726,7 @@ pub(crate) fn may_set_hard_constraint(caller: &MaybeAuthUser) -> bool {
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/schedule` — set a task's planned start
 /// and working duration; answers with the task and **what moved** (PJ-8).
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 async fn set_schedule(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

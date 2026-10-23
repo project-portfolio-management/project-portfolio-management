@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `buffer_plans`. Append-only: the critical chain and its buffers as planned (CC-4).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

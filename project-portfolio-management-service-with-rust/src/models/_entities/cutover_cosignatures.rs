@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `cutover_cosignatures`. Append-only: a role's co-signature of a go decision (EX-6).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

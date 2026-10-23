@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `portfolio_drum`. Append-only: the skill pool named as the portfolio's drum (CC-5).
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

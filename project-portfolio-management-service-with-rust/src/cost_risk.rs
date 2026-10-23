@@ -24,7 +24,6 @@
 //!   exactly (or the amount already spent, if that is more).
 
 // The sampling maths uses the standard names (o, m, p, u, x).
-#![allow(clippy::many_single_char_names)]
 
 use std::collections::BTreeMap;
 
@@ -242,7 +241,7 @@ pub(crate) fn spread(l: &Line, band_percent: i64) -> (i64, i64, i64, Source, boo
 /// # Errors
 ///
 /// [`RunError`] when there are no lines or the requested work is over the caps.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn simulate(lines: &[Line], events: &[CostEvent], params: Params) -> Result<Outcome, RunError> {
     if lines.is_empty() {
         return Err(RunError::NoLines);
@@ -285,7 +284,7 @@ pub fn simulate(lines: &[Line], events: &[CostEvent], params: Params) -> Result<
         let mut by_plan: BTreeMap<(usize, Uuid), i64> = BTreeMap::new();
         for (i, l) in lines.iter().enumerate() {
             let (lo, m, hi, _, _) = spreads[i];
-            #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             let drawn = if hi <= lo {
                 m
             } else {
@@ -303,11 +302,11 @@ pub fn simulate(lines: &[Line], events: &[CostEvent], params: Params) -> Result<
             let ci = cur_ix(&l.currency).unwrap_or(0);
             sum[ci] += cost;
             *by_plan.entry((ci, l.plan)).or_default() += cost;
-            #[allow(clippy::cast_precision_loss)]
+            #[expect(clippy::cast_precision_loss)]
             line_costs[i].push(cost as f64);
         }
         for (k, e) in events.iter().enumerate() {
-            #[allow(clippy::cast_precision_loss)]
+            #[expect(clippy::cast_precision_loss)]
             let p = e.probability_bp as f64 / 10_000.0;
             if rng.unit() < p {
                 hits[k] += 1;
@@ -356,7 +355,7 @@ pub fn simulate(lines: &[Line], events: &[CostEvent], params: Params) -> Result<
             histogram[b].count += 1;
         }
         let total_f: Vec<f64> = {
-            #[allow(clippy::cast_precision_loss)]
+            #[expect(clippy::cast_precision_loss)]
             let v: Vec<f64> = totals[ci].iter().map(|t| *t as f64).collect();
             v
         };

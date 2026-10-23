@@ -4,7 +4,7 @@
 
 // SeaORM-generated entity: the field-level shape is documented by the
 // migration and the `merge_records` table, not by per-field rustdoc.
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

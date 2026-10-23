@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `document_versions`. One version of a controlled document.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

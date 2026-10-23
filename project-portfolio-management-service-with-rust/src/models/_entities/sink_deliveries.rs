@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `sink_deliveries`. One attempt-tracked delivery of one notification to one sink (LT-6). Enqueued when the notification is written and sent later, so a slow or dead destination can never delay or fail the notification itself. Bounded retries with growing backoff; the last error is kept.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

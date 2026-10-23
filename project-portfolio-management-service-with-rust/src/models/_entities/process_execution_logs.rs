@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `process_execution_logs`. The append-only log of an execution.
 
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};

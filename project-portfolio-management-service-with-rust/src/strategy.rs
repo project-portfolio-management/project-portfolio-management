@@ -278,7 +278,7 @@ pub fn generate_scenario(
                 // only needs to order candidates, so `f64`'s ~15
                 // significant digits of precision at typical minor-
                 // unit magnitudes is not a correctness concern.
-                #[allow(clippy::cast_precision_loss)]
+                #[expect(clippy::cast_precision_loss)]
                 let cost = cost as f64;
                 score / cost
             }

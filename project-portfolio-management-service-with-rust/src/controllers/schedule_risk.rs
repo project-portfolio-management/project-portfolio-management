@@ -290,7 +290,6 @@ pub(crate) fn classify_events(
 
 /// `GET /api/plans/{pid}/schedule-risk` — simulate the plan's task network.
 #[debug_handler]
-#[allow(clippy::too_many_lines)]
 async fn schedule_risk(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,

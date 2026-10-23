@@ -1820,6 +1820,7 @@ came from grep.
   **Acceptance:** the extended test fails on a literal it would have missed
   before.
   **Progress 2026-10-21 (not ticked).** `ObjectiveCard.svelte:187` uses a new catalogue key; `catalogue-coverage.test.ts` gains "no literal English in browser dialogs" (any `confirm`/`alert`/`prompt` whose first argument is a string or template literal, in `.svelte` and `.ts`), which fails on the old line. **Still to do:** the Lily dialog in place of the four native dialogs; the unused-key census; the 25 `as never` casts.
+  **Progress 2026-10-23 (not ticked).** Unused-key census added (19 known, shrink-only); the run-time key casts use `tDynamic()`. **Still to do:** the Lily dialog in place of the native dialogs; deleting or using the 19 keys.
 - [ ] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
   `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`,
   critical-path, earned-value and RACI. The axe sweep also audits each page in

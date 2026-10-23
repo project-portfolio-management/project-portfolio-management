@@ -8,7 +8,7 @@
   import { errorText } from "#lib/error-text.js";
   import KanbanBoard from "@lilydesignsystem/svelte-kanban-board";
   import type { KanbanCard, KanbanColumn } from "@lilydesignsystem/svelte-kanban-board";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyTask } from "#lib/api/ppm.js";
 
@@ -34,7 +34,7 @@
   }
   onMount(() => void load());
 
-  const columns = $derived<KanbanColumn[]>(STATUSES.map((s) => ({ id: s, title: t(`p.kanban.${s}` as never) })));
+  const columns = $derived<KanbanColumn[]>(STATUSES.map((s) => ({ id: s, title: tDynamic(`p.kanban.${s}`) })));
   const cards = $derived<KanbanCard[]>(
     (tasks ?? []).map((x) => ({
       id: x.pid,

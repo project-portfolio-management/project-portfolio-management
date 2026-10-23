@@ -4,7 +4,7 @@
   (`p.demo.*`); the screens it points at are in `$lib/demo-tour.ts`.
 -->
 <script lang="ts">
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PlanRepository } from "#lib/api/plans.js";
   import { GROUPS, FEATURES, demoHref } from "#lib/demo-tour.js";
@@ -24,7 +24,7 @@
     }
   });
 
-  const word = (key: string) => t(`p.demo.${key}` as never);
+  const word = (key: string) => tDynamic(`p.demo.${key}`);
   const shown = (g: string) =>
     FEATURES.filter((f) => f.group === g)
       .map((f) => ({ f, href: demoHref(f, northPid) }))

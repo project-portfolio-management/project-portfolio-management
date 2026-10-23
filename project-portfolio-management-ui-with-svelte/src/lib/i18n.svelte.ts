@@ -3971,6 +3971,17 @@ export function t(key: StringKey, values?: MessageValues): string {
   return translate(key, current, values);
 }
 
+const STRING_KEY_SET: ReadonlySet<string> = new Set(STRING_KEYS);
+
+/**
+ * Like {@link t}, for a key put together at run time (`p.kanban.${status}`), which the compiler
+ * cannot check. A name that is not a key comes back as it was given, as `t` does for a missing one.
+ * Use `t` for a literal key, so a misspelling fails the type check.
+ */
+export function tDynamic(key: string, values?: MessageValues): string {
+  return STRING_KEY_SET.has(key) ? t(key as StringKey, values) : key;
+}
+
 /**
  * An app path under the current locale: `localeHref("/plans")` is
  * `/cy-001/plans` while Welsh is showing. Reactive, like {@link t}. Use it for

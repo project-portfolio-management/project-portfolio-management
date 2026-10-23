@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Pipeline, type SkillPool } from "#lib/api/ppm.js";
   import { layoutBars, outcomeLook } from "#lib/chain-view.js";
@@ -61,7 +61,7 @@
     { id: "name", header: t("p.critical_chain.col_project"), rowHeader: true },
     { id: "needs", header: t("p.critical_chain.col_needs"), accessor: (r) => `${(r as unknown as Proj).first_drum_use} → ${(r as unknown as Proj).last_drum_use}` },
     { id: "peak_fte", header: t("p.critical_chain.col_peak"), align: "end" },
-    { id: "outcome", header: t("p.critical_chain.col_proposal"), format: (v) => t(outcomeLook(String(v)).word as never), cell: outcomeCell, cellClass: (c) => `cell-${outcomeLook(String(c.value)).tone}` },
+    { id: "outcome", header: t("p.critical_chain.col_proposal"), format: (v) => tDynamic(outcomeLook(String(v)).word), cell: outcomeCell, cellClass: (c) => `cell-${outcomeLook(String(c.value)).tone}` },
     { id: "proposed_first_drum_use", header: t("p.critical_chain.col_proposed") },
     { id: "delay_days", header: t("p.critical_chain.col_delay"), align: "end" },
     { id: "explanation", header: t("p.critical_chain.col_why") },

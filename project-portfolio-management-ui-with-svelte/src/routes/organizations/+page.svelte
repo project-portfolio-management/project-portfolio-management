@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Organization } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -43,7 +43,7 @@
     await run(() => ppm.addOrganization(name.trim(), kind));
     if (!error) name = "";
   };
-  const kindWord = (k: string) => t(`p.organizations.kind_${k}` as never);
+  const kindWord = (k: string) => tDynamic(`p.organizations.kind_${k}`);
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.organizations.col_name"), rowHeader: true },
     { id: "kind", header: t("p.organizations.col_kind"), format: (v) => kindWord(String(v)) },

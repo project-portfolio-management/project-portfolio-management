@@ -8,7 +8,7 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
   import { i18n } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -31,7 +31,7 @@
   const sections: Section[] = $derived(
     pack
       ? buildPackView(pack.body, {
-          t: (k, v) => t(k as never, v),
+          t: (k, v) => tDynamic(k, v),
           label: (g, v) => enumLabel(g as never, v),
           locale: i18n.locale,
         })

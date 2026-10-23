@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type DeploymentMoves, type DeploymentMove, type Task } from "#lib/api/ppm.js";
@@ -59,7 +59,7 @@
     { id: "reason", header: t("p.moves.col_reason") },
     { id: "requested_by", header: t("p.moves.col_by"), format: (v) => (v ? String(v) : "") },
     { id: "approver_ref", header: t("p.moves.col_approver") },
-    { id: "status", header: t("p.moves.col_status"), format: (v) => t(`p.moves.status_${v}` as never), cell: statusCell, cellClass: (c) => ({ approved: "cell-green", refused: "cell-red", requested: "cell-amber" })[String(c.value)] ?? "" },
+    { id: "status", header: t("p.moves.col_status"), format: (v) => tDynamic(`p.moves.status_${v}`), cell: statusCell, cellClass: (c) => ({ approved: "cell-green", refused: "cell-red", requested: "cell-amber" })[String(c.value)] ?? "" },
     { id: "knock_on", header: t("p.moves.col_knock"), sortable: false, format: (_v, r) => t("p.moves.knock", { n: (r as unknown as DeploymentMove).knock_on.length, cost: cost((r as unknown as DeploymentMove).knock_on_cost.labour) }) },
     { id: "pid", header: t("p.moves.col_act"), sortable: false, cell: decideCell },
   ]);

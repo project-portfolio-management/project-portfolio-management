@@ -3,7 +3,7 @@
 // is looked up in the page catalogue under `l.enum.<group>.<value>`, so it renders in the
 // reader's language. A value the catalogue does not know (a custom status, say) is shown as is.
 
-import { t } from "./i18n.svelte.js";
+import { tDynamic } from "./i18n.svelte.js";
 import { PAGE_KEYS } from "./i18n-pages";
 
 export type EnumGroup =
@@ -32,5 +32,5 @@ export type EnumGroup =
 export function enumLabel(group: EnumGroup, value: unknown): string {
   const text = typeof value === "string" ? value : String(value);
   const key = `l.enum.${group}.${text}`;
-  return PAGE_KEYS.has(key) ? t(key as never) : text;
+  return PAGE_KEYS.has(key) ? tDynamic(key) : text;
 }

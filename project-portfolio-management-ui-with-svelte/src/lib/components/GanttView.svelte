@@ -9,7 +9,7 @@
   import GanttChart from "@lilydesignsystem/svelte-gantt-chart";
   import type { GanttTask, GanttTimeUnit } from "@lilydesignsystem/svelte-gantt-chart";
   import { onMount } from "svelte";
-  import { t, i18n } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, i18n } from "#lib/i18n.svelte.js";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import {
     chartRange,
@@ -41,7 +41,7 @@
   const STORAGE = "ppm.gantt.columns";
   // Which optional columns show. The chart has no such control of its own, so it is ours; remembered per browser.
   let shown = $state<GanttColumnId[]>(parseGanttColumns(null));
-  const columnName = (id: GanttColumnId) => t(`c.GanttView.${id}` as never);
+  const columnName = (id: GanttColumnId) => tDynamic(`c.GanttView.${id}`);
   const fields = $derived(
     GANTT_COLUMNS.filter((id) => shown.includes(id)).map((id) => ({
       id,
@@ -71,7 +71,7 @@
   });
 
   const range = $derived(chartRange(tasks, today));
-  const unitName = (u: GanttTimeUnit) => t(`c.GanttView.unit_${u}` as never);
+  const unitName = (u: GanttTimeUnit) => tDynamic(`c.GanttView.unit_${u}`);
   const critical = (task: GanttTask) => (task.critical ? t("c.GanttView.critical", { name: task.label }) : task.label);
 
   const labels = $derived({

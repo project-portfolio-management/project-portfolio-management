@@ -9,7 +9,7 @@
 // an explicit per-request `token` override, if ever passed. See
 // `agents/share/authentication-sessions.md`.
 
-import { t } from "../i18n.svelte.js";
+import { tDynamic } from "../i18n.svelte.js";
 
 /**
  * Construction-time configuration for {@link ApiClient}.
@@ -344,9 +344,9 @@ function localizeApiMessage(
   status: number,
 ): string {
   if (message === undefined)
-    return t("l.enum.api.http_status" as never, { status });
+    return tDynamic("l.enum.api.http_status", { status });
   const key = API_CODES[message.trim().toLowerCase()];
-  return key ? t(key as never) : message;
+  return key ? tDynamic(key) : message;
 }
 
 /**

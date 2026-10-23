@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type CutoverDecision } from "#lib/api/ppm.js";
@@ -50,8 +50,8 @@
     await run(() => ppm.createCutoverDecision(pid, title.trim(), criteriaText.split("\n").map((l) => l.trim()).filter(Boolean)));
     if (!error) { title = ""; criteriaText = ""; }
   };
-  const status = (s: string) => t(`p.cutover.status_${s}` as never);
-  const outcomeWord = (o: string) => t(`p.cutover.outcome_${o}` as never);
+  const status = (s: string) => tDynamic(`p.cutover.status_${s}`);
+  const outcomeWord = (o: string) => tDynamic(`p.cutover.outcome_${o}`);
   type Criterion = CutoverDecision["criteria"][number];
   /** Columns for one decision's criteria: an open decision adds the column that marks them. */
   function criteriaColumns(d: CutoverDecision, mark: Snippet<[DataGridCellContext]>): DataGridColumn[] {

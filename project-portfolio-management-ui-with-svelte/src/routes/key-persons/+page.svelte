@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KeyPersons } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -56,8 +56,8 @@
     await run(() => ppm.setContingent(contingentRef.trim(), true));
     if (!error) contingentRef = "";
   }
-  const ready = (r: string) => t(`p.key_persons.ready_${r}` as never);
-  const kindWord = (k: string) => t(`p.key_persons.kind_${k}` as never);
+  const ready = (r: string) => tDynamic(`p.key_persons.ready_${r}`);
+  const kindWord = (k: string) => tDynamic(`p.key_persons.kind_${k}`);
   const columns: DataGridColumn[] = $derived([
     { id: "subject", header: t("p.key_persons.col_subject"), rowHeader: true, cell: subjectCell },
     { id: "successor_ref", header: t("p.key_persons.col_successor"), format: (v) => (v ? String(v) : t("p.key_persons.no_successor")) },

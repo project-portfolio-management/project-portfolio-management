@@ -6,7 +6,7 @@
   figures are in the page's table.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import type { BufferReading, FeverLines } from "#lib/api/ppm.js";
   import { bands, FEVER_BOX, markerPath, toPixel, zoneLook } from "#lib/chain-view.js";
 
@@ -22,7 +22,7 @@
     p
       ? t("p.critical_chain.chart_caption", {
           buffer: label,
-          zone: `${look.symbol} ${t(look.word as never)}`,
+          zone: `${look.symbol} ${tDynamic(look.word)}`,
           consumed: Math.round(p.buffer_consumed_pct),
           done: Math.round(p.chain_completed_pct),
         })

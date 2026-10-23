@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type BufferManagement, type BufferReading, type RecoveryAction } from "#lib/api/ppm.js";
@@ -190,13 +190,13 @@
 {#snippet zoneCell({ row, formatted }: DataGridCellContext)}
   {@const r = row as unknown as BufferReading}
   {@const look = zoneLook(r.point?.zone)}
-  <span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}
+  <span aria-hidden="true">{look.symbol}</span> {tDynamic(look.word)}
   {#if !r.point && r.no_point_reason}<span class="small"> — {r.no_point_reason}</span>{/if}
 {/snippet}
 
 {#snippet snapZoneCell({ value }: DataGridCellContext)}
   {@const look = zoneLook((value ?? null) as never)}
-  <span aria-hidden="true">{look.symbol}</span> {t(look.word as never)}
+  <span aria-hidden="true">{look.symbol}</span> {tDynamic(look.word)}
 {/snippet}
 
 {#snippet statusCell({ row, formatted }: DataGridCellContext)}

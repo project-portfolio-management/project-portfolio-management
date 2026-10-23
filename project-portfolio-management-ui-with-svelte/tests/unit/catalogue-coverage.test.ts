@@ -14,25 +14,87 @@ import { PAGES_CY } from "../../src/lib/i18n-pages.cy";
 
 /** English strings that are correct, unchanged, in Welsh (names, units, codes, symbols). */
 const SAME_IN_WELSH = new Set([
-  "CSV", "GBP", "PERT", "Gantt", "RACI — PPM", "PROJ-2026", "uuid", "capex", "opex",
-  "person:…", "person:<uuid>", "worker:<uuid>", "CPI {value}", "Delta (b − a)", "Asana (allforio CSV)",
+  "CSV",
+  "GBP",
+  "PERT",
+  "Gantt",
+  "RACI — PPM",
+  "PROJ-2026",
+  "uuid",
+  "capex",
+  "opex",
+  "person:…",
+  "person:<uuid>",
+  "worker:<uuid>",
+  "CPI {value}",
+  "Delta (b − a)",
+  "Asana (allforio CSV)",
   // Same word in Welsh, or a name/abbreviation:
-  "Excel", "TSV", "Agenda", "Cost", "cost", "CPI", "Person", "Band", "Cap", "label", "pts", "PPM", "ROI", "SPI", "SPI {ratioOrReason} ·",
-  "· ROI {toFixed}%", "Cost — {title}: {costSkippedText}", "band", "person", "{word}: SPI {ratioText}, {gap}.",
-  " · {points}pt", "{headcount} person",
-  "Main X", "Gantt — Main X", "Plans — Main X", "Main X · Plans", "{name} — Main X", "{t} — Main X",
-  "{v} — Main X", "Edit case — Main X", "New case — Main X", "Tour · Main X Plans",
+  "Excel",
+  "TSV",
+  "Agenda",
+  "Cost",
+  "cost",
+  "CPI",
+  "Person",
+  "Band",
+  "Cap",
+  "label",
+  "pts",
+  "PPM",
+  "ROI",
+  "SPI",
+  "SPI {ratioOrReason} ·",
+  "· ROI {toFixed}%",
+  "Cost — {title}: {costSkippedText}",
+  "band",
+  "person",
+  "{word}: SPI {ratioText}, {gap}.",
+  " · {points}pt",
+  "{headcount} person",
+  "Main X",
+  "Gantt — Main X",
+  "Plans — Main X",
+  "Main X · Plans",
+  "{name} — Main X",
+  "{t} — Main X",
+  "{v} — Main X",
+  "Edit case — Main X",
+  "New case — Main X",
+  "Tour · Main X Plans",
 ]);
 const SAME_PREFIX = /^(?:[A-Za-z ]+ — PPM|\{\w+\} — PPM|ROI|SPI|Main X)/;
 
 /** Visible text in a template that is deliberately not translated (brand, code, symbols). */
 const TEMPLATE_ALLOW = new Set([
-  "PPM", "Kanban", "OpenDyslexic", "Jira", "Asana", "Microsoft Project", "Keycloak", "PERT", "RACI",
-  "KPI", "OKR", "ROI", "FTE", "CSV", "GBP", "P50", "P80", "P90", "EV", "PV", "AC", "CPI", "SPI",
+  "PPM",
+  "Kanban",
+  "OpenDyslexic",
+  "Jira",
+  "Asana",
+  "Microsoft Project",
+  "Keycloak",
+  "PERT",
+  "RACI",
+  "KPI",
+  "OKR",
+  "ROI",
+  "FTE",
+  "CSV",
+  "GBP",
+  "P50",
+  "P80",
+  "P90",
+  "EV",
+  "PV",
+  "AC",
+  "CPI",
+  "SPI",
 ]);
 
 const PH = /\{(\w+)\}/g;
-const placeholders = (s: string): string[] => [...s.matchAll(PH)].map((m) => m[1]!).sort();
+const placeholders = (s: string): string[] =>
+  [...s.matchAll(PH)].map((m) => m[1]!).sort();
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const f of readdirSync(dir)) {
@@ -61,7 +123,10 @@ describe("the Welsh page catalogue", () => {
   });
 
   it("keeps the placeholders of the English text", () => {
-    const bad = keys.filter((k) => placeholders(PAGES_EN[k]).join() !== placeholders(PAGES_CY[k]).join());
+    const bad = keys.filter(
+      (k) =>
+        placeholders(PAGES_EN[k]).join() !== placeholders(PAGES_CY[k]).join(),
+    );
     expect(bad).toEqual([]);
   });
 
@@ -82,16 +147,35 @@ describe("no visible English outside the catalogue", () => {
   const word = /[A-Za-z]{3,}/;
   const visit = (n: any, file: string, inCode: boolean): void => {
     if (!n || typeof n !== "object") return;
-    const code = inCode || (n.type === "RegularElement" && ["code", "kbd", "pre", "script", "style", "title"].includes(n.name));
+    const code =
+      inCode ||
+      (n.type === "RegularElement" &&
+        ["code", "kbd", "pre", "script", "style", "title"].includes(n.name));
     if (n.type === "Text" && !code) {
       const s = String(n.data).trim();
-      if (word.test(s) && !TEMPLATE_ALLOW.has(s) && !/^[\p{P}\p{S}\s\d]*$/u.test(s)) found.push(`${file}: ${JSON.stringify(s.slice(0, 60))}`);
+      if (
+        word.test(s) &&
+        !TEMPLATE_ALLOW.has(s) &&
+        !/^[\p{P}\p{S}\s\d]*$/u.test(s)
+      )
+        found.push(`${file}: ${JSON.stringify(s.slice(0, 60))}`);
     }
     for (const a of n.attributes ?? []) {
-      if (a.type !== "Attribute" || !/^(aria-label|title|placeholder|alt)$/.test(a.name) || !Array.isArray(a.value)) continue;
+      if (
+        a.type !== "Attribute" ||
+        !/^(aria-label|title|placeholder|alt)$/.test(a.name) ||
+        !Array.isArray(a.value)
+      )
+        continue;
       for (const p of a.value) {
-        if (p.type === "Text" && word.test(p.data) && !TEMPLATE_ALLOW.has(p.data.trim())) {
-          found.push(`${file}: ${a.name}=${JSON.stringify(String(p.data).slice(0, 60))}`);
+        if (
+          p.type === "Text" &&
+          word.test(p.data) &&
+          !TEMPLATE_ALLOW.has(p.data.trim())
+        ) {
+          found.push(
+            `${file}: ${a.name}=${JSON.stringify(String(p.data).slice(0, 60))}`,
+          );
         }
       }
     }
@@ -123,8 +207,72 @@ describe("no literal English in browser dialogs", () => {
           .split("\n")
           .map((line, i) => [line, i] as const)
           .filter(([line]) => literal.test(line))
-          .map(([line, i]) => `${file.replace(process.cwd() + "/", "")}:${i + 1}: ${line.trim().slice(0, 80)}`),
+          .map(
+            ([line, i]) =>
+              `${file.replace(process.cwd() + "/", "")}:${i + 1}: ${line.trim().slice(0, 80)}`,
+          ),
       );
     expect(found).toEqual([]);
+  });
+});
+
+// CQ-23: a page key nothing refers to is dead text that translators still have to read.
+describe("no unused page keys", () => {
+  /** Groups whose keys are built or handed over as a set, so a search for the key cannot see them. */
+  const SET_PREFIXES = [
+    "p.director_pack.",
+    "c.LilyGanttTable.",
+    "c.LilyKanbanTable.",
+    "c.CalendarMonth.",
+  ];
+  /** Unused when the census was added. It can only shrink: delete the key, or use it, and remove it here. */
+  const KNOWN_UNUSED = new Set([
+    "p.calendar.csv",
+    "p.calendar.excel",
+    "p.calendar.export",
+    "p.calendar.exported",
+    "p.escalations.escalated_for",
+    "p.gantt.accessible_table",
+    "p.gantt.chart",
+    "p.gantt.schedule_view",
+    "p.key_persons.contingent_add",
+    "p.plans.pid.board.accessible_table",
+    "p.plans.pid.board.blocked_for",
+    "p.plans.pid.board.board_view",
+    "p.plans.pid.board.csv",
+    "p.plans.pid.board.excel",
+    "p.plans.pid.board.export",
+    "p.plans.pid.board.exported",
+    "p.processes.steps_one",
+    "p.processes.steps_other",
+    "p.tolerances.from_plan",
+  ]);
+
+  const sources = (dir: string, out: string[] = []): string[] => {
+    for (const f of readdirSync(dir)) {
+      const p = join(dir, f);
+      if (statSync(p).isDirectory()) sources(p, out);
+      else if (/\.(svelte|ts)$/.test(p) && !/i18n/.test(f))
+        out.push(readFileSync(p, "utf8"));
+    }
+    return out;
+  };
+  const text = sources(join(process.cwd(), "src")).join("\n");
+  // The text before a `${` in a quoted or template string: a key built at run time.
+  const dynamic = [...text.matchAll(/[`"']([A-Za-z0-9_.]+)\$\{/g)]
+    .map((m) => m[1]!)
+    .filter((p) => p.length > 2);
+  const unused = Object.keys(PAGES_EN).filter(
+    (k) =>
+      !text.includes(k) &&
+      !dynamic.some((p) => k.startsWith(p)) &&
+      !SET_PREFIXES.some((p) => k.startsWith(p)),
+  );
+
+  it("finds no key nobody refers to, beyond the known list", () => {
+    expect(unused.filter((k) => !KNOWN_UNUSED.has(k))).toEqual([]);
+  });
+  it("keeps the known list honest: every entry is still unused and still a key", () => {
+    expect([...KNOWN_UNUSED].filter((k) => !unused.includes(k))).toEqual([]);
   });
 });

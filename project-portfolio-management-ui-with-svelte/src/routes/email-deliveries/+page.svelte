@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EmailDeliveries } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -27,7 +27,7 @@
   }
   onMount(() => void load());
 
-  const word = (s: string) => t(`p.email_deliveries.status_${s}` as never);
+  const word = (s: string) => tDynamic(`p.email_deliveries.status_${s}`);
   const when = (v: unknown) => (typeof v === "string" ? v.slice(0, 16).replace("T", " ") : "");
   const columns: DataGridColumn[] = $derived([
     { id: "recipient", header: t("p.email_deliveries.col_recipient"), rowHeader: true },

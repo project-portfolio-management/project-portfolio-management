@@ -13,7 +13,7 @@
   import DataGrid from "@lilydesignsystem/svelte-data-grid";
   import type { DataGridColumn, DataGridRow } from "@lilydesignsystem/svelte-data-grid";
   import type { Snippet } from "svelte";
-  import { t, i18n } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, i18n } from "#lib/i18n.svelte.js";
   import { exportLabels } from "#lib/table-labels.js";
   import { hasOwnWidgetWords, packLabels } from "#lib/lily-labels.js";
 
@@ -107,7 +107,7 @@
   const own = $derived(hasOwnWidgetWords(i18n.locale));
   const slug = (s: string) =>
     s.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "") || "table";
-  const direction = (d: string) => t(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}` as never);
+  const direction = (d: string) => tDynamic(`p.table.${d === "ascending" ? "asc" : d === "descending" ? "desc" : "none"}`);
 </script>
 
 <div bind:this={host} class="data-table-host">

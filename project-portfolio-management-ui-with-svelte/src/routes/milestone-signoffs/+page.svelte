@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneSignoffs, type Organization } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -44,7 +44,7 @@
   }
   const SYM: Record<string, string> = { met: "●", delivered_not_met: "▲", not_delivered: "–", not_required: "–" };
   type Row = MilestoneSignoffs["milestones"][number];
-  const stateWord = (s: string) => t(`p.signoffs.state_${s === "not_required" ? "met" : s}` as never);
+  const stateWord = (s: string) => tDynamic(`p.signoffs.state_${s === "not_required" ? "met" : s}`);
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.signoffs.col_milestone"), rowHeader: true },
     { id: "due", header: t("p.signoffs.col_due"), format: (v) => (v ? String(v).slice(0, 10) : "") },

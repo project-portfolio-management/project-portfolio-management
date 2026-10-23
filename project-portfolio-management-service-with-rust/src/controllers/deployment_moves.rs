@@ -12,7 +12,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use axum::http::StatusCode;
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -329,7 +329,7 @@ async fn decide(
     let mut a: moves::ActiveModel = m.into();
     a.status = ActiveValue::set(if approve { "approved" } else { "refused" }.to_string());
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
+    a.decided_on = ActiveValue::set(Some(crate::tz::utc_today()));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(

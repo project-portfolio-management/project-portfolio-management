@@ -662,7 +662,7 @@ async fn convert_to_issue(
     action: &control_actions::Model,
     control: &controls::Model,
 ) -> Result<Response> {
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let title: String = action
         .description
         .trim()

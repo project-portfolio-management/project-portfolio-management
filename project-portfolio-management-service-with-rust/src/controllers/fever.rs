@@ -7,7 +7,6 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::Utc;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -133,7 +132,7 @@ async fn set_buffer(
                 .filter(|n| !n.is_empty()),
         ),
         declared_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        declared_on: ActiveValue::set(Utc::now().date_naive()),
+        declared_on: ActiveValue::set(crate::tz::utc_today()),
         baseline_version: ActiveValue::set(chain.as_ref().map(|(b, _)| b.version)),
         ..Default::default()
     }

@@ -345,7 +345,7 @@ async fn time_report(
     let by = GroupBy::parse(&p.group_by).ok_or_else(|| {
         unprocessable("group_by must be person, plan, category, billable or month")
     })?;
-    let to = p.to.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let to = p.to.unwrap_or_else(crate::tz::utc_today);
     let from = p.from.unwrap_or_else(|| to - chrono::Duration::days(89));
     if from > to {
         return Err(unprocessable("from must not be after to"));

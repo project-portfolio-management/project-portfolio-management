@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 23 October
 
+- **Every "today" in the service now says whether it is the portfolio's or the person's (CQ-13, part).** The 93 `Utc::now().date_naive()` calls became `tz::utc_today()`, and a test fails on the raw form, so a new one must choose `utc_today` or `local_today`. No behaviour changed. Verified: clippy and the unit tests. **Not done:** I did not audit each default against the spec to move any to a caller's zone (the doctrine makes portfolio-wide views UTC, so only personal views would move), so there are no UTC−10 tests; the clippy `disallowed-methods` entry is a census test instead, because clippy cannot ban one call chain. Database tests were not run.
 - **CI now fails on an unused dependency (CQ-16, part).** A `cargo machete` job covers the service and the matcher and is part of `ci-ok`; it found one more unused crate (`validator`), now removed. Verified: machete is clean locally on both crates, and clippy with all features passes. **Not verified:** the new job has not yet run in CI, and the action version tag is from memory. **Not done:** one `svelte-headless` (waits on an upstream release) and the `arbitrary_precision` decision.
 
 ### 22 October

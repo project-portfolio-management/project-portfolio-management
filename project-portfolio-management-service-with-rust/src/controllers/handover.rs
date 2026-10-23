@@ -180,7 +180,7 @@ async fn preview(
         plan.pid,
         &b.from_person,
         &def,
-        Utc::now().date_naive(),
+        crate::tz::utc_today(),
     )
     .await?;
     let tag = etag(&b.from_person, b.to_person.as_deref(), &h);
@@ -238,7 +238,7 @@ async fn commit(
         )
     };
     let def = super::workflow::in_force(&ctx, plan.pid, "task").await?;
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let to = b.to_person.as_deref();
     // The freshness check is made through the transaction that writes, behind a lock
     // on the plan, so a second commit waits and then sees the first one's changes.

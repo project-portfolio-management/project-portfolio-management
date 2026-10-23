@@ -1744,6 +1744,7 @@ came from grep.
   method so new ones need a reason.
   **Acceptance:** a unit test with the zone set to UTC−10 near midnight, for
   each moved default.
+  **Progress 2026-10-23 (not ticked).** All 93 calls now go through `tz::utc_today()`; census test `tz::no_raw_utc_today_outside_this_file`. **Still to do:** audit each default against the spec and move personal ones to `local_today` with the UTC−10 test.
 - [ ] **CQ-14 (S) — Lints reach the tests, and stale allows show.** Move the
   lints to a `[lints]` table in `Cargo.toml`, so the integration tests get
   pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove

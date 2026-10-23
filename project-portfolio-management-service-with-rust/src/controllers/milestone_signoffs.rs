@@ -13,7 +13,7 @@ use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use axum::http::StatusCode;
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -254,7 +254,7 @@ async fn act(
         organization_pid: ActiveValue::set(b.organization_pid),
         action: ActiveValue::set(b.action.clone()),
         reason: ActiveValue::set(reason.clone()),
-        acted_on: ActiveValue::set(Utc::now().date_naive()),
+        acted_on: ActiveValue::set(crate::tz::utc_today()),
         signed_by: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
@@ -304,7 +304,7 @@ pub(crate) async fn summary(ctx: &AppContext, include: &HashSet<Uuid>) -> Result
             .filter(|m| include.contains(&m.plan_pid))
             .collect()
     };
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let derived = super::milestones::derive(ctx, &rows, today, 14, 5, false).await?;
     let mut list: Vec<Value> = Vec::new();
     let mut states: Vec<rules::State> = Vec::new();

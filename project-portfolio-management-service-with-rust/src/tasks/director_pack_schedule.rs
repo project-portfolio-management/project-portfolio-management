@@ -8,7 +8,6 @@
 //! (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`). It **only drafts**: a person reviews and a person
 //! issues. `POST /api/director-pack-schedules/sweep` does the same by hand.
 
-use chrono::Utc;
 use loco_rs::prelude::*;
 
 /// The `director_pack_schedule` CLI task.
@@ -30,7 +29,7 @@ impl Task for DirectorPackSchedule {
     ///
     /// When a database statement fails.
     async fn run(&self, ctx: &AppContext, _vars: &task::Vars) -> Result<()> {
-        let r = crate::controllers::pack_rhythm::run_due(ctx, Utc::now().date_naive()).await?;
+        let r = crate::controllers::pack_rhythm::run_due(ctx, crate::tz::utc_today()).await?;
         println!(
             "director pack schedule: {} drafted, {} skipped, 0 issued",
             r.drafted.len(),

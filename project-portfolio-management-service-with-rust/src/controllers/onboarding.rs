@@ -287,7 +287,7 @@ async fn items_of(ctx: &AppContext, case: Uuid) -> Result<Vec<onboarding_items::
 }
 
 fn progress_of(items: &[onboarding_items::Model]) -> rules::Progress {
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let states: Vec<rules::ItemState<'_>> = items
         .iter()
         .map(|i| rules::ItemState {
@@ -305,7 +305,7 @@ async fn case_view(
 ) -> Result<Response> {
     let items = items_of(ctx, c.pid).await?;
     let see = may_manage_people(caller);
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     format::json(serde_json::json!({
         "pid": c.pid, "kind": c.kind, "plan_pid": c.plan_pid, "title": c.title,
         "subject_ref": if see { c.subject_ref.clone() } else { None },
@@ -639,7 +639,7 @@ async fn record_access(
         person_ref: ActiveValue::set(b.person_ref.clone()),
         access: ActiveValue::set(b.access.trim().to_string()),
         action: ActiveValue::set(b.action.clone()),
-        recorded_on: ActiveValue::set(b.recorded_on.unwrap_or_else(|| Utc::now().date_naive())),
+        recorded_on: ActiveValue::set(b.recorded_on.unwrap_or_else(crate::tz::utc_today)),
         recorded_by: ActiveValue::set(caller.actor().map(str::to_string)),
         note: ActiveValue::set(b.note.clone().filter(|n| !n.trim().is_empty())),
         ..Default::default()
@@ -730,7 +730,7 @@ async fn closeout(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
         .await
         .map_err(db_err)?
         .len();
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let active_allocations = allocations::Entity::find()
         .filter(allocations::Column::PlanPid.eq(plan.pid))
         .filter(allocations::Column::DeletedAt.is_null())

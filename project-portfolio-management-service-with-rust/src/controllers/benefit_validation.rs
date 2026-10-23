@@ -8,7 +8,6 @@ use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
-use chrono::Utc;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -285,7 +284,7 @@ async fn validate(
         currency: ActiveValue::set(currency),
         validator: ActiveValue::set(Some(actor)),
         evidence_attachment_pid: ActiveValue::set(b.evidence_attachment_pid),
-        validated_on: ActiveValue::set(Utc::now().date_naive()),
+        validated_on: ActiveValue::set(crate::tz::utc_today()),
         note: ActiveValue::set(
             b.note
                 .map(|n| n.trim().to_string())

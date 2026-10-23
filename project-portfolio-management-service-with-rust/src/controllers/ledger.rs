@@ -14,7 +14,6 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
-use chrono::Utc;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -110,7 +109,7 @@ async fn create(
     if !crate::governance::valid_currency(&b.currency) {
         problems.push("currency must be an ISO 4217 code");
     }
-    if b.allocated_on > Utc::now().date_naive() {
+    if b.allocated_on > crate::tz::utc_today() {
         problems.push("allocated_on is not in the future");
     }
     if b.reference
@@ -311,7 +310,7 @@ async fn trace(
             .map_err(|e| db_err(&e))?
     };
     let derived =
-        super::milestones::derive(&ctx, &ms, Utc::now().date_naive(), 14, 5, false).await?;
+        super::milestones::derive(&ctx, &ms, crate::tz::utc_today(), 14, 5, false).await?;
     let milestone_rows: Vec<Value> = derived.json.iter().map(|(_, _, v)| json!({
         "plan": names.get(&Uuid::parse_str(v["plan_pid"].as_str().unwrap_or("")).unwrap_or_default()), "name": v["name"], "due": v["due"],
         "met": v["achieved"], "met_on": v["achieved_on"],

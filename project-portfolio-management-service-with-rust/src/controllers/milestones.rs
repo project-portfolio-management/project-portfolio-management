@@ -376,7 +376,7 @@ async fn list(
     {
         return Err(unprocessable("to is before from"));
     }
-    let today = q.as_of.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let today = q.as_of.unwrap_or_else(crate::tz::utc_today);
     let mut query = milestones::Entity::find().filter(milestones::Column::DeletedAt.is_null());
     if let Some(p) = q.plan {
         query = query.filter(milestones::Column::PlanPid.eq(p));
@@ -448,7 +448,7 @@ async fn get_one(
     if !readable.contains(&m.plan_pid) {
         return Err(Error::NotFound);
     }
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let derived = derive(&ctx, &[m], today, DUE_SOON_DAYS, AT_RISK_DAYS, true).await?;
     let (_, _, v) = derived.json.into_iter().next().ok_or(Error::NotFound)?;
     format::json(v)

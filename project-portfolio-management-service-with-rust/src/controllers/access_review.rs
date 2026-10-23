@@ -8,7 +8,6 @@
 use super::refuse;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
-use chrono::Utc;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -95,7 +94,7 @@ async fn review(
             note: r.note,
         })
         .collect();
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let standing = rules::standing(&entries, today, stale);
     AuditModel::record_or_log(
         &ctx.db,

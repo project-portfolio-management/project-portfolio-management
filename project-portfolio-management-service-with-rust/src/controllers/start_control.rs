@@ -11,7 +11,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
-use chrono::{Datelike, Utc};
+use chrono::Datelike;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -49,7 +49,7 @@ pub(crate) struct Evaluation {
 /// Evaluate a start of `plan` now.
 #[allow(clippy::too_many_lines)]
 pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Evaluation> {
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let all = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)
@@ -244,7 +244,7 @@ pub(crate) async fn gate(
     if plan.kind.as_deref() != Some("Program") {
         return Ok(());
     }
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let status = super::programme_gates::status_map(ctx, today)
         .await?
         .get(&plan.pid)
@@ -377,7 +377,7 @@ async fn withdraw(
         .ok_or(Error::NotFound)?;
     let mut a: queue::ActiveModel = q.into();
     a.status = ActiveValue::set("withdrawn".to_string());
-    a.resolved_on = ActiveValue::set(Some(Utc::now().date_naive()));
+    a.resolved_on = ActiveValue::set(Some(crate::tz::utc_today()));
     a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,

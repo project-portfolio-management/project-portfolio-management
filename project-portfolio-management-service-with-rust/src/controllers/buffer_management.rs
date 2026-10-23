@@ -14,7 +14,7 @@ use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use axum::http::StatusCode;
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -182,7 +182,7 @@ async fn freeze(
     let row = buffer_plans::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
-        taken_on: ActiveValue::set(Utc::now().date_naive()),
+        taken_on: ActiveValue::set(crate::tz::utc_today()),
         document: ActiveValue::set(doc.to_string()),
         ..Default::default()
     }
@@ -329,7 +329,7 @@ async fn snapshot(
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
         buffer_plan_pid: ActiveValue::set(row.pid),
-        taken_on: ActiveValue::set(Utc::now().date_naive()),
+        taken_on: ActiveValue::set(crate::tz::utc_today()),
         document: ActiveValue::set(document.to_string()),
         ..Default::default()
     }
@@ -451,7 +451,7 @@ async fn close_action(
     }
     let mut m: actions::ActiveModel = a.into();
     m.status = ActiveValue::set(b.status.clone());
-    m.closed_on = ActiveValue::set(Some(Utc::now().date_naive()));
+    m.closed_on = ActiveValue::set(Some(crate::tz::utc_today()));
     let row = m.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,

@@ -119,7 +119,7 @@ async fn resource_plan(
     caller: MaybeAuthUser,
     Query(q): Query<PlanParams>,
 ) -> Result<Response> {
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let from = q.from.unwrap_or(today);
     let to = q.to.unwrap_or(from + chrono::Days::new(89));
     let grain = match q.period.as_deref() {
@@ -254,7 +254,7 @@ async fn hours(
     caller: MaybeAuthUser,
     Query(q): Query<HoursParams>,
 ) -> Result<Response> {
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let to = q.to.unwrap_or(today);
     let from = q.from.unwrap_or(to - chrono::Days::new(27));
     if to < from {
@@ -518,7 +518,7 @@ async fn resolve_placeholder(
     }
     let mut over = false;
     if allocation.booking == "committed" {
-        let today = chrono::Utc::now().date_naive();
+        let today = crate::tz::utc_today();
         let from = allocation.start_date.unwrap_or(today);
         let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
         let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx.db)

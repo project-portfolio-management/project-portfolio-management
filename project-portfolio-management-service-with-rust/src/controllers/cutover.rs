@@ -14,7 +14,6 @@
 
 use super::conflict;
 use axum::http::StatusCode;
-use chrono::Utc;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -255,7 +254,7 @@ async fn advance(
             d.status
         )));
     }
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let mut a: decisions::ActiveModel = d.into();
     a.status = ActiveValue::set(to.to_string());
     if to == "published" {
@@ -341,7 +340,7 @@ async fn mark(
     a.met = ActiveValue::set(Some(b.met));
     a.evidence = ActiveValue::set(Some(b.evidence.trim().to_string()));
     a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.marked_on = ActiveValue::set(Some(Utc::now().date_naive()));
+    a.marked_on = ActiveValue::set(Some(crate::tz::utc_today()));
     a.update(&ctx.db).await.map_err(db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
@@ -400,7 +399,7 @@ async fn cosign(
         decision_pid: ActiveValue::set(d.pid),
         role: ActiveValue::set(role.clone()),
         signed_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        signed_on: ActiveValue::set(Utc::now().date_naive()),
+        signed_on: ActiveValue::set(crate::tz::utc_today()),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -471,7 +470,7 @@ async fn decide(
     let mut a: decisions::ActiveModel = d.into();
     a.status = ActiveValue::set("decided".to_string());
     a.outcome = ActiveValue::set(Some(b.outcome.clone()));
-    a.decided_on = ActiveValue::set(Some(Utc::now().date_naive()));
+    a.decided_on = ActiveValue::set(Some(crate::tz::utc_today()));
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
     let row = a.update(&ctx.db).await.map_err(db_err)?;

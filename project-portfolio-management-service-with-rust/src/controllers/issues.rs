@@ -21,7 +21,7 @@ use crate::models::_entities::{issues, plans, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn today() -> NaiveDate {
-    Utc::now().date_naive()
+    crate::tz::utc_today()
 }
 
 fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {

@@ -24,7 +24,7 @@ use crate::models::_entities::{escalation_events, escalations, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
 fn today() -> NaiveDate {
-    chrono::Utc::now().date_naive()
+    crate::tz::utc_today()
 }
 
 pub(crate) fn view(e: &escalations::Model, now: NaiveDate) -> Value {

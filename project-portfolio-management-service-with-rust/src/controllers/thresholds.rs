@@ -87,7 +87,7 @@ async fn set_triage(
     let row = triages::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
-        triaged_on: ActiveValue::set(Utc::now().date_naive()),
+        triaged_on: ActiveValue::set(crate::tz::utc_today()),
         outcome: ActiveValue::set(b.outcome.clone()),
         reason: ActiveValue::set(b.reason.trim().to_string()),
         decided_by: ActiveValue::set(caller.actor().map(str::to_string)),
@@ -291,7 +291,7 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
 #[debug_handler]
 #[allow(clippy::too_many_lines)]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let all = thresholds::Entity::find()
         .order_by_asc(thresholds::Column::Id)
         .all(&ctx.db)
@@ -459,7 +459,7 @@ async fn decide(
             "this exception was not opened by a threshold: use the ordinary decision",
         ));
     };
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let problems = rules::decision_problems(&b.action, &b.reason, b.expiry, today);
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
@@ -548,7 +548,7 @@ pub(crate) async fn pack_section(
         .collect();
     triage.sort_by_key(|v| v["programme"].as_str().unwrap_or("").to_string());
     let count_of = |o: &str| latest.values().filter(|t| t.outcome == o).count();
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let decided: Vec<decisions::Model> = decisions::Entity::find()
         .order_by_asc(decisions::Column::Id)
         .all(&ctx.db)

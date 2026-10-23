@@ -50,6 +50,16 @@ pub fn local_today(now: DateTime<Utc>, tz: Tz) -> NaiveDate {
     now.with_timezone(&tz).date_naive()
 }
 
+/// The calendar date it is, right now, in UTC: "today" for a portfolio-wide
+/// view or a default (doctrine 4), so two callers see one answer. A personal
+/// view takes a zone and uses [`local_today`]. Calls name this rather than
+/// `Utc::now().date_naive()`, so each use is findable and a census can ban
+/// the raw form.
+#[must_use]
+pub fn utc_today() -> NaiveDate {
+    Utc::now().date_naive()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +161,40 @@ mod tests {
             offenders.is_empty(),
             "reads the process zone: {offenders:?}"
         );
+    }
+
+    /// Every portfolio-wide "today" goes through `utc_today`; a personal one
+    /// goes through `local_today`. The raw form hides which was meant.
+    #[test]
+    fn no_raw_utc_today_outside_this_file() {
+        fn walk(dir: &std::path::Path, hits: &mut Vec<String>) {
+            for e in std::fs::read_dir(dir).unwrap().flatten() {
+                let p = e.path();
+                if p.is_dir() {
+                    walk(&p, hits);
+                } else if p.extension().is_some_and(|x| x == "rs") && !p.ends_with("tz.rs") {
+                    let text = std::fs::read_to_string(&p).unwrap();
+                    if text.contains("Utc::now().date_naive()") {
+                        hits.push(p.display().to_string());
+                    }
+                }
+            }
+        }
+        let mut hits = Vec::new();
+        walk(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src"),
+            &mut hits,
+        );
+        assert!(
+            hits.is_empty(),
+            "use tz::utc_today() or tz::local_today(): {hits:?}"
+        );
+    }
+
+    #[test]
+    fn utc_today_is_the_utc_date() {
+        let before = Utc::now().date_naive();
+        let t = utc_today();
+        assert!(t >= before && t <= Utc::now().date_naive());
     }
 }

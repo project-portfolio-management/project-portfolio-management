@@ -265,7 +265,7 @@ async fn decide_status(
         return Err(unprocessable("the reason must be at least 10 characters"));
     }
     let history = history_of(&ctx, plan.pid).await?;
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let current = rules::status_at(&as_rules(&history), today);
     // The database's last row is the truth even if its date is in the future; the date is today's.
     let current = history.last().map_or(current, |d| match d.status.as_str() {
@@ -344,7 +344,7 @@ async fn decide_status(
 async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let history = history_of(&ctx, plan.pid).await?;
-    let status = rules::status_at(&as_rules(&history), Utc::now().date_naive());
+    let status = rules::status_at(&as_rules(&history), crate::tz::utc_today());
     let kept_now = if status == "active" {
         serde_json::Value::Null
     } else {

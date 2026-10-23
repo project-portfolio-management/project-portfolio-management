@@ -440,7 +440,7 @@ async fn list_milestones(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let rows = vis_models::milestones_for(&ctx.db, item.pid).await?;
     let views: Vec<_> = rows
         .into_iter()
@@ -827,7 +827,7 @@ async fn commit_allocation(
         ));
     }
     // The person's committed load with this booking made firm, over its own span.
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let from = allocation.start_date.unwrap_or(today);
     let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
     let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx.db)
@@ -928,7 +928,7 @@ async fn capacity(
     Query(params): Query<CapacityParams>,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let from = params.from.unwrap_or(today);
     let to = params.to.unwrap_or(from + chrono::Days::new(30));
     if to < from {
@@ -1372,7 +1372,7 @@ async fn at_a_glance(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let today = chrono::Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let items = scope.keep(
         plans::Entity::find()
             .filter(plans::Column::DeletedAt.is_null())

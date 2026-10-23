@@ -4,7 +4,6 @@
 //! the answer says `available: false` with the reason rather than a page of zeros.
 
 use axum::http::StatusCode;
-use chrono::Utc;
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
@@ -55,7 +54,7 @@ async fn summary(
     plans.sort();
     plans.dedup();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plans).await;
-    let today = Utc::now().date_naive();
+    let today = crate::tz::utc_today();
     let issue_lite: Vec<IssueLite> = issue_rows
         .iter()
         .filter(|i| readable.contains(&i.plan_pid))

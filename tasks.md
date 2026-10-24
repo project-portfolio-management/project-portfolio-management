@@ -1852,13 +1852,14 @@ came from grep.
 Gaps that earlier entries record only as "Not done", lifted here because each
 can give a wrong answer ([plan.md §66](plan.md)).
 
-- [ ] **CF-1 (M) — Large plans are never silently truncated.** The WBS and
+- [x] **CF-1 (M) — Large plans are never silently truncated.** The WBS and
   earned-value pages read the first 2,000 tasks without saying so (RG-15).
   Page them, or compute earned value in the service over every task. The
   critical-path page offers `?only=critical` on a 413 instead of showing the
   message (RG-16).
   **Acceptance:** an e2e test with a stubbed 2,001-task plan shows the right
   totals or a truncation notice; a 413 test shows the critical part.
+  **Built 2026-10-24.** Chose the notice, not paging, because the service already adds up earned value over every task and the UI used the capped list only for task names. The WBS page says "Showing N of M tasks" when `truncated`; the earned-value page says the figures cover every task but some names may be missing; the critical-path page, on a 413, says the plan is too large and offers "Show only the critical part" (`?only=critical`), then labels the result. New `tests/e2e/large-plans.spec.ts` (4 tests, with a 2,001-task stub, a plan with no truncation, and a 413). Welsh for the five new strings is machine-written. **Not verified:** against the real service with a 2,001-task plan (the service side was built and tested under RG-15 and RG-16); the service's earned-value code was read for a task cap, not run at that size; the other pages that call `listTasks` (board, risk inputs, milestone card, deployment moves) were not changed (the board already had its notice).
 - [x] **CF-2 (S) — Goals by id with `If-Match`** (OQ-5, CHANGELOG 0.2.0).
   **Acceptance:** a concurrent delete test removes the intended goal or gets a
   412.

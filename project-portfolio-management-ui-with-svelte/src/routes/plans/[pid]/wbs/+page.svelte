@@ -19,6 +19,8 @@
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
   let tasks = $state<Task[] | null>(null);
+  /** The service held back tasks (a very large plan): say so, so a short outline is not read as complete. */
+  let shown = $state<{ total: number } | null>(null);
   let error = $state<string | null>(null);
   /** Links per task; empty when they could not be loaded, and then the page says so. */
   let linkCounts = $state<Record<string, number>>({});
@@ -26,7 +28,9 @@
 
   onMount(async () => {
     try {
-      tasks = (await ppm.listTasks(pid)).tasks;
+      const r = await ppm.listTasks(pid);
+      tasks = r.tasks;
+      shown = r.truncated ? { total: r.total ?? r.tasks.length } : null;
     } catch (err) {
       error = errorText(err, "p.plans.pid.wbs.could_not_load_the_tasks");
     }
@@ -46,7 +50,9 @@
     if (!change) return;
     try {
       await ppm.setTaskOrder(pid, change.parent_task_pid, change.order);
-      tasks = (await ppm.listTasks(pid)).tasks;
+      const r = await ppm.listTasks(pid);
+      tasks = r.tasks;
+      shown = r.truncated ? { total: r.total ?? r.tasks.length } : null;
       notice = t("p.plans.pid.wbs.moved", { title });
     } catch (err) {
       notice = t("p.plans.pid.wbs.could_not_move", { reason: err instanceof Error ? err.message : "" });
@@ -69,6 +75,7 @@
 
 <p class="small"><a href={localeHref(`/plans/${pid}`)}>{t("p.plans.pid.wbs.plan")}</a></p>
 <h1>{t("p.plans.pid.wbs.work_breakdown")}</h1>
+{#if shown}<p class="banner" role="note" data-testid="wbs-truncated">{t("p.plans.pid.wbs.truncated", { shown: tasks?.length ?? 0, total: shown.total })}</p>{/if}
 <p class="lede">{t("p.plans.pid.wbs.the_plan_s_tasks_each")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if linkCountsFailed}<p class="banner" role="note" data-testid="link-counts-failed">{t("p.plans.pid.wbs.link_counts_failed")}</p>{/if}

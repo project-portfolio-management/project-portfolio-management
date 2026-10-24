@@ -48,6 +48,8 @@
   let rollup = $state<EvRollup | null>(null);
   let recorded = $state(false);
   let tasks = $state<Task[]>([]);
+  /** Task names come from a capped list on a very large plan; the figures do not (the service adds up every task). */
+  let namesTruncated = $state(false);
   let error = $state<string | null>(null);
   let editing = $state<string | null>(null);
   let method = $state("");
@@ -57,7 +59,9 @@
   async function load() {
     try {
       ev = await ppm.earnedValue(pid);
-      tasks = (await ppm.listTasks(pid)).tasks;
+      const list = await ppm.listTasks(pid);
+      tasks = list.tasks;
+      namesTruncated = list.truncated === true;
       [forecast, series, rollup] = await Promise.all([
         ppm.earnedValueForecast(pid),
         ppm.earnedValueSeries(pid),
@@ -142,6 +146,7 @@
 <h1>{t("p.plans.pid.earned_value.progress_against_budget_earned_value")}</h1>
 <p class="lede">{t("p.plans.pid.earned_value.is_the_work_finished_worth")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
+{#if namesTruncated}<p class="banner" role="note" data-testid="ev-names-truncated">{t("p.plans.pid.earned_value.names_truncated")}</p>{/if}
 
 {#if ev}
   <p class="small muted">{t("p.plans.pid.earned_value.measured_as_of_percent_complete", { as_of: ev.as_of })}</p>

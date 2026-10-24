@@ -2209,6 +2209,15 @@ export const PAGES_EN = {
   "p.plans.pid.wbs.move_up": "Move {title} up",
   "p.plans.pid.wbs.move_down": "Move {title} down",
   "p.plans.pid.wbs.moved": "Moved {title}.",
+  "p.plans.pid.wbs.truncated":
+    "Showing {shown} of {total} tasks: this plan is too large to list in full, so the outline below is incomplete.",
+  "p.plans.pid.critical_path.too_large":
+    "This plan is too large to schedule in full in one answer.",
+  "p.plans.pid.critical_path.show_critical_only": "Show only the critical part",
+  "p.plans.pid.critical_path.critical_only_notice":
+    "Showing only the critical and near-critical tasks; the rest of the plan is left out.",
+  "p.plans.pid.earned_value.names_truncated":
+    "This plan is very large: the figures cover every task, but some task names below may be missing.",
   "p.plans.pid.wbs.could_not_move": "Could not move the task: {reason}",
   "p.plans.pid.wbs.sub_task_one": "({children} sub-task)",
   "p.plans.pid.wbs.sub_task_other": "({children} sub-tasks)",

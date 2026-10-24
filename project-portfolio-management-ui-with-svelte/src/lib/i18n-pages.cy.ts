@@ -2256,6 +2256,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.wbs.move_up": "Symud {title} i fyny",
   "p.plans.pid.wbs.move_down": "Symud {title} i lawr",
   "p.plans.pid.wbs.moved": "Symudwyd {title}.",
+  "p.plans.pid.wbs.truncated":
+    "Yn dangos {shown} o {total} tasg: mae'r cynllun hwn yn rhy fawr i'w restru'n llawn, felly mae'r amlinelliad isod yn anghyflawn.",
+  "p.plans.pid.critical_path.too_large":
+    "Mae'r cynllun hwn yn rhy fawr i'w drefnu'n llawn mewn un ateb.",
+  "p.plans.pid.critical_path.show_critical_only":
+    "Dangos y rhan gritigol yn unig",
+  "p.plans.pid.critical_path.critical_only_notice":
+    "Yn dangos y tasgau critigol a bron yn gritigol yn unig; mae gweddill y cynllun wedi'i adael allan.",
+  "p.plans.pid.earned_value.names_truncated":
+    "Mae'r cynllun hwn yn fawr iawn: mae'r ffigurau'n cynnwys pob tasg, ond efallai fod rhai enwau tasgau isod ar goll.",
   "p.plans.pid.wbs.could_not_move": "Methu symud y dasg: {reason}",
   "p.plans.pid.wbs.sub_task_one": "({children} is-dasg)",
   "p.plans.pid.wbs.links": "Dolenni",

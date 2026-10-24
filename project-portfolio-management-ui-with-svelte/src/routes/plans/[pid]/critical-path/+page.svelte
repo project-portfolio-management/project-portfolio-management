@@ -12,6 +12,7 @@
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
+  import { ApiError } from "#lib/api/client.js";
   import {
     PpmClient,
     type Cpm,
@@ -30,6 +31,9 @@
   const pid = $derived(page.params.pid ?? "");
 
   let cpm = $state<Cpm | null>(null);
+  /** The full answer was refused as too large (413): offer the critical part, which is always allowed. */
+  let tooLarge = $state(false);
+  let onlyCritical = $state(false);
   let error = $state<string | null>(null);
   let view = $state<"gantt" | "network" | "table">("gantt");
   let near = $state(5);
@@ -81,14 +85,25 @@
 
   async function load() {
     try {
-      cpm = await ppm.planCpm(pid, near);
+      cpm = await ppm.planCpm(pid, near, onlyCritical ? "critical" : undefined);
       error = null;
+      tooLarge = false;
       await loadBaselines();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 413 && !onlyCritical) {
+        tooLarge = true;
+        error = null;
+        return;
+      }
       error = errorText(err, "p.plans.pid.critical_path.could_not_load_the_schedule");
     }
   }
   onMount(() => void load());
+
+  async function showCriticalOnly() {
+    onlyCritical = true;
+    await load();
+  }
 
   // Where each task was baselined to sit, for the outline under its Gantt bar.
   const ghosts = $derived(
@@ -168,6 +183,14 @@
 <h1>{t("p.plans.pid.critical_path.critical_path")}</h1>
 <p class="lede">{t("p.plans.pid.critical_path.the_longest_chain_of_tasks")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
+{#if tooLarge}
+  <p class="banner" role="alert" data-testid="cpm-too-large">
+    {t("p.plans.pid.critical_path.too_large")}
+    <button type="button" class="button" onclick={showCriticalOnly}>{t("p.plans.pid.critical_path.show_critical_only")}</button>
+  </p>
+{:else if onlyCritical}
+  <p class="banner" role="note" data-testid="cpm-critical-only">{t("p.plans.pid.critical_path.critical_only_notice")}</p>
+{/if}
 
 {#if cpm}
   <p class="small muted">

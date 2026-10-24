@@ -4019,8 +4019,12 @@ export class PpmClient {
       headers: { "If-Match": etag },
     });
   }
-  planCpm(pid: string, near?: number): Promise<Cpm> {
-    const q = near === undefined ? "" : `?near=${near}`;
+  planCpm(pid: string, near?: number, only?: "critical"): Promise<Cpm> {
+    const params = [
+      near === undefined ? "" : `near=${near}`,
+      only === undefined ? "" : `only=${only}`,
+    ].filter(Boolean);
+    const q = params.length ? `?${params.join("&")}` : "";
     return this.http.get(`/api/plans/${pid}/cpm${q}`);
   }
   /** Set a task's planned start, duration, constraint and deadline; answers with what moved. */

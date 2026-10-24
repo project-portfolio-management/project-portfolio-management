@@ -88,7 +88,7 @@ project-portfolio-management-service-with-rust/
 │   │   ├── visibility.rs            lifecycle funnel + readiness
 │   │   ├── insights.rs              executive / financial / technology views
 │   │   ├── oversight.rs             auditor, compliance, regulator extracts
-│   │   ├── tba.rs                   time-based analysis (§12)
+│   │   ├── tba/                     time-based analysis (§12): mod.rs + one file per section
 │   │   ├── compliance.rs            integrity + evidence
 │   │   ├── metrics.rs docs.rs       Prometheus · OpenAPI + Swagger UI
 │   ├── models/                      plans + sub-resource CRUD helpers, _entities/

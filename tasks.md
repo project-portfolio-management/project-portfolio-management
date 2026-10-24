@@ -1762,6 +1762,7 @@ came from grep.
   allocations and reports, giving the last its first unit tests. `auth.rs`
   splits into verifier, ABAC and areas. These are pure moves.
   **Acceptance:** no behavioural diff; the OpenAPI census and all gates pass.
+  **Progress 2026-10-24 (not ticked): `tba.rs` split.** `src/tba.rs` (3,401 lines) is now `src/tba/mod.rs` (the header, shared constants and re-exports) plus eleven files, one per existing section (inputs, outputs, cohort, constraints, flow, cumulative, rollup, attrition, forecast, gauges, persistence) and `tests.rs`, by a script; public paths (`crate::tba::...`) are unchanged and each section imports only the names it uses. 1075 lib tests, the full database suite and clippy `--all-features` pass with no test changed. **Still to do:** `controllers/engineering.rs` by route group, `controllers/visibility.rs` (and its first unit tests), `auth.rs` into verifier, ABAC and areas.
 - [ ] **CQ-16 (S) — Trim dependencies.** Remove `regex`, `include_dir` and
   `futures-util` if unused, sea-orm's `sqlx-sqlite` feature, and the second
   `sha2`; confirm serde_json's `arbitrary_precision` is needed. Add

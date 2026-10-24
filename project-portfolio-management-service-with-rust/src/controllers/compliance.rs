@@ -55,6 +55,21 @@ impl VerifyParams {
     }
 }
 
+/// The verifiers read every plan and every audit row, private ones included, and report counts and the rows that
+/// differ, so they are for administrators (and, with enforcement off, for anyone, as for every write).
+fn require_admin(caller: &crate::auth::MaybeAuthUser) -> Result<()> {
+    if caller.holds_or_open(|c| super::plan_access::is_admin(Some(c))) {
+        return Ok(());
+    }
+    Err(Error::CustomError(
+        axum::http::StatusCode::FORBIDDEN,
+        loco_rs::controller::ErrorDetail::new(
+            "forbidden",
+            "the integrity verifiers cover every record, private ones included: they need access=admin",
+        ),
+    ))
+}
+
 /// Verify row-level record integrity.
 ///
 /// `GET /api/compliance/records/verify?limit=1000`
@@ -65,8 +80,10 @@ impl VerifyParams {
 #[debug_handler]
 async fn verify_records(
     State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
     Query(params): Query<VerifyParams>,
 ) -> Result<Response> {
+    require_admin(&caller)?;
     let rows = plans::Entity::find()
         .order_by_desc(plans::Column::UpdatedAt)
         .limit(params.limit())
@@ -85,8 +102,10 @@ async fn verify_records(
 #[debug_handler]
 async fn verify_audit(
     State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
     Query(params): Query<VerifyParams>,
 ) -> Result<Response> {
+    require_admin(&caller)?;
     let rows = audit_logs::Entity::find()
         .order_by_desc(audit_logs::Column::Id)
         .limit(params.limit())

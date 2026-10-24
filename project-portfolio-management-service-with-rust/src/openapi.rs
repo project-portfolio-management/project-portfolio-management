@@ -61,6 +61,7 @@ fn paths() -> Value {
     merge_object(&mut paths, module_paths());
     merge_object(&mut paths, settings_paths());
     merge_object(&mut paths, crate::openapi_more::paths());
+    crate::openapi_bodies::document_missing(&mut paths);
     document_paging(&mut paths);
     crate::openapi_schemas::attach(&mut paths);
     crate::openapi_bodies::attach(&mut paths);
@@ -74,6 +75,17 @@ fn paths() -> Value {
 /// (and that the ones it cannot reach are named, with a reason), so a new list
 /// cannot go undocumented.
 pub const PAGED_LISTS: &[&str] = &[
+    "/api/ideas",
+    "/api/objectives",
+    "/api/plans/{pid}/allocations",
+    "/api/plans/{pid}/milestones",
+    "/api/plans/{pid}/objectives",
+    "/api/plans/{pid}/risks",
+    "/api/proposals",
+    "/api/proposals/{pid}/duplicates",
+    "/api/reports",
+    "/api/saved-views",
+    "/api/scenarios",
     "/api/governance-frameworks",
     "/api/ways-of-working",
     "/api/approvals",
@@ -2088,84 +2100,6 @@ mod tests {
         );
     }
 
-    /// Write operations (`post`, `put`, `patch`) documented **without** a `requestBody`
-    /// (CQ-8). Some take no body (an `approve`, a POST twin of a delete); the rest are
-    /// documentation debt. The list can only shrink: a new write must document its body,
-    /// and an entry whose operation gains one, or goes, must be removed.
-    const WRITES_WITHOUT_REQUEST_BODY: &[&str] = &[
-        "post /api/actions/{pid}/convert",
-        "post /api/admin/subjects/{subject}/pseudonymise",
-        "post /api/approvals/{pid}/withdraw",
-        "post /api/attachments",
-        "post /api/attachments/{pid}/delete",
-        "post /api/automations/milestones/sweep",
-        "post /api/automations/{pid}/disable",
-        "post /api/automations/{pid}/enable",
-        "post /api/availability/{pid}/delete",
-        "post /api/board/snapshots",
-        "post /api/break-glass/{pid}/revoke",
-        "post /api/comments/{pid}/delete",
-        "post /api/director-pack-schedules/sweep",
-        "post /api/director-packs/{pid}/issue",
-        "post /api/director-packs/{pid}/review",
-        "post /api/documents/{pid}/versions/{version}/make-effective",
-        "post /api/governance-frameworks",
-        "post /api/governance-frameworks/{pid}/delete",
-        "post /api/ledger/reconcile",
-        "post /api/me/feed-token",
-        "post /api/me/feed-token/revoke",
-        "post /api/me/notification-sinks/{pid}/delete",
-        "post /api/me/planned-slots/{pid}/delete",
-        "post /api/notification-sinks/dispatch",
-        "post /api/notifications/{pid}/read",
-        "post /api/onboarding/cases/{pid}/complete",
-        "post /api/plan-templates/{pid}/delete",
-        "post /api/plans/bulk-jobs/sweep",
-        "post /api/plans/bulk-jobs/{id}/cancel",
-        "post /api/plans/import",
-        "post /api/plans/review-queue/{pid}/confirm",
-        "post /api/plans/review-queue/{pid}/reject",
-        "post /api/plans/{pid}/allocations/{a_pid}/commit",
-        "post /api/plans/{pid}/buffer-management/snapshots",
-        "post /api/plans/{pid}/buffer-plan",
-        "post /api/plans/{pid}/change-requests/{cr}/baseline",
-        "post /api/plans/{pid}/change-requests/{cr}/implement",
-        "post /api/plans/{pid}/change-requests/{cr}/review",
-        "post /api/plans/{pid}/change-requests/{cr}/withdraw",
-        "post /api/plans/{pid}/cutover-decisions/{did}/new-version",
-        "post /api/plans/{pid}/cutover-decisions/{did}/open",
-        "post /api/plans/{pid}/cutover-decisions/{did}/publish",
-        "post /api/plans/{pid}/earned-value/snapshot",
-        "post /api/plans/{pid}/goals",
-        "post /api/plans/{pid}/goals/{index}/delete",
-        "post /api/plans/{pid}/guests/{grant}/revoke",
-        "post /api/plans/{pid}/import/asana",
-        "post /api/plans/{pid}/import/jira",
-        "post /api/plans/{pid}/import/mspdi",
-        "post /api/plans/{pid}/issues/from-risk/{risk_pid}",
-        "post /api/plans/{pid}/issues/from-task/{task_pid}",
-        "post /api/plans/{pid}/labour-costs/record",
-        "post /api/plans/{pid}/links/{lpid}/delete",
-        "post /api/plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert",
-        "post /api/plans/{pid}/start-queue/withdraw",
-        "post /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete",
-        "post /api/plans/{pid}/tolerances/escalate",
-        "post /api/plans/{pid}/tolerances/{dimension}/delete",
-        "post /api/process-executions/{pid}/resume",
-        "post /api/report-schedules/sweep",
-        "post /api/report-schedules/{pid}/delete",
-        "post /api/scheduled-actions/sweep",
-        "post /api/sprints/{pid}/commit",
-        "post /api/threshold-sweep",
-        "post /api/ways-of-working",
-        "post /api/ways-of-working/{pid}/delete",
-        "put /api/governance-frameworks/{pid}",
-        "put /api/plans/{pid}/goals/{index}",
-        "put /api/plans/{pid}/governance-framework",
-        "put /api/plans/{pid}/ways-of-working",
-        "put /api/ways-of-working/{pid}",
-    ];
-
     /// CQ-9: the mounted routes as `METHOD /path` lines in `api-routes.txt` at the crate root, so
     /// the UI's tests can check its client's paths against what the service really serves.
     /// Regenerate with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`.
@@ -2189,31 +2123,57 @@ mod tests {
         );
     }
 
-    /// CQ-8: every documented write has a `requestBody`, or is on the shrinking list above.
+    /// Write routes with no request body that the generator cannot see in a handler's signature: the POST twins
+    /// of `DELETE` are registered by a closure that calls the shared remover, and the four proposal pipeline
+    /// steps are made by a macro (`pipeline_handler!`); none of them reads a body.
+    const NO_BODY_BY_CLOSURE: &[&str] = &[
+        "post /api/governance-frameworks/{pid}/delete",
+        "post /api/ways-of-working/{pid}/delete",
+        "post /api/proposals/{pid}/submit",
+        "post /api/proposals/{pid}/review",
+        "post /api/proposals/{pid}/approve",
+        "post /api/proposals/{pid}/reject",
+    ];
+
+    /// CQ-8: every documented write has a `requestBody` or is a route whose handler provably takes none
+    /// (`crate::openapi_bodies::TAKES_NO_BODY`, generated from the handlers' signatures).
     #[test]
-    fn every_documented_write_has_a_request_body_or_is_listed() {
+    fn every_documented_write_has_a_request_body_or_takes_none() {
         use std::collections::BTreeSet;
         let doc = spec();
-        let mut lacking = BTreeSet::new();
+        let none: BTreeSet<&str> = crate::openapi_bodies::TAKES_NO_BODY
+            .iter()
+            .chain(NO_BODY_BY_CLOSURE)
+            .copied()
+            .collect();
+        let mut lacking = Vec::new();
         for (path, item) in doc["paths"].as_object().expect("paths") {
             for method in ["post", "put", "patch"] {
                 if let Some(op) = item.get(method)
                     && op.get("requestBody").is_none()
+                    && !none.contains(format!("{method} {path}").as_str())
                 {
-                    lacking.insert(format!("{method} {path}"));
+                    lacking.push(format!("{method} {path}"));
                 }
             }
         }
-        let listed: BTreeSet<String> = WRITES_WITHOUT_REQUEST_BODY
-            .iter()
-            .map(|s| (*s).to_string())
-            .collect();
-        let new: Vec<&String> = lacking.difference(&listed).collect();
-        assert!(new.is_empty(), "document the request body of: {new:#?}");
-        let stale: Vec<&String> = listed.difference(&lacking).collect();
         assert!(
-            stale.is_empty(),
-            "documented or removed, so take off WRITES_WITHOUT_REQUEST_BODY: {stale:#?}"
+            lacking.is_empty(),
+            "document the request body of: {lacking:#?}"
+        );
+        // A route listed as taking no body that has one documented is a contradiction.
+        let contradicted: Vec<String> = crate::openapi_bodies::TAKES_NO_BODY
+            .iter()
+            .chain(NO_BODY_BY_CLOSURE)
+            .filter(|r| {
+                r.split_once(' ')
+                    .is_some_and(|(m, p)| doc["paths"][p][m].get("requestBody").is_some())
+            })
+            .map(|r| (*r).to_string())
+            .collect();
+        assert!(
+            contradicted.is_empty(),
+            "documented with a body, yet listed as taking none: {contradicted:#?}"
         );
     }
 
@@ -2263,65 +2223,9 @@ mod tests {
     /// the masked/export views, and the docs surface itself, which
     /// documents the API rather than its own pages).
     const KNOWN_UNDOCUMENTED: &[&str] = &[
-        // docs surface
+        // The docs surface documents the API rather than being part of it (the generator skips it).
         "/api-docs/openapi.json",
         "/swagger-ui",
-        // privacy views on the plan record
-        "/api/plans/{pid}/masked",
-        "/api/plans/{pid}/export",
-        // integrity verification
-        "/api/compliance/records/verify",
-        "/api/compliance/audit/verify",
-        // governance (PPM Phase A)
-        "/api/proposals",
-        "/api/proposals/forecast",
-        "/api/proposals/{pid}",
-        "/api/proposals/{pid}/submit",
-        "/api/proposals/{pid}/review",
-        "/api/proposals/{pid}/approve",
-        "/api/proposals/{pid}/reject",
-        "/api/proposals/{pid}/promote",
-        "/api/proposals/{pid}/duplicates",
-        "/api/plans/{pid}/gate-reviews",
-        "/api/plans/{pid}/risks",
-        "/api/plans/{pid}/risks/{risk_pid}",
-        "/api/plans/{pid}/risks/{risk_pid}/escalate",
-        "/api/plans/{pid}/budget-lines",
-        "/api/plans/{pid}/budget-lines/{line_pid}/actual",
-        "/api/plans/{pid}/budget-lines/{line_pid}/release",
-        "/api/plans/{pid}/governance",
-        // strategy (PPM Phase C)
-        "/api/ideas",
-        "/api/ideas/{pid}/vote",
-        "/api/ideas/{pid}/dismiss",
-        "/api/ideas/{pid}/convert",
-        "/api/scenarios",
-        "/api/scenarios/{pid}/evaluate",
-        "/api/scenarios/{pid}/commit",
-        "/api/scenarios/{pid}/rollback",
-        "/api/scenarios/generate",
-        "/api/objectives",
-        "/api/objectives/{pid}/alignment",
-        "/api/plans/{pid}/objectives",
-        "/api/plans/{pid}/benefits",
-        "/api/plans/{pid}/benefits/{b_pid}/realize",
-        // visibility (PPM Phase B)
-        "/api/plans/{pid}/schedule",
-        "/api/plans/{pid}/milestones",
-        "/api/plans/{pid}/milestones/{m_pid}",
-        "/api/plans/{pid}/milestones/{m_pid}/complete",
-        "/api/plans/{pid}/allocations",
-        "/api/plans/{pid}/allocations/{a_pid}",
-        "/api/plans/{pid}/skill-gap",
-        "/api/capacity",
-        "/api/reports",
-        "/api/reports/{pid}",
-        "/api/reports/{pid}/run",
-        "/api/at-a-glance",
-        // per-user saved views (T-28l)
-        "/api/saved-views",
-        "/api/saved-views/{pid}",
-        "/api/saved-views/{pid}/delete",
     ];
 
     /// Every route the controllers mount, as `(path, method)` pairs —
@@ -2569,6 +2473,12 @@ mod tests {
     /// CRUD read, an auth/audit/metrics utility, or a newest-first list
     /// of records with nothing computed across them.
     const NON_DERIVED_GET: &[&str] = &[
+        // Documented from the handlers' own doc comments (CQ-8): plain reads of stored rows.
+        "/api/objectives",
+        "/api/plans/{pid}/allocations",
+        "/api/plans/{pid}/gate-reviews",
+        "/api/proposals/{pid}",
+        "/api/scenarios",
         // Change requests (IR-4): plain record reads, stored fields only.
         "/api/plans/{pid}/change-requests",
         "/api/plans/{pid}/change-requests/{cr}",

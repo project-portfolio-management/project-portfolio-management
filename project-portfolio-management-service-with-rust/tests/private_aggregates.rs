@@ -185,6 +185,10 @@ const PRIVILEGED: &[&str] = &[
     // The access review is administrators only (the `access_review` area), and still leaves out
     // plans the caller cannot read.
     "/api/access-review",
+    // The integrity verifiers read every plan and audit row, private ones included, and report counts and the
+    // rows that differ: administrators only.
+    "/api/compliance/records/verify",
+    "/api/compliance/audit/verify",
     // What named people work on: administrators and resource managers only. It filters out tasks in plans
     // the caller cannot read the same way `/api/me/tasks` does; this census checks the 403/200 split, and
     // the end of the test checks the private-plan filter itself (CF-5).
@@ -204,6 +208,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// Every mounted such route must be here or in one of the lists above, so a new aggregate cannot
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
+    (
+        "/api/scenarios",
+        "the scenarios themselves; each one's member list drops the plans the caller may not read, which the end of this test checks for a non-member (and a member sees them)",
+    ),
     (
         "/api/settings/today-time-zone",
         "a deployment setting (a zone name and the date it gives); it reads no plan",

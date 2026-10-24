@@ -263,6 +263,18 @@ pub fn schemas() -> Value {
             "audience": en(&["executive", "board", "escalation_board", "partner"]), "subscribed": boolean(),
             "person": { "type": "string", "nullable": true, "description": "An editor may subscribe someone else." } })),
         "DirectorPackSubscription": obj(&["audience", "subscribed"], json!({ "audience": s(), "subscribed": boolean() })),
+        "Goal": obj(&["title"], json!({
+            "title": s(), "description": s_null(),
+            "target_date": { "type": "string", "format": "date", "nullable": true },
+            "status": { "nullable": true, "description": "NotStarted, InProgress, Achieved, Missed, or {\"Custom\": \"a label\"}.",
+                        "oneOf": [ en(&["NotStarted", "InProgress", "Achieved", "Missed"]),
+                                   obj(&["Custom"], json!({ "Custom": s() })) ] } })),
+        "FrameworkRecordInput": json!({ "type": "object", "required": ["name"], "additionalProperties": true,
+            "description": "A framework record: `name` (1 to 120 characters), `description?`, `plan_pid?` (create only: the plan that owns it), and the family's own fields, which the operation's description lists. An unknown field is 422.",
+            "properties": { "name": s(), "description": s_null(), "plan_pid": { "type": "string", "format": "uuid", "nullable": true } } }),
+        "FrameworkLinkInput": obj(&[], json!({
+            "framework_pid": { "type": "string", "format": "uuid", "nullable": true, "description": "The record to follow; null unlinks." },
+            "version": { "type": "integer", "nullable": true, "description": "The version to follow; the record's current one when absent." } })),
         "EscalationAcknowledgementInput": obj(&[], json!({ "note": s_null() })),
         "EscalationAcknowledgement": obj(&["escalation_pid", "plan_pid", "level", "acknowledged_by", "acknowledged_at"], json!({
             "escalation_pid": uuid(), "plan_pid": uuid(), "level": int(), "acknowledged_by": s_null(),
@@ -752,6 +764,44 @@ pub const ATTACH: &[Attach] = &[
         "/api/plans/{pid}/escalations/{epid}/resolution",
         Some("EscalationResolutionInput"),
         &[("200", "EscalationResolution")],
+    ),
+    ("post", "/api/plans/{pid}/goals", Some("Goal"), &[]),
+    ("put", "/api/plans/{pid}/goals/{index}", Some("Goal"), &[]),
+    (
+        "post",
+        "/api/ways-of-working",
+        Some("FrameworkRecordInput"),
+        &[],
+    ),
+    (
+        "put",
+        "/api/ways-of-working/{pid}",
+        Some("FrameworkRecordInput"),
+        &[],
+    ),
+    (
+        "post",
+        "/api/governance-frameworks",
+        Some("FrameworkRecordInput"),
+        &[],
+    ),
+    (
+        "put",
+        "/api/governance-frameworks/{pid}",
+        Some("FrameworkRecordInput"),
+        &[],
+    ),
+    (
+        "put",
+        "/api/plans/{pid}/ways-of-working",
+        Some("FrameworkLinkInput"),
+        &[],
+    ),
+    (
+        "put",
+        "/api/plans/{pid}/governance-framework",
+        Some("FrameworkLinkInput"),
+        &[],
     ),
 ];
 

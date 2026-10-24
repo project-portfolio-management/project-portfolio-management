@@ -195,3 +195,14 @@ instance re-reads it within a minute, so a change reaches all instances
 without a restart. Until an administrator sets it, "today" is the UTC date,
 exactly as before. It changes which calendar day a portfolio-wide default or
 "overdue" test means; it never moves a stored date or instant.
+
+Audit of every use of "today" (CQ-13, 2026-10-24): the 93 `deployment_today()` calls are of three
+kinds, and all are deployment-wide on purpose. (1) *Views and defaults over the portfolio* (earned
+value `as_of`, thresholds, tolerances, KPIs, oversight, visibility, insights, de-escalation quarter
+windows, the time report's `to`, the effort window). Two people in different zones must read one
+answer, so these follow the administrator's zone. (2) *Dates stamped on a record* (`decided_on`,
+`signed_on`, `declared_on`, `taken_on`, `closed_on`, `requested_on`, `acted_on` and similar). A stored
+date must not depend on which viewer's zone made the request, so it is the deployment date. (3) *The
+schedulers* (`pack_rhythm::run_due`), which run with no caller at all. The only per-person days are
+`GET /api/me/tasks` and the notification digest, which already take the caller's zone (`?tz=`).
+No default was moved. A report that wants a person's own day passes `from`/`to` explicitly.

@@ -1737,7 +1737,7 @@ came from grep.
   **Acceptance:** unit test of the allow-list; a request test checks the 409
   body carries no database message.
   **Built 2026-10-21.** `controllers::advisory_lock(txn, scope, pid)` replaces seven formatted lock statements (the pass named only `sandbox.rs`; there were seven); retention's `condition()` writes `$1` and the count and delete bind the cut-off; `subjects::is_plain_identifier` guards `touch()`; the 409 logs the `DbErr` and says only which column. Unit tests for the identifiers and the condition. **Deviation, stated:** no request test makes the pseudonymisation update fail to inspect the 409 body (the failure needs a constraint violation the fixtures do not produce); the change is a removed interpolation, read in review.
-- [ ] **CQ-13 (M) — "Today" in the deployment's zone.** There are 93
+- [x] **CQ-13 (M) — "Today" in the deployment's zone.** There are 93
   `Utc::now().date_naive()` calls against 14 uses of `tz::local_today`. Audit
   each `today` or `as_of` default against the spec, move the ones that should
   follow the zone to `tz::local_today`, and add a `clippy.toml` disallowed
@@ -1746,6 +1746,7 @@ came from grep.
   each moved default.
   **Progress 2026-10-23 (not ticked).** All 93 calls now go through `tz::utc_today()`; census test `tz::no_raw_utc_today_outside_this_file`. **Still to do:** audit each default against the spec and move personal ones to `local_today` with the UTC−10 test.
   **Progress 2026-10-24 (not ticked).** The deployment-wide "today" is now an explicit administrator setting, since the software is used in several zones at once. `tz::utc_today()` became `tz::deployment_today()` at all 93 sites and reads a zone (UTC until set) kept in `deployment_settings` and re-read by every instance each minute. `GET`/`PUT`/`DELETE /api/settings/today-time-zone` (admin only, audited, `422` for a non-IANA name); spec §7.x and §9.2g; unit test of UTC−10 and daylight saving through `deployment_today_at`; request test `today_time_zone` (default, 403, 422, set, audit row, convergence by refresh). **Still to do:** the per-site audit of which defaults should be personal (`local_today`) rather than deployment-wide; a screen for the setting.
+  **Done 2026-10-24 (ticked).** Per-site audit written into spec §7.x: all 93 are portfolio-wide views, record stamps or scheduler runs and stay deployment-wide; the two personal views already use `local_today` with `?tz=`. No default moved, so the "UTC−10 test per moved default" is satisfied by the zone tests that exist (`deployment_today_at` at UTC−10 and Auckland daylight saving; `today_time_zone`). **Not done:** the `clippy.toml` disallowed method (the raw `Utc::now().date_naive()` is banned by the census test `no_raw_deployment_today_outside_this_file` instead, because a disallowed `date_naive` would also ban `local_today`); no request-level test shows one particular endpoint's default following the zone; no screen for the setting (UI).
 - [x] **CQ-14 (S) — Lints reach the tests, and stale allows show.** Move the
   lints to a `[lints]` table in `Cargo.toml`, so the integration tests get
   pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove

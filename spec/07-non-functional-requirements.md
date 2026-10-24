@@ -60,8 +60,11 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   further than the owner's rule for writes: an unrecorded export or break-glass use is the case an audit trail
   exists for.) Any other audited read is answered, and the failure is logged at error level and counted in
   `audit_write_failed_total`, which an operator should alert on. An audit outage therefore stops writes and those
-  reads; that is the intended trade. **Status:** built for about two thirds of the audited writes (150 of about 230); the logged-and-counted
-  fallback still runs for the rest. `tasks.md` CQ-3 says which remain, and a census test keeps that list from growing.
+  reads; that is the intended trade. **Status:** built, with named exceptions. Audits of something already done with no caller to refuse (an
+  automation run or scheduled action that has fired, a background job's end, a failed report run), the
+  register-incomplete warning and the record of a refused upload are logged and counted, not refused; a census test
+  names them and keeps that list from growing. MS Project import fails the request on a failed audit but is not one
+  transaction (it is idempotent).
 - **NFR-7 — Observability.** Structured tracing (`tracing` +
   `tracing-subscriber`, JSON logs in production); OTLP traces /
   metrics / logs *(roadmap)* per

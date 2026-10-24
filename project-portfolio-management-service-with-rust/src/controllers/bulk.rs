@@ -306,8 +306,10 @@ async fn import(
         caller.actor(),
     )
     .await?;
+    // The job row and the audit row of its request are one change.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let job = new_job(
-        &ctx,
+        &txn,
         "import",
         format,
         key,
@@ -316,14 +318,10 @@ async fn import(
         Some(source.pid),
     )
     .await?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        job.pid,
-        "bulk_import_requested",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, job.pid, "bulk_import_requested", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     queue_job(&ctx, &job).await?;
     // Re-read: in the foreground profile the job has already run.
     let fresh = find_job(&ctx, &job.pid.to_string(), None)
@@ -332,8 +330,8 @@ async fn import(
     Ok(accepted(&fresh))
 }
 
-async fn new_job(
-    ctx: &AppContext,
+async fn new_job<C: ConnectionTrait>(
+    db: &C,
     kind: &str,
     format: &str,
     key: Option<String>,
@@ -368,7 +366,7 @@ async fn new_job(
         cancelled_by: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(db)
     .await
     .map_err(db_err)
 }
@@ -453,7 +451,7 @@ async fn export(
         .collect();
     let omitted = candidates.len() - pids.len();
     let job = new_job(
-        &ctx,
+        &ctx.db,
         "export",
         format,
         None,
@@ -497,6 +495,7 @@ async fn cancel_job(
     let who = caller.actor().map(str::to_string);
     // Queued: cancel it before it starts. The claim in `run_job` needs `queued`, so
     // the two cannot both win.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let queued = bulk_jobs::Entity::update_many()
         .col_expr(bulk_jobs::Column::Status, Expr::value("cancelled"))
         .col_expr(bulk_jobs::Column::CancelledBy, Expr::value(who.clone()))
@@ -505,7 +504,7 @@ async fn cancel_job(
         .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
         .filter(bulk_jobs::Column::Pid.eq(job.pid))
         .filter(bulk_jobs::Column::Status.eq("queued"))
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(db_err)?;
     let (changed, kind) = if queued.rows_affected == 1 {
@@ -518,21 +517,23 @@ async fn cancel_job(
             .filter(bulk_jobs::Column::Pid.eq(job.pid))
             .filter(bulk_jobs::Column::Status.eq("running"))
             .filter(bulk_jobs::Column::CancelRequestedAt.is_null())
-            .exec(&ctx.db)
+            .exec(&txn)
             .await
             .map_err(db_err)?;
         (running.rows_affected == 1, "bulk_job_cancel_requested")
     };
     if changed {
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record(
+            &txn,
             job.pid,
             kind,
             caller.actor(),
             Some(serde_json::json!({ "kind": job.kind })),
         )
-        .await;
+        .await
+        .map_err(super::audit_failed)?;
     }
+    txn.commit().await.map_err(db_err)?;
     let now_job = find_job(&ctx, &id, None).await?;
     format::json(serde_json::json!({
         "job_id": now_job.pid,

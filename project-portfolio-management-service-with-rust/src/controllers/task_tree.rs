@@ -180,15 +180,16 @@ async fn set_order(
             active.update(&txn).await.map_err(db_err)?;
         }
     }
-    txn.commit().await.map_err(db_err)?;
-    crate::models::audit_logs::Model::record_or_log(
-        &ctx.db,
+    crate::models::audit_logs::Model::record(
+        &txn,
         plan.pid,
         "task_order_set",
         caller.actor(),
         Some(serde_json::json!({ "parent_task_pid": body.parent_task_pid, "order": body.order })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "parent_task_pid": body.parent_task_pid,
         "order": body.order,

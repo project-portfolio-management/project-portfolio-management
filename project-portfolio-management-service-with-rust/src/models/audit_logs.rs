@@ -144,20 +144,19 @@ mod tests {
     }
 
     /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
-    /// write. `record_or_log` (log, count, keep the write) is for the writes not yet moved and for audited reads.
-    /// This list can only shrink: a file's count may go down (then lower it here), never up, and a file not
-    /// named here may not call it. Today: 14 calls in 8 controllers.
+    /// write. `record_or_log` (log, count, keep) is what remains for audits of something **already done with
+    /// no caller to refuse**, or that is not a change: the audit of an automation run or a scheduled action
+    /// that has fired, of a background job's end, of a report run that failed, the warning that a register is
+    /// incomplete, and the record that a scan refused an upload. This list can only shrink: a file's count may
+    /// go down (then lower it here), never up, and a file not named here may not call it.
     #[test]
     fn the_writes_that_still_keep_a_failed_audit_only_shrink() {
         const KNOWN: &[(&str, usize)] = &[
             ("attachments.rs", 1),
-            ("automation.rs", 4),
-            ("bulk.rs", 4),
-            ("mspdi_export.rs", 1),
-            ("mspdi_import.rs", 1),
+            ("automation.rs", 2),
+            ("bulk.rs", 2),
             ("register.rs", 1),
             ("report_schedules.rs", 1),
-            ("task_bulk.rs", 1),
         ];
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
         let mut faults = Vec::new();
@@ -172,7 +171,7 @@ mod tests {
                 .to_string_lossy()
                 .to_string();
             let text = std::fs::read_to_string(&path).expect("read file");
-            let found = text.matches("AuditModel::record_or_log(").count();
+            let found = text.matches("record_or_log(").count();
             let allowed = KNOWN
                 .iter()
                 .find(|(f, _)| *f == name)

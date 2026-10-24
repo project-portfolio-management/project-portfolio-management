@@ -370,17 +370,20 @@ async fn board_investments(
 /// series only ever contains what was actually captured.
 #[debug_handler]
 async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let row = crate::snapshots::capture(&ctx.db)
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = crate::snapshots::capture(&txn)
         .await
         .map_err(Error::Model)?;
-    crate::models::audit_logs::Model::record_or_log(
-        &ctx.db,
+    crate::models::audit_logs::Model::record(
+        &txn,
         Uuid::new_v4(),
         "snapshot_taken",
         caller.actor(),
         Some(serde_json::json!({ "snapshot_id": row.id })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 

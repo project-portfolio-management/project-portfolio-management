@@ -20,7 +20,7 @@ use crate::models::_entities::{budget_lines, insight_snapshots, plans, risks};
 /// # Errors
 ///
 /// Returns the model error if a query or the insert fails.
-pub async fn capture(db: &DatabaseConnection) -> Result<insight_snapshots::Model, ModelError> {
+pub async fn capture<C: ConnectionTrait>(db: &C) -> Result<insight_snapshots::Model, ModelError> {
     let items = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
         .all(db)

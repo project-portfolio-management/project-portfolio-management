@@ -217,10 +217,24 @@ pub(super) async fn edit_one(
     active.due_date = ActiveValue::set(new_due);
     active.start_date = ActiveValue::set(new_start);
     active.component_pid = ActiveValue::set(new_component);
-    if let Err(e) = active.update(&ctx.db).await {
+    // The change and its audit row are one change: an item whose audit row cannot be written is refused.
+    let txn = match ctx.db.begin().await {
+        Ok(t) => t,
+        Err(e) => return ItemResult::refused(pid, e.to_string()),
+    };
+    if let Err(e) = active.update(&txn).await {
         return ItemResult::refused(pid, e.to_string());
     }
-    AuditModel::record_or_log(&ctx.db, pid, audit_kind, caller.actor(), audit_detail).await;
+    if let Err(e) = AuditModel::record(&txn, pid, audit_kind, caller.actor(), audit_detail).await {
+        let _ = super::audit_failed(e);
+        return ItemResult::refused(
+            pid,
+            "the change was not made because it could not be recorded",
+        );
+    }
+    if let Err(e) = txn.commit().await {
+        return ItemResult::refused(pid, e.to_string());
+    }
     if let Change::Set(who) = assignee {
         cap_models::notify(
             &ctx.db,

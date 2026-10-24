@@ -780,11 +780,16 @@ async fn act_shift_dependents(
         plan.start_date = shift.proposed_start.map(|d| d.to_string());
         plan.target_date = shift.proposed_end.map(|d| d.to_string());
         let active: plans::ActiveModel = model.into();
-        if active.update_data(&ctx.db, &plan).await.is_err() {
+        // The shift, its run record and its audit row are one change: a shift that cannot be audited is not
+        // made (the rule never blocks the action that triggered it, so it is skipped, and logged).
+        let Ok(txn) = ctx.db.begin().await else {
+            continue;
+        };
+        if active.update_data(&txn, &plan).await.is_err() {
             continue;
         }
         cap_models::record_run(
-            &ctx.db,
+            &txn,
             rule_pid,
             "plan",
             shift.successor_pid,
@@ -800,14 +805,21 @@ async fn act_shift_dependents(
         )
         .await
         .ok();
-        AuditModel::record_or_log(
-            &ctx.db,
+        if let Err(error) = AuditModel::record(
+            &txn,
             shift.successor_pid,
             "automation_shifted_dependent",
             actor,
             Some(serde_json::json!({ "edge_pid": shift.edge_pid.to_string() })),
         )
-        .await;
+        .await
+        {
+            let _ = super::audit_failed(error);
+            continue;
+        }
+        if txn.commit().await.is_err() {
+            continue;
+        }
         moved.push(shift.successor_pid.to_string());
     }
     (
@@ -1109,8 +1121,9 @@ async fn create_scheduled_action(
         return Err(unprocessable(&problems.join("; ")));
     }
     let due_at = chrono::Utc::now() + chrono::Duration::days(payload.in_days);
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = cap_models::schedule(
-        &ctx.db,
+        &txn,
         cap_models::NewScheduledAction {
             subject_kind: payload.subject_kind.clone(),
             subject_pid: payload.subject_pid,
@@ -1125,8 +1138,8 @@ async fn create_scheduled_action(
         },
     )
     .await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "scheduled_action_created",
         caller.actor(),
@@ -1135,7 +1148,9 @@ async fn create_scheduled_action(
             "due_at": row.due_at.to_rfc3339(),
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 

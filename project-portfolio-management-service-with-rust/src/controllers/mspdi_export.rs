@@ -233,14 +233,15 @@ async fn export(
         &links,
         calendar.as_ref(),
     );
-    AuditModel::record_or_log(
+    AuditModel::record(
         &ctx.db,
         plan.pid,
         "mspdi_export",
         caller.actor(),
         Some(serde_json::json!({ "tasks": ms_tasks.len(), "links": links.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
     Ok((
         [
             (

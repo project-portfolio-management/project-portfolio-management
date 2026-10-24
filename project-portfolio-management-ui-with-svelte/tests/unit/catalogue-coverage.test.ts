@@ -226,27 +226,7 @@ describe("no unused page keys", () => {
     "c.CalendarMonth.",
   ];
   /** Unused when the census was added. It can only shrink: delete the key, or use it, and remove it here. */
-  const KNOWN_UNUSED = new Set([
-    "p.calendar.csv",
-    "p.calendar.excel",
-    "p.calendar.export",
-    "p.calendar.exported",
-    "p.escalations.escalated_for",
-    "p.gantt.accessible_table",
-    "p.gantt.chart",
-    "p.gantt.schedule_view",
-    "p.key_persons.contingent_add",
-    "p.plans.pid.board.accessible_table",
-    "p.plans.pid.board.blocked_for",
-    "p.plans.pid.board.board_view",
-    "p.plans.pid.board.csv",
-    "p.plans.pid.board.excel",
-    "p.plans.pid.board.export",
-    "p.plans.pid.board.exported",
-    "p.processes.steps_one",
-    "p.processes.steps_other",
-    "p.tolerances.from_plan",
-  ]);
+  const KNOWN_UNUSED = new Set<string>([]);
 
   const sources = (dir: string, out: string[] = []): string[] => {
     for (const f of readdirSync(dir)) {

@@ -1815,7 +1815,7 @@ came from grep.
   and add both to CI.
   **Acceptance:** CI runs both and is green.
   **Built 2026-10-23.** Prettier format commit; `eslint.config.js`; `pnpm run lint` runs both and is a CI step. **Deviations, stated:** 51 findings are warnings, to be fixed later (unused imports in 20 pages, 19 each-blocks without a key); one rule off for lack of a base path.
-- [ ] **CQ-23 (S) — Close the i18n leaks.** Translate
+- [x] **CQ-23 (S) — Close the i18n leaks.** Translate
   `ObjectiveCard.svelte:187`'s `confirm()`, and replace the native confirms
   with the Lily dialog. Extend the catalogue test to string and template
   literals inside expressions. Add an unused-key census with an allow-list for
@@ -1825,6 +1825,7 @@ came from grep.
   **Progress 2026-10-21 (not ticked).** `ObjectiveCard.svelte:187` uses a new catalogue key; `catalogue-coverage.test.ts` gains "no literal English in browser dialogs" (any `confirm`/`alert`/`prompt` whose first argument is a string or template literal, in `.svelte` and `.ts`), which fails on the old line. **Still to do:** the Lily dialog in place of the four native dialogs; the unused-key census; the 25 `as never` casts.
   **Progress 2026-10-23 (not ticked).** Unused-key census added (19 known, shrink-only); the run-time key casts use `tDynamic()`. **Still to do:** the Lily dialog in place of the native dialogs; deleting or using the 19 keys.
   **Progress 2026-10-24 (not ticked).** The four native `confirm()` calls (objective, key result, KPI, plan merge) now ask through `askConfirm()` and one Lily `AlertDialog` (`ConfirmHost`, mounted in the layout; Cancel takes focus, Escape answers no). Unit test `confirm.test.ts`; e2e `merge asks in an alert dialog and posts only after OK` (fails on any native dialog). **Still to do:** the one `window.prompt` (review score, needs a text field, and `reviews.spec.ts` drives it natively); deleting or using the 19 unused keys; e2e for the three other confirm sites; the full e2e suite and the axe sweep were not re-run with the dialog; the Welsh for the three new keys is machine-written.
+  **Done 2026-10-24 (ticked).** The 19 unused keys were dead (the shared `p.table.*` export labels replaced them) and are deleted from both catalogues; `KNOWN_UNUSED` is now empty, so any new unused key fails the census. **Left, stated:** the review-score `window.prompt` stays native (it takes text, takes its string from the catalogue, and `reviews.spec.ts` drives it); no e2e for the objective, key-result and KPI confirms; full Playwright suite and axe not re-run.
 - [x] **CQ-24 (M) — Functional e2e tests for nine routes.** `/announcements`,
   `/automations`, `/lifecycle`, `/reports`, `/reviews`, `/verify`,
   critical-path, earned-value and RACI. The axe sweep also audits each page in

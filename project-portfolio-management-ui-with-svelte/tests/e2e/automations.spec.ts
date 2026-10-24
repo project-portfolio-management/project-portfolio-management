@@ -3,7 +3,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const SUBJECT = "33333333-3333-4333-8333-333333333333";
-const RULE = { pid: "u1", plan_pid: null, name: "Assign reviewer on review", trigger_kind: "task_moved", from_status: "in_progress", to_status: "in_review", action_kind: "assign", action_value: { assignee_ref: "person:x" }, enabled: true };
+const RULE = { pid: "u1", plan_pid: null, name: "Assign reviewer on review", trigger_kind: "task_moved", from_status: "in_progress", to_status: "in_review", actions: [{ kind: "assign", value: { assignee_ref: "person:x" } }], enabled: true };
 const SCHEDULED = { pid: "s1", subject_kind: "review", subject_pid: SUBJECT, action_kind: "notify", payload: {}, due_at: "2026-11-01T09:00:00Z", status: "pending", source_automation_pid: null, created_by: null, fired_at: null, outcome: null };
 const RUN = { pid: "n1", automation_pid: "u1", subject_kind: "task", subject_pid: SUBJECT, outcome: "failed", detail: { reason: "no such person" }, created_at: "2026-10-12T09:00:00Z" };
 
@@ -65,7 +65,7 @@ test.describe("automations", () => {
     await page.getByLabel(/^action/).selectOption("add_label");
     await page.getByLabel(/^label/).fill("shipped");
     await page.getByRole("button", { name: "Save rule" }).click();
-    await expect.poll(() => s.bodies["/api/automations"]).toMatchObject({ name: "Label done work", trigger_kind: "task_moved", from_status: "in_review", to_status: "done", action_kind: "add_label", action_value: { label: "shipped" } });
+    await expect.poll(() => s.bodies["/api/automations"]).toMatchObject({ name: "Label done work", trigger_kind: "task_moved", from_status: "in_review", to_status: "done", actions: [{ kind: "add_label", value: { label: "shipped" } }] });
     await expect(page.getByText("Rule saved — it fires from the next matching move")).toBeVisible();
   });
 

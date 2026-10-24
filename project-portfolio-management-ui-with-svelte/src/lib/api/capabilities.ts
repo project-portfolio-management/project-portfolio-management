@@ -106,8 +106,8 @@ export interface Automation {
   trigger_kind: TriggerKind;
   from_status: string | null;
   to_status: string | null;
-  action_kind: ActionKind;
-  action_value: Record<string, unknown>;
+  /** What the rule does, in order. */
+  actions: { kind: ActionKind; value: Record<string, unknown> }[];
   enabled: boolean;
 }
 
@@ -386,8 +386,8 @@ export class CapabilityClient {
     trigger_kind: TriggerKind;
     from_status?: string;
     to_status?: string;
-    action_kind: ActionKind;
-    action_value: Record<string, unknown>;
+    /** What the rule does, in order: each is `{ kind, value }`; at least one, at most the service's cap. */
+    actions: { kind: ActionKind; value: Record<string, unknown> }[];
   }): Promise<Automation> {
     return this.http.post("/api/automations", { body });
   }

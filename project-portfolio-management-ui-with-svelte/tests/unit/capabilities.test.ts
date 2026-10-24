@@ -56,8 +56,7 @@ describe("CapabilityClient paths", () => {
       name: "Route reviews",
       trigger_kind: "task_moved",
       to_status: "in_review",
-      action_kind: "assign",
-      action_value: { assignee_ref: "person:u1" },
+      actions: [{ kind: "assign", value: { assignee_ref: "person:u1" } }],
     });
     await api.setAutomationEnabled("a1", false);
     await api.setAutomationEnabled("a1", true);

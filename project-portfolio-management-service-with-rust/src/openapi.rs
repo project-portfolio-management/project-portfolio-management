@@ -2177,6 +2177,23 @@ mod tests {
         );
     }
 
+    /// CQ-9: the OpenAPI document as a file, so the UI can generate its types from it and a change to the API shows
+    /// in review. Regenerate with `UPDATE_OPENAPI_JSON=1 cargo test --lib openapi_json_file`.
+    #[test]
+    fn openapi_json_file_is_current() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("openapi.json");
+        let mut text = serde_json::to_string_pretty(&spec()).expect("serialise");
+        text.push('\n');
+        if std::env::var_os("UPDATE_OPENAPI_JSON").is_some() {
+            std::fs::write(&path, &text).expect("write openapi.json");
+        }
+        let have = std::fs::read_to_string(&path).unwrap_or_default();
+        assert!(
+            have == text,
+            "openapi.json is stale; regenerate with UPDATE_OPENAPI_JSON=1 cargo test --lib openapi_json_file"
+        );
+    }
+
     /// CQ-8: the request bodies derived from the handlers' own types are usable in an `OpenAPI` 3.0 document:
     /// inline (no `$ref` or `$defs` that point nowhere) and without the JSON Schema 2020-12 vocabulary 3.0 lacks.
     #[test]

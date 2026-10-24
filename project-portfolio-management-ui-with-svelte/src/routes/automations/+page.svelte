@@ -106,8 +106,7 @@
         trigger_kind: triggerKind,
         from_status: triggerKind === "task_moved" && fromStatus ? fromStatus : undefined,
         to_status: triggerKind === "task_moved" && toStatus ? toStatus : undefined,
-        action_kind: actionKind,
-        action_value: actionValue(),
+        actions: [{ kind: actionKind, value: actionValue() }],
       });
       notice = t("p.automations.rule_saved_it_fires_from");
       error = null;
@@ -148,7 +147,7 @@
     { id: "name", header: t("p.automations.name_2"), rowHeader: true },
     { id: "plan_pid", header: t("p.automations.scope"), format: (v) => (v ? `${String(v).slice(0, 8)}…` : t("p.automations.every_plan")) },
     { id: "trigger", header: t("p.automations.trigger_2"), accessor: (r) => { const x = rowOf<Rule>(r); return `${x.trigger_kind}${x.from_status || x.to_status ? ` (${x.from_status ?? t("p.automations.any")} → ${x.to_status ?? t("p.automations.any")})` : ""}`; } },
-    { id: "action_kind", header: t("p.automations.action_2") },
+    { id: "actions", header: t("p.automations.action_2"), accessor: (r) => rowOf<Rule>(r).actions.map((a) => a.kind).join(", ") },
     { id: "enabled", header: t("p.automations.state"), format: (v) => (v ? t("p.automations.on") : t("p.automations.off")) },
     { id: "pid", header: "", sortable: false, cell: ruleActions },
   ]);

@@ -380,7 +380,9 @@
   {#if data.demo}
     <p class="demo-banner" role="note">{t("p.demo.banner")} <a href={localeHref("/demo")}>{t("p.demo.banner_tour")}</a></p>
   {/if}
-  <main>{@render children()}</main>
+  <!-- A page that loads once on mount must start again when only the id in the address changes (CQ-18):
+       SvelteKit reuses the component for /plans/A/wbs → /plans/B/wbs, so key the page on its ids. -->
+  <main>{#key `${page.params.pid ?? ""}/${page.params.tpid ?? ""}`}{@render children()}{/key}</main>
   <ConfirmHost />
 </div>
 

@@ -2,10 +2,10 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup, fireEvent } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 
-// The layout reads `page.url.pathname` for `aria-current`; a static page is
-// enough to render the top bar.
+// The layout reads `page.url.pathname` for `aria-current` and `page.params` to key the page
+// (CQ-18); a static page is enough to render the top bar.
 vi.mock("$app/state", () => ({
-  page: { url: new URL("http://localhost/") },
+  page: { url: new URL("http://localhost/"), params: {} },
 }));
 
 // The layout now imports the i18n store, which seeds from localStorage behind

@@ -1777,13 +1777,14 @@ came from grep.
   independent awaits with `Promise.all`.
   **Acceptance:** a Playwright test counts one request per filter change.
   **Built 2026-10-21.** Calendar and flow: the effect passes the filter to `load(filter)` (so it is tracked), the handler only sets it, a `latest` counter drops stale answers, `error` clears on success. Board: the effect tracked nothing (no double load there); its reads now run as `Promise.all` of four, then of two. `tests/e2e/load-once.spec.ts` (calendar, flow) counts requests; checked that it fails (3, not 2) with the old handler call restored. Full check, vitest and Playwright pass.
-- [ ] **CQ-18 (M) — Param pages follow the URL.** 27 pages load in `onMount`,
+- [x] **CQ-18 (M) — Param pages follow the URL.** 27 pages load in `onMount`,
   and five hold a non-reactive `pid` (`plans/[pid]/+page.svelte:19` links to
   other plans). Move the loading into `+page.ts` `load`, or key it on a
   `$derived` pid.
   **Acceptance:** an e2e test follows a duplicate link from one plan to another
   and sees the second plan's name.
   **Progress 2026-10-21 (not ticked: 25 pages left).** The five pages that held a constant `pid` now use `$derived`: the plan page and its edit page reload in an `$effect` keyed on it with a stale-answer guard (the edit form sits in `{#key pid}`); board and flow already loaded in an effect, which now tracks the id (the board resets its sprint). `tests/e2e/plan-navigation.spec.ts` passes, and fails (shows "Website replatform") on the old page. **Still to do:** 25 `[pid]` pages load in `onMount`; move them to `+page.ts` `load` or the same effect pattern, best together with CQ-20's `resource()` helper.
+  **Done 2026-10-24 (ticked, by a different route).** The root layout now keys the page on its route ids (`{#key pid/tpid}` around `children()`), so every `[pid]` and `[tpid]` page starts again, `onMount` included, when only an id changes; no page was edited. `plan-navigation.spec.ts` gained a test that moves client-side from one plan's WBS to another's and sees the second plan's tasks; it failed before the key and passes after. **Trade-offs, stated:** a move between two plans remounts the page, so a half-filled form is lost (which is what a new plan should do); the pages still load in `onMount`, so CQ-20's `resource()` helper is not done by this. Only the WBS is tested; the other 21 pages rely on the same mechanism (`director-packs/[pid]` and `documents/[pid]` too).
 - [x] **CQ-19 (S–M) — No silent UI failures.** WBS link counts
   (`wbs/+page.svelte:30`), plan modules (`plans/[pid]/+page.svelte:77`), the
   Gantt calendar, the announcements downgrade on any error, the

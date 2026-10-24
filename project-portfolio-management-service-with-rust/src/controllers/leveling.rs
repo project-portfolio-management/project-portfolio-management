@@ -33,8 +33,8 @@ fn conflict(code: &str, message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new(code, message))
 }
 
-#[derive(Debug, Deserialize)]
-struct LevelingParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LevelingParams {
     /// Let a critical task move; the finish impact is then stated.
     #[serde(default)]
     allow_critical: bool,
@@ -242,14 +242,14 @@ async fn propose(
     format::json(shape(&c, &caller, q.allow_critical, percent))
 }
 
-#[derive(Debug, Deserialize)]
-struct ApplyMove {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ApplyMove {
     task_pid: Uuid,
     start_date: NaiveDate,
 }
 
-#[derive(Debug, Deserialize)]
-struct ApplyBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ApplyBody {
     /// The moves to apply, as proposed.
     moves: Vec<ApplyMove>,
     /// Must be `true`: applying is a decision, not a side effect of reading.

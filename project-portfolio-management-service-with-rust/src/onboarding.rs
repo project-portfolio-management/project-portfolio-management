@@ -62,7 +62,7 @@ impl Kind {
 }
 
 /// One checklist item of a template.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Seed {
     /// What to do.
     pub title: String,

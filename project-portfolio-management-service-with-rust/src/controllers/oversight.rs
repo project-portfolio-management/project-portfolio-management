@@ -93,8 +93,8 @@ fn authorize_oversight_read(caller: &MaybeAuthUser) -> Result<()> {
 
 /// A `?from=&to=` window (dates or RFC 3339 instants); defaults to the
 /// trailing 90 calendar days.
-#[derive(Debug, Deserialize)]
-struct WindowQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct WindowQuery {
     from: Option<String>,
     to: Option<String>,
 }
@@ -388,8 +388,8 @@ async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> 
 }
 
 /// Query for the trend series: optional result cap.
-#[derive(Debug, Deserialize)]
-struct TrendsQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TrendsQuery {
     /// Maximum snapshots returned (default 100, cap 500), oldest first.
     limit: Option<u64>,
 }
@@ -434,8 +434,8 @@ async fn board_trends(
 // ─── Auditor ────────────────────────────────────────────────────────────────
 
 /// Query for the audit-trail explorer.
-#[derive(Debug, Deserialize)]
-struct TrailQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TrailQuery {
     actor: Option<String>,
     action: Option<String>,
     /// Entity pid filter.
@@ -648,8 +648,8 @@ async fn auditor_findings(
 }
 
 /// Query for the evidence pack: window + format.
-#[derive(Debug, Deserialize)]
-struct EvidenceQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EvidenceQuery {
     from: Option<String>,
     to: Option<String>,
     /// `json` (default) or `csv` (flat audit rows).
@@ -741,8 +741,8 @@ async fn compliance_register(
 }
 
 /// Query for conformance findings: the gate-recency threshold.
-#[derive(Debug, Deserialize)]
-struct ConformanceQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ConformanceQuery {
     /// Calendar days an unfinished, target-dated item may go without a gate
     /// review before it is a finding (default 90, cap 365).
     review_days: Option<u32>,

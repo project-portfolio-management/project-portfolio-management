@@ -37,7 +37,7 @@ fn bad_request(code: &str, message: &str) -> Response {
 }
 
 /// `?limit=` / `?offset=` for a handler that pages in the database.
-#[derive(Debug, Default, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
 pub struct PageQuery {
     /// Page size.
     #[serde(default)]

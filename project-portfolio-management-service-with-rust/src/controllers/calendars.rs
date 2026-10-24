@@ -110,8 +110,8 @@ fn view(row: Option<&work_calendars::Model>, default_note: &str) -> serde_json::
 }
 
 /// `PUT` body for both calendars.
-#[derive(Debug, Deserialize)]
-struct CalendarBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CalendarBody {
     weekdays: String,
     #[serde(default)]
     holidays: Vec<NaiveDate>,

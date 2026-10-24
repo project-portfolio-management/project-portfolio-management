@@ -88,8 +88,8 @@ fn view(c: &change_requests::Model, links: Option<&(Vec<Uuid>, Vec<Uuid>)>) -> s
     })
 }
 
-#[derive(Debug, Deserialize)]
-struct Input {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Input {
     title: String,
     description: String,
     reason: String,
@@ -249,8 +249,8 @@ async fn update(
     format::json(view(&row, Some(&links)))
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]
@@ -348,8 +348,8 @@ async fn step(
     format::json(view(&row, Some(&links)))
 }
 
-#[derive(Debug, Deserialize)]
-struct SubmitBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubmitBody {
     approver_ref: String,
 }
 
@@ -406,8 +406,8 @@ async fn review(
     step(&ctx, &caller, row, Action::Review, |_| {}).await
 }
 
-#[derive(Debug, Deserialize)]
-struct DecisionBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecisionBody {
     /// `approve` or `reject`.
     decision: String,
     reason: String,
@@ -483,8 +483,8 @@ async fn withdraw(
     step(&ctx, &caller, row, Action::Withdraw, |_| {}).await
 }
 
-#[derive(Debug, Deserialize)]
-struct LinksBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinksBody {
     #[serde(default)]
     issue_pids: Vec<Uuid>,
     #[serde(default)]
@@ -674,8 +674,8 @@ async fn baseline(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct PortfolioParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PortfolioParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

@@ -129,8 +129,8 @@ fn etag(person: &str, to: Option<&str>, h: &[Holding]) -> String {
     crate::sandbox::fingerprint(&parts)
 }
 
-#[derive(Debug, Deserialize)]
-struct Body {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Body {
     from_person: String,
     /// Who takes it; null releases the work (tasks unassigned, bookings ended).
     #[serde(default)]

@@ -46,8 +46,8 @@ async fn find_sprint(ctx: &AppContext, raw: &str) -> Result<sprints::Model> {
 }
 
 /// `POST /api/sprints/{pid}/ceremonies` body.
-#[derive(Debug, Deserialize)]
-struct CeremonyPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CeremonyPayload {
     kind: String,
     #[serde(default)]
     facilitator_ref: Option<String>,

@@ -105,8 +105,8 @@ fn view(r: &person_availabilities::Model) -> serde_json::Value {
 }
 
 /// `POST /api/availability` body.
-#[derive(Debug, Deserialize)]
-struct Body {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Body {
     /// Whose; defaults to the caller's own.
     #[serde(default)]
     person_ref: Option<String>,
@@ -201,8 +201,8 @@ async fn create(
     format::json(view(&row))
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// Whose ranges; defaults to the caller's own.
     #[serde(default)]
     person_ref: Option<String>,

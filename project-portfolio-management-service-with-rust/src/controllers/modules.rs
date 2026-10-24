@@ -104,8 +104,8 @@ fn view(plan_pid: Uuid, modules: &BTreeSet<String>, own: bool) -> serde_json::Va
 
 /// `PUT /api/plans/{pid}/modules` body: exactly one of `modules`,
 /// `preset`, or `reset`.
-#[derive(Debug, Deserialize)]
-struct ModulesPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ModulesPayload {
     #[serde(default)]
     modules: Option<Vec<String>>,
     #[serde(default)]

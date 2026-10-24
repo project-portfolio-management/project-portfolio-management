@@ -321,8 +321,8 @@ async fn get_plan(
 }
 
 /// `PUT /api/plans/{pid}/tolerances/{dimension}` body.
-#[derive(Debug, Deserialize)]
-struct SetBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SetBody {
     limit: i64,
     #[serde(default)]
     amber_from_percent: Option<i64>,
@@ -438,8 +438,8 @@ async fn remove_one(
 }
 
 /// `GET /api/tolerances` query.
-#[derive(Debug, Deserialize)]
-struct BoardQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BoardQuery {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

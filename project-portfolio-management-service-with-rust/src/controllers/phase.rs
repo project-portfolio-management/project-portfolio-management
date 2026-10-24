@@ -51,8 +51,8 @@ fn refuse(detail: &rules::Refusal) -> Error {
 }
 
 /// `PUT /api/plans/{pid}/phase` body.
-#[derive(Debug, Deserialize)]
-struct PhasePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PhasePayload {
     phase: String,
     #[serde(default)]
     reason: Option<String>,

@@ -44,8 +44,8 @@ async fn find_component(ctx: &AppContext, plan_pid: Uuid, pid: &str) -> Result<c
 }
 
 /// `POST/PUT` body.
-#[derive(Debug, Deserialize)]
-struct ComponentPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ComponentPayload {
     name: String,
     #[serde(default)]
     lead_ref: Option<String>,

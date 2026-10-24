@@ -48,8 +48,8 @@ async fn live_assignments(ctx: &AppContext, plan: Uuid) -> Result<Vec<raci_assig
         .map_err(db_err)
 }
 
-#[derive(Debug, Deserialize)]
-struct MatrixParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MatrixParams {
     /// `csv` for a spreadsheet; JSON otherwise.
     #[serde(default)]
     format: Option<String>,
@@ -96,15 +96,15 @@ async fn matrix(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Party {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Party {
     person_ref: String,
     /// Letters, e.g. `"AR"` (case-insensitive).
     roles: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct RowBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RowBody {
     assignments: Vec<Party>,
 }
 

@@ -48,8 +48,8 @@ fn view(s: &report_schedules::Model) -> serde_json::Value {
 }
 
 /// `POST /api/reports/{pid}/schedule` body.
-#[derive(Debug, Deserialize)]
-struct ScheduleBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ScheduleBody {
     cadence: String,
     #[serde(default)]
     format: Option<String>,

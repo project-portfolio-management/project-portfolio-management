@@ -169,8 +169,8 @@ pub(crate) async fn plan_of(db: &DatabaseConnection, kind: &str, pid: Uuid) -> O
 }
 
 /// `POST /api/plans/{pid}/guests` body.
-#[derive(Debug, Deserialize)]
-struct GrantBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct GrantBody {
     /// The guest's user id (their token `sub`).
     guest_sub: Uuid,
     /// `read` or `comment`.

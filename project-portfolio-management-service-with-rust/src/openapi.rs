@@ -63,6 +63,7 @@ fn paths() -> Value {
     merge_object(&mut paths, crate::openapi_more::paths());
     document_paging(&mut paths);
     crate::openapi_schemas::attach(&mut paths);
+    crate::openapi_bodies::attach(&mut paths);
     paths
 }
 
@@ -2092,232 +2093,76 @@ mod tests {
     /// documentation debt. The list can only shrink: a new write must document its body,
     /// and an entry whose operation gains one, or goes, must be removed.
     const WRITES_WITHOUT_REQUEST_BODY: &[&str] = &[
-        "patch /api/plans/{pid}/tasks/{t_pid}",
         "post /api/actions/{pid}/convert",
         "post /api/admin/subjects/{subject}/pseudonymise",
-        "post /api/announcements",
-        "post /api/approvals",
-        "post /api/approvals/{pid}/decide",
         "post /api/approvals/{pid}/withdraw",
         "post /api/attachments",
         "post /api/attachments/{pid}/delete",
         "post /api/automations/milestones/sweep",
         "post /api/automations/{pid}/disable",
         "post /api/automations/{pid}/enable",
-        "post /api/availability",
         "post /api/availability/{pid}/delete",
         "post /api/board/snapshots",
-        "post /api/break-glass",
         "post /api/break-glass/{pid}/revoke",
-        "post /api/canvases",
-        "post /api/canvases/{pid}/items",
-        "post /api/canvases/{pid}/items/{item_pid}/promote",
-        "post /api/comments",
         "post /api/comments/{pid}/delete",
-        "post /api/controls/{pid}/readings",
-        "post /api/cost-rate-tables",
-        "post /api/cost-rate-tables/{pid}/rates",
-        "post /api/custom-fields",
-        "post /api/deescalation/criteria",
-        "post /api/dependencies",
-        "post /api/devops/events",
         "post /api/director-pack-schedules/sweep",
         "post /api/director-packs/{pid}/issue",
         "post /api/director-packs/{pid}/review",
-        "post /api/documents",
-        "post /api/documents/{pid}/versions",
         "post /api/documents/{pid}/versions/{version}/make-effective",
-        "post /api/documents/{pid}/versions/{version}/submit",
-        "post /api/exceptions/{pid}/threshold-decision",
-        "post /api/funding-allocations",
         "post /api/governance-frameworks",
         "post /api/governance-frameworks/{pid}/delete",
-        "post /api/key-results/{pid}/check-ins",
-        "post /api/kpis",
-        "post /api/kpis/{pid}/readings",
         "post /api/ledger/reconcile",
         "post /api/me/feed-token",
         "post /api/me/feed-token/revoke",
-        "post /api/me/notification-prefs/reset",
-        "post /api/me/notification-sinks",
         "post /api/me/notification-sinks/{pid}/delete",
-        "post /api/me/planned-slots",
         "post /api/me/planned-slots/{pid}/delete",
-        "post /api/non-working",
         "post /api/notification-sinks/dispatch",
         "post /api/notifications/{pid}/read",
-        "post /api/objectives/{pid}/key-results",
-        "post /api/onboarding/cases/{pid}/cancel",
         "post /api/onboarding/cases/{pid}/complete",
-        "post /api/organizations",
         "post /api/plan-templates/{pid}/delete",
         "post /api/plans/bulk-jobs/sweep",
         "post /api/plans/bulk-jobs/{id}/cancel",
-        "post /api/plans/export",
-        "post /api/plans/from-template/{tpl}",
         "post /api/plans/import",
         "post /api/plans/review-queue/{pid}/confirm",
         "post /api/plans/review-queue/{pid}/reject",
-        "post /api/plans/{pid}/access-records",
-        "post /api/plans/{pid}/adoption",
         "post /api/plans/{pid}/allocations/{a_pid}/commit",
-        "post /api/plans/{pid}/allocations/{a_pid}/resolve",
-        "post /api/plans/{pid}/budget-baselines",
         "post /api/plans/{pid}/buffer-management/snapshots",
         "post /api/plans/{pid}/buffer-plan",
-        "post /api/plans/{pid}/buffer-recovery-actions",
-        "post /api/plans/{pid}/business-case",
         "post /api/plans/{pid}/change-requests/{cr}/baseline",
         "post /api/plans/{pid}/change-requests/{cr}/implement",
         "post /api/plans/{pid}/change-requests/{cr}/review",
         "post /api/plans/{pid}/change-requests/{cr}/withdraw",
-        "post /api/plans/{pid}/components",
-        "post /api/plans/{pid}/controls",
-        "post /api/plans/{pid}/controls/register-standard",
-        "post /api/plans/{pid}/cutover-decisions",
-        "post /api/plans/{pid}/cutover-decisions/{did}/cosign",
-        "post /api/plans/{pid}/cutover-decisions/{did}/decide",
         "post /api/plans/{pid}/cutover-decisions/{did}/new-version",
         "post /api/plans/{pid}/cutover-decisions/{did}/open",
         "post /api/plans/{pid}/cutover-decisions/{did}/publish",
-        "post /api/plans/{pid}/deployment-moves",
-        "post /api/plans/{pid}/deployment-moves/{mpid}/decision",
         "post /api/plans/{pid}/earned-value/snapshot",
-        "post /api/plans/{pid}/escalations",
-        "post /api/plans/{pid}/escalations/{epid}/acknowledge",
-        "post /api/plans/{pid}/escalations/{epid}/raise-level",
-        "post /api/plans/{pid}/escalations/{epid}/resolve",
-        "post /api/plans/{pid}/escalations/{epid}/withdraw",
         "post /api/plans/{pid}/goals",
         "post /api/plans/{pid}/goals/{index}/delete",
-        "post /api/plans/{pid}/guests",
         "post /api/plans/{pid}/guests/{grant}/revoke",
-        "post /api/plans/{pid}/hammocks/{h_pid}/links",
-        "post /api/plans/{pid}/handover/commit",
-        "post /api/plans/{pid}/handover/preview",
         "post /api/plans/{pid}/import/asana",
         "post /api/plans/{pid}/import/jira",
         "post /api/plans/{pid}/import/mspdi",
-        "post /api/plans/{pid}/issues",
         "post /api/plans/{pid}/issues/from-risk/{risk_pid}",
         "post /api/plans/{pid}/issues/from-task/{task_pid}",
         "post /api/plans/{pid}/labour-costs/record",
-        "post /api/plans/{pid}/leveling/apply",
-        "post /api/plans/{pid}/links",
         "post /api/plans/{pid}/links/{lpid}/delete",
-        "post /api/plans/{pid}/milestones/{m_pid}/reopen",
-        "post /api/plans/{pid}/milestones/{m_pid}/signoffs",
-        "post /api/plans/{pid}/onboarding/cases",
-        "post /api/plans/{pid}/sandbox/commit",
-        "post /api/plans/{pid}/sandbox/preview",
-        "post /api/plans/{pid}/satisfaction",
-        "post /api/plans/{pid}/save-as-template",
-        "post /api/plans/{pid}/schedule-baselines",
-        "post /api/plans/{pid}/sprints",
-        "post /api/plans/{pid}/sprints/{s_pid}/notes",
         "post /api/plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert",
         "post /api/plans/{pid}/start-queue/withdraw",
-        "post /api/plans/{pid}/tasks",
-        "post /api/plans/{pid}/tasks/{t_pid}/assign",
-        "post /api/plans/{pid}/tasks/{t_pid}/costs",
-        "post /api/plans/{pid}/tasks/{t_pid}/hammock",
-        "post /api/plans/{pid}/tasks/{t_pid}/relations",
-        "post /api/plans/{pid}/tasks/{tpid}/links",
         "post /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete",
-        "post /api/plans/{pid}/time-entries",
         "post /api/plans/{pid}/tolerances/escalate",
         "post /api/plans/{pid}/tolerances/{dimension}/delete",
-        "post /api/plans/{pid}/tpc",
-        "post /api/plans/{pid}/value-points",
-        "post /api/process-executions/{pid}/cancel",
         "post /api/process-executions/{pid}/resume",
-        "post /api/process-executions/{pid}/steps/{index}/complete",
-        "post /api/processes",
-        "post /api/processes/{pid}/start",
-        "post /api/reactions",
-        "post /api/reactions/remove",
-        "post /api/readings/{pid}/actions",
         "post /api/report-schedules/sweep",
         "post /api/report-schedules/{pid}/delete",
-        "post /api/reports/{pid}/schedule",
-        "post /api/reviews/{pid}/respond",
-        "post /api/reviews/{pid}/submit",
-        "post /api/scheduled-actions",
         "post /api/scheduled-actions/sweep",
-        "post /api/scorecards",
-        "post /api/scorecards/{pid}/from-template",
-        "post /api/sprints/{pid}/ceremonies",
         "post /api/sprints/{pid}/commit",
-        "post /api/tasks/bulk",
-        "post /api/tasks/copy",
-        "post /api/tasks/move",
         "post /api/threshold-sweep",
-        "post /api/timesheets/decide",
-        "post /api/timesheets/submit",
-        "post /api/watchers",
-        "post /api/watchers/unwatch",
         "post /api/ways-of-working",
         "post /api/ways-of-working/{pid}/delete",
-        "post /api/workflows",
-        "post /api/working-time",
-        "put /api/announcements/{pid}",
-        "put /api/canvases/{pid}/items/{item_pid}",
-        "put /api/comments/{pid}",
-        "put /api/cost-codes",
-        "put /api/custom-fields/values",
-        "put /api/deescalation/criteria/{pid}/evidence",
-        "put /api/deescalation/level",
-        "put /api/documents/{pid}/versions/{version}",
         "put /api/governance-frameworks/{pid}",
-        "put /api/key-persons",
-        "put /api/key-persons/contingent",
-        "put /api/key-results/{pid}",
-        "put /api/kpis/{pid}",
-        "put /api/me/calendar",
-        "put /api/me/notification-prefs",
-        "put /api/objectives/{pid}",
-        "put /api/onboarding/cases/{pid}/items/{item}",
-        "put /api/onboarding/templates/{kind}",
-        "put /api/organizations/{pid}",
-        "put /api/plans/{pid}/access",
-        "put /api/plans/{pid}/budget-lines/{l_pid}/estimate",
-        "put /api/plans/{pid}/budget-lines/{line}/funding-allocation",
-        "put /api/plans/{pid}/buffer-recovery-actions/{aid}/status",
-        "put /api/plans/{pid}/calendar",
-        "put /api/plans/{pid}/components/{c_pid}",
-        "put /api/plans/{pid}/cutover-decisions/{did}/criteria",
-        "put /api/plans/{pid}/cutover-decisions/{did}/criteria/{n}/mark",
-        "put /api/plans/{pid}/delivery-model",
-        "put /api/plans/{pid}/earned-value-settings",
         "put /api/plans/{pid}/goals/{index}",
         "put /api/plans/{pid}/governance-framework",
-        "put /api/plans/{pid}/handling-mark",
-        "put /api/plans/{pid}/issues/{issue_pid}",
-        "put /api/plans/{pid}/milestones/{m_pid}/signoff-required",
-        "put /api/plans/{pid}/milestones/{m_pid}/tasks",
-        "put /api/plans/{pid}/modules",
-        "put /api/plans/{pid}/phase",
-        "put /api/plans/{pid}/reporting-method",
-        "put /api/plans/{pid}/risks/{r_pid}/cost-impact",
-        "put /api/plans/{pid}/risks/{r_pid}/schedule-impact",
-        "put /api/plans/{pid}/task-order",
-        "put /api/plans/{pid}/tasks/{t_pid}",
-        "put /api/plans/{pid}/tasks/{t_pid}/assignment",
-        "put /api/plans/{pid}/tasks/{t_pid}/ccpm-estimate",
-        "put /api/plans/{pid}/tasks/{t_pid}/contour",
-        "put /api/plans/{pid}/tasks/{t_pid}/estimate",
-        "put /api/plans/{pid}/tasks/{t_pid}/percent-complete",
-        "put /api/plans/{pid}/tasks/{t_pid}/raci",
-        "put /api/plans/{pid}/tasks/{t_pid}/schedule",
-        "put /api/plans/{pid}/thresholds",
-        "put /api/plans/{pid}/tolerances/{dimension}",
-        "put /api/plans/{pid}/triage",
         "put /api/plans/{pid}/ways-of-working",
-        "put /api/portfolio-drum",
-        "put /api/processes/{pid}",
-        "put /api/proposals/{pid}/tradeoff",
-        "put /api/resource-roles",
-        "put /api/scorecards/{pid}/kpis",
         "put /api/ways-of-working/{pid}",
     ];
 
@@ -2370,6 +2215,47 @@ mod tests {
             stale.is_empty(),
             "documented or removed, so take off WRITES_WITHOUT_REQUEST_BODY: {stale:#?}"
         );
+    }
+
+    /// CQ-8: the request bodies derived from the handlers' own types are usable in an `OpenAPI` 3.0 document:
+    /// inline (no `$ref` or `$defs` that point nowhere) and without the JSON Schema 2020-12 vocabulary 3.0 lacks.
+    #[test]
+    fn derived_request_bodies_are_plain_openapi_3_0() {
+        fn walk(v: &serde_json::Value, at: &str, bad: &mut Vec<String>) {
+            match v {
+                serde_json::Value::Object(m) => {
+                    for (k, x) in m {
+                        if matches!(k.as_str(), "$defs" | "$schema" | "const" | "prefixItems")
+                            || (k == "$ref"
+                                && !x.as_str().is_some_and(|r| r.starts_with("#/components/")))
+                            || (k == "type" && x.is_array())
+                        {
+                            bad.push(format!("{at}: {k}"));
+                        }
+                        walk(x, &format!("{at}/{k}"), bad);
+                    }
+                }
+                serde_json::Value::Array(a) => a.iter().for_each(|x| walk(x, at, bad)),
+                _ => {}
+            }
+        }
+        let doc = spec();
+        let mut bad = Vec::new();
+        for (path, item) in doc["paths"].as_object().expect("paths") {
+            for method in ["post", "put", "patch"] {
+                if let Some(body) = item.get(method).and_then(|op| op.get("requestBody")) {
+                    walk(body, &format!("{method} {path}"), &mut bad);
+                }
+            }
+        }
+        assert!(bad.is_empty(), "not plain OpenAPI 3.0: {bad:#?}");
+        if std::env::var_os("DUMP_BODY").is_some() {
+            eprintln!("{}", doc["paths"]["/api/approvals"]["post"]["requestBody"]);
+            eprintln!(
+                "{}",
+                doc["paths"]["/api/plans/{pid}/escalations/{epid}/resolution"]["put"]["requestBody"]
+            );
+        }
     }
 
     /// Mounted-but-undocumented paths: the pre-existing gap

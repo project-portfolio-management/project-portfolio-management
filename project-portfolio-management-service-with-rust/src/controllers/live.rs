@@ -27,8 +27,8 @@ use crate::auth::MaybeAuthUser;
 use crate::live::{self, Replay};
 
 /// `GET /api/plans/{pid}/live` query.
-#[derive(Debug, Deserialize)]
-struct LiveParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LiveParams {
     /// Close after this many events.
     #[serde(default)]
     limit: Option<usize>,

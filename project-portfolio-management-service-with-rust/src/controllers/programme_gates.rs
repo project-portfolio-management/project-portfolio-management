@@ -141,8 +141,8 @@ async fn kept(ctx: &AppContext, tree: &HashSet<Uuid>) -> Result<serde_json::Valu
 
 // ---- planned gate dates ----------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct PlannedBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PlannedBody {
     planned_on: NaiveDate,
 }
 
@@ -218,8 +218,8 @@ async fn list_planned(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
 
 // ---- programme status ------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct StatusBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct StatusBody {
     status: String,
     reason: String,
     #[serde(default)]

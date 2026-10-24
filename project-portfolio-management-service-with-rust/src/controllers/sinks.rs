@@ -302,8 +302,8 @@ pub fn spawn(ctx: &AppContext) {
 // ───────────────────────────── endpoints ─────────────────────────────
 
 /// `POST /api/me/notification-sinks` body.
-#[derive(Debug, Deserialize)]
-struct SinkBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SinkBody {
     kind: String,
     destination: String,
     #[serde(default)]

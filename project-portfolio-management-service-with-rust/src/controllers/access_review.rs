@@ -19,8 +19,8 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::access_records;
 use crate::models::audit_logs::Model as AuditModel;
 
-#[derive(Debug, Deserialize)]
-struct Params {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     #[serde(default)]
     plan: Option<Uuid>,
     /// Calendar days after which a grant is flagged for review.

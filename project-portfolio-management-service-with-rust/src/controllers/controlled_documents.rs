@@ -105,8 +105,8 @@ async fn doc_view(ctx: &AppContext, doc: &docs::Model) -> Result<serde_json::Val
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct CreateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CreateBody {
     title: String,
     #[serde(default)]
     plan_pid: Option<Uuid>,
@@ -280,8 +280,8 @@ async fn get_version(
     format::json(version_view(&v, true))
 }
 
-#[derive(Debug, Deserialize)]
-struct InForceParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct InForceParams {
     #[serde(default)]
     on: Option<NaiveDate>,
 }
@@ -314,8 +314,8 @@ async fn in_force(
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct DraftBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DraftBody {
     #[serde(default)]
     body: Option<String>,
     #[serde(default)]
@@ -442,8 +442,8 @@ async fn edit_version(
     format::json(version_view(&row, true))
 }
 
-#[derive(Debug, Deserialize)]
-struct SubmitBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubmitBody {
     approver_ref: String,
     #[serde(default)]
     message: Option<String>,

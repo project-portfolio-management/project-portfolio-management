@@ -77,8 +77,8 @@ async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
     format::json(serde_json::json!({ "templates": out }))
 }
 
-#[derive(Debug, Deserialize)]
-struct TemplateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TemplateBody {
     items: Vec<Seed>,
 }
 
@@ -156,8 +156,8 @@ async fn delete_template(
 
 // ───────────────────────── cases ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct CaseBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CaseBody {
     kind: String,
     /// The person, for a join or leave.
     #[serde(default)]
@@ -353,8 +353,8 @@ async fn find_case(
     Ok(c)
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     status: Option<String>,
 }
@@ -407,8 +407,8 @@ async fn get_case(
     case_view(&ctx, &caller, &c).await
 }
 
-#[derive(Debug, Deserialize)]
-struct ItemBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ItemBody {
     /// A person URN, or "" to clear.
     #[serde(default)]
     owner_ref: Option<String>,
@@ -530,8 +530,8 @@ async fn complete_case(
     close(&ctx, &caller, case, "completed", None).await
 }
 
-#[derive(Debug, Deserialize)]
-struct CancelBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CancelBody {
     reason: String,
 }
 
@@ -588,8 +588,8 @@ async fn close(
 
 // ───────────────────────── access record ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct AccessBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AccessBody {
     person_ref: String,
     /// What access, in words ("repo write", "wiki editor").
     access: String,

@@ -177,8 +177,8 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
     Ok(sent)
 }
 
-#[derive(Debug, Deserialize)]
-struct ListQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListQuery {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

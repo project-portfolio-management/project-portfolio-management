@@ -117,8 +117,8 @@ fn is_admin(caller: &MaybeAuthUser) -> bool {
     caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
-#[derive(Debug, Deserialize)]
-struct Required_ {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Required_ {
     organization_pids: Vec<Uuid>,
 }
 
@@ -193,8 +193,8 @@ async fn set_required(
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Act {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Act {
     organization_pid: Uuid,
     /// `sign` or `withdraw`.
     action: String,

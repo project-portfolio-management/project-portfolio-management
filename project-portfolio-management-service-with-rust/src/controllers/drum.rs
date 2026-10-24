@@ -47,8 +47,8 @@ pub fn routes() -> Routes {
         .add("/portfolio-pipeline", get(pipeline))
 }
 
-#[derive(Debug, Deserialize)]
-struct DrumBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DrumBody {
     /// The pool to name; `null` clears the naming.
     #[serde(default)]
     skill_pool_pid: Option<Uuid>,
@@ -213,8 +213,8 @@ async fn readable_set(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSe
     Ok(super::plan_access::readable_plans(ctx, caller, &all).await)
 }
 
-#[derive(Debug, Deserialize)]
-struct Window {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Window {
     #[serde(default)]
     from: Option<String>,
     #[serde(default)]

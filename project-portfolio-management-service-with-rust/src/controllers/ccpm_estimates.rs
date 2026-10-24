@@ -23,8 +23,8 @@ use crate::models::audit_logs::Model as AuditModel;
 /// Most tasks one answer lists.
 const MAX_LIMIT: u64 = 1_000;
 
-#[derive(Debug, Deserialize)]
-struct Body {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Body {
     /// Business days at about 50 percent confidence; `null` clears.
     #[serde(default)]
     aggressive_days: Option<i32>,
@@ -149,8 +149,8 @@ fn resolve_task(t: &tasks::Model, rec: Option<&rows::Model>, rule: est::Rule) ->
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct Page {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Page {
     #[serde(default)]
     limit: Option<u64>,
     #[serde(default)]

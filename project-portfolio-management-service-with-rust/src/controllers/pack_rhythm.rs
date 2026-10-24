@@ -49,8 +49,8 @@ fn schedule_json(s: &schedules::Model) -> serde_json::Value {
     })
 }
 
-#[derive(Debug, Deserialize)]
-struct NewSchedule {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewSchedule {
     audience: String,
     day_of_month: i32,
 }
@@ -136,8 +136,8 @@ async fn list_schedules(State(ctx): State<AppContext>, caller: MaybeAuthUser) ->
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct UpdateSchedule {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct UpdateSchedule {
     #[serde(default)]
     enabled: Option<bool>,
     #[serde(default)]
@@ -339,8 +339,8 @@ async fn review(
     format::json(serde_json::json!({ "pid": row.pid, "reviewed": true }))
 }
 
-#[derive(Debug, Deserialize)]
-struct SubscribeBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubscribeBody {
     audience: String,
     subscribed: bool,
     /// An editor may subscribe someone else (a partner reader cannot subscribe themselves).

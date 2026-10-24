@@ -26,8 +26,8 @@ use crate::models::_entities::{plan_dependencies, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::tracker_import::{self as reader, Bucket, Item, Source};
 
-#[derive(Debug, Deserialize)]
-struct ImportParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ImportParams {
     /// `true` (default) reports without writing.
     #[serde(default)]
     dry_run: Option<bool>,

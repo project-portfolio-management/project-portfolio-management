@@ -34,8 +34,8 @@ fn is_admin(caller: &MaybeAuthUser) -> bool {
 }
 
 /// `POST /api/attachments` query.
-#[derive(Debug, Deserialize)]
-struct UploadParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct UploadParams {
     subject_kind: String,
     subject_pid: String,
     filename: String,
@@ -186,8 +186,8 @@ async fn index_text(ctx: &AppContext, attachment_pid: Uuid, declared: &str, body
 }
 
 /// `GET /api/attachments/search` query.
-#[derive(Debug, Deserialize)]
-struct SearchParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SearchParams {
     q: String,
 }
 
@@ -255,8 +255,8 @@ async fn search(
 }
 
 /// `GET /api/attachments` query.
-#[derive(Debug, Deserialize)]
-struct SubjectParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubjectParams {
     subject_kind: String,
     subject_pid: String,
 }

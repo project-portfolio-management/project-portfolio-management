@@ -63,8 +63,8 @@ async fn baselined_chain(
     Ok(Some((b, chain)))
 }
 
-#[derive(Debug, Deserialize)]
-struct BufferBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BufferBody {
     #[serde(default)]
     buffer_days: Option<i64>,
     #[serde(default)]

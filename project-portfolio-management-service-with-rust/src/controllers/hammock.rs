@@ -25,8 +25,8 @@ use crate::hammock::{self as rules, Span};
 use crate::models::_entities::{hammock_links, plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
-#[derive(Debug, Deserialize)]
-struct EnableBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EnableBody {
     enabled: bool,
 }
 
@@ -126,8 +126,8 @@ async fn set_hammock(
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct LinkBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinkBody {
     member_pid: Uuid,
 }
 

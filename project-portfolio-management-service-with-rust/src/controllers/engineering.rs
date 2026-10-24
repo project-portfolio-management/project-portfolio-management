@@ -89,8 +89,8 @@ pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
 }
 
 /// `POST /api/plans/{pid}/tasks` body.
-#[derive(Debug, Deserialize)]
-struct TaskPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TaskPayload {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -318,8 +318,8 @@ async fn create_task(
 }
 
 /// `GET /api/plans/{pid}/tasks` query.
-#[derive(Debug, Deserialize)]
-struct TaskListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TaskListParams {
     #[serde(default)]
     component: Option<String>,
     /// Page size (at most 500). With `limit` or `offset` the answer is one page.
@@ -498,8 +498,8 @@ fn enforce_move_roles(
 }
 
 /// `PATCH /api/plans/{pid}/tasks/{t_pid}` body: the move.
-#[derive(Debug, Deserialize)]
-struct MovePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MovePayload {
     status: String,
     /// Why the task is blocked; only on a move into `blocked`
     /// (`crate::tba::BLOCKED_REASONS`).
@@ -714,8 +714,8 @@ async fn delete_task(
 }
 
 /// `POST /api/plans/{pid}/sprints` body.
-#[derive(Debug, Deserialize)]
-struct SprintPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SprintPayload {
     name: String,
     starts_on: chrono::NaiveDate,
     ends_on: chrono::NaiveDate,
@@ -773,8 +773,8 @@ async fn list_sprints(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
 }
 
 /// Query for the burndown: the sprint to derive over.
-#[derive(Debug, Deserialize)]
-struct BurndownQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BurndownQuery {
     sprint: Uuid,
 }
 
@@ -916,8 +916,8 @@ async fn find_sprint(ctx: &AppContext, plan_pid: Uuid, s_pid: &str) -> Result<sp
 }
 
 /// `POST .../sprints/{s_pid}/notes` body.
-#[derive(Debug, Deserialize)]
-struct NotePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NotePayload {
     category: String,
     body: String,
 }
@@ -1107,8 +1107,8 @@ async fn velocity(
 // ─── DevOps events ──────────────────────────────────────────────────────────
 
 /// `POST /api/devops/events` body.
-#[derive(Debug, Deserialize)]
-struct DevopsEventPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DevopsEventPayload {
     plan_pid: Uuid,
     kind: String,
     #[serde(default)]
@@ -1215,8 +1215,8 @@ async fn ingest_devops_event(
 }
 
 /// Query for the devops metrics window.
-#[derive(Debug, Deserialize)]
-struct DevopsMetricsQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DevopsMetricsQuery {
     /// Trailing months (default 3, cap 24).
     months: Option<u32>,
 }
@@ -1523,8 +1523,8 @@ async fn delivery_links(
 }
 
 /// Query for the milestone calendar: optional kind filter.
-#[derive(Debug, Deserialize)]
-struct CalendarQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CalendarQuery {
     kind: Option<String>,
 }
 

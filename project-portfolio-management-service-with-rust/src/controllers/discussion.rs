@@ -216,8 +216,8 @@ pub(crate) async fn resolve_subject(
 }
 
 /// `POST /api/comments` body.
-#[derive(Debug, Deserialize)]
-struct CommentPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CommentPayload {
     subject_kind: String,
     subject_pid: String,
     body: String,
@@ -307,8 +307,8 @@ async fn create_comment(
 }
 
 /// Query naming a subject.
-#[derive(Debug, Deserialize)]
-struct SubjectParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubjectParams {
     subject_kind: String,
     subject_pid: String,
 }
@@ -354,8 +354,8 @@ fn require_author(comment: &comments::Model, caller: &MaybeAuthUser) -> Result<(
 }
 
 /// `PUT /api/comments/{pid}` body.
-#[derive(Debug, Deserialize)]
-struct EditPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EditPayload {
     body: String,
 }
 
@@ -457,8 +457,8 @@ fn reactor(caller: &MaybeAuthUser) -> String {
 }
 
 /// `POST /api/reactions` body.
-#[derive(Debug, Deserialize)]
-struct ReactionPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReactionPayload {
     subject_kind: String,
     subject_pid: String,
     kind: String,
@@ -508,8 +508,8 @@ async fn add_reaction(
 
 /// `DELETE /api/reactions?subject_kind=&subject_pid=&kind=` — remove
 /// the caller's own reaction (idempotent).
-#[derive(Debug, Deserialize)]
-struct RemoveParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RemoveParams {
     subject_kind: String,
     subject_pid: String,
     kind: String,

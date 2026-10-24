@@ -15,8 +15,8 @@ use crate::auth::MaybeAuthUser;
 use crate::director_summary::{self as rules, ChangeLite, IssueLite};
 use crate::models::_entities::{change_requests, issues};
 
-#[derive(Deserialize)]
-struct Params {
+#[derive(Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     /// Calendar days the "in the period" counts look back; 1 to 366, default 30.
     #[serde(default)]
     window_days: Option<i64>,

@@ -65,8 +65,8 @@ async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> 
 /// The most issues one plan's list returns; `truncated` says when there were more.
 const PLAN_LIST_MAX: u64 = 5_000;
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]
@@ -150,8 +150,8 @@ async fn get_one(
     format::json(view(&row, today()))
 }
 
-#[derive(Debug, Deserialize)]
-struct Input {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Input {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -334,8 +334,8 @@ async fn remove(
     format::empty_json()
 }
 
-#[derive(Debug, Deserialize)]
-struct RegisterParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RegisterParams {
     #[serde(default)]
     plan: Option<Uuid>,
     #[serde(default)]

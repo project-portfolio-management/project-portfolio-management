@@ -248,8 +248,8 @@ async fn task_time_analysis(
 }
 
 /// Plan-level query parameters.
-#[derive(Debug, serde::Deserialize)]
-struct PlanQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct PlanQuery {
     /// The service-level-expectation percentile (default 0.85).
     #[serde(default)]
     sle_percentile: Option<f64>,
@@ -412,8 +412,8 @@ async fn aging_wip(
 }
 
 /// Flow query parameters.
-#[derive(Debug, serde::Deserialize)]
-struct FlowQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct FlowQuery {
     #[serde(default)]
     window_days: Option<i64>,
 }
@@ -502,8 +502,8 @@ async fn plan_flow(
 }
 
 /// Cumulative-flow query parameters.
-#[derive(Debug, serde::Deserialize)]
-struct CumulativeFlowQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct CumulativeFlowQuery {
     /// How far back to sample, in calendar days (default 60).
     #[serde(default)]
     days: Option<i64>,
@@ -561,8 +561,8 @@ async fn cumulative_flow(
 }
 
 /// Rollup query parameters.
-#[derive(Debug, serde::Deserialize)]
-struct RollupQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct RollupQuery {
     /// Cap the containment depth walked (default and maximum 32).
     #[serde(default)]
     depth: Option<usize>,
@@ -723,8 +723,8 @@ async fn rollup(
 }
 
 /// Forecast query parameters.
-#[derive(Debug, serde::Deserialize)]
-struct ForecastQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct ForecastQuery {
     /// How many items to forecast a completion date for.
     #[serde(default)]
     items: Option<usize>,

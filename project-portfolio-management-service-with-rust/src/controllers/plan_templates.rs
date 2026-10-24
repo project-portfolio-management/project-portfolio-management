@@ -214,8 +214,8 @@ async fn capture(
 }
 
 /// `POST /api/plans/{pid}/save-as-template` body.
-#[derive(Debug, Deserialize)]
-struct SaveBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SaveBody {
     name: String,
     #[serde(default)]
     description: Option<String>,
@@ -342,8 +342,8 @@ async fn delete_template(
 }
 
 /// `POST /api/plans/from-template/{tpl}` body.
-#[derive(Debug, Deserialize)]
-struct InstantiateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct InstantiateBody {
     /// The new root plan's name (default: the template root's name).
     #[serde(default)]
     name: Option<String>,

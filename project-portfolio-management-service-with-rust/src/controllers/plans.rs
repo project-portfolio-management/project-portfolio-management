@@ -190,17 +190,19 @@ fn readable_refs(
 
 /// Body of `POST /{collection}/match`: a query plus the explicit
 /// candidate list to rank it against (no persistence is touched).
-#[derive(Debug, Deserialize)]
-struct MatchRequest {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MatchRequest {
     /// The plan to score against each candidate.
+    #[schemars(with = "serde_json::Value")]
     query: Plan,
     /// The candidate plans to rank.
+    #[schemars(with = "Vec<serde_json::Value>")]
     candidates: Vec<Plan>,
 }
 
 /// Query string for `GET /plans`: an optional parent roll-up filter.
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// When set, list only the direct children of this parent plan.
     #[serde(default)]
     parent: Option<String>,
@@ -245,8 +247,8 @@ fn parse_pids(hits: &[String]) -> Vec<uuid::Uuid> {
 }
 
 /// Query string for `GET /plans/search`: the `q` name term.
-#[derive(Debug, Deserialize)]
-struct SearchParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SearchParams {
     /// Page size; absent ⇒ [`SEARCH_DEFAULT_LIMIT`].
     #[serde(default)]
     limit: Option<u64>,
@@ -270,8 +272,8 @@ struct SearchParams {
 
 /// Body of `POST /{collection}/merge`: which duplicate folds into which
 /// survivor, and (optionally) why.
-#[derive(Debug, Deserialize)]
-struct MergeRequest {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MergeRequest {
     /// The surviving plan's public id.
     main_pid: String,
     /// The duplicate to merge in and soft-delete.
@@ -303,16 +305,16 @@ fn score_desc(a: f64, b: f64) -> std::cmp::Ordering {
 }
 
 /// `GET /api/plans/{pid}` query.
-#[derive(Debug, Deserialize)]
-struct GetParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetParams {
     /// Embed named sub-resources (`milestones,risks,tasks,…`), RM-12.
     #[serde(default)]
     include: Option<String>,
 }
 
 /// `POST /api/plans` query.
-#[derive(Debug, Deserialize)]
-struct CreateParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CreateParams {
     /// Start the plan with a module preset (`personal`: tasks and time
     /// only) instead of the deployment default (RM-7).
     #[serde(default)]

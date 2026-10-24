@@ -347,8 +347,8 @@ pub(crate) async fn decision_entries(
 }
 
 /// Query for the decision log: optional result cap.
-#[derive(Debug, Deserialize)]
-struct DecisionsQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecisionsQuery {
     /// Maximum entries (default 50, cap 200).
     limit: Option<usize>,
 }
@@ -924,8 +924,8 @@ async fn technology_debt(
 }
 
 /// Query for the flow metrics: the trailing window in months.
-#[derive(Debug, Deserialize)]
-struct FlowQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct FlowQuery {
     /// Trailing months to report (default 6, cap 24).
     months: Option<u32>,
 }

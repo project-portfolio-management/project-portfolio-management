@@ -77,8 +77,8 @@ async fn readable_task(
 const ALLOWED: &[&str] = &["assignee_ref", "due_date", "component_pid", "start_date"];
 
 /// `POST /api/tasks/bulk` body.
-#[derive(Debug, Deserialize)]
-struct EditBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EditBody {
     ids: Vec<Uuid>,
     /// Any of `assignee_ref`, `due_date`, `component_pid`, `start_date`; `null` clears.
     set: BTreeMap<String, Value>,
@@ -254,8 +254,8 @@ pub(super) async fn edit_one(
 }
 
 /// `POST /api/tasks/copy` and `/move` body.
-#[derive(Debug, Deserialize)]
-struct TransferBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TransferBody {
     ids: Vec<Uuid>,
     to_plan_pid: Uuid,
     /// Copy only: keep the source's assignee (default false).

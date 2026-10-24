@@ -135,8 +135,8 @@ async fn put_criteria<C: ConnectionTrait>(db: &C, decision: Uuid, items: &[Strin
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
-struct New {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct New {
     title: String,
     criteria: Vec<String>,
 }
@@ -205,8 +205,8 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     format::json(json!({ "decisions": out, "required_cosigners": rules::required_roles() }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Criteria {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Criteria {
     criteria: Vec<String>,
 }
 
@@ -316,8 +316,8 @@ async fn open(
     .await
 }
 
-#[derive(Debug, Deserialize)]
-struct Mark {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Mark {
     met: bool,
     evidence: String,
 }
@@ -367,8 +367,8 @@ async fn mark(
     format::json(view(&d, &c, &s))
 }
 
-#[derive(Debug, Deserialize)]
-struct Cosign {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Cosign {
     role: String,
 }
 
@@ -439,8 +439,8 @@ async fn cosign(
     format::json(view(&d, &c, &s))
 }
 
-#[derive(Debug, Deserialize)]
-struct Decide {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Decide {
     outcome: String,
     reason: String,
 }

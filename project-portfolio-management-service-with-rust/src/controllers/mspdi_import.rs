@@ -32,8 +32,8 @@ use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsConstraint};
 
-#[derive(Debug, Deserialize)]
-struct ImportParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ImportParams {
     /// `true` (default) reports without writing.
     #[serde(default)]
     dry_run: Option<bool>,

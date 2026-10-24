@@ -94,8 +94,8 @@ async fn get_zone(State(ctx): State<AppContext>) -> Result<Response> {
     view(&ctx.db).await
 }
 
-#[derive(Debug, Deserialize)]
-struct ZoneBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ZoneBody {
     time_zone: String,
 }
 

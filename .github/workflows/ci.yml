@@ -272,6 +272,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Generated status is current
         run: scripts/generate-status.sh --check
+      - name: Derived request bodies are current
+        run: python3 scripts/generate-openapi-bodies.py --check
       - name: llms.txt matches llms.json and every listed file exists
         run: python3 scripts/generate-llms.py --check
       - name: Link check (offline)

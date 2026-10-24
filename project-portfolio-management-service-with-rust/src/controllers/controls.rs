@@ -151,8 +151,8 @@ fn standard_of(row: &controls::Model) -> rules::Standard {
 }
 
 /// `POST /api/plans/{pid}/controls` body.
-#[derive(Debug, Deserialize)]
-struct ControlPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ControlPayload {
     name: String,
     timing: String,
     metric: String,
@@ -299,8 +299,8 @@ async fn create(
 
 /// `POST /api/plans/{pid}/controls/register-standard` body — PRO-P33
 /// (repo `tasks.md`).
-#[derive(Debug, Deserialize)]
-struct RegisterStandardPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RegisterStandardPayload {
     /// Required, no default: a WIP limit is plan/team-specific, and
     /// this service has no notion of a universal "reasonable" one —
     /// registering an invented number would be exactly the risk
@@ -512,8 +512,8 @@ async fn remove(
 
 /// `POST /api/controls/{pid}/readings` body. `value` absent is
 /// `unmeasured`, which is deliberate and is not an error.
-#[derive(Debug, Deserialize)]
-struct ReadingPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReadingPayload {
     #[serde(default)]
     value: Option<i64>,
     #[serde(default = "default_method")]
@@ -588,8 +588,8 @@ async fn list_readings(Path(pid): Path<String>, State(ctx): State<AppContext>) -
 }
 
 /// `POST /api/readings/{pid}/actions` body.
-#[derive(Debug, Deserialize)]
-struct ActionPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ActionPayload {
     kind: String,
     description: String,
     #[serde(default)]
@@ -658,8 +658,8 @@ async fn add_action(
 }
 
 /// `POST /api/actions/{pid}/convert` query.
-#[derive(Debug, Deserialize)]
-struct ConvertParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ConvertParams {
     /// `task` (default) or `issue`.
     #[serde(default)]
     to: Option<String>,

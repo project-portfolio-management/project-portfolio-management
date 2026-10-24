@@ -37,8 +37,8 @@ fn unauthorized() -> Error {
 }
 
 /// `POST /api/me/feed-token?label=` query.
-#[derive(Debug, Deserialize, Default)]
-struct IssueParams {
+#[derive(Debug, Deserialize, Default, schemars::JsonSchema)]
+pub(crate) struct IssueParams {
     #[serde(default)]
     label: Option<String>,
 }
@@ -92,8 +92,8 @@ async fn revoke(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Re
 }
 
 /// `?token=` query.
-#[derive(Debug, Deserialize)]
-struct TokenParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TokenParams {
     token: String,
 }
 

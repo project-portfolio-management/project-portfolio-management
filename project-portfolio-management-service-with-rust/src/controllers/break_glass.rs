@@ -31,8 +31,8 @@ fn view(g: &grants::Model, now: chrono::DateTime<Utc>) -> serde_json::Value {
     })
 }
 
-#[derive(Debug, Deserialize)]
-struct OpenBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct OpenBody {
     plan_pid: Uuid,
     reason: String,
     #[serde(default)]

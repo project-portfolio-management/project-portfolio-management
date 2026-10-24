@@ -45,8 +45,8 @@ find_active!(find_objective, objectives);
 find_active!(find_benefit, benefits);
 
 /// `POST /api/ideas` body.
-#[derive(Debug, Deserialize)]
-struct IdeaPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct IdeaPayload {
     title: String,
     #[serde(default)]
     pitch: Option<String>,
@@ -97,8 +97,8 @@ async fn create_idea(
 }
 
 /// `GET /api/ideas?status=` — most-voted first (default: open).
-#[derive(Debug, Deserialize)]
-struct IdeaParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct IdeaParams {
     #[serde(default)]
     status: Option<String>,
 }
@@ -169,8 +169,8 @@ async fn dismiss_idea(
 /// `POST /api/ideas/{pid}/convert` — mint a **draft proposal** from
 /// an open idea (the funnel's next stage: idea → proposal → work
 /// item; PPM-2).
-#[derive(Debug, Deserialize)]
-struct ConvertPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ConvertPayload {
     /// Optional descriptive kind label for the eventual plan. Blank means
     /// "no kind"; a non-blank value must be a recognized kind label.
     kind_target: String,
@@ -247,8 +247,8 @@ async fn convert_idea(
 }
 
 /// `POST /api/scenarios` body.
-#[derive(Debug, Deserialize)]
-struct ScenarioPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ScenarioPayload {
     name: String,
     #[serde(default)]
     description: Option<String>,
@@ -602,8 +602,8 @@ pub(crate) async fn evaluate(
 }
 
 /// Query for `GET /api/scenarios/compare`: the two scenario pids.
-#[derive(Debug, serde::Deserialize)]
-struct CompareQuery {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct CompareQuery {
     a: String,
     b: String,
 }
@@ -800,8 +800,8 @@ async fn rollback_scenario(
 }
 
 /// `POST /api/scenarios/generate` body (T-28h).
-#[derive(Debug, Deserialize)]
-struct GeneratePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct GeneratePayload {
     #[serde(default)]
     name: Option<String>,
     #[serde(default)]
@@ -940,8 +940,8 @@ async fn generate_scenario(
 }
 
 /// `POST /api/objectives` body.
-#[derive(Debug, Deserialize)]
-struct ObjectivePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ObjectivePayload {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -1038,8 +1038,8 @@ async fn objective_alignment(
 
 /// `POST /api/plans/{pid}/objectives` body: a weighted mapping
 /// (upserts on the pair — re-linking updates the weight).
-#[derive(Debug, Deserialize)]
-struct LinkPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinkPayload {
     objective_pid: Uuid,
     weight: i32,
 }
@@ -1120,8 +1120,8 @@ async fn item_objectives(
 }
 
 /// `POST /api/plans/{pid}/benefits` body.
-#[derive(Debug, Deserialize)]
-struct BenefitPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BenefitPayload {
     title: String,
     category: String,
     #[serde(default)]
@@ -1248,8 +1248,8 @@ async fn list_benefits(State(ctx): State<AppContext>, Path(pid): Path<String>) -
 /// `POST /api/plans/{pid}/benefits/{b_pid}/realize` — record
 /// realized value (accumulates; overflow refused) and optionally move
 /// the status.
-#[derive(Debug, Deserialize)]
-struct RealizePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RealizePayload {
     #[serde(default)]
     amount_minor: Option<i64>,
     #[serde(default)]

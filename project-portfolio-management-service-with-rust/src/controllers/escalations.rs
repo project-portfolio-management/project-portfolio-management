@@ -92,8 +92,8 @@ async fn event<C: ConnectionTrait>(
 }
 
 /// `POST /api/plans/{pid}/escalations` body.
-#[derive(Debug, Deserialize)]
-struct Input {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Input {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -263,8 +263,8 @@ async fn raise(
 }
 
 /// `GET /api/plans/{pid}/escalations?status=` query.
-#[derive(Debug, Deserialize)]
-struct StatusQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct StatusQuery {
     #[serde(default)]
     status: Option<String>,
 }
@@ -330,15 +330,15 @@ async fn get_one(
 }
 
 /// A note on an action.
-#[derive(Debug, Deserialize)]
-struct NoteBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NoteBody {
     #[serde(default)]
     note: Option<String>,
 }
 
 /// `POST …/resolve` body.
-#[derive(Debug, Deserialize)]
-struct ResolveBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ResolveBody {
     outcome: String,
     response: String,
 }
@@ -710,8 +710,8 @@ async fn withdraw(
 }
 
 /// `GET /api/escalations?status=&plan=&overdue=` query.
-#[derive(Debug, Deserialize)]
-struct RegisterQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RegisterQuery {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

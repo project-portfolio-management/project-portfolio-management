@@ -118,8 +118,8 @@ async fn rollup(
 }
 
 /// `PUT /api/plans/{pid}/task-order` body.
-#[derive(Debug, serde::Deserialize)]
-struct OrderBody {
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct OrderBody {
     /// The parent whose children are ordered; absent or null for the top level.
     #[serde(default)]
     parent_task_pid: Option<Uuid>,

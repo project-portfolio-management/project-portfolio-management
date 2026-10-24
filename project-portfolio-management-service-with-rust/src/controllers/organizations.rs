@@ -56,8 +56,8 @@ async fn list(State(ctx): State<AppContext>) -> Result<Response> {
     format::json(json!({ "organizations": rows.iter().map(show).collect::<Vec<_>>() }))
 }
 
-#[derive(Debug, Deserialize)]
-struct NewOrg {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewOrg {
     name: String,
     kind: String,
 }
@@ -109,8 +109,8 @@ async fn create(
     format::json(show(&row))
 }
 
-#[derive(Debug, Deserialize)]
-struct Change {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Change {
     #[serde(default)]
     name: Option<String>,
     #[serde(default)]

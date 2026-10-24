@@ -94,8 +94,8 @@ async fn items_for(
 }
 
 /// `GET /api/plans/{pid}/flow-distribution` query.
-#[derive(Debug, Deserialize)]
-struct Params {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     #[serde(default)]
     window_days: Option<i64>,
     #[serde(default)]

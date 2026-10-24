@@ -61,8 +61,8 @@ pub fn parse(raw: &str) -> std::result::Result<Vec<&'static str>, String> {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct Params {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     #[serde(default)]
     include: Option<String>,
 }

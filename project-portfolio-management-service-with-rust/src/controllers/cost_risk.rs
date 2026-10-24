@@ -31,8 +31,8 @@ use crate::models::_entities::{budget_lines, plans, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self, Distribution, RunError};
 
-#[derive(Debug, Deserialize)]
-struct EstimateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EstimateBody {
     /// Low final cost in minor units; `null` clears.
     #[serde(default)]
     low_minor: Option<i64>,
@@ -101,8 +101,8 @@ async fn set_line_estimate(
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct CostImpactBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CostImpactBody {
     /// The cost it adds, in minor units (positive); `null` clears both this and the currency.
     #[serde(default)]
     cost_impact_minor: Option<i64>,
@@ -186,8 +186,8 @@ async fn set_cost_impact(
     format::json(serde_json::json!({ "risk_pid": row.pid, "cost": now }))
 }
 
-#[derive(Debug, Deserialize)]
-struct RunParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RunParams {
     #[serde(default)]
     iterations: Option<usize>,
     #[serde(default)]

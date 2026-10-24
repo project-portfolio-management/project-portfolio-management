@@ -93,8 +93,8 @@ async fn scoped_allocations(
     Ok((rows, scope))
 }
 
-#[derive(Debug, Deserialize)]
-struct PlanParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PlanParams {
     #[serde(default)]
     from: Option<NaiveDate>,
     #[serde(default)]
@@ -238,8 +238,8 @@ async fn resource_plan(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct HoursParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct HoursParams {
     #[serde(default)]
     from: Option<NaiveDate>,
     #[serde(default)]
@@ -376,8 +376,8 @@ async fn hours(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct RoleBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RoleBody {
     person_ref: String,
     /// The primary role, or `null` to clear it.
     #[serde(default)]
@@ -480,8 +480,8 @@ async fn list_roles(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct ResolveBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ResolveBody {
     person_ref: String,
     /// Resolve even though it would put the person over capacity.
     #[serde(default)]

@@ -64,8 +64,8 @@ fn cap_opt(problems: &mut Vec<String>, field: &str, value: Option<&str>) {
 }
 
 /// `POST /api/proposals` body (also the draft-update shape).
-#[derive(Debug, Deserialize)]
-struct ProposalPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ProposalPayload {
     title: String,
     #[serde(default)]
     summary: Option<String>,
@@ -170,8 +170,8 @@ async fn create_proposal(
 
 /// `GET /api/proposals?status=` — the intake board (default: every
 /// non-promoted, most recent first, capped 200).
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     status: Option<String>,
 }
@@ -286,8 +286,8 @@ pub(crate) async fn asks_section(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct TradeoffBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TradeoffBody {
     /// What the ask displaces (10 to 2000 characters).
     tradeoff: String,
 }
@@ -441,8 +441,8 @@ async fn promote_proposal(
 
 /// `GET /api/proposals/forecast` query parameters — the same shape as
 /// `GET /plans/{pid}/forecast`'s (T-28i reuses its Monte-Carlo).
-#[derive(Debug, Deserialize)]
-struct IntakeForecastQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct IntakeForecastQuery {
     /// How many periods ahead to forecast an approved count for.
     #[serde(default)]
     periods: Option<usize>,
@@ -628,8 +628,8 @@ pub(crate) async fn find_item(ctx: &AppContext, pid: &str) -> Result<plans::Mode
 }
 
 /// `POST /api/plans/{pid}/gate-reviews` body.
-#[derive(Debug, Deserialize)]
-struct GateReviewPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct GateReviewPayload {
     gate: String,
     decision: String,
     #[serde(default)]
@@ -732,8 +732,8 @@ async fn list_gate_reviews(
 }
 
 /// `POST /api/plans/{pid}/risks` body.
-#[derive(Debug, Deserialize)]
-struct RiskPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RiskPayload {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -842,8 +842,8 @@ async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 
 /// `PUT /api/plans/{pid}/risks/{risk_pid}` — update scoring /
 /// status / mitigation.
-#[derive(Debug, Deserialize)]
-struct RiskUpdate {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RiskUpdate {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]
@@ -942,8 +942,8 @@ async fn escalate_risk(
 }
 
 /// `POST /api/plans/{pid}/budget-lines` body.
-#[derive(Debug, Deserialize)]
-struct BudgetPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BudgetPayload {
     category: String,
     description: String,
     currency: String,
@@ -1076,8 +1076,8 @@ fn budget_totals(rows: &[budget_lines::Model]) -> Vec<serde_json::Value> {
 /// `POST /api/plans/{pid}/budget-lines/{line_pid}/actual` —
 /// record spend against a line (accumulates; negative adjustments
 /// allowed; overflow refused).
-#[derive(Debug, Deserialize)]
-struct ActualPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ActualPayload {
     amount_minor: i64,
     #[serde(default)]
     note: Option<String>,

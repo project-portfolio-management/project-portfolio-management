@@ -31,8 +31,8 @@ fn addressable(sub: &str) -> Result<Uuid> {
 }
 
 /// `PUT /api/me/notification-prefs` body.
-#[derive(Debug, Deserialize)]
-struct PrefPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PrefPayload {
     kind: String,
     #[serde(default)]
     channel: Option<String>,
@@ -118,8 +118,8 @@ async fn list_prefs(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -
 }
 
 /// `DELETE /api/me/notification-prefs?kind=&channel=` query.
-#[derive(Debug, Deserialize)]
-struct ResetParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ResetParams {
     kind: String,
     #[serde(default)]
     channel: Option<String>,
@@ -151,8 +151,8 @@ async fn reset_pref(
 }
 
 /// `POST /api/me/notification-prefs/reset` body.
-#[derive(Debug, Deserialize)]
-struct ResetBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ResetBody {
     kind: String,
     #[serde(default)]
     channel: Option<String>,
@@ -178,8 +178,8 @@ async fn reset_pref_post(
 }
 
 /// `GET /api/me/inbox?tz=&unread=` query.
-#[derive(Debug, Deserialize)]
-struct InboxParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct InboxParams {
     /// IANA zone; a daily digest groups by the caller's local day.
     tz: String,
     #[serde(default)]

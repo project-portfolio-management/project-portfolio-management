@@ -268,8 +268,8 @@ async fn create(
 }
 
 /// `GET /api/<family>?plan=` query.
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     plan: Option<String>,
 }
@@ -426,8 +426,8 @@ async fn list_versions(
 }
 
 /// `PUT /api/plans/{pid}/<family>` body.
-#[derive(Debug, Deserialize)]
-struct LinkBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinkBody {
     /// The record to follow, or null to follow none of its own (the plan then inherits).
     framework_pid: Option<String>,
     /// The version to follow; the record's current one when absent. Following a record again with no version

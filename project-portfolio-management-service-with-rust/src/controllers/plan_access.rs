@@ -748,8 +748,8 @@ async fn get_access(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 }
 
 /// `PUT /api/plans/{pid}/access` body.
-#[derive(Debug, Deserialize)]
-struct AccessPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AccessPayload {
     private: bool,
     #[serde(default)]
     members: Vec<String>,

@@ -64,8 +64,8 @@ fn show_partners() -> bool {
 
 // ---- pools ----------------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct NewPool {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewPool {
     name: String,
     #[serde(default)]
     roles: Vec<String>,
@@ -153,8 +153,8 @@ async fn create_pool(
     format::json(pool_json(&row, &ms))
 }
 
-#[derive(Debug, Deserialize)]
-struct UpdatePool {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct UpdatePool {
     #[serde(default)]
     active: Option<bool>,
     #[serde(default)]
@@ -231,8 +231,8 @@ async fn list_pools(State(ctx): State<AppContext>) -> Result<Response> {
 
 // ---- commitments ----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct CommitBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CommitBody {
     pool_pid: Uuid,
     plan_pid: Uuid,
     #[serde(default)]
@@ -627,8 +627,8 @@ pub(crate) async fn heatmap(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct HeatQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct HeatQuery {
     #[serde(default)]
     from: Option<String>,
     #[serde(default)]

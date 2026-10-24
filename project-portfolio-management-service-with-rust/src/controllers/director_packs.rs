@@ -265,8 +265,8 @@ async fn compute_body(
     serde_json::to_string(&body).map_err(|e| Error::string(&e.to_string()))
 }
 
-#[derive(Debug, Deserialize)]
-struct DraftBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DraftBody {
     period: String,
     audience: String,
     /// Defaults to now; not in the future and not more than a year old.
@@ -491,8 +491,8 @@ async fn issue(
     format::json(meta(&now))
 }
 
-#[derive(Debug, Deserialize)]
-struct ReissueBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReissueBody {
     change_note: String,
 }
 

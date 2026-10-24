@@ -512,8 +512,8 @@ fn cycle_error(on: &[Uuid]) -> Error {
     ))
 }
 
-#[derive(Debug, Deserialize)]
-struct CpmParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CpmParams {
     /// Business days of float that count as near-critical (default 5).
     #[serde(default)]
     near: Option<i64>,
@@ -689,8 +689,8 @@ async fn plan_cpm(
 }
 
 /// `PUT …/tasks/{pid}/schedule` body. An absent or `null` field **clears** it.
-#[derive(Debug, Deserialize)]
-struct ScheduleBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ScheduleBody {
     #[serde(default)]
     start_date: Option<NaiveDate>,
     #[serde(default)]

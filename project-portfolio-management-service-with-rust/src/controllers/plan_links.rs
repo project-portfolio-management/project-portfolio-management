@@ -31,8 +31,8 @@ async fn live(ctx: &AppContext, plan: Uuid, task: Option<Uuid>) -> Result<Vec<pl
 }
 
 /// `POST /api/plans/{pid}/links` body.
-#[derive(Debug, Deserialize)]
-struct LinkBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinkBody {
     kind: String,
     url: String,
     label: String,
@@ -125,8 +125,8 @@ async fn add(
 }
 
 /// `GET /api/plans/{pid}/links` query: narrow to one system and/or kind.
-#[derive(Debug, Deserialize)]
-struct ListQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListQuery {
     #[serde(default)]
     system: Option<String>,
     #[serde(default)]

@@ -26,7 +26,7 @@ use crate::cpm::{self, Constraint, ConstraintKind, CpmResult, Edge, Kind, Node};
 pub const MAX_EDITS: usize = 100;
 
 /// One edit to a plan's schedule.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, schemars::JsonSchema)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Edit {
     /// Set a task's planned start.

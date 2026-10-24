@@ -316,8 +316,8 @@ pub(crate) async fn derive(
     Ok(Derived { json: out })
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// Only this plan's milestones.
     #[serde(default)]
     plan: Option<Uuid>,
@@ -455,8 +455,8 @@ async fn get_one(
 }
 
 /// `PUT …/milestones/{m_pid}/tasks` body.
-#[derive(Debug, Deserialize)]
-struct LinksBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LinksBody {
     /// The tasks the milestone waits for (replaces the set).
     task_pids: Vec<Uuid>,
     /// `manual` or `linked`; by default `linked` when there are tasks, else `manual`.
@@ -560,8 +560,8 @@ async fn set_links(
 }
 
 /// `POST …/milestones/{m_pid}/reopen` body.
-#[derive(Debug, Deserialize)]
-struct ReopenBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReopenBody {
     /// Why it is being reopened (required).
     reason: String,
 }

@@ -74,8 +74,8 @@ async fn visible_plans(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashS
 
 // ---- allocations ----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct NewAllocation {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewAllocation {
     funding_source_pid: Uuid,
     amount_minor: i64,
     currency: String,
@@ -204,8 +204,8 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
     }).collect::<Vec<_>>() }))
 }
 
-#[derive(Debug, Deserialize)]
-struct AttachBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AttachBody {
     /// The allocation the line draws on; `null` detaches it.
     #[serde(default)]
     funding_allocation_pid: Option<Uuid>,
@@ -388,8 +388,8 @@ async fn trace(
 
 // ---- cost codes -----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct CodeBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CodeBody {
     cost_code: String,
     budget_line_pid: Uuid,
 }

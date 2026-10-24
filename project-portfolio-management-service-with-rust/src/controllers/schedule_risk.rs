@@ -22,8 +22,8 @@ use crate::models::_entities::{risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self as sim, Distribution, Estimate, Event, Params, RunError};
 
-#[derive(Debug, Deserialize)]
-struct EstimateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EstimateBody {
     /// Optimistic business days; `null` clears.
     #[serde(default)]
     optimistic_days: Option<i32>,
@@ -111,8 +111,8 @@ async fn set_estimate(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ImpactBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ImpactBody {
     /// The task it threatens; `null` clears the schedule fields.
     #[serde(default)]
     task_pid: Option<Uuid>,
@@ -192,8 +192,8 @@ async fn set_impact(
     format::json(serde_json::json!({ "risk_pid": row.pid, "schedule": now }))
 }
 
-#[derive(Debug, Deserialize)]
-struct RunParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RunParams {
     #[serde(default)]
     iterations: Option<usize>,
     #[serde(default)]

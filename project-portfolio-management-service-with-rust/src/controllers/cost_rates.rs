@@ -122,8 +122,8 @@ async fn applicable(ctx: &AppContext, person: &str, name: &str) -> Result<Option
 
 // ───────────────────────── rate tables and rates ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct TableBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TableBody {
     name: String,
     #[serde(default)]
     person_ref: Option<String>,
@@ -205,8 +205,8 @@ async fn create_table(
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ListTables {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListTables {
     #[serde(default)]
     person_ref: Option<String>,
     #[serde(default)]
@@ -247,8 +247,8 @@ async fn list_tables(
     format::json(serde_json::json!({ "tables": out }))
 }
 
-#[derive(Debug, Deserialize)]
-struct RateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RateBody {
     effective_from: NaiveDate,
     /// Minor units of the table's currency per hour.
     per_hour_minor: i64,
@@ -321,8 +321,8 @@ async fn add_rate(
         "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor, "currency": table.currency }))
 }
 
-#[derive(Debug, Deserialize)]
-struct LookupParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LookupParams {
     person_ref: String,
     date: NaiveDate,
     #[serde(default)]
@@ -356,8 +356,8 @@ async fn lookup(
 
 // ───────────────────────── task costs ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct TaskCostBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TaskCostBody {
     /// `material` or `fixed`.
     kind: String,
     description: String,
@@ -503,8 +503,8 @@ fn add_days(into: &mut BTreeMap<NaiveDate, i64>, days: &[(NaiveDate, i64)]) {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct CostPlanParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CostPlanParams {
     #[serde(flatten)]
     window: super::assignments::ProfileParams,
     /// The rate table to price labour with (default `standard`).
@@ -737,8 +737,8 @@ pub(crate) async fn labour_totals(
 
 // ───────────────────────── labour cost actuals ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct RecordParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RecordParams {
     #[serde(default)]
     table: Option<String>,
 }

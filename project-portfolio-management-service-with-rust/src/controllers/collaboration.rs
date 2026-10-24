@@ -80,8 +80,8 @@ async fn subject_exists(ctx: &AppContext, subject_kind: &str, subject_pid: Uuid)
 }
 
 /// `POST /api/reviews` body — delegate a subject to one expert.
-#[derive(Debug, Deserialize)]
-struct InvitePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct InvitePayload {
     subject_kind: String,
     subject_pid: Uuid,
     reviewer_ref: String,
@@ -221,8 +221,8 @@ async fn invite_review(
 }
 
 /// `GET /api/reviews` filter.
-#[derive(Debug, Deserialize)]
-struct ReviewParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReviewParams {
     #[serde(default)]
     subject_kind: Option<String>,
     #[serde(default)]
@@ -284,8 +284,8 @@ async fn list_reviews(
 }
 
 /// `POST /api/reviews/{pid}/respond` body.
-#[derive(Debug, Deserialize)]
-struct RespondPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RespondPayload {
     /// `accept` or `decline`.
     response: String,
 }
@@ -331,8 +331,8 @@ async fn respond_review(
 }
 
 /// `POST /api/reviews/{pid}/submit` body — the expert's verdict.
-#[derive(Debug, Deserialize)]
-struct VerdictPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct VerdictPayload {
     #[serde(default)]
     score: Option<i32>,
     recommendation: String,
@@ -464,8 +464,8 @@ async fn withdraw_review(
 }
 
 /// `GET /api/reviews/consensus` filter.
-#[derive(Debug, Deserialize)]
-struct ConsensusParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ConsensusParams {
     subject_kind: String,
     subject_pid: Uuid,
 }
@@ -513,8 +513,8 @@ pub(crate) fn consensus_of(rows: &[reviews::Model]) -> rules::Consensus {
 
 /// `POST /api/plans/{pid}/tasks/{t_pid}/assign` body. A `null` /
 /// absent `assignee_ref` unassigns.
-#[derive(Debug, Deserialize)]
-struct AssignPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AssignPayload {
     #[serde(default)]
     assignee_ref: Option<String>,
 }
@@ -585,8 +585,8 @@ async fn assign_task(
 }
 
 /// `GET /api/assignees/workload` filter.
-#[derive(Debug, Deserialize)]
-struct WorkloadParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct WorkloadParams {
     /// Restrict to one plan's board; absent = every plan.
     #[serde(default)]
     plan: Option<Uuid>,
@@ -628,8 +628,8 @@ async fn assignee_workload(
 }
 
 /// `GET /api/notifications` filter.
-#[derive(Debug, Deserialize)]
-struct NotificationParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NotificationParams {
     /// Whose inbox to read.
     recipient: String,
     /// `true` ⇒ only unread.

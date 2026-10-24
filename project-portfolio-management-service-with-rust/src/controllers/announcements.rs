@@ -44,8 +44,8 @@ fn view(a: &announcements::Model, now: DateTime<Utc>) -> serde_json::Value {
     })
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     include: Option<String>,
     #[serde(default)]
@@ -110,8 +110,8 @@ async fn list(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Input {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Input {
     title: String,
     #[serde(rename = "body")]
     text: String,

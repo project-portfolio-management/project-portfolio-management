@@ -50,8 +50,8 @@ async fn find_benefit(ctx: &AppContext, plan: Uuid, pid: Uuid) -> Result<benefit
         .ok_or(Error::NotFound)
 }
 
-#[derive(Debug, Deserialize)]
-struct ClassifyBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ClassifyBody {
     #[serde(default)]
     recurrence: Option<String>,
     #[serde(default)]
@@ -223,8 +223,8 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
     Ok(refs)
 }
 
-#[derive(Debug, Deserialize)]
-struct ValidateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ValidateBody {
     amount_minor: i64,
     #[serde(default)]
     evidence_attachment_pid: Option<Uuid>,

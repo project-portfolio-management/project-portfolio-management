@@ -40,8 +40,8 @@ pub const VERIFY_DEFAULT_LIMIT: u64 = 1000;
 pub const VERIFY_MAX_LIMIT: u64 = 10_000;
 
 /// Query string for both verification endpoints.
-#[derive(Debug, Deserialize)]
-struct VerifyParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct VerifyParams {
     /// How many rows to verify; clamped to [`VERIFY_MAX_LIMIT`].
     limit: Option<u64>,
 }

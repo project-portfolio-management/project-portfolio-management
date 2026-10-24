@@ -200,8 +200,8 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
 }
 
 /// `POST …/relations` body.
-#[derive(Debug, Deserialize)]
-struct RelationPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RelationPayload {
     kind: String,
     to_task_pid: Uuid,
 }

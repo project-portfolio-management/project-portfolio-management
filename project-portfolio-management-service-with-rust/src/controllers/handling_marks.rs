@@ -52,8 +52,8 @@ async fn get_mark(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     format::json(view(plan.pid, row.as_ref().map(|r| r.mark.as_str())))
 }
 
-#[derive(Debug, Deserialize)]
-struct SetBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SetBody {
     /// A code in the scheme, or `null` to reset to the lowest level.
     mark: Option<String>,
 }

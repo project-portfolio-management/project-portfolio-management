@@ -123,8 +123,8 @@ async fn export(
 
 const NOT_COVERED: &str = "Names or e-mail addresses typed into free text (titles, comments, documents), the content of uploaded files, the snapshot JSON of audit rows, notification destinations (listed above under notification_sinks), request logs (which record the path of every call, this one included) and backups are not searched. Credential and digest fields are left out of the export.";
 
-#[derive(Debug, Deserialize)]
-struct ApplyParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ApplyParams {
     #[serde(default)]
     apply: Option<bool>,
 }

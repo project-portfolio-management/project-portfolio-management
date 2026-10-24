@@ -34,8 +34,8 @@ fn is_admin(claims: &authentication_verifier::Claims) -> bool {
 
 // ───────────────────────── definitions ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct DefinitionBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DefinitionBody {
     #[serde(default)]
     name: Option<String>,
     steps: Vec<Step>,
@@ -456,8 +456,8 @@ async fn run_from<C: ConnectionTrait>(
 
 // ───────────────────────── executions ─────────────────────────
 
-#[derive(Debug, Deserialize)]
-struct StartBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct StartBody {
     subject_kind: String,
     subject_pid: String,
 }
@@ -668,8 +668,8 @@ async fn get_execution(
     format::json(execution_json(&ctx, &ex).await?)
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]
@@ -735,8 +735,8 @@ async fn list_executions(
     ))
 }
 
-#[derive(Debug, Deserialize)]
-struct NoteBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NoteBody {
     #[serde(default)]
     note: Option<String>,
 }

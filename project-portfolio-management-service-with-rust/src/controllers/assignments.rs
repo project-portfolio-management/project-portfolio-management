@@ -77,8 +77,8 @@ pub(crate) fn recompute_for_duration(
     .map_err(|p| p.message().to_string())
 }
 
-#[derive(Debug, Deserialize)]
-struct AssignmentBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AssignmentBody {
     /// `fixed_units`, `fixed_duration` or `fixed_work`.
     #[serde(default)]
     rule: Option<String>,
@@ -279,8 +279,8 @@ async fn capacity_check(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ContourBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ContourBody {
     contour: String,
     /// Percentages summing to 100, for `custom`.
     #[serde(default)]
@@ -420,7 +420,7 @@ pub(crate) fn work_of(
     out
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ProfileParams {
     #[serde(default)]
     pub(crate) from: Option<NaiveDate>,

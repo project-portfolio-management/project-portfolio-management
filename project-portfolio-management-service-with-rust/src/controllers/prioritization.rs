@@ -247,8 +247,8 @@ async fn plan_smart_score(
 }
 
 /// `GET /api/prioritization` filter.
-#[derive(Debug, Deserialize)]
-struct RankParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RankParams {
     /// How many rows to return (default 50, capped at [`RANK_CAP`]).
     #[serde(default)]
     limit: Option<usize>,

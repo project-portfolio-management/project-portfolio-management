@@ -20,8 +20,8 @@ use crate::workflow::{Category, category_of};
 
 const ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS";
 
-#[derive(Debug, Deserialize)]
-struct Params {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     /// The status date (default today).
     #[serde(default)]
     as_of: Option<NaiveDate>,

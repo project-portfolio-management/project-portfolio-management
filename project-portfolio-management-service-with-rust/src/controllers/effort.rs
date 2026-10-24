@@ -38,8 +38,8 @@ const MAX_ROWS: u64 = 5000;
 const DEFAULT_WINDOW_DAYS: i64 = 28;
 
 /// `POST /api/plans/{pid}/time-entries` body.
-#[derive(Debug, Deserialize)]
-struct EntryPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EntryPayload {
     actor_ref: String,
     spent_on: chrono::NaiveDate,
     minutes: i64,
@@ -192,8 +192,8 @@ async fn effort_rollup(
 }
 
 /// `POST /api/working-time` body.
-#[derive(Debug, Deserialize)]
-struct WorkingTimePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct WorkingTimePayload {
     #[serde(default)]
     scope_ref: Option<String>,
     minutes_per_day: i32,
@@ -235,8 +235,8 @@ async fn set_working_time(
 }
 
 /// `POST /api/non-working` body.
-#[derive(Debug, Deserialize)]
-struct NonWorkingPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NonWorkingPayload {
     person_ref: String,
     starts_on: chrono::NaiveDate,
     ends_on: chrono::NaiveDate,
@@ -285,8 +285,8 @@ async fn create_non_working(
 }
 
 /// `GET /api/capacity/utilization` query.
-#[derive(Debug, Deserialize)]
-struct UtilizationParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct UtilizationParams {
     #[serde(default)]
     by: Option<String>,
     #[serde(default)]

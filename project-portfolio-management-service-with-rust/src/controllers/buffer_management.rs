@@ -359,8 +359,8 @@ async fn snapshot(
     format::json(json!({ "pid": snap.pid, "taken_on": snap.taken_on, "document": document }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ActionBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ActionBody {
     buffer_key: String,
     action: String,
     owner_ref: String,
@@ -427,8 +427,8 @@ async fn add_action(
     format::json(json!({ "pid": a.pid, "buffer_key": a.buffer_key, "status": a.status }))
 }
 
-#[derive(Debug, Deserialize)]
-struct StatusBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct StatusBody {
     status: String,
 }
 

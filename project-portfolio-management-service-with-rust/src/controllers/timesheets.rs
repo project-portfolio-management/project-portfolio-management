@@ -121,8 +121,8 @@ pub(crate) async fn week_is_locked(
 }
 
 /// `GET /api/timesheets` query.
-#[derive(Debug, Deserialize)]
-struct GridParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct GridParams {
     #[serde(default)]
     person: Option<String>,
     week: String,
@@ -169,8 +169,8 @@ async fn get_week(
 }
 
 /// `POST /api/timesheets/submit` body.
-#[derive(Debug, Deserialize)]
-struct SubmitBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubmitBody {
     #[serde(default)]
     person: Option<String>,
     week: String,
@@ -259,8 +259,8 @@ async fn submit(
 }
 
 /// `POST /api/timesheets/decide` body.
-#[derive(Debug, Deserialize)]
-struct DecideBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecideBody {
     person: String,
     week: String,
     /// `approved` | `rejected`.
@@ -323,8 +323,8 @@ async fn decide(
 }
 
 /// `GET /api/time-reports` query.
-#[derive(Debug, Deserialize)]
-struct ReportParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReportParams {
     group_by: String,
     #[serde(default)]
     from: Option<NaiveDate>,

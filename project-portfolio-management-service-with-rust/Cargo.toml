@@ -36,6 +36,8 @@ sha3 = { version = "0.12" }
 loco-rs = { workspace = true  }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
+# Request-body schemas for the OpenAPI document (CQ-8): derived from the handlers' own types.
+schemars = { version = "1", features = ["chrono04", "uuid1"] }
 tokio = { version = "1.53", default-features = false, features = [
   "rt-multi-thread",
   # `sync` for the live-update broadcast channel (src/live.rs); `time` for

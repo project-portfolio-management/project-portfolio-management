@@ -25,8 +25,8 @@ use crate::tz;
 const MAX_SLOTS: u64 = 2_000;
 
 /// `POST /api/me/planned-slots` body.
-#[derive(Debug, Deserialize)]
-struct SlotBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SlotBody {
     task_pid: Uuid,
     starts_at: DateTime<Utc>,
     ends_at: DateTime<Utc>,
@@ -105,8 +105,8 @@ async fn delete_slot(
 }
 
 /// `GET /api/me/plan` query.
-#[derive(Debug, Deserialize)]
-struct PlanParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PlanParams {
     day: NaiveDate,
     tz: String,
 }

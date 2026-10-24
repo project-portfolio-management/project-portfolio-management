@@ -29,8 +29,8 @@ use crate::value as rules;
 const MAX_ROWS: u64 = 5000;
 
 /// `POST /api/plans/{pid}/business-case` body.
-#[derive(Debug, Deserialize)]
-struct TargetPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TargetPayload {
     metric: String,
     baseline_value: i64,
     target_value: i64,
@@ -94,8 +94,8 @@ async fn create_target(
 }
 
 /// `POST /api/plans/{pid}/value-points` body.
-#[derive(Debug, Deserialize)]
-struct ValuePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ValuePayload {
     value: i64,
     #[serde(default)]
     method: Option<String>,
@@ -156,8 +156,8 @@ async fn create_value_point(
 }
 
 /// `POST /api/plans/{pid}/adoption` body.
-#[derive(Debug, Deserialize)]
-struct AdoptionPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AdoptionPayload {
     active_users: i64,
     target_users: i64,
     window_days: i32,
@@ -212,8 +212,8 @@ async fn create_adoption(
 }
 
 /// `POST /api/plans/{pid}/satisfaction` body.
-#[derive(Debug, Deserialize)]
-struct SatisfactionPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SatisfactionPayload {
     instrument: String,
     score: i16,
     respondent_role: String,

@@ -239,8 +239,8 @@ fn pc_view(default: DefaultMethod, pc: &ev::PercentComplete) -> serde_json::Valu
 }
 
 /// `?ac=` on `GET …/earned-value`.
-#[derive(Debug, Deserialize)]
-struct EarnedValueParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EarnedValueParams {
     /// `budget_lines` (default), `labour` or `both`.
     #[serde(default)]
     ac: Option<String>,
@@ -305,8 +305,8 @@ async fn earned_value(
 }
 
 /// `PUT …/earned-value-settings` body.
-#[derive(Debug, Deserialize)]
-struct SettingsBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SettingsBody {
     /// `zero_hundred`, `fifty_fifty` or `points`.
     default_method: String,
 }
@@ -366,8 +366,8 @@ async fn put_settings(
 }
 
 /// `PUT …/tasks/{pid}/percent-complete` body.
-#[derive(Debug, Deserialize)]
-struct PercentBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PercentBody {
     /// `zero_hundred`, `fifty_fifty` or `manual`; absent or null clears the override.
     #[serde(default)]
     method: Option<String>,
@@ -628,8 +628,8 @@ async fn snapshot(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct SeriesParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SeriesParams {
     /// `csv` for a spreadsheet.
     #[serde(default)]
     format: Option<String>,

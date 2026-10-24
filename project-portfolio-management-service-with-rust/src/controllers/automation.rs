@@ -56,8 +56,8 @@ pub const SWEEP_CAP: u64 = 500;
 /// Each element is `{"kind": …, "value": …}`, the same shape
 /// `action_kind`/`action_value` used singly before this rule type
 /// existed.
-#[derive(Debug, Deserialize)]
-struct AutomationPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AutomationPayload {
     /// Scope the rule to one plan's board; absent = every plan.
     #[serde(default)]
     plan_pid: Option<Uuid>,
@@ -143,8 +143,8 @@ async fn create_automation(
 }
 
 /// `GET /api/automations` filter.
-#[derive(Debug, Deserialize)]
-struct AutomationParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AutomationParams {
     #[serde(default)]
     plan: Option<Uuid>,
     #[serde(default)]
@@ -272,8 +272,8 @@ async fn delete_automation(
 }
 
 /// `GET /api/automations/runs` filter.
-#[derive(Debug, Deserialize)]
-struct RunParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RunParams {
     #[serde(default)]
     automation: Option<Uuid>,
     #[serde(default)]
@@ -1058,8 +1058,8 @@ pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool
 }
 
 /// `POST /api/scheduled-actions` body.
-#[derive(Debug, Deserialize)]
-struct SchedulePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SchedulePayload {
     subject_kind: String,
     subject_pid: Uuid,
     action_kind: String,
@@ -1155,8 +1155,8 @@ async fn create_scheduled_action(
 }
 
 /// `GET /api/scheduled-actions` filter.
-#[derive(Debug, Deserialize)]
-struct ScheduledParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ScheduledParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

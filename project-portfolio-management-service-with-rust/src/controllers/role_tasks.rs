@@ -66,8 +66,8 @@ async fn readable_plans(
 }
 
 /// `GET /api/resource-plan/role-tasks` query.
-#[derive(Debug, Deserialize)]
-struct Params {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Params {
     role: String,
 }
 

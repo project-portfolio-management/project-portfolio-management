@@ -53,8 +53,8 @@ async fn programme(ctx: &AppContext, pid: &str, what: &str) -> Result<plans::Mod
 
 // ---- triage ---------------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct TriageBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TriageBody {
     /// `finish`, `fix`, `pause` or `stop`.
     outcome: String,
     reason: String,
@@ -127,8 +127,8 @@ async fn get_triage(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 
 // ---- thresholds -----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct ThresholdBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ThresholdBody {
     kind: String,
     /// `confidence_red_packs`: how many issued packs in a row at red (1 to 24).
     #[serde(default)]
@@ -455,8 +455,8 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
 
 // ---- the decision ---------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct DecideBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecideBody {
     action: String,
     reason: String,
     #[serde(default)]

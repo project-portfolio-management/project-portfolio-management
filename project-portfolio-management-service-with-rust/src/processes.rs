@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 pub const MAX_STEPS: usize = 20;
 
 /// What a step does.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Kind {
     /// Ask someone to approve; wait for the decision.
@@ -31,7 +31,7 @@ pub enum Kind {
 }
 
 /// One step of a process.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Step {
     /// What it does.
     pub kind: Kind,

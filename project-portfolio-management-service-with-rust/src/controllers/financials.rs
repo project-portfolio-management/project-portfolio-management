@@ -39,16 +39,16 @@ fn valid_currency(raw: &str) -> Option<String> {
 }
 
 /// `POST /api/plans/{pid}/budget-baselines` body.
-#[derive(Debug, Deserialize)]
-struct BaselinePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BaselinePayload {
     currency: String,
     periods: Vec<PeriodPayload>,
     #[serde(default)]
     reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-struct PeriodPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PeriodPayload {
     period_start: chrono::NaiveDate,
     period_end: chrono::NaiveDate,
     planned_minor: i64,
@@ -311,8 +311,8 @@ async fn forecast(
 }
 
 /// `GET /api/financials/forecast?plan=&depth=` query.
-#[derive(Debug, Deserialize)]
-struct RollupQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RollupQuery {
     plan: String,
     #[serde(default)]
     depth: Option<usize>,

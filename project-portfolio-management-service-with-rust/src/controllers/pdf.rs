@@ -108,8 +108,8 @@ fn compact(v: &Value) -> String {
 }
 
 /// `GET /api/board/pack.pdf` query.
-#[derive(Debug, Deserialize)]
-struct PackParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PackParams {
     #[serde(default)]
     from: Option<String>,
     #[serde(default)]
@@ -144,8 +144,8 @@ async fn board_pack_pdf(
 }
 
 /// `GET /api/plans/{pid}/summary.pdf` query.
-#[derive(Debug, Deserialize)]
-struct SummaryParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SummaryParams {
     #[serde(default)]
     as_of: Option<String>,
 }

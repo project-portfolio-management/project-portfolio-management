@@ -232,8 +232,8 @@ async fn queue_job(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<()> {
 // ───────────────────────────── import ─────────────────────────────
 
 /// `POST /api/plans/import` query.
-#[derive(Debug, Deserialize)]
-struct ImportParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ImportParams {
     /// `jsonl` (default) or `csv`.
     #[serde(default)]
     format: Option<String>,
@@ -374,8 +374,8 @@ async fn new_job<C: ConnectionTrait>(
 // ───────────────────────────── export ─────────────────────────────
 
 /// `POST /api/plans/export` body.
-#[derive(Debug, Deserialize)]
-struct ExportBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ExportBody {
     #[serde(default)]
     format: Option<String>,
     /// `masked` (default) or `full`.
@@ -601,8 +601,8 @@ async fn export_download(
 }
 
 /// `GET /api/plans/bulk-jobs` query.
-#[derive(Debug, Deserialize)]
-struct JobListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct JobListParams {
     #[serde(default)]
     kind: Option<String>,
     #[serde(default)]
@@ -638,8 +638,8 @@ async fn list_jobs(
 }
 
 /// `GET /api/plans/bulk-jobs/{id}/errors` query.
-#[derive(Debug, Deserialize)]
-struct ErrorsParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ErrorsParams {
     #[serde(default)]
     format: Option<String>,
 }
@@ -705,8 +705,8 @@ fn code_of(s: &str) -> &'static str {
 // ───────────────────────────── review queue ─────────────────────────────
 
 /// `GET /api/plans/review-queue` query.
-#[derive(Debug, Deserialize)]
-struct QueueParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct QueueParams {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]

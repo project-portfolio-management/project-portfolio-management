@@ -101,15 +101,15 @@ pub(crate) async fn notify_watchers(
 }
 
 /// `POST/DELETE/GET /api/watchers` subject query.
-#[derive(Debug, Deserialize)]
-struct SubjectParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SubjectParams {
     subject_kind: String,
     subject_pid: String,
 }
 
 /// `POST /api/watchers` body.
-#[derive(Debug, Deserialize)]
-struct WatchPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct WatchPayload {
     subject_kind: String,
     subject_pid: String,
 }

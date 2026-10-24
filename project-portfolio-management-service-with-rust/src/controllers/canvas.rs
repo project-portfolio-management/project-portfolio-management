@@ -64,8 +64,8 @@ async fn list_templates() -> Result<Response> {
 }
 
 /// `POST /api/canvases` body.
-#[derive(Debug, Deserialize)]
-struct CanvasPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CanvasPayload {
     template: String,
     title: String,
     #[serde(default)]
@@ -121,8 +121,8 @@ async fn create_canvas(
 }
 
 /// `GET /api/canvases?plan=&template=` query.
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     #[serde(default)]
     plan: Option<String>,
     #[serde(default)]
@@ -198,8 +198,8 @@ fn db_err_model(e: ModelError) -> Error {
 }
 
 /// `POST …/items` body.
-#[derive(Debug, Deserialize)]
-struct ItemPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ItemPayload {
     #[serde(rename = "box")]
     box_key: String,
     body: String,
@@ -264,8 +264,8 @@ async fn add_item(
 }
 
 /// `PUT …/items/{item_pid}` body — every field optional.
-#[derive(Debug, Deserialize)]
-struct ItemUpdate {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ItemUpdate {
     #[serde(default, rename = "box")]
     box_key: Option<String>,
     #[serde(default)]
@@ -340,8 +340,8 @@ async fn delete_item(
 }
 
 /// `POST …/items/{item_pid}/promote` body.
-#[derive(Debug, Deserialize)]
-struct PromotePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PromotePayload {
     /// `idea` | `risk` | `objective`.
     target: String,
     /// Risk only — 1–5. Never defaulted: the author must say.

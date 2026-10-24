@@ -47,8 +47,8 @@ async fn live_defs(ctx: &AppContext, applies_to: &str) -> Result<Vec<custom_fiel
 }
 
 /// `POST /api/custom-fields` body.
-#[derive(Debug, Deserialize)]
-struct DefPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DefPayload {
     key: String,
     label: String,
     #[serde(rename = "type")]
@@ -113,8 +113,8 @@ async fn create_def(
 }
 
 /// `GET /api/custom-fields?applies_to=` query.
-#[derive(Debug, Deserialize)]
-struct ListDefsParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListDefsParams {
     #[serde(default)]
     applies_to: Option<String>,
 }
@@ -283,8 +283,8 @@ async fn plan_kind(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<String>> {
 }
 
 /// `PUT /api/custom-fields/values` body.
-#[derive(Debug, Deserialize)]
-struct ValuesPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ValuesPayload {
     applies_to: String,
     subject_pid: String,
     values: BTreeMap<String, Value>,
@@ -321,8 +321,8 @@ async fn put_values(
 }
 
 /// `GET /api/custom-fields/values?applies_to=&subject_pid=` query.
-#[derive(Debug, Deserialize)]
-struct ValuesParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ValuesParams {
     applies_to: String,
     subject_pid: String,
 }
@@ -393,8 +393,8 @@ async fn get_values(
 }
 
 /// `GET /api/custom-fields/search?applies_to=&key=&value=` query.
-#[derive(Debug, Deserialize)]
-struct SearchParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SearchParams {
     applies_to: String,
     key: String,
     value: String,

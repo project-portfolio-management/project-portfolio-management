@@ -139,6 +139,7 @@ pub mod okr;
 /// per-phase durations from the transition log.
 pub mod onboarding;
 pub mod openapi;
+pub mod openapi_bodies;
 pub mod openapi_more;
 pub mod openapi_schemas;
 pub mod pdf;

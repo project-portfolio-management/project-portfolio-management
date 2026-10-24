@@ -61,8 +61,8 @@ pub(crate) fn is_finished(model: &plans::Model) -> bool {
 /// `POST /api/dependencies` body: a dependency between two plans, two tasks,
 /// or one of each (SC-1): a relationship `kind` (`fs` default, `ss`, `ff`,
 /// `sf`) and a lag in business days, **negative for a lead**.
-#[derive(Debug, Deserialize)]
-struct DependencyPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DependencyPayload {
     predecessor_pid: Uuid,
     successor_pid: Uuid,
     #[serde(default)]
@@ -186,8 +186,8 @@ async fn create_dependency(
 
 /// `GET /api/dependencies?item={pid}` — edges touching one item (or
 /// all, capped 500).
-#[derive(Debug, Deserialize)]
-struct DependencyParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DependencyParams {
     #[serde(default)]
     item: Option<Uuid>,
 }
@@ -394,8 +394,8 @@ fn plan_level_cpm(
 }
 
 /// `POST /api/plans/{pid}/milestones` body.
-#[derive(Debug, Deserialize)]
-struct MilestonePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MilestonePayload {
     name: String,
     due: chrono::NaiveDate,
     /// Optional kind (`milestone` / `demo` / `release` / `checkpoint`);
@@ -468,8 +468,8 @@ async fn list_milestones(
 }
 
 /// `PUT /api/plans/{pid}/milestones/{m_pid}` body.
-#[derive(Debug, Deserialize)]
-struct MilestoneReschedulePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MilestoneReschedulePayload {
     due: chrono::NaiveDate,
     /// Why it moved; kept in the slip history (optional, up to 500 characters).
     #[serde(default)]
@@ -562,8 +562,8 @@ async fn reschedule_milestone(
 }
 
 /// `POST /api/plans/{pid}/milestones/{m_pid}/complete` body (optional).
-#[derive(Debug, Deserialize, Default)]
-struct MilestoneCompletePayload {
+#[derive(Debug, Deserialize, Default, schemars::JsonSchema)]
+pub(crate) struct MilestoneCompletePayload {
     /// Why. **Required** when the milestone is linked to tasks that are not all
     /// done: completing it by hand over open work is allowed, but not silently.
     #[serde(default)]
@@ -643,8 +643,8 @@ async fn complete_milestone(
 }
 
 /// `POST /api/plans/{pid}/allocations` body.
-#[derive(Debug, Deserialize)]
-struct AllocationPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AllocationPayload {
     /// `person:` / `worker:` `EntityRef` URN. Omit it with `placeholder: true`.
     #[serde(default)]
     person_ref: String,
@@ -807,8 +807,8 @@ async fn list_allocations(
 }
 
 /// `POST …/allocations/{a_pid}/commit` query.
-#[derive(Debug, Deserialize, Default)]
-struct CommitBody {
+#[derive(Debug, Deserialize, Default, schemars::JsonSchema)]
+pub(crate) struct CommitBody {
     /// Commit even though it would push the person over their capacity.
     #[serde(default)]
     confirm: bool,
@@ -936,8 +936,8 @@ async fn delete_allocation(
 /// `GET /api/capacity?from=&to=` — the per-person capacity rollup
 /// over a window (default: today → today + 30 calendar days). Summed percent
 /// over 100 ⇒ over-allocated (PPM-8).
-#[derive(Debug, Deserialize)]
-struct CapacityParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CapacityParams {
     #[serde(default)]
     from: Option<chrono::NaiveDate>,
     #[serde(default)]
@@ -1050,8 +1050,8 @@ async fn capacity(
 }
 
 /// `POST /api/reports` body (PPM-9).
-#[derive(Debug, Deserialize)]
-struct ReportPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReportPayload {
     name: String,
     collection: String,
     #[serde(default)]
@@ -1201,8 +1201,8 @@ fn report_cell(model: &plans::Model, field: &str) -> String {
 /// `GET /api/reports/{pid}/run?format=json|csv` — execute a saved
 /// report synchronously (row cap 1000; scheduled/bulk-artifact runs
 /// are the family bulk machinery, roadmap).
-#[derive(Debug, Deserialize)]
-struct RunParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RunParams {
     #[serde(default)]
     format: Option<String>,
 }

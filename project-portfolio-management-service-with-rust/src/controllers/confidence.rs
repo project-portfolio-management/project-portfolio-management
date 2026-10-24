@@ -55,8 +55,8 @@ fn assessment_json(a: &assessments::Model) -> serde_json::Value {
     })
 }
 
-#[derive(Debug, Deserialize)]
-struct AssessBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AssessBody {
     value: String,
     kind: String,
     rationale: String,
@@ -254,8 +254,8 @@ fn lite(a: &assessments::Model) -> Assessment {
 // DP-3: exceptions
 // ---------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct ExceptionQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ExceptionQuery {
     #[serde(default)]
     status: Option<String>,
     #[serde(default)]
@@ -318,8 +318,8 @@ pub(crate) async fn find_exception(
     Ok(row)
 }
 
-#[derive(Debug, Deserialize)]
-struct CompleteBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CompleteBody {
     #[serde(default)]
     cause: Option<String>,
     #[serde(default)]
@@ -400,8 +400,8 @@ async fn complete_exception(
     format::json(exception_json(&saved, Utc::now(), rules::window_hours()))
 }
 
-#[derive(Debug, Deserialize)]
-struct DecisionBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecisionBody {
     decision: String,
 }
 
@@ -469,8 +469,8 @@ async fn decide_exception(
 // DP-4: strategic aims and the portfolio map
 // ---------------------------------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct AimBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct AimBody {
     strategic: bool,
 }
 
@@ -537,8 +537,8 @@ async fn mark_aim(
     format::json(serde_json::json!({ "objective_pid": objective.pid, "strategic": b.strategic }))
 }
 
-#[derive(Debug, Deserialize)]
-struct PrimaryBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PrimaryBody {
     objective_pid: Uuid,
 }
 
@@ -770,8 +770,8 @@ pub(crate) async fn build_map(
 }
 
 /// `GET /api/portfolio-map[?period=YYYY-MM]` — the map for the programmes you can read.
-#[derive(Debug, Deserialize)]
-struct MapQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MapQuery {
     #[serde(default)]
     period: Option<String>,
 }

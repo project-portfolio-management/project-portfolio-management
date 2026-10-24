@@ -35,8 +35,8 @@ async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
 }
 
 /// `POST /api/approvals` body.
-#[derive(Debug, Deserialize)]
-struct RequestPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct RequestPayload {
     subject_kind: String,
     subject_pid: String,
     /// The one person asked: a `person:` / `worker:` URN.
@@ -104,8 +104,8 @@ async fn request_approval(
 }
 
 /// `GET /api/approvals` query.
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// `approver` (waiting on me) or `requester` (I asked); absent = both.
     #[serde(default)]
     mine: Option<String>,
@@ -166,8 +166,8 @@ async fn list(
 }
 
 /// `POST /api/approvals/{pid}/decide` body.
-#[derive(Debug, Deserialize)]
-struct DecidePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct DecidePayload {
     /// `approved` | `rejected`.
     decision: String,
     #[serde(default)]

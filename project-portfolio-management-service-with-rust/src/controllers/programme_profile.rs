@@ -25,8 +25,8 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/reporting-method", put(set_method))
 }
 
-#[derive(Debug, Deserialize)]
-struct Body {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Body {
     /// One of the three models; `null` clears it.
     #[serde(default)]
     delivery_model: Option<String>,
@@ -160,8 +160,8 @@ async fn show(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     format::json(view(row.as_ref(), &names))
 }
 
-#[derive(Debug, Deserialize)]
-struct MethodBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MethodBody {
     /// `evm` or `product`.
     method: String,
 }

@@ -98,8 +98,8 @@ async fn key_results_of(ctx: &AppContext, objective_pid: Uuid) -> Result<Vec<key
 }
 
 /// `POST /api/objectives/{pid}/key-results` body.
-#[derive(Debug, Deserialize)]
-struct KeyResultPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct KeyResultPayload {
     title: String,
     metric: String,
     direction: String,
@@ -229,8 +229,8 @@ async fn list_key_results(
 }
 
 /// `POST /api/key-results/{pid}/check-ins` body.
-#[derive(Debug, Deserialize)]
-struct CheckInPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CheckInPayload {
     value: i64,
     #[serde(default)]
     confidence: Option<i16>,
@@ -390,8 +390,8 @@ async fn plan_okr(
 // ───────────────────────── portfolio view, edit and delete ─────────────────────────
 
 /// `GET /api/okrs?period=` query.
-#[derive(Debug, Deserialize)]
-struct OkrParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct OkrParams {
     /// Only objectives of this period (an exact match).
     #[serde(default)]
     period: Option<String>,
@@ -476,9 +476,9 @@ async fn list_okrs(
 }
 
 /// `PUT /api/objectives/{pid}` body: replaces title, description and period.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct ObjectiveUpdate {
+pub(crate) struct ObjectiveUpdate {
     title: String,
     #[serde(default)]
     description: Option<String>,
@@ -545,9 +545,9 @@ async fn delete_objective(
 /// `direction` and `currency` are **not** editable — progress measured from a
 /// moving baseline, or a changed unit, is not progress — and sending one is
 /// refused.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct KeyResultUpdate {
+pub(crate) struct KeyResultUpdate {
     title: String,
     target_value: i64,
     #[serde(default)]

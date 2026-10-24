@@ -72,8 +72,8 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct Entry {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Entry {
     /// `person` or `role`.
     subject_kind: String,
     /// A person reference (for `person`) or a role name (for `role`).
@@ -202,8 +202,8 @@ async fn remove(
     format::json(json!({ "removed": pid }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Contingent {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Contingent {
     person_ref: String,
     contingent: bool,
 }

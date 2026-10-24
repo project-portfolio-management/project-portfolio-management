@@ -128,8 +128,8 @@ async fn find_kpi(ctx: &AppContext, caller: &MaybeAuthUser, raw: &str) -> Result
 }
 
 /// `POST /api/kpis` body.
-#[derive(Debug, Deserialize)]
-struct CreateBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CreateBody {
     /// The plan it measures; omit for a portfolio-level KPI.
     #[serde(default)]
     plan_pid: Option<Uuid>,
@@ -211,8 +211,8 @@ async fn create(
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// Only this plan's KPIs.
     #[serde(default)]
     plan: Option<Uuid>,
@@ -313,9 +313,9 @@ async fn get_one(
 
 /// `PUT /api/kpis/{pid}` body. The `direction` and the plan are not editable:
 /// changing which way is good would silently re-colour every past reading.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct UpdateBody {
+pub(crate) struct UpdateBody {
     name: String,
     #[serde(default)]
     description: Option<String>,
@@ -406,8 +406,8 @@ async fn remove(
 }
 
 /// `POST /api/kpis/{pid}/readings` body.
-#[derive(Debug, Deserialize)]
-struct ReadingBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReadingBody {
     value: i64,
     /// The day it was observed (default today; not in the future).
     #[serde(default)]

@@ -160,8 +160,8 @@ pub async fn in_force(
 }
 
 /// `POST /api/workflows` body.
-#[derive(Debug, Deserialize)]
-struct WorkflowPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct WorkflowPayload {
     name: String,
     applies_to: String,
     #[serde(default)]
@@ -173,8 +173,8 @@ struct WorkflowPayload {
     transitions: Vec<TransitionPayload>,
 }
 
-#[derive(Debug, Deserialize)]
-struct StatePayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct StatePayload {
     key: String,
     label: String,
     category: String,
@@ -186,8 +186,8 @@ struct StatePayload {
     is_terminal: bool,
 }
 
-#[derive(Debug, Deserialize)]
-struct TransitionPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TransitionPayload {
     from: String,
     to: String,
     /// Roles allowed to make this move (RM-2); empty/absent means anyone.
@@ -423,8 +423,8 @@ async fn remove(
 }
 
 /// `GET /api/plans/{pid}/workflow?applies_to=` query.
-#[derive(Debug, Deserialize)]
-struct InForceParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct InForceParams {
     #[serde(default)]
     applies_to: Option<String>,
 }

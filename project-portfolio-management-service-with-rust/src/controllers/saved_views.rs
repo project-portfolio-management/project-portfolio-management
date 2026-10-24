@@ -18,8 +18,8 @@ use crate::models::_entities::saved_views;
 use crate::saved_views as rules;
 
 /// `POST /api/saved-views` body.
-#[derive(Debug, Deserialize)]
-struct SavedViewPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SavedViewPayload {
     route: String,
     name: String,
     #[serde(default)]
@@ -68,8 +68,8 @@ async fn create_saved_view(
 }
 
 /// `GET /api/saved-views?route=` query.
-#[derive(Debug, Deserialize)]
-struct ListParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ListParams {
     /// Narrow to one route; omitted ⇒ every one of the caller's own
     /// views, across routes (a "manage my views" listing).
     #[serde(default)]

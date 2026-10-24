@@ -84,8 +84,8 @@ async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uu
 
 // ---- scorecards -----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct NewScorecard {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewScorecard {
     name: String,
     /// Make this the scorecard the de-escalation tracker reads.
     #[serde(default)]
@@ -135,8 +135,8 @@ async fn list(State(ctx): State<AppContext>) -> Result<Response> {
     )
 }
 
-#[derive(Debug, Deserialize)]
-struct SetKpis {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SetKpis {
     kpi_pids: Vec<Uuid>,
 }
 
@@ -217,15 +217,15 @@ async fn template() -> Result<Response> {
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct Pick {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Pick {
     key: String,
     target_value: i64,
     red_value: i64,
 }
 
-#[derive(Debug, Deserialize)]
-struct FromTemplate {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct FromTemplate {
     measures: Vec<Pick>,
 }
 
@@ -356,8 +356,8 @@ async fn kpi_rows(
     Ok((rows, hidden, inputs))
 }
 
-#[derive(Debug, Deserialize)]
-struct Quarters {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Quarters {
     #[serde(default)]
     quarters: Option<usize>,
 }
@@ -389,8 +389,8 @@ async fn show(
 
 // ---- the tracker ----------------------------------------------------------------------------
 
-#[derive(Debug, Deserialize)]
-struct LevelBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LevelBody {
     level: String,
     #[serde(default)]
     note: Option<String>,
@@ -444,8 +444,8 @@ async fn set_level(
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
-#[derive(Debug, Deserialize)]
-struct CriterionBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct CriterionBody {
     criterion: String,
 }
 
@@ -482,8 +482,8 @@ async fn add_criterion(
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
-#[derive(Debug, Deserialize)]
-struct EvidenceBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EvidenceBody {
     /// `YYYY-Qn`, a finished quarter.
     quarter: String,
     met: bool,

@@ -78,8 +78,8 @@ pub(crate) async fn current(
 }
 
 /// `POST …/schedule-baselines` body.
-#[derive(Debug, Deserialize)]
-struct BaselineBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct BaselineBody {
     /// Why the baseline is being taken (required, up to 500 characters).
     reason: String,
 }
@@ -205,8 +205,8 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
-#[derive(Debug, Deserialize)]
-struct VarianceParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct VarianceParams {
     /// A baseline version; defaults to the latest.
     #[serde(default)]
     baseline: Option<i32>,

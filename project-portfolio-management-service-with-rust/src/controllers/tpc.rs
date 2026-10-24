@@ -64,8 +64,8 @@ fn facts_of(row: &tpc_rows::Model) -> rules::TpcFacts {
 
 /// `POST /api/plans/{pid}/tpc` body. Money in minor units of
 /// `currency`; ratios in basis points.
-#[derive(Debug, Deserialize)]
-struct TpcPayload {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TpcPayload {
     currency: String,
     expected_monetary_value: i64,
     cost_estimate_to_complete: i64,
@@ -193,8 +193,8 @@ async fn report(
 }
 
 /// `GET /api/tpc?currency=GBP` — portfolio triage, highest DIPP first.
-#[derive(Debug, Deserialize)]
-struct TriageParams {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct TriageParams {
     #[serde(default)]
     currency: Option<String>,
 }

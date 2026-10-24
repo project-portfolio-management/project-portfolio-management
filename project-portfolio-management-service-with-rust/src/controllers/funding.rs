@@ -35,8 +35,8 @@ pub fn routes() -> Routes {
         .add("/portfolio-money", get(portfolio_money))
 }
 
-#[derive(Debug, Deserialize)]
-struct SourceBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct SourceBody {
     name: String,
 }
 
@@ -100,8 +100,8 @@ async fn list_sources(State(ctx): State<AppContext>) -> Result<Response> {
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ActiveBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ActiveBody {
     active: bool,
 }
 
@@ -134,8 +134,8 @@ async fn update_source(
     format::json(serde_json::json!({ "pid": row.pid, "name": row.name, "active": row.active }))
 }
 
-#[derive(Debug, Deserialize)]
-struct LineSourceBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct LineSourceBody {
     #[serde(default)]
     funding_source_pid: Option<Uuid>,
 }
@@ -196,8 +196,8 @@ async fn set_line_source(
     format::json(serde_json::json!({ "line": line, "funding_source_pid": b.funding_source_pid }))
 }
 
-#[derive(Debug, Deserialize)]
-struct MoneyQuery {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct MoneyQuery {
     /// The year the financial year starts in, e.g. 2026 for 2026/27 (April start).
     #[serde(default)]
     fy: Option<i32>,

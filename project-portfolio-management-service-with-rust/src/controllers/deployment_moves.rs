@@ -40,8 +40,8 @@ pub fn routes() -> Routes {
         )
 }
 
-#[derive(Debug, Deserialize)]
-struct NewMove {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct NewMove {
     task_pid: Uuid,
     new_start: NaiveDate,
     reason: String,
@@ -246,8 +246,8 @@ async fn request_move(
     format::json(view(&row))
 }
 
-#[derive(Debug, Deserialize)]
-struct Decision {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Decision {
     /// `approve` or `refuse`.
     decision: String,
     reason: String,

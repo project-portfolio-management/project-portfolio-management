@@ -494,8 +494,8 @@ pub(crate) async fn preview_json(
     body(ctx, caller, plan, &e).await
 }
 
-#[derive(Debug, Deserialize)]
-struct EditsBody {
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct EditsBody {
     edits: Vec<Edit>,
     /// Why (audited with each changed item).
     #[serde(default)]

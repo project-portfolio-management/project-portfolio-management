@@ -409,15 +409,12 @@ async fn remove(
     let plan_pid = workflow.plan_pid.unwrap_or(workflow.pid);
     let mut active: workflows::ActiveModel = workflow.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        plan_pid,
-        "workflow_withdrawn",
-        caller.actor(),
-        None,
-    )
-    .await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, plan_pid, "workflow_withdrawn", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

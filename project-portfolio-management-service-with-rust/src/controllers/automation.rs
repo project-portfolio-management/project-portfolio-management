@@ -108,6 +108,7 @@ async fn create_automation(
             .map_err(db_err)?
             .ok_or(Error::NotFound)?;
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = crate::models::_entities::automations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(payload.plan_pid),
@@ -120,11 +121,11 @@ async fn create_automation(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "automation_created",
         caller.actor(),
@@ -135,8 +136,9 @@ async fn create_automation(
             }),
             "plan_pid": row.plan_pid.map(|p| p.to_string()),
         })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -212,13 +214,17 @@ async fn set_enabled(
     let row_pid = row.pid;
     let mut active: crate::models::_entities::automations::ActiveModel = row.into();
     active.enabled = ActiveValue::set(enabled);
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
     let action = if enabled {
         "automation_enabled"
     } else {
         "automation_disabled"
     };
-    AuditModel::record_or_log(&ctx.db, row_pid, action, caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, action, caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -256,8 +262,12 @@ async fn delete_automation(
     let mut active: crate::models::_entities::automations::ActiveModel = row.into();
     active.enabled = ActiveValue::set(false);
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "automation_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "automation_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -1214,15 +1224,18 @@ async fn cancel_scheduled_action(
     let mut active: scheduled_actions::ActiveModel = row.into();
     active.status = ActiveValue::set("cancelled".to_string());
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row_pid,
         "scheduled_action_cancelled",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

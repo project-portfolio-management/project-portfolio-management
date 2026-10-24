@@ -220,6 +220,7 @@ async fn request_move(
             json!({ "currency": c, "delta_minor": y - x })
         })
         .collect();
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = moves::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -236,11 +237,12 @@ async fn request_move(
         knock_on_cost: ActiveValue::set(json!({ "labour": cost, "unrated_minutes_before": b_cost.unrated_minutes, "unrated_minutes_after": a_cost.unrated_minutes }).to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() })))
-        .await;
+    AuditModel::record(&txn, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() }))).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row))
 }
 

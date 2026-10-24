@@ -72,23 +72,26 @@ async fn set_drum(
             return Err(unprocessable("that skill pool is retired"));
         }
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = drums::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         skill_pool_pid: ActiveValue::set(b.skill_pool_pid),
         declared_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "portfolio_drum_set",
         caller.actor(),
         Some(json!({ "skill_pool_pid": b.skill_pool_pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "skill_pool_pid": row.skill_pool_pid, "declared_on": row.declared_on }))
 }
 

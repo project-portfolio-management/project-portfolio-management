@@ -145,6 +145,7 @@ async fn create(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = announcements::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         title: ActiveValue::set(b.title.trim().to_string()),
@@ -157,12 +158,13 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "announcement_published", caller.actor(),
-        Some(serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned })))
-        .await;
+    AuditModel::record(&txn, row.pid, "announcement_published", caller.actor(),
+        Some(serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned }))).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, Utc::now()))
 }
 
@@ -203,16 +205,19 @@ async fn update(
     a.pinned = ActiveValue::set(b.pinned);
     a.publish_at = ActiveValue::set(publish_at.into());
     a.expires_at = ActiveValue::set(b.expires_at.map(Into::into));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "announcement_edited",
         caller.actor(),
         Some(serde_json::json!({ "from": was,
             "to": { "title": row.title, "severity": row.severity, "pinned": row.pinned } })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, Utc::now()))
 }
 
@@ -230,8 +235,12 @@ async fn retract(
     let pid = row.pid;
     let mut a: announcements::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "announcement_retracted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "announcement_retracted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

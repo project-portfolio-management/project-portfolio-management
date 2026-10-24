@@ -556,15 +556,18 @@ async fn resolve_placeholder(
     let row_pid = allocation.pid;
     let mut active: allocations::ActiveModel = allocation.into();
     active.person_ref = ActiveValue::set(b.person_ref.clone());
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row_pid,
         "allocation_resolved",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.person_ref, "over_capacity": over })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         serde_json::json!({ "pid": row_pid, "person_ref": b.person_ref, "over_capacity": over }),
     )

@@ -84,6 +84,7 @@ async fn set_triage(
             "a reason of at least 10 characters is required",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = triages::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -93,17 +94,19 @@ async fn set_triage(
         decided_by: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "programme_triaged",
         caller.actor(),
         Some(json!({ "outcome": b.outcome })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(triage_view(&row))
 }
 

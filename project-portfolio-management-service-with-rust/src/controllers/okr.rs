@@ -166,6 +166,7 @@ async fn create_key_result(
         ));
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = key_results::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         objective_pid: ActiveValue::set(objective.pid),
@@ -183,18 +184,20 @@ async fn create_key_result(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         objective.pid,
         "key_result_declared",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -498,16 +501,19 @@ async fn update_objective(
     a.title = ActiveValue::set(b.title.trim().to_string());
     a.description = ActiveValue::set(b.description.clone());
     a.period = ActiveValue::set(b.period.clone());
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "objective_updated",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": { "title": row.title,
             "description": row.description, "period": row.period } })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -523,8 +529,12 @@ async fn delete_objective(
     let row_pid = objective.pid;
     let mut a: objectives::ActiveModel = objective.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "objective_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "objective_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -581,9 +591,10 @@ async fn update_key_result(
     a.unit = ActiveValue::set(b.unit.clone());
     a.owner_ref = ActiveValue::set(b.owner_ref.clone());
     a.due_date = ActiveValue::set(b.due_date);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "key_result_updated",
         caller.actor(),
@@ -591,7 +602,9 @@ async fn update_key_result(
             "target_value": row.target_value, "tolerance": row.tolerance, "unit": row.unit,
             "owner_ref": row.owner_ref, "due_date": row.due_date } })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -607,8 +620,12 @@ async fn delete_key_result(
     let row_pid = kr.pid;
     let mut a: key_results::ActiveModel = kr.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "key_result_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "key_result_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

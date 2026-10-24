@@ -165,6 +165,7 @@ async fn create_dependency(
     if rules::would_create_cycle(&edges, payload.predecessor_pid, payload.successor_pid) {
         return Err(unprocessable("this dependency would create a cycle"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = plan_dependencies::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         predecessor_pid: ActiveValue::set(payload.predecessor_pid),
@@ -173,10 +174,13 @@ async fn create_dependency(
         kind: ActiveValue::set(kind),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "dependency_added", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "dependency_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -251,11 +255,15 @@ async fn delete_dependency(
         return Err(Error::NotFound);
     }
     let row_pid = row.pid;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     plan_dependencies::Entity::delete_by_id(row.id)
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "dependency_removed", caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, "dependency_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -415,6 +423,7 @@ async fn create_milestone(
         )));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = milestones::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -425,10 +434,13 @@ async fn create_milestone(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "milestone_added", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "milestone_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -613,12 +625,13 @@ async fn complete_milestone(
     if reason.is_some() {
         active.done_reason = ActiveValue::set(reason.clone());
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row_pid,
         "milestone_completed",
         caller.actor(),
@@ -626,7 +639,9 @@ async fn complete_milestone(
             .as_ref()
             .map(|r| serde_json::json!({ "reason": r, "open_linked_tasks": open })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -713,6 +728,7 @@ async fn create_allocation(
     if payload.booking.as_deref() != Some("proposed") {
         super::register::guard(&ctx, &caller, item.pid, "booking a firm allocation").await?;
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = allocations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -740,10 +756,13 @@ async fn create_allocation(
         skills_required: ActiveValue::set(serde_json::json!(payload.skills_required)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "allocation_added", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "allocation_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -866,12 +885,13 @@ async fn commit_allocation(
     let row_pid = allocation.pid;
     let mut active: allocations::ActiveModel = allocation.into();
     active.booking = ActiveValue::set("committed".to_string());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row_pid,
         "allocation_committed",
         caller.actor(),
@@ -880,7 +900,9 @@ async fn commit_allocation(
                                   "peak_percent": load.peak_demand }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         serde_json::json!({ "pid": row_pid, "booking": "committed", "over_capacity": over }),
     )
@@ -902,11 +924,15 @@ async fn delete_allocation(
     let row_pid = allocation.pid;
     let mut active: allocations::ActiveModel = allocation.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "allocation_removed", caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, "allocation_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -1097,6 +1123,7 @@ async fn create_report(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = report_definitions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(payload.name.clone()),
@@ -1107,10 +1134,13 @@ async fn create_report(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "report_saved", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "report_saved", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1138,11 +1168,15 @@ async fn delete_report(
     let row_pid = row.pid;
     let mut active: report_definitions::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "report_deleted", caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, "report_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

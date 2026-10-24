@@ -56,6 +56,7 @@ async fn create_slot(
             "at most {MAX_SLOTS} planned slots per person"
         )));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = planned_slots::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         sub: ActiveValue::set(claims.sub.clone()),
@@ -65,10 +66,13 @@ async fn create_slot(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "slot_planned", Some(&claims.sub), None).await;
+    AuditModel::record(&txn, row.pid, "slot_planned", Some(&claims.sub), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -91,8 +95,12 @@ async fn delete_slot(
         .ok_or(Error::NotFound)?;
     let mut active: planned_slots::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "slot_removed", Some(&claims.sub), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "slot_removed", Some(&claims.sub), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

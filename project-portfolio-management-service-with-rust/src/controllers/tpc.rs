@@ -105,6 +105,7 @@ async fn record(
         ));
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = tpc_rows::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -128,11 +129,14 @@ async fn record(
         // numbers beside it.
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
-    AuditModel::record_or_log(&ctx.db, plan.pid, "tpc_recorded", caller.actor(), None).await;
+    AuditModel::record(&txn, plan.pid, "tpc_recorded", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

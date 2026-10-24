@@ -185,6 +185,7 @@ async fn create(
     if let Some(plan) = b.plan_pid {
         super::governance::find_item(&ctx, &plan.to_string()).await?;
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = kpis::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(b.plan_pid),
@@ -200,10 +201,13 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "kpi_defined", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "kpi_defined", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -366,16 +370,18 @@ async fn update(
     a.cadence = ActiveValue::set(b.cadence.clone());
     a.owner_ref = ActiveValue::set(b.owner_ref.clone());
     a.objective_pid = ActiveValue::set(b.objective_pid);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "kpi_updated",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": { "name": row.name, "target_value": row.target_value,
             "red_value": row.red_value, "cadence": row.cadence, "owner_ref": row.owner_ref } })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -390,8 +396,12 @@ async fn remove(
     let row_pid = k.pid;
     let mut a: kpis::ActiveModel = k.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "kpi_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "kpi_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -431,6 +441,7 @@ async fn add_reading(
     {
         return Err(unprocessable("note is too long"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = kpi_readings::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         kpi_pid: ActiveValue::set(k.pid),
@@ -440,17 +451,19 @@ async fn add_reading(
         actor: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         k.pid,
         "kpi_reading_added",
         caller.actor(),
         Some(serde_json::json!({ "value": b.value, "observed_on": on })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let readings = load_readings(&ctx, &[k.pid]).await?;
     let (_, v) = view(&k, &readings, today);
     format::json(serde_json::json!({ "reading_pid": row.pid, "kpi": v }))

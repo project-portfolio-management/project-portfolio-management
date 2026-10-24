@@ -190,8 +190,12 @@ async fn remove(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    row.delete(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "key_person_removed", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    row.delete(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "key_person_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "removed": pid }))
 }
 

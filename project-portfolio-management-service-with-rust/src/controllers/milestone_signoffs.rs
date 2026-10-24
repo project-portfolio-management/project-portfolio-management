@@ -248,6 +248,7 @@ async fn act(
             "a withdrawal needs a reason of 5 to 500 characters",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = events::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         milestone_pid: ActiveValue::set(m.pid),
@@ -258,11 +259,11 @@ async fn act(
         signed_by: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         m.pid,
         if b.action == "sign" {
             "milestone_signed_off"
@@ -272,7 +273,9 @@ async fn act(
         caller.actor(),
         Some(json!({ "organization": b.organization_pid, "reason": reason })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "pid": row.pid, "action": row.action, "acted_on": row.acted_on }))
 }
 

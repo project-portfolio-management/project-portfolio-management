@@ -57,9 +57,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   decision, plan §70 question 2.) The one exception is a **read** that is audited (for example a data-subject
   export or a break-glass read): it is not a change, so it is answered and the failure is logged at error level
   and counted in `audit_write_failed_total`, which an operator should alert on. An audit outage therefore stops
-  writes; that is the intended trade. **Status:** the rule is decided and the logged-and-counted fallback is
-  what runs today for the writes not yet moved into their transactions; `tasks.md` CQ-3 lists which remain, and a
-  census test keeps that list from growing.
+  writes; that is the intended trade. **Status:** built for about two thirds of the audited writes (150 of about 230); the logged-and-counted
+  fallback still runs for the rest. `tasks.md` CQ-3 says which remain, and a census test keeps that list from growing.
 - **NFR-7 — Observability.** Structured tracing (`tracing` +
   `tracing-subscriber`, JSON logs in production); OTLP traces /
   metrics / logs *(roadmap)* per

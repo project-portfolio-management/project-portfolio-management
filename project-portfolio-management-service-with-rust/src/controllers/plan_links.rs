@@ -100,6 +100,7 @@ async fn add(
             ErrorDetail::new("conflict", "this URL is already linked from the plan"),
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = plan_links::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan),
@@ -113,10 +114,13 @@ async fn add(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "plan_link_added", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "plan_link_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -245,8 +249,12 @@ async fn remove(
         .ok_or(Error::NotFound)?;
     let mut a: plan_links::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, lpid, "plan_link_removed", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, lpid, "plan_link_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

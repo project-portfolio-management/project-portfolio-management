@@ -69,6 +69,7 @@ async fn request_approval(
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = approval_requests::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         subject_kind: ActiveValue::set(p.subject_kind.clone()),
@@ -82,17 +83,13 @@ async fn request_approval(
         decided_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "approval_requested",
-        Some(&claims.sub),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "approval_requested", Some(&claims.sub), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     cap_models::notify(
         &ctx.db,
         &p.approver_ref,

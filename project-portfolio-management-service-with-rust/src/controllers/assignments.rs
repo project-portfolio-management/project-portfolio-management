@@ -209,9 +209,10 @@ async fn set_assignment(
         ));
         a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "task_assignment_set",
         caller.actor(),
@@ -219,8 +220,9 @@ async fn set_assignment(
             "to": { "rule": row.scheduling_rule, "duration_days": row.duration_days,
                     "units_percent": row.units_percent, "work_minutes": row.work_minutes },
             "derived": outcome.map(|r| field_name(r.derived)), "exact": outcome.map(|r| r.exact) })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
 
     // Does the result ask more of the assignee than they can give, on any day?
     let capacity = capacity_check(&ctx, plan.pid, &row, &person).await?;
@@ -313,16 +315,18 @@ async fn set_contour(
         Contour::Custom(w) => Some(serde_json::json!(w)),
         _ => None,
     });
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "task_contour_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was,
             "to": { "contour": row.contour, "custom": row.contour_custom }, "work_minutes": work })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "contour": row.contour,
         "custom": row.contour_custom, "work_minutes": row.work_minutes,

@@ -253,6 +253,7 @@ async fn save_as_template(
         return Err(conflict("a template with this name already exists"));
     }
     let (snapshot, omitted) = capture(&ctx, &caller, root).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = plan_templates::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(name),
@@ -262,17 +263,13 @@ async fn save_as_template(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "plan_template_saved",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "plan_template_saved", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "pid": row.pid,
         "name": row.name,
@@ -335,15 +332,12 @@ async fn delete_template(
     let tpl_pid = row.pid;
     let mut active: plan_templates::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        tpl_pid,
-        "plan_template_deleted",
-        caller.actor(),
-        None,
-    )
-    .await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, tpl_pid, "plan_template_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

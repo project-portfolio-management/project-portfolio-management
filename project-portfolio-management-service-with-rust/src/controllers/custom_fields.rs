@@ -89,6 +89,7 @@ async fn create_def(
             "a field with this key already exists for this subject type",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = custom_field_defs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         key: ActiveValue::set(p.key.clone()),
@@ -101,17 +102,13 @@ async fn create_def(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "custom_field_declared",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "custom_field_declared", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -159,8 +156,12 @@ async fn delete_def(
         .ok_or(Error::NotFound)?;
     let mut active: custom_field_defs::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "custom_field_withdrawn", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "custom_field_withdrawn", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

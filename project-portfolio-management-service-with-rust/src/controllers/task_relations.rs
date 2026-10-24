@@ -254,6 +254,7 @@ async fn create_relation(
             "`precedes` requires the successor to be due after the predecessor",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = task_relations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         from_task_pid: ActiveValue::set(from),
@@ -262,17 +263,13 @@ async fn create_relation(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "task_relation_added",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "task_relation_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -376,15 +373,12 @@ async fn delete_relation(
         .ok_or(Error::NotFound)?;
     let mut active: task_relations::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        r_pid,
-        "task_relation_removed",
-        caller.actor(),
-        None,
-    )
-    .await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, r_pid, "task_relation_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

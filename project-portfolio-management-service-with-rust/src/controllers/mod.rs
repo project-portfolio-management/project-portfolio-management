@@ -95,6 +95,28 @@ pub(crate) fn db_err(e: sea_orm::DbErr) -> loco_rs::Error {
     loco_rs::Error::Model(loco_rs::model::ModelError::from(e))
 }
 
+/// A write's audit row could not be written, so the write is refused (NFR-6): the audit row is written in
+/// the same transaction as the change, and the transaction is rolled back when this is returned. Logged at
+/// error level and counted in `audit_write_failed_total`, which an operator should alert on.
+#[must_use]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "passed to `map_err`, which hands it over"
+)]
+pub(crate) fn audit_failed(e: loco_rs::model::ModelError) -> loco_rs::Error {
+    crate::metrics::Metrics::global()
+        .audit_write_failed_total
+        .inc();
+    tracing::error!(error = %e, "audit row not written; the write is refused");
+    loco_rs::Error::CustomError(
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        loco_rs::controller::ErrorDetail::new(
+            "audit_unavailable",
+            "the change was not made because it could not be recorded; try again",
+        ),
+    )
+}
+
 /// `422 Unprocessable Entity` with the error code `unprocessable` and `message`.
 ///
 /// Controllers that answer with the code `unprocessable_entity` keep their own copy: the code string is part of

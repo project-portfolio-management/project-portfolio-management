@@ -179,6 +179,7 @@ async fn freeze(
             answer["reason"].as_str().unwrap_or("no critical chain")
         )));
     };
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = buffer_plans::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -186,17 +187,19 @@ async fn freeze(
         document: ActiveValue::set(doc.to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "buffer_plan_frozen",
         caller.actor(),
         Some(json!({ "buffer_plan": row.pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "pid": row.pid, "taken_on": row.taken_on, "document": doc }))
 }
 
@@ -390,6 +393,7 @@ async fn add_action(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let a = actions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -401,17 +405,19 @@ async fn add_action(
         status: ActiveValue::set("open".to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "buffer_recovery_action_recorded",
         caller.actor(),
         Some(json!({ "action": a.pid, "buffer_key": a.buffer_key })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "pid": a.pid, "buffer_key": a.buffer_key, "status": a.status }))
 }
 
@@ -452,15 +458,18 @@ async fn close_action(
     let mut m: actions::ActiveModel = a.into();
     m.status = ActiveValue::set(b.status.clone());
     m.closed_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    let row = m.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = m.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         plan.pid,
         "buffer_recovery_action_closed",
         caller.actor(),
         Some(json!({ "action": row.pid, "status": row.status })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "pid": row.pid, "status": row.status, "closed_on": row.closed_on }))
 }
 

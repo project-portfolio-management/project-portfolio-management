@@ -484,9 +484,10 @@ async fn put_item(
         }
         Some(_) => return Err(unprocessable("resolution must be done, skipped or open")),
     }
-    let updated = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let updated = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         updated.pid,
         "onboarding_item_updated",
         caller.actor(),
@@ -496,7 +497,9 @@ async fn put_item(
                     "resolution": updated.resolution, "note": updated.note } }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     case_view(&ctx, &caller, &case).await
 }
 
@@ -565,15 +568,18 @@ async fn close(
     a.status = ActiveValue::set(status.to_string());
     a.closed_at = ActiveValue::set(Some(Utc::now().into()));
     a.closed_reason = ActiveValue::set(reason.clone());
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         &format!("onboarding_case_{status}"),
         caller.actor(),
         Some(serde_json::json!({ "reason": reason })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     case_view(ctx, caller, &row).await
 }
 
@@ -632,6 +638,7 @@ async fn record_access(
             return Err(unprocessable("case_pid is not a checklist of this plan"));
         }
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = access_records::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -644,11 +651,11 @@ async fn record_access(
         note: ActiveValue::set(b.note.clone().filter(|n| !n.trim().is_empty())),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "access_recorded",
         caller.actor(),
@@ -657,7 +664,9 @@ async fn record_access(
             "access": row.access, "action": row.action }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 

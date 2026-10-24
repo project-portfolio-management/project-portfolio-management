@@ -141,6 +141,7 @@ async fn create_proposal(
     if !problems.is_empty() {
         return Err(unprocessable(&problems));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = proposals::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         title: ActiveValue::set(payload.title.clone()),
@@ -157,10 +158,13 @@ async fn create_proposal(
         tradeoff: ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty())),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "proposal_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "proposal_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string(), "status": row.status }))
 }
 
@@ -228,11 +232,15 @@ async fn update_proposal(
     active.currency = ActiveValue::set(payload.currency.clone());
     active.external_ask = ActiveValue::set(payload.external_ask);
     active.tradeoff = ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "proposal_updated", caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, "proposal_updated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -312,18 +320,15 @@ async fn set_tradeoff(
     let row_pid = row.pid;
     let mut active: proposals::ActiveModel = row.into();
     active.tradeoff = ActiveValue::set(Some(text));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row_pid,
-        "proposal_tradeoff_set",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row_pid, "proposal_tradeoff_set", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -351,11 +356,15 @@ async fn transition_proposal(
     let row_pid = row.pid;
     let mut active: proposals::ActiveModel = row.into();
     active.status = ActiveValue::set(next.to_string());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row_pid, action.token(), caller.actor(), None).await;
+    AuditModel::record(&txn, row_pid, action.token(), caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     Ok(row)
 }
 
@@ -402,8 +411,9 @@ async fn promote_proposal(
     let mut active: proposals::ActiveModel = row.into();
     active.status = ActiveValue::set(next.to_string());
     active.promoted_plan_pid = ActiveValue::set(Some(model.pid));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let updated = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     let snapshot = serde_json::json!({
@@ -411,14 +421,16 @@ async fn promote_proposal(
         "collection": updated.kind_target,
         "provenance": "intake",
     });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         proposal_pid,
         rules::ProposalAction::Promote.token(),
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "pid": updated.pid.to_string(),
         "status": updated.status,
@@ -771,6 +783,7 @@ async fn create_risk(
         return Err(unprocessable(&problems));
     }
     let item = find_item(&ctx, &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = risks::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -787,10 +800,13 @@ async fn create_risk(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "risk_raised", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "risk_raised", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -877,11 +893,15 @@ async fn update_risk(
     if let Some(review_date) = payload.review_date {
         active.review_date = ActiveValue::set(Some(review_date));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, risk_row_pid, "risk_updated", caller.actor(), None).await;
+    AuditModel::record(&txn, risk_row_pid, "risk_updated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -906,18 +926,15 @@ async fn escalate_risk(
     let mut active: risks::ActiveModel = risk.into();
     active.status = ActiveValue::set("materialized".to_string());
     active.escalated_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        risk_row_pid,
-        "risk_escalated",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, risk_row_pid, "risk_escalated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -983,6 +1000,7 @@ async fn create_budget_line(
     if let Some(s) = payload.funding_source_pid {
         super::funding::check_source(&ctx, s).await?;
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = budget_lines::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -999,17 +1017,13 @@ async fn create_budget_line(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "budget_line_created",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "budget_line_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1092,8 +1106,9 @@ async fn record_actual(
     let line_pid = line.pid;
     let mut active: budget_lines::ActiveModel = line.into();
     active.actual_minor = ActiveValue::set(next);
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     let snapshot = serde_json::json!({
@@ -1101,14 +1116,16 @@ async fn record_actual(
         "actual_minor": next,
         "note": payload.note,
     });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         line_pid,
         "budget_actual_recorded",
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -1145,18 +1162,21 @@ async fn release_budget_line(
     let line_pid = line.pid;
     let mut active: budget_lines::ActiveModel = line.into();
     active.released_at = ActiveValue::set(Some(chrono::Utc::now().into()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         line_pid,
         "budget_line_released",
         caller.actor(),
         Some(serde_json::json!({ "gate": gate })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 

@@ -249,15 +249,18 @@ async fn remove(
     let (row_pid, person) = (row.pid, row.person_ref.clone());
     let mut a: person_availabilities::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row_pid,
         "availability_removed",
         caller.actor(),
         Some(serde_json::json!({ "person_ref": person })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

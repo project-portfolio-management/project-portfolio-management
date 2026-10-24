@@ -418,15 +418,18 @@ async fn remove_one(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    row.delete(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    row.delete(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         plan.pid,
         "tolerance_removed",
         caller.actor(),
         Some(json!({ "dimension": dim.token() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }

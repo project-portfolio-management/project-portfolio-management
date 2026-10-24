@@ -150,6 +150,7 @@ async fn create(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     validate(&b)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = change_requests::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -181,17 +182,19 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "change_request_drafted",
         caller.actor(),
         Some(serde_json::json!({ "plan_pid": plan.pid, "title": row.title, "kind": row.kind })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, None))
 }
 
@@ -236,15 +239,12 @@ async fn update(
             .filter(|s| !s.is_empty()),
     );
     a.edits = ActiveValue::set(edits_json(&b));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "change_request_edited",
-        caller.actor(),
-        None,
-    )
-    .await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row.pid, "change_request_edited", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -332,15 +332,18 @@ async fn step(
     let mut a: change_requests::ActiveModel = row.into();
     a.status = ActiveValue::set(to.to_string());
     edit(&mut a);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         &format!("change_request_{to}"),
         caller.actor(),
         Some(serde_json::json!({ "from": from, "to": to, "decision_reason": row.decision_reason })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let links = links_of(ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -653,15 +656,18 @@ async fn baseline(
     let taken = super::schedule_baselines::take(&ctx, &caller, plan.pid, reason).await?;
     let mut a: change_requests::ActiveModel = row.into();
     a.baseline_pid = ActiveValue::set(Some(taken.pid));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "change_request_baselined",
         caller.actor(),
         Some(serde_json::json!({ "baseline_pid": taken.pid, "version": taken.version })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "change_request_pid": row.pid, "baseline_pid": taken.pid, "baseline_version": taken.version,
     }))

@@ -246,8 +246,12 @@ async fn delete_process(
     let pid = p.pid;
     let mut a: processes::ActiveModel = p.into();
     a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "process_retired", Some(&claims.sub), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "process_retired", Some(&claims.sub), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

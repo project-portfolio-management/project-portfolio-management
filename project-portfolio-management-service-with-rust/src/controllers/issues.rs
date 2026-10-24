@@ -223,6 +223,7 @@ async fn create(
     let now = today();
     let raised_on = b.raised_on.unwrap_or(now);
     validate(&b, raised_on)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan),
@@ -244,11 +245,11 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "issue_raised",
         caller.actor(),
@@ -257,7 +258,9 @@ async fn create(
             "severity": row.severity, "status": row.status,
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, now))
 }
 
@@ -293,9 +296,10 @@ async fn update(
     a.resolved_on = ActiveValue::set(resolved_on);
     a.source_risk_pid = ActiveValue::set(b.source_risk_pid);
     a.source_task_pid = ActiveValue::set(b.source_task_pid);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "issue_changed",
         caller.actor(),
@@ -303,7 +307,9 @@ async fn update(
             "to": { "title": row.title, "severity": row.severity, "status": row.status,
                     "owner_ref": row.owner_ref } })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, now))
 }
 
@@ -319,8 +325,12 @@ async fn remove(
     let pid = row.pid;
     let mut a: issues::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "issue_removed", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "issue_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -476,6 +486,7 @@ async fn insert_from_source(
     source_task_pid: Option<Uuid>,
 ) -> Result<issues::Model> {
     let now = today();
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan),
@@ -497,11 +508,11 @@ async fn insert_from_source(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "issue_raised",
         caller.actor(),
@@ -510,7 +521,9 @@ async fn insert_from_source(
             "source_risk_pid": source_risk_pid, "source_task_pid": source_task_pid,
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     Ok(row)
 }
 

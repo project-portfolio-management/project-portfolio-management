@@ -449,11 +449,15 @@ async fn update_task(
     active.component_pid = sea_orm::ActiveValue::set(payload.component_pid);
     active.parent_task_pid = sea_orm::ActiveValue::set(payload.parent_task_pid);
     active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, task_pid, "task_updated", caller.actor(), None).await;
+    AuditModel::record(&txn, task_pid, "task_updated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     crate::live::publish(
         item.pid,
         "task_updated",
@@ -692,11 +696,15 @@ async fn delete_task(
     let task_pid = task.pid;
     let mut active: tasks::ActiveModel = task.into();
     active.deleted_at = sea_orm::ActiveValue::set(Some(chrono::Utc::now().into()));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, task_pid, "task_deleted", caller.actor(), None).await;
+    AuditModel::record(&txn, task_pid, "task_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -724,6 +732,7 @@ async fn create_sprint(
         return Err(refuse("ends_on is before starts_on"));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = sprints::ActiveModel {
         pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
         plan_pid: sea_orm::ActiveValue::set(item.pid),
@@ -733,10 +742,13 @@ async fn create_sprint(
         deleted_at: sea_orm::ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "sprint_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "sprint_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -925,6 +937,7 @@ async fn create_note(
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
     let sprint = find_sprint(&ctx, item.pid, &s_pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = sprint_notes::ActiveModel {
         pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
         sprint_pid: sea_orm::ActiveValue::set(sprint.pid),
@@ -934,10 +947,13 @@ async fn create_note(
         deleted_at: sea_orm::ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "sprint_note_added", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "sprint_note_added", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -1159,6 +1175,7 @@ async fn ingest_devops_event(
             ));
         }
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = devops_events::ActiveModel {
         pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
         plan_pid: sea_orm::ActiveValue::set(item.pid),
@@ -1173,17 +1190,19 @@ async fn ingest_devops_event(
         ),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "devops_event_ingested",
         caller.actor(),
         Some(serde_json::json!({ "kind": row.kind })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 

@@ -74,6 +74,7 @@ async fn create_idea(
             "tags: at most 32, non-blank, each ≤ 64 chars",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = ideas::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         title: ActiveValue::set(payload.title.clone()),
@@ -85,10 +86,13 @@ async fn create_idea(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "idea_captured", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "idea_captured", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -130,8 +134,12 @@ async fn vote_idea(
     let next = idea.votes.saturating_add(1);
     let mut active: ideas::ActiveModel = idea.into();
     active.votes = ActiveValue::set(next);
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "idea_voted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "idea_voted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -149,8 +157,12 @@ async fn dismiss_idea(
     let row_pid = idea.pid;
     let mut active: ideas::ActiveModel = idea.into();
     active.status = ActiveValue::set("dismissed".to_string());
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "idea_dismissed", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "idea_dismissed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -305,6 +317,7 @@ async fn create_scenario(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = scenarios::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(payload.name.clone()),
@@ -321,10 +334,13 @@ async fn create_scenario(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "scenario_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "scenario_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -713,16 +729,19 @@ async fn commit_scenario(
     let mut active: scenarios::ActiveModel = scenario.into();
     active.status = ActiveValue::set("committed".to_string());
     active.committed_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
     let snapshot = serde_json::to_value(&result.evaluation).unwrap_or_default();
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row_pid,
         "scenario_committed",
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -762,15 +781,18 @@ async fn rollback_scenario(
     let mut active: scenarios::ActiveModel = scenario.into();
     active.status = ActiveValue::set("draft".to_string());
     active.committed_at = ActiveValue::set(None);
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row_pid,
         "scenario_rolled_back",
         caller.actor(),
         Some(serde_json::json!({ "former_committed_at": former_committed_at })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -874,6 +896,7 @@ async fn generate_scenario(
             chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         )
     });
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = scenarios::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(name.clone()),
@@ -892,17 +915,19 @@ async fn generate_scenario(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "scenario_generated",
         caller.actor(),
         Some(serde_json::json!({ "rationale": rationale })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
         "name": row.name,
@@ -931,6 +956,7 @@ async fn create_objective(
     if payload.title.trim().is_empty() || payload.title.len() > MAX_TEXT_LEN {
         return Err(unprocessable("title is required (and capped)"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = objectives::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         title: ActiveValue::set(payload.title.clone()),
@@ -939,10 +965,13 @@ async fn create_objective(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "objective_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "objective_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1130,6 +1159,7 @@ async fn create_benefit(
         return Err(unprocessable(&problems.join("; ")));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = benefits::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -1145,10 +1175,13 @@ async fn create_benefit(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "benefit_declared", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "benefit_declared", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -1252,21 +1285,24 @@ async fn realize_benefit(
     if let Some(status) = payload.status.clone() {
         active.status = ActiveValue::set(status);
     }
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
     let snapshot = serde_json::json!({
         "amount_minor": payload.amount_minor,
         "realized_minor": next,
         "note": payload.note,
         "status": payload.status,
     });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row_pid,
         "benefit_realized",
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 

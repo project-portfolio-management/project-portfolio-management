@@ -62,6 +62,7 @@ async fn create_target(
     if payload.metric.trim().is_empty() {
         return Err(unprocessable("metric is required"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = business_case_targets::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -76,17 +77,19 @@ async fn create_target(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "business_case_target_set",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -113,6 +116,7 @@ async fn create_value_point(
     Json(payload): Json<ValuePayload>,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = value_points::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -130,7 +134,7 @@ async fn create_value_point(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| {
         // The partial unique index refuses a second first-measurable
@@ -144,7 +148,10 @@ async fn create_value_point(
             db_err(e)
         }
     })?;
-    AuditModel::record_or_log(&ctx.db, plan.pid, "value_observed", caller.actor(), None).await;
+    AuditModel::record(&txn, plan.pid, "value_observed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -183,6 +190,7 @@ async fn create_adoption(
              redefined between two readings, so it is stored beside the rate",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = adoption_snapshots::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -193,10 +201,13 @@ async fn create_adoption(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, plan.pid, "adoption_recorded", caller.actor(), None).await;
+    AuditModel::record(&txn, plan.pid, "adoption_recorded", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -230,6 +241,7 @@ async fn create_satisfaction(
             "respondent_role must be sponsor, user, team or other",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = satisfaction_responses::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -240,17 +252,19 @@ async fn create_satisfaction(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "satisfaction_recorded",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

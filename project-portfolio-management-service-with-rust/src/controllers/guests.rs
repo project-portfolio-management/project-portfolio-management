@@ -198,6 +198,7 @@ async fn grant(
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = guest_grants::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         guest_sub: ActiveValue::set(b.guest_sub.to_string()),
@@ -209,17 +210,18 @@ async fn grant(
         revoked_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         subject.pid,
         "guest_granted",
         Some(&claims.sub),
         Some(serde_json::json!({ "guest": b.guest_sub, "access": b.access, "expires_at": b.expires_at })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -272,15 +274,12 @@ async fn revoke(
     if row.revoked_at.is_none() {
         let mut a: guest_grants::ActiveModel = row.into();
         a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
-        a.update(&ctx.db).await.map_err(db_err)?;
-        AuditModel::record_or_log(
-            &ctx.db,
-            subject.pid,
-            "guest_revoked",
-            Some(&claims.sub),
-            None,
-        )
-        .await;
+        let txn = ctx.db.begin().await.map_err(super::db_err)?;
+        a.update(&txn).await.map_err(db_err)?;
+        AuditModel::record(&txn, subject.pid, "guest_revoked", Some(&claims.sub), None)
+            .await
+            .map_err(super::audit_failed)?;
+        txn.commit().await.map_err(super::db_err)?;
     }
     format::empty_json()
 }

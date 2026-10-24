@@ -378,15 +378,18 @@ async fn withdraw(
     let mut a: queue::ActiveModel = q.into();
     a.status = ActiveValue::set("withdrawn".to_string());
     a.resolved_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         plan.pid,
         "start_queue_withdrawn",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "withdrawn": plan.pid }))
 }
 

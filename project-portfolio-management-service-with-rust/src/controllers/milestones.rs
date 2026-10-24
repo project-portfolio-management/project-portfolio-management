@@ -601,15 +601,18 @@ async fn reopen(
     a.done = ActiveValue::set(false);
     a.done_at = ActiveValue::set(None);
     a.done_reason = ActiveValue::set(None);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row_pid,
         "milestone_reopened",
         caller.actor(),
         Some(serde_json::json!({ "reason": reason, "was_done_at": was.0, "was_reason": was.1 })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let still = rules::achieved(mode, false, &progress) == Achieved::Tasks;
     format::json(serde_json::json!({ "pid": row.pid, "done": row.done, "achieved": still }))
 }

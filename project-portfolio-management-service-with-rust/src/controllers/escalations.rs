@@ -185,6 +185,7 @@ pub(crate) async fn insert(
             .unwrap_or(1)
     });
     let default_to = rules::check_level(level, &path).map_err(|m| unprocessable(&m))?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = escalations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan),
@@ -202,18 +203,20 @@ pub(crate) async fn insert(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    event(&ctx.db, row.pid, "raised", level, caller.actor(), None).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    event(&txn, row.pid, "raised", level, caller.actor(), None).await?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "escalation_raised",
         caller.actor(),
         Some(json!({ "plan_pid": plan, "level": level, "reason_kind": row.reason_kind })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     tell(ctx, &row, caller.actor(), false, "has been raised with you").await;
     Ok(row)
 }

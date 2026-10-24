@@ -102,6 +102,7 @@ async fn create(
     if !(3..=120).contains(&b.name.trim().chars().count()) {
         return Err(unprocessable("name is 3 to 120 characters"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = scorecards::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(b.name.trim().to_string()),
@@ -109,10 +110,13 @@ async fn create(
         active: ActiveValue::set(true),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "scorecard_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "scorecard_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         json!({ "pid": row.pid, "name": row.name, "for_deescalation": row.for_deescalation }),
     )
@@ -405,6 +409,7 @@ async fn set_level(
     if !(1..=60).contains(&b.level.trim().chars().count()) {
         return Err(unprocessable("level is 1 to 60 characters"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = levels::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         level: ActiveValue::set(b.level.trim().to_string()),
@@ -417,17 +422,19 @@ async fn set_level(
         set_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "escalation_level_set",
         caller.actor(),
         Some(json!({ "level": row.level })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
@@ -446,23 +453,26 @@ async fn add_criterion(
     if !(5..=500).contains(&b.criterion.trim().chars().count()) {
         return Err(unprocessable("a criterion is 5 to 500 characters"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = crits::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         criterion: ActiveValue::set(b.criterion.trim().to_string()),
         active: ActiveValue::set(true),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "deescalation_criterion_added",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
@@ -511,6 +521,7 @@ async fn set_evidence(
             "link must be an http or https address with no spaces, up to 500 characters",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     evidence::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         criterion_pid: ActiveValue::set(c.pid),
@@ -522,17 +533,19 @@ async fn set_evidence(
         recorded_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         c.pid,
         "deescalation_evidence_recorded",
         caller.actor(),
         Some(json!({ "quarter": q.label(), "met": b.met })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "criterion_pid": c.pid, "quarter": q.label(), "met": b.met }))
 }
 

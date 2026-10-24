@@ -90,9 +90,10 @@ async fn set_estimate(
     let mut a: tasks::ActiveModel = task.into();
     a.duration_optimistic_days = ActiveValue::set(b.optimistic_days);
     a.duration_pessimistic_days = ActiveValue::set(b.pessimistic_days);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "task_estimate_set",
         caller.actor(),
@@ -101,7 +102,9 @@ async fn set_estimate(
             "to": { "optimistic_days": b.optimistic_days, "pessimistic_days": b.pessimistic_days },
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "task_pid": row.pid, "optimistic_days": row.duration_optimistic_days,
         "likely_days": row.duration_days, "pessimistic_days": row.duration_pessimistic_days,
@@ -172,17 +175,20 @@ async fn set_impact(
     a.task_pid = ActiveValue::set(b.task_pid);
     a.schedule_impact_days = ActiveValue::set(b.impact_days);
     a.schedule_probability_percent = ActiveValue::set(b.probability_percent);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
     let now = serde_json::json!({ "task_pid": row.task_pid, "impact_days": row.schedule_impact_days,
         "probability_percent": row.schedule_probability_percent });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "risk_schedule_impact_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": now })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "risk_pid": row.pid, "schedule": now }))
 }
 

@@ -119,7 +119,7 @@ fn clean(list: &[String]) -> Result<Vec<String>> {
     Ok(items)
 }
 
-async fn put_criteria(ctx: &AppContext, decision: Uuid, items: &[String]) -> Result<()> {
+async fn put_criteria<C: ConnectionTrait>(db: &C, decision: Uuid, items: &[String]) -> Result<()> {
     for (i, text) in items.iter().enumerate() {
         criteria::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -128,7 +128,7 @@ async fn put_criteria(ctx: &AppContext, decision: Uuid, items: &[String]) -> Res
             criterion: ActiveValue::set(text.clone()),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(db)
         .await
         .map_err(db_err)?;
     }
@@ -154,6 +154,7 @@ async fn create(
         return Err(unprocessable("title is 3 to 200 characters"));
     }
     let items = clean(&b.criteria)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let d = decisions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -162,7 +163,7 @@ async fn create(
         status: ActiveValue::set("draft".to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| {
         if e.to_string().contains("cd_version") {
@@ -171,15 +172,17 @@ async fn create(
             db_err(e)
         }
     })?;
-    put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    put_criteria(&txn, d.pid, &items).await?;
+    AuditModel::record(
+        &txn,
         d.pid,
         "cutover_decision_drafted",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -222,20 +225,23 @@ async fn replace_criteria(
         ));
     }
     let items = clean(&b.criteria)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     criteria::Entity::delete_many()
         .filter(criteria::Column::DecisionPid.eq(d.pid))
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(db_err)?;
-    put_criteria(&ctx, d.pid, &items).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    put_criteria(&txn, d.pid, &items).await?;
+    AuditModel::record(
+        &txn,
         d.pid,
         "cutover_criteria_edited",
         caller.actor(),
         Some(json!({ "count": items.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -262,8 +268,12 @@ async fn advance(
     } else {
         a.opened_on = ActiveValue::set(Some(today));
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, action, caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row.pid, action, caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(ctx, &row).await?;
     format::json(view(&row, &c, &s))
 }
@@ -341,15 +351,18 @@ async fn mark(
     a.evidence = ActiveValue::set(Some(b.evidence.trim().to_string()));
     a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.marked_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         d.pid,
         "cutover_criterion_marked",
         caller.actor(),
         Some(json!({ "n": n, "met": b.met })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -394,6 +407,7 @@ async fn cosign(
             ),
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     cosigs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         decision_pid: ActiveValue::set(d.pid),
@@ -402,7 +416,7 @@ async fn cosign(
         signed_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| {
         if e.to_string().contains("ccs_once") {
@@ -411,14 +425,16 @@ async fn cosign(
             db_err(e)
         }
     })?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         d.pid,
         "cutover_cosigned",
         caller.actor(),
         Some(json!({ "role": role })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -473,15 +489,18 @@ async fn decide(
     a.decided_on = ActiveValue::set(Some(crate::tz::deployment_today()));
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "cutover_decided",
         caller.actor(),
         Some(json!({ "outcome": b.outcome })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, &c, &s))
 }
 
@@ -535,7 +554,7 @@ async fn new_version(
     .await
     .map_err(db_err)?;
     put_criteria(
-        &ctx,
+        &ctx.db,
         nd.pid,
         &old_c
             .iter()

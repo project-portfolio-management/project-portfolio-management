@@ -429,9 +429,10 @@ async fn put_percent(
     a.percent_method = ActiveValue::set(b.method.clone());
     a.percent_manual = ActiveValue::set(manual);
     a.percent_note = ActiveValue::set(note.clone());
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "percent_complete_method_set",
         caller.actor(),
@@ -440,7 +441,9 @@ async fn put_percent(
                                   "to": { "method": b.method, "percent": manual, "note": note } }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "method": row.percent_method,
         "percent": row.percent_manual, "note": row.percent_note }),

@@ -83,6 +83,7 @@ async fn create_entry(
             ),
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = time_entries::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -100,11 +101,14 @@ async fn create_entry(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
-    AuditModel::record_or_log(&ctx.db, plan.pid, "effort_recorded", caller.actor(), None).await;
+    AuditModel::record(&txn, plan.pid, "effort_recorded", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -211,6 +215,7 @@ async fn set_working_time(
             "working_days_per_week must be between 1 and 7",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = working_time_configs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         scope_ref: ActiveValue::set(payload.scope_ref.clone()),
@@ -219,17 +224,13 @@ async fn set_working_time(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "working_time_declared",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "working_time_declared", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -262,6 +263,7 @@ async fn create_non_working(
     if payload.ends_on < payload.starts_on {
         return Err(unprocessable("ends_on must not precede starts_on"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = non_working_periods::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         person_ref: ActiveValue::set(payload.person_ref.clone()),
@@ -272,17 +274,13 @@ async fn create_non_working(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
-        row.pid,
-        "non_working_recorded",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row.pid, "non_working_recorded", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

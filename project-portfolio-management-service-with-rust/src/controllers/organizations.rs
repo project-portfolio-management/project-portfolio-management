@@ -85,6 +85,7 @@ async fn create(
     Json(b): Json<NewOrg>,
 ) -> Result<Response> {
     validate(&b.name, &b.kind)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = orgs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(b.name.trim().to_string()),
@@ -92,17 +93,19 @@ async fn create(
         active: ActiveValue::set(true),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "organization_created",
         caller.actor(),
         Some(json!({ "kind": row.kind })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(show(&row))
 }
 
@@ -145,15 +148,18 @@ async fn update(
     if let Some(v) = b.active {
         a.active = ActiveValue::set(v);
     }
-    let row = a.update(&ctx.db).await.map_err(|e| db_err(&e))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(|e| db_err(&e))?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "organization_changed",
         caller.actor(),
         Some(json!({ "active": row.active })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(show(&row))
 }
 

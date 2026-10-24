@@ -208,18 +208,21 @@ async fn remove_link(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     hammock_links::Entity::delete_by_id(link.id)
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         link.pid,
         "hammock_link_removed",
         caller.actor(),
         Some(serde_json::json!({ "hammock_pid": hammock.pid, "member_pid": member })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

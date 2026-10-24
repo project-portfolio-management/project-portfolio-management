@@ -142,4 +142,92 @@ mod tests {
         }
         assert!(offenders.is_empty(), "audit error discarded: {offenders:?}");
     }
+
+    /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
+    /// write. `record_or_log` (log, count, keep the write) is for the writes not yet moved and for audited reads.
+    /// This list can only shrink: a file's count may go down (then lower it here), never up, and a file not
+    /// named here may not call it. Today: 85 calls in 51 controllers.
+    #[test]
+    fn the_writes_that_still_keep_a_failed_audit_only_shrink() {
+        const KNOWN: &[(&str, usize)] = &[
+            ("access_review.rs", 1),
+            ("approvals.rs", 2),
+            ("attachments.rs", 2),
+            ("automation.rs", 4),
+            ("availability.rs", 1),
+            ("buffer_management.rs", 2),
+            ("bulk.rs", 4),
+            ("calendars.rs", 1),
+            ("ccpm_estimates.rs", 1),
+            ("ceremony.rs", 2),
+            ("change_requests.rs", 1),
+            ("controls.rs", 5),
+            ("cost_rates.rs", 5),
+            ("cutover.rs", 1),
+            ("deescalation.rs", 2),
+            ("deployment_moves.rs", 2),
+            ("earned_value.rs", 1),
+            ("engineering.rs", 3),
+            ("escalations.rs", 1),
+            ("financials.rs", 1),
+            ("frameworks.rs", 3),
+            ("governance.rs", 1),
+            ("handling_marks.rs", 1),
+            ("key_persons.rs", 2),
+            ("ledger.rs", 1),
+            ("milestone_signoffs.rs", 1),
+            ("milestones.rs", 1),
+            ("modules.rs", 1),
+            ("mspdi_export.rs", 1),
+            ("mspdi_import.rs", 1),
+            ("okr.rs", 1),
+            ("onboarding.rs", 1),
+            ("phase.rs", 1),
+            ("plan_access.rs", 2),
+            ("plan_templates.rs", 1),
+            ("portfolio_resources.rs", 1),
+            ("programme_profile.rs", 2),
+            ("raci.rs", 1),
+            ("register.rs", 1),
+            ("report_schedules.rs", 1),
+            ("schedule_baselines.rs", 1),
+            ("settings.rs", 2),
+            ("start_control.rs", 2),
+            ("strategy.rs", 2),
+            ("subjects.rs", 1),
+            ("task_bulk.rs", 1),
+            ("thresholds.rs", 4),
+            ("timesheets.rs", 2),
+            ("tolerances.rs", 1),
+            ("visibility.rs", 1),
+            ("workflow.rs", 1),
+        ];
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
+        let mut faults = Vec::new();
+        for entry in std::fs::read_dir(&dir).expect("read controllers") {
+            let path = entry.expect("entry").path();
+            if path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            let name = path
+                .file_name()
+                .expect("name")
+                .to_string_lossy()
+                .to_string();
+            let text = std::fs::read_to_string(&path).expect("read file");
+            let found = text.matches("AuditModel::record_or_log(").count();
+            let allowed = KNOWN
+                .iter()
+                .find(|(f, _)| *f == name)
+                .map_or(0, |(_, n)| *n);
+            if found > allowed {
+                faults.push(format!("{name}: {found} calls, {allowed} allowed: put the audit in the write's transaction (record + map_err(audit_failed))"));
+            } else if found < allowed {
+                faults.push(format!(
+                    "{name}: {found} calls, {allowed} listed: lower the number in KNOWN"
+                ));
+            }
+        }
+        assert!(faults.is_empty(), "{faults:#?}");
+    }
 }

@@ -168,34 +168,34 @@ async fn find_visible(
     Ok(row)
 }
 
-async fn link_of(
-    ctx: &AppContext,
+async fn link_of<C: ConnectionTrait>(
+    db: &C,
     plan: Uuid,
     family: Family,
 ) -> Result<Option<plan_frameworks::Model>> {
     plan_frameworks::Entity::find()
         .filter(plan_frameworks::Column::PlanPid.eq(plan))
         .filter(plan_frameworks::Column::Family.eq(family.token()))
-        .one(&ctx.db)
+        .one(db)
         .await
         .map_err(db_err)
 }
 
 /// Point `plan` at `target` for `family`, replacing any earlier link.
-async fn set_link(
-    ctx: &AppContext,
+async fn set_link<C: ConnectionTrait>(
+    db: &C,
     plan: Uuid,
     family: Family,
     target: Uuid,
     version: i32,
     by: Option<&str>,
 ) -> Result<()> {
-    if let Some(existing) = link_of(ctx, plan, family).await? {
+    if let Some(existing) = link_of(db, plan, family).await? {
         let mut a: plan_frameworks::ActiveModel = existing.into();
         a.framework_pid = ActiveValue::set(target);
         a.version = ActiveValue::set(version);
         a.set_by = ActiveValue::set(by.map(str::to_string));
-        a.update(&ctx.db).await.map_err(db_err)?;
+        a.update(db).await.map_err(db_err)?;
     } else {
         plan_frameworks::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -206,7 +206,7 @@ async fn set_link(
             set_by: ActiveValue::set(by.map(str::to_string)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(db)
         .await
         .map_err(db_err)?;
     }
@@ -235,6 +235,7 @@ async fn create(
         None => None,
     };
     require_shared_right(&caller, owner)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = frameworks::ActiveModel {
         version: ActiveValue::set(1),
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -247,21 +248,22 @@ async fn create(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| name_taken(&e, family))?;
-    record_version(&ctx.db, &row, caller.actor()).await?;
+    record_version(&txn, &row, caller.actor()).await?;
     if let Some(plan) = owner {
-        set_link(&ctx, plan, family, row.pid, row.version, caller.actor()).await?;
+        set_link(&txn, plan, family, row.pid, row.version, caller.actor()).await?;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "framework_created",
         caller.actor(),
         Some(serde_json::json!({ "family": family.token(), "name": row.name, "owner_plan_pid": owner })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, u64::from(owner.is_some())))
 }
 
@@ -369,8 +371,12 @@ async fn remove(
     let pid = row.pid;
     let mut a: frameworks::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, pid, "framework_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, pid, "framework_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 
@@ -464,10 +470,18 @@ async fn link(
                     record.version
                 )));
             }
-            let before = link_of(&ctx, plan.pid, family)
+            let before = link_of(&ctx.db, plan.pid, family)
                 .await?
                 .map(|l| (l.framework_pid, l.version));
-            set_link(&ctx, plan.pid, family, record.pid, version, caller.actor()).await?;
+            set_link(
+                &ctx.db,
+                plan.pid,
+                family,
+                record.pid,
+                version,
+                caller.actor(),
+            )
+            .await?;
             AuditModel::record_or_log(
                 &ctx.db,
                 plan.pid,
@@ -479,7 +493,7 @@ async fn link(
             .await;
         }
         None => {
-            if let Some(existing) = link_of(&ctx, plan.pid, family).await? {
+            if let Some(existing) = link_of(&ctx.db, plan.pid, family).await? {
                 existing.delete(&ctx.db).await.map_err(db_err)?;
                 AuditModel::record_or_log(
                     &ctx.db,

@@ -251,8 +251,12 @@ async fn revoke(
     let mut a: grants::ActiveModel = row.into();
     a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
     a.revoked_by = ActiveValue::set(Some(sub.clone()));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "break_glass_revoked", Some(&sub), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row.pid, "break_glass_revoked", Some(&sub), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row, Utc::now()))
 }
 

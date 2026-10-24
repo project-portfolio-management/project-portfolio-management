@@ -79,6 +79,7 @@ async fn create_component(
             "a component with this name already exists in the plan",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = components::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -87,10 +88,13 @@ async fn create_component(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "component_created", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "component_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -131,8 +135,12 @@ async fn update_component(
     let mut active: components::ActiveModel = row.into();
     active.name = ActiveValue::set(payload.name.trim().to_string());
     active.lead_ref = ActiveValue::set(payload.lead_ref.clone());
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, comp_pid, "component_updated", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, comp_pid, "component_updated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(row)
 }
 
@@ -160,8 +168,12 @@ async fn delete_component(
     let comp_pid = row.pid;
     let mut active: components::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, comp_pid, "component_deleted", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, comp_pid, "component_deleted", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

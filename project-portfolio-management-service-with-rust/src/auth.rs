@@ -570,6 +570,10 @@ fn area_rule(
 ///   `access=admin` or `escalation=acknowledge` / `escalation=resolve` respectively. Holding
 ///   one does not give the other, and neither replaces the right to write to the plan.
 ///
+/// * `resource.area = shared_framework` (CF-4): creating, editing or deleting an **organisation-wide**
+///   ways-of-working or governance framework needs `access=admin` or `framework=edit`. A framework a plan
+///   owns follows that plan's write access, as before.
+///
 /// A handler asks with [`area_allows`]. A deployment that wants other holders can
 /// widen who carries those attributes in its identity service; it cannot widen
 /// these rules from the policy file, by design.
@@ -635,6 +639,25 @@ pub fn service_rules() -> Vec<Rule> {
         ));
         rules.push(area_rule(Effect::Deny, &[ActionPattern::Any], area, None));
     }
+    // Organisation-wide frameworks (CF-4): an administrator, or `framework=edit`.
+    rules.push(area_rule(
+        Effect::Allow,
+        &[ActionPattern::Any],
+        SHARED_FRAMEWORK,
+        Some(("access", "admin")),
+    ));
+    rules.push(area_rule(
+        Effect::Allow,
+        &[ActionPattern::Any],
+        SHARED_FRAMEWORK,
+        Some(("framework", "edit")),
+    ));
+    rules.push(area_rule(
+        Effect::Deny,
+        &[ActionPattern::Any],
+        SHARED_FRAMEWORK,
+        None,
+    ));
     // Data-subject requests (RG-6) and the access review (RG-9): administrators only, whatever the
     // policy file says.
     for area in ["subjects", "access_review"] {
@@ -653,6 +676,9 @@ pub fn service_rules() -> Vec<Rule> {
 pub const ESCALATION_ACKNOWLEDGEMENT: &str = "escalation_acknowledgement";
 /// The area of the right to resolve an escalation (CF-4).
 pub const ESCALATION_RESOLUTION: &str = "escalation_resolution";
+
+/// The area of the right to change an organisation-wide framework (CF-4).
+pub const SHARED_FRAMEWORK: &str = "shared_framework";
 
 /// `policy` with [`service_rules`] first (first match wins).
 #[must_use]

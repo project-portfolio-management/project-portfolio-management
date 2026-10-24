@@ -76,7 +76,12 @@ mutation (§10.2).
   `frameworks_name_once (family, owner or none, lower(name))` among live rows.
   `plan_frameworks`: `plan_pid`, `family`, `framework_pid`, `set_by?`, unique
   `(plan_pid, family)`. A plan with no row for a family inherits the nearest
-  ancestor's, resolved on read (migration `m20261020_000080`).
+  ancestor's, resolved on read (migration `m20261020_000080`). **Versions (CF-4,
+  migration `m20261024_000088`):** `frameworks.version` is the current version and
+  `plan_frameworks.version` the one a plan follows (both default 1);
+  `framework_versions` (`framework_pid`, `version`, `name`, `description?`, `body`,
+  `created_by?`, unique `(framework_pid, version)`) holds every version and is
+  append-only (a trigger refuses UPDATE and DELETE). Existing rows became version 1.
 - **`plan_tolerances`** (built, FR-53) — a plan's limit per dimension: `plan_pid`, `dimension` (CHECK
   `time`/`schedule`/`cost`/`risk`/`resources`, widened by `m20261021_000085`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
   `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan

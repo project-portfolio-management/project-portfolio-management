@@ -18,6 +18,8 @@ pub struct Model {
     pub plan_pid: Uuid,
     pub family: String,
     pub framework_pid: Uuid,
+    /// The version of the framework this plan follows; it stays until the plan is moved.
+    pub version: i32,
     pub set_by: Option<String>,
 }
 

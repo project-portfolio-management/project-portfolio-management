@@ -104,6 +104,14 @@ const UNREACHED: &[(&str, &str)] = &[
         "one record (an object, not a list); needs a record this census does not create",
     ),
     (
+        "/api/ways-of-working/{pid}/versions",
+        "one record's versions (an object, not a paged list); needs a record this census does not create",
+    ),
+    (
+        "/api/governance-frameworks/{pid}/versions",
+        "one record's versions (an object, not a paged list); needs a record this census does not create",
+    ),
+    (
         "/api/governance-frameworks/{pid}",
         "one record (an object, not a list); needs a record this census does not create",
     ),

@@ -618,7 +618,16 @@ across currencies.
   own. An unknown field is `422`, not dropped; a name is unique per family and owner
   (`409`); a record plans still follow cannot be deleted (`409`). A record owned by a
   plan the caller cannot read is `404` and absent from lists, and an inherited record
-  from such a plan is withheld with a reason.
+  from such a plan is withheld with a reason. **Versions and who may change one (CF-4).** An edit
+  (`PUT …/{pid}`) is a new **version**: it appends to the record's history (`GET …/{pid}/versions`, newest
+  first, each with the plans following it) and never changes an earlier one. A plan's link **pins** the version it
+  follows (the record's current one when it links, or the `version` it names) and keeps it, with the escalation
+  path and every other field of that version, until it is moved by linking again; the answer says
+  `version`, `latest_version` and `behind`. So one plan's edit, or a programme's, does not change the plans that
+  follow it. Existing records became version 1 and existing links were pinned to 1. Creating, editing or deleting an
+  **organisation-wide** record needs `access=admin` or `framework=edit` (policy area `shared_framework`, which a
+  deployment's policy file cannot widen), otherwise `403`; a record a plan owns follows that plan's write access.
+  Not built: a notice to the plans that are behind; moving all of them at once; a diff between versions.
 - **FR-53 Tolerances.** Every plan can set how far it may drift on five dimensions before it must be
   referred upward, and sees how much of each limit is used as **red / amber / green**.
   `PUT /api/plans/{pid}/tolerances/{dimension}` (`time`, `schedule`, `cost`, `risk`, `resources`; body

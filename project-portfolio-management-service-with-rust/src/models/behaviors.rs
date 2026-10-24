@@ -27,6 +27,7 @@ impl ActiveModelBehavior for review_queue_items::ActiveModel {}
 impl ActiveModelBehavior for guest_grants::ActiveModel {}
 impl ActiveModelBehavior for plan_links::ActiveModel {}
 impl ActiveModelBehavior for frameworks::ActiveModel {}
+impl ActiveModelBehavior for framework_versions::ActiveModel {}
 impl ActiveModelBehavior for plan_frameworks::ActiveModel {}
 impl ActiveModelBehavior for plan_tolerances::ActiveModel {}
 impl ActiveModelBehavior for escalations::ActiveModel {}

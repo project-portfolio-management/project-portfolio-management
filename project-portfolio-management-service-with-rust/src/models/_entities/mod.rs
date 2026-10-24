@@ -63,6 +63,7 @@ pub mod escalation_levels;
 pub mod escalations;
 pub mod event_outbox;
 pub mod feed_tokens;
+pub mod framework_versions;
 pub mod frameworks;
 pub mod funding_allocations;
 pub mod funding_sources;

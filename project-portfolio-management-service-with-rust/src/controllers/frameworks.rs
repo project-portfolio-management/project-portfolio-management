@@ -5,6 +5,10 @@
 //!
 //! * `POST/GET /api/<family>`, `GET/PUT/DELETE /api/<family>/{pid}` and a POST delete twin: the records. A
 //!   record is organisation-wide, or owned by one plan (`plan_pid` on create).
+//! * `GET /api/<family>/{pid}/versions`: the versions of a record. An edit (`PUT`) appends a version and never
+//!   changes an earlier one; a plan's link pins the version it follows, and the plan keeps it until it is moved
+//!   (a `PUT` of the link again, with or without `version`). Changing an organisation-wide record needs
+//!   `access=admin` or `framework=edit`.
 //! * `PUT /api/plans/{pid}/<family>`: link a plan to a record (its own, an organisation-wide one, or a
 //!   programme's), or unlink with null.
 //! * `GET /api/plans/{pid}/<family>`: the framework in force for a plan: its own link, else the nearest
@@ -26,7 +30,7 @@ use super::{conflict, db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::frameworks::Family;
 use crate::inherit::{Source, resolve};
-use crate::models::_entities::{frameworks, plan_frameworks};
+use crate::models::_entities::{framework_versions, frameworks, plan_frameworks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 
@@ -81,6 +85,7 @@ fn view(r: &frameworks::Model, plans_using: u64) -> Value {
             "organization"
         }),
     );
+    out.insert("version".into(), serde_json::json!(r.version));
     out.insert("plans_using".into(), serde_json::json!(plans_using));
     out.insert("created_by".into(), serde_json::json!(r.created_by));
     out.insert("created_at".into(), serde_json::json!(r.created_at));
@@ -93,6 +98,48 @@ async fn using(ctx: &AppContext, pid: Uuid) -> Result<u64> {
         .count(&ctx.db)
         .await
         .map_err(db_err)
+}
+
+/// `403` when `owner` is none (an organisation-wide record) and the caller does not hold the right to change one.
+fn require_shared_right(caller: &MaybeAuthUser, owner: Option<Uuid>) -> Result<()> {
+    if owner.is_some()
+        || crate::auth::area_allows(
+            caller,
+            crate::auth::SHARED_FRAMEWORK,
+            authentication_verifier::Action::Write,
+        )
+    {
+        return Ok(());
+    }
+    Err(Error::CustomError(
+        axum::http::StatusCode::FORBIDDEN,
+        loco_rs::controller::ErrorDetail::new(
+            "forbidden",
+            "changing an organisation-wide framework needs access=admin or framework=edit"
+                .to_string(),
+        ),
+    ))
+}
+
+/// Append `version` of `row` to the history.
+async fn record_version<C: ConnectionTrait>(
+    db: &C,
+    row: &frameworks::Model,
+    by: Option<&str>,
+) -> Result<()> {
+    framework_versions::ActiveModel {
+        framework_pid: ActiveValue::set(row.pid),
+        version: ActiveValue::set(row.version),
+        name: ActiveValue::set(row.name.clone()),
+        description: ActiveValue::set(row.description.clone()),
+        body: ActiveValue::set(row.body.clone()),
+        created_by: ActiveValue::set(by.map(str::to_string)),
+        ..Default::default()
+    }
+    .insert(db)
+    .await
+    .map_err(db_err)?;
+    Ok(())
 }
 
 /// A live record of `family` the caller may see: organisation-wide, or owned by a plan they can read.
@@ -140,11 +187,13 @@ async fn set_link(
     plan: Uuid,
     family: Family,
     target: Uuid,
+    version: i32,
     by: Option<&str>,
 ) -> Result<()> {
     if let Some(existing) = link_of(ctx, plan, family).await? {
         let mut a: plan_frameworks::ActiveModel = existing.into();
         a.framework_pid = ActiveValue::set(target);
+        a.version = ActiveValue::set(version);
         a.set_by = ActiveValue::set(by.map(str::to_string));
         a.update(&ctx.db).await.map_err(db_err)?;
     } else {
@@ -153,6 +202,7 @@ async fn set_link(
             plan_pid: ActiveValue::set(plan),
             family: ActiveValue::set(family.token().to_string()),
             framework_pid: ActiveValue::set(target),
+            version: ActiveValue::set(version),
             set_by: ActiveValue::set(by.map(str::to_string)),
             ..Default::default()
         }
@@ -184,7 +234,9 @@ async fn create(
         Some(plan) => Some(find_item(&ctx, plan).await?.pid),
         None => None,
     };
+    require_shared_right(&caller, owner)?;
     let row = frameworks::ActiveModel {
+        version: ActiveValue::set(1),
         pid: ActiveValue::set(Uuid::new_v4()),
         family: ActiveValue::set(family.token().to_string()),
         name: ActiveValue::set(p.name),
@@ -198,8 +250,9 @@ async fn create(
     .insert(&ctx.db)
     .await
     .map_err(|e| name_taken(&e, family))?;
+    record_version(&ctx.db, &row, caller.actor()).await?;
     if let Some(plan) = owner {
-        set_link(&ctx, plan, family, row.pid, caller.actor()).await?;
+        set_link(&ctx, plan, family, row.pid, row.version, caller.actor()).await?;
     }
     AuditModel::record_or_log(
         &ctx.db,
@@ -276,15 +329,26 @@ async fn update(
 ) -> Result<Response> {
     let p = parse(family, input)?;
     let row = find_visible(&ctx, &caller, family, &pid).await?;
+    require_shared_right(&caller, row.owner_plan_pid)?;
+    // An edit is a new version: the plans that follow this one keep the version they pinned until they move.
+    let previous = row.version;
     let mut a: frameworks::ActiveModel = row.into();
     a.name = ActiveValue::set(p.name);
     a.description = ActiveValue::set(p.description);
     a.body = ActiveValue::set(p.body);
-    let row = a
-        .update(&ctx.db)
-        .await
-        .map_err(|e| name_taken(&e, family))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "framework_updated", caller.actor(), None).await;
+    a.version = ActiveValue::set(previous + 1);
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let row = a.update(&txn).await.map_err(|e| name_taken(&e, family))?;
+    record_version(&txn, &row, caller.actor()).await?;
+    txn.commit().await.map_err(db_err)?;
+    AuditModel::record_or_log(
+        &ctx.db,
+        row.pid,
+        "framework_updated",
+        caller.actor(),
+        Some(serde_json::json!({ "family": family.token(), "version": row.version, "previous_version": previous })),
+    )
+    .await;
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
@@ -295,6 +359,7 @@ async fn remove(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = find_visible(&ctx, &caller, family, &pid).await?;
+    require_shared_right(&caller, row.owner_plan_pid)?;
     let n = using(&ctx, row.pid).await?;
     if n > 0 {
         return Err(conflict(&format!(
@@ -309,11 +374,59 @@ async fn remove(
     format::empty_json()
 }
 
+/// `GET /api/<family>/{pid}/versions`: every version the record has had, newest first, with how many plans
+/// follow each.
+async fn list_versions(
+    family: Family,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let row = find_visible(&ctx, &caller, family, &pid).await?;
+    let versions = framework_versions::Entity::find()
+        .filter(framework_versions::Column::FrameworkPid.eq(row.pid))
+        .order_by_desc(framework_versions::Column::Version)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut following: HashMap<i32, u64> = HashMap::new();
+    for l in plan_frameworks::Entity::find()
+        .filter(plan_frameworks::Column::FrameworkPid.eq(row.pid))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+    {
+        *following.entry(l.version).or_insert(0) += 1;
+    }
+    format::json(serde_json::json!({
+        "framework_pid": row.pid,
+        "current_version": row.version,
+        "versions": versions.iter().map(|v| {
+            let mut out = Map::new();
+            out.insert("version".into(), serde_json::json!(v.version));
+            out.insert("current".into(), serde_json::json!(v.version == row.version));
+            out.insert("name".into(), serde_json::json!(v.name));
+            out.insert("description".into(), serde_json::json!(v.description));
+            if let Value::Object(body) = &v.body {
+                out.extend(body.clone());
+            }
+            out.insert("created_by".into(), serde_json::json!(v.created_by));
+            out.insert("created_at".into(), serde_json::json!(v.created_at));
+            out.insert("plans_following".into(), serde_json::json!(following.get(&v.version).copied().unwrap_or(0)));
+            Value::Object(out)
+        }).collect::<Vec<_>>(),
+    }))
+}
+
 /// `PUT /api/plans/{pid}/<family>` body.
 #[derive(Debug, Deserialize)]
 struct LinkBody {
     /// The record to follow, or null to follow none of its own (the plan then inherits).
     framework_pid: Option<String>,
+    /// The version to follow; the record's current one when absent. Following a record again with no version
+    /// moves the plan to its current version.
+    #[serde(default)]
+    version: Option<i32>,
 }
 
 async fn link(
@@ -336,13 +449,32 @@ async fn link(
                         )),
                         other => other,
                     })?;
-            set_link(&ctx, plan.pid, family, record.pid, caller.actor()).await?;
+            let version = b.version.unwrap_or(record.version);
+            if version != record.version
+                && framework_versions::Entity::find()
+                    .filter(framework_versions::Column::FrameworkPid.eq(record.pid))
+                    .filter(framework_versions::Column::Version.eq(version))
+                    .one(&ctx.db)
+                    .await
+                    .map_err(db_err)?
+                    .is_none()
+            {
+                return Err(unprocessable(&format!(
+                    "version {version} does not exist (the current version is {})",
+                    record.version
+                )));
+            }
+            let before = link_of(&ctx, plan.pid, family)
+                .await?
+                .map(|l| (l.framework_pid, l.version));
+            set_link(&ctx, plan.pid, family, record.pid, version, caller.actor()).await?;
             AuditModel::record_or_log(
                 &ctx.db,
                 plan.pid,
                 "framework_linked",
                 caller.actor(),
-                Some(serde_json::json!({ "family": family.token(), "framework_pid": record.pid })),
+                Some(serde_json::json!({ "family": family.token(), "framework_pid": record.pid, "version": version,
+                    "before": before.map(|(f, v)| serde_json::json!({ "framework_pid": f, "version": v })) })),
             )
             .await;
         }
@@ -375,6 +507,9 @@ pub(crate) struct InForce {
     pub withheld: bool,
     /// The plan follows a record that has since been deleted.
     pub deleted: bool,
+    /// The record's current version, when it differs from the one the plan follows (`record` then shows the
+    /// pinned one).
+    pub latest_version: Option<i32>,
 }
 
 /// Resolve the framework of `family` in force for `plan`: its own link, else the nearest ancestor's, else none.
@@ -389,21 +524,26 @@ pub(crate) async fn in_force(
         .map_err(Error::Model)?;
     let mut chain = vec![plan];
     chain.extend(&ancestors);
-    let links: HashMap<Uuid, Uuid> = plan_frameworks::Entity::find()
+    let links: HashMap<Uuid, (Uuid, i32)> = plan_frameworks::Entity::find()
         .filter(plan_frameworks::Column::Family.eq(family.token()))
         .filter(plan_frameworks::Column::PlanPid.is_in(chain))
         .all(&ctx.db)
         .await
         .map_err(db_err)?
         .into_iter()
-        .map(|l| (l.plan_pid, l.framework_pid))
+        .map(|l| (l.plan_pid, (l.framework_pid, l.version)))
         .collect();
     let ancestor_links: Vec<(Uuid, Option<Uuid>)> = ancestors
         .iter()
-        .map(|p| (*p, links.get(p).copied()))
+        .map(|p| (*p, links.get(p).map(|l| l.0)))
         .collect();
-    let r = resolve(plan, links.get(&plan).copied(), &ancestor_links);
-    let record = match r.value {
+    let r = resolve(plan, links.get(&plan).map(|l| l.0), &ancestor_links);
+    // The version pinned by the link that decided it (the plan's own, or the ancestor's it inherits).
+    let pinned = match r.source {
+        Source::Own => links.get(&plan).map(|l| l.1),
+        _ => r.from_plan.and_then(|p| links.get(&p)).map(|l| l.1),
+    };
+    let mut record = match r.value {
         None => None,
         Some(w) => frameworks::Entity::find()
             .filter(frameworks::Column::Pid.eq(w))
@@ -412,6 +552,25 @@ pub(crate) async fn in_force(
             .await
             .map_err(db_err)?,
     };
+    // Show the version the plan follows, not the record's current one.
+    let mut latest_version = None;
+    if let (Some(rec), Some(want)) = (record.as_mut(), pinned)
+        && want != rec.version
+    {
+        let old = framework_versions::Entity::find()
+            .filter(framework_versions::Column::FrameworkPid.eq(rec.pid))
+            .filter(framework_versions::Column::Version.eq(want))
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        if let Some(old) = old {
+            latest_version = Some(rec.version);
+            rec.name = old.name;
+            rec.description = old.description;
+            rec.body = old.body;
+            rec.version = old.version;
+        }
+    }
     // An inherited record that comes from (or is owned by) a plan the caller cannot read is not shown.
     let mut guarded: Vec<Uuid> = Vec::new();
     if r.source == Source::Inherited {
@@ -430,6 +589,7 @@ pub(crate) async fn in_force(
         deleted: r.value.is_some() && record.is_none(),
         record: if withheld { None } else { record },
         withheld,
+        latest_version,
     })
 }
 
@@ -489,6 +649,15 @@ async fn effective(
             .map_or(Value::Null, |x| view(x, plans_using)),
     );
     out.insert("reason".into(), serde_json::json!(reason));
+    // Behind: the plan follows an older version than the record now has (CF-4); moving it is a deliberate act.
+    out.insert(
+        "latest_version".into(),
+        serde_json::json!(f.latest_version.or(f.record.as_ref().map(|x| x.version))),
+    );
+    out.insert(
+        "behind".into(),
+        serde_json::json!(f.latest_version.is_some()),
+    );
     format::json(Value::Object(out))
 }
 
@@ -531,6 +700,10 @@ fn family_routes(routes: Routes, family: Family, collection: &str, plan_path: &s
         .add(
             &format!("{one}/delete"),
             post(move |s: S, u: U, p: Path<String>| remove(family, s, u, p)),
+        )
+        .add(
+            &format!("{one}/versions"),
+            get(move |s: S, u: U, p: Path<String>| list_versions(family, s, u, p)),
         )
         .add(
             plan_path,

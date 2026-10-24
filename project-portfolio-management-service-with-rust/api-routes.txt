@@ -149,6 +149,7 @@ DELETE /api/governance-frameworks/{pid}
 GET /api/governance-frameworks/{pid}
 PUT /api/governance-frameworks/{pid}
 POST /api/governance-frameworks/{pid}/delete
+GET /api/governance-frameworks/{pid}/versions
 GET /api/handling-marks
 GET /api/ideas
 POST /api/ideas
@@ -623,6 +624,7 @@ DELETE /api/ways-of-working/{pid}
 GET /api/ways-of-working/{pid}
 PUT /api/ways-of-working/{pid}
 POST /api/ways-of-working/{pid}/delete
+GET /api/ways-of-working/{pid}/versions
 GET /api/work-profile
 GET /api/workflows
 POST /api/workflows

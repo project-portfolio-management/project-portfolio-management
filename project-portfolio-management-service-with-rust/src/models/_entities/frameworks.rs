@@ -20,6 +20,8 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub body: Json,
+    /// The current version; the others are in `framework_versions`.
+    pub version: i32,
     pub owner_plan_pid: Option<Uuid>,
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,

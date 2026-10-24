@@ -783,8 +783,14 @@ fn framework_paths() -> Value {
             one.clone(),
             json!({
                 "get": op(tag, &format!("One {noun} record"), "404 for a record owned by a plan the caller cannot read.", pid.clone(), &[("200", "The record"), ("404", "Unknown or not readable")]),
-                "put": op(tag, &format!("Replace a {noun} record"), &format!("Replaces the fields; the owner does not change. Plans following it see the change at once (no versions). {unknown_fields}"), pid.clone(), &[("200", "The record"), ("404", "Unknown or not readable"), ("409", "Name taken"), ("422", "A field is wrong")]),
+                "put": op(tag, &format!("Replace a {noun} record"), &format!("Replaces the fields; the owner does not change. The edit is a new version (the record's `version` goes up by one): plans that follow it keep the version they pinned until they are moved (`PUT` of their link). Changing an organisation-wide record needs `access=admin` or `framework=edit`, else 403; a record a plan owns follows that plan's write access. {unknown_fields}"), pid.clone(), &[("200", "The record"), ("403", "An organisation-wide record, and not allowed to change one"), ("404", "Unknown or not readable"), ("409", "Name taken"), ("422", "A field is wrong")]),
                 "delete": op(tag, &format!("Delete a {noun} record (soft)"), "Refused (409) while any plan follows it.", pid.clone(), &[("200", "Deleted"), ("404", "Unknown or not readable"), ("409", "Plans still follow it")])
+            }),
+        );
+        put_item(
+            format!("{one}/versions"),
+            json!({
+                "get": op(tag, &format!("The versions of a {noun} record"), "Newest first, each with its fields, who made it, when, whether it is the current one, and how many plans follow it (`plans_following`). Versions are never changed or removed.", pid.clone(), &[("200", "framework_pid, current_version, versions"), ("404", "Unknown or not readable")])
             }),
         );
         put_item(
@@ -797,11 +803,11 @@ fn framework_paths() -> Value {
             plan,
             json!({
                 "get": op(tag, &format!("The {noun} in force for a plan"),
-                    &format!("`source` is `own` (the plan's link), `inherited` (the nearest ancestor's, with `from_plan_pid`) or `none` (nothing declared: `{key}` is null with a `reason`, never invented defaults). Resolved on read, never stored, so changing a programme's link changes every project beneath it that has none of its own. An inherited record from a plan the caller cannot read is withheld with a reason."),
+                    &format!("`source` is `own` (the plan's link), `inherited` (the nearest ancestor's, with `from_plan_pid`) or `none` (nothing declared: `{key}` is null with a `reason`, never invented defaults). Resolved on read, never stored, so changing a programme's link changes every project beneath it that has none of its own. The record shown is the version the link pins, not necessarily the latest. An inherited record from a plan the caller cannot read is withheld with a reason."),
                     pid.clone(), &[("200", "source, from_plan_pid, the record, reason"), ("404", "Unknown plan")]),
                 "put": op(tag, &format!("Link a plan to a {noun}, or unlink"),
-                    "Body `{framework_pid}`: an organisation-wide record, the plan's own, or one owned by another plan the caller can read (for example a programme's). Null unlinks, and the plan then inherits. Answers like GET.",
-                    pid, &[("200", "What is now in force"), ("404", "Unknown plan"), ("422", "The record does not exist or cannot be read")])
+                    "Body `{framework_pid, version?}`: an organisation-wide record, the plan's own, or one owned by another plan the caller can read (for example a programme's). The plan follows that version, the record's current one when none is given, and keeps it when the record is edited; sending the link again moves it. Null unlinks, and the plan then inherits. Answers like GET, with `version`, `latest_version` and `behind` (the plan follows an older version).",
+                    pid, &[("200", "What is now in force"), ("404", "Unknown plan"), ("422", "The record or version does not exist or cannot be read")])
             }),
         );
     }

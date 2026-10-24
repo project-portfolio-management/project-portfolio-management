@@ -578,15 +578,16 @@ async fn put_links(
         .await
         .map_err(db_err)?;
     }
-    tx.commit().await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &tx,
         row.pid,
         "change_request_relinked",
         caller.actor(),
         Some(serde_json::json!({ "issues": b.issue_pids.len(), "risks": b.risk_pids.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await.map_err(db_err)?;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }

@@ -776,6 +776,9 @@ async fn record_labour(
     let mut cache: HashMap<String, Option<Applicable>> = HashMap::new();
     let (mut recorded, mut already) = (0_usize, 0_usize);
     let mut no_rate = Vec::new();
+    // Price everything first (this reads); then record every cost and the audit row as one change. The
+    // pool may hold a single connection, so nothing is read while the transaction is open.
+    let mut costs: Vec<time_entry_costs::ActiveModel> = Vec::new();
     for e in &entries {
         if done.contains(&e.pid) {
             already += 1;
@@ -798,7 +801,7 @@ async fn record_labour(
             );
             continue;
         };
-        time_entry_costs::ActiveModel {
+        costs.push(time_entry_costs::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
             time_entry_pid: ActiveValue::set(e.pid),
             plan_pid: ActiveValue::set(plan.pid),
@@ -810,14 +813,15 @@ async fn record_labour(
             currency: ActiveValue::set(currency),
             cost_minor: ActiveValue::set(rules::labour_cost_minor(e.minutes, rate)),
             ..Default::default()
-        }
-        .insert(&ctx.db)
-        .await
-        .map_err(db_err)?;
+        });
         recorded += 1;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    for cost in costs {
+        cost.insert(&txn).await.map_err(db_err)?;
+    }
+    AuditModel::record(
+        &txn,
         plan.pid,
         "labour_costs_recorded",
         caller.actor(),
@@ -826,7 +830,9 @@ async fn record_labour(
             "no_rate": no_rate.len(), "table": table }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "recorded": recorded, "already_recorded": already, "no_rate": no_rate,
         "note": "A recorded cost keeps the rate it was priced at. Recording again never changes one; it prices only entries that have none yet.",

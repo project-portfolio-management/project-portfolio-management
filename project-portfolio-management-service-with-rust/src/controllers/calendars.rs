@@ -30,8 +30,8 @@ fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {
         .collect()
 }
 
-async fn find(
-    ctx: &AppContext,
+async fn find<C: ConnectionTrait>(
+    db: &C,
     scope: &str,
     subject: &str,
 ) -> Result<Option<work_calendars::Model>> {
@@ -39,7 +39,7 @@ async fn find(
         .filter(work_calendars::Column::Scope.eq(scope))
         .filter(work_calendars::Column::Subject.eq(subject))
         .filter(work_calendars::Column::DeletedAt.is_null())
-        .one(&ctx.db)
+        .one(db)
         .await
         .map_err(db_err)
 }
@@ -49,7 +49,7 @@ pub(crate) async fn plan_calendar(
     ctx: &AppContext,
     plan_pid: Uuid,
 ) -> Result<(WorkCalendar, &'static str)> {
-    match find(ctx, "plan", &plan_pid.to_string()).await? {
+    match find(&ctx.db, "plan", &plan_pid.to_string()).await? {
         Some(row) => Ok((
             rules::build(&row.weekdays, &holidays_of(&row))
                 .unwrap_or_else(|_| WorkCalendar::seven_day()),
@@ -72,7 +72,7 @@ pub(crate) async fn person_calendars(
     let mut out = HashMap::new();
     let mut conflicts = Vec::new();
     for r in refs {
-        let row = find(ctx, "person", r).await?;
+        let row = find(&ctx.db, "person", r).await?;
         let absences: Vec<(NaiveDate, NaiveDate)> = non_working_periods::Entity::find()
             .filter(non_working_periods::Column::PersonRef.eq(r.as_str()))
             .filter(non_working_periods::Column::DeletedAt.is_null())
@@ -139,14 +139,16 @@ pub(crate) async fn plan_calendar_spec(
     ctx: &AppContext,
     plan_pid: Uuid,
 ) -> Result<Option<(String, Vec<NaiveDate>)>> {
-    Ok(find(ctx, "plan", &plan_pid.to_string())
+    Ok(find(&ctx.db, "plan", &plan_pid.to_string())
         .await?
         .map(|row| (row.weekdays.clone(), holidays_of(&row))))
 }
 
 /// Whether a plan already has its own calendar.
 pub(crate) async fn plan_has_calendar(ctx: &AppContext, plan_pid: Uuid) -> Result<bool> {
-    Ok(find(ctx, "plan", &plan_pid.to_string()).await?.is_some())
+    Ok(find(&ctx.db, "plan", &plan_pid.to_string())
+        .await?
+        .is_some())
 }
 
 async fn upsert(
@@ -163,12 +165,13 @@ async fn upsert(
     let mut holidays = b.holidays.clone();
     holidays.sort_unstable();
     let json = serde_json::json!(holidays.iter().map(ToString::to_string).collect::<Vec<_>>());
-    let row = match find(ctx, scope, subject).await? {
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let row = match find(&txn, scope, subject).await? {
         Some(existing) => {
             let mut a: work_calendars::ActiveModel = existing.into();
             a.weekdays = ActiveValue::set(b.weekdays.clone());
             a.holidays = ActiveValue::set(json);
-            a.update(&ctx.db).await.map_err(db_err)?
+            a.update(&txn).await.map_err(db_err)?
         }
         None => work_calendars::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -179,12 +182,12 @@ async fn upsert(
             deleted_at: ActiveValue::set(None),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?,
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "calendar_set",
         actor,
@@ -193,7 +196,9 @@ async fn upsert(
                                   "holidays": holidays.len(), "at": Utc::now() }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     Ok(row)
 }
 
@@ -202,7 +207,7 @@ async fn upsert(
 #[debug_handler]
 async fn get_plan(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = find(&ctx, "plan", &plan.pid.to_string()).await?;
+    let row = find(&ctx.db, "plan", &plan.pid.to_string()).await?;
     format::json(view(row.as_ref(), "no calendar set: every day works"))
 }
 
@@ -228,7 +233,7 @@ fn person_subject(sub: &str) -> Result<String> {
 /// `GET /api/me/calendar` — the caller's own calendar.
 #[debug_handler]
 async fn get_me(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
-    let row = find(&ctx, "person", &person_subject(&claims.sub)?).await?;
+    let row = find(&ctx.db, "person", &person_subject(&claims.sub)?).await?;
     format::json(view(
         row.as_ref(),
         "no personal calendar set: the plan's calendar applies",

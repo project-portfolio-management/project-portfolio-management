@@ -799,6 +799,8 @@ async fn complete_step(
             // finished: then the completion is not recorded a second time.
             if Status::is_final(&ex.status) || usize::try_from(ex.current_step).ok() != Some(index)
             {
+                // Give the connection back before reading with another one.
+                drop(t2);
                 return execution_response(&ctx, ex_pid).await;
             }
             log(

@@ -105,6 +105,9 @@ async fn upload(
         .await
         .map_err(|e| Error::string(&e.to_string()))?
         .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
+    // The artifact, the attachment and the audit row are one change (the stored bytes are not: a refused
+    // change leaves an unreferenced blob, which nothing reads).
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let artifact = artifact_rows::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         kind: ActiveValue::set("attachment".to_string()),
@@ -117,7 +120,7 @@ async fn upload(
         expires_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
     let row = attachments::ActiveModel {
@@ -129,12 +132,11 @@ async fn upload(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    index_text(&ctx, row.pid, declared, &body).await;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "attachment_added",
         caller.actor(),
@@ -143,7 +145,10 @@ async fn upload(
                                   "filename": filename, "sha256": sha }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+    index_text(&ctx, row.pid, declared, &body).await;
     format::json(serde_json::json!({
         "pid": row.pid, "filename": filename, "content_type": artifact.content_type,
         "size_bytes": size, "sha256": sha,

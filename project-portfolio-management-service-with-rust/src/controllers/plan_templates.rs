@@ -384,18 +384,23 @@ async fn from_template(
 
     let mut created: Vec<Uuid> = Vec::new();
     let result = build(&ctx, &caller, &snap, &b, &date_of, &mut created).await;
+    // The plans are built one at a time, so they cannot share a transaction with the audit row; if the audit
+    // row cannot be written the whole instantiation is undone the same way a failed build is.
+    let result = match result {
+        Ok(summary) => AuditModel::record(
+            &ctx.db,
+            row.pid,
+            "plan_template_instantiated",
+            caller.actor(),
+            Some(serde_json::json!({ "root": created.first() })),
+        )
+        .await
+        .map(|_| summary)
+        .map_err(super::audit_failed),
+        Err(e) => Err(e),
+    };
     match result {
-        Ok(summary) => {
-            AuditModel::record_or_log(
-                &ctx.db,
-                row.pid,
-                "plan_template_instantiated",
-                caller.actor(),
-                Some(serde_json::json!({ "root": created.first() })),
-            )
-            .await;
-            format::json(summary)
-        }
+        Ok(summary) => format::json(summary),
         Err(e) => {
             // Roll back: soft-delete what was created, then report the failure.
             for pid in created.iter().rev() {

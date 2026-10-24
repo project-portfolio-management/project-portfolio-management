@@ -328,6 +328,8 @@ async fn snapshot(
         "readings": rs.iter().map(|(r, l)| reading_json(r, l)).collect::<Vec<_>>(),
         "alerts": alerts(&rs),
     });
+    // The snapshot and the audit rows (one per red buffer too) are one change.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let snap = buffer_snapshots::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -336,20 +338,24 @@ async fn snapshot(
         document: ActiveValue::set(document.to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "buffer_snapshot_taken",
         caller.actor(),
         Some(json!({ "snapshot": snap.pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
     for a in alerts(&rs) {
-        AuditModel::record_or_log(&ctx.db, plan.pid, "buffer_red", caller.actor(), Some(a)).await;
+        AuditModel::record(&txn, plan.pid, "buffer_red", caller.actor(), Some(a))
+            .await
+            .map_err(super::audit_failed)?;
     }
+    txn.commit().await.map_err(db_err)?;
     format::json(json!({ "pid": snap.pid, "taken_on": snap.taken_on, "document": document }))
 }
 

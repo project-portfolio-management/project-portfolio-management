@@ -146,26 +146,18 @@ mod tests {
     /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
     /// write. `record_or_log` (log, count, keep the write) is for the writes not yet moved and for audited reads.
     /// This list can only shrink: a file's count may go down (then lower it here), never up, and a file not
-    /// named here may not call it. Today: 26 calls in 16 controllers.
+    /// named here may not call it. Today: 14 calls in 8 controllers.
     #[test]
     fn the_writes_that_still_keep_a_failed_audit_only_shrink() {
         const KNOWN: &[(&str, usize)] = &[
-            ("attachments.rs", 2),
+            ("attachments.rs", 1),
             ("automation.rs", 4),
-            ("buffer_management.rs", 2),
             ("bulk.rs", 4),
-            ("calendars.rs", 1),
-            ("change_requests.rs", 1),
-            ("cost_rates.rs", 1),
             ("mspdi_export.rs", 1),
             ("mspdi_import.rs", 1),
-            ("plan_templates.rs", 1),
-            ("raci.rs", 1),
             ("register.rs", 1),
             ("report_schedules.rs", 1),
-            ("start_control.rs", 2),
             ("task_bulk.rs", 1),
-            ("timesheets.rs", 2),
         ];
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
         let mut faults = Vec::new();
@@ -194,5 +186,54 @@ mod tests {
             }
         }
         assert!(faults.is_empty(), "{faults:#?}");
+    }
+
+    /// A handler that holds a transaction must not ask the pool for a second connection: with one connection
+    /// (the test and development default) the second request waits for the first, which is waiting for it,
+    /// and under load the same thing starves the pool. Between `let txn = ctx.db.begin()` and `txn.commit()`
+    /// every database call goes through `txn`, so the word `ctx` may not appear there.
+    #[test]
+    fn no_controller_uses_the_pool_while_it_holds_a_transaction() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
+        let mut faults = Vec::new();
+        for entry in std::fs::read_dir(&dir).expect("read controllers") {
+            let path = entry.expect("entry").path();
+            if path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).expect("read file");
+            for (at, _) in text.match_indices("= ctx.db.begin()") {
+                let Some(open) = text[..at].rfind("let ") else {
+                    continue;
+                };
+                let var = text[open + 4..at].trim().to_string();
+                // The transaction ends at its commit, its rollback, or when it is dropped.
+                let Some(close) = [
+                    format!("{var}.commit()"),
+                    format!("{var}.rollback()"),
+                    format!("drop({var})"),
+                ]
+                .iter()
+                .filter_map(|end| text[at..].find(end))
+                .min() else {
+                    continue;
+                };
+                let window = &text[at + 16..at + close];
+                for (n, line) in window.lines().enumerate() {
+                    let code = line.split("//").next().unwrap_or("");
+                    let uses_ctx = code
+                        .split(|c: char| !(c.is_alphanumeric() || c == '_'))
+                        .any(|w| w == "ctx");
+                    if uses_ctx {
+                        let line_no = text[..at].matches('\n').count() + 1 + n;
+                        faults.push(format!("{}:{line_no}: {}", path.display(), line.trim()));
+                    }
+                }
+            }
+        }
+        assert!(
+            faults.is_empty(),
+            "the pool is used while a transaction is open: {faults:#?}"
+        );
     }
 }

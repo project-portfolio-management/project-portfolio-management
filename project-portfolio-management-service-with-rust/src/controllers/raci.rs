@@ -200,6 +200,19 @@ async fn set_row(
             })?;
         }
     }
+    let after: BTreeMap<String, String> = entries
+        .iter()
+        .map(|e| (e.person_ref.clone(), e.roles.iter().collect()))
+        .collect();
+    AuditModel::record(
+        &txn,
+        task.pid,
+        "raci_set",
+        caller.actor(),
+        Some(serde_json::json!({ "plan_pid": plan.pid, "before": before, "after": after })),
+    )
+    .await
+    .map_err(super::audit_failed)?;
     txn.commit().await.map_err(db_err)?;
     // Responsible, Accountable and Informed people want to hear about the task.
     for e in &entries {
@@ -209,18 +222,6 @@ async fn set_row(
             super::watchers::ensure_watching(&ctx.db, "task", task.pid, sub).await;
         }
     }
-    let after: BTreeMap<String, String> = entries
-        .iter()
-        .map(|e| (e.person_ref.clone(), e.roles.iter().collect()))
-        .collect();
-    AuditModel::record_or_log(
-        &ctx.db,
-        task.pid,
-        "raci_set",
-        caller.actor(),
-        Some(serde_json::json!({ "plan_pid": plan.pid, "before": before, "after": after })),
-    )
-    .await;
     crate::live::publish(
         plan.pid,
         "raci_updated",

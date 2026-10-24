@@ -96,15 +96,15 @@ fn fact(e: &time_entries::Model) -> Entry {
     }
 }
 
-async fn week_row(
-    ctx: &AppContext,
+async fn week_row<C: ConnectionTrait>(
+    db: &C,
     person: &str,
     monday: NaiveDate,
 ) -> Result<Option<timesheet_weeks::Model>> {
     timesheet_weeks::Entity::find()
         .filter(timesheet_weeks::Column::PersonRef.eq(person))
         .filter(timesheet_weeks::Column::WeekStart.eq(monday))
-        .one(&ctx.db)
+        .one(db)
         .await
         .map_err(db_err)
 }
@@ -115,7 +115,7 @@ pub(crate) async fn week_is_locked(
     person: &str,
     date: NaiveDate,
 ) -> Result<bool> {
-    Ok(week_row(ctx, person, rules::monday_of(date))
+    Ok(week_row(&ctx.db, person, rules::monday_of(date))
         .await?
         .is_some_and(|r| r.status == "approved"))
 }
@@ -155,7 +155,7 @@ async fn get_week(
         .map(fact)
         .collect();
     let omitted = rows.len() - facts.len();
-    let state = week_row(&ctx, &person, monday).await?;
+    let state = week_row(&ctx.db, &person, monday).await?;
     format::json(serde_json::json!({
         "person": person,
         "week": p.week,
@@ -176,15 +176,15 @@ struct SubmitBody {
     week: String,
 }
 
-async fn set_state(
-    ctx: &AppContext,
+async fn set_state<C: ConnectionTrait>(
+    db: &C,
     person: &str,
     monday: NaiveDate,
     status: &str,
     submitted: bool,
     decider: Option<(&str, Option<&str>)>,
 ) -> Result<timesheet_weeks::Model> {
-    let existing = week_row(ctx, person, monday).await?;
+    let existing = week_row(db, person, monday).await?;
     let now: sea_orm::prelude::DateTimeWithTimeZone = chrono::Utc::now().into();
     match existing {
         Some(row) => {
@@ -201,7 +201,7 @@ async fn set_state(
                 a.decided_at = ActiveValue::set(Some(now));
                 a.decision_comment = ActiveValue::set(comment.map(|c| c.trim().to_string()));
             }
-            a.update(&ctx.db).await.map_err(db_err)
+            a.update(db).await.map_err(db_err)
         }
         None => timesheet_weeks::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -214,7 +214,7 @@ async fn set_state(
             decision_comment: ActiveValue::set(decider.and_then(|(_, c)| c.map(str::to_string))),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(db)
         .await
         .map_err(db_err),
     }
@@ -235,7 +235,7 @@ async fn submit(
     }
     let monday = week_of(&b.week)?;
     let entries = week_entries(&ctx, &person, monday).await?;
-    let current = week_row(&ctx, &person, monday).await?;
+    let current = week_row(&ctx.db, &person, monday).await?;
     let next =
         rules::submit(current.as_ref().map(|r| r.status.as_str()), entries.len()).map_err(|r| {
             match r {
@@ -243,15 +243,18 @@ async fn submit(
                 _ => conflict(&r.message()),
             }
         })?;
-    let row = set_state(&ctx, &person, monday, next, true, None).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let row = set_state(&txn, &person, monday, next, true, None).await?;
+    AuditModel::record(
+        &txn,
         row.pid,
         "timesheet_submitted",
         Some(&claims.sub),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(row)
 }
 
@@ -286,7 +289,7 @@ async fn decide(
         _ => return Err(unprocessable("decision must be approved or rejected")),
     };
     let monday = week_of(&b.week)?;
-    let current = week_row(&ctx, &person, monday).await?;
+    let current = week_row(&ctx.db, &person, monday).await?;
     let next = rules::decide(
         current.as_ref().map(|r| r.status.as_str()),
         approve,
@@ -296,8 +299,9 @@ async fn decide(
         rules::Refusal::CommentRequired => unprocessable(&r.message()),
         _ => conflict(&r.message()),
     })?;
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = set_state(
-        &ctx,
+        &txn,
         &person,
         monday,
         next,
@@ -305,14 +309,16 @@ async fn decide(
         Some((&claims.sub, b.comment.as_deref())),
     )
     .await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         &format!("timesheet_{next}"),
         Some(&claims.sub),
         Some(serde_json::json!({ "person": person, "week_start": monday, "comment": b.comment })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(row)
 }
 

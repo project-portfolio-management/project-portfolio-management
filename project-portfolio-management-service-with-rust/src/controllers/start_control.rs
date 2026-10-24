@@ -196,13 +196,28 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     })
 }
 
-async fn waiting(ctx: &AppContext) -> Result<Vec<queue::Model>> {
+async fn waiting<C: ConnectionTrait>(db: &C) -> Result<Vec<queue::Model>> {
     queue::Entity::find()
         .filter(queue::Column::Status.eq("waiting"))
         .order_by_asc(queue::Column::Id)
-        .all(&ctx.db)
+        .all(db)
         .await
         .map_err(db_err)
+}
+
+/// Mark a waiting programme as started.
+async fn mark_started<C: ConnectionTrait>(
+    db: &C,
+    entry: Option<queue::Model>,
+    today: chrono::NaiveDate,
+) -> Result<()> {
+    if let Some(q) = entry {
+        let mut a: queue::ActiveModel = q.into();
+        a.status = ActiveValue::set("started".to_string());
+        a.resolved_on = ActiveValue::set(Some(today));
+        a.update(db).await.map_err(db_err)?;
+    }
+    Ok(())
 }
 
 /// `GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing.
@@ -214,7 +229,7 @@ async fn start_check(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let e = evaluate(&ctx, &plan).await?;
-    let q = waiting(&ctx).await?;
+    let q = waiting(&ctx.db).await?;
     let pids: Vec<Uuid> = q.iter().map(|x| x.plan_pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
     format::json(json!({
@@ -260,23 +275,16 @@ pub(crate) async fn gate(
         .one(&ctx.db)
         .await
         .map_err(db_err)?;
-    let started = |entry: Option<queue::Model>| async move {
-        if let Some(q) = entry {
-            let mut a: queue::ActiveModel = q.into();
-            a.status = ActiveValue::set("started".to_string());
-            a.resolved_on = ActiveValue::set(Some(today));
-            a.update(&ctx.db).await.map_err(db_err)?;
-        }
-        Ok::<(), Error>(())
-    };
     if e.refusals.is_empty() {
-        return started(entry).await;
+        return mark_started(&ctx.db, entry, today).await;
     }
     let text = serde_json::to_string(&e.refusals).unwrap_or_default();
     if let Some(r) = override_reason
         .map(str::trim)
         .filter(|r| r.chars().count() >= 10)
     {
+        // The override, the audit row and the start are one change.
+        let txn = ctx.db.begin().await.map_err(db_err)?;
         overrides::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
             plan_pid: ActiveValue::set(plan.pid),
@@ -286,23 +294,33 @@ pub(crate) async fn gate(
             decided_on: ActiveValue::set(today),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?;
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record(
+            &txn,
             plan.pid,
             "start_override",
             caller.actor(),
             Some(json!({ "refusals": e.refusals })),
         )
-        .await;
-        return started(entry).await;
+        .await
+        .map_err(super::audit_failed)?;
+        mark_started(&txn, entry, today).await?;
+        txn.commit().await.map_err(db_err)?;
+        return Ok(());
     }
+    // Who may be counted in the queue, worked out before the transaction opens: the pool may hold a single
+    // connection, and nothing may ask for a second while one is held.
+    let mut pids: Vec<Uuid> = waiting(&ctx.db).await?.iter().map(|x| x.plan_pid).collect();
+    pids.push(plan.pid);
+    let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
+    // The queue entry and the audit row of the refusal are one change.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let position = if let Some(q) = entry {
         let mut a: queue::ActiveModel = q.clone().into();
         a.refusals = ActiveValue::set(text);
-        a.update(&ctx.db).await.map_err(db_err)?;
+        a.update(&txn).await.map_err(db_err)?;
         q.id
     } else {
         queue::ActiveModel {
@@ -313,15 +331,13 @@ pub(crate) async fn gate(
             queued_on: ActiveValue::set(today),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
         .id
     };
     // The place among the programmes the caller may read: a private plan is not counted for anyone else.
-    let waiting_now = waiting(ctx).await?;
-    let pids: Vec<Uuid> = waiting_now.iter().map(|x| x.plan_pid).collect();
-    let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
+    let waiting_now = waiting(&txn).await?;
     let place = waiting_now
         .iter()
         .filter(|x| readable.contains(&x.plan_pid))
@@ -341,14 +357,16 @@ pub(crate) async fn gate(
         })
         .collect::<Vec<_>>()
         .join("; ");
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "start_refused",
         caller.actor(),
         Some(json!({ "refusals": e.refusals, "queue_position": place })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     Err(Error::CustomError(
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new(
@@ -396,7 +414,7 @@ async fn withdraw(
 /// `GET /api/start-queue` — programmes waiting to start that you can read, in the order they asked.
 #[debug_handler]
 async fn list_queue(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let q = waiting(&ctx).await?;
+    let q = waiting(&ctx.db).await?;
     let pids: Vec<Uuid> = q.iter().map(|x| x.plan_pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
     let names: HashMap<Uuid, String> = plans::Entity::find()

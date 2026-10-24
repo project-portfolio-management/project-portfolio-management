@@ -2177,7 +2177,7 @@ mod tests {
         );
     }
 
-    /// CQ-9: the OpenAPI document as a file, so the UI can generate its types from it and a change to the API shows
+    /// CQ-9: the `OpenAPI` document as a file, so the UI can generate its types from it and a change to the API shows
     /// in review. Regenerate with `UPDATE_OPENAPI_JSON=1 cargo test --lib openapi_json_file`.
     #[test]
     fn openapi_json_file_is_current() {

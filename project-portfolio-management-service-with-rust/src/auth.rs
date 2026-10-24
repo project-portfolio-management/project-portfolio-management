@@ -867,8 +867,9 @@ fn bearer_token(headers: &HeaderMap) -> Result<&str, (StatusCode, String)> {
 ///
 /// `401` when the header is missing or not a bearer token, the token fails
 /// verification, or no verifier in this build accepts its type.
-// `async` for the Keycloak path (JWKS refresh); a PASETO-only build never awaits.
-#[expect(clippy::unused_async)]
+// `async` for the Keycloak path (JWKS refresh); a PASETO-only build never awaits. An `allow`, not an
+// `expect`: the lint fires in that build and not in an all-features one.
+#[allow(clippy::unused_async)]
 pub async fn request_claims(headers: &HeaderMap) -> Result<Claims, (StatusCode, String)> {
     let token = bearer_token(headers)?;
     #[cfg(feature = "keycloak")]

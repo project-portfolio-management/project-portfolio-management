@@ -96,7 +96,7 @@ project-portfolio-management-service-with-rust/
 │   │                                collaboration.rs · automation.rs ·
 │   │                                prioritization.rs · lifecycle.rs · insights.rs ·
 │   │                                visibility.rs · tba.rs · merge.rs · validation.rs
-│   ├── auth.rs streaming.rs relay.rs search/ privacy.rs compliance/
+│   ├── auth/ (verifier · enforcement · policy · areas · identity) streaming.rs relay.rs search/ privacy.rs compliance/
 │   ├── flow_metrics.rs scheduler.rs snapshots.rs version.rs
 │   └── workers/                     loco background jobs
 ├── migration/src/                   plans, audit_logs, merge_records, event_outbox,

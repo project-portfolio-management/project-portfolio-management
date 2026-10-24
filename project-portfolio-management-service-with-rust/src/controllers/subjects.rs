@@ -104,14 +104,15 @@ async fn export(
             "table": table, "column": column, "rows": rows, "truncated": truncated,
         }));
     }
-    AuditModel::record_or_log(
+    AuditModel::record(
         &ctx.db,
         Uuid::nil(),
         "subject_exported",
         caller.actor(),
         Some(serde_json::json!({ "tables": tables.len(), "rows": total })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
     format::json(serde_json::json!({
         "subject_forms_searched": forms.len(),
         "tables": tables,

@@ -704,7 +704,9 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                     )
                         .into_response();
                 }
-                AuditModel::record_or_log(
+                // Fail closed: a break-glass request that cannot be audited is not served, so the use
+                // of the grant is never invisible.
+                if let Err(error) = AuditModel::record(
                     &ctx.db,
                     plan_pid,
                     "break_glass_access",
@@ -713,7 +715,10 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                         "method": req.method().as_str(), "path": req.uri().path(),
                     })),
                 )
-                .await;
+                .await
+                {
+                    return super::audit_failed(error).into_response();
+                }
             }
         }
     }

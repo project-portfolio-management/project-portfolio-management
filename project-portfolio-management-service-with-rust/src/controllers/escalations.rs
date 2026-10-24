@@ -383,20 +383,21 @@ async fn advance(
         note.clone(),
     )
     .await?;
-    txn.commit().await.map_err(db_err)?;
     let snapshot = match event_name {
         "acknowledged" => Some(json!({ "level": row.level, "note": note })),
         "resolved" => Some(json!({ "outcome": row.outcome, "response": row.response })),
         _ => None,
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         pid,
         &format!("escalation_{event_name}"),
         caller.actor(),
         snapshot,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     let what = match event_name {
         "acknowledged" => "has been acknowledged",
         "level_raised" => "has been taken up a level",

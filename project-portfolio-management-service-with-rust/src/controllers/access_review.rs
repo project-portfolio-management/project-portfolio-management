@@ -96,14 +96,15 @@ async fn review(
         .collect();
     let today = crate::tz::deployment_today();
     let standing = rules::standing(&entries, today, stale);
-    AuditModel::record_or_log(
+    AuditModel::record(
         &ctx.db,
         Uuid::nil(),
         "access_review_read",
         caller.actor(),
         Some(serde_json::json!({ "grants": standing.len(), "older_than_days": stale })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
     if csv {
         return Ok((
             [

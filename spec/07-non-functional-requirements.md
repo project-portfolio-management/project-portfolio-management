@@ -54,10 +54,13 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   **When a write's audit row cannot be written, the write is refused.** The audit row is written in the
   same database transaction as the change it records, and if it cannot be written the transaction rolls back,
   the caller gets a `5xx`, and nothing of the change remains: there is no change without its audit row. (Owner
-  decision, plan §70 question 2.) The one exception is a **read** that is audited (for example a data-subject
-  export or a break-glass read): it is not a change, so it is answered and the failure is logged at error level
-  and counted in `audit_write_failed_total`, which an operator should alert on. An audit outage therefore stops
-  writes; that is the intended trade. **Status:** built for about two thirds of the audited writes (150 of about 230); the logged-and-counted
+  decision, plan §70 question 2.) A **read** that is audited because it exposes
+  something sensitive (a data-subject export, the access review, a request served by a break-glass grant) is
+  treated the same way: if its audit row cannot be written it is not served. (The service's choice, going
+  further than the owner's rule for writes: an unrecorded export or break-glass use is the case an audit trail
+  exists for.) Any other audited read is answered, and the failure is logged at error level and counted in
+  `audit_write_failed_total`, which an operator should alert on. An audit outage therefore stops writes and those
+  reads; that is the intended trade. **Status:** built for about two thirds of the audited writes (150 of about 230); the logged-and-counted
   fallback still runs for the rest. `tasks.md` CQ-3 says which remain, and a census test keeps that list from growing.
 - **NFR-7 — Observability.** Structured tracing (`tracing` +
   `tracing-subscriber`, JSON logs in production); OTLP traces /

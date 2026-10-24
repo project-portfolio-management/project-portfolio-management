@@ -146,11 +146,10 @@ mod tests {
     /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
     /// write. `record_or_log` (log, count, keep the write) is for the writes not yet moved and for audited reads.
     /// This list can only shrink: a file's count may go down (then lower it here), never up, and a file not
-    /// named here may not call it. Today: 54 calls in 32 controllers.
+    /// named here may not call it. Today: 45 calls in 26 controllers.
     #[test]
     fn the_writes_that_still_keep_a_failed_audit_only_shrink() {
         const KNOWN: &[(&str, usize)] = &[
-            ("access_review.rs", 1),
             ("approvals.rs", 2),
             ("attachments.rs", 2),
             ("automation.rs", 4),
@@ -163,21 +162,16 @@ mod tests {
             ("cost_rates.rs", 1),
             ("deployment_moves.rs", 2),
             ("engineering.rs", 2),
-            ("escalations.rs", 1),
             ("financials.rs", 1),
-            ("frameworks.rs", 3),
             ("milestones.rs", 1),
             ("mspdi_export.rs", 1),
             ("mspdi_import.rs", 1),
-            ("plan_access.rs", 1),
             ("plan_templates.rs", 1),
             ("raci.rs", 1),
             ("register.rs", 1),
             ("report_schedules.rs", 1),
             ("schedule_baselines.rs", 1),
-            ("settings.rs", 2),
             ("start_control.rs", 2),
-            ("subjects.rs", 1),
             ("task_bulk.rs", 1),
             ("thresholds.rs", 4),
             ("timesheets.rs", 2),

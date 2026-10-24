@@ -342,15 +342,16 @@ async fn update(
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = a.update(&txn).await.map_err(|e| name_taken(&e, family))?;
     record_version(&txn, &row, caller.actor()).await?;
-    txn.commit().await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "framework_updated",
         caller.actor(),
         Some(serde_json::json!({ "family": family.token(), "version": row.version, "previous_version": previous })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
@@ -473,36 +474,34 @@ async fn link(
             let before = link_of(&ctx.db, plan.pid, family)
                 .await?
                 .map(|l| (l.framework_pid, l.version));
-            set_link(
-                &ctx.db,
-                plan.pid,
-                family,
-                record.pid,
-                version,
-                caller.actor(),
-            )
-            .await?;
-            AuditModel::record_or_log(
-                &ctx.db,
+            let txn = ctx.db.begin().await.map_err(db_err)?;
+            set_link(&txn, plan.pid, family, record.pid, version, caller.actor()).await?;
+            AuditModel::record(
+                &txn,
                 plan.pid,
                 "framework_linked",
                 caller.actor(),
                 Some(serde_json::json!({ "family": family.token(), "framework_pid": record.pid, "version": version,
                     "before": before.map(|(f, v)| serde_json::json!({ "framework_pid": f, "version": v })) })),
             )
-            .await;
+            .await
+            .map_err(super::audit_failed)?;
+            txn.commit().await.map_err(db_err)?;
         }
         None => {
             if let Some(existing) = link_of(&ctx.db, plan.pid, family).await? {
-                existing.delete(&ctx.db).await.map_err(db_err)?;
-                AuditModel::record_or_log(
-                    &ctx.db,
+                let txn = ctx.db.begin().await.map_err(db_err)?;
+                existing.delete(&txn).await.map_err(db_err)?;
+                AuditModel::record(
+                    &txn,
                     plan.pid,
                     "framework_unlinked",
                     caller.actor(),
                     Some(serde_json::json!({ "family": family.token() })),
                 )
-                .await;
+                .await
+                .map_err(super::audit_failed)?;
+                txn.commit().await.map_err(db_err)?;
             }
         }
     }

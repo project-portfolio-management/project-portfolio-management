@@ -123,8 +123,8 @@ async fn put_zone(
     let zone = tz::parse_zone(&body.time_zone).map_err(|m| unprocessable(&m))?;
     let before = tz::today_zone();
     let actor = caller.actor().map(str::to_string);
-    ctx.db
-        .execute_raw(Statement::from_sql_and_values(
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    txn.execute_raw(Statement::from_sql_and_values(
             DatabaseBackend::Postgres,
             "INSERT INTO deployment_settings (key, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
              ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()",
@@ -132,15 +132,18 @@ async fn put_zone(
         ))
         .await
         .map_err(db_err)?;
-    tz::set_today_zone(zone);
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         Uuid::nil(),
         "today_time_zone_changed",
         actor.as_deref(),
         Some(serde_json::json!({ "before": before.name(), "after": zone.name() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+    // Only once it is stored and audited does this instance use it.
+    tz::set_today_zone(zone);
     view(&ctx.db).await
 }
 
@@ -149,23 +152,25 @@ async fn put_zone(
 async fn delete_zone(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     require_admin(&caller)?;
     let before = tz::today_zone();
-    ctx.db
-        .execute_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "DELETE FROM deployment_settings WHERE key = $1",
-            [KEY.into()],
-        ))
-        .await
-        .map_err(db_err)?;
-    tz::set_today_zone(tz::Tz::UTC);
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    txn.execute_raw(Statement::from_sql_and_values(
+        DatabaseBackend::Postgres,
+        "DELETE FROM deployment_settings WHERE key = $1",
+        [KEY.into()],
+    ))
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         Uuid::nil(),
         "today_time_zone_changed",
         caller.actor(),
         Some(serde_json::json!({ "before": before.name(), "after": tz::Tz::UTC.name() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+    tz::set_today_zone(tz::Tz::UTC);
     view(&ctx.db).await
 }
 

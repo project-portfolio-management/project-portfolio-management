@@ -565,6 +565,11 @@ fn area_rule(
 ///   `resource.area = access_review` (the recertification report): every action needs
 ///   `access=admin`, with no other holder.
 ///
+/// * `resource.area = escalation_acknowledgement` and `resource.area = escalation_resolution`
+///   (CF-4: saying an escalation has been seen, and answering it): every action needs
+///   `access=admin` or `escalation=acknowledge` / `escalation=resolve` respectively. Holding
+///   one does not give the other, and neither replaces the right to write to the plan.
+///
 /// A handler asks with [`area_allows`]. A deployment that wants other holders can
 /// widen who carries those attributes in its identity service; it cannot widen
 /// these rules from the policy file, by design.
@@ -610,6 +615,26 @@ pub fn service_rules() -> Vec<Rule> {
         "break_glass",
         None,
     ));
+    // Escalations (CF-4): acknowledging and resolving are separate rights, each held by an
+    // administrator or by the attribute `escalation=<verb>` the identity service assigns.
+    for (area, verb) in [
+        (ESCALATION_ACKNOWLEDGEMENT, "acknowledge"),
+        (ESCALATION_RESOLUTION, "resolve"),
+    ] {
+        rules.push(area_rule(
+            Effect::Allow,
+            &[ActionPattern::Any],
+            area,
+            Some(("access", "admin")),
+        ));
+        rules.push(area_rule(
+            Effect::Allow,
+            &[ActionPattern::Any],
+            area,
+            Some(("escalation", verb)),
+        ));
+        rules.push(area_rule(Effect::Deny, &[ActionPattern::Any], area, None));
+    }
     // Data-subject requests (RG-6) and the access review (RG-9): administrators only, whatever the
     // policy file says.
     for area in ["subjects", "access_review"] {
@@ -623,6 +648,11 @@ pub fn service_rules() -> Vec<Rule> {
     }
     rules
 }
+
+/// The area of the right to acknowledge an escalation (CF-4).
+pub const ESCALATION_ACKNOWLEDGEMENT: &str = "escalation_acknowledgement";
+/// The area of the right to resolve an escalation (CF-4).
+pub const ESCALATION_RESOLUTION: &str = "escalation_resolution";
 
 /// `policy` with [`service_rules`] first (first match wins).
 #[must_use]
@@ -1924,6 +1954,48 @@ mod area_tests {
             &claims(&[("access", "write")]),
             Action::Delete,
             "comms"
+        ));
+    }
+
+    #[test]
+    fn acknowledging_and_resolving_an_escalation_are_separate_rights() {
+        let p = with_service_rules(Policy::default_policy());
+        let writer = claims(&[("access", "write")]);
+        let acker = claims(&[("access", "write"), ("escalation", "acknowledge")]);
+        let resolver = claims(&[("access", "write"), ("escalation", "resolve")]);
+        let admin = claims(&[("access", "admin")]);
+        for (who, ack, res) in [
+            (&writer, false, false),
+            (&acker, true, false),
+            (&resolver, false, true),
+            (&admin, true, true),
+        ] {
+            assert_eq!(
+                allowed(&p, who, Action::Write, ESCALATION_ACKNOWLEDGEMENT),
+                ack
+            );
+            assert_eq!(allowed(&p, who, Action::Write, ESCALATION_RESOLUTION), res);
+        }
+        // A permissive deployment policy cannot widen them.
+        let open = with_service_rules(Policy {
+            rules: vec![Rule {
+                effect: Effect::Allow,
+                actions: vec![ActionPattern::Any],
+                when: std::collections::BTreeMap::default(),
+                obligations: vec![],
+            }],
+        });
+        assert!(!allowed(
+            &open,
+            &writer,
+            Action::Write,
+            ESCALATION_ACKNOWLEDGEMENT
+        ));
+        assert!(!allowed(
+            &open,
+            &writer,
+            Action::Write,
+            ESCALATION_RESOLUTION
         ));
     }
 

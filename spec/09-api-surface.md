@@ -237,6 +237,7 @@ other response.
 | POST | `/documents/{pid}/versions` | Next draft (one in-flight version per document, else `409`) |
 | GET / PUT | `/documents/{pid}/versions/{version}` | Read; edit a **draft** only (a later edit is the next draft) |
 | POST | `…/versions/{version}/submit` · `…/make-effective` | Submit for review (a PL-1 approval on the version; `approver_ref` must be a person/worker URN, `422`); make effective only if that approval was approved, superseding the version it replaces; otherwise `409`/`403`/`422` |
+| GET / PUT | `/plans/{pid}/escalations/{epid}/acknowledgement` · `…/resolution` | The acknowledgement and the resolution of an escalation as resources (CF-4). `PUT` needs `access=admin` or `escalation=acknowledge` / `escalation=resolve` (else `403`), is idempotent, and records the history event and the audit entry; a resolution is never overwritten (`409`). `GET` is `404` until there is one |
 | GET / POST / PUT / DELETE | `/announcements` · `/announcements/{pid}` | Anyone reads the live feed; publish / edit / retract need the `comms` area (`access=admin` or `comms=publish`), else `403`; `?include=all` (publishers) also lists scheduled and expired; severity `info`/`important`/`urgent` |
 
 ### 9.2f Bulk jobs — progress and cancel

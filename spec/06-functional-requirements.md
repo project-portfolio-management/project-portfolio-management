@@ -654,8 +654,19 @@ across currencies.
   escalation on a plan that stays red is not raised again at once. Nothing runs the task unless the operator schedules
   it. The person it names as responsible (`owner_ref`) and the person who raised it are told in their in-app
   inbox (kind `escalation`, which a person can switch off) when it is raised, acknowledged, taken up a level, resolved
-  or withdrawn, never the person who acted; no email or push is sent. Nothing
-  checks who acknowledges or resolves.
+  or withdrawn, never the person who acted; no email or push is sent.
+  **Who may acknowledge or resolve (CF-4).** Two separate rights, on top of write access to the plan: to
+  acknowledge, `access=admin` or `escalation=acknowledge` (policy area `escalation_acknowledgement`); to resolve,
+  `access=admin` or `escalation=resolve` (area `escalation_resolution`). Neither implies the other, a deployment's
+  policy file cannot widen them (the service puts these rules first, like `finance` and `comms`), and anyone else
+  gets `403`. **The acknowledgement and the resolution are resources**: `GET`/`PUT
+  /api/plans/{pid}/escalations/{epid}/acknowledgement` and `…/resolution`. `PUT` is the same act as the older
+  `POST …/acknowledge` and `…/resolve` (same rights, same history event, same audit entry carrying the level and
+  note, or the outcome and response), and is idempotent: repeating it answers the record already there and writes
+  nothing. A resolution is a record and is never overwritten: a different outcome or response is `409`. Taking an
+  escalation up a level sends it back to `open`, so the acknowledgement of the level below is `404` until the new
+  level acknowledges. Not built: restricting who may act to the members of the body the escalation is addressed to
+  (`escalated_to` is free text with no link to people); this is a right held by an attribute, not by a seat.
 
 ### 6.5 Cross-service links & bulk — service
 

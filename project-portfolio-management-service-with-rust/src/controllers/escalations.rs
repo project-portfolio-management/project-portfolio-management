@@ -5,11 +5,16 @@
 //! * `POST/GET /api/plans/{pid}/escalations`: raise one, list a plan's;
 //! * `GET /api/plans/{pid}/escalations/{epid}`: one, with its history;
 //! * `POST …/{epid}/acknowledge`, `…/raise-level`, `…/resolve`, `…/withdraw`: move it on;
+//! * `GET/PUT …/{epid}/acknowledgement` and `…/resolution` (CF-4): the acknowledgement and the resolution as
+//!   resources of their own. `PUT` records one (the same act as the `POST` above, with the same rights and the
+//!   same audit entry) and repeating it answers the existing one; a resolution is never overwritten;
 //! * `GET /api/escalations`: the register across the plans the caller can read.
 //!
 //! The history (`escalation_events`) is append-only, enforced by a database trigger. Nothing here notifies anyone.
 
+use axum::http::StatusCode;
 use chrono::NaiveDate;
+use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
@@ -345,6 +350,20 @@ async fn step(
     note: Option<String>,
     change: impl FnOnce(&mut escalations::ActiveModel),
 ) -> Result<Response> {
+    let row = advance(ctx, caller, e, action, event_name, note, change).await?;
+    format::json(view(&row, today()))
+}
+
+/// [`step`], answering the changed row.
+async fn advance(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    e: escalations::Model,
+    action: Action,
+    event_name: &str,
+    note: Option<String>,
+    change: impl FnOnce(&mut escalations::ActiveModel),
+) -> Result<escalations::Model> {
     let status = rules::apply(&e.status, action).map_err(|m| conflict(&m))?;
     let pid = e.pid;
     let mut a: escalations::ActiveModel = e.into();
@@ -352,14 +371,27 @@ async fn step(
     change(&mut a);
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = a.update(&txn).await.map_err(db_err)?;
-    event(&txn, pid, event_name, row.level, caller.actor(), note).await?;
+    event(
+        &txn,
+        pid,
+        event_name,
+        row.level,
+        caller.actor(),
+        note.clone(),
+    )
+    .await?;
     txn.commit().await.map_err(db_err)?;
+    let snapshot = match event_name {
+        "acknowledged" => Some(json!({ "level": row.level, "note": note })),
+        "resolved" => Some(json!({ "outcome": row.outcome, "response": row.response })),
+        _ => None,
+    };
     AuditModel::record_or_log(
         &ctx.db,
         pid,
         &format!("escalation_{event_name}"),
         caller.actor(),
-        None,
+        snapshot,
     )
     .await;
     let what = match event_name {
@@ -369,7 +401,21 @@ async fn step(
         _ => "has been withdrawn",
     };
     tell(ctx, &row, caller.actor(), true, what).await;
-    format::json(view(&row, today()))
+    Ok(row)
+}
+
+/// `403` unless the caller holds the escalation right for `area` (CF-4).
+fn require_right(caller: &MaybeAuthUser, area: &str, what: &str, attribute: &str) -> Result<()> {
+    if crate::auth::area_allows(caller, area, authentication_verifier::Action::Write) {
+        return Ok(());
+    }
+    Err(Error::CustomError(
+        StatusCode::FORBIDDEN,
+        ErrorDetail::new(
+            "forbidden",
+            format!("{what} an escalation needs access=admin or escalation={attribute}"),
+        ),
+    ))
 }
 
 #[debug_handler]
@@ -379,6 +425,12 @@ async fn acknowledge(
     Path((pid, epid)): Path<(String, String)>,
     Json(b): Json<NoteBody>,
 ) -> Result<Response> {
+    require_right(
+        &caller,
+        crate::auth::ESCALATION_ACKNOWLEDGEMENT,
+        "acknowledging",
+        "acknowledge",
+    )?;
     let plan = find_item(&ctx, &pid).await?;
     let e = find_escalation(&ctx, plan.pid, &epid).await?;
     step(
@@ -435,8 +487,25 @@ async fn resolve(
     Path((pid, epid)): Path<(String, String)>,
     Json(b): Json<ResolveBody>,
 ) -> Result<Response> {
+    require_right(
+        &caller,
+        crate::auth::ESCALATION_RESOLUTION,
+        "resolving",
+        "resolve",
+    )?;
     let plan = find_item(&ctx, &pid).await?;
     let e = find_escalation(&ctx, plan.pid, &epid).await?;
+    let row = resolve_row(&ctx, &caller, e, &b).await?;
+    format::json(view(&row, today()))
+}
+
+/// Check a resolution and record it.
+async fn resolve_row(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    e: escalations::Model,
+    b: &ResolveBody,
+) -> Result<escalations::Model> {
     let mut problems = Vec::new();
     if !rules::OUTCOMES.contains(&b.outcome.as_str()) {
         problems.push(format!("outcome must be one of {:?}", rules::OUTCOMES));
@@ -453,9 +522,9 @@ async fn resolve(
     }
     let outcome = b.outcome.clone();
     let on = today();
-    step(
-        &ctx,
-        &caller,
+    advance(
+        ctx,
+        caller,
         e,
         Action::Resolve,
         "resolved",
@@ -467,6 +536,152 @@ async fn resolve(
         },
     )
     .await
+}
+
+/// The history of one escalation, oldest first.
+async fn events_of(ctx: &AppContext, esc: Uuid) -> Result<Vec<escalation_events::Model>> {
+    escalation_events::Entity::find()
+        .filter(escalation_events::Column::EscalationPid.eq(esc))
+        .order_by_asc(escalation_events::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)
+}
+
+/// The acknowledgement the escalation has now: the last `acknowledged` event after the last
+/// `level_raised` (taking it up a level sends it back to `open`, so the new level has not seen it).
+fn current_acknowledgement(
+    e: &escalations::Model,
+    events: &[escalation_events::Model],
+) -> Option<Value> {
+    let since = events
+        .iter()
+        .rposition(|x| x.event == "level_raised")
+        .map_or(0, |i| i + 1);
+    events[since..]
+        .iter()
+        .rfind(|x| x.event == "acknowledged")
+        .map(|x| {
+            json!({ "escalation_pid": e.pid, "plan_pid": e.plan_pid, "level": x.level,
+                "acknowledged_by": x.actor, "acknowledged_at": x.created_at, "note": x.note })
+        })
+}
+
+/// The resolution of a resolved escalation.
+fn current_resolution(
+    e: &escalations::Model,
+    events: &[escalation_events::Model],
+) -> Option<Value> {
+    if e.status != "resolved" {
+        return None;
+    }
+    let by = events.iter().rfind(|x| x.event == "resolved");
+    Some(
+        json!({ "escalation_pid": e.pid, "plan_pid": e.plan_pid, "outcome": e.outcome,
+        "response": e.response, "resolved_on": e.resolved_on,
+        "resolved_by": by.and_then(|x| x.actor.clone()), "resolved_at": by.map(|x| x.created_at) }),
+    )
+}
+
+fn no_such(what: &str) -> Error {
+    Error::CustomError(
+        StatusCode::NOT_FOUND,
+        ErrorDetail::new("not_found", format!("this escalation has no {what} (yet)")),
+    )
+}
+
+/// `GET …/{epid}/acknowledgement`: who acknowledged it at its current level, when, and what they said.
+#[debug_handler]
+async fn get_acknowledgement(
+    State(ctx): State<AppContext>,
+    Path((pid, epid)): Path<(String, String)>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let e = find_escalation(&ctx, plan.pid, &epid).await?;
+    let events = events_of(&ctx, e.pid).await?;
+    let ack = current_acknowledgement(&e, &events).ok_or_else(|| no_such("acknowledgement"))?;
+    format::json(ack)
+}
+
+/// `PUT …/{epid}/acknowledgement` body `{note?}`: acknowledge it. Repeating it changes nothing and
+/// answers the acknowledgement already there.
+#[debug_handler]
+async fn put_acknowledgement(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, epid)): Path<(String, String)>,
+    Json(b): Json<NoteBody>,
+) -> Result<Response> {
+    require_right(
+        &caller,
+        crate::auth::ESCALATION_ACKNOWLEDGEMENT,
+        "acknowledging",
+        "acknowledge",
+    )?;
+    let plan = find_item(&ctx, &pid).await?;
+    let e = find_escalation(&ctx, plan.pid, &epid).await?;
+    let events = events_of(&ctx, e.pid).await?;
+    if let Some(existing) = current_acknowledgement(&e, &events) {
+        return format::json(existing);
+    }
+    let row = advance(
+        &ctx,
+        &caller,
+        e,
+        Action::Acknowledge,
+        "acknowledged",
+        trimmed(b.note.as_ref()),
+        |_| {},
+    )
+    .await?;
+    let events = events_of(&ctx, row.pid).await?;
+    format::json(current_acknowledgement(&row, &events).ok_or_else(|| no_such("acknowledgement"))?)
+}
+
+/// `GET …/{epid}/resolution`: the outcome and response, who resolved it and when.
+#[debug_handler]
+async fn get_resolution(
+    State(ctx): State<AppContext>,
+    Path((pid, epid)): Path<(String, String)>,
+) -> Result<Response> {
+    let plan = find_item(&ctx, &pid).await?;
+    let e = find_escalation(&ctx, plan.pid, &epid).await?;
+    let events = events_of(&ctx, e.pid).await?;
+    format::json(current_resolution(&e, &events).ok_or_else(|| no_such("resolution"))?)
+}
+
+/// `PUT …/{epid}/resolution` body `{outcome, response}`: resolve it. Repeating the same resolution
+/// answers the one already there; a different one is `409`, because a resolution is a record and is not
+/// overwritten (the history keeps it, and so does the audit trail).
+#[debug_handler]
+async fn put_resolution(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path((pid, epid)): Path<(String, String)>,
+    Json(b): Json<ResolveBody>,
+) -> Result<Response> {
+    require_right(
+        &caller,
+        crate::auth::ESCALATION_RESOLUTION,
+        "resolving",
+        "resolve",
+    )?;
+    let plan = find_item(&ctx, &pid).await?;
+    let e = find_escalation(&ctx, plan.pid, &epid).await?;
+    let row = if e.status == "resolved" {
+        let same = e.outcome.as_deref() == Some(b.outcome.as_str())
+            && e.response.as_deref() == Some(b.response.trim());
+        if !same {
+            return Err(conflict(
+                "this escalation is already resolved with a different outcome or response; a resolution is not overwritten",
+            ));
+        }
+        e
+    } else {
+        resolve_row(&ctx, &caller, e, &b).await?
+    };
+    let events = events_of(&ctx, row.pid).await?;
+    format::json(current_resolution(&row, &events).ok_or_else(|| no_such("resolution"))?)
 }
 
 #[debug_handler]
@@ -568,5 +783,13 @@ pub fn routes() -> Routes {
             post(raise_level),
         )
         .add("/plans/{pid}/escalations/{epid}/resolve", post(resolve))
+        .add(
+            "/plans/{pid}/escalations/{epid}/acknowledgement",
+            get(get_acknowledgement).put(put_acknowledgement),
+        )
+        .add(
+            "/plans/{pid}/escalations/{epid}/resolution",
+            get(get_resolution).put(put_resolution),
+        )
         .add("/plans/{pid}/escalations/{epid}/withdraw", post(withdraw))
 }

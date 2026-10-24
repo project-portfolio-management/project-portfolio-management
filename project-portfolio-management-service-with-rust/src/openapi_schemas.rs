@@ -263,6 +263,17 @@ pub fn schemas() -> Value {
             "audience": en(&["executive", "board", "escalation_board", "partner"]), "subscribed": boolean(),
             "person": { "type": "string", "nullable": true, "description": "An editor may subscribe someone else." } })),
         "DirectorPackSubscription": obj(&["audience", "subscribed"], json!({ "audience": s(), "subscribed": boolean() })),
+        "EscalationAcknowledgementInput": obj(&[], json!({ "note": s_null() })),
+        "EscalationAcknowledgement": obj(&["escalation_pid", "plan_pid", "level", "acknowledged_by", "acknowledged_at"], json!({
+            "escalation_pid": uuid(), "plan_pid": uuid(), "level": int(), "acknowledged_by": s_null(),
+            "acknowledged_at": { "type": "string", "format": "date-time" }, "note": s_null() })),
+        "EscalationResolutionInput": obj(&["outcome", "response"], json!({
+            "outcome": en(&["decided", "guidance_given", "rejected"]),
+            "response": { "type": "string", "minLength": 10, "maxLength": 10000 } })),
+        "EscalationResolution": obj(&["escalation_pid", "plan_pid", "outcome", "response", "resolved_on"], json!({
+            "escalation_pid": uuid(), "plan_pid": uuid(), "outcome": s(), "response": s(),
+            "resolved_on": { "type": "string", "format": "date" }, "resolved_by": s_null(),
+            "resolved_at": { "type": "string", "format": "date-time", "nullable": true } })),
         "DirectorPackSubscriptions": obj(&["subscribed_to"], json!({ "subscribed_to": list(s()) })),
 
         // ── skill pools, commitments, heatmap ──
@@ -717,6 +728,30 @@ pub const ATTACH: &[Attach] = &[
         "/api/director-pack-subscriptions",
         Some("DirectorPackSubscriptionInput"),
         &[("200", "DirectorPackSubscription")],
+    ),
+    (
+        "get",
+        "/api/plans/{pid}/escalations/{epid}/acknowledgement",
+        None,
+        &[("200", "EscalationAcknowledgement")],
+    ),
+    (
+        "put",
+        "/api/plans/{pid}/escalations/{epid}/acknowledgement",
+        Some("EscalationAcknowledgementInput"),
+        &[("200", "EscalationAcknowledgement")],
+    ),
+    (
+        "get",
+        "/api/plans/{pid}/escalations/{epid}/resolution",
+        None,
+        &[("200", "EscalationResolution")],
+    ),
+    (
+        "put",
+        "/api/plans/{pid}/escalations/{epid}/resolution",
+        Some("EscalationResolutionInput"),
+        &[("200", "EscalationResolution")],
     ),
 ];
 

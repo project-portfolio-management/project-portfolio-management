@@ -92,6 +92,14 @@ const UNREACHED: &[(&str, &str)] = &[
         "one escalation with its history (an object, not a list); needs an escalation this census does not create",
     ),
     (
+        "/api/plans/{pid}/escalations/{epid}/acknowledgement",
+        "one acknowledgement (an object, not a list); needs an escalation this census does not create",
+    ),
+    (
+        "/api/plans/{pid}/escalations/{epid}/resolution",
+        "one resolution (an object, not a list); needs an escalation this census does not create",
+    ),
+    (
         "/api/ways-of-working/{pid}",
         "one record (an object, not a list); needs a record this census does not create",
     ),

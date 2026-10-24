@@ -344,7 +344,11 @@ GET /api/plans/{pid}/escalations
 POST /api/plans/{pid}/escalations
 GET /api/plans/{pid}/escalations/{epid}
 POST /api/plans/{pid}/escalations/{epid}/acknowledge
+GET /api/plans/{pid}/escalations/{epid}/acknowledgement
+PUT /api/plans/{pid}/escalations/{epid}/acknowledgement
 POST /api/plans/{pid}/escalations/{epid}/raise-level
+GET /api/plans/{pid}/escalations/{epid}/resolution
+PUT /api/plans/{pid}/escalations/{epid}/resolution
 POST /api/plans/{pid}/escalations/{epid}/resolve
 POST /api/plans/{pid}/escalations/{epid}/withdraw
 GET /api/plans/{pid}/export

@@ -163,9 +163,10 @@ async fn set_required(
     if found.len() != wanted.len() {
         return Err(unprocessable("every organization must exist and be active"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     reqs::Entity::delete_many()
         .filter(reqs::Column::MilestonePid.eq(m.pid))
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(db_err)?;
     for o in &wanted {
@@ -175,18 +176,20 @@ async fn set_required(
             organization_pid: ActiveValue::set(*o),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         m.pid,
         "milestone_signoff_required_set",
         caller.actor(),
         Some(json!({ "organizations": wanted })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 

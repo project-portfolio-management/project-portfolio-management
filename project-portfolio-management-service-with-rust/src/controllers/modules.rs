@@ -122,18 +122,19 @@ pub(crate) async fn set_modules(
     actor: Option<&str>,
 ) -> Result<()> {
     let before = explicit_modules(&ctx.db, plan_pid).await.map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match &new {
         Some(set) => {
             let value = serde_json::json!(set);
             let existing = plan_modules::Entity::find()
                 .filter(plan_modules::Column::PlanPid.eq(plan_pid))
-                .one(&ctx.db)
+                .one(&txn)
                 .await
                 .map_err(db_err)?;
             if let Some(row) = existing {
                 let mut active: plan_modules::ActiveModel = row.into();
                 active.modules = ActiveValue::set(value);
-                active.update(&ctx.db).await.map_err(db_err)?;
+                active.update(&txn).await.map_err(db_err)?;
             } else {
                 plan_modules::ActiveModel {
                     pid: ActiveValue::set(Uuid::new_v4()),
@@ -141,7 +142,7 @@ pub(crate) async fn set_modules(
                     modules: ActiveValue::set(value),
                     ..Default::default()
                 }
-                .insert(&ctx.db)
+                .insert(&txn)
                 .await
                 .map_err(db_err)?;
             }
@@ -149,19 +150,21 @@ pub(crate) async fn set_modules(
         None => {
             plan_modules::Entity::delete_many()
                 .filter(plan_modules::Column::PlanPid.eq(plan_pid))
-                .exec(&ctx.db)
+                .exec(&txn)
                 .await
                 .map_err(db_err)?;
         }
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan_pid,
         "plan_modules_changed",
         actor,
         Some(serde_json::json!({ "before": before, "after": new })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     Ok(())
 }
 

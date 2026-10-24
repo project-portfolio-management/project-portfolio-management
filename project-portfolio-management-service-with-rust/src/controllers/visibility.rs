@@ -508,8 +508,9 @@ async fn reschedule_milestone(
     let row_pid = milestone.pid;
     let mut active: milestones::ActiveModel = milestone.into();
     active.due = ActiveValue::set(payload.due);
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     // The slip history: one append-only row per actual move.
@@ -530,18 +531,14 @@ async fn reschedule_milestone(
             actor: ActiveValue::set(caller.actor().map(str::to_string)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
-        row_pid,
-        "milestone_rescheduled",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, row_pid, "milestone_rescheduled", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
 
     if old_due != payload.due {
         super::automation::fire(

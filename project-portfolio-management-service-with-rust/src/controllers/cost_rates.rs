@@ -176,6 +176,7 @@ async fn create_table(
             "that person or role already has a table with that name",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = cost_rate_tables::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         name: ActiveValue::set(name.to_string()),
@@ -185,11 +186,11 @@ async fn create_table(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "cost_rate_table_created",
         caller.actor(),
@@ -198,7 +199,9 @@ async fn create_table(
             "role": row.role, "currency": row.currency }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -292,6 +295,7 @@ async fn add_rate(
             "that table already has a rate effective from that date; add a later date instead",
         ));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = cost_rates::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         table_pid: ActiveValue::set(table.pid),
@@ -300,18 +304,19 @@ async fn add_rate(
         created_by: ActiveValue::set(caller.actor().map(str::to_string)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         table.pid,
         "cost_rate_added",
         caller.actor(),
         Some(serde_json::json!({ "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor,
             "currency": table.currency })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid, "table_pid": table.pid,
         "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor, "currency": table.currency }))
 }
@@ -393,6 +398,7 @@ async fn add_task_cost(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = task_costs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         task_pid: ActiveValue::set(task.pid),
@@ -404,18 +410,19 @@ async fn add_task_cost(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "task_cost_added",
         caller.actor(),
         Some(serde_json::json!({ "task_pid": task.pid, "kind": row.kind, "amount_minor": row.amount_minor,
             "currency": row.currency, "accrual": row.accrual })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -465,8 +472,12 @@ async fn delete_task_cost(
     let row_pid = row.pid;
     let mut a: task_costs::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(&ctx.db, row_pid, "task_cost_removed", caller.actor(), None).await;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(&txn, row_pid, "task_cost_removed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
 

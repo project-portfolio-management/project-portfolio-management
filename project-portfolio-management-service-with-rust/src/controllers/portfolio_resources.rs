@@ -411,18 +411,19 @@ async fn set_role(
         .await
         .map_err(db_err)?;
     let was = existing.as_ref().map(|e| e.role.clone());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let pid = match (existing, role) {
         (Some(e), Some(r)) => {
             let pid = e.pid;
             let mut a: resource_roles::ActiveModel = e.into();
             a.role = ActiveValue::set(r.to_string());
-            a.update(&ctx.db).await.map_err(db_err)?;
+            a.update(&txn).await.map_err(db_err)?;
             pid
         }
         (Some(e), None) => {
             let pid = e.pid;
             resource_roles::Entity::delete_by_id(e.id)
-                .exec(&ctx.db)
+                .exec(&txn)
                 .await
                 .map_err(db_err)?;
             pid
@@ -434,7 +435,7 @@ async fn set_role(
                 role: ActiveValue::set(r.to_string()),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?
             .pid
@@ -443,14 +444,16 @@ async fn set_role(
             return format::json(serde_json::json!({ "person_ref": b.person_ref, "role": null }));
         }
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         pid,
         "resource_role_set",
         caller.actor(),
         Some(serde_json::json!({ "person_ref": b.person_ref, "from": was, "to": role })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "person_ref": b.person_ref, "role": role }))
 }
 

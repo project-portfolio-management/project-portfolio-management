@@ -102,12 +102,13 @@ async fn put_template(
         .one(&ctx.db)
         .await
         .map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let pid = match existing {
         Some(t) => {
             let pid = t.pid;
             let mut a: onboarding_templates::ActiveModel = t.into();
             a.items = ActiveValue::set(items);
-            a.update(&ctx.db).await.map_err(db_err)?;
+            a.update(&txn).await.map_err(db_err)?;
             pid
         }
         None => {
@@ -117,20 +118,22 @@ async fn put_template(
                 items: ActiveValue::set(items),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?
             .pid
         }
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         pid,
         "onboarding_template_set",
         caller.actor(),
         Some(serde_json::json!({ "kind": kind.token(), "items": b.items.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "kind": kind.token(), "custom": true, "items": b.items }))
 }
 

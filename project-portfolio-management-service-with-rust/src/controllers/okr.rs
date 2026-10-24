@@ -254,6 +254,7 @@ async fn create_check_in(
         return Err(unprocessable("confidence must be between 0 and 100"));
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = key_result_check_ins::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         key_result_pid: ActiveValue::set(key_result.pid),
@@ -263,7 +264,7 @@ async fn create_check_in(
         actor: ActiveValue::set(caller.actor().map(ToString::to_string)),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
@@ -272,16 +273,18 @@ async fn create_check_in(
     let objective_pid = key_result.objective_pid;
     let mut active: key_results::ActiveModel = key_result.into();
     active.current_value = ActiveValue::set(payload.value);
-    let updated = active.update(&ctx.db).await.map_err(db_err)?;
+    let updated = active.update(&txn).await.map_err(db_err)?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         objective_pid,
         "key_result_checked_in",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
 
     let progress = fact_of(&updated).and_then(|fact| rules::progress(&fact).ok());
     format::json(serde_json::json!({

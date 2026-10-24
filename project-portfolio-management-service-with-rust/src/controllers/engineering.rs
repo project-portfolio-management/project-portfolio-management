@@ -1007,6 +1007,7 @@ async fn convert_note(
         return Err(refuse("note is already converted"));
     }
     let now = chrono::Utc::now();
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let task = tasks::ActiveModel {
         pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
         plan_pid: sea_orm::ActiveValue::set(item.pid),
@@ -1024,24 +1025,26 @@ async fn convert_note(
         deleted_at: sea_orm::ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
     let note_pid = note.pid;
     let mut active: sprint_notes::ActiveModel = note.into();
     active.task_pid = sea_orm::ActiveValue::set(Some(task.pid));
     let updated = active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         note_pid,
         "sprint_note_converted",
         caller.actor(),
         Some(serde_json::json!({ "task_pid": task.pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "note": updated, "task": task_view(&task) }))
 }
 

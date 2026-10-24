@@ -368,13 +368,14 @@ async fn set_one(
         .await
         .map_err(db_err)?;
     let amber = i32::try_from(amber).unwrap_or(75);
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     if let Some(row) = existing {
         let mut a: plan_tolerances::ActiveModel = row.into();
         a.limit_value = ActiveValue::set(b.limit);
         a.amber_from_percent = ActiveValue::set(amber);
         a.note = ActiveValue::set(note);
         a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-        a.update(&ctx.db).await.map_err(db_err)?;
+        a.update(&txn).await.map_err(db_err)?;
     } else {
         plan_tolerances::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -386,18 +387,20 @@ async fn set_one(
             set_by: ActiveValue::set(caller.actor().map(str::to_string)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "tolerance_set",
         caller.actor(),
         Some(json!({ "dimension": dim.token(), "limit": b.limit, "amber_from_percent": amber })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }

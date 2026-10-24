@@ -65,19 +65,20 @@ async fn set(
         .await
         .map_err(db_err)?;
     let was = existing.as_ref().map(|r| (r.aggressive_days, r.safe_days));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match (
         existing,
         b.aggressive_days.is_none() && b.safe_days.is_none(),
     ) {
         (Some(r), true) => {
-            r.delete(&ctx.db).await.map_err(db_err)?;
+            r.delete(&txn).await.map_err(db_err)?;
         }
         (None, true) => {}
         (Some(r), false) => {
             let mut a: rows::ActiveModel = r.into();
             a.aggressive_days = ActiveValue::set(b.aggressive_days);
             a.safe_days = ActiveValue::set(b.safe_days);
-            a.update(&ctx.db).await.map_err(db_err)?;
+            a.update(&txn).await.map_err(db_err)?;
         }
         (None, false) => {
             rows::ActiveModel {
@@ -88,13 +89,13 @@ async fn set(
                 safe_days: ActiveValue::set(b.safe_days),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?;
         }
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         t_pid,
         "task_ccpm_estimate_set",
         caller.actor(),
@@ -103,7 +104,9 @@ async fn set(
             "to": { "aggressive_days": b.aggressive_days, "safe_days": b.safe_days },
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({
         "task_pid": t_pid, "aggressive_days": b.aggressive_days, "safe_days": b.safe_days,
         "likely_days": task.duration_days,

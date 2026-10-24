@@ -88,6 +88,7 @@ async fn create_ceremony(
         }
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = ceremonies::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         sprint_pid: ActiveValue::set(sprint.pid),
@@ -97,18 +98,14 @@ async fn create_ceremony(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
-        sprint.plan_pid,
-        "ceremony_held",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, sprint.plan_pid, "ceremony_held", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 
@@ -175,6 +172,7 @@ async fn commit_sprint(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     for task in &current {
         sprint_commitments::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -182,19 +180,21 @@ async fn commit_sprint(
             task_pid: ActiveValue::set(task.pid),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?;
     }
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         sprint.plan_pid,
         "sprint_committed",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "committed": current.len() }))
 }
 

@@ -119,11 +119,12 @@ async fn set(
     }
     let existing = find(&ctx, plan.pid).await?;
     let was = view(existing.as_ref(), &HashMap::new());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = if let Some(e) = existing {
         let mut a: profiles::ActiveModel = e.into();
         a.delivery_model = ActiveValue::set(b.delivery_model.clone());
         a.delivery_organization_pid = ActiveValue::set(b.delivery_owner_organization_pid);
-        a.update(&ctx.db).await.map_err(db_err)?
+        a.update(&txn).await.map_err(db_err)?
     } else {
         profiles::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -133,18 +134,19 @@ async fn set(
             method: ActiveValue::set("evm".to_string()),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "delivery_model_set",
         caller.actor(),
         Some(json!({ "from": was["delivery_model"], "to": b.delivery_model, "owner": b.delivery_owner_organization_pid })),
-    )
-    .await;
+    ).await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (_, names) = all(&ctx, &HashSet::from([plan.pid])).await?;
     format::json(view(Some(&row), &names))
 }
@@ -186,10 +188,11 @@ async fn set_method(
     let was = existing
         .as_ref()
         .map_or("evm".to_string(), |e| e.method.clone());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = if let Some(e) = existing {
         let mut a: profiles::ActiveModel = e.into();
         a.method = ActiveValue::set(b.method.clone());
-        a.update(&ctx.db).await.map_err(db_err)?
+        a.update(&txn).await.map_err(db_err)?
     } else {
         profiles::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -197,19 +200,21 @@ async fn set_method(
             method: ActiveValue::set(b.method.clone()),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
     };
     if was != b.method {
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record(
+            &txn,
             plan.pid,
             "reporting_method_changed",
             caller.actor(),
             Some(json!({ "from": was, "to": b.method })),
         )
-        .await;
+        .await
+        .map_err(super::audit_failed)?;
+        txn.commit().await.map_err(super::db_err)?;
     }
     format::json(json!({ "plan_pid": plan.pid, "reporting_method": row.method }))
 }

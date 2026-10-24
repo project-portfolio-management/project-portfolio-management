@@ -178,9 +178,10 @@ async fn set_kpis(
     if found.len() != wanted.len() {
         return Err(unprocessable("every kpi_pid must be a KPI"));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     members::Entity::delete_many()
         .filter(members::Column::ScorecardPid.eq(sc.pid))
-        .exec(&ctx.db)
+        .exec(&txn)
         .await
         .map_err(|e| db_err(&e))?;
     for k in &wanted {
@@ -190,18 +191,20 @@ async fn set_kpis(
             kpi_pid: ActiveValue::set(*k),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(|e| db_err(&e))?;
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         sc.pid,
         "scorecard_kpis_set",
         caller.actor(),
         Some(json!({ "count": wanted.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": wanted }))
 }
 
@@ -255,6 +258,7 @@ async fn from_template(
         return Err(unprocessable(&problems.join("; ")));
     }
     let mut made = Vec::new();
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     for (name, dir, unit, p) in chosen {
         let k = kpis::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -266,7 +270,7 @@ async fn from_template(
             cadence: ActiveValue::set(Some("quarterly".to_string())),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(|e| db_err(&e))?;
         members::ActiveModel {
@@ -275,19 +279,21 @@ async fn from_template(
             kpi_pid: ActiveValue::set(k.pid),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(|e| db_err(&e))?;
         made.push(k.pid);
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         sc.pid,
         "scorecard_from_template",
         caller.actor(),
         Some(json!({ "created": made.len() })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": made }))
 }
 

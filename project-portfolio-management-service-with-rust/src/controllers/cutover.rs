@@ -536,10 +536,11 @@ async fn new_version(
         return Err(conflict("there is already a newer version"));
     }
     let (old_c, _) = parts(&ctx, &d).await?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     if d.status != "decided" {
         let mut a: decisions::ActiveModel = d.clone().into();
         a.status = ActiveValue::set("superseded".to_string());
-        a.update(&ctx.db).await.map_err(db_err)?;
+        a.update(&txn).await.map_err(db_err)?;
     }
     let nd = decisions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -550,11 +551,11 @@ async fn new_version(
         status: ActiveValue::set("draft".to_string()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
     put_criteria(
-        &ctx.db,
+        &txn,
         nd.pid,
         &old_c
             .iter()
@@ -562,14 +563,16 @@ async fn new_version(
             .collect::<Vec<_>>(),
     )
     .await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         nd.pid,
         "cutover_decision_new_version",
         caller.actor(),
         Some(json!({ "supersedes": d.pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     let (c, s) = parts(&ctx, &nd).await?;
     format::json(view(&nd, &c, &s))
 }

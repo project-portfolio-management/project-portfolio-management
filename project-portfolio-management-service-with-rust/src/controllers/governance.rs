@@ -669,6 +669,7 @@ async fn create_gate_review(
     let new_stage =
         rules::apply_gate_review(item.stage.as_deref(), &payload.gate, &payload.decision)
             .map_err(|e| refuse(&e))?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let review = gate_reviews::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(item.pid),
@@ -679,7 +680,7 @@ async fn create_gate_review(
         decided_at: ActiveValue::set(chrono::Utc::now().into()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
     let item_pid = item.pid;
@@ -687,7 +688,7 @@ async fn create_gate_review(
     let mut active: plans::ActiveModel = item.into();
     active.stage = ActiveValue::set(new_stage.clone());
     active
-        .update(&ctx.db)
+        .update(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     let snapshot = serde_json::json!({
@@ -697,14 +698,16 @@ async fn create_gate_review(
         "to_stage": new_stage,
         "approver_ref": payload.approver_ref,
     });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         item_pid,
         "gate_reviewed",
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "pid": review.pid.to_string(),
         "gate": review.gate,

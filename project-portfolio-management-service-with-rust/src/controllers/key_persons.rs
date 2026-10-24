@@ -142,13 +142,14 @@ async fn upsert(
         .note
         .map(|n| n.trim().to_string())
         .filter(|n| !n.is_empty());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = if let Some(e) = existing {
         let mut a: entries::ActiveModel = e.into();
         a.successor_ref = ActiveValue::set(b.successor_ref.clone());
         a.readiness = ActiveValue::set(b.readiness.clone());
         a.skill_pool_pid = ActiveValue::set(b.skill_pool_pid);
         a.note = ActiveValue::set(note);
-        a.update(&ctx.db).await.map_err(db_err)?
+        a.update(&txn).await.map_err(db_err)?
     } else {
         entries::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -160,18 +161,20 @@ async fn upsert(
             note: ActiveValue::set(note),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "key_person_recorded",
         caller.actor(),
         Some(json!({ "kind": row.subject_kind, "readiness": row.readiness })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(&row))
 }
 
@@ -221,6 +224,7 @@ async fn set_contingent(
         .one(&ctx.db)
         .await
         .map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match (existing, b.contingent) {
         (None, true) => {
             contingent_workers::ActiveModel {
@@ -228,23 +232,25 @@ async fn set_contingent(
                 person_ref: ActiveValue::set(b.person_ref.clone()),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?;
         }
         (Some(e), false) => {
-            e.delete(&ctx.db).await.map_err(db_err)?;
+            e.delete(&txn).await.map_err(db_err)?;
         }
         _ => {}
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         Uuid::new_v4(),
         "contingent_worker_set",
         caller.actor(),
         Some(json!({ "contingent": b.contingent })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "person_ref": b.person_ref, "contingent": b.contingent }))
 }
 

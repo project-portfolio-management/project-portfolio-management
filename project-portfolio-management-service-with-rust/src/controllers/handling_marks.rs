@@ -85,16 +85,17 @@ async fn put_mark(
             Error::CustomError(status, ErrorDetail::new("handling_mark", m))
         })?;
     let was = existing.as_ref().map(|r| r.mark.clone());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match (existing, b.mark.as_deref()) {
         (Some(row), Some(new)) => {
             let mut a: marks::ActiveModel = row.into();
             a.mark = ActiveValue::set(new.to_string());
             a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-            a.update(&ctx.db).await.map_err(db_err)?;
+            a.update(&txn).await.map_err(db_err)?;
         }
         (Some(row), None) => {
             marks::Entity::delete_by_id(row.id)
-                .exec(&ctx.db)
+                .exec(&txn)
                 .await
                 .map_err(db_err)?;
         }
@@ -106,20 +107,22 @@ async fn put_mark(
                 set_by: ActiveValue::set(caller.actor().map(str::to_string)),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?;
         }
         (None, None) => {}
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "handling_mark_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.mark })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(view(plan.pid, b.mark.as_deref()))
 }
 

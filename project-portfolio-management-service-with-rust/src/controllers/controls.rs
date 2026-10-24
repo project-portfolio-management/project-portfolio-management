@@ -618,6 +618,7 @@ async fn add_action(
         return Err(unprocessable("description is required (and capped)"));
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = control_actions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         reading_pid: ActiveValue::set(reading.pid),
@@ -632,7 +633,7 @@ async fn add_action(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
@@ -640,17 +641,19 @@ async fn add_action(
         let mut active: control_readings::ActiveModel = reading.clone().into();
         active.accepted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
         active.accepted_reason = ActiveValue::set(payload.reason.clone());
-        active.update(&ctx.db).await.map_err(db_err)?;
+        active.update(&txn).await.map_err(db_err)?;
     }
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         reading.control_pid,
         "control_action_recorded",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string() }))
 }
 

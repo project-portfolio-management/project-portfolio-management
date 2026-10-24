@@ -96,6 +96,7 @@ async fn set_phase(
         .await?;
     }
 
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     phase_transitions::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan.pid),
@@ -105,7 +106,7 @@ async fn set_phase(
         reason: ActiveValue::set(payload.reason.clone()),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
 
@@ -121,9 +122,12 @@ async fn set_phase(
     let mut active: plans::ActiveModel = plan.into();
     active.phase = ActiveValue::set(Some(to.token().to_string()));
     active.data = ActiveValue::set(data);
-    active.update(&ctx.db).await.map_err(db_err)?;
+    active.update(&txn).await.map_err(db_err)?;
 
-    AuditModel::record_or_log(&ctx.db, plan_pid, "phase_changed", caller.actor(), None).await;
+    AuditModel::record(&txn, plan_pid, "phase_changed", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
 
     // Workflow automation (FR-32). The phase change is already
     // committed, so a rule that fails is logged as a failed run and

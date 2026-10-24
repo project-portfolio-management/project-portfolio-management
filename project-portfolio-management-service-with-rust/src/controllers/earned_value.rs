@@ -332,11 +332,12 @@ async fn put_settings(
         .await
         .map_err(db_err)?;
     let was = existing.as_ref().map(|e| e.default_method.clone());
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match existing {
         Some(row) => {
             let mut a: earned_value_settings::ActiveModel = row.into();
             a.default_method = ActiveValue::set(b.default_method.clone());
-            a.update(&ctx.db).await.map_err(db_err)?;
+            a.update(&txn).await.map_err(db_err)?;
         }
         None => {
             earned_value_settings::ActiveModel {
@@ -346,19 +347,21 @@ async fn put_settings(
                 deleted_at: ActiveValue::set(None),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?;
         }
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "earned_value_method_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": b.default_method })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "plan_pid": plan.pid, "default_method": b.default_method }))
 }
 

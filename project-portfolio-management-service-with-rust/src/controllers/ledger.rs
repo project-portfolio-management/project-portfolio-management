@@ -424,10 +424,11 @@ async fn map_code(
         .one(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = if let Some(e) = existing {
         let mut a: codes::ActiveModel = e.into();
         a.budget_line_pid = ActiveValue::set(line.pid);
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        a.update(&txn).await.map_err(|e| db_err(&e))?
     } else {
         codes::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -436,18 +437,20 @@ async fn map_code(
             created_by: ActiveValue::set(caller.actor().map(str::to_string)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "cost_code_mapped",
         caller.actor(),
         Some(json!({ "line": line.pid })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(json!({ "cost_code": row.cost_code, "budget_line_pid": row.budget_line_pid }))
 }
 

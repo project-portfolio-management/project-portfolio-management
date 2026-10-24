@@ -201,6 +201,7 @@ async fn convert_idea(
     if idea.status != "open" {
         return Err(unprocessable(&format!("idea is {}", idea.status)));
     }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let proposal = proposals::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         title: ActiveValue::set(idea.title.clone()),
@@ -215,27 +216,29 @@ async fn convert_idea(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
     let idea_pid = idea.pid;
     let mut active: ideas::ActiveModel = idea.into();
     active.status = ActiveValue::set("converted".to_string());
     active.converted_proposal_pid = ActiveValue::set(Some(proposal.pid));
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
+    let row = active.update(&txn).await.map_err(db_err)?;
     let snapshot = serde_json::json!({
         "proposal_pid": proposal.pid.to_string(),
         "kind_target": payload.kind_target,
         "provenance": "idea",
     });
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         idea_pid,
         "idea_converted",
         caller.actor(),
         Some(snapshot),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
         "status": row.status,
@@ -1059,10 +1062,11 @@ async fn link_objective(
         .one(&ctx.db)
         .await
         .map_err(db_err)?;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = if let Some(existing) = existing {
         let mut active: objective_links::ActiveModel = existing.into();
         active.weight = ActiveValue::set(payload.weight);
-        active.update(&ctx.db).await.map_err(db_err)?
+        active.update(&txn).await.map_err(db_err)?
     } else {
         objective_links::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -1071,11 +1075,14 @@ async fn link_objective(
             weight: ActiveValue::set(payload.weight),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
     };
-    AuditModel::record_or_log(&ctx.db, row.pid, "objective_linked", caller.actor(), None).await;
+    AuditModel::record(&txn, row.pid, "objective_linked", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(serde_json::json!({ "pid": row.pid.to_string(), "weight": row.weight }))
 }
 

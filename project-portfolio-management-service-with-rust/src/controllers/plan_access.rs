@@ -781,12 +781,13 @@ async fn put_access(
         .await
         .map_err(db_err)?;
     let before = existing.as_ref().map(|r| (r.private, members_of(r)));
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
     match existing {
         Some(row) => {
             let mut active: plan_access::ActiveModel = row.into();
             active.private = ActiveValue::set(p.private);
             active.members = ActiveValue::set(serde_json::json!(members));
-            active.update(&ctx.db).await.map_err(db_err)?;
+            active.update(&txn).await.map_err(db_err)?;
         }
         None => {
             plan_access::ActiveModel {
@@ -796,13 +797,13 @@ async fn put_access(
                 members: ActiveValue::set(serde_json::json!(members)),
                 ..Default::default()
             }
-            .insert(&ctx.db)
+            .insert(&txn)
             .await
             .map_err(db_err)?;
         }
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "plan_access_changed",
         Some(&claims.sub),
@@ -811,7 +812,9 @@ async fn put_access(
             "after": { "private": p.private, "members": members },
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "private": p.private, "members": members }),
     )

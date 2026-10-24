@@ -103,7 +103,7 @@ async fn set_confidence(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let on = b.assessed_on.unwrap_or(today);
     if on > today {
         return Err(unprocessable("assessed_on must not be in the future"));
@@ -637,7 +637,7 @@ pub(crate) async fn build_map(
     period: &str,
     previous_body: Option<&str>,
 ) -> Result<serde_json::Value> {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let all_plans = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
         .all(&ctx.db)

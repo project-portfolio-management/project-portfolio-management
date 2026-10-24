@@ -145,7 +145,7 @@ async fn executive_health(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let items = live!(plans, &ctx.db, &scope);
     let risk_rows = live!(risks, &ctx.db, &scope);
     let budget_rows = live!(budget_lines, &ctx.db, &scope);
@@ -615,7 +615,7 @@ async fn technology_dependency_risk(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let items = live!(plans, &ctx.db, &scope);
     let risk_rows = live!(risks, &ctx.db, &scope);
     let budget_rows = live!(budget_lines, &ctx.db, &scope);

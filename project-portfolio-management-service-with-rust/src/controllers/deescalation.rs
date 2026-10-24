@@ -361,7 +361,7 @@ async fn show(
     Query(q): Query<Quarters>,
 ) -> Result<Response> {
     let sc = find_scorecard(&ctx, &pid).await?;
-    let qs = rules::window(crate::tz::utc_today(), q.quarters.unwrap_or(4));
+    let qs = rules::window(crate::tz::deployment_today(), q.quarters.unwrap_or(4));
     let visible = readable(&ctx, &caller).await?;
     let (rows, hidden, inputs) = kpi_rows(&ctx, &sc, &qs, &visible).await?;
     let states: Vec<Value> = qs
@@ -414,7 +414,7 @@ async fn set_level(
                 .filter(|n| !n.is_empty()),
         ),
         set_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        set_on: ActiveValue::set(crate::tz::utc_today()),
+        set_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -494,7 +494,7 @@ async fn set_evidence(
     let Some(q) = Quarter::parse(&b.quarter) else {
         return Err(unprocessable("quarter must be YYYY-Qn"));
     };
-    if q > rules::last_finished(crate::tz::utc_today()) {
+    if q > rules::last_finished(crate::tz::deployment_today()) {
         return Err(unprocessable(
             "a quarter that has not finished cannot be recorded",
         ));
@@ -519,7 +519,7 @@ async fn set_evidence(
         link: ActiveValue::set(b.link.clone()),
         note: ActiveValue::set(b.note.trim().to_string()),
         recorded_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        recorded_on: ActiveValue::set(crate::tz::utc_today()),
+        recorded_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -623,7 +623,7 @@ pub(crate) async fn tracker_view(
 #[debug_handler]
 async fn tracker(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let visible = readable(&ctx, &caller).await?;
-    format::json(tracker_view(&ctx, &visible, crate::tz::utc_today(), true).await?)
+    format::json(tracker_view(&ctx, &visible, crate::tz::deployment_today(), true).await?)
 }
 
 /// The pack's section: the scorecard of the last finished quarter and the tracker without evidence detail.
@@ -632,7 +632,7 @@ async fn tracker(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result
 ///
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>) -> Result<Value> {
-    let mut v = tracker_view(ctx, include, crate::tz::utc_today(), true).await?;
+    let mut v = tracker_view(ctx, include, crate::tz::deployment_today(), true).await?;
     // The pack carries the level, the run and the KPI figures; the evidence notes and links stay in the tracker.
     if let Some(c) = v.get_mut("criteria").and_then(Value::as_array_mut) {
         for x in c {

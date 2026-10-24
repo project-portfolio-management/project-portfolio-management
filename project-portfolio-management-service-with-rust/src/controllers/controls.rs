@@ -662,7 +662,7 @@ async fn convert_to_issue(
     action: &control_actions::Model,
     control: &controls::Model,
 ) -> Result<Response> {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let title: String = action
         .description
         .trim()

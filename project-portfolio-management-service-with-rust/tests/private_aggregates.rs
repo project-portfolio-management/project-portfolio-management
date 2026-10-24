@@ -205,6 +205,10 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/settings/today-time-zone",
+        "a deployment setting (a zone name and the date it gives); it reads no plan",
+    ),
+    (
         "/api/scorecards",
         "the scorecard names only; the KPIs are read, filtered by the plans the caller may read, from /api/scorecards/{pid} and /api/deescalation",
     ),

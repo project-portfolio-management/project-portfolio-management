@@ -334,7 +334,7 @@ async fn utilization(
         .window_days
         .filter(|d| *d > 0 && *d <= 366)
         .unwrap_or(DEFAULT_WINDOW_DAYS);
-    let since = crate::tz::utc_today() - chrono::Duration::days(window_days);
+    let since = crate::tz::deployment_today() - chrono::Duration::days(window_days);
 
     let mut query = time_entries::Entity::find()
         .filter(time_entries::Column::DeletedAt.is_null())

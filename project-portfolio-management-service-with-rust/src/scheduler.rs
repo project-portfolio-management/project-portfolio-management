@@ -70,7 +70,9 @@ pub fn spawn(ctx: AppContext) {
                 Ok(_) => {}
                 Err(err) => tracing::warn!("report-schedule sweep failed: {err}"),
             }
-            match crate::controllers::pack_rhythm::run_due(&ctx, crate::tz::utc_today()).await {
+            match crate::controllers::pack_rhythm::run_due(&ctx, crate::tz::deployment_today())
+                .await
+            {
                 Ok(r) if !r.drafted.is_empty() => {
                     tracing::info!("director-pack schedule drafted {} pack(s)", r.drafted.len());
                 }

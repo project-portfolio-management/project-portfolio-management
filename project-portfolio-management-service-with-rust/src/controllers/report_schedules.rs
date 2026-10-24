@@ -87,7 +87,7 @@ async fn create(
             rules::FORMATS
         )));
     }
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let start = match b.start.as_deref() {
         None => today,
         Some(s) => NaiveDate::parse_from_str(s, "%Y-%m-%d")
@@ -218,7 +218,7 @@ pub struct Swept {
 ///
 /// Propagates database errors from finding the due schedules.
 pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let due = report_schedules::Entity::find()
         .filter(report_schedules::Column::Enabled.eq(true))
         .filter(report_schedules::Column::DeletedAt.is_null())
@@ -294,8 +294,11 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
     } else {
         ("application/json", "json")
     };
-    let filename =
-        artifacts::sanitize_filename(&format!("{}-{}.{ext}", def.name, crate::tz::utc_today()));
+    let filename = artifacts::sanitize_filename(&format!(
+        "{}-{}.{ext}",
+        def.name,
+        crate::tz::deployment_today()
+    ));
     let sha = artifacts::sha256_hex(&bytes);
     let size = i64::try_from(bytes.len()).unwrap_or(i64::MAX);
     let key = tokio::task::spawn_blocking(move || Store::from_env().put(&bytes))

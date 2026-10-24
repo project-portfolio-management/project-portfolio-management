@@ -392,7 +392,7 @@ async fn performance(
     // SC-4: schedule and cost performance are real earned-value figures now. They are
     // `null` with an accurate reason whenever they cannot be stated — never defaulted
     // to 1.0 ("exactly on plan").
-    let as_of = crate::tz::utc_today();
+    let as_of = crate::tz::deployment_today();
     let (spi, cpi, absent, reason): (Option<i64>, Option<i64>, Option<&str>, Option<String>) =
         match super::earned_value::compute(&ctx, plan.pid, as_of).await? {
             super::earned_value::Outcome::NoBaseline => (

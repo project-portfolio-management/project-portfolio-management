@@ -61,6 +61,7 @@ pub mod prioritization;
 pub mod programme_gates;
 pub mod sandbox;
 pub mod saved_views;
+pub mod settings;
 pub mod strategy;
 /// Time-based analysis: the read surface over the task transition log —
 /// per-task and plan flow, constraints, aging WIP, and Little's Law.

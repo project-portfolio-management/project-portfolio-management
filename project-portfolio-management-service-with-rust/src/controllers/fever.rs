@@ -132,7 +132,7 @@ async fn set_buffer(
                 .filter(|n| !n.is_empty()),
         ),
         declared_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        declared_on: ActiveValue::set(crate::tz::utc_today()),
+        declared_on: ActiveValue::set(crate::tz::deployment_today()),
         baseline_version: ActiveValue::set(chain.as_ref().map(|(b, _)| b.version)),
         ..Default::default()
     }

@@ -284,7 +284,7 @@ async fn validate(
         currency: ActiveValue::set(currency),
         validator: ActiveValue::set(Some(actor)),
         evidence_attachment_pid: ActiveValue::set(b.evidence_attachment_pid),
-        validated_on: ActiveValue::set(crate::tz::utc_today()),
+        validated_on: ActiveValue::set(crate::tz::deployment_today()),
         note: ActiveValue::set(
             b.note
                 .map(|n| n.trim().to_string())

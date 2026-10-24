@@ -54,7 +54,7 @@ async fn summary(
     plans.sort();
     plans.dedup();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plans).await;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let issue_lite: Vec<IssueLite> = issue_rows
         .iter()
         .filter(|i| readable.contains(&i.plan_pid))

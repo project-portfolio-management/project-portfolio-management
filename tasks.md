@@ -1745,6 +1745,7 @@ came from grep.
   **Acceptance:** a unit test with the zone set to UTC−10 near midnight, for
   each moved default.
   **Progress 2026-10-23 (not ticked).** All 93 calls now go through `tz::utc_today()`; census test `tz::no_raw_utc_today_outside_this_file`. **Still to do:** audit each default against the spec and move personal ones to `local_today` with the UTC−10 test.
+  **Progress 2026-10-24 (not ticked).** The deployment-wide "today" is now an explicit administrator setting, since the software is used in several zones at once. `tz::utc_today()` became `tz::deployment_today()` at all 93 sites and reads a zone (UTC until set) kept in `deployment_settings` and re-read by every instance each minute. `GET`/`PUT`/`DELETE /api/settings/today-time-zone` (admin only, audited, `422` for a non-IANA name); spec §7.x and §9.2g; unit test of UTC−10 and daylight saving through `deployment_today_at`; request test `today_time_zone` (default, 403, 422, set, audit row, convergence by refresh). **Still to do:** the per-site audit of which defaults should be personal (`local_today`) rather than deployment-wide; a screen for the setting.
 - [x] **CQ-14 (S) — Lints reach the tests, and stale allows show.** Move the
   lints to a `[lints]` table in `Cargo.toml`, so the integration tests get
   pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove

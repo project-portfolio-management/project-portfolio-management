@@ -180,7 +180,18 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 Doctrine (LT-9, `src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);
 a `date` is a **calendar date with no zone**; **the server never reads its own
 zone** (`chrono::Local` is banned by `clippy.toml` and by a unit test, so any
-process `TZ` yields identical answers); **portfolio-wide views use the UTC
-date** so two callers see one answer; **personal views take an explicit IANA
+process `TZ` yields identical answers); **portfolio-wide views use the
+deployment's "today" zone**, an explicit administrator setting (IANA name,
+default `UTC`) so that people in many zones at once all see one answer, and
+the answer says which zone it used; **personal views take an explicit IANA
 zone** per request (`?tz=`), and fixed offsets are refused because they cannot
 follow daylight saving.
+
+The setting is `GET`/`PUT`/`DELETE /api/settings/today-time-zone`. Anyone
+signed in may read it; only `access=admin` may change it (`403` otherwise); a
+name that is not an IANA zone is `422`; every change is audited with the
+before and after. It is stored in `deployment_settings` and every service
+instance re-reads it within a minute, so a change reaches all instances
+without a restart. Until an administrator sets it, "today" is the UTC date,
+exactly as before. It changes which calendar day a portfolio-wide default or
+"overdue" test means; it never moves a stored date or instant.

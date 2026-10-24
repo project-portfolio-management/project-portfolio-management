@@ -584,6 +584,9 @@ GET /api/scorecards/{pid}
 POST /api/scorecards/{pid}/from-template
 PUT /api/scorecards/{pid}/kpis
 GET /api/security/register
+DELETE /api/settings/today-time-zone
+GET /api/settings/today-time-zone
+PUT /api/settings/today-time-zone
 GET /api/skill-pools
 POST /api/skill-pools
 PUT /api/skill-pools/{pid}

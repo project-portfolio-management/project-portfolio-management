@@ -94,7 +94,7 @@ async fn review(
             note: r.note,
         })
         .collect();
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let standing = rules::standing(&entries, today, stale);
     AuditModel::record_or_log(
         &ctx.db,

@@ -69,7 +69,7 @@ async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> 
 }
 
 fn view(c: &change_requests::Model, links: Option<&(Vec<Uuid>, Vec<Uuid>)>) -> serde_json::Value {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     serde_json::json!({
         "pid": c.pid, "plan_pid": c.plan_pid, "title": c.title, "description": c.description,
         "reason": c.reason, "kind": c.kind,
@@ -171,7 +171,7 @@ async fn create(
         edits: ActiveValue::set(edits_json(&b)),
         status: ActiveValue::set("draft".to_string()),
         requested_by: ActiveValue::set(actor_of(&caller)),
-        requested_on: ActiveValue::set(crate::tz::utc_today()),
+        requested_on: ActiveValue::set(crate::tz::deployment_today()),
         approver_ref: ActiveValue::set(None),
         decided_by: ActiveValue::set(None),
         decided_on: ActiveValue::set(None),
@@ -431,7 +431,7 @@ async fn decide(
     }
     let (who, on, reason) = (
         actor_of(&caller),
-        crate::tz::utc_today(),
+        crate::tz::deployment_today(),
         b.reason.trim().to_string(),
     );
     step(&ctx, &caller, row, action, |a| {
@@ -451,7 +451,7 @@ async fn implement(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let row = find_cr(&ctx, plan.pid, &cr).await?;
-    let on = crate::tz::utc_today();
+    let on = crate::tz::deployment_today();
     step(&ctx, &caller, row, Action::Implement, |a| {
         a.implemented_on = ActiveValue::set(Some(on));
     })
@@ -702,7 +702,7 @@ async fn portfolio(
     plans.dedup();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plans).await;
     rows.retain(|r| readable.contains(&r.plan_pid));
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let mut by_status: std::collections::BTreeMap<&str, usize> =
         rules::STATUSES.iter().map(|s| (*s, 0)).collect();
     for r in &rows {

@@ -276,7 +276,7 @@ pub(crate) async fn forecast_of(ctx: &AppContext, plan_pid: Uuid) -> Result<rule
     let baseline = latest_baseline(ctx, plan_pid).await?;
     let tpc_cec = latest_tpc_cec(ctx, plan_pid).await?;
     let lines = actual_lines(ctx, plan_pid).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     Ok(rules::forecast(
         &lines,
         tpc_cec.as_ref().map(|(c, v)| (c.as_str(), *v)),

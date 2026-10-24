@@ -100,7 +100,7 @@ async fn doc_view(ctx: &AppContext, doc: &docs::Model) -> Result<serde_json::Val
         .collect();
     Ok(serde_json::json!({
         "pid": doc.pid, "title": doc.title, "plan_pid": doc.plan_pid, "created_by": doc.created_by,
-        "in_force_today": rules::in_force(&spans, crate::tz::utc_today()),
+        "in_force_today": rules::in_force(&spans, crate::tz::deployment_today()),
         "versions": vs.iter().map(|v| version_view(v, false)).collect::<Vec<_>>(),
     }))
 }
@@ -296,7 +296,7 @@ async fn in_force(
     Query(q): Query<InForceParams>,
 ) -> Result<Response> {
     let doc = find_doc(&ctx, &caller, &pid).await?;
-    let date = q.on.unwrap_or_else(crate::tz::utc_today);
+    let date = q.on.unwrap_or_else(crate::tz::deployment_today);
     let vs = versions_of(&ctx.db, doc.pid).await?;
     let spans: Vec<Span> = vs
         .iter()
@@ -618,7 +618,7 @@ async fn make_effective(
         ));
     }
     let current = vs.iter().find(|x| x.status == Status::Effective.token());
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let from = rules::effective_date(today, current.and_then(|c| c.effective_from))
         .map_err(|m| conflict(&m))?;
     // The version it replaces is superseded first (one effective at a time), naming this one.

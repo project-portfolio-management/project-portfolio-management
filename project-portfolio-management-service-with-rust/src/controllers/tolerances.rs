@@ -229,7 +229,7 @@ async fn picture(
     let mut chain = vec![plan.pid];
     chain.extend(&ancestors);
     let rows = rows_for(ctx, chain).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     // Live escalations that cite a tolerance dimension, so a red one nobody has escalated is visible.
     let mut escalated: HashMap<String, usize> = HashMap::new();
     for e in escalations::Entity::find()
@@ -548,7 +548,10 @@ async fn escalate(
             },
         )
         .await?;
-        raised.push(super::escalations::view(&row, crate::tz::utc_today()));
+        raised.push(super::escalations::view(
+            &row,
+            crate::tz::deployment_today(),
+        ));
     }
     format::json(
         json!({ "raised": raised, "tolerances": picture(&ctx, &caller, &plan, &allocs).await? }),
@@ -587,7 +590,7 @@ fn system_caller() -> MaybeAuthUser {
 /// When a database statement fails.
 pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize> {
     let caller = system_caller();
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let since = today - chrono::Duration::days(quiet_days);
     let plans = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())

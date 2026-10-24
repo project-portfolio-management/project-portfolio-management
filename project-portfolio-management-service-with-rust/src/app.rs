@@ -219,6 +219,7 @@ impl Hooks for App {
             .add_route(controllers::subjects::routes())
             .add_route(controllers::access_review::routes())
             .add_route(controllers::break_glass::routes())
+            .add_route(controllers::settings::routes())
             .add_route(controllers::handling_marks::routes())
             .add_route(controllers::change_requests::routes())
             .add_route(controllers::director_summary::routes())
@@ -294,6 +295,8 @@ impl Hooks for App {
         // no-ops unless their source is configured.
         auth::spawn_key_refresh();
         auth::spawn_policy_watcher();
+        // The zone that defines "today": load it now, re-read it every minute (settings.rs).
+        controllers::settings::spawn(ctx.db.clone());
         // Time-based-analysis gauges: a no-op unless
         // `PROJECT_PORTFOLIO_MANAGEMENT_FLOW_METRICS_SECS` is set.
         crate::flow_metrics::spawn(ctx);

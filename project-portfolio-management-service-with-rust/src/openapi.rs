@@ -59,6 +59,7 @@ fn paths() -> Value {
     merge_object(&mut paths, discussion_paths());
     merge_object(&mut paths, personal_paths());
     merge_object(&mut paths, module_paths());
+    merge_object(&mut paths, settings_paths());
     merge_object(&mut paths, crate::openapi_more::paths());
     document_paging(&mut paths);
     crate::openapi_schemas::attach(&mut paths);
@@ -1640,6 +1641,37 @@ fn module_paths() -> Value {
     })
 }
 
+/// Deployment settings an administrator changes at run time.
+fn settings_paths() -> Value {
+    json!({
+        "/api/settings/today-time-zone": {
+            "get": {
+                "tags": ["settings"],
+                "summary": "The time zone that defines \"today\" for portfolio-wide views",
+                "description": "Returns time_zone (an IANA name), source (default until an administrator sets one, then admin), who set it and when, the current UTC instant and the date it gives in that zone. The default is UTC, so a deployment nobody configured behaves as it always did. A personal view still takes its own ?tz=. Each service instance re-reads the stored value every minute.",
+                "responses": { "200": { "description": "time_zone, source, updated_by, updated_at, now_utc, today" } }
+            },
+            "put": {
+                "tags": ["settings"],
+                "summary": "Set the time zone that defines \"today\" (administrator)",
+                "description": "Body { time_zone }, an IANA name such as Europe/London or Pacific/Auckland. Fixed offsets and abbreviations are refused because they cannot follow daylight saving. It changes which calendar day a portfolio-wide default or overdue test means; it never moves a stored date or instant. Audited with the before and after.",
+                "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["time_zone"], "properties": { "time_zone": { "type": "string" } } } } } },
+                "responses": {
+                    "200": { "description": "The new view, as GET" },
+                    "403": { "description": "Not an administrator" },
+                    "422": { "description": "Not an IANA time zone" }
+                }
+            },
+            "delete": {
+                "tags": ["settings"],
+                "summary": "Go back to the default (UTC) (administrator)",
+                "description": "Removes the stored zone. Audited.",
+                "responses": { "200": { "description": "The new view, as GET" }, "403": { "description": "Not an administrator" } }
+            }
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2415,6 +2447,7 @@ mod tests {
     fn mounted_routes() -> std::collections::BTreeSet<(String, String)> {
         let groups = [
             crate::controllers::plans::routes(),
+            crate::controllers::settings::routes(),
             crate::controllers::compliance::routes(),
             crate::controllers::governance::routes(),
             crate::controllers::visibility::routes(),

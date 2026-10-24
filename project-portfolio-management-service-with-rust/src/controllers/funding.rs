@@ -228,7 +228,7 @@ async fn portfolio_money(
             NaiveDate::from_ymd_opt(y, sm, 1).ok_or_else(|| unprocessable("fy is not a year"))?
         }
         Some(_) => return Err(unprocessable("fy must be a year between 2000 and 2100")),
-        None => crate::tz::utc_today(),
+        None => crate::tz::deployment_today(),
     };
     let body = money_section(&ctx, &readable, day, q.combine_classes.unwrap_or(false)).await?;
     format::json(body)

@@ -948,7 +948,7 @@ async fn apply_rule_actions(
 /// Propagates a database error from the due-milestone query.
 pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
     use crate::models::_entities::{automation_milestone_fires, milestones};
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let due = milestones::Entity::find()
         .filter(milestones::Column::Due.lte(today))
         .filter(milestones::Column::Done.eq(false))

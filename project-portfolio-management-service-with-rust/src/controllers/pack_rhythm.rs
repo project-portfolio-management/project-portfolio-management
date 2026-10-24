@@ -86,7 +86,7 @@ async fn create_schedule(
             "day_of_month must be 1 to 28, so that every month has it",
         ));
     }
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let next = first_run(b.day_of_month, today).ok_or_else(|| unprocessable("no such day"))?;
     let row = schedules::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -171,7 +171,8 @@ async fn update_schedule(
         }
         a.day_of_month = ActiveValue::set(d);
         a.next_run_date = ActiveValue::set(
-            first_run(d, crate::tz::utc_today()).ok_or_else(|| unprocessable("no such day"))?,
+            first_run(d, crate::tz::deployment_today())
+                .ok_or_else(|| unprocessable("no such day"))?,
         );
     }
     let row = a.update(&ctx.db).await.map_err(db_err)?;
@@ -289,7 +290,7 @@ async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Resu
 #[debug_handler]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     need(&caller, Power::Editor)?;
-    let r = run_due(&ctx, crate::tz::utc_today()).await?;
+    let r = run_due(&ctx, crate::tz::deployment_today()).await?;
     format::json(serde_json::json!({ "drafted": r.drafted, "skipped": r.skipped, "issued": 0 }))
 }
 

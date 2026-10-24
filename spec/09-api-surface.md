@@ -257,6 +257,11 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
 
 ### 9.2g Cross-cutting API behaviour
 
+- **The "today" time zone** (`GET`/`PUT`/`DELETE /api/settings/today-time-zone`). The zone that
+  defines "today" for portfolio-wide views and defaults; UTC until an administrator sets one (see §7.x).
+  `GET` is open to anyone signed in and answers `time_zone`, `source` (`default` or `admin`),
+  `updated_by`, `updated_at`, `now_utc` and the `today` it gives. `PUT { time_zone }` and `DELETE`
+  are `access=admin` only (`403`); a name that is not an IANA zone is `422`; both are audited.
 - **Paging** (`controllers::paging::paging_mw`). Every `GET` that
   answers `200` with a **bare JSON array** pages the same way:
   `?limit=` (default and ceiling **500**; a larger value is clamped),

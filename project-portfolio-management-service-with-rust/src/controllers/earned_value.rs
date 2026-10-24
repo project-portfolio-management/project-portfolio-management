@@ -271,7 +271,7 @@ async fn earned_value(
             ErrorDetail::new("forbidden", "actual cost from labour needs finance access"),
         ));
     }
-    let as_of = crate::tz::utc_today();
+    let as_of = crate::tz::deployment_today();
     let body = match compute_with(&ctx, plan.pid, as_of, source).await? {
         Outcome::NoBaseline => serde_json::json!({
             "plan_pid": plan.pid, "as_of": as_of, "blocks": null, "absent": "no_baseline",
@@ -502,7 +502,7 @@ fn forecast_view(
 #[debug_handler]
 async fn forecast(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let as_of = crate::tz::utc_today();
+    let as_of = crate::tz::deployment_today();
     let (t, defaulted) = thresholds();
     let body = match compute(&ctx, plan.pid, as_of).await? {
         Outcome::NoBaseline => {
@@ -541,7 +541,7 @@ async fn forecast(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
 /// Record today's figures for a plan (one row per currency; a second call the
 /// same day replaces the first). Returns how many currencies were recorded.
 pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize> {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let Outcome::Figures { blocks, .. } = compute(ctx, plan, today).await? else {
         return Ok(0);
     };
@@ -589,7 +589,7 @@ pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize>
 ///
 /// Propagates database errors from finding the plans.
 pub async fn snapshot_all(ctx: &AppContext) -> Result<usize> {
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let with_baseline: std::collections::BTreeSet<Uuid> = budget_baselines::Entity::find()
         .all(&ctx.db)
         .await
@@ -618,7 +618,7 @@ async fn snapshot(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let n = snapshot_plan(&ctx, plan.pid).await?;
     format::json(
-        serde_json::json!({ "plan_pid": plan.pid, "as_of": crate::tz::utc_today(), "snapshotted": n }),
+        serde_json::json!({ "plan_pid": plan.pid, "as_of": crate::tz::deployment_today(), "snapshotted": n }),
     )
 }
 
@@ -872,7 +872,7 @@ async fn rollup(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let root = super::governance::find_item(&ctx, &pid).await?;
-    let as_of = crate::tz::utc_today();
+    let as_of = crate::tz::deployment_today();
     let (t, defaulted) = thresholds();
     let all = descendants(&ctx, root.pid).await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
@@ -1039,7 +1039,7 @@ async fn portfolio(
         .map(|p| p.pid)
         .collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
-    format::json(portfolio_section(&ctx, &readable, crate::tz::utc_today(), source).await?)
+    format::json(portfolio_section(&ctx, &readable, crate::tz::deployment_today(), source).await?)
 }
 
 /// The earned-value routes.

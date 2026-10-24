@@ -75,7 +75,7 @@ async fn set_drum(
     let row = drums::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         skill_pool_pid: ActiveValue::set(b.skill_pool_pid),
-        declared_on: ActiveValue::set(crate::tz::utc_today()),
+        declared_on: ActiveValue::set(crate::tz::deployment_today()),
         ..Default::default()
     }
     .insert(&ctx.db)
@@ -224,7 +224,9 @@ fn window(q: &Window) -> Result<(NaiveDate, u32)> {
         return Err(unprocessable("months must be 1 to 24"));
     }
     let from = match &q.from {
-        None => crate::tz::utc_today().with_day(1).unwrap_or_default(),
+        None => crate::tz::deployment_today()
+            .with_day(1)
+            .unwrap_or_default(),
         Some(f) => crate::capacity_heatmap::parse_month(f)
             .ok_or_else(|| unprocessable("from must be YYYY-MM"))?,
     };

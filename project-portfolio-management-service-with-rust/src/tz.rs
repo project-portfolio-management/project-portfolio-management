@@ -10,8 +10,9 @@
 //! 3. **The server never reads its own zone.** `chrono::Local` is banned by
 //!    `clippy.toml` and by a test below; the process may run in any `TZ`
 //!    and every answer is unchanged.
-//! 4. **Portfolio-wide views use the UTC date** ("today" in `at-a-glance`,
-//!    overdue risks, …) so two callers see one answer, and say so.
+//! 4. **Portfolio-wide views use the deployment's "today" zone** ("today" in
+//!    `at-a-glance`, overdue risks, …): an explicit administrator setting
+//!    (UTC until set), so people in many zones see one answer.
 //! 5. **Personal views take an explicit IANA zone** per request (`?tz=`) and
 //!    compute "today" there with [`local_today`]. A fixed offset is refused:
 //!    it cannot know about daylight saving, which is exactly the
@@ -50,14 +51,43 @@ pub fn local_today(now: DateTime<Utc>, tz: Tz) -> NaiveDate {
     now.with_timezone(&tz).date_naive()
 }
 
-/// The calendar date it is, right now, in UTC: "today" for a portfolio-wide
-/// view or a default (doctrine 4), so two callers see one answer. A personal
-/// view takes a zone and uses [`local_today`]. Calls name this rather than
-/// `Utc::now().date_naive()`, so each use is findable and a census can ban
-/// the raw form.
+/// The zone that defines "today" for portfolio-wide views and defaults: an explicit administrator
+/// setting (`deployment_settings`, key `today_time_zone`), UTC until one is set. Read through
+/// [`today_zone`], written only through [`set_today_zone`] by the settings controller and its
+/// refresher, so every instance converges on the stored value.
+static TODAY_ZONE: std::sync::RwLock<Tz> = std::sync::RwLock::new(Tz::UTC);
+
+/// The zone that currently defines "today" for portfolio-wide views.
 #[must_use]
-pub fn utc_today() -> NaiveDate {
-    Utc::now().date_naive()
+pub fn today_zone() -> Tz {
+    *TODAY_ZONE
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+/// Replace the zone that defines "today". Callers: the settings endpoint and the refresher.
+pub fn set_today_zone(zone: Tz) {
+    *TODAY_ZONE
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = zone;
+}
+
+/// The calendar date it is at `now` in the deployment's "today" zone `zone`. Pure, so it is
+/// testable without touching the shared setting; [`deployment_today`] is this with the clock and
+/// the configured zone.
+#[must_use]
+pub fn deployment_today_at(now: DateTime<Utc>, zone: Tz) -> NaiveDate {
+    local_today(now, zone)
+}
+
+/// The calendar date it is, right now, in the deployment's "today" zone (doctrine 4): what a
+/// portfolio-wide view or a default means by "today", so everyone sees one answer however many
+/// zones they sit in. A personal view takes a zone per request and uses [`local_today`]. Calls name
+/// this rather than `Utc::now().date_naive()`, so each use is findable and a census can ban the raw
+/// form.
+#[must_use]
+pub fn deployment_today() -> NaiveDate {
+    deployment_today_at(Utc::now(), today_zone())
 }
 
 #[cfg(test)]
@@ -163,10 +193,10 @@ mod tests {
         );
     }
 
-    /// Every portfolio-wide "today" goes through `utc_today`; a personal one
+    /// Every portfolio-wide "today" goes through `deployment_today`; a personal one
     /// goes through `local_today`. The raw form hides which was meant.
     #[test]
-    fn no_raw_utc_today_outside_this_file() {
+    fn no_raw_deployment_today_outside_this_file() {
         fn walk(dir: &std::path::Path, hits: &mut Vec<String>) {
             for e in std::fs::read_dir(dir).unwrap().flatten() {
                 let p = e.path();
@@ -187,14 +217,56 @@ mod tests {
         );
         assert!(
             hits.is_empty(),
-            "use tz::utc_today() or tz::local_today(): {hits:?}"
+            "use tz::deployment_today() or tz::local_today(): {hits:?}"
         );
     }
 
+    /// Until an administrator sets a zone, "today" is the UTC date, as it was before the setting
+    /// existed. (No test in this binary sets the shared zone; see `deployment_today_at` for those.)
     #[test]
-    fn utc_today_is_the_utc_date() {
+    fn deployment_today_defaults_to_the_utc_date() {
+        assert_eq!(today_zone(), Tz::UTC);
         let before = Utc::now().date_naive();
-        let t = utc_today();
+        let t = deployment_today();
         assert!(t >= before && t <= Utc::now().date_naive());
+    }
+
+    /// The configured zone decides the day near midnight. Honolulu is UTC-10 all year: 09:30Z on
+    /// the 2nd is 23:30 on the 1st there, and 10:00Z is midnight into the 2nd.
+    #[test]
+    fn the_configured_zone_decides_the_day_near_midnight() {
+        let honolulu = parse_zone("Pacific/Honolulu").unwrap();
+        let utc = Tz::UTC;
+        assert_eq!(
+            deployment_today_at(at(2026, 10, 2, 9, 30), honolulu),
+            day(2026, 10, 1)
+        );
+        assert_eq!(
+            deployment_today_at(at(2026, 10, 2, 9, 30), utc),
+            day(2026, 10, 2)
+        );
+        assert_eq!(
+            deployment_today_at(at(2026, 10, 2, 9, 59), honolulu),
+            day(2026, 10, 1)
+        );
+        assert_eq!(
+            deployment_today_at(at(2026, 10, 2, 10, 0), honolulu),
+            day(2026, 10, 2)
+        );
+        // A zone with daylight saving moves its midnight with the clocks (Auckland: UTC+13 in
+        // October, UTC+12 in June).
+        let auckland = parse_zone("Pacific/Auckland").unwrap();
+        assert_eq!(
+            deployment_today_at(at(2026, 10, 2, 11, 30), auckland),
+            day(2026, 10, 3)
+        );
+        assert_eq!(
+            deployment_today_at(at(2026, 6, 2, 11, 30), auckland),
+            day(2026, 6, 2)
+        );
+        assert_eq!(
+            deployment_today_at(at(2026, 6, 2, 12, 0), auckland),
+            day(2026, 6, 3)
+        );
     }
 }

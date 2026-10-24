@@ -29,7 +29,8 @@ impl Task for DirectorPackSchedule {
     ///
     /// When a database statement fails.
     async fn run(&self, ctx: &AppContext, _vars: &task::Vars) -> Result<()> {
-        let r = crate::controllers::pack_rhythm::run_due(ctx, crate::tz::utc_today()).await?;
+        let r =
+            crate::controllers::pack_rhythm::run_due(ctx, crate::tz::deployment_today()).await?;
         println!(
             "director pack schedule: {} drafted, {} skipped, 0 issued",
             r.drafted.len(),

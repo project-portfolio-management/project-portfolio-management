@@ -239,7 +239,7 @@ async fn list(
         Some("no_data") => Some(Status::NoData),
         Some(_) => return Err(unprocessable("status must be green, amber, red or no_data")),
     };
-    let as_of = q.as_of.unwrap_or_else(crate::tz::utc_today);
+    let as_of = q.as_of.unwrap_or_else(crate::tz::deployment_today);
     let mut query = kpis::Entity::find().filter(kpis::Column::DeletedAt.is_null());
     if let Some(p) = q.plan {
         query = query.filter(kpis::Column::PlanPid.eq(p));
@@ -293,7 +293,7 @@ async fn get_one(
 ) -> Result<Response> {
     let k = find_kpi(&ctx, &caller, &pid).await?;
     let readings = load_readings(&ctx, &[k.pid]).await?;
-    let (_, mut v) = view(&k, &readings, crate::tz::utc_today());
+    let (_, mut v) = view(&k, &readings, crate::tz::deployment_today());
     let mut history: Vec<&kpi_readings::Model> = readings.iter().collect();
     history.sort_by_key(|r| std::cmp::Reverse((r.observed_on, r.id)));
     v["history"] = serde_json::json!(
@@ -417,7 +417,7 @@ async fn add_reading(
     Json(b): Json<ReadingBody>,
 ) -> Result<Response> {
     let k = find_kpi(&ctx, &caller, &pid).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let on = b.observed_on.unwrap_or(today);
     if on > today {
         return Err(unprocessable("observed_on is in the future"));

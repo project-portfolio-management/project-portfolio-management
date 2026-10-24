@@ -35,7 +35,7 @@ async fn schedule_health(
     Query(q): Query<Params>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let as_of = q.as_of.unwrap_or_else(crate::tz::utc_today);
+    let as_of = q.as_of.unwrap_or_else(crate::tz::deployment_today);
     if as_of < chrono::NaiveDate::from_ymd_opt(1970, 1, 5).unwrap_or_default()
         || chrono::Datelike::year(&as_of) > 2100
     {

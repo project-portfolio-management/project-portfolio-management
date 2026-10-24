@@ -15,6 +15,11 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 24 October
+
+- **An administrator sets the time zone that defines "today" (CQ-13, part).** Because the software is used in several zones at once, "today" for portfolio-wide views and defaults is now an explicit setting, not the UTC date: `GET`/`PUT`/`DELETE /api/settings/today-time-zone` (anyone signed in may read; only `access=admin` may change; a non-IANA name is `422`; changes are audited). It lives in a new `deployment_settings` table and each instance re-reads it every minute. Until set it is UTC, so nothing changes by default. `tz::utc_today()` is renamed `tz::deployment_today()` at all 93 call sites. Verified: lib tests (including UTC−10 and daylight saving through the pure function), clippy `-D warnings --all-features`, and a new request test with real admin and non-admin identities. **Not done:** no screen in the UI for it; the 93 sites are all deployment-wide, none audited yet to see which should follow the caller's own zone; a change takes up to a minute to reach other instances; a stored value edited by hand to something invalid is logged and ignored.
+- **Fixed CI after CQ-14.** One `#[expect(clippy::unused_async)]` in `auth.rs` is unfulfilled in the all-features build CI uses; it is an `allow` again. I had run clippy with default features only.
+
 ### 23 October
 
 - **The threshold sweep reads its plans in one query (CQ-11, part).** It fetched each threshold's plan separately. The other two places the task named (`includes.rs`, `task_get.rs`) run one query per requested include, not per row, so they are unchanged. Verified: clippy, lib tests, the 190 request tests and the `organizations` test, which runs the sweep. **Not done:** no test counts queries, so nothing proves the sweep stays at one; the results are not compared before and after beyond the existing assertions.

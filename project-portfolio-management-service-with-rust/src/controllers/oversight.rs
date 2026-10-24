@@ -194,7 +194,7 @@ async fn board_pack_body(
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
 
     // Current portfolio health summary (worst member colour per bucket).
@@ -864,7 +864,7 @@ async fn risk_heatmap(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let today = crate::tz::utc_today();
+    let today = crate::tz::deployment_today();
     let items = live!(plans, &ctx.db, &scope);
     let risk_rows = live!(risks, &ctx.db, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =

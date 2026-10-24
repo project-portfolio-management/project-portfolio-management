@@ -6,6 +6,7 @@
   has its words and, where a state matters, a shape.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -65,24 +66,24 @@
     return t("p.critical_chain.held_person", { person: link.person_ref ?? link.person ?? "" });
   };
   const chainColumns: DataGridColumn[] = $derived([
-    { id: "title", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => (r as unknown as Task).title ?? (r as unknown as Task).pid },
+    { id: "title", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => rowOf<Task>(r).title ?? rowOf<Task>(r).pid },
     { id: "duration_days", header: t("p.critical_chain.col_days"), align: "end" },
     { id: "start", header: t("p.critical_chain.col_start"), format: (v) => (v ? String(v) : "") },
     { id: "finish", header: t("p.critical_chain.col_finish"), format: (v) => (v ? String(v) : "") },
-    { id: "held", header: t("p.critical_chain.col_held_by"), accessor: (r) => heldText(r as unknown as Task) },
+    { id: "held", header: t("p.critical_chain.col_held_by"), accessor: (r) => heldText(rowOf<Task>(r)) },
     { id: "on_critical_path", header: t("p.critical_chain.col_on_path"), format: (v) => (v ? t("p.critical_chain.yes") : t("p.critical_chain.no")) },
   ]);
   const feedingColumns: DataGridColumn[] = $derived([
-    { id: "tasks", header: t("p.critical_chain.col_feeding_tasks"), rowHeader: true, accessor: (r) => (r as unknown as Feeding).tasks.map((x) => x.title ?? x.pid).join(" → ") },
-    { id: "joins", header: t("p.critical_chain.col_joins"), accessor: (r) => (r as unknown as Feeding).joins.title ?? (r as unknown as Feeding).joins.pid },
+    { id: "tasks", header: t("p.critical_chain.col_feeding_tasks"), rowHeader: true, accessor: (r) => rowOf<Feeding>(r).tasks.map((x) => x.title ?? x.pid).join(" → ") },
+    { id: "joins", header: t("p.critical_chain.col_joins"), accessor: (r) => rowOf<Feeding>(r).joins.title ?? rowOf<Feeding>(r).joins.pid },
     { id: "duration_days", header: t("p.critical_chain.col_days"), align: "end" },
     { id: "buffer_days", header: t("p.critical_chain.col_buffer"), align: "end", format: (v) => (v === null || v === undefined ? t("p.critical_chain.unsized") : String(v)) },
     { id: "room_before_join_days", header: t("p.critical_chain.col_room"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
-    { id: "push", header: t("p.critical_chain.col_push"), accessor: (r) => { const f = r as unknown as Feeding; return f.would_push_chain ? `▲ ${t("p.critical_chain.push_yes", { days: f.push_days ?? 0 })}` : f.buffer_days !== null ? t("p.critical_chain.no") : ""; } },
+    { id: "push", header: t("p.critical_chain.col_push"), accessor: (r) => { const f = rowOf<Feeding>(r); return f.would_push_chain ? `▲ ${t("p.critical_chain.push_yes", { days: f.push_days ?? 0 })}` : f.buffer_days !== null ? t("p.critical_chain.no") : ""; } },
   ]);
   const resourceColumns: DataGridColumn[] = $derived([
-    { id: "task", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => (r as unknown as ResBuf).task.title ?? (r as unknown as ResBuf).task.pid },
-    { id: "person", header: t("p.critical_chain.col_person"), accessor: (r) => { const x = r as unknown as ResBuf; return x.masked ? `${x.person} ${t("p.critical_chain.hidden")}` : (x.person_ref ?? x.person); } },
+    { id: "task", header: t("p.critical_chain.col_task"), rowHeader: true, accessor: (r) => rowOf<ResBuf>(r).task.title ?? rowOf<ResBuf>(r).task.pid },
+    { id: "person", header: t("p.critical_chain.col_person"), accessor: (r) => { const x = rowOf<ResBuf>(r); return x.masked ? `${x.person} ${t("p.critical_chain.hidden")}` : (x.person_ref ?? x.person); } },
     { id: "alert_on", header: t("p.critical_chain.col_alert_on") },
     { id: "starts", header: t("p.critical_chain.col_task_starts") },
   ]);
@@ -184,7 +185,7 @@
       <h3>{t("p.critical_chain.resource_h3")}</h3>
       <p>{t("p.critical_chain.resource_lede", { lead: buffers.resource_buffer_lead_days })}</p>
       {#if (buffers.resource_buffers ?? []).length > 0}
-        <DataTable label={t("p.critical_chain.resource_h3")} columns={resourceColumns} rows={buffers.resource_buffers ?? []} rowId={(r) => String((r as unknown as ResBuf).task.pid)} />
+        <DataTable label={t("p.critical_chain.resource_h3")} columns={resourceColumns} rows={buffers.resource_buffers ?? []} rowId={(r) => String(rowOf<ResBuf>(r).task.pid)} />
       {/if}
 
       {#if (buffers.scheduled_at_likely_duration ?? []).length > 0}

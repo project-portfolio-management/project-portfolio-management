@@ -8,6 +8,7 @@
   English-first, like the other recent views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -132,10 +133,10 @@
   const forecastColumns = (currency: string, recommended: string): DataGridColumn[] => {
     const c = (n: number) => money(n, currency);
     return [
-      { id: "formula", header: t("p.plans.pid.earned_value.forecast"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as Variant).variant === recommended ? ` — ${t("p.plans.pid.earned_value.the_one_to_lead_with")}` : ""}` },
-      { id: "eac", header: t("p.plans.pid.earned_value.final_cost_eac"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor); } },
-      { id: "etc", header: t("p.plans.pid.earned_value.still_to_spend_etc"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.etc.minor === null ? "—" : c(v.etc.minor); } },
-      { id: "vac", header: t("p.plans.pid.earned_value.against_the_budget_vac"), align: "end", accessor: (r) => { const v = r as unknown as Variant; return v.vac.minor === null ? "—" : c(v.vac.minor) + (v.vac.minor < 0 ? t("p.plans.pid.earned_value.overrun") : ""); } },
+      { id: "formula", header: t("p.plans.pid.earned_value.forecast"), rowHeader: true, format: (v, r) => `${v}${rowOf<Variant>(r).variant === recommended ? ` — ${t("p.plans.pid.earned_value.the_one_to_lead_with")}` : ""}` },
+      { id: "eac", header: t("p.plans.pid.earned_value.final_cost_eac"), align: "end", accessor: (r) => { const v = rowOf<Variant>(r); return v.eac.minor === null ? amountAbsentText(v.eac) : c(v.eac.minor); } },
+      { id: "etc", header: t("p.plans.pid.earned_value.still_to_spend_etc"), align: "end", accessor: (r) => { const v = rowOf<Variant>(r); return v.etc.minor === null ? "—" : c(v.etc.minor); } },
+      { id: "vac", header: t("p.plans.pid.earned_value.against_the_budget_vac"), align: "end", accessor: (r) => { const v = rowOf<Variant>(r); return v.vac.minor === null ? "—" : c(v.vac.minor) + (v.vac.minor < 0 ? t("p.plans.pid.earned_value.overrun") : ""); } },
     ];
   };
 </script>
@@ -214,7 +215,7 @@
             <span aria-hidden="true">{ragText(f.spi.rag).marker}</span> {t("p.plans.pid.earned_value.schedule_is", { word: ragText(f.spi.rag).word })}
             <span aria-hidden="true">{ragText(f.cpi.rag).marker}</span> {t("p.plans.pid.earned_value.cost_is", { word: ragText(f.cpi.rag).word })}
           </p>
-          <DataTable label={t("p.plans.pid.earned_value.forecasts_of_the_final_cost", { currency: f.currency })} columns={forecastColumns(f.currency, f.recommended.variant)} rows={f.variants} rowId={(r) => String(r.variant)} sortable={false} rowClass={(r) => ((r as unknown as Variant).variant === f.recommended.variant ? "chosen" : "")} />
+          <DataTable label={t("p.plans.pid.earned_value.forecasts_of_the_final_cost", { currency: f.currency })} columns={forecastColumns(f.currency, f.recommended.variant)} rows={f.variants} rowId={(r) => String(r.variant)} sortable={false} rowClass={(r) => (rowOf<Variant>(r).variant === f.recommended.variant ? "chosen" : "")} />
           <p class="small">{t("p.plans.pid.earned_value.leading_with_that_one_because", { why: f.recommended.why })}</p>
           <p><span aria-hidden="true">{ragText(f.tcpi_to_budget.rag).marker}</span> {tcpiSentence(f.tcpi_to_budget.tcpi, t("p.plans.pid.earned_value.target_budget"))}</p>
           {#if f.tcpi_to_recommended_eac}

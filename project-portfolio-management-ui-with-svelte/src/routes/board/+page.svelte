@@ -7,6 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -63,19 +64,19 @@
     { id: "at", header: t("p.board.when"), rowHeader: true },
     { id: "kind", header: t("p.board.kind") },
     { id: "decision", header: t("p.board.decision") },
-    { id: "subject", header: t("p.board.subject"), accessor: (r) => { const s = (r as unknown as Dec).subject; return s.name ?? s.pid; } },
+    { id: "subject", header: t("p.board.subject"), accessor: (r) => { const s = rowOf<Dec>(r).subject; return s.name ?? s.pid; } },
   ]);
   const investmentColumns: DataGridColumn[] = $derived([
     { id: "at", header: t("p.board.when"), rowHeader: true },
-    { id: "kind", header: t("p.board.kind"), accessor: (r) => { const e = r as unknown as Investment; return `${e.kind}${e.gate ? ` · ${e.gate}` : ""}`; } },
-    { id: "what", header: t("p.board.what"), accessor: (r) => label(r as unknown as Investment) },
-    { id: "amount", header: t("p.board.amount"), align: "end", sortable: false, accessor: (r) => amount(r as unknown as Investment) },
+    { id: "kind", header: t("p.board.kind"), accessor: (r) => { const e = rowOf<Investment>(r); return `${e.kind}${e.gate ? ` · ${e.gate}` : ""}`; } },
+    { id: "what", header: t("p.board.what"), accessor: (r) => label(rowOf<Investment>(r)) },
+    { id: "amount", header: t("p.board.amount"), align: "end", sortable: false, accessor: (r) => amount(rowOf<Investment>(r)) },
   ]);
   const trendColumns: DataGridColumn[] = $derived([
     { id: "taken_at", header: t("p.board.taken"), rowHeader: true },
-    { id: "plans", header: t("p.board.work_items"), align: "end", accessor: (r) => String((r as unknown as Trend).body["plans"] ?? "—") },
-    { id: "portfolios", header: t("p.board.portfolios"), align: "end", accessor: (r) => String((r as unknown as Trend).body["portfolios"] ?? "—") },
-    { id: "open_exposure", header: t("p.board.open_exposure"), align: "end", accessor: (r) => String((r as unknown as Trend).body["open_exposure"] ?? "—") },
+    { id: "plans", header: t("p.board.work_items"), align: "end", accessor: (r) => String(rowOf<Trend>(r).body["plans"] ?? "—") },
+    { id: "portfolios", header: t("p.board.portfolios"), align: "end", accessor: (r) => String(rowOf<Trend>(r).body["portfolios"] ?? "—") },
+    { id: "open_exposure", header: t("p.board.open_exposure"), align: "end", accessor: (r) => String(rowOf<Trend>(r).body["open_exposure"] ?? "—") },
   ]);
 </script>
 
@@ -110,12 +111,12 @@
   {/if}
 
   <h3>{t("p.board.decisions_in_window")}</h3>
-  <DataTable label={t("p.board.decision")} columns={decisionColumns} rows={pack.decisions} rowId={(r) => String(r.kind) + String(r.at) + String((r as unknown as Dec).subject.pid)} emptyText={t("p.board.no_decisions_in_the_window")} testid="board-decisions" pageSize={50} searchable />
+  <DataTable label={t("p.board.decision")} columns={decisionColumns} rows={pack.decisions} rowId={(r) => String(r.kind) + String(r.at) + String(rowOf<Dec>(r).subject.pid)} emptyText={t("p.board.no_decisions_in_the_window")} testid="board-decisions" pageSize={50} searchable />
 {/if}
 
 {#if investments}
   <h2>{t("p.board.investment_decisions")}</h2>
-  <DataTable label={t("p.board.what")} columns={investmentColumns} rows={investments} rowId={(r) => String(r.kind) + String(r.at) + label(r as unknown as Investment)} emptyText={t("p.board.no_investment_decisions_recorded")} testid="board-investments" />
+  <DataTable label={t("p.board.what")} columns={investmentColumns} rows={investments} rowId={(r) => String(r.kind) + String(r.at) + label(rowOf<Investment>(r))} emptyText={t("p.board.no_investment_decisions_recorded")} testid="board-investments" />
 {/if}
 
 {#if trends}

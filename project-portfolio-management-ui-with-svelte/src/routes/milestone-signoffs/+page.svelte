@@ -3,6 +3,7 @@
   organizations have signed them off. Delivered and met are different things, and the gap is shown.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -48,10 +49,10 @@
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.signoffs.col_milestone"), rowHeader: true },
     { id: "due", header: t("p.signoffs.col_due"), format: (v) => (v ? String(v).slice(0, 10) : "") },
-    { id: "state", header: t("p.signoffs.col_state"), accessor: (r) => (r as unknown as Row).signoff.state, format: (v) => stateWord(String(v)), cell: stateCell, cellClass: (c) => (c.value === "delivered_not_met" ? "cell-red" : c.value === "met" ? "cell-green" : "") },
-    { id: "delivered_on", header: t("p.signoffs.col_delivered"), accessor: (r) => (r as unknown as Row).signoff.delivered_on ?? "" },
-    { id: "met_on", header: t("p.signoffs.col_met"), accessor: (r) => (r as unknown as Row).signoff.met_on ?? "" },
-    { id: "outstanding", header: t("p.signoffs.col_outstanding"), accessor: (r) => (r as unknown as Row).signoff.outstanding.join(", ") },
+    { id: "state", header: t("p.signoffs.col_state"), accessor: (r) => rowOf<Row>(r).signoff.state, format: (v) => stateWord(String(v)), cell: stateCell, cellClass: (c) => (c.value === "delivered_not_met" ? "cell-red" : c.value === "met" ? "cell-green" : "") },
+    { id: "delivered_on", header: t("p.signoffs.col_delivered"), accessor: (r) => rowOf<Row>(r).signoff.delivered_on ?? "" },
+    { id: "met_on", header: t("p.signoffs.col_met"), accessor: (r) => rowOf<Row>(r).signoff.met_on ?? "" },
+    { id: "outstanding", header: t("p.signoffs.col_outstanding"), accessor: (r) => rowOf<Row>(r).signoff.outstanding.join(", ") },
     { id: "milestone_pid", header: t("p.signoffs.col_act"), sortable: false, cell: actCell },
   ]);
   const share = $derived(
@@ -62,7 +63,7 @@
 {#snippet stateCell({ value, formatted }: DataGridCellContext)}<span aria-hidden="true">{SYM[String(value)] ?? "–"}</span> {formatted}{/snippet}
 
 {#snippet actCell({ row }: DataGridCellContext)}
-  {@const m = row as unknown as Row}
+  {@const m = rowOf<Row>(row)}
   <div class="act">
     <label>{t("p.signoffs.organization")}
       <select bind:value={pick[m.milestone_pid]}>{#each orgs as o (o.pid)}<option value={o.pid}>{o.name}</option>{/each}</select>

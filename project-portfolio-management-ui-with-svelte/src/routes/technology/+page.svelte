@@ -7,6 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -45,22 +46,22 @@
   type Edge = DependencyRisk["red_predecessor_edges"][number];
   type DebtRow = TechDebtRegister["register"][number];
   const fanColumns: DataGridColumn[] = $derived([
-    { id: "item", header: t("p.technology.item"), rowHeader: true, accessor: (r) => (r as unknown as Fan).item.name, cell: fanItemCell },
-    { id: "kind", header: t("p.technology.kind"), accessor: (r) => (r as unknown as Fan).item.kind },
+    { id: "item", header: t("p.technology.item"), rowHeader: true, accessor: (r) => rowOf<Fan>(r).item.name, cell: fanItemCell },
+    { id: "kind", header: t("p.technology.kind"), accessor: (r) => rowOf<Fan>(r).item.kind },
     { id: "dependents", header: t("p.technology.dependents"), align: "end" },
     { id: "rag", header: t("p.technology.status"), headerCell: ragHeader, format: (v) => (v ? String(v) : "—") },
   ]);
   const redColumns: DataGridColumn[] = $derived([
-    { id: "predecessor", header: t("p.technology.predecessor_red"), rowHeader: true, accessor: (r) => (r as unknown as Edge).predecessor.name },
-    { id: "successor", header: t("p.technology.successor_at_risk"), accessor: (r) => (r as unknown as Edge).successor.name },
+    { id: "predecessor", header: t("p.technology.predecessor_red"), rowHeader: true, accessor: (r) => rowOf<Edge>(r).predecessor.name },
+    { id: "successor", header: t("p.technology.successor_at_risk"), accessor: (r) => rowOf<Edge>(r).successor.name },
   ]);
   const crossColumns: DataGridColumn[] = $derived([
-    { id: "predecessor", header: t("p.technology.predecessor"), rowHeader: true, accessor: (r) => `${(r as unknown as Edge).predecessor.name} (${(r as unknown as Edge).predecessor.kind})` },
-    { id: "successor", header: t("p.technology.successor"), accessor: (r) => `${(r as unknown as Edge).successor.name} (${(r as unknown as Edge).successor.kind})` },
+    { id: "predecessor", header: t("p.technology.predecessor"), rowHeader: true, accessor: (r) => `${rowOf<Edge>(r).predecessor.name} (${rowOf<Edge>(r).predecessor.kind})` },
+    { id: "successor", header: t("p.technology.successor"), accessor: (r) => `${rowOf<Edge>(r).successor.name} (${rowOf<Edge>(r).successor.kind})` },
   ]);
   const debtColumns: DataGridColumn[] = $derived([
-    { id: "title", header: t("p.technology.risk"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as DebtRow).escalated ? " ⚠" : ""}` },
-    { id: "item", header: t("p.technology.item"), accessor: (r) => (r as unknown as DebtRow).item?.name ?? "—" },
+    { id: "title", header: t("p.technology.risk"), rowHeader: true, format: (v, r) => `${v}${rowOf<DebtRow>(r).escalated ? " ⚠" : ""}` },
+    { id: "item", header: t("p.technology.item"), accessor: (r) => rowOf<DebtRow>(r).item?.name ?? "—" },
     { id: "status", header: t("p.technology.status_2") },
     { id: "exposure", header: t("p.technology.exposure"), align: "end" },
     { id: "owner_ref", header: t("p.technology.owner"), format: (v) => (v ? String(v) : "—") },
@@ -75,7 +76,7 @@
 {#snippet ragHeader()}{t("p.technology.status")}<Term t="RAG" />){/snippet}
 
 {#snippet fanItemCell({ row, formatted }: DataGridCellContext)}
-  {@const f = row as unknown as Fan}
+  {@const f = rowOf<Fan>(row)}
   <a href={localeHref(`/${f.item.kind.toLowerCase()}s/${f.item.pid}`)}>{formatted}</a>
 {/snippet}
 
@@ -117,7 +118,7 @@
   <p class="muted">{t("p.technology.as_of_edges", { as_of: risk.as_of, edges: risk.edges })}</p>
 
   <h3>{t("p.technology.most_depended_on_single_point")}</h3>
-  <DataTable label={t("p.technology.item")} columns={fanColumns} rows={risk.top_fan_out} rowId={(r) => String((r as unknown as Fan).item.pid)} emptyText={t("p.technology.no_dependencies_recorded_yet")} testid="tech-fan-out" />
+  <DataTable label={t("p.technology.item")} columns={fanColumns} rows={risk.top_fan_out} rowId={(r) => String(rowOf<Fan>(r).item.pid)} emptyText={t("p.technology.no_dependencies_recorded_yet")} testid="tech-fan-out" />
 
   <h3>{t("p.technology.edges_importing_risk_from_a")}</h3>
   <DataTable label={t("p.technology.predecessor_red")} columns={redColumns} rows={risk.red_predecessor_edges} rowId={(r) => String(r.edge)} emptyText={t("p.technology.none_no_red_predecessors")} testid="tech-red-edges" />

@@ -6,6 +6,7 @@
   person decides.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -72,24 +73,24 @@
   type Action = RecoveryAction;
   const tone = (z: unknown) => `cell-${zoneLook(z as never).tone}`;
   const readingColumns: DataGridColumn[] = $derived([
-    { id: "key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, accessor: (r) => label(r as unknown as BufferReading) },
+    { id: "key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, accessor: (r) => label(rowOf<BufferReading>(r)) },
     { id: "buffer_days", header: t("p.critical_chain.col_size"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
-    { id: "done", header: t("p.critical_chain.col_done"), align: "end", accessor: (r) => (r as unknown as BufferReading).point?.chain_completed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
-    { id: "used", header: t("p.critical_chain.col_used"), align: "end", accessor: (r) => (r as unknown as BufferReading).point?.buffer_consumed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
+    { id: "done", header: t("p.critical_chain.col_done"), align: "end", accessor: (r) => rowOf<BufferReading>(r).point?.chain_completed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
+    { id: "used", header: t("p.critical_chain.col_used"), align: "end", accessor: (r) => rowOf<BufferReading>(r).point?.buffer_consumed_pct ?? null, format: (v) => (v === null ? "" : pct(Number(v))) },
     { id: "slip_days", header: t("p.critical_chain.col_slip"), align: "end", format: (v) => (v === null || v === undefined ? "" : String(v)) },
-    { id: "zone", header: t("p.critical_chain.col_zone"), accessor: (r) => (r as unknown as BufferReading).point?.zone ?? null, cell: zoneCell, cellClass: (c) => tone(c.value) },
+    { id: "zone", header: t("p.critical_chain.col_zone"), accessor: (r) => rowOf<BufferReading>(r).point?.zone ?? null, cell: zoneCell, cellClass: (c) => tone(c.value) },
   ]);
   const actionColumns: DataGridColumn[] = $derived([
     { id: "buffer_key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, format: (v) => labelOf.get(String(v)) ?? String(v) },
     { id: "action", header: t("p.critical_chain.col_action") },
-    { id: "owner", header: t("p.critical_chain.col_owner"), accessor: (r) => { const a = r as unknown as Action; return a.owner_ref ?? (a.owner ? `${a.owner} ${t("p.critical_chain.hidden")}` : ""); } },
+    { id: "owner", header: t("p.critical_chain.col_owner"), accessor: (r) => { const a = rowOf<Action>(r); return a.owner_ref ?? (a.owner ? `${a.owner} ${t("p.critical_chain.hidden")}` : ""); } },
     { id: "due_date", header: t("p.critical_chain.col_due"), format: (v) => (v ? String(v) : "") },
     { id: "status", header: t("p.critical_chain.col_status"), format: (v) => statusText(String(v) as Action["status"]), cell: statusCell },
   ]);
   const snapColumns: DataGridColumn[] = $derived([
     { id: "taken_on", header: t("p.critical_chain.col_snap_date"), rowHeader: true },
     ...(data?.readings ?? []).map((r): DataGridColumn => ({
-      id: `z-${r.key}`, header: label(r), accessor: (row) => ((row as unknown as Snap).zones[r.key] ?? null), cell: snapZoneCell, cellClass: (c) => tone(c.value),
+      id: `z-${r.key}`, header: label(r), accessor: (row) => (rowOf<Snap>(row).zones[r.key] ?? null), cell: snapZoneCell, cellClass: (c) => tone(c.value),
     })),
   ]);
 </script>
@@ -149,7 +150,7 @@
 
   <section aria-labelledby="bm-table">
     <h2 id="bm-table">{t("p.critical_chain.table_h2")}</h2>
-    <DataTable label={t("p.critical_chain.table_h2")} columns={readingColumns} rows={data.readings} rowId={(r) => String((r as unknown as BufferReading).key)} />
+    <DataTable label={t("p.critical_chain.table_h2")} columns={readingColumns} rows={data.readings} rowId={(r) => String(rowOf<BufferReading>(r).key)} />
   </section>
 
   <section aria-labelledby="bm-actions">
@@ -157,7 +158,7 @@
     {#if (data.recovery_actions ?? []).length === 0}
       <p>{t("p.critical_chain.actions_none")}</p>
     {:else}
-      <DataTable label={t("p.critical_chain.actions_h2")} columns={actionColumns} rows={data.recovery_actions ?? []} rowId={(r) => String((r as unknown as Action).pid)} />
+      <DataTable label={t("p.critical_chain.actions_h2")} columns={actionColumns} rows={data.recovery_actions ?? []} rowId={(r) => String(rowOf<Action>(r).pid)} />
     {/if}
 
     <h3>{t("p.critical_chain.add_action_h3")}</h3>
@@ -182,13 +183,13 @@
     {#if (data.snapshots ?? []).length === 0}
       <p>{t("p.critical_chain.snap_none")}</p>
     {:else}
-      <DataTable label={t("p.critical_chain.snap_h2")} columns={snapColumns} rows={data.snapshots ?? []} rowId={(r) => String((r as unknown as Snap).pid)} />
+      <DataTable label={t("p.critical_chain.snap_h2")} columns={snapColumns} rows={data.snapshots ?? []} rowId={(r) => String(rowOf<Snap>(r).pid)} />
     {/if}
   </section>
 {/if}
 
 {#snippet zoneCell({ row, formatted }: DataGridCellContext)}
-  {@const r = row as unknown as BufferReading}
+  {@const r = rowOf<BufferReading>(row)}
   {@const look = zoneLook(r.point?.zone)}
   <span aria-hidden="true">{look.symbol}</span> {tDynamic(look.word)}
   {#if !r.point && r.no_point_reason}<span class="small"> — {r.no_point_reason}</span>{/if}
@@ -200,7 +201,7 @@
 {/snippet}
 
 {#snippet statusCell({ row, formatted }: DataGridCellContext)}
-  {@const a = row as unknown as Action}
+  {@const a = rowOf<Action>(row)}
   {formatted}
   {#if a.status === "open"}
     <button class="button small" type="button" disabled={busy} aria-label={`${t("p.critical_chain.mark_done")}: ${a.action}`} onclick={() => void run(() => ppm.closeRecoveryAction(pid, a.pid, "done"))}>{t("p.critical_chain.mark_done")}</button>

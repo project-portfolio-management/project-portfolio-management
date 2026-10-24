@@ -3,6 +3,7 @@
   accessible page; the figures are read from the issued pack, never recalculated.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -32,7 +33,7 @@
 </script>
 
 {#snippet periodCell({ row, formatted }: DataGridCellContext)}
-  {@const p = row as unknown as DirectorPackMeta}
+  {@const p = rowOf<DirectorPackMeta>(row)}
   <a href={localeHref(`/director-packs/${p.pid}`)} aria-label={t("p.director_pack.open_pack", { period: p.period, audience: p.audience, version: p.version })}>{formatted}</a>
 {/snippet}
 

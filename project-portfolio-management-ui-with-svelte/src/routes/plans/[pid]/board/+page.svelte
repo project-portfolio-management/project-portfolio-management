@@ -9,6 +9,7 @@
   the last-24h standup digest. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -166,7 +167,7 @@
   ];
   type VRow = Velocity["sprints"][number];
   const velocityColumns: DataGridColumn[] = $derived([
-    { id: "sprint", header: t("p.plans.pid.board.sprint"), rowHeader: true, accessor: (r) => (r as unknown as VRow).sprint.name },
+    { id: "sprint", header: t("p.plans.pid.board.sprint"), rowHeader: true, accessor: (r) => rowOf<VRow>(r).sprint.name },
     { id: "tasks_done", header: t("p.plans.pid.board.tasks_done"), align: "end" },
     { id: "points_done", header: t("p.plans.pid.board.points_done"), align: "end" },
     { id: "unpointed_done", header: t("p.plans.pid.board.unpointed"), align: "end" },
@@ -317,7 +318,7 @@
 {#if velocity && velocity.sprints.length > 0}
   <h2>{t("p.plans.pid.board.velocity")}</h2>
   <p class="muted">{velocity.note}</p>
-  <DataTable label={t("p.plans.pid.board.sprint")} columns={velocityColumns} rows={velocity.sprints} rowId={(r) => String((r as unknown as { sprint: { pid: string } }).sprint.pid)} testid="velocity" />
+  <DataTable label={t("p.plans.pid.board.sprint")} columns={velocityColumns} rows={velocity.sprints} rowId={(r) => String(rowOf<{ sprint: { pid: string } }>(r).sprint.pid)} testid="velocity" />
 {/if}
 
 <style>

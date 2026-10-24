@@ -7,6 +7,7 @@
   and the scatter has the same numbers beneath it.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -76,9 +77,9 @@
   ]);
   type Line = JointRisk["cost"]["lines"][number];
   const lineColumns = (currencyOf: string): DataGridColumn[] => [
-    { id: "description", header: t("p.plans.pid.joint_risk.line"), rowHeader: true, accessor: (r) => (r as unknown as Line).description ?? (r as unknown as Line).pid },
-    { id: "range", header: t("p.plans.pid.joint_risk.low_planned_high"), sortable: false, accessor: (r) => { const l = r as unknown as Line; return `${money(l.low, currencyOf)} / ${money(l.likely, currencyOf)} / ${money(l.high, currencyOf)}`; } },
-    { id: "estimate", header: t("p.plans.pid.joint_risk.estimate"), accessor: (r) => lineSourceText(r as unknown as Line), cell: lineSourceCell },
+    { id: "description", header: t("p.plans.pid.joint_risk.line"), rowHeader: true, accessor: (r) => rowOf<Line>(r).description ?? rowOf<Line>(r).pid },
+    { id: "range", header: t("p.plans.pid.joint_risk.low_planned_high"), sortable: false, accessor: (r) => { const l = rowOf<Line>(r); return `${money(l.low, currencyOf)} / ${money(l.likely, currencyOf)} / ${money(l.high, currencyOf)}`; } },
+    { id: "estimate", header: t("p.plans.pid.joint_risk.estimate"), accessor: (r) => lineSourceText(rowOf<Line>(r)), cell: lineSourceCell },
   ];
   const costRows = (result: JointRisk) => [
     { label: t("p.plans.pid.joint_risk.budget_2"), value: money(result.cost.budget_minor, result.currency) },

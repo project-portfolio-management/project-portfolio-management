@@ -6,6 +6,7 @@
   server-derived. English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -34,10 +35,10 @@
     { id: "title", header: t("p.risk.risk"), rowHeader: true },
     { id: "category", header: t("p.risk.category") },
     { id: "exposure", header: t("p.risk.exposure"), align: "end" },
-    { id: "item", header: t("p.risk.item"), accessor: (r) => (r as unknown as Top).item?.name ?? "—" },
+    { id: "item", header: t("p.risk.item"), accessor: (r) => rowOf<Top>(r).item?.name ?? "—" },
   ]);
   const postureColumns: DataGridColumn[] = $derived([
-    { id: "portfolio", header: t("p.risk.portfolio"), rowHeader: true, accessor: (r) => (r as unknown as Post).portfolio?.name ?? t("p.risk.unassigned") },
+    { id: "portfolio", header: t("p.risk.portfolio"), rowHeader: true, accessor: (r) => rowOf<Post>(r).portfolio?.name ?? t("p.risk.unassigned") },
     { id: "open_exposure", header: t("p.risk.open_exposure"), align: "end" },
     { id: "escalated", header: t("p.risk.escalated"), align: "end" },
     { id: "materialized", header: t("p.risk.materialized"), align: "end" },
@@ -90,7 +91,7 @@
   <DataTable label={t("p.risk.risk")} columns={topColumns} rows={heatmap.top_risks} rowId={(r) => String(r.pid)} emptyText={t("p.risk.no_open_risks")} testid="risk-top" />
 
   <h2>{t("p.risk.posture_by_portfolio")}</h2>
-  <DataTable label={t("p.risk.portfolio")} columns={postureColumns} rows={heatmap.posture} rowId={(r) => String((r as unknown as Post).portfolio?.pid ?? "unassigned")} testid="risk-posture" />
+  <DataTable label={t("p.risk.portfolio")} columns={postureColumns} rows={heatmap.posture} rowId={(r) => String(rowOf<Post>(r).portfolio?.pid ?? "unassigned")} testid="risk-posture" />
 
   {#if heatmap.concentration.length > 0}
     <h2>{t("p.risk.concentration")}</h2>

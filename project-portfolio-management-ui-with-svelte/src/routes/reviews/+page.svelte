@@ -10,6 +10,7 @@
   outsider is a disclosure decision, not an inference.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -122,12 +123,12 @@
   onMount(refresh);
 
   const columns: DataGridColumn[] = $derived([
-    { id: "subject", header: t("p.reviews.subject_2"), rowHeader: true, accessor: (r) => `${(r as unknown as Review).subject_kind} ${(r as unknown as Review).subject_pid.slice(0, 8)}…` },
+    { id: "subject", header: t("p.reviews.subject_2"), rowHeader: true, accessor: (r) => `${rowOf<Review>(r).subject_kind} ${rowOf<Review>(r).subject_pid.slice(0, 8)}…` },
     { id: "reviewer_ref", header: t("p.reviews.reviewer_2") },
     { id: "reviewer_scope", header: t("p.reviews.scope_2"), cell: scopeCell },
     { id: "expertise", header: t("p.reviews.expertise_2"), format: (v) => (v ? String(v) : "—") },
     { id: "status", header: t("p.reviews.status_2") },
-    { id: "verdict", header: t("p.reviews.verdict"), accessor: (r) => { const x = r as unknown as Review; return x.status === "submitted" ? `${x.recommendation} · ${x.score ?? t("p.reviews.no_score")}` : "—"; } },
+    { id: "verdict", header: t("p.reviews.verdict"), accessor: (r) => { const x = rowOf<Review>(r); return x.status === "submitted" ? `${x.recommendation} · ${x.score ?? t("p.reviews.no_score")}` : "—"; } },
     { id: "pid", header: t("p.reviews.actions"), sortable: false, cell: reviewActions },
   ]);
 </script>
@@ -135,7 +136,7 @@
 {#snippet scopeCell({ row, formatted }: DataGridCellContext)}<span class="chip" class:external={row.reviewer_scope === "external"}>{formatted}</span>{/snippet}
 
 {#snippet reviewActions({ row }: DataGridCellContext)}
-  {@const review = row as unknown as Review}
+  {@const review = rowOf<Review>(row)}
   {#if review.status === "invited"}
     <button class="button small" type="button" onclick={() => respond(review.pid, "accept")}>{t("p.reviews.accept")}</button>
     <button class="button small" type="button" onclick={() => respond(review.pid, "decline")}>{t("p.reviews.decline")}</button>

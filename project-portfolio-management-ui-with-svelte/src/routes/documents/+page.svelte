@@ -4,6 +4,7 @@
   force today; creating a document starts its first draft.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -44,8 +45,8 @@
 
   const columns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.documents.document"), rowHeader: true, cell: docCell },
-    { id: "in_force", header: t("p.documents.in_force"), accessor: (r) => forceText(r as unknown as ControlledDocument) },
-    { id: "versions", header: t("p.documents.versions"), align: "end", accessor: (r) => (r as unknown as ControlledDocument).versions.length },
+    { id: "in_force", header: t("p.documents.in_force"), accessor: (r) => forceText(rowOf<ControlledDocument>(r)) },
+    { id: "versions", header: t("p.documents.versions"), align: "end", accessor: (r) => rowOf<ControlledDocument>(r).versions.length },
   ]);
 </script>
 

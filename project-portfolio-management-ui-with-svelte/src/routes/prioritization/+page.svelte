@@ -8,6 +8,7 @@
   reported as no evidence, never as a low score.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -60,7 +61,7 @@
     { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(1)) },
     { id: "band", header: t("p.prioritization.band_2"), format: (v) => enumLabel("band", String(v)), cell: bandCell },
     { id: "coverage", header: t("p.prioritization.coverage_2"), align: "end", format: (v) => `${Math.round(Number(v) * 100)}%` },
-    { id: "missing_evidence", header: t("p.prioritization.missing_evidence"), accessor: (r) => ((r as unknown as PRow).missing_evidence.length === 0 ? t("p.prioritization.none") : (r as unknown as PRow).missing_evidence.join(", ")) },
+    { id: "missing_evidence", header: t("p.prioritization.missing_evidence"), accessor: (r) => (rowOf<PRow>(r).missing_evidence.length === 0 ? t("p.prioritization.none") : rowOf<PRow>(r).missing_evidence.join(", ")) },
     { id: "pid", header: "", sortable: false, cell: explainCell },
   ]);
   const componentColumns: DataGridColumn[] = $derived([
@@ -73,7 +74,7 @@
 
 {#snippet planCell({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${row.pid}`)}>{formatted}</a>{/snippet}
 
-{#snippet bandCell({ row, formatted }: DataGridCellContext)}<span class={`chip ${(row as unknown as PRow).band}`}>{formatted}</span>{/snippet}
+{#snippet bandCell({ row, formatted }: DataGridCellContext)}<span class={`chip ${rowOf<PRow>(row).band}`}>{formatted}</span>{/snippet}
 
 {#snippet explainCell({ row }: DataGridCellContext)}
   <button class="button small" type="button" onclick={() => toggle(String(row.pid))}>

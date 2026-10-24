@@ -4,6 +4,7 @@
   happened; a risk is something that might. Age is in calendar days.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -55,7 +56,7 @@
 {/snippet}
 
 {#snippet dueCell({ row, formatted }: DataGridCellContext)}
-  {formatted}{#if (row as unknown as Issue).overdue}<strong> · {t("p.issues.overdue_flag")}</strong>{/if}
+  {formatted}{#if rowOf<Issue>(row).overdue}<strong> · {t("p.issues.overdue_flag")}</strong>{/if}
 {/snippet}
 
 

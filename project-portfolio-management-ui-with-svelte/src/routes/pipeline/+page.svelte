@@ -4,6 +4,7 @@
   and proposed use of the drum are two labelled bars, and a table gives the same dates with the reason.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -59,7 +60,7 @@
   type Proj = NonNullable<NonNullable<typeof pipe>["projects"]>[number];
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.critical_chain.col_project"), rowHeader: true },
-    { id: "needs", header: t("p.critical_chain.col_needs"), accessor: (r) => `${(r as unknown as Proj).first_drum_use} → ${(r as unknown as Proj).last_drum_use}` },
+    { id: "needs", header: t("p.critical_chain.col_needs"), accessor: (r) => `${rowOf<Proj>(r).first_drum_use} → ${rowOf<Proj>(r).last_drum_use}` },
     { id: "peak_fte", header: t("p.critical_chain.col_peak"), align: "end" },
     { id: "outcome", header: t("p.critical_chain.col_proposal"), format: (v) => tDynamic(outcomeLook(String(v)).word), cell: outcomeCell, cellClass: (c) => `cell-${outcomeLook(String(c.value)).tone}` },
     { id: "proposed_first_drum_use", header: t("p.critical_chain.col_proposed") },
@@ -129,7 +130,7 @@
             {/each}
           </ol>
         </figure>
-        <DataTable label={t("p.critical_chain.projects_h2")} columns={columns} rows={projects} rowId={(r) => String((r as unknown as Proj).plan_pid)} />
+        <DataTable label={t("p.critical_chain.projects_h2")} columns={columns} rows={projects} rowId={(r) => String(rowOf<Proj>(r).plan_pid)} />
       {/if}
     </section>
   {/if}

@@ -8,6 +8,7 @@
   separately instead of being quietly folded in somewhere.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -38,12 +39,12 @@
     { id: "phase", header: t("p.lifecycle.phase"), rowHeader: true, format: (v) => String(v).replaceAll("_", " ") },
     { id: "live", header: t("p.lifecycle.live"), align: "end" },
     { id: "stalled", header: t("p.lifecycle.stalled"), align: "end", cellClass: (c) => (Number(c.value) > 0 ? "cell-red" : "") },
-    { id: "share", header: t("p.lifecycle.share"), sortable: false, accessor: (r) => (r as unknown as Phase).live, cell: shareCell },
+    { id: "share", header: t("p.lifecycle.share"), sortable: false, accessor: (r) => rowOf<Phase>(r).live, cell: shareCell },
   ]);
 </script>
 
 {#snippet shareCell({ row }: DataGridCellContext)}
-  <span class="meter"><span class="fill" style:width="{total === 0 ? 0 : ((row as unknown as Phase).live / total) * 100}%"></span></span>
+  <span class="meter"><span class="fill" style:width="{total === 0 ? 0 : (rowOf<Phase>(row).live / total) * 100}%"></span></span>
 {/snippet}
 
 

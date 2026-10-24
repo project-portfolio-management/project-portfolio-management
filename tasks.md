@@ -1806,11 +1806,12 @@ came from grep.
   **Acceptance:** the copy count is near zero; a test with the Welsh locale and
   a 409 shows Welsh text.
   **Progress 2026-10-22 (not ticked).** `src/lib/error-text.ts` (`errorText(err, key, values?)`) replaces 159 of the copies in 88 files, mechanically; a 5xx now shows the catalogue fallback instead of the server's English text, a 4xx keeps the service's reason. Unit test; all UI gates pass. **Still to do:** the `resource()` helper (which would also close CQ-18's 25 pages); 15 variants falling back to `""` or `String(err)`; mapping service error codes to catalogue text; structured data instead of parsing English in `lib/pack-view.ts`.
-- [ ] **CQ-21 (M) — Typed DataTable.** Use `<script generics="T">` on
+- [x] **CQ-21 (M) — Typed DataTable.** Use `<script generics="T">` on
   `DataTable.svelte`, or a typed `columns<T>()` helper; 180 of the 182
   `as unknown as` casts are column accessors.
   **Acceptance:** `grep -c 'as unknown as'` is under 10 and `pnpm run check`
   is clean.
+  **Done 2026-10-24 (ticked, by the second route the task allows: a helper, not generics).** `rowOf<T>(row)` in `src/lib/row-of.ts` is now the one place a table row becomes the page's own type; 180 double casts in 41 files were replaced by it (mechanically, then fixed by hand where the pattern met `c.row` and a call's own parenthesis). `as unknown as` now appears twice in `src` (the helper, and a regex match in `pack-view.ts`), guarded by `tests/unit/row-casts.test.ts`. **Honest limit:** this moves the cast, it does not remove it. `rowOf<T>` is as unchecked as `as unknown as T` was: nothing ties `T` to the `rows` a table is given, so a wrong `T` still compiles. A real fix is `columns<T>()` / a generic `DataTable<T>` that types `accessor`, `format` and `cell` from `rows`; not started.
 - [x] **CQ-22 (S) — UI lint and format gate.** Add ESLint with
   `eslint-plugin-svelte` and Prettier, format the 51 files in their own commit,
   and add both to CI.

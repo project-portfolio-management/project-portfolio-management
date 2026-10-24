@@ -7,6 +7,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -46,24 +47,24 @@
   type Release = DevopsReleases["releases"][number];
   const blockedColumns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.engineering.task"), rowHeader: true },
-    { id: "item", header: t("p.engineering.item"), accessor: (r) => (r as unknown as Blocked).item?.name ?? "—" },
+    { id: "item", header: t("p.engineering.item"), accessor: (r) => rowOf<Blocked>(r).item?.name ?? "—" },
     { id: "assignee_ref", header: t("p.engineering.assignee"), format: (v) => (v ? String(v) : "—") },
     { id: "blocked_days", header: t("p.engineering.blocked_calendar_days"), align: "end" },
   ]);
   const linkColumns: DataGridColumn[] = $derived([
-    { id: "item", header: t("p.engineering.item"), rowHeader: true, accessor: (r) => (r as unknown as Tracked).item.name },
-    { id: "links", header: t("p.engineering.trackers"), sortable: false, accessor: (r) => (r as unknown as Tracked).links.map((l) => `${l.scheme}:${l.value}`).join(" "), cell: trackersCell },
+    { id: "item", header: t("p.engineering.item"), rowHeader: true, accessor: (r) => rowOf<Tracked>(r).item.name },
+    { id: "links", header: t("p.engineering.trackers"), sortable: false, accessor: (r) => rowOf<Tracked>(r).links.map((l) => `${l.scheme}:${l.value}`).join(" "), cell: trackersCell },
   ]);
   const releaseColumns: DataGridColumn[] = $derived([
     { id: "occurred_at", header: t("p.engineering.when") },
     { id: "version", header: t("p.engineering.version"), format: (v) => (v ? String(v) : "—") },
     { id: "environment", header: t("p.engineering.environment"), format: (v) => (v ? String(v) : "—") },
-    { id: "item", header: t("p.engineering.item"), accessor: (r) => (r as unknown as Release).item?.name ?? "—" },
+    { id: "item", header: t("p.engineering.item"), accessor: (r) => rowOf<Release>(r).item?.name ?? "—" },
   ]);
 </script>
 
 {#snippet trackersCell({ row }: DataGridCellContext)}
-  {#each (row as unknown as Tracked).links as link (link.scheme + link.value)}<code>{link.scheme}:{link.value}</code>&nbsp;{/each}
+  {#each rowOf<Tracked>(row).links as link (link.scheme + link.value)}<code>{link.scheme}:{link.value}</code>&nbsp;{/each}
 {/snippet}
 
 
@@ -100,7 +101,7 @@
 
 {#if links}
   <h2>{t("p.engineering.delivery_links")}</h2>
-  <DataTable label={t("p.engineering.item")} columns={linkColumns} rows={links.tracked} rowId={(r) => String((r as unknown as Tracked).item.pid)} emptyText={t("p.engineering.no_externally_tracked_items")} testid="eng-links" />
+  <DataTable label={t("p.engineering.item")} columns={linkColumns} rows={links.tracked} rowId={(r) => String(rowOf<Tracked>(r).item.pid)} emptyText={t("p.engineering.no_externally_tracked_items")} testid="eng-links" />
   {#if links.untracked.length > 0}
     <p data-testid="eng-untracked">
       {t("p.engineering.untracked")}

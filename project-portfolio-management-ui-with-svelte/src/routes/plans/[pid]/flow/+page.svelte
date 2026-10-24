@@ -18,6 +18,7 @@
   English-first, like the other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -85,13 +86,13 @@
   type Aging = AgingWip["aging"][number];
   type FlowColumn = PlanFlow["columns"][number];
   const agingColumns: DataGridColumn[] = $derived([
-    { id: "title", header: t("p.plans.pid.flow.item"), rowHeader: true, accessor: (r) => (r as unknown as Aging).task.title, cell: agingTitle },
+    { id: "title", header: t("p.plans.pid.flow.item"), rowHeader: true, accessor: (r) => rowOf<Aging>(r).task.title, cell: agingTitle },
     { id: "status", header: t("p.plans.pid.flow.status") },
-    { id: "age", header: t("p.plans.pid.flow.age"), align: "end", accessor: (r) => (r as unknown as Aging).aging.age_days, format: (v) => days(Number(v)) },
-    { id: "sle", header: t("p.plans.pid.flow.vs_expectation"), align: "end", accessor: (r) => (r as unknown as Aging).aging.sle_ratio ?? -1, cell: sleCell },
-    { id: "blocked", header: t("p.plans.pid.flow.blocked"), align: "end", accessor: (r) => (r as unknown as Aging).blocked_time_ms, format: (v) => msAsDays(Number(v)) },
+    { id: "age", header: t("p.plans.pid.flow.age"), align: "end", accessor: (r) => rowOf<Aging>(r).aging.age_days, format: (v) => days(Number(v)) },
+    { id: "sle", header: t("p.plans.pid.flow.vs_expectation"), align: "end", accessor: (r) => rowOf<Aging>(r).aging.sle_ratio ?? -1, cell: sleCell },
+    { id: "blocked", header: t("p.plans.pid.flow.blocked"), align: "end", accessor: (r) => rowOf<Aging>(r).blocked_time_ms, format: (v) => msAsDays(Number(v)) },
     { id: "rework_count", header: t("p.plans.pid.flow.rework"), align: "end" },
-    { id: "assignee", header: t("p.plans.pid.flow.assignee"), accessor: (r) => (r as unknown as Aging).task.assignee_ref ?? t("p.plans.pid.flow.unassigned") },
+    { id: "assignee", header: t("p.plans.pid.flow.assignee"), accessor: (r) => rowOf<Aging>(r).task.assignee_ref ?? t("p.plans.pid.flow.unassigned") },
   ]);
   const constraintColumns: DataGridColumn[] = $derived([
     { id: "rule", header: t("p.plans.pid.flow.rule"), rowHeader: true, cell: ruleCell },
@@ -102,33 +103,33 @@
   const columnColumns: DataGridColumn[] = $derived([
     { id: "status", header: t("p.plans.pid.flow.column"), rowHeader: true },
     { id: "count", header: t("p.plans.pid.flow.count"), align: "end" },
-    { id: "limit", header: t("p.plans.pid.flow.limit"), align: "end", accessor: (r) => (r as unknown as FlowColumn).limit ?? "", cell: limitCell },
+    { id: "limit", header: t("p.plans.pid.flow.limit"), align: "end", accessor: (r) => rowOf<FlowColumn>(r).limit ?? "", cell: limitCell },
   ]);
   const distributionRows = (s: NonNullable<typeof summary>) => [{ label: "Cycle time", d: s.cycle_time }, { label: "Lead time", d: s.lead_time }];
   type Dist = ReturnType<typeof distributionRows>[number];
   const distributionColumns: DataGridColumn[] = $derived([
     { id: "label", header: t("p.plans.pid.flow.measure"), rowHeader: true },
-    { id: "n", header: "n", align: "end", accessor: (r) => (r as unknown as Dist).d?.n ?? "—" },
-    { id: "min", header: t("p.plans.pid.flow.min"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.min_ms ?? null) },
-    { id: "p50", header: "p50", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p50_ms ?? null) },
-    { id: "p85", header: "p85", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p85_ms ?? null) },
-    { id: "p95", header: "p95", align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.p95_ms ?? null) },
-    { id: "max", header: t("p.plans.pid.flow.max"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.max_ms ?? null) },
-    { id: "mean", header: t("p.plans.pid.flow.mean"), align: "end", accessor: (r) => msAsDays((r as unknown as Dist).d?.mean_ms ?? null) },
+    { id: "n", header: "n", align: "end", accessor: (r) => rowOf<Dist>(r).d?.n ?? "—" },
+    { id: "min", header: t("p.plans.pid.flow.min"), align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.min_ms ?? null) },
+    { id: "p50", header: "p50", align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.p50_ms ?? null) },
+    { id: "p85", header: "p85", align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.p85_ms ?? null) },
+    { id: "p95", header: "p95", align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.p95_ms ?? null) },
+    { id: "max", header: t("p.plans.pid.flow.max"), align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.max_ms ?? null) },
+    { id: "mean", header: t("p.plans.pid.flow.mean"), align: "end", accessor: (r) => msAsDays(rowOf<Dist>(r).d?.mean_ms ?? null) },
   ]);
 </script>
 
 {#snippet agingTitle({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${pid}/board`)}>{formatted}</a>{/snippet}
 
 {#snippet sleCell({ row }: DataGridCellContext)}
-  {@const a = (row as unknown as Aging).aging}
+  {@const a = rowOf<Aging>(row).aging}
   {#if a.sle_ratio === null}<span class="muted">{t("p.plans.pid.flow.no_expectation_yet")}</span>{:else}{a.past_sle ? "⚠ " : ""}{percent(a.sle_ratio)}{/if}
 {/snippet}
 
 {#snippet ruleCell({ formatted }: DataGridCellContext)}<code>{formatted}</code>{/snippet}
 
 {#snippet limitCell({ row }: DataGridCellContext)}
-  {@const c = row as unknown as FlowColumn}
+  {@const c = rowOf<FlowColumn>(row)}
   {#if c.limit === null}<span class="muted">{t("p.plans.pid.flow.no_cap")}</span>{:else}{c.over_limit ? "⚠ " : ""}{c.limit}{/if}
 {/snippet}
 
@@ -213,7 +214,7 @@
   {#if aging.aging.length === 0}
     <p class="muted">{t("p.plans.pid.flow.nothing_in_progress")}</p>
   {:else}
-    <DataTable label={t("p.plans.pid.flow.item")} columns={agingColumns} rows={aging.aging} rowId={(r) => String((r as unknown as Aging).task.pid)} testid="aging-wip" />
+    <DataTable label={t("p.plans.pid.flow.item")} columns={agingColumns} rows={aging.aging} rowId={(r) => String(rowOf<Aging>(r).task.pid)} testid="aging-wip" />
     {#if overdue.length > 0}
       <p class="finding">
         {overdue.length === 1 ? t("p.plans.pid.flow.overdue_one", { count: overdue.length }) : t("p.plans.pid.flow.overdue_other", { count: overdue.length })}

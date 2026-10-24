@@ -7,6 +7,7 @@
   may manage people.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -127,19 +128,19 @@
   type PRow = SandboxPreview["tasks"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.plans.pid.what_if.task"), rowHeader: true, cell: whatTaskCell },
-    { id: "before", header: t("p.plans.pid.what_if.before"), accessor: (r) => dates((r as unknown as PRow).before) },
-    { id: "after", header: t("p.plans.pid.what_if.after"), accessor: (r) => dates((r as unknown as PRow).after) },
-    { id: "float", header: t("p.plans.pid.what_if.float"), sortable: false, accessor: (r) => { const x = r as unknown as PRow; return `${x.before?.total_float ?? "–"} → ${x.after?.total_float ?? "–"}`; }, cell: floatCell },
+    { id: "before", header: t("p.plans.pid.what_if.before"), accessor: (r) => dates(rowOf<PRow>(r).before) },
+    { id: "after", header: t("p.plans.pid.what_if.after"), accessor: (r) => dates(rowOf<PRow>(r).after) },
+    { id: "float", header: t("p.plans.pid.what_if.float"), sortable: false, accessor: (r) => { const x = rowOf<PRow>(r); return `${x.before?.total_float ?? "–"} → ${x.after?.total_float ?? "–"}`; }, cell: floatCell },
   ]);
 </script>
 
 {#snippet whatTaskCell({ row }: DataGridCellContext)}
-  {@const r = row as unknown as PRow}
+  {@const r = rowOf<PRow>(row)}
   {r.title}{#if r.assignee} <span class="muted small">({r.assignee})</span>{/if}
 {/snippet}
 
 {#snippet floatCell({ row, formatted }: DataGridCellContext)}
-  {formatted}{#if (row as unknown as PRow).after?.critical}<span class="small"> {t("p.plans.pid.what_if.critical")}</span>{/if}
+  {formatted}{#if rowOf<PRow>(row).after?.critical}<span class="small"> {t("p.plans.pid.what_if.critical")}</span>{/if}
 {/snippet}
 
 

@@ -7,6 +7,7 @@
   a symbol, never colour alone.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -35,20 +36,20 @@
   type Check = ScheduleHealth["checks"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.plans.pid.schedule_health.check"), rowHeader: true, format: (v, r) => `${r.id}. ${v}` },
-    { id: "result", header: t("p.plans.pid.schedule_health.result"), accessor: (r) => healthResult(r as unknown as Check).text, cell: resultCell, cellClass: (c) => ({ fail: "cell-red health-fail", na: "cell-grey health-na", pass: "" })[healthResult(c.row as unknown as Check).kind] },
-    { id: "found", header: t("p.plans.pid.schedule_health.what_was_found"), accessor: (r) => { const c = r as unknown as Check; return c.pass === null ? healthReason(c.reason) : healthValue(c); } },
-    { id: "held", header: t("p.plans.pid.schedule_health.held_to"), accessor: (r) => thresholdSentence(r as unknown as Check) },
-    { id: "fix", header: t("p.plans.pid.schedule_health.to_fix"), sortable: false, accessor: (r) => (r as unknown as Check).offenders.length, cell: fixCell },
+    { id: "result", header: t("p.plans.pid.schedule_health.result"), accessor: (r) => healthResult(rowOf<Check>(r)).text, cell: resultCell, cellClass: (c) => ({ fail: "cell-red health-fail", na: "cell-grey health-na", pass: "" })[healthResult(rowOf<Check>(c.row)).kind] },
+    { id: "found", header: t("p.plans.pid.schedule_health.what_was_found"), accessor: (r) => { const c = rowOf<Check>(r); return c.pass === null ? healthReason(c.reason) : healthValue(c); } },
+    { id: "held", header: t("p.plans.pid.schedule_health.held_to"), accessor: (r) => thresholdSentence(rowOf<Check>(r)) },
+    { id: "fix", header: t("p.plans.pid.schedule_health.to_fix"), sortable: false, accessor: (r) => rowOf<Check>(r).offenders.length, cell: fixCell },
   ]);
 </script>
 
 {#snippet resultCell({ row }: DataGridCellContext)}
-  {@const r = healthResult(row as unknown as Check)}
+  {@const r = healthResult(rowOf<Check>(row))}
   <span aria-hidden="true">{r.symbol}</span> {r.text}
 {/snippet}
 
 {#snippet fixCell({ row }: DataGridCellContext)}
-  {@const c = row as unknown as Check}
+  {@const c = rowOf<Check>(row)}
   {#if c.offenders.length === 0}
     {c.pass === false ? t("p.plans.pid.schedule_health.see_the_note") : "—"}
   {:else}

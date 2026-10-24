@@ -3,6 +3,7 @@
   other tasks and its labour cost, and the approver's decision. Nothing moves until it is approved.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -60,19 +61,19 @@
     { id: "requested_by", header: t("p.moves.col_by"), format: (v) => (v ? String(v) : "") },
     { id: "approver_ref", header: t("p.moves.col_approver") },
     { id: "status", header: t("p.moves.col_status"), format: (v) => tDynamic(`p.moves.status_${v}`), cell: statusCell, cellClass: (c) => ({ approved: "cell-green", refused: "cell-red", requested: "cell-amber" })[String(c.value)] ?? "" },
-    { id: "knock_on", header: t("p.moves.col_knock"), sortable: false, format: (_v, r) => t("p.moves.knock", { n: (r as unknown as DeploymentMove).knock_on.length, cost: cost((r as unknown as DeploymentMove).knock_on_cost.labour) }) },
+    { id: "knock_on", header: t("p.moves.col_knock"), sortable: false, format: (_v, r) => t("p.moves.knock", { n: rowOf<DeploymentMove>(r).knock_on.length, cost: cost(rowOf<DeploymentMove>(r).knock_on_cost.labour) }) },
     { id: "pid", header: t("p.moves.col_act"), sortable: false, cell: decideCell },
   ]);
 </script>
 
 {#snippet statusCell({ value, formatted, row }: DataGridCellContext)}
-  {@const m = row as unknown as DeploymentMove}
+  {@const m = rowOf<DeploymentMove>(row)}
   <span aria-hidden="true">{value === "approved" ? "●" : value === "refused" ? "✖" : "◆"}</span> {formatted}
   {#if m.decided_on}<br /><small>{t("p.moves.decided", { by: m.decided_by ?? "", on: m.decided_on.slice(0, 10), why: m.decision_reason ?? "" })}</small>{/if}
 {/snippet}
 
 {#snippet decideCell({ row }: DataGridCellContext)}
-  {@const m = row as unknown as DeploymentMove}
+  {@const m = rowOf<DeploymentMove>(row)}
   {#if m.status === "requested"}
     <label>{t("p.moves.decision_reason")} <input bind:value={why[m.pid]} maxlength="500" /></label>
     <button class="button" type="button" disabled={busy} aria-label={t("p.moves.approve_for", { name: title(m.task_pid) })} onclick={() => void decide(m.pid, "approve")}>{t("p.moves.approve")}</button>

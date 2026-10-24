@@ -9,6 +9,7 @@
   per-run cap.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -146,28 +147,28 @@
   const ruleColumns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.automations.name_2"), rowHeader: true },
     { id: "plan_pid", header: t("p.automations.scope"), format: (v) => (v ? `${String(v).slice(0, 8)}…` : t("p.automations.every_plan")) },
-    { id: "trigger", header: t("p.automations.trigger_2"), accessor: (r) => { const x = r as unknown as Rule; return `${x.trigger_kind}${x.from_status || x.to_status ? ` (${x.from_status ?? t("p.automations.any")} → ${x.to_status ?? t("p.automations.any")})` : ""}`; } },
+    { id: "trigger", header: t("p.automations.trigger_2"), accessor: (r) => { const x = rowOf<Rule>(r); return `${x.trigger_kind}${x.from_status || x.to_status ? ` (${x.from_status ?? t("p.automations.any")} → ${x.to_status ?? t("p.automations.any")})` : ""}`; } },
     { id: "action_kind", header: t("p.automations.action_2") },
     { id: "enabled", header: t("p.automations.state"), format: (v) => (v ? t("p.automations.on") : t("p.automations.off")) },
     { id: "pid", header: "", sortable: false, cell: ruleActions },
   ]);
   const scheduledColumns: DataGridColumn[] = $derived([
-    { id: "subject", header: t("p.automations.subject"), rowHeader: true, accessor: (r) => `${(r as unknown as ScheduledAction).subject_kind} ${(r as unknown as ScheduledAction).subject_pid.slice(0, 8)}…` },
+    { id: "subject", header: t("p.automations.subject"), rowHeader: true, accessor: (r) => `${rowOf<ScheduledAction>(r).subject_kind} ${rowOf<ScheduledAction>(r).subject_pid.slice(0, 8)}…` },
     { id: "action_kind", header: t("p.automations.action_2") },
     { id: "due_at", header: t("p.automations.due") },
-    { id: "source", header: t("p.automations.source"), accessor: (r) => ((r as unknown as ScheduledAction).source_automation_pid ? t("p.automations.automation") : t("p.automations.operator")) },
+    { id: "source", header: t("p.automations.source"), accessor: (r) => (rowOf<ScheduledAction>(r).source_automation_pid ? t("p.automations.automation") : t("p.automations.operator")) },
     { id: "pid", header: "", sortable: false, cell: scheduledActions },
   ]);
   const runColumns: DataGridColumn[] = $derived([
     { id: "created_at", header: t("p.automations.when"), rowHeader: true },
-    { id: "subject", header: t("p.automations.subject"), accessor: (r) => `${(r as unknown as AutomationRun).subject_kind} ${(r as unknown as AutomationRun).subject_pid.slice(0, 8)}…` },
+    { id: "subject", header: t("p.automations.subject"), accessor: (r) => `${rowOf<AutomationRun>(r).subject_kind} ${rowOf<AutomationRun>(r).subject_pid.slice(0, 8)}…` },
     { id: "outcome", header: t("p.automations.outcome"), cellClass: (c) => (c.value === "failed" ? "cell-red" : "") },
-    { id: "detail", header: t("p.automations.detail"), sortable: false, accessor: (r) => JSON.stringify((r as unknown as AutomationRun).detail) },
+    { id: "detail", header: t("p.automations.detail"), sortable: false, accessor: (r) => JSON.stringify(rowOf<AutomationRun>(r).detail) },
   ]);
 </script>
 
 {#snippet ruleActions({ row }: DataGridCellContext)}
-  {@const rule = row as unknown as Rule}
+  {@const rule = rowOf<Rule>(row)}
   <button class="button small" type="button" onclick={() => act(() => api.setAutomationEnabled(rule.pid, !rule.enabled))}>{rule.enabled ? t("p.automations.disable") : t("p.automations.enable")}</button>
   <button class="button small" type="button" onclick={() => act(() => api.deleteAutomation(rule.pid))}>{t("p.automations.delete")}</button>
 {/snippet}

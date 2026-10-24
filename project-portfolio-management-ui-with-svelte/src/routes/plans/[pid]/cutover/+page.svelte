@@ -4,6 +4,7 @@
   not slippage.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -93,7 +94,7 @@
 
   {#each decisions as d (d.pid)}
 {#snippet markCell({ row }: DataGridCellContext)}
-  {@const c = row as unknown as Criterion}
+  {@const c = rowOf<Criterion>(row)}
   <label>{t("p.cutover.evidence")} <input bind:value={evidence[`${d.pid}-${c.n}`]} maxlength="500" /></label>
   <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_met", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, true, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_met_short")}</button>
   <button class="button" type="button" disabled={busy} aria-label={t("p.cutover.mark_unmet", { name: `${c.n}` })} onclick={() => void run(() => ppm.markCutoverCriterion(pid, d.pid, c.n, false, (evidence[`${d.pid}-${c.n}`] ?? "").trim()))}>{t("p.cutover.mark_unmet_short")}</button>

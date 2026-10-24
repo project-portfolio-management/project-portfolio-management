@@ -7,6 +7,7 @@
   fallback band; a risk that could not be used is named with the reason.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -69,11 +70,11 @@
     { id: "share", header: t("p.plans.pid.schedule_risk.share"), align: "end", accessor: (r) => ((r as { count: number }).count / iterations) * 100, format: (v) => `${Number(v).toFixed(1)}%` },
   ];
   const taskColumns: DataGridColumn[] = $derived([
-    { id: "title", header: t("p.plans.pid.schedule_risk.task"), rowHeader: true, accessor: (r) => (r as unknown as RTask).title ?? (r as unknown as RTask).pid },
-    { id: "range", header: t("p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine"), accessor: (r) => { const x = r as unknown as RTask; return `${x.optimistic} / ${x.likely} / ${x.pessimistic}`; } },
-    { id: "estimate", header: t("p.plans.pid.schedule_risk.estimate"), accessor: (r) => sourceText(r as unknown as RTask), cell: sourceCell },
-    { id: "critical", header: t("p.plans.pid.schedule_risk.critical_in"), accessor: (r) => t("p.plans.pid.schedule_risk.of_runs", { criticalityText: criticalityText((r as unknown as RTask).criticality_bp) }) },
-    { id: "sensitivity", header: t("p.plans.pid.schedule_risk.sensitivity"), accessor: (r) => sensitivityText((r as unknown as RTask).sensitivity) },
+    { id: "title", header: t("p.plans.pid.schedule_risk.task"), rowHeader: true, accessor: (r) => rowOf<RTask>(r).title ?? rowOf<RTask>(r).pid },
+    { id: "range", header: t("p.plans.pid.schedule_risk.optimistic_likely_pessimistic_busine"), accessor: (r) => { const x = rowOf<RTask>(r); return `${x.optimistic} / ${x.likely} / ${x.pessimistic}`; } },
+    { id: "estimate", header: t("p.plans.pid.schedule_risk.estimate"), accessor: (r) => sourceText(rowOf<RTask>(r)), cell: sourceCell },
+    { id: "critical", header: t("p.plans.pid.schedule_risk.critical_in"), accessor: (r) => t("p.plans.pid.schedule_risk.of_runs", { criticalityText: criticalityText(rowOf<RTask>(r).criticality_bp) }) },
+    { id: "sensitivity", header: t("p.plans.pid.schedule_risk.sensitivity"), accessor: (r) => sensitivityText(rowOf<RTask>(r).sensitivity) },
   ]);
 </script>
 

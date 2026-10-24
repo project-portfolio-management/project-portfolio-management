@@ -7,6 +7,7 @@
   then the finish cost is stated.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -64,23 +65,23 @@
 
   type Move = LevelingProposal["moves"][number];
   const columns: DataGridColumn[] = $derived([
-    { id: "apply", header: t("p.plans.pid.leveling.apply"), sortable: false, accessor: (r) => picked[(r as unknown as Move).pid] ?? false, cell: applyCell },
-    { id: "title", header: t("p.plans.pid.leveling.task"), rowHeader: true, cell: moveTaskCell, accessor: (r) => (r as unknown as Move).title ?? (r as unknown as Move).pid },
-    { id: "person", header: t("p.plans.pid.leveling.person"), accessor: (r) => { const m = r as unknown as Move; return m.masked ? m.person : (m.person_ref ?? m.person); } },
-    { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => `${(r as unknown as Move).from_start} → ${(r as unknown as Move).scheduled_start}` },
-    { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => `${(r as unknown as Move).from_finish} → ${(r as unknown as Move).to_finish}` },
+    { id: "apply", header: t("p.plans.pid.leveling.apply"), sortable: false, accessor: (r) => picked[rowOf<Move>(r).pid] ?? false, cell: applyCell },
+    { id: "title", header: t("p.plans.pid.leveling.task"), rowHeader: true, cell: moveTaskCell, accessor: (r) => rowOf<Move>(r).title ?? rowOf<Move>(r).pid },
+    { id: "person", header: t("p.plans.pid.leveling.person"), accessor: (r) => { const m = rowOf<Move>(r); return m.masked ? m.person : (m.person_ref ?? m.person); } },
+    { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => `${rowOf<Move>(r).from_start} → ${rowOf<Move>(r).scheduled_start}` },
+    { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => `${rowOf<Move>(r).from_finish} → ${rowOf<Move>(r).to_finish}` },
     { id: "delay_days", header: t("p.plans.pid.leveling.later_by"), align: "end", format: (v) => (Number(v) === 1 ? t("p.plans.pid.leveling.business_day_one", { delay_days: Number(v) }) : t("p.plans.pid.leveling.business_day_other", { delay_days: Number(v) })) },
-    { id: "float", header: t("p.plans.pid.leveling.float"), accessor: (r) => `${(r as unknown as Move).float_before} → ${(r as unknown as Move).float_after}` },
+    { id: "float", header: t("p.plans.pid.leveling.float"), accessor: (r) => `${rowOf<Move>(r).float_before} → ${rowOf<Move>(r).float_after}` },
   ]);
 </script>
 
 {#snippet applyCell({ row }: DataGridCellContext)}
-  {@const m = row as unknown as Move}
+  {@const m = rowOf<Move>(row)}
   <input type="checkbox" bind:checked={picked[m.pid]} aria-label={`Apply: ${moveText(m)}`} />
 {/snippet}
 
 {#snippet moveTaskCell({ row }: DataGridCellContext)}
-  {@const m = row as unknown as Move}
+  {@const m = rowOf<Move>(row)}
   {m.title ?? m.pid}{#if m.critical} <span aria-hidden="true">▲</span> <strong>{t("p.plans.pid.leveling.critical")}</strong>{/if}
 {/snippet}
 

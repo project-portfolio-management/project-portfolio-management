@@ -5,6 +5,7 @@
   duplicate-demand checks, and promote-to-work-item.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -98,7 +99,7 @@
 {#snippet statusChip({ formatted }: DataGridCellContext)}<span class="chip">{formatted}</span>{/snippet}
 
 {#snippet proposalActions({ row }: DataGridCellContext)}
-  {@const proposal = row as unknown as Proposal}
+  {@const proposal = rowOf<Proposal>(row)}
   {#each actionsFor(proposal.status) as action (action)}
     <button class="button small" onclick={() => act(() => ppm.proposalAction(proposal.pid, action))}>{action}</button>
   {/each}

@@ -7,6 +7,7 @@
   be placed is listed, never dropped.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -117,19 +118,19 @@
     { id: "title", header: t("p.plans.pid.work.task"), rowHeader: true, cell: workTaskCell },
     ...(profile.totals.buckets ?? []).map((b, i): DataGridColumn => ({
       id: `b${i}`, header: label(b), align: "end",
-      accessor: (r) => ((r as unknown as WRow).buckets[i]?.minutes ?? 0), format: (v) => (v ? hoursText(Number(v)) : "–"),
+      accessor: (r) => (rowOf<WRow>(r).buckets[i]?.minutes ?? 0), format: (v) => (v ? hoursText(Number(v)) : "–"),
     })),
     { id: "work_minutes", header: t("p.plans.pid.work.total"), align: "end", cell: workTotalCell, format: (v) => hoursText(Number(v)) },
   ];
 </script>
 
 {#snippet workTaskCell({ row }: DataGridCellContext)}
-  {@const r = row as unknown as WRow}
+  {@const r = rowOf<WRow>(row)}
   {r.title} <span class="muted small">({r.contour.replace("_", " ")})</span>
 {/snippet}
 
 {#snippet workTotalCell({ row, formatted }: DataGridCellContext)}
-  {formatted}{#if !(row as unknown as WRow).placed} <span class="small">{t("p.plans.pid.work.not_placed")}</span>{/if}
+  {formatted}{#if !rowOf<WRow>(row).placed} <span class="small">{t("p.plans.pid.work.not_placed")}</span>{/if}
 {/snippet}
 
 

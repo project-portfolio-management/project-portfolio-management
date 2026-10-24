@@ -5,6 +5,7 @@
   other PPM views.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -36,8 +37,8 @@
     { id: "detail", header: t("p.compliance.detail") },
   ]);
   const registerColumns: DataGridColumn[] = $derived([
-    { id: "title", header: t("p.compliance.risk"), rowHeader: true, format: (v, r) => `${v}${(r as unknown as Row).escalated ? " ⚠" : ""}` },
-    { id: "item", header: t("p.compliance.item"), accessor: (r) => (r as unknown as Row).item?.name ?? "—" },
+    { id: "title", header: t("p.compliance.risk"), rowHeader: true, format: (v, r) => `${v}${rowOf<Row>(r).escalated ? " ⚠" : ""}` },
+    { id: "item", header: t("p.compliance.item"), accessor: (r) => rowOf<Row>(r).item?.name ?? "—" },
     { id: "status", header: t("p.compliance.status") },
     { id: "exposure", header: t("p.compliance.exposure"), align: "end" },
     { id: "owner_ref", header: t("p.compliance.owner"), format: (v) => (v ? String(v) : "—") },

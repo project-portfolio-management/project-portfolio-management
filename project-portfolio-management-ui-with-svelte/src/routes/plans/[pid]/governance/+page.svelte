@@ -6,6 +6,7 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -131,7 +132,7 @@
   ]);
   const benefitColumns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.plans.pid.governance.benefit"), rowHeader: true, cell: benefitCell },
-    { id: "target", header: t("p.plans.pid.governance.target"), align: "end", accessor: (r) => { const b = r as unknown as BenefitRow; return b.target_minor !== null ? money(b.target_minor, b.currency) : (b.target_note ?? "—"); } },
+    { id: "target", header: t("p.plans.pid.governance.target"), align: "end", accessor: (r) => { const b = rowOf<BenefitRow>(r); return b.target_minor !== null ? money(b.target_minor, b.currency) : (b.target_note ?? "—"); } },
     { id: "realized_minor", header: t("p.plans.pid.governance.realized"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
     { id: "status", header: t("p.plans.pid.governance.status"), cell: chip },
     { id: "realize", header: "", sortable: false, accessor: () => "", cell: realizeCell },
@@ -139,13 +140,13 @@
 </script>
 
 {#snippet riskCell({ row }: DataGridCellContext)}
-  {@const risk = row as unknown as Risk}
+  {@const risk = rowOf<Risk>(row)}
   {risk.title}{#if risk.mitigation}<div class="small muted">{risk.mitigation}</div>{/if}
   <RiskInputs {risk} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
 {/snippet}
 
 {#snippet exposureCell({ row }: DataGridCellContext)}
-  {@const risk = row as unknown as Risk}
+  {@const risk = rowOf<Risk>(row)}
   {risk.probability}×{risk.impact} = <strong>{risk.exposure}</strong>
 {/snippet}
 
@@ -154,7 +155,7 @@
 {#snippet chip({ formatted }: DataGridCellContext)}<span class="chip">{formatted}</span>{/snippet}
 
 {#snippet riskActions({ row }: DataGridCellContext)}
-  {@const risk = row as unknown as Risk}
+  {@const risk = rowOf<Risk>(row)}
   {#if risk.status === "open" || risk.status === "mitigating"}
     <button class="button danger small" onclick={() => act(() => ppm.escalateRisk(pid, risk.pid))}>{t("ppm.gov.escalate")}</button>
   {/if}
@@ -163,11 +164,11 @@
 {#snippet lineCell({ row, formatted }: DataGridCellContext)}{formatted} <span class="chip">{row.category}</span>{/snippet}
 
 {#snippet rangeCell({ row }: DataGridCellContext)}
-  <LineRange line={row as unknown as BudgetLine} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
+  <LineRange line={rowOf<BudgetLine>(row)} {pid} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
 {/snippet}
 
 {#snippet recordCell({ row }: DataGridCellContext)}
-  {@const line = row as unknown as BudgetLine}
+  {@const line = rowOf<BudgetLine>(row)}
   <form
     class="row"
     onsubmit={(e) => {
@@ -188,7 +189,7 @@
 {#snippet benefitCell({ row, formatted }: DataGridCellContext)}{formatted} <span class="chip">{row.category}</span>{/snippet}
 
 {#snippet realizeCell({ row }: DataGridCellContext)}
-  {@const benefit = row as unknown as BenefitRow}
+  {@const benefit = rowOf<BenefitRow>(row)}
   <form
     class="row"
     onsubmit={(e) => {

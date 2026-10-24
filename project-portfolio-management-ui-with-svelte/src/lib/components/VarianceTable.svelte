@@ -6,6 +6,7 @@
   with its baselined dates; one unscheduled on either side has no variance.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -19,16 +20,16 @@
   type VRow = typeof variance.rows[number];
   const columns: DataGridColumn[] = $derived([
     { id: "title", header: t("c.VarianceTable.task"), rowHeader: true },
-    { id: "standing", header: t("c.VarianceTable.standing"), accessor: (r) => { const x = standingText(r as unknown as VRow); return `${x.word}: ${x.detail}`; }, cell: standingCell },
-    { id: "baseline", header: t("c.VarianceTable.baselined"), accessor: (r) => `${(r as unknown as VRow).baseline_start ?? "—"} → ${(r as unknown as VRow).baseline_finish ?? "—"}` },
-    { id: "now", header: t("c.VarianceTable.now"), accessor: (r) => `${(r as unknown as VRow).start ?? "—"} → ${(r as unknown as VRow).finish ?? "—"}` },
+    { id: "standing", header: t("c.VarianceTable.standing"), accessor: (r) => { const x = standingText(rowOf<VRow>(r)); return `${x.word}: ${x.detail}`; }, cell: standingCell },
+    { id: "baseline", header: t("c.VarianceTable.baselined"), accessor: (r) => `${rowOf<VRow>(r).baseline_start ?? "—"} → ${rowOf<VRow>(r).baseline_finish ?? "—"}` },
+    { id: "now", header: t("c.VarianceTable.now"), accessor: (r) => `${rowOf<VRow>(r).start ?? "—"} → ${rowOf<VRow>(r).finish ?? "—"}` },
     { id: "start_variance_days", header: t("c.VarianceTable.start"), align: "end", format: (v) => sign(v as number | null) },
     { id: "finish_variance_days", header: t("c.VarianceTable.finish"), align: "end", format: (v) => sign(v as number | null) },
     { id: "duration_variance_days", header: t("c.VarianceTable.duration"), align: "end", format: (v) => sign(v as number | null) },
   ]);
 </script>
 
-{#snippet standingCell({ row, formatted }: DataGridCellContext)}<span aria-hidden="true">{standingText(row as unknown as VRow).marker}</span> {formatted}{/snippet}
+{#snippet standingCell({ row, formatted }: DataGridCellContext)}<span aria-hidden="true">{standingText(rowOf<VRow>(row)).marker}</span> {formatted}{/snippet}
 
 
 <div data-testid="variance">

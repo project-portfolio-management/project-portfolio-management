@@ -19,6 +19,7 @@
   not optional decoration — it is the relief the palette requires.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -133,8 +134,8 @@
   }
 
   const columns: DataGridColumn[] = $derived([
-    { id: "day", header: t("c.CumulativeFlow.day"), rowHeader: true, accessor: (r) => dayLabel((r as unknown as FlowSample).at_ms) },
-    ...BANDS.map((band): DataGridColumn => ({ id: band.status, header: band.label, align: "end", accessor: (r) => (r as unknown as FlowSample).counts[band.status] ?? 0 })),
+    { id: "day", header: t("c.CumulativeFlow.day"), rowHeader: true, accessor: (r) => dayLabel(rowOf<FlowSample>(r).at_ms) },
+    ...BANDS.map((band): DataGridColumn => ({ id: band.status, header: band.label, align: "end", accessor: (r) => rowOf<FlowSample>(r).counts[band.status] ?? 0 })),
     { id: "total", header: t("c.CumulativeFlow.total"), align: "end" },
   ]);
 </script>

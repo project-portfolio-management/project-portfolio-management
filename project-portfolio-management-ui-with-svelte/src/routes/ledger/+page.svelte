@@ -3,6 +3,7 @@
   amount and why.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -55,7 +56,7 @@
 </script>
 
 {#snippet traceCell({ row }: DataGridCellContext)}
-  {@const a = row as unknown as FundingAllocation}
+  {@const a = rowOf<FundingAllocation>(row)}
   <button class="button" type="button" aria-label={t("p.ledger.trace", { name: label(a) })} onclick={() => void open(a)}>{t("p.ledger.trace_short")}</button>
 {/snippet}
 

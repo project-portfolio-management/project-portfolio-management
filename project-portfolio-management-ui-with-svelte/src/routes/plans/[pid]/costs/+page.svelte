@@ -6,6 +6,7 @@
   Rates are finance data: someone without access sees a plain note, not an error.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -83,9 +84,9 @@
     { id: "name", header: "", rowHeader: true },
     ...c.total.buckets.map((b, i): DataGridColumn => ({
       id: `b${i}`, header: label(b), align: "end",
-      accessor: (r) => ((r as unknown as { m: Measure }).m.buckets[i]?.minor ?? 0), format: (v) => (v ? money(Number(v)) : "–"),
+      accessor: (r) => (rowOf<{ m: Measure }>(r).m.buckets[i]?.minor ?? 0), format: (v) => (v ? money(Number(v)) : "–"),
     })),
-    { id: "total", header: t("p.plans.pid.costs.total"), align: "end", accessor: (r) => (r as unknown as { m: Measure }).m.total_minor, format: (v) => money(Number(v)) },
+    { id: "total", header: t("p.plans.pid.costs.total"), align: "end", accessor: (r) => rowOf<{ m: Measure }>(r).m.total_minor, format: (v) => money(Number(v)) },
   ];
 </script>
 

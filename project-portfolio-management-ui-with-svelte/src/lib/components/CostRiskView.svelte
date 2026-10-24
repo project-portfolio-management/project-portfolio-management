@@ -6,6 +6,7 @@
   and every assumption, including that the inputs are independent.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -38,11 +39,11 @@
     { id: "mean_minor", header: t("c.CostRiskView.mean_simulated_cost"), align: "end", format: (v) => money(Number(v), cur) },
   ];
   const lineColumns = (cur: string): DataGridColumn[] => [
-    { id: "description", header: t("c.CostRiskView.line"), rowHeader: true, accessor: (r) => (r as unknown as Line).description ?? (r as unknown as Line).pid, cell: lineNameCell },
-    { id: "range", header: t("c.CostRiskView.low_planned_high"), sortable: false, accessor: (r) => { const l = r as unknown as Line; return `${money(l.low, cur)} / ${money(l.likely, cur)} / ${money(l.high, cur)}`; } },
-    { id: "estimate", header: t("c.CostRiskView.estimate"), accessor: (r) => lineSourceText(r as unknown as Line), cell: lineSourceCell },
+    { id: "description", header: t("c.CostRiskView.line"), rowHeader: true, accessor: (r) => rowOf<Line>(r).description ?? rowOf<Line>(r).pid, cell: lineNameCell },
+    { id: "range", header: t("c.CostRiskView.low_planned_high"), sortable: false, accessor: (r) => { const l = rowOf<Line>(r); return `${money(l.low, cur)} / ${money(l.likely, cur)} / ${money(l.high, cur)}`; } },
+    { id: "estimate", header: t("c.CostRiskView.estimate"), accessor: (r) => lineSourceText(rowOf<Line>(r)), cell: lineSourceCell },
     { id: "actual", header: t("c.CostRiskView.spent"), align: "end", format: (v) => money(Number(v), cur) },
-    { id: "sensitivity", header: t("c.CostRiskView.sensitivity"), accessor: (r) => sensitivityText((r as unknown as Line).sensitivity) },
+    { id: "sensitivity", header: t("c.CostRiskView.sensitivity"), accessor: (r) => sensitivityText(rowOf<Line>(r).sensitivity) },
   ];
 </script>
 

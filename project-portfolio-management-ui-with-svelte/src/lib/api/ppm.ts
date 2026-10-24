@@ -10,6 +10,7 @@ import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient } from "./client";
 import type { Collection } from "./types";
 import { t } from "../i18n.svelte.js";
+import { rowOf } from "#lib/row-of.js";
 
 // ---- wire shapes (mirroring the service responses) ----
 
@@ -3673,7 +3674,7 @@ export class PpmClient {
     });
     return source === "mspdi"
       ? mspdiReport(raw)
-      : (raw as unknown as TrackerImportReport);
+      : rowOf<TrackerImportReport>(raw);
   }
 
   // ---- controlled documents (PL-6) ----

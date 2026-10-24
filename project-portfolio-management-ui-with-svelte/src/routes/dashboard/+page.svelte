@@ -4,6 +4,7 @@
   English-first (locale catalogues extend as a follow-up).
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -28,15 +29,15 @@
   const columns: DataGridColumn[] = $derived([
     { id: "collection", header: t("ppm.dashboard.collection"), rowHeader: true },
     { id: "total", header: t("ppm.dashboard.total"), align: "end" },
-    { id: "red", header: t("ppm.dashboard.red"), align: "end", accessor: (r) => (r as unknown as Collection).rag.red, cellClass: "rag red" },
-    { id: "amber", header: t("ppm.dashboard.amber"), align: "end", accessor: (r) => (r as unknown as Collection).rag.amber, cellClass: "rag amber" },
-    { id: "green", header: t("ppm.dashboard.green"), align: "end", accessor: (r) => (r as unknown as Collection).rag.green, cellClass: "rag green" },
-    { id: "stages", header: t("ppm.dashboard.stages"), sortable: false, accessor: (r) => Object.entries((r as unknown as Collection).stages).map(([k, v]) => `${k}: ${v}`).join(", "), cell: stagesCell },
+    { id: "red", header: t("ppm.dashboard.red"), align: "end", accessor: (r) => rowOf<Collection>(r).rag.red, cellClass: "rag red" },
+    { id: "amber", header: t("ppm.dashboard.amber"), align: "end", accessor: (r) => rowOf<Collection>(r).rag.amber, cellClass: "rag amber" },
+    { id: "green", header: t("ppm.dashboard.green"), align: "end", accessor: (r) => rowOf<Collection>(r).rag.green, cellClass: "rag green" },
+    { id: "stages", header: t("ppm.dashboard.stages"), sortable: false, accessor: (r) => Object.entries(rowOf<Collection>(r).stages).map(([k, v]) => `${k}: ${v}`).join(", "), cell: stagesCell },
   ]);
 </script>
 
 {#snippet stagesCell({ row }: DataGridCellContext)}
-  {#each Object.entries((row as unknown as Collection).stages) as [stage, count] (stage)}<span class="chip">{stage}: {count}</span>{/each}
+  {#each Object.entries(rowOf<Collection>(row).stages) as [stage, count] (stage)}<span class="chip">{stage}: {count}</span>{/each}
 {/snippet}
 
 

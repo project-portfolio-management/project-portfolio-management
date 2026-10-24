@@ -4,6 +4,7 @@
   columns the chart cannot show (free float, constraint, deadline, calendar).
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -18,21 +19,21 @@
     { id: "early_finish", header: t("c.CpmTable.finishes") },
     { id: "total_float", header: t("c.CpmTable.total_float"), align: "end" },
     { id: "free_float", header: t("c.CpmTable.free_float"), align: "end" },
-    { id: "state", header: t("c.CpmTable.state"), accessor: (r) => floatLabel(r as unknown as CpmNode), cell: stateCell },
-    { id: "constraint", header: t("c.CpmTable.constraint"), accessor: (r) => { const n = r as unknown as CpmNode; return n.constraint ? `${n.constraint.toUpperCase()} ${n.constraint_date}` : "—"; }, cell: constraintCell },
+    { id: "state", header: t("c.CpmTable.state"), accessor: (r) => floatLabel(rowOf<CpmNode>(r)), cell: stateCell },
+    { id: "constraint", header: t("c.CpmTable.constraint"), accessor: (r) => { const n = rowOf<CpmNode>(r); return n.constraint ? `${n.constraint.toUpperCase()} ${n.constraint_date}` : "—"; }, cell: constraintCell },
     { id: "deadline", header: t("c.CpmTable.deadline"), format: (v) => (v ? String(v) : "—") },
     { id: "calendar", header: t("c.CpmTable.calendar"), format: (v) => (v === "plan+person" ? t("c.CpmTable.plan_assignee") : t("c.CpmTable.plan")) },
   ]);
 </script>
 
-{#snippet stateCell({ row, formatted }: DataGridCellContext)}<span aria-hidden="true">{floatState(row as unknown as CpmNode).marker}</span> {formatted}{/snippet}
+{#snippet stateCell({ row, formatted }: DataGridCellContext)}<span aria-hidden="true">{floatState(rowOf<CpmNode>(row)).marker}</span> {formatted}{/snippet}
 
 {#snippet constraintCell({ row, formatted }: DataGridCellContext)}
-  {formatted}{#if (row as unknown as CpmNode).hard_conflict}<strong> {t("c.CpmTable.overrides_its_predecessors")}</strong>{/if}
+  {formatted}{#if rowOf<CpmNode>(row).hard_conflict}<strong> {t("c.CpmTable.overrides_its_predecessors")}</strong>{/if}
 {/snippet}
 
 
-  <DataTable label={t("c.CpmTable.task_schedule_with_float_in")} columns={columns} rows={nodes} rowId={(r) => String(r.pid)} rowAttrs={(r) => ({ id: `task-${r.pid}` })} rowClass={(r) => floatState(r as unknown as CpmNode).key} testid="cpm-table" />
+  <DataTable label={t("c.CpmTable.task_schedule_with_float_in")} columns={columns} rows={nodes} rowId={(r) => String(r.pid)} rowAttrs={(r) => ({ id: `task-${r.pid}` })} rowClass={(r) => floatState(rowOf<CpmNode>(r)).key} testid="cpm-table" />
 
 <style>
   /* A critical task is marked at the start of its row, and a late one with a dashed mark: the row also says so in words. */

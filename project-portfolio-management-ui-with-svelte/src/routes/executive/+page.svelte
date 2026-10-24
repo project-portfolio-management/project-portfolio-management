@@ -8,6 +8,7 @@
   views).
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -46,16 +47,16 @@
   type BenefitPortfolio = ExecutiveBenefits["portfolios"][number];
   type Dec = DecisionEntry;
   const healthColumns: DataGridColumn[] = $derived([
-    { id: "portfolio", header: t("p.executive.portfolio"), rowHeader: true, accessor: (r) => bucketName((r as unknown as Health).portfolio) },
+    { id: "portfolio", header: t("p.executive.portfolio"), rowHeader: true, accessor: (r) => bucketName(rowOf<Health>(r).portfolio) },
     { id: "status", header: t("p.executive.status"), cell: statusCell, cellClass: (c) => ({ red: "cell-red", amber: "cell-amber", green: "cell-green" })[String(c.value)] ?? "" },
     { id: "members", header: t("p.executive.members"), align: "end" },
-    { id: "red", header: t("ppm.dashboard.red"), align: "end", accessor: (r) => (r as unknown as Health).rag.red },
-    { id: "amber", header: t("ppm.dashboard.amber"), align: "end", accessor: (r) => (r as unknown as Health).rag.amber },
-    { id: "green", header: t("ppm.dashboard.green"), align: "end", accessor: (r) => (r as unknown as Health).rag.green },
+    { id: "red", header: t("ppm.dashboard.red"), align: "end", accessor: (r) => rowOf<Health>(r).rag.red },
+    { id: "amber", header: t("ppm.dashboard.amber"), align: "end", accessor: (r) => rowOf<Health>(r).rag.amber },
+    { id: "green", header: t("ppm.dashboard.green"), align: "end", accessor: (r) => rowOf<Health>(r).rag.green },
     { id: "overdue_milestones", header: t("p.executive.overdue_milestones"), align: "end" },
     { id: "escalated_risks", header: t("p.executive.escalated_risks"), align: "end" },
     { id: "open_risk_exposure", header: t("p.executive.open_exposure"), align: "end" },
-    { id: "overrun_currencies", header: t("p.executive.overrun_currencies"), accessor: (r) => (r as unknown as Health).overrun_currencies.join(", ") || "—" },
+    { id: "overrun_currencies", header: t("p.executive.overrun_currencies"), accessor: (r) => rowOf<Health>(r).overrun_currencies.join(", ") || "—" },
     { id: "days_since_last_update", header: t("p.executive.calendar_days_since_update"), align: "end" },
   ]);
   type BRow = { portfolio: string; benefits: number | string; currency: string; target: string; realized: string; ratio: number | null | undefined; nonFinancial: number | null };
@@ -82,17 +83,17 @@
   ]);
   const decisionColumns: DataGridColumn[] = $derived([
     { id: "at", header: t("p.executive.when"), rowHeader: true },
-    { id: "kind", header: t("p.executive.kind"), accessor: (r) => { const e = r as unknown as Dec; return `${e.kind}${e.gate ? ` · ${e.gate}` : ""}`; } },
+    { id: "kind", header: t("p.executive.kind"), accessor: (r) => { const e = rowOf<Dec>(r); return `${e.kind}${e.gate ? ` · ${e.gate}` : ""}`; } },
     { id: "decision", header: t("p.executive.decision") },
-    { id: "subject", header: t("p.executive.subject"), accessor: (r) => { const s = (r as unknown as Dec).subject; return s.name ?? s.pid; } },
-    { id: "actor", header: t("p.executive.actor"), accessor: (r) => { const e = r as unknown as Dec; return e.actor ?? e.sponsor ?? "—"; } },
+    { id: "subject", header: t("p.executive.subject"), accessor: (r) => { const s = rowOf<Dec>(r).subject; return s.name ?? s.pid; } },
+    { id: "actor", header: t("p.executive.actor"), accessor: (r) => { const e = rowOf<Dec>(r); return e.actor ?? e.sponsor ?? "—"; } },
   ]);
 </script>
 
 {#snippet statusCell({ value }: DataGridCellContext)}<span class={`rag rag-${value}`}>{value}</span>{/snippet}
 
 {#snippet ratioCell({ row, value }: DataGridCellContext)}
-  {@const r = row as unknown as BRow}
+  {@const r = rowOf<BRow>(row)}
   {#if r.nonFinancial !== null}
     <span class="muted">{t("p.executive.non_financial_only", { non_financial: r.nonFinancial })}</span>
   {:else if value === null}
@@ -111,7 +112,7 @@
 {#if health}
   <h2>{t("p.executive.portfolio_health")}</h2>
   <p class="muted">{t("p.executive.as_of", { as_of: health.as_of, derivation: health.derivation })}</p>
-  <DataTable label={t("p.executive.portfolio")} columns={healthColumns} rows={health.portfolios} rowId={(r) => String((r as unknown as Health).portfolio?.pid ?? "unassigned")} testid="exec-health" />
+  <DataTable label={t("p.executive.portfolio")} columns={healthColumns} rows={health.portfolios} rowId={(r) => String(rowOf<Health>(r).portfolio?.pid ?? "unassigned")} testid="exec-health" />
 {/if}
 
 {#if benefits}
@@ -149,7 +150,7 @@
 
 {#if decisions}
   <h2>{t("p.executive.decision_log")}</h2>
-  <DataTable label={t("p.executive.decision")} columns={decisionColumns} rows={decisions} rowId={(r) => String(r.kind) + String(r.at) + String((r as unknown as Dec).subject.pid)} emptyText={t("p.executive.no_decisions_recorded_yet")} testid="exec-decisions" pageSize={50} searchable />
+  <DataTable label={t("p.executive.decision")} columns={decisionColumns} rows={decisions} rowId={(r) => String(r.kind) + String(r.at) + String(rowOf<Dec>(r).subject.pid)} emptyText={t("p.executive.no_decisions_recorded_yet")} testid="exec-decisions" pageSize={50} searchable />
 {/if}
 
 <style>

@@ -4,6 +4,7 @@
   deciding are done through the API.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -41,7 +42,7 @@
     { id: "title", header: t("p.change_requests.title_col"), rowHeader: true, cell: crTitle },
     { id: "kind", header: t("p.change_requests.kind_col"), format: (v) => enumLabel("cr_kind", String(v)) },
     { id: "status", header: t("p.change_requests.status_col"), format: (v) => enumLabel("cr_status", String(v)) },
-    { id: "impact", header: t("p.change_requests.impact_col"), sortable: false, accessor: (r) => impactText(r as unknown as CR) },
+    { id: "impact", header: t("p.change_requests.impact_col"), sortable: false, accessor: (r) => impactText(rowOf<CR>(r)) },
     { id: "approver_ref", header: t("p.change_requests.approver_col"), format: (v) => (v ? String(v) : t("p.change_requests.no_approver")) },
     { id: "age_calendar_days", header: t("p.change_requests.age_col"), align: "end" },
   ]);

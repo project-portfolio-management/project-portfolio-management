@@ -3,6 +3,7 @@
   a window; summed percent over 100 flags over-allocation.
 -->
 <script lang="ts">
+  import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -30,20 +31,20 @@
   type Person = CapacityView["people"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "person_ref", header: t("ppm.capacity.person"), rowHeader: true },
-    { id: "allocated_percent", header: t("ppm.capacity.allocated"), align: "end", format: (v) => `${v}%`, cell: allocCell, cellClass: (c) => ((c.row as unknown as Person).over_allocated ? "cell-red" : "") },
-    { id: "proposed", header: t("p.capacity.proposed"), align: "end", accessor: (r) => (r as unknown as Person).proposed.percent, format: (_v, r) => ((r as unknown as Person).proposed.allocations > 0 ? `${(r as unknown as Person).proposed.percent}%` : "—") },
-    { id: "load", header: t("ppm.capacity.load"), sortable: false, accessor: (r) => (r as unknown as Person).allocated_percent, cell: loadCell },
+    { id: "allocated_percent", header: t("ppm.capacity.allocated"), align: "end", format: (v) => `${v}%`, cell: allocCell, cellClass: (c) => ((rowOf<Person>(c.row)).over_allocated ? "cell-red" : "") },
+    { id: "proposed", header: t("p.capacity.proposed"), align: "end", accessor: (r) => rowOf<Person>(r).proposed.percent, format: (_v, r) => (rowOf<Person>(r).proposed.allocations > 0 ? `${rowOf<Person>(r).proposed.percent}%` : "—") },
+    { id: "load", header: t("ppm.capacity.load"), sortable: false, accessor: (r) => rowOf<Person>(r).allocated_percent, cell: loadCell },
     { id: "allocations", header: t("ppm.nav.capacity"), align: "end" },
   ]);
 </script>
 
 {#snippet allocCell({ formatted, row }: DataGridCellContext)}
   {formatted}
-  {#if (row as unknown as Person).over_allocated}<span class="chip red">{t("p.capacity.over")}</span>{/if}
+  {#if rowOf<Person>(row).over_allocated}<span class="chip red">{t("p.capacity.over")}</span>{/if}
 {/snippet}
 
 {#snippet loadCell({ row }: DataGridCellContext)}
-  {#if view}<CapacityMeter person={row as unknown as Person} from={view.from} to={view.to} />{/if}
+  {#if view}<CapacityMeter person={rowOf<Person>(row)} from={view.from} to={view.to} />{/if}
 {/snippet}
 
 

@@ -278,3 +278,24 @@ html[data-font="dyslexia"] textarea {
   text-align: center;
   letter-spacing: 0.04em;
 }
+
+/* The confirm question (ConfirmHost): a Lily AlertDialog, centred over the page. */
+dialog.confirm-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-inline-size: min(32rem, calc(100vw - 2rem));
+  block-size: fit-content;
+  padding: 1rem 1.25rem;
+  border: 2px solid currentColor;
+  border-radius: 0.5rem;
+  background: var(--mxi-color-surface, Canvas);
+  color: var(--mxi-color-fg, CanvasText);
+  z-index: 1000;
+}
+.confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-block-start: 1rem;
+}

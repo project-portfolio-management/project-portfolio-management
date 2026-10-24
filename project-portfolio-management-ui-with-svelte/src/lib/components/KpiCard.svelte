@@ -9,6 +9,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
   import type { KpiView, KpiCadence, PpmClient, KpiReading } from "#lib/api/ppm.js";
   import { STATUS_SYMBOL, STATUS_TEXT, staleText, thresholdText, trendText, valueText } from "#lib/kpi-view.js";
 
@@ -89,8 +90,8 @@
       }),
     );
   };
-  const remove = () => {
-    if (confirm(t("c.KpiCard.delete_the_kpi_its_readings", { name: k.name }))) void run(() => ppm.deleteKpi(k.pid));
+  const remove = async () => {
+    if (await askConfirm(t("c.KpiCard.delete_the_kpi_its_readings", { name: k.name }))) void run(() => ppm.deleteKpi(k.pid));
   };
 
   const historyColumns: DataGridColumn[] = $derived([

@@ -30,6 +30,7 @@
   import { validateMerge } from "#lib/components/merge-validation.js";
   import type { MergeRecordRow, MergeResponse, Plan } from "#lib/api/types.js";
   import { t, translate, localeHref } from "#lib/i18n.svelte.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
 
   const repo = PlanRepository.withFetch();
 
@@ -83,7 +84,7 @@
       dup: duplicateId,
       main: mainId,
     });
-    if (!confirm(question)) return;
+    if (!(await askConfirm(question))) return;
     merging = true;
     error = null;
     try {

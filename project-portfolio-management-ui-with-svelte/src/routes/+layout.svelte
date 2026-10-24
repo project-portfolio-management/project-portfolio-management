@@ -21,6 +21,7 @@
   import { PpmClient } from "#lib/api/ppm.js";
   import { isAbsent } from "#lib/absent.js";
   import { orderNavForView } from "#lib/nav.js";
+  import ConfirmHost from "#lib/components/ConfirmHost.svelte";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
 
@@ -380,6 +381,7 @@
     <p class="demo-banner" role="note">{t("p.demo.banner")} <a href={localeHref("/demo")}>{t("p.demo.banner_tour")}</a></p>
   {/if}
   <main>{@render children()}</main>
+  <ConfirmHost />
 </div>
 
 <style>

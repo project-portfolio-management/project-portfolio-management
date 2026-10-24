@@ -7,6 +7,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
   import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection } from "#lib/api/ppm.js";
   import { percentText, progressValue, keyResultProgress, valueText, confidenceText } from "#lib/okr-view.js";
 
@@ -45,8 +46,8 @@
     e.preventDefault();
     void run(() => ppm.updateObjective(o.pid, { title, description: o.description, period: period.trim() || null }));
   };
-  const removeObjective = () => {
-    if (confirm(t("c.ObjectiveCard.delete_the_objective_and_its", { title: o.title }))) void run(() => ppm.deleteObjective(o.pid));
+  const removeObjective = async () => {
+    if (await askConfirm(t("c.ObjectiveCard.delete_the_objective_and_its", { title: o.title }))) void run(() => ppm.deleteObjective(o.pid));
   };
 
   // Add a key result.
@@ -185,7 +186,7 @@
                 <input type="number" step="1" required bind:value={editTarget[k.pid]} placeholder={String(k.target_value)} />
               </label>
               <button class="button small" type="submit">{t("c.ObjectiveCard.save")}</button>
-              <button class="button small" type="button" onclick={() => confirm(t("c.ObjectiveCard.delete_the_key_result", { title: k.title })) && void run(() => ppm.deleteKeyResult(k.pid))}>{t("c.ObjectiveCard.delete")}</button>
+              <button class="button small" type="button" onclick={async () => (await askConfirm(t("c.ObjectiveCard.delete_the_key_result", { title: k.title }))) && void run(() => ppm.deleteKeyResult(k.pid))}>{t("c.ObjectiveCard.delete")}</button>
             </form>
             <p class="small muted">{t("c.ObjectiveCard.the_baseline_metric_and_direction")}</p>
           </details>

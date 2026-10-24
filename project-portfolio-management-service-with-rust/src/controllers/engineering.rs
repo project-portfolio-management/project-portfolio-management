@@ -299,10 +299,13 @@ async fn create_task(
     .insert(&txn)
     .await
     .map_err(|e| Error::Model(ModelError::from(e)))?;
+    AuditModel::record(&txn, row.pid, "task_created", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
     txn.commit()
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(&ctx.db, row.pid, "task_created", caller.actor(), None).await;
+
     if let Some(sub) = caller.actor() {
         super::watchers::ensure_watching(&ctx.db, "task", row.pid, sub).await;
     }
@@ -637,17 +640,19 @@ async fn move_task(
         .insert(&txn)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    txn.commit()
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         task_pid,
         "task_moved",
         caller.actor(),
         Some(serde_json::json!({ "from": from, "to": payload.status })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit()
+        .await
+        .map_err(|e| Error::Model(ModelError::from(e)))?;
+
     crate::live::publish(
         item.pid,
         "task_moved",

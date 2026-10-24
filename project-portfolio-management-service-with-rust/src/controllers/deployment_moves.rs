@@ -299,11 +299,13 @@ async fn decide(
         ));
     }
     let approve = b.decision == "approve";
+    // The go-live date, the move and both audit rows are one change.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     if approve {
         let task = tasks::Entity::find()
             .filter(tasks::Column::Pid.eq(m.task_pid))
             .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
+            .one(&txn)
             .await
             .map_err(db_err)?
             .ok_or(Error::NotFound)?;
@@ -318,24 +320,25 @@ async fn decide(
         }
         let mut a: tasks::ActiveModel = task.into();
         a.start_date = ActiveValue::set(Some(m.to_start));
-        a.update(&ctx.db).await.map_err(db_err)?;
-        AuditModel::record_or_log(
-            &ctx.db,
+        a.update(&txn).await.map_err(db_err)?;
+        AuditModel::record(
+            &txn,
             m.task_pid,
             "deployment_go_live_moved",
             caller.actor(),
             Some(json!({ "from": m.from_start, "to": m.to_start, "move": m.pid })),
         )
-        .await;
+        .await
+        .map_err(super::audit_failed)?;
     }
     let mut a: moves::ActiveModel = m.into();
     a.status = ActiveValue::set(if approve { "approved" } else { "refused" }.to_string());
     a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.decided_on = ActiveValue::set(Some(crate::tz::deployment_today()));
     a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let row = a.update(&txn).await.map_err(db_err)?;
+    AuditModel::record(
+        &txn,
         row.pid,
         if approve {
             "deployment_move_approved"
@@ -345,7 +348,9 @@ async fn decide(
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(view(&row))
 }
 

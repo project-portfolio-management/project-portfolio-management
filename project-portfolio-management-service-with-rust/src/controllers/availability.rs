@@ -184,9 +184,8 @@ async fn create(
     .insert(&txn)
     .await
     .map_err(overlap_or_db_err)?;
-    txn.commit().await.map_err(overlap_or_db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         row.pid,
         "availability_set",
         caller.actor(),
@@ -195,7 +194,10 @@ async fn create(
             "to": row.to_date, "max_percent": row.max_percent }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(overlap_or_db_err)?;
+
     format::json(view(&row))
 }
 

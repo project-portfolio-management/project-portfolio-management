@@ -208,16 +208,17 @@ async fn decide(
         row.subject_kind.clone(),
         row.subject_pid,
     );
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let updated = settle(
-        &ctx,
+        &txn,
         request_pid,
         status,
         p.comment.as_ref().map(|c| c.trim().to_string()),
         Some(claims.sub.clone()),
     )
     .await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         request_pid,
         &format!("approval_{status}"),
         Some(&claims.sub),
@@ -227,7 +228,9 @@ async fn decide(
             "comment": p.comment,
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     // An approval that belongs to a process moves that process on (or ends it).
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
@@ -260,15 +263,18 @@ async fn withdraw(
     }
     let status = rules::withdraw(&row.status).map_err(|r| conflict(&r.message()))?;
     let request_pid = row.pid;
-    let updated = settle(&ctx, request_pid, status, None, None).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let updated = settle(&txn, request_pid, status, None, None).await?;
+    AuditModel::record(
+        &txn,
         request_pid,
         "approval_withdrawn",
         Some(&claims.sub),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
     format::json(updated)
@@ -278,8 +284,8 @@ async fn withdraw(
 /// the condition, so of two racing decisions (or a decision and a withdrawal) exactly one
 /// lands and the other is a 409 — never a last-write-wins that leaves what hangs off the
 /// request (a process step, a document version) disagreeing with it.
-async fn settle(
-    ctx: &AppContext,
+async fn settle<C: ConnectionTrait>(
+    db: &C,
     pid: Uuid,
     status: &str,
     comment: Option<String>,
@@ -308,13 +314,13 @@ async fn settle(
                 sea_orm::sea_query::Expr::value(chrono::Utc::now().fixed_offset()),
             );
     }
-    let done = q.exec(&ctx.db).await.map_err(db_err)?;
+    let done = q.exec(db).await.map_err(db_err)?;
     if done.rows_affected != 1 {
         return Err(conflict("this request was already decided or withdrawn"));
     }
     approval_requests::Entity::find()
         .filter(approval_requests::Column::Pid.eq(pid))
-        .one(&ctx.db)
+        .one(db)
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)

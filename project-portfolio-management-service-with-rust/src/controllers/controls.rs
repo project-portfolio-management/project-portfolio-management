@@ -218,8 +218,8 @@ fn register_error(err: RegisterError) -> Error {
 /// callers record different audit event names). Returns the inserted
 /// row plus the parsed [`rules::Timing`] (needed for
 /// `permitted_response`, and cheaper than re-parsing the stored token).
-async fn register_control(
-    ctx: &AppContext,
+async fn register_control<C: ConnectionTrait>(
+    db: &C,
     plan_pid: Uuid,
     payload: &ControlPayload,
 ) -> std::result::Result<(controls::Model, rules::Timing), RegisterError> {
@@ -266,7 +266,7 @@ async fn register_control(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(db)
     .await
     .map_err(RegisterError::Db)?;
 
@@ -282,18 +282,15 @@ async fn create(
     Json(payload): Json<ControlPayload>,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let (row, timing) = register_control(&ctx, plan.pid, &payload)
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let (row, timing) = register_control(&txn, plan.pid, &payload)
         .await
         .map_err(register_error)?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
-        plan.pid,
-        "control_registered",
-        caller.actor(),
-        None,
-    )
-    .await;
+    AuditModel::record(&txn, plan.pid, "control_registered", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
         "permitted_response": rules::permitted_response(timing),
@@ -436,13 +433,14 @@ async fn register_standard(
         ));
     }
 
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let mut outcomes = Vec::with_capacity(4);
     for candidate in &standard_control_payloads(&payload) {
         let existing = controls::Entity::find()
             .filter(controls::Column::PlanPid.eq(plan.pid))
             .filter(controls::Column::Metric.eq(candidate.metric.as_str()))
             .filter(controls::Column::DeletedAt.is_null())
-            .one(&ctx.db)
+            .one(&txn)
             .await
             .map_err(db_err)?;
         if existing.is_some() {
@@ -452,7 +450,7 @@ async fn register_standard(
             }));
             continue;
         }
-        let (row, _timing) = register_control(&ctx, plan.pid, candidate)
+        let (row, _timing) = register_control(&txn, plan.pid, candidate)
             .await
             .map_err(register_error)?;
         outcomes.push(serde_json::json!({
@@ -462,14 +460,16 @@ async fn register_standard(
         }));
     }
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "standard_controls_registered",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
 
     format::json(serde_json::json!({ "controls": outcomes }))
 }
@@ -710,9 +710,8 @@ async fn convert_to_issue(
     let mut active: control_actions::ActiveModel = action.clone().into();
     active.converted_issue_pid = ActiveValue::set(Some(issue.pid));
     active.update(&txn).await.map_err(db_err)?;
-    txn.commit().await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         control.pid,
         "control_action_converted",
         caller.actor(),
@@ -721,7 +720,10 @@ async fn convert_to_issue(
             "issue_pid": issue.pid.to_string(),
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
         "issue_pid": issue.pid.to_string(),
@@ -833,10 +835,9 @@ async fn convert_action(
     let mut active: control_actions::ActiveModel = action.clone().into();
     active.converted_task_pid = ActiveValue::set(Some(task.pid));
     active.update(&txn).await.map_err(db_err)?;
-    txn.commit().await.map_err(db_err)?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         control.pid,
         "control_action_converted",
         caller.actor(),
@@ -845,7 +846,10 @@ async fn convert_action(
             "task_pid": task.pid.to_string(),
         })),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
         "task_pid": task.pid.to_string(),

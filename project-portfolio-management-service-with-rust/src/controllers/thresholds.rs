@@ -165,24 +165,27 @@ async fn set_threshold(
             rules::KINDS
         )));
     }
+    let txn = ctx.db.begin().await.map_err(db_err)?;
     let existing = thresholds::Entity::find()
         .filter(thresholds::Column::PlanPid.eq(plan.pid))
         .filter(thresholds::Column::Kind.eq(&b.kind))
-        .one(&ctx.db)
+        .one(&txn)
         .await
         .map_err(db_err)?;
     if b.remove {
         if let Some(e) = existing {
-            e.delete(&ctx.db).await.map_err(db_err)?;
+            e.delete(&txn).await.map_err(db_err)?;
         }
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record(
+            &txn,
             plan.pid,
             "threshold_removed",
             caller.actor(),
             Some(json!({ "kind": b.kind })),
         )
-        .await;
+        .await
+        .map_err(super::audit_failed)?;
+        txn.commit().await.map_err(db_err)?;
         return format::json(json!({ "removed": b.kind }));
     }
     let (count, date, amount, currency) = match b.kind.as_str() {
@@ -209,7 +212,7 @@ async fn set_threshold(
         a.date_value = ActiveValue::set(date);
         a.amount_minor = ActiveValue::set(amount);
         a.currency = ActiveValue::set(currency);
-        a.update(&ctx.db).await.map_err(db_err)?
+        a.update(&txn).await.map_err(db_err)?
     } else {
         thresholds::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
@@ -221,18 +224,20 @@ async fn set_threshold(
             currency: ActiveValue::set(currency),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(&txn)
         .await
         .map_err(db_err)?
     };
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         plan.pid,
         "threshold_set",
         caller.actor(),
         Some(threshold_view(&row)),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(threshold_view(&row))
 }
 
@@ -389,20 +394,24 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     Some(c) if !c.trim().is_empty() => format!("{c} {cause}"),
                     _ => cause.clone(),
                 }));
-                a.update(&ctx.db).await.map_err(db_err)?;
-                AuditModel::record_or_log(
-                    &ctx.db,
+                let txn = ctx.db.begin().await.map_err(db_err)?;
+                a.update(&txn).await.map_err(db_err)?;
+                AuditModel::record(
+                    &txn,
                     o.pid,
                     "threshold_attached_to_exception",
                     actor.as_deref(),
                     Some(json!({ "kind": t.kind })),
                 )
-                .await;
+                .await
+                .map_err(super::audit_failed)?;
+                txn.commit().await.map_err(db_err)?;
                 row["outcome"] = json!("attached_to_open_exception");
                 row["exception_pid"] = json!(o.pid);
             }
             None => {
                 let now = Utc::now();
+                let txn = ctx.db.begin().await.map_err(db_err)?;
                 let e = exceptions::ActiveModel {
                     pid: ActiveValue::set(Uuid::new_v4()),
                     plan_pid: ActiveValue::set(plan.pid),
@@ -419,17 +428,19 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
                     threshold_kind: ActiveValue::set(Some(t.kind.clone())),
                     ..Default::default()
                 }
-                .insert(&ctx.db)
+                .insert(&txn)
                 .await
                 .map_err(db_err)?;
-                AuditModel::record_or_log(
-                    &ctx.db,
+                AuditModel::record(
+                    &txn,
                     e.pid,
                     "threshold_exception_opened",
                     actor.as_deref(),
                     Some(json!({ "kind": t.kind })),
                 )
-                .await;
+                .await
+                .map_err(super::audit_failed)?;
+                txn.commit().await.map_err(db_err)?;
                 row["outcome"] = json!("opened");
                 row["exception_pid"] = json!(e.pid);
             }

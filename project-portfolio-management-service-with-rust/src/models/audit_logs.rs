@@ -146,36 +146,26 @@ mod tests {
     /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
     /// write. `record_or_log` (log, count, keep the write) is for the writes not yet moved and for audited reads.
     /// This list can only shrink: a file's count may go down (then lower it here), never up, and a file not
-    /// named here may not call it. Today: 45 calls in 26 controllers.
+    /// named here may not call it. Today: 26 calls in 16 controllers.
     #[test]
     fn the_writes_that_still_keep_a_failed_audit_only_shrink() {
         const KNOWN: &[(&str, usize)] = &[
-            ("approvals.rs", 2),
             ("attachments.rs", 2),
             ("automation.rs", 4),
-            ("availability.rs", 1),
             ("buffer_management.rs", 2),
             ("bulk.rs", 4),
             ("calendars.rs", 1),
             ("change_requests.rs", 1),
-            ("controls.rs", 4),
             ("cost_rates.rs", 1),
-            ("deployment_moves.rs", 2),
-            ("engineering.rs", 2),
-            ("financials.rs", 1),
-            ("milestones.rs", 1),
             ("mspdi_export.rs", 1),
             ("mspdi_import.rs", 1),
             ("plan_templates.rs", 1),
             ("raci.rs", 1),
             ("register.rs", 1),
             ("report_schedules.rs", 1),
-            ("schedule_baselines.rs", 1),
             ("start_control.rs", 2),
             ("task_bulk.rs", 1),
-            ("thresholds.rs", 4),
             ("timesheets.rs", 2),
-            ("workflow.rs", 1),
         ];
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
         let mut faults = Vec::new();

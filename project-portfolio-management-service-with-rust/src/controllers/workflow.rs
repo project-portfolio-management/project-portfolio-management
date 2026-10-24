@@ -112,7 +112,7 @@ pub(crate) async fn register_own(
         states: Vec::new(),
         transitions: Vec::new(),
     };
-    persist(ctx, &payload, def).await.map(|_| ())
+    persist(&ctx.db, &payload, def).await.map(|_| ())
 }
 
 /// The workflow in force for a plan and resource kind.
@@ -200,8 +200,8 @@ struct TransitionPayload {
 /// Split from the handler so the validation half stays readable; the
 /// ordering matters — the parent row first, so a state can never
 /// reference a workflow that does not exist.
-async fn persist(
-    ctx: &AppContext,
+async fn persist<C: ConnectionTrait>(
+    db: &C,
     payload: &WorkflowPayload,
     def: &rules::WorkflowDef,
 ) -> Result<workflows::Model> {
@@ -216,7 +216,7 @@ async fn persist(
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(db)
     .await
     .map_err(db_err)?;
 
@@ -233,7 +233,7 @@ async fn persist(
             position: ActiveValue::set(i32::try_from(position).unwrap_or(0)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(db)
         .await
         .map_err(db_err)?;
     }
@@ -246,7 +246,7 @@ async fn persist(
             roles: ActiveValue::set(serde_json::json!(transition.roles)),
             ..Default::default()
         }
-        .insert(&ctx.db)
+        .insert(db)
         .await
         .map_err(db_err)?;
     }
@@ -329,16 +329,20 @@ async fn create(
         )));
     }
 
-    let workflow = persist(&ctx, &payload, &def).await?;
+    // The workflow, its states and transitions, and the audit row are one change.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let workflow = persist(&txn, &payload, &def).await?;
 
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         payload.plan_pid.unwrap_or(workflow.pid),
         "workflow_registered",
         caller.actor(),
         None,
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
 }
 

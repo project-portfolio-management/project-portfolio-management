@@ -540,9 +540,8 @@ async fn set_links(
         Mode::Linked => "linked".to_string(),
     });
     a.update(&txn).await.map_err(db_err)?;
-    txn.commit().await.map_err(db_err)?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record(
+        &txn,
         m.pid,
         "milestone_links_set",
         caller.actor(),
@@ -551,7 +550,10 @@ async fn set_links(
             "to": { "tasks": b.task_pids, "mode": mode } }),
         ),
     )
-    .await;
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+
     format::json(
         serde_json::json!({ "pid": m.pid, "completion_mode": mode, "task_pids": b.task_pids }),
     )

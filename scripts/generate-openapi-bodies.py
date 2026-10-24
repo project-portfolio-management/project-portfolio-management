@@ -158,6 +158,8 @@ def main():
 //! type, so a route and its documented body cannot drift apart. Applied only where the hand-written schemas in
 //! [`crate::openapi_schemas`] have not already given the operation a body.
 
+#![cfg_attr(rustfmt, rustfmt::skip)]
+
 use schemars::generate::SchemaSettings;
 use serde_json::{{Value, json}};
 
@@ -211,7 +213,6 @@ pub fn document_missing(paths: &mut Value) {{
 }}
 
 /// Attach the derived request bodies to `paths`.
-#[rustfmt::skip]
 #[expect(clippy::too_many_lines, reason = "one line per route, generated")]
 pub fn attach(paths: &mut Value) {{
     let settings = SchemaSettings::openapi3().with(|s| s.inline_subschemas = true);

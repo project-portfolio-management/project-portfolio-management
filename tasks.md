@@ -1863,10 +1863,11 @@ can give a wrong answer ([plan.md §66](plan.md)).
   **Acceptance:** a concurrent delete test removes the intended goal or gets a
   412.
   **Built 2026-10-21, by tag rather than by id.** A `Goal` is a matcher type with no id, and adding one would change the matchable payload; instead `controllers/goals.rs` sends `ETag: W/"<16 hex of SHA-256 of the goals>"` on every answer and refuses a stale `If-Match` with 412 on replace and delete. `paging_mw` keeps an `ETag` when the page is the whole list. Request test in `requests::goals`. **Deviations, stated:** goals are still addressed by position; `If-Match` is optional (old clients unchanged); the read-check-write is not atomic; the UI was not changed to send `If-Match`.
-- [ ] **CF-3 (S) — A database constraint for availability overlap** (an
+- [x] **CF-3 (S) — A database constraint for availability overlap** (an
   exclusion constraint on the date range per resource, PJ-3).
   **Acceptance:** two concurrent overlapping inserts leave one row.
   **Progress 2026-10-21 (not ticked: the race is not reproduced).** Built with a lock, not a constraint (an exclusion constraint on a date range per text key needs `btree_gist`): `create` reads, checks and inserts in one transaction under `advisory_lock("availability", person_ref)`. A request test sends two overlapping ranges with `tokio::join!` and expects one 200 and one 409, but it also passed with the lock removed (20 rounds), because the in-process server serialises them. **Still to do:** a test that really overlaps the two transactions (two database connections, or a multi-threaded runtime), or the constraint if `btree_gist` is acceptable to deployers.
+  **Done 2026-10-24 (ticked).** The constraint, on `btree_gist` (migration 87, spec `10-persistence.md`). The request test now also inserts two overlapping ranges from two transactions on two connections, past the service; exactly one survives. I confirmed it fails when the constraint is replaced by `CHECK (true)`. **Not verified:** the service's `409` mapping of the database error (`overlap_or_db_err`) is not exercised by a test, because the advisory lock keeps requests from reaching it; the migration on a database that already has overlapping ranges (it fails by design); `btree_gist` on a managed database whose role may not create extensions.
 - [ ] **CF-4 (M) — Who may acknowledge or resolve an escalation, and who may
   edit a shared framework.** Name a role or ABAC area for each, and give shared
   frameworks a version, so one plan's edit does not change every plan that

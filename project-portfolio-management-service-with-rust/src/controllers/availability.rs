@@ -117,6 +117,21 @@ struct Body {
     note: Option<String>,
 }
 
+/// The database refused an overlapping range (the exclusion constraint, CF-3): the same answer the
+/// service's own check gives. Anything else is an ordinary database error.
+fn overlap_or_db_err(e: sea_orm::DbErr) -> Error {
+    if e.to_string().contains("person_availabilities_no_overlap") {
+        return Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new(
+                "conflict",
+                "this range overlaps one already set for this person; remove or change that one first",
+            ),
+        );
+    }
+    db_err(e)
+}
+
 /// `POST /api/availability` — set a person's capacity for a date range.
 #[debug_handler]
 async fn create(
@@ -168,8 +183,8 @@ async fn create(
     }
     .insert(&txn)
     .await
-    .map_err(db_err)?;
-    txn.commit().await.map_err(db_err)?;
+    .map_err(overlap_or_db_err)?;
+    txn.commit().await.map_err(overlap_or_db_err)?;
     AuditModel::record_or_log(
         &ctx.db,
         row.pid,

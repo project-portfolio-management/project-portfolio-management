@@ -288,3 +288,11 @@ Row-level soft delete, append-only logs and immutability are enforced
 in the database (CHECKs and triggers) for the 2026-10 groups above;
 for the earlier groups see their own migration files (not re-audited
 here: **unverified**).
+
+**Availability ranges (CF-3, migration `20261024 87`).** One person's non-removed `person_availabilities`
+ranges cannot overlap, inclusive of both end dates: an exclusion constraint
+`person_availabilities_no_overlap` (`EXCLUDE USING gist (person_ref WITH =, daterange(from_date, to_date, '[]') WITH &&) WHERE deleted_at IS NULL`).
+It needs the `btree_gist` extension, which the migration creates (trusted from PostgreSQL 13). The service
+still checks first, under a per-person advisory lock, and answers `409`; if a writer reaches the database
+past that check, the constraint refuses the second range and the service also answers `409`. The migration
+fails, naming the constraint, if overlapping ranges already exist.

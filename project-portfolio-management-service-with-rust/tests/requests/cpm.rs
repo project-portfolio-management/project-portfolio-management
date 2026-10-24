@@ -533,8 +533,10 @@ async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_droppe
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn capacity_is_read_per_day_from_availability_ranges() {
+    use project_portfolio_management::models::_entities::person_availabilities;
+    use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();
         let who = "person:3f2c6b7e-0000-4000-8000-0000000000bb";
@@ -578,6 +580,37 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
         let mut codes = [a.status_code().as_u16(), b.status_code().as_u16()];
         codes.sort_unstable();
         assert_eq!(codes, [200, 409], "{} / {}", a.text(), b.text());
+
+        // CF-3, the database's own guarantee: two transactions on two connections insert overlapping
+        // ranges at once, past the service and its lock. The exclusion constraint leaves exactly one.
+        let raw = format!("person:{}", uuid::Uuid::new_v4());
+        let insert = |from: &'static str, to: &'static str| {
+            let (db, raw) = (ctx.db.clone(), raw.clone());
+            async move {
+                let txn = sea_orm::TransactionTrait::begin(&db).await.unwrap();
+                let done = txn
+                    .execute_unprepared(&format!(
+                        "INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at)
+                         VALUES (gen_random_uuid(), '{raw}', '{from}', '{to}', 50, now(), now())"
+                    ))
+                    .await;
+                match done {
+                    Ok(_) => txn.commit().await.is_ok(),
+                    Err(_) => false,
+                }
+            }
+        };
+        let (x, y) = tokio::join!(insert("2026-12-01", "2026-12-07"), insert("2026-12-05", "2026-12-10"));
+        assert_eq!([x, y].iter().filter(|ok| **ok).count(), 1, "exactly one of two overlapping inserts survives");
+        let n = person_availabilities::Entity::find()
+            .filter(person_availabilities::Column::PersonRef.eq(raw.as_str()))
+            .count(&ctx.db)
+            .await
+            .unwrap();
+        assert_eq!(n, 1);
+        // A removed range no longer blocks, and a range that only touches in a gap is fine.
+        ctx.db.execute_unprepared(&format!("UPDATE person_availabilities SET deleted_at = now() WHERE person_ref = '{raw}'")).await.unwrap();
+        assert!(insert("2026-12-05", "2026-12-10").await, "a removed range does not block");
 
         // Capacity is per day: the 40% week is over, the full-capacity week is not, and the sum is unchanged.
         let c = cap("2026-10-05", "2026-10-18").await;

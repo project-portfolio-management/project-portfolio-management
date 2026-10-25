@@ -28,6 +28,7 @@ pub mod announcements;
 pub mod app;
 pub mod approvals;
 pub mod artifacts;
+pub mod asyncapi;
 pub mod auth;
 /// Pure workflow-automation rules (trigger matching, action shapes, due-ness).
 pub mod automation;

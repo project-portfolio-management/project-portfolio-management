@@ -1,0 +1,371 @@
+{
+  "asyncapi": "3.0.0",
+  "channels": {
+    "planLive": {
+      "address": "/api/plans/{pid}/live",
+      "description": "`id:` is a monotonic number, so `Last-Event-ID` resumes; the stream says `resync` when the gap is too large. Query: `limit`, `idle_ms`.",
+      "messages": {
+        "live_comment_added": {
+          "$ref": "#/components/messages/live_comment_added"
+        },
+        "live_raci_updated": {
+          "$ref": "#/components/messages/live_raci_updated"
+        },
+        "live_resync": {
+          "$ref": "#/components/messages/live_resync"
+        },
+        "live_task_created": {
+          "$ref": "#/components/messages/live_task_created"
+        },
+        "live_task_moved": {
+          "$ref": "#/components/messages/live_task_moved"
+        },
+        "live_task_updated": {
+          "$ref": "#/components/messages/live_task_updated"
+        }
+      },
+      "parameters": {
+        "pid": {
+          "description": "The plan's pid."
+        }
+      },
+      "title": "A plan's live events (server-sent events)"
+    },
+    "webhook": {
+      "address": "{receiver url}",
+      "description": "Best effort, retried on 5xx and transport failure, not on 4xx.",
+      "messages": {
+        "cloudeventsBinary": {
+          "$ref": "#/components/messages/webhookCloudEventsBinary"
+        },
+        "cloudeventsStructured": {
+          "$ref": "#/components/messages/webhookCloudEventsStructured"
+        },
+        "native": {
+          "$ref": "#/components/messages/webhookNative"
+        }
+      },
+      "title": "Outbound webhook (POST to each configured target)"
+    }
+  },
+  "components": {
+    "messages": {
+      "live_comment_added": {
+        "name": "comment_added",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "A comment was added: identifiers, no more.",
+        "title": "comment_added"
+      },
+      "live_raci_updated": {
+        "name": "raci_updated",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "A task's RACI assignment changed: identifiers and the changed fact.",
+        "title": "raci_updated"
+      },
+      "live_resync": {
+        "name": "resync",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "Sent by the stream itself when the client is owed more than it remembers (`reason` is `gap` or `lagged`): refetch.",
+        "title": "resync"
+      },
+      "live_task_created": {
+        "name": "task_created",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "A task was created: `task_pid`, `title`, `status`.",
+        "title": "task_created"
+      },
+      "live_task_moved": {
+        "name": "task_moved",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "A task changed status: identifiers, the old and new status.",
+        "title": "task_moved"
+      },
+      "live_task_updated": {
+        "name": "task_updated",
+        "payload": {
+          "$ref": "#/components/schemas/LiveEvent"
+        },
+        "summary": "A task was edited: identifiers and the changed fact.",
+        "title": "task_updated"
+      },
+      "webhookCloudEventsBinary": {
+        "contentType": "application/json",
+        "headers": {
+          "$ref": "#/components/schemas/CloudEventsBinaryHeaders"
+        },
+        "name": "cloudevents_binary",
+        "payload": {
+          "$ref": "#/components/schemas/Envelope"
+        },
+        "summary": "The `ce-specversion`, `ce-id`, `ce-source`, `ce-type` and `ce-subject` headers carry the CloudEvents attributes; the body is the envelope."
+      },
+      "webhookCloudEventsStructured": {
+        "contentType": "application/cloudevents+json",
+        "headers": {
+          "$ref": "#/components/schemas/WebhookHeaders"
+        },
+        "name": "cloudevents_structured",
+        "payload": {
+          "$ref": "#/components/schemas/CloudEvent"
+        }
+      },
+      "webhookNative": {
+        "contentType": "application/json",
+        "headers": {
+          "$ref": "#/components/schemas/WebhookHeaders"
+        },
+        "name": "native",
+        "payload": {
+          "$ref": "#/components/schemas/Envelope"
+        }
+      }
+    },
+    "schemas": {
+      "CloudEvent": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          "datacontenttype": {
+            "enum": [
+              "application/json"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "source": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "specversion": {
+            "enum": [
+              "1.0"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "type": {
+            "description": "`org.project-portfolio-management.<entity>.<kind>`",
+            "type": "string"
+          }
+        },
+        "required": [
+          "specversion",
+          "id",
+          "source",
+          "type"
+        ],
+        "type": "object"
+      },
+      "CloudEventsBinaryHeaders": {
+        "properties": {
+          "X-Mxi-Event-Id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "X-Mxi-Signature": {
+            "type": "string"
+          },
+          "ce-id": {
+            "type": "string"
+          },
+          "ce-source": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "ce-specversion": {
+            "enum": [
+              "1.0"
+            ],
+            "type": "string"
+          },
+          "ce-subject": {
+            "type": "string"
+          },
+          "ce-time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "ce-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-Mxi-Event-Id",
+          "X-Mxi-Signature",
+          "ce-specversion",
+          "ce-id",
+          "ce-source",
+          "ce-type"
+        ],
+        "type": "object"
+      },
+      "Envelope": {
+        "properties": {
+          "actor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entity": {
+            "type": "string"
+          },
+          "event_id": {
+            "description": "The deduplication key.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "created",
+              "updated",
+              "deleted",
+              "merged"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pid": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "integer"
+          },
+          "seq": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "schema_version",
+          "entity",
+          "kind",
+          "pid",
+          "seq",
+          "name"
+        ],
+        "type": "object"
+      },
+      "LiveEvent": {
+        "properties": {
+          "data": {
+            "description": "Identifiers and the changed fact, no more.",
+            "type": "object"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "plan_pid": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_pid",
+          "kind",
+          "data"
+        ],
+        "type": "object"
+      },
+      "WebhookHeaders": {
+        "properties": {
+          "X-Mxi-Event-Id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "X-Mxi-Signature": {
+            "description": "`<scheme>.<key id>:<hex>`, HMAC-SHA256 over the exact body bytes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-Mxi-Event-Id",
+          "X-Mxi-Signature"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "defaultContentType": "application/json",
+  "info": {
+    "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over the exact request body bytes (header `X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`.",
+    "title": "Project Portfolio Management Service events",
+    "version": "0.2.0"
+  },
+  "operations": {
+    "deliverWebhook": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/webhook"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/webhook/messages/native"
+        },
+        {
+          "$ref": "#/channels/webhook/messages/cloudeventsStructured"
+        },
+        {
+          "$ref": "#/channels/webhook/messages/cloudeventsBinary"
+        }
+      ],
+      "summary": "The service POSTs the event to each configured webhook target."
+    },
+    "receivePlanLive": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/planLive"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/planLive/messages/live_task_created"
+        },
+        {
+          "$ref": "#/channels/planLive/messages/live_task_updated"
+        },
+        {
+          "$ref": "#/channels/planLive/messages/live_task_moved"
+        },
+        {
+          "$ref": "#/channels/planLive/messages/live_raci_updated"
+        },
+        {
+          "$ref": "#/channels/planLive/messages/live_comment_added"
+        },
+        {
+          "$ref": "#/channels/planLive/messages/live_resync"
+        }
+      ],
+      "summary": "The service sends these to a client reading a plan's stream."
+    }
+  },
+  "servers": {
+    "service": {
+      "description": "The service itself; the stream is `GET /api/plans/{pid}/live`.",
+      "host": "localhost:5150",
+      "protocol": "http"
+    }
+  }
+}

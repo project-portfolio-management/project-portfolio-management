@@ -1961,11 +1961,12 @@ only as search snippets.
   proposals.**
   **Acceptance:** e2e test; the matrix has a keyboard-usable table
   alternative.
-- [ ] **NC-11 (S) — CloudEvents option for webhooks, and an AsyncAPI
+- [x] **NC-11 (S) — CloudEvents option for webhooks, and an AsyncAPI
   document.** An opt-in envelope per target; HMAC signing is unchanged. An
   AsyncAPI document describes the SSE and webhook events.
   **Acceptance:** a delivery in CloudEvents binary or structured mode
   validates against the spec; the AsyncAPI document lints.
+  **Built 2026-10-25.** `webhooks::render` (pure) and a per-target `format` (`native`, `cloudevents_structured`, `cloudevents_binary`); the signature is over whatever body is sent. `asyncapi.rs` and `asyncapi.json` (AsyncAPI 3.0: the live stream and the three webhook shapes). Tests: 5 for the formats (each CloudEvents shape is checked against the 1.0 required-attribute rules written out in the test), and 3 for the document (the file is current; every `$ref` resolves and every operation's messages belong to its channel; every `live::publish` kind in the source is described and nothing else is). Spec FR-16e5. **Not done / not verified:** no delivery was made over the network in any format (no receiver test exists for webhooks at all); "validates against the spec" is checked by my reading of the 1.0 rules in a test, not by the official CloudEvents SDK or conformance suite; "lints" is the structural check above, not the official AsyncAPI linter; no `time` (the envelope has no timestamp); the document is a file, not served over HTTP; CloudEvents is not offered on the live stream.
 - [ ] **NC-12 (M) — Blueprint sync.** Show the plans made from a template what
   changed in it, as a diff, and apply the change per plan with consent. Local
   edits are never overwritten without a decision.

@@ -258,6 +258,16 @@ matcher payload (§5.6); every mutation audits (§6.6).
   each probable match with its score, confidence and per-component breakdown and that plan's lessons, best match first.
   Plans the caller may not read are not compared. Not built: matching on more than the title; limiting the comparison
   to closed plans; a screen; showing the lessons in the intake form.
+
+- **FR-16e5 CloudEvents webhooks and an AsyncAPI document (NC-11).** A webhook target may set
+  `"format": "cloudevents_structured"` (`application/cloudevents+json`, the envelope as `data`) or
+  `"cloudevents_binary"` (`ce-specversion`, `ce-id`, `ce-source`, `ce-type`, `ce-subject` headers, the envelope as
+  the body); the default `native` is unchanged. The CloudEvents `id` is the envelope's `event_id`, `source` is
+  `urn:project-portfolio-management:<entity>`, `type` is `org.project-portfolio-management.<entity>.<kind>`, `subject`
+  the record's pid; `time` is sent only when the envelope carries `occurred_at` (it does not today). The signature is
+  unchanged: HMAC-SHA256 over the exact request body bytes, `X-Mxi-Signature`. `asyncapi.json` (AsyncAPI 3.0) describes
+  the per-plan live stream (`task_created`, `task_updated`, `task_moved`, `raci_updated`, `comment_added`, `resync`)
+  and the three webhook shapes. Not built: serving the document over HTTP; CloudEvents on the live stream.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

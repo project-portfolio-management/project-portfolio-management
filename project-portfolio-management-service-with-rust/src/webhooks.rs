@@ -85,6 +85,12 @@
 //! is the "refuses to start" half of this crate's own T-28m acceptance
 //! criterion.
 //!
+//! ## Format (NC-11)
+//!
+//! A target may add `"format": "cloudevents_structured"` or `"cloudevents_binary"` to receive a `CloudEvents` 1.0
+//! event instead of the bare envelope ([`render`]). The signature is unchanged: HMAC over the exact request body
+//! bytes, whatever the format. The default is `native`.
+//!
 //! ## Retry policy
 //!
 //! A `5xx` response, or a transport-level failure (no response at all —
@@ -131,6 +137,103 @@ pub struct WebhookTarget {
     /// `null`) means every kind.
     #[serde(default)]
     pub kinds: Option<Vec<String>>,
+    /// The shape of the request (NC-11). `native` (the default) sends the outbox envelope as it is.
+    #[serde(default)]
+    pub format: WebhookFormat,
+}
+
+/// How a delivery is shaped. The signature is the same in every format: HMAC over the exact request body bytes.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WebhookFormat {
+    /// The outbox envelope as JSON, `content-type: application/json`.
+    #[default]
+    Native,
+    /// A `CloudEvents` 1.0 JSON event (`application/cloudevents+json`) whose `data` is the envelope.
+    CloudeventsStructured,
+    /// A `CloudEvents` 1.0 binary-mode event: `ce-*` headers, the envelope as the body.
+    CloudeventsBinary,
+}
+
+/// A request ready to send: its `content-type`, any extra headers, and the exact body bytes that are signed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Rendered {
+    /// The `content-type` header.
+    pub content_type: &'static str,
+    /// Extra headers (the `CloudEvents` `ce-*` attributes in binary mode).
+    pub headers: Vec<(String, String)>,
+    /// The body bytes, signed as they are.
+    pub body: Vec<u8>,
+}
+
+/// The `CloudEvents` `type` of an event: `org.project-portfolio-management.<entity>.<kind>`.
+fn ce_type(entity: &str, kind: &str) -> String {
+    format!("org.project-portfolio-management.{entity}.{kind}")
+}
+
+/// Shape `payload` (the outbox envelope) for `format`. `None` when it cannot be serialized.
+///
+/// `CloudEvents` attributes: `specversion` `1.0`; `id` the envelope's `event_id`; `source`
+/// `urn:project-portfolio-management:<entity>`; `type` as [`ce_type`]; `subject` the record's pid; `time` only
+/// when the envelope carries `occurred_at` (it does not today, and a time is never invented); `datacontenttype`
+/// `application/json`. Pure, so it is unit-tested without a network.
+#[must_use]
+pub fn render(
+    format: WebhookFormat,
+    entity: &str,
+    payload: &serde_json::Value,
+) -> Option<Rendered> {
+    let text = |key: &str| payload.get(key).and_then(|v| v.as_str());
+    let id = text("event_id").unwrap_or_default();
+    let kind = text("kind").unwrap_or_default();
+    let source = format!("urn:project-portfolio-management:{entity}");
+    match format {
+        WebhookFormat::Native => Some(Rendered {
+            content_type: "application/json",
+            headers: Vec::new(),
+            body: serde_json::to_vec(payload).ok()?,
+        }),
+        WebhookFormat::CloudeventsStructured => {
+            let mut event = serde_json::json!({
+                "specversion": "1.0",
+                "id": id,
+                "source": source,
+                "type": ce_type(entity, kind),
+                "datacontenttype": "application/json",
+                "data": payload,
+            });
+            if let Some(pid) = text("pid") {
+                event["subject"] = pid.into();
+            }
+            if let Some(time) = text("occurred_at") {
+                event["time"] = time.into();
+            }
+            Some(Rendered {
+                content_type: "application/cloudevents+json",
+                headers: Vec::new(),
+                body: serde_json::to_vec(&event).ok()?,
+            })
+        }
+        WebhookFormat::CloudeventsBinary => {
+            let mut headers = vec![
+                ("ce-specversion".to_string(), "1.0".to_string()),
+                ("ce-id".to_string(), id.to_string()),
+                ("ce-source".to_string(), source),
+                ("ce-type".to_string(), ce_type(entity, kind)),
+            ];
+            if let Some(pid) = text("pid") {
+                headers.push(("ce-subject".to_string(), pid.to_string()));
+            }
+            if let Some(time) = text("occurred_at") {
+                headers.push(("ce-time".to_string(), time.to_string()));
+            }
+            Some(Rendered {
+                content_type: "application/json",
+                headers,
+                body: serde_json::to_vec(payload).ok()?,
+            })
+        }
+    }
 }
 
 impl WebhookTarget {
@@ -333,7 +436,12 @@ pub async fn check_resolution(url: &str) -> Result<(), bool> {
 
 /// One HTTP attempt: send `body` (already the signed bytes) to `url`
 /// with the given headers.
-async fn attempt_once(url: &str, event_id: &str, signature: &str, body: &[u8]) -> AttemptResult {
+async fn attempt_once(
+    url: &str,
+    event_id: &str,
+    signature: &str,
+    request: &Rendered,
+) -> AttemptResult {
     match check_resolution(url).await {
         Ok(()) => {}
         Err(true) => {
@@ -350,14 +458,15 @@ async fn attempt_once(url: &str, event_id: &str, signature: &str, body: &[u8]) -
             };
         }
     }
-    let result = client()
+    let mut builder = client()
         .post(url)
-        .header("content-type", "application/json")
+        .header("content-type", request.content_type)
         .header(EVENT_ID_HEADER, event_id)
-        .header(SIGNATURE_HEADER, signature)
-        .body(body.to_vec())
-        .send()
-        .await;
+        .header(SIGNATURE_HEADER, signature);
+    for (name, value) in &request.headers {
+        builder = builder.header(name.as_str(), value.as_str());
+    }
+    let result = builder.body(request.body.clone()).send().await;
     match result {
         Ok(resp) => {
             let status = resp.status();
@@ -393,13 +502,13 @@ async fn deliver_with_retry(
     kind: &str,
     event_id: uuid::Uuid,
     signature: &str,
-    body: &[u8],
+    request: &Rendered,
 ) {
     let mut backoff = INITIAL_BACKOFF;
     let mut attempts = 0u32;
     let (delivered, status_code, error) = loop {
         attempts += 1;
-        match attempt_once(&target.url, &event_id.to_string(), signature, body).await {
+        match attempt_once(&target.url, &event_id.to_string(), signature, request).await {
             AttemptResult::Delivered => break (true, None, None),
             AttemptResult::Rejected { status, error } => break (false, Some(status), Some(error)),
             AttemptResult::Retryable { status, error } => {
@@ -477,34 +586,30 @@ impl EventSink for WebhookSink {
             .and_then(|v| v.as_str())
             .and_then(|s| uuid::Uuid::parse_str(s).ok())
             .unwrap_or_else(uuid::Uuid::nil);
-        let body = match serde_json::to_vec(payload) {
-            Ok(bytes) => bytes,
-            Err(err) => {
-                tracing::warn!(error = %err, "failed to serialize webhook payload; skipping");
-                return Ok(());
-            }
-        };
-        let Some(signature) = mac::tag(Domain::Webhook, &body) else {
-            // Constructed without a key configured — refuse to send
-            // unsigned deliveries rather than silently downgrade.
-            tracing::error!(
-                "webhook targets are configured but no integrity-MAC key is active; \
-                 skipping delivery rather than sending an unsigned request"
-            );
-            return Ok(());
-        };
         for target in &self.targets {
             if !target.matches_kind(kind) {
                 continue;
             }
+            let Some(request) = render(target.format, entity, payload) else {
+                tracing::warn!("failed to serialize webhook payload; skipping");
+                continue;
+            };
+            let Some(signature) = mac::tag(Domain::Webhook, &request.body) else {
+                // Constructed without a key configured — refuse to send
+                // unsigned deliveries rather than silently downgrade.
+                tracing::error!(
+                    "webhook targets are configured but no integrity-MAC key is active; \
+                     skipping delivery rather than sending an unsigned request"
+                );
+                return Ok(());
+            };
             let target = target.clone();
             let entity = entity.to_string();
             let kind = kind.to_string();
-            let signature = signature.clone();
-            let body = body.clone();
             let db = self.db.clone();
             tokio::spawn(async move {
-                deliver_with_retry(&db, &target, &entity, &kind, event_id, &signature, &body).await;
+                deliver_with_retry(&db, &target, &entity, &kind, event_id, &signature, &request)
+                    .await;
             });
         }
         Ok(())
@@ -536,7 +641,8 @@ mod tests {
     }
 
     use super::{
-        WebhookTarget, parse_targets, should_retry_status, target_allowed, url_is_permitted,
+        WebhookFormat, WebhookTarget, parse_targets, render, should_retry_status, target_allowed,
+        url_is_permitted,
     };
 
     #[test]
@@ -582,6 +688,7 @@ mod tests {
         let target = WebhookTarget {
             url: "https://example.com/hook".to_string(),
             kinds: None,
+            format: WebhookFormat::Native,
         };
         assert!(target.matches_kind("created"));
         assert!(target.matches_kind("merged"));
@@ -592,6 +699,7 @@ mod tests {
         let target = WebhookTarget {
             url: "https://example.com/hook".to_string(),
             kinds: Some(vec!["created".to_string(), "merged".to_string()]),
+            format: WebhookFormat::Native,
         };
         assert!(target.matches_kind("created"));
         assert!(target.matches_kind("merged"));
@@ -636,5 +744,123 @@ mod tests {
     fn parse_targets_on_blank_input_returns_empty() {
         assert!(parse_targets("").is_empty());
         assert!(parse_targets("   ").is_empty());
+    }
+
+    fn envelope() -> serde_json::Value {
+        serde_json::json!({
+            "event_id": "5f1d1d5e-6d7e-4a53-9b0a-0d6a2c3f2a11",
+            "schema_version": 1,
+            "entity": "plan",
+            "kind": "created",
+            "pid": "0c3f6a1e-93a4-4b1f-8f55-3a0c7e9b2d10",
+            "seq": 7,
+            "actor": null,
+            "name": "Data warehouse"
+        })
+    }
+
+    /// The `CloudEvents` 1.0 rules a receiver relies on: the four required attributes are present and
+    /// non-empty strings, `specversion` is `1.0`, `source` is a URI-reference, `type` is non-empty,
+    /// attribute names are lower-case `a-z0-9`, and `time`, when present, is RFC 3339.
+    fn assert_valid_ce(attrs: &std::collections::BTreeMap<String, String>) {
+        for required in ["specversion", "id", "source", "type"] {
+            assert!(
+                attrs.get(required).is_some_and(|v| !v.is_empty()),
+                "{required} is required and non-empty"
+            );
+        }
+        assert_eq!(attrs["specversion"], "1.0");
+        assert!(reqwest::Url::parse(&attrs["source"]).is_ok(), "a URI");
+        for name in attrs.keys() {
+            assert!(
+                name.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()),
+                "attribute name {name}"
+            );
+        }
+        if let Some(t) = attrs.get("time") {
+            assert!(chrono::DateTime::parse_from_rfc3339(t).is_ok(), "RFC 3339");
+        }
+    }
+
+    #[test]
+    fn native_is_the_envelope_unchanged() {
+        let r = render(WebhookFormat::Native, "plan", &envelope()).unwrap();
+        assert_eq!(r.content_type, "application/json");
+        assert!(r.headers.is_empty());
+        assert_eq!(r.body, serde_json::to_vec(&envelope()).unwrap());
+    }
+
+    #[test]
+    fn a_structured_cloudevent_is_valid_and_carries_the_envelope_as_data() {
+        let r = render(WebhookFormat::CloudeventsStructured, "plan", &envelope()).unwrap();
+        assert_eq!(r.content_type, "application/cloudevents+json");
+        let event: serde_json::Value = serde_json::from_slice(&r.body).unwrap();
+        let attrs = event
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(k, _)| k.as_str() != "data")
+            .map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string()))
+            .collect();
+        assert_valid_ce(&attrs);
+        assert_eq!(attrs["id"], "5f1d1d5e-6d7e-4a53-9b0a-0d6a2c3f2a11");
+        assert_eq!(
+            attrs["type"],
+            "org.project-portfolio-management.plan.created"
+        );
+        assert_eq!(attrs["subject"], "0c3f6a1e-93a4-4b1f-8f55-3a0c7e9b2d10");
+        assert_eq!(event["data"], envelope());
+        assert!(!attrs.contains_key("time"), "a time is never invented");
+    }
+
+    #[test]
+    fn a_binary_cloudevent_is_valid_with_the_envelope_as_the_body() {
+        let r = render(WebhookFormat::CloudeventsBinary, "plan", &envelope()).unwrap();
+        assert_eq!(r.content_type, "application/json");
+        assert_eq!(r.body, serde_json::to_vec(&envelope()).unwrap());
+        let attrs = r
+            .headers
+            .iter()
+            .map(|(k, v)| {
+                (
+                    k.strip_prefix("ce-").expect("ce- prefix").to_string(),
+                    v.clone(),
+                )
+            })
+            .collect();
+        assert_valid_ce(&attrs);
+        assert_eq!(
+            attrs["type"],
+            "org.project-portfolio-management.plan.created"
+        );
+    }
+
+    #[test]
+    fn occurred_at_becomes_the_cloudevents_time_when_the_envelope_has_one() {
+        let mut e = envelope();
+        e["occurred_at"] = "2026-10-25T06:00:00Z".into();
+        let r = render(WebhookFormat::CloudeventsBinary, "plan", &e).unwrap();
+        assert!(
+            r.headers
+                .contains(&("ce-time".to_string(), "2026-10-25T06:00:00Z".to_string()))
+        );
+    }
+
+    #[test]
+    fn the_format_is_read_from_the_target_list_and_defaults_to_native() {
+        let raw = r#"[{"url":"https://a.example/h"},
+                      {"url":"https://b.example/h","format":"cloudevents_structured"},
+                      {"url":"https://c.example/h","format":"cloudevents_binary"}]"#;
+        let formats: Vec<WebhookFormat> = parse_targets(raw).iter().map(|t| t.format).collect();
+        assert_eq!(
+            formats,
+            vec![
+                WebhookFormat::Native,
+                WebhookFormat::CloudeventsStructured,
+                WebhookFormat::CloudeventsBinary
+            ]
+        );
+        assert!(parse_targets(r#"[{"url":"https://a.example/h","format":"xml"}]"#).is_empty());
     }
 }

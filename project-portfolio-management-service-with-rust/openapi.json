@@ -29827,6 +29827,21 @@
         ]
       }
     },
+    "/api/scenarios/frontier": {
+      "get": {
+        "description": "`GET /api/scenarios/frontier` — the generator re-run over a sweep of budget caps: value (summed Smart Score) against cost, each point carrying the same explainable rows as a single `POST /api/scenarios/generate` at that cap. Nothing is saved.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/scenarios/frontier` — the generator re-run over a sweep of budget caps: value (summed Smart Score) against cost, each point carrying the same explainable rows as a single `POST /api/scenarios/generate` at that cap",
+        "tags": [
+          "strategy"
+        ]
+      }
+    },
     "/api/scenarios/generate": {
       "post": {
         "description": "`POST /api/scenarios/generate` — a deterministic, explainable draft: every active plan is scored (Smart Score) and priced (budget lines summed in the cap's currency), then greedily selected by score per unit cost within the cap. Saved as an ordinary `draft` scenario, so it goes through the same evaluate/compare/commit path as one a planner wrote — including this one's own rollback (T-28a). Candidates are **plans only**, never proposals: Smart Score has no defined evidence trail for a not-yet-promoted proposal (see `crate::strategy::generate_scenario` and `spec/13-tasks.md` T-28h for the full \"decided rather than guessed\" fence note).",

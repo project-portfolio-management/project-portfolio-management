@@ -577,6 +577,7 @@ POST /api/saved-views/{pid}/delete
 GET /api/scenarios
 POST /api/scenarios
 GET /api/scenarios/compare
+GET /api/scenarios/frontier
 POST /api/scenarios/generate
 POST /api/scenarios/{pid}/commit
 GET /api/scenarios/{pid}/evaluate

@@ -314,6 +314,61 @@ pub fn generate_scenario(
     rationale
 }
 
+/// One point of the efficient frontier: what the generator selects at one budget cap.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct FrontierPoint {
+    /// The budget cap this point was generated at, minor units.
+    pub budget_cap_minor: i64,
+    /// Sum of the Smart Scores of the included candidates.
+    pub value: f64,
+    /// Sum of the costs of the included candidates, minor units.
+    pub cost_minor: i64,
+    /// How many candidates are included.
+    pub included: usize,
+    /// True when a point at a lower cap reaches at least this value, so spending more here
+    /// buys nothing (the greedy selection is not optimal, and says so).
+    pub dominated: bool,
+    /// The same explainable rows a single `generate_scenario` run at this cap returns.
+    pub rationale: Vec<GenerateRationale>,
+}
+
+/// Run [`generate_scenario`] once for each cap (sorted, duplicates dropped) and total the value
+/// and cost of what it selects. Each point is exactly the single-cap run's selection.
+#[must_use]
+pub fn frontier(
+    candidates: &[GenerateCandidateFact],
+    caps: &[i64],
+    must_include: &[Uuid],
+) -> Vec<FrontierPoint> {
+    let mut caps = caps.to_vec();
+    caps.sort_unstable();
+    caps.dedup();
+    let mut best = f64::NEG_INFINITY;
+    caps.into_iter()
+        .map(|cap| {
+            let rationale = generate_scenario(candidates.to_vec(), Some(cap), must_include);
+            let chosen = rationale.iter().filter(|r| r.included);
+            let (value, cost_minor, included) = chosen.fold((0.0, 0_i64, 0), |(v, c, n), r| {
+                (
+                    v + r.score.unwrap_or(0.0),
+                    c.saturating_add(r.cost_minor.unwrap_or(0)),
+                    n + 1,
+                )
+            });
+            let dominated = value <= best;
+            best = best.max(value);
+            FrontierPoint {
+                budget_cap_minor: cap,
+                value,
+                cost_minor,
+                included,
+                dominated,
+                rationale,
+            }
+        })
+        .collect()
+}
+
 /// Simple ROI in basis points: `(realized − cost) / cost × 10_000`.
 /// `None` when the cost is zero or negative (undefined, never a
 /// divide-by-zero panic).
@@ -532,5 +587,39 @@ mod tests {
         let json_a = serde_json::to_string(&rows_a).unwrap();
         let json_b = serde_json::to_string(&rows_b).unwrap();
         assert_eq!(json_a, json_b);
+    }
+
+    fn fixture() -> Vec<GenerateCandidateFact> {
+        vec![
+            candidate(1, Some(80.0), Some(10_000)),
+            candidate(2, Some(50.0), Some(20_000)),
+            candidate(3, Some(20.0), Some(30_000)),
+        ]
+    }
+
+    #[test]
+    fn the_frontier_rises_with_the_cap_and_each_point_is_a_single_cap_run() {
+        let caps = [60_000, 0, 10_000, 30_000, 10_000];
+        let points = frontier(&fixture(), &caps, &[]);
+        let at: Vec<i64> = points.iter().map(|p| p.budget_cap_minor).collect();
+        assert_eq!(at, vec![0, 10_000, 30_000, 60_000], "sorted, deduplicated");
+        let values: Vec<f64> = points.iter().map(|p| p.value).collect();
+        assert!(values.windows(2).all(|w| w[0] <= w[1]), "{values:?}");
+        assert_eq!(values, vec![0.0, 80.0, 130.0, 150.0]);
+        assert_eq!(points[2].cost_minor, 30_000);
+        assert_eq!(points[2].included, 2);
+        for p in &points {
+            let single = generate_scenario(fixture(), Some(p.budget_cap_minor), &[]);
+            assert_eq!(p.rationale, single);
+            assert!(!p.dominated);
+        }
+    }
+
+    #[test]
+    fn a_point_that_buys_nothing_more_is_marked_dominated() {
+        let points = frontier(&fixture(), &[60_000, 600_000], &[]);
+        assert!(!points[0].dominated);
+        assert!(points[1].dominated, "ten times the money, the same value");
+        assert_eq!(points[0].value, points[1].value);
     }
 }

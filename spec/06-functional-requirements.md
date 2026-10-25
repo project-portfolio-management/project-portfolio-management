@@ -243,6 +243,13 @@ matcher payload (§5.6); every mutation audits (§6.6).
   model (the Smart Score by default), highest first, the unscored last with their missing inputs; `band` applies
   to the Smart Score only (`422` otherwise). The ranking reads the plans the caller may read, as the Smart Score
   ranking does. Nothing but the inputs is stored. Not built: a screen for the inputs and the choice of model; weights.
+- **FR-16e3 Efficient frontier (NC-7).** `GET /api/scenarios/frontier?currency=` re-runs the scenario generator
+  (FR-16d) over a sweep of budget caps (`caps=` up to 50 minor-unit amounts, or `steps=` 2 to 50 caps spread evenly from
+  0 to the cost of every scored, priceable plan; `must_include=` as in generate) and returns, per cap, the value
+  (the sum of the Smart Scores of the included plans), the cost, the number included, and the same per-plan rationale
+  rows a single `POST /api/scenarios/generate` at that cap returns. Nothing is saved. The selection is greedy, so it
+  is not guaranteed optimal and the value need not rise with every cap: a point whose value is no more than that of a
+  cheaper cap is marked `dominated`. Plans the caller may not read are not candidates.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

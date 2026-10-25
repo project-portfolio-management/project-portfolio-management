@@ -939,6 +939,105 @@ async fn generate_scenario(
     }))
 }
 
+/// `GET /api/scenarios/frontier` query.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct FrontierQuery {
+    /// ISO 4217 code the costs are summed in.
+    currency: String,
+    /// Comma-separated budget caps, minor units (up to 50). Without it, `steps` caps are spread
+    /// evenly from 0 to the cost of every priceable plan.
+    #[serde(default)]
+    caps: Option<String>,
+    /// How many caps to spread when `caps` is absent: 2 to 50, default 10.
+    #[serde(default)]
+    steps: Option<u32>,
+    /// Plans every point must include, comma-separated pids.
+    #[serde(default)]
+    must_include: Option<String>,
+}
+
+/// The most points a frontier request may ask for.
+const MAX_FRONTIER_POINTS: usize = 50;
+
+/// `GET /api/scenarios/frontier` — the generator re-run over a sweep of budget caps: value
+/// (summed Smart Score) against cost, each point carrying the same explainable rows as a
+/// single `POST /api/scenarios/generate` at that cap. Nothing is saved.
+#[debug_handler]
+async fn scenario_frontier(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Query(q): Query<FrontierQuery>,
+) -> Result<Response> {
+    if !gov_rules::valid_currency(&q.currency) {
+        return Err(unprocessable("currency must be an ISO 4217 code"));
+    }
+    let parse_list = |text: &str, what: &str| -> Result<Vec<String>> {
+        let items: Vec<String> = text
+            .split(',')
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .collect();
+        if items.len() > MAX_FRONTIER_POINTS {
+            return Err(unprocessable(&format!(
+                "{what}: at most {MAX_FRONTIER_POINTS}"
+            )));
+        }
+        Ok(items)
+    };
+    let must_include: Vec<Uuid> =
+        parse_list(q.must_include.as_deref().unwrap_or(""), "must_include")?
+            .iter()
+            .map(|t| {
+                Uuid::parse_str(t).map_err(|_| unprocessable("must_include: pids, comma-separated"))
+            })
+            .collect::<Result<_>>()?;
+
+    let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let estate = prioritization::Estate::load(&ctx, &fence).await?;
+    let weights = prioritization::weights();
+    let candidates: Vec<rules::GenerateCandidateFact> = estate
+        .plans
+        .iter()
+        .map(|plan| rules::GenerateCandidateFact {
+            pid: plan.pid,
+            score: crate::prioritization::smart_score(&estate.facts(plan), &weights).score,
+            cost_minor: cost_of(&estate, plan.pid, &q.currency),
+        })
+        .collect();
+
+    let caps: Vec<i64> = if let Some(text) = q.caps.as_deref() {
+        parse_list(text, "caps")?
+            .iter()
+            .map(|t| match t.parse::<i64>() {
+                Ok(n) if n >= 0 => Ok(n),
+                _ => Err(unprocessable("caps: non-negative whole minor units")),
+            })
+            .collect::<Result<_>>()?
+    } else {
+        let steps = q.steps.unwrap_or(10);
+        if !(2..=50).contains(&steps) {
+            return Err(unprocessable("steps: 2 to 50"));
+        }
+        let total: i64 = candidates
+            .iter()
+            .filter(|c| c.score.is_some())
+            .filter_map(|c| c.cost_minor)
+            .sum();
+        (0..steps)
+            .map(|i| total * i64::from(i) / i64::from(steps - 1))
+            .collect()
+    };
+    if caps.is_empty() {
+        return Err(unprocessable("caps: at least one"));
+    }
+    let points = rules::frontier(&candidates, &caps, &must_include);
+    format::json(serde_json::json!({
+        "currency": q.currency,
+        "value": "sum of the Smart Scores of the included plans",
+        "points": points,
+    }))
+}
+
 /// `POST /api/objectives` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ObjectivePayload {
@@ -1325,6 +1424,7 @@ pub fn routes() -> Routes {
         .add("/scenarios", post(create_scenario))
         .add("/scenarios", get(list_scenarios))
         .add("/scenarios/generate", post(generate_scenario))
+        .add("/scenarios/frontier", get(scenario_frontier))
         .add("/scenarios/compare", get(compare_scenarios))
         .add("/scenarios/{pid}/evaluate", get(evaluate_scenario))
         .add("/scenarios/{pid}/commit", post(commit_scenario))

@@ -303,6 +303,7 @@ async fn every_list_pages_the_same_way() {
             ("/api/me/plan", "day=2026-10-06&tz=UTC".to_string()),
             ("/api/plans/{pid}/burndown", format!("sprint={sprint}")),
             ("/api/scenarios/compare", format!("a={scen_a}&b={scen_b}")),
+            ("/api/scenarios/frontier", "currency=GBP&steps=4".to_string()),
         ]);
         let docs: Value = request.get("/api-docs/openapi.json").add_header(who.0.clone(), who.1.clone()).await.json();
         let (mut lists, mut unreached, mut broken, mut undocumented) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());

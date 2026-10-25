@@ -1942,11 +1942,12 @@ only as search snippets.
   **Acceptance:** unit tests of each formula; ranking by each model through the
   API.
   **Built 2026-10-25.** `src/scoring_models.rs` (pure; 7 unit tests: each formula, a missing input is `null` and named with its reason, a stated zero is not a missing one, validation names every problem), table `scoring_inputs` (migration 89), `PUT`/`GET /api/plans/{pid}/scoring-inputs` (audited, in the write's transaction), `GET /api/plans/{pid}/score?model=wsjf|rice`, and `GET /api/prioritization?model=smart|wsjf|rice`; request test `plans_are_ranked_by_wsjf_and_rice_from_their_estimated_inputs` (the two models rank two plans in opposite orders; an unestimated plan is last and unscored in both; clearing an input makes the score null again; the audit row). Spec FR-16e2. **Not done:** a screen for the inputs or for choosing the model; configurable weights or scales; the privacy census exercises the two ranking variants but with no estimated private plan in them, so it shows the ranking is fenced, not that a private plan's inputs are hidden by another route (`GET .../scoring-inputs` of a private plan is `404` for a non-member through the same plan lookup as every per-plan read).
-- [ ] **NC-7 (S) — Efficient frontier.** Re-run the existing scenario
+- [x] **NC-7 (S) — Efficient frontier.** Re-run the existing scenario
   generator over a sweep of budget caps and return value against cost, each
   point with its explainable selection.
   **Acceptance:** the frontier is monotone on a fixture; each point equals a
   single-cap run.
+  **Built 2026-10-25.** `strategy::frontier` (pure; 2 unit tests) and `GET /api/scenarios/frontier?currency=&caps=|steps=&must_include=`; request test `the_efficient_frontier_matches_single_cap_generate_runs` (monotone on the fixture; every point's rationale equals a `POST /scenarios/generate` at that cap). Spec FR-16e3. **Not done:** a chart or screen; an optimal (knapsack) selection. The greedy selection is not optimal, so the frontier is monotone on the fixture, not in general: a point that buys nothing over a cheaper cap is marked `dominated` rather than hidden. The privacy census exercises the route for a non-member through the shared plan fence only.
 - [ ] **NC-8 (S) — Lessons-learned register.** Entries are recorded at gates
   and closure. At intake, the matcher surfaces lessons from similar past plans.
   **Acceptance:** a new proposal similar to a closed plan lists that plan's

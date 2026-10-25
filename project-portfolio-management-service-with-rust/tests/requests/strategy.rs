@@ -658,3 +658,77 @@ async fn benefits_track_realization_and_roi() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+// NC-7: the frontier sweeps the budget cap; its value never falls as the cap rises on this
+// fixture, and each point selects exactly what a single generate at that cap selects.
+async fn the_efficient_frontier_matches_single_cap_generate_runs() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        for (name, cost) in [("Small", 10_000), ("Middle", 20_000), ("Large", 40_000)] {
+            let plan: Value = request
+                .post("/api/plans")
+                .json(&json!({ "kind": "Project", "name": name }))
+                .await
+                .json();
+            let pid = plan["pid"].as_str().expect("pid").to_string();
+            request
+                .post(&format!("/api/plans/{pid}/budget-lines"))
+                .json(&json!({ "category": "capex", "description": "build",
+                                "currency": "GBP", "planned_minor": cost }))
+                .await
+                .assert_status_ok();
+        }
+        let sweep: Value = request
+            .get("/api/scenarios/frontier?currency=GBP&caps=0,10000,30000,70000,70000")
+            .await
+            .json();
+        let points = sweep["points"].as_array().expect("points");
+        assert_eq!(points.len(), 4, "duplicate caps are dropped");
+        let values: Vec<f64> = points
+            .iter()
+            .map(|p| p["value"].as_f64().unwrap())
+            .collect();
+        assert!(values.windows(2).all(|w| w[0] <= w[1]), "{values:?}");
+        assert_eq!(points[0]["included"], 0);
+        assert_eq!(points[3]["included"], 3);
+
+        for point in points {
+            let cap = point["budget_cap_minor"].as_i64().unwrap();
+            let single: Value = request
+                .post("/api/scenarios/generate")
+                .json(&json!({ "budget_cap_minor": cap, "currency": "GBP" }))
+                .await
+                .json();
+            assert_eq!(point["rationale"], single["rationale"], "cap {cap}");
+        }
+
+        // Evenly spread caps by default; bad input is refused.
+        let spread: Value = request
+            .get("/api/scenarios/frontier?currency=GBP&steps=3")
+            .await
+            .json();
+        let caps: Vec<i64> = spread["points"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p["budget_cap_minor"].as_i64().unwrap())
+            .collect();
+        assert_eq!(caps, vec![0, 35_000, 70_000]);
+        request
+            .get("/api/scenarios/frontier?currency=GBP&caps=-1")
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request
+            .get("/api/scenarios/frontier?currency=gbp")
+            .await
+            .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request
+            .get("/api/scenarios/frontier")
+            .await
+            .assert_status_bad_request();
+    })
+    .await;
+}

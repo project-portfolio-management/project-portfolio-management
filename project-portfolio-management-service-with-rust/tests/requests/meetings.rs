@@ -14,9 +14,9 @@ use serial_test::serial;
 async fn a_meeting_is_planned_held_linked_and_printed_and_a_held_one_is_a_record() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
-        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
+        let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Gate programme" })).await.json();
         let plan = plan["pid"].as_str().unwrap().to_string();
-        let other: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Gemini" })).await.json();
+        let other: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Other programme" })).await.json();
         let other = other["pid"].as_str().unwrap().to_string();
         let task: Value = request
             .post(&format!("/api/plans/{plan}/tasks"))

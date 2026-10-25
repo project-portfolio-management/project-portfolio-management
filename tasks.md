@@ -2004,3 +2004,89 @@ SCIM provisioning (it belongs to the authentication service); AI copilots or
 generated content inside the service; claiming conformance with ISO 21503/21504
 or the PMI portfolio standard; a separate SAFe portfolio kanban. Reasons are in
 [plan.md §68](plan.md).
+
+## Brainitive ideas (BR-n)
+
+Source: [spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md) and [plan.md §71 to §76](plan.md).
+Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, then BR-3 and BR-2, then the small
+ones. Each item follows the rules in AGENTS.md.
+
+- [ ] **BR-1 (S–M) — Idempotency keys on writes.** An optional `Idempotency-Key` header on the create `POST`s: the
+  same key and body replays the stored result (the same `pid`, one row, one audit row), the same key with a different
+  body is `409`. Keys are per caller, stored with a hash of the body and an expiry (default 24 hours), and cleaned up
+  by the existing retention run. The bulk import's key keeps working. Required on any MCP write tool when NC-2 grows
+  them. Owner question §76.3.
+  **Acceptance:** a request test per verb class (create plan, create task, post meeting): replay returns the first
+  answer and creates nothing; a different body is `409`; two callers using one key do not collide.
+- [ ] **BR-2 (S–M) — Evidence-backed status updates.** Extends NC-4. A status update may carry claims, each with
+  source references (`task:<pid>`, `risk:<pid>`, `milestone:<pid>`, `metric:<key>`). A reference is checked on save
+  (it must be a live record of the plan; otherwise `422`) and resolved for the **reader** on display: a source the
+  reader cannot open is "unavailable" with no title and no link. Stored as ids, never titles. A
+  `GET /api/status-metrics` publishes the definitions of the numbers (overdue, due soon, blocked, unknown), and a
+  missing input is reported as unknown, never zero.
+  **Acceptance:** a false reference is `422`; a reader without access to the source sees "unavailable" and no title;
+  the definitions endpoint matches the counts in a fixture (due today is not overdue).
+- [ ] **BR-3 (S–M) — Action outcomes to tasks: propose, verify, create once.** Extends NC-14, no model in the
+  service. `POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview` takes proposed items (from a person or an
+  external agent) with an evidence excerpt that must appear in the minutes, an assignee name matched only against the
+  plan's people (several matches are listed as ambiguous), and a due date inside a window around the meeting; nothing
+  is written. `…/commit` creates the chosen ones in one transaction under an idempotency key (BR-1), links each task
+  back to the meeting outcome, and refuses a second commit of the same outcome. Owner question §76.1.
+  **Acceptance:** an excerpt not in the minutes is dropped and counted; an ambiguous assignee must be chosen; a retry
+  with the same key creates nothing more; a task created is listed under the meeting's outcome.
+- [ ] **BR-4 (S) — Reverse references.** `GET /api/plans/{pid}/references?kind=&pid=` lists the meetings and lessons
+  that point at a task, risk, issue or milestone of the plan. Visibility is applied before counting; a target the
+  caller cannot read answers as one that does not exist. Depends on NC-14 and NC-8 (both built).
+  **Acceptance:** a meeting and a lesson appear under a task; a private plan's records do not appear for a
+  non-member; the count equals the list.
+- [ ] **BR-5 (S) — Webhook replay protection and redelivery.** Amends NC-11. Sign `timestamp + "." + body`, send the
+  timestamp in a header, keep the event id stable across redeliveries, add the delivery id as a header, and add
+  `POST …/deliveries/{id}/redeliver`. Send the old and the new signature header for one release. Owner question
+  §76.4.
+  **Acceptance:** a unit test of the signature over a fixed timestamp and body; a redelivery keeps the event id; a
+  receiver-side check rejects a timestamp older than the stated window.
+- [ ] **BR-6 (M) — A security sweep with tests that fail on the old code.** One named regression test per class their
+  review found, applied to this service: attachments (a client's file name and extension never decide the stored name
+  or the served type); nested route ids belong to their parent (a task under another plan's path is `404`); per-resource
+  tokens, not a token that covers a person's other records; rich text sanitised on write and read; outbound fetches
+  (sinks, webhook targets) refuse private ranges, do not follow a redirect to one, pin the resolved address and cap the
+  size; search and any fetch tool return only what the caller may read; suspended or revoked identities are refused on
+  token endpoints; token endpoints are throttled; temporary-file names cannot traverse. For each, record that the test
+  fails against a deliberately broken variant. Findings that are real become their own `CF-n` items.
+  **Acceptance:** `tests/security_regression.rs`, one test per class, each with a comment saying how it was shown to
+  fail; a list of what turned out already safe and what did not, in the CHANGELOG.
+- [ ] **BR-7 (S) — Planning rules audit.** Read `allocations` and the capacity heatmap against: no double counting of
+  a parent and its subtasks; a changed estimate or reassignment flags an allocation and never overwrites it; an
+  override beats a default; no capacity declared is "not set", not zero; weeks are stored as Monday dates; a write
+  carries the value the planner saw. Record the findings in `plan.md`; add a test for each gap and a `CF-n` for each
+  defect.
+  **Acceptance:** a written finding per rule (holds, fails, or not applicable) with the code reference.
+- [ ] **BR-8 (S) — Reviewer subagents over one checklist.** `agents/review-checklist.md` (security, database, Rust,
+  UI) as the single copy, and thin `.claude/agents/*-reviewer.md` files that point at it. `AGENTS.md` names them.
+  **Acceptance:** each reviewer file is under 40 lines and contains no rule that is not in the checklist; a link
+  check passes.
+- [ ] **BR-9 (S, only on request) — Expiring, revocable share links** for a meeting PDF: a whitelisted payload,
+  `X-Robots-Tag: noindex`, `410` once revoked, expired or deleted, a view count. Refused for any record that carries
+  a handling mark. Owner question §76.2.
+  **Acceptance:** a request test of create, read, revoke (`410`), expiry (`410`), and a refusal for a marked record.
+- [ ] **BR-10 (S) — Tests that do not depend on other tests' data.** Found on 2026-10-25: tests in one process share
+  one search index, so a plan named "Apollo" in another test pushed the real one off a fuzzy page and failed the
+  restore drill. Give `search_reaches_secondary_fields_tolerates_typos_and_filters_by_kind` a name no other test uses,
+  clear the index at the start of each test that asserts a count, or assert on the pid rather than the number of hits.
+  **Acceptance:** the restore drill and a full run pass with an extra test that creates a plan named "Apollo".
+
+### Amendments (Brainitive)
+
+- **NC-2** gains: no `null` in any declared string output field (strict clients reject the whole response); read-only
+  and idempotent annotations on every tool; a `location` in every result; all tools in one page; a model-facing
+  description per tool; a server instructions block; a temporary request logger only to diagnose a client, without
+  bodies or tokens, and removed afterwards. A write tool takes an idempotency key (BR-1).
+- **CQ-11** gains: assert a fixed number of queries per aggregate view (they do this per insights tab), and keep each
+  definition of a counted number in one place with a note when two places must change together.
+
+### Not taken (Brainitive)
+
+Helpdesk and ticket portal, lead forms, billing, whiteboards, the document editor, calendar sync, a browser extension,
+web push, a personal capture inbox and focus timer, AI writing or extraction inside the service, SQLite by default,
+their commercial model, and software-release versions with a public changelog. Reasons are in
+[plan.md §74](plan.md).

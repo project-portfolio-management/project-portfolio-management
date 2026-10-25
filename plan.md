@@ -1568,3 +1568,87 @@ decision log, RACI, skill pools, delivery confidence, OKRs and benefits.
 6. **NC-5.** Should the service schedule the rest of its jobs (the ticker already exists and is opt-in),
    which is simpler for small deployers, or should that stay the operator's
    job?
+
+# Research: Brainitive (BR-n)
+
+Research date: 2026-10-25. Subject: [armendzekjiri/brainitive](https://github.com/armendzekjiri/brainitive)
+(PHP / Laravel 12 + Inertia + React; AGPL-3.0; 20 stars; created 2026-02-23). The full map is
+[spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md); this section is the assessment and the
+recommendations.
+
+**Evidence base.** Read: the README, `AGENTS.md`, `docs/ai/README.md`, two skills, the headings of `KNOWLEDGE.md` and
+`CONVENTIONS.md` and its webhook and insights sections, 18 per-branch plan files, three middleware files, the file
+listing of `app/`. Not read: most source, tests, UI, deployment. What it does is **as its own documents say**, not
+as run. **Licence note:** AGPL-3.0 is strong copyleft; this plan takes *ideas only*, and no code, text or schema is to
+be copied from it.
+
+## 71. What it is, and why it is worth reading
+
+A small-team workspace (boards, docs, whiteboards, Gantt plans, helpdesk, leads, billing, MCP server) shipped as one
+monolith. It is not a portfolio tool, and most of it is out of scope here. It is worth reading because it documents
+each decision in a per-branch plan file with its definitions, its permission rules and its test plan, and because the
+parts that overlap with ours (an MCP server for AI clients, outgoing webhooks, status reporting, workload, templates,
+and a security review) were hardened by real incidents they wrote down.
+
+## 72. Where we already match or lead
+
+- Planning depth: critical path, earned value, buffers, stage gates, escalation, tolerances, a director pack. They have
+  Gantt rows and milestones.
+- Templates (LT-2) and now sync of a template's change to its plans (NC-12); they have versions and runs.
+- Time zones: "today" is the deployment's date and a period is local days converted to bounds. Same doctrine.
+- Person-chosen status, no computed health score (NC-4). Same doctrine, stated in both.
+- Signed webhooks with a private-network guard (`webhooks.rs`, `sinks.rs`); payloads without personal data.
+- ABAC with an explicit read-only scope (NC-15); they rely on workspace roles and policies per model.
+- Audit rows in the write's own transaction; they log an activity feed.
+- A read-only MCP adapter is planned (NC-2); theirs has about 50 tools including writes.
+
+## 73. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **Idempotency keys on writes** a client may retry; same key and body replays, same key and other body is refused | We have `Idempotency-Key` only for bulk import. Integrations, webhook consumers and any future MCP write retry | High | BR-1 |
+| 2 | **Evidence-backed status** — claims with source references validated on save, resolved for the reader, "unavailable" when unreadable; the definitions of every number published | NC-4's narrative is free text. A board wants the status and the numbers behind it, and must not learn from a source it may not read | High | BR-2 |
+| 3 | **Propose, verify, create once** for action items from minutes, with no model in the service | NC-14 records "action" outcomes that nobody turns into tasks. The verify-and-create half keeps the §16 refusal | Medium-high | BR-3 |
+| 4 | **Reverse references** — which meetings and lessons mention this task, risk or issue | NC-14 and NC-8 link out; nothing answers "referenced by". The batching and no-existence-leak rules are the useful part | Medium | BR-4 |
+| 5 | **Webhook replay protection and redelivery** — sign `timestamp.body`, stable event id, a redeliver action | NC-11 signs the body only; a captured request can be replayed, and a failed delivery cannot be retried by hand | High | BR-5 |
+| 6 | **A security sweep with fail-on-old-code tests** for the classes their review found | Cheap, generic, and our attachments, sinks, search and the future MCP adapter are the same shapes | High | BR-6 |
+| 7 | **Planning rules audit** — no double counting parent and child, flag don't overwrite, unknown is not zero, Monday-dated weeks | Our `allocations` and capacity heatmap have not been read against a stated rule list | Medium | BR-7 |
+| 8 | **Reviewer subagents over one checklist** | One copy of the review rules for every agent; our `agents/` has no reviewer | Medium | BR-8 |
+| 9 | **Expiring, revocable share links** with a whitelisted payload, noindex, 410 | Useful for a meeting PDF; risky for portfolio data. Owner decision | Low-medium | BR-9 |
+| 10 | **Tests must not depend on what other tests create** | We hit it on 2026-10-25: a shared search index and a plan named "Apollo" failed the restore drill | High | BR-10 |
+| 11 | MCP details: no null in a declared string field, read-only and idempotent annotations, a location on every result, one page of tools, a server instructions block | Prevents the failures they hit with strict clients | High (amends NC-2) | amend NC-2 |
+| 12 | Fixed query counts asserted per aggregate view; each definition in one place | Direct support for CQ-11 | High (amends CQ-11) | amend CQ-11 |
+
+## 74. Deliberately not taken (Brainitive)
+
+- **Helpdesk, ticket portal, lead forms, billing and invoicing, whiteboards, the document editor, Google Calendar
+  sync, a browser extension, web push.** Other products.
+- **A personal capture inbox and focus timer.** A worker-productivity feature; our audience is the portfolio.
+- **AI writing helpers, and AI extraction of tasks from notes, inside the service.** The same refusal as §16: it
+  would be the one output that cannot disclose its inputs. BR-3 takes the verification half only.
+- **SQLite by default, and the monolith shape.** We are one Rust service over PostgreSQL.
+- **Their commercial model** (hosted cloud, AGPL self-host, a separate commercial licence).
+- **A single fix version per issue and a public changelog token.** Their releases are software releases; ours are
+  milestones and stage gates. A public changelog is not wanted for portfolio data.
+
+## 75. Sequencing
+
+1. **BR-6** first: it can find real defects, and each finding is a small fix.
+2. **BR-1** and **BR-5**: independent, small, and both protect integrations.
+3. **BR-10** at any time; it is a test change.
+4. **BR-3** and **BR-2**: they extend NC-14 and NC-4 and share the idea of validating references on write.
+5. **BR-4**, **BR-7**, **BR-8**: small; BR-4 depends on NC-14 and NC-8, BR-7 only reads.
+6. **BR-9** only on request.
+7. The two amendments go into NC-2 and CQ-11 when those are picked up.
+
+## 76. Open questions for the owner (Brainitive)
+
+1. **BR-3.** Is an external agent proposing tasks from minutes, with the service only verifying and creating, an
+   acceptable reading of the §16 refusal? Recommended: yes, because the service runs no model and every item names
+   its evidence.
+2. **BR-9.** Is a public, expiring link to a meeting PDF wanted at all? Recommended: no, until handling marks can
+   refuse it for marked content.
+3. **BR-1.** Should the key be required on creates (breaking) or optional? Recommended: optional on the REST API,
+   required on any MCP write tool.
+4. **BR-5.** Is a breaking change to the signature acceptable? Recommended: send both the old and the new header for
+   one release, and document the receivers' window.

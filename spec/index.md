@@ -78,6 +78,8 @@ kept whole rather than split across them:
   to build, plus **the vocabulary trap** — a PRINCE2 management stage is
   a *fourth* ordered sequence, not the gate stage and not the project
   phase.
+- [Brainitive lessons](brainitive-lessons/index.md) — what an open-source team workspace and its MCP server
+  teach about retry-safe writes, evidence-backed status, webhook signing and security sweeps (ideas only; AGPL-3.0)
 - [Total Project Control](total-project-control/index.md) — Devaux's
   DIPP, expected monetary value and cost estimate to complete: is the
   value still to come worth the money still to spend? Implemented in

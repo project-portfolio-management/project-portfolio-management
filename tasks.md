@@ -2045,7 +2045,7 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   §76.4.
   **Acceptance:** a unit test of the signature over a fixed timestamp and body; a redelivery keeps the event id; a
   receiver-side check rejects a timestamp older than the stated window.
-- [ ] **BR-6 (M) — A security sweep with tests that fail on the old code.** One named regression test per class their
+- [x] **BR-6 (M) — A security sweep with tests that fail on the old code.** One named regression test per class their
   review found, applied to this service: attachments (a client's file name and extension never decide the stored name
   or the served type); nested route ids belong to their parent (a task under another plan's path is `404`); per-resource
   tokens, not a token that covers a person's other records; rich text sanitised on write and read; outbound fetches
@@ -2055,6 +2055,7 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   fails against a deliberately broken variant. Findings that are real become their own `CF-n` items.
   **Acceptance:** `tests/security_regression.rs`, one test per class, each with a comment saying how it was shown to
   fail; a list of what turned out already safe and what did not, in the CHANGELOG.
+  **Built 2026-10-25 (partly).** One new test, `a_record_of_one_plan_is_not_reachable_through_another_plans_path` (in `tests/requests/security_regression.rs`, in the main binary, not a separate file): 19 nested reads and writes on tasks, components, milestones, risks, issues, meetings and lessons, plan B's record under plan A's path, each must be `404`, and plan B is then unchanged. Shown to fail: with the plan check removed from `update_risk` the test fails (`PUT …/risks/{id} answered 200`); restored and passing. The other classes were read against the code and found already covered, so no new test: attachment names and types (`artifacts::sanitize_filename`, the store refusing a key that escapes its root, declared-type checks: unit tests; `attachments_are_refused_before_storing_verified_and_served_safely`: request test); outbound destinations (`sinks::destination_url_ok` and `resolved_ok`, a non-redirecting webhook client, unit tests); search and aggregates scoped to what the caller may read (`list_search_check_duplicates_authz`, `private_aggregates`). **Findings:** no defect. One posture to know: operator-configured webhook targets are permitted to private addresses unless `OUTBOUND_STRICT` is on (user-supplied destinations are always strict); that is by design and documented in `operations/deployment.md`. **Not done / not audited:** the 19 routes are a sample of about 94 nested routes, not all; rich-text sanitising (not checked whether any endpoint stores markup that a client renders); suspended identities and token throttling (the authentication service's); the future MCP `fetch` (NC-2 is not built).
 - [ ] **BR-7 (S) — Planning rules audit.** Read `allocations` and the capacity heatmap against: no double counting of
   a parent and its subtasks; a changed estimate or reassignment flags an allocation and never overwrites it; an
   override beats a default; no capacity declared is "not set", not zero; weeks are stored as Monday dates; a write

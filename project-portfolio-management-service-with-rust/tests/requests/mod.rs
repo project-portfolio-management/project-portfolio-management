@@ -48,6 +48,7 @@ mod role_tasks;
 mod scale;
 mod scheduled_jobs;
 mod scoring;
+mod security_regression;
 mod status_updates;
 mod strategy;
 mod subjects;

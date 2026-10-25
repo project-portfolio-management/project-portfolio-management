@@ -406,6 +406,12 @@ DELETE /api/plans/{pid}/links/{lpid}
 POST /api/plans/{pid}/links/{lpid}/delete
 GET /api/plans/{pid}/live
 GET /api/plans/{pid}/masked
+GET /api/plans/{pid}/meetings
+POST /api/plans/{pid}/meetings
+GET /api/plans/{pid}/meetings/{mid}
+POST /api/plans/{pid}/meetings/{mid}/cancel
+POST /api/plans/{pid}/meetings/{mid}/held
+GET /api/plans/{pid}/meetings/{mid}/pdf
 GET /api/plans/{pid}/milestones
 POST /api/plans/{pid}/milestones
 PUT /api/plans/{pid}/milestones/{m_pid}

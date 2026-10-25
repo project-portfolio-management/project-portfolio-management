@@ -91,6 +91,10 @@ mutation (§10.2).
   (unique), `template_pid`, `node_key`, `template_version` (>= 1), `baseline` (the template's tasks for the plan when it
   was last brought up to date) and `task_map` (template task key to the plan's task); the template's `version` starts at
   1 and rises on each revision; migration `m20261025_000093`.
+- **`meetings`** and **`meeting_items`** (built, FR-16e10) — a plan's meeting (`title`, `scheduled_on`, `status`
+  planned / held / cancelled by CHECK, `minutes?`, `held_on?`, `created_by?`, `held_by?`, `deleted_at?`) and its agenda
+  items and outcomes (`part`, `outcome_kind` decision / action / note by CHECK, `text`, optional `link_kind` and
+  `link_pid` together); migration `m20261025_000094`.
 - **`scheduled_job_runs`** (built, FR-16e8) — `pid`, `job`, `started_at`, `finished_at?`, `outcome` (`running`, `ok`, `failed` by CHECK), `detail?`; one row per run of a job the service schedules for itself; migration `m20261025_000092`.
 - **`lessons`** (built, FR-16e4) — `pid`, `plan_pid`, `occasion` (a gate or `closure`), `category` (`went_well`,
   `went_badly`, `recommendation`, by CHECK), `summary`, `detail?`, `recorded_by?`, `deleted_at?` (a withdrawal);

@@ -316,6 +316,18 @@ matcher payload (§5.6); every mutation audits (§6.6).
   named in `overwrite_local`; a change not named stays waiting. Scope: the tasks' title, description and points. Not
   built: milestones, components, plan fields, workflows and task dates or hierarchy; plans made before this existed
   (no link, so no diff); events for the tasks a sync creates; a screen.
+- **FR-16e10 Meetings (NC-14).** A plan holds meetings. `POST /api/plans/{pid}/meetings` plans one with a title, a
+  date and an agenda; each agenda item, and later each outcome, may point at a task, risk, issue, milestone, change
+  request or cutover decision **of the same plan** (a record of another plan, or of a kind not listed, is `422`).
+  `POST …/{mid}/held` records the minutes (required, up to 20,000 characters) and the outcomes (`decision`, `action` or
+  `note`), once; a held or cancelled meeting answers `409` to being held or cancelled again and is not edited.
+  `GET …/{mid}` shows it with each linked record named as it is now, or marked as no longer there;
+  `GET …/{mid}/pdf` prints the same, stating the meeting's own dates and not the moment of rendering, so two renders
+  are byte-identical. Planning, holding and cancelling are audited in the write's own transaction. Meetings are
+  retention class `COM`, kept with the plan and not purged by the service. Not built: attendees and apologies
+  (people are not recorded, to keep the personal-data inventory small); a single decision log across kinds (outcomes
+  of kind `decision` are listed per meeting and link to the change-request or cutover decision that records the
+  formal decision); editing or correcting held minutes; a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

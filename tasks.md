@@ -1981,9 +1981,10 @@ only as search snippets.
   left out.
   **Acceptance:** a fixture of three linked projects imports with resources
   merged once.
-- [ ] **NC-14 (M) — Meetings.** An agenda, minutes and outcomes linked to plan
+- [x] **NC-14 (M) — Meetings.** An agenda, minutes and outcomes linked to plan
   items and the decision log, exported as PDF, and kept under retention.
   **Acceptance:** request tests; a PDF golden test.
+  **Built 2026-10-25.** `meetings.rs` (pure rules and printed lines; 4 unit tests including the golden PDF `tests/fixtures/meeting-golden.pdf`, regenerated with `UPDATE_GOLDEN=1`), tables `meetings` and `meeting_items` (migration 94), `POST/GET …/meetings`, `GET …/{mid}`, `POST …/held` (once, claimed by a conditional update), `POST …/cancel`, `GET …/pdf`. Request test `a_meeting_is_planned_held_linked_and_printed_and_a_held_one_is_a_record`. Spec FR-16e10; retention class `COM`. **Not done:** attendees; correcting held minutes; a single decision log across kinds (outcomes link to change requests and cutover decisions); a screen; purging. **Not verified:** the PDF in a reader; text outside Latin-1. **Found, not fixed:** `tests/personal_data_inventory.rs` is not run in CI and fails for about 25 older columns missing from the inventory CSV (see CHANGELOG); I added only the meetings rows.
 - [x] **NC-15 (S–M) — Service accounts or scoped tokens for integrations.**
   Mostly in the authentication service. Here: a stated scope claim the ABAC
   policy understands.

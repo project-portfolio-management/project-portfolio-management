@@ -35,6 +35,8 @@ impl ActiveModelBehavior for lessons::ActiveModel {}
 impl ActiveModelBehavior for scheduled_job_runs::ActiveModel {}
 impl ActiveModelBehavior for plan_status_cadences::ActiveModel {}
 impl ActiveModelBehavior for plan_template_links::ActiveModel {}
+impl ActiveModelBehavior for meetings::ActiveModel {}
+impl ActiveModelBehavior for meeting_items::ActiveModel {}
 impl ActiveModelBehavior for status_updates::ActiveModel {}
 impl ActiveModelBehavior for escalations::ActiveModel {}
 impl ActiveModelBehavior for escalation_events::ActiveModel {}

@@ -1,0 +1,56 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Title (Meeting: Gate 2 review) /Producer (Project Portfolio Management) >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 460 >>
+stream
+BT
+/F1 10 Tf
+12 TL
+50 792 Td
+(Plan: Apollo) '
+(Status: held) '
+(Scheduled for: 2026-11-02) '
+(Held on: 2026-11-03) '
+(Agenda) '
+(1. Is the budget still right?) '
+(about milestone: Beta) '
+(2. Open risks) '
+(Minutes) '
+(The sponsor attended.) '
+(The budget holds for one more quarter.) '
+(Outcomes) '
+(1. [decision] Continue to gate 3) '
+(about change_request: Extend scope) '
+(2. [action] Re-baseline the schedule \(by the lead\)) '
+(about task: Re-plan) '
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000212 00000 n 
+0000000306 00000 n 
+0000000432 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R /Info 4 0 R >>
+startxref
+942
+%%EOF

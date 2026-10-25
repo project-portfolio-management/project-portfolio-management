@@ -21397,6 +21397,354 @@
         ]
       }
     },
+    "/api/plans/{pid}/meetings": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/meetings`: the plan's meetings, newest first, without their items.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/meetings`: the plan's meetings, newest first, without their items",
+        "tags": [
+          "meetings"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/plans/{pid}/meetings`: plan a meeting with its agenda (audited).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plans/{pid}/meetings` body.",
+                "properties": {
+                  "agenda": {
+                    "description": "The agenda, in order.",
+                    "items": {
+                      "description": "One agenda item as given.",
+                      "properties": {
+                        "link": {
+                          "default": null,
+                          "description": "The plan record it concerns, if any.",
+                          "nullable": true,
+                          "properties": {
+                            "kind": {
+                              "description": "One of [`LINK_KINDS`].",
+                              "type": "string"
+                            },
+                            "pid": {
+                              "description": "The record's `pid`.",
+                              "format": "uuid",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "pid"
+                          ],
+                          "type": "object"
+                        },
+                        "text": {
+                          "description": "What is to be discussed.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "scheduled_on": {
+                    "description": "The date it is scheduled for.",
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "title": {
+                    "description": "The meeting's title.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title",
+                  "scheduled_on"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/meetings`: plan a meeting with its agenda (audited)",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
+    "/api/plans/{pid}/meetings/{mid}": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/meetings/{mid}`: one meeting with its agenda, minutes and outcomes, each linked record named as it is now (or marked as no longer there).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/meetings/{mid}`: one meeting with its agenda, minutes and outcomes, each linked record named as it is now (or marked as no longer there)",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
+    "/api/plans/{pid}/meetings/{mid}/cancel": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/meetings/{mid}/cancel`: cancel a planned meeting (audited); `409` once held or cancelled.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/meetings/{mid}/cancel`: cancel a planned meeting (audited); `409` once held or cancelled",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
+    "/api/plans/{pid}/meetings/{mid}/held": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/meetings/{mid}/held`: record the minutes and outcomes of a planned meeting, once (audited). A meeting that is held or cancelled is a record and answers `409`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST …/{mid}/held` body.",
+                "properties": {
+                  "held_on": {
+                    "default": null,
+                    "description": "The date it was held (default: the scheduled date).",
+                    "format": "date",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "minutes": {
+                    "description": "What was said and agreed.",
+                    "type": "string"
+                  },
+                  "outcomes": {
+                    "description": "Decisions, actions and notes, in order.",
+                    "items": {
+                      "description": "One outcome as given.",
+                      "properties": {
+                        "kind": {
+                          "description": "`decision`, `action` or `note`.",
+                          "type": "string"
+                        },
+                        "link": {
+                          "default": null,
+                          "description": "The plan record it concerns, if any.",
+                          "nullable": true,
+                          "properties": {
+                            "kind": {
+                              "description": "One of [`LINK_KINDS`].",
+                              "type": "string"
+                            },
+                            "pid": {
+                              "description": "The record's `pid`.",
+                              "format": "uuid",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "pid"
+                          ],
+                          "type": "object"
+                        },
+                        "text": {
+                          "description": "What was decided, to be done, or noted.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "minutes"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/meetings/{mid}/held`: record the minutes and outcomes of a planned meeting, once (audited)",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
+    "/api/plans/{pid}/meetings/{mid}/pdf": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/meetings/{mid}/pdf`: the meeting as a PDF: agenda, and once held the minutes and outcomes. It states the meeting's own dates and not the moment of rendering, so two renders are byte-identical.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/meetings/{mid}/pdf`: the meeting as a PDF: agenda, and once held the minutes and outcomes",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
     "/api/plans/{pid}/milestones": {
       "get": {
         "description": "`GET /api/plans/{pid}/milestones` — due-date order, with overdue flags.",

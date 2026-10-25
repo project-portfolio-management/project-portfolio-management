@@ -31,6 +31,7 @@ mod insights;
 mod issues;
 mod lessons;
 mod live;
+mod meetings;
 mod metrics_control;
 mod modules;
 mod mspdi_export;

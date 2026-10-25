@@ -205,6 +205,7 @@ impl Hooks for App {
             .add_route(controllers::timesheets::routes())
             .add_route(controllers::plan_templates::routes())
             .add_route(controllers::blueprint_sync::routes())
+            .add_route(controllers::meetings::routes())
             .add_route(controllers::live::routes())
             .add_route(controllers::planner::routes())
             .add_route(controllers::attachments::routes())

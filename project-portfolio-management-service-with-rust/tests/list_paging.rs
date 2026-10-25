@@ -104,6 +104,14 @@ const UNREACHED: &[(&str, &str)] = &[
         "one record (an object, not a list); needs a record this census does not create",
     ),
     (
+        "/api/plans/{pid}/meetings/{mid}",
+        "one meeting (an object, not a list); needs a meeting this census does not create",
+    ),
+    (
+        "/api/plans/{pid}/meetings/{mid}/pdf",
+        "one meeting as a PDF (not a list); needs a meeting this census does not create",
+    ),
+    (
         "/api/plans/{pid}/template-diff",
         "one plan's template changes (an object, not a list); a 404 unless the plan was made from a template, which this census does not do",
     ),

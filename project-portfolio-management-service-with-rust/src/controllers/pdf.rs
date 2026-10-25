@@ -39,7 +39,7 @@ fn stamp(raw: Option<&str>) -> Result<DateTime<Utc>> {
     }
 }
 
-fn respond(filename: &str, bytes: Vec<u8>) -> axum::response::Response {
+pub(super) fn respond(filename: &str, bytes: Vec<u8>) -> axum::response::Response {
     (
         [
             (header::CONTENT_TYPE, "application/pdf".to_string()),

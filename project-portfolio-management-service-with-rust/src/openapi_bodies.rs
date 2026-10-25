@@ -42,6 +42,7 @@ pub const TAKES_NO_BODY: &[&str] = &[
     "post /api/plans/bulk-jobs/{id}/cancel",
     "post /api/plans/review-queue/{pid}/confirm",
     "post /api/plans/review-queue/{pid}/reject",
+    "post /api/plans/{pid}/meetings/{mid}/cancel",
     "post /api/plans/{pid}/allocations/{a_pid}/commit",
     "post /api/plans/{pid}/budget-lines/{line_pid}/release",
     "post /api/plans/{pid}/buffer-management/snapshots",
@@ -553,6 +554,12 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/status", "status_updates", "`GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the deployment's time zone). A plan with no cadence has no due date; one with no update says so."),
     ("get", "/api/plans/{pid}/template-diff", "blueprint_sync", "`GET /api/plans/{pid}/template-diff`: the template's changes since this plan was last brought up to date, each with whether the plan's own people have edited or removed that task. `404` for a plan not made from a template."),
     ("post", "/api/plans/{pid}/template-sync", "blueprint_sync", "`POST /api/plans/{pid}/template-sync`: apply the named changes to this plan in one transaction. A change to a task the plan edited is refused unless named in `overwrite_local`; refusals are listed, not errors."),
+    ("get", "/api/plans/{pid}/meetings", "meetings", "`GET /api/plans/{pid}/meetings`: the plan's meetings, newest first, without their items."),
+    ("post", "/api/plans/{pid}/meetings", "meetings", "`POST /api/plans/{pid}/meetings`: plan a meeting with its agenda (audited)."),
+    ("get", "/api/plans/{pid}/meetings/{mid}", "meetings", "`GET /api/plans/{pid}/meetings/{mid}`: one meeting with its agenda, minutes and outcomes, each linked record named as it is now (or marked as no longer there)."),
+    ("post", "/api/plans/{pid}/meetings/{mid}/cancel", "meetings", "`POST /api/plans/{pid}/meetings/{mid}/cancel`: cancel a planned meeting (audited); `409` once held or cancelled."),
+    ("post", "/api/plans/{pid}/meetings/{mid}/held", "meetings", "`POST /api/plans/{pid}/meetings/{mid}/held`: record the minutes and outcomes of a planned meeting, once (audited). A meeting that is held or cancelled is a record and answers `409`."),
+    ("get", "/api/plans/{pid}/meetings/{mid}/pdf", "meetings", "`GET /api/plans/{pid}/meetings/{mid}/pdf`: the meeting as a PDF: agenda, and once held the minutes and outcomes. It states the meeting's own dates and not the moment of rendering, so two renders are byte-identical."),
     ("get", "/api/plans/{pid}/status-cadence", "status_updates", "`GET /api/plans/{pid}/status-cadence` — how often the plan expects an update and where it stands against that today: the date the next is due, whether it is due or overdue, and by how many days; `404` when no cadence is set."),
     ("put", "/api/plans/{pid}/status-cadence", "status_updates", "`PUT /api/plans/{pid}/status-cadence`."),
     ("get", "/api/plans/{pid}/status-updates", "status_updates", "`GET /api/plans/{pid}/status-updates`: the history, newest first."),
@@ -849,6 +856,8 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/plans/from-template/{tpl}", crate::controllers::plan_templates::InstantiateBody);
     body!("post", "/api/plan-templates/{pid}/revise", crate::controllers::blueprint_sync::ReviseBody);
     body!("post", "/api/plans/{pid}/template-sync", crate::controllers::blueprint_sync::SyncBody);
+    body!("post", "/api/plans/{pid}/meetings", crate::controllers::meetings::PlanBody);
+    body!("post", "/api/plans/{pid}/meetings/{mid}/held", crate::controllers::meetings::HeldBody);
     body!("post", "/api/plans/match", crate::controllers::plans::MatchRequest);
     body!("post", "/api/plans/merge", crate::controllers::plans::MergeRequest);
     body!("put", "/api/plans/{pid}/access", crate::controllers::plan_access::AccessPayload);

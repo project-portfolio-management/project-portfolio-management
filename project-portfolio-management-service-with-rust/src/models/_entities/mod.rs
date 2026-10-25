@@ -79,6 +79,8 @@ pub mod key_results;
 pub mod kpi_readings;
 pub mod kpis;
 pub mod lessons;
+pub mod meeting_items;
+pub mod meetings;
 pub mod merge_records;
 pub mod milestone_signoff_requirements;
 pub mod milestone_signoffs;

@@ -418,6 +418,7 @@ pub mod kpis;
 pub mod ledger;
 pub mod leveling;
 pub mod live;
+pub mod meetings;
 pub mod milestone_signoffs;
 pub mod milestones;
 pub mod mspdi_export;

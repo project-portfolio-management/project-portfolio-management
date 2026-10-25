@@ -149,3 +149,243 @@ async fn three_projects_import_in_one_job_with_their_shared_resources_listed_onc
     })
     .await;
 }
+
+/// A project with pay: `Ana Lopez` at `ana_rate` an hour with a calendar that is off on Fridays, a fixed cost on
+/// the first task, an enterprise field, and optionally a link to a task of another file.
+fn pay_project(name: &str, ana_rate: &str, bo_rate: &str, cross: Option<(&str, i64)>) -> String {
+    let link = cross.map_or(String::new(), |(file, uid)| {
+        format!(
+            "<PredecessorLink><PredecessorUID>{uid}</PredecessorUID><Type>1</Type><CrossProject>1</CrossProject>\
+             <CrossProjectName>{file}</CrossProjectName></PredecessorLink>"
+        )
+    });
+    format!(
+        "<Project xmlns=\"http://schemas.microsoft.com/project\"><Name>{name}</Name><CurrencyCode>GBP</CurrencyCode>\
+         <MinutesPerDay>480</MinutesPerDay>\
+         <ExtendedAttributes><ExtendedAttribute><FieldID>111</FieldID><FieldName>Enterprise Text1</FieldName><Alias>Grant code</Alias></ExtendedAttribute></ExtendedAttributes>\
+         <Calendars><Calendar><UID>5</UID><IsBaseCalendar>0</IsBaseCalendar><WeekDays>\
+           <WeekDay><DayType>6</DayType><DayWorking>0</DayWorking></WeekDay></WeekDays></Calendar></Calendars>\
+         <Tasks>\
+           <Task><UID>1</UID><Name>{name} design</Name><OutlineLevel>1</OutlineLevel><Duration>PT40H0M0S</Duration>\
+             <FixedCost>300</FixedCost><FixedCostAccrual>2</FixedCostAccrual>\
+             <ExtendedAttribute><FieldID>111</FieldID><Value>42</Value></ExtendedAttribute></Task>\
+           <Task><UID>2</UID><Name>{name} build</Name><OutlineLevel>1</OutlineLevel><Duration>PT80H0M0S</Duration>{link}\
+             <ExtendedAttribute><FieldID>111</FieldID><Value>7</Value></ExtendedAttribute></Task>\
+         </Tasks>\
+         <Resources>\
+           <Resource><UID>1</UID><Name>Ana Lopez</Name><StandardRate>{ana_rate}</StandardRate><StandardRateFormat>2</StandardRateFormat>\
+             <OvertimeRate>75</OvertimeRate><OvertimeRateFormat>2</OvertimeRateFormat><CostPerUse>20</CostPerUse><CalendarUID>5</CalendarUID></Resource>\
+           <Resource><UID>2</UID><Name>Bo Chen</Name><StandardRate>{bo_rate}</StandardRate><StandardRateFormat>2</StandardRateFormat></Resource>\
+         </Resources></Project>"
+    )
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn files_link_to_each_other_and_carry_rates_costs_and_new_fields() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let body = json!({
+            "create_fields": true,
+            "field_map": { "grant code": "grant_code" },
+            "resource_map": { "ana lopez": { "role": "developer" } },
+            "rates_effective_from": "2026-11-01",
+            "projects": [
+                { "xml": pay_project("Alpha", "50", "40", None) },
+                { "xml": pay_project("Beta", "50", "45", Some(("C:\\Plans\\Alpha.mpp", 2))) },
+                { "xml": pay_project("Gamma", "50", "40", Some(("Zeta.mpp", 1))) }
+            ]
+        });
+
+        // ---- a dry run says what it would do, and writes nothing
+        let dry: Value = request
+            .post("/api/import/mspdi-batch")
+            .json(&body)
+            .await
+            .json();
+        assert_eq!(
+            dry["custom_field_definitions"][0]["outcome"],
+            "would_declare"
+        );
+        assert_eq!(
+            dry["custom_field_definitions"][0]["type"], "integer",
+            "42 and 7 are whole numbers"
+        );
+        assert_eq!(dry["projects"][0]["custom_fields"]["values_to_store"], 2);
+        assert_eq!(dry["cross_project_links"]["would_create"], 1);
+        let unresolved = dry["cross_project_links"]["unresolved"].as_array().unwrap();
+        assert_eq!(unresolved.len(), 1);
+        assert!(
+            unresolved[0]["reason"]
+                .as_str()
+                .unwrap()
+                .contains("Zeta.mpp"),
+            "{unresolved:?}"
+        );
+        let terms = dry["resource_terms"].as_array().unwrap();
+        let ana = &terms[0]["parts"];
+        assert!(
+            ana.as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p["what"] == "standard_rate" && p["outcome"] == "would_store")
+        );
+        assert!(
+            ana.as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p["what"] == "cost_per_use" && p["outcome"] == "not_stored")
+        );
+        assert!(
+            ana.as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p["what"] == "calendar"
+                    && p["reason"].as_str().unwrap().contains("1111000")),
+            "a person's calendar is theirs to set, and its weekdays are shown: {ana}"
+        );
+        let bo = terms[1]["parts"].as_array().unwrap();
+        assert!(
+            bo.iter().any(|p| p["reason"]
+                .as_str()
+                .unwrap()
+                .contains("disagree on: standard rate")),
+            "{bo:?}"
+        );
+        let defs: Value = request
+            .get("/api/custom-fields?applies_to=task")
+            .await
+            .json();
+        assert!(
+            !defs.to_string().contains("grant_code"),
+            "a dry run declares nothing"
+        );
+        let tables: Value = request.get("/api/cost-rate-tables").await.json();
+        assert_eq!(tables["tables"].as_array().unwrap().len(), 0);
+
+        // ---- applied
+        let done: Value = request
+            .post("/api/import/mspdi-batch?dry_run=false")
+            .json(&body)
+            .await
+            .json();
+        assert_eq!(done["failed_at"], Value::Null, "{done}");
+        assert_eq!(done["custom_field_definitions"][0]["outcome"], "declared");
+        assert_eq!(
+            done["cross_project_links"]["created"], 1,
+            "{}",
+            done["cross_project_links"]
+        );
+        let plans: Vec<String> = done["projects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| p["plan_pid"].as_str().unwrap().to_string())
+            .collect();
+        for p in done["projects"].as_array().unwrap() {
+            assert_eq!(p["costs"]["stored"], 1, "{p}");
+            assert_eq!(p["custom_fields"]["values_stored"], 2);
+        }
+        // The link runs from Alpha's task 2 to Beta's task 2, across plans.
+        let tasks_of = |plan: String| {
+            let request = &request;
+            async move {
+                let t: Value = request
+                    .get(&format!("/api/plans/{plan}/tasks"))
+                    .await
+                    .json();
+                t["tasks"].as_array().unwrap().clone()
+            }
+        };
+        let alpha = tasks_of(plans[0].clone()).await;
+        let beta = tasks_of(plans[1].clone()).await;
+        let a2 = alpha.iter().find(|t| t["title"] == "Alpha build").unwrap()["pid"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let b2 = beta.iter().find(|t| t["title"] == "Beta build").unwrap()["pid"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let deps: Value = request.get("/api/dependencies").await.json();
+        let found = deps.to_string();
+        assert!(
+            found.contains(&a2) && found.contains(&b2),
+            "no dependency joins the two plans: {found}"
+        );
+        // The role's rate tables hold Ana's rates, once, in GBP; Bo's disagreement stored nothing.
+        let tables: Value = request
+            .get("/api/cost-rate-tables?role=developer")
+            .await
+            .json();
+        let tables = tables["tables"].as_array().unwrap();
+        let names: Vec<&str> = tables.iter().map(|t| t["name"].as_str().unwrap()).collect();
+        assert_eq!(names, ["standard", "overtime"]);
+        assert_eq!(tables[0]["currency"], "GBP");
+        assert_eq!(tables[0]["rates"][0]["per_hour_minor"], 5000);
+        assert_eq!(tables[0]["rates"][0]["effective_from"], "2026-11-01");
+        assert_eq!(tables[1]["rates"][0]["per_hour_minor"], 7500);
+        // The fixed cost sits on the first task.
+        let a1 = alpha.iter().find(|t| t["title"] == "Alpha design").unwrap()["pid"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let costs: Value = request
+            .get(&format!("/api/plans/{}/tasks/{a1}/costs", plans[0]))
+            .await
+            .json();
+        assert_eq!(costs["costs"][0]["amount_minor"], 30000);
+        assert_eq!(costs["costs"][0]["accrual"], "end");
+        // The new field holds the whole number.
+        let v: Value = request
+            .get(&format!(
+                "/api/custom-fields/values?applies_to=task&subject_pid={a1}"
+            ))
+            .await
+            .json();
+        assert_eq!(v["values"]["grant_code"]["value"], 42, "{v}");
+
+        // ---- again: nothing is doubled
+        let mut same = body.clone();
+        for (i, p) in same["projects"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
+            p["plan_pid"] = json!(plans[i]);
+        }
+        let again: Value = request
+            .post("/api/import/mspdi-batch?dry_run=false")
+            .json(&same)
+            .await
+            .json();
+        assert_eq!(again["failed_at"], Value::Null, "{again}");
+        assert_eq!(again["cross_project_links"]["created"], 0);
+        assert_eq!(again["cross_project_links"]["already_present"], 1);
+        assert!(
+            again["custom_field_definitions"]
+                .as_array()
+                .unwrap()
+                .is_empty(),
+            "already declared"
+        );
+        let ana = again["resource_terms"][0]["parts"].as_array().unwrap();
+        assert!(
+            ana.iter()
+                .any(|p| p["what"] == "standard_rate" && p["outcome"] == "already_there"),
+            "{ana:?}"
+        );
+        assert_eq!(
+            again["projects"][0]["costs"]["stored"], 0,
+            "the fixed cost is there already"
+        );
+        let tables: Value = request
+            .get("/api/cost-rate-tables?role=developer")
+            .await
+            .json();
+        assert_eq!(tables["tables"][0]["rates"].as_array().unwrap().len(), 1);
+    })
+    .await;
+}

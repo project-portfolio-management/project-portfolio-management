@@ -13,7 +13,8 @@ use std::collections::BTreeMap;
 
 use serde_json::Value;
 
-use crate::mspdi::Parsed;
+use crate::cpm::Kind;
+use crate::mspdi::{MsCalendar, Parsed};
 
 /// The most files one job reads.
 pub const MAX_PROJECTS: usize = 10;
@@ -152,6 +153,204 @@ pub fn candidates(raw: &str) -> Vec<Value> {
     out
 }
 
+/// A project file's name reduced to what two spellings of it share: the last path segment, without its extension,
+/// lower case. `C:\Plans\Beta.mpp`, `Beta.xml` and `beta` are the same project.
+#[must_use]
+pub fn project_key(name: &str) -> String {
+    let last = name.rsplit(['\\', '/']).next().unwrap_or(name).trim();
+    let stem = match last.rsplit_once('.') {
+        Some((stem, ext)) if matches!(ext.to_lowercase().as_str(), "mpp" | "xml" | "mspdi") => stem,
+        _ => last,
+    };
+    stem.trim().to_lowercase()
+}
+
+/// A cross-project link that names a task in another file of the job.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Resolved {
+    /// Index of the project holding the successor.
+    pub successor_project: usize,
+    /// The successor's `UID` in that file.
+    pub successor: i64,
+    /// Index of the project holding the predecessor.
+    pub predecessor_project: usize,
+    /// The predecessor's `UID` in its file.
+    pub predecessor: i64,
+    /// The link kind.
+    pub kind: Kind,
+    /// Business days of lag.
+    pub lag_days: i64,
+}
+
+/// A cross-project link that could not be placed, and why.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unresolved {
+    /// The project holding the successor.
+    pub project: String,
+    /// The successor's `UID`.
+    pub successor: i64,
+    /// Why.
+    pub reason: String,
+}
+
+/// Place each cross-project link of each file: the file it names must be in the job (matched by `project_key` to the
+/// label or the project's own name), and the predecessor's `UID` must be a task of that file.
+#[must_use]
+pub fn resolve_cross_links(projects: &[(String, &Parsed)]) -> (Vec<Resolved>, Vec<Unresolved>) {
+    let keys: Vec<Vec<String>> = projects
+        .iter()
+        .map(|(label, p)| {
+            let mut k = vec![project_key(label)];
+            k.extend(p.name.as_deref().map(project_key));
+            k
+        })
+        .collect();
+    let (mut ok, mut bad) = (Vec::new(), Vec::new());
+    for (i, (label, p)) in projects.iter().enumerate() {
+        for l in &p.cross_links {
+            let wanted = project_key(&l.project);
+            let hits: Vec<usize> = (0..projects.len())
+                .filter(|j| *j != i && keys[*j].contains(&wanted))
+                .collect();
+            let reason = match hits.as_slice() {
+                [] => Some(format!(
+                    "{:?} is not among the files of this job",
+                    l.project
+                )),
+                [j] if projects[*j].1.tasks.iter().any(|t| t.uid == l.predecessor) => {
+                    ok.push(Resolved {
+                        successor_project: i,
+                        successor: l.successor,
+                        predecessor_project: *j,
+                        predecessor: l.predecessor,
+                        kind: l.kind,
+                        lag_days: l.lag_days,
+                    });
+                    None
+                }
+                [j] => Some(format!(
+                    "task {} is not in {:?}",
+                    l.predecessor, projects[*j].0
+                )),
+                _ => Some(format!(
+                    "{:?} names more than one file of this job",
+                    l.project
+                )),
+            };
+            if let Some(reason) = reason {
+                bad.push(Unresolved {
+                    project: label.clone(),
+                    successor: l.successor,
+                    reason,
+                });
+            }
+        }
+    }
+    (ok, bad)
+}
+
+/// What the files together say a resource is paid and works to. A value two files give differently is a conflict:
+/// it is not taken, and it is listed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Terms {
+    /// The resource, as in the pool.
+    pub name: String,
+    /// Minor currency units per hour, standard.
+    pub standard: Option<i64>,
+    /// Minor currency units per hour, overtime.
+    pub overtime: Option<i64>,
+    /// Per-use cost in minor units (reported, not stored).
+    pub cost_per_use: Option<i64>,
+    /// The resource's own calendar.
+    pub calendar: Option<MsCalendar>,
+    /// The currency the files agree on.
+    pub currency: Option<String>,
+    /// Which of the above the files disagree on.
+    pub conflicts: Vec<String>,
+    /// Rates that could not be converted, and similar.
+    pub notes: Vec<String>,
+}
+
+fn agree<T: Clone + PartialEq>(values: &[T], what: &str, conflicts: &mut Vec<String>) -> Option<T> {
+    let first = values.first()?;
+    if values.iter().all(|v| v == first) {
+        Some(first.clone())
+    } else {
+        conflicts.push(what.to_string());
+        None
+    }
+}
+
+/// Merge each resource's pay and calendar across the files, in pool order.
+#[must_use]
+pub fn merge_terms(projects: &[(String, &Parsed)]) -> Vec<Terms> {
+    let pool = merge_resources(projects);
+    pool.into_iter()
+        .map(|entry| {
+            let key = normalize(&entry.name);
+            let mut standard = vec![];
+            let mut overtime = vec![];
+            let mut per_use = vec![];
+            let mut calendars = vec![];
+            let mut currencies = vec![];
+            let mut notes = vec![];
+            for (_, p) in projects {
+                for r in p
+                    .resource_terms
+                    .iter()
+                    .filter(|r| normalize(&r.name) == key)
+                {
+                    standard.extend(r.standard_per_hour_minor);
+                    overtime.extend(r.overtime_per_hour_minor);
+                    per_use.extend(r.cost_per_use_minor);
+                    calendars.extend(r.calendar.clone());
+                    notes.extend(r.rate_notes.clone());
+                    if r.standard_per_hour_minor.is_some() || r.overtime_per_hour_minor.is_some() {
+                        currencies.extend(p.currency.clone());
+                    }
+                }
+            }
+            notes.sort();
+            notes.dedup();
+            let mut conflicts = Vec::new();
+            Terms {
+                name: entry.name,
+                standard: agree(&standard, "standard rate", &mut conflicts),
+                overtime: agree(&overtime, "overtime rate", &mut conflicts),
+                cost_per_use: agree(&per_use, "cost per use", &mut conflicts),
+                calendar: agree(&calendars, "calendar", &mut conflicts),
+                currency: agree(&currencies, "currency", &mut conflicts),
+                conflicts,
+                notes,
+            }
+        })
+        .collect()
+}
+
+/// The custom-field type that fits every value: `integer`, `date`, `bool`, else `text`.
+#[must_use]
+pub fn infer_type<'a>(values: impl IntoIterator<Item = &'a str>) -> &'static str {
+    let vals: Vec<&str> = values.into_iter().map(str::trim).collect();
+    if vals.is_empty() {
+        return "text";
+    }
+    if vals.iter().all(|v| v.parse::<i64>().is_ok()) {
+        "integer"
+    } else if vals.iter().all(|v| {
+        chrono::NaiveDate::parse_from_str(v.get(..10).unwrap_or(v), "%Y-%m-%d").is_ok()
+            && v.len() >= 10
+    }) {
+        "date"
+    } else if vals
+        .iter()
+        .all(|v| matches!(v.to_lowercase().as_str(), "yes" | "no" | "true" | "false"))
+    {
+        "bool"
+    } else {
+        "text"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -241,5 +440,100 @@ mod tests {
         assert_eq!(candidates("Yes"), [Value::from("Yes"), Value::Bool(true)]);
         assert_eq!(candidates("1").len(), 3);
         assert_eq!(candidates("plain"), [Value::from("plain")]);
+    }
+
+    #[test]
+    fn a_cross_project_link_is_placed_when_its_file_and_task_are_in_the_job() {
+        let link = "<PredecessorLink><PredecessorUID>1</PredecessorUID><Type>1</Type><CrossProject>1</CrossProject><CrossProjectName>C:\\Plans\\Alpha.mpp</CrossProjectName></PredecessorLink>";
+        let a = parse(&project("Alpha", &[], &[], "", "")).unwrap();
+        let b_xml = project("Beta", &[], &[], "", "").replace("</Task>", &format!("{link}</Task>"));
+        let b = parse(&b_xml).unwrap();
+        assert_eq!(b.cross_links.len(), 1);
+        let (ok, bad) = resolve_cross_links(&[("Alpha".into(), &a), ("Beta".into(), &b)]);
+        assert!(bad.is_empty(), "{bad:?}");
+        assert_eq!(
+            (
+                ok[0].successor_project,
+                ok[0].predecessor_project,
+                ok[0].predecessor
+            ),
+            (1, 0, 1)
+        );
+        // Without the file, or with a task it does not have, the link is listed with the reason.
+        let (ok, bad) = resolve_cross_links(&[("Beta".into(), &b)]);
+        assert!(
+            ok.is_empty() && bad[0].reason.contains("not among the files"),
+            "{bad:?}"
+        );
+        let b_missing = parse(&b_xml.replace("<PredecessorUID>1<", "<PredecessorUID>99<")).unwrap();
+        let (ok, bad) = resolve_cross_links(&[("Alpha".into(), &a), ("Beta".into(), &b_missing)]);
+        assert!(
+            ok.is_empty() && bad[0].reason.contains("task 99"),
+            "{bad:?}"
+        );
+    }
+
+    #[test]
+    fn project_names_match_across_paths_and_extensions() {
+        assert_eq!(project_key("C:\\Plans\\Beta.mpp"), "beta");
+        assert_eq!(project_key("/x/y/Beta.XML"), "beta");
+        assert_eq!(project_key(" Beta "), "beta");
+        assert_eq!(
+            project_key("v1.2 plan"),
+            "v1.2 plan",
+            "a dot that is not an extension stays"
+        );
+    }
+
+    fn with_pay(name: &str, rate: &str, fmt: &str, extra: &str) -> String {
+        format!(
+            "<Project><Name>{name}</Name><CurrencyCode>GBP</CurrencyCode><MinutesPerDay>480</MinutesPerDay>\
+             <Calendars><Calendar><UID>5</UID><IsBaseCalendar>0</IsBaseCalendar><WeekDays>\
+               <WeekDay><DayType>6</DayType><DayWorking>0</DayWorking></WeekDay></WeekDays></Calendar></Calendars>\
+             <Tasks><Task><UID>1</UID><Name>t</Name><FixedCost>250.5</FixedCost><FixedCostAccrual>2</FixedCostAccrual></Task></Tasks>\
+             <Resources><Resource><UID>1</UID><Name>Ana</Name><StandardRate>{rate}</StandardRate>\
+               <StandardRateFormat>{fmt}</StandardRateFormat><CalendarUID>5</CalendarUID>{extra}</Resource></Resources></Project>"
+        )
+    }
+
+    #[test]
+    fn rates_are_converted_to_minor_units_per_hour_and_files_that_disagree_conflict() {
+        let a = parse(&with_pay("A", "50", "2", "")).unwrap();
+        let day = parse(&with_pay("B", "400", "3", "")).unwrap();
+        assert_eq!(a.resource_terms[0].standard_per_hour_minor, Some(5000));
+        assert_eq!(
+            day.resource_terms[0].standard_per_hour_minor,
+            Some(5000),
+            "400 a day over 8 hours"
+        );
+        assert_eq!(a.fixed_costs[0].amount_minor, 25050);
+        assert_eq!(a.fixed_costs[0].accrual, "end");
+        assert_eq!(
+            a.resource_terms[0].calendar.as_ref().unwrap().weekdays,
+            "1111000",
+            "Friday (day type 6) is off"
+        );
+        let t = merge_terms(&[("A".into(), &a), ("B".into(), &day)]);
+        assert_eq!(
+            (t[0].standard, t[0].currency.as_deref()),
+            (Some(5000), Some("GBP"))
+        );
+        assert!(t[0].conflicts.is_empty());
+        let other = parse(&with_pay("C", "60", "2", "")).unwrap();
+        let t = merge_terms(&[("A".into(), &a), ("C".into(), &other)]);
+        assert_eq!(t[0].standard, None);
+        assert_eq!(t[0].conflicts, ["standard rate"]);
+        let week = parse(&with_pay("D", "1000", "4", "")).unwrap();
+        assert_eq!(week.resource_terms[0].standard_per_hour_minor, None);
+        assert!(week.resource_terms[0].rate_notes[0].contains("week, month or year"));
+    }
+
+    #[test]
+    fn a_field_type_is_inferred_from_all_its_values() {
+        assert_eq!(infer_type(["1", " 22 "]), "integer");
+        assert_eq!(infer_type(["2026-11-02T08:00:00", "2026-12-01"]), "date");
+        assert_eq!(infer_type(["Yes", "no"]), "bool");
+        assert_eq!(infer_type(["1", "x"]), "text");
+        assert_eq!(infer_type([]), "text");
     }
 }

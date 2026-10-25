@@ -120,6 +120,190 @@ async fn applicable(ctx: &AppContext, person: &str, name: &str) -> Result<Option
     }
 }
 
+/// What an import did with one rate.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RateOutcome {
+    /// A table and/or a rate was written.
+    Stored,
+    /// The table already has this rate in force on that date.
+    AlreadyThere,
+    /// The table already has a different rate from that date; rates are append-only, so nothing was changed.
+    DiffersFromExisting,
+}
+
+/// Store a rate for a person or a role from an import: the named table is created when it is missing; a rate
+/// is written unless the table already holds this value (in force on the date) or a different one on that date.
+pub(crate) async fn import_rate(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    owner: (Option<&str>, Option<&str>),
+    table_name: &str,
+    currency: &str,
+    effective_from: NaiveDate,
+    per_hour_minor: i64,
+) -> Result<RateOutcome> {
+    let (person_ref, role) = owner;
+    let mut q = cost_rate_tables::Entity::find()
+        .filter(cost_rate_tables::Column::Name.eq(table_name))
+        .filter(cost_rate_tables::Column::DeletedAt.is_null());
+    q = match (person_ref, role) {
+        (Some(p), _) => q.filter(cost_rate_tables::Column::PersonRef.eq(p)),
+        (_, Some(r)) => q.filter(cost_rate_tables::Column::Role.eq(r)),
+        _ => return Err(unprocessable("name exactly one of person_ref and role")),
+    };
+    let existing = q.one(&ctx.db).await.map_err(db_err)?;
+    if let Some(t) = &existing {
+        let in_force = cost_rates::Entity::find()
+            .filter(cost_rates::Column::TablePid.eq(t.pid))
+            .filter(cost_rates::Column::EffectiveFrom.lte(effective_from))
+            .order_by_desc(cost_rates::Column::EffectiveFrom)
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        if let Some(r) = in_force {
+            return Ok(if r.per_hour_minor == per_hour_minor {
+                RateOutcome::AlreadyThere
+            } else if r.effective_from == effective_from {
+                RateOutcome::DiffersFromExisting
+            } else {
+                // A different rate was in force earlier; this one starts a new period.
+                add_import_rate(ctx, actor, t, effective_from, per_hour_minor).await?;
+                RateOutcome::Stored
+            });
+        }
+    }
+    let table = match existing {
+        Some(t) => t,
+        None => create_import_table(ctx, actor, (person_ref, role), table_name, currency).await?,
+    };
+    add_import_rate(ctx, actor, &table, effective_from, per_hour_minor).await?;
+    Ok(RateOutcome::Stored)
+}
+
+async fn create_import_table(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    owner: (Option<&str>, Option<&str>),
+    table_name: &str,
+    currency: &str,
+) -> Result<cost_rate_tables::Model> {
+    let (person_ref, role) = owner;
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = cost_rate_tables::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        name: ActiveValue::set(table_name.to_string()),
+        person_ref: ActiveValue::set(person_ref.map(str::to_string)),
+        role: ActiveValue::set(role.map(str::to_string)),
+        currency: ActiveValue::set(currency.to_string()),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&txn)
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &txn,
+        row.pid,
+        "cost_rate_table_created",
+        actor,
+        Some(
+            serde_json::json!({ "name": row.name, "person_ref": row.person_ref,
+            "role": row.role, "currency": row.currency, "via": "mspdi_batch" }),
+        ),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
+    Ok(row)
+}
+
+async fn add_import_rate(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    table: &cost_rate_tables::Model,
+    effective_from: NaiveDate,
+    per_hour_minor: i64,
+) -> Result<()> {
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = cost_rates::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        table_pid: ActiveValue::set(table.pid),
+        effective_from: ActiveValue::set(effective_from),
+        per_hour_minor: ActiveValue::set(per_hour_minor),
+        created_by: ActiveValue::set(actor.map(str::to_string)),
+        ..Default::default()
+    }
+    .insert(&txn)
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &txn,
+        table.pid,
+        "cost_rate_added",
+        actor,
+        Some(serde_json::json!({ "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor,
+            "currency": table.currency, "via": "mspdi_batch" })),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
+    Ok(())
+}
+
+/// Store a task's fixed cost from an import, once: a task that already has a fixed cost with this description
+/// keeps it (a re-import converges). Returns whether one was written.
+pub(crate) async fn import_fixed_cost(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    task_pid: Uuid,
+    description: &str,
+    amount_minor: i64,
+    currency: &str,
+    accrual: &str,
+) -> Result<bool> {
+    let present = task_costs::Entity::find()
+        .filter(task_costs::Column::TaskPid.eq(task_pid))
+        .filter(task_costs::Column::Kind.eq("fixed"))
+        .filter(task_costs::Column::Description.eq(description))
+        .filter(task_costs::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .is_some();
+    if present {
+        return Ok(false);
+    }
+    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let row = task_costs::ActiveModel {
+        pid: ActiveValue::set(Uuid::new_v4()),
+        task_pid: ActiveValue::set(task_pid),
+        kind: ActiveValue::set("fixed".to_string()),
+        description: ActiveValue::set(description.to_string()),
+        amount_minor: ActiveValue::set(amount_minor),
+        currency: ActiveValue::set(currency.to_string()),
+        accrual: ActiveValue::set(accrual.to_string()),
+        deleted_at: ActiveValue::set(None),
+        ..Default::default()
+    }
+    .insert(&txn)
+    .await
+    .map_err(db_err)?;
+    AuditModel::record(
+        &txn,
+        row.pid,
+        "task_cost_added",
+        actor,
+        Some(
+            serde_json::json!({ "task_pid": task_pid, "kind": "fixed", "amount_minor": amount_minor,
+            "currency": currency, "accrual": accrual, "via": "mspdi_batch" }),
+        ),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(super::db_err)?;
+    Ok(true)
+}
+
 // ───────────────────────── rate tables and rates ─────────────────────────
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]

@@ -134,6 +134,23 @@ pub(crate) async fn set_plan_calendar(
         .map(|_| ())
 }
 
+/// Set a person's calendar (the MS Project batch import uses it for the caller's own resource).
+pub(crate) async fn set_person_calendar(
+    ctx: &AppContext,
+    person_ref: &str,
+    weekdays: &str,
+    holidays: &[NaiveDate],
+    actor: Option<&str>,
+) -> Result<()> {
+    let body = CalendarBody {
+        weekdays: weekdays.to_string(),
+        holidays: holidays.to_vec(),
+    };
+    upsert(ctx, "person", person_ref, &body, actor)
+        .await
+        .map(|_| ())
+}
+
 /// A plan's own calendar as stored (weekday mask, holidays), or `None` when it has none.
 pub(crate) async fn plan_calendar_spec(
     ctx: &AppContext,

@@ -9639,12 +9639,17 @@
               "schema": {
                 "description": "`POST /api/import/mspdi-batch` body.",
                 "properties": {
+                  "create_fields": {
+                    "default": false,
+                    "description": "Declare the mapped custom fields that do not exist yet (type from the values: integer, date, yes/no or text).",
+                    "type": "boolean"
+                  },
                   "field_map": {
                     "additionalProperties": {
                       "type": "string"
                     },
                     "default": {},
-                    "description": "A project field (its alias, name or id) to the key of an existing task custom field.",
+                    "description": "A project field (its alias, name or id) to the key of a task custom field.",
                     "type": "object"
                   },
                   "parent_pid": {
@@ -9683,6 +9688,35 @@
                       "type": "object"
                     },
                     "type": "array"
+                  },
+                  "rates_effective_from": {
+                    "default": null,
+                    "description": "The date the imported rates take effect (default: today in the deployment's time zone).",
+                    "format": "date",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "resource_map": {
+                    "additionalProperties": {
+                      "description": "Who a resource of the files is.",
+                      "properties": {
+                        "person_ref": {
+                          "default": null,
+                          "description": "A person (`person:` or `worker:` URN): their rates go in their own rate tables.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "role": {
+                          "default": null,
+                          "description": "A role: the rates go in the role's tables, for any person without their own.",
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "description": "Who each pool resource is, by its name in the files. Without an entry a resource's rates and calendar are\nreported and not stored: a name is not an identity.",
+                    "type": "object"
                   }
                 },
                 "required": [

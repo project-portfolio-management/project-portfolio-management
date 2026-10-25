@@ -337,9 +337,22 @@ matcher payload (§5.6); every mutation audits (§6.6).
   declared custom fields, enterprise ones included, are stored on the matching tasks according to the caller's
   `field_map` (the field's alias, name or id to the key of an existing task custom field, validated by that field's type);
   a field with no mapping, and a value the type refuses, are listed with the reason. Not one transaction: the job stops
-  at the first project that fails and lists the rest as not attempted; a plan created by a failed run is kept. Not built:
-  links between projects (a task waiting on another file's task), resource rates, calendars per resource and costs, creating
-  custom-field definitions, a screen.
+  at the first project that fails and lists the rest as not attempted; a plan created by a failed run is kept.
+  **Links between files:** a predecessor link written with `CrossProject` and `CrossProjectName` is placed when that
+  name (last path segment, extension ignored) is another file of the job, matched to its label or project name, and the
+  predecessor's `UID` is a task of that file; it becomes a dependency between the two plans' tasks (already-linked pairs
+  skipped, a cycle refused). A link to a file not in the job, or to a task it lacks, is listed with the reason.
+  **Pay:** each resource's standard and overtime rates (per hour, or per minute or day converted; week, month and year
+  are not), calendar and per-use cost are merged across the files; a value the files give differently is a conflict and
+  is not taken. `resource_map` says who a resource is (`person_ref` or `role`); only then, with finance access and a
+  currency in the files, are rates written to that person's or role's `standard` / `overtime` rate table from
+  `rates_effective_from` (append-only; the same rate again is "already there"). A calendar is written only for the
+  caller's own `person_ref`, since a person's calendar is theirs to set; otherwise it is shown. A task's `FixedCost`
+  becomes a fixed task cost once (with finance access and a currency). Costs that follow from rates and work are not
+  carried; the service computes its own. **Custom fields:** with `create_fields`, a mapped field that has no task custom
+  field is declared with the type that fits all its values (integer, date, yes/no, else text) and labelled by its alias.
+  Not built: week, month and year rates, per-use costs, resource skills; writing another person's calendar; links the
+  other direction (a successor in another file); a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

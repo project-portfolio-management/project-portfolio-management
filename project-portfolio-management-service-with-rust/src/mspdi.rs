@@ -132,6 +132,51 @@ pub struct MsCalendar {
     pub holidays: Vec<NaiveDate>,
 }
 
+/// A link from a task of this file to a task of another project file (`CrossProject`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MsCrossLink {
+    /// The successor's UID, in this file.
+    pub successor: i64,
+    /// `CrossProjectName`: the other file, as MS Project wrote it (often a path).
+    pub project: String,
+    /// `PredecessorUID`, in the other file.
+    pub predecessor: i64,
+    /// Our kind.
+    pub kind: Kind,
+    /// Business days of lag.
+    pub lag_days: i64,
+}
+
+/// What a resource is paid, and the calendar it works to.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MsResource {
+    /// `UID`.
+    pub uid: i64,
+    /// `Name`.
+    pub name: String,
+    /// `StandardRate` as minor currency units per hour, when its unit could be converted.
+    pub standard_per_hour_minor: Option<i64>,
+    /// `OvertimeRate` as minor currency units per hour.
+    pub overtime_per_hour_minor: Option<i64>,
+    /// `CostPerUse` in minor currency units (not stored anywhere: reported).
+    pub cost_per_use_minor: Option<i64>,
+    /// The resource's own calendar (`CalendarUID`), when it has one.
+    pub calendar: Option<MsCalendar>,
+    /// A rate that could not be converted, and why.
+    pub rate_notes: Vec<String>,
+}
+
+/// A task's fixed cost.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MsFixedCost {
+    /// The task's `UID`.
+    pub uid: i64,
+    /// `FixedCost` in minor currency units.
+    pub amount_minor: i64,
+    /// `start`, `end` or `prorated` (`FixedCostAccrual` 1, 2, 3).
+    pub accrual: &'static str,
+}
+
 /// A custom field the project declares (`ExtendedAttributes`), including enterprise fields.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MsField {
@@ -160,6 +205,14 @@ pub const MAX_EXTENDED: usize = 100_000;
 /// A parsed document.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parsed {
+    /// Links to tasks in other project files.
+    pub cross_links: Vec<MsCrossLink>,
+    /// Pay and calendars per resource.
+    pub resource_terms: Vec<MsResource>,
+    /// Tasks' fixed costs.
+    pub fixed_costs: Vec<MsFixedCost>,
+    /// `CurrencyCode`.
+    pub currency: Option<String>,
     /// The custom fields the project declares.
     pub fields: Vec<MsField>,
     /// Each task's custom-field values.
@@ -277,13 +330,24 @@ pub fn days_of(minutes: i64, minutes_per_day: i64) -> (i64, bool) {
 }
 
 fn calendar_of(root: roxmltree::Node<'_, '_>) -> Option<MsCalendar> {
-    let uid = int(root, "CalendarUID");
+    calendar_with(root, int(root, "CalendarUID"), true)
+}
+
+/// The calendar with `uid`; when `fall_back_to_base`, the base calendar if that uid names none.
+fn calendar_with(
+    root: roxmltree::Node<'_, '_>,
+    uid: Option<i64>,
+    fall_back_to_base: bool,
+) -> Option<MsCalendar> {
     let cals = child(root, "Calendars")?;
     let cal = cals
         .children()
         .filter(|c| c.is_element() && c.tag_name().name() == "Calendar")
         .find(|c| uid.is_some_and(|u| int(*c, "UID") == Some(u)))
         .or_else(|| {
+            if !fall_back_to_base {
+                return None;
+            }
             cals.children().find(|c| {
                 c.is_element()
                     && c.tag_name().name() == "Calendar"
@@ -335,6 +399,62 @@ fn calendar_of(root: roxmltree::Node<'_, '_>) -> Option<MsCalendar> {
     })
 }
 
+/// Minor currency units per hour for a rate written in MS Project's `format` (1 minute, 2 hour, 3 day); `None` for
+/// the units that depend on a calendar the file does not give (week, month, year).
+fn per_hour_minor(rate: f64, format: Option<i64>, minutes_per_day: i64) -> Option<i64> {
+    let per_hour = match format.unwrap_or(2) {
+        1 => rate * 60.0,
+        2 => rate,
+        #[expect(clippy::cast_precision_loss)] // a business day's minutes
+        3 => rate / (minutes_per_day as f64 / 60.0),
+        _ => return None,
+    };
+    let minor = (per_hour * 100.0).round();
+    #[expect(clippy::cast_possible_truncation)]
+    (0.0..9.0e15).contains(&minor).then_some(minor as i64)
+}
+
+fn resource_terms_of(root: roxmltree::Node<'_, '_>, minutes_per_day: i64) -> Vec<MsResource> {
+    let Some(rs) = child(root, "Resources") else {
+        return Vec::new();
+    };
+    rs.children()
+        .filter(|c| c.is_element() && c.tag_name().name() == "Resource")
+        .filter_map(|r| {
+            let uid = int(r, "UID").filter(|u| *u != 0)?;
+            let name = text(r, "Name")?.to_string();
+            let mut rate_notes = Vec::new();
+            let mut rate = |tag: &str, fmt: &str| -> Option<i64> {
+                let v = text(r, tag)?.parse::<f64>().ok().filter(|v| *v > 0.0)?;
+                let minor = per_hour_minor(v, int(r, fmt), minutes_per_day);
+                if minor.is_none() {
+                    rate_notes.push(format!(
+                        "{tag} is written per week, month or year, which needs the resource's hours; not converted"
+                    ));
+                }
+                minor
+            };
+            let standard = rate("StandardRate", "StandardRateFormat");
+            let overtime = rate("OvertimeRate", "OvertimeRateFormat");
+            let cost_per_use = text(r, "CostPerUse")
+                .and_then(|c| c.parse::<f64>().ok())
+                .map(|c| (c * 100.0).round())
+                .filter(|c| (1.0..9.0e15).contains(c));
+            Some(MsResource {
+                uid,
+                name,
+                standard_per_hour_minor: standard,
+                overtime_per_hour_minor: overtime,
+                #[expect(clippy::cast_possible_truncation)]
+                cost_per_use_minor: cost_per_use.map(|c| c as i64),
+                calendar: int(r, "CalendarUID")
+                    .and_then(|u| calendar_with(root, Some(u), false)),
+                rate_notes,
+            })
+        })
+        .collect()
+}
+
 fn span(from: NaiveDate, to: NaiveDate) -> Vec<NaiveDate> {
     if to < from {
         return Vec::new();
@@ -373,6 +493,8 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
     let mut tasks = Vec::new();
     let mut links = Vec::new();
     let mut extended: Vec<MsExtended> = Vec::new();
+    let mut cross_links: Vec<MsCrossLink> = Vec::new();
+    let mut fixed_costs: Vec<MsFixedCost> = Vec::new();
     let fields: Vec<MsField> = child(root, "ExtendedAttributes")
         .map(|fs| {
             fs.children()
@@ -461,14 +583,7 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                 let Some(pred) = int(l, "PredecessorUID") else {
                     continue;
                 };
-                if text(l, "CrossProject") == Some("1") {
-                    unmapped.push(Unmapped {
-                        what: "link",
-                        uid: Some(uid),
-                        reason: "a link to another project file was skipped".to_string(),
-                    });
-                    continue;
-                }
+                let cross = text(l, "CrossProject") == Some("1");
                 let ty = int(l, "Type").unwrap_or(1);
                 let Some(kind) = link_kind_of(ty) else {
                     unmapped.push(Unmapped {
@@ -497,12 +612,45 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                         reason: "an elapsed-time lag was treated as working time".to_string(),
                     });
                 }
+                if cross {
+                    let project = text(l, "CrossProjectName").unwrap_or_default().to_string();
+                    unmapped.push(Unmapped {
+                        what: "link",
+                        uid: Some(uid),
+                        reason: format!(
+                            "a link to task {pred} of another project file ({project}) is not created by a single-file import; the batch import creates it when that file is in the same job"
+                        ),
+                    });
+                    cross_links.push(MsCrossLink {
+                        successor: uid,
+                        project,
+                        predecessor: pred,
+                        kind,
+                        lag_days,
+                    });
+                    continue;
+                }
                 links.push(MsLink {
                     successor: uid,
                     predecessor: pred,
                     kind,
                     lag_days,
                 });
+            }
+            if let Some(cost) = text(t, "FixedCost").and_then(|c| c.parse::<f64>().ok()) {
+                let minor = (cost * 100.0).round();
+                if (1.0..9.0e15).contains(&minor) {
+                    fixed_costs.push(MsFixedCost {
+                        uid,
+                        #[expect(clippy::cast_possible_truncation)]
+                        amount_minor: minor as i64,
+                        accrual: match int(t, "FixedCostAccrual") {
+                            Some(1) => "start",
+                            Some(2) => "end",
+                            _ => "prorated",
+                        },
+                    });
+                }
             }
             for e in t
                 .children()
@@ -560,7 +708,12 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                 .collect()
         })
         .unwrap_or_default();
+    let resource_terms = resource_terms_of(root, minutes_per_day);
     Ok(Parsed {
+        cross_links,
+        resource_terms,
+        fixed_costs,
+        currency: text(root, "CurrencyCode").map(str::to_string),
         fields,
         extended,
         name: text(root, "Name")

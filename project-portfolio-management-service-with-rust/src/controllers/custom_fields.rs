@@ -69,21 +69,43 @@ async fn create_def(
     caller: MaybeAuthUser,
     Json(p): Json<DefPayload>,
 ) -> Result<Response> {
-    let problems = rules::def_problems(
+    let row = declare(
+        &ctx,
+        caller.actor(),
         &p.key,
         &p.label,
         &p.field_type,
         &p.applies_to,
         &p.kinds,
+        p.required,
         &p.options,
-    );
+    )
+    .await?;
+    format::json(row)
+}
+
+/// Declare a custom field: validated, refused when the key is taken for that subject type, audited. The route and
+/// the MSPDI batch import both come through here.
+#[expect(clippy::too_many_arguments)] // the definition's own fields, as the route receives them
+pub(crate) async fn declare(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    key: &str,
+    label: &str,
+    field_type: &str,
+    applies_to: &str,
+    kinds: &[String],
+    required: bool,
+    options: &[String],
+) -> Result<custom_field_defs::Model> {
+    let problems = rules::def_problems(key, label, field_type, applies_to, kinds, options);
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    if live_defs(&ctx, &p.applies_to)
+    if live_defs(ctx, applies_to)
         .await?
         .iter()
-        .any(|d| d.key == p.key)
+        .any(|d| d.key == key)
     {
         return Err(conflict(
             "a field with this key already exists for this subject type",
@@ -92,24 +114,32 @@ async fn create_def(
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = custom_field_defs::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
-        key: ActiveValue::set(p.key.clone()),
-        label: ActiveValue::set(p.label.trim().to_string()),
-        field_type: ActiveValue::set(p.field_type.clone()),
-        applies_to: ActiveValue::set(p.applies_to.clone()),
-        kinds: ActiveValue::set(serde_json::json!(p.kinds)),
-        required: ActiveValue::set(p.required),
-        options: ActiveValue::set(serde_json::json!(p.options)),
+        key: ActiveValue::set(key.to_string()),
+        label: ActiveValue::set(label.trim().to_string()),
+        field_type: ActiveValue::set(field_type.to_string()),
+        applies_to: ActiveValue::set(applies_to.to_string()),
+        kinds: ActiveValue::set(serde_json::json!(kinds)),
+        required: ActiveValue::set(required),
+        options: ActiveValue::set(serde_json::json!(options)),
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }
     .insert(&txn)
     .await
     .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "custom_field_declared", caller.actor(), None)
+    AuditModel::record(&txn, row.pid, "custom_field_declared", actor, None)
         .await
         .map_err(super::audit_failed)?;
     txn.commit().await.map_err(super::db_err)?;
-    format::json(row)
+    Ok(row)
+}
+
+/// Whether a live definition with this key exists for the subject type.
+pub(crate) async fn is_declared(ctx: &AppContext, applies_to: &str, key: &str) -> Result<bool> {
+    Ok(live_defs(ctx, applies_to)
+        .await?
+        .iter()
+        .any(|d| d.key == key))
 }
 
 /// `GET /api/custom-fields?applies_to=` query.

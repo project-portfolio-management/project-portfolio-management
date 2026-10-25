@@ -61,7 +61,7 @@ tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Embedded full-text search index (see src/search/). Same version as the
 # rest of the family, so one index format.
-tantivy = { version = "0.26" }
+tantivy = { version = "0.27" }
 project-portfolio-management-migration = { version = "0.2.0", path = "migration" }
 sea-orm = { version = "2.0", features = [
   "sqlx-postgres",
@@ -161,7 +161,7 @@ serial_test = { version = "4.0.1" }
 # `ServiceExt::oneshot` to drive a bare `axum::Router` in the middleware unit
 # tests (security headers, CORS, rate limiting). Already in the tree via axum.
 tower = { version = "0.5", features = ["util"] }
-rstest = { version = "0.27" }
+rstest = { version = "0.28" }
 insta = { version = "1.48", features = ["redactions", "yaml", "filters"] }
 # Mint PASETO v4.public tokens + a matching Ed25519 key set in-process so the extractor.s
 # happy path is verified un-gated (no auth-service / network dependency).

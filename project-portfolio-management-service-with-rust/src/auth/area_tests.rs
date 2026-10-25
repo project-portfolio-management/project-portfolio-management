@@ -251,3 +251,38 @@ fn a_deployments_own_policy_cannot_open_these_areas_and_other_areas_are_untouche
     assert!(allowed(&d, &nobody, Action::Read, "plan"));
     assert!(!allowed(&d, &nobody, Action::Write, "plan"));
 }
+
+/// NC-15: a token carrying `scope=readonly` reads and changes nothing, however much else it holds; one without it is
+/// judged as before. Nothing in the policy file can lift it.
+#[test]
+fn a_read_only_token_is_refused_every_write_whatever_else_it_holds() {
+    let permissive = with_service_rules(Policy {
+        rules: vec![Rule {
+            effect: Effect::Allow,
+            actions: vec![ActionPattern::Any],
+            when: std::collections::BTreeMap::new(),
+            obligations: Vec::new(),
+        }],
+    });
+    for holds in [
+        &[("access", "write"), ("scope", "readonly")][..],
+        &[("access", "admin"), ("scope", "readonly")][..],
+        &[("scope", "readonly")][..],
+    ] {
+        let c = claims(holds);
+        assert!(
+            permissive.evaluate(&c, Action::Read, ENTITY).allowed,
+            "{holds:?} reads"
+        );
+        for a in [Action::Write, Action::Delete, Action::Destructive] {
+            assert!(
+                !permissive.evaluate(&c, a, ENTITY).allowed,
+                "{holds:?} {a:?}"
+            );
+        }
+        // The service-owned areas too: an administrator who is read-only cannot use an admin-only area to write.
+        assert!(!allowed(&permissive, &c, Action::Write, "subjects"));
+    }
+    let writer = claims(&[("access", "write")]);
+    assert!(permissive.evaluate(&writer, Action::Write, ENTITY).allowed);
+}

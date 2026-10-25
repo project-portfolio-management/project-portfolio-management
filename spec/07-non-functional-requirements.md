@@ -46,6 +46,12 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   (`agents/share/authentication-sessions.md` (shared family guidance, not in this repository),
   supersedes the RS256-JWT model); leads / assignees are user
   identities resolved by `EntityRef`; no secrets in code or images.
+  **Read-only tokens (NC-15).** A token whose attributes include `scope=readonly` can read what its other attributes
+  let it read and is refused (`403`) every write, delete and destructive action, however much else it holds, an
+  administrator included; the service puts this rule first, so a policy file cannot lift it. It is for an
+  integration: the identity service mints the attribute. It decides from the attribute, not from the older `scope`
+  claim, which the family treats as deprecated for authorization. A `POST` that only reads is a write to this rule
+  unless the route is classed as a read.
 - **NFR-6 — Auditability.** Soft delete with audit-friendly
   timestamps; full audit log (who/what/when, old + new JSON) and event
   streaming on every CRUD **and sub-resource write** per

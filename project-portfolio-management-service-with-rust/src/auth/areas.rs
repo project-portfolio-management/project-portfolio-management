@@ -1,4 +1,4 @@
-//! The service-owned ABAC areas (`finance`, `comms`, `break_glass`, `subjects`, `access_review`, escalations, shared frameworks), placed in front of every policy so a policy file cannot open them.
+//! The service-owned ABAC rules: the read-only scope, and the areas (`finance`, `comms`, `break_glass`, `subjects`, `access_review`, escalations, shared frameworks), placed in front of every policy so a policy file cannot open them.
 
 #[allow(
     clippy::wildcard_imports,
@@ -55,6 +55,18 @@ pub(super) fn area_rule(
 pub fn service_rules() -> Vec<Rule> {
     use ActionPattern::{Any, Delete, Destructive, Write};
     let mut rules = Vec::new();
+    // A read-only token (NC-15): an integration given `scope=readonly` can read whatever its other attributes
+    // would let it read, and can change nothing, whatever else it holds (an administrator included). First, so no
+    // later rule, and nothing in the policy file, can open a write for it.
+    rules.push(Rule {
+        effect: Effect::Deny,
+        actions: vec![Write, Delete, Destructive],
+        when: std::collections::BTreeMap::from([(
+            READ_ONLY_SCOPE.0.to_string(),
+            vec![READ_ONLY_SCOPE.1.to_string()],
+        )]),
+        obligations: Vec::new(),
+    });
     for (area, who, actions) in [
         ("finance", "finance", vec![Any]),
         ("comms", "comms", vec![Write, Delete, Destructive]),
@@ -145,6 +157,10 @@ pub fn service_rules() -> Vec<Rule> {
     }
     rules
 }
+
+/// The attribute that makes a token read-only (NC-15): `scope=readonly`. The identity service mints it for an
+/// integration's token; the family decides authorization from attributes, not from the older `scope` claim.
+pub const READ_ONLY_SCOPE: (&str, &str) = ("scope", "readonly");
 
 /// The area of the right to acknowledge an escalation (CF-4).
 pub const ESCALATION_ACKNOWLEDGEMENT: &str = "escalation_acknowledgement";

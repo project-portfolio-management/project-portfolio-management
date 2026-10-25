@@ -1983,10 +1983,11 @@ only as search snippets.
 - [ ] **NC-14 (M) — Meetings.** An agenda, minutes and outcomes linked to plan
   items and the decision log, exported as PDF, and kept under retention.
   **Acceptance:** request tests; a PDF golden test.
-- [ ] **NC-15 (S–M) — Service accounts or scoped tokens for integrations.**
+- [x] **NC-15 (S–M) — Service accounts or scoped tokens for integrations.**
   Mostly in the authentication service. Here: a stated scope claim the ABAC
   policy understands.
   **Acceptance:** a token with a read scope is refused on writes.
+  **Built 2026-10-25.** The attribute `scope=readonly`: a first, service-owned deny rule for write, delete and destructive actions (`auth/areas.rs`, `READ_ONLY_SCOPE`), so nothing in a policy file or in the token's other attributes lifts it. Unit test `a_read_only_token_is_refused_every_write_whatever_else_it_holds` and a real-token request test (`tests/read_only_scope.rs`: reads succeed, create, edit and delete are `403` for a read-only writer and a read-only administrator, and the same identity without the scope writes). Spec NFR-5. **Not done:** minting the attribute (that is the authentication service's, outside this repository); service accounts as a concept; a scope narrower than "all reads" (for example one plan, or one area); the older `scope` claim is deliberately not read. **Not verified:** that every read-only POST in the API (search, duplicate checks, previews) is classed as a read, so a read-only token may be refused some of those; I did not list them.
 - [ ] **NC-16 (M, only on demand) — Lean budgets with guardrails and
   participatory budgeting rounds** (SAFe LPM).
 - [x] **NC-17 (S) — Weekly portfolio-exceptions digest** from the existing

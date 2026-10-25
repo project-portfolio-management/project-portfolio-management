@@ -72,7 +72,6 @@ impl Report {
     }
 }
 
-#[expect(clippy::too_many_lines)]
 #[debug_handler]
 async fn import(
     State(ctx): State<AppContext>,
@@ -81,9 +80,21 @@ async fn import(
     Query(params): Query<ImportParams>,
     body: Bytes,
 ) -> Result<Response> {
-    let plan = super::governance::find_item(&ctx, &pid).await?;
-    let dry_run = params.dry_run.unwrap_or(true);
-    let xml = std::str::from_utf8(&body)
+    format::json(run(&ctx, &caller, &pid, params.dry_run.unwrap_or(true), &body).await?)
+}
+
+/// Import one MSPDI file into the plan `pid`; the report is the route's answer. Also called once per file by the
+/// batch import ([`super::mspdi_batch`]).
+#[expect(clippy::too_many_lines)]
+pub(super) async fn run(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pid: &str,
+    dry_run: bool,
+    body: &[u8],
+) -> Result<serde_json::Value> {
+    let plan = super::governance::find_item(ctx, pid).await?;
+    let xml = std::str::from_utf8(body)
         .map_err(|_| unprocessable("the file is not UTF-8 text; export MS Project XML as UTF-8"))?;
     let parsed = mspdi::parse(xml).map_err(|e| unprocessable(&e.to_string()))?;
     let mut report = Report::default();
@@ -92,7 +103,7 @@ async fn import(
     }
 
     // The workflow's states: where a new task starts, and what 1–99% and 100% mean.
-    let workflow = super::workflow::in_force(&ctx, plan.pid, "task").await?;
+    let workflow = super::workflow::in_force(ctx, plan.pid, "task").await?;
     let key_of = |pred: &dyn Fn(&crate::workflow::StateDef) -> bool| {
         workflow
             .states
@@ -114,7 +125,7 @@ async fn import(
         );
     }
 
-    let hard_ok = super::cpm::may_set_hard_constraint(&caller);
+    let hard_ok = super::cpm::may_set_hard_constraint(caller);
     let names: HashMap<i64, &str> = parsed
         .resources
         .iter()
@@ -392,7 +403,7 @@ async fn import(
         }
         txn.commit().await.map_err(db_err)?;
         if let Some(cal) = &parsed.calendar
-            && !super::calendars::plan_has_calendar(&ctx, plan.pid).await?
+            && !super::calendars::plan_has_calendar(ctx, plan.pid).await?
         {
             let mut holidays = cal.holidays.clone();
             if holidays.len() > crate::calendars::MAX_HOLIDAYS {
@@ -408,7 +419,7 @@ async fn import(
             }
             if crate::calendars::problems(&cal.weekdays, &holidays).is_empty() {
                 super::calendars::set_plan_calendar(
-                    &ctx,
+                    ctx,
                     plan.pid,
                     &cal.weekdays,
                     &holidays,
@@ -435,7 +446,7 @@ async fn import(
         .await
         .map_err(super::audit_failed)?;
     } else if let Some(cal) = &parsed.calendar {
-        if super::calendars::plan_has_calendar(&ctx, plan.pid).await? {
+        if super::calendars::plan_has_calendar(ctx, plan.pid).await? {
             report.note(
                 "calendar",
                 None,
@@ -445,7 +456,7 @@ async fn import(
             calendar_imported = true;
         }
     }
-    format::json(serde_json::json!({
+    Ok(serde_json::json!({
         "dry_run": dry_run,
         "project_name": parsed.name,
         "tasks_in_file": parsed.tasks.len(),

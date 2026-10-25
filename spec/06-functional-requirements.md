@@ -328,6 +328,18 @@ matcher payload (§5.6); every mutation audits (§6.6).
   (people are not recorded, to keep the personal-data inventory small); a single decision log across kinds (outcomes
   of kind `decision` are listed per meeting and link to the change-request or cutover decision that records the
   formal decision); editing or correcting held minutes; a screen.
+- **FR-16e11 Many MSPDI files in one job (NC-13).** `POST /api/import/mspdi-batch` (dry run by default; `dry_run=false`
+  applies) takes up to ten MSPDI files. Each goes into an existing plan (`plan_pid`) or a new plan (`name`, else the
+  file's project name, under `parent_pid`); every file is read and checked before anything is written, and a bad one is
+  `422` naming its position. The resources of all the files are listed once (names equal after trimming, collapsing
+  spaces and ignoring case), with the projects that use each and its assignments; they are still not matched to people.
+  Each file is imported by the single-file importer (FR-PJ-10), so what that leaves out is still reported. A project's
+  declared custom fields, enterprise ones included, are stored on the matching tasks according to the caller's
+  `field_map` (the field's alias, name or id to the key of an existing task custom field, validated by that field's type);
+  a field with no mapping, and a value the type refuses, are listed with the reason. Not one transaction: the job stops
+  at the first project that fails and lists the rest as not attempted; a plan created by a failed run is kept. Not built:
+  links between projects (a task waiting on another file's task), resource rates, calendars per resource and costs, creating
+  custom-field definitions, a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

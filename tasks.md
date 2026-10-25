@@ -1975,12 +1975,13 @@ only as search snippets.
   **Acceptance:** a test where a template change is applied to one plan and
   refused for another.
   **Built 2026-10-25.** `blueprint_sync.rs` (pure: `diff` by task key, `locally_edited`, `rekey`, `same_shape`; 4 unit tests), table `plan_template_links` and `plan_templates.version` (migration 93), a link written when a plan is made from a template, `POST …/revise`, `GET …/plans`, `GET /api/plans/{pid}/template-diff`, `POST /api/plans/{pid}/template-sync` (one transaction, audited). Request test `a_template_change_is_applied_to_one_plan_and_refused_for_another_that_edited_the_task` (X takes all three changes; Y's edited task is refused, its other change applied, then the edit is overwritten by naming it; unknown ids and a reshaped tree are `422`). Spec FR-16e9. **Not done:** milestones, components, plan fields, workflows, task dates and hierarchy; plans made before this change (no link, so `404` on the diff); events for the tasks a sync creates (they are written directly, like instantiation); a screen. **Known limit:** a task renamed in a revision reads as a removal and an addition (tasks are matched by title); a change to a task the plan removed cannot be applied (refused, and stays waiting). **Not verified:** a multi-level tree (the test uses one plan); many links at once.
-- [ ] **NC-13 (M) — Multi-project import from Project Online exports.** Many
+- [x] **NC-13 (M) — Multi-project import from Project Online exports.** Many
   MSPDI files in one job, a shared resource pool, and enterprise custom fields
   mapped to custom fields, with a preview and a stated reason for everything
   left out.
   **Acceptance:** a fixture of three linked projects imports with resources
   merged once.
+  **Built 2026-10-25.** `POST /api/import/mspdi-batch` (`controllers/mspdi_batch.rs`, rules in `mspdi_batch.rs`): up to ten files, each into an existing plan or a new one, every file checked before any write, the resource pool listed once, `field_map` to existing task custom fields, dry run by default; the reader now reads `ExtendedAttributes`; `mspdi_import::run` is the single-file importer as a function. Request test `three_projects_import_in_one_job_with_their_shared_resources_listed_once`; 3 unit tests. Spec FR-16e11. **Not done:** links *between* the projects (the fixture's three projects are related by shared resources and a programme parent, not by cross-file links); resource rates, calendars, costs; creating custom-field definitions; a screen; "merged once" is a report, because resources are not people here, so no pool table exists. **Not verified:** a real Project Online export; the ceiling; the stop-at-first-failure path.
 - [x] **NC-14 (M) — Meetings.** An agenda, minutes and outcomes linked to plan
   items and the decision log, exported as PDF, and kept under retention.
   **Acceptance:** request tests; a PDF golden test.

@@ -421,6 +421,7 @@ pub mod live;
 pub mod meetings;
 pub mod milestone_signoffs;
 pub mod milestones;
+pub mod mspdi_batch;
 pub mod mspdi_export;
 pub mod mspdi_import;
 pub mod organizations;

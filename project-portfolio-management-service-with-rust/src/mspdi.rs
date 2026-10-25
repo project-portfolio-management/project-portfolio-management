@@ -132,9 +132,38 @@ pub struct MsCalendar {
     pub holidays: Vec<NaiveDate>,
 }
 
+/// A custom field the project declares (`ExtendedAttributes`), including enterprise fields.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MsField {
+    /// `FieldID`.
+    pub field_id: String,
+    /// `FieldName`, e.g. `Text1` or `Enterprise Text1`.
+    pub name: String,
+    /// `Alias`: the label people gave it.
+    pub alias: Option<String>,
+}
+
+/// One task's value for a custom field.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MsExtended {
+    /// The task's `UID`.
+    pub uid: i64,
+    /// `FieldID`.
+    pub field_id: String,
+    /// `Value`.
+    pub value: String,
+}
+
+/// The most custom-field values one file may carry.
+pub const MAX_EXTENDED: usize = 100_000;
+
 /// A parsed document.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parsed {
+    /// The custom fields the project declares.
+    pub fields: Vec<MsField>,
+    /// Each task's custom-field values.
+    pub extended: Vec<MsExtended>,
     /// Project `Name` or `Title`.
     pub name: Option<String>,
     /// Minutes in a business day.
@@ -343,6 +372,21 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
     let mut unmapped = Vec::new();
     let mut tasks = Vec::new();
     let mut links = Vec::new();
+    let mut extended: Vec<MsExtended> = Vec::new();
+    let fields: Vec<MsField> = child(root, "ExtendedAttributes")
+        .map(|fs| {
+            fs.children()
+                .filter(|c| c.is_element() && c.tag_name().name() == "ExtendedAttribute")
+                .filter_map(|f| {
+                    Some(MsField {
+                        field_id: text(f, "FieldID")?.to_string(),
+                        name: text(f, "FieldName").unwrap_or_default().to_string(),
+                        alias: text(f, "Alias").map(str::to_string),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
     if let Some(ts) = child(root, "Tasks") {
         for t in ts
             .children()
@@ -460,6 +504,21 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
                     lag_days,
                 });
             }
+            for e in t
+                .children()
+                .filter(|c| c.is_element() && c.tag_name().name() == "ExtendedAttribute")
+            {
+                if let (Some(field_id), Some(value)) = (text(e, "FieldID"), text(e, "Value")) {
+                    if extended.len() >= MAX_EXTENDED {
+                        return Err(ParseError::TooManyTasks);
+                    }
+                    extended.push(MsExtended {
+                        uid,
+                        field_id: field_id.to_string(),
+                        value: value.to_string(),
+                    });
+                }
+            }
             tasks.push(MsTask {
                 uid,
                 name,
@@ -502,6 +561,8 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
         })
         .unwrap_or_default();
     Ok(Parsed {
+        fields,
+        extended,
         name: text(root, "Name")
             .or_else(|| text(root, "Title"))
             .map(str::to_string),

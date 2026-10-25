@@ -157,6 +157,7 @@ POST /api/ideas
 POST /api/ideas/{pid}/convert
 POST /api/ideas/{pid}/dismiss
 POST /api/ideas/{pid}/vote
+POST /api/import/mspdi-batch
 GET /api/issues
 GET /api/key-persons
 PUT /api/key-persons

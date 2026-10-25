@@ -247,6 +247,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/ideas/{pid}/convert", "strategy", ""),
     ("post", "/api/ideas/{pid}/dismiss", "strategy", "`POST /api/ideas/{pid}/dismiss`."),
     ("post", "/api/ideas/{pid}/vote", "strategy", "`POST /api/ideas/{pid}/vote` — +1."),
+    ("post", "/api/import/mspdi-batch", "mspdi_batch", "`POST /api/import/mspdi-batch`: read every file first, list the resources of all of them once, then import each into its plan (existing, or created) and store the mapped custom-field values. The default is a dry run."),
     ("get", "/api/issues", "issues", "`GET /api/issues` — the register across every plan the caller can read, most serious first, then oldest. Plans the caller cannot read are left out without a trace; the summary counts what the caller can see, whatever the filters."),
     ("get", "/api/key-persons", "key_persons", "`GET /api/key-persons`"),
     ("put", "/api/key-persons", "key_persons", "`PUT /api/key-persons` — record (or update) a single point of failure."),
@@ -830,6 +831,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/funding-sources/{pid}", crate::controllers::funding::ActiveBody);
     body!("post", "/api/ideas", crate::controllers::strategy::IdeaPayload);
     body!("post", "/api/ideas/{pid}/convert", crate::controllers::strategy::ConvertPayload);
+    body!("post", "/api/import/mspdi-batch", crate::controllers::mspdi_batch::BatchBody);
     body!("put", "/api/key-persons", crate::controllers::key_persons::Entry);
     body!("put", "/api/key-persons/contingent", crate::controllers::key_persons::Contingent);
     body!("put", "/api/key-results/{pid}", crate::controllers::okr::KeyResultUpdate);

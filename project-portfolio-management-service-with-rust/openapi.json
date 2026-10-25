@@ -9629,6 +9629,82 @@
         ]
       }
     },
+    "/api/import/mspdi-batch": {
+      "post": {
+        "description": "`POST /api/import/mspdi-batch`: read every file first, list the resources of all of them once, then import each into its plan (existing, or created) and store the mapped custom-field values. The default is a dry run.",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/import/mspdi-batch` body.",
+                "properties": {
+                  "field_map": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": {},
+                    "description": "A project field (its alias, name or id) to the key of an existing task custom field.",
+                    "type": "object"
+                  },
+                  "parent_pid": {
+                    "default": null,
+                    "description": "Put every new plan under this plan.",
+                    "format": "uuid",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "projects": {
+                    "description": "The files, at most ten.",
+                    "items": {
+                      "description": "One file of the job.",
+                      "properties": {
+                        "name": {
+                          "default": null,
+                          "description": "The new plan's name (default: the project's name in the file).",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "plan_pid": {
+                          "default": null,
+                          "description": "Import into this existing plan; omit to create a new one.",
+                          "format": "uuid",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "xml": {
+                          "description": "The MSPDI XML, as UTF-8 text.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "xml"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "projects"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/import/mspdi-batch`: read every file first, list the resources of all of them once, then import each into its plan (existing, or created) and store the mapped custom-field values",
+        "tags": [
+          "mspdi_batch"
+        ]
+      }
+    },
     "/api/issues": {
       "get": {
         "description": "Every issue in the plans the caller can read (others are left out without a trace), most serious first, then oldest. Filters: plan, status, severity, owner, open=true (not resolved or closed), min_age_days (calendar days since raised, until resolved). summary counts everything the caller can see whatever the filters: by_severity, by_status, overdue and the oldest open issue. limit defaults to 200, at most 500; truncated says when more match.",

@@ -127,6 +127,7 @@ pub mod milestones;
 pub mod models;
 pub mod modules;
 pub mod mspdi;
+pub mod mspdi_batch;
 pub mod my_work;
 pub mod notification_prefs;
 /// Structured logging + real OpenTelemetry OTLP export (repo `tasks.md`

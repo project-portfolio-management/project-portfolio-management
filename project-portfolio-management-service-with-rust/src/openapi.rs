@@ -2306,6 +2306,7 @@ mod tests {
             crate::controllers::plan_templates::routes(),
             crate::controllers::blueprint_sync::routes(),
             crate::controllers::meetings::routes(),
+            crate::controllers::mspdi_batch::routes(),
             crate::controllers::live::routes(),
             crate::controllers::planner::routes(),
             crate::controllers::attachments::routes(),

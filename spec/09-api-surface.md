@@ -112,6 +112,7 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | GET / POST | `/api/plans/{pid}/template-diff` · `/api/plans/{pid}/template-sync` | What a template changed since the plan was brought up to date; apply named changes, refusing locally edited tasks unless overwritten |
 | POST / GET | `/api/plans/{pid}/meetings` · GET `…/{mid}` | Plan a meeting with an agenda; list; read one with its linked records named |
 | POST / GET | `/api/plans/{pid}/meetings/{mid}/held` · `…/cancel` · GET `…/pdf` | Record the minutes and outcomes once; cancel; print as a deterministic PDF |
+| POST | `/api/import/mspdi-batch` | Up to ten MSPDI files in one job: plans created or reused, the resource pool listed once, custom fields mapped; dry run by default |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 
 ### 9.2b Service REST API — full-suite capabilities (§1.4–§1.6)

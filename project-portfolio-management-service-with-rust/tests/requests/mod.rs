@@ -34,6 +34,7 @@ mod live;
 mod meetings;
 mod metrics_control;
 mod modules;
+mod mspdi_batch;
 mod mspdi_export;
 mod oversight;
 mod paging;

@@ -59,6 +59,7 @@ pub const TAKES_NO_BODY: &[&str] = &[
     "post /api/plans/{pid}/issues/from-risk/{risk_pid}",
     "post /api/plans/{pid}/issues/from-task/{task_pid}",
     "post /api/plans/{pid}/labour-costs/record",
+    "post /api/plans/{pid}/lessons/{lpid}/withdraw",
     "post /api/plans/{pid}/links/{lpid}/delete",
     "post /api/plans/{pid}/risks/{risk_pid}/escalate",
     "post /api/plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert",
@@ -476,6 +477,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/joint-risk", "cost_risk", "`GET /api/plans/{pid}/joint-risk` — schedule and cost simulated together."),
     ("get", "/api/plans/{pid}/labour-costs", "cost_rates", "`GET /api/plans/{pid}/labour-costs` — the recorded labour cost, per currency and never across, with the entries still unpriced counted apart."),
     ("post", "/api/plans/{pid}/labour-costs/record", "cost_rates", "`POST /api/plans/{pid}/labour-costs/record` — price every recorded time entry that has no recorded cost yet, at the rate in force the day it was worked, and store the rate **with** the cost. Entries already recorded are never touched: a later rate change never rewrites an actual. Entries with no rate are listed and left unrecorded (cost unknown, not zero)."),
+    ("get", "/api/plans/{pid}/lessons", "lessons", "`GET /api/plans/{pid}/lessons`."),
+    ("post", "/api/plans/{pid}/lessons", "lessons", "`POST /api/plans/{pid}/lessons`."),
+    ("post", "/api/plans/{pid}/lessons/{lpid}/withdraw", "lessons", "`POST /api/plans/{pid}/lessons/{lpid}/withdraw`."),
     ("get", "/api/plans/{pid}/leveling", "leveling", "`GET /api/plans/{pid}/leveling` — propose a leveling. Changes nothing."),
     ("post", "/api/plans/{pid}/leveling/apply", "leveling", "`POST /api/plans/{pid}/leveling/apply` — apply moves from a proposal."),
     ("get", "/api/plans/{pid}/lifecycle", "prioritization", "`GET /api/plans/{pid}/lifecycle` — where one plan sits and what stands between it and the next gate."),
@@ -619,6 +623,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("put", "/api/proposals/{pid}", "governance", "`PUT /api/proposals/{pid}` — edit; drafts only (the pipeline owns everything after submission)."),
     ("post", "/api/proposals/{pid}/approve", "governance", ""),
     ("get", "/api/proposals/{pid}/duplicates", "governance", "`GET /api/proposals/{pid}/duplicates` — duplicate-demand check (the registry heritage applied at intake): match the proposal's title against the live plans of its target collection **and** the other open proposals."),
+    ("get", "/api/proposals/{pid}/lessons", "lessons", "`GET /api/proposals/{pid}/lessons` — the proposal's title is matched, by the same engine as the duplicate check, against the plans that have lessons; each probable match is returned with its score, confidence and per-component breakdown (the evidence) and that plan's lessons. Plans the caller may not read are not compared. Only plans with lessons are compared, whether or not they are closed."),
     ("post", "/api/proposals/{pid}/promote", "governance", "`POST /api/proposals/{pid}/promote` — mint the plan from an approved proposal (`provenance` recorded in the audit trail) and mark the proposal `promoted`."),
     ("post", "/api/proposals/{pid}/reject", "governance", ""),
     ("post", "/api/proposals/{pid}/review", "governance", ""),
@@ -884,6 +889,7 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/plans/{pid}/handover/preview", crate::controllers::handover::Body);
     body!("post", "/api/plans/{pid}/issues", crate::controllers::issues::Input);
     body!("put", "/api/plans/{pid}/issues/{issue_pid}", crate::controllers::issues::Input);
+    body!("post", "/api/plans/{pid}/lessons", crate::controllers::lessons::LessonPayload);
     body!("post", "/api/plans/{pid}/leveling/apply", crate::controllers::leveling::ApplyBody);
     body!("post", "/api/plans/{pid}/links", crate::controllers::plan_links::LinkBody);
     body!("post", "/api/plans/{pid}/milestones", crate::controllers::visibility::MilestonePayload);

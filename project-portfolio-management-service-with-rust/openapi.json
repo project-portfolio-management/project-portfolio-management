@@ -20659,6 +20659,160 @@
         ]
       }
     },
+    "/api/plans/{pid}/lessons": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/lessons`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/lessons`",
+        "tags": [
+          "lessons"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/plans/{pid}/lessons`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plans/{pid}/lessons` body.",
+                "properties": {
+                  "category": {
+                    "description": "`went_well`, `went_badly` or `recommendation`.",
+                    "type": "string"
+                  },
+                  "detail": {
+                    "default": null,
+                    "description": "More, when a sentence is not enough.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "occasion": {
+                    "description": "A gate (`g0_concept` … `g5_benefits`) or `closure`.",
+                    "type": "string"
+                  },
+                  "summary": {
+                    "description": "The lesson in a sentence.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "occasion",
+                  "category",
+                  "summary"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/lessons`",
+        "tags": [
+          "lessons"
+        ]
+      }
+    },
+    "/api/plans/{pid}/lessons/{lpid}/withdraw": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/lessons/{lpid}/withdraw`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lpid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/lessons/{lpid}/withdraw`",
+        "tags": [
+          "lessons"
+        ]
+      }
+    },
     "/api/plans/{pid}/leveling": {
       "get": {
         "description": "Finds the days a person's unfinished, assigned, scheduled tasks ask for more than their capacity (availability, 100% when none; plus their committed bookings in other plans) and proposes start delays. The first over-allocated day is resolved by keeping tasks in priority order (cannot-move first, then least total float, then earliest start, then input order) and delaying the lowest-priority task left over; a delay is accepted only if the network re-run shows no negative float, no hard-constraint conflict, nothing newly unscheduled and, unless allow_critical=true, an unchanged project finish. A task already started or with a hard constraint is never moved; a critical task is never moved without allow_critical, and then it is marked and the finish impact shown. What cannot be fixed is listed under unresolved with a reason (fixed_tasks, critical_task, no_float, hard_constraint, did_not_move, limit). The same input always gives the same proposal. Each moved task is for a person: a caller who may not manage that person sees person-N labels, no person_ref and no percentages. load_percent (default 100) is what one task asks of its assignee per business day.",
@@ -28237,6 +28391,70 @@
         "summary": "`GET /api/proposals/{pid}/duplicates` — duplicate-demand check (the registry heritage applied at intake): match the proposal's title against the live plans of its target collection **and** the other open proposals",
         "tags": [
           "governance"
+        ]
+      }
+    },
+    "/api/proposals/{pid}/lessons": {
+      "get": {
+        "description": "`GET /api/proposals/{pid}/lessons` — the proposal's title is matched, by the same engine as the duplicate check, against the plans that have lessons; each probable match is returned with its score, confidence and per-component breakdown (the evidence) and that plan's lessons. Plans the caller may not read are not compared. Only plans with lessons are compared, whether or not they are closed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/proposals/{pid}/lessons` — the proposal's title is matched, by the same engine as the duplicate check, against the plans that have lessons; each probable match is returned with its score, confidence and per-component breakdown (the evidence) and that plan's lessons",
+        "tags": [
+          "lessons"
         ]
       }
     },

@@ -31,6 +31,7 @@ impl ActiveModelBehavior for framework_versions::ActiveModel {}
 impl ActiveModelBehavior for plan_frameworks::ActiveModel {}
 impl ActiveModelBehavior for plan_tolerances::ActiveModel {}
 impl ActiveModelBehavior for scoring_inputs::ActiveModel {}
+impl ActiveModelBehavior for lessons::ActiveModel {}
 impl ActiveModelBehavior for escalations::ActiveModel {}
 impl ActiveModelBehavior for escalation_events::ActiveModel {}
 impl ActiveModelBehavior for notification_sinks::ActiveModel {}

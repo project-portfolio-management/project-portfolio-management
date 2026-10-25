@@ -250,6 +250,14 @@ matcher payload (§5.6); every mutation audits (§6.6).
   rows a single `POST /api/scenarios/generate` at that cap returns. Nothing is saved. The selection is greedy, so it
   is not guaranteed optimal and the value need not rise with every cap: a point whose value is no more than that of a
   cheaper cap is marked `dominated`. Plans the caller may not read are not candidates.
+- **FR-16e4 Lessons-learned register (NC-8).** A plan records a lesson at a phase gate or at closure
+  (`POST /api/plans/{pid}/lessons`: `occasion` is a gate or `closure`; `category` is `went_well`, `went_badly` or
+  `recommendation`; a one-sentence `summary`, optional `detail`). Lessons are append-only: one can be withdrawn
+  (`POST …/{lpid}/withdraw`), after which it is no longer shown; both are audited. `GET /api/proposals/{pid}/lessons`
+  matches the proposal's title with the engine the duplicate check uses against the plans that have lessons and returns
+  each probable match with its score, confidence and per-component breakdown and that plan's lessons, best match first.
+  Plans the caller may not read are not compared. Not built: matching on more than the title; limiting the comparison
+  to closed plans; a screen; showing the lessons in the intake form.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

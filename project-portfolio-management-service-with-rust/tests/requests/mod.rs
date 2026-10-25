@@ -27,6 +27,7 @@ mod governance;
 mod includes;
 mod insights;
 mod issues;
+mod lessons;
 mod live;
 mod metrics_control;
 mod modules;

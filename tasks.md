@@ -1948,10 +1948,11 @@ only as search snippets.
   **Acceptance:** the frontier is monotone on a fixture; each point equals a
   single-cap run.
   **Built 2026-10-25.** `strategy::frontier` (pure; 2 unit tests) and `GET /api/scenarios/frontier?currency=&caps=|steps=&must_include=`; request test `the_efficient_frontier_matches_single_cap_generate_runs` (monotone on the fixture; every point's rationale equals a `POST /scenarios/generate` at that cap). Spec FR-16e3. **Not done:** a chart or screen; an optimal (knapsack) selection. The greedy selection is not optimal, so the frontier is monotone on the fixture, not in general: a point that buys nothing over a cheaper cap is marked `dominated` rather than hidden. The privacy census exercises the route for a non-member through the shared plan fence only.
-- [ ] **NC-8 (S) — Lessons-learned register.** Entries are recorded at gates
+- [x] **NC-8 (S) — Lessons-learned register.** Entries are recorded at gates
   and closure. At intake, the matcher surfaces lessons from similar past plans.
   **Acceptance:** a new proposal similar to a closed plan lists that plan's
   lessons with the match evidence.
+  **Built 2026-10-25.** Table `lessons` (migration 90, append-only, withdrawal is a soft delete), `POST`/`GET /api/plans/{pid}/lessons`, `POST …/{lpid}/withdraw`, `GET /api/proposals/{pid}/lessons` (title matched with the duplicate-check engine; each hit carries the score, confidence and breakdown). Request test `a_similar_proposal_is_shown_the_lessons_of_a_past_plan_with_the_match_evidence` (a similar title lists the lessons with evidence, an unrelated one lists none, a withdrawn lesson disappears, both writes are audited). Spec FR-16e4. **Not done:** a screen or showing the lessons in the intake form; matching on anything but the title; limiting the comparison to closed plans (any plan with lessons is compared); recording lessons automatically at a gate decision or closure (a person records them); no test that a private plan's lessons are hidden from a non-member at intake (the code skips hidden plans through the shared fence; that path is not exercised).
 - [ ] **NC-9 (S) — Portfolio balance view.** A bubble chart of value, risk and
   cost by category or strategic aim, with stated imbalance flags.
   **Acceptance:** unit test of the flags; an e2e test of the chart and its

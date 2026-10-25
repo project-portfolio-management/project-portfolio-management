@@ -391,6 +391,9 @@ PUT /api/plans/{pid}/issues/{issue_pid}
 GET /api/plans/{pid}/joint-risk
 GET /api/plans/{pid}/labour-costs
 POST /api/plans/{pid}/labour-costs/record
+GET /api/plans/{pid}/lessons
+POST /api/plans/{pid}/lessons
+POST /api/plans/{pid}/lessons/{lpid}/withdraw
 GET /api/plans/{pid}/leveling
 POST /api/plans/{pid}/leveling/apply
 GET /api/plans/{pid}/lifecycle
@@ -536,6 +539,7 @@ GET /api/proposals/{pid}
 PUT /api/proposals/{pid}
 POST /api/proposals/{pid}/approve
 GET /api/proposals/{pid}/duplicates
+GET /api/proposals/{pid}/lessons
 POST /api/proposals/{pid}/promote
 POST /api/proposals/{pid}/reject
 POST /api/proposals/{pid}/review

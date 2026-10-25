@@ -135,6 +135,8 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/processes",
     "/api/process-executions",
     "/api/documents",
+    "/api/plans/{pid}/lessons",
+    "/api/proposals/{pid}/lessons",
 ];
 
 /// Add `limit`, `offset` and the count headers to every list in [`PAGED_LISTS`].
@@ -2256,6 +2258,7 @@ mod tests {
             crate::controllers::plans::routes(),
             crate::controllers::settings::routes(),
             crate::controllers::scoring::routes(),
+            crate::controllers::lessons::routes(),
             crate::controllers::compliance::routes(),
             crate::controllers::governance::routes(),
             crate::controllers::visibility::routes(),
@@ -2493,6 +2496,7 @@ mod tests {
     const NON_DERIVED_GET: &[&str] = &[
         // Documented from the handlers' own doc comments (CQ-8): plain reads of stored rows.
         "/api/plans/{pid}/scoring-inputs",
+        "/api/plans/{pid}/lessons",
         "/api/objectives",
         "/api/plans/{pid}/allocations",
         "/api/plans/{pid}/gate-reviews",

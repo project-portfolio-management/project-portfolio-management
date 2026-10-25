@@ -24363,6 +24363,208 @@
         ]
       }
     },
+    "/api/plans/{pid}/status": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the deployment's time zone). A plan with no cadence has no due date; one with no update says so.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the deployment's time zone)",
+        "tags": [
+          "status_updates"
+        ]
+      }
+    },
+    "/api/plans/{pid}/status-cadence": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/status-cadence` — how often the plan expects an update and where it stands against that today: the date the next is due, whether it is due or overdue, and by how many days; `404` when no cadence is set.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/status-cadence` — how often the plan expects an update and where it stands against that today: the date the next is due, whether it is due or overdue, and by how many days; `404` when no cadence is set",
+        "tags": [
+          "status_updates"
+        ]
+      },
+      "put": {
+        "description": "`PUT /api/plans/{pid}/status-cadence`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/plans/{pid}/status-cadence` body.",
+                "properties": {
+                  "cadence_days": {
+                    "description": "How often an update is expected, in days (1 to 92).",
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "cadence_days"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/plans/{pid}/status-cadence`",
+        "tags": [
+          "status_updates"
+        ]
+      }
+    },
+    "/api/plans/{pid}/status-updates": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/status-updates`: the history, newest first.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/status-updates`: the history, newest first",
+        "tags": [
+          "status_updates"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/plans/{pid}/status-updates`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plans/{pid}/status-updates` body.",
+                "properties": {
+                  "narrative": {
+                    "description": "What is going on, in words.",
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "`on_track`, `at_risk` or `off_track`.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "narrative"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/status-updates`",
+        "tags": [
+          "status_updates"
+        ]
+      }
+    },
     "/api/plans/{pid}/summary.pdf": {
       "get": {
         "description": "Read-checked like the plan itself (record-level policy, private plans). Rendered from the MASKED record and counts only: no lead, owner organization, assignee or risk owner ever reaches the text layer. Shows kind, status, phase, stage, dates, keywords, goals, task counts by status, the number of risks recorded and the milestones. A PDF is never more permissive than its JSON, is deterministic when stamped (pass as_of and two renders of unchanged data are byte-identical), and is NOT signed: signing needs a named signer and a key policy, which is an open decision. Text outside WinAnsi (Latin-1) is written as a question mark rather than guessed.",
@@ -30920,6 +31122,77 @@
         "summary": "Programmes waiting to start, in the order they asked",
         "tags": [
           "governance"
+        ]
+      }
+    },
+    "/api/status-updates/due": {
+      "get": {
+        "description": "`GET /api/status-updates/due` — the plans the caller can read whose next update is due, most overdue first.",
+        "parameters": [
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/status-updates/due` — the plans the caller can read whose next update is due, most overdue first",
+        "tags": [
+          "status_updates"
+        ]
+      }
+    },
+    "/api/status-updates/remind": {
+      "post": {
+        "description": "`POST /api/status-updates/remind`.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/status-updates/remind`",
+        "tags": [
+          "status_updates"
         ]
       }
     },

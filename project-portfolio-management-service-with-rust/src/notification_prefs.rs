@@ -35,6 +35,7 @@ pub const KINDS: &[&str] = &[
     "review_invited",
     "review_submitted",
     "scheduled",
+    "status_update_due",
     "task_assigned",
     "watch_update",
 ];

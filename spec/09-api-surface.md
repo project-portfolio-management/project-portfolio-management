@@ -105,6 +105,9 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | POST / GET | `/api/plans/{pid}/lessons` · POST `…/{lpid}/withdraw` | The lessons-learned register: record a lesson at a gate or closure; list; withdraw (audited) |
 | GET | `/api/proposals/{pid}/lessons` | Lessons of past plans similar to a proposal, with the match score and breakdown |
 | GET | `/api/exceptions/digest` | The weekly portfolio-exceptions digest as the caller sees it: tolerances, threshold exceptions, escalations |
+| PUT / GET | `/api/plans/{pid}/status-cadence` | How often a plan expects a status update, and where it stands against it |
+| POST / GET | `/api/plans/{pid}/status-updates` · GET `/api/plans/{pid}/status` | Post an on-track / at-risk / off-track update; the history; the latest with its due date |
+| GET / POST | `/api/status-updates/due` · `/api/status-updates/remind` | The plans whose update is due; send the once-per-due-date reminders |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 
 ### 9.2b Service REST API — full-suite capabilities (§1.4–§1.6)

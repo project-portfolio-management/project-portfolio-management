@@ -1919,12 +1919,13 @@ only as search snippets.
   field, with the reason. No schema change. Owner question §70.5.
   **Acceptance:** a fixture portfolio exports and validates; each rule in the
   mapping has a test.
-- [ ] **NC-4 (S–M) — Status updates on a cadence.** Each plan gets an
+- [x] **NC-4 (S–M) — Status updates on a cadence.** Each plan gets an
   on-track / at-risk / off-track update with a narrative, a due cadence, a
   reminder when due, an overdue flag, and history. The latest update feeds the
   director pack.
   **Acceptance:** request tests for due and overdue; the pack shows the update
   as at its cut-off.
+  **Built 2026-10-25.** `status_updates.rs` (pure: statuses, cadence range, `standing`; 5 unit tests), tables `plan_status_cadences` and `status_updates` (migration 91), `PUT`/`GET …/status-cadence`, `POST`/`GET …/status-updates`, `GET …/status`, `GET /api/status-updates/due`, `POST /api/status-updates/remind` (claimed with a conditional update, once per due date), the same sweep in the scheduler ticker, and a `status_updates` director-pack section. Request test `updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them_as_at_its_cut_off` (due, overdue by 3 days, one reminder not two, a post restarts the clock, history newest first, the pack section as at two cut-offs). Spec FR-16e7. **Not done:** removing a cadence; any screen, including showing the section in the pack view; reminding anyone but the last poster or the person who set the cadence. **Not verified:** the section inside a real drafted pack. Drafting needs a signed-in issuer, which this test does not have, so the test calls the section directly at two cut-offs and the wiring into the pack body is only compiled, not exercised; the pack's cut-off comparison to the second (an update's time is the database's clock and the cut-off's the caller's, so the test uses an hour either side); the sweep inside the scheduler ticker; that `unaddressed` plans (nobody to tell) get no reminder at all.
 - [ ] **NC-5 (M) — The service runs its own scheduled jobs (opt-in).** Extend
   the existing in-process ticker (`src/scheduler.rs`, `SCHEDULER_MINUTES`, which
   already runs scheduled actions, report schedules, director-pack drafting and

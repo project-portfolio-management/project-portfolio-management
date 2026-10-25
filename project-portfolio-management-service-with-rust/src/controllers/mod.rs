@@ -65,6 +65,7 @@ pub mod sandbox;
 pub mod saved_views;
 pub mod scoring;
 pub mod settings;
+pub mod status_updates;
 pub mod strategy;
 /// Time-based analysis: the read surface over the task transition log —
 /// per-task and plan flow, constraints, aging WIP, and Little's Law.

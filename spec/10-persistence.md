@@ -86,6 +86,7 @@ mutation (§10.2).
   (`business_value`, `time_criticality`, `risk_reduction`, `job_size`, each 1 to 20) and RICE (`reach` >= 0,
   `impact` in 0.25/0.5/1/2/3, `confidence_percent` 0 to 100, `effort` > 0), all nullable by CHECKs;
   `set_by?` (migration `m20261025_000089`). No score is stored.
+- **`plan_status_cadences`** and **`status_updates`** (built, FR-16e7) — a plan's expected update cadence (`cadence_days` 1 to 92, `set_on`, `set_by?`, `reminded_for?`) and its append-only updates (`status` on_track / at_risk / off_track by CHECK, `narrative`, `posted_on`, `posted_by?`); migration `m20261025_000091`.
 - **`lessons`** (built, FR-16e4) — `pid`, `plan_pid`, `occasion` (a gate or `closure`), `category` (`went_well`,
   `went_badly`, `recommendation`, by CHECK), `summary`, `detail?`, `recorded_by?`, `deleted_at?` (a withdrawal);
   append-only (migration `m20261025_000090`).

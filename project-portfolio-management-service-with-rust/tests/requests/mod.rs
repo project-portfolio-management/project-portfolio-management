@@ -44,6 +44,7 @@ mod retention;
 mod role_tasks;
 mod scale;
 mod scoring;
+mod status_updates;
 mod strategy;
 mod subjects;
 mod task_bulk;

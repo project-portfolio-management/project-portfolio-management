@@ -76,6 +76,7 @@ pub const TAKES_NO_BODY: &[&str] = &[
     "post /api/scenarios/{pid}/rollback",
     "post /api/scheduled-actions/sweep",
     "post /api/sprints/{pid}/commit",
+    "post /api/status-updates/remind",
     "post /api/threshold-sweep",
 ];
 
@@ -547,6 +548,11 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/standup", "engineering", "`GET /api/plans/{pid}/standup` — the last-24h digest, audit-derived: tasks created / moved / completed, current blockers, risks raised. What a standup reads out, from what was recorded."),
     ("get", "/api/plans/{pid}/start-check", "start_control", "`GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing."),
     ("post", "/api/plans/{pid}/start-queue/withdraw", "start_control", "`POST /api/plans/{pid}/start-queue/withdraw` — leave the queue."),
+    ("get", "/api/plans/{pid}/status", "status_updates", "`GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the deployment's time zone). A plan with no cadence has no due date; one with no update says so."),
+    ("get", "/api/plans/{pid}/status-cadence", "status_updates", "`GET /api/plans/{pid}/status-cadence` — how often the plan expects an update and where it stands against that today: the date the next is due, whether it is due or overdue, and by how many days; `404` when no cadence is set."),
+    ("put", "/api/plans/{pid}/status-cadence", "status_updates", "`PUT /api/plans/{pid}/status-cadence`."),
+    ("get", "/api/plans/{pid}/status-updates", "status_updates", "`GET /api/plans/{pid}/status-updates`: the history, newest first."),
+    ("post", "/api/plans/{pid}/status-updates", "status_updates", "`POST /api/plans/{pid}/status-updates`."),
     ("get", "/api/plans/{pid}/summary.pdf", "pdf", "`GET /api/plans/{pid}/summary.pdf` — a one-plan summary, masked, as a document."),
     ("get", "/api/plans/{pid}/task-link-counts", "plan_links", "`GET /api/plans/{pid}/task-link-counts`: how many live links each of the plan's tasks has, so a list of tasks can say which ones link out without asking for every task's links. Tasks with none are absent."),
     ("put", "/api/plans/{pid}/task-order", "task_tree", "`PUT /api/plans/{pid}/task-order`: set the order of one parent's children.  The body must name **exactly** the live children of the parent, so two people reordering at once cannot silently drop or resurrect a task: whoever is second sees a `409` and reloads."),
@@ -693,6 +699,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/sprints/{pid}/commit", "ceremony", "`POST /api/sprints/{pid}/commit` — snapshot the committed task set.  Refuses a second call: a rewritable commitment is not a commitment, and a sprint that grew by half would otherwise look like one that was always that size."),
     ("get", "/api/sprints/{pid}/commitment", "ceremony", "`GET /api/sprints/{pid}/commitment` — the committed set beside the current one, so a scope change reads **as a change**."),
     ("get", "/api/start-queue", "start_control", "`GET /api/start-queue` — programmes waiting to start that you can read, in the order they asked."),
+    ("get", "/api/status-updates/due", "status_updates", "`GET /api/status-updates/due` — the plans the caller can read whose next update is due, most overdue first."),
+    ("post", "/api/status-updates/remind", "status_updates", "`POST /api/status-updates/remind`."),
     ("post", "/api/tasks/bulk", "task_bulk", "`POST /api/tasks/bulk` — set the same fields on many tasks."),
     ("post", "/api/tasks/copy", "task_bulk", "`POST /api/tasks/copy` — copy tasks into a plan."),
     ("post", "/api/tasks/move", "task_bulk", "`POST /api/tasks/move` — re-home tasks into another plan."),
@@ -920,6 +928,8 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/scoring-inputs", crate::scoring_models::ModelInputs);
     body!("post", "/api/plans/{pid}/sprints", crate::controllers::engineering::SprintPayload);
     body!("post", "/api/plans/{pid}/sprints/{s_pid}/notes", crate::controllers::engineering::NotePayload);
+    body!("put", "/api/plans/{pid}/status-cadence", crate::controllers::status_updates::CadenceBody);
+    body!("post", "/api/plans/{pid}/status-updates", crate::controllers::status_updates::UpdateBody);
     body!("put", "/api/plans/{pid}/task-order", crate::controllers::task_tree::OrderBody);
     body!("post", "/api/plans/{pid}/tasks", crate::controllers::engineering::TaskPayload);
     body!("patch", "/api/plans/{pid}/tasks/{t_pid}", crate::controllers::engineering::MovePayload);

@@ -82,6 +82,17 @@ pub fn spawn(ctx: AppContext) {
             if let Err(err) = crate::controllers::earned_value::snapshot_all(&ctx).await {
                 tracing::warn!("earned-value snapshot pass failed: {err}");
             }
+            match crate::controllers::status_updates::remind_due(&ctx).await {
+                Ok(r) if r.sent > 0 || r.unaddressed > 0 => {
+                    tracing::info!(
+                        "status-update reminders: {} sent, {} with nobody to tell",
+                        r.sent,
+                        r.unaddressed
+                    );
+                }
+                Ok(_) => {}
+                Err(err) => tracing::warn!("status-update reminder sweep failed: {err}"),
+            }
             match crate::controllers::automation::sweep_milestone_due(&ctx).await {
                 Ok((fired, already_claimed, capped)) if fired > 0 || capped => {
                     tracing::info!(

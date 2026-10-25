@@ -278,6 +278,19 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS`; a recipient who already has this week's (Monday to Sunday of the
   deployment's "today") is skipped. Not built: recipients as an administrator setting or a per-person subscription;
   per-recipient content (every recipient gets the same digest); a screen.
+
+- **FR-16e7 Status updates on a cadence (NC-4).** A plan sets how often it expects a status update
+  (`PUT /api/plans/{pid}/status-cadence`, 1 to 92 days; setting it restarts the clock). A person posts an
+  `on_track`, `at_risk` or `off_track` call with a narrative (`POST /api/plans/{pid}/status-updates`); updates are
+  append-only and audited, newest first in the history. `GET /api/plans/{pid}/status` gives the latest update and where
+  the plan stands: the date the next is due (a cadence after the last update, or after the cadence was set when there
+  has been none), whether it is due or overdue and by how many days, in the deployment's time zone.
+  `GET /api/status-updates/due` lists the plans the caller can read whose update is due, most overdue first.
+  `POST /api/status-updates/remind`, and the scheduler ticker when it is on, tell the person who last posted (else who
+  set the cadence) once per due date, as a `status_update_due` notification. The director pack carries a
+  `status_updates` section: per included plan with a cadence, the latest update posted on or before the cut-off and
+  where it stood on the cut-off's date. Not built: removing a cadence; a screen; the pack screen showing the section;
+  a reminder to anyone but that one person.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

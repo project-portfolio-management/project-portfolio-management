@@ -461,6 +461,11 @@ POST /api/plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert
 GET /api/plans/{pid}/standup
 GET /api/plans/{pid}/start-check
 POST /api/plans/{pid}/start-queue/withdraw
+GET /api/plans/{pid}/status
+GET /api/plans/{pid}/status-cadence
+PUT /api/plans/{pid}/status-cadence
+GET /api/plans/{pid}/status-updates
+POST /api/plans/{pid}/status-updates
 GET /api/plans/{pid}/summary.pdf
 GET /api/plans/{pid}/task-link-counts
 PUT /api/plans/{pid}/task-order
@@ -609,6 +614,8 @@ POST /api/sprints/{pid}/ceremonies
 POST /api/sprints/{pid}/commit
 GET /api/sprints/{pid}/commitment
 GET /api/start-queue
+GET /api/status-updates/due
+POST /api/status-updates/remind
 POST /api/tasks/bulk
 POST /api/tasks/copy
 POST /api/tasks/move

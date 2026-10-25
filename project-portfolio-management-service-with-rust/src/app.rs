@@ -184,6 +184,7 @@ impl Hooks for App {
             .add_route(controllers::prioritization::routes())
             .add_route(controllers::scoring::routes())
             .add_route(controllers::lessons::routes())
+            .add_route(controllers::status_updates::routes())
             .add_route(controllers::exceptions_digest::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())

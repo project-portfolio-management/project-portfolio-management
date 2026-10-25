@@ -21,6 +21,7 @@
   so the history row is read back from `/api/plans/merges/recent`.
 -->
 <script lang="ts">
+  import { errorReason } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { onMount } from "svelte";
@@ -106,7 +107,7 @@
   // the status is what makes a failure legible ("404: not found").
   function describe(err: unknown): string {
     if (err instanceof ApiError) return `${err.status}: ${err.message}`;
-    return err instanceof Error ? err.message : String(err);
+    return errorReason(err);
   }
 
   // One-line summary "Name (kind)" for the preview panel.

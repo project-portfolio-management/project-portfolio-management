@@ -6,7 +6,7 @@
   table alone. A task under a parent you may not see sits under "Restricted item".
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { isAbsent } from "#lib/absent.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -55,7 +55,7 @@
       shown = r.truncated ? { total: r.total ?? r.tasks.length } : null;
       notice = t("p.plans.pid.wbs.moved", { title });
     } catch (err) {
-      notice = t("p.plans.pid.wbs.could_not_move", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.plans.pid.wbs.could_not_move", { reason: errorReason(err) });
     }
   }
 

@@ -5,7 +5,7 @@
   `?reason=tolerance&dimension=…` it starts a tolerance escalation.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -60,7 +60,7 @@
   }
   onMount(load);
 
-  const message = (err: unknown) => t("p.escalations.could_not", { reason: err instanceof Error ? err.message : "" });
+  const message = (err: unknown) => t("p.escalations.could_not", { reason: errorReason(err) });
 
   async function raise(e: SubmitEvent) {
     e.preventDefault();

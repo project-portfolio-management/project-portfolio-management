@@ -6,6 +6,7 @@
   endpoints; the Gantt is a derived visualization, not a second editor.
 -->
 <script lang="ts">
+  import { errorReason } from "#lib/error-text.js";
   import { isAbsent } from "#lib/absent.js";
   import { onMount } from "svelte";
   import GanttView from "#lib/components/GanttView.svelte";
@@ -46,7 +47,7 @@
         calendarFailed = !isAbsent(err);
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      error = errorReason(err);
       schedule = null;
     } finally {
       loading = false;
@@ -60,7 +61,7 @@
       if (selected) await loadSchedule(selected);
       else loading = false;
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      error = errorReason(err);
       loading = false;
     }
   });

@@ -4,7 +4,7 @@
   not know supply or people for skills, and says so). Each grouping is a table.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -28,7 +28,7 @@
     try {
       open = { ...open, [role]: await ppm.roleTasks(role) };
     } catch (err) {
-      open = { ...open, [role]: { error: err instanceof Error ? err.message : "" } };
+      open = { ...open, [role]: { error: errorReason(err) } };
     }
   }
 

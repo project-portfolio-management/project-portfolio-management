@@ -4,7 +4,7 @@
   removed (then the plan inherits again). A colour is always a word and a shape too.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -69,7 +69,7 @@
       fill(picture);
       notice = t("p.tolerances.saved", { dimension: dimensionLabel(d.dimension) });
     } catch (err) {
-      notice = t("p.tolerances.could_not", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.tolerances.could_not", { reason: errorReason(err) });
     }
   }
 
@@ -80,7 +80,7 @@
       fill(picture);
       notice = t("p.tolerances.escalated", { n: r.raised.length });
     } catch (err) {
-      notice = t("p.tolerances.could_not", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.tolerances.could_not", { reason: errorReason(err) });
     }
   }
 
@@ -90,7 +90,7 @@
       fill(picture);
       notice = t("p.tolerances.removed", { dimension: dimensionLabel(d.dimension) });
     } catch (err) {
-      notice = t("p.tolerances.could_not", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.tolerances.could_not", { reason: errorReason(err) });
     }
   }
 </script>

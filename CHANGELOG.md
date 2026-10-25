@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 25 October
+
+- **A refusal is worded in the reader's language first (CQ-20, part, not ticked).** In a non-English locale, an error from the service now shows the catalogue's sentence for that kind of refusal (not allowed, not found, conflict, changed since you loaded it, too large, not accepted, too many requests) with the service's English reason after it in brackets; a server fault shows only the localized "the service had a problem". In English nothing changes. 15 hand-written copies of the old expression in 11 files now use `errorReason()`. Welsh for the 10 new strings is machine-written. Verified: 787 unit tests (including Welsh with a 409), `svelte-check`, lint (no errors), the complete Playwright suite (723). **Not done:** the per-code mapping (a 409 about one thing reads like a 409 about another); the `resource()` helper; the English reason is still shown in brackets.
+
 ### 24 October
 
 - **`tba.rs` is split by section (CQ-15, part, not ticked).** The 3,401-line time-based-analysis module is now `src/tba/` with one file per section and its tests apart. A move only: the public paths, the behaviour and the tests are unchanged (1075 lib tests and the full database suite pass). **Not done:** `engineering.rs`, `visibility.rs` (no unit tests yet) and `auth.rs`. Also: the previous push failed CI's clippy step on a doc comment missing backticks (fixed in the next commit); I had added that test after my last clippy run.

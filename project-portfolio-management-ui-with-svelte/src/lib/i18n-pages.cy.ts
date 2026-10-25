@@ -1982,6 +1982,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.escalations.withdraw": "Tynnu'n ôl",
   "p.escalations.done": "Wedi'i wneud.",
   "p.escalations.could_not": "Ni weithiodd hynny: {reason}",
+  "p.error.status_401":
+    "Nid ydych wedi mewngofnodi, neu mae eich sesiwn wedi dod i ben.",
+  "p.error.status_403": "Nid oes hawl gennych i wneud hynny.",
+  "p.error.status_404": "Ni ellid dod o hyd i hynny, neu ni allwch ei weld.",
+  "p.error.status_409":
+    "Mae hynny'n gwrthdaro â'r cyflwr presennol: mae rhywun arall wedi ei newid neu wedi penderfynu arno, neu mae eisoes wedi'i wneud.",
+  "p.error.status_412":
+    "Mae wedi newid ers i chi ei lwytho: ail-lwythwch a rhowch gynnig arall arni.",
+  "p.error.status_413": "Mae hynny'n rhy fawr.",
+  "p.error.status_422": "Nid yw rhywbeth a roesoch yn cael ei dderbyn.",
+  "p.error.status_429":
+    "Gormod o geisiadau: arhoswch eiliad a rhowch gynnig arall arni.",
+  "p.error.client": "Gwrthodwyd y cais.",
+  "p.error.server": "Cafodd y gwasanaeth broblem: rhowch gynnig arall arni.",
   "p.escalations.note_problem": "Ysgrifennwch o leiaf 10 nod.",
   "p.escalations.show": "Dangos {title}",
   "p.escalations.hide": "Cuddio {title}",

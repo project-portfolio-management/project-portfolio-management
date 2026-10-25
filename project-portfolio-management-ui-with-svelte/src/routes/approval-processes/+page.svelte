@@ -5,7 +5,7 @@
   an approval again. The service decides who may do what; a refusal is shown as a message.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type ProcessDefinition, type ProcessRun } from "#lib/api/ppm.js";
@@ -56,7 +56,7 @@
       await work();
       notice = done;
     } catch (err) {
-      notice = t("p.processes.could_not", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.processes.could_not", { reason: errorReason(err) });
     }
     await load();
   }
@@ -93,7 +93,7 @@
     try {
       shown = { ...shown, [run.pid]: await ppm.processRun(run.pid) };
     } catch (err) {
-      notice = t("p.processes.could_not", { reason: err instanceof Error ? err.message : "" });
+      notice = t("p.processes.could_not", { reason: errorReason(err) });
     }
   }
 

@@ -5,7 +5,7 @@
   Finance data: someone without access sees a plain note.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -25,7 +25,7 @@
       tables = (await ppm.costRateTables()).tables;
       error = null;
     } catch (err) {
-      const m = err instanceof Error ? err.message : "";
+      const m = errorReason(err);
       if (err instanceof ApiError && err.status === 404) denied = true;
       else error = m || t("p.cost_rates.could_not_load_the_rate");
     }

@@ -4,7 +4,7 @@
   in a new tab.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type PlanLink } from "#lib/api/ppm.js";
@@ -28,7 +28,7 @@
   }
   onMount(load);
 
-  const message = (err: unknown) => t("p.links.could_not", { reason: err instanceof Error ? err.message : "" });
+  const message = (err: unknown) => t("p.links.could_not", { reason: errorReason(err) });
 
   async function add(e: SubmitEvent) {
     e.preventDefault();

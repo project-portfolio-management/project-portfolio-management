@@ -4,7 +4,7 @@
   this plan and edit it, with every list on it (ceremonies, escalation path, decision rights, forums).
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Framework, type FrameworkFamily, type FrameworkInForce } from "#lib/api/ppm.js";
@@ -52,7 +52,7 @@
   }
   onMount(load);
 
-  const message = (err: unknown) => t("p.frameworks.could_not", { reason: err instanceof Error ? err.message : "" });
+  const message = (err: unknown) => t("p.frameworks.could_not", { reason: errorReason(err) });
 
   async function follow() {
     if (!chosen) return;

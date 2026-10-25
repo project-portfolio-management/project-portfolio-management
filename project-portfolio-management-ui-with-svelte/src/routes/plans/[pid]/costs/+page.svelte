@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -33,7 +33,7 @@
       actuals = await ppm.labourCosts(pid);
       error = null;
     } catch (err) {
-      const m = err instanceof Error ? err.message : "";
+      const m = errorReason(err);
       // A 404 is how finance data hides from someone without access.
       if (err instanceof ApiError && err.status === 404) denied = true;
       else error = m || t("p.plans.pid.costs.could_not_load_the_costs");

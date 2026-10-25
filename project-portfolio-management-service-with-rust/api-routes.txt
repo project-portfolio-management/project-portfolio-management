@@ -444,6 +444,9 @@ POST /api/plans/{pid}/schedule-baselines
 GET /api/plans/{pid}/schedule-health
 GET /api/plans/{pid}/schedule-risk
 GET /api/plans/{pid}/schedule-variance
+GET /api/plans/{pid}/score
+GET /api/plans/{pid}/scoring-inputs
+PUT /api/plans/{pid}/scoring-inputs
 GET /api/plans/{pid}/skill-gap
 GET /api/plans/{pid}/smart-score
 GET /api/plans/{pid}/sprints

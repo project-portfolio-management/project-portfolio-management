@@ -529,6 +529,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/schedule-health", "schedule_health", "`GET /api/plans/{pid}/schedule-health` — run the fourteen checks."),
     ("get", "/api/plans/{pid}/schedule-risk", "schedule_risk", "`GET /api/plans/{pid}/schedule-risk` — simulate the plan's task network."),
     ("get", "/api/plans/{pid}/schedule-variance", "schedule_baselines", "`GET /api/plans/{pid}/schedule-variance?baseline=` — how the schedule now differs from a baseline."),
+    ("get", "/api/plans/{pid}/score", "scoring", "`GET /api/plans/{pid}/score?model=wsjf|rice`."),
+    ("get", "/api/plans/{pid}/scoring-inputs", "scoring", "`GET /api/plans/{pid}/scoring-inputs`."),
+    ("put", "/api/plans/{pid}/scoring-inputs", "scoring", "`PUT /api/plans/{pid}/scoring-inputs`."),
     ("get", "/api/plans/{pid}/skill-gap", "visibility", "`GET /api/plans/{pid}/skill-gap` — for every allocation on this plan carrying `skills_required` tags, resolve the assigned person's held skills live against the worker service (by `EntityRef`, TTL-cached, T-28c) and report each tag's status."),
     ("get", "/api/plans/{pid}/smart-score", "prioritization", "`GET /api/plans/{pid}/smart-score` — one plan's score and the full derivation behind it."),
     ("get", "/api/plans/{pid}/sprints", "engineering", "`GET /api/plans/{pid}/sprints` — the item's sprints, newest first."),
@@ -906,6 +909,7 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/plans/{pid}/satisfaction", crate::controllers::value::SatisfactionPayload);
     body!("post", "/api/plans/{pid}/save-as-template", crate::controllers::plan_templates::SaveBody);
     body!("post", "/api/plans/{pid}/schedule-baselines", crate::controllers::schedule_baselines::BaselineBody);
+    body!("put", "/api/plans/{pid}/scoring-inputs", crate::scoring_models::ModelInputs);
     body!("post", "/api/plans/{pid}/sprints", crate::controllers::engineering::SprintPayload);
     body!("post", "/api/plans/{pid}/sprints/{s_pid}/notes", crate::controllers::engineering::NotePayload);
     body!("put", "/api/plans/{pid}/task-order", crate::controllers::task_tree::OrderBody);

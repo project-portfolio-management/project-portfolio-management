@@ -109,6 +109,27 @@ def routes(src):
     return found
 
 
+_OTHER = None
+
+
+def other_type(name):
+    """`crate::module::Name` for a type with `JsonSchema` defined outside the controllers, if exactly one is."""
+    global _OTHER
+    if _OTHER is None:
+        _OTHER = {}
+        root = SERVICE / "src"
+        for f in root.rglob("*.rs"):
+            if "controllers" in f.parts:
+                continue
+            text = f.read_text()
+            for m in re.finditer(r"JsonSchema\)\]\s*(?:#\[[^\n]*\]\s*)*pub (?:struct|enum) (\w+)", text):
+                rel = f.relative_to(root).with_suffix("")
+                parts = [p for p in rel.parts if p != "mod"]
+                _OTHER.setdefault(m.group(1), []).append("crate::" + "::".join(parts) + "::" + m.group(1))
+    found = _OTHER.get(name, [])
+    return found[0] if len(found) == 1 else None
+
+
 def main():
     lines = []
     no_body = []
@@ -138,7 +159,13 @@ def main():
             if ty in ("Value",) or ty.endswith("::Value"):
                 continue
             if "::" not in ty and not re.search(r"JsonSchema\)\]\s*(?:#\[[^\n]*\]\s*)*(?:pub(?:\([a-z]+\))? )?(?:struct|enum) " + ty + r"\b", src):
-                continue  # a type from another crate (the matcher's Plan, Goal): documented by hand
+                # Not defined in the controller: a type the crate defines elsewhere, or another crate's (the
+                # matcher's Plan and Goal), which is documented by hand.
+                where = other_type(ty)
+                if where is None:
+                    continue
+                lines.append((path, method, where))
+                continue
             tpath = ty if "::" in ty else f"crate::controllers::{mod}::{ty}"
             if ty.startswith("crate::") or ty.startswith("super::"):
                 tpath = ty.replace("super::", "crate::controllers::", 1)

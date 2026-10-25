@@ -2255,6 +2255,7 @@ mod tests {
         let groups = [
             crate::controllers::plans::routes(),
             crate::controllers::settings::routes(),
+            crate::controllers::scoring::routes(),
             crate::controllers::compliance::routes(),
             crate::controllers::governance::routes(),
             crate::controllers::visibility::routes(),
@@ -2491,6 +2492,7 @@ mod tests {
     /// of records with nothing computed across them.
     const NON_DERIVED_GET: &[&str] = &[
         // Documented from the handlers' own doc comments (CQ-8): plain reads of stored rows.
+        "/api/plans/{pid}/scoring-inputs",
         "/api/objectives",
         "/api/plans/{pid}/allocations",
         "/api/plans/{pid}/gate-reviews",

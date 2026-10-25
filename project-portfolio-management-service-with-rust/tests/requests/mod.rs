@@ -41,6 +41,7 @@ mod privacy_lookup_failure;
 mod retention;
 mod role_tasks;
 mod scale;
+mod scoring;
 mod strategy;
 mod subjects;
 mod task_bulk;

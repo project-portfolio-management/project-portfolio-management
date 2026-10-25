@@ -126,6 +126,8 @@ const AGGREGATES: &[&str] = &[
     "/api/okrs",
     "/api/objectives",
     "/api/prioritization",
+    "/api/prioritization?model=wsjf",
+    "/api/prioritization?model=rice",
     "/api/proposals",
     "/api/proposals/forecast",
     "/api/reports",

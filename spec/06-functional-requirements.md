@@ -231,6 +231,18 @@ matcher payload (§5.6); every mutation audits (§6.6).
   deployment-tunable as a complete basis-point map; anything else falls
   back to the documented defaults with a warning. Nothing is stored, so
   the score cannot drift from its inputs.
+- **FR-16e2 WSJF and RICE (NC-6).** Two more ways to rank, beside the Smart Score, from numbers a person
+  estimates and the service stores per plan (`PUT /api/plans/{pid}/scoring-inputs`, all optional, audited with
+  the before and after; `GET` reads them). **WSJF** is `(business value + time criticality + risk reduction or
+  opportunity enablement) / job size`, each on a relative 1 to 20 scale. **RICE** is `reach × impact ×
+  confidence / effort`: reach is a count per period, impact one of 0.25, 0.5, 1, 2 or 3, confidence 0 to 100
+  percent, effort person-months above 0. `GET /api/plans/{pid}/score?model=wsjf|rice` returns the score, the
+  formula in words, every component with what it means, and the inputs still missing, each with the reason it is
+  needed. **Absent input is absent, not zero:** with any input missing the score is `null`; a stated zero (zero
+  confidence) is a stated answer and scores 0. `GET /api/prioritization?model=smart|wsjf|rice` ranks by the chosen
+  model (the Smart Score by default), highest first, the unscored last with their missing inputs; `band` applies
+  to the Smart Score only (`422` otherwise). The ranking reads the plans the caller may read, as the Smart Score
+  ranking does. Nothing but the inputs is stored. Not built: a screen for the inputs and the choice of model; weights.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

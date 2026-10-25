@@ -252,9 +252,13 @@ pub(crate) struct RankParams {
     /// How many rows to return (default 50, capped at [`RANK_CAP`]).
     #[serde(default)]
     limit: Option<usize>,
-    /// Only rows in this band (`high` / `medium` / `low` / `unscored`).
+    /// Only rows in this band (`high` / `medium` / `low` / `unscored`); the Smart Score only.
     #[serde(default)]
     band: Option<String>,
+    /// How to rank: `smart` (the default), `wsjf` or `rice` (NC-6). The last two need the plan's
+    /// `scoring-inputs`; a plan without them is unscored and sorts last, with the inputs it lacks named.
+    #[serde(default)]
+    model: Option<String>,
 }
 
 /// `GET /api/prioritization?limit=&band=` — the ranked queue: what
@@ -269,9 +273,21 @@ async fn prioritization(
     headers: HeaderMap,
     Query(params): Query<RankParams>,
 ) -> Result<Response> {
+    let model = params.model.as_deref().unwrap_or("smart");
+    if !matches!(model, "smart" | "wsjf" | "rice") {
+        return Err(super::unprocessable("model is smart, wsjf or rice"));
+    }
+    if model != "smart" && params.band.is_some() {
+        return Err(super::unprocessable(
+            "band is a Smart Score band; wsjf and rice rank by their score alone",
+        ));
+    }
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let limit = params.limit.unwrap_or(50).min(RANK_CAP);
     let estate = Estate::load(&ctx, &fence).await?;
+    if model != "smart" {
+        return rank_by_inputs(&ctx, &headers, &estate, model, limit).await;
+    }
     let mut rows: Vec<serde_json::Value> = Vec::new();
     let weights = weights();
     let mut scored: Vec<(Option<f64>, serde_json::Value)> = estate
@@ -318,6 +334,67 @@ async fn prioritization(
     let mut with_as_of = body;
     with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
     super::conditional_json(&headers, &etag, &with_as_of)
+}
+
+/// The ranking by a model that scores from estimated inputs (WSJF or RICE, NC-6): the plans the caller may read
+/// (the estate is already fenced), highest score first, unscored last with the inputs they lack.
+async fn rank_by_inputs(
+    ctx: &AppContext,
+    headers: &HeaderMap,
+    estate: &Estate,
+    model: &str,
+    limit: usize,
+) -> Result<Response> {
+    let pids: Vec<Uuid> = estate.plans.iter().take(RANK_CAP).map(|p| p.pid).collect();
+    let by_plan: std::collections::HashMap<Uuid, crate::models::_entities::scoring_inputs::Model> =
+        crate::models::_entities::scoring_inputs::Entity::find()
+            .filter(crate::models::_entities::scoring_inputs::Column::PlanPid.is_in(pids))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|r| (r.plan_pid, r))
+            .collect();
+    let mut scored: Vec<(Option<f64>, serde_json::Value)> = estate
+        .plans
+        .iter()
+        .take(RANK_CAP)
+        .map(|plan| {
+            let inputs = by_plan
+                .get(&plan.pid)
+                .map(super::scoring::inputs_of)
+                .unwrap_or_default();
+            let s =
+                super::scoring::score_by_name(model, &inputs).expect("the model name was checked");
+            (
+                s.score,
+                serde_json::json!({
+                    "pid": plan.pid.to_string(),
+                    "name": plan.name,
+                    "kind": plan.kind,
+                    "stage": plan.stage,
+                    "score": s.score,
+                    "missing_inputs": s.missing,
+                }),
+            )
+        })
+        .collect();
+    scored.sort_by(|a, b| match (a.0, b.0) {
+        (Some(x), Some(y)) => y.partial_cmp(&x).unwrap_or(std::cmp::Ordering::Equal),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => std::cmp::Ordering::Equal,
+    });
+    let rows: Vec<serde_json::Value> = scored.into_iter().map(|(_, r)| r).take(limit).collect();
+    let body = serde_json::json!({
+        "model": model,
+        "plans": rows,
+        "scored_of": estate.plans.len(),
+    });
+    let etag = super::etag_of(&body);
+    let mut with_as_of = body;
+    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    super::conditional_json(headers, &etag, &with_as_of)
 }
 
 /// `GET /api/lifecycle` — the bird's-eye funnel: how much sits in each

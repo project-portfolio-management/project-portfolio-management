@@ -134,6 +134,7 @@ mod m20261021_000085_schedule_tolerance;
 mod m20261024_000086_deployment_settings;
 mod m20261024_000087_availability_no_overlap;
 mod m20261024_000088_framework_versions;
+mod m20261025_000089_scoring_inputs;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -269,6 +270,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261024_000086_deployment_settings::Migration),
             Box::new(m20261024_000087_availability_no_overlap::Migration),
             Box::new(m20261024_000088_framework_versions::Migration),
+            Box::new(m20261025_000089_scoring_inputs::Migration),
             // inject-above (do not remove this comment)
         ]
     }

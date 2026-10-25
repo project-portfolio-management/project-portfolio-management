@@ -82,6 +82,10 @@ mutation (§10.2).
   `framework_versions` (`framework_pid`, `version`, `name`, `description?`, `body`,
   `created_by?`, unique `(framework_pid, version)`) holds every version and is
   append-only (a trigger refuses UPDATE and DELETE). Existing rows became version 1.
+- **`scoring_inputs`** (built, FR-16e2) — one row per plan (`plan_pid` unique) of the estimated inputs of WSJF
+  (`business_value`, `time_criticality`, `risk_reduction`, `job_size`, each 1 to 20) and RICE (`reach` >= 0,
+  `impact` in 0.25/0.5/1/2/3, `confidence_percent` 0 to 100, `effort` > 0), all nullable by CHECKs;
+  `set_by?` (migration `m20261025_000089`). No score is stored.
 - **`plan_tolerances`** (built, FR-53) — a plan's limit per dimension: `plan_pid`, `dimension` (CHECK
   `time`/`schedule`/`cost`/`risk`/`resources`, widened by `m20261021_000085`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
   `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan

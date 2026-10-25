@@ -135,6 +135,7 @@ pub mod schedule_baselines;
 pub mod scheduled_actions;
 pub mod scorecard_kpis;
 pub mod scorecards;
+pub mod scoring_inputs;
 pub mod sink_deliveries;
 pub mod skill_pool_members;
 pub mod skill_pools;

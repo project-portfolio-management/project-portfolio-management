@@ -23716,6 +23716,155 @@
         ]
       }
     },
+    "/api/plans/{pid}/score": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/score?model=wsjf|rice`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/score?model=wsjf|rice`",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
+    "/api/plans/{pid}/scoring-inputs": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/scoring-inputs`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/scoring-inputs`",
+        "tags": [
+          "scoring"
+        ]
+      },
+      "put": {
+        "description": "`PUT /api/plans/{pid}/scoring-inputs`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "The estimated inputs for both models. Every one is optional.",
+                "properties": {
+                  "business_value": {
+                    "default": null,
+                    "description": "WSJF: relative value to the user or business, `1..=20`.",
+                    "format": "int16",
+                    "maximum": 32767,
+                    "minimum": -32768,
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "confidence_percent": {
+                    "default": null,
+                    "description": "RICE: how sure the estimates are, `0..=100` percent.",
+                    "format": "int16",
+                    "maximum": 32767,
+                    "minimum": -32768,
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "effort": {
+                    "default": null,
+                    "description": "RICE: person-months of work, above 0.",
+                    "format": "double",
+                    "nullable": true,
+                    "type": "number"
+                  },
+                  "impact": {
+                    "default": null,
+                    "description": "RICE: 0.25, 0.5, 1, 2 or 3.",
+                    "format": "double",
+                    "nullable": true,
+                    "type": "number"
+                  },
+                  "job_size": {
+                    "default": null,
+                    "description": "WSJF: relative size of the job, `1..=20`.",
+                    "format": "int16",
+                    "maximum": 32767,
+                    "minimum": -32768,
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "reach": {
+                    "default": null,
+                    "description": "RICE: how many people or events it reaches in a period (a whole number, 0 or more).",
+                    "format": "int32",
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "risk_reduction": {
+                    "default": null,
+                    "description": "WSJF: risk reduction or opportunity enablement, `1..=20`.",
+                    "format": "int16",
+                    "maximum": 32767,
+                    "minimum": -32768,
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "time_criticality": {
+                    "default": null,
+                    "description": "WSJF: how much the value decays with time, `1..=20`.",
+                    "format": "int16",
+                    "maximum": 32767,
+                    "minimum": -32768,
+                    "nullable": true,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/plans/{pid}/scoring-inputs`",
+        "tags": [
+          "scoring"
+        ]
+      }
+    },
     "/api/plans/{pid}/skill-gap": {
       "get": {
         "description": "`GET /api/plans/{pid}/skill-gap` — for every allocation on this plan carrying `skills_required` tags, resolve the assigned person's held skills live against the worker service (by `EntityRef`, TTL-cached, T-28c) and report each tag's status.",

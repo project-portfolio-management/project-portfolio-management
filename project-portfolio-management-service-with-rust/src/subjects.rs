@@ -77,6 +77,7 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("frameworks", "created_by"),
     ("plan_frameworks", "set_by"),
     ("plan_tolerances", "set_by"),
+    ("scoring_inputs", "set_by"),
     ("escalations", "raised_by"),
     ("escalations", "owner_ref"),
     ("escalation_events", "actor"),

@@ -182,6 +182,7 @@ impl Hooks for App {
             .add_route(controllers::collaboration::routes())
             .add_route(controllers::automation::routes())
             .add_route(controllers::prioritization::routes())
+            .add_route(controllers::scoring::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())
             .add_route(controllers::modules::routes())

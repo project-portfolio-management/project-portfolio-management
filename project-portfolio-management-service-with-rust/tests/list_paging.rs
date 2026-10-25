@@ -104,6 +104,10 @@ const UNREACHED: &[(&str, &str)] = &[
         "one record (an object, not a list); needs a record this census does not create",
     ),
     (
+        "/api/plans/{pid}/score",
+        "one plan's score (an object, not a list); needs `?model=` and a plan this census does not create",
+    ),
+    (
         "/api/scenarios/{pid}/evaluate",
         "one scenario's evaluation (an object, not a list); needs a scenario this census does not create",
     ),

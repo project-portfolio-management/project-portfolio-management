@@ -169,6 +169,7 @@ pub mod schedule_risk;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;
 pub mod scheduling_rules;
+pub mod scoring_models;
 /// Tantivy full-text search: index schema, engine, and query surface.
 pub mod search;
 pub mod sinks;

@@ -1936,11 +1936,12 @@ only as search snippets.
   escalation. Owner question §70.6.
   **Acceptance:** a test with two schedulers shows one run; a disabled
   scheduler runs nothing.
-- [ ] **NC-6 (S) — WSJF and RICE scoring models.** Selectable beside the
+- [x] **NC-6 (S) — WSJF and RICE scoring models.** Selectable beside the
   Smart Score, with each component explained. Absent input is `null` with a
   reason, never zero.
   **Acceptance:** unit tests of each formula; ranking by each model through the
   API.
+  **Built 2026-10-25.** `src/scoring_models.rs` (pure; 7 unit tests: each formula, a missing input is `null` and named with its reason, a stated zero is not a missing one, validation names every problem), table `scoring_inputs` (migration 89), `PUT`/`GET /api/plans/{pid}/scoring-inputs` (audited, in the write's transaction), `GET /api/plans/{pid}/score?model=wsjf|rice`, and `GET /api/prioritization?model=smart|wsjf|rice`; request test `plans_are_ranked_by_wsjf_and_rice_from_their_estimated_inputs` (the two models rank two plans in opposite orders; an unestimated plan is last and unscored in both; clearing an input makes the score null again; the audit row). Spec FR-16e2. **Not done:** a screen for the inputs or for choosing the model; configurable weights or scales; the privacy census exercises the two ranking variants but with no estimated private plan in them, so it shows the ranking is fenced, not that a private plan's inputs are hidden by another route (`GET .../scoring-inputs` of a private plan is `404` for a non-member through the same plan lookup as every per-plan read).
 - [ ] **NC-7 (S) — Efficient frontier.** Re-run the existing scenario
   generator over a sweep of budget caps and return value against cost, each
   point with its explainable selection.

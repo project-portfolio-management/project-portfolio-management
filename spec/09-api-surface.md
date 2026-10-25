@@ -99,7 +99,9 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | POST/GET | `/api/automations` · POST `…/{pid}/enable`·`/disable` · DELETE `…/{pid}` | Workflow-automation rules |
 | GET | `/api/automations/runs` | What fired: applied / skipped / failed |
 | POST/GET | `/api/scheduled-actions` · POST `…/sweep` · DELETE `…/{pid}` | Set-and-forget deadline queue |
-| GET | `/api/plans/{pid}/smart-score` · `/api/prioritization` | Smart Score + ranked queue (with breakdown) |
+| GET | `/api/plans/{pid}/smart-score` · `/api/prioritization` | Smart Score + ranked queue (with breakdown); `?model=wsjf\|rice` ranks by those models (NC-6) |
+| PUT / GET | `/api/plans/{pid}/scoring-inputs` | The estimated WSJF and RICE inputs (all optional; audited) |
+| GET | `/api/plans/{pid}/score?model=wsjf\|rice` | One plan's WSJF or RICE score with formula, components and the inputs still missing |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 
 ### 9.2b Service REST API — full-suite capabilities (§1.4–§1.6)

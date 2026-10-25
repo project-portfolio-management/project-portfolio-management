@@ -2007,9 +2007,9 @@ or the PMI portfolio standard; a separate SAFe portfolio kanban. Reasons are in
 
 ## Brainitive ideas (BR-n)
 
-Source: [spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md) and [plan.md §71 to §76](plan.md).
-Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, then BR-3 and BR-2, then the small
-ones. Each item follows the rules in AGENTS.md.
+Source: [spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md) and [plan.md §71 to §81](plan.md) (the
+repository, then the public site: BR-11 to BR-17).
+Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, then BR-3 and BR-2, then BR-11 and BR-12, then the small ones. Each item follows the rules in AGENTS.md.
 
 - [ ] **BR-1 (S–M) — Idempotency keys on writes.** An optional `Idempotency-Key` header on the create `POST`s: the
   same key and body replays the stored result (the same `pid`, one row, one audit row), the same key with a different
@@ -2075,12 +2075,52 @@ ones. Each item follows the rules in AGENTS.md.
   clear the index at the start of each test that asserts a count, or assert on the pid rather than the number of hits.
   **Acceptance:** the restore drill and a full run pass with an extra test that creates a plan named "Apollo".
 
+- [ ] **BR-11 (S, documents) — One page of operating commitments.** `operations/commitments.md`: how often backups
+  are taken, how far back a restore goes, the recovery objectives, an uptime objective (stated as an objective, not a
+  guarantee, until measured), support response targets, the list of processors, a data processing agreement template,
+  the time to delete or anonymise personal data after a request, the notice given before a policy change, and the
+  position on SSO and SCIM (SCIM is not offered here). Every line links to the evidence (`scripts/restore-test.sh`,
+  `recovery-objectives.md`, the DPIA) or says "not offered". Owner question §81.1.
+  **Acceptance:** the page exists, every commitment has a link or "not offered", the offline link check passes.
+- [ ] **BR-12 (S–M) — A narrow write scope.** Extends NC-15. The attribute `scope=capture`: an allowlist rule that
+  lets a token read and search, and `POST` only status updates, comments and lessons; every other write is refused.
+  Same shape as `READ_ONLY_SCOPE` in `auth/areas.rs`: a service-owned rule placed first. Owner question §81.2.
+  **Acceptance:** a real-token test: the capture token posts a status update (200) and is refused (403) on a plan
+  edit, a delete and a template instantiation; the same identity without the scope is unchanged.
+- [ ] **BR-13 (S) — Starter templates.** Ship five as data through the template snapshot format: a stage-gated project,
+  a programme with workstreams, a benefits-realisation review, a change-request process, an incident response. Marked
+  as starters, listed by `GET /api/plan-templates`, instantiable like any template, and not editable in place.
+  **Acceptance:** a test instantiates each starter and checks the plan count, task count and that no field outside the
+  service's model is used.
+- [ ] **BR-14 (M, UI) — Command palette.** Ctrl/Cmd-K opens a palette: search plans by name through the search API,
+  recent items, and commands (new plan, my work, exceptions, open the status page). A combobox with the right roles,
+  a focus trap, escape to close, and no mouse needed. One of the first NC-1 slices.
+  **Acceptance:** an e2e test opens it, finds a plan, navigates to it; axe passes with it open; a vitest test of the
+  ranking.
+- [ ] **BR-15 (S–M, UI) — Paste rows from a spreadsheet.** In the task list, pasting tab-separated rows opens a
+  preview built on the bulk import's dry run, showing each row's problems; only the good rows are created.
+  **Acceptance:** an e2e test pastes three rows (one wrong), sees the preview flag it, commits two; axe passes.
+- [ ] **BR-16 (M, optional, blocked) — Development activity on a task.** An inbound webhook (GitHub or GitLab) with its
+  signature verified attaches a commit, pull request or deployment to the task whose key the message mentions;
+  deliveries are deduplicated by delivery id. **Blocked on a human-readable task key**, which tasks do not have.
+  Owner question §81.3.
+  **Acceptance:** (when unblocked) a signed delivery attaches a link; the same delivery twice attaches one; a wrong
+  signature is refused.
+- [ ] **BR-17 (S–M, UI) — Hide the modules I do not use.** Per-user and per-plan switches for which sections the
+  navigation shows. A default stays invisible: a user who never changed it follows the current default. Writes are
+  serialised. Part of NC-1.
+  **Acceptance:** an e2e test hides a section and finds it gone after a reload; a new default reaches a user who never
+  changed it; axe passes on the settings page.
+
 ### Amendments (Brainitive)
 
 - **NC-2** gains: no `null` in any declared string output field (strict clients reject the whole response); read-only
   and idempotent annotations on every tool; a `location` in every result; all tools in one page; a model-facing
   description per tool; a server instructions block; a temporary request logger only to diagnose a client, without
   bodies or tokens, and removed afterwards. A write tool takes an idempotency key (BR-1).
+- **NC-1** gains: the command palette (BR-14), paste from a spreadsheet (BR-15) and hidden modules (BR-17) are UI
+  slices; each follows the e2e-plus-axe rule.
+- **NC-15** gains: narrow write scopes (BR-12) are the "not done" part of it.
 - **CQ-11** gains: assert a fixed number of queries per aggregate view (they do this per insights tab), and keep each
   definition of a counted number in one place with a note when two places must change together.
 
@@ -2088,5 +2128,5 @@ ones. Each item follows the rules in AGENTS.md.
 
 Helpdesk and ticket portal, lead forms, billing, whiteboards, the document editor, calendar sync, a browser extension,
 web push, a personal capture inbox and focus timer, AI writing or extraction inside the service, SQLite by default,
-their commercial model, and software-release versions with a public changelog. Reasons are in
-[plan.md §74](plan.md).
+their commercial model, software-release versions with a public changelog, client invoicing from logged time, a free
+tier and per-seat pricing, and install-as-app. Reasons are in [plan.md §74 and §80](plan.md).

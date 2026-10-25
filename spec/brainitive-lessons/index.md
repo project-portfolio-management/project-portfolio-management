@@ -1,6 +1,8 @@
 # Brainitive: lessons for this repository
 
-Research date: 2026-10-25. Subject: [armendzekjiri/brainitive](https://github.com/armendzekjiri/brainitive)
+Research date: 2026-10-25. Two sources: the repository
+[armendzekjiri/brainitive](https://github.com/armendzekjiri/brainitive) (lessons 1 to 10) and the product's public site
+[www.brainitive.app](https://www.brainitive.app/) (lessons 11 to 17, further down). The repository:
 (PHP / Laravel 12 + Inertia + React; AGPL-3.0; 20 stars; created 2026-02-23; pushed the day of this research).
 An open-source team workspace: Kanban and Scrum boards, docs, Excalidraw whiteboards, Gantt plans, a helpdesk,
 lead forms, billing and an MCP server, as one self-hosted monolith.
@@ -8,7 +10,7 @@ lead forms, billing and an MCP server, as one self-hosted monolith.
 This file is a **map, not a transcription**: what Brainitive does that bears on a portfolio service, what this
 repository already has, and what to take. The pattern follows [prince2](../prince2/index.md) and
 [total-project-control](../total-project-control/index.md). The decisions that came out of it are in
-[plan.md §71 to §76](../../plan.md) and the tasks `BR-1` to `BR-10` in [tasks.md](../../tasks.md).
+[plan.md §71 to §81](../../plan.md) and the tasks `BR-1` to `BR-17` in [tasks.md](../../tasks.md).
 
 **Licence.** AGPL-3.0 is strong copyleft. This repository takes **ideas only**; no code, text or schema is to be
 copied from it.
@@ -128,6 +130,75 @@ Their e2e suite runs specs in parallel against one workspace, so numbers are ass
 creates. This repository hit the same thing on 2026-10-25: tests in one process share one search index, an extra
 plan named "Apollo" pushed the real one off a fuzzy page, and the restore drill failed. See CHANGELOG.
 
+## The public site (www.brainitive.app)
+
+**Evidence base.** The home page as served on 2026-10-25 (a single-page app: the text is in the page's script bundle,
+read as strings), its pricing block, and the privacy page. No sign-in, no app screen, no demo. This is **marketing
+and policy text**: it says what the vendor claims, not what the product does. Prices and limits below are the
+vendor's *planned* prices ("free while in early access").
+
+### 11. The commercial shape: every feature open, the operation sold (record, no task)
+
+"Open source. Pay only for the cloud." Every feature is free to self-host; the hosted plans (Free up to 5 members and
+1 GB; Team at 6 per user per month, 5 yearly, with 100 GB; Business at 12, 10 yearly) differ in size, support and
+**assurances**, not in features. The early-access notice promises prices will be announced at least 30 days ahead and
+that nobody pays unless they choose a paid plan.
+*Here:* the same split suits a public-sector service: one build with every capability, and the paid part is the
+operation. It is the owner's call and is recorded in plan.md §80 only.
+
+### 12. What the "compliance" tier promises is a buyer's checklist (take: BR-11)
+
+Business adds: a data processing agreement, a 99.9% uptime SLA, **daily backups with a 30-day restore**, priority
+support the next business day, and "SAML SSO and SCIM on request". The privacy page adds: personal data deleted or
+anonymised within 30 days of account deletion; 14 days' notice of a material policy change; encryption in transit;
+named categories of processor under data processing agreements; analytics cookies only with consent.
+*Here:* `operations/` has the backup, restore and recovery objectives, and `governance/` has the DPIA and the record
+of processing, but there is **no single page of commitments** and no data processing agreement template or processor
+list. A buyer's first question is that page.
+
+### 13. A capture credential that can only save and search (take: BR-12)
+
+The browser extension "can only save things and search titles"; its token is stored on the device and removed on
+sign-out; it reads a page only when the user acts on it, and shares nothing with third parties.
+*Here:* NC-15 gave one scope, `readonly`. The same mechanism can carry a narrow *write* scope for an integration that
+only posts status updates, comments or lessons.
+
+### 14. Starter templates by domain (take: BR-13)
+
+"Start from 20 templates, software, marketing, HR, sales and more, or save your own project as one"; the helpdesk has 17
+more. A template is a good first minute for a new user.
+*Here:* LT-2 and NC-12 give templates and sync, and there are no shipped ones.
+
+### 15. Keyboard-first navigation and spreadsheet paste (take: BR-14, BR-15)
+
+"Press Cmd-K to search everything, jump back to recent items and run commands from the keyboard." Gantt rows can be
+"pasted straight from Excel". A shortcut ("C anywhere") drops an idea into a private inbox.
+*Here:* the UI has neither a command palette nor a paste step, and a portfolio with thousands of plans needs the
+first. Both are keyboard- and screen-reader-friendly by nature, which suits this repository's accessibility duty.
+
+### 16. Development activity as evidence on the item (option: BR-16)
+
+"Branches, commits, pull requests and deployments show up on the issue they mention." Their repository notes say the
+inbound webhook is a stateless route, deliveries are stored so a duplicate delivery is a no-op (a duplicate once
+aborted a transaction), and the signature is checked.
+*Here:* useful as delivery evidence on a task, but it needs a human-readable task key, which tasks here do not have.
+
+### 17. Progressive disclosure in a large interface (take: BR-17)
+
+"Hide what you don't use, choose what each project shows and pin the boards, lists and docs you open every day." Their
+notes add: defaults stay invisible (a user who never changed it sees the current default), and writes are serialised.
+*Here:* NC-1 will add many screens; without this the navigation grows with every slice.
+
+### Smaller points from the site
+
+- A grouped notification inbox with All, Unread, Mentions and Assigned filters and a channel per category (in-app, push
+  or email). `notification_prefs.rs` has the per-kind switch; the grouping by day is not there.
+- Time logged on an item is billed in a monthly report, and **finalised hours are locked so nothing is billed twice**.
+  Worth checking against the timesheet period lock here (not read for this note).
+- Saved dated status updates sit next to the health numbers, every number linking to the items behind it (lesson 2).
+- The product installs as an app on any device (a web manifest). Not a need here yet.
+- AI features are bring-your-own-key and optional, and the AI project context is bounded and labelled. Still not taken.
+
 ## Small facts worth keeping
 
 - Duplicating an issue copies planning fields, resets logged time, and never copies comments, attachments, watchers,
@@ -155,3 +226,7 @@ Do first, in this order: **BR-6** (security sweep; cheap, and the findings are g
 **BR-5** (signed timestamps and redelivery), **BR-10** (stop the test coupling). Then **BR-3** and **BR-2**, which
 extend NC-14 and NC-4 with the "evidence, then a person decides" pattern. **BR-4**, **BR-7** and **BR-8** are small and
 can wait. **BR-9** (share links) only if an owner asks, because public links to portfolio data are a disclosure risk.
+
+From the site: **BR-11** (one page of operating commitments) is the cheapest and the one a public buyer asks for first;
+**BR-12** (a narrow write scope) follows NC-15 naturally; **BR-14** (command palette) belongs in the first NC-1 UI
+slice; **BR-13**, **BR-15** and **BR-17** are small and can ride along with UI work; **BR-16** waits for task keys.

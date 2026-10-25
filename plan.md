@@ -1652,3 +1652,46 @@ and a security review) were hardened by real incidents they wrote down.
    required on any MCP write tool.
 4. **BR-5.** Is a breaking change to the signature acceptable? Recommended: send both the old and the new header for
    one release, and document the receivers' window.
+
+## 77. The public site: what is added (Brainitive)
+
+Second source for the same subject, read 2026-10-25: the home page, its pricing block and the privacy page of
+[www.brainitive.app](https://www.brainitive.app/). It is marketing and policy text, so it is evidence of what the
+vendor *claims*; nothing was run. The detail is in
+[spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md), lessons 11 to 17.
+
+## 78. Where we already match or lead (site)
+
+- Backup and restore are written and exercised (`scripts/restore-test.sh`, run by CI as the restore drill);
+  recovery objectives exist in `operations/recovery-objectives.md`.
+- A DPIA, a record of processing, a retention schedule and a personal-data inventory exist under `governance/`.
+- Per-kind notification preferences, saved views, custom fields, bulk edit, MCP (planned), signed webhooks.
+- Single sign-on is the authentication service's job and is already how this service works.
+
+## 79. Gaps worth considering (site)
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 13 | **One page of operating commitments** — backup frequency, restore window, uptime objective, support response, processor list, DPA, SSO and SCIM position, each linked to its evidence or marked "not offered" | A public buyer asks for it first; the pieces exist but are scattered, and there is no DPA template or processor list | High | BR-11 |
+| 14 | **A narrow write scope** for an integration that only posts status updates, comments or lessons and searches titles | NC-15 has one scope, `readonly`; the browser extension's "save and search only" token is the model | Medium-high | BR-12 |
+| 15 | **Starter templates** shipped as data | A new deployment starts empty; LT-2 and NC-12 have nothing to instantiate | Medium | BR-13 |
+| 16 | **Command palette** (jump to a plan, recent items, commands) | A portfolio of thousands of plans is unusable by menu alone; it is also the most accessible way to navigate | High (UI) | BR-14 |
+| 17 | **Paste rows from a spreadsheet** with a preview | Planners live in spreadsheets; the bulk import already has a dry run | Medium (UI) | BR-15 |
+| 18 | **Development activity on a task** (commits, pull requests, deployments that mention it) | Delivery evidence for assurance; needs task keys first | Low-medium | BR-16 |
+| 19 | **Hide the modules I do not use**, per user and per plan | NC-1 adds many screens; navigation must not grow with them | Medium (UI) | BR-17 |
+
+## 80. Deliberately not taken (site) and one decision to record
+
+- **Free tier, per-seat pricing, early-access marketing, cookie banner, install-as-app, Google and GitHub sign-in.**
+  Product and commercial choices that are not this service's.
+- **Client invoicing from logged time.** Billing is another product; time stays for cost and capacity.
+- **Decision to record, not to build:** the vendor sells *operation and assurance*, not features. If this service is
+  ever offered as a hosted service, the same split is the sound one: every capability in one build, and the paid part is
+  backups, uptime, support and the agreements in BR-11. That is the owner's decision.
+
+## 81. Open questions for the owner (site)
+
+1. **BR-11.** Is a hosted offering planned? If not, the page is still worth having as a statement for self-hosting
+   customers (what the operator, not the vendor, commits to).
+2. **BR-12.** Which narrow scopes are wanted first: capture (status updates, comments, lessons) or search only?
+3. **BR-16.** Do tasks get a human-readable key? Without one the idea cannot start.

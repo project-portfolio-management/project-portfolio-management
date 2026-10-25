@@ -8,9 +8,10 @@
        theme in ThemePicker restyle the whole app, not just Lily components. */
   --mxi-color-bg: var(--color-base-100, #fafafa);
   --mxi-color-fg: var(--color-base-content, #111827);
+  /* 88%, not 78%: Lily themes 0.6 made the base text colour lighter, and 78% fell to 4.07:1 (needs 4.5:1). */
   --mxi-color-muted: color-mix(
     in oklch,
-    var(--color-base-content, #6b7280) 78%,
+    var(--color-base-content, #6b7280) 88%,
     var(--color-base-100, #fafafa)
   );
   --mxi-color-border: var(--color-base-300, #e5e7eb);

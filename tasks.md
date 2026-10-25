@@ -2069,11 +2069,12 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   `X-Robots-Tag: noindex`, `410` once revoked, expired or deleted, a view count. Refused for any record that carries
   a handling mark. Owner question §76.2.
   **Acceptance:** a request test of create, read, revoke (`410`), expiry (`410`), and a refusal for a marked record.
-- [ ] **BR-10 (S) — Tests that do not depend on other tests' data.** Found on 2026-10-25: tests in one process share
+- [x] **BR-10 (S) — Tests that do not depend on other tests' data.** Found on 2026-10-25: tests in one process share
   one search index, so a plan named "Apollo" in another test pushed the real one off a fuzzy page and failed the
   restore drill. Give `search_reaches_secondary_fields_tolerates_typos_and_filters_by_kind` a name no other test uses,
   clear the index at the start of each test that asserts a count, or assert on the pid rather than the number of hits.
   **Acceptance:** the restore drill and a full run pass with an extra test that creates a plan named "Apollo".
+  **Built 2026-10-25.** The search test clears the index (`search::engine().clear()`) before it asserts counts. Shown with the failing condition restored: the meetings test back to a plan named "Apollo", then `scripts/restore-test.sh` running the whole suite on the restored copy: 201 passed (it failed 0 of 1 expected hits before). **Not done:** other tests that assert hit counts on a shared index (none failed; they were not audited); a per-test index.
 
 - [ ] **BR-11 (S, documents) — One page of operating commitments.** `operations/commitments.md`: how often backups
   are taken, how far back a restore goes, the recovery objectives, an uptime objective (stated as an objective, not a

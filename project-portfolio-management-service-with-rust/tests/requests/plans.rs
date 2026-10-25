@@ -248,6 +248,12 @@ async fn list_and_search_are_paginated() {
 async fn search_reaches_secondary_fields_tolerates_typos_and_filters_by_kind() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
+        // The index is shared by every test in this process and keeps a plan's entry after the next test
+        // truncates the database. Many tests create a plan named "Apollo"; their stale entries crowd a fuzzy
+        // page and made this test fail on the restore drill. Start from an empty index.
+        if let Some(engine) = project_portfolio_management::search::engine() {
+            engine.clear().expect("clear the search index");
+        }
         let created = request.post("/api/plans").json(&apollo_project()).await;
         assert_eq!(created.status_code(), 200);
 

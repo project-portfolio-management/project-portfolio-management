@@ -140,6 +140,7 @@ mod m20261025_000091_status_updates;
 mod m20261025_000092_scheduled_job_runs;
 mod m20261025_000093_blueprint_sync;
 mod m20261025_000094_meetings;
+mod m20261025_000095_idempotency_keys;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -281,6 +282,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261025_000092_scheduled_job_runs::Migration),
             Box::new(m20261025_000093_blueprint_sync::Migration),
             Box::new(m20261025_000094_meetings::Migration),
+            Box::new(m20261025_000095_idempotency_keys::Migration),
             // inject-above (do not remove this comment)
         ]
     }

@@ -61,6 +61,14 @@ pub const RULES: &[Rule] = &[
         default_days: 30,
     },
     Rule {
+        name: "idempotency_keys",
+        class: "GEN",
+        table: "idempotency_keys",
+        age_column: "created_at",
+        also: "",
+        default_days: 1,
+    },
+    Rule {
         name: "insight_snapshots",
         class: "DRV",
         table: "insight_snapshots",

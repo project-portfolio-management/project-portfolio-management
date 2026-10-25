@@ -2011,13 +2011,14 @@ Source: [spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md) and
 repository, then the public site: BR-11 to BR-17).
 Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, then BR-3 and BR-2, then BR-11 and BR-12, then the small ones. Each item follows the rules in AGENTS.md.
 
-- [ ] **BR-1 (S–M) — Idempotency keys on writes.** An optional `Idempotency-Key` header on the create `POST`s: the
+- [x] **BR-1 (S–M) — Idempotency keys on writes.** An optional `Idempotency-Key` header on the create `POST`s: the
   same key and body replays the stored result (the same `pid`, one row, one audit row), the same key with a different
   body is `409`. Keys are per caller, stored with a hash of the body and an expiry (default 24 hours), and cleaned up
   by the existing retention run. The bulk import's key keeps working. Required on any MCP write tool when NC-2 grows
   them. Owner question §76.3.
   **Acceptance:** a request test per verb class (create plan, create task, post meeting): replay returns the first
   answer and creates nothing; a different body is `409`; two callers using one key do not collide.
+  **Built 2026-10-25.** `idempotency.rs` (pure `decide`, `request_hash`, `key_of`, `applies`: 5 unit tests; the layer `idempotency_mw`, installed inside the auth, guest and privacy guards), table `idempotency_keys` (migration 95), retention rule `idempotency_keys` (one day, class `GEN`). Request test `a_retried_post_returns_the_first_answer_and_writes_once` (no key: two plans; key: replay, one plan; different body and different path: `409`; a refused request releases its key; a meeting retried three times is one; a body over 1 MiB with a key: `422`; a GET ignores the header) and, in its own binary because it needs real tokens, `keys_are_per_caller_and_a_replay_never_skips_the_guards` (two writers share a key without colliding, each replays only their own; a read-only token and an anonymous caller are refused even on an exact replay). Spec NFR-7. Owner question §76.3 resolved as recommended: optional on the REST API. **Not done:** a required key on any MCP write tool (NC-2 has none yet); a key on `PUT`, `PATCH`, `DELETE`; honouring a key on the bulk import (it has its own). **Not verified:** the in-progress and stale-takeover paths end to end (only the pure `decide` is tested; a concurrent pair of requests was not run); behaviour behind more than one replica (the claim is a database row, so it should hold, but only one process was run).
 - [ ] **BR-2 (S–M) — Evidence-backed status updates.** Extends NC-4. A status update may carry claims, each with
   source references (`task:<pid>`, `risk:<pid>`, `milestone:<pid>`, `metric:<key>`). A reference is checked on save
   (it must be a live record of the plan; otherwise `422`) and resolved for the **reader** on display: a source the

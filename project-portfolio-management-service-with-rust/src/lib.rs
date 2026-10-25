@@ -108,6 +108,7 @@ pub mod guests;
 pub mod hammock;
 pub mod handling_marks;
 pub mod http_security;
+pub mod idempotency;
 pub mod inherit;
 pub mod initializers;
 pub mod insights;

@@ -226,3 +226,19 @@ date must not depend on which viewer's zone made the request, so it is the deplo
 schedulers* (`pack_rhythm::run_due`), which run with no caller at all. The only per-person days are
 `GET /api/me/tasks` and the notification digest, which already take the caller's zone (`?tz=`).
 No default was moved. A report that wants a person's own day passes `from`/`to` explicitly.
+
+- **NFR-7 — Retry-safe writes (BR-1).** A `POST` may carry `Idempotency-Key: <opaque, up to 200 characters>`. The
+  same key with the same request (method, path, query, body) returns the **first answer** again (its status and body;
+  header `Idempotent-Replayed: true`) and writes nothing a second time. The same key with a different request is
+  `409` `idempotency_key_reused`; the same key while the first request is still running is `409`
+  `idempotency_in_progress` with `Retry-After: 1`. Keys are **per caller** (the token's subject; callers with no token
+  share one namespace, which only matters when enforcement is off). The layer sits inside the authentication,
+  guest and privacy guards, so a replay is decided only for a caller those guards let through. Only a `2xx` answer is
+  kept; a refusal or failure releases the key so the corrected request can run. A key is kept one day (retention rule
+  `idempotency_keys`, class `GEN`) and a run that died holding it is taken over after five minutes. Request and answer
+  bodies up to 1 MiB are supported: a larger request with a key is `422` `idempotency_body_too_large`, a larger answer
+  is returned and not kept. `POST /api/plans/import` keeps its own key semantics (it returns the original job). If the
+  store cannot be reached the request is **not run** (`503` `idempotency_unavailable`), never run unprotected.
+  Not built: a required key (it is optional everywhere); keys on `PUT`, `PATCH` and `DELETE` (already safe to repeat);
+  a per-key lock held across the whole run (the claim is a row, so it survives a restart but not a deadline).
+

@@ -291,13 +291,26 @@
       },
       "WebhookHeaders": {
         "properties": {
+          "X-Mxi-Delivery-Id": {
+            "description": "One delivery, all its attempts. A redelivery has a new one; the event id stays.",
+            "format": "uuid",
+            "type": "string"
+          },
           "X-Mxi-Event-Id": {
             "format": "uuid",
             "type": "string"
           },
           "X-Mxi-Signature": {
-            "description": "`<scheme>.<key id>:<hex>`, HMAC-SHA256 over the exact body bytes.",
+            "description": "`<scheme>.<key id>:<hex>`, HMAC-SHA256 over the exact body bytes. Kept for one release; verify `X-Mxi-Signature-V2`.",
             "type": "string"
+          },
+          "X-Mxi-Signature-V2": {
+            "description": "The same MAC over `<X-Mxi-Timestamp>.` followed by the exact body bytes.",
+            "type": "string"
+          },
+          "X-Mxi-Timestamp": {
+            "description": "Unix seconds when this attempt was signed. Refuse a delivery more than 300 seconds from your clock.",
+            "type": "integer"
           }
         },
         "required": [
@@ -310,7 +323,7 @@
   },
   "defaultContentType": "application/json",
   "info": {
-    "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over the exact request body bytes (header `X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`.",
+    "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over `<X-Mxi-Timestamp>.` and the exact request body bytes (header `X-Mxi-Signature-V2`; a receiver should refuse a timestamp more than 300 seconds from its clock), and, for one more release, over the body alone (`X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`.",
     "title": "Project Portfolio Management Service events",
     "version": "0.2.0"
   },

@@ -453,6 +453,7 @@ pub mod timesheets;
 pub mod tolerances;
 pub mod tracker_import;
 pub mod watchers;
+pub mod webhook_deliveries;
 
 #[cfg(test)]
 mod helper_census {

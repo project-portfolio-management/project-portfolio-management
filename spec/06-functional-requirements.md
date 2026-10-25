@@ -353,6 +353,16 @@ matcher payload (§5.6); every mutation audits (§6.6).
   field is declared with the type that fits all its values (integer, date, yes/no, else text) and labelled by its alias.
   Not built: week, month and year rates, per-use costs, resource skills; writing another person's calendar; links the
   other direction (a successor in another file); a screen.
+- **FR-16e12 Webhook replay protection and redelivery (BR-5).** Every webhook attempt carries `X-Mxi-Timestamp` (Unix
+  seconds, taken afresh on each attempt), `X-Mxi-Signature-V2` (the integrity MAC over `"<timestamp>."` and the exact
+  body bytes), `X-Mxi-Delivery-Id` (one delivery, all its attempts) and, unchanged for one more release,
+  `X-Mxi-Signature` over the body alone. A receiver should refuse a timestamp more than 300 seconds from its clock.
+  `GET /api/webhook-deliveries[?event_id=][&status=][&limit=]` lists the delivery log and
+  `POST /api/webhook-deliveries/{id}/redeliver` sends a logged delivery again: one attempt, to the same target if it
+  is still configured, from the event the outbox still holds (about a week); the event id is the same, the delivery id
+  is new, a new log row records the outcome, and the audit row is written first. Both are administrators only (`404`
+  for anyone else). Not built: redelivery of a notification-sink delivery (those have their own retry); redelivery
+  after the outbox has dropped the event; an automatic replay-window check on our side (it is the receiver's rule).
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

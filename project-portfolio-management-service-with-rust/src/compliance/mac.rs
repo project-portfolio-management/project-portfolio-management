@@ -37,7 +37,7 @@ pub use integrity_mac::{Assessment, MacVerdict, assess_key_hex, generate_key, wr
 /// The service name is bound into every derived subkey, so this
 /// service's tags cannot verify against a sibling's rows even when a
 /// deployment shares one root key across a cluster.
-const CONFIG: KeyConfig = KeyConfig::new(env!("CARGO_PKG_NAME"), "PORTFOLIO");
+pub(crate) const CONFIG: KeyConfig = KeyConfig::new(env!("CARGO_PKG_NAME"), "PORTFOLIO");
 
 /// Environment variable holding the active MAC **root** key, hex-encoded.
 pub const KEY_ENV: &str = "PORTFOLIO_INTEGRITY_MAC_KEY";
@@ -99,7 +99,7 @@ impl Domain {
 
     /// Every domain, so the key set derives them all at load time rather
     /// than on first use.
-    const ALL: [&'static str; 3] = ["audit-row", "record", "webhook"];
+    pub(crate) const ALL: [&'static str; 3] = ["audit-row", "record", "webhook"];
 }
 
 /// The process key set, loaded once.

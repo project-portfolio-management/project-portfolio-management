@@ -85,6 +85,17 @@
 //! is the "refuses to start" half of this crate's own T-28m acceptance
 //! criterion.
 //!
+//! ## Replay protection and redelivery (BR-5)
+//!
+//! Each attempt also carries `X-Mxi-Timestamp: <unix seconds>` and `X-Mxi-Signature-V2: <tag>`, the same MAC over
+//! `"<timestamp>." + <exact body bytes>`. A receiver should recompute that tag and **reject a delivery whose timestamp
+//! is more than [`REPLAY_WINDOW_SECS`] from its own clock**, so a captured request cannot be played back later. The
+//! timestamp is taken afresh on every attempt, so a retry after backoff is not stale. `X-Mxi-Signature` (over the body
+//! alone) is still sent for one release so existing receivers keep working; new receivers should verify V2.
+//! `X-Mxi-Delivery-Id` names one delivery (all its attempts); the event id stays the same on a redelivery. An
+//! administrator can redeliver a logged delivery (`POST /api/webhook-deliveries/{id}/redeliver`): one attempt, to the
+//! same configured target, from the event kept in the outbox.
+//!
 //! ## Format (NC-11)
 //!
 //! A target may add `"format": "cloudevents_structured"` or `"cloudevents_binary"` to receive a `CloudEvents` 1.0
@@ -120,6 +131,32 @@ pub const WEBHOOKS_FILE_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_WEBHOOKS_FILE"
 pub const EVENT_ID_HEADER: &str = "X-Mxi-Event-Id";
 /// The header carrying the HMAC signature (`"<scheme>.<key id>:<hex>"`).
 pub const SIGNATURE_HEADER: &str = "X-Mxi-Signature";
+
+/// The header carrying the Unix time (seconds) the attempt was signed.
+pub const TIMESTAMP_HEADER: &str = "X-Mxi-Timestamp";
+/// The header carrying the signature over `"<timestamp>." + body`.
+pub const SIGNATURE_V2_HEADER: &str = "X-Mxi-Signature-V2";
+/// The header naming one delivery (all its attempts).
+pub const DELIVERY_ID_HEADER: &str = "X-Mxi-Delivery-Id";
+/// How far a delivery's timestamp may be from the receiver's clock before the receiver should refuse it.
+pub const REPLAY_WINDOW_SECS: i64 = 300;
+
+/// The bytes the V2 signature covers: the timestamp in decimal, a full stop, and the exact request body.
+#[must_use]
+pub fn signing_input_v2(timestamp: i64, body: &[u8]) -> Vec<u8> {
+    let mut input = Vec::with_capacity(body.len() + 21);
+    input.extend_from_slice(timestamp.to_string().as_bytes());
+    input.push(b'.');
+    input.extend_from_slice(body);
+    input
+}
+
+/// The receiver's replay rule, stated once so it can be tested: a timestamp is acceptable when it is within
+/// [`REPLAY_WINDOW_SECS`] of `now`, in either direction (clocks differ).
+#[must_use]
+pub fn timestamp_is_fresh(timestamp: i64, now: i64) -> bool {
+    (now - timestamp).abs() <= REPLAY_WINDOW_SECS
+}
 
 /// Maximum HTTP attempts per target per event (the initial attempt plus
 /// retries).
@@ -439,6 +476,7 @@ pub async fn check_resolution(url: &str) -> Result<(), bool> {
 async fn attempt_once(
     url: &str,
     event_id: &str,
+    delivery_id: &str,
     signature: &str,
     request: &Rendered,
 ) -> AttemptResult {
@@ -462,7 +500,15 @@ async fn attempt_once(
         .post(url)
         .header("content-type", request.content_type)
         .header(EVENT_ID_HEADER, event_id)
+        .header(DELIVERY_ID_HEADER, delivery_id)
         .header(SIGNATURE_HEADER, signature);
+    // Signed afresh for this attempt, so a retry after backoff is not stale to a receiver that checks the age.
+    let timestamp = chrono::Utc::now().timestamp();
+    if let Some(v2) = mac::tag(Domain::Webhook, &signing_input_v2(timestamp, &request.body)) {
+        builder = builder
+            .header(TIMESTAMP_HEADER, timestamp.to_string())
+            .header(SIGNATURE_V2_HEADER, v2);
+    }
     for (name, value) in &request.headers {
         builder = builder.header(name.as_str(), value.as_str());
     }
@@ -495,24 +541,35 @@ async fn attempt_once(
 /// with exponential backoff up to [`MAX_ATTEMPTS`], and record the final
 /// outcome in the delivery log. Never panics and never propagates an
 /// error — this is the fire-and-forget body a spawned task runs.
-async fn deliver_with_retry(
+#[expect(clippy::too_many_arguments)] // one delivery: where, what, which event, which delivery, how often
+pub(crate) async fn deliver_with_retry(
     db: &DatabaseConnection,
     target: &WebhookTarget,
     entity: &str,
     kind: &str,
     event_id: uuid::Uuid,
+    delivery_id: uuid::Uuid,
     signature: &str,
     request: &Rendered,
-) {
+    max_attempts: u32,
+) -> Option<i32> {
     let mut backoff = INITIAL_BACKOFF;
     let mut attempts = 0u32;
     let (delivered, status_code, error) = loop {
         attempts += 1;
-        match attempt_once(&target.url, &event_id.to_string(), signature, request).await {
+        match attempt_once(
+            &target.url,
+            &event_id.to_string(),
+            &delivery_id.to_string(),
+            signature,
+            request,
+        )
+        .await
+        {
             AttemptResult::Delivered => break (true, None, None),
             AttemptResult::Rejected { status, error } => break (false, Some(status), Some(error)),
             AttemptResult::Retryable { status, error } => {
-                if attempts >= MAX_ATTEMPTS {
+                if attempts >= max_attempts {
                     break (false, status, Some(error));
                 }
                 tracing::warn!(
@@ -544,8 +601,12 @@ async fn deliver_with_retry(
         status_code,
         error,
     };
-    if let Err(err) = DeliveryLog::record(db, &outcome).await {
-        tracing::warn!(error = %err, "failed to write webhook delivery-log row");
+    match DeliveryLog::record(db, &outcome).await {
+        Ok(row) => Some(row.id),
+        Err(err) => {
+            tracing::warn!(error = %err, "failed to write webhook delivery-log row");
+            None
+        }
     }
 }
 
@@ -608,8 +669,18 @@ impl EventSink for WebhookSink {
             let kind = kind.to_string();
             let db = self.db.clone();
             tokio::spawn(async move {
-                deliver_with_retry(&db, &target, &entity, &kind, event_id, &signature, &request)
-                    .await;
+                deliver_with_retry(
+                    &db,
+                    &target,
+                    &entity,
+                    &kind,
+                    event_id,
+                    uuid::Uuid::new_v4(),
+                    &signature,
+                    &request,
+                    MAX_ATTEMPTS,
+                )
+                .await;
             });
         }
         Ok(())
@@ -618,6 +689,52 @@ impl EventSink for WebhookSink {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn the_v2_signature_covers_the_timestamp_and_the_exact_body() {
+        let keys = integrity_mac::KeySet::load_with_domains(
+            &crate::compliance::mac::CONFIG,
+            Some("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+            None,
+            None,
+            &Domain::ALL,
+        );
+        let body = br#"{"event_id":"x","kind":"created"}"#;
+        let tag = |ts: i64, b: &[u8]| {
+            keys.tag(Domain::Webhook.as_str(), &signing_input_v2(ts, b))
+                .unwrap()
+        };
+        let signed = tag(1_800_000_000, body);
+        let verdict = |t: &str, ts: i64, b: &[u8]| {
+            keys.verify(Domain::Webhook.as_str(), Some(t), &signing_input_v2(ts, b))
+        };
+        assert!(matches!(
+            verdict(&signed, 1_800_000_000, body),
+            integrity_mac::MacVerdict::Valid
+        ));
+        // Another timestamp, or another body, does not verify: a replay with a fresh header fails.
+        assert!(matches!(
+            verdict(&signed, 1_800_000_001, body),
+            integrity_mac::MacVerdict::Invalid
+        ));
+        assert!(matches!(
+            verdict(&signed, 1_800_000_000, b"{}"),
+            integrity_mac::MacVerdict::Invalid
+        ));
+        // And the V2 tag is not the V1 tag over the body alone.
+        assert_ne!(signed, keys.tag(Domain::Webhook.as_str(), body).unwrap());
+        assert_eq!(signing_input_v2(7, b"ab"), b"7.ab");
+    }
+
+    #[test]
+    fn a_timestamp_is_fresh_within_the_window_either_way() {
+        let now = 1_800_000_000;
+        assert!(timestamp_is_fresh(now, now));
+        assert!(timestamp_is_fresh(now - REPLAY_WINDOW_SECS, now));
+        assert!(timestamp_is_fresh(now + REPLAY_WINDOW_SECS, now));
+        assert!(!timestamp_is_fresh(now - REPLAY_WINDOW_SECS - 1, now));
+        assert!(!timestamp_is_fresh(now + REPLAY_WINDOW_SECS + 1, now));
+    }
+
     #[test]
     fn strict_mode_refuses_private_metadata_and_internal_targets() {
         // Off: the operator's own choice stands.
@@ -641,7 +758,8 @@ mod tests {
     }
 
     use super::{
-        WebhookFormat, WebhookTarget, parse_targets, render, should_retry_status, target_allowed,
+        Domain, REPLAY_WINDOW_SECS, WebhookFormat, WebhookTarget, parse_targets, render,
+        should_retry_status, signing_input_v2, target_allowed, timestamp_is_fresh,
         url_is_permitted,
     };
 

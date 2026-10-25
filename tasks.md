@@ -2040,12 +2040,13 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   caller cannot read answers as one that does not exist. Depends on NC-14 and NC-8 (both built).
   **Acceptance:** a meeting and a lesson appear under a task; a private plan's records do not appear for a
   non-member; the count equals the list.
-- [ ] **BR-5 (S) — Webhook replay protection and redelivery.** Amends NC-11. Sign `timestamp + "." + body`, send the
+- [x] **BR-5 (S) — Webhook replay protection and redelivery.** Amends NC-11. Sign `timestamp + "." + body`, send the
   timestamp in a header, keep the event id stable across redeliveries, add the delivery id as a header, and add
   `POST …/deliveries/{id}/redeliver`. Send the old and the new signature header for one release. Owner question
   §76.4.
   **Acceptance:** a unit test of the signature over a fixed timestamp and body; a redelivery keeps the event id; a
   receiver-side check rejects a timestamp older than the stated window.
+  **Built 2026-10-25.** Each attempt now also sends `X-Mxi-Timestamp`, `X-Mxi-Signature-V2` (MAC over `"<ts>."` plus the body, signed afresh per attempt) and `X-Mxi-Delivery-Id`; `X-Mxi-Signature` is unchanged. `webhooks::signing_input_v2` and `timestamp_is_fresh` (2 unit tests: the tag verifies only for its timestamp and body, and the window is 300 seconds either way). `controllers/webhook_deliveries.rs`: `GET /api/webhook-deliveries` and `POST /api/webhook-deliveries/{id}/redeliver` (administrators only, audit row first, one attempt). Test `a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp` (own binary, with a real loopback receiver and a real key: the receiver sees one attempt, the same event id, a new delivery id, a V2 signature that verifies and a fresh timestamp, and the old V1 header; a second redelivery gets another delivery id; an unknown row is `404`; a gone event or target is `422`). AsyncAPI document updated. Spec FR-16e12. **Not done:** redelivery of a notification-sink delivery; a stable delivery id stored in the log (it is in the header and the audit row only); dropping the V1 header (next release). **Not verified:** the non-administrator `404` for these two routes (the same check as `email-deliveries`, not exercised here); a receiver in another language verifying V2 from the published description; a redelivery under `OUTBOUND_STRICT=on`.
 - [x] **BR-6 (M) — A security sweep with tests that fail on the old code.** One named regression test per class their
   review found, applied to this service: attachments (a client's file name and extension never decide the stored name
   or the served type); nested route ids belong to their parent (a task under another plan's path is `404`); per-resource

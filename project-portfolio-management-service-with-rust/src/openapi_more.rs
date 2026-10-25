@@ -146,6 +146,7 @@ pub fn paths() -> Value {
     merge(&mut all, scorecard_paths());
     merge(&mut all, ledger_paths());
     merge(&mut all, email_delivery_paths());
+    merge(&mut all, webhook_delivery_paths());
     merge(&mut all, portfolio_resource_paths());
     merge(&mut all, schedule_risk_paths());
     merge(&mut all, schedule_health_paths());
@@ -1823,6 +1824,23 @@ fn start_control_paths() -> Value {
             "get": op("governance", "Programmes waiting to start, in the order they asked",
                 "Inputs: the waiting queue entries, filtered to programmes the caller may read. The order is the order of asking and never changes; a position counts only the programmes the caller may read, so a private plan is nowhere. Each entry carries why it was refused.",
                 vec![], &[("200", "queue, note")])
+        }
+    })
+}
+
+/// Outbound webhook deliveries: the log, and sending one again.
+fn webhook_delivery_paths() -> Value {
+    json!({
+        "/api/webhook-deliveries": {
+            "get": op("notifications", "The outbound webhook delivery log",
+                "Inputs: the delivery log, one row per target and event with its final outcome: delivered or failed, the attempts, the last status code and error. Administrators only: anyone else gets 404. event_id and status (delivered or failed) filter; limit is 1 to 500, default 100.",
+                vec![query("event_id", false, "one event"), query("status", false, "delivered or failed"), query("limit", false, "1 to 500, default 100")],
+                &[("200", "deliveries"), ("404", "Not an administrator"), ("422", "A bad status")])
+        },
+        "/api/webhook-deliveries/{id}/redeliver": {
+            "post": op("notifications", "Send a logged webhook delivery again",
+                "Sends the logged event once more, one attempt, to the same target if it is still configured, from the event the outbox still holds (kept about a week). The event id is the same, the delivery id is new, and a new log row records the outcome. The audit row is written first. Administrators only: anyone else gets 404. Signed like any delivery, including the timestamped V2 signature.",
+                vec![json!({ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } })], &[("200", "event_id, delivery_id, log_id, status, status_code, error"), ("404", "Not an administrator, or no such log row"), ("422", "The event or the target is gone"), ("503", "No integrity key is active")])
         }
     })
 }

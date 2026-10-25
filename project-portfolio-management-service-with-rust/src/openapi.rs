@@ -2361,6 +2361,7 @@ mod tests {
             crate::controllers::deployment_moves::routes(),
             crate::controllers::start_control::routes(),
             crate::controllers::email_deliveries::routes(),
+            crate::controllers::webhook_deliveries::routes(),
             crate::controllers::thresholds::routes(),
             crate::controllers::key_persons::routes(),
             crate::controllers::register::routes(),

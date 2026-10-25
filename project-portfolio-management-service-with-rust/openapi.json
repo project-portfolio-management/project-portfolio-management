@@ -32783,6 +32783,88 @@
         ]
       }
     },
+    "/api/webhook-deliveries": {
+      "get": {
+        "description": "Inputs: the delivery log, one row per target and event with its final outcome: delivered or failed, the attempts, the last status code and error. Administrators only: anyone else gets 404. event_id and status (delivered or failed) filter; limit is 1 to 500, default 100.",
+        "parameters": [
+          {
+            "description": "one event",
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "delivered or failed",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "1 to 500, default 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deliveries"
+          },
+          "404": {
+            "description": "Not an administrator"
+          },
+          "422": {
+            "description": "A bad status"
+          }
+        },
+        "summary": "The outbound webhook delivery log",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/webhook-deliveries/{id}/redeliver": {
+      "post": {
+        "description": "Sends the logged event once more, one attempt, to the same target if it is still configured, from the event the outbox still holds (kept about a week). The event id is the same, the delivery id is new, and a new log row records the outcome. The audit row is written first. Administrators only: anyone else gets 404. Signed like any delivery, including the timestamped V2 signature.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "event_id, delivery_id, log_id, status, status_code, error"
+          },
+          "404": {
+            "description": "Not an administrator, or no such log row"
+          },
+          "422": {
+            "description": "The event or the target is gone"
+          },
+          "503": {
+            "description": "No integrity key is active"
+          }
+        },
+        "summary": "Send a logged webhook delivery again",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/work-profile": {
       "get": {
         "description": "The same, for every plan the caller can read: each plan's buckets are the sum of its tasks', and the portfolio total is the sum of the plans' at every period. Plans the caller cannot read are left out.",

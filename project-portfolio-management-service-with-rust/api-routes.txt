@@ -652,6 +652,8 @@ GET /api/ways-of-working/{pid}
 PUT /api/ways-of-working/{pid}
 POST /api/ways-of-working/{pid}/delete
 GET /api/ways-of-working/{pid}/versions
+GET /api/webhook-deliveries
+POST /api/webhook-deliveries/{id}/redeliver
 GET /api/work-profile
 GET /api/workflows
 POST /api/workflows

@@ -262,6 +262,7 @@ impl Hooks for App {
             .add_route(controllers::deployment_moves::routes())
             .add_route(controllers::start_control::routes())
             .add_route(controllers::email_deliveries::routes())
+            .add_route(controllers::webhook_deliveries::routes())
             .add_route(controllers::thresholds::routes())
             .add_route(controllers::key_persons::routes())
             .add_route(controllers::register::routes())

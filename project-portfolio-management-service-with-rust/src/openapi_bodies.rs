@@ -79,6 +79,7 @@ pub const TAKES_NO_BODY: &[&str] = &[
     "post /api/sprints/{pid}/commit",
     "post /api/status-updates/remind",
     "post /api/threshold-sweep",
+    "post /api/webhook-deliveries/{id}/redeliver",
 ];
 
 /// Write routes whose handler reads the raw request body (`Bytes`): an uploaded file or an import, whose media
@@ -731,6 +732,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/watchers", "watchers", "`GET /api/watchers?subject_kind=&subject_pid=` — how many follow a subject and whether the caller does. Other watchers are never named."),
     ("post", "/api/watchers", "watchers", "`POST /api/watchers` — follow a subject (idempotent)."),
     ("post", "/api/watchers/unwatch", "watchers", "`POST /api/watchers/unwatch` — the same as `DELETE`, for a write-level user (the default policy reserves DELETE for admins)."),
+    ("get", "/api/webhook-deliveries", "webhook_deliveries", "`GET /api/webhook-deliveries[?event_id=][&status=][&limit=]` — administrators only; anyone else gets 404."),
+    ("post", "/api/webhook-deliveries/{id}/redeliver", "webhook_deliveries", "`POST /api/webhook-deliveries/{id}/redeliver` — administrators only; anyone else gets 404. One attempt, to the same still-configured target, from the event the outbox still holds (`422` when either is gone). Audited first."),
     ("get", "/api/work-profile", "assignments", "`GET /api/work-profile` — every plan the caller can read, rolled up."),
     ("get", "/api/workflows", "workflow", "`GET /api/workflows` — every registered workflow."),
     ("post", "/api/workflows", "workflow", "`POST /api/workflows` — register a workflow."),

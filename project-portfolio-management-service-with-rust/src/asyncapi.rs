@@ -66,7 +66,7 @@ pub fn spec() -> Value {
         "info": {
             "title": "Project Portfolio Management Service events",
             "version": env!("CARGO_PKG_VERSION"),
-            "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over the exact request body bytes (header `X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`."
+            "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over `<X-Mxi-Timestamp>.` and the exact request body bytes (header `X-Mxi-Signature-V2`; a receiver should refuse a timestamp more than 300 seconds from its clock), and, for one more release, over the body alone (`X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`."
         },
         "defaultContentType": "application/json",
         "servers": {
@@ -164,7 +164,10 @@ pub fn spec() -> Value {
                     "required": ["X-Mxi-Event-Id", "X-Mxi-Signature"],
                     "properties": {
                         "X-Mxi-Event-Id": { "type": "string", "format": "uuid" },
-                        "X-Mxi-Signature": { "type": "string", "description": "`<scheme>.<key id>:<hex>`, HMAC-SHA256 over the exact body bytes." }
+                        "X-Mxi-Delivery-Id": { "type": "string", "format": "uuid", "description": "One delivery, all its attempts. A redelivery has a new one; the event id stays." },
+                        "X-Mxi-Timestamp": { "type": "integer", "description": "Unix seconds when this attempt was signed. Refuse a delivery more than 300 seconds from your clock." },
+                        "X-Mxi-Signature": { "type": "string", "description": "`<scheme>.<key id>:<hex>`, HMAC-SHA256 over the exact body bytes. Kept for one release; verify `X-Mxi-Signature-V2`." },
+                        "X-Mxi-Signature-V2": { "type": "string", "description": "The same MAC over `<X-Mxi-Timestamp>.` followed by the exact body bytes." }
                     }
                 },
                 "CloudEventsBinaryHeaders": {

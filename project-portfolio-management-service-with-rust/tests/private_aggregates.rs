@@ -230,6 +230,10 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
         "a fixed list of suggested measures built into the service; no record",
     ),
     (
+        "/api/webhook-deliveries",
+        "the outbound webhook delivery log: administrators only (404 for anyone else), event ids, kinds and target URLs, no plan, no amount",
+    ),
+    (
         "/api/email-deliveries",
         "per-recipient email deliveries: administrators only (404 for anyone else), no plan, no amount",
     ),

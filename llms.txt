@@ -36,6 +36,7 @@
 - [Time-based analysis](spec/time-based-analysis.md): Cycle and lead time, flow efficiency, forecasting rules
 - [Bulk import/export](spec/bulk-import-export.md): Design of asynchronous import and export jobs
 - [PRINCE2 mapping](spec/prince2/index.md): How the service maps to PRINCE2
+- [Brainitive lessons](spec/brainitive-lessons/index.md): Ideas from an open-source team workspace: retry-safe writes, evidence-backed status, webhook signing, security sweeps
 - [Total Project Control](spec/total-project-control/index.md): DIPP, banding and portfolio triage
 - [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics
 - [Keycloak test containers](spec/testcontainers-keycloak/index.md): Testing against a Keycloak container

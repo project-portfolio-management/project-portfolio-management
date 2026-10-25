@@ -25,6 +25,7 @@ Toolchain is pinned in `rust-toolchain.toml` (1.99.1; minimum supported 1.96); t
 
 ## Conventions
 
+- Before pushing: `scripts/generate-status.sh --check`, `python3 scripts/generate-openapi-bodies.py --check` and `python3 scripts/generate-llms.py --check`; the restore drill (`scripts/restore-test.sh`, see `AGENTS.md`) runs the whole suite on a restored copy, so a test must not depend on data other tests create.
 - Spec-driven: a behaviour change is a spec edit, a code edit and a test edit together. Entity-wide contract: `spec/index.md`; crate internals: that crate's `spec/`.
 - One recursive `/api/plans` collection; `kind` is an optional label and never gates matching.
 - Absent evidence is `null` with a reason, never zero; money is integer minor units, per currency, never summed across currencies.

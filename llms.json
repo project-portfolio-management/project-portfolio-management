@@ -86,6 +86,11 @@
           "description": "How the service maps to PRINCE2"
         },
         {
+          "title": "Brainitive lessons",
+          "path": "spec/brainitive-lessons/index.md",
+          "description": "Ideas from an open-source team workspace: retry-safe writes, evidence-backed status, webhook signing, security sweeps"
+        },
+        {
           "title": "Total Project Control",
           "path": "spec/total-project-control/index.md",
           "description": "DIPP, banding and portfolio triage"

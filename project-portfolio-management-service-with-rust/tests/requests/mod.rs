@@ -7,6 +7,7 @@ mod access_review;
 mod attachments;
 mod audit_failure;
 mod audit_protection;
+mod blueprint_sync;
 mod bulk;
 mod canvas;
 mod capabilities;

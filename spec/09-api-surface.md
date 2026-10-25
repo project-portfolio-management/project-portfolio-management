@@ -108,6 +108,8 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | PUT / GET | `/api/plans/{pid}/status-cadence` | How often a plan expects a status update, and where it stands against it |
 | POST / GET | `/api/plans/{pid}/status-updates` · GET `/api/plans/{pid}/status` | Post an on-track / at-risk / off-track update; the history; the latest with its due date |
 | GET / POST | `/api/status-updates/due` · `/api/status-updates/remind` | The plans whose update is due; send the once-per-due-date reminders |
+| POST / GET | `/api/plan-templates/{pid}/revise` · `/api/plan-templates/{pid}/plans` | Revise a template from a plan tree; the plans made from it and the changes each has waiting |
+| GET / POST | `/api/plans/{pid}/template-diff` · `/api/plans/{pid}/template-sync` | What a template changed since the plan was brought up to date; apply named changes, refusing locally edited tasks unless overwritten |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 
 ### 9.2b Service REST API — full-suite capabilities (§1.4–§1.6)

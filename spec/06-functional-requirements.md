@@ -303,6 +303,19 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_RETENTION_APPLY` is true. Not built: a notice to the plan lead on an automatic
   escalation (who the plan lead is is owner question §70.6); an endpoint to read the runs; a job that failed being
   retried before its interval is up.
+- **FR-16e9 Blueprint sync (NC-12).** A plan made from a template remembers it: the template, its place in the
+  template's tree, the version it was last brought up to, a baseline of the template's tasks for that plan, and which
+  of its tasks came from which template task. A template is revised from a plan tree
+  (`POST /api/plan-templates/{pid}/revise`, a new version); the revision may change tasks and add plans at the end of
+  the tree but not move, rename or drop one. Tasks keep their template keys by title, so a task renamed in a revision
+  reads as a removal and an addition. `GET /api/plan-templates/{pid}/plans` lists the plans made from a template that the
+  caller can read, with the number of changes waiting. `GET /api/plans/{pid}/template-diff` lists them as
+  `add:`, `change:` or `remove:` plus the template task's key, each marked `locally_edited` when the plan's people have
+  since changed or removed that task. `POST /api/plans/{pid}/template-sync` applies the changes named in `accept` in
+  one transaction and audits it; a change marked `locally_edited` is refused (listed, not an error) unless it is also
+  named in `overwrite_local`; a change not named stays waiting. Scope: the tasks' title, description and points. Not
+  built: milestones, components, plan fields, workflows and task dates or hierarchy; plans made before this existed
+  (no link, so no diff); events for the tasks a sync creates; a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

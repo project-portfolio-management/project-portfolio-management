@@ -87,6 +87,10 @@ mutation (§10.2).
   `impact` in 0.25/0.5/1/2/3, `confidence_percent` 0 to 100, `effort` > 0), all nullable by CHECKs;
   `set_by?` (migration `m20261025_000089`). No score is stored.
 - **`plan_status_cadences`** and **`status_updates`** (built, FR-16e7) — a plan's expected update cadence (`cadence_days` 1 to 92, `set_on`, `set_by?`, `reminded_for?`) and its append-only updates (`status` on_track / at_risk / off_track by CHECK, `narrative`, `posted_on`, `posted_by?`); migration `m20261025_000091`.
+- **`plan_template_links`** and `plan_templates.version` (built, FR-16e9) — per plan made from a template: `plan_pid`
+  (unique), `template_pid`, `node_key`, `template_version` (>= 1), `baseline` (the template's tasks for the plan when it
+  was last brought up to date) and `task_map` (template task key to the plan's task); the template's `version` starts at
+  1 and rises on each revision; migration `m20261025_000093`.
 - **`scheduled_job_runs`** (built, FR-16e8) — `pid`, `job`, `started_at`, `finished_at?`, `outcome` (`running`, `ok`, `failed` by CHECK), `detail?`; one row per run of a job the service schedules for itself; migration `m20261025_000092`.
 - **`lessons`** (built, FR-16e4) — `pid`, `plan_pid`, `occasion` (a gate or `closure`), `category` (`went_well`,
   `went_badly`, `recommendation`, by CHECK), `summary`, `detail?`, `recorded_by?`, `deleted_at?` (a withdrawal);

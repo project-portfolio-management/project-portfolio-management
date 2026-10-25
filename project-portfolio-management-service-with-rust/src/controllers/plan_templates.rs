@@ -25,7 +25,9 @@ use uuid::Uuid;
 use super::discussion::resolve_subject;
 use super::plan_access::readable_plans;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{components, milestones, plan_templates, plans, tasks};
+use crate::models::_entities::{
+    components, milestones, plan_template_links, plan_templates, plans, tasks,
+};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::plan_templates::{self as rules, Snapshot, TplMilestone, TplNode, TplTask};
@@ -43,7 +45,7 @@ struct Raw {
 #[expect(clippy::too_many_lines)] // one linear pipeline: walk, load, convert
 /// Capture the readable subtree under `root` into a snapshot; returns it with
 /// the number of plans left out because the caller cannot read them.
-async fn capture(
+pub(super) async fn capture(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     root: plans::Model,
@@ -304,7 +306,7 @@ async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
     format::json(items)
 }
 
-async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_templates::Model> {
+pub(super) async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_templates::Model> {
     let pid = super::parse_pid(pid)?;
     plan_templates::Entity::find()
         .filter(plan_templates::Column::Pid.eq(pid))
@@ -383,7 +385,16 @@ async fn from_template(
     };
 
     let mut created: Vec<Uuid> = Vec::new();
-    let result = build(&ctx, &caller, &snap, &b, &date_of, &mut created).await;
+    let result = build(
+        &ctx,
+        &caller,
+        &snap,
+        &b,
+        &date_of,
+        (row.pid, row.version),
+        &mut created,
+    )
+    .await;
     // The plans are built one at a time, so they cannot share a transaction with the audit row; if the audit
     // row cannot be written the whole instantiation is undone the same way a failed build is.
     let result = match result {
@@ -403,6 +414,11 @@ async fn from_template(
         Ok(summary) => format::json(summary),
         Err(e) => {
             // Roll back: soft-delete what was created, then report the failure.
+            plan_template_links::Entity::delete_many()
+                .filter(plan_template_links::Column::PlanPid.is_in(created.clone()))
+                .exec(&ctx.db)
+                .await
+                .ok();
             for pid in created.iter().rev() {
                 if let Ok(m) = PlanModel::find_by_pid(&ctx.db, &pid.to_string()).await {
                     streaming::delete_and_emit(&ctx.db, m, caller.actor())
@@ -422,6 +438,7 @@ async fn build(
     snap: &Snapshot,
     b: &InstantiateBody,
     date_of: &impl Fn(Option<i64>) -> Option<NaiveDate>,
+    template: (Uuid, i32),
     created: &mut Vec<Uuid>,
 ) -> Result<serde_json::Value> {
     let mut pids: Vec<Uuid> = Vec::new();
@@ -535,6 +552,28 @@ async fn build(
                     .map_err(db_err)?;
             }
         }
+        // Remember where the plan came from, for blueprint sync (NC-12).
+        let task_map: Vec<serde_json::Value> = node
+            .tasks
+            .iter()
+            .filter_map(|t| {
+                task_pids
+                    .get(t.key)
+                    .map(|p| serde_json::json!({ "key": t.key, "task_pid": p }))
+            })
+            .collect();
+        plan_template_links::ActiveModel {
+            plan_pid: ActiveValue::set(plan_pid),
+            template_pid: ActiveValue::set(template.0),
+            node_key: ActiveValue::set(i32::try_from(node.key).unwrap_or(0)),
+            template_version: ActiveValue::set(template.1),
+            baseline: ActiveValue::set(serde_json::json!(node.tasks)),
+            task_map: ActiveValue::set(serde_json::json!(task_map)),
+            ..Default::default()
+        }
+        .insert(&ctx.db)
+        .await
+        .map_err(db_err)?;
         for m in &node.milestones {
             let Some(due) = date_of(Some(m.offset_days)) else {
                 continue;

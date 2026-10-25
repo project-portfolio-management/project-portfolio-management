@@ -386,6 +386,7 @@ pub mod pagination {
 pub mod approvals;
 pub mod attachments;
 pub mod availability;
+pub mod blueprint_sync;
 pub mod buffer_management;
 pub mod buffers;
 pub mod bulk;

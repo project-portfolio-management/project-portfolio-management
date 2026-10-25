@@ -17,6 +17,8 @@ pub struct Model {
     pub name: String,
     pub description: Option<String>,
     pub snapshot: Json,
+    /// Bumped each time the template is revised (NC-12).
+    pub version: i32,
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }

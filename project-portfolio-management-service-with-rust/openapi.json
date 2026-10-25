@@ -12551,6 +12551,115 @@
         ]
       }
     },
+    "/api/plan-templates/{pid}/plans": {
+      "get": {
+        "description": "`GET /api/plan-templates/{pid}/plans`: the plans made from this template that the caller can read, and how many template changes each has waiting; a plan with none is up to date.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/plan-templates/{pid}/plans`: the plans made from this template that the caller can read, and how many template changes each has waiting; a plan with none is up to date",
+        "tags": [
+          "blueprint_sync"
+        ]
+      }
+    },
+    "/api/plan-templates/{pid}/revise": {
+      "post": {
+        "description": "`POST /api/plan-templates/{pid}/revise`: re-capture a plan tree as the template's next version. Plans made from the template are not touched; each sees the difference through `template-diff`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plan-templates/{pid}/revise` body.",
+                "properties": {
+                  "from_plan": {
+                    "description": "The plan tree whose tasks the template should now hold.",
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from_plan"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plan-templates/{pid}/revise`: re-capture a plan tree as the template's next version",
+        "tags": [
+          "blueprint_sync"
+        ]
+      }
+    },
     "/api/plans": {
       "get": {
         "parameters": [
@@ -26325,6 +26434,85 @@
         "summary": "Remove a task's link (POST twin)",
         "tags": [
           "links"
+        ]
+      }
+    },
+    "/api/plans/{pid}/template-diff": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/template-diff`: the template's changes since this plan was last brought up to date, each with whether the plan's own people have edited or removed that task. `404` for a plan not made from a template.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/template-diff`: the template's changes since this plan was last brought up to date, each with whether the plan's own people have edited or removed that task",
+        "tags": [
+          "blueprint_sync"
+        ]
+      }
+    },
+    "/api/plans/{pid}/template-sync": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/template-sync`: apply the named changes to this plan in one transaction. A change to a task the plan edited is refused unless named in `overwrite_local`; refusals are listed, not errors.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plans/{pid}/template-sync` body.",
+                "properties": {
+                  "accept": {
+                    "description": "The change ids to apply (`add:3`, `change:1`, `remove:2`); anything not named is left for later.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "overwrite_local": {
+                    "default": [],
+                    "description": "Of those, the ones to apply even though the plan edited or removed the task. Without a name here, such a\nchange is refused.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "accept"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/template-sync`: apply the named changes to this plan in one transaction",
+        "tags": [
+          "blueprint_sync"
         ]
       }
     },

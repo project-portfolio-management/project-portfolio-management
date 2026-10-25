@@ -314,6 +314,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plan-templates", "plan_templates", "`GET /api/plan-templates` — name, description and size, not the snapshot."),
     ("delete", "/api/plan-templates/{pid}", "plan_templates", "`POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete."),
     ("get", "/api/plan-templates/{pid}", "plan_templates", "`GET /api/plan-templates/{pid}` — the full snapshot."),
+    ("get", "/api/plan-templates/{pid}/plans", "blueprint_sync", "`GET /api/plan-templates/{pid}/plans`: the plans made from this template that the caller can read, and how many template changes each has waiting; a plan with none is up to date."),
+    ("post", "/api/plan-templates/{pid}/revise", "blueprint_sync", "`POST /api/plan-templates/{pid}/revise`: re-capture a plan tree as the template's next version. Plans made from the template are not touched; each sees the difference through `template-diff`."),
     ("post", "/api/plan-templates/{pid}/delete", "plan_templates", "`POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete."),
     ("get", "/api/plans", "plans", "List active plans (cap 100). Accepts `?parent=<pid>` to roll up one plan's direct children. `GET /api/plans`.  # Errors  A DB error when the query fails."),
     ("post", "/api/plans", "plans", "Create a plan. `POST /api/plans`.  # Errors  `422` on validation failure or a containment cycle."),
@@ -549,6 +551,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/start-check", "start_control", "`GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing."),
     ("post", "/api/plans/{pid}/start-queue/withdraw", "start_control", "`POST /api/plans/{pid}/start-queue/withdraw` — leave the queue."),
     ("get", "/api/plans/{pid}/status", "status_updates", "`GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the deployment's time zone). A plan with no cadence has no due date; one with no update says so."),
+    ("get", "/api/plans/{pid}/template-diff", "blueprint_sync", "`GET /api/plans/{pid}/template-diff`: the template's changes since this plan was last brought up to date, each with whether the plan's own people have edited or removed that task. `404` for a plan not made from a template."),
+    ("post", "/api/plans/{pid}/template-sync", "blueprint_sync", "`POST /api/plans/{pid}/template-sync`: apply the named changes to this plan in one transaction. A change to a task the plan edited is refused unless named in `overwrite_local`; refusals are listed, not errors."),
     ("get", "/api/plans/{pid}/status-cadence", "status_updates", "`GET /api/plans/{pid}/status-cadence` — how often the plan expects an update and where it stands against that today: the date the next is due, whether it is due or overdue, and by how many days; `404` when no cadence is set."),
     ("put", "/api/plans/{pid}/status-cadence", "status_updates", "`PUT /api/plans/{pid}/status-cadence`."),
     ("get", "/api/plans/{pid}/status-updates", "status_updates", "`GET /api/plans/{pid}/status-updates`: the history, newest first."),
@@ -843,6 +847,8 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/organizations/{pid}", crate::controllers::organizations::Change);
     body!("post", "/api/plans/export", crate::controllers::bulk::ExportBody);
     body!("post", "/api/plans/from-template/{tpl}", crate::controllers::plan_templates::InstantiateBody);
+    body!("post", "/api/plan-templates/{pid}/revise", crate::controllers::blueprint_sync::ReviseBody);
+    body!("post", "/api/plans/{pid}/template-sync", crate::controllers::blueprint_sync::SyncBody);
     body!("post", "/api/plans/match", crate::controllers::plans::MatchRequest);
     body!("post", "/api/plans/merge", crate::controllers::plans::MergeRequest);
     body!("put", "/api/plans/{pid}/access", crate::controllers::plan_access::AccessPayload);

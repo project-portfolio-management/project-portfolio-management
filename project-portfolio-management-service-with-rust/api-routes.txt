@@ -226,6 +226,8 @@ GET /api/plan-templates
 DELETE /api/plan-templates/{pid}
 GET /api/plan-templates/{pid}
 POST /api/plan-templates/{pid}/delete
+GET /api/plan-templates/{pid}/plans
+POST /api/plan-templates/{pid}/revise
 GET /api/plans
 POST /api/plans
 GET /api/plans/audit/recent
@@ -497,6 +499,8 @@ GET /api/plans/{pid}/tasks/{tpid}/links
 POST /api/plans/{pid}/tasks/{tpid}/links
 DELETE /api/plans/{pid}/tasks/{tpid}/links/{lpid}
 POST /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete
+GET /api/plans/{pid}/template-diff
+POST /api/plans/{pid}/template-sync
 GET /api/plans/{pid}/thresholds
 PUT /api/plans/{pid}/thresholds
 GET /api/plans/{pid}/time-analysis

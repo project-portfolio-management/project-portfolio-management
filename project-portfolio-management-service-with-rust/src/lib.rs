@@ -35,6 +35,7 @@ pub mod automation;
 pub mod availability;
 pub mod baselines;
 pub mod benefit_validation;
+pub mod blueprint_sync;
 pub mod break_glass;
 pub mod buffer_management;
 pub mod buffers;

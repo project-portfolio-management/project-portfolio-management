@@ -32,6 +32,7 @@ impl ActiveModelBehavior for plan_frameworks::ActiveModel {}
 impl ActiveModelBehavior for plan_tolerances::ActiveModel {}
 impl ActiveModelBehavior for scoring_inputs::ActiveModel {}
 impl ActiveModelBehavior for lessons::ActiveModel {}
+impl ActiveModelBehavior for scheduled_job_runs::ActiveModel {}
 impl ActiveModelBehavior for plan_status_cadences::ActiveModel {}
 impl ActiveModelBehavior for status_updates::ActiveModel {}
 impl ActiveModelBehavior for escalations::ActiveModel {}

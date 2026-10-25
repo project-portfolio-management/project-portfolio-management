@@ -21,6 +21,7 @@
 //! | `plan_deleted_total` | counter | — |
 //! | `plan_merged_total` | counter | — |
 //! | `http_requests_total` | counter vec | `method`, `path`, `status` |
+//! | `scheduled_job_runs_total` | counter vec | `job`, `outcome` |
 //! | `ppm_flow_efficiency` | gauge vec | `plan` |
 //! | `ppm_flow_cycle_time_p85_days` | gauge vec | `plan` |
 //! | `ppm_flow_work_in_progress` | gauge vec | `plan` |
@@ -93,6 +94,9 @@ pub struct Metrics {
 
     /// HTTP requests handled, labeled by `method`, `path`, and `status`.
     pub http_requests_total: IntCounterVec,
+
+    /// Runs of the jobs the service schedules for itself, labeled by `job` and `outcome` (`ok` or `failed`).
+    pub scheduled_job_runs_total: IntCounterVec,
 
     /// Aggregate work-over-cycle ratio per plan (`plan` = pid).
     pub flow_efficiency: GaugeVec,
@@ -252,6 +256,15 @@ impl Metrics {
         )
         .expect("static counter-vec opts are always valid");
 
+        let scheduled_job_runs_total = IntCounterVec::new(
+            Opts::new(
+                "scheduled_job_runs_total",
+                "Runs of the jobs the service schedules for itself, labeled by job and outcome.",
+            ),
+            &["job", "outcome"],
+        )
+        .expect("static counter-vec opts are always valid");
+
         for collector in [
             Box::new(plan_created_total.clone()) as Box<dyn prometheus::core::Collector>,
             Box::new(plan_updated_total.clone()),
@@ -267,6 +280,9 @@ impl Metrics {
         registry
             .register(Box::new(http_requests_total.clone()))
             .expect("registering a freshly-constructed collector cannot fail");
+        registry
+            .register(Box::new(scheduled_job_runs_total.clone()))
+            .expect("registering a freshly-constructed collector cannot fail");
 
         let flow = FlowGauges::register_into(&registry);
         Self {
@@ -278,6 +294,7 @@ impl Metrics {
             audit_write_failed_total,
             visibility_lookup_failed_total,
             http_requests_total,
+            scheduled_job_runs_total,
             flow_efficiency: flow.efficiency,
             flow_cycle_time_p85_days: flow.cycle_time_p85_days,
             flow_work_in_progress: flow.work_in_progress,

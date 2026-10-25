@@ -291,6 +291,18 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `status_updates` section: per included plan with a cadence, the latest update posted on or before the cut-off and
   where it stood on the cut-off's date. Not built: removing a cadence; a screen; the pack screen showing the section;
   a reminder to anyone but that one person.
+
+- **FR-16e8 The service runs its own scheduled jobs (NC-5).** Opt in with `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_JOBS`
+  (comma-separated: `tolerance_escalations`, `exception_breaches`, `retention_purge`, `threshold_sweep`,
+  `exceptions_digest`; unset runs none) and the scheduler ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`).
+  Each job has its own minimum interval (5 minutes for breaches, an hour for the threshold sweep, a day for escalations
+  and retention, a week for the digest). A replica claims a job in a short transaction that takes a PostgreSQL advisory
+  lock and writes a `scheduled_job_runs` row; one that finds a run started within the interval skips, so several
+  replicas run a job once. Each run is audited at its start and its end as `system:scheduler` and counted in
+  `scheduled_job_runs_total{job,outcome}`. Retention is a dry run unless
+  `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_RETENTION_APPLY` is true. Not built: a notice to the plan lead on an automatic
+  escalation (who the plan lead is is owner question §70.6); an endpoint to read the runs; a job that failed being
+  retried before its interval is up.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

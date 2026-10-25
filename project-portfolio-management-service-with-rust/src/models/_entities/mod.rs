@@ -135,6 +135,7 @@ pub mod scenarios;
 pub mod schedule_baseline_tasks;
 pub mod schedule_baselines;
 pub mod scheduled_actions;
+pub mod scheduled_job_runs;
 pub mod scorecard_kpis;
 pub mod scorecards;
 pub mod scoring_inputs;

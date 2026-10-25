@@ -43,6 +43,7 @@ mod privacy_lookup_failure;
 mod retention;
 mod role_tasks;
 mod scale;
+mod scheduled_jobs;
 mod scoring;
 mod status_updates;
 mod strategy;

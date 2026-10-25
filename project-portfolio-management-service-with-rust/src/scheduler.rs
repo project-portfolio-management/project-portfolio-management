@@ -82,6 +82,7 @@ pub fn spawn(ctx: AppContext) {
             if let Err(err) = crate::controllers::earned_value::snapshot_all(&ctx).await {
                 tracing::warn!("earned-value snapshot pass failed: {err}");
             }
+            crate::scheduled_jobs::run_enabled(&ctx).await;
             match crate::controllers::status_updates::remind_due(&ctx).await {
                 Ok(r) if r.sent > 0 || r.unaddressed > 0 => {
                     tracing::info!(

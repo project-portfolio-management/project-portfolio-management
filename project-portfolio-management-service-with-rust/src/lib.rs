@@ -168,6 +168,7 @@ pub mod sandbox;
 pub mod saved_views;
 pub mod schedule_health;
 pub mod schedule_risk;
+pub mod scheduled_jobs;
 /// The set-and-forget ticker: the optional scheduled-action sweep loop.
 pub mod scheduler;
 pub mod scheduling_rules;

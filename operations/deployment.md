@@ -74,6 +74,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Tolerance escalations | `cargo loco task tolerance_escalations` | schedule daily: raises one escalation per red tolerance nobody has escalated (FR-54), as `system:tolerance-escalations`. Not run by the in-process ticker |
 | Exception breaches | `cargo loco task exception_breaches` | schedule every few minutes: tells the owner of each delivery exception not completed within its window, once (DP-3). Not run by the in-process ticker |
 | Director packs | `cargo loco task director_pack_schedule` | schedule daily, **or** set `SCHEDULER_MINUTES`, whose ticker drafts due packs too (DP-12). It only drafts; a person issues |
+| Scheduled jobs | `SCHEDULED_JOBS` (with `SCHEDULER_MINUTES`) | off unless set. A comma-separated list of `tolerance_escalations`, `exception_breaches`, `retention_purge`, `threshold_sweep`, `exceptions_digest`: the service runs them itself instead of a cron, once across replicas (an advisory lock and a `scheduled_job_runs` row), each audited and counted in `scheduled_job_runs_total`. `retention_purge` is a dry run unless `SCHEDULED_RETENTION_APPLY=true`. Do not also schedule the same job externally unless you want it twice. The digest's recipients are `DIGEST_RECIPIENTS` |
 | Background loops | `SCHEDULER_MINUTES`, `SNAPSHOT_HOURS`, `FLOW_METRICS_SECS`, `SINKS_TICK_SECS` | each is off unless set (sinks tick on by default; `0` turns it off) |
 
 `podman compose run --rm api /app/project-portfolio-management doctor --config`

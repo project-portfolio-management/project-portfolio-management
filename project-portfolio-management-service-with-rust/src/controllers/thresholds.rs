@@ -297,15 +297,24 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
 
 /// `POST /api/threshold-sweep` — open an exception for each threshold now crossed. Changes no programme.
 #[debug_handler]
-#[expect(clippy::too_many_lines)]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    format::json(run_sweep(&ctx, caller.actor()).await?)
+}
+
+/// The sweep itself, as `actor` (`None` for a scheduled run): what the endpoint and the scheduler both run.
+///
+/// # Errors
+///
+/// When a database statement fails.
+#[expect(clippy::too_many_lines)]
+pub(crate) async fn run_sweep(ctx: &AppContext, actor: Option<&str>) -> Result<Value> {
     let today = crate::tz::deployment_today();
     let all = thresholds::Entity::find()
         .order_by_asc(thresholds::Column::Id)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    let reds = red_history(&ctx).await?;
+    let reds = red_history(ctx).await?;
     // One query for every threshold's plan, not one per threshold (CQ-11).
     let live_plans: std::collections::HashMap<Uuid, plans::Model> = plans::Entity::find()
         .filter(plans::Column::Pid.is_in(all.iter().map(|t| t.plan_pid).collect::<Vec<_>>()))
@@ -332,7 +341,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             }
             "forecast_past" => {
                 let limit = t.date_value.unwrap_or(today);
-                let forecast = super::schedule_baselines::current(&ctx, plan.pid)
+                let forecast = super::schedule_baselines::current(ctx, plan.pid)
                     .await
                     .ok()
                     .and_then(|(_, f, _, _)| f);
@@ -343,8 +352,8 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             }
             _ => {
                 let cur = t.currency.clone().unwrap_or_default();
-                let tree = super::earned_value::subtree_ids(&ctx, plan.pid).await?;
-                let p80 = super::cost_risk::p80_by_currency(&ctx, &tree)
+                let tree = super::earned_value::subtree_ids(ctx, plan.pid).await?;
+                let p80 = super::cost_risk::p80_by_currency(ctx, &tree)
                     .await?
                     .and_then(|m| m.get(&cur).copied());
                 (
@@ -381,7 +390,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
             .await
             .map_err(db_err)?;
         let cause = format!("Threshold crossed: {detail}.");
-        let actor = caller.actor().map(str::to_string);
+        let actor = actor.map(str::to_string);
         match open {
             Some(o) if o.threshold_kind.is_some() => {
                 row["outcome"] = json!("already_open");
@@ -447,7 +456,7 @@ async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<R
         }
         results.push(row);
     }
-    format::json(json!({
+    Ok(json!({
         "results": results,
         "note": "A crossing opens a delivery exception (or is attached to the one already open); a person then records pause, reset, stop or an override with an expiry. Nothing is paused, reset or stopped by this call.",
     }))

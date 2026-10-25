@@ -88,6 +88,7 @@ pub mod email;
 pub mod engineering;
 pub mod escalations;
 pub mod evm;
+pub mod exceptions_digest;
 pub mod extract;
 pub mod feeds;
 pub mod fever;

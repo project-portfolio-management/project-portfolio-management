@@ -90,6 +90,7 @@ const AGGREGATES: &[&str] = &[
     "/api/capacity/utilization?by=plan",
     "/api/capacity/utilization?by=person",
     "/api/cost-risk",
+    "/api/exceptions/digest",
     "/api/executive/alignment",
     "/api/executive/benefits",
     "/api/executive/decisions",

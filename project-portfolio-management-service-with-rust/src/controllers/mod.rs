@@ -31,6 +31,7 @@ pub mod docs;
 /// Recorded effort and utilization, including per person.
 pub mod effort;
 pub mod engineering;
+pub mod exceptions_digest;
 /// The buffer fever chart (DP-7).
 pub mod fever;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).

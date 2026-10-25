@@ -2259,6 +2259,7 @@ mod tests {
             crate::controllers::settings::routes(),
             crate::controllers::scoring::routes(),
             crate::controllers::lessons::routes(),
+            crate::controllers::exceptions_digest::routes(),
             crate::controllers::compliance::routes(),
             crate::controllers::governance::routes(),
             crate::controllers::visibility::routes(),

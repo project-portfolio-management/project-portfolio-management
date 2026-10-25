@@ -268,6 +268,16 @@ matcher payload (§5.6); every mutation audits (§6.6).
   unchanged: HMAC-SHA256 over the exact request body bytes, `X-Mxi-Signature`. `asyncapi.json` (AsyncAPI 3.0) describes
   the per-plan live stream (`task_created`, `task_updated`, `task_moved`, `raci_updated`, `comment_added`, `resync`)
   and the three webhook shapes. Not built: serving the document over HTTP; CloudEvents on the live stream.
+
+- **FR-16e6 Weekly portfolio-exceptions digest (NC-17).** One short message of what is wrong across the portfolio:
+  every red or amber tolerance, every open exception opened by a threshold and every live escalation (overdue ones
+  first), worst first, with counts over all of them and at most 20 listed. `GET /api/exceptions/digest` shows it for
+  the caller (only plans they can read). The `exceptions_digest` task, run weekly, builds it as the system identity
+  (so a private plan or a plan under a handling mark is never in it) and sends it as an `exceptions_digest`
+  notification, through each recipient's own sinks and preferences, to the `person:` references in
+  `PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS`; a recipient who already has this week's (Monday to Sunday of the
+  deployment's "today") is skipped. Not built: recipients as an administrator setting or a per-person subscription;
+  per-recipient content (every recipient gets the same digest); a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

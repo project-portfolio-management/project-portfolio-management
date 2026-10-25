@@ -219,6 +219,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/engineering/moscow", "engineering", "`GET /api/engineering/moscow` — the `MoSCoW` scope cut from `moscow:<band>` tags (convention disclosed; untagged items listed separately, never guessed into a band)."),
     ("get", "/api/escalations", "escalations", "`GET /api/escalations`: the register across the plans the caller can read, newest first."),
     ("get", "/api/exceptions", "confidence", "`GET /api/exceptions[?status&breached]` — across the plans you can read."),
+    ("get", "/api/exceptions/digest", "exceptions_digest", "`GET /api/exceptions/digest` — the weekly digest as the caller would see it: every red or amber tolerance, every open threshold exception and every live escalation on a plan they can read, worst first, with counts over all of them and the message a recipient would be sent."),
     ("put", "/api/exceptions/{pid}", "confidence", "`PUT /api/exceptions/{pid}` — fill in the cause, the decision needed, the owner and the decide-by date. Fields left out are kept; the exception is complete when all four are there."),
     ("post", "/api/exceptions/{pid}/decision", "confidence", "`POST /api/exceptions/{pid}/decision` — record the decision, which closes it."),
     ("post", "/api/exceptions/{pid}/threshold-decision", "thresholds", "`POST /api/exceptions/{pid}/threshold-decision` — record pause, reset, stop or an override; closes it."),

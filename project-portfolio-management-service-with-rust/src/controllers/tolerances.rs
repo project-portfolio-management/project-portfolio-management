@@ -446,6 +446,32 @@ pub(crate) struct BoardQuery {
     dimension: Option<String>,
 }
 
+/// The tolerance picture of each plan the caller can read (at most [`BOARD_CAP`]), and whether more were left out.
+pub(crate) async fn pictures(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+) -> Result<(Vec<Value>, bool)> {
+    let all = plans::Entity::find()
+        .filter(plans::Column::DeletedAt.is_null())
+        .order_by_asc(plans::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let pids: Vec<Uuid> = all.iter().map(|p| p.pid).collect();
+    let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
+    let visible: Vec<&plans::Model> = all.iter().filter(|p| readable.contains(&p.pid)).collect();
+    let truncated = visible.len() as u64 > BOARD_CAP;
+    let allocs = readable_allocations(ctx, caller).await?;
+    let mut out = Vec::new();
+    for plan in visible
+        .into_iter()
+        .take(usize::try_from(BOARD_CAP).unwrap_or(usize::MAX))
+    {
+        out.push(picture(ctx, caller, plan, &allocs).await?);
+    }
+    Ok((out, truncated))
+}
+
 /// `GET /api/tolerances?status=&dimension=`: the readable plans that have any tolerance, worst first.
 #[debug_handler]
 async fn board(
@@ -466,23 +492,9 @@ async fn board(
         ),
     };
     let want_dimension = q.dimension.as_deref().map(dimension_of).transpose()?;
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .order_by_asc(plans::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let pids: Vec<Uuid> = all.iter().map(|p| p.pid).collect();
-    let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
-    let visible: Vec<&plans::Model> = all.iter().filter(|p| readable.contains(&p.pid)).collect();
-    let truncated = visible.len() as u64 > BOARD_CAP;
-    let allocs = readable_allocations(&ctx, &caller).await?;
+    let (pictures, truncated) = pictures(&ctx, &caller).await?;
     let mut out: Vec<Value> = Vec::new();
-    for plan in visible
-        .into_iter()
-        .take(usize::try_from(BOARD_CAP).unwrap_or(usize::MAX))
-    {
-        let p = picture(&ctx, &caller, plan, &allocs).await?;
+    for p in pictures {
         let overall: Status =
             serde_json::from_value(p["overall"].clone()).unwrap_or(Status::NotSet);
         if overall == Status::NotSet {
@@ -568,7 +580,7 @@ async fn escalate(
 /// that is not hidden from everyone by a handling mark, and recognisable in the register and the audit log.
 pub(crate) const SYSTEM_ACTOR: &str = "system:tolerance-escalations";
 
-fn system_caller() -> MaybeAuthUser {
+pub(crate) fn system_caller() -> MaybeAuthUser {
     MaybeAuthUser(Some(authentication_verifier::Claims {
         sub: SYSTEM_ACTOR.to_string(),
         email: String::new(),

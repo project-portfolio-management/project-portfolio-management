@@ -3,6 +3,9 @@
 /// `director_pack_schedule` — draft the monthly director packs that are due.
 pub mod director_pack_schedule;
 
+/// `exceptions_digest` — send the weekly portfolio-exceptions digest.
+pub mod exceptions_digest;
+
 /// `exception_breaches` — notify breached delivery exceptions.
 pub mod exception_breaches;
 

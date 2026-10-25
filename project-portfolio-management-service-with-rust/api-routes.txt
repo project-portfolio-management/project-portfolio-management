@@ -124,6 +124,7 @@ GET /api/engineering/milestone-calendar
 GET /api/engineering/moscow
 GET /api/escalations
 GET /api/exceptions
+GET /api/exceptions/digest
 PUT /api/exceptions/{pid}
 POST /api/exceptions/{pid}/decision
 POST /api/exceptions/{pid}/threshold-decision

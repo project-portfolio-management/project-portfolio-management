@@ -184,6 +184,7 @@ impl Hooks for App {
             .add_route(controllers::prioritization::routes())
             .add_route(controllers::scoring::routes())
             .add_route(controllers::lessons::routes())
+            .add_route(controllers::exceptions_digest::routes())
             .add_route(controllers::saved_views::routes())
             .add_route(controllers::canvas::routes())
             .add_route(controllers::modules::routes())
@@ -394,6 +395,7 @@ impl Hooks for App {
         tasks.register(crate::tasks::retention_purge::RetentionPurge);
         tasks.register(crate::tasks::exception_breaches::ExceptionBreaches);
         tasks.register(crate::tasks::tolerance_escalations::ToleranceEscalations);
+        tasks.register(crate::tasks::exceptions_digest::ExceptionsDigest);
         tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
         // tasks-inject (do not remove)
     }

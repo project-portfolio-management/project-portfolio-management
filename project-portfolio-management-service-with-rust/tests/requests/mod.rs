@@ -20,6 +20,7 @@ mod effort;
 mod email;
 mod escalations;
 mod event_outbox;
+mod exceptions_digest;
 mod financials;
 mod frameworks;
 mod goals;

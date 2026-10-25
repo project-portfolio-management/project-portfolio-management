@@ -8570,6 +8570,21 @@
         ]
       }
     },
+    "/api/exceptions/digest": {
+      "get": {
+        "description": "`GET /api/exceptions/digest` — the weekly digest as the caller would see it: every red or amber tolerance, every open threshold exception and every live escalation on a plan they can read, worst first, with counts over all of them and the message a recipient would be sent.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/exceptions/digest` — the weekly digest as the caller would see it: every red or amber tolerance, every open threshold exception and every live escalation on a plan they can read, worst first, with counts over all of them and the message a recipient would be sent",
+        "tags": [
+          "exceptions_digest"
+        ]
+      }
+    },
     "/api/exceptions/{pid}": {
       "put": {
         "description": "Sets any of cause, decision_needed, owner_ref, owner_role (the role a pack shows instead of the person) and decide_by; fields left out are kept. It is complete when cause, decision needed, owner and decide-by are all present, and completion is timed. A closed exception is 409; one on a plan you cannot read is 404.",

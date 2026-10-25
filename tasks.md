@@ -1987,9 +1987,10 @@ only as search snippets.
   **Acceptance:** a token with a read scope is refused on writes.
 - [ ] **NC-16 (M, only on demand) — Lean budgets with guardrails and
   participatory budgeting rounds** (SAFe LPM).
-- [ ] **NC-17 (S) — Weekly portfolio-exceptions digest** from the existing
+- [x] **NC-17 (S) — Weekly portfolio-exceptions digest** from the existing
   thresholds, tolerances and escalations, through the existing sinks.
   **Acceptance:** a digest test with one item of each kind.
+  **Built 2026-10-25.** `exceptions_digest.rs` (pure: order, count, cap, word; 4 unit tests), `GET /api/exceptions/digest`, the `exceptions_digest` task and notification kind, `controllers/exceptions_digest.rs` (`gather`, `send_weekly`). Request test `a_digest_with_one_item_of_each_kind_is_built_and_sent_once_a_week` (a red tolerance, an open threshold exception and an overdue escalation are each counted and listed worst first; the send goes once per recipient per week; a non-person recipient is not sent to). The privacy census gained the route. Spec FR-16e6. **Not done:** recipients are an environment variable, not an administrator setting or a subscription; every recipient gets the same digest; no screen; the digest does not report items that were resolved this week. **Not verified:** a private plan's absence from the *sent* digest (the system identity is not a member of any private plan, which the code relies on; the census covers only the caller's view); delivery to a real sink; that the threshold exception row the test inserts directly matches what the sweep writes in every field.
 
 ## Not taken (this pass)
 

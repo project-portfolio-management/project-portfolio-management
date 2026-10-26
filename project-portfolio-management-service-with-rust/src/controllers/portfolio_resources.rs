@@ -557,10 +557,26 @@ async fn resolve_placeholder(
     }
     let was = allocation.person_ref.clone();
     let row_pid = allocation.pid;
-    let mut active: allocations::ActiveModel = allocation.into();
-    active.person_ref = ActiveValue::set(b.person_ref.clone());
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
+    // Compare and set (CF-6): the write names the placeholder it saw, so a second resolver that read the same row
+    // changes nothing and is told so, rather than replacing the first person.
+    let changed = allocations::Entity::update_many()
+        .col_expr(
+            allocations::Column::PersonRef,
+            sea_orm::sea_query::Expr::value(b.person_ref.clone()),
+        )
+        .filter(allocations::Column::Pid.eq(row_pid))
+        .filter(allocations::Column::PersonRef.eq(was.clone()))
+        .exec(&txn)
+        .await
+        .map_err(db_err)?
+        .rows_affected;
+    if changed == 0 {
+        return Err(Error::CustomError(
+            StatusCode::CONFLICT,
+            ErrorDetail::new("conflict", "this allocation already names a person"),
+        ));
+    }
     AuditModel::record(
         &txn,
         row_pid,

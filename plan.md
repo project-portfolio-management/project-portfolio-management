@@ -1695,3 +1695,22 @@ vendor *claims*; nothing was run. The detail is in
    customers (what the operator, not the vendor, commits to).
 2. **BR-12.** Which narrow scopes are wanted first: capture (status updates, comments, lessons) or search only?
 3. **BR-16.** Do tasks get a human-readable key? Without one the idea cannot start.
+
+## 82. Planning rules audit (BR-7)
+
+Read on 2026-10-26: `allocations` (`controllers/visibility.rs`, `controllers/portfolio_resources.rs`,
+`portfolio_resources.rs`), the capacity heatmap (`capacity_heatmap.rs`) and availability (`availability.rs`), against
+six rules. The model is plan-level allocations (a percent over a date range), not weekly cells on tasks, so some rules
+meet a different shape than they were written for.
+
+| Rule | Finding | Code |
+|---|---|---|
+| No double counting of a parent and its subtasks | **Holds.** There are no task-level allocations. A subtree read (`programme_gates::subtree`, `benefit_validation`) collects plan ids into a set before it sums, and a tree has no plan twice. Two bookings of one person on a parent plan and a child plan both count, because they are two bookings. | `controllers/programme_gates.rs:83`, `controllers/benefit_validation.rs:160` |
+| A changed estimate or a reassignment flags an allocation and never overwrites it | **Not applicable to estimates:** an allocation is not derived from a task estimate, so no estimate change touches it. **Holds** for the one derived write there is: a programme pause flags its allocations (`allocations_flagged`) and deletes none. **Fails for reassignment:** resolving a placeholder overwrote the person with no check that the placeholder was still there (see CF-6, fixed). | `controllers/programme_gates.rs:102`, `controllers/portfolio_resources.rs` (`resolve_placeholder`) |
+| An override beats a default | **Holds.** `capacity_on` takes the range that covers the day, else the default; ranges for one person cannot overlap (validated, and a database constraint, CF-3), so no day has two answers. Tested: `capacity_is_read_per_day_not_averaged`, `overlap_includes_the_boundary_days`. | `availability.rs:56` |
+| No capacity declared is "not set", not zero | **Holds for the heatmap:** a pool with no supplier and no partner commitment is `no_supply_recorded`, never zero (`verdict`). **Partly fails for a person:** with no range declared the capacity is `DEFAULT_PERCENT` = 100, never zero, but it is an assumption and the load output does not say it was assumed (CF-7, open, an owner decision). | `capacity_heatmap.rs:56`, `availability.rs:15` |
+| Weeks are stored as Monday dates | **Holds for timesheets:** `timesheet_weeks.week_start` is the Monday of an ISO week (`week_start`, `monday_of`; tested in `iso_weeks_parse_to_their_monday`). **Not applicable to allocations:** they store a start date and an end date, not weeks; the resource plan's weekly periods are computed. | `timesheets.rs:19` |
+| A write carries the value the planner saw | **Fails for resolving a placeholder** (CF-6, fixed: the update now names the placeholder it saw and a loser gets `409`). **Not applicable to creating or deleting an allocation:** neither depends on a value the planner read, and an allocation cannot be edited in place. | `controllers/portfolio_resources.rs` |
+
+Not looked at: the leveling apply path and the what-if sandbox commit (it has its own `If-Match`); allocation
+`PUT` (there is none); the UI's resource screens.

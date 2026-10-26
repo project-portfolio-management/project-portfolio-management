@@ -410,6 +410,11 @@ matcher payload (§5.6); every mutation audits (§6.6).
   and save the result under another name. Changing a starter in a release changes later instantiations only. Not
   built: a starter per locale (the names and task titles are English); a task workflow of its own for any starter; a
   screen that marks them; hiding them for a deployment that does not want them.
+- **FR-16e17 Resolving a placeholder (CF-6).** `POST /api/plans/{pid}/allocations/{a_pid}/resolve` names a person for a
+  placeholder allocation (an administrator or `role=resource_manager`). The write is a compare and set on the placeholder
+  the request saw: of several concurrent resolvers exactly one succeeds, and the rest get `409` "this allocation already
+  names a person". Over capacity is also `409` unless `confirm` is true. An allocation that already names a person is
+  `409`. Not built: changing a named person's allocation in place (there is no edit); an `If-Match` header.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

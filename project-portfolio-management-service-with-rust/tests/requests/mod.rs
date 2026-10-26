@@ -46,6 +46,7 @@ mod plan_templates;
 mod plans;
 mod privacy_lookup_failure;
 mod references;
+mod resource_audit;
 mod retention;
 mod role_tasks;
 mod scale;

@@ -17,6 +17,8 @@ workflow yet. Dates are 2026.
 
 ### 26 October (later)
 
+- **CQ-9: four more request bodies are typed, and one was wrong.** `createRisk`, `createTask`, `createMilestone` and `createScenario` now take types written from the service's schemas (the body test compares 75, up from 71). **Bug found:** the scenarios page sent `work_item_pids`, which the service ignores, so scenarios made in the UI never had members; it sends `plan_pids` now, and `pnpm run check` fails if the old name returns. Verified: `pnpm run check`, lint, 820 unit tests, and the kanban and ppm e2e files (24). **Not done:** 16 other `body: unknown` methods, and a test of the posted body. **Not verified:** a running service; the rest of the e2e suite.
+
 - **CQ-11: a statement counter, and a test that uses it.** `query_count` counts the statements run on the app's own connection (set in `after_context`, because a clone does not see them). The new request test lists a plan's budget baselines with one baseline and with four and asserts the same number of statements; with a per-baseline query put back it failed (6 against 9). **Not done:** counts for the other fixed endpoints; CQ-11 stays unticked. **Verified:** clippy, and all 211 database tests in the `mod` binary pass with the hook. **Not verified:** the lib tests and the other test binaries; the production cost of the counter. **Open:** CF-7 (waiting for the owner's choice among three options).
 
 - **BR-10 follow-up: audited the tests that assert search hit counts.** Only `list_paging` asserts a count (query "Paging", total 5) and no other test uses that word; the other search tests assert on a pid being present or absent. No change to code or tests. **Not verified:** by a run; this is a reading. **Not done:** a per-test index.

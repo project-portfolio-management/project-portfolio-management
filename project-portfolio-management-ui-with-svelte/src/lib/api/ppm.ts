@@ -14,6 +14,53 @@ import { rowOf } from "#lib/row-of.js";
 
 // ---- wire shapes (mirroring the service responses) ----
 
+/** `POST /api/plans/{pid}/risks`; checked against the service's schema by `client-bodies.test.ts` (CQ-9). */
+export interface CreateRiskBody {
+  title: string;
+  probability: number;
+  impact: number;
+  category?: string | null;
+  description?: string | null;
+  mitigation?: string | null;
+  owner_ref?: string | null;
+  review_date?: string | null;
+}
+
+/** `POST /api/plans/{pid}/tasks`. */
+export interface CreateTaskBody {
+  title: string;
+  assignee_ref?: string | null;
+  component_pid?: string | null;
+  custom?: Record<string, unknown> | null;
+  description?: string | null;
+  due_date?: string | null;
+  duration_days?: number | null;
+  flow_type?: string | null;
+  parent_task_pid?: string | null;
+  points?: number | null;
+  sprint_pid?: string | null;
+  start_date?: string | null;
+  status?: string | null;
+}
+
+/** `POST /api/plans/{pid}/milestones`. */
+export interface CreateMilestoneBody {
+  name: string;
+  due: string;
+  kind?: string | null;
+}
+
+/** `POST /api/scenarios`. */
+export interface CreateScenarioBody {
+  name: string;
+  plan_pids?: string[];
+  proposal_pids?: string[];
+  must_include?: string[];
+  budget_cap_minor?: number | null;
+  currency?: string | null;
+  description?: string | null;
+}
+
 export interface Proposal {
   pid: string;
   title: string;
@@ -2782,7 +2829,7 @@ export class PpmClient {
   listRisks(pid: string): Promise<Risk[]> {
     return this.http.get(`/api/plans/${pid}/risks`);
   }
-  createRisk(pid: string, body: unknown): Promise<{ pid: string }> {
+  createRisk(pid: string, body: CreateRiskBody): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/risks`, { body });
   }
   escalateRisk(pid: string, riskPid: string): Promise<Risk> {
@@ -2837,7 +2884,10 @@ export class PpmClient {
   milestones(pid: string): Promise<Milestone[]> {
     return this.http.get(`/api/plans/${pid}/milestones`);
   }
-  createMilestone(pid: string, body: unknown): Promise<{ pid: string }> {
+  createMilestone(
+    pid: string,
+    body: CreateMilestoneBody,
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/milestones`, { body });
   }
   /** A linked milestone with open tasks needs a `reason` (422 without one). */
@@ -3219,7 +3269,7 @@ export class PpmClient {
   listScenarios(): Promise<Scenario[]> {
     return this.http.get("/api/scenarios");
   }
-  createScenario(body: unknown): Promise<{ pid: string }> {
+  createScenario(body: CreateScenarioBody): Promise<{ pid: string }> {
     return this.http.post("/api/scenarios", { body });
   }
   evaluateScenario(pid: string): Promise<ScenarioEvaluation> {
@@ -4177,7 +4227,7 @@ export class PpmClient {
       body: { parent_task_pid: parentTaskPid, order },
     });
   }
-  createTask(pid: string, body: unknown): Promise<Task> {
+  createTask(pid: string, body: CreateTaskBody): Promise<Task> {
     return this.http.post(`/api/plans/${pid}/tasks`, { body });
   }
   moveTask(pid: string, taskPid: string, status: string): Promise<Task> {

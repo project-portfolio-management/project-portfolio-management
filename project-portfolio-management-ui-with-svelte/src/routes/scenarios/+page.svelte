@@ -71,7 +71,7 @@
     await act(() =>
       ppm.createScenario({
         name,
-        work_item_pids: pids,
+        plan_pids: pids,
         ...(capMinor !== undefined && Number.isFinite(capMinor)
           ? { budget_cap_minor: capMinor, currency }
           : {}),

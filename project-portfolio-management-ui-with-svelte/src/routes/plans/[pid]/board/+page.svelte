@@ -19,6 +19,7 @@
   import {
     PpmClient,
     type Burndown,
+    type CreateTaskBody,
     type Sprint,
     type SprintNote,
     type Standup,
@@ -186,10 +187,10 @@
   onsubmit={(event) => {
     event.preventDefault();
     if (!title.trim()) return;
-    const body: Record<string, unknown> = { title: title.trim() };
-    if (selectedSprint) body["sprint_pid"] = selectedSprint;
+    const body: CreateTaskBody = { title: title.trim() };
+    if (selectedSprint) body.sprint_pid = selectedSprint;
     const parsedPoints = Number.parseInt(points, 10);
-    if (!Number.isNaN(parsedPoints)) body["points"] = parsedPoints;
+    if (!Number.isNaN(parsedPoints)) body.points = parsedPoints;
     title = "";
     points = "";
     void act(() => ppm.createTask(pid, body));

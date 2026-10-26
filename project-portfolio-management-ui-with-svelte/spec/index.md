@@ -1216,3 +1216,20 @@ On `/plans/[pid]/earned-value`, below the figures:
 
 **Not built:** a per-period history before snapshots began (it cannot be
 reconstructed), a spreadsheet link for the series on the page (the CSV is in the API).
+
+## Command palette (BR-14)
+
+Ctrl or Cmd with K, or the "Search" button in the top bar (its accessible name is "Search and commands"; a longer label made the top bar wrap and pushed the CEO dashboard off an iPad in portrait), opens a modal palette. It is Lily's `Dialog`
+(a real modal: focus trapped, Escape closes, focus returns to the opener) holding Lily's `Combobox` (the input has
+`role="combobox"`, `aria-controls` and `aria-activedescendant`; the rows are `role="option"` with `aria-selected`).
+Typing two or more letters searches plans by name through `GET /api/plans/search?q=` after a 200 ms pause, and only
+the latest answer is shown; commands are matched at once. Rows are ranked by the whole label, a prefix, a word start,
+a match inside, then letters in order (`src/lib/palette-view.ts`, pure and unit-tested); with nothing typed the recent
+items come first. The first match is active, the arrow keys move (wrapping), Enter goes there, Escape closes. The
+active row is marked by a bar and bold text as well as colour, and every row says what it is (Command, Plan, Recent).
+Ctrl or Cmd with K is taken over everywhere in the app, text fields included, so the browser's own shortcut for it does not run. The last five items chosen are kept in this browser (`mxi.palette.recent`), never sent anywhere; a stored item with a
+path that does not start with a single `/` is dropped. A failed search says so in words and the commands still work.
+Commands today: New plan, My work, Escalations, Dashboard. Not built: a command per page; searching tasks, risks or
+meetings; a "status page" command (the UI has no status page route); the shortcut shown in the button's text; other
+locales than English and Welsh (the rest show English). Tests: `tests/unit/palette-view.test.ts`,
+`tests/e2e/command-palette.spec.ts`.

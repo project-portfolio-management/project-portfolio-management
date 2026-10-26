@@ -22,6 +22,7 @@
   import { isAbsent } from "#lib/absent.js";
   import { orderNavForView } from "#lib/nav.js";
   import ConfirmHost from "#lib/components/ConfirmHost.svelte";
+  import CommandPalette from "#lib/components/CommandPalette.svelte";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
 
@@ -316,6 +317,7 @@
       </ul>
     </nav>
     <div class="header-end">
+      <CommandPalette />
       <button type="button" class="session-button" aria-pressed={simple} onclick={toggleSimple}>
         {t("p.layout.simple_view", { v: simple ? t("p.common.on") : t("p.common.off") })}
       </button>

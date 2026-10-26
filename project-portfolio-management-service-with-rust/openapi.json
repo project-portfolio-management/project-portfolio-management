@@ -23337,7 +23337,7 @@
     },
     "/api/plans/{pid}/references": {
       "get": {
-        "description": "`GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan. The plan guard runs first (a plan the caller cannot read is a `404`), then the target must be a live record of this plan, else it answers as one that does not exist; only then are references read, and `count` is the length of what is listed.",
+        "description": "`GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan. The plan guard runs first (a plan the caller cannot read is a `404`), then the target must be a live record of this plan, else it answers as one that does not exist; only then are references read, and `count` is the length of what is listed (at most 100 meetings and 100 lessons).",
         "parameters": [
           {
             "in": "path",

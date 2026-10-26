@@ -248,9 +248,10 @@ async fn save_as_template(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    if existing
-        .iter()
-        .any(|t| t.name.to_lowercase() == name.to_lowercase())
+    if crate::starter_templates::is_starter_name(&name)
+        || existing
+            .iter()
+            .any(|t| t.name.to_lowercase() == name.to_lowercase())
     {
         return Err(conflict("a template with this name already exists"));
     }
@@ -298,16 +299,55 @@ async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
             let nodes = t.snapshot.get("nodes").and_then(|n| n.as_array()).map_or(0, Vec::len);
             serde_json::json!({
                 "pid": t.pid, "name": t.name, "description": t.description,
+                "starter": false,
                 "plans": nodes,
                 "needs_start_date": t.snapshot.get("has_offsets").and_then(serde_json::Value::as_bool).unwrap_or(false),
             })
         })
+        .chain(crate::starter_templates::starters().into_iter().map(|s| {
+            serde_json::json!({
+                "pid": s.pid, "name": s.name, "description": s.description,
+                "starter": true,
+                "plans": s.snapshot.nodes.len(),
+                "needs_start_date": s.snapshot.has_offsets,
+            })
+        }))
         .collect();
     format::json(items)
 }
 
+/// A starter (BR-13) as a template row: it is code, so it has no database row and is always version 1.
+fn starter_row(s: &crate::starter_templates::Starter) -> plan_templates::Model {
+    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    plan_templates::Model {
+        created_at: now,
+        updated_at: now,
+        id: 0,
+        pid: s.pid,
+        name: s.name.to_string(),
+        description: Some(s.description.to_string()),
+        snapshot: serde_json::to_value(&s.snapshot).unwrap_or_default(),
+        version: 1,
+        created_by: Some("system:starter".to_string()),
+        deleted_at: None,
+    }
+}
+
+/// `422` when the template is a starter: it is not edited, revised or deleted in place; save a copy instead.
+pub(super) fn refuse_starter(row: &plan_templates::Model) -> Result<()> {
+    if crate::starter_templates::find(row.pid).is_some() {
+        return Err(unprocessable(
+            "this is a starter template and is not changed in place; instantiate it and save the result under your own name",
+        ));
+    }
+    Ok(())
+}
+
 pub(super) async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_templates::Model> {
     let pid = super::parse_pid(pid)?;
+    if let Some(s) = crate::starter_templates::find(pid) {
+        return Ok(starter_row(&s));
+    }
     plan_templates::Entity::find()
         .filter(plan_templates::Column::Pid.eq(pid))
         .filter(plan_templates::Column::DeletedAt.is_null())
@@ -331,6 +371,7 @@ async fn delete_template(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = find_template(&ctx, &pid).await?;
+    refuse_starter(&row)?;
     let tpl_pid = row.pid;
     let mut active: plan_templates::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));

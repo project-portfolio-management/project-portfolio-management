@@ -110,6 +110,7 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | GET | `/api/plans/{pid}/references` | The meetings and lessons that point at one record of the plan (`kind`, `pid`); `404` when the plan or the record is not visible |
 | GET | `/api/status-metrics` | How each number a status-update claim may cite is counted |
 | GET / POST | `/api/status-updates/due` · `/api/status-updates/remind` | The plans whose update is due; send the once-per-due-date reminders |
+| GET | `/api/plan-templates` | Stored templates, then the five starters (`starter: true`; BR-13); a starter cannot be deleted or revised |
 | POST / GET | `/api/plan-templates/{pid}/revise` · `/api/plan-templates/{pid}/plans` | Revise a template from a plan tree; the plans made from it and the changes each has waiting |
 | GET / POST | `/api/plans/{pid}/template-diff` · `/api/plans/{pid}/template-sync` | What a template changed since the plan was brought up to date; apply named changes, refusing locally edited tasks unless overwritten |
 | POST / GET | `/api/plans/{pid}/meetings` · GET `…/{mid}` | Plan a meeting with an agenda; list; read one with its linked records named |

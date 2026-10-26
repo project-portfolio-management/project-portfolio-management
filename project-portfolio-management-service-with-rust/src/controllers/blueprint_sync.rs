@@ -113,6 +113,7 @@ async fn revise(
     Json(b): Json<ReviseBody>,
 ) -> Result<Response> {
     let row = find_template(&ctx, &pid).await?;
+    super::plan_templates::refuse_starter(&row)?;
     let old: Snapshot = serde_json::from_value(row.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
     let subject = resolve_subject(&ctx, &caller, "plan", &b.from_plan.to_string()).await?;

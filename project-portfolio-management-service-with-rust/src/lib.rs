@@ -184,6 +184,7 @@ pub mod sinks;
 /// Point-in-time estate snapshots (board / CRO trends).
 pub mod snapshots;
 pub mod start_control;
+pub mod starter_templates;
 pub mod status_evidence;
 pub mod status_updates;
 /// Pure PPM strategy rules (scenario evaluation, OKR weights, ROI).

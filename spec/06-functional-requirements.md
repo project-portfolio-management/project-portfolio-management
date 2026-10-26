@@ -400,6 +400,16 @@ matcher payload (§5.6); every mutation audits (§6.6).
   missing record are indistinguishable. A withdrawn lesson and a deleted meeting are not listed; a cancelled meeting is
   (its `meeting_status` says so). Not built: references from comments, tasks or risks; a screen; setting a link on an
   existing lesson.
+- **FR-16e16 Starter templates (BR-13).** Five templates ship with the service, in the template snapshot format and as
+  code rather than rows: a stage-gated project (four stages, gates 0 to 5), a programme with three workstreams, a
+  benefits-realisation review, a change-request process and an incident response. `GET /api/plan-templates` lists them
+  after the stored templates with `"starter": true`; each is read with `GET /api/plan-templates/{pid}` and instantiated
+  with `POST /api/plans/from-template/{pid}` like any template (a `start_date` is required: the dates are offsets).
+  A starter has no people or identifiers and tasks start at the workflow's initial state. It cannot be deleted or
+  revised (`422`), and a saved template cannot take its name (`409`, case-insensitive); to change one, instantiate it
+  and save the result under another name. Changing a starter in a release changes later instantiations only. Not
+  built: a starter per locale (the names and task titles are English); a task workflow of its own for any starter; a
+  screen that marks them; hiding them for a deployment that does not want them.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

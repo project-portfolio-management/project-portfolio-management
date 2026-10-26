@@ -154,9 +154,15 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
             early["plans"][0]["latest"].is_null(),
             "nothing had been posted at that cut-off: {early}"
         );
-        let late = pack_section(&ctx, &include, chrono::Utc::now())
-            .await
-            .unwrap();
+        // `created_at` is the database's clock, which can run a fraction of a second ahead of this process's: a cut-off
+        // of exactly now can fall before a row posted a moment ago.
+        let late = pack_section(
+            &ctx,
+            &include,
+            chrono::Utc::now() + chrono::Duration::minutes(1),
+        )
+        .await
+        .unwrap();
         assert_eq!(late["plans"][0]["latest"]["status"], "on_track");
         assert_eq!(late["without_cadence"], 0);
     })

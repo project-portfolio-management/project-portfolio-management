@@ -443,7 +443,7 @@ pub(crate) struct ReferencesQuery {
 /// `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan.
 /// The plan guard runs first (a plan the caller cannot read is a `404`), then the target must be a live record of
 /// this plan, else it answers as one that does not exist; only then are references read, and `count` is the length
-/// of what is listed.
+/// of what is listed (at most 100 meetings and 100 lessons).
 #[debug_handler]
 async fn references(
     State(ctx): State<AppContext>,
@@ -466,7 +466,7 @@ async fn references(
                     m.scheduled_on AS scheduled_on, i.part AS part, i.outcome_kind AS outcome_kind, i.text AS text \
              FROM meeting_items i JOIN meetings m ON m.pid = i.meeting_pid \
              WHERE m.plan_pid = $1 AND m.deleted_at IS NULL AND i.link_kind = $2 AND i.link_pid = $3 \
-             ORDER BY m.scheduled_on DESC, i.id"
+             ORDER BY m.scheduled_on DESC, i.id LIMIT 100"
                 .to_string(),
             [plan.pid.into(), q.kind.clone().into(), q.pid.into()],
         ))
@@ -492,6 +492,7 @@ async fn references(
         .filter(crate::models::_entities::lessons::Column::LinkKind.eq(q.kind.clone()))
         .filter(crate::models::_entities::lessons::Column::LinkPid.eq(q.pid))
         .order_by_asc(crate::models::_entities::lessons::Column::Id)
+        .limit(100)
         .all(&ctx.db)
         .await
         .map_err(db_err)?

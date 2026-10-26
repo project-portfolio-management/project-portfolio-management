@@ -393,7 +393,7 @@ matcher payload (§5.6); every mutation audits (§6.6).
   screen.
 - **FR-16e15 Reverse references (BR-4).** `GET /api/plans/{pid}/references?kind=&pid=` lists the meetings (agenda items
   and outcomes) and the lessons that point at one task, risk, issue, milestone, change request or cutover decision of
-  the plan, and a `count` that is the length of the two lists together. A lesson may now carry an optional `link`
+  the plan, and a `count` that is the length of the two lists together (each list is capped at 100). A lesson may now carry an optional `link`
   (`{kind, pid}`), checked on save like a meeting's (a record of another plan or an unknown kind is `422`); a lesson
   recorded before has none and appears under nothing. The plan guard runs first, so a private plan the caller cannot
   read is `404`; then the target must be a live record of this plan, else `404`, so a wrong plan, an unknown kind and a

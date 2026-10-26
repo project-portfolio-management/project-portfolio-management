@@ -6,6 +6,7 @@ back. Each guide says what was **tested** and what was not.
 | Guide | Use it to |
 |---|---|
 | [Deployment](deployment.md) | stand the service up with Compose, configure it, put it behind TLS, scale it |
+| [Operating commitments](commitments.md) | one page: what is committed about backups, recovery, support and data requests, and what is not offered |
 | [Recovery objectives](recovery-objectives.md) | read the stated recovery point and recovery time targets, and what each backup mode guarantees |
 | [Backup and restore](backup-and-restore.md) | back up the database and the artifact store, restore them, and run the restore drill |
 | [Upgrade and migration](upgrade-and-migration.md) | move to a new version safely, and roll back |

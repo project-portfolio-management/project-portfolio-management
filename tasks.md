@@ -2081,13 +2081,14 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   **Acceptance:** the restore drill and a full run pass with an extra test that creates a plan named "Apollo".
   **Built 2026-10-25.** The search test clears the index (`search::engine().clear()`) before it asserts counts. Shown with the failing condition restored: the meetings test back to a plan named "Apollo", then `scripts/restore-test.sh` running the whole suite on the restored copy: 201 passed (it failed 0 of 1 expected hits before). **Not done:** other tests that assert hit counts on a shared index (none failed; they were not audited); a per-test index.
 
-- [ ] **BR-11 (S, documents) — One page of operating commitments.** `operations/commitments.md`: how often backups
+- [x] **BR-11 (S, documents) — One page of operating commitments.** `operations/commitments.md`: how often backups
   are taken, how far back a restore goes, the recovery objectives, an uptime objective (stated as an objective, not a
   guarantee, until measured), support response targets, the list of processors, a data processing agreement template,
   the time to delete or anonymise personal data after a request, the notice given before a policy change, and the
   position on SSO and SCIM (SCIM is not offered here). Every line links to the evidence (`scripts/restore-test.sh`,
   `recovery-objectives.md`, the DPIA) or says "not offered". Owner question §81.1.
   **Acceptance:** the page exists, every commitment has a link or "not offered", the offline link check passes.
+  **Built 2026-10-26.** `operations/commitments.md`, listed in `operations/README.md`; `scripts/check-links.py` reports 0 broken links. Nine of the fourteen lines are a link to existing evidence; uptime, support targets, a DPA template, a deletion deadline, a notice period and SCIM are "not offered". **Not done:** any new number; the page states none that the recovery objectives did not already. **Not verified:** that every sentence agrees with `GOVERNANCE.md` beyond the lines quoted; no one but the author has read it.
 - [ ] **BR-12 (S–M) — A narrow write scope.** Extends NC-15. The attribute `scope=capture`: an allowlist rule that
   lets a token read and search, and `POST` only status updates, comments and lessons; every other write is refused.
   Same shape as `READ_ONLY_SCOPE` in `auth/areas.rs`: a service-owned rule placed first. Owner question §81.2.

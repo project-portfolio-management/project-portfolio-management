@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 26 October (later)
+
+- **BR-10 follow-up: audited the tests that assert search hit counts.** Only `list_paging` asserts a count (query "Paging", total 5) and no other test uses that word; the other search tests assert on a pid being present or absent. No change to code or tests. **Not verified:** by a run; this is a reading. **Not done:** a per-test index.
+
 ### 25 October
 
 - **CI fix: the restore drill failed on the meetings test's plan names.** Tests in one run share one search index, and the index keeps a plan's entry after the next test truncates the database. `search_reaches_secondary_fields_tolerates_typos_and_filters_by_kind` asks for "Apoll" with `fuzzy=true`; the meetings test (NC-14) also created a plan named "Apollo", and with that extra stale entry the real plan fell off the result page (0 hits, 1 expected). Reproduced locally with `scripts/restore-test.sh` running the whole suite on the restored copy (it failed the same way), then fixed by renaming the meetings test's plans; the same run now passes (200). **Not fixed:** the fragility itself, a test that depends on how many other tests used a similar name; the other tests that create "Apollo" plans still add stale entries.

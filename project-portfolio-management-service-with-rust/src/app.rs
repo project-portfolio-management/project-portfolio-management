@@ -96,6 +96,11 @@ impl Hooks for App {
         create_app::<Self, Migrator>(mode, environment, config).await
     }
 
+    async fn after_context(mut ctx: AppContext) -> Result<AppContext> {
+        crate::query_count::install(&mut ctx.db);
+        Ok(ctx)
+    }
+
     /// Install this crate's own logging + `OpenTelemetry` stack (repo
     /// `tasks.md` PRO-H12), returning `true` so loco does **not** also
     /// install its own. Ported from case-service's `App::init_logger`

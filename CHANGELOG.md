@@ -17,6 +17,8 @@ workflow yet. Dates are 2026.
 
 ### 26 October (later)
 
+- **CQ-11: a statement counter, and a test that uses it.** `query_count` counts the statements run on the app's own connection (set in `after_context`, because a clone does not see them). The new request test lists a plan's budget baselines with one baseline and with four and asserts the same number of statements; with a per-baseline query put back it failed (6 against 9). **Not done:** counts for the other fixed endpoints; CQ-11 stays unticked. **Verified:** clippy, and all 211 database tests in the `mod` binary pass with the hook. **Not verified:** the lib tests and the other test binaries; the production cost of the counter. **Open:** CF-7 (waiting for the owner's choice among three options).
+
 - **BR-10 follow-up: audited the tests that assert search hit counts.** Only `list_paging` asserts a count (query "Paging", total 5) and no other test uses that word; the other search tests assert on a pid being present or absent. No change to code or tests. **Not verified:** by a run; this is a reading. **Not done:** a per-test index.
 
 ### 25 October

@@ -161,6 +161,8 @@ pub mod prioritization;
 pub mod privacy;
 pub mod processes;
 pub mod product_flow;
+/// Count of statements run on the app's connection, for query-count tests.
+pub mod query_count;
 pub mod raci;
 /// Durable event bus Phase 3: the outbox relay loop + retention purge.
 pub mod rate_limit;

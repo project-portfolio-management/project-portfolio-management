@@ -273,3 +273,46 @@ async fn performance_names_why_it_has_no_earned_value_once_a_baseline_exists() {
     })
     .await;
 }
+
+/// A list endpoint's statements do not grow with the rows it returns (CQ-11): the periods of every baseline
+/// come in one query, not one per baseline.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn listing_baselines_runs_the_same_number_of_queries_for_one_baseline_or_four() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = seed_plan(&request, "QueryCount").await;
+        let url = format!("/api/plans/{plan}/budget-baselines");
+        let baseline = |reason: Option<&str>, planned: i64| {
+            let mut body = json!({
+                "currency": "GBP",
+                "periods": [{ "period_start": "2099-01-01", "period_end": "2099-12-31", "planned_minor": planned }],
+            });
+            if let Some(r) = reason {
+                body["reason"] = json!(r);
+            }
+            body
+        };
+        let counted = |url: String| {
+            let request = &request;
+            async move {
+                let before = project_portfolio_management::query_count::total();
+                let listed = request.get(&url).await;
+                let after = project_portfolio_management::query_count::total();
+                listed.assert_status_ok();
+                (listed.json::<Value>().as_array().expect("array").len(), after - before)
+            }
+        };
+        request.post(&url).json(&baseline(None, 100_000)).await.assert_status_ok();
+        let (one_row, one_queries) = counted(url.clone()).await;
+        for n in 2..=4_i64 {
+            request.post(&url).json(&baseline(Some("re-plan"), 100_000 * n)).await.assert_status_ok();
+        }
+        let (four_rows, four_queries) = counted(url.clone()).await;
+        assert_eq!((one_row, four_rows), (1, 4));
+        assert!(one_queries > 0, "the counter sees the app's own statements");
+        assert_eq!(one_queries, four_queries, "one baseline took {one_queries} statements, four took {four_queries}");
+    })
+    .await;
+}

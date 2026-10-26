@@ -242,6 +242,14 @@ pub(super) fn decide(
     path: &str,
     policy: &Policy,
 ) -> Result<(), (StatusCode, String)> {
+    // A capture token (BR-12) is narrowed before the policy is asked; the policy can only narrow it further.
+    if has_attr(claims, CAPTURE_SCOPE.0, CAPTURE_SCOPE.1) && !capture_allows(method, path) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "a token with scope=capture may only post status updates, comments and lessons"
+                .to_string(),
+        ));
+    }
     let decision = policy.evaluate(claims, derive_action(method, path), ENTITY);
     if decision.allowed {
         Ok(())

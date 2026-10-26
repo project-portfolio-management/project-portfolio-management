@@ -162,6 +162,30 @@ pub fn service_rules() -> Vec<Rule> {
 /// integration's token; the family decides authorization from attributes, not from the older `scope` claim.
 pub const READ_ONLY_SCOPE: (&str, &str) = ("scope", "readonly");
 
+/// The attribute that narrows a token to capture (BR-12): `scope=capture`. The token reads and searches whatever its
+/// other attributes allow, and may `POST` only a status update, a comment or a lesson ([`capture_allows`]).
+pub const CAPTURE_SCOPE: (&str, &str) = ("scope", "capture");
+
+/// Whether a capture token may make this request: any read, and a `POST` to exactly
+/// `/api/plans/{pid}/status-updates`, `/api/plans/{pid}/lessons` or `/api/comments`. Everything else is refused,
+/// including a `POST` that only reads, as for the read-only scope. Pure.
+#[must_use]
+pub fn capture_allows(method: &Method, path: &str) -> bool {
+    let path = path.trim_end_matches('/');
+    match *method {
+        Method::GET | Method::HEAD | Method::OPTIONS => true,
+        Method::POST => {
+            let parts: Vec<&str> = path.trim_start_matches('/').split('/').collect();
+            match parts.as_slice() {
+                ["api", "comments"] => true,
+                ["api", "plans", pid, "status-updates" | "lessons"] => !pid.is_empty(),
+                _ => false,
+            }
+        }
+        _ => false,
+    }
+}
+
 /// The area of the right to acknowledge an escalation (CF-4).
 pub const ESCALATION_ACKNOWLEDGEMENT: &str = "escalation_acknowledgement";
 

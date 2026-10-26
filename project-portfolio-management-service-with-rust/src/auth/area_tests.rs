@@ -286,3 +286,53 @@ fn a_read_only_token_is_refused_every_write_whatever_else_it_holds() {
     let writer = claims(&[("access", "write")]);
     assert!(permissive.evaluate(&writer, Action::Write, ENTITY).allowed);
 }
+
+/// BR-12: a capture token reads and posts a status update, a comment or a lesson, and nothing else, whatever else it
+/// holds; the same identity without the scope is unchanged.
+#[test]
+fn a_capture_token_posts_three_things_and_nothing_else() {
+    use axum::http::Method;
+    let plan = "/api/plans/3f2c6b7e-0000-4000-8000-0000000000ad";
+    for ok in [
+        (Method::GET, "/api/plans".to_string()),
+        (Method::GET, format!("{plan}/status")),
+        (Method::POST, format!("{plan}/status-updates")),
+        (Method::POST, format!("{plan}/status-updates/")),
+        (Method::POST, format!("{plan}/lessons")),
+        (Method::POST, "/api/comments".to_string()),
+    ] {
+        assert!(capture_allows(&ok.0, &ok.1), "{ok:?}");
+    }
+    for no in [
+        (Method::PUT, plan.to_string()),
+        (Method::PATCH, plan.to_string()),
+        (Method::DELETE, plan.to_string()),
+        (Method::POST, "/api/plans".to_string()),
+        (Method::POST, format!("{plan}/lessons/x/withdraw")),
+        (Method::POST, format!("{plan}/tasks")),
+        (Method::POST, format!("{plan}/instantiate")),
+        (
+            Method::POST,
+            "/api/plan-templates/x/instantiate".to_string(),
+        ),
+        (Method::PUT, "/api/comments/x".to_string()),
+        (Method::DELETE, "/api/comments/x".to_string()),
+        (Method::POST, "/api/plans//status-updates".to_string()),
+    ] {
+        assert!(!capture_allows(&no.0, &no.1), "{no:?}");
+    }
+    let permissive = with_service_rules(Policy {
+        rules: vec![Rule {
+            effect: Effect::Allow,
+            actions: vec![ActionPattern::Any],
+            when: std::collections::BTreeMap::new(),
+            obligations: Vec::new(),
+        }],
+    });
+    let admin_capture = claims(&[("access", "admin"), ("scope", "capture")]);
+    let post = |c: &Claims, p: &str| decide(c, &Method::POST, p, &permissive).is_ok();
+    assert!(post(&admin_capture, &format!("{plan}/status-updates")));
+    assert!(!post(&admin_capture, &format!("{plan}/tasks")));
+    let admin = claims(&[("access", "admin")]);
+    assert!(post(&admin, &format!("{plan}/tasks")));
+}

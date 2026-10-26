@@ -8,6 +8,7 @@
 //! * `GET /api/status-updates/due`: the plans the caller can read whose update is due, most overdue first;
 //! * `POST /api/status-updates/remind`: tell the person who last posted (else who set the cadence) once per due
 //!   date. The scheduler ticker does the same on its own when it is switched on.
+//! * `GET /api/status-metrics`: the definitions of the numbers a claim may cite (BR-2);
 //! * [`pack_section`]: the director pack's view, as at its cut-off.
 
 use std::collections::HashSet;
@@ -21,10 +22,12 @@ use uuid::Uuid;
 
 use super::{db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
+use crate::meetings::Link;
 use crate::models::_entities::{
     plan_status_cadences as cadences, plans, status_updates as updates,
 };
 use crate::models::audit_logs::Model as AuditModel;
+use crate::status_evidence::{self as evidence, Claim, Counts, Source, TaskFact};
 use crate::status_updates::{self as rules, Standing};
 
 fn update_view(u: &updates::Model) -> Value {
@@ -32,6 +35,82 @@ fn update_view(u: &updates::Model) -> Value {
         "pid": u.pid, "plan_pid": u.plan_pid, "status": u.status, "narrative": u.narrative,
         "posted_on": u.posted_on, "posted_by": u.posted_by, "posted_at": u.created_at,
     })
+}
+
+/// The plan's open-task numbers as of today (BR-2): "open" is a workflow state that is not done.
+async fn counts_of(ctx: &AppContext, plan: Uuid) -> Result<Counts> {
+    let workflow = super::workflow::in_force(ctx, plan, "task").await?;
+    let rows = crate::models::_entities::tasks::Entity::find()
+        .filter(crate::models::_entities::tasks::Column::PlanPid.eq(plan))
+        .filter(crate::models::_entities::tasks::Column::DeletedAt.is_null())
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let facts: Vec<TaskFact> = rows
+        .iter()
+        .map(|t| TaskFact {
+            due: t.due_date,
+            open: !crate::workflow::is_done(&workflow, &t.status),
+            blocked: t.status == "blocked",
+        })
+        .collect();
+    Ok(evidence::counts(&facts, crate::tz::deployment_today()))
+}
+
+/// An update with its claims' sources resolved for the reader. Sources are stored as ids; a record that is gone, or
+/// not a record of the plan, is `unavailable` with no title; a metric carries its current value (`null` is unknown)
+/// and its definition. The numbers are counted once per request, and only when a claim cites one.
+async fn view_with_evidence(
+    ctx: &AppContext,
+    u: &updates::Model,
+    counts: &mut Option<Counts>,
+) -> Result<Value> {
+    let claims: Vec<Claim> = serde_json::from_value(u.claims.clone()).unwrap_or_default();
+    let mut shown = Vec::with_capacity(claims.len());
+    for c in &claims {
+        let mut sources = Vec::with_capacity(c.sources.len());
+        for s in &c.sources {
+            sources.push(match evidence::parse(s) {
+                Ok(Source::Record { kind, pid }) => {
+                    let link = Link { kind: kind.clone(), pid };
+                    match super::meetings::describe(&ctx.db, u.plan_pid, &link).await? {
+                        Some(title) => json!({ "source": s, "state": "ok", "kind": kind, "pid": pid, "title": title }),
+                        None => json!({ "source": s, "state": "unavailable" }),
+                    }
+                }
+                Ok(Source::Metric(key)) => {
+                    if counts.is_none() {
+                        *counts = Some(counts_of(ctx, u.plan_pid).await?);
+                    }
+                    let value = counts.as_ref().and_then(|c| c.value(&key));
+                    let def = evidence::METRICS.iter().find(|m| m.key == key);
+                    json!({
+                        "source": s, "state": "ok", "kind": "metric", "key": key,
+                        "value": value, "known": value.is_some(),
+                        "definition": def.map(|d| d.definition),
+                    })
+                }
+                Err(_) => json!({ "source": s, "state": "unavailable" }),
+            });
+        }
+        shown.push(json!({ "text": c.text, "sources": sources }));
+    }
+    let mut v = update_view(u);
+    v["claims"] = json!(shown);
+    Ok(v)
+}
+
+/// `GET /api/status-metrics`: how each number a claim may cite is counted. A number that cannot be known is `null`
+/// in a claim's source, never zero.
+#[debug_handler]
+async fn metrics() -> Result<Response> {
+    format::json(json!({
+        "due_soon_days": evidence::DUE_SOON_DAYS,
+        "metrics": evidence::METRICS.iter().map(|m| json!({
+            "key": m.key, "label": m.label, "definition": m.definition,
+        })).collect::<Vec<_>>(),
+        "note": "A status is chosen by a person; the service computes no health score.",
+    }))
 }
 
 async fn latest_before<C: ConnectionTrait>(
@@ -151,6 +230,10 @@ pub(crate) struct UpdateBody {
     status: String,
     /// What is going on, in words.
     narrative: String,
+    /// Optional claims, each a sentence with sources (`task:<pid>`, `risk:<pid>`, `issue:<pid>`, `milestone:<pid>`,
+    /// `metric:<key>`). Every source is checked on save.
+    #[serde(default)]
+    claims: Vec<Claim>,
 }
 
 /// `POST /api/plans/{pid}/status-updates`.
@@ -162,9 +245,23 @@ async fn post_update(
     Json(body): Json<UpdateBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let found = rules::update_problems(&body.status, &body.narrative);
+    let mut found = rules::update_problems(&body.status, &body.narrative);
+    found.extend(evidence::problems(&body.claims));
     if !found.is_empty() {
         return Err(unprocessable(&found.join("; ")));
+    }
+    for (i, c) in body.claims.iter().enumerate() {
+        for s in &c.sources {
+            if let Ok(Source::Record { kind, pid }) = evidence::parse(s)
+                && super::meetings::describe(&ctx.db, plan.pid, &Link { kind, pid })
+                    .await?
+                    .is_none()
+            {
+                return Err(unprocessable(&format!(
+                    "claim {i}: {s} is not a record of this plan"
+                )));
+            }
+        }
     }
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = updates::ActiveModel {
@@ -174,6 +271,7 @@ async fn post_update(
         narrative: ActiveValue::set(body.narrative.trim().to_string()),
         posted_on: ActiveValue::set(crate::tz::deployment_today()),
         posted_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        claims: ActiveValue::set(json!(body.claims)),
         ..Default::default()
     }
     .insert(&txn)
@@ -184,12 +282,12 @@ async fn post_update(
         plan.pid,
         "status_update_posted",
         caller.actor(),
-        Some(json!({ "update": row.pid, "status": row.status })),
+        Some(json!({ "update": row.pid, "status": row.status, "claims": body.claims.len() })),
     )
     .await
     .map_err(super::audit_failed)?;
     txn.commit().await.map_err(db_err)?;
-    format::json(update_view(&row))
+    format::json(view_with_evidence(&ctx, &row, &mut None).await?)
 }
 
 /// `GET /api/plans/{pid}/status-updates`: the history, newest first.
@@ -202,7 +300,12 @@ async fn list_updates(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    format::json(rows.iter().map(update_view).collect::<Vec<_>>())
+    let mut counts = None;
+    let mut out = Vec::with_capacity(rows.len());
+    for r in &rows {
+        out.push(view_with_evidence(&ctx, r, &mut counts).await?);
+    }
+    format::json(out)
 }
 
 /// `GET /api/plans/{pid}/status` — the latest update, the plan's cadence and where it stands against it (today, in the
@@ -220,7 +323,10 @@ async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
     format::json(json!({
         "plan_pid": plan.pid,
         "as_of": today,
-        "latest": last.as_ref().map(update_view),
+        "latest": match last.as_ref() {
+            Some(u) => Some(view_with_evidence(&ctx, u, &mut None).await?),
+            None => None,
+        },
         "cadence_days": cadence.as_ref().map(|c| c.cadence_days),
         "standing": cadence.as_ref().map(|c| standing_of(c, last.as_ref(), today)),
     }))
@@ -444,6 +550,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/status-updates", post(post_update))
         .add("/plans/{pid}/status-updates", get(list_updates))
         .add("/plans/{pid}/status", get(get_status))
+        .add("/status-metrics", get(metrics))
         .add("/status-updates/due", get(due))
         .add("/status-updates/remind", post(remind))
 }

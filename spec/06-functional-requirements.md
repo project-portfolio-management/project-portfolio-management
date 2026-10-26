@@ -377,6 +377,20 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `Idempotency-Key` (NFR-7) returns the first answer. Not built: matching a *name* in the minutes to a person (the
   service holds no names, only `person:`/`worker:` URNs, so the proposer resolves them; the ambiguous-assignee choice
   in the task text is therefore not built); creating risks or issues from minutes; a screen.
+- **FR-16e14 Evidence behind a status update (BR-2).** `POST /api/plans/{pid}/status-updates` may carry up to 10
+  `claims`, each a sentence (up to 500 characters) with up to 5 `sources`: `task:<pid>`, `risk:<pid>`, `issue:<pid>`,
+  `milestone:<pid>`, `change_request:<pid>`, `cutover_decision:<pid>` or `metric:<key>`. Every source is checked on
+  save: a record that is not a live record of this plan, an unknown kind or metric, or a malformed id makes the whole
+  update `422` and nothing is stored. Sources are stored as ids and never as titles. When an update is read (the
+  history, the latest, the response to the post) each source is resolved as it is now: a record gives its title; one
+  that has since been deleted is `unavailable` with no title and no id; a metric gives its current value and its
+  definition. `GET /api/status-metrics` publishes the definitions: `overdue` (open tasks due before today; due today is
+  not overdue), `due_soon` (due today to 7 days ahead), `blocked` and `no_due_date`, over the plan's open tasks (a
+  workflow state that is not done). `overdue` and `due_soon` are `null` (unknown, `known: false`), never zero, when
+  the plan has open tasks and none has a due date. The service computes no health score: the status stays a person's
+  call. Not built: a per-record visibility check beyond the plan's (the service has none for tasks and risks, so a
+  reader of the plan can open every source in it); claims on the director pack's section; editing a posted update; a
+  screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

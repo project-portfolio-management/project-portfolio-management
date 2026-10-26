@@ -714,6 +714,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/sprints/{pid}/commit", "ceremony", "`POST /api/sprints/{pid}/commit` — snapshot the committed task set.  Refuses a second call: a rewritable commitment is not a commitment, and a sprint that grew by half would otherwise look like one that was always that size."),
     ("get", "/api/sprints/{pid}/commitment", "ceremony", "`GET /api/sprints/{pid}/commitment` — the committed set beside the current one, so a scope change reads **as a change**."),
     ("get", "/api/start-queue", "start_control", "`GET /api/start-queue` — programmes waiting to start that you can read, in the order they asked."),
+    ("get", "/api/status-metrics", "status_updates", "`GET /api/status-metrics`: how each number a claim may cite is counted. A number that cannot be known is `null` in a claim's source, never zero."),
     ("get", "/api/status-updates/due", "status_updates", "`GET /api/status-updates/due` — the plans the caller can read whose next update is due, most overdue first."),
     ("post", "/api/status-updates/remind", "status_updates", "`POST /api/status-updates/remind`."),
     ("post", "/api/tasks/bulk", "task_bulk", "`POST /api/tasks/bulk` — set the same fields on many tasks."),

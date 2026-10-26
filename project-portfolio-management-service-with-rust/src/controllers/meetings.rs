@@ -36,7 +36,7 @@ const LINK_TABLES: &[(&str, &str, &str, &str)] = &[
 ];
 
 /// The name of the record a link points at, when it belongs to `plan_pid` and is still there.
-async fn describe(
+pub(super) async fn describe(
     db: &impl ConnectionTrait,
     plan_pid: Uuid,
     link: &Link,

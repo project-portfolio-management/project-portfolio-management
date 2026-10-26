@@ -20,6 +20,8 @@ pub struct Model {
     pub narrative: String,
     pub posted_on: Date,
     pub posted_by: Option<String>,
+    /// Claims with their sources, as ids (BR-2).
+    pub claims: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

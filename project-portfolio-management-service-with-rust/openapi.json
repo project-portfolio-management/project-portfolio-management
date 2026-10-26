@@ -25296,6 +25296,32 @@
               "schema": {
                 "description": "`POST /api/plans/{pid}/status-updates` body.",
                 "properties": {
+                  "claims": {
+                    "default": [],
+                    "description": "Optional claims, each a sentence with sources (`task:<pid>`, `risk:<pid>`, `issue:<pid>`, `milestone:<pid>`,\n`metric:<key>`). Every source is checked on save.",
+                    "items": {
+                      "description": "A claim as given or stored: a sentence and the sources that support it.",
+                      "properties": {
+                        "sources": {
+                          "default": [],
+                          "description": "`kind:<pid>` or `metric:<key>`.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "text": {
+                          "description": "What is being asserted.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
                   "narrative": {
                     "description": "What is going on, in words.",
                     "type": "string"
@@ -31962,6 +31988,21 @@
         "summary": "Programmes waiting to start, in the order they asked",
         "tags": [
           "governance"
+        ]
+      }
+    },
+    "/api/status-metrics": {
+      "get": {
+        "description": "`GET /api/status-metrics`: how each number a claim may cite is counted. A number that cannot be known is `null` in a claim's source, never zero.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/status-metrics`: how each number a claim may cite is counted",
+        "tags": [
+          "status_updates"
         ]
       }
     },

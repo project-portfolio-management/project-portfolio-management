@@ -51,6 +51,7 @@ mod scale;
 mod scheduled_jobs;
 mod scoring;
 mod security_regression;
+mod status_evidence;
 mod status_updates;
 mod strategy;
 mod subjects;

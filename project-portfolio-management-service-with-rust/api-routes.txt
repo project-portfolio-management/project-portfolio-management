@@ -627,6 +627,7 @@ POST /api/sprints/{pid}/ceremonies
 POST /api/sprints/{pid}/commit
 GET /api/sprints/{pid}/commitment
 GET /api/start-queue
+GET /api/status-metrics
 GET /api/status-updates/due
 POST /api/status-updates/remind
 POST /api/tasks/bulk

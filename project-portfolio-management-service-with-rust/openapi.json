@@ -21857,7 +21857,7 @@
     },
     "/api/plans/{pid}/meetings/{mid}/task-proposals/commit": {
       "post": {
-        "description": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/commit`: create every proposed task in one transaction, or none (audited); each task is linked to its outcome and an outcome has at most one task. Send an `Idempotency-Key` so a retry returns the first answer.",
+        "description": "`POST …/task-proposals/commit`: create every proposed task in one transaction, or none (audited). A proposal that is not ready, or an outcome that already has a task, is `422` and nothing is written.",
         "parameters": [
           {
             "in": "path",
@@ -21946,15 +21946,15 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/commit`: create every proposed task in one transaction, or none (audited); each task is linked to its outcome and an outcome has at most one task",
+        "summary": "`POST …/task-proposals/commit`: create every proposed task in one transaction, or none (audited)",
         "tags": [
-          "meetings"
+          "meeting_actions"
         ]
       }
     },
     "/api/plans/{pid}/meetings/{mid}/task-proposals/preview": {
       "post": {
-        "description": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview`: judge proposed tasks against a held meeting's minutes and the plan's people; nothing is written. Each is ready, dropped with a reason (the quoted excerpt is not in the minutes, the outcome is not an action or already has a task, the assignee is not a person of the plan, the due date is outside the window).",
+        "description": "`POST …/task-proposals/preview`: judge each proposal against the minutes and the plan; nothing is written.",
         "parameters": [
           {
             "in": "path",
@@ -22043,9 +22043,9 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview`: judge proposed tasks against a held meeting's minutes and the plan's people; nothing is written",
+        "summary": "`POST …/task-proposals/preview`: judge each proposal against the minutes and the plan; nothing is written",
         "tags": [
-          "meetings"
+          "meeting_actions"
         ]
       }
     },

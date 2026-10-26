@@ -6,7 +6,8 @@
 //! * `GET /api/plans/{pid}/meetings/{mid}`: one meeting with its agenda, minutes and outcomes;
 //! * `POST …/{mid}/held`: record that it was held, with minutes and outcomes (once; a record is not edited);
 //! * `POST …/{mid}/cancel`: cancel a planned meeting;
-//! * `GET …/{mid}/pdf`: the meeting as a PDF, from what the JSON shows and no more.
+//! * `GET …/{mid}/pdf`: the meeting as a PDF, from what the JSON shows and no more;
+//! * `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and lessons that point at one record of the plan (BR-4).
 
 use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, DatabaseBackend, QueryOrder, Statement};
@@ -430,6 +431,81 @@ async fn pdf(
     ))
 }
 
+/// `GET /api/plans/{pid}/references` query.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReferencesQuery {
+    /// `task`, `risk`, `issue`, `milestone`, `change_request` or `cutover_decision`.
+    kind: String,
+    /// The record's `pid`.
+    pid: Uuid,
+}
+
+/// `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan.
+/// The plan guard runs first (a plan the caller cannot read is a `404`), then the target must be a live record of
+/// this plan, else it answers as one that does not exist; only then are references read, and `count` is the length
+/// of what is listed.
+#[debug_handler]
+async fn references(
+    State(ctx): State<AppContext>,
+    Path(pid): Path<String>,
+    Query(q): Query<ReferencesQuery>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let link = Link {
+        kind: q.kind.clone(),
+        pid: q.pid,
+    };
+    let Some(title) = describe(&ctx.db, plan.pid, &link).await? else {
+        return Err(Error::NotFound);
+    };
+    let rows = ctx
+        .db
+        .query_all_raw(Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            "SELECT m.pid AS meeting_pid, m.title AS meeting_title, m.status AS meeting_status, \
+                    m.scheduled_on AS scheduled_on, i.part AS part, i.outcome_kind AS outcome_kind, i.text AS text \
+             FROM meeting_items i JOIN meetings m ON m.pid = i.meeting_pid \
+             WHERE m.plan_pid = $1 AND m.deleted_at IS NULL AND i.link_kind = $2 AND i.link_pid = $3 \
+             ORDER BY m.scheduled_on DESC, i.id"
+                .to_string(),
+            [plan.pid.into(), q.kind.clone().into(), q.pid.into()],
+        ))
+        .await
+        .map_err(db_err)?;
+    let meetings: Vec<serde_json::Value> = rows
+        .iter()
+        .map(|r| {
+            json!({
+                "meeting_pid": r.try_get::<Uuid>("", "meeting_pid").ok(),
+                "meeting_title": r.try_get::<String>("", "meeting_title").ok(),
+                "meeting_status": r.try_get::<String>("", "meeting_status").ok(),
+                "scheduled_on": r.try_get::<chrono::NaiveDate>("", "scheduled_on").ok(),
+                "part": r.try_get::<String>("", "part").ok(),
+                "outcome_kind": r.try_get::<Option<String>>("", "outcome_kind").ok().flatten(),
+                "text": r.try_get::<String>("", "text").ok(),
+            })
+        })
+        .collect();
+    let lessons: Vec<serde_json::Value> = crate::models::_entities::lessons::Entity::find()
+        .filter(crate::models::_entities::lessons::Column::PlanPid.eq(plan.pid))
+        .filter(crate::models::_entities::lessons::Column::DeletedAt.is_null())
+        .filter(crate::models::_entities::lessons::Column::LinkKind.eq(q.kind.clone()))
+        .filter(crate::models::_entities::lessons::Column::LinkPid.eq(q.pid))
+        .order_by_asc(crate::models::_entities::lessons::Column::Id)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|l| json!({ "lesson_pid": l.pid, "occasion": l.occasion, "category": l.category, "summary": l.summary }))
+        .collect();
+    format::json(json!({
+        "target": { "kind": q.kind, "pid": q.pid, "title": title },
+        "meetings": meetings,
+        "lessons": lessons,
+        "count": meetings.len() + lessons.len(),
+    }))
+}
+
 /// The meeting routes.
 pub fn routes() -> Routes {
     Routes::new()
@@ -440,4 +516,5 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/meetings/{mid}/held", post(held))
         .add("/plans/{pid}/meetings/{mid}/cancel", post(cancel))
         .add("/plans/{pid}/meetings/{mid}/pdf", get(pdf))
+        .add("/plans/{pid}/references", get(references))
 }

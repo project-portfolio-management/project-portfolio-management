@@ -143,6 +143,7 @@ mod m20261025_000094_meetings;
 mod m20261025_000095_idempotency_keys;
 mod m20261025_000096_meeting_tasks;
 mod m20261025_000097_status_claims;
+mod m20261025_000098_lesson_links;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -287,6 +288,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261025_000095_idempotency_keys::Migration),
             Box::new(m20261025_000096_meeting_tasks::Migration),
             Box::new(m20261025_000097_status_claims::Migration),
+            Box::new(m20261025_000098_lesson_links::Migration),
             // inject-above (do not remove this comment)
         ]
     }

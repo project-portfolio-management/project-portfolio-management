@@ -104,7 +104,8 @@ mutation (§10.2).
 - **`scheduled_job_runs`** (built, FR-16e8) — `pid`, `job`, `started_at`, `finished_at?`, `outcome` (`running`, `ok`, `failed` by CHECK), `detail?`; one row per run of a job the service schedules for itself; migration `m20261025_000092`.
 - **`lessons`** (built, FR-16e4) — `pid`, `plan_pid`, `occasion` (a gate or `closure`), `category` (`went_well`,
   `went_badly`, `recommendation`, by CHECK), `summary`, `detail?`, `recorded_by?`, `deleted_at?` (a withdrawal);
-  append-only (migration `m20261025_000090`).
+  append-only (migration `m20261025_000090`); `link_kind?` and `link_pid?` (BR-4, migration 98) name one record of the
+  plan, indexed with `meeting_items.link_pid`.
 - **`plan_tolerances`** (built, FR-53) — a plan's limit per dimension: `plan_pid`, `dimension` (CHECK
   `time`/`schedule`/`cost`/`risk`/`resources`, widened by `m20261021_000085`), `limit_value` (CHECK 0 to 100000, and 1 to 25 for risk),
   `amber_from_percent` (CHECK 1 to 99, default 75), `note?`, `set_by?`; unique `(plan_pid, dimension)`. A plan

@@ -20984,6 +20984,27 @@
                     "nullable": true,
                     "type": "string"
                   },
+                  "link": {
+                    "default": null,
+                    "description": "A task, risk, issue, milestone, change request or cutover decision of this plan the lesson is about.",
+                    "nullable": true,
+                    "properties": {
+                      "kind": {
+                        "description": "One of [`LINK_KINDS`].",
+                        "type": "string"
+                      },
+                      "pid": {
+                        "description": "The record's `pid`.",
+                        "format": "uuid",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "pid"
+                    ],
+                    "type": "object"
+                  },
                   "occasion": {
                     "description": "A gate (`g0_concept` … `g5_benefits`) or `closure`.",
                     "type": "string"
@@ -23311,6 +23332,30 @@
         "summary": "The plan's RACI matrix",
         "tags": [
           "raci"
+        ]
+      }
+    },
+    "/api/plans/{pid}/references": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan. The plan guard runs first (a plan the caller cannot read is a `404`), then the target must be a live record of this plan, else it answers as one that does not exist; only then are references read, and `count` is the length of what is listed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/references?kind=&pid=`: the meetings and the lessons that point at one record of the plan",
+        "tags": [
+          "meetings"
         ]
       }
     },

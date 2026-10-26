@@ -391,6 +391,15 @@ matcher payload (§5.6); every mutation audits (§6.6).
   call. Not built: a per-record visibility check beyond the plan's (the service has none for tasks and risks, so a
   reader of the plan can open every source in it); claims on the director pack's section; editing a posted update; a
   screen.
+- **FR-16e15 Reverse references (BR-4).** `GET /api/plans/{pid}/references?kind=&pid=` lists the meetings (agenda items
+  and outcomes) and the lessons that point at one task, risk, issue, milestone, change request or cutover decision of
+  the plan, and a `count` that is the length of the two lists together. A lesson may now carry an optional `link`
+  (`{kind, pid}`), checked on save like a meeting's (a record of another plan or an unknown kind is `422`); a lesson
+  recorded before has none and appears under nothing. The plan guard runs first, so a private plan the caller cannot
+  read is `404`; then the target must be a live record of this plan, else `404`, so a wrong plan, an unknown kind and a
+  missing record are indistinguishable. A withdrawn lesson and a deleted meeting are not listed; a cancelled meeting is
+  (its `meeting_status` says so). Not built: references from comments, tasks or risks; a screen; setting a link on an
+  existing lesson.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

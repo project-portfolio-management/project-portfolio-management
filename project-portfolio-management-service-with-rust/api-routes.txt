@@ -441,6 +441,7 @@ POST /api/plans/{pid}/programme-status
 GET /api/plans/{pid}/project-buffer
 PUT /api/plans/{pid}/project-buffer
 GET /api/plans/{pid}/raci
+GET /api/plans/{pid}/references
 PUT /api/plans/{pid}/reporting-method
 GET /api/plans/{pid}/risks
 POST /api/plans/{pid}/risks

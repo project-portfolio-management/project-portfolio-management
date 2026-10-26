@@ -42,6 +42,9 @@ pub(crate) struct LessonPayload {
     /// More, when a sentence is not enough.
     #[serde(default)]
     detail: Option<String>,
+    /// A task, risk, issue, milestone, change request or cutover decision of this plan the lesson is about.
+    #[serde(default)]
+    link: Option<crate::meetings::Link>,
 }
 
 fn problems(p: &LessonPayload) -> Vec<String> {
@@ -77,6 +80,16 @@ async fn record(
     if !found.is_empty() {
         return Err(unprocessable(&found.join("; ")));
     }
+    if let Some(l) = &body.link
+        && super::meetings::describe(&ctx.db, plan.pid, l)
+            .await?
+            .is_none()
+    {
+        return Err(unprocessable(&format!(
+            "{} {} is not a record of this plan",
+            l.kind, l.pid
+        )));
+    }
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let row = lessons::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -86,6 +99,8 @@ async fn record(
         summary: ActiveValue::set(body.summary.trim().to_string()),
         detail: ActiveValue::set(body.detail.clone()),
         recorded_by: ActiveValue::set(caller.actor().map(str::to_string)),
+        link_kind: ActiveValue::set(body.link.as_ref().map(|l| l.kind.clone())),
+        link_pid: ActiveValue::set(body.link.as_ref().map(|l| l.pid)),
         deleted_at: ActiveValue::set(None),
         ..Default::default()
     }

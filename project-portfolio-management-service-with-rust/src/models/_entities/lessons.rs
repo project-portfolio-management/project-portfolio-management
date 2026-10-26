@@ -20,6 +20,10 @@ pub struct Model {
     pub summary: String,
     pub detail: Option<String>,
     pub recorded_by: Option<String>,
+    /// The kind of record the lesson points at, when it does (BR-4).
+    pub link_kind: Option<String>,
+    /// That record's `pid`.
+    pub link_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 

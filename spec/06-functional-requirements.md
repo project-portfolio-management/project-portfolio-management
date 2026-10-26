@@ -363,6 +363,20 @@ matcher payload (§5.6); every mutation audits (§6.6).
   is new, a new log row records the outcome, and the audit row is written first. Both are administrators only (`404`
   for anyone else). Not built: redelivery of a notification-sink delivery (those have their own retry); redelivery
   after the outbox has dropped the event; an automatic replay-window check on our side (it is the receiver's rule).
+- **FR-16e13 Action items from minutes to tasks (BR-3).** The service runs no model. For a **held** meeting (any other
+  is `409`), `POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview` judges up to 20 proposed tasks and writes
+  nothing; `…/commit` creates them in one transaction, all or none, audited (`meeting_tasks_created`). A proposal gives
+  a `title`, an `excerpt`, the `outcome` (0-based position among the meeting's outcomes, which must be an `action`)
+  and optionally `assignee_ref`, `due_on` and `points`. It is **dropped** with a named reason when the excerpt (at least
+  8 characters, case and spacing ignored) is not in the minutes (`excerpt_not_in_minutes`), the outcome is missing or
+  not an action or already has a task, the due date is more than 7 days before or 365 days after the meeting, the title
+  or points are invalid, or the assignee is not already a person of the plan (on a live task or a RACI row of it).
+  Preview returns each verdict and the counts; commit refuses the whole request (`422`, every reason listed) if any
+  item is not ready. Each task is linked to its outcome in `meeting_tasks`, whose unique `(meeting, outcome)` means an
+  outcome has at most one task, and `GET …/{mid}` shows `index` and `task_pid` on each outcome. A retry under the same
+  `Idempotency-Key` (NFR-7) returns the first answer. Not built: matching a *name* in the minutes to a person (the
+  service holds no names, only `person:`/`worker:` URNs, so the proposer resolves them; the ambiguous-assignee choice
+  in the task text is therefore not built); creating risks or issues from minutes; a screen.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

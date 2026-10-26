@@ -120,6 +120,7 @@ pub mod leveling;
 /// Pure bird.s-eye lifecycle rules (the funnel + next-phase readiness).
 pub mod lifecycle;
 pub mod live;
+pub mod meeting_actions;
 pub mod meetings;
 pub mod merge;
 pub mod metrics;

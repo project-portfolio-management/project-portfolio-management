@@ -502,6 +502,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/meetings/{mid}/cancel", "meetings", "`POST /api/plans/{pid}/meetings/{mid}/cancel`: cancel a planned meeting (audited); `409` once held or cancelled."),
     ("post", "/api/plans/{pid}/meetings/{mid}/held", "meetings", "`POST /api/plans/{pid}/meetings/{mid}/held`: record the minutes and outcomes of a planned meeting, once (audited). A meeting that is held or cancelled is a record and answers `409`."),
     ("get", "/api/plans/{pid}/meetings/{mid}/pdf", "meetings", "`GET /api/plans/{pid}/meetings/{mid}/pdf`: the meeting as a PDF: agenda, and once held the minutes and outcomes. It states the meeting's own dates and not the moment of rendering, so two renders are byte-identical."),
+    ("post", "/api/plans/{pid}/meetings/{mid}/task-proposals/commit", "meeting_actions", "`POST …/task-proposals/commit`: create every proposed task in one transaction, or none (audited). A proposal that is not ready, or an outcome that already has a task, is `422` and nothing is written."),
+    ("post", "/api/plans/{pid}/meetings/{mid}/task-proposals/preview", "meeting_actions", "`POST …/task-proposals/preview`: judge each proposal against the minutes and the plan; nothing is written."),
     ("get", "/api/plans/{pid}/milestones", "visibility", "`GET /api/plans/{pid}/milestones` — due-date order, with overdue flags."),
     ("post", "/api/plans/{pid}/milestones", "visibility", ""),
     ("put", "/api/plans/{pid}/milestones/{m_pid}", "visibility", "`PUT /api/plans/{pid}/milestones/{m_pid}` — reschedule a milestone's `due` date.  Added for T-28g: the `milestone_due_changed` trigger needs a real write path, and none existed before this — a milestone could be created and completed, never moved. Fires the trigger only when `due` actually changes, mirroring `plans::update`'s `plan_timeframe_changed` firing."),
@@ -920,6 +922,8 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/plans/{pid}/links", crate::controllers::plan_links::LinkBody);
     body!("post", "/api/plans/{pid}/meetings", crate::controllers::meetings::PlanBody);
     body!("post", "/api/plans/{pid}/meetings/{mid}/held", crate::controllers::meetings::HeldBody);
+    body!("post", "/api/plans/{pid}/meetings/{mid}/task-proposals/commit", crate::controllers::meeting_actions::ProposalsBody);
+    body!("post", "/api/plans/{pid}/meetings/{mid}/task-proposals/preview", crate::controllers::meeting_actions::ProposalsBody);
     body!("post", "/api/plans/{pid}/milestones", crate::controllers::visibility::MilestonePayload);
     body!("put", "/api/plans/{pid}/milestones/{m_pid}", crate::controllers::visibility::MilestoneReschedulePayload);
     body!("post", "/api/plans/{pid}/milestones/{m_pid}/reopen", crate::controllers::milestones::ReopenBody);

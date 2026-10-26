@@ -155,7 +155,7 @@ async fn insert_item(
     Ok(())
 }
 
-async fn find(ctx: &AppContext, plan_pid: Uuid, mid: &str) -> Result<meetings::Model> {
+pub(super) async fn find(ctx: &AppContext, plan_pid: Uuid, mid: &str) -> Result<meetings::Model> {
     meetings::Entity::find()
         .filter(meetings::Column::Pid.eq(super::parse_pid(mid)?))
         .filter(meetings::Column::PlanPid.eq(plan_pid))
@@ -259,10 +259,30 @@ async fn get_one(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let m = find(&ctx, plan.pid, &mid).await?;
     let items = load_items(&ctx, plan.pid, m.pid).await?;
+    // Each outcome says which task was created from it (BR-3), by its position among the outcomes.
+    let made = ctx
+        .db
+        .query_all_raw(Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            "SELECT outcome_no, task_pid FROM meeting_tasks WHERE meeting_pid = $1",
+            [m.pid.into()],
+        ))
+        .await
+        .map_err(db_err)?;
+    let mut outcomes = items.outcomes_json;
+    for (i, o) in outcomes.iter_mut().enumerate() {
+        let task = made.iter().find_map(|r| {
+            (r.try_get::<i32>("", "outcome_no").ok()? == i32::try_from(i).ok()?)
+                .then(|| r.try_get::<Uuid>("", "task_pid").ok())
+                .flatten()
+        });
+        o["index"] = json!(i);
+        o["task_pid"] = json!(task);
+    }
     format::json(json!({
         "pid": m.pid, "title": m.title, "scheduled_on": m.scheduled_on, "status": m.status,
         "held_on": m.held_on, "minutes": m.minutes,
-        "agenda": items.agenda_json, "outcomes": items.outcomes_json,
+        "agenda": items.agenda_json, "outcomes": outcomes,
     }))
 }
 

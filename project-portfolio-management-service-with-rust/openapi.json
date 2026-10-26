@@ -21855,6 +21855,200 @@
         ]
       }
     },
+    "/api/plans/{pid}/meetings/{mid}/task-proposals/commit": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/commit`: create every proposed task in one transaction, or none (audited); each task is linked to its outcome and an outcome has at most one task. Send an `Idempotency-Key` so a retry returns the first answer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Both routes take this body.",
+                "properties": {
+                  "items": {
+                    "description": "The proposed tasks (at most 20).",
+                    "items": {
+                      "description": "One proposed task as given.",
+                      "properties": {
+                        "assignee_ref": {
+                          "default": null,
+                          "description": "Who it is assigned to: a URN already on the plan's tasks or RACI rows.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "due_on": {
+                          "default": null,
+                          "description": "When it is due.",
+                          "format": "date",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "excerpt": {
+                          "description": "A passage of the minutes that supports the task; it must appear in them (case and spacing are ignored).",
+                          "type": "string"
+                        },
+                        "outcome": {
+                          "description": "Which outcome of the meeting this is: the 0-based position among its outcomes, which must be an `action`.",
+                          "format": "uint",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "points": {
+                          "default": null,
+                          "description": "Story points, if the plan estimates in them.",
+                          "format": "int32",
+                          "nullable": true,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "description": "The task's title.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "excerpt",
+                        "outcome"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "items"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/commit`: create every proposed task in one transaction, or none (audited); each task is linked to its outcome and an outcome has at most one task",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
+    "/api/plans/{pid}/meetings/{mid}/task-proposals/preview": {
+      "post": {
+        "description": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview`: judge proposed tasks against a held meeting's minutes and the plan's people; nothing is written. Each is ready, dropped with a reason (the quoted excerpt is not in the minutes, the outcome is not an action or already has a task, the assignee is not a person of the plan, the due date is outside the window).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Both routes take this body.",
+                "properties": {
+                  "items": {
+                    "description": "The proposed tasks (at most 20).",
+                    "items": {
+                      "description": "One proposed task as given.",
+                      "properties": {
+                        "assignee_ref": {
+                          "default": null,
+                          "description": "Who it is assigned to: a URN already on the plan's tasks or RACI rows.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "due_on": {
+                          "default": null,
+                          "description": "When it is due.",
+                          "format": "date",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "excerpt": {
+                          "description": "A passage of the minutes that supports the task; it must appear in them (case and spacing are ignored).",
+                          "type": "string"
+                        },
+                        "outcome": {
+                          "description": "Which outcome of the meeting this is: the 0-based position among its outcomes, which must be an `action`.",
+                          "format": "uint",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "points": {
+                          "default": null,
+                          "description": "Story points, if the plan estimates in them.",
+                          "format": "int32",
+                          "nullable": true,
+                          "type": "integer"
+                        },
+                        "title": {
+                          "description": "The task's title.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "excerpt",
+                        "outcome"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "items"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview`: judge proposed tasks against a held meeting's minutes and the plan's people; nothing is written",
+        "tags": [
+          "meetings"
+        ]
+      }
+    },
     "/api/plans/{pid}/milestones": {
       "get": {
         "description": "`GET /api/plans/{pid}/milestones` — due-date order, with overdue flags.",

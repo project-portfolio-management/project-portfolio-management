@@ -2027,7 +2027,7 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   missing input is reported as unknown, never zero.
   **Acceptance:** a false reference is `422`; a reader without access to the source sees "unavailable" and no title;
   the definitions endpoint matches the counts in a fixture (due today is not overdue).
-- [ ] **BR-3 (S–M) — Action outcomes to tasks: propose, verify, create once.** Extends NC-14, no model in the
+- [x] **BR-3 (S–M) — Action outcomes to tasks: propose, verify, create once.** Extends NC-14, no model in the
   service. `POST /api/plans/{pid}/meetings/{mid}/task-proposals/preview` takes proposed items (from a person or an
   external agent) with an evidence excerpt that must appear in the minutes, an assignee name matched only against the
   plan's people (several matches are listed as ambiguous), and a due date inside a window around the meeting; nothing
@@ -2035,6 +2035,7 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   back to the meeting outcome, and refuses a second commit of the same outcome. Owner question §76.1.
   **Acceptance:** an excerpt not in the minutes is dropped and counted; an ambiguous assignee must be chosen; a retry
   with the same key creates nothing more; a task created is listed under the meeting's outcome.
+  **Built 2026-10-26.** `src/meeting_actions.rs` (pure `judge`, `excerpt_found`, `due_in_window`; 4 unit tests), `controllers/meeting_actions.rs` (`POST …/{mid}/task-proposals/preview` and `…/commit`), migration 96 `meeting_tasks` (unique per outcome), outcomes in `GET …/{mid}` carry `index` and `task_pid`. Test `proposed_tasks_are_verified_against_the_minutes_and_created_once`: a preview writes nothing and names each reason (excerpt not in the minutes, outcome not an action, due date outside the window, assignee not on the plan); commit refuses the whole request when one item is not ready; a retry under the same key returns the first answer and creates no task; another key for the same outcome is `422`; the meeting shows the task under its outcome. Spec FR-16e13. **Changed from the text above:** the service holds no person names (assignees are `person:` URNs), so there is no name matching and no "ambiguous" state; `assignee_ref` must already be a person of the plan, and the proposer resolves names. **Not done:** name matching; risks and issues from minutes; a screen. **Not verified:** the unique-table path under two concurrent commits (the up-front check answers first in the test); a plan with a custom task workflow; the Welsh or any UI text (none added). The owner question §76.1 was answered by building only the verify and create half.
 - [ ] **BR-4 (S) — Reverse references.** `GET /api/plans/{pid}/references?kind=&pid=` lists the meetings and lessons
   that point at a task, risk, issue or milestone of the plan. Visibility is applied before counting; a target the
   caller cannot read answers as one that does not exist. Depends on NC-14 and NC-8 (both built).

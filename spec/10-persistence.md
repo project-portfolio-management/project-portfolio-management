@@ -95,6 +95,8 @@ mutation (§10.2).
   planned / held / cancelled by CHECK, `minutes?`, `held_on?`, `created_by?`, `held_by?`, `deleted_at?`) and its agenda
   items and outcomes (`part`, `outcome_kind` decision / action / note by CHECK, `text`, optional `link_kind` and
   `link_pid` together); migration `m20261025_000094`.
+- **`meeting_tasks`** (built, FR-16e13) — which task came from which outcome (`meeting_pid`, `outcome_no`, `task_pid`);
+  `UNIQUE (meeting_pid, outcome_no)` so an outcome has at most one task; no personal data; migration `m20261025_000096`.
 - **`idempotency_keys`** (built, NFR-7) — `caller`, `key` (unique together), `method`, `path`, `request_hash`,
   `state` (`in_progress`, `done` by CHECK), and for a kept answer `status`, `content_type`, `body`; purged after one day
   (class `GEN`); migration `m20261025_000095`. The stored body is the answer as sent, so it may hold personal data

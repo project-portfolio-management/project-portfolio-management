@@ -32,6 +32,7 @@ mod insights;
 mod issues;
 mod lessons;
 mod live;
+mod meeting_actions;
 mod meetings;
 mod metrics_control;
 mod modules;

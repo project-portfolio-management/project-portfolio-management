@@ -230,7 +230,6 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.ObjectiveCard.currency": "Arian cyfred",
   "c.ObjectiveCard.currency_e_g_gbp": "Arian cyfred (e.e. GBP)",
   "c.ObjectiveCard.decrease": "Lleihau",
-  "c.CommandPalette.button": "Chwilio",
   "c.CommandPalette.cmd_dashboard": "Dangosfwrdd",
   "c.CommandPalette.cmd_escalations": "Uwchgyfeiriadau",
   "c.CommandPalette.cmd_my_work": "Fy ngwaith",
@@ -247,6 +246,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.CommandPalette.open": "Chwilio a gorchmynion",
   "c.CommandPalette.placeholder": "Teipiwch enw cynllun neu orchymyn",
   "c.CommandPalette.title": "Chwilio a gorchmynion",
+  "c.NavItems.portfolios": "Portffolios",
+  "c.NavItems.projects": "Prosiectau",
+  "c.NavItems.products": "Cynhyrchion",
+  "c.NavItems.programs": "Rhaglenni",
+  "c.NavItems.practices": "Arferion",
+  "c.NavItems.processes": "Prosesau",
+  "c.NavItems.purposes": "Dibenion",
+  "c.NavItems.pathways": "Llwybrau",
   "c.PasteTasks.check": "Gwirio gyda'r gwasanaeth",
   "c.PasteTasks.clear": "Clirio",
   "c.PasteTasks.col_due": "Terfyn amser",
@@ -592,6 +599,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.display.this_is_the_default_for":
     "Dyma'r rhagosodiad ar gyfer eich rôl: {v}.",
   "p.display.use_simple_view": "Defnyddio golwg syml",
+  "p.display.sections_title": "Adrannau yn y bar uchaf",
+  "p.display.sections_help":
+    "Dad-diciwch adran i'w chuddio o'r bar uchaf. Mae'n dal i fod un cam i ffwrdd yn ei chyfeiriad, a gallwch ei dangos eto yma. Ni chaiff dim ei gadw nes i chi guddio un, felly bydd adrannau a ychwanegir yn nes ymlaen yn eich cyrraedd.",
+  "p.display.sections_legend": "Dangos yr adrannau hyn",
+  "p.display.sections_hidden_count_one": "{n} adran wedi'i chuddio",
+  "p.display.sections_hidden_count_other": "{n} adran wedi'u cuddio",
+  "p.display.sections_none_hidden": "Nid oes adran wedi'i chuddio.",
+  "p.display.sections_show_all": "Dangos pob adran",
   "p.display.use_the_dyslexia_friendly_font":
     "Defnyddio'r ffont cyfeillgar i ddyslecsia",
   "p.display.uses_the_opendyslexic_typeface_with":

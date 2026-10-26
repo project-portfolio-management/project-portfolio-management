@@ -15,11 +15,15 @@
   import { page } from "$app/state";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple } from "#lib/preferences.js";
+  import { buildNavItems } from "#lib/nav-items.js";
 
   const data = $derived(page.data as { signedIn?: boolean; view?: string | null });
   const signedIn = $derived(data.signedIn === true);
   const simple = $derived(effectiveSimple(display.prefs, data.view));
   const chosen = $derived(typeof display.prefs.simple === "boolean");
+  // BR-17: every section of the top bar except the way home, ticked unless this person hid it.
+  const sections = $derived(buildNavItems().filter((i) => i.href !== "/"));
+  const hidden = $derived(new Set(display.prefs.hidden ?? []));
 
   const STATUS: Record<string, string> = {
     idle: "",
@@ -64,6 +68,34 @@
   </label>
 </section>
 
+<section class="surface stack" aria-labelledby="sections-h">
+  <h2 id="sections-h">{t("p.display.sections_title")}</h2>
+  <p>{t("p.display.sections_help")}</p>
+  <fieldset class="sections">
+    <legend>{t("p.display.sections_legend")}</legend>
+    {#each sections as item (item.href)}
+      <label class="check">
+        <input
+          type="checkbox"
+          checked={!hidden.has(item.href)}
+          onchange={(e) => void display.setSectionHidden(item.href, !e.currentTarget.checked, signedIn)}
+        />
+        {item.label}
+      </label>
+    {/each}
+  </fieldset>
+  <p class="small muted">
+    {#if hidden.size === 0}
+      {t("p.display.sections_none_hidden")}
+    {:else}
+      {hidden.size === 1 ? t("p.display.sections_hidden_count_one", { n: 1 }) : t("p.display.sections_hidden_count_other", { n: hidden.size })}
+      <button type="button" class="linklike" onclick={() => void display.showAllSections(signedIn)}>
+        {t("p.display.sections_show_all")}
+      </button>
+    {/if}
+  </p>
+</section>
+
 <p class="small" role="status" aria-live="polite">{STATUS[display.status]}</p>
 {#if !signedIn}
   <p class="small muted">{t("p.display.sign_in_to_keep_these")}</p>
@@ -80,6 +112,16 @@
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
+  }
+  .sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.4rem 1rem;
+    border: 0;
+    padding: 0;
+  }
+  .sections .check {
+    font-weight: 400;
   }
   .linklike {
     background: none;

@@ -24,6 +24,68 @@ export interface Prefs {
   simple?: boolean;
   /** The dyslexia-friendly font. */
   dyslexia?: boolean;
+  /**
+   * Sections of the top bar this person chose to hide, by path (`/okrs`). Absent until they hide one: a person who
+   * never changed it follows the current default, so a section added later reaches them, and a choice is only ever
+   * a section they themselves hid (BR-17).
+   */
+  hidden?: string[];
+}
+
+/** The most sections one person can hide. */
+export const MAX_HIDDEN = 100;
+/** Paths that cannot be hidden: the way home. (The Display page, where a choice is undone, is not in the bar.) */
+export const NEVER_HIDDEN: readonly string[] = ["/"];
+
+/** A hidden-section list read back: only in-app paths, once each, within the cap; `undefined` when nothing is left. */
+export function parseHidden(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const seen = new Set<string>();
+  for (const h of raw) {
+    if (typeof h !== "string" || h.length > 100) continue;
+    if (!/^\/(?![/\\])/.test(h) || NEVER_HIDDEN.includes(h)) continue;
+    seen.add(h);
+    if (seen.size === MAX_HIDDEN) break;
+  }
+  return seen.size > 0 ? [...seen] : undefined;
+}
+
+/** `prefs` with `href` hidden or shown again. Showing the last hidden section removes the field altogether. */
+export function withHidden(prefs: Prefs, href: string, hide: boolean): Prefs {
+  const now = new Set(prefs.hidden ?? []);
+  if (hide) now.add(href);
+  else now.delete(href);
+  const next: Prefs = { ...prefs };
+  const hidden = parseHidden([...now]);
+  if (hidden) next.hidden = hidden;
+  else delete next.hidden;
+  return next;
+}
+
+/** The nav items minus what this person hid. Nothing else is touched, so a new item always shows. */
+export function applyHidden<T extends { href: string }>(
+  items: T[],
+  prefs: Prefs,
+): T[] {
+  const hidden = new Set(prefs.hidden ?? []);
+  if (hidden.size === 0) return items;
+  return items.filter(
+    (i) => !hidden.has(i.href) || NEVER_HIDDEN.includes(i.href),
+  );
+}
+
+/**
+ * Run async tasks one after another, in the order they were asked for, whatever each outcome (a failure does not stop
+ * the ones behind it). Account writes go through one of these, so two quick changes never interleave their
+ * list, delete and create steps and leave two copies or none.
+ */
+export function serialQueue(): <R>(task: () => Promise<R>) => Promise<R> {
+  let tail: Promise<unknown> = Promise.resolve();
+  return <R>(task: () => Promise<R>): Promise<R> => {
+    const run = tail.then(task, task);
+    tail = run.catch(() => undefined);
+    return run;
+  };
 }
 
 /** The persona that gets simple mode by default: the worker's `view=me`. */
@@ -53,6 +115,8 @@ export function parsePrefs(raw: unknown): Prefs {
   const out: Prefs = {};
   if (typeof v.simple === "boolean") out.simple = v.simple;
   if (typeof v.dyslexia === "boolean") out.dyslexia = v.dyslexia;
+  const hidden = parseHidden(v.hidden);
+  if (hidden) out.hidden = hidden;
   return out;
 }
 

@@ -68,7 +68,9 @@ test.describe("command palette (BR-14)", () => {
   });
 
   test("Escape closes it and focus goes back to the button that opened it; Tab stays inside", async ({ page }) => {
-    const trigger = page.getByRole("button", { name: "Search and commands" }); // visible text "Search"
+    // The button is an entry in the menu, which is closed until it is opened.
+    await page.locator("button.hamburger").click();
+    const trigger = page.locator("#primary-nav").getByRole("button", { name: "Search and commands" });
     await trigger.focus();
     await page.keyboard.press("Enter");
     await expect(palette(page)).toBeVisible();

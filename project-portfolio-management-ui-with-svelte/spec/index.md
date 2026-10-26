@@ -1219,7 +1219,7 @@ reconstructed), a spreadsheet link for the series on the page (the CSV is in the
 
 ## Command palette (BR-14)
 
-Ctrl or Cmd with K, or the "Search" button in the top bar (its accessible name is "Search and commands"; a longer label made the top bar wrap and pushed the CEO dashboard off an iPad in portrait), opens a modal palette. It is Lily's `Dialog`
+Ctrl or Cmd with K, or the "Search and commands" entry in the navigation menu (it is in the menu, not the top row: one more control in the top row wrapped the bar on a narrow screen and pushed the CEO dashboard off an iPad in portrait in CI), opens a modal palette. It is Lily's `Dialog`
 (a real modal: focus trapped, Escape closes, focus returns to the opener) holding Lily's `Combobox` (the input has
 `role="combobox"`, `aria-controls` and `aria-activedescendant`; the rows are `role="option"` with `aria-selected`).
 Typing two or more letters searches plans by name through `GET /api/plans/search?q=` after a 200 ms pause, and only
@@ -1251,3 +1251,20 @@ dates come across as deadlines"), so the column is called Deadline, the board do
 (assignee, points, status); a due date; a deadline on the board; translations other than English and Welsh. Tests:
 `tests/unit/paste-view.test.ts`, `tests/e2e/paste-tasks.spec.ts` and, in the service,
 `tests/requests/paste_import.rs`.
+
+## Hiding sections of the top bar (BR-17)
+
+The Display page (`/display`) lists every section of the top bar with a tick; unticking one hides it from the bar for
+that person. The choice is a list of paths (`hidden`) in the person's display preferences: kept on the device and, when
+signed in, on the account like simple view and the font. **A default is invisible.** Nothing is stored until a section is
+hidden, and showing the last one again removes the field, so a person who never changed anything follows the current
+default and a section added later reaches everyone who did not hide it, including someone who hid another. The way home
+(`/`) cannot be hidden, and the Display page is a link in the top bar's own end (not a section), so a choice can always
+be undone. A hidden section is not removed: its page still works at its address. "Show all sections" clears the list.
+Hidden sections are removed before simple view splits the bar, so they appear in neither the front nor "More".
+Account writes go through one queue (`serialQueue`, `src/lib/preferences.ts`): one at a time, in order, each sending the
+choices as they stand when its turn comes, so two quick changes cannot interleave their list, delete and create steps.
+The bar's items are in `src/lib/nav-items.ts`, shared by the layout and the Display page; the eight collection entries now have words in English and Welsh (they were shown as raw lowercase English names in every language). **Not built:** per-plan
+switches in the UI (the service has them, `GET`/`PUT /api/plans/{pid}/modules`, and the plan page already follows them,
+but no screen sets them); hiding a plan's workspace links per person; hiding a section for everyone. Tests:
+`tests/unit/hidden-sections.test.ts`, `tests/e2e/hidden-sections.spec.ts`.

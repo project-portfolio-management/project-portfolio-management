@@ -12,7 +12,9 @@ import {
   STORAGE_KEY,
   fromSavedViews,
   parsePrefs,
+  serialQueue,
   toSavedView,
+  withHidden,
   type Prefs,
 } from "./preferences.js";
 
@@ -41,7 +43,14 @@ let prefs = $state<Prefs>(readLocal());
 let status = $state<SaveStatus>("idle");
 let syncedFor: boolean | null = null;
 
-async function pushToAccount(next: Prefs): Promise<boolean> {
+// One account write at a time, each sending the choices as they are when its turn comes (BR-17).
+const queue = serialQueue();
+
+function pushToAccount(_asked: Prefs): Promise<boolean> {
+  return queue(() => pushNow(prefs));
+}
+
+async function pushNow(next: Prefs): Promise<boolean> {
   const ppm = PpmClient.withFetch();
   try {
     const old = await ppm.listSavedViews(PREFERENCES_ROUTE);
@@ -77,6 +86,31 @@ export const display = {
     signedIn: boolean,
   ): Promise<void> {
     const next: Prefs = parsePrefs({ ...prefs, ...patch });
+    prefs = next;
+    writeLocal(next);
+    status = "device";
+    if (signedIn)
+      status = (await pushToAccount(next)) ? "account" : "account-failed";
+  },
+
+  /** Hide a section of the top bar, or show it again (BR-17). Nothing is stored for a section never hidden. */
+  async setSectionHidden(
+    href: string,
+    hide: boolean,
+    signedIn: boolean,
+  ): Promise<void> {
+    const next = withHidden(prefs, href, hide);
+    prefs = next;
+    writeLocal(next);
+    status = "device";
+    if (signedIn)
+      status = (await pushToAccount(next)) ? "account" : "account-failed";
+  },
+
+  /** Show every section again. */
+  async showAllSections(signedIn: boolean): Promise<void> {
+    const next: Prefs = { ...prefs };
+    delete next.hidden;
     prefs = next;
     writeLocal(next);
     status = "device";

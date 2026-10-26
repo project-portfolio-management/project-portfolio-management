@@ -16,13 +16,14 @@
   } from "#lib/i18n.svelte.js";
   import { localizePath, normalizeLocale, splitPath } from "#lib/locales.js";
   import { display } from "#lib/preferences.svelte.js";
-  import { effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
-  import { COLLECTIONS } from "#lib/api/types.js";
+  import { applyHidden, effectiveSimple, htmlAttributes, splitNav } from "#lib/preferences.js";
   import { PpmClient } from "#lib/api/ppm.js";
   import { isAbsent } from "#lib/absent.js";
   import { orderNavForView } from "#lib/nav.js";
+  import { buildNavItems } from "#lib/nav-items.js";
   import ConfirmHost from "#lib/components/ConfirmHost.svelte";
   import CommandPalette from "#lib/components/CommandPalette.svelte";
+  import PaletteTrigger from "#lib/components/PaletteTrigger.svelte";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
 
@@ -160,67 +161,7 @@
 
   // Sidebar navigation targets; `key` is an i18n key so labels follow the
   // selected locale. `aria-current` is set per item below.
-  const navItems: { href: string; label: string }[] = [
-    { href: "/", label: t("brand.name") },
-    ...COLLECTIONS.map((collection) => ({
-      href: `/${collection}`,
-      label: collection,
-    })),
-    // Record merge (fold a confirmed duplicate plan into a survivor).
-    { href: "/plans/merge", label: t("nav.merge") },
-    // PPM catalogue views (fully localized 2026-07-18).
-    // LT-3: the individual worker's personal task view. A deployment opts a
-    // persona into it as its landing page with `view=me` (T-28f).
-    { href: "/me", get label() { return t("p.me.my_work"); } },
-    { href: "/dashboard", label: t("ppm.nav.dashboard") },
-    { href: "/prioritization", get label() { return t("p.prioritization.prioritization"); } },
-    { href: "/lifecycle", get label() { return t("p.lifecycle.lifecycle"); } },
-    { href: "/reviews", get label() { return t("p._layout_svelte.reviews"); } },
-    { href: "/automations", get label() { return t("p._layout_svelte.automations"); } },
-    { href: "/proposals", label: t("ppm.nav.proposals") },
-    { href: "/ideas", label: t("ppm.nav.ideas") },
-    { href: "/scenarios", label: t("ppm.nav.scenarios") },
-    { href: "/objectives", label: t("ppm.nav.objectives") },
-    { href: "/okrs", get label() { return t("p._layout_svelte.goals_okrs"); } },
-    { href: "/milestones", get label() { return t("p.milestones.milestones"); } },
-    { href: "/kpis", get label() { return t("p.kpis.key_measures_kpis"); } },
-    { href: "/gantt", label: t("ppm.nav.gantt") },
-    { href: "/engineering", label: t("ppm.nav.engineering") },
-    { href: "/calendar", label: t("ppm.nav.calendar") },
-    { href: "/ceo", get label() { return t("p.ceo.ceo_dashboard"); } },
-    { href: "/announcements", get label() { return t("p.ceo.announcements"); } },
-    { href: "/executive", label: t("ppm.nav.executive") },
-    { href: "/financials", label: t("ppm.nav.financials") },
-    { href: "/technology", label: t("ppm.nav.technology") },
-    { href: "/board", label: t("ppm.nav.board") },
-    { href: "/auditor", label: t("ppm.nav.auditor") },
-    { href: "/compliance", label: t("ppm.nav.compliance") },
-    { href: "/risk", label: t("ppm.nav.risk") },
-    { href: "/issues", get label() { return t("p.issues.issues"); } },
-    { href: "/change-requests", get label() { return t("p.change_requests.change_requests"); } },
-    { href: "/director-packs", get label() { return t("p.director_pack.director_packs"); } },
-    { href: "/pipeline", get label() { return t("p.critical_chain.nav_pipeline"); } },
-    { href: "/start-queue", get label() { return t("p.start_queue.nav"); } },
-    { href: "/kanban", get label() { return t("p.kanban.nav"); } },
-    { href: "/ledger", get label() { return t("p.ledger.nav"); } },
-    { href: "/milestone-signoffs", get label() { return t("p.signoffs.nav"); } },
-    { href: "/key-persons", get label() { return t("p.key_persons.nav"); } },
-    { href: "/organizations", get label() { return t("p.organizations.nav"); } },
-    { href: "/email-deliveries", get label() { return t("p.email_deliveries.nav"); } },
-    { href: "/security", label: t("ppm.nav.security") },
-    { href: "/regulator", label: t("ppm.nav.regulator") },
-    { href: "/capacity", label: t("ppm.nav.capacity") },
-    { href: "/resources", get label() { return t("p.resources.resources"); } },
-    { href: "/cost-risk", get label() { return t("p.plans.pid.joint_risk.cost_risk"); } },
-    { href: "/cost-rates", get label() { return t("p.plans.pid.costs.cost_rates"); } },
-    { href: "/reports", label: t("ppm.nav.reports") },
-    { href: "/onboarding", get label() { return t("p._layout_svelte.onboarding"); } },
-    { href: "/documents", get label() { return t("p.documents.documents"); } },
-    { href: "/approval-processes", get label() { return t("p.processes.processes"); } },
-    { href: "/tolerances", get label() { return t("p.tolerances.tolerances"); } },
-    { href: "/escalations", get label() { return t("p.escalations.escalations"); } },
-    { href: "/tour", label: t("nav.tour") },
-  ];
+  const navItems = buildNavItems();
 
   // T-28f: reorders `navItems` around `data.view` (the deployment-declared
   // ABAC attribute) — recomputes whenever `data` changes (sign-in/out,
@@ -236,7 +177,7 @@
   // behind "More" — prominence, not capability: every route still works. It is on
   // by default for the worker persona (`view=me`); an explicit choice wins.
   const simple = $derived(effectiveSimple(display.prefs, data.view));
-  const nav = $derived(splitNav(orderedNavItems, simple));
+  const nav = $derived(splitNav(applyHidden(orderedNavItems, display.prefs), simple));
   $effect(() => {
     if (!browser) return;
     const a = htmlAttributes(simple, display.dyslexia);
@@ -287,6 +228,9 @@
     <a href={localeHref("/")} class="brand">{t("brand.name")}</a>
     <nav id="primary-nav" class="primary-nav" class:open={menuOpen}>
       <ul>
+        <!-- The palette's button lives in the menu, not the top row: one more control there wrapped the bar on a narrow
+             screen and pushed the CEO dashboard off an iPad in portrait. Ctrl or Cmd with K works from anywhere. -->
+        <li class="palette-item"><PaletteTrigger /></li>
         {#each nav.front as item (item.href)}
           <li>
             <a
@@ -317,7 +261,6 @@
       </ul>
     </nav>
     <div class="header-end">
-      <CommandPalette />
       <button type="button" class="session-button" aria-pressed={simple} onclick={toggleSimple}>
         {t("p.layout.simple_view", { v: simple ? t("p.common.on") : t("p.common.off") })}
       </button>
@@ -386,6 +329,7 @@
        SvelteKit reuses the component for /plans/A/wbs → /plans/B/wbs, so key the page on its ids. -->
   <main>{#key `${page.params.pid ?? ""}/${page.params.tpid ?? ""}`}{@render children()}{/key}</main>
   <ConfirmHost />
+  <CommandPalette />
 </div>
 
 <style>

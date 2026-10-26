@@ -3,13 +3,14 @@
   arrow keys, Enter goes there, Escape closes. Lily's Dialog is the modal (focus trap, Escape, focus returned to the
   opener) and Lily's Combobox is the input and listbox (roles and labels); the arrow keys and the active row are
   done here because the primitives are headless. The ranking is in `#lib/palette-view.ts`.
-  Mounted once in the root layout, which also shows its trigger button in the top bar.
+  Mounted once in the root layout; the button that opens it is `PaletteTrigger`, an entry in the menu.
 -->
 <script lang="ts">
   import { Combobox, Dialog } from "@lilydesignsystem/svelte-headless";
   import { goto } from "$app/navigation";
   import { PlanRepository } from "#lib/api/plans.js";
   import { localeHref, t } from "#lib/i18n.svelte.js";
+  import { paletteRequests } from "#lib/palette.svelte.js";
   import {
     RECENT_KEY,
     move,
@@ -130,6 +131,16 @@
     }
   }
 
+  // Something (the menu button) asked for the palette. The first run is the page loading, not a request.
+  let seen = paletteRequests.count;
+  $effect(() => {
+    const now = paletteRequests.count;
+    if (now !== seen) {
+      seen = now;
+      show();
+    }
+  });
+
   function onwindowkeydown(e: KeyboardEvent) {
     if (opensPalette(e)) {
       e.preventDefault();
@@ -140,15 +151,6 @@
 </script>
 
 <svelte:window onkeydown={onwindowkeydown} />
-
-<button
-  type="button"
-  class="session-button palette-trigger"
-  aria-haspopup="dialog"
-  aria-keyshortcuts="Control+K Meta+K"
-  aria-label={t("c.CommandPalette.open")}
-  onclick={show}
->{t("c.CommandPalette.button")}</button>
 
 <Dialog class="palette-dialog" bind:open label={t("c.CommandPalette.title")}>
   <div bind:this={root} class="palette">

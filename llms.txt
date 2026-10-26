@@ -50,6 +50,7 @@
 - [API service guide](project-portfolio-management-service-with-rust/AGENTS.md): Route map, middleware order, private-plan guard, paging, gotchas, test layout and commands
 - [Matcher guide](project-portfolio-management-matcher-with-rust/AGENTS.md): Matching rules, golden rules and file layout for the library
 - [UI guide](project-portfolio-management-ui-with-svelte/AGENTS.md): Working guide for the SvelteKit UI
+- [Review checklist](agents/review-checklist.md): The one list of what a reviewer checks; the reviewer agents point at it
 - [Agents index](agents/index.md): Entity-level reference documents
 - [Subprojects](agents/subprojects.md): The trio: responsibilities, dependency direction, how to run each
 - [Domain models](agents/models.md): Plan DTO, supporting types, operational records, persistence

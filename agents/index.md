@@ -12,6 +12,7 @@ service crate + matcher crate + front-end.
 | [models.md](models.md) | Domain model reference — the `Plan` DTO, its optional `kind` label, recursive containment, sub-resources and derived views |
 | [matching.md](matching.md) | Matching algorithm reference — kind-agnostic scoring, weights, components, deterministic rules |
 | [restful.md](restful.md) | REST API (one `/api/plans` collection) + front-end consumption + matcher library API |
+| [review-checklist.md](review-checklist.md) | The one list of what a reviewer checks: security, database, Rust, UI and every change |
 | [testing.md](testing.md) | Testing strategy across the trio |
 
 ## Subproject docs

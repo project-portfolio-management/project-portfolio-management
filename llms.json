@@ -146,6 +146,11 @@
           "description": "Working guide for the SvelteKit UI"
         },
         {
+          "title": "Review checklist",
+          "path": "agents/review-checklist.md",
+          "description": "The one list of what a reviewer checks; the reviewer agents point at it"
+        },
+        {
           "title": "Agents index",
           "path": "agents/index.md",
           "description": "Entity-level reference documents"

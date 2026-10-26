@@ -24,6 +24,12 @@ Version 0.1.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum support
 5. Welsh (and other) strings are machine-written until a speaker reviews them; `governance/welsh-translation-review.csv`
    lists them. Never claim a translation is reviewed.
 
+## Review
+
+[`agents/review-checklist.md`](agents/review-checklist.md) is the one list of what a reviewer checks. Four reviewer
+agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `ui-reviewer`
+([`.claude/agents/`](.claude/agents/)). They add no rule of their own.
+
 ## Gates
 
 ```bash

@@ -2067,10 +2067,11 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   carries the value the planner saw. Record the findings in `plan.md`; add a test for each gap and a `CF-n` for each
   defect.
   **Acceptance:** a written finding per rule (holds, fails, or not applicable) with the code reference.
-- [ ] **BR-8 (S) — Reviewer subagents over one checklist.** `agents/review-checklist.md` (security, database, Rust,
+- [x] **BR-8 (S) — Reviewer subagents over one checklist.** `agents/review-checklist.md` (security, database, Rust,
   UI) as the single copy, and thin `.claude/agents/*-reviewer.md` files that point at it. `AGENTS.md` names them.
   **Acceptance:** each reviewer file is under 40 lines and contains no rule that is not in the checklist; a link
   check passes.
+  **Built 2026-10-26.** `agents/review-checklist.md` (security 8, database 5, Rust 8, UI 7, every change 4 items; each names its source), `.claude/agents/{security,database,rust,ui}-reviewer.md` (12 lines each; each says to read its section and the every-change section and adds no rule), named in `AGENTS.md`, `agents/index.md` and `llms.json`/`llms.txt`. The link check passes (0 broken). **Not done:** the reviewers were not run on a real diff; no test that a reviewer file stays free of rules (checked by reading). **Not verified:** that every item is still true of the code (each was taken from a guide or a test, not re-derived); the matcher's own `AGENTS.md` rules beyond the four listed.
 - [ ] **BR-9 (S, only on request) — Expiring, revocable share links** for a meeting PDF: a whitelisted payload,
   `X-Robots-Tag: noindex`, `410` once revoked, expired or deleted, a view count. Refused for any record that carries
   a handling mark. Owner question §76.2.

@@ -44,7 +44,7 @@ look at.
 4. No left-hand sidebar; an acronym never stands alone in a heading or label; status is never shown by colour alone. (UI `AGENTS.md`)
 5. The UI wraps `DataTable` and the Lily widgets; there is no SVAR. (root `AGENTS.md`)
 6. Welsh and other strings are machine-written until a speaker reviews them; never claim a translation is reviewed. (root `AGENTS.md`)
-7. `pnpm run check`, `npx vitest run` and the Playwright run pass (`PW_PORT` set, since other projects hold 4173). (root `AGENTS.md`; memory: shared machine ports)
+7. `pnpm run lint` (Prettier and ESLint, which CI runs first), `pnpm run check`, `npx vitest run` and the Playwright run pass (`PW_PORT` set, since other projects hold 4173). (root `AGENTS.md`; memory: shared machine ports)
 
 ## Every change
 

@@ -41,7 +41,7 @@ cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --l
 #   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
 # UI (other projects on this machine may hold port 4173: use PW_PORT)
-cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test
+cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test
 ```
 
 ## Things that are easy to get wrong

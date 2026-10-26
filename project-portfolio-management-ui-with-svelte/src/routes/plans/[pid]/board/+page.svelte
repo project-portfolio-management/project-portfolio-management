@@ -26,6 +26,7 @@
     type Velocity,
   } from "#lib/api/ppm.js";
   import { t } from "#lib/i18n.svelte.js";
+  import PasteTasks from "#lib/components/PasteTasks.svelte";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { calendarDays } from "#lib/units.js";
   // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
@@ -216,6 +217,8 @@
     </select>
   </label>
 </form>
+
+<PasteTasks {pid} onDone={() => void load()} />
 
 {#if tasks !== null}
   <div class="board-wrap" data-testid="task-board">

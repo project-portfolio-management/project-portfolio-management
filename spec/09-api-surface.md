@@ -79,7 +79,7 @@ payload (§5.6); all writes emit events + audit rows.
 | Method | Path | Purpose |
 |---|---|---|
 | GET/POST | `/api/plans/{pid}/goals` · PUT/DELETE `…/goals/{id}` | Goals — writes also mutate `data.goals[]` (§5.3) |
-| GET/POST | `/api/plans/{pid}/tasks` · PUT/DELETE `…/tasks/{id}` | Tasks (board / list; status, assignee, estimate, due, nesting) |
+| GET/POST | `/api/plans/{pid}/tasks` · PUT/DELETE `…/tasks/{id}` | Tasks (board / list; status, assignee, estimate, due, `deadline` (set by an import or a paste), nesting) |
 | GET/POST | `/api/plans/{pid}/issues` · PUT/DELETE `…/issues/{id}` | Issues (kind / severity / status / assignee) |
 | GET | `/api/plans/{pid}/timeline` | Derived Gantt projection (read-only) |
 | GET | `/api/plans/{pid}/burndown` | Derived remaining-vs-estimate (read-only) |

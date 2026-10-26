@@ -40,6 +40,7 @@ mod mspdi_batch;
 mod mspdi_export;
 mod oversight;
 mod paging;
+mod paste_import;
 mod pdf;
 mod plan_links;
 mod plan_templates;

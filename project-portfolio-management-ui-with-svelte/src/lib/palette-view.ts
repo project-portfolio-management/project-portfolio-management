@@ -71,14 +71,20 @@ export function rows(
   plans: PaletteItem[],
   recent: PaletteItem[],
 ): PaletteItem[] {
-  const pool = query.trim() === "" ? [...recent, ...commands] : [...commands, ...plans];
+  const pool =
+    query.trim() === "" ? [...recent, ...commands] : [...commands, ...plans];
   const seen = new Set<string>();
-  const unique = pool.filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)));
+  const unique = pool.filter((i) =>
+    seen.has(i.id) ? false : (seen.add(i.id), true),
+  );
   return rank(query, unique);
 }
 
 /** `item` put first in `list`, once, keeping at most {@link MAX_RECENT}. */
-export function pushRecent(list: PaletteItem[], item: PaletteItem): PaletteItem[] {
+export function pushRecent(
+  list: PaletteItem[],
+  item: PaletteItem,
+): PaletteItem[] {
   const as: PaletteItem = { ...item, kind: "recent" };
   return [as, ...list.filter((i) => i.id !== item.id)].slice(0, MAX_RECENT);
 }
@@ -100,7 +106,12 @@ export function parseRecent(text: string | null): PaletteItem[] {
           // One leading slash and no second slash or backslash: `//host` and `/\host` both leave the site.
           /^\/(?![/\\])/.test((r as PaletteItem).href),
       )
-      .map((r) => ({ id: r.id, kind: "recent" as const, label: r.label, href: r.href }))
+      .map((r) => ({
+        id: r.id,
+        kind: "recent" as const,
+        label: r.label,
+        href: r.href,
+      }))
       .slice(0, MAX_RECENT);
   } catch {
     return [];
@@ -109,16 +120,30 @@ export function parseRecent(text: string | null): PaletteItem[] {
 
 /** A plan found by name, as a row. */
 export function planItem(p: { pid: string; name: string }): PaletteItem {
-  return { id: `plan:${p.pid}`, kind: "plan", label: p.name, href: `/plans/${p.pid}` };
+  return {
+    id: `plan:${p.pid}`,
+    kind: "plan",
+    label: p.name,
+    href: `/plans/${p.pid}`,
+  };
 }
 
 /** Whether a key event opens the palette: Ctrl or Cmd with K. */
-export function opensPalette(e: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean }): boolean {
+export function opensPalette(e: {
+  key: string;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  altKey: boolean;
+}): boolean {
   return (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k";
 }
 
 /** The index after an arrow key, wrapping, among `count` rows; `-1` when there are none. */
-export function move(current: number, key: "ArrowDown" | "ArrowUp", count: number): number {
+export function move(
+  current: number,
+  key: "ArrowDown" | "ArrowUp",
+  count: number,
+): number {
   if (count <= 0) return -1;
   if (key === "ArrowDown") return current < 0 ? 0 : (current + 1) % count;
   return current <= 0 ? count - 1 : current - 1;

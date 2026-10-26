@@ -1233,3 +1233,21 @@ Commands today: New plan, My work, Escalations, Dashboard. Not built: a command 
 meetings; a "status page" command (the UI has no status page route); the shortcut shown in the button's text; other
 locales than English and Welsh (the rest show English). Tests: `tests/unit/palette-view.test.ts`,
 `tests/e2e/command-palette.spec.ts`.
+
+## Paste rows from a spreadsheet (BR-15)
+
+On the board (the task list), "Paste rows from a spreadsheet" takes cells copied from a spreadsheet: one task per line,
+tab-separated, the columns Title, Deadline (`yyyy-mm-dd`) and Notes in that order; a first line that names the columns
+is skipped (`src/lib/paste-view.ts`, pure and unit-tested; `src/lib/components/PasteTasks.svelte`). Every row is shown
+with its status. A row with no title, a title over 300 characters, a date that is not `yyyy-mm-dd` (other forms are
+refused, not guessed, because day-month and month-day cannot be told apart), notes over 5000 characters, a repeat of an
+earlier row, or beyond the 200th row is shown with the reason and **left out**; only the good rows go on. "Check with
+the service" sends them to the Asana-shaped import as a dry run, which writes nothing, and shows what it would do;
+"Create N tasks" sends the same rows for real. Each row's id is made from its own title and date, so pasting the same
+rows again updates the tasks it made and creates none (the stored reference reads `asana:paste-xxxxxxxx`). Changing the
+text starts again. **The date is stored as the task's deadline, not its due date**: that is what the import does ("due
+dates come across as deadlines"), so the column is called Deadline, the board does not show it, and the overdue counts
+(which read the due date) do not see it. `GET /api/plans/{pid}/tasks` now returns `deadline`. Not built: more columns
+(assignee, points, status); a due date; a deadline on the board; translations other than English and Welsh. Tests:
+`tests/unit/paste-view.test.ts`, `tests/e2e/paste-tasks.spec.ts` and, in the service,
+`tests/requests/paste_import.rs`.

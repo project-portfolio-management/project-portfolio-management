@@ -2118,6 +2118,8 @@ export interface Task {
   points: number | null;
   /** Due calendar date (`YYYY-MM-DD`, no zone), or null. */
   due_date: string | null;
+  /** The deadline (`YYYY-MM-DD`), or null: what an import or a paste sets; the board does not show it. */
+  deadline?: string | null;
   sprint_pid: string | null;
   created_at: string;
   status_changed_at: string;

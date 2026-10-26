@@ -68,6 +68,7 @@ pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
         "assignee_ref": task.assignee_ref,
         "points": task.points,
         "due_date": task.due_date,
+        "deadline": task.deadline,
         "start_date": task.start_date,
         "duration_days": task.duration_days,
         "duration_optimistic_days": task.duration_optimistic_days,

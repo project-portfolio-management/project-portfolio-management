@@ -27,6 +27,9 @@ ignore = [
     "RUSTSEC-2025-0057", # transitive advisory (loco tree)
     "RUSTSEC-2024-0449", # unsafe-libyaml (unmaintained), transitive: loco-rs -> loco-gen -> rrgen -> serde_yaml; added 2026-10-13
     "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
+    "RUSTSEC-2026-0391", # zstd 0.13.3: only with `--all-features`, via the optional `fluvio` feature (fluvio 0.50.1, the latest, pins zstd 0.13); the default build has zstd 0.14.3, which is patched; added 2026-10-26
+    "RUSTSEC-2026-0398", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
+    "RUSTSEC-2026-0403", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
 ]
 
 [licenses]

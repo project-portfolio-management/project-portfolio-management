@@ -4,24 +4,19 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type DirectorPackMeta } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let packs = $state<DirectorPackMeta[] | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource(async () => (await ppm.directorPacks()).packs, "p.director_pack.could_not_load");
+  const packs = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
-  onMount(async () => {
-    try {
-      packs = (await ppm.directorPacks()).packs;
-    } catch (err) {
-      error = errorText(err, "p.director_pack.could_not_load");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   const columns: DataGridColumn[] = $derived([
     { id: "period", header: t("p.director_pack.col_period"), rowHeader: true, cell: periodCell },

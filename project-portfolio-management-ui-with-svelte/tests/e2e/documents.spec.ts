@@ -111,7 +111,7 @@ test("a draft is edited and sent for review; one primary button", async ({
   await page.getByLabel("Approver's id").fill(APPROVER);
   await page.getByRole("button", { name: "Send for review" }).click();
   await expect(page.getByRole("status")).toContainText("Sent for review.");
-  expect(sent).toEqual({ approver_ref: `person:${APPROVER}` });
+  await expect.poll(() => sent).toEqual({ approver_ref: `person:${APPROVER}` });
   await audit(page);
 });
 

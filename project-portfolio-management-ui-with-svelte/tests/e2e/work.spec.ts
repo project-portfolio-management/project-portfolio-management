@@ -132,7 +132,7 @@ test("the assignment form sends one change, says what the rule did, and the tabl
   await expect(page.getByRole("status")).toContainText(
     "Over capacity on 2 calendar days",
   );
-  expect(sent).toEqual({ rule: "fixed_units", work_minutes: 4800 });
+  await expect.poll(() => sent).toEqual({ rule: "fixed_units", work_minutes: 4800 });
   // The profile: the plan's total, and the unplaced work named rather than dropped.
   await expect(page.getByTestId("work-profile").locator("tfoot")).toContainText(
     "48 h",

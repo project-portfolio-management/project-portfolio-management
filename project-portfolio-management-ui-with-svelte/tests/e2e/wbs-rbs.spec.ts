@@ -168,7 +168,7 @@ test("a task moves one place among its siblings and the order is sent to the ser
   await expect(tree.getByRole("button", { name: "Move C3 down" })).toBeDisabled();
   await tree.getByRole("button", { name: "Move C3 up" }).click();
   await expect(page.getByRole("status")).toContainText("Moved C3.");
-  expect(sent).toEqual({ parent_task_pid: null, order: ["a1", "c3", "b2"] });
+  await expect.poll(() => sent).toEqual({ parent_task_pid: null, order: ["a1", "c3", "b2"] });
   await expect(tree.getByRole("listitem").nth(1)).toContainText("C3");
   await audit(page);
 });

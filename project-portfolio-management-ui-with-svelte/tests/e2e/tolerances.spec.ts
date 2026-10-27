@@ -105,7 +105,7 @@ test("a plan's tolerances can be set and removed, and an unmeasurable one says w
   await expect(time).toContainText("no limit set");
   await time.getByLabel("Limit (calendar days late)").fill("5");
   await time.getByRole("button", { name: "Set the limit" }).click();
-  expect(sent).toEqual({ limit: 5, note: null });
+  await expect.poll(() => sent).toEqual({ limit: 5, note: null });
   await expect(page.getByRole("status")).toContainText("Saved the Time limit.");
   await expect(time).toContainText("over tolerance");
   await expect(time).toContainText("9 days");

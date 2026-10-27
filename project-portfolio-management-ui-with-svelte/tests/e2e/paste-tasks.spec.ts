@@ -51,7 +51,7 @@ test("pasted rows are previewed, the bad one is left out, and only the good ones
   // Check with the service: it is sent the two good rows only, and as a dry run.
   await page.getByRole("button", { name: "Check with the service" }).click();
   await expect(page.getByTestId("paste-report")).toContainText("Would create 2 tasks");
-  expect(sent).toHaveLength(1);
+  await expect.poll(() => sent.length).toBe(1);
   expect(sent[0]!.dry).toBe(true);
   expect(sent[0]!.body).toContain("Write plan");
   expect(sent[0]!.body).toContain("Book room");
@@ -68,7 +68,7 @@ test("pasted rows are previewed, the bad one is left out, and only the good ones
   // Create: the same two rows, not a dry run; the box is emptied and the report says it is done.
   await page.getByRole("button", { name: "Create 2 tasks" }).click();
   await expect(page.getByTestId("paste-report")).toContainText("Done");
-  expect(sent).toHaveLength(2);
+  await expect.poll(() => sent.length).toBe(2);
   expect(sent[1]!.dry).toBe(false);
   expect(sent[1]!.body).toBe(sent[0]!.body);
   await expect(page.getByLabel("Pasted rows")).toHaveValue("");
@@ -88,5 +88,5 @@ test("changing the paste starts again, and a paste with nothing good cannot be s
   await expect(page.getByTestId("paste-report")).toBeVisible();
   await box.fill("Another task");
   await expect(page.getByTestId("paste-report")).toBeHidden();
-  expect(sent).toHaveLength(1);
+  await expect.poll(() => sent.length).toBe(1);
 });

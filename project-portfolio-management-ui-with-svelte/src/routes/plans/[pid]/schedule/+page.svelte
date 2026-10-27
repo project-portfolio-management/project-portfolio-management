@@ -4,25 +4,20 @@
   members. Any plan may contain children, so this works for any plan.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { page } from "$app/state";
-  import { PpmClient, type ScheduleView } from "#lib/api/ppm.js";
+  import { PpmClient } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
 
-  let schedule = $state<ScheduleView | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource(() => ppm.schedule(pid), "ppm.common.loadFailed");
+  const schedule = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
-  onMount(async () => {
-    try {
-      schedule = await ppm.schedule(pid);
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   /** Bar geometry: percent offsets across the min..max date span. */
   const span = $derived.by(() => {

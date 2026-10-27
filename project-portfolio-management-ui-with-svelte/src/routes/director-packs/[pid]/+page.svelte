@@ -5,28 +5,23 @@
   language, or download the service's English PDF.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
   import { i18n } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { page } from "$app/state";
-  import { PpmClient, type DirectorPack } from "#lib/api/ppm.js";
+  import { PpmClient } from "#lib/api/ppm.js";
   import { buildPackView, type Section } from "#lib/pack-view.js";
 
   const ppm = PpmClient.withFetch();
-  let pack = $state<DirectorPack | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource(() => ppm.directorPack(page.params.pid ?? ""), "p.director_pack.could_not_load_one");
+  const pack = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
-  onMount(async () => {
-    try {
-      pack = await ppm.directorPack(page.params.pid ?? "");
-    } catch (err) {
-      error = errorText(err, "p.director_pack.could_not_load_one");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   const sections: Section[] = $derived(
     pack

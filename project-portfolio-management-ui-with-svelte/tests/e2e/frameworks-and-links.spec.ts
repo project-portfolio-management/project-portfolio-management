@@ -37,12 +37,12 @@ test("a plan can follow a shared way of working and stop following it", async ({
 
   await page.getByLabel("Shared or existing").selectOption("w2");
   await page.getByRole("button", { name: "Follow this" }).click();
-  expect(sent).toEqual({ framework_pid: "w2" });
+  await expect.poll(() => sent).toEqual({ framework_pid: "w2" });
   await expect(page.getByRole("status")).toContainText("Now following it.");
   await expect(page.getByText("set on this plan")).toBeVisible();
 
   await page.getByRole("button", { name: "Stop following (inherit again)" }).click();
-  expect(sent).toEqual({ framework_pid: null });
+  await expect.poll(() => sent).toEqual({ framework_pid: null });
   await expect(page.getByText("inherited from a plan above")).toBeVisible();
 });
 
@@ -103,7 +103,7 @@ test("links to Jira and Trello are added, kept on their own domain, and removed"
 
   await page.getByLabel("Address (http or https)").fill("https://trello.com/b/abc/delivery");
   await page.getByRole("button", { name: "Add the link" }).click();
-  expect(sent).toEqual({ kind: "tracker", url: "https://trello.com/b/abc/delivery", label: "Delivery board", system: "trello" });
+  await expect.poll(() => sent).toEqual({ kind: "tracker", url: "https://trello.com/b/abc/delivery", label: "Delivery board", system: "trello" });
   await expect(page.getByRole("link", { name: "Delivery board" })).toHaveAttribute("target", "_blank");
   await audit(page);
   await page.getByRole("button", { name: "Remove Delivery board" }).click();
@@ -134,7 +134,7 @@ test("a task shows its status and keeps its own links to the issue it is tracked
   await page.getByLabel("External tool").selectOption("jira");
   await page.getByLabel("Its identifier there").fill("PPM-7");
   await page.getByRole("button", { name: "Add the link" }).click();
-  expect(sent).toEqual({ kind: "ticket", url: "https://acme.atlassian.net/browse/PPM-7", label: "PPM-7", system: "jira", external_id: "PPM-7" });
+  await expect.poll(() => sent).toEqual({ kind: "ticket", url: "https://acme.atlassian.net/browse/PPM-7", label: "PPM-7", system: "jira", external_id: "PPM-7" });
   await expect(page.getByRole("link", { name: "PPM-7" })).toBeVisible();
   await audit(page);
 });

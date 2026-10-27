@@ -732,3 +732,41 @@ async fn the_efficient_frontier_matches_single_cap_generate_runs() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+// CQ-11: creating a scenario checks its members with one query per kind, so naming four plans takes as many
+// statements as naming one.
+async fn creating_a_scenario_runs_the_same_number_of_queries_for_one_plan_or_four() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let mut plans = Vec::new();
+        for n in 0..4 {
+            let created: Value = request
+                .post("/api/plans")
+                .json(&json!({ "kind": "Project", "name": format!("Member {n} {}", uuid::Uuid::new_v4()) }))
+                .await
+                .json();
+            plans.push(created["pid"].as_str().expect("plan pid").to_string());
+        }
+        let counted = |members: Vec<String>| {
+            let request = &request;
+            async move {
+                let before = project_portfolio_management::query_count::total();
+                let created = request
+                    .post("/api/scenarios")
+                    .json(&json!({ "name": "Counted", "plan_pids": members }))
+                    .await;
+                let after = project_portfolio_management::query_count::total();
+                created.assert_status_ok();
+                after - before
+            }
+        };
+        let one = counted(plans[..1].to_vec()).await;
+        let four = counted(plans.clone()).await;
+        assert!(one > 0, "the counter sees the app's own statements");
+        assert_eq!(one, four, "one member took {one} statements, four took {four}");
+    })
+    .await;
+}

@@ -188,6 +188,19 @@ export interface CreateSprintBody {
   ends_on: string;
 }
 
+/** `POST /api/plans/{pid}/benefits/{b_pid}/realize`. */
+export interface RealizeBenefitBody {
+  amount_minor?: number | null;
+  note?: string | null;
+  status?: string | null;
+}
+
+/** `POST /api/plans/{pid}/sprints/{s_pid}/notes`. */
+export interface CreateSprintNoteBody {
+  category: string;
+  body: string;
+}
+
 export interface Proposal {
   pid: string;
   title: string;
@@ -2997,7 +3010,7 @@ export class PpmClient {
   realizeBenefit(
     pid: string,
     benefitPid: string,
-    body: unknown,
+    body: RealizeBenefitBody,
   ): Promise<unknown> {
     return this.http.post(`/api/plans/${pid}/benefits/${benefitPid}/realize`, {
       body,
@@ -4409,7 +4422,7 @@ export class PpmClient {
   createNote(
     pid: string,
     sprintPid: string,
-    body: unknown,
+    body: CreateSprintNoteBody,
   ): Promise<SprintNote> {
     return this.http.post(`/api/plans/${pid}/sprints/${sprintPid}/notes`, {
       body,

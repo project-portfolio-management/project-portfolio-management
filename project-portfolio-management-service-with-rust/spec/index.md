@@ -1333,7 +1333,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   DFS cycle detection, finish-start violation checks with lag, a
   memoized longest-duration critical path, the documented RAG
   heuristic, window-overlap capacity sums, RFC-4180 CSV escaping —
-  7 DB-free unit tests); `controllers/visibility.rs` (dependencies
+  7 DB-free unit tests); `controllers/visibility/` (dependencies
   with self/duplicate/cycle refusal; `GET
   /plans/{pid}/schedule` with violations + critical path +
   undated members; milestones with overdue flags; allocations +

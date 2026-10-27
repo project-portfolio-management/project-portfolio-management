@@ -95,3 +95,79 @@ pub fn routes() -> Routes {
         .add("/reports/{pid}/run", get(run_report))
         .add("/at-a-glance", get(at_a_glance))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+    use serde_json::json;
+
+    fn model(data: serde_json::Value) -> plans::Model {
+        let at = chrono::DateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00").unwrap();
+        plans::Model {
+            created_at: at,
+            updated_at: at,
+            id: 1,
+            pid: Uuid::from_u128(1),
+            kind: None,
+            name: "Alpha".to_string(),
+            data,
+            parent_pid: None,
+            active: true,
+            stage: None,
+            phase: None,
+            deleted_at: None,
+            content_hash: None,
+            content_hash_sha3: None,
+            content_mac: None,
+        }
+    }
+
+    fn day(y: i32, m: u32, d: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    }
+
+    #[test]
+    fn schedule_item_reads_whole_dates() {
+        let m = model(json!({"start_date": "2026-03-04", "target_date": "2026-05-06"}));
+        let item = schedule_item(&m);
+        assert_eq!(item.pid, m.pid);
+        assert_eq!(item.start, Some(day(2026, 3, 4)));
+        assert_eq!(item.end, Some(day(2026, 5, 6)));
+    }
+
+    #[test]
+    fn schedule_item_widens_a_month_to_its_first_and_last_day() {
+        let m = model(json!({"start_date": "2026-02", "target_date": "2028-02"}));
+        let item = schedule_item(&m);
+        assert_eq!(item.start, Some(day(2026, 2, 1)));
+        assert_eq!(item.end, Some(day(2028, 2, 29)), "2028 is a leap year");
+    }
+
+    #[test]
+    fn schedule_item_leaves_missing_or_unreadable_dates_unknown() {
+        let m = model(json!({"start_date": "soon", "target_date": 5}));
+        let item = schedule_item(&m);
+        assert_eq!((item.start, item.end), (None, None));
+        let none = schedule_item(&model(json!({})));
+        assert_eq!((none.start, none.end), (None, None));
+    }
+
+    #[test]
+    fn only_completed_and_cancelled_are_finished() {
+        for (status, finished) in [
+            ("Completed", true),
+            ("Cancelled", true),
+            ("Active", false),
+            ("completed", false),
+        ] {
+            assert_eq!(
+                is_finished(&model(json!({ "status": status }))),
+                finished,
+                "{status}"
+            );
+        }
+        assert!(!is_finished(&model(json!({}))), "no status is not finished");
+        assert!(!is_finished(&model(json!({"status": 3}))));
+    }
+}

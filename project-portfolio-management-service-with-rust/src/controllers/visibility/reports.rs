@@ -357,3 +357,58 @@ async fn run_grouped(
         "groups": groups,
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn model(data: serde_json::Value) -> plans::Model {
+        let at = chrono::DateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00").unwrap();
+        plans::Model {
+            created_at: at,
+            updated_at: at,
+            id: 1,
+            pid: Uuid::from_u128(1),
+            kind: None,
+            name: "Alpha".to_string(),
+            data,
+            parent_pid: None,
+            active: true,
+            stage: None,
+            phase: None,
+            deleted_at: None,
+            content_hash: None,
+            content_hash_sha3: None,
+            content_mac: None,
+        }
+    }
+
+    #[test]
+    fn report_cell_projects_the_stored_columns() {
+        let mut m = model(json!({}));
+        m.kind = Some("Project".to_string());
+        m.stage = Some("g1_business_case".to_string());
+        assert_eq!(report_cell(&m, "pid"), Uuid::from_u128(1).to_string());
+        assert_eq!(report_cell(&m, "kind"), "Project");
+        assert_eq!(report_cell(&m, "name"), "Alpha");
+        assert_eq!(report_cell(&m, "stage"), "g1_business_case");
+        assert_eq!(report_cell(&m, "created_at"), "2026-10-01T09:30:00+00:00");
+    }
+
+    #[test]
+    fn report_cell_says_unspecified_for_a_missing_kind_and_blank_for_a_missing_stage() {
+        let m = model(json!({}));
+        assert_eq!(report_cell(&m, "kind"), "unspecified");
+        assert_eq!(report_cell(&m, "stage"), "");
+    }
+
+    #[test]
+    fn report_cell_reads_payload_fields_and_ignores_unknown_ones() {
+        let m = model(json!({"status": "Active", "start_date": "2026-01", "target_date": 7}));
+        assert_eq!(report_cell(&m, "status"), "Active");
+        assert_eq!(report_cell(&m, "start_date"), "2026-01");
+        assert_eq!(report_cell(&m, "target_date"), "", "a non-string is blank");
+        assert_eq!(report_cell(&m, "budget"), "", "an unknown field is blank");
+    }
+}

@@ -350,3 +350,108 @@ fn plan_level_cpm(
         Err(cpm::CpmError::Cycle(on)) => serde_json::json!({ "error": "cycle", "on": on }),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cpm::{Kind, WorkCalendar};
+    use chrono::NaiveDate;
+    use serde_json::json;
+
+    fn day(d: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(2026, 3, d).unwrap()
+    }
+
+    fn item(n: u128, start: u32, end: u32) -> rules::ScheduleItem {
+        rules::ScheduleItem {
+            pid: Uuid::from_u128(n),
+            start: Some(day(start)),
+            end: Some(day(end)),
+        }
+    }
+
+    fn edge(n: u128, from: u128, to: u128) -> rules::ScheduleEdge {
+        rules::ScheduleEdge {
+            pid: Uuid::from_u128(n),
+            predecessor: Uuid::from_u128(from),
+            successor: Uuid::from_u128(to),
+            lag_days: 0,
+            kind: Kind::Fs,
+        }
+    }
+
+    fn members(n: u128) -> Vec<plans::Model> {
+        let at = chrono::DateTime::parse_from_rfc3339("2026-03-01T00:00:00+00:00").unwrap();
+        vec![plans::Model {
+            created_at: at,
+            updated_at: at,
+            id: 1,
+            pid: Uuid::from_u128(n),
+            kind: None,
+            name: "Container".to_string(),
+            data: json!({}),
+            parent_pid: None,
+            active: true,
+            stage: None,
+            phase: None,
+            deleted_at: None,
+            content_hash: None,
+            content_hash_sha3: None,
+            content_mac: None,
+        }]
+    }
+
+    #[test]
+    fn the_container_is_a_summary_not_a_node() {
+        // 100 is the container (first member); 1 and 2 are the work.
+        let facts = [item(100, 1, 20), item(1, 1, 5), item(2, 6, 10)];
+        let out = plan_level_cpm(
+            &members(100),
+            &facts,
+            &[edge(9, 1, 2)],
+            &WorkCalendar::seven_day(),
+            "default",
+        );
+        assert_eq!(out["calendar"], "default");
+        let nodes = out["nodes"].as_array().unwrap();
+        assert_eq!(nodes.len(), 2, "the container is left out");
+        assert!(
+            nodes
+                .iter()
+                .all(|n| n["pid"] != json!(Uuid::from_u128(100)))
+        );
+    }
+
+    #[test]
+    fn a_dependency_cycle_is_reported_not_raised() {
+        let facts = [item(100, 1, 20), item(1, 1, 5), item(2, 6, 10)];
+        let out = plan_level_cpm(
+            &members(100),
+            &facts,
+            &[edge(8, 1, 2), edge(9, 2, 1)],
+            &WorkCalendar::seven_day(),
+            "default",
+        );
+        assert_eq!(out["error"], "cycle");
+    }
+
+    #[test]
+    fn an_item_with_no_usable_dates_is_unscheduled() {
+        let mut undated = item(2, 6, 10);
+        undated.end = None;
+        let facts = [item(100, 1, 20), item(1, 1, 5), undated];
+        let out = plan_level_cpm(
+            &members(100),
+            &facts,
+            &[],
+            &WorkCalendar::seven_day(),
+            "default",
+        );
+        assert!(
+            out["unscheduled"]
+                .to_string()
+                .contains(&Uuid::from_u128(2).to_string()),
+            "{out}"
+        );
+    }
+}

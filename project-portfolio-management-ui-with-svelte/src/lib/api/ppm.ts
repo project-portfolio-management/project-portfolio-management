@@ -61,6 +61,61 @@ export interface CreateScenarioBody {
   description?: string | null;
 }
 
+/** `POST /api/proposals`. */
+export interface CreateProposalBody {
+  title: string;
+  kind_target: string;
+  currency?: string | null;
+  external_ask?: boolean | null;
+  requested_minor?: number | null;
+  sponsor_ref?: string | null;
+  strategic_rationale?: string | null;
+  summary?: string | null;
+  tradeoff?: string | null;
+}
+
+/** `POST /api/ideas`. */
+export interface CreateIdeaBody {
+  title: string;
+  pitch?: string | null;
+  tags?: string[] | null;
+}
+
+/** `POST /api/plans/{pid}/budget-lines`. */
+export interface CreateBudgetLineBody {
+  category: string;
+  currency: string;
+  description: string;
+  planned_minor: number;
+  funding_source_pid?: string | null;
+  gate?: string | null;
+  period_end?: string | null;
+  period_start?: string | null;
+}
+
+/** `POST /api/plans/{pid}/benefits`. */
+export interface CreateBenefitBody {
+  title: string;
+  category: string;
+  currency?: string | null;
+  expected_on?: string | null;
+  target_minor?: number | null;
+  target_note?: string | null;
+}
+
+/** `POST /api/plans/{pid}/allocations`. */
+export interface CreateAllocationBody {
+  percent: number;
+  booking?: string | null;
+  end_date?: string | null;
+  person_ref?: string | null;
+  placeholder?: boolean | null;
+  requested?: boolean | null;
+  role?: string | null;
+  skills_required?: string[] | null;
+  start_date?: string | null;
+}
+
 export interface Proposal {
   pid: string;
   title: string;
@@ -2776,7 +2831,7 @@ export class PpmClient {
   listProposals(status?: string): Promise<Proposal[]> {
     return this.http.get(`/api/proposals${status ? `?status=${status}` : ""}`);
   }
-  createProposal(body: unknown): Promise<{ pid: string }> {
+  createProposal(body: CreateProposalBody): Promise<{ pid: string }> {
     return this.http.post("/api/proposals", { body });
   }
   proposalAction(
@@ -2798,7 +2853,7 @@ export class PpmClient {
   listIdeas(status?: string): Promise<Idea[]> {
     return this.http.get(`/api/ideas${status ? `?status=${status}` : ""}`);
   }
-  createIdea(body: unknown): Promise<{ pid: string }> {
+  createIdea(body: CreateIdeaBody): Promise<{ pid: string }> {
     return this.http.post("/api/ideas", { body });
   }
   voteIdea(pid: string): Promise<Idea> {
@@ -2840,7 +2895,10 @@ export class PpmClient {
   budget(pid: string): Promise<BudgetBoard> {
     return this.http.get(`/api/plans/${pid}/budget-lines`);
   }
-  createBudgetLine(pid: string, body: unknown): Promise<{ pid: string }> {
+  createBudgetLine(
+    pid: string,
+    body: CreateBudgetLineBody,
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/budget-lines`, { body });
   }
   recordActual(
@@ -2855,7 +2913,10 @@ export class PpmClient {
   benefits(pid: string): Promise<BenefitBoard> {
     return this.http.get(`/api/plans/${pid}/benefits`);
   }
-  createBenefit(pid: string, body: unknown): Promise<{ pid: string }> {
+  createBenefit(
+    pid: string,
+    body: CreateBenefitBody,
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/benefits`, { body });
   }
   realizeBenefit(
@@ -3247,7 +3308,10 @@ export class PpmClient {
   removeAvailability(pid: string): Promise<unknown> {
     return this.http.post(`/api/availability/${pid}/delete`);
   }
-  createAllocation(pid: string, body: unknown): Promise<{ pid: string }> {
+  createAllocation(
+    pid: string,
+    body: CreateAllocationBody,
+  ): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/allocations`, { body });
   }
 

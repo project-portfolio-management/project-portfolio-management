@@ -6,24 +6,19 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type RiskRegister } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let register = $state<RiskRegister | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource(() => ppm.securityRegister(), "ppm.common.loadFailed");
+  const register = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
-  onMount(async () => {
-    try {
-      register = await ppm.securityRegister();
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   type Row = RiskRegister["register"][number];
   const columns: DataGridColumn[] = $derived([

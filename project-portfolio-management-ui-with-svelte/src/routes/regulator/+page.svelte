@@ -5,24 +5,19 @@
   `mask` obligation). English-first, like the other PPM views.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
-  import { PpmClient, money, type RegulatorExtract } from "#lib/api/ppm.js";
+  import { resource } from "#lib/resource.svelte.js";
+  import { PpmClient, money } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let extract = $state<RegulatorExtract | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource(() => ppm.regulatorExtract(), "ppm.common.loadFailed");
+  const extract = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
-  onMount(async () => {
-    try {
-      extract = await ppm.regulatorExtract();
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   const columns: DataGridColumn[] = $derived([
     { id: "currency", header: t("p.regulator.currency"), rowHeader: true },

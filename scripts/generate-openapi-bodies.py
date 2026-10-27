@@ -135,13 +135,16 @@ def main():
     no_body = []
     raw_body = []
     docs = []
-    for f in sorted(CTRL.glob("*.rs")):
-        src = f.read_text()
+    # A module is one file, or a directory (`visibility/mod.rs` and its parts) read as one source.
+    modules = [(f.stem, f.read_text()) for f in CTRL.glob("*.rs")]
+    for d in CTRL.iterdir():
+        if d.is_dir() and (d / "mod.rs").exists():
+            modules.append((d.name, "\n".join(f.read_text() for f in sorted(d.glob("*.rs")))))
+    for mod, src in sorted(modules):
         if "Routes::new()" not in src:
             continue
         hs = handlers(src)
         sigs = signatures(src)
-        mod = f.stem
         for method, path, h in routes(src):
             if len(path) > 1:
                 path = path.rstrip("/")

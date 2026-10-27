@@ -7,29 +7,26 @@
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
-  let allocations = $state<FundingAllocation[] | null>(null);
+  const loaded = resource(async () => (await ppm.fundingAllocations()).allocations, "p.ledger.could_not_load");
+  const allocations = $derived(loaded.data);
   let trace = $state<AllocationTrace | null>(null);
-  let error = $state<string | null>(null);
+  let traceError = $state<string | null>(null);
+  const error = $derived(loaded.error ?? traceError);
 
-  onMount(async () => {
-    try {
-      allocations = (await ppm.fundingAllocations()).allocations;
-    } catch (err) {
-      error = errorText(err, "p.ledger.could_not_load");
-    }
-  });
+  onMount(() => void loaded.reload());
 
   async function open(a: FundingAllocation) {
     try {
       trace = await ppm.traceAllocation(a.pid);
-      error = null;
+      traceError = null;
     } catch (err) {
-      error = errorText(err, "p.ledger.could_not_trace");
+      traceError = errorText(err, "p.ledger.could_not_trace");
     }
   }
   /** Minor units (pence, cents) as a decimal amount. */

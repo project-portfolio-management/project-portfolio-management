@@ -251,7 +251,7 @@
           e.preventDefault();
           act(() =>
             ppm.reviewGate(pid, {
-              gate: journey?.next_gate,
+              gate: journey?.next_gate ?? "",
               decision: gateDecision,
             }),
           );

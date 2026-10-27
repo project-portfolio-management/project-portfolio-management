@@ -116,6 +116,78 @@ export interface CreateAllocationBody {
   start_date?: string | null;
 }
 
+/** `POST /api/plans/{pid}/gate-reviews`. */
+export interface ReviewGateBody {
+  gate: string;
+  decision: string;
+  approver_ref?: string | null;
+  conditions?: string | null;
+}
+
+/** `POST /api/objectives`. */
+export interface CreateObjectiveBody {
+  title: string;
+  description?: string | null;
+  period?: string | null;
+}
+
+/** `POST /api/objectives/{pid}/key-results`. */
+export interface CreateKeyResultBody {
+  title: string;
+  metric: string;
+  direction: string;
+  start_value: number;
+  target_value: number;
+  currency?: string | null;
+  owner_ref?: string | null;
+  tolerance?: number | null;
+  unit?: string | null;
+}
+
+/** `PUT /api/key-results/{pid}`. */
+export interface UpdateKeyResultBody {
+  title: string;
+  target_value: number;
+  due_date?: string | null;
+  owner_ref?: string | null;
+  tolerance?: number | null;
+  unit?: string | null;
+}
+
+/** `PUT /api/kpis/{pid}`. */
+export interface UpdateKpiBody {
+  name: string;
+  red_value: number;
+  target_value: number;
+  cadence?: string | null;
+  description?: string | null;
+  objective_pid?: string | null;
+  owner_ref?: string | null;
+  unit?: string | null;
+}
+
+/** `POST /api/kpis`. */
+export interface CreateKpiBody extends UpdateKpiBody {
+  direction: string;
+  plan_pid?: string | null;
+}
+
+/** `POST /api/reports`. */
+export interface CreateReportBody {
+  name: string;
+  collection: string;
+  fields: string[];
+  filters?: unknown;
+  group_by?: string | null;
+}
+
+/** `POST /api/plans/{pid}/sprints`. */
+export interface CreateSprintBody {
+  name: string;
+  starts_on: string;
+  ends_on: string;
+}
+
 export interface Proposal {
   pid: string;
   title: string;
@@ -2878,7 +2950,10 @@ export class PpmClient {
   gateJourney(pid: string): Promise<GateJourney> {
     return this.http.get(`/api/plans/${pid}/gate-reviews`);
   }
-  reviewGate(pid: string, body: unknown): Promise<{ stage: string | null }> {
+  reviewGate(
+    pid: string,
+    body: ReviewGateBody,
+  ): Promise<{ stage: string | null }> {
     return this.http.post(`/api/plans/${pid}/gate-reviews`, { body });
   }
   listRisks(pid: string): Promise<Risk[]> {
@@ -3347,7 +3422,7 @@ export class PpmClient {
   listObjectives(): Promise<Objective[]> {
     return this.http.get("/api/objectives");
   }
-  createObjective(body: unknown): Promise<{ pid: string }> {
+  createObjective(body: CreateObjectiveBody): Promise<{ pid: string }> {
     return this.http.post("/api/objectives", { body });
   }
   alignment(pid: string): Promise<Alignment> {
@@ -3715,13 +3790,13 @@ export class PpmClient {
   }
   createKeyResult(
     objectivePid: string,
-    body: unknown,
+    body: CreateKeyResultBody,
   ): Promise<{ pid: string }> {
     return this.http.post(`/api/objectives/${objectivePid}/key-results`, {
       body,
     });
   }
-  updateKeyResult(pid: string, body: unknown): Promise<KeyResult> {
+  updateKeyResult(pid: string, body: UpdateKeyResultBody): Promise<KeyResult> {
     return this.http.put(`/api/key-results/${pid}`, { body });
   }
   deleteKeyResult(pid: string): Promise<void> {
@@ -3748,10 +3823,10 @@ export class PpmClient {
   kpi(pid: string): Promise<KpiView> {
     return this.http.get(`/api/kpis/${pid}`);
   }
-  createKpi(body: unknown): Promise<{ pid: string }> {
+  createKpi(body: CreateKpiBody): Promise<{ pid: string }> {
     return this.http.post("/api/kpis", { body });
   }
-  updateKpi(pid: string, body: unknown): Promise<Kpi> {
+  updateKpi(pid: string, body: UpdateKpiBody): Promise<Kpi> {
     return this.http.put(`/api/kpis/${pid}`, { body });
   }
   deleteKpi(pid: string): Promise<void> {
@@ -3768,7 +3843,7 @@ export class PpmClient {
   listReports(): Promise<ReportDefinition[]> {
     return this.http.get("/api/reports");
   }
-  createReport(body: unknown): Promise<{ pid: string }> {
+  createReport(body: CreateReportBody): Promise<{ pid: string }> {
     return this.http.post("/api/reports", { body });
   }
   runReport(pid: string): Promise<ReportRun> {
@@ -4302,7 +4377,7 @@ export class PpmClient {
   listSprints(pid: string): Promise<Sprint[]> {
     return this.http.get(`/api/plans/${pid}/sprints`);
   }
-  createSprint(pid: string, body: unknown): Promise<Sprint> {
+  createSprint(pid: string, body: CreateSprintBody): Promise<Sprint> {
     return this.http.post(`/api/plans/${pid}/sprints`, { body });
   }
   burndown(pid: string, sprintPid: string): Promise<Burndown> {

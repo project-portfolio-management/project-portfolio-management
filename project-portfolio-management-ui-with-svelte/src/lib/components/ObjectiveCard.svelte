@@ -101,7 +101,7 @@
     e.preventDefault();
     void run(() =>
       ppm.updateKeyResult(pid, {
-        title: editTitle[pid],
+        title: editTitle[pid] ?? "",
         target_value: Number(editTarget[pid]),
         tolerance: tol,
         unit: krUnit,

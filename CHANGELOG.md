@@ -17,6 +17,7 @@ workflow yet. Dates are 2026.
 
 ### 26 October (later)
 
+- **CQ-9: eight more request bodies are typed (gate review, objective, key result, KPI, report, sprint).** Types written from `openapi.json`; a renamed required field fails the body test. Two callers that could send `undefined` for a required field now send `""`. Verified: `pnpm run check`, 820 unit tests, lint (0 errors). **Not done:** two `body: unknown` methods (benefit realize, sprint notes). **Not verified:** a running service; e2e. No wrong field name found.
 - **CQ-9: five more request bodies are typed (proposal, idea, budget line, benefit, allocation).** Types written from `openapi.json`; a renamed required field fails the body test. Verified: `pnpm run check`, 820 unit tests, lint (0 errors). **Not done:** the other 10 `body: unknown` methods. **Not verified:** a running service; e2e. No bug found.
 - **CQ-9: four more request bodies are typed, and one was wrong.** `createRisk`, `createTask`, `createMilestone` and `createScenario` now take types written from the service's schemas (the body test compares 75, up from 71). **Bug found:** the scenarios page sent `work_item_pids`, which the service ignores, so scenarios made in the UI never had members; it sends `plan_pids` now, and `pnpm run check` fails if the old name returns. Verified: `pnpm run check`, lint, 820 unit tests, and the kanban and ppm e2e files (24). **Not done:** 16 other `body: unknown` methods, and a test of the posted body. **Not verified:** a running service; the rest of the e2e suite.
 

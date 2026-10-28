@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -28,28 +28,21 @@
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
-  let run = $state<ScheduleRisk | null>(null);
   let ranOn = $state("");
-  let error = $state<string | null>(null);
   let iterations = $state(2000);
   let seed = $state(1);
   let distribution = $state<"triangular" | "pert">("triangular");
   let band = $state(20);
-  let busy = $state(false);
-
-  async function simulate() {
-    busy = true;
-    try {
-      run = await ppm.scheduleRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band });
-      ranOn = new Date().toISOString().slice(0, 10);
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.plans.pid.schedule_risk.could_not_run_the_simulation");
-    } finally {
-      busy = false;
-    }
-  }
-  onMount(() => void simulate());
+  const loaded = resource<ScheduleRisk>(async () => {
+    const answer = await ppm.scheduleRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band });
+    ranOn = new Date().toISOString().slice(0, 10);
+    return answer;
+  }, "p.plans.pid.schedule_risk.could_not_run_the_simulation");
+  const run = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const busy = $derived(loaded.loading);
+  const simulate = () => loaded.reload();
+  onMount(simulate);
 
   const g = $derived(run ? histogramGeometry(run.histogram, run.percentiles, run.cpm_finish) : null);
   const pName = (p: number) => `P${p}`;

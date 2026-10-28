@@ -4,7 +4,7 @@
   `CostRiskView` for what it shows and what it does not claim.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -13,26 +13,19 @@
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
-  let result = $state<CostRisk | null>(null);
-  let error = $state<string | null>(null);
   let iterations = $state(5000);
   let seed = $state(1);
   let distribution = $state<"triangular" | "pert">("triangular");
   let band = $state(20);
-  let busy = $state(false);
-
-  async function run() {
-    busy = true;
-    try {
-      result = await ppm.costRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.plans.pid.cost_risk.could_not_run_the_simulation");
-    } finally {
-      busy = false;
-    }
-  }
-  onMount(() => void run());
+  const loaded = resource<CostRisk>(
+    () => ppm.costRisk(pid, { iterations, seed, distribution, fallbackBandPercent: band }),
+    "p.plans.pid.cost_risk.could_not_run_the_simulation",
+  );
+  const result = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const busy = $derived(loaded.loading);
+  const run = () => loaded.reload();
+  onMount(run);
 </script>
 
 <svelte:head><title>{t("p.plans.pid.cost_risk.cost_risk_ppm")}</title></svelte:head>

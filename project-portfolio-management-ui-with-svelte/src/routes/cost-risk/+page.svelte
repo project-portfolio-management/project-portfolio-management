@@ -4,33 +4,26 @@
   simulated cost beside its budget. Plans you cannot read are not part of it.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type CostRisk } from "#lib/api/ppm.js";
   import CostRiskView from "#lib/components/CostRiskView.svelte";
 
   const ppm = PpmClient.withFetch();
-  let result = $state<CostRisk | null>(null);
-  let error = $state<string | null>(null);
   let iterations = $state(5000);
   let seed = $state(1);
   let distribution = $state<"triangular" | "pert">("triangular");
   let band = $state(20);
-  let busy = $state(false);
-
-  async function run() {
-    busy = true;
-    try {
-      result = await ppm.portfolioCostRisk({ iterations, seed, distribution, fallbackBandPercent: band });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.cost_risk.could_not_run_the_simulation");
-    } finally {
-      busy = false;
-    }
-  }
-  onMount(() => void run());
+  const loaded = resource<CostRisk>(
+    () => ppm.portfolioCostRisk({ iterations, seed, distribution, fallbackBandPercent: band }),
+    "p.cost_risk.could_not_run_the_simulation",
+  );
+  const result = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const busy = $derived(loaded.loading);
+  const run = () => loaded.reload();
+  onMount(run);
 </script>
 
 <svelte:head><title>{t("p.cost_risk.portfolio_cost_risk_ppm")}</title></svelte:head>

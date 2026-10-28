@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -30,35 +30,29 @@
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
-  let result = $state<JointRisk | null>(null);
-  let error = $state<string | null>(null);
   let iterations = $state(2000);
   let seed = $state(1);
   let distribution = $state<"triangular" | "pert">("triangular");
   let band = $state(20);
   let currency = $state("");
   let delayCost = $state(0);
-  let busy = $state(false);
-
-  async function run() {
-    busy = true;
-    try {
-      result = await ppm.jointRisk(pid, {
+  const loaded = resource<JointRisk>(
+    () =>
+      ppm.jointRisk(pid, {
         iterations,
         seed,
         distribution,
         fallbackBandPercent: band,
         currency: currency.trim().toUpperCase() || undefined,
         delayCostPerDayMinor: Math.round(delayCost * 100),
-      });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.plans.pid.joint_risk.could_not_run_the_simulation");
-    } finally {
-      busy = false;
-    }
-  }
-  onMount(() => void run());
+      }),
+    "p.plans.pid.joint_risk.could_not_run_the_simulation",
+  );
+  const result = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const busy = $derived(loaded.loading);
+  const run = () => loaded.reload();
+  onMount(run);
 
   const scatter = $derived(result ? scatterGeometry(result.points, result.cost.budget_minor) : null);
 

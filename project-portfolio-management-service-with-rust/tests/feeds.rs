@@ -22,8 +22,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
+use project_portfolio_management::models::_entities::feed_tokens;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -242,7 +243,7 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
             .assert_status_ok();
         request
             .post("/api/me/feed-token/revoke")
-            .add_header(ak, av)
+            .add_header(ak.clone(), av.clone())
             .await
             .assert_status_ok();
         assert_eq!(
@@ -258,6 +259,50 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
                 .await
                 .status_code(),
             401
+        );
+
+        // Issuing a new token revokes the earlier one (rotation), and a token expires after a year.
+        let mint_token = || async {
+            let v: Value = request
+                .post("/api/me/feed-token")
+                .add_header(ak.clone(), av.clone())
+                .await
+                .json();
+            v["token"].as_str().expect("token").to_string()
+        };
+        let first = mint_token().await;
+        let second = mint_token().await;
+        let status = |t: String| {
+            let request = &request;
+            async move {
+                request
+                    .get(&format!("/api/feeds/calendar.ics?token={t}"))
+                    .await
+                    .status_code()
+            }
+        };
+        assert_eq!(
+            status(first).await,
+            401,
+            "an earlier token stops on rotation"
+        );
+        assert_eq!(status(second.clone()).await, 200);
+        feed_tokens::Entity::update_many()
+            .col_expr(
+                feed_tokens::Column::CreatedAt,
+                sea_orm::sea_query::Expr::value(chrono::Utc::now() - chrono::Duration::days(366)),
+            )
+            .filter(
+                feed_tokens::Column::TokenHash
+                    .eq(project_portfolio_management::feeds::hash_token(&second)),
+            )
+            .exec(&ctx.db)
+            .await
+            .expect("age the token");
+        assert_eq!(
+            status(second).await,
+            401,
+            "a token older than a year is refused"
         );
     })
     .await;

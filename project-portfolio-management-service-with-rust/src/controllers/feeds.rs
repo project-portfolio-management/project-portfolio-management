@@ -25,6 +25,7 @@ use uuid::Uuid;
 
 use crate::auth::AuthUser;
 use crate::feeds::{self as rules, Entry, Event};
+use crate::link_token;
 use crate::models::_entities::{
     feed_tokens, milestones, notifications, planned_slots, plans, sprints, tasks,
 };
@@ -32,7 +33,7 @@ use crate::models::_entities::{
 fn unauthorized() -> Error {
     Error::CustomError(
         StatusCode::UNAUTHORIZED,
-        ErrorDetail::new("unauthorized", "unknown or revoked feed token"),
+        ErrorDetail::new("unauthorized", "unknown, revoked or expired feed token"),
     )
 }
 
@@ -55,6 +56,10 @@ async fn issue(
         .label
         .map(|l| l.chars().take(100).collect::<String>());
     let token = rules::new_token();
+    // One live token per person: issuing a new one revokes the earlier ones, so a leaked old URL
+    // stops working on rotation.
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    revoke_live(&txn, &claims.sub).await?;
     feed_tokens::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         sub: ActiveValue::set(claims.sub.clone()),
@@ -64,30 +69,37 @@ async fn issue(
         last_used_at: ActiveValue::set(None),
         ..Default::default()
     }
-    .insert(&ctx.db)
+    .insert(&txn)
     .await
     .map_err(db_err)?;
+    txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({
         "token": token,
         "calendar_url": format!("/api/feeds/calendar.ics?token={token}"),
         "atom_url": format!("/api/feeds/me.atom?token={token}"),
-        "note": "This token is shown once; only its hash is stored. Revoke with DELETE /api/me/feed-token.",
+        "note": "This token is shown once; only its hash is stored. It expires after 365 days and replaces any earlier token. Revoke with DELETE /api/me/feed-token.",
     }))
 }
 
-/// `DELETE /api/me/feed-token` — revoke **all** of the caller's tokens.
-#[debug_handler]
-async fn revoke(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
+/// Revoke every live token of `sub`.
+async fn revoke_live(db: &impl ConnectionTrait, sub: &str) -> Result<()> {
     feed_tokens::Entity::update_many()
         .col_expr(
             feed_tokens::Column::RevokedAt,
             sea_orm::sea_query::Expr::value(chrono::Utc::now()),
         )
-        .filter(feed_tokens::Column::Sub.eq(claims.sub.as_str()))
+        .filter(feed_tokens::Column::Sub.eq(sub))
         .filter(feed_tokens::Column::RevokedAt.is_null())
-        .exec(&ctx.db)
+        .exec(db)
         .await
         .map_err(db_err)?;
+    Ok(())
+}
+
+/// `DELETE /api/me/feed-token` — revoke **all** of the caller's tokens.
+#[debug_handler]
+async fn revoke(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
+    revoke_live(&ctx.db, &claims.sub).await?;
     format::empty_json()
 }
 
@@ -109,6 +121,14 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
         .await
         .map_err(db_err)?
         .ok_or_else(unauthorized)?;
+    let link = link_token::Link {
+        issued_at: row.created_at.with_timezone(&chrono::Utc),
+        lifetime_days: link_token::FEED_TOKEN_LIFETIME_DAYS,
+        revoked_at: None,
+        redeemed_at: None,
+        single_use: false,
+    };
+    link_token::check(&link, chrono::Utc::now()).map_err(|_| unauthorized())?;
     // Best-effort bookkeeping; never fails the fetch.
     let sub = row.sub.clone();
     let mut active: feed_tokens::ActiveModel = row.into();

@@ -317,6 +317,19 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   default policy, so a person's undo of their own action has a POST
   twin (`…/delete`, `/api/watchers/unwatch`, `/api/reactions/remove`,
   `/api/me/feed-token/revoke`, `/api/me/notification-prefs/reset`).
+- **Link tokens.** A token carried in a URL (today only the per-user feed
+  token) is a high-entropy secret, **shown once, stored as a SHA-256 hash**,
+  revocable and **expiring**: a feed token is refused 365 days after it was
+  issued, and issuing a new one **revokes the caller's earlier live tokens**
+  (one live feed token per person, so a leaked old URL stops working on
+  rotation). A feed token is deliberately **reusable**: a calendar app
+  fetches the same URL on a schedule, so single use would end the
+  subscription. Any future one-shot link (an invite, a share or export link)
+  must be single-use: it is refused once redeemed or expired, decided by
+  `link_token::check` and redeemed with one conditional update so two
+  simultaneous requests cannot both win. The hash is looked up by equality
+  in the database; a timing difference on a lookup of the hash of a 244-bit
+  secret reveals nothing about the secret.
 
 **Not built (verified: no route, no table).** The `goals` sub-resource
 (§9.2) and the `issues` sub-resource (§9.2) have **no** controller and

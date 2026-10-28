@@ -3,28 +3,25 @@
   still awaiting an answer and for the overdue ones. Each state is a word and a shape; overdue is said in words.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
+  import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type EscalationRegister } from "#lib/api/ppm.js";
   import { STATUS_SYMBOL, STATUS_TEXT, ageText, automaticText, levelText, reasonLabel } from "#lib/escalation-view.js";
 
   const ppm = PpmClient.withFetch();
-  let register = $state<EscalationRegister | null>(null);
-  let error = $state<string | null>(null);
   let filter = $state("live");
-
-  async function refresh() {
-    try {
-      register = await ppm.escalationRegister({
+  const loaded = resource<EscalationRegister>(
+    () =>
+      ppm.escalationRegister({
         status: filter === "overdue" || filter === "all" ? undefined : filter,
         overdue: filter === "overdue",
-      });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.escalations.could_not_load");
-    }
-  }
+      }),
+    "p.escalations.could_not_load",
+  );
+  const register = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const refresh = () => loaded.reload();
   onMount(refresh);
 </script>
 

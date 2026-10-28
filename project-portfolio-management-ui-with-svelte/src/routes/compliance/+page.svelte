@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -18,17 +18,15 @@
   } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let register = $state<RiskRegister | null>(null);
-  let findings = $state<ConformanceFindings | null>(null);
-  let error = $state<string | null>(null);
+  const registerLoad = resource<RiskRegister>(() => ppm.complianceRegister(), "ppm.common.loadFailed");
+  const findingsLoad = resource<ConformanceFindings>(() => ppm.complianceFindings(), "ppm.common.loadFailed");
+  const register = $derived(registerLoad.data);
+  const findings = $derived(findingsLoad.data);
+  const error = $derived(registerLoad.error ?? findingsLoad.error);
 
-  onMount(async () => {
-    try {
-      register = await ppm.complianceRegister();
-      findings = await ppm.complianceFindings();
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
+  onMount(() => {
+    void registerLoad.reload();
+    void findingsLoad.reload();
   });
 
   type Row = RiskRegister["register"][number];

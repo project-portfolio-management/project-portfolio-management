@@ -6,7 +6,7 @@
   is displayed verbatim). English-first, like the other PPM views.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -20,17 +20,15 @@
   } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let variance = $state<FinancialVariance | null>(null);
-  let exposure = $state<FinancialExposure | null>(null);
-  let error = $state<string | null>(null);
+  const varianceLoad = resource<FinancialVariance>(() => ppm.financialVariance(), "ppm.common.loadFailed");
+  const exposureLoad = resource<FinancialExposure>(() => ppm.financialExposure(), "ppm.common.loadFailed");
+  const variance = $derived(varianceLoad.data);
+  const exposure = $derived(exposureLoad.data);
+  const error = $derived(varianceLoad.error ?? exposureLoad.error);
 
-  onMount(async () => {
-    try {
-      variance = await ppm.financialVariance();
-      exposure = await ppm.financialExposure();
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
+  onMount(() => {
+    void varianceLoad.reload();
+    void exposureLoad.reload();
   });
 
   const overrun = (c: DataGridCellContext) => ((c.row as { overrun?: boolean }).overrun ? "cell-red" : "");

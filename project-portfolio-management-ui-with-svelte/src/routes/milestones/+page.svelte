@@ -50,6 +50,8 @@
     <p class="small muted">
       {t("p.milestones.forecast")}
       {#each Object.entries(list.summary.by_schedule_state) as [state, count] (state)}
+        <!-- the literal space is kept: Svelte trims whitespace before {/each} -->
+        <!-- eslint-disable-next-line svelte/no-useless-mustaches -->
         {STATE_TEXT[state as keyof typeof STATE_TEXT]} {count}{" "}
       {/each}
     </p>

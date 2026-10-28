@@ -213,7 +213,7 @@
   <label>
     {t("p.plans.pid.onboarding.what")}
     <select bind:value={kind}>
-      {#each Object.entries(KIND_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
+      {#each Object.entries(KIND_TEXT) as [k, v] (k)}<option value={k}>{v}</option>{/each}
     </select>
   </label>
   {#if isPersonKind(kind)}
@@ -232,7 +232,7 @@
     <p>{t("p.plans.pid.onboarding.no_access_is_outstanding")}</p>
   {:else}
     <ul data-testid="outstanding">
-      {#each access.outstanding as o}<li>{t("p.plans.pid.onboarding.since", { person_ref: o.person_ref, access: o.access, granted_on: o.granted_on })}</li>{/each}
+      {#each access.outstanding as o, i (i)}<li>{t("p.plans.pid.onboarding.since", { person_ref: o.person_ref, access: o.access, granted_on: o.granted_on })}</li>{/each}
     </ul>
   {/if}
   <form class="surface stack" onsubmit={recordAccess} aria-labelledby="acc-h">

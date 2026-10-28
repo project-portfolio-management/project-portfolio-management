@@ -92,7 +92,7 @@
     {#each unmappedGroups(shown.unmapped) as g (g.title)}
       <details>
         <summary>{g.title} ({g.reasons.length})</summary>
-        <ul>{#each g.reasons as r}<li>{r}</li>{/each}</ul>
+        <ul>{#each g.reasons as r, i (i)}<li>{r}</li>{/each}</ul>
       </details>
     {/each}
   </section>

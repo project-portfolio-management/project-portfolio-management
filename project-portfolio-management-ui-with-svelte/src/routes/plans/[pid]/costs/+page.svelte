@@ -105,10 +105,10 @@
   {#each plan?.currencies ?? [] as c (c.currency)}
     <DataTable label={t("p.plans.pid.costs.per_period", { currency: c.currency })} columns={costColumns(c)} rows={costRows(c)} rowId={(r) => String(r.name)} sortable={false} testid={`cost-${c.currency}`} />
   {/each}
-  {#each [...(plan?.unrated ?? []), ...(plan?.unassigned ?? [])] as u}
+  {#each [...(plan?.unrated ?? []), ...(plan?.unassigned ?? [])] as u, i (i)}
     <p class="small">{t("p.plans.pid.costs.so_its_labour_is_not", { title: u.title, hoursText: hoursText(u.work_minutes), reason: NO_RATE_TEXT[u.reason] ?? u.reason })}</p>
   {/each}
-  {#each plan?.unplaced ?? [] as u}
+  {#each plan?.unplaced ?? [] as u, i (i)}
     <p class="small">{t("p.plans.pid.costs.an_expense_of_so_it", { money: money(u.amount_minor, u.currency), reason: UNPLACED_TEXT[u.reason] ?? u.reason })}</p>
   {/each}
 

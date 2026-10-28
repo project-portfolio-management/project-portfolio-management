@@ -25,8 +25,7 @@
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       const work = await ppm.myTasks(tz);
-      const seen = new Set<string>();
-      tasks = MY_WORK_BUCKETS.flatMap((b) => work.buckets[b] ?? []).filter((x) => !seen.has(x.pid) && seen.add(x.pid));
+      tasks = MY_WORK_BUCKETS.flatMap((b) => work.buckets[b] ?? []).filter((x, i, all) => all.findIndex((y) => y.pid === x.pid) === i);
       omitted = work.omitted_unreadable;
       error = null;
     } catch (err) {

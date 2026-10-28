@@ -145,6 +145,7 @@ describe("the Welsh page catalogue", () => {
 describe("no visible English outside the catalogue", () => {
   const found: string[] = [];
   const word = /[A-Za-z]{3,}/;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the Svelte AST is untyped here
   const visit = (n: any, file: string, inCode: boolean): void => {
     if (!n || typeof n !== "object") return;
     const code =

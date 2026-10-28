@@ -13,7 +13,7 @@ const ROOTS = ["src", "static", "tests", "docs", "locales"];
 const SKIP = new Set(["node_modules", ".svelte-kit", "build", "dist"]);
 
 function walk(dir: string, out: { path: string; dir: boolean }[] = []) {
-  let names: string[] = [];
+  let names: string[];
   try {
     names = readdirSync(dir);
   } catch {

@@ -156,7 +156,7 @@
   <label>
     {t("p.plans.pid.what_if.edit")}
     <select bind:value={form.kind}>
-      {#each Object.entries(EDIT_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
+      {#each Object.entries(EDIT_TEXT) as [k, v] (k)}<option value={k}>{v}</option>{/each}
     </select>
   </label>
   {#if form.kind === "add_link"}
@@ -192,7 +192,7 @@
       <label>{t("p.plans.pid.what_if.constraint")}
         <select bind:value={form.constraint}>
           <option value="">{t("p.plans.pid.what_if.none_clear_it")}</option>
-          {#each Object.entries(CONSTRAINTS) as [k, v]}<option value={k}>{v}</option>{/each}
+          {#each Object.entries(CONSTRAINTS) as [k, v] (k)}<option value={k}>{v}</option>{/each}
         </select>
       </label>
       {#if form.constraint}
@@ -212,7 +212,7 @@
   <p class="muted">{t("p.plans.pid.what_if.none_yet")}</p>
 {:else}
   <ol data-testid="staged">
-    {#each edits as e, i}
+    {#each edits as e, i (i)}
       <li>
         {describeEdit(e, name)}
         <button class="button" type="button" onclick={() => unstage(i)} aria-label={t("p.plans.pid.what_if.remove_edit", { n: i + 1 })}>{t("p.plans.pid.what_if.remove")}</button>
@@ -240,11 +240,11 @@
         {#if preview.critical_path.removed.length}{t("p.plans.pid.what_if.leaves_it", { join: preview.critical_path.removed.map(name).join(", ") })}{/if}
       </p>
     {/if}
-    {#each preview.assignments_recomputed as r}
+    {#each preview.assignments_recomputed as r, i (i)}
       <p class="small">{t("p.plans.pid.what_if.now_takes_of_the_day", { name: name(r.task_pid), units_percent: r.units_percent, hoursText: hoursText(r.work_minutes) })}</p>
     {/each}
     {#if preview.cost_impact.available}
-      {#each preview.cost_impact.labour as c}
+      {#each preview.cost_impact.labour as c, i (i)}
         <p>{t("p.plans.pid.what_if.planned_labour_cost", { deltaText: deltaText(c.delta_minor, c.currency), deltaText2: deltaText(c.before_minor, c.currency), deltaText3: deltaText(c.after_minor, c.currency) })}</p>
       {/each}
       {#if preview.cost_impact.unrated_minutes_after}

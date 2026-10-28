@@ -164,7 +164,7 @@
             <label>
               {t("p.plans.pid.work.rule")}
               <select bind:value={f.rule}>
-                {#each Object.entries(RULE_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
+                {#each Object.entries(RULE_TEXT) as [k, v] (k)}<option value={k}>{v}</option>{/each}
               </select>
             </label>
             <p class="small muted">{RULE_HELP[f.rule]}</p>
@@ -195,7 +195,7 @@
               <label>
                 {t("p.plans.pid.work.spread")}
                 <select bind:value={f.contour}>
-                  {#each Object.entries(CONTOUR_TEXT) as [k, v]}<option value={k}>{v}</option>{/each}
+                  {#each Object.entries(CONTOUR_TEXT) as [k, v] (k)}<option value={k}>{v}</option>{/each}
                 </select>
               </label>
               {#if f.contour === "custom"}
@@ -228,14 +228,14 @@
     {#snippet footer()}
       <tr>
         <th scope="row">{t("p.plans.pid.work.plan_2")}</th>
-        {#each buckets as b}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
+        {#each buckets as b, i (i)}<td>{b.minutes ? hoursText(b.minutes) : "–"}</td>{/each}
         <td>{hoursText(p.totals.work_minutes)}</td>
       </tr>
     {/snippet}
   </DataTable>
   {#if profile.unplaced.length}
     <ul>
-      {#each profile.unplaced as u}
+      {#each profile.unplaced as u, i (i)}
         <li>{t("p.plans.pid.work.so_its_work_is_not", { title: u.title, hoursText: hoursText(u.work_minutes), reason: UNPLACED_TEXT[u.reason] ?? u.reason })}</li>
       {/each}
     </ul>

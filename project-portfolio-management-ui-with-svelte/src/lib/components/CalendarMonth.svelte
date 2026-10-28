@@ -33,7 +33,6 @@
 
   const pad = (n: number, w = 2) => String(n).padStart(w, "0");
   let view = $state<Mode>("month");
-  // svelte-ignore state_referenced_locally
   let anchorDate = $state(`${pad(year, 4)}-${pad(month)}-01`);
   let range = $state<[string, string] | null>(null);
   let today = $state<string | undefined>(undefined);

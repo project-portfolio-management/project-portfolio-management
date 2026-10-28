@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -13,19 +13,12 @@
   import CapacityMeter from "#lib/components/CapacityMeter.svelte";
 
   const ppm = PpmClient.withFetch();
-  let view = $state<CapacityView | null>(null);
-  let error = $state<string | null>(null);
   let from = $state("");
   let to = $state("");
-
-  async function refresh() {
-    try {
-      view = await ppm.capacity(from || undefined, to || undefined);
-      error = null;
-    } catch (err) {
-      error = errorText(err, "ppm.common.loadFailed");
-    }
-  }
+  const loaded = resource<CapacityView>(() => ppm.capacity(from || undefined, to || undefined), "ppm.common.loadFailed");
+  const view = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const refresh = () => loaded.reload();
   onMount(refresh);
 
   type Person = CapacityView["people"][number];

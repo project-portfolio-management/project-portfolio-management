@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -19,19 +19,15 @@
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
-  let report = $state<ScheduleHealth | null>(null);
-  let error = $state<string | null>(null);
   let asOf = $state("");
-
-  async function load() {
-    try {
-      report = await ppm.scheduleHealth(pid, asOf || undefined);
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.plans.pid.schedule_health.could_not_run_the_schedule");
-    }
-  }
-  onMount(() => void load());
+  const loaded = resource<ScheduleHealth>(
+    () => ppm.scheduleHealth(pid, asOf || undefined),
+    "p.plans.pid.schedule_health.could_not_run_the_schedule",
+  );
+  const report = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const load = () => loaded.reload();
+  onMount(load);
 
   type Check = ScheduleHealth["checks"][number];
   const columns: DataGridColumn[] = $derived([

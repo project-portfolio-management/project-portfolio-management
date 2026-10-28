@@ -9,7 +9,7 @@ import { SESSION_COOKIE } from "#lib/server/session.js";
 import { oidcConfig, oidcOptions } from "#lib/server/config.js";
 import { OIDC_COOKIE, providerMetadata } from "#lib/server/oidc-session.js";
 import { sessions } from "#lib/server/session-store-instance.js";
-import { t, pageTitle } from "#lib/i18n.svelte.js";
+import { pageTitle } from "#lib/i18n.svelte.js";
 
 // `page.data.title` convention (see `./+layout.svelte`): mirrors this
 // route's own <svelte:head><title>{t("brand.name")}</title> so

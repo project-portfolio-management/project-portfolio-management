@@ -9,7 +9,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";

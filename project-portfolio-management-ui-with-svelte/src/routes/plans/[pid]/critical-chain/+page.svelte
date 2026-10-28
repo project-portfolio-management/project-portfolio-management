@@ -12,7 +12,7 @@
   import { page } from "$app/state";
   import { PpmClient, type ChainBuffers, type CriticalChain } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { layoutBars } from "#lib/chain-view.js";
 
   const ppm = PpmClient.withFetch();

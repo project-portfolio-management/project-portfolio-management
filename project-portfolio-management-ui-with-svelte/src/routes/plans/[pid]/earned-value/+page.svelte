@@ -11,7 +11,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -208,7 +208,6 @@
     {#if forecast?.forecasts}
       <h2>{t("p.plans.pid.earned_value.where_it_is_heading")}</h2>
       {#each forecast.forecasts as f (f.currency)}
-        {@const c = (n: number) => money(n, f.currency)}
         <section class="surface stack" aria-labelledby="fc-{f.currency}">
           <h3 id="fc-{f.currency}">{f.currency}</h3>
           <p>

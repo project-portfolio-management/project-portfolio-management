@@ -8,7 +8,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import type { MilestoneView, MilestoneMode, PpmClient, Task } from "#lib/api/ppm.js";
   import {

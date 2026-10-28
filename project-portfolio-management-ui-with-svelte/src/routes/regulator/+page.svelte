@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";

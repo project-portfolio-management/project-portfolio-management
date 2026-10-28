@@ -12,7 +12,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
-  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { page } from "$app/state";
   import KanbanBoard from "@lilydesignsystem/svelte-kanban-board";
   import type { KanbanCard, KanbanColumn, KanbanField } from "@lilydesignsystem/svelte-kanban-board";
@@ -29,7 +29,6 @@
   import { t } from "#lib/i18n.svelte.js";
   import PasteTasks from "#lib/components/PasteTasks.svelte";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
-  import { calendarDays } from "#lib/units.js";
   // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
   const pid = $derived(page.params.pid ?? "");
   const ppm = PpmClient.withFetch();

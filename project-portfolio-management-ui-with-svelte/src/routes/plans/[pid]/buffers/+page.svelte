@@ -188,7 +188,7 @@
   </section>
 {/if}
 
-{#snippet zoneCell({ row, formatted }: DataGridCellContext)}
+{#snippet zoneCell({ row }: DataGridCellContext)}
   {@const r = rowOf<BufferReading>(row)}
   {@const look = zoneLook(r.point?.zone)}
   <span aria-hidden="true">{look.symbol}</span> {tDynamic(look.word)}

@@ -119,7 +119,7 @@
   ]);
 </script>
 
-{#snippet agingTitle({ row, formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${pid}/board`)}>{formatted}</a>{/snippet}
+{#snippet agingTitle({ formatted }: DataGridCellContext)}<a href={localeHref(`/plans/${pid}/board`)}>{formatted}</a>{/snippet}
 
 {#snippet sleCell({ row }: DataGridCellContext)}
   {@const a = rowOf<Aging>(row).aging}

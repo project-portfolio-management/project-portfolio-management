@@ -55,7 +55,6 @@
   onMount(refresh);
 
   type PRow = Prioritization["plans"][number];
-  type Component = PlanSmartScore["smart_score"]["components"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.prioritization.plan"), rowHeader: true, cell: planCell },
     { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(1)) },

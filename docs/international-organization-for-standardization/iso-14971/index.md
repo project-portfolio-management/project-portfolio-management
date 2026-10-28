@@ -44,7 +44,7 @@ the project risks register is **not** evidence for any row below.
 
 ## What a deployer who uses PPM clinically would need
 
-These are not done and not planned; they are listed so the gap is plain:
+A [starting hazard analysis](hazard-analysis.md) names the hazards a clinical use would add to and the controls PPM has. The following are not done and not planned; they are listed so the gap is plain:
 
 - a stated intended purpose, a hazard analysis and acceptability criteria for the clinical use;
 - the software life-cycle process the standard is normally paired with (IEC 62304) and a register of third-party

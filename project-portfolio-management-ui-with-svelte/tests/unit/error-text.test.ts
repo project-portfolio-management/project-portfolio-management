@@ -39,10 +39,12 @@ describe("errorText (CQ-20): no page shows the service's text", () => {
   });
 
   it("is in the reader's language and carries no English from the service", () => {
+    const english = t("p.error.status_409");
     i18n.set("cy-001");
     try {
       const reason = errorReason(new ApiError(409, "already decided"));
       expect(reason).toBe(t("p.error.status_409"));
+      expect(reason).not.toBe(english);
       expect(reason).not.toMatch(/^p\.error\./);
       expect(reason).not.toContain("already decided");
       expect(errorReason(new ApiError(500, "Internal Server Error"))).toBe(

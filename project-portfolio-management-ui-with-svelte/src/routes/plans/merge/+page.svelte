@@ -106,7 +106,7 @@
   // This client's ApiError carries `status` + `message` (no error code), so
   // the status is what makes a failure legible ("404: not found").
   function describe(err: unknown): string {
-    if (err instanceof ApiError) return `${err.status}: ${err.message}`;
+    if (err instanceof ApiError) return `${err.status}: ${errorReason(err)}`;
     return errorReason(err);
   }
 

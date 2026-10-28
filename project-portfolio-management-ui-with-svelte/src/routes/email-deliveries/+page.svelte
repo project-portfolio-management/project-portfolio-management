@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
+  import { ApiError } from "#lib/api/client.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type EmailDeliveries } from "#lib/api/ppm.js";
@@ -20,7 +21,7 @@
       data = await ppm.emailDeliveries(status || undefined);
       error = null;
     } catch (err) {
-      error = err instanceof Error && /404|not found/i.test(err.message)
+      error = err instanceof ApiError && err.status === 404
         ? t("p.email_deliveries.not_allowed")
         : errorText(err, "p.email_deliveries.could_not_load");
     }

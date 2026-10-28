@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
+  import { ApiError } from "#lib/api/client.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KeyPersons } from "#lib/api/ppm.js";
@@ -26,7 +27,7 @@
       data = await ppm.keyPersons();
       error = null;
     } catch (err) {
-      error = err instanceof Error && /404|not found/i.test(err.message)
+      error = err instanceof ApiError && err.status === 404
         ? t("p.key_persons.not_allowed")
         : errorText(err, "p.key_persons.could_not_load");
     }

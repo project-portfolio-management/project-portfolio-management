@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import RiskInputs from "#lib/components/RiskInputs.svelte";
@@ -106,7 +106,7 @@
     } catch (err) {
       if (err instanceof ApiError && isOverCapacityConflict(err.status, err.body)) {
         overCapacity = allocationPid;
-        error = err.message;
+        error = errorReason(err);
       } else {
         error = errorText(err, "ppm.common.actionFailed");
       }

@@ -27,13 +27,13 @@ describe("resource (CQ-20)", () => {
     expect(r.loading).toBe(false);
   });
 
-  it("shows the service's reason for a refusal and the page's message for a server fault", async () => {
+  it("shows the catalogue's sentence for a refusal and the page's message for a server fault", async () => {
     let err: unknown = new ApiError(422, "title must not be blank");
     const r = resource(async () => {
       throw err;
     }, "ppm.common.loadFailed");
     await r.reload();
-    expect(r.error).toBe("title must not be blank");
+    expect(r.error).toBe(t("p.error.status_422"));
     err = new ApiError(500, "Internal Server Error");
     await r.reload();
     expect(r.error).toBe(t("ppm.common.loadFailed"));
@@ -50,7 +50,7 @@ describe("resource (CQ-20)", () => {
     fail = true;
     await r.reload();
     expect(r.data).toBe("kept");
-    expect(r.error).toBe("gone");
+    expect(r.error).toBe(t("p.error.status_404"));
     fail = false;
     await r.reload();
     expect(r.error).toBeNull();

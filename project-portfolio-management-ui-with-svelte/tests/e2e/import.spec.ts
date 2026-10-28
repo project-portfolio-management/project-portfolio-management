@@ -104,7 +104,7 @@ test("a refusal is shown, and changing tracker clears the file", async ({
   });
   await page.getByRole("button", { name: "Preview the import" }).click();
   await expect(page.getByRole("alert")).toContainText(
-    "does not look like that export",
+    "Something you entered is not accepted.",
   );
   await page.getByLabel("Tracker").selectOption("jira");
   await expect(

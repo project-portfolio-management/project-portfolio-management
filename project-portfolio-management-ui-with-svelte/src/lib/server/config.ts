@@ -1,6 +1,7 @@
 // Server-side BFF endpoints (never bundled into the browser).
 
 import * as env from "$app/env/private";
+import { baseUrl, type Bridges } from "../bridge.js";
 
 /** Portfolio service base URL — the proxy forwards entity-API calls here with
  *  a server-injected PASETO. (loco dev default 5150.) */
@@ -57,5 +58,13 @@ export function oidcOptions(): {
         60,
     ),
     endProviderSession: (env.OIDC_END_SESSION ?? "").trim() === "true",
+  };
+}
+
+/** The sibling apps' base URLs (`CONTACTS_APP_URL`, `WORKFORCE_APP_URL`), each `null` unless a web URL. */
+export function bridgeConfig(): Bridges {
+  return {
+    contacts: baseUrl(env.CONTACTS_APP_URL),
+    workforce: baseUrl(env.WORKFORCE_APP_URL),
   };
 }

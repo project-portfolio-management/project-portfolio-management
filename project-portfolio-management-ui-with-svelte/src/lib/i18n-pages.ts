@@ -2006,6 +2006,8 @@ export const PAGES_EN = {
   "p.error.status_413": "That is too large.",
   "p.error.status_422": "Something you entered is not accepted.",
   "p.error.status_429": "Too many requests: wait a moment and try again.",
+  "p.bridge.open_workforce": "Open {name} in workforce planning",
+  "p.bridge.open_contacts": "Open {name} in contacts",
   "p.error.client": "The request was refused.",
   "p.error.server": "The service had a problem: try again.",
   "p.escalations.note_problem": "Write at least 10 characters.",

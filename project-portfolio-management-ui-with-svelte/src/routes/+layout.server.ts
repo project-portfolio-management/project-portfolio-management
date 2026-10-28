@@ -8,13 +8,14 @@
 import type { LayoutServerLoad } from "./$types";
 import { currentUser } from "#lib/server/auth.js";
 import { demoEnabled } from "#lib/server/demo.js";
+import { bridgeConfig } from "#lib/server/config.js";
 import { KNOWN_NAV_HREFS, landingRouteForView, viewAttr } from "#lib/nav.js";
 
 const DEFAULT_LANDING_ROUTE = "/plans";
 
 export const load: LayoutServerLoad = async (event) => {
   const data = await loadSession(event);
-  return { ...data, demo: demoEnabled() };
+  return { ...data, demo: demoEnabled(), bridges: bridgeConfig() };
 };
 
 const loadSession = async ({

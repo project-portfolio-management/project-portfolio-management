@@ -21,6 +21,9 @@ export const variables = defineEnvVars({
   OIDC_SESSION_STORE: { schema: (input) => input ?? "" },
   REDIS_URL: { schema: (input) => input ?? "" },
   OIDC_END_SESSION: { schema: (input) => input ?? "" },
+  // Cross-app bridges (see src/lib/bridge.ts): where the sibling apps live. Blank means no link.
+  CONTACTS_APP_URL: { schema: (input) => input ?? "" },
+  WORKFORCE_APP_URL: { schema: (input) => input ?? "" },
   // Demonstration mode (see src/lib/server/demo.ts): sign in as example@example.com, fictitious data only.
   PPM_DEMO_MODE: { schema: (input) => input ?? "" },
 });

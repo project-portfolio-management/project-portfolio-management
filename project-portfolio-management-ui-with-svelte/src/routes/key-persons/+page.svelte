@@ -5,6 +5,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { ApiError } from "#lib/api/client.js";
+  import BridgeLink from "#lib/components/BridgeLink.svelte";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type KeyPersons } from "#lib/api/ppm.js";
@@ -61,7 +62,7 @@
   const kindWord = (k: string) => tDynamic(`p.key_persons.kind_${k}`);
   const columns: DataGridColumn[] = $derived([
     { id: "subject", header: t("p.key_persons.col_subject"), rowHeader: true, cell: subjectCell },
-    { id: "successor_ref", header: t("p.key_persons.col_successor"), format: (v) => (v ? String(v) : t("p.key_persons.no_successor")) },
+    { id: "successor_ref", header: t("p.key_persons.col_successor"), format: (v) => (v ? String(v) : t("p.key_persons.no_successor")), cell: successorCell },
     { id: "readiness", header: t("p.key_persons.col_ready"), format: (v) => ready(String(v)), cell: readyCell, cellClass: (c) => ({ ready: "cell-green", partly: "cell-amber", none: "cell-red" })[String(c.value)] ?? "" },
     { id: "note", header: t("p.key_persons.col_note"), format: (v) => (v ? String(v) : "") },
     { id: "pid", header: t("p.key_persons.col_act"), sortable: false, cell: actCell },
@@ -69,6 +70,8 @@
 </script>
 
 {#snippet subjectCell({ row }: DataGridCellContext)}{row.subject} <span class="muted">({kindWord(String(row.subject_kind))})</span>{/snippet}
+
+{#snippet successorCell({ value, formatted }: DataGridCellContext)}{formatted}{#if value} <BridgeLink ref={String(value)} name={formatted} />{/if}{/snippet}
 
 {#snippet readyCell({ value, formatted }: DataGridCellContext)}
   <span aria-hidden="true">{value === "ready" ? "●" : value === "partly" ? "◐" : "✖"}</span> {formatted}

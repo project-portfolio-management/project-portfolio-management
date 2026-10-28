@@ -16,6 +16,7 @@
   import { API_BASE_URL } from "#lib/config.js";
   import { PpmClient, type RaciMatrix } from "#lib/api/ppm.js";
   import RaciMatrixTable from "#lib/components/RaciMatrix.svelte";
+  import BridgeLink from "#lib/components/BridgeLink.svelte";
   import { LETTERS, LETTER_MEANING, LETTER_WORD, shortRef, toAssignments, validPersonRef } from "#lib/raci-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -65,13 +66,15 @@
   }
 
   const workloadColumns: DataGridColumn[] = $derived([
-    { id: "person", header: t("p.plans.pid.raci.person"), rowHeader: true, accessor: (r) => shortRef(String(r.person_ref)) },
+    { id: "person", header: t("p.plans.pid.raci.person"), rowHeader: true, accessor: (r) => shortRef(String(r.person_ref)), cell: personCell },
     { id: "responsible", header: LETTER_WORD.R, align: "end" },
     { id: "accountable", header: LETTER_WORD.A, align: "end" },
     { id: "consulted", header: LETTER_WORD.C, align: "end" },
     { id: "informed", header: LETTER_WORD.I, align: "end" },
   ]);
 </script>
+
+{#snippet personCell({ row, formatted }: DataGridCellContext)}{formatted} <BridgeLink ref={String(row.person_ref)} name={formatted} />{/snippet}
 
 <svelte:head><title>{t("p.plans.pid.raci.raci_ppm")}</title></svelte:head>
 

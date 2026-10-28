@@ -2052,6 +2052,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.error.status_422": "Nid yw rhywbeth a roesoch yn cael ei dderbyn.",
   "p.error.status_429":
     "Gormod o geisiadau: arhoswch eiliad a rhowch gynnig arall arni.",
+  "p.bridge.open_workforce": "Agor {name} mewn cynllunio'r gweithlu",
+  "p.bridge.open_contacts": "Agor {name} mewn cysylltiadau",
   "p.error.client": "Gwrthodwyd y cais.",
   "p.error.server": "Cafodd y gwasanaeth broblem: rhowch gynnig arall arni.",
   "p.escalations.note_problem": "Ysgrifennwch o leiaf 10 nod.",

@@ -1268,3 +1268,21 @@ The bar's items are in `src/lib/nav-items.ts`, shared by the layout and the Disp
 switches in the UI (the service has them, `GET`/`PUT /api/plans/{pid}/modules`, and the plan page already follows them,
 but no screen sets them); hiding a plan's workspace links per person; hiding a section for everyone. Tests:
 `tests/unit/hidden-sections.test.ts`, `tests/e2e/hidden-sections.spec.ts`.
+
+## Cross-app bridges (links to contact-relationship-management and workforce-planning-management)
+
+A bridge is a **plain link** in each direction, with no runtime coupling: this app never calls the
+other apps, shares a session with them, or fails when they are down.
+
+- **Outbound.** A deployment sets `CONTACTS_APP_URL` and `WORKFORCE_APP_URL` (http or https, no
+  credentials; anything else is ignored). Where the UI shows a stored reference, a `worker:<id>` links to
+  `{WORKFORCE_APP_URL}/workers/<id>` and a `contact:<id>` to `{CONTACTS_APP_URL}/contacts/<id>`, opened in a
+  new tab with `rel="noopener noreferrer"`. With no URL set no link is shown. `person:<id>` is **not**
+  linked: nothing says a person's id is the same in either app. Today the links appear on the RACI workload
+  table and the key-persons successor column (`src/lib/bridge.ts`, `BridgeLink.svelte`).
+- **Inbound.** The other apps may link to `/plans`, `/plans/{pid}`, `/plans/{pid}/work`,
+  `/plans/{pid}/raci` and `/me` (with the locale prefix the app adds). These routes are part of the
+  contract: `tests/unit/bridge.test.ts` fails if one stops existing.
+- **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
+  there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
+

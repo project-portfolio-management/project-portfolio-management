@@ -17,7 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "format": "prettier --write src",
-    "lint": "prettier --check src && eslint src tests"
+    "lint": "prettier --check src tests playwright.config.ts vite.config.ts tsconfig.json eslint.config.js && eslint --max-warnings 51 src tests"
   },
   "dependencies": {
     "@fontsource/opendyslexic": "^5.3.0",

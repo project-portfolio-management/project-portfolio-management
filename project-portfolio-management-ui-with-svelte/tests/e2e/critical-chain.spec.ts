@@ -332,12 +332,10 @@ test.describe("critical chain, buffers and the drum (CC-6)", () => {
     ).toBeVisible();
     await expect(page.getByTestId("fever-chart")).toHaveCount(3);
     await expect(
-      page
-        .getByRole("alert")
-        .filter({
-          hasText:
-            "The project buffer is in the red: 120% used. Chain: Build → Test.",
-        }),
+      page.getByRole("alert").filter({
+        hasText:
+          "The project buffer is in the red: 120% used. Chain: Build → Test.",
+      }),
     ).toBeVisible();
     await expect(
       page.getByText(

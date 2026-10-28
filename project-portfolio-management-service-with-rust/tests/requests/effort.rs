@@ -223,3 +223,76 @@ async fn no_declared_capacity_is_not_zero_utilization() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+// **Small-cell suppression.** A team figure over fewer than five people is
+// withheld whole (no figure, and no numerator or denominator to make one
+// from); the fifth person makes it reportable. The per-person view is the
+// owner's carve-out and is not suppressed at any size.
+async fn a_team_under_five_is_withheld_and_a_team_of_five_is_reported() {
+    super::isolate_search_index();
+    let today = chrono::Utc::now().date_naive();
+    let spent_on = (today - chrono::Duration::days(5)).to_string();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = create_plan!(request, "Small cell plan");
+        // Declared capacity large enough that the minutes floor is cleared,
+        // so the reason under test is the size of the group.
+        let declared = request
+            .post("/api/working-time")
+            .json(&json!({ "minutes_per_day": 480, "working_days_per_week": 5 }))
+            .await;
+        assert_eq!(declared.status_code(), 200);
+
+        let person = |n: u32| format!("person:cccccccc-0000-0000-0000-00000000000{n}");
+        let team = || async {
+            let view: Value = request
+                .get("/api/capacity/utilization?by=team&window_days=28")
+                .await
+                .json();
+            view
+        };
+        for n in 1..=4 {
+            let entry = request
+                .post(&format!("/api/plans/{plan}/time-entries"))
+                .json(&json!({
+                    "actor_ref": person(n), "spent_on": spent_on, "minutes": 480
+                }))
+                .await;
+            assert_eq!(entry.status_code(), 200);
+        }
+
+        let four = team().await;
+        assert_eq!(four["people_counted"], 4);
+        let u = &four["utilization"];
+        assert!(u["basis_points"].is_null(), "four people: no figure");
+        assert_eq!(u["unavailable"], "small_group");
+        assert_eq!(u["effort_minutes"], 0, "the numerator is withheld too");
+        assert_eq!(u["available_minutes"], 0, "and the denominator");
+
+        // The per-person view is unchanged at this size.
+        let people: Value = request
+            .get("/api/capacity/utilization?by=person&window_days=28")
+            .await
+            .json();
+        assert_eq!(people["utilization"].as_array().expect("rows").len(), 4);
+
+        let fifth = request
+            .post(&format!("/api/plans/{plan}/time-entries"))
+            .json(&json!({
+                "actor_ref": person(5), "spent_on": spent_on, "minutes": 480
+            }))
+            .await;
+        assert_eq!(fifth.status_code(), 200);
+
+        let five = team().await;
+        assert_eq!(five["people_counted"], 5);
+        let u = &five["utilization"];
+        assert!(u["unavailable"].is_null(), "five people: reportable");
+        assert!(u["basis_points"].as_i64().is_some_and(|b| b > 0));
+        assert_eq!(u["effort_minutes"], 5 * 480);
+        assert!(u["available_minutes"].as_i64().unwrap_or(0) > 0);
+    })
+    .await;
+}

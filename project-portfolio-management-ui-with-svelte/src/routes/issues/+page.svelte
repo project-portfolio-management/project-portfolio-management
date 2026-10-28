@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -14,26 +14,24 @@
   import { PpmClient, type IssueRegister } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let register = $state<IssueRegister | null>(null);
-  let error = $state<string | null>(null);
   let status = $state("");
   let severity = $state("");
   let openOnly = $state(false);
   let minAge = $state<number | undefined>(undefined);
 
-  async function refresh() {
-    try {
-      register = await ppm.issues({
+  const loaded = resource<IssueRegister>(
+    () =>
+      ppm.issues({
         status: status || undefined,
         severity: severity || undefined,
         open: openOnly,
         min_age_days: minAge === undefined || Number.isNaN(minAge) ? undefined : minAge,
-      });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.issues.could_not_load");
-    }
-  }
+      }),
+    "p.issues.could_not_load",
+  );
+  const register = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const refresh = () => loaded.reload();
   onMount(refresh);
 
   const SEVERITIES = ["critical", "high", "med", "low"] as const;

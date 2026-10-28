@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -14,19 +14,15 @@
   import { PpmClient, type ChangeRequestList } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
-  let list = $state<ChangeRequestList | null>(null);
-  let error = $state<string | null>(null);
   let status = $state("");
   let openOnly = $state(false);
-
-  async function refresh() {
-    try {
-      list = await ppm.changeRequests({ status: status || undefined, open: openOnly });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.change_requests.could_not_load");
-    }
-  }
+  const loaded = resource<ChangeRequestList>(
+    () => ppm.changeRequests({ status: status || undefined, open: openOnly }),
+    "p.change_requests.could_not_load",
+  );
+  const list = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const refresh = () => loaded.reload();
   onMount(refresh);
 
   const STATUSES = ["draft", "submitted", "under_review", "approved", "rejected", "implemented", "withdrawn"] as const;

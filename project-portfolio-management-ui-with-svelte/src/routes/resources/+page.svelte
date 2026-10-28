@@ -7,7 +7,7 @@
   sees roles and totals only. The whole of it is also available as a long table.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
@@ -16,22 +16,19 @@
   import { gapCell, maxAbsGap, periodLabel } from "#lib/scheduling-view.js";
 
   const ppm = PpmClient.withFetch();
-  let plan = $state<ResourcePlan | null>(null);
-  let error = $state<string | null>(null);
   let from = $state("");
   let to = $state("");
   let period = $state<"week" | "month">("month");
   let groupBy = $state<"role" | "skill">("role");
 
-  async function load() {
-    try {
-      plan = await ppm.resourcePlan({ from: from || undefined, to: to || undefined, period, group_by: groupBy });
-      error = null;
-    } catch (err) {
-      error = errorText(err, "p.resources.could_not_load_the_resource");
-    }
-  }
-  onMount(() => void load());
+  const loaded = resource<ResourcePlan>(
+    () => ppm.resourcePlan({ from: from || undefined, to: to || undefined, period, group_by: groupBy }),
+    "p.resources.could_not_load_the_resource",
+  );
+  const plan = $derived(loaded.data);
+  const error = $derived(loaded.error);
+  const load = () => loaded.reload();
+  onMount(load);
 
   const keys = $derived(
     [...new Set((plan?.periods ?? []).flatMap((p) => p.rows.map((r) => r.key)))].sort(),

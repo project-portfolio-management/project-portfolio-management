@@ -3,7 +3,7 @@
   issue it is tracked as. The service stores a link's address and never fetches it.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -13,8 +13,9 @@
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
   const tpid = $derived(page.params.tpid ?? "");
-  let task = $state<Task | null>(null);
-  let error = $state<string | null>(null);
+  const loaded = resource<Task>(() => ppm.getTask(pid, tpid), "p.task.could_not_load");
+  const task = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
   const STATUS: Record<Task["status"], string> = {
     get todo() { return t("p.task.s_todo"); },
@@ -24,13 +25,7 @@
     get blocked() { return t("p.task.s_blocked"); },
   };
 
-  onMount(async () => {
-    try {
-      task = await ppm.getTask(pid, tpid);
-    } catch (err) {
-      error = errorText(err, "p.task.could_not_load");
-    }
-  });
+  onMount(() => void loaded.reload());
 </script>
 
 <svelte:head><title>{t("p.task.task_ppm")}</title></svelte:head>

@@ -6,7 +6,7 @@
   completed on their work item. The list below the calendar is the same data as plain text.
 -->
 <script lang="ts">
-  import { errorText } from "#lib/error-text.js";
+  import { resource } from "#lib/resource.svelte.js";
   import CalendarView from "@lilydesignsystem/svelte-calendar";
   import type { CalendarEvent, CalendarEventField, CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
   import { onMount } from "svelte";
@@ -17,9 +17,10 @@
   import { WEEKDAY_NAMES } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
-  let calendar = $state<MilestoneCalendar | null>(null);
   let kind = $state("");
-  let error = $state<string | null>(null);
+  const loaded = resource<MilestoneCalendar>(() => ppm.milestoneCalendar(kind || undefined), "ppm.common.loadFailed");
+  const calendar = $derived(loaded.data);
+  const error = $derived(loaded.error);
 
   const pad = (n: number) => String(n).padStart(2, "0");
   let view = $state<Mode>("month");
@@ -31,22 +32,10 @@
     today = anchorDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   });
 
-  // The effect re-runs when `kind` changes, so the filter needs no load of its own (CQ-17); a
-  // late answer for an older filter is dropped rather than shown over a newer one.
-  let latest = 0;
-  async function load(filter: string) {
-    const mine = ++latest;
-    try {
-      const result = await ppm.milestoneCalendar(filter || undefined);
-      if (mine !== latest) return;
-      calendar = result;
-      error = null;
-    } catch (err) {
-      if (mine === latest) error = errorText(err, "ppm.common.loadFailed");
-    }
-  }
+  // The effect re-runs when `kind` changes (`reload` reads it), so the filter needs no load of its own
+  // (CQ-17); `resource` drops a late answer for an older filter rather than showing it over a newer one.
   $effect(() => {
-    void load(kind);
+    void loaded.reload();
   });
 
   const events = $derived<CalendarEvent[]>(

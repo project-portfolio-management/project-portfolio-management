@@ -40,6 +40,10 @@ test("the delivery calendar loads once per kind change", async ({ page }) => {
         : undefined,
   );
   await page.goto("/en-001/calendar", { waitUntil: "networkidle" });
+  // `networkidle` can fire before a slow page has made its first call, so wait for it, then check that
+  // no second one follows.
+  await expect.poll(calls).toBe(1);
+  await page.waitForTimeout(500);
   expect(calls()).toBe(1);
   await page.getByLabel("Kind").selectOption("demo");
   // The new load arrives, and no second one follows it.
@@ -55,6 +59,10 @@ test("the flow page loads once per window change", async ({ page }) => {
     () => undefined,
   );
   await page.goto(`/en-001/plans/${PLAN}/flow`, { waitUntil: "networkidle" });
+  // `networkidle` can fire before a slow page has made its first call, so wait for it, then check that
+  // no second one follows.
+  await expect.poll(calls).toBe(1);
+  await page.waitForTimeout(500);
   expect(calls()).toBe(1);
   await page.getByLabel("Window").selectOption("90");
   // The new load arrives, and no second one follows it.

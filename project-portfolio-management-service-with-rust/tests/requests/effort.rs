@@ -216,7 +216,8 @@ async fn no_declared_capacity_is_not_zero_utilization() {
         assert!(utilization["basis_points"].is_null());
         assert!(
             utilization["unavailable"] == "no_declared_capacity"
-                || utilization["unavailable"] == "all_non_working",
+                || utilization["unavailable"] == "all_non_working"
+                || utilization["unavailable"] == "small_group",
             "an unknown denominator is never reported as 0%"
         );
     })

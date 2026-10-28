@@ -798,6 +798,14 @@ they are what keep the figure honest rather than merely available:
 3. **Small denominators are suppressed.** Below a configured floor of
    capacity-days in the window, the figure is `null` with a reason —
    the same posture as the flow gauges' small-board suppression.
+   **Small groups are suppressed too.** A team or plan figure
+   (`by=team|plan`) over fewer than **5 people** is withheld entirely, its
+   numerator and denominator included, with the reason `small_group`: with
+   one person in the group the "team" figure *is* that person's, and with
+   two or three, anyone who knows one of them can recover the other. The
+   count of people (`people_counted`) is still returned. The per-person
+   view (`by=person`) is the carve-out above and is unchanged; the minimum
+   is `MIN_GROUP_PEOPLE` in `src/effort.rs`.
 4. **It is never the sole ranking key of a person list**, and it ships
    beside its numerator, its denominator, and the queue figures for the
    same period.

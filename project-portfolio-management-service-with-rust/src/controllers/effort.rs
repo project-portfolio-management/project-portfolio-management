@@ -404,7 +404,7 @@ async fn utilization(
         _ => serde_json::json!({
             "by": by,
             "window_days": window_days,
-            "utilization": rules::team_utilization(&facts, floor),
+            "utilization": rules::group_utilization(&facts, floor),
             "people_counted": facts.len(),
         }),
     };

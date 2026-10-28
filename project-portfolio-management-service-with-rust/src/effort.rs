@@ -40,6 +40,11 @@ pub const BASIS_POINTS: i64 = 10_000;
 /// suppressed. One nominal working week.
 pub const DEFAULT_SUPPRESSION_FLOOR_MINUTES: i64 = 2_400;
 
+/// The fewest people a team or plan utilization figure may cover. Below it the figure is withheld
+/// (small-cell suppression): with one person it is that person's figure, with two or three the
+/// others can be recovered by anyone who knows one.
+pub const MIN_GROUP_PEOPLE: usize = 5;
+
 /// How effort is categorized for the capex / opex split the budget
 /// lines already use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -151,6 +156,9 @@ pub enum Unavailable {
     /// Below the suppression floor. In a clinical setting this is a
     /// re-identification control, not only a statistical one.
     BelowFloor,
+    /// A team or plan figure over fewer than [`MIN_GROUP_PEOPLE`] people. The numerator and the
+    /// denominator are withheld with it.
+    SmallGroup,
 }
 
 /// A person's declared capacity and recorded effort for one window.
@@ -252,6 +260,26 @@ pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilizati
             .fold(0_i64, |a, f| a.saturating_add(f.effort_minutes)),
     };
     utilization(&combined, floor_minutes)
+}
+
+/// [`team_utilization`], or a figure with nothing in it when the group is under
+/// [`MIN_GROUP_PEOPLE`] people (small-cell suppression).
+#[must_use]
+pub fn group_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilization {
+    if facts.len() < MIN_GROUP_PEOPLE {
+        return Utilization {
+            actor_ref: "team".to_string(),
+            basis_points: None,
+            unavailable: Some(Unavailable::SmallGroup),
+            effort_minutes: 0,
+            available_minutes: 0,
+            declared_minutes: 0,
+            non_working_minutes: 0,
+            asserted: true,
+            at_or_over_capacity: false,
+        };
+    }
+    team_utilization(facts, floor_minutes)
 }
 
 #[cfg(test)]
@@ -396,6 +424,46 @@ mod tests {
         // have said 50%.
         assert_eq!(team.basis_points, Some(9_090));
         assert_ne!(team.basis_points, Some(5_000));
+    }
+
+    fn people(n: usize) -> Vec<CapacityFact> {
+        (0..n)
+            .map(|i| CapacityFact {
+                actor_ref: format!("person:{i}"),
+                declared_minutes: 2_400,
+                non_working_minutes: 0,
+                effort_minutes: 1_200,
+            })
+            .collect()
+    }
+
+    /// A group under five people is withheld whole: no figure, and no numerator or denominator
+    /// from which one could be made.
+    #[test]
+    fn a_small_group_is_withheld_whole() {
+        for n in 0..MIN_GROUP_PEOPLE {
+            let u = group_utilization(&people(n), 0);
+            assert_eq!(u.basis_points, None, "{n} people");
+            assert_eq!(u.unavailable, Some(Unavailable::SmallGroup), "{n} people");
+            assert_eq!(
+                (
+                    u.effort_minutes,
+                    u.available_minutes,
+                    u.declared_minutes,
+                    u.non_working_minutes
+                ),
+                (0, 0, 0, 0),
+                "{n} people"
+            );
+        }
+    }
+
+    #[test]
+    fn a_group_of_five_is_reported() {
+        let u = group_utilization(&people(MIN_GROUP_PEOPLE), 0);
+        assert_eq!(u.basis_points, Some(5_000));
+        assert_eq!(u.unavailable, None);
+        assert_eq!(u.effort_minutes, 6_000);
     }
 
     /// Untrusted stored values must not panic.

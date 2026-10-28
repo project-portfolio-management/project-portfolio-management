@@ -6,6 +6,7 @@
   has its words and, where a state matters, a shape.
 -->
 <script lang="ts">
+  import { errorText } from "#lib/error-text.js";
   import { rowOf } from "#lib/row-of.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
@@ -25,7 +26,7 @@
   onMount(async () => {
     const [c, b] = await Promise.allSettled([ppm.criticalChain(pid), ppm.chainBuffers(pid)]);
     if (c.status === "fulfilled") chain = c.value;
-    else error = c.reason instanceof Error ? c.reason.message : t("p.critical_chain.could_not_load_chain");
+    else error = errorText(c.reason, "p.critical_chain.could_not_load_chain");
     if (b.status === "fulfilled") buffers = b.value;
     loaded = true;
   });

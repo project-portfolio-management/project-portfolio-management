@@ -53,6 +53,7 @@ import type {
   CreateRiskBody,
   CreateScenarioBody,
   CreateSprintBody,
+  RaiseEscalationBody,
   CreateSprintNoteBody,
   CreateTaskBody,
   CriticalChain,
@@ -748,10 +749,7 @@ export class PpmClient {
   escalation(pid: string, epid: string): Promise<Escalation> {
     return this.http.get(`/api/plans/${pid}/escalations/${epid}`);
   }
-  raiseEscalation(
-    pid: string,
-    body: Record<string, unknown>,
-  ): Promise<Escalation> {
+  raiseEscalation(pid: string, body: RaiseEscalationBody): Promise<Escalation> {
     return this.http.post(`/api/plans/${pid}/escalations`, { body });
   }
   escalationAction(

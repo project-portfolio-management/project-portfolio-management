@@ -5,6 +5,7 @@
 // route: a field the client sends that the service does not know, or a required field the client leaves out,
 // fails here instead of in production.
 
+import { writeFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -130,12 +131,18 @@ function program(): ts.Program {
 
 type Finding = { at: string; route: string; problem: string };
 
-function check(): { findings: Finding[]; compared: number; unchecked: number } {
+function check(): {
+  findings: Finding[];
+  compared: number;
+  unchecked: number;
+  skipped: string[];
+} {
   const prog = program();
   const checker = prog.getTypeChecker();
   const findings: Finding[] = [];
   let compared = 0;
   let unchecked = 0;
+  const skipped: string[] = [];
   for (const sf of prog.getSourceFiles()) {
     if (!sf.fileName.includes("/src/lib/api/") || sf.fileName.endsWith(".d.ts"))
       continue;
@@ -169,24 +176,58 @@ function check(): { findings: Finding[]; compared: number; unchecked: number } {
                 ? bodyProp.initializer
                 : null;
             const type = expr ? checker.getTypeAtLocation(expr) : null;
-            const props =
+            // A union of object types (`{ a } | { b }`): a field is sent if any member has it, and is
+            // required only if every member requires it.
+            const members =
               type &&
-              !type.isUnion() &&
+              type.isUnion() &&
+              type.types.every(
+                (m) =>
+                  m.isClassOrInterface() ||
+                  (m.flags & ts.TypeFlags.Object) !== 0,
+              )
+                ? type.types
+                : type
+                  ? [type]
+                  : [];
+            const merged = new Map<string, boolean>();
+            if (
+              type &&
               !(type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
-                ? type.getProperties()
-                : [];
-            const stringIndexed = type?.getStringIndexType() !== undefined;
+            )
+              for (const m of members)
+                for (const p of m.getProperties()) {
+                  const req = (p.flags & ts.SymbolFlags.Optional) === 0;
+                  merged.set(
+                    p.name,
+                    (merged.get(p.name) ?? true) &&
+                      req &&
+                      members.every((o) => o.getProperty(p.name)),
+                  );
+                }
+            const props = [...merged.keys()];
+            const stringIndexed = members.some(
+              (m) => m.getStringIndexType() !== undefined,
+            );
             if (!type || props.length === 0 || stringIndexed) {
               unchecked += 1;
+              skipped.push(
+                `${at} ${method} ${tpl}: client body is ${
+                  !type
+                    ? "unreadable"
+                    : type.isUnion()
+                      ? "a union"
+                      : type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)
+                        ? "any/unknown"
+                        : stringIndexed
+                          ? "a Record"
+                          : "without properties"
+                }`,
+              );
             } else {
               compared += 1;
               const route = `${method} ${tpl}`;
-              const have = new Map(
-                props.map((p) => [
-                  p.name,
-                  (p.flags & ts.SymbolFlags.Optional) === 0,
-                ]),
-              );
+              const have = merged;
               if (!shape.open) {
                 for (const name of have.keys()) {
                   if (!shape.props.has(name))
@@ -214,6 +255,26 @@ function check(): { findings: Finding[]; compared: number; unchecked: number } {
             }
           } else if (bodyProp && tpl) {
             unchecked += 1;
+            if (!reqBody && !DOC.paths[tpl][method]?.requestBody) {
+              // The service documents no body for this route, so every field the client sends is ignored.
+              const expr = ts.isPropertyAssignment(bodyProp)
+                ? bodyProp.initializer
+                : ts.isShorthandPropertyAssignment(bodyProp)
+                  ? bodyProp.name
+                  : null;
+              const sent = expr
+                ? checker.getTypeAtLocation(expr).getProperties()
+                : [];
+              for (const prop of sent)
+                findings.push({
+                  at,
+                  route: `${method} ${tpl}`,
+                  problem: `sends \`${prop.name}\`, but the service documents no request body`,
+                });
+            }
+            skipped.push(
+              `${at} ${method} ${tpl}: the service's schema is free-form or a choice`,
+            );
           }
         }
       }
@@ -221,14 +282,17 @@ function check(): { findings: Finding[]; compared: number; unchecked: number } {
     };
     visit(sf);
   }
-  return { findings, compared, unchecked };
+  return { findings, compared, unchecked, skipped };
 }
 
 describe("the client's request bodies match the service's", () => {
   it("sends only fields the service accepts and leaves out none it requires", () => {
-    const { findings, compared, unchecked } = check();
+    const { findings, compared, unchecked, skipped } = check();
     if (process.env.SHOW_COUNTS)
-      console.log(`compared ${compared}, not compared ${unchecked}`);
+      writeFileSync(
+        process.env.SHOW_COUNTS,
+        `compared ${compared}, not compared ${unchecked}\n${skipped.join("\n")}\n`,
+      );
     // It must actually be comparing something.
     expect(compared).toBeGreaterThan(20);
     expect(findings.map((f) => `${f.at} ${f.route}: ${f.problem}`)).toEqual([]);

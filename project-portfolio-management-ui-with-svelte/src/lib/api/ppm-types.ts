@@ -180,6 +180,18 @@ export interface CreateSprintBody {
   ends_on: string;
 }
 
+/** `POST /api/plans/{pid}/escalations`. */
+export interface RaiseEscalationBody {
+  title: string;
+  reason_kind?: string;
+  description?: string | null;
+  tolerance_dimension?: string | null;
+  level?: number | null;
+  escalated_to?: string | null;
+  owner_ref?: string | null;
+  respond_by?: string | null;
+}
+
 /** `POST /api/plans/{pid}/benefits/{b_pid}/realize`. */
 export interface RealizeBenefitBody {
   amount_minor?: number | null;

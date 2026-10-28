@@ -10,6 +10,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type Escalation } from "#lib/api/ppm.js";
+  import type { RaiseEscalationBody } from "#lib/api/ppm-types.js";
   import {
     DIMENSIONS,
     OUTCOMES,
@@ -66,7 +67,7 @@
     e.preventDefault();
     problems = raiseProblems({ title, reason_kind: reason, tolerance_dimension: dimension, level, owner_ref: owner });
     if (problems.length > 0) return;
-    const body: Record<string, unknown> = { title: title.trim(), reason_kind: reason };
+    const body: RaiseEscalationBody = { title: title.trim(), reason_kind: reason };
     if (description.trim()) body.description = description.trim();
     if (reason === "tolerance") body.tolerance_dimension = dimension;
     if (level.trim()) body.level = Number(level);

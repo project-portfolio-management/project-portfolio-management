@@ -5,9 +5,17 @@ import { describe, expect, it } from "vitest";
 import { createPublicKey, verify } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { DEMO_SUB, demoKeySet, mintDemoToken, pae } from "../../src/lib/server/demo-token";
+import {
+  DEMO_SUB,
+  demoKeySet,
+  mintDemoToken,
+  pae,
+} from "../../src/lib/server/demo-token";
 // @ts-expect-error a plain ES module with no types
-import { mintDemoToken as mintForSeed, DEMO_SUB as SEED_SUB } from "../../../scripts/demo/token.mjs";
+import {
+  mintDemoToken as mintForSeed,
+  DEMO_SUB as SEED_SUB,
+} from "../../../scripts/demo/token.mjs";
 
 const fromB64url = (s: string) => Buffer.from(s, "base64url");
 
@@ -18,7 +26,9 @@ describe("the demonstration token", () => {
     const [v, purpose, body, footer] = token.split(".");
     expect(`${v}.${purpose}`).toBe("v4.public");
     expect(body!.length).toBeGreaterThan(100);
-    expect(JSON.parse(fromB64url(footer!).toString()).kid).toBe(demoKeySet().keys[0]!.kid);
+    expect(JSON.parse(fromB64url(footer!).toString()).kid).toBe(
+      demoKeySet().keys[0]!.kid,
+    );
   });
 
   it("verifies against the published public key", () => {
@@ -27,9 +37,26 @@ describe("the demonstration token", () => {
     const message = raw.subarray(0, raw.length - 64);
     const signature = raw.subarray(raw.length - 64);
     const x = demoKeySet().keys[0]!.x;
-    const spki = Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), fromB64url(x)]);
-    const publicKey = createPublicKey({ key: spki, format: "der", type: "spki" });
-    const ok = verify(null, pae(Buffer.from("v4.public."), message, fromB64url(footer!), Buffer.alloc(0)), publicKey, signature);
+    const spki = Buffer.concat([
+      Buffer.from("302a300506032b6570032100", "hex"),
+      fromB64url(x),
+    ]);
+    const publicKey = createPublicKey({
+      key: spki,
+      format: "der",
+      type: "spki",
+    });
+    const ok = verify(
+      null,
+      pae(
+        Buffer.from("v4.public."),
+        message,
+        fromB64url(footer!),
+        Buffer.alloc(0),
+      ),
+      publicKey,
+      signature,
+    );
     expect(ok).toBe(true);
     const claims = JSON.parse(message.toString());
     expect(claims.sub).toBe(DEMO_SUB);
@@ -38,11 +65,16 @@ describe("the demonstration token", () => {
     expect(claims.aud).toBe("main-x-service");
     expect(claims.exp - claims.iat).toBe(3600);
     expect(claims.attrs.access).toEqual(["write", "admin"]);
-    expect(claims.attrs.cutover_role).toEqual(["accountable_professional_lead"]);
+    expect(claims.attrs.cutover_role).toEqual([
+      "accountable_professional_lead",
+    ]);
   });
 
   it("is the key the compose demonstration API trusts", () => {
-    const compose = readFileSync(resolve(process.cwd(), "../compose.yaml"), "utf8");
+    const compose = readFileSync(
+      resolve(process.cwd(), "../compose.yaml"),
+      "utf8",
+    );
     const { kid, x } = demoKeySet().keys[0]!;
     expect(compose).toContain(kid);
     expect(compose).toContain(x);
@@ -55,6 +87,8 @@ describe("the demonstration token", () => {
 
   it("pae follows the PASETO encoding", () => {
     expect(pae().toString("hex")).toBe("0000000000000000");
-    expect(pae(Buffer.from("test")).toString("hex")).toBe("0100000000000000" + "0400000000000000" + "74657374");
+    expect(pae(Buffer.from("test")).toString("hex")).toBe(
+      "0100000000000000" + "0400000000000000" + "74657374",
+    );
   });
 });

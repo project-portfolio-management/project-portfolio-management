@@ -22,35 +22,53 @@ const REPORT = (dry: boolean) => ({
 async function stub(page: Page) {
   await stubPlansApi(page);
   const base = `**/api/plans/${PID}`;
-  await page.route(`${base}/tasks**`, (r) => r.fulfill({ json: { tasks: [], total: 0, truncated: false } }));
+  await page.route(`${base}/tasks**`, (r) =>
+    r.fulfill({ json: { tasks: [], total: 0, truncated: false } }),
+  );
   await page.route(`${base}/sprints**`, (r) => r.fulfill({ json: [] }));
-  await page.route(`${base}/standup**`, (r) => r.fulfill({ json: { tasks_created: [], tasks_moved: [], blocked_now: [] } }));
-  await page.route(`${base}/velocity**`, (r) => r.fulfill({ json: { sprints: [] } }));
+  await page.route(`${base}/standup**`, (r) =>
+    r.fulfill({
+      json: { tasks_created: [], tasks_moved: [], blocked_now: [] },
+    }),
+  );
+  await page.route(`${base}/velocity**`, (r) =>
+    r.fulfill({ json: { sprints: [] } }),
+  );
   const sent: { dry: boolean; body: string }[] = [];
   await page.route(`${base}/import/asana**`, (r) => {
-    const dry = new URL(r.request().url()).searchParams.get("dry_run") === "true";
+    const dry =
+      new URL(r.request().url()).searchParams.get("dry_run") === "true";
     sent.push({ dry, body: r.request().postData() ?? "" });
     return r.fulfill({ json: REPORT(dry) });
   });
   return sent;
 }
 
-const ROWS = "Write plan\t2026-10-05\tfirst draft\nBook room\t2026-10-06\nSend invites\t5 Oct";
+const ROWS =
+  "Write plan\t2026-10-05\tfirst draft\nBook room\t2026-10-06\nSend invites\t5 Oct";
 
-test("pasted rows are previewed, the bad one is left out, and only the good ones are created", async ({ page }) => {
+test("pasted rows are previewed, the bad one is left out, and only the good ones are created", async ({
+  page,
+}) => {
   const sent = await stub(page);
   await page.goto(`/en-001/plans/${PID}/board`, { waitUntil: "networkidle" });
-  await page.getByText("Paste rows from a spreadsheet", { exact: true }).click();
+  await page
+    .getByText("Paste rows from a spreadsheet", { exact: true })
+    .click();
 
   await page.getByLabel("Pasted rows").fill(ROWS);
   await expect(page.getByText("2 ready, 1 left out")).toBeVisible();
   const table = page.getByTestId("paste-rows");
   await expect(table.getByText("Write plan")).toBeVisible();
-  await expect(table.getByText(/“5 Oct” is not a date; write it as yyyy-mm-dd/)).toBeVisible();
+  await expect(
+    table.getByText(/“5 Oct” is not a date; write it as yyyy-mm-dd/),
+  ).toBeVisible();
 
   // Check with the service: it is sent the two good rows only, and as a dry run.
   await page.getByRole("button", { name: "Check with the service" }).click();
-  await expect(page.getByTestId("paste-report")).toContainText("Would create 2 tasks");
+  await expect(page.getByTestId("paste-report")).toContainText(
+    "Would create 2 tasks",
+  );
   await expect.poll(() => sent.length).toBe(1);
   expect(sent[0]!.dry).toBe(true);
   expect(sent[0]!.body).toContain("Write plan");
@@ -62,7 +80,9 @@ test("pasted rows are previewed, the bad one is left out, and only the good ones
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
-  const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  const bad = results.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
   expect(bad.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 
   // Create: the same two rows, not a dry run; the box is emptied and the report says it is done.
@@ -74,14 +94,20 @@ test("pasted rows are previewed, the bad one is left out, and only the good ones
   await expect(page.getByLabel("Pasted rows")).toHaveValue("");
 });
 
-test("changing the paste starts again, and a paste with nothing good cannot be sent", async ({ page }) => {
+test("changing the paste starts again, and a paste with nothing good cannot be sent", async ({
+  page,
+}) => {
   const sent = await stub(page);
   await page.goto(`/en-001/plans/${PID}/board`, { waitUntil: "networkidle" });
-  await page.getByText("Paste rows from a spreadsheet", { exact: true }).click();
+  await page
+    .getByText("Paste rows from a spreadsheet", { exact: true })
+    .click();
   const box = page.getByLabel("Pasted rows");
   await box.fill("\t2026-10-05");
   await expect(page.getByText("0 ready, 1 left out")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Check with the service" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Check with the service" }),
+  ).toBeDisabled();
 
   await box.fill("One task");
   await page.getByRole("button", { name: "Check with the service" }).click();

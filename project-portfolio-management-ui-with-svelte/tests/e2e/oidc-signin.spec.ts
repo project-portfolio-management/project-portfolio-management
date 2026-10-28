@@ -48,13 +48,19 @@ test.describe("sign in with an Entra-compatible OpenID Connect provider", () => 
     expect(session?.httpOnly).toBe(true);
     expect(session?.secure).toBe(true);
     expect(session?.value).not.toMatch(/^eyJ|at_/);
-    const stored = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
+    const stored = await page.evaluate(() =>
+      JSON.stringify({ ...localStorage, ...sessionStorage }),
+    );
     expect(stored).not.toMatch(/at_|eyJ/);
 
     // The proxy now sends the provider's access token, and the API accepts it.
     const api = await page.request.get("/api/proxy/api/plans");
     expect(api.status()).toBe(200);
-    expect(await api.json()).toMatchObject({ ok: true, sub: "alice-sub", roles: ["Portfolio.Editor"] });
+    expect(await api.json()).toMatchObject({
+      ok: true,
+      sub: "alice-sub",
+      roles: ["Portfolio.Editor"],
+    });
     expect((await stats(request)).pkceFailures).toBe(0);
   });
 
@@ -96,7 +102,10 @@ test.describe("sign in with an Entra-compatible OpenID Connect provider", () => 
     expect((await page.request.get("/api/proxy/api/plans")).status()).toBe(401);
   });
 
-  test("a callback with a made-up state or a replayed code is refused", async ({ page, request }) => {
+  test("a callback with a made-up state or a replayed code is refused", async ({
+    page,
+    request,
+  }) => {
     // A forged callback: no login was started in this browser.
     await page.goto("/signin/oidc/callback?code=anything&state=forged");
     await expect(page).toHaveURL(/\/signin\?error=oidc$/);
@@ -118,7 +127,9 @@ test.describe("sign in with an Entra-compatible OpenID Connect provider", () => 
     expect((await stats(request)).codesIssued).toBeGreaterThan(0);
   });
 
-  test("signing out ends the session here and at the provider", async ({ page }) => {
+  test("signing out ends the session here and at the provider", async ({
+    page,
+  }) => {
     await page.goto("/en-001/signin");
     await page.getByRole("link", { name: ENTRA }).click();
     await page.locator("#as-alice").click();
@@ -139,7 +150,9 @@ test.describe("sign in with an Entra-compatible OpenID Connect provider", () => 
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(
-      r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id),
+      r.violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => v.id),
     ).toEqual([]);
   });
 });

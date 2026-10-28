@@ -14,7 +14,9 @@ async function audit(page: Page) {
   expect(
     r.violations
       .filter((v) => v.impact === "serious" || v.impact === "critical")
-      .map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join("; ")}`),
+      .map(
+        (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join("; ")}`,
+      ),
   ).toEqual([]);
 }
 

@@ -30,8 +30,12 @@ describe("tolerance words and shapes", () => {
       expect(STATUS_TEXT[s]).toBeTruthy();
       expect(STATUS_SYMBOL[s]).toBeTruthy();
     }
-    expect(new Set(STATUS_ORDER.map((s) => STATUS_SYMBOL[s])).size).toBe(STATUS_ORDER.length);
-    expect(STATUS_ORDER.indexOf("unknown")).toBeLessThan(STATUS_ORDER.indexOf("green"));
+    expect(new Set(STATUS_ORDER.map((s) => STATUS_SYMBOL[s])).size).toBe(
+      STATUS_ORDER.length,
+    );
+    expect(STATUS_ORDER.indexOf("unknown")).toBeLessThan(
+      STATUS_ORDER.indexOf("green"),
+    );
     expect(STATUS_TEXT.unknown).not.toBe(STATUS_TEXT.green);
   });
 
@@ -57,13 +61,25 @@ describe("tolerance words and shapes", () => {
   });
 
   it("says why there is nothing to compare, rather than showing a number", () => {
-    expect(usageText(dim({ status: "amber", usage_percent: 80 }))).toBe("80% of the limit used");
-    expect(usageText(dim({ status: "unknown", reason: "no baseline" }))).toBe("no baseline");
-    expect(usageText(dim({ status: "unknown", reason: null }))).toBe("Could not be measured.");
-    expect(usageText(dim({ status: "not_set", limit: null, source: "none" }))).toBe("No limit is set here or above.");
-    expect(usageText(dim({ status: "red", limit: 0, usage_percent: null }))).toMatch(/^Zero tolerance/);
+    expect(usageText(dim({ status: "amber", usage_percent: 80 }))).toBe(
+      "80% of the limit used",
+    );
+    expect(usageText(dim({ status: "unknown", reason: "no baseline" }))).toBe(
+      "no baseline",
+    );
+    expect(usageText(dim({ status: "unknown", reason: null }))).toBe(
+      "Could not be measured.",
+    );
+    expect(
+      usageText(dim({ status: "not_set", limit: null, source: "none" })),
+    ).toBe("No limit is set here or above.");
+    expect(
+      usageText(dim({ status: "red", limit: 0, usage_percent: null })),
+    ).toMatch(/^Zero tolerance/);
     expect(sourceText(dim({ source: "own" }))).toBe("Set on this plan");
-    expect(sourceText(dim({ source: "inherited" }))).toBe("Inherited from a plan above");
+    expect(sourceText(dim({ source: "inherited" }))).toBe(
+      "Inherited from a plan above",
+    );
     expect(sourceText(dim({ source: "none" }))).toBe("");
   });
 });

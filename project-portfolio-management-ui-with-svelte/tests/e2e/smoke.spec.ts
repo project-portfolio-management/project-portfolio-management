@@ -104,7 +104,9 @@ test("detail page renders the fetched plan", async ({ page }) => {
     page.getByRole("heading", { name: "Website replatform" }),
   ).toBeVisible();
   // The governance panel is linked from the detail page (PPM views).
-  await expect(page.getByRole("link", { name: "Governance", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Governance", exact: true }),
+  ).toBeVisible();
 });
 
 // Pins: the edit route loads the plan and renders the edit form. Heading
@@ -198,14 +200,18 @@ test("tour renders anonymously with six workflow sections", async ({
 // CQ-23: the merge question is the Lily alert dialog, not the browser's `confirm()`. Escape and
 // Cancel answer no (nothing is posted); OK posts the merge. A native dialog would fail this test:
 // Playwright dismisses it unseen, and no `alertdialog` would ever exist.
-test("merge asks in an alert dialog and posts only after OK", async ({ page }) => {
+test("merge asks in an alert dialog and posts only after OK", async ({
+  page,
+}) => {
   const MAIN = "11111111-1111-4111-8111-111111111111";
   const DUP = "22222222-2222-4222-8222-222222222222";
   const posts: unknown[] = [];
   page.on("dialog", (d) => {
     throw new Error(`native dialog used: ${d.message()}`);
   });
-  await page.route("**/api/plans/merges/recent", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/plans/merges/recent", (route) =>
+    route.fulfill({ json: [] }),
+  );
   await page.route("**/api/plans/merge", async (route) => {
     posts.push(route.request().postDataJSON());
     await route.fulfill({ status: 500, json: { error: "stub" } });

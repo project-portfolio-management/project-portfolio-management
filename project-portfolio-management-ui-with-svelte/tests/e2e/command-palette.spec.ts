@@ -13,7 +13,8 @@ async function stub(page: Page) {
   );
 }
 
-const palette = (page: Page) => page.getByRole("dialog", { name: "Search and commands" });
+const palette = (page: Page) =>
+  page.getByRole("dialog", { name: "Search and commands" });
 const input = (page: Page) => palette(page).getByRole("combobox");
 
 test.describe("command palette (BR-14)", () => {
@@ -23,15 +24,22 @@ test.describe("command palette (BR-14)", () => {
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
-  test("opens with Ctrl-K, finds a plan by name and goes to it with the keyboard alone", async ({ page }) => {
+  test("opens with Ctrl-K, finds a plan by name and goes to it with the keyboard alone", async ({
+    page,
+  }) => {
     await page.keyboard.press("Control+k");
     await expect(palette(page)).toBeVisible();
     await expect(input(page)).toBeFocused();
 
     await input(page).pressSequentially("Webs");
-    const option = palette(page).getByRole("option", { name: /Website replatform/ });
+    const option = palette(page).getByRole("option", {
+      name: /Website replatform/,
+    });
     await expect(option).toBeVisible();
-    await expect(input(page)).toHaveAttribute("aria-activedescendant", /palette-row-0/);
+    await expect(input(page)).toHaveAttribute(
+      "aria-activedescendant",
+      /palette-row-0/,
+    );
     await expect(option).toHaveAttribute("aria-selected", "true");
 
     await page.keyboard.press("Enter");
@@ -39,7 +47,9 @@ test.describe("command palette (BR-14)", () => {
     await expect(palette(page)).toBeHidden();
   });
 
-  test("a command is reached by name, and Cmd-K opens it too", async ({ page }) => {
+  test("a command is reached by name, and Cmd-K opens it too", async ({
+    page,
+  }) => {
     await page.keyboard.press("Meta+k");
     await expect(palette(page)).toBeVisible();
     await input(page).pressSequentially("my wo");
@@ -48,16 +58,24 @@ test.describe("command palette (BR-14)", () => {
     await expect(page).toHaveURL(/\/en-001\/me$/);
   });
 
-  test("the arrow keys move the active row, wrapping, and a visit is remembered", async ({ page }) => {
+  test("the arrow keys move the active row, wrapping, and a visit is remembered", async ({
+    page,
+  }) => {
     await page.keyboard.press("Control+k");
     await input(page).pressSequentially("a"); // one letter: no plan search, three commands match
     await expect(palette(page).getByRole("option").first()).toBeVisible();
     const count = await palette(page).getByRole("option").count();
     expect(count).toBeGreaterThan(1);
     await page.keyboard.press("ArrowUp");
-    await expect(input(page)).toHaveAttribute("aria-activedescendant", `palette-row-${count - 1}`);
+    await expect(input(page)).toHaveAttribute(
+      "aria-activedescendant",
+      `palette-row-${count - 1}`,
+    );
     await page.keyboard.press("ArrowDown");
-    await expect(input(page)).toHaveAttribute("aria-activedescendant", "palette-row-0");
+    await expect(input(page)).toHaveAttribute(
+      "aria-activedescendant",
+      "palette-row-0",
+    );
 
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/en-001\/plans\/new$/);
@@ -67,10 +85,14 @@ test.describe("command palette (BR-14)", () => {
     await expect(first).toContainText("Recent");
   });
 
-  test("Escape closes it and focus goes back to the button that opened it; Tab stays inside", async ({ page }) => {
+  test("Escape closes it and focus goes back to the button that opened it; Tab stays inside", async ({
+    page,
+  }) => {
     // The button is an entry in the menu, which is closed until it is opened.
     await page.locator("button.hamburger").click();
-    const trigger = page.locator("#primary-nav").getByRole("button", { name: "Search and commands" });
+    const trigger = page
+      .locator("#primary-nav")
+      .getByRole("button", { name: "Search and commands" });
     await trigger.focus();
     await page.keyboard.press("Enter");
     await expect(palette(page)).toBeVisible();
@@ -81,14 +103,22 @@ test.describe("command palette (BR-14)", () => {
     await expect(trigger).toBeFocused();
   });
 
-  test("when plan search fails the commands still work and the failure is said in words", async ({ page }) => {
-    await page.route("**/api/plans/search**", (route) => route.fulfill({ status: 500, json: { error: "down" } }));
+  test("when plan search fails the commands still work and the failure is said in words", async ({
+    page,
+  }) => {
+    await page.route("**/api/plans/search**", (route) =>
+      route.fulfill({ status: 500, json: { error: "down" } }),
+    );
     await page.keyboard.press("Control+k");
     await input(page).pressSequentially("Webs");
-    await expect(palette(page).getByRole("status")).toContainText("Plan search is not available");
+    await expect(palette(page).getByRole("status")).toContainText(
+      "Plan search is not available",
+    );
   });
 
-  test("axe finds no serious or critical violation with it open", async ({ page }) => {
+  test("axe finds no serious or critical violation with it open", async ({
+    page,
+  }) => {
     await page.keyboard.press("Control+k");
     await input(page).pressSequentially("Webs");
     await expect(palette(page).getByRole("option").first()).toBeVisible();
@@ -96,7 +126,9 @@ test.describe("command palette (BR-14)", () => {
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
-    const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    const bad = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    );
     expect(bad.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });
 });

@@ -84,7 +84,13 @@ describe("i18n catalog", () => {
   // until they are translated. Welsh completeness is pinned below and in catalogue-coverage.test.ts.
   it("every locale covers every long-standing key (frozen baseline), with no extra keys", () => {
     const baseline = JSON.parse(
-      readFileSync(resolve(process.cwd(), "tests/unit/fixtures/catalogue-baseline-keys.json"), "utf8"),
+      readFileSync(
+        resolve(
+          process.cwd(),
+          "tests/unit/fixtures/catalogue-baseline-keys.json",
+        ),
+        "utf8",
+      ),
     ) as string[];
     expect(baseline.length).toBeGreaterThan(300);
     for (const locale of LOCALES) {
@@ -94,7 +100,10 @@ describe("i18n catalog", () => {
       }
       // Nothing beyond the English source of truth.
       for (const key of Object.keys(table)) {
-        expect(STRING_KEYS as readonly string[], `${locale} has an extra key ${key}`).toContain(key);
+        expect(
+          STRING_KEYS as readonly string[],
+          `${locale} has an extra key ${key}`,
+        ).toContain(key);
       }
     }
   });
@@ -102,11 +111,16 @@ describe("i18n catalog", () => {
   it("Welsh (cy-001) covers every key English has", () => {
     const cy = STRINGS_BY_LOCALE["cy-001"];
     const missing = STRING_KEYS.filter((k) => !cy[k]);
-    expect(missing, `cy-001 is missing ${missing.length} keys, e.g. ${missing.slice(0, 5)}`).toEqual([]);
+    expect(
+      missing,
+      `cy-001 is missing ${missing.length} keys, e.g. ${missing.slice(0, 5)}`,
+    ).toEqual([]);
   });
 
   it("a locale without a page key shows the English text, with its values filled in", () => {
-    expect(STRINGS_BY_LOCALE["de-de"]["p.cost_rates.a_person" as never]).toBeUndefined();
+    expect(
+      STRINGS_BY_LOCALE["de-de"]["p.cost_rates.a_person" as never],
+    ).toBeUndefined();
     expect(translate("p.cost_rates.a_person" as never, "de-de")).toBe(
       translate("p.cost_rates.a_person" as never, "en-001"),
     );

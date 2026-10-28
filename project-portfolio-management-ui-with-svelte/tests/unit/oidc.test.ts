@@ -2,7 +2,12 @@
 // transaction and session store, and the safe-return rule. No network: `fetch` is
 // injected and the keys are generated here.
 
-import { createHash, createSign, generateKeyPairSync, randomBytes } from "node:crypto";
+import {
+  createHash,
+  createSign,
+  generateKeyPairSync,
+  randomBytes,
+} from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import {
   OidcError,
@@ -19,9 +24,14 @@ import {
 import { OidcStore, accessTokenFor } from "../../src/lib/server/oidc-session";
 import { MemorySessionStore } from "../../src/lib/server/session-store";
 
-const ISSUER = "https://login.example.test/11111111-2222-3333-4444-555555555555/v2.0";
+const ISSUER =
+  "https://login.example.test/11111111-2222-3333-4444-555555555555/v2.0";
 const CLIENT = "client-123";
-const CFG: OidcConfig = { issuer: ISSUER, clientId: CLIENT, scopes: "openid profile email" };
+const CFG: OidcConfig = {
+  issuer: ISSUER,
+  clientId: CLIENT,
+  scopes: "openid profile email",
+};
 const META: ProviderMetadata = {
   issuer: ISSUER,
   authorization_endpoint: `${ISSUER}/authorize`,
@@ -30,14 +40,28 @@ const META: ProviderMetadata = {
 };
 
 const pair = generateKeyPairSync("rsa", { modulusLength: 2048 });
-const jwk: Jwk = { ...(pair.publicKey.export({ format: "jwk" }) as Jwk), kid: "k1", use: "sig" };
+const jwk: Jwk = {
+  ...(pair.publicKey.export({ format: "jwk" }) as Jwk),
+  kid: "k1",
+  use: "sig",
+};
 const other = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
-const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
-function sign(claims: Record<string, unknown>, opts: { alg?: string; kid?: string; key?: typeof pair.privateKey } = {}) {
-  const header = { alg: opts.alg ?? "RS256", kid: opts.kid ?? "k1", typ: "JWT" };
+const b64 = (o: unknown) =>
+  Buffer.from(JSON.stringify(o)).toString("base64url");
+function sign(
+  claims: Record<string, unknown>,
+  opts: { alg?: string; kid?: string; key?: typeof pair.privateKey } = {},
+) {
+  const header = {
+    alg: opts.alg ?? "RS256",
+    kid: opts.kid ?? "k1",
+    typ: "JWT",
+  };
   const input = `${b64(header)}.${b64(claims)}`;
-  const sig = createSign("RSA-SHA256").update(input).sign(opts.key ?? pair.privateKey);
+  const sig = createSign("RSA-SHA256")
+    .update(input)
+    .sign(opts.key ?? pair.privateKey);
   return `${input}.${sig.toString("base64url")}`;
 }
 const NOW = 1_800_000_000;
@@ -73,13 +97,17 @@ describe("verifyIdToken", () => {
     }
     // the classic confusion attack: an HMAC token keyed with the public key
     const input = `${b64({ alg: "HS256", kid: "k1" })}.${b64(good())}`;
-    expect(() => verifyIdToken(`${input}.AAAA`, [jwk], expectOk)).toThrow(OidcError);
+    expect(() => verifyIdToken(`${input}.AAAA`, [jwk], expectOk)).toThrow(
+      OidcError,
+    );
   });
 
   it("refuses a tampered payload", () => {
     const [h, , s] = sign(good()).split(".");
     const forged = `${h}.${b64(good({ sub: "admin" }))}.${s}`;
-    expect(() => verifyIdToken(forged, [jwk], expectOk)).toThrow(/bad signature/);
+    expect(() => verifyIdToken(forged, [jwk], expectOk)).toThrow(
+      /bad signature/,
+    );
   });
 
   it.each([
@@ -94,24 +122,34 @@ describe("verifyIdToken", () => {
   });
 
   it("accepts an audience list that includes the client, tolerates small clock skew", () => {
-    expect(() => verifyIdToken(sign(good({ aud: ["x", CLIENT] })), [jwk], expectOk)).not.toThrow();
-    expect(() => verifyIdToken(sign(good({ exp: NOW - 30 })), [jwk], expectOk)).not.toThrow();
+    expect(() =>
+      verifyIdToken(sign(good({ aud: ["x", CLIENT] })), [jwk], expectOk),
+    ).not.toThrow();
+    expect(() =>
+      verifyIdToken(sign(good({ exp: NOW - 30 })), [jwk], expectOk),
+    ).not.toThrow();
   });
 
   it("enforces the tenant when one is configured", () => {
     const t = sign(good({ tid: "99999999-0000-0000-0000-000000000000" }));
     expect(() =>
-      verifyIdToken(t, [jwk], { ...expectOk, tenantId: "11111111-2222-3333-4444-555555555555" }),
+      verifyIdToken(t, [jwk], {
+        ...expectOk,
+        tenantId: "11111111-2222-3333-4444-555555555555",
+      }),
     ).toThrow(/wrong tenant/);
     expect(() =>
-      verifyIdToken(sign(good()), [jwk], { ...expectOk, tenantId: "11111111-2222-3333-4444-555555555555" }),
+      verifyIdToken(sign(good()), [jwk], {
+        ...expectOk,
+        tenantId: "11111111-2222-3333-4444-555555555555",
+      }),
     ).not.toThrow();
   });
 
   it("picks the key by kid and refuses an unknown kid", () => {
-    expect(() => verifyIdToken(sign(good(), { kid: "unknown" }), [jwk], expectOk)).toThrow(
-      /no matching signing key/,
-    );
+    expect(() =>
+      verifyIdToken(sign(good(), { kid: "unknown" }), [jwk], expectOk),
+    ).toThrow(/no matching signing key/);
   });
 
   it("refuses malformed input", () => {
@@ -127,23 +165,31 @@ describe("PKCE and the authorization URL", () => {
     const b = pkcePair();
     expect(a.verifier).not.toBe(b.verifier);
     expect(a.verifier.length).toBeGreaterThanOrEqual(43);
-    expect(a.challenge).toBe(createHash("sha256").update(a.verifier).digest("base64url"));
+    expect(a.challenge).toBe(
+      createHash("sha256").update(a.verifier).digest("base64url"),
+    );
   });
 
   it("carries state, nonce, challenge, the exact redirect URI, and always asks for openid", () => {
     const url = new URL(
-      authorizationUrl(META, { ...CFG, scopes: "profile email", idpHint: "entra" }, {
-        state: "s1",
-        nonce: "n1",
-        challenge: "c1",
-        redirectUri: "https://app.example/signin/oidc/callback",
-      }),
+      authorizationUrl(
+        META,
+        { ...CFG, scopes: "profile email", idpHint: "entra" },
+        {
+          state: "s1",
+          nonce: "n1",
+          challenge: "c1",
+          redirectUri: "https://app.example/signin/oidc/callback",
+        },
+      ),
     );
     expect(url.origin + url.pathname).toBe(META.authorization_endpoint);
     const q = url.searchParams;
     expect(q.get("response_type")).toBe("code");
     expect(q.get("client_id")).toBe(CLIENT);
-    expect(q.get("redirect_uri")).toBe("https://app.example/signin/oidc/callback");
+    expect(q.get("redirect_uri")).toBe(
+      "https://app.example/signin/oidc/callback",
+    );
     expect(q.get("scope")?.split(" ")).toEqual(["openid", "profile", "email"]);
     expect(q.get("state")).toBe("s1");
     expect(q.get("nonce")).toBe("n1");
@@ -155,7 +201,9 @@ describe("PKCE and the authorization URL", () => {
 
 describe("discover", () => {
   const reply = (body: unknown, status = 200) =>
-    vi.fn(async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
+    vi.fn(
+      async () => new Response(JSON.stringify(body), { status }),
+    ) as unknown as typeof fetch;
 
   it("returns the metadata when the issuer matches", async () => {
     const meta = await discover(reply(META), ISSUER);
@@ -163,18 +211,26 @@ describe("discover", () => {
   });
 
   it("refuses an issuer that differs, or a template (Entra common)", async () => {
-    await expect(discover(reply({ ...META, issuer: "https://evil.example" }), ISSUER)).rejects.toThrow(
-      /different issuer/,
-    );
     await expect(
-      discover(reply({ ...META, issuer: "https://login.example.test/{tenantid}/v2.0" }), ISSUER),
+      discover(reply({ ...META, issuer: "https://evil.example" }), ISSUER),
+    ).rejects.toThrow(/different issuer/);
+    await expect(
+      discover(
+        reply({
+          ...META,
+          issuer: "https://login.example.test/{tenantid}/v2.0",
+        }),
+        ISSUER,
+      ),
     ).rejects.toThrow(/template|specific tenant/);
   });
 
   it("refuses a failing or incomplete document", async () => {
     await expect(discover(reply({}, 500), ISSUER)).rejects.toThrow(OidcError);
     const { token_endpoint: _t, ...partial } = META;
-    await expect(discover(reply(partial), ISSUER)).rejects.toThrow(/no token_endpoint/);
+    await expect(discover(reply(partial), ISSUER)).rejects.toThrow(
+      /no token_endpoint/,
+    );
   });
 });
 
@@ -183,13 +239,24 @@ describe("exchangeCode", () => {
     let seen: URLSearchParams | undefined;
     const f = vi.fn(async (_u: unknown, init?: RequestInit) => {
       seen = init?.body as URLSearchParams;
-      return new Response(JSON.stringify({ access_token: "at", id_token: "it", expires_in: 3599 }));
+      return new Response(
+        JSON.stringify({
+          access_token: "at",
+          id_token: "it",
+          expires_in: 3599,
+        }),
+      );
     }) as unknown as typeof fetch;
-    const t = await exchangeCode(f, META, { ...CFG, clientSecret: "shh" }, {
-      code: "abc",
-      verifier: "ver",
-      redirectUri: "https://app.example/cb",
-    });
+    const t = await exchangeCode(
+      f,
+      META,
+      { ...CFG, clientSecret: "shh" },
+      {
+        code: "abc",
+        verifier: "ver",
+        redirectUri: "https://app.example/cb",
+      },
+    );
     expect(t.access_token).toBe("at");
     expect(seen?.get("grant_type")).toBe("authorization_code");
     expect(seen?.get("code")).toBe("abc");
@@ -199,10 +266,14 @@ describe("exchangeCode", () => {
   });
 
   it("fails on a rejected exchange without echoing the response", async () => {
-    const f = vi.fn(async () => new Response("secret detail", { status: 400 })) as unknown as typeof fetch;
-    const err = await exchangeCode(f, META, CFG, { code: "x", verifier: "v", redirectUri: "r" }).catch(
-      (e: Error) => e,
-    );
+    const f = vi.fn(
+      async () => new Response("secret detail", { status: 400 }),
+    ) as unknown as typeof fetch;
+    const err = await exchangeCode(f, META, CFG, {
+      code: "x",
+      verifier: "v",
+      redirectUri: "r",
+    }).catch((e: Error) => e);
     expect(err).toBeInstanceOf(OidcError);
     expect((err as Error).message).not.toContain("secret detail");
   });
@@ -229,15 +300,34 @@ describe("safeReturnPath", () => {
 });
 
 describe("OidcStore", () => {
-  const claims = { iss: ISSUER, sub: "u1", aud: CLIENT, exp: NOW, name: "Alice", roles: ["a"] };
+  const claims = {
+    iss: ISSUER,
+    sub: "u1",
+    aud: CLIENT,
+    exp: NOW,
+    name: "Alice",
+    roles: ["a"],
+  };
 
   it("a login transaction is single use and expires", () => {
     let now = 1000;
     const s = new OidcStore(() => now);
-    s.startTransaction("st", { nonce: "n", verifier: "v", returnTo: "/", redirectUri: "r", locale: "en-001" });
+    s.startTransaction("st", {
+      nonce: "n",
+      verifier: "v",
+      returnTo: "/",
+      redirectUri: "r",
+      locale: "en-001",
+    });
     expect(s.takeTransaction("st")?.nonce).toBe("n");
     expect(s.takeTransaction("st")).toBeNull();
-    s.startTransaction("st2", { nonce: "n", verifier: "v", returnTo: "/", redirectUri: "r", locale: "en-001" });
+    s.startTransaction("st2", {
+      nonce: "n",
+      verifier: "v",
+      returnTo: "/",
+      redirectUri: "r",
+      locale: "en-001",
+    });
     now += 11 * 60 * 1000;
     expect(s.takeTransaction("st2")).toBeNull();
     expect(s.takeTransaction("never")).toBeNull();
@@ -246,28 +336,45 @@ describe("OidcStore", () => {
   it("a session is found by its id, ends at its hard limit, and can be deleted", () => {
     let now = 0;
     const s = new OidcStore(() => now);
-    const a = s.createSession({ accessToken: "at", sessionSeconds: 60, claims });
+    const a = s.createSession({
+      accessToken: "at",
+      sessionSeconds: 60,
+      claims,
+    });
     expect(a.id.length).toBeGreaterThanOrEqual(43);
-    expect(s.get(a.id)?.user).toMatchObject({ sub: "u1", name: "Alice", roles: ["a"] });
+    expect(s.get(a.id)?.user).toMatchObject({
+      sub: "u1",
+      name: "Alice",
+      roles: ["a"],
+    });
     expect(s.get("nope")).toBeNull();
     expect(s.get(null)).toBeNull();
     now = 61_000;
     expect(s.get(a.id)).toBeNull();
-    const b = s.createSession({ accessToken: "at", sessionSeconds: 60, claims });
+    const b = s.createSession({
+      accessToken: "at",
+      sessionSeconds: 60,
+      claims,
+    });
     s.delete(b.id);
     expect(s.get(b.id)).toBeNull();
   });
 
   it("memory is bounded", () => {
     const s = new OidcStore(() => 0, 3);
-    for (let i = 0; i < 20; i++) s.createSession({ accessToken: "t", sessionSeconds: 60, claims });
+    for (let i = 0; i < 20; i++)
+      s.createSession({ accessToken: "t", sessionSeconds: 60, claims });
     expect(s.size).toBeLessThanOrEqual(3);
   });
 
   it("session ids are unpredictable", () => {
     const s = new OidcStore();
     const ids = new Set(
-      Array.from({ length: 50 }, () => s.createSession({ accessToken: "t", sessionSeconds: 60, claims }).id),
+      Array.from(
+        { length: 50 },
+        () =>
+          s.createSession({ accessToken: "t", sessionSeconds: 60, claims }).id,
+      ),
     );
     expect(ids.size).toBe(50);
     void randomBytes;
@@ -275,7 +382,13 @@ describe("OidcStore", () => {
 });
 
 describe("accessTokenFor", () => {
-  const claims = { iss: ISSUER, sub: "u1", aud: CLIENT, exp: NOW, name: "Alice" };
+  const claims = {
+    iss: ISSUER,
+    sub: "u1",
+    aud: CLIENT,
+    exp: NOW,
+    name: "Alice",
+  };
   const store = () => {
     let now = 0;
     const s = new OidcStore(() => now);
@@ -284,9 +397,21 @@ describe("accessTokenFor", () => {
 
   it("returns the current token while it is fresh", async () => {
     const { s, now } = store();
-    const sess = s.createSession({ accessToken: "fresh", expiresInSeconds: 3600, sessionSeconds: 7200, claims });
+    const sess = s.createSession({
+      accessToken: "fresh",
+      expiresInSeconds: 3600,
+      sessionSeconds: 7200,
+      claims,
+    });
     const f = vi.fn() as unknown as typeof fetch;
-    expect(await accessTokenFor(new MemorySessionStore(s), sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("fresh");
+    expect(
+      await accessTokenFor(new MemorySessionStore(s), sess, {
+        fetchFn: f,
+        cfg: CFG,
+        meta: META,
+        now,
+      }),
+    ).toBe("fresh");
     expect(f).not.toHaveBeenCalled();
   });
 
@@ -300,36 +425,87 @@ describe("accessTokenFor", () => {
       claims,
     });
     advance(45_000);
-    const f = vi.fn(async () =>
-      new Response(JSON.stringify({ access_token: "new", refresh_token: "r2", expires_in: 3600 })),
+    const f = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "new",
+            refresh_token: "r2",
+            expires_in: 3600,
+          }),
+        ),
     ) as unknown as typeof fetch;
-    expect(await accessTokenFor(new MemorySessionStore(s), sess, { fetchFn: f, cfg: CFG, meta: META, now })).toBe("new");
+    expect(
+      await accessTokenFor(new MemorySessionStore(s), sess, {
+        fetchFn: f,
+        cfg: CFG,
+        meta: META,
+        now,
+      }),
+    ).toBe("new");
     expect(sess.refreshToken).toBe("r2");
     expect(s.get(sess.id)).not.toBeNull();
   });
 
   it("ends the session when it cannot be refreshed", async () => {
     const { s, advance, now } = store();
-    const noRefresh = s.createSession({ accessToken: "x", expiresInSeconds: 10, sessionSeconds: 7200, claims });
+    const noRefresh = s.createSession({
+      accessToken: "x",
+      expiresInSeconds: 10,
+      sessionSeconds: 7200,
+      claims,
+    });
     advance(20_000);
     const f = vi.fn() as unknown as typeof fetch;
-    expect(await accessTokenFor(new MemorySessionStore(s), noRefresh, { fetchFn: f, cfg: CFG, meta: META, now })).toBeNull();
+    expect(
+      await accessTokenFor(new MemorySessionStore(s), noRefresh, {
+        fetchFn: f,
+        cfg: CFG,
+        meta: META,
+        now,
+      }),
+    ).toBeNull();
     expect(s.get(noRefresh.id)).toBeNull();
 
-    const failing = s.createSession({ accessToken: "x", refreshToken: "r", expiresInSeconds: 10, sessionSeconds: 7200, claims });
+    const failing = s.createSession({
+      accessToken: "x",
+      refreshToken: "r",
+      expiresInSeconds: 10,
+      sessionSeconds: 7200,
+      claims,
+    });
     advance(20_000);
-    const bad = vi.fn(async () => new Response("no", { status: 400 })) as unknown as typeof fetch;
-    expect(await accessTokenFor(new MemorySessionStore(s), failing, { fetchFn: bad, cfg: CFG, meta: META, now })).toBeNull();
+    const bad = vi.fn(
+      async () => new Response("no", { status: 400 }),
+    ) as unknown as typeof fetch;
+    expect(
+      await accessTokenFor(new MemorySessionStore(s), failing, {
+        fetchFn: bad,
+        cfg: CFG,
+        meta: META,
+        now,
+      }),
+    ).toBeNull();
     expect(s.get(failing.id)).toBeNull();
   });
 });
 
 describe("the idle timeout (RG-2)", () => {
-  const claims = { iss: "i", sub: "s", aud: "a", exp: 9e9, name: "Ada" } as never;
+  const claims = {
+    iss: "i",
+    sub: "s",
+    aud: "a",
+    exp: 9e9,
+    name: "Ada",
+  } as never;
   const make = (idleSeconds: number) => {
     let now = 1_000_000;
     const store = new OidcStore(() => now, 100, idleSeconds);
-    const s = store.createSession({ accessToken: "at", sessionSeconds: 8 * 3600, claims });
+    const s = store.createSession({
+      accessToken: "at",
+      sessionSeconds: 8 * 3600,
+      claims,
+    });
     return { store, s, advance: (seconds: number) => (now += seconds * 1000) };
   };
 

@@ -54,7 +54,9 @@ test("the WBS shows codes, links by id, and hides what it must", async ({
       },
     }),
   );
-  await page.route(`**/api/plans/${PID}/task-link-counts`, (r) => r.fulfill({ json: { plan_pid: PID, counts: { a1: 1, b2: 3 } } }));
+  await page.route(`**/api/plans/${PID}/task-link-counts`, (r) =>
+    r.fulfill({ json: { plan_pid: PID, counts: { a1: 1, b2: 3 } } }),
+  );
   await page.goto(`/en-001/plans/${PID}/wbs`);
   const tree = page.getByRole("list", { name: "Work breakdown tree" });
   await expect(tree).toContainText("· 1 link");
@@ -165,10 +167,14 @@ test("a task moves one place among its siblings and the order is sent to the ser
   await page.goto(`/en-001/plans/${PID}/wbs`);
   const tree = page.getByRole("list", { name: "Work breakdown tree" });
   await expect(tree.getByRole("button", { name: "Move A1 up" })).toBeDisabled();
-  await expect(tree.getByRole("button", { name: "Move C3 down" })).toBeDisabled();
+  await expect(
+    tree.getByRole("button", { name: "Move C3 down" }),
+  ).toBeDisabled();
   await tree.getByRole("button", { name: "Move C3 up" }).click();
   await expect(page.getByRole("status")).toContainText("Moved C3.");
-  await expect.poll(() => sent).toEqual({ parent_task_pid: null, order: ["a1", "c3", "b2"] });
+  await expect
+    .poll(() => sent)
+    .toEqual({ parent_task_pid: null, order: ["a1", "c3", "b2"] });
   await expect(tree.getByRole("listitem").nth(1)).toContainText("C3");
   await audit(page);
 });
@@ -203,13 +209,16 @@ test("a role opens onto the open tasks of its people", async ({ page }) => {
       },
     ],
     placeholders: [],
-    people_by_role: group === "role" ? { Engineer: ["person:x", "person:y"] } : null,
+    people_by_role:
+      group === "role" ? { Engineer: ["person:x", "person:y"] } : null,
     masked: false,
     note: "",
   });
   await page.route("**/api/resource-plan?**", (r) =>
     r.fulfill({
-      json: plan(new URL(r.request().url()).searchParams.get("group_by") ?? "role"),
+      json: plan(
+        new URL(r.request().url()).searchParams.get("group_by") ?? "role",
+      ),
     }),
   );
   await page.route("**/api/resource-plan/role-tasks?**", (r) =>
@@ -220,7 +229,14 @@ test("a role opens onto the open tasks of its people", async ({ page }) => {
           {
             person_ref: "person:x",
             tasks: [
-              { pid: "t1", title: "Fix the build", status: "todo", due_date: null, plan_pid: PID, plan_name: "Apollo" },
+              {
+                pid: "t1",
+                title: "Fix the build",
+                status: "todo",
+                due_date: null,
+                plan_pid: PID,
+                plan_name: "Apollo",
+              },
             ],
           },
           { person_ref: "person:y", tasks: [] },
@@ -232,15 +248,27 @@ test("a role opens onto the open tasks of its people", async ({ page }) => {
     }),
   );
   await page.goto("/en-001/resources/rbs");
-  const button = page.getByRole("button", { name: "Show the open tasks of Engineer" });
+  const button = page.getByRole("button", {
+    name: "Show the open tasks of Engineer",
+  });
   await expect(button).toHaveAttribute("aria-expanded", "false");
   await button.click();
-  const region = page.getByRole("region", { name: "Show the open tasks of Engineer" });
-  await expect(region.getByRole("link", { name: "Fix the build" })).toHaveAttribute("href", /\/plans\/.*\/tasks\/t1$/);
+  const region = page.getByRole("region", {
+    name: "Show the open tasks of Engineer",
+  });
+  await expect(
+    region.getByRole("link", { name: "Fix the build" }),
+  ).toHaveAttribute("href", /\/plans\/.*\/tasks\/t1$/);
   await expect(region).toContainText("no open tasks");
-  await expect(region).toContainText("2 in plans you cannot read are not shown.");
-  await expect(page.getByRole("button", { name: "Hide the open tasks of Engineer" })).toHaveAttribute("aria-expanded", "true");
+  await expect(region).toContainText(
+    "2 in plans you cannot read are not shown.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Hide the open tasks of Engineer" }),
+  ).toHaveAttribute("aria-expanded", "true");
   await audit(page);
-  await page.getByRole("button", { name: "Hide the open tasks of Engineer" }).click();
+  await page
+    .getByRole("button", { name: "Hide the open tasks of Engineer" })
+    .click();
   await expect(region).toHaveCount(0);
 });

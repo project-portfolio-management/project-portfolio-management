@@ -46,8 +46,15 @@ test.describe("phone-viewport responsive audit (T-28k)", () => {
         const wide = [...document.querySelectorAll("body *")]
           .filter((e) => e.getBoundingClientRect().right > doc.clientWidth + 1)
           .slice(0, 6)
-          .map((e) => `${e.tagName.toLowerCase()}.${String((e as HTMLElement).className).slice(0, 40)} left=${Math.round(e.getBoundingClientRect().left)} right=${Math.round(e.getBoundingClientRect().right)} text=${JSON.stringify((e.textContent ?? "").slice(0, 40))}`);
-        return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, wide };
+          .map(
+            (e) =>
+              `${e.tagName.toLowerCase()}.${String((e as HTMLElement).className).slice(0, 40)} left=${Math.round(e.getBoundingClientRect().left)} right=${Math.round(e.getBoundingClientRect().right)} text=${JSON.stringify((e.textContent ?? "").slice(0, 40))}`,
+          );
+        return {
+          scrollWidth: doc.scrollWidth,
+          clientWidth: doc.clientWidth,
+          wide,
+        };
       });
       expect(
         overflow.scrollWidth,

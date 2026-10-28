@@ -187,7 +187,11 @@ describe("ApiClient Idempotency-Key", () => {
     await c.put("/api/x", { body: {} });
     await c.delete("/api/x");
     expect(key(f, 0)).toMatch(/\S{8,}/);
-    expect([key(f, 1), key(f, 2), key(f, 3)]).toEqual([undefined, undefined, undefined]);
+    expect([key(f, 1), key(f, 2), key(f, 3)]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 
   // Pins: a separate action is a separate key.
@@ -217,10 +221,15 @@ describe("ApiClient Idempotency-Key", () => {
     const f = fakeFetch(200, {});
     const c = client(f);
     await c.post("/api/x", { body: {}, idempotencyKey: "mine-1" });
-    await c.post("/api/x", { body: {}, headers: { "Idempotency-Key": "mine-2" } });
+    await c.post("/api/x", {
+      body: {},
+      headers: { "Idempotency-Key": "mine-2" },
+    });
     await c.post("/api/x", { body: {}, idempotencyKey: false });
     expect(key(f, 0)).toBe("mine-1");
-    expect((f.calls[1]?.init.headers as Record<string, string>)["Idempotency-Key"]).toBe("mine-2");
+    expect(
+      (f.calls[1]?.init.headers as Record<string, string>)["Idempotency-Key"],
+    ).toBe("mine-2");
     expect(key(f, 1)).toBeUndefined();
     expect(key(f, 2)).toBeUndefined();
   });

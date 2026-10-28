@@ -7,21 +7,56 @@ import { ROUTES, stubPlansApi } from "./fixtures";
 
 /** Lines that are the same in both languages by design: product, data and fixture names, units. */
 const SAME = new Set([
-  "PPM", "Website replatform", "WEB-42", "Kanban", "Gantt", "CSV", "CSV TSV Excel", "GBP", "PERT", "RACI", "Main X",
-  "Project", "Active", "Jira", "Trello", "Asana", "Linear", "Monday", "ClickUp", "Azure DevOps", "GitHub", "platform", "Cymraeg", "English",
+  "PPM",
+  "Website replatform",
+  "WEB-42",
+  "Kanban",
+  "Gantt",
+  "CSV",
+  "CSV TSV Excel",
+  "GBP",
+  "PERT",
+  "RACI",
+  "Main X",
+  "Project",
+  "Active",
+  "Jira",
+  "Trello",
+  "Asana",
+  "Linear",
+  "Monday",
+  "ClickUp",
+  "Azure DevOps",
+  "GitHub",
+  "platform",
+  "Cymraeg",
+  "English",
   // Catalogue words that are the same in Welsh, and the stub API's own error text (test data):
-  "band", "capex", "opex", "unhandled in stub", "404: unhandled in stub",
+  "band",
+  "capex",
+  "opex",
+  "unhandled in stub",
+  "404: unhandled in stub",
 ]);
 
-async function lines(page: import("@playwright/test").Page, path: string): Promise<string[]> {
+async function lines(
+  page: import("@playwright/test").Page,
+  path: string,
+): Promise<string[]> {
   await page.goto(path, { waitUntil: "networkidle" });
   await expect(page.locator("h1").first()).toBeVisible();
   const text = await page.locator("body").innerText();
-  return text
-    .split("\n")
-    .map((l) => l.replace(/[⁦-⁩‎‏]/g, "").trim())
-    // A row that carries a record id is data (a name beside its id), not text to translate.
-    .filter((l) => /[A-Za-z]{4,}/.test(l) && !/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/.test(l));
+  return (
+    text
+      .split("\n")
+      .map((l) => l.replace(/[⁦-⁩‎‏]/g, "").trim())
+      // A row that carries a record id is data (a name beside its id), not text to translate.
+      .filter(
+        (l) =>
+          /[A-Za-z]{4,}/.test(l) &&
+          !/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/.test(l),
+      )
+  );
 }
 
 test.describe("every page renders in Welsh (HD-13)", () => {

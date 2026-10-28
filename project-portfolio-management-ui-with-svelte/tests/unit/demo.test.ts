@@ -1,7 +1,12 @@
 // Demonstration mode: the one address it accepts, and the identity it signs in.
 
 import { describe, expect, it } from "vitest";
-import { DEMO_EMAIL, DEMO_SUB, demoClaims, isDemoEmail } from "../../src/lib/demo";
+import {
+  DEMO_EMAIL,
+  DEMO_SUB,
+  demoClaims,
+  isDemoEmail,
+} from "../../src/lib/demo";
 
 describe("demonstration sign-in", () => {
   it("accepts example@example.com, ignoring case and surrounding space", () => {
@@ -11,7 +16,13 @@ describe("demonstration sign-in", () => {
   });
 
   it("accepts nothing else", () => {
-    for (const other of ["", "someone@example.com", "example@example.org", "example@example.com.evil.test", "xexample@example.com"]) {
+    for (const other of [
+      "",
+      "someone@example.com",
+      "example@example.org",
+      "example@example.com.evil.test",
+      "xexample@example.com",
+    ]) {
       expect(isDemoEmail(other), other).toBe(false);
     }
   });

@@ -237,7 +237,9 @@ test.describe("time-based analysis", () => {
     await page.goto(`/plans/${PLAN}/flow`);
 
     // The expectation is the number a team can actually quote.
-    await expect(page.getByTestId("sle-badge")).toContainText("11.0 calendar days");
+    await expect(page.getByTestId("sle-badge")).toContainText(
+      "11.0 calendar days",
+    );
     await expect(page.getByTestId("sle-badge")).toContainText(
       "14 finished items",
     );

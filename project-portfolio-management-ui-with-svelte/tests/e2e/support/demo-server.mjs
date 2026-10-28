@@ -13,9 +13,17 @@ for (let i = 0; i < 240; i++) {
   }
   await new Promise((r) => setTimeout(r, 1000));
 }
-const child = spawn("npx", ["vite", "preview", "--port", String(MAIN + 1), "--strictPort"], {
-  stdio: "inherit",
-  env: { ...process.env, PPM_DEMO_MODE: "true", PROJECT_PORTFOLIO_MANAGEMENT_API_URL: "http://localhost:4181" },
-});
+const child = spawn(
+  "npx",
+  ["vite", "preview", "--port", String(MAIN + 1), "--strictPort"],
+  {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      PPM_DEMO_MODE: "true",
+      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: "http://localhost:4181",
+    },
+  },
+);
 child.on("exit", (code) => process.exit(code ?? 0));
 process.on("SIGTERM", () => child.kill("SIGTERM"));

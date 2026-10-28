@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { answerConfirm, askConfirm, confirmState } from "../../src/lib/confirm.svelte";
+import {
+  answerConfirm,
+  askConfirm,
+  confirmState,
+} from "../../src/lib/confirm.svelte";
 
 describe("askConfirm", () => {
   it("resolves true on OK and clears the question", async () => {

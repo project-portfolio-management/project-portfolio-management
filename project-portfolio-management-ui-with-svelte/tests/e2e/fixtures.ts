@@ -42,7 +42,14 @@ export async function stubPlansApi(page: Page) {
     }
     if (path === `/api/plans/${PID}/schedule` && method === "GET") {
       return route.fulfill({
-        json: { portfolio_pid: PID, items: [], edges: [], violations: [], critical_path: [], undated: [] },
+        json: {
+          portfolio_pid: PID,
+          items: [],
+          edges: [],
+          violations: [],
+          critical_path: [],
+          undated: [],
+        },
       });
     }
     if (path === "/api/me/tasks" && method === "GET") {
@@ -90,7 +97,11 @@ export const ROUTES: string[] = pages("src/routes")
   .map(
     (f) => f.slice("src/routes".length).replace(/\/\+page\.svelte$/, "") || "/",
   )
-  .map((r) => r.replace(/\[pid\]/g, PID).replace(/\[tpid\]/g, "33333333-3333-4333-8333-333333333333"))
+  .map((r) =>
+    r
+      .replace(/\[pid\]/g, PID)
+      .replace(/\[tpid\]/g, "33333333-3333-4333-8333-333333333333"),
+  )
   .sort();
 
 /** The visible primary buttons on screen, by name (LT-12: there is at most one). */

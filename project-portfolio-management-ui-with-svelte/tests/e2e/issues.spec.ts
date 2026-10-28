@@ -15,8 +15,32 @@ const ISSUE = {
 };
 const REGISTER = {
   issues: [
-    { ...ISSUE, pid: "a", title: "Build server is down", kind: "blocker", severity: "critical", status: "open", owner_ref: "person:ada", raised_on: "2026-09-10", due_date: "2026-09-12", age_calendar_days: 30, overdue: true },
-    { ...ISSUE, pid: "b", title: "Typo in the report", kind: "bug", severity: "low", status: "in_progress", owner_ref: null, raised_on: "2026-10-01", due_date: null, age_calendar_days: 9, overdue: false },
+    {
+      ...ISSUE,
+      pid: "a",
+      title: "Build server is down",
+      kind: "blocker",
+      severity: "critical",
+      status: "open",
+      owner_ref: "person:ada",
+      raised_on: "2026-09-10",
+      due_date: "2026-09-12",
+      age_calendar_days: 30,
+      overdue: true,
+    },
+    {
+      ...ISSUE,
+      pid: "b",
+      title: "Typo in the report",
+      kind: "bug",
+      severity: "low",
+      status: "in_progress",
+      owner_ref: null,
+      raised_on: "2026-10-01",
+      due_date: null,
+      age_calendar_days: 9,
+      overdue: false,
+    },
   ],
   matching: 2,
   truncated: false,
@@ -32,12 +56,18 @@ const REGISTER = {
 
 test.describe("issues register (IR-2)", () => {
   test.beforeEach(async ({ page }) => {
-    await page.route("**/api/issues**", (route) => route.fulfill({ json: REGISTER }));
+    await page.route("**/api/issues**", (route) =>
+      route.fulfill({ json: REGISTER }),
+    );
   });
 
-  test("lists the issues in words, most serious first, and says what is overdue", async ({ page }) => {
+  test("lists the issues in words, most serious first, and says what is overdue", async ({
+    page,
+  }) => {
     await page.goto("/en-001/issues", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Issues register" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Issues register" }),
+    ).toBeVisible();
     const rows = page.locator("tbody tr");
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toContainText("Build server is down");
@@ -49,14 +79,20 @@ test.describe("issues register (IR-2)", () => {
 
   test("the same page reads in Welsh", async ({ page }) => {
     await page.goto("/cy-001/issues", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Cofrestr materion" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Cofrestr materion" }),
+    ).toBeVisible();
     await expect(page.locator("tbody tr").nth(0)).toContainText("critigol");
     await expect(page.locator("tbody tr").nth(1)).toContainText("ar y gweill");
   });
 
   test("a filter is sent to the service", async ({ page }) => {
     await page.goto("/en-001/issues", { waitUntil: "networkidle" });
-    const request = page.waitForRequest((r) => r.url().includes("/api/issues") && r.url().includes("severity=critical"));
+    const request = page.waitForRequest(
+      (r) =>
+        r.url().includes("/api/issues") &&
+        r.url().includes("severity=critical"),
+    );
     await page.locator(".filter select").nth(1).selectOption("critical");
     expect((await request).url()).toContain("severity=critical");
   });
@@ -69,6 +105,10 @@ test.describe("issues register (IR-2)", () => {
     const r = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
-    expect(r.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
+    expect(
+      r.violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => v.id),
+    ).toEqual([]);
   });
 });

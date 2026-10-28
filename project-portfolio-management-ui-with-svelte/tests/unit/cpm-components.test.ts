@@ -209,8 +209,12 @@ describe("CalendarMonth", () => {
         .find((e) => e.getAttribute("aria-label")?.startsWith(d))
         ?.getAttribute("aria-label");
     expect(label("12 October 2026")).toBe("12 October 2026, Monday: holiday");
-    expect(label("3 October 2026")).toBe("3 October 2026, Saturday: not a business day");
-    expect(label("13 October 2026")).toBe("13 October 2026, Tuesday: business day");
+    expect(label("3 October 2026")).toBe(
+      "3 October 2026, Saturday: not a business day",
+    );
+    expect(label("13 October 2026")).toBe(
+      "13 October 2026, Tuesday: business day",
+    );
     done();
   });
   it("toggles a holiday only on a business day of this month when editable", () => {
@@ -241,7 +245,9 @@ describe("CalendarMonth", () => {
       mask: "1111100",
       holidays: [],
     });
-    expect(root.querySelectorAll("td[data-date]:not([aria-disabled])")).toHaveLength(0);
+    expect(
+      root.querySelectorAll("td[data-date]:not([aria-disabled])"),
+    ).toHaveLength(0);
     (root.querySelector('td[data-date="2026-10-12"]') as HTMLElement).click();
     done();
   });
@@ -260,14 +266,28 @@ describe("CalendarMonth", () => {
     done();
   });
   it("browses by week and four weeks, and labels the buttons", () => {
-    const { root, done } = render(CalendarMonth, { year: 2026, month: 10, mask: "1111100", holidays: [] });
-    const next = () => root.querySelector(".calendar-view-next-button") as HTMLButtonElement;
+    const { root, done } = render(CalendarMonth, {
+      year: 2026,
+      month: 10,
+      mask: "1111100",
+      holidays: [],
+    });
+    const next = () =>
+      root.querySelector(".calendar-view-next-button") as HTMLButtonElement;
     expect(next().getAttribute("aria-label")).toBe("Next Month");
-    (root.querySelector(".calendar-view-switcher-button-week") as HTMLButtonElement).click();
+    (
+      root.querySelector(
+        ".calendar-view-switcher-button-week",
+      ) as HTMLButtonElement
+    ).click();
     flushSync();
     expect(root.querySelectorAll("td[data-date]")).toHaveLength(7);
     expect(next().getAttribute("aria-label")).toBe("Next Week");
-    (root.querySelector(".calendar-view-switcher-button-four-week") as HTMLButtonElement).click();
+    (
+      root.querySelector(
+        ".calendar-view-switcher-button-four-week",
+      ) as HTMLButtonElement
+    ).click();
     flushSync();
     expect(root.querySelectorAll("td[data-date]")).toHaveLength(28);
     done();

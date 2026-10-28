@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  dateOf,
-  dayNumber,
-} from "../../src/lib/lily-grids";
+import { dateOf, dayNumber } from "../../src/lib/lily-grids";
 
 describe("dates", () => {
   it("round-trips calendar dates and rejects junk", () => {

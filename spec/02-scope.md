@@ -25,8 +25,8 @@ defect:
 Where today's coverage is uneven (the ten supported locales in
 [locales.md](locales.md), the compliance mapping in
 [12-compliance.md](12-compliance.md), which names the UK and EU laws), that is a
-gap to close, not a design. Gaps are recorded in `tasks.md` and the
-[open questions](16-open-questions.md), and the Welsh and other non-English
+gap to close, not a design. Gaps are recorded in `tasks.md` (WW-1) and the
+[worldwide equity audit](../governance/worldwide-equity-audit.md), and the Welsh and other non-English
 text stay marked machine-written until a speaker reviews them.
 
 ### 2.1 In scope — entity level

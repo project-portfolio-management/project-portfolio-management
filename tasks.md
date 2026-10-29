@@ -1916,7 +1916,11 @@ only as search snippets.
   only), the ten supported locales, the identity and federation options, and any rule tied to one law (small-cell
   minimum of 5, retention, erasure). **Acceptance:** a written list of each finding with a decision (configurable,
   extended, or recorded as a deliberate limit with its reason), and a test where a finding is a default that can be
-  made configurable. Not started.
+  made configurable.
+  **Audit done 2026-10-29:** 25 findings, each with a proposed decision, in
+  [`governance/worldwide-equity-audit.md`](governance/worldwide-equity-audit.md). **Decisions not yet accepted and no
+  code changed.** The fixes are not started; the first four findings (locale parity, compliance mapping, money,
+  working week) are the ones that most clearly break §2.0.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

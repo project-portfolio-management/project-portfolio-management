@@ -10,6 +10,7 @@ decisions that belong to the buyer clearly marked.
 | [DPIA template](dpia.md) | A data protection impact assessment, filled in for this service as far as the software can know, with the buyer's parts marked |
 | [Data-flow diagram](data-flow.md) | Who and what talks to whom, where personal data is stored, and where it leaves |
 | [Record of processing](record-of-processing.md) | The Article 30-style record: purposes, categories, recipients, transfers, retention, security |
+| [Worldwide equity audit](worldwide-equity-audit.md) | Where one country or region is the default or only case (spec §2.0), with a proposed decision for each |
 | [Retention schedule](retention-schedule.md) | A retention class for every kind of record, with a starting period, and what the code enforces today |
 | [Personal-data inventory](personal-data-inventory.csv) | Every column that can hold personal data, with class, purpose and retention class (kept true to the schema by a test) |
 | [Accessibility statement](accessibility-statement.md) | WCAG 2.2 AA: what is tested, what is not, known gaps, how to ask |

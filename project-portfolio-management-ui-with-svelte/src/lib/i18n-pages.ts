@@ -4481,6 +4481,47 @@ export const PAGES_EN = {
   "p.director_pack.oc_missing": "missing",
   "p.director_pack.c_quarter": "Quarter",
   "p.director_pack.c_why": "Why",
+  "p.balance.balance": "Portfolio balance",
+  "p.balance.balance_ppm": "Portfolio balance — PPM",
+  "p.balance.intro":
+    "Where each portfolio's planned cost, target benefit value and open risk sit against the others, and the imbalances that follow from the figures.",
+  "p.balance.loading": "Loading…",
+  "p.balance.could_not_load": "Could not load the portfolio balance",
+  "p.balance.none":
+    "No cost, benefit value or risk is recorded against a portfolio yet.",
+  "p.balance.currency": "Currency",
+  "p.balance.unassigned": "No portfolio",
+  "p.balance.caption":
+    "Each bubble is a portfolio. Across: planned cost in {currency}. Up: target benefit value in {currency}. Area: open risk exposure.",
+  "p.balance.axis_cost": "Planned cost ({currency})",
+  "p.balance.axis_value": "Target benefit value ({currency})",
+  "p.balance.imbalances": "Imbalances",
+  "p.balance.no_imbalance":
+    "None of the rules below flags an imbalance in these figures.",
+  "p.balance.rules":
+    "A flag is raised when a portfolio holds {concentration}% or more of the planned cost or of the open risk (with at least two portfolios), when its share of planned cost or of risk is {gap} percentage points or more above its share of target value, or when it has planned cost and no target value in the chosen currency. A flag is a prompt to look, not a verdict.",
+  "p.balance.flag_cost_concentration":
+    "{name} holds {percent}% of the planned cost.",
+  "p.balance.flag_risk_concentration":
+    "{name} holds {percent}% of the open risk exposure.",
+  "p.balance.flag_cost_ahead_of_value":
+    "{name} has a share of planned cost well above its {percent}% share of target value.",
+  "p.balance.flag_risk_ahead_of_value":
+    "{name} has a share of open risk well above its {percent}% share of target value.",
+  "p.balance.flag_no_value":
+    "{name} has planned cost but no target value recorded in {currency}.",
+  "p.balance.table": "The same figures as a table",
+  "p.balance.portfolio": "Portfolio",
+  "p.balance.cost": "Planned cost ({currency})",
+  "p.balance.value": "Target value ({currency})",
+  "p.balance.risk": "Open risk exposure",
+  "p.balance.cost_share": "Share of cost",
+  "p.balance.value_share": "Share of value",
+  "p.balance.risk_share": "Share of risk",
+  "p.balance.flags": "Flags",
+  "p.balance.no_flag": "none",
+  "p.balance.notes":
+    "Grouped by portfolio, not by category or strategic aim: portfolio is the only grouping that cost, benefit value and risk are all reported by. Cost is the planned amount on budget lines, value is the target of the recorded benefits, and risk is the open exposure score; money in different currencies is never added together.",
 } as const;
 
 /** A key in the page and component catalogue. */

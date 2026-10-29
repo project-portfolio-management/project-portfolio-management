@@ -1972,10 +1972,11 @@ only as search snippets.
   **Acceptance:** a new proposal similar to a closed plan lists that plan's
   lessons with the match evidence.
   **Built 2026-10-25.** Table `lessons` (migration 90, append-only, withdrawal is a soft delete), `POST`/`GET /api/plans/{pid}/lessons`, `POST …/{lpid}/withdraw`, `GET /api/proposals/{pid}/lessons` (title matched with the duplicate-check engine; each hit carries the score, confidence and breakdown). Request test `a_similar_proposal_is_shown_the_lessons_of_a_past_plan_with_the_match_evidence` (a similar title lists the lessons with evidence, an unrelated one lists none, a withdrawn lesson disappears, both writes are audited). Spec FR-16e4. **Not done:** a screen or showing the lessons in the intake form; matching on anything but the title; limiting the comparison to closed plans (any plan with lessons is compared); recording lessons automatically at a gate decision or closure (a person records them); no test that a private plan's lessons are hidden from a non-member at intake (the code skips hidden plans through the shared fence; that path is not exercised).
-- [ ] **NC-9 (S) — Portfolio balance view.** A bubble chart of value, risk and
+- [x] **NC-9 (S) — Portfolio balance view.** A bubble chart of value, risk and
   cost by category or strategic aim, with stated imbalance flags.
   **Acceptance:** unit test of the flags; an e2e test of the chart and its
   table alternative.
+  **Built 2026-10-29.** UI only: `/balance` (`src/lib/balance-view.ts`, `src/routes/balance/`), a bubble chart per portfolio (cost across, benefit value up, risk as area) with five stated flags and an always-present table; cost, value and risk come from `/api/financials/variance`, `/api/executive/benefits` and `/api/risk/heatmap`. One currency at a time, never converted. Tests: `tests/unit/balance-view.test.ts` (17), `tests/e2e/balance.spec.ts` (5, with axe). UI spec §13. **Not done:** grouping by category or strategic aim (no existing read gives cost, value and risk together by either, so it is by portfolio; a service read would be needed); drill-through from a bubble. **Not verified:** real data (all three reads are stubbed), the flag thresholds against real portfolios, a screen reader, the other eight locales (Welsh is machine-written, unreviewed), the full Playwright suite.
 - [ ] **NC-10 (S) — Impact/effort matrix and Now / Next / Later over ideas and
   proposals.**
   **Acceptance:** e2e test; the matrix has a keyboard-usable table

@@ -488,6 +488,38 @@ links are **never** a match signal (entity spec §1).
 > This is the build queue for the implemented app (MVP shipped); check off
 > in three-part PRs (spec + code + test).
 
+- [x] **2026-10-29 — NC-9: the portfolio balance page (`/balance`).** A bubble
+  chart with one bubble per portfolio: across is planned cost, up is target
+  benefit value, the bubble's area is open risk exposure; every axis starts at
+  zero. Beside it, the imbalances in words, and the same figures as a table
+  (`DataTable`), always on the page, which is the chart's text alternative.
+  **Data (existing reads only, no service change):** cost from
+  `GET /api/financials/variance` (`by_portfolio`, `planned_minor`), value from
+  `GET /api/executive/benefits` (`target_minor`), risk from
+  `GET /api/risk/heatmap` (`posture[].open_exposure`), joined on the
+  portfolio's `pid` (plans under no portfolio form one "No portfolio" group).
+  Money is shown in one currency at a time, chosen from the currencies the cost
+  and value reads name, and is never converted or added across currencies; risk
+  exposure is the service's score and has no currency. **Flags** (pure, in
+  `src/lib/balance-view.ts`, thresholds written there and on the page): a
+  portfolio holds at least 50% of the total planned cost, or of the total open
+  risk (only with two or more groups); its share of cost, or of risk, is at
+  least 20 percentage points above its share of value; or it has planned cost
+  and no target value in the chosen currency. Shares are compared to the nearest
+  tenth of a percent. A flag is a prompt to look, not a verdict. A flagged
+  bubble has a heavy dashed outline and a "!" mark, and is named in the list;
+  colour is never the only signal. Load failures show the catalogue's sentence
+  (`resource()`), never the service's text. Strings are `p.balance.*`; the Welsh
+  is machine-written and listed in `governance/welsh-translation-review.csv`.
+  **Not built:** grouping by category or strategic aim (the service reports
+  cost, value and risk together only by portfolio; budget lines carry a
+  category and objectives carry a strategic aim, but no read gives all three
+  per category or aim); risk and value in the same unit as cost; drill-through
+  from a bubble to the portfolio. Tests: `tests/unit/balance-view.test.ts` (the
+  flags and their thresholds, the join, the layout) and
+  `tests/e2e/balance.spec.ts` (the chart, the table, currency switching, the
+  empty and failed states, Welsh, axe).
+
 - [x] **2026-10-02 — LT-3: the "My work" page (`/me`).** The signed-in
   person's open tasks in five due-date buckets (overdue / today / this week /
   later / no due date), computed **in the browser's own IANA zone**, sent

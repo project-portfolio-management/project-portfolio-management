@@ -4583,4 +4583,45 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.oc_missing": "ar goll",
   "p.director_pack.c_quarter": "Chwarter",
   "p.director_pack.c_why": "Pam",
+  "p.balance.balance": "Cydbwysedd y portffolio",
+  "p.balance.balance_ppm": "Cydbwysedd y portffolio — PPM",
+  "p.balance.intro":
+    "Ble mae cost arfaethedig, gwerth buddion targed a risg agored pob portffolio o'i gymharu ag eraill, a'r anghydbwysedd sy'n dilyn o'r ffigurau.",
+  "p.balance.loading": "Wrthi'n llwytho…",
+  "p.balance.could_not_load": "Methu llwytho cydbwysedd y portffolio",
+  "p.balance.none":
+    "Nid oes cost, gwerth buddion na risg wedi'i gofnodi yn erbyn portffolio eto.",
+  "p.balance.currency": "Arian cyfred",
+  "p.balance.unassigned": "Dim portffolio",
+  "p.balance.caption":
+    "Mae pob swigen yn bortffolio. Ar draws: cost arfaethedig mewn {currency}. I fyny: gwerth buddion targed mewn {currency}. Arwynebedd: amlygiad risg agored.",
+  "p.balance.axis_cost": "Cost arfaethedig ({currency})",
+  "p.balance.axis_value": "Gwerth buddion targed ({currency})",
+  "p.balance.imbalances": "Anghydbwysedd",
+  "p.balance.no_imbalance":
+    "Nid yw'r un o'r rheolau isod yn nodi anghydbwysedd yn y ffigurau hyn.",
+  "p.balance.rules":
+    "Codir baner pan fydd portffolio yn dal {concentration}% neu fwy o'r gost arfaethedig neu o'r risg agored (gydag o leiaf dau bortffolio), pan fydd ei gyfran o'r gost arfaethedig neu o'r risg {gap} pwynt canran neu fwy uwchlaw ei gyfran o'r gwerth targed, neu pan fydd ganddo gost arfaethedig a dim gwerth targed yn yr arian cyfred a ddewiswyd. Anogaeth i edrych yw baner, nid dyfarniad.",
+  "p.balance.flag_cost_concentration":
+    "Mae {name} yn dal {percent}% o'r gost arfaethedig.",
+  "p.balance.flag_risk_concentration":
+    "Mae {name} yn dal {percent}% o'r amlygiad risg agored.",
+  "p.balance.flag_cost_ahead_of_value":
+    "Mae cyfran {name} o'r gost arfaethedig ymhell uwchlaw ei gyfran o {percent}% o'r gwerth targed.",
+  "p.balance.flag_risk_ahead_of_value":
+    "Mae cyfran {name} o'r risg agored ymhell uwchlaw ei gyfran o {percent}% o'r gwerth targed.",
+  "p.balance.flag_no_value":
+    "Mae gan {name} gost arfaethedig ond dim gwerth targed wedi'i gofnodi mewn {currency}.",
+  "p.balance.table": "Yr un ffigurau ar ffurf tabl",
+  "p.balance.portfolio": "Portffolio",
+  "p.balance.cost": "Cost arfaethedig ({currency})",
+  "p.balance.value": "Gwerth targed ({currency})",
+  "p.balance.risk": "Amlygiad risg agored",
+  "p.balance.cost_share": "Cyfran o'r gost",
+  "p.balance.value_share": "Cyfran o'r gwerth",
+  "p.balance.risk_share": "Cyfran o'r risg",
+  "p.balance.flags": "Baneri",
+  "p.balance.no_flag": "dim",
+  "p.balance.notes":
+    "Wedi'i grwpio yn ôl portffolio, nid yn ôl categori na nod strategol: portffolio yw'r unig grwpio y mae cost, gwerth buddion a risg i gyd yn cael eu hadrodd arno. Cost yw'r swm arfaethedig ar linellau cyllideb, gwerth yw targed y buddion a gofnodwyd, a risg yw'r sgôr amlygiad agored; ni chaiff arian mewn gwahanol arian cyfred byth ei adio at ei gilydd.",
 };

@@ -206,6 +206,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/balance",
+      get label() {
+        return t("p.balance.balance");
+      },
+    },
+    {
       href: "/tolerances",
       get label() {
         return t("p.tolerances.tolerances");

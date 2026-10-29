@@ -117,6 +117,7 @@
 <svelte:head><title>{t("p.proposals.proposals_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.proposals.title")}</h1>
+<p class="small"><a href={localeHref("/roadmap")}>{t("p.roadmap.see_ideas")}</a></p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={submitNew}>

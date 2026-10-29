@@ -4661,4 +4661,42 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.balance.no_flag": "dim",
   "p.balance.notes":
     "Wedi'i grwpio yn ôl portffolio, nid yn ôl categori na nod strategol: portffolio yw'r unig grwpio y mae cost, gwerth buddion a risg i gyd yn cael eu hadrodd arno. Cost yw'r swm arfaethedig ar linellau cyllideb, gwerth yw targed y buddion a gofnodwyd, a risg yw'r sgôr amlygiad agored; ni chaiff arian mewn gwahanol arian cyfred byth ei adio at ei gilydd.",
+  "p.roadmap.title":
+    "Map ffordd — effaith, ymdrech a Nawr / Nesaf / Yn ddiweddarach",
+  "p.roadmap.h1":
+    "Map ffordd: effaith, ymdrech a Nawr / Nesaf / Yn ddiweddarach",
+  "p.roadmap.lede":
+    "Syniadau agored a chynigion sy'n dal i gael eu penderfynu, wedi'u gosod yn ôl faint maen nhw'n bwysig (effaith) a faint o waith sydd ei angen (ymdrech). Nid oes gan y gwasanaeth effaith nac ymdrech ar gyfer syniad na chynnig, felly rydych chi'n graddio pob un yma; cedwir eich graddau yn y porwr hwn yn unig ac nid ydynt yn cael eu rhannu na'u hanfon i'r gwasanaeth. Ni osodir eitem heb y ddwy radd.",
+  "p.roadmap.loading": "Wrthi'n llwytho'r syniadau a'r cynigion…",
+  "p.roadmap.matrix_h2": "Matrics effaith ac ymdrech",
+  "p.roadmap.matrix_caption":
+    "Effaith mewn rhesi, ymdrech mewn colofnau. Mae pob cell yn rhestru'r eitemau a raddiwyd felly.",
+  "p.roadmap.impact": "Effaith",
+  "p.roadmap.effort": "Ymdrech",
+  "p.roadmap.impact_level": "Effaith {level}",
+  "p.roadmap.effort_level": "Ymdrech {level}",
+  "p.roadmap.level_low": "Isel",
+  "p.roadmap.level_medium": "Canolig",
+  "p.roadmap.level_high": "Uchel",
+  "p.roadmap.rate_h2": "Graddio'r eitemau",
+  "p.roadmap.rate_hint":
+    "Y tabl hon yw'r ffordd bysellfwrdd i'r fatrics: dewiswch effaith ac ymdrech ar gyfer pob eitem a bydd yn symud yn y fatrics ac yn y rhestrau Nawr / Nesaf / Yn ddiweddarach.",
+  "p.roadmap.col_item": "Eitem",
+  "p.roadmap.col_type": "Math",
+  "p.roadmap.col_horizon": "Pryd",
+  "p.roadmap.kind_idea": "Syniad",
+  "p.roadmap.kind_proposal": "Cynnig",
+  "p.roadmap.not_rated": "Heb ei raddio",
+  "p.roadmap.rate_impact": "Effaith {title}",
+  "p.roadmap.rate_effort": "Ymdrech {title}",
+  "p.roadmap.no_items": "Nid oes syniadau agored na chynigion i'w graddio.",
+  "p.roadmap.horizons_h2": "Nawr / Nesaf / Yn ddiweddarach",
+  "p.roadmap.horizon_rule":
+    "Nawr: mae'r effaith yn uwch na'r ymdrech. Nesaf: mae'r effaith yn hafal i'r ymdrech ac o leiaf canolig. Yn ddiweddarach: popeth arall a raddiwyd. Heb eu graddio eto: dim effaith neu ddim ymdrech wedi'i ddewis.",
+  "p.roadmap.h_now": "Nawr",
+  "p.roadmap.h_next": "Nesaf",
+  "p.roadmap.h_later": "Yn ddiweddarach",
+  "p.roadmap.h_unrated": "Heb eu graddio eto",
+  "p.roadmap.nothing_here": "Dim byd yma.",
+  "p.roadmap.see_ideas": "Gweld syniadau a chynigion ar y map ffordd",
 };

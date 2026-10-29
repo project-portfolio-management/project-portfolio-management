@@ -4559,6 +4559,42 @@ export const PAGES_EN = {
   "p.balance.no_flag": "none",
   "p.balance.notes":
     "Grouped by portfolio, not by category or strategic aim: portfolio is the only grouping that cost, benefit value and risk are all reported by. Cost is the planned amount on budget lines, value is the target of the recorded benefits, and risk is the open exposure score; money in different currencies is never added together.",
+  "p.roadmap.title": "Roadmap — impact, effort and Now / Next / Later",
+  "p.roadmap.h1": "Roadmap: impact, effort and Now / Next / Later",
+  "p.roadmap.lede":
+    "Open ideas and proposals still being decided, placed by how much they matter (impact) and how much work they need (effort). The service holds no impact or effort for an idea or a proposal, so you rate each one here; your ratings are kept in this browser only and are not shared or sent to the service. An item without both ratings is not placed.",
+  "p.roadmap.loading": "Loading the ideas and proposals…",
+  "p.roadmap.matrix_h2": "Impact and effort matrix",
+  "p.roadmap.matrix_caption":
+    "Impact in rows, effort in columns. Each cell lists the items rated that way.",
+  "p.roadmap.impact": "Impact",
+  "p.roadmap.effort": "Effort",
+  "p.roadmap.impact_level": "{level} impact",
+  "p.roadmap.effort_level": "{level} effort",
+  "p.roadmap.level_low": "Low",
+  "p.roadmap.level_medium": "Medium",
+  "p.roadmap.level_high": "High",
+  "p.roadmap.rate_h2": "Rate the items",
+  "p.roadmap.rate_hint":
+    "This table is the keyboard way to the matrix: choose an impact and an effort for each item and it moves in the matrix and in the Now / Next / Later lists.",
+  "p.roadmap.col_item": "Item",
+  "p.roadmap.col_type": "Type",
+  "p.roadmap.col_horizon": "When",
+  "p.roadmap.kind_idea": "Idea",
+  "p.roadmap.kind_proposal": "Proposal",
+  "p.roadmap.not_rated": "Not rated",
+  "p.roadmap.rate_impact": "Impact of {title}",
+  "p.roadmap.rate_effort": "Effort of {title}",
+  "p.roadmap.no_items": "There are no open ideas or proposals to rate.",
+  "p.roadmap.horizons_h2": "Now / Next / Later",
+  "p.roadmap.horizon_rule":
+    "Now: impact is above effort. Next: impact equals effort and is at least medium. Later: everything else rated. Not yet rated: no impact or no effort chosen.",
+  "p.roadmap.h_now": "Now",
+  "p.roadmap.h_next": "Next",
+  "p.roadmap.h_later": "Later",
+  "p.roadmap.h_unrated": "Not yet rated",
+  "p.roadmap.nothing_here": "Nothing here.",
+  "p.roadmap.see_ideas": "See ideas and proposals on the roadmap",
 } as const;
 
 /** A key in the page and component catalogue. */

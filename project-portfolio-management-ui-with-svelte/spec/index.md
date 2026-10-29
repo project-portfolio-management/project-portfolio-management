@@ -148,6 +148,8 @@ match breakdown).
 /ideas                       idea board
 /objectives                  OKR objectives + alignment rollups
 /proposals                   work-intake proposal pipeline
+/roadmap                     ideas and proposals on an impact / effort
+                             matrix and in Now / Next / Later (NC-10)
 /reports                     saved reports + CSV download
 /scenarios                   scenario planning + side-by-side compare
 /board                       board pack + investments + snapshot trends
@@ -1300,6 +1302,32 @@ The bar's items are in `src/lib/nav-items.ts`, shared by the layout and the Disp
 switches in the UI (the service has them, `GET`/`PUT /api/plans/{pid}/modules`, and the plan page already follows them,
 but no screen sets them); hiding a plan's workspace links per person; hiding a section for everyone. Tests:
 `tests/unit/hidden-sections.test.ts`, `tests/e2e/hidden-sections.spec.ts`.
+
+## Roadmap: impact / effort matrix and Now / Next / Later (NC-10)
+
+`/roadmap` (`src/routes/roadmap`, logic in `src/lib/roadmap-view.ts`) places **open ideas** and **proposals still
+being decided** (not rejected, not promoted) on a 3 by 3 matrix and in Now / Next / Later lists.
+
+- **Where the figures come from.** The service holds **no impact or effort** for an idea or a proposal (the
+  RICE fields belong to plan scoring, not to these), and this change does not add any. A person rates each item
+  here as Low, Medium or High impact and effort. Ratings are kept in this browser only (`localStorage`
+  `ppm.roadmap.ratings`, keyed `idea:<pid>` / `proposal:<pid>`); they are **not** shared, not sent to the service,
+  and do not follow the person to another browser. If storage is blocked the page still works for the visit.
+  Nothing is guessed: an item with either rating missing is **Not yet rated** and is not placed.
+- **Horizons** (a pure rule, `horizonOf`): rank Low 1, Medium 2, High 3; impact less effort is 1 or more means
+  **Now**; 0 with at least Medium impact means **Next**; anything else rated means **Later**.
+- **Keyboard alternative.** The matrix is a real `<table>` (row headers for impact, column headers for effort,
+  every cell a list of items). The table "Rate the items" (`DataTable`) is the way to set and change ratings: each
+  row has an impact and an effort `<select>` named after the item, so everything the matrix shows can be reached
+  and changed with the keyboard alone. Status is never colour alone: horizons are words and lists.
+- Linked from `/ideas` and `/proposals`; not in the top bar. Load failures show a fixed catalogue sentence
+  (`resource()` and `errorText`), never the service's text. Strings are `p.roadmap.*`; Welsh is machine-written
+  and listed in `governance/welsh-translation-review.csv`.
+- **Tests.** `tests/unit/roadmap-view.test.ts` (rules, filtering, storage parsing); `tests/e2e/roadmap.spec.ts`
+  (keyboard rating moves an item in the matrix and the lists, reload remembers, fixed error sentence, Welsh,
+  axe in two locales); the route is also audited by `a11y.spec.ts`.
+- **Not built.** Shared or server-saved ratings (needs a service field); dragging items on the matrix; sorting
+  within a cell; a link in the top bar; non-English text beyond English and Welsh (other locales fall back to English).
 
 ## Cross-app bridges (links to contact-relationship-management and workforce-planning-management)
 

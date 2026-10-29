@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type Idea } from "#lib/api/ppm.js";
@@ -49,6 +49,7 @@
 <svelte:head><title>{t("p.ideas.ideas_ppm")}</title></svelte:head>
 
 <h1>{t("ppm.ideas.title")}</h1>
+<p class="small"><a href={localeHref("/roadmap")}>{t("p.roadmap.see_ideas")}</a></p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={capture}>

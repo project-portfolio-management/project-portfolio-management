@@ -1,5 +1,34 @@
 ## 2. Scope
 
+### 2.0 Worldwide target
+
+The target is **worldwide**, not the United States or the United Kingdom.
+Examples in this repository that name one country (UK GDPR, the NHS, PRINCE2,
+the MHRA, a pound sterling default) are examples, and none of them is the
+default or the model. Two rules follow, and a change that breaks either is a
+defect:
+
+- **No standard, protocol, convention or locale is a gate for one country or
+  region.** Where the service or the operator interface supports one (a data
+  protection law, a calendar, a currency, a public-holiday set, a date, number
+  or address format, a name format, a script and its direction, a project
+  method, a reporting standard, an identity or federation protocol), it must
+  offer **equitable capability** to countries, regions and federations
+  worldwide: the same features, the same quality of text, the same tests, and
+  no part of the product that only works, or works well only, for one of them.
+- **A capability that is built for one jurisdiction is named for it and is
+  not the only one.** A rule tied to a law (for example small-cell suppression,
+  retention, or erasure) states the value used and why, and is configurable
+  per deployment; a deployment in another region is never forced to the
+  default of a country it is not in.
+
+Where today's coverage is uneven (the ten supported locales in
+[locales.md](locales.md), the compliance mapping in
+[12-compliance.md](12-compliance.md), which names the UK and EU laws), that is a
+gap to close, not a design. Gaps are recorded in `tasks.md` and the
+[open questions](16-open-questions.md), and the Welsh and other non-English
+text stay marked machine-written until a speaker reviews them.
+
 ### 2.1 In scope — entity level
 
 This spec owns the **cross-subproject contract**:

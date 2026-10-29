@@ -1910,6 +1910,13 @@ can give a wrong answer ([plan.md §66](plan.md)).
 From [plan.md §67](plan.md). Ranked. Sources are cited there; most were read
 only as search snippets.
 
+- [ ] **WW-1 (M) — Audit for worldwide equity (spec §2.0).** Walk the code, spec and docs for anything that treats one
+  country or region as the default or the only supported case: currency and number defaults, calendars and public
+  holidays, date and name formats, address fields, the compliance mapping (`spec/12-compliance.md` names UK and EU law
+  only), the ten supported locales, the identity and federation options, and any rule tied to one law (small-cell
+  minimum of 5, retention, erasure). **Acceptance:** a written list of each finding with a decision (configurable,
+  extended, or recorded as a deliberate limit with its reason), and a test where a finding is a default that can be
+  made configurable. Not started.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

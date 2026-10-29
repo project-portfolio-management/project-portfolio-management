@@ -123,7 +123,28 @@ const HEAT: Record<string, { symbol: string; tone: Tone }> = {
 
 const plain = (text: string): Cell => ({ text });
 
-/** What changed: the service writes these as English sentences; this reads the three shapes it uses. */
+/** One count in "what changed", as the service sends it: figures, no sentence. */
+function changedItem(it: Record<string, unknown>, d: Deps): string | null {
+  const key =
+    it.key === "open_issues"
+      ? "changed_issues"
+      : it.key === "change_requests_awaiting_decision"
+        ? "changed_changes"
+        : null;
+  if (!key || typeof it.now !== "number") return null;
+  const change =
+    typeof it.before !== "number"
+      ? d.t(`${K}changed_first`)
+      : it.before === it.now
+        ? d.t(`${K}changed_unchanged`)
+        : d.t(`${K}changed_was`, { before: String(it.before) });
+  return d.t(`${K}${key}`, { now: String(it.now), change });
+}
+
+/**
+ * The same, for a pack issued before `what_changed_items` existed: an issued pack is never rewritten, so
+ * its three English sentences are read back here. Remove with the last such pack.
+ */
 function changedLine(line: string, d: Deps): string {
   const m =
     /^(.+?): (\d+)(?: \(no earlier pack to compare with\)|, unchanged|, was (\d+))$/.exec(
@@ -215,9 +236,15 @@ export function buildPackView(
       : [],
   );
 
-  const changed = (
-    Array.isArray(body.what_changed) ? body.what_changed : []
-  ).map((x) => changedLine(String(x), d));
+  const items = Array.isArray(body.what_changed_items)
+    ? body.what_changed_items.map((x) => changedItem(obj(x), d))
+    : [];
+  const changed =
+    items.length && items.every((x) => x !== null)
+      ? (items as string[])
+      : (Array.isArray(body.what_changed) ? body.what_changed : []).map((x) =>
+          changedLine(String(x), d),
+        );
   add("changed", changed.length ? changed : [d.t(`${K}nothing_here`)]);
 
   // The portfolio map.

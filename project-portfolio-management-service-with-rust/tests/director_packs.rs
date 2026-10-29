@@ -189,6 +189,7 @@ async fn a_pack_is_drafted_by_some_issued_by_fewer_read_by_audience_and_never_ch
         assert!(!first_text.contains("SECRET-ISSUE"));
         assert!(!first_text.contains("person:") && !first_text.to_lowercase().contains("cost_rate") && !first_text.contains(WRITER));
         assert!(first_text.contains("no earlier pack to compare with"));
+        assert_eq!(pack["body"]["what_changed_items"][0], json!({ "key": "open_issues", "now": 1, "before": null }));
 
         // Byte-identical after the data changes, and on every read.
         with!(request.post(&format!("/api/plans/{pubp}/issues")), writer)

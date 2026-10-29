@@ -190,6 +190,26 @@ describe("the director pack view", () => {
     expect(lines[1]).toBe("Something else: 3");
   });
 
+  it("builds what changed from the service's figures when it sends them, without reading a sentence", () => {
+    const secs = buildPackView(
+      {
+        ...BODY,
+        what_changed: ["Open issues: 99, was 98"],
+        what_changed_items: [
+          { key: "open_issues", now: 9, before: 4 },
+          { key: "change_requests_awaiting_decision", now: 5, before: 5 },
+          { key: "open_issues", now: 3, before: null },
+        ],
+      },
+      deps(PAGES_EN as unknown as Record<string, string>, "en-GB", new Set()),
+    );
+    expect(secs.find((s) => s.id === "changed")!.lines).toEqual([
+      "Open issues: 9, was 4",
+      "Change requests waiting for a decision: 5, unchanged",
+      "Open issues: 3, no earlier pack to compare with",
+    ]);
+  });
+
   it("copes with an empty body without throwing", () => {
     const secs = buildPackView(
       {},

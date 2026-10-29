@@ -121,6 +121,13 @@ pub fn changed(label: &str, before: Option<u64>, now: u64) -> String {
     }
 }
 
+/// The same comparison as data, for a reader that must not parse the sentence: `key` names the count,
+/// `now` is this pack's figure, `before` the previous issued pack's (null when there is none).
+#[must_use]
+pub fn changed_item(key: &str, before: Option<u64>, now: u64) -> serde_json::Value {
+    serde_json::json!({ "key": key, "now": now, "before": before })
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -246,5 +253,17 @@ mod tests {
             "Open issues: 4, unchanged"
         );
         assert_eq!(changed("Open issues", Some(6), 4), "Open issues: 4, was 6");
+    }
+
+    #[test]
+    fn what_changed_item_carries_the_figures_not_a_sentence() {
+        assert_eq!(
+            changed_item("open_issues", None, 4),
+            serde_json::json!({ "key": "open_issues", "now": 4, "before": null })
+        );
+        assert_eq!(
+            changed_item("open_issues", Some(6), 4),
+            serde_json::json!({ "key": "open_issues", "now": 4, "before": 6 })
+        );
     }
 }

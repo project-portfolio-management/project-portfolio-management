@@ -201,6 +201,14 @@ async fn compute_body(
             c.awaiting_decision as u64,
         ),
     ];
+    let what_changed_items = vec![
+        rules::changed_item("open_issues", before(&["issues", "open"]), i.open as u64),
+        rules::changed_item(
+            "change_requests_awaiting_decision",
+            before(&["change_requests", "awaiting_decision"]),
+            c.awaiting_decision as u64,
+        ),
+    ];
     let portfolio_map = super::confidence::build_map(ctx, &included_set, period, prev_body).await?;
     let exceptions =
         super::confidence::exceptions_section(ctx, &included_set, period, cut_off).await?;
@@ -234,6 +242,7 @@ async fn compute_body(
                 "pid": p.pid, "period": p.period, "version": p.version })),
         },
         "what_changed": what_changed,
+        "what_changed_items": what_changed_items,
         "basis": "Records dated on or before the cut-off, in the state they have when this pack is drafted: issues and change requests keep no status history, so a record closed after the cut-off but before drafting shows as closed.",
         "data_quality": {
             "plans_included": included,

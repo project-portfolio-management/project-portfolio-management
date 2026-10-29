@@ -1278,6 +1278,13 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "what_changed_items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [

@@ -1921,6 +1921,14 @@ only as search snippets.
   inputs (DP-, EX-).
   **Acceptance, per slice:** a route, catalogue text with Welsh marked
   machine-written, an e2e test, and an axe pass.
+  **Slice 1 built 2026-10-29 (issues raise and edit, raise from a risk; NC-1 stays open).** New route
+  `/plans/[pid]/issues` (list, one raise/edit form, a raise-from-risk form), linked from the plan page and from the
+  `/issues` register rows; typed `IssueBody` and four client methods; `src/lib/issue-view.ts` with unit tests;
+  `tests/e2e/plan-issues.spec.ts` (raise, edit, refused close, raise from a risk, 409, Welsh, axe). The read-only
+  `/issues` register already existed. **Not done:** deleting an issue; a button on each risk row of the governance
+  page; raise from a task (`source_task_pid`); `priority`; an owner picker; every later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh is machine-written and
+  unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
   schedule and pack reads as MCP tools that call the existing API with the
   caller's token, so ABAC, privacy and handling marks apply unchanged. It runs

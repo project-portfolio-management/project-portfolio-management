@@ -973,6 +973,35 @@ export interface IssueRegister {
   note: string;
 }
 
+/** `GET /api/plans/{pid}/issues`: one plan's issues, most serious first. */
+export interface PlanIssueList {
+  plan_pid: string;
+  issues: Issue[];
+  total: number;
+  open: number;
+  overdue: number;
+  as_of: string;
+}
+
+/**
+ * `POST /api/plans/{pid}/issues` and `PUT /api/plans/{pid}/issues/{issue_pid}` (same fields); checked against the
+ * service's schema by `client-bodies.test.ts` (CQ-9). A closed issue needs a resolution.
+ */
+export interface IssueBody {
+  title: string;
+  description?: string | null;
+  kind?: Issue["kind"];
+  severity?: Issue["severity"];
+  priority?: string | null;
+  status?: Issue["status"];
+  owner_ref?: string | null;
+  raised_on?: string | null;
+  due_date?: string | null;
+  resolution?: string | null;
+  source_risk_pid?: string | null;
+  source_task_pid?: string | null;
+}
+
 /** One change request (IR-4). */
 export interface ChangeRequest {
   pid: string;

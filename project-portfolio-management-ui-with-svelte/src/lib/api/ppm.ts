@@ -90,6 +90,9 @@ import type {
   Idea,
   Investment,
   IssueRegister,
+  Issue,
+  IssueBody,
+  PlanIssueList,
   JointRisk,
   KeyResult,
   Kpi,
@@ -601,6 +604,24 @@ export class PpmClient {
       if (v !== undefined && v !== "" && v !== false) q.set(k, String(v));
     const qs = q.toString();
     return this.http.get(`/api/issues${qs ? `?${qs}` : ""}`);
+  }
+  /** One plan's issues (IR-2), most serious first. */
+  planIssues(pid: string): Promise<PlanIssueList> {
+    return this.http.get(`/api/plans/${pid}/issues`);
+  }
+  /** Raise an issue on a plan (IR-2). */
+  raiseIssue(pid: string, body: IssueBody): Promise<Issue> {
+    return this.http.post(`/api/plans/${pid}/issues`, { body });
+  }
+  /** Replace an issue's fields (IR-2). */
+  updateIssue(pid: string, issuePid: string, body: IssueBody): Promise<Issue> {
+    return this.http.put(`/api/plans/${pid}/issues/${issuePid}`, { body });
+  }
+  /** Raise an issue from a risk that has happened (IR-3); 409 when one is already open for it. */
+  raiseIssueFromRisk(pid: string, riskPid: string): Promise<Issue> {
+    return this.http.post(`/api/plans/${pid}/issues/from-risk/${riskPid}`, {
+      body: {},
+    });
   }
   milestone(pid: string): Promise<MilestoneView> {
     return this.http.get(`/api/milestones/${pid}`);

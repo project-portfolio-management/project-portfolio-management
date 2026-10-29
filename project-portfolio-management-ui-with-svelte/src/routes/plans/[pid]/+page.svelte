@@ -59,6 +59,7 @@
     get wbs() { return t("p.plans.pid.wbs.work_breakdown"); },
     get tolerances() { return t("p.tolerances.plan_link"); },
     get escalations() { return t("p.escalations.plan_link"); },
+    get issues() { return t("p.issues.plan_issues_link"); },
     get "ways-of-working"() { return t("p.frameworks.wow"); },
     get "governance-framework"() { return t("p.frameworks.gov"); },
     get links() { return t("p.links.links"); },

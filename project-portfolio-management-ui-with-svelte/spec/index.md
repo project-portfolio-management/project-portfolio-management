@@ -1318,3 +1318,26 @@ other apps, shares a session with them, or fails when they are down.
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 
+
+## Plan issues: raise, edit, raise from a risk (NC-1 slice 1, IR-2, IR-3)
+
+`/plans/[pid]/issues` is the screen for the issue routes that existed only at the API. It is linked from the
+plan page (module `governance`) and from the title of each row in the all-plans register at `/issues`.
+
+- **List.** `GET /api/plans/{pid}/issues`: the plan's issues, most serious first, in a `DataTable` with the
+  kind, severity and status as words, the age in calendar days, and "Overdue" in words.
+- **Raise and edit.** One form (`POST /api/plans/{pid}/issues`; `PUT …/issues/{issue_pid}` for an edit, which
+  replaces every field, so the form always sends all of them). Title is required; a closed issue needs a
+  resolution; a due date is not before the day raised. The page checks these three before sending
+  (`src/lib/issue-view.ts`) and says which in the reader's language; the service remains the authority. An
+  empty "raised on" is left out so the service uses today. The body type `IssueBody` is checked against
+  `openapi.json` by `client-bodies.test.ts`.
+- **Raise from a risk.** `POST …/issues/from-risk/{risk_pid}` from a list of the plan's risks. The service
+  allows one open issue per risk; a second attempt is a 409, which the page shows as the catalogue's
+  sentence for a conflict, never the service's text.
+- **Not built in this slice:** deleting an issue; a "raise as issue" button on each risk row of the governance
+  page; `source_task_pid` (raise from a task); `priority`; picking the owner from a list of people (the
+  owner is a typed `person:` or `worker:` reference).
+- **Tests:** `tests/unit/issue-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/plan-issues.spec.ts` (raise, edit, the refused close, raise from a risk, the 409, Welsh, axe).
+  The Welsh is machine-written and listed in `governance/welsh-translation-review.csv`.

@@ -243,6 +243,24 @@ describe("PpmClient paths", () => {
   });
 });
 
+describe("PpmClient issue paths (NC-1, IR-2, IR-3)", () => {
+  it("lists, raises, replaces and raises from a risk", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.planIssues("p1");
+    await ppm.raiseIssue("p1", { title: "T" });
+    await ppm.updateIssue("p1", "i1", { title: "T2", status: "resolved" });
+    await ppm.raiseIssueFromRisk("p1", "r1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/issues",
+      "POST /api/plans/p1/issues",
+      "PUT /api/plans/p1/issues/i1",
+      "POST /api/plans/p1/issues/from-risk/r1",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP")).toBe("1,234.50 GBP");

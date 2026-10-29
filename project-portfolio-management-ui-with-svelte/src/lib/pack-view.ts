@@ -3,6 +3,8 @@
 // fixed word comes through `deps.t` / `deps.label`; free text (names, causes, decisions) is shown as
 // entered. A server sentence in the JSON (`note`, `basis`) is not shown: the catalogue carries it.
 
+import { exponentOf, money } from "./money.js";
+
 export type Tone = "red" | "amber" | "green" | "grey";
 
 /** One table cell: text, and for a reading a symbol and a tone, so colour is never alone. */
@@ -57,36 +59,7 @@ function deliveryText(dl: Record<string, unknown>, d: Deps): string {
   return parts.join("; ");
 }
 
-export function exponentOf(currency: string, locale: string): number {
-  try {
-    return (
-      new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-      }).resolvedOptions().maximumFractionDigits ?? 2
-    );
-  } catch {
-    return 2;
-  }
-}
-
-/** `minor` units of `currency` in the reader's own number format. Always names the currency. */
-export function money(
-  minor: number | null,
-  currency: string,
-  locale: string,
-): string {
-  if (minor === null) return "–";
-  const e = exponentOf(currency, locale);
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-    }).format(minor / 10 ** e);
-  } catch {
-    return `${currency} ${minor}`;
-  }
-}
+export { exponentOf, money };
 
 const fixed = (n: number | null, places: number, locale: string): string =>
   n === null

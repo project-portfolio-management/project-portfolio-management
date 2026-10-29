@@ -30,12 +30,16 @@ describe("units of measure", () => {
       expect(minutesFromHours(bad as never)).toBeNull();
   });
   it("reads money strictly and never turns bad text into zero", () => {
-    expect(minorFromMajor("12.34")).toBe(1234);
-    expect(minorFromMajor("0")).toBeNull();
-    expect(minorFromMajor("0", true)).toBe(0);
-    expect(minorFromMajor("-1")).toBeNull();
-    expect(minorFromMajor("")).toBeNull();
-    expect(minorFromMajor("abc")).toBeNull();
+    expect(minorFromMajor("12.34", "GBP", false, "en-GB")).toBe(1234);
+    expect(minorFromMajor("0", "GBP", false, "en-GB")).toBeNull();
+    expect(minorFromMajor("0", "GBP", true, "en-GB")).toBe(0);
+    expect(minorFromMajor("-1", "GBP", false, "en-GB")).toBeNull();
+    expect(minorFromMajor("", "GBP", false, "en-GB")).toBeNull();
+    expect(minorFromMajor("abc", "GBP", false, "en-GB")).toBeNull();
+    // the minor unit is the currency's own, and the amount is read in the reader's format
+    expect(minorFromMajor("1500", "JPY", false, "en-GB")).toBe(1500);
+    expect(minorFromMajor("1,234", "KWD", false, "en-GB")).toBe(1_234_000);
+    expect(minorFromMajor("1 234,50", "EUR", false, "de-DE")).toBe(123_450);
   });
 });
 

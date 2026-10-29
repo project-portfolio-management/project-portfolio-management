@@ -380,7 +380,7 @@ pub fn parse_bac_thresholds(raw: Option<&str>) -> (BTreeMap<String, i64>, bool) 
     };
     let ok = map
         .iter()
-        .all(|(k, v)| k.len() == 3 && k.chars().all(|c| c.is_ascii_uppercase()) && *v >= 0);
+        .all(|(k, v)| crate::currency::is_code(k) && *v >= 0);
     if ok {
         (map, false)
     } else {

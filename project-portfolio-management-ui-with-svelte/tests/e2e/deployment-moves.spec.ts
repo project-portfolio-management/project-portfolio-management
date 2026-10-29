@@ -97,7 +97,7 @@ test.describe("deployment moves", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("row", {
-        name: /Build the interface.*2026-11-02 → 2026-11-16.*waiting for the approver.*1 other tasks move; labour cost \+1200\.00 GBP/,
+        name: /Build the interface.*2026-11-02 → 2026-11-16.*waiting for the approver.*1 other tasks move; labour cost \+£1,200\.00/,
       }),
     ).toBeVisible();
     await expect(

@@ -273,10 +273,16 @@ test("cost rates: a table with no rate says its work is not costed; a 404 is a p
     }),
   );
   await page.goto("/en-001/cost-rates");
-  await expect(page.getByText("50.00 GBP")).toBeVisible();
+  await expect(page.getByText("£50.00")).toBeVisible();
   await expect(
     page.getByText("No rate yet: work by this role is not costed."),
   ).toBeVisible();
+  // WW-1.3: no currency is built in, so the new-table form starts with none
+  await expect(page.getByLabel("Currency")).toHaveValue("");
+  await expect(page.getByLabel("Currency")).toHaveAttribute(
+    "placeholder",
+    "for example EUR, JPY or GBP",
+  );
   await audit(page);
   await page.unroute("**/api/cost-rate-tables");
   await page.route("**/api/cost-rate-tables", (r) =>

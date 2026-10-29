@@ -221,7 +221,7 @@
       {/if}
       <label>{t("c.ObjectiveCard.unit")} <input type="text" bind:value={unit} /></label>
       {#if metric === "currency"}
-        <label>{t("c.ObjectiveCard.currency_e_g_gbp")} <input type="text" required maxlength="3" bind:value={currency} /></label>
+        <label>{t("c.ObjectiveCard.currency_e_g_gbp")} <input type="text" required maxlength="3" bind:value={currency} placeholder={t("p.money.currency_hint")} /></label>
       {/if}
       <button class="button small" type="submit">{t("c.ObjectiveCard.add_key_result")}</button>
     </form>

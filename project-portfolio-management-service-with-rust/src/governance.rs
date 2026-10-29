@@ -181,10 +181,10 @@ pub fn risk_exposure(probability: i32, impact: i32) -> Result<i32, String> {
 }
 
 /// Whether an ISO-4217-shaped currency code (three ASCII uppercase
-/// letters) — format-checked, not a registry lookup.
+/// letters) — format-checked, not a registry lookup. The one rule lives in `currency::is_code`.
 #[must_use]
 pub fn valid_currency(code: &str) -> bool {
-    code.len() == 3 && code.bytes().all(|b| b.is_ascii_uppercase())
+    crate::currency::is_code(code)
 }
 
 /// Accumulate a recorded actual onto a budget line, refusing `i64`

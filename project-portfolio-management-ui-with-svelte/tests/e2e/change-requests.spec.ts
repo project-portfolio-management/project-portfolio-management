@@ -76,7 +76,7 @@ test.describe("change requests page (IR-4)", () => {
     await expect(rows.nth(0)).toContainText("Move go-live");
     await expect(rows.nth(0)).toContainText("under review");
     await expect(rows.nth(0)).toContainText("10 business days");
-    await expect(rows.nth(0)).toContainText("1500.00 GBP");
+    await expect(rows.nth(0)).toContainText("£1,500.00");
     await expect(rows.nth(1)).toContainText("No impact stated");
     await expect(rows.nth(1)).toContainText("Not yet named");
   });

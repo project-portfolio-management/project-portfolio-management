@@ -13,6 +13,7 @@
   import RiskInputs from "#lib/components/RiskInputs.svelte";
   import LineRange from "#lib/components/LineRange.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { currencyCode, minorToInput, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -51,7 +52,8 @@
   let riskImpact = $state(3);
   let lineDescription = $state("");
   let lineCategory = $state("capex");
-  let lineCurrency = $state("GBP");
+  let lineCurrency = $state("");
+  let benefitCurrency = $state("");
   let linePlanned = $state("");
   let benefitTitle = $state("");
   let benefitCategory = $state("cost_saving");
@@ -113,8 +115,6 @@
     }
   }
 
-  const toMinor = (major: string) => Math.round(Number(major) * 100);
-
   type BudgetLine = BudgetBoard["lines"][number];
   type BenefitRow = BenefitBoard["benefits"][number];
   const riskColumns: DataGridColumn[] = $derived([
@@ -132,7 +132,7 @@
   ]);
   const benefitColumns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.plans.pid.governance.benefit"), rowHeader: true, cell: benefitCell },
-    { id: "target", header: t("p.plans.pid.governance.target"), align: "end", accessor: (r) => { const b = rowOf<BenefitRow>(r); return b.target_minor !== null ? money(b.target_minor, b.currency) : (b.target_note ?? "—"); } },
+    { id: "target", header: t("p.plans.pid.governance.target"), align: "end", accessor: (r) => { const b = rowOf<BenefitRow>(r); return b.target_minor !== null ? money(b.target_minor, b.currency ?? "") : (b.target_note ?? "—"); } },
     { id: "realized_minor", header: t("p.plans.pid.governance.realized"), align: "end", format: (v, r) => money(Number(v), String(r.currency)) },
     { id: "status", header: t("p.plans.pid.governance.status"), cell: chip },
     { id: "realize", header: "", sortable: false, accessor: () => "", cell: realizeCell },
@@ -174,14 +174,14 @@
     onsubmit={(e) => {
       e.preventDefault();
       const input = (e.currentTarget as HTMLFormElement).elements.namedItem("amount") as HTMLInputElement;
-      const minor = toMinor(input.value);
-      if (Number.isFinite(minor)) {
+      const minor = toMinor(input.value, line.currency);
+      if (minor !== null) {
         act(() => ppm.recordActual(pid, line.pid, minor));
         input.value = "";
       }
     }}
   >
-    <input name="amount" size="8" placeholder="0.00" />
+    <input name="amount" size="8" inputmode="decimal" placeholder={minorToInput(0, line.currency)} />
     <button class="button small" type="submit">+</button>
   </form>
 {/snippet}
@@ -195,14 +195,14 @@
     onsubmit={(e) => {
       e.preventDefault();
       const input = (e.currentTarget as HTMLFormElement).elements.namedItem("realize") as HTMLInputElement;
-      const minor = toMinor(input.value);
-      if (Number.isFinite(minor)) {
+      const minor = toMinor(input.value, benefit.currency ?? "");
+      if (minor !== null) {
         act(() => ppm.realizeBenefit(pid, benefit.pid, { amount_minor: minor, status: "on_track" }));
         input.value = "";
       }
     }}
   >
-    <input name="realize" size="8" placeholder="0.00" />
+    <input name="realize" size="8" inputmode="decimal" placeholder={minorToInput(0, benefit.currency ?? "")} />
     <button class="button small" type="submit">{t("ppm.gov.realize")}</button>
   </form>
 {/snippet}
@@ -227,7 +227,7 @@
     {/if}
     {#each summary.budget as total (total.currency)}
       <span class="chip" class:red={total.variance_minor < 0}>
-        {total.currency}: {money(total.actual_minor)} / {money(total.planned_minor)}
+        {total.currency}: {money(total.actual_minor, total.currency)} / {money(total.planned_minor, total.currency)}
       </span>
     {/each}
     <a class="button small" href={localeHref(`/plans/${pid}/schedule`)}>{t("ppm.common.schedule")}</a>
@@ -301,7 +301,7 @@
     <DataTable label={t("p.plans.pid.governance.line")} columns={lineColumns} rows={budget.lines} rowId={(r) => String(r.pid)} />
     {#each budget.totals as total (total.currency)}
       <p class="small">
-        <strong>{total.currency}</strong>{t("p.plans.pid.governance.planned_actual_variance", { money: money(total.planned_minor), money2: money(total.actual_minor), money3: money(total.variance_minor) })}
+        <strong>{total.currency}</strong>{t("p.plans.pid.governance.planned_actual_variance", { money: money(total.planned_minor, total.currency), money2: money(total.actual_minor, total.currency), money3: money(total.variance_minor, total.currency) })}
       </p>
     {/each}
   {/if}
@@ -309,13 +309,17 @@
     class="row"
     onsubmit={(e) => {
       e.preventDefault();
-      const minor = toMinor(linePlanned);
-      if (!Number.isFinite(minor)) return;
+      const code = currencyCode(lineCurrency);
+      const minor = code === null ? null : toMinor(linePlanned, code);
+      if (code === null || minor === null) {
+        error = t("p.money.amount_or_currency");
+        return;
+      }
       act(() =>
         ppm.createBudgetLine(pid, {
           category: lineCategory,
           description: lineDescription,
-          currency: lineCurrency,
+          currency: code,
           planned_minor: minor,
         }),
       ).then(() => {
@@ -326,8 +330,8 @@
   >
     <input placeholder={t("p.plans.pid.governance.new_budget_line")} bind:value={lineDescription} required />
     <select bind:value={lineCategory} aria-label={t("p.plans.pid.governance.category")}><option>{t("p.plans.pid.governance.capex")}</option><option>{t("p.plans.pid.governance.opex")}</option></select>
-    <input bind:value={lineCurrency} size="4" aria-label={t("p.plans.pid.governance.currency")} />
-    <input placeholder={t("p.plans.pid.governance.planned_major")} bind:value={linePlanned} size="10" required />
+    <input bind:value={lineCurrency} required maxlength="3" size="4" aria-label={t("p.plans.pid.governance.currency")} placeholder={t("p.money.currency_hint")} />
+    <input placeholder={t("p.plans.pid.governance.planned_major")} bind:value={linePlanned} inputmode="decimal" size="10" required />
     <button class="button small" type="submit">{t("ppm.gov.addLine")}</button>
   </form>
 </details>
@@ -338,7 +342,7 @@
     <DataTable label={t("p.plans.pid.governance.benefit")} columns={benefitColumns} rows={benefits.benefits} rowId={(r) => String(r.pid)} />
     {#each benefits.totals as total (total.currency)}
       <p class="small">
-        <strong>{total.currency}</strong>{t("p.plans.pid.governance.target_realized_spend", { money: money(total.target_minor), money2: money(total.realized_minor), money3: money(total.spend_minor) })}
+        <strong>{total.currency}</strong>{t("p.plans.pid.governance.target_realized_spend", { money: money(total.target_minor, total.currency), money2: money(total.realized_minor, total.currency), money3: money(total.spend_minor, total.currency) })}
         {#if total.roi_basis_points !== null}
           {t("p.plans.pid.governance.roi", { toFixed: (total.roi_basis_points / 100).toFixed(1) })}
         {/if}
@@ -349,13 +353,22 @@
     class="row"
     onsubmit={(e) => {
       e.preventDefault();
-      const minor = benefitTarget.trim() ? toMinor(benefitTarget) : undefined;
+      const code = currencyCode(benefitCurrency);
+      let minor: number | undefined;
+      if (benefitTarget.trim()) {
+        const m = code === null ? null : toMinor(benefitTarget, code);
+        if (code === null || m === null) {
+          error = t("p.money.amount_or_currency");
+          return;
+        }
+        minor = m;
+      }
       act(() =>
         ppm.createBenefit(pid, {
           title: benefitTitle,
           category: benefitCategory,
-          ...(minor !== undefined && Number.isFinite(minor)
-            ? { currency: lineCurrency, target_minor: minor }
+          ...(minor !== undefined && code !== null
+            ? { currency: code, target_minor: minor }
             : { target_note: "qualitative" }),
         }),
       ).then(() => {
@@ -369,7 +382,8 @@
       <option>{t("p.plans.pid.governance.cost_saving")}</option><option>{t("p.plans.pid.governance.revenue")}</option><option>{t("p.plans.pid.governance.risk_reduction")}</option>
       <option>{t("p.plans.pid.governance.quality")}</option><option>{t("p.plans.pid.governance.compliance")}</option><option>{t("p.plans.pid.governance.other")}</option>
     </select>
-    <input placeholder={t("p.plans.pid.governance.target_major")} bind:value={benefitTarget} size="10" />
+    <input placeholder={t("p.plans.pid.governance.target_major")} bind:value={benefitTarget} inputmode="decimal" size="10" />
+    <input bind:value={benefitCurrency} maxlength="3" size="4" aria-label={t("p.plans.pid.governance.currency")} placeholder={t("p.money.currency_hint")} />
     <button class="button small" type="submit">{t("ppm.gov.declare")}</button>
   </form>
 </details>

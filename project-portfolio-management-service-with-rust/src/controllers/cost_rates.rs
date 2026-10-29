@@ -341,8 +341,8 @@ async fn create_table(
         _ => problems.push("name exactly one of person_ref and role".to_string()),
     }
     let currency = b.currency.trim().to_ascii_uppercase();
-    if currency.len() != 3 || !currency.chars().all(|c| c.is_ascii_uppercase()) {
-        problems.push("currency must be a 3-letter code such as GBP".to_string());
+    if !crate::currency::is_code(&currency) {
+        problems.push("currency must be a 3-letter code, for example EUR, JPY or GBP".to_string());
     }
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
@@ -573,8 +573,8 @@ async fn add_task_cost(
     if b.amount_minor <= 0 {
         problems.push("amount_minor must be above zero".to_string());
     }
-    if currency.len() != 3 || !currency.chars().all(|c| c.is_ascii_uppercase()) {
-        problems.push("currency must be a 3-letter code such as GBP".to_string());
+    if !crate::currency::is_code(&currency) {
+        problems.push("currency must be a 3-letter code, for example EUR, JPY or GBP".to_string());
     }
     if Accrual::parse(&b.accrual).is_none() {
         problems.push("accrual must be start, prorated or end".to_string());

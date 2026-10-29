@@ -229,7 +229,7 @@ export const PAGES_EN = {
   "c.ObjectiveCard.check_in": "Check in",
   "c.ObjectiveCard.confidence_0_100": "Confidence (0–100)",
   "c.ObjectiveCard.currency": "Currency",
-  "c.ObjectiveCard.currency_e_g_gbp": "Currency (e.g. GBP)",
+  "c.ObjectiveCard.currency_e_g_gbp": "Currency (for example EUR, JPY or GBP)",
   "c.ObjectiveCard.decrease": "Decrease",
   "c.CommandPalette.cmd_dashboard": "Dashboard",
   "c.CommandPalette.cmd_escalations": "Escalations",
@@ -329,7 +329,7 @@ export const PAGES_EN = {
   "c.RiskInputs.by_business_days": "by (business days)",
   "c.RiskInputs.currency": "Currency",
   "c.RiskInputs.delays_task": "Delays task",
-  "c.RiskInputs.gbp": "GBP",
+  "c.RiskInputs.gbp": "EUR",
   "c.RiskInputs.none": "None",
   "c.RiskInputs.one_probability_covers_both_effects":
     "One probability covers both effects: a risk that delays a task and adds cost strikes once and does both. Leave a part empty to leave it out.",
@@ -731,7 +731,7 @@ export const PAGES_EN = {
   "p.kpis.not_set": "Not set",
   "p.kpis.off_target": "Off target",
   "p.kpis.on_target": "On target",
-  "p.kpis.percent_defects_gbp": "percent, defects, GBP…",
+  "p.kpis.percent_defects_gbp": "percent, defects, EUR…",
   "p.kpis.plan_optional_pid": "Plan (optional pid)",
   "p.kpis.quarterly": "Quarterly",
   "p.kpis.read_how_often": "Read how often",
@@ -1272,7 +1272,6 @@ export const PAGES_EN = {
   "p.plans.pid.joint_risk.finish": "Finish",
   "p.plans.pid.joint_risk.finish_date_at_each_percentile":
     "Finish date at each percentile",
-  "p.plans.pid.joint_risk.gbp": "GBP",
   "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall":
     "How the simulated outcomes fall around the budget and the critical-path finish",
   "p.plans.pid.joint_risk.independence": "Independence.",
@@ -2724,7 +2723,7 @@ export const PAGES_EN = {
   "l.simulation_inputs.the_cost_must_be_an":
     "The cost must be an amount above zero.",
   "l.simulation_inputs.the_currency_must_be_a":
-    "The currency must be a 3-letter code such as GBP.",
+    "The currency must be a 3-letter code, for example EUR, JPY or GBP.",
   "l.simulation_inputs.a_risk_that_changes_the":
     "A risk that changes the schedule or the cost needs a probability.",
   "l.simulation_inputs.amounts_must_be_numbers_zero":
@@ -2870,7 +2869,10 @@ export const PAGES_EN = {
   "p.plans.pid.costs.the_amount_must_be_above":
     "The amount must be above zero.",
   "p.plans.pid.costs.the_currency_must_be_a":
-    "The currency must be a 3-letter code such as GBP.",
+    "The currency must be a 3-letter code, for example EUR, JPY or GBP.",
+  "p.money.currency_hint": "for example EUR, JPY or GBP",
+  "p.money.amount_or_currency":
+    "Give the amount as a number and the currency as a 3-letter code, for example EUR, JPY or GBP.",
   "p.plans.pid.costs.expense_added": "Expense added.",
   "p.plans.pid.costs.could_not_add_the_expense": "Could not add the expense",
   "p.plans.pid.costs.could_not_record": "Could not record",

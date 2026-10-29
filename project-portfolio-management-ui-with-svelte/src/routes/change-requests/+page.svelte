@@ -11,7 +11,7 @@
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
-  import { PpmClient, type ChangeRequestList } from "#lib/api/ppm.js";
+  import { PpmClient, money, type ChangeRequestList } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
   let status = $state("");
@@ -31,7 +31,7 @@
   const impactText = (cr: CR): string => {
     if (cr.impact.schedule_business_days === null && cr.impact.cost_minor === null) return t("p.change_requests.no_impact");
     const days = cr.impact.schedule_business_days !== null ? t("p.change_requests.impact_days", { days: cr.impact.schedule_business_days }) : "";
-    const cost = cr.impact.cost_minor !== null ? `${cr.impact.schedule_business_days !== null ? " · " : ""}${(cr.impact.cost_minor / 100).toFixed(2)} ${cr.impact.cost_currency}` : "";
+    const cost = cr.impact.cost_minor !== null ? `${cr.impact.schedule_business_days !== null ? " · " : ""}${money(cr.impact.cost_minor, cr.impact.cost_currency ?? "")}` : "";
     return `${days}${cost}`;
   };
   const columns: DataGridColumn[] = $derived([

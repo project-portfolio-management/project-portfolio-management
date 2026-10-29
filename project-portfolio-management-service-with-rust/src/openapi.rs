@@ -798,7 +798,7 @@ fn tpc_paths() -> Value {
                 "summary": "Portfolio triage ranked by DIPP descending, within one currency",
                 "description": "Plans recorded in another currency and plans whose DIPP is undefined are excluded and reported, rather than sorted last as though measured and bad. This service never converts currency.",
                 "parameters": [
-                    { "name": "currency", "in": "query", "schema": { "type": "string", "default": "GBP" } }
+                    { "name": "currency", "in": "query", "required": true, "description": "A three-letter ISO 4217 code, for example EUR, JPY or GBP. No currency is built in: omitting it is a 422.", "schema": { "type": "string" } }
                 ],
                 "responses": { "200": { "description": "Ranked triage" } }
             }

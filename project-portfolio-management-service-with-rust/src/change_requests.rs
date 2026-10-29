@@ -128,8 +128,10 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
     match (d.impact_cost_minor, d.cost_currency) {
         (Some(_), None) => out.push("a cost impact needs its currency".to_string()),
         (None, Some(_)) => out.push("a currency needs a cost impact".to_string()),
-        (Some(_), Some(c)) if !(c.len() == 3 && c.bytes().all(|b| b.is_ascii_uppercase())) => {
-            out.push("the currency must be a 3-letter code such as GBP".to_string());
+        (Some(_), Some(c)) if !crate::currency::is_code(c) => {
+            out.push(
+                "the currency must be a 3-letter code, for example EUR, JPY or GBP".to_string(),
+            );
         }
         _ => {}
     }

@@ -12,6 +12,7 @@
   import { onMount } from "svelte";
   import { ApiError } from "#lib/api/client.js";
   import { PpmClient, money, type CostRateTable } from "#lib/api/ppm.js";
+  import { currencyCode } from "#lib/money.js";
   import { minorFromMajor } from "#lib/work-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -35,11 +36,13 @@
   let name = $state("standard");
   let scope = $state<"person" | "role">("role");
   let who = $state("");
-  let currency = $state("GBP");
+  let currency = $state("");
   async function addTable(e: SubmitEvent) {
     e.preventDefault();
+    const code = currencyCode(currency);
+    if (code === null) return void (status = t("p.plans.pid.costs.the_currency_must_be_a"));
     try {
-      await ppm.createCostRateTable({ name, currency, ...(scope === "person" ? { person_ref: who } : { role: who }) });
+      await ppm.createCostRateTable({ name, currency: code, ...(scope === "person" ? { person_ref: who } : { role: who }) });
       who = "";
       status = t("p.cost_rates.rate_table_added");
       await load();
@@ -51,7 +54,7 @@
   let rate = $state<Record<string, string>>({});
   async function addRate(table: CostRateTable, e: SubmitEvent) {
     e.preventDefault();
-    const minor = minorFromMajor(rate[table.pid], true);
+    const minor = minorFromMajor(rate[table.pid], table.currency, true);
     const date = from[table.pid];
     if (minor === null || !date) return void (status = t("p.cost_rates.give_a_date_and_an"));
     try {
@@ -89,7 +92,7 @@
         {/if}
         <form class="row" onsubmit={(e) => addRate(row, e)}>
           <label>{t("p.cost_rates.effective_from")} <input type="date" value={from[row.pid] ?? ""} oninput={(e) => (from[row.pid] = e.currentTarget.value)} /></label>
-          <label>{t("p.cost_rates.per_hour")} <input type="number" min="0" step="0.01" value={rate[row.pid] ?? ""} oninput={(e) => (rate[row.pid] = e.currentTarget.value)} /></label>
+          <label>{t("p.cost_rates.per_hour")} <input type="text" inputmode="decimal" value={rate[row.pid] ?? ""} oninput={(e) => (rate[row.pid] = e.currentTarget.value)} /></label>
           <button class="button" type="submit">{t("p.cost_rates.add_rate")}</button>
         </form>
       </li>
@@ -103,7 +106,7 @@
       <select bind:value={scope}><option value="role">{t("p.cost_rates.a_role")}</option><option value="person">{t("p.cost_rates.a_person")}</option></select>
     </label>
     <label>{scope === "role" ? t("p.cost_rates.role") : t("p.cost_rates.person_person_reference")} <input bind:value={who} required /></label>
-    <label>{t("p.cost_rates.currency")} <input bind:value={currency} maxlength="3" size="4" /></label>
+    <label>{t("p.cost_rates.currency")} <input bind:value={currency} required maxlength="3" size="4" placeholder={t("p.money.currency_hint")} /></label>
     <button class="button primary" type="submit">{t("p.cost_rates.add_table")}</button>
   </form>
   {#if status}<p role="status" class="small">{status}</p>{/if}

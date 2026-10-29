@@ -220,12 +220,12 @@ describe("values bound to number inputs", () => {
       schedule: null,
       cost: null,
     });
-    expect(lineEstimateProblems(80, 160, 10_000)).toEqual([]);
-    expect(lineEstimateProblems(undefined, 90, 10_000)).toEqual([
-      "The high amount cannot be below the planned amount.",
-    ]);
-    expect(rangeMinor(80.5)).toBe(8050);
-    expect(rangeMinor(undefined)).toBeNull();
+    expect(lineEstimateProblems(80, 160, 10_000, "GBP", "en-GB")).toEqual([]);
+    expect(lineEstimateProblems(undefined, 90, 10_000, "GBP", "en-GB")).toEqual(
+      ["The high amount cannot be below the planned amount."],
+    );
+    expect(rangeMinor(80.5, "GBP", "en-GB")).toBe(8050);
+    expect(rangeMinor(undefined, "GBP", "en-GB")).toBeNull();
     expect(taskEstimateProblems(3, 9, 5)).toEqual([]);
     expect(taskEstimateProblems(6, undefined, 5)[0]).toContain(
       "above the likely duration",
@@ -235,21 +235,32 @@ describe("values bound to number inputs", () => {
 
 describe("estimate ranges", () => {
   it("keeps a line's range around its planned amount", () => {
-    expect(lineEstimateProblems("80", "160", 10_000)).toEqual([]);
-    expect(lineEstimateProblems("120", "", 10_000)).toEqual([
+    expect(lineEstimateProblems("80", "160", 10_000, "GBP", "en-GB")).toEqual(
+      [],
+    );
+    expect(lineEstimateProblems("120", "", 10_000, "GBP", "en-GB")).toEqual([
       "The low amount cannot be above the planned amount.",
     ]);
-    expect(lineEstimateProblems("", "90", 10_000)).toEqual([
+    expect(lineEstimateProblems("", "90", 10_000, "GBP", "en-GB")).toEqual([
       "The high amount cannot be below the planned amount.",
     ]);
-    expect(lineEstimateProblems("abc", "", 10_000)).toEqual([
+    expect(lineEstimateProblems("abc", "", 10_000, "GBP", "en-GB")).toEqual([
       "Amounts must be numbers, zero or more.",
     ]);
-    expect(lineEstimateProblems("-1", "", 10_000)[0]).toContain("numbers");
-    expect(lineEstimateProblems("", "", 10_000)).toEqual([]);
-    expect(rangeMinor("")).toBeNull();
-    expect(rangeMinor("80.5")).toBe(8050);
-    expect(toMinorStrict("0")).toBeNull();
+    expect(lineEstimateProblems("-1", "", 10_000, "GBP", "en-GB")[0]).toContain(
+      "numbers",
+    );
+    expect(lineEstimateProblems("", "", 10_000, "GBP", "en-GB")).toEqual([]);
+    expect(rangeMinor("", "GBP", "en-GB")).toBeNull();
+    expect(rangeMinor("80.5", "GBP", "en-GB")).toBe(8050);
+    expect(toMinorStrict("0", "GBP", "en-GB")).toBeNull();
+    // JPY has no minor unit, KWD has three, and a decimal-comma locale reads "1,5"
+    expect(rangeMinor("1500", "JPY", "en-GB")).toBe(1500);
+    expect(rangeMinor("1.234", "KWD", "en-GB")).toBe(1234);
+    expect(rangeMinor("1 234,5", "EUR", "fr-FR")).toBe(123_450);
+    expect(rangeMinor("1,5", "EUR", "de-DE")).toBe(150);
+    expect(toMinorStrict("1,5", "KWD", "de-DE")).toBe(1500);
+    expect(lineEstimateProblems("0,5", "", 10_000, "EUR", "de-DE")).toEqual([]);
   });
 
   it("keeps a task's range around its likely duration", () => {

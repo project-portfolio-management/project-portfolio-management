@@ -152,7 +152,7 @@ test("stage, preview, then commit sends exactly the staged edits with the previe
   await expect(pv).toContainText(
     "The finish moves from 2026-10-07 to 2026-10-12.",
   );
-  await expect(pv).toContainText("+1,200.00 GBP");
+  await expect(pv).toContainText("+£1,200.00");
   await expect(pv).toContainText("100% of the day for 48 h of work");
   await expect
     .poll(() => primaryButtons(page), {

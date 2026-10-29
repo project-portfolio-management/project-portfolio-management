@@ -224,6 +224,44 @@ async fn a_plan_with_no_tpc_observation_is_unmeasured() {
     .await;
 }
 
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+// No currency is built in (spec 02-scope 2.0, WW-1.3): the portfolio triage names the currency it ranks
+// in, or it is refused, and a plan recorded in another currency is reported, not ranked.
+async fn tpc_triage_needs_a_currency_and_has_no_default() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = create_plan!(request, "Yen plan");
+        let recorded = request
+            .post(&format!("/api/plans/{plan}/tpc"))
+            .json(&json!({
+                "currency": "jpy",
+                "expected_monetary_value": 2_000_000,
+                "cost_estimate_to_complete": 1_000_000
+            }))
+            .await;
+        assert_eq!(recorded.status_code(), 200);
+
+        for path in ["/api/tpc", "/api/tpc?currency=", "/api/tpc?currency=Y3N"] {
+            let refused = request.get(path).await;
+            assert_eq!(refused.status_code(), 422, "{path}");
+        }
+
+        let yen: Value = request.get("/api/tpc?currency=jpy").await.json();
+        assert_eq!(yen["currency"], "JPY");
+        assert_eq!(yen["ranked"].as_array().map(Vec::len), Some(1));
+
+        let euro: Value = request.get("/api/tpc?currency=EUR").await.json();
+        assert_eq!(euro["ranked"].as_array().map(Vec::len), Some(0));
+        assert_eq!(
+            euro["excluded_other_currency"].as_array().map(Vec::len),
+            Some(1)
+        );
+    })
+    .await;
+}
+
 // ------------------------------------------------------------- controls
 
 #[tokio::test]

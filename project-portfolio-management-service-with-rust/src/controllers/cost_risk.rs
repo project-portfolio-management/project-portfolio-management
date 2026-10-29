@@ -147,8 +147,11 @@ async fn set_cost_impact(
             if i <= 0 {
                 problems.push("cost_impact_minor must be positive".to_string());
             }
-            if c.len() != 3 || !c.chars().all(|ch| ch.is_ascii_uppercase()) {
-                problems.push("cost_currency must be a 3-letter code such as GBP".to_string());
+            if !crate::currency::is_code(c) {
+                problems.push(
+                    "cost_currency must be a 3-letter code, for example EUR, JPY or GBP"
+                        .to_string(),
+                );
             }
         }
         _ => problems.push("cost_impact_minor and cost_currency go together".to_string()),

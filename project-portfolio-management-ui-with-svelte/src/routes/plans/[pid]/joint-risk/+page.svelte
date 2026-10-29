@@ -12,6 +12,8 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { currencyCode } from "#lib/money.js";
+  import { minorFromMajor } from "#lib/work-view.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, money, type JointRisk } from "#lib/api/ppm.js";
@@ -35,7 +37,15 @@
   let distribution = $state<"triangular" | "pert">("triangular");
   let band = $state(20);
   let currency = $state("");
-  let delayCost = $state(0);
+  let delayCost = $state("");
+  /** The cost of a delay day in minor units; the currency is needed to know the minor unit. */
+  function delayMinor(): number {
+    if (delayCost.trim() === "") return 0;
+    const code = currencyCode(currency);
+    const minor = code === null ? null : minorFromMajor(delayCost, code, true);
+    if (minor === null) throw new Error("delay cost needs a currency");
+    return minor;
+  }
   const loaded = resource<JointRisk>(
     () =>
       ppm.jointRisk(pid, {
@@ -44,7 +54,7 @@
         distribution,
         fallbackBandPercent: band,
         currency: currency.trim().toUpperCase() || undefined,
-        delayCostPerDayMinor: Math.round(delayCost * 100),
+        delayCostPerDayMinor: delayMinor(),
       }),
     "p.plans.pid.joint_risk.could_not_run_the_simulation",
   );
@@ -100,8 +110,8 @@
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void run(); }}>
-  <label>{t("p.plans.pid.joint_risk.currency_if_the_plan_has")} <input type="text" maxlength="3" bind:value={currency} placeholder={t("p.plans.pid.joint_risk.gbp")} /></label>
-  <label>{t("p.plans.pid.joint_risk.cost_of_each_business_day")} <input type="number" min="0" step="0.01" bind:value={delayCost} /></label>
+  <label>{t("p.plans.pid.joint_risk.currency_if_the_plan_has")} <input type="text" maxlength="3" bind:value={currency} placeholder={t("p.money.currency_hint")} /></label>
+  <label>{t("p.plans.pid.joint_risk.cost_of_each_business_day")} <input type="text" inputmode="decimal" bind:value={delayCost} /></label>
   <label>{t("p.plans.pid.joint_risk.iterations")} <input type="number" min="1" max="20000" step="1" bind:value={iterations} /></label>
   <label>{t("p.plans.pid.joint_risk.seed")} <input type="number" min="0" step="1" bind:value={seed} /></label>
   <label>{t("p.plans.pid.joint_risk.distribution")}

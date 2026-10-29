@@ -7,6 +7,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { minorToInput } from "#lib/money.js";
   import { money, type PpmClient } from "#lib/api/ppm.js";
   import { lineEstimateProblems, rangeMinor, rangeText } from "#lib/simulation-inputs.js";
 
@@ -29,16 +30,16 @@
   let problems = $state<string[]>([]);
   // Follows what is stored; opening the section never resets what is typed.
   $effect(() => {
-    low = line.low_minor === null || line.low_minor === undefined ? "" : (line.low_minor / 100).toFixed(2);
-    high = line.high_minor === null || line.high_minor === undefined ? "" : (line.high_minor / 100).toFixed(2);
+    low = line.low_minor === null || line.low_minor === undefined ? "" : minorToInput(line.low_minor, line.currency);
+    high = line.high_minor === null || line.high_minor === undefined ? "" : minorToInput(line.high_minor, line.currency);
     problems = [];
   });
   async function save(e: SubmitEvent) {
     e.preventDefault();
-    problems = lineEstimateProblems(low, high, line.planned_minor);
+    problems = lineEstimateProblems(low, high, line.planned_minor, line.currency);
     if (problems.length > 0) return;
     try {
-      await ppm.setLineEstimate(pid, line.pid, { low_minor: rangeMinor(low), high_minor: rangeMinor(high) });
+      await ppm.setLineEstimate(pid, line.pid, { low_minor: rangeMinor(low, line.currency), high_minor: rangeMinor(high, line.currency) });
       onchange();
     } catch (err) {
       onerror(errorText(err, "c.LineRange.could_not_save"));
@@ -49,8 +50,8 @@
 <details class="line-range">
   <summary class="small">{rangeText(line.low_minor ?? null, line.high_minor ?? null, (m) => money(m, line.currency))}</summary>
   <form class="inline" onsubmit={save}>
-    <label>{t("c.LineRange.low")} <input type="number" min="0" step="0.01" bind:value={low} /></label>
-    <label>{t("c.LineRange.high")} <input type="number" min="0" step="0.01" bind:value={high} /></label>
+    <label>{t("c.LineRange.low")} <input type="text" inputmode="decimal" bind:value={low} /></label>
+    <label>{t("c.LineRange.high")} <input type="text" inputmode="decimal" bind:value={high} /></label>
     <button class="button small" type="submit">{t("c.LineRange.save_range")}</button>
   </form>
   {#each problems as p (p)}<p class="banner" role="alert">{p}</p>{/each}

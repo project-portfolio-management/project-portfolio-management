@@ -228,7 +228,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.ObjectiveCard.check_in": "Cofrestru",
   "c.ObjectiveCard.confidence_0_100": "Hyder (0–100)",
   "c.ObjectiveCard.currency": "Arian cyfred",
-  "c.ObjectiveCard.currency_e_g_gbp": "Arian cyfred (e.e. GBP)",
+  "c.ObjectiveCard.currency_e_g_gbp":
+    "Arian cyfred (er enghraifft EUR, JPY neu GBP)",
   "c.ObjectiveCard.decrease": "Lleihau",
   "c.CommandPalette.cmd_dashboard": "Dangosfwrdd",
   "c.CommandPalette.cmd_escalations": "Uwchgyfeiriadau",
@@ -326,7 +327,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.RiskInputs.by_business_days": "erbyn (diwrnodau gwaith)",
   "c.RiskInputs.currency": "Arian cyfred",
   "c.RiskInputs.delays_task": "Yn gohirio tasg",
-  "c.RiskInputs.gbp": "GBP",
+  "c.RiskInputs.gbp": "EUR",
   "c.RiskInputs.none": "Dim",
   "c.RiskInputs.one_probability_covers_both_effects":
     "Mae un tebygolrwydd yn cwmpasu'r ddau effaith: mae risg sy'n gohirio tasg ac yn ychwanegu cost yn taro unwaith ac yn gwneud y ddau. Gadewch ran yn wag i'w gadael allan.",
@@ -740,7 +741,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.kpis.not_set": "Heb ei osod",
   "p.kpis.off_target": "Oddi ar y targed",
   "p.kpis.on_target": "Ar y targed",
-  "p.kpis.percent_defects_gbp": "canran, diffygion, GBP…",
+  "p.kpis.percent_defects_gbp": "canran, diffygion, EUR…",
   "p.kpis.plan_optional_pid": "Cynllun (pid dewisol)",
   "p.kpis.quarterly": "Chwarterol",
   "p.kpis.read_how_often": "Darllen pa mor aml",
@@ -1294,7 +1295,6 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.joint_risk.finish": "Gorffen",
   "p.plans.pid.joint_risk.finish_date_at_each_percentile":
     "Dyddiad gorffen ar bob canraneg",
-  "p.plans.pid.joint_risk.gbp": "GBP",
   "p.plans.pid.joint_risk.how_the_simulated_outcomes_fall":
     "Sut mae'r canlyniadau efelychiedig yn disgyn o gwmpas y gyllideb a diwedd y llwybr critigol",
   "p.plans.pid.joint_risk.independence": "Annibyniaeth.",
@@ -2796,7 +2796,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.simulation_inputs.the_cost_must_be_an":
     "Rhaid i'r gost fod yn swm uwch na sero.",
   "l.simulation_inputs.the_currency_must_be_a":
-    "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
+    "Rhaid i'r arian cyfred fod yn god 3 llythyren, er enghraifft EUR, JPY neu GBP.",
   "l.simulation_inputs.a_risk_that_changes_the":
     "Mae risg sy'n newid yr amserlen neu'r gost angen tebygolrwydd.",
   "l.simulation_inputs.amounts_must_be_numbers_zero":
@@ -2943,7 +2943,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.costs.the_amount_must_be_above":
     "Rhaid i'r swm fod yn uwch na sero.",
   "p.plans.pid.costs.the_currency_must_be_a":
-    "Rhaid i'r arian cyfred fod yn god 3 llythyren megis GBP.",
+    "Rhaid i'r arian cyfred fod yn god 3 llythyren, er enghraifft EUR, JPY neu GBP.",
+  "p.money.currency_hint": "er enghraifft EUR, JPY neu GBP",
+  "p.money.amount_or_currency":
+    "Rhowch y swm fel rhif a'r arian cyfred fel cod 3 llythyren, er enghraifft EUR, JPY neu GBP.",
   "p.plans.pid.costs.expense_added": "Ychwanegwyd y gost.",
   "p.plans.pid.costs.could_not_add_the_expense": "Methu ychwanegu'r gost",
   "p.plans.pid.costs.could_not_record": "Methu cofnodi",

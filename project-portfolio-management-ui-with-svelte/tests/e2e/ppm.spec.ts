@@ -924,7 +924,7 @@ test("intake board lists proposals with pipeline actions and duplicate hits", as
   await stubPpm(page);
   await page.goto("/proposals");
   await expect(page.getByText("Website replatform")).toBeVisible();
-  await expect(page.getByText("250,000.00 GBP")).toBeVisible();
+  await expect(page.getByText("£250,000.00")).toBeVisible();
   // in_review offers approve/reject; approve round-trips the stub.
   await expect(page.getByRole("button", { name: "reject" })).toBeVisible();
   await page.getByRole("button", { name: "approve" }).click();
@@ -1020,7 +1020,7 @@ test("board area renders the pack, investments, and trends", async ({
     page.getByTestId("board-tiles").getByText("milestones completed"),
   ).toBeVisible();
   await expect(
-    page.getByTestId("board-realized").getByText("500.00 GBP"),
+    page.getByTestId("board-realized").getByText("£500.00"),
   ).toBeVisible();
   await expect(
     page.getByTestId("board-investments").getByText("FY27 mix"),
@@ -1089,7 +1089,7 @@ test("regulator area renders coarse aggregates", async ({ page }) => {
     page.getByRole("heading", { name: "Transformation" }),
   ).toBeVisible();
   await expect(
-    page.getByTestId("regulator-portfolio").getByText("20,000.00 GBP"),
+    page.getByTestId("regulator-portfolio").getByText("£20,000.00"),
   ).toBeVisible();
 });
 

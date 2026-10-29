@@ -202,6 +202,15 @@ parity with the rest of the family. Selecting a theme via
 Theme stylesheets are served from `static/assets/themes/` (a symlink
 to the shared design-system themes).
 
+### Money (WW-1.3)
+
+An amount is an integer in the minor unit of the currency the record carries. One module (`src/lib/money.ts`) formats
+it (`Intl.NumberFormat`, the reader's locale, the currency's own number of decimals: JPY 0, EUR 2, KWD 3, CLF 4),
+reads what the reader types in that locale (so "1,5" and "1 234,50" work where the locale uses a decimal comma) and
+scales it by the same exponent. No page divides or multiplies by a fixed 100, and no form starts with a currency: the
+field is empty and required (an amount without a currency is refused before anything is sent), with the neutral hint
+"for example EUR, JPY or GBP".
+
 ### Locale / i18n
 
 `LocalePicker` (`lily-design-system-svelte-locale-picker`) sets `lang`

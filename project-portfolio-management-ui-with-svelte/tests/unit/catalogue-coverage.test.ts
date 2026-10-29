@@ -16,6 +16,7 @@ import { PAGES_CY } from "../../src/lib/i18n-pages.cy";
 const SAME_IN_WELSH = new Set([
   "CSV",
   "GBP",
+  "EUR",
   "PERT",
   "Gantt",
   "RACI — PPM",

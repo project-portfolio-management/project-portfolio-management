@@ -263,9 +263,9 @@ describe("PpmClient issue paths (NC-1, IR-2, IR-3)", () => {
 
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
-    expect(money(123_450, "GBP")).toBe("1,234.50 GBP");
-    expect(money(5, "EUR")).toBe("0.05 EUR");
-    expect(money(-99, "GBP")).toBe("-0.99 GBP");
-    expect(money(100_00)).toBe("100.00");
+    expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");
+    expect(money(5, "EUR", "en-GB")).toBe("€0.05");
+    expect(money(-99, "GBP", "en-GB")).toBe("-£0.99");
+    expect(money(null, "GBP", "en-GB")).toBe("–");
   });
 });

@@ -34,8 +34,7 @@ use crate::validation::{MAX_ARRAY_LEN, MAX_TEXT_LEN};
 const MAX_PLANS_SCANNED: u64 = 1000;
 
 fn valid_currency(raw: &str) -> Option<String> {
-    let currency = raw.trim().to_uppercase();
-    (currency.len() == 3 && currency.chars().all(|c| c.is_ascii_alphabetic())).then_some(currency)
+    crate::currency::normalize(raw)
 }
 
 /// `POST /api/plans/{pid}/budget-baselines` body.
@@ -83,7 +82,7 @@ async fn create(
 
     let Some(currency) = valid_currency(&payload.currency) else {
         return Err(unprocessable(
-            "currency must be a three-letter ISO 4217 code",
+            "currency must be a three-letter ISO 4217 code, for example EUR, JPY or GBP",
         ));
     };
     if payload.periods.is_empty() {

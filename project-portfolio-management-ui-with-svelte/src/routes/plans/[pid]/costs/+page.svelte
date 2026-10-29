@@ -15,6 +15,7 @@
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
   import { PpmClient, money, type CostPlan, type CpmNode, type LabourCosts } from "#lib/api/ppm.js";
+  import { currencyCode } from "#lib/money.js";
   import { NO_RATE_TEXT, UNPLACED_TEXT, hoursText, minorFromMajor } from "#lib/work-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -45,16 +46,17 @@
   let kind = $state<"material" | "fixed">("material");
   let description = $state("");
   let amount = $state("");
-  let currency = $state("GBP");
+  let currency = $state("");
   let accrual = $state<"start" | "prorated" | "end">("prorated");
   async function addExpense(e: SubmitEvent) {
     e.preventDefault();
-    const minor = minorFromMajor(amount);
+    const code = currencyCode(currency);
     if (!taskPid) return void (status = t("p.plans.pid.costs.choose_a_task"));
+    if (code === null) return void (status = t("p.plans.pid.costs.the_currency_must_be_a"));
+    const minor = minorFromMajor(amount, code);
     if (minor === null) return void (status = t("p.plans.pid.costs.the_amount_must_be_above"));
-    if (!/^[A-Za-z]{3}$/.test(currency)) return void (status = t("p.plans.pid.costs.the_currency_must_be_a"));
     try {
-      await ppm.addTaskCost(pid, taskPid, { kind, description, amount_minor: minor, currency: currency.toUpperCase(), accrual });
+      await ppm.addTaskCost(pid, taskPid, { kind, description, amount_minor: minor, currency: code, accrual });
       description = amount = "";
       status = t("p.plans.pid.costs.expense_added");
       await load();
@@ -84,9 +86,9 @@
     { id: "name", header: "", rowHeader: true },
     ...c.total.buckets.map((b, i): DataGridColumn => ({
       id: `b${i}`, header: label(b), align: "end",
-      accessor: (r) => (rowOf<{ m: Measure }>(r).m.buckets[i]?.minor ?? 0), format: (v) => (v ? money(Number(v)) : "–"),
+      accessor: (r) => (rowOf<{ m: Measure }>(r).m.buckets[i]?.minor ?? 0), format: (v) => (v ? money(Number(v), c.currency) : "–"),
     })),
-    { id: "total", header: t("p.plans.pid.costs.total"), align: "end", accessor: (r) => rowOf<{ m: Measure }>(r).m.total_minor, format: (v) => money(Number(v)) },
+    { id: "total", header: t("p.plans.pid.costs.total"), align: "end", accessor: (r) => rowOf<{ m: Measure }>(r).m.total_minor, format: (v) => money(Number(v), c.currency) },
   ];
 </script>
 
@@ -137,8 +139,8 @@
       <select bind:value={kind}><option value="material">{t("p.plans.pid.costs.material")}</option><option value="fixed">{t("p.plans.pid.costs.fixed_cost")}</option></select>
     </label>
     <label>{t("p.plans.pid.costs.description")} <input bind:value={description} required maxlength="200" /></label>
-    <label>{t("p.plans.pid.costs.amount")} <input type="number" min="0" step="0.01" bind:value={amount} /></label>
-    <label>{t("p.plans.pid.costs.currency")} <input bind:value={currency} maxlength="3" size="4" /></label>
+    <label>{t("p.plans.pid.costs.amount")} <input type="text" inputmode="decimal" bind:value={amount} /></label>
+    <label>{t("p.plans.pid.costs.currency")} <input bind:value={currency} required maxlength="3" size="4" placeholder={t("p.money.currency_hint")} /></label>
     <label>{t("p.plans.pid.costs.falls")}
       <select bind:value={accrual}>
         <option value="start">{t("p.plans.pid.costs.all_at_the_start")}</option>

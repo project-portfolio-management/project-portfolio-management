@@ -3,6 +3,7 @@
 
 import type { SandboxEdit, SandboxPreview } from "#lib/api/ppm.js";
 import { t } from "./i18n.svelte.js";
+import { signedMoney } from "./money.js";
 
 export type FieldValue = string | number | null | undefined;
 const str = (v: FieldValue) => (v === null || v === undefined ? "" : String(v));
@@ -192,11 +193,9 @@ export function finishText(p: Pick<SandboxPreview, "finish">): string {
   return t("l.whatif_view.the_finish_moves_from_to", { before, after });
 }
 
-/** Money in minor units with the sign shown ("+120.00 GBP"). */
+/** Money in minor units with the sign shown ("+£120.00"), in the reader's locale and the currency's exponent. */
 export function deltaText(minor: number, currency: string): string {
-  const sign = minor > 0 ? "+" : minor < 0 ? "-" : "";
-  const abs = Math.abs(minor);
-  return `${sign}${Math.floor(abs / 100).toLocaleString("en-GB")}.${String(abs % 100).padStart(2, "0")} ${currency}`;
+  return signedMoney(minor, currency);
 }
 
 /** A sentence for why cost is absent; empty when it is present. */

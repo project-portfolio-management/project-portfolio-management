@@ -8,6 +8,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { currencyCode, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -39,7 +40,7 @@
   let name = $state("");
   let members = $state("");
   let cap = $state("");
-  let currency = $state("GBP");
+  let currency = $state("");
 
   async function refresh() {
     try {
@@ -67,13 +68,22 @@
       .split(/[\s,]+/)
       .map((value) => value.trim())
       .filter(Boolean);
-    const capMinor = cap.trim() ? Math.round(Number(cap) * 100) : undefined;
+    const code = currencyCode(currency);
+    let capMinor: number | undefined;
+    if (cap.trim()) {
+      const m = code === null ? null : toMinor(cap, code);
+      if (code === null || m === null || m < 0) {
+        error = t("p.money.amount_or_currency");
+        return;
+      }
+      capMinor = m;
+    }
     await act(() =>
       ppm.createScenario({
         name,
         plan_pids: pids,
-        ...(capMinor !== undefined && Number.isFinite(capMinor)
-          ? { budget_cap_minor: capMinor, currency }
+        ...(capMinor !== undefined && code !== null
+          ? { budget_cap_minor: capMinor, currency: code }
           : {}),
       }),
     );
@@ -117,7 +127,7 @@
 {#snippet evalCell({ row }: DataGridCellContext)}
   {@const evaluated = evaluations[String(row.pid)]}
   {#if evaluated}
-    {#each evaluated.evaluation.planned_by_currency as [code, total] (code)}<span class="chip">{code} {money(total)}</span>{/each}
+    {#each evaluated.evaluation.planned_by_currency as [code, total] (code)}<span class="chip">{money(total, code)}</span>{/each}
     <span class="chip">{t("ppm.scenarios.exposure")} {evaluated.evaluation.total_exposure}</span>
     <span class="chip">{t("ppm.scenarios.alignment")} {evaluated.evaluation.total_alignment}</span>
     {#each evaluated.evaluation.violations as violation (violation)}<span class="chip red">{violation}</span>{/each}
@@ -142,7 +152,7 @@
   <input placeholder={t("ppm.scenarios.name")} bind:value={name} required />
   <input placeholder={t("p.scenarios.work_item_pids_space_comma")} bind:value={members} size="50" />
   <input placeholder={t("ppm.scenarios.cap")} bind:value={cap} size="12" />
-  <input bind:value={currency} size="4" aria-label={t("p.scenarios.currency")} />
+  <input bind:value={currency} size="4" maxlength="3" aria-label={t("p.scenarios.currency")} placeholder={t("p.money.currency_hint")} />
   <button class="button primary" type="submit">{t("ppm.scenarios.create")}</button>
 </form>
 

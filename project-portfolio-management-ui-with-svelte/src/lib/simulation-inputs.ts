@@ -1,4 +1,5 @@
 import { t } from "./i18n.svelte.js";
+import { currentLocale, exponentOf, minorToInput, toMinor } from "./money.js";
 // The inputs the Monte Carlo analyses read (schedule risk, cost risk, joint
 // risk): a task's optimistic / pessimistic duration, a budget line's low / high
 // cost, and a register risk's probability, schedule impact and cost impact.
@@ -55,15 +56,34 @@ const str = (v: FieldValue): string =>
   v === null || v === undefined ? "" : String(v);
 const blank = (v: FieldValue): boolean => str(v).trim() === "";
 
-/** Whole money in major units to minor units, or `null` if it is not a positive amount. */
-export function toMinorStrict(major: FieldValue): number | null {
-  const n = Number(str(major));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100);
+/** An amount as typed (in `locale`) or already a number, to minor units of `currency`; `null` if not a number. */
+function minorOf(
+  v: FieldValue,
+  currency: string,
+  locale: string,
+): number | null {
+  if (typeof v === "number") {
+    if (!Number.isFinite(v)) return null;
+    return Math.round(Number(`${v}e${exponentOf(currency, locale)}`));
+  }
+  return toMinor(str(v), currency, locale);
+}
+
+/** A positive amount in major units to minor units of `currency`, or `null` if it is not one. */
+export function toMinorStrict(
+  major: FieldValue,
+  currency: string,
+  locale: string = currentLocale(),
+): number | null {
+  const m = minorOf(major, currency, locale);
+  return m === null || m <= 0 ? null : m;
 }
 
 /** The form for a risk, pre-filled from what is stored. */
-export function formFrom(c: RiskInputsCurrent): RiskInputsForm {
+export function formFrom(
+  c: RiskInputsCurrent,
+  locale: string = currentLocale(),
+): RiskInputsForm {
   return {
     probability:
       c.probability_percent === null ? "" : String(c.probability_percent),
@@ -73,7 +93,7 @@ export function formFrom(c: RiskInputsCurrent): RiskInputsForm {
     cost:
       c.cost_impact_minor === null
         ? ""
-        : (c.cost_impact_minor / 100).toFixed(2),
+        : minorToInput(c.cost_impact_minor, c.cost_currency ?? "", locale),
     currency: c.cost_currency ?? "",
   };
 }
@@ -126,7 +146,7 @@ export function planRiskCalls(
   let minor: number | null = null;
   let currency: string | null = null;
   if (hasCost) {
-    minor = toMinorStrict(form.cost);
+    minor = toMinorStrict(form.cost, str(form.currency).trim().toUpperCase());
     if (minor === null)
       return { error: t("l.simulation_inputs.the_cost_must_be_an") };
     currency = str(form.currency).trim().toUpperCase();
@@ -177,12 +197,14 @@ export function lineEstimateProblems(
   lowMajor: string,
   highMajor: string,
   plannedMinor: number,
+  currency: string,
+  locale: string = currentLocale(),
 ): string[] {
   const out: string[] = [];
   const parse = (s: FieldValue): number | null | "bad" => {
     if (blank(s)) return null;
-    const n = Number(str(s));
-    return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : "bad";
+    const m = minorOf(s, currency, locale);
+    return m !== null && m >= 0 ? m : "bad";
   };
   const lo = parse(lowMajor);
   const hi = parse(highMajor);
@@ -196,8 +218,12 @@ export function lineEstimateProblems(
 }
 
 /** Minor units for a low / high field, or null when it is empty (clears it). */
-export function rangeMinor(major: FieldValue): number | null {
-  return blank(major) ? null : Math.round(Number(str(major)) * 100);
+export function rangeMinor(
+  major: FieldValue,
+  currency: string,
+  locale: string = currentLocale(),
+): number | null {
+  return blank(major) ? null : minorOf(major, currency, locale);
 }
 
 /** Problems with a task's optimistic / pessimistic business days against its likely duration. */

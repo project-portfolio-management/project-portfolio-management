@@ -93,12 +93,11 @@ async fn record(
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
 
-    let currency = payload.currency.trim().to_uppercase();
-    if currency.len() != 3 || !currency.chars().all(|c| c.is_ascii_alphabetic()) {
+    let Some(currency) = crate::currency::normalize(&payload.currency) else {
         return Err(unprocessable(
-            "currency must be a three-letter ISO 4217 code",
+            "currency must be a three-letter ISO 4217 code, for example EUR, JPY or GBP",
         ));
-    }
+    };
     if payload.cost_estimate_to_complete < 0 {
         return Err(unprocessable(
             "cost_estimate_to_complete must not be negative",
@@ -192,7 +191,8 @@ async fn report(
     super::conditional_json(&headers, &etag, &body)
 }
 
-/// `GET /api/tpc?currency=GBP` — portfolio triage, highest DIPP first.
+/// `GET /api/tpc?currency=EUR` — portfolio triage, highest DIPP first. The currency is required: no
+/// currency is built in (spec `02-scope` §2.0).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TriageParams {
     #[serde(default)]
@@ -210,11 +210,15 @@ async fn triage(
     Query(params): Query<TriageParams>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let currency = params
+    let Some(currency) = params
         .currency
-        .unwrap_or_else(|| "GBP".to_string())
-        .trim()
-        .to_uppercase();
+        .as_deref()
+        .and_then(crate::currency::normalize)
+    else {
+        return Err(unprocessable(
+            "currency is required: a three-letter ISO 4217 code, for example EUR, JPY or GBP",
+        ));
+    };
 
     let rows = tpc_rows::Entity::find()
         .filter(tpc_rows::Column::DeletedAt.is_null())

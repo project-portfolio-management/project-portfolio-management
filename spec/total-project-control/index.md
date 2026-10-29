@@ -78,7 +78,7 @@ any layer.
 | `POST /api/plans/{pid}/tpc` | Record one observation. Negative EMV accepted; negative CEC refused (`422` **and** CHECK); currency validated as ISO 4217 shape. Audited (`tpc_recorded`). |
 | `GET /api/plans/{pid}/tpc` | The observation history, newest first. |
 | `GET /api/plans/{pid}/tpc/report` | The derived view over the newest observation: computed DIPP, band, DPI, stored-vs-computed divergence, echoed inputs. A plan with no observation reports `measured: false` with a reason — the same *unmeasured-is-not-zero* posture as the OKR and Smart Score views. |
-| `GET /api/tpc?currency=` | Portfolio triage: plans ranked **highest DIPP first** — Devaux's intended use, scarce resources to the project returning most per remaining pound. |
+| `GET /api/tpc?currency=` | Portfolio triage: plans ranked **highest DIPP first** — Devaux's intended use, scarce resources to the project returning most per remaining unit of money. **`currency` is required** (an ISO 4217 code such as EUR, JPY or GBP; `422` if it is absent or not three letters): no currency is built in (§2.0 of the entity scope, WW-1.3). |
 
 ### 3.3 Derivation properties worth knowing
 

@@ -11,6 +11,7 @@
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
+  import { currencyCode, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
   import { PpmClient, type DemandHit, type Proposal, money } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
@@ -25,7 +26,7 @@
   let summary = $state("");
   let kindTarget = $state<Collection>("projects");
   let requested = $state("");
-  let currency = $state("GBP");
+  let currency = $state("");
 
   async function refresh() {
     try {
@@ -50,14 +51,23 @@
 
   async function submitNew(event: SubmitEvent) {
     event.preventDefault();
-    const minor = requested.trim() ? Math.round(Number(requested) * 100) : undefined;
+    const code = currencyCode(currency);
+    let minor: number | undefined;
+    if (requested.trim()) {
+      const m = code === null ? null : toMinor(requested, code);
+      if (code === null || m === null || m < 0) {
+        error = t("p.money.amount_or_currency");
+        return;
+      }
+      minor = m;
+    }
     await act(() =>
       ppm.createProposal({
         title,
         summary: summary || undefined,
         kind_target: kindTarget,
-        ...(minor !== undefined && Number.isFinite(minor)
-          ? { requested_minor: minor, currency }
+        ...(minor !== undefined && code !== null
+          ? { requested_minor: minor, currency: code }
           : {}),
       }),
     );
@@ -127,7 +137,7 @@
     {#each COLLECTIONS as target (target)}<option value={target}>{enumLabel("collection", target)}</option>{/each}
   </select>
   <input placeholder={t("ppm.proposals.requested")} bind:value={requested} size="12" />
-  <input bind:value={currency} size="4" aria-label={t("p.proposals.currency")} />
+  <input bind:value={currency} size="4" maxlength="3" aria-label={t("p.proposals.currency")} placeholder={t("p.money.currency_hint")} />
   <button class="button primary" type="submit">{t("ppm.proposals.open")}</button>
 </form>
 

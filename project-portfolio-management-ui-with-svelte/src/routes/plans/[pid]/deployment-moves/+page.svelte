@@ -6,6 +6,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
+  import { signedMoney } from "#lib/money.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type DeploymentMoves, type DeploymentMove, type Task } from "#lib/api/ppm.js";
@@ -50,9 +51,8 @@
       ...(form.approver_ref.trim() ? { approver_ref: form.approver_ref.trim() } : {}),
     }));
   const decide = (mp: string, d: "approve" | "refuse") => run(() => ppm.decideDeploymentMove(pid, mp, d, (why[mp] ?? "").trim()));
-  const money = (minor: number) => `${minor < 0 ? "-" : minor > 0 ? "+" : ""}${Math.floor(Math.abs(minor) / 100)}.${String(Math.abs(minor) % 100).padStart(2, "0")}`;
   const cost = (c: { currency: string; delta_minor: number }[] | undefined) =>
-    c && c.length ? c.map((x) => `${money(x.delta_minor)} ${x.currency}`).join(", ") : t("p.moves.no_cost");
+    c && c.length ? c.map((x) => signedMoney(x.delta_minor, x.currency)).join(", ") : t("p.moves.no_cost");
   const title = (taskPid: string) => tasks.find((x) => x.pid === taskPid)?.title ?? taskPid;
   const columns: DataGridColumn[] = $derived([
     { id: "task_pid", header: t("p.moves.col_task"), rowHeader: true, format: (v) => title(String(v)) },

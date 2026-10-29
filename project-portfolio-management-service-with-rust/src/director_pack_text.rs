@@ -23,14 +23,10 @@ fn num(v: &Value, k: &str) -> String {
     }
 }
 
-/// Decimal places a currency's minor unit has.
+/// Decimal places a currency's minor unit has: the full ISO 4217 table in `currency`.
 #[must_use]
 pub fn exponent(currency: &str) -> u32 {
-    match currency {
-        "JPY" | "KRW" | "VND" | "CLP" | "ISK" | "UGX" | "XAF" | "XOF" | "XPF" | "PYG" | "RWF" => 0,
-        "BHD" | "IQD" | "JOD" | "KWD" | "LYD" | "OMR" | "TND" => 3,
-        _ => 2,
-    }
+    crate::currency::exponent(currency)
 }
 
 /// `1234567` minor units of `GBP` as `GBP 12,345.67`. Never mixes currencies: the code is always shown.
@@ -370,6 +366,11 @@ mod tests {
         assert_eq!(money(1_234_567, "JPY"), "JPY 1,234,567");
         assert_eq!(money(1_234_567, "KWD"), "KWD 1,234.567");
         assert_eq!(money(0, "USD"), "USD 0.00");
+        // codes the old partial list missed: no minor unit, and four decimals
+        assert_eq!(money(1_500, "BIF"), "BIF 1,500");
+        assert_eq!(money(1_500, "UYI"), "UYI 1,500");
+        assert_eq!(money(123_456_789, "CLF"), "CLF 12,345.6789");
+        assert_eq!(money(5, "UYW"), "UYW 0.0005");
         assert!(money(i64::MIN, "GBP").starts_with("-GBP 92,233,720,368,547,758."));
     }
 

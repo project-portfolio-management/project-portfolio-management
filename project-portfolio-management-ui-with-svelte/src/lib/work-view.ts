@@ -11,6 +11,7 @@ import type {
   SchedulingRule,
 } from "#lib/api/ppm.js";
 import { t } from "./i18n.svelte.js";
+import { currentLocale, toMinor } from "./money.js";
 
 export type FieldValue = string | number | null | undefined;
 const str = (v: FieldValue) => (v === null || v === undefined ? "" : String(v));
@@ -53,15 +54,17 @@ export function minutesFromHours(text: FieldValue): number | null {
   return Math.round(n * 60);
 }
 
-/** Money as typed (major units) → minor units, or null when not a non-negative amount. */
+/** Money as typed (major units, in the reader's locale) → minor units of `currency`, or null when not a non-negative amount. */
 export function minorFromMajor(
   text: FieldValue,
+  currency: string,
   allowZero = false,
+  locale: string = currentLocale(),
 ): number | null {
-  const n = Number(str(text));
-  if (blank(text) || !Number.isFinite(n) || n < 0 || (!allowZero && n === 0))
-    return null;
-  return Math.round(n * 100);
+  if (blank(text)) return null;
+  const n = toMinor(str(text), currency, locale);
+  if (n === null || n < 0 || (!allowZero && n === 0)) return null;
+  return n;
 }
 
 /** What the assignment form holds. Exactly one of the three is the field being changed. */

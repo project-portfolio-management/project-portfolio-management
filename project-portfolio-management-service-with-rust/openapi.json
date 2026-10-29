@@ -32626,10 +32626,11 @@
         "description": "Plans recorded in another currency and plans whose DIPP is undefined are excluded and reported, rather than sorted last as though measured and bad. This service never converts currency.",
         "parameters": [
           {
+            "description": "A three-letter ISO 4217 code, for example EUR, JPY or GBP. No currency is built in: omitting it is a 422.",
             "in": "query",
             "name": "currency",
+            "required": true,
             "schema": {
-              "default": "GBP",
               "type": "string"
             }
           }

@@ -157,9 +157,9 @@ describe("words", () => {
     );
   });
   it("signs money and explains absent cost", () => {
-    expect(deltaText(120000, "GBP")).toBe("+1,200.00 GBP");
-    expect(deltaText(-5, "GBP")).toBe("-0.05 GBP");
-    expect(deltaText(0, "GBP")).toBe("0.00 GBP");
+    expect(deltaText(120000, "GBP")).toBe("+£1,200.00");
+    expect(deltaText(-5, "GBP")).toBe("-£0.05");
+    expect(deltaText(0, "GBP")).toBe("£0.00");
     expect(
       costReasonText({ available: false, reason: "no_finance_access" }),
     ).toMatch(/finance data/);

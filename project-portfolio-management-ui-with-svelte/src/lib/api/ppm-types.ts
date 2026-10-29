@@ -1530,14 +1530,8 @@ export interface BenefitBoard {
   }[];
 }
 
-/** Format integer minor units as a major-unit string (e.g. 1_234_50 → "1,234.50"). */
-export function money(minor: number, currency?: string | null): string {
-  const sign = minor < 0 ? "-" : "";
-  const abs = Math.abs(minor);
-  const major = Math.floor(abs / 100).toLocaleString("en-GB");
-  const cents = String(abs % 100).padStart(2, "0");
-  return `${sign}${major}.${cents}${currency ? ` ${currency}` : ""}`;
-}
+/** Money in minor units, in the reader's locale with the currency's own exponent (see `money.ts`). */
+export { money } from "../money.js";
 
 /** The PPM endpoints, bound to the configured base URL. */
 

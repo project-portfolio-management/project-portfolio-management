@@ -8,7 +8,7 @@
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
-  import { PpmClient, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
+  import { PpmClient, money, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
@@ -29,25 +29,24 @@
       traceError = errorText(err, "p.ledger.could_not_trace");
     }
   }
-  /** Minor units (pence, cents) as a decimal amount. */
-  const money = (minor: number) => `${minor < 0 ? "-" : ""}${Math.floor(Math.abs(minor) / 100)}.${String(Math.abs(minor) % 100).padStart(2, "0")}`;
+  const cur = () => trace?.currency ?? "";
   const label = (a: FundingAllocation) => `${a.funding_source} ${a.allocated_on}`;
   const num = (a: unknown, b: unknown) => Number(a) - Number(b);
   const allocColumns: DataGridColumn[] = $derived([
     { id: "funding_source", header: t("p.ledger.col_source"), rowHeader: true },
     { id: "reference", header: t("p.ledger.col_ref"), format: (v) => (v ? String(v) : "") },
     { id: "allocated_on", header: t("p.ledger.col_on") },
-    { id: "amount_minor", header: t("p.ledger.col_amount"), align: "end", compare: num, format: (v, r) => `${money(Number(v))} ${r.currency}` },
-    { id: "planned_on_lines_minor", header: t("p.ledger.col_planned"), align: "end", compare: num, format: (v) => money(Number(v)) },
-    { id: "untraced_minor", header: t("p.ledger.col_untraced"), align: "end", compare: num, format: (v) => money(Number(v)), cellClass: (c) => (Number(c.value) !== 0 ? "cell-amber" : "") },
+    { id: "amount_minor", header: t("p.ledger.col_amount"), align: "end", compare: num, format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "planned_on_lines_minor", header: t("p.ledger.col_planned"), align: "end", compare: num, format: (v, r) => money(Number(v), String(r.currency)) },
+    { id: "untraced_minor", header: t("p.ledger.col_untraced"), align: "end", compare: num, format: (v, r) => money(Number(v), String(r.currency)), cellClass: (c) => (Number(c.value) !== 0 ? "cell-amber" : "") },
     { id: "lines", header: t("p.ledger.col_lines"), align: "end" },
     { id: "pid", header: t("p.ledger.col_act"), sortable: false, cell: traceCell },
   ]);
   const lineColumns: DataGridColumn[] = $derived([
     { id: "plan", header: t("p.ledger.line_plan"), rowHeader: true, format: (v) => (v ? String(v) : "") },
     { id: "description", header: t("p.ledger.line_desc") },
-    { id: "planned_minor", header: t("p.ledger.line_planned"), align: "end", compare: num, format: (v) => money(Number(v)) },
-    { id: "actual_minor", header: t("p.ledger.line_actual"), align: "end", compare: num, format: (v) => money(Number(v)) },
+    { id: "planned_minor", header: t("p.ledger.line_planned"), align: "end", compare: num, format: (v) => money(Number(v), cur()) },
+    { id: "actual_minor", header: t("p.ledger.line_actual"), align: "end", compare: num, format: (v) => money(Number(v), cur()) },
     { id: "gate", header: t("p.ledger.line_gate"), format: (v, r) => (v ? `${v}: ${r.released ? t("p.ledger.released") : t("p.ledger.held")}` : t("p.ledger.no_gate")) },
   ]);
 </script>
@@ -76,12 +75,12 @@
 {#if trace}
   <section aria-labelledby="lg-trace">
     <h2 id="lg-trace">{t("p.ledger.trace_h2", { name: label(trace.allocation) })}</h2>
-    <p>{t("p.ledger.money", { allocated: money(trace.money.allocated_minor), planned: money(trace.money.planned_on_lines_minor), spent: money(trace.money.spent_minor), untraced: money(trace.money.untraced_minor), currency: trace.currency })}</p>
+    <p>{t("p.ledger.money", { allocated: money(trace.money.allocated_minor, trace.currency), planned: money(trace.money.planned_on_lines_minor, trace.currency), spent: money(trace.money.spent_minor, trace.currency), untraced: money(trace.money.untraced_minor, trace.currency), currency: trace.currency })}</p>
     {#if trace.money.untraced_reason}<p class="banner" role="note">{trace.money.untraced_reason}</p>{/if}
     <p>{t("p.ledger.gates", { gated: trace.gates.lines_with_a_gate, released: trace.gates.released })}</p>
     <p>{t("p.ledger.milestones_met", { met: trace.milestones.met, total: trace.milestones.total })}</p>
     <p>{t("p.ledger.benefits", { n: trace.benefits.benefits })}
-      {#each trace.benefits.validated_by_currency as v (v.currency)}{t("p.ledger.validated", { currency: v.currency, amount: money(v.validated_minor) })}. {/each}
+      {#each trace.benefits.validated_by_currency as v (v.currency)}{t("p.ledger.validated", { currency: v.currency, amount: money(v.validated_minor, v.currency) })}. {/each}
     </p>
     {#if trace.lines.length > 0}
       <h3>{t("p.ledger.lines_h3")}</h3>

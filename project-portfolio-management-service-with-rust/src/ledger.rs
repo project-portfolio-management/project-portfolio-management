@@ -92,7 +92,7 @@ pub fn parse(text: &str) -> Result<Vec<Row>, Vec<String>> {
             problems.push(format!(
                 "line {n}: amount_minor is not a whole number of minor units"
             ));
-        } else if currency.len() != 3 || !currency.chars().all(|ch| ch.is_ascii_uppercase()) {
+        } else if !crate::currency::is_code(&currency) {
             problems.push(format!("line {n}: currency is a three-letter code"));
         } else {
             rows.push(Row {

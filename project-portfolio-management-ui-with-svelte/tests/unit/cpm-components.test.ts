@@ -549,10 +549,10 @@ describe("EvBars", () => {
     expect(root.querySelectorAll(".fill")).toHaveLength(3);
     expect(root.querySelectorAll(".bac")).toHaveLength(3);
     expect(text).toContain("Planned value");
-    expect(text).toContain("1,000.00 GBP");
-    expect(text).toContain("2,000.00 GBP");
-    expect(text).toContain("2,500.00 GBP");
-    expect(text).toContain("budget at completion: 4,000.00 GBP");
+    expect(text).toContain("£1,000.00");
+    expect(text).toContain("£2,000.00");
+    expect(text).toContain("£2,500.00");
+    expect(text).toContain("budget at completion: £4,000.00");
     done();
   });
   it("calls an unrecorded actual cost unknown, never zero", () => {
@@ -560,7 +560,7 @@ describe("EvBars", () => {
       block: { ...block, ac_minor: null, cv_minor: null },
     });
     expect(root.textContent).toContain("unknown");
-    expect(root.textContent).not.toContain("0.00 GBP\n");
+    expect(root.textContent).not.toContain("£0.00\n");
     done();
   });
 });
@@ -594,7 +594,7 @@ describe("SCurve", () => {
     const text = root.textContent ?? "";
     expect(text).toContain("only on days recorded (1 so far)");
     expect(text).toContain("not recorded");
-    expect(text).toContain("4,000.00 GBP");
+    expect(text).toContain("£4,000.00");
     expect(root.querySelectorAll("tbody tr")).toHaveLength(3);
     done();
   });

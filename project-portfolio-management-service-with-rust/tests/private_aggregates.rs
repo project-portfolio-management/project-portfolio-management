@@ -146,7 +146,7 @@ const AGGREGATES: &[&str] = &[
     "/api/time-reports?group_by=plan",
     "/api/time-reports?group_by=person",
     "/api/time-reports?group_by=month",
-    "/api/tpc",
+    "/api/tpc?currency=EUR",
     "/api/work-profile",
     "/api/compliance/findings",
     "/api/controls/coverage",

@@ -1921,6 +1921,11 @@ only as search snippets.
   [`governance/worldwide-equity-audit.md`](governance/worldwide-equity-audit.md). **Decisions not yet accepted and no
   code changed.** The fixes are not started; the first four findings (locale parity, compliance mapping, money,
   working week) are the ones that most clearly break §2.0.
+  **WW-1.3 (money) fixed 2026-10-29, in part:** one locale-aware formatter and parser in the interface
+  (`src/lib/money.ts`, `Intl`, the currency's own exponent), no `/100`, no GBP starting value in the five forms,
+  `GET /api/tpc` needs `currency`, one currency validator and the full ISO 4217 exponent table in the service
+  (`currency.rs`), and WW-1.13's validator and error-text items. The owner has not accepted the other decisions; the
+  rest of WW-1 is not started. What was not done is in the root `CHANGELOG.md` entry.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

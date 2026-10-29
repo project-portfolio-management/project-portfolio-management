@@ -9,6 +9,7 @@
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import type { PpmClient, Risk, Task } from "#lib/api/ppm.js";
+  import { minorToInput } from "#lib/money.js";
   import { formFrom, planRiskCalls, type RiskInputsForm } from "#lib/simulation-inputs.js";
 
   let {
@@ -79,7 +80,7 @@
     const parts: string[] = [];
     if (current.probability_percent !== null) parts.push(t("c.RiskInputs.chance", { probability_percent: current.probability_percent }));
     if (current.task_pid && current.schedule_impact_days) parts.push(t("c.RiskInputs.adds_business_days_to_a", { schedule_impact_days: current.schedule_impact_days }));
-    if (current.cost_impact_minor !== null) parts.push(t("c.RiskInputs.adds", { toFixed: (current.cost_impact_minor / 100).toFixed(2), cost_currency: current.cost_currency }));
+    if (current.cost_impact_minor !== null) parts.push(t("c.RiskInputs.adds", { toFixed: minorToInput(current.cost_impact_minor, current.cost_currency ?? ""), cost_currency: current.cost_currency }));
     return parts.length === 0 ? t("c.RiskInputs.not_used_in_the_simulations") : parts.join(" · ");
   });
 </script>
@@ -95,7 +96,7 @@
       </select>
     </label>
     <label>{t("c.RiskInputs.by_business_days")} <input type="number" min="1" max="365" step="1" bind:value={form.impactDays} /></label>
-    <label>{t("c.RiskInputs.adds_cost")} <input type="number" min="0" step="0.01" bind:value={form.cost} /></label>
+    <label>{t("c.RiskInputs.adds_cost")} <input type="text" inputmode="decimal" bind:value={form.cost} /></label>
     <label>{t("c.RiskInputs.currency")} <input type="text" maxlength="3" size="4" bind:value={form.currency} placeholder={t("c.RiskInputs.gbp")} /></label>
     <button class="button small" type="submit" disabled={saving}>{saving ? t("c.RiskInputs.saving") : t("c.RiskInputs.save")}</button>
   </form>

@@ -764,7 +764,7 @@ test("joint risk: the joint confidence sits beside both marginals, with a quadra
   ).toBeVisible();
   await expect(
     page.getByText(
-      /Each business day late adds 500\.00 GBP; finishing early earns nothing back\./,
+      /Each business day late adds £500\.00; finishing early earns nothing back\./,
     ),
   ).toBeVisible();
   await expect(

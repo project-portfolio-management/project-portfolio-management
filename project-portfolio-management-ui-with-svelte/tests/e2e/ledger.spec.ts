@@ -65,7 +65,7 @@ test.describe("funding ledger", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("row", {
-        name: /Treasury.*FY27.*10000\.00 GBP.*7500\.00.*2500\.00/,
+        name: /Treasury.*FY27.*£10,000\.00.*£7,500\.00.*£2,500\.00/,
       }),
     ).toBeVisible();
     await page
@@ -73,7 +73,7 @@ test.describe("funding ledger", () => {
       .click();
     await expect(
       page.getByText(
-        "Allocated 10000.00, planned on lines 7500.00, spent 2000.00, untraced 2500.00 (GBP).",
+        "Allocated £10,000.00, planned on lines £7,500.00, spent £2,000.00, untraced £2,500.00 (GBP).",
       ),
     ).toBeVisible();
     await expect(

@@ -180,7 +180,9 @@ WPM-D135, WPM-D138 to D141).
 3. **One owner per fact for a linked pool: supply is WPM's, demand is PPM's.** `GET /api/capacity-heatmap` counts,
    for a linked pool, WPM's supply alone (hundredths of an FTE, shown in FTE) with `supply_source: "wpm"` and a
    `peer_supply` reading: `live`, `last_received` (with `as_of`, the time WPM took it, and `age_seconds`),
-   `hidden` (WPM hides a month made up of fewer workers than its floor) or `unknown` (nothing received). A hidden
+   `hidden` (WPM hides a month made up of fewer workers than its floor) or `unknown` (nothing received). The last
+   figure is shown only when WPM could not be reached; when WPM **refuses** the caller (4xx), the month is `unknown`,
+   so a caller WPM turns away never sees a figure another caller's token fetched (WPM-D135). A hidden
    or unknown month is the state `supply_unknown`, never zero and never a fall back to the local figure. Everything
    PPM holds on the supply side for that pool (its people's availability, its own and partners' supply commitments)
    is kept and shown as `entered_here_supply_fte`, and is **never added** to WPM's figure. Demand stays PPM's

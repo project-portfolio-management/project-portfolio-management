@@ -274,14 +274,22 @@ struct SupplyMonth {
     supply_centi: Option<i64>,
 }
 
+/// Why a supply read failed. A refusal is WPM's answer about *this* caller, so it must not be met with a figure
+/// another caller's token fetched (WPM-D135); only a peer that could not be reached falls back to the last figure.
+#[derive(Debug, PartialEq, Eq)]
+enum Fetch {
+    Unreachable(String),
+    Refused(String),
+}
+
 async fn fetch_supply(
     base: &str,
     bearer: &str,
     peer_pool_ref: &str,
     from: NaiveDate,
     months: u32,
-) -> Result<Vec<(NaiveDate, Received)>, String> {
-    allowed(base).await?;
+) -> Result<Vec<(NaiveDate, Received)>, Fetch> {
+    allowed(base).await.map_err(Fetch::Unreachable)?;
     // Every part is a UUID, a date or a number, so nothing needs escaping.
     let url = format!(
         "{}/api/capacity/peer-supply?pool={peer_pool_ref}&from={}&months={months}",
@@ -294,19 +302,29 @@ async fn fetch_supply(
         .send()
         .await
         .map_err(|e| {
-            if e.is_timeout() {
+            Fetch::Unreachable(if e.is_timeout() {
                 "WPM did not answer in time".to_string()
             } else {
                 "WPM could not be reached".to_string()
-            }
+            })
         })?;
-    if !response.status().is_success() {
-        return Err(format!("WPM answered {}", response.status().as_u16()));
+    let status = response.status();
+    if status.is_client_error() {
+        return Err(Fetch::Refused(format!(
+            "WPM refused this caller ({})",
+            status.as_u16()
+        )));
+    }
+    if !status.is_success() {
+        return Err(Fetch::Unreachable(format!(
+            "WPM answered {}",
+            status.as_u16()
+        )));
     }
     let body: SupplyBody = response
         .json()
         .await
-        .map_err(|_| "WPM's answer could not be read".to_string())?;
+        .map_err(|_| Fetch::Unreachable("WPM's answer could not be read".to_string()))?;
     Ok(body
         .months
         .into_iter()
@@ -346,15 +364,15 @@ pub async fn supply_for(
         let (pool, peer, base, read) = (*pool, peer.clone(), base.clone(), read.clone());
         set.spawn(async move {
             let live = match (&read, base.as_deref(), first) {
-                (SupplyRead::Kept, _, _) => {
-                    Err("figures kept from earlier reads only on this view".to_string())
-                }
-                (SupplyRead::Live(_), None, _) => {
-                    Err("the worker service URL is not set".to_string())
-                }
-                (SupplyRead::Live(None), Some(_), _) => {
-                    Err("the request carried no bearer token to forward to WPM".to_string())
-                }
+                (SupplyRead::Kept, _, _) => Err(Fetch::Unreachable(
+                    "figures kept from earlier reads only on this view".to_string(),
+                )),
+                (SupplyRead::Live(_), None, _) => Err(Fetch::Unreachable(
+                    "the worker service URL is not set".to_string(),
+                )),
+                (SupplyRead::Live(None), Some(_), _) => Err(Fetch::Unreachable(
+                    "the request carried no bearer token to forward to WPM".to_string(),
+                )),
                 (SupplyRead::Live(Some(_)), Some(_), None) => Ok(Vec::new()),
                 (SupplyRead::Live(Some(t)), Some(b), Some(f)) => {
                     fetch_supply(b, t, &peer, f, n).await
@@ -365,14 +383,15 @@ pub async fn supply_for(
     }
     let mut out = HashMap::new();
     while let Some(Ok((pool, peer, live))) = set.join_next().await {
-        let (got, why): (HashMap<NaiveDate, Received>, Option<String>) = match live {
+        let (got, why, refused): (HashMap<NaiveDate, Received>, Option<String>, bool) = match live {
             Ok(rows) => {
                 for (m, r) in &rows {
                     remember(&peer, *m, *r);
                 }
-                (rows.into_iter().collect(), None)
+                (rows.into_iter().collect(), None, false)
             }
-            Err(e) => (HashMap::new(), Some(e)),
+            Err(Fetch::Unreachable(e)) => (HashMap::new(), Some(e), false),
+            Err(Fetch::Refused(e)) => (HashMap::new(), Some(e), true),
         };
         let readings = months
             .iter()
@@ -382,7 +401,8 @@ pub async fn supply_for(
                 } else {
                     Some("WPM gave no figure for this month")
                 });
-                read_month(got.get(m).copied(), recall(&peer, *m), why)
+                let last = if refused { None } else { recall(&peer, *m) };
+                read_month(got.get(m).copied(), last, why)
             })
             .collect();
         out.insert(pool, readings);
@@ -586,7 +606,27 @@ mod tests {
             started.elapsed() < Duration::from_secs(5),
             "bounded by the timeout"
         );
-        assert_eq!(r, Err("WPM did not answer in time".to_string()));
+        assert_eq!(
+            r,
+            Err(Fetch::Unreachable("WPM did not answer in time".to_string()))
+        );
+    }
+
+    #[tokio::test]
+    async fn a_refusal_is_told_apart_from_a_peer_that_cannot_be_reached() {
+        // A refused caller must not be shown the last figure another caller's token fetched (WPM-D135).
+        let app = axum::Router::new().route(
+            "/api/capacity/peer-supply",
+            axum::routing::get(|| async { axum::http::StatusCode::FORBIDDEN }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let peer = Uuid::new_v4().to_string();
+        let refused = fetch_supply(&format!("http://{addr}"), "t", &peer, d("2026-11-01"), 1).await;
+        assert!(matches!(refused, Err(Fetch::Refused(_))), "{refused:?}");
+        let gone = fetch_supply("http://127.0.0.1:9", "t", &peer, d("2026-11-01"), 1).await;
+        assert!(matches!(gone, Err(Fetch::Unreachable(_))), "{gone:?}");
     }
 
     #[tokio::test]

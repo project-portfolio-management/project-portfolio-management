@@ -8,8 +8,10 @@ WPM's people impact for a programme. The rules behind every step are the entity 
 
 **What has been checked.** The steps below match the code and the tests: `tests/wpm_bridge.rs` runs PPM against a
 stand-in WPM on a local port, and the UI's `tests/e2e/wpm-bridge.spec.ts` and `capacity-commitments.spec.ts` drive the
-screens against a stubbed service. **The whole walk-through has not been run against a real WPM** (task FB-8 in
-[`tasks.md`](../tasks.md) is that check, still open). Treat the sample answers as the shapes the code writes, not as a
+screens against a stubbed service. A live run on 2026-10-30 (task FB-8 in [`tasks.md`](../tasks.md), done in part)
+checked the link, supply, demand and people impact through the API against a real WPM, before FB-5 and FB-6; **the
+withdrawals (a zero, and those on unlink) and the screens have not been run against a real WPM**, and this
+walk-through was not followed step by step. Treat the sample answers as the shapes the code writes, not as a
 recorded session.
 
 ## 1. What you need

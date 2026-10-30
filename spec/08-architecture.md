@@ -162,12 +162,19 @@ WPM-D135, WPM-D138 to D141).
 
 | Bridge | Direction | Contract | State in PPM |
 | --- | --- | --- | --- |
-| Delivery ideas | CRM → PPM | `POST /api/ideas` `{title, pitch, tags}` → `{pid}` (CRM's `POST /api/bridges/ppm/deals/{pid}`) | exists (PPM's route; CRM calls it) |
-| Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1); set and removed on the `/skill-pools` screen (FB-6) |
-| Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2); shown on the `/capacity-heatmap` screen with its source and reading (FB-6) |
-| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); zero sent as the withdrawal, and every sent figure withdrawn on unlink (FB-5); set on the `/capacity-commitments` screen, which shows the send outcome and the recent sends (FB-6) |
-| People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` | **built** (FB-4): `GET /api/plans/{pid}/people-impact`, shown on a programme's plan page |
+| Delivery ideas | CRM → PPM | `POST /api/ideas` `{title, pitch, tags}` → `{pid}` (CRM's `POST /api/bridges/ppm/deals/{pid}`) | exists (PPM's route; CRM calls it); **checked live** 2026-10-30 (FB-8): a won deal in CRM opened one PPM idea, idempotent |
+| Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1); set and removed on the `/skill-pools` screen (FB-6); **checked live** on both sides (FB-8) |
+| Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2); shown on the `/capacity-heatmap` screen with its source and reading (FB-6); **checked live** through the API (FB-8): `live` with `as_of` and age, the entered-here figure not added, `hidden` under WPM's floor, and with WPM stopped `last_received` with its age and a refused caller `unknown` |
+| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); zero sent as the withdrawal, and every sent figure withdrawn on unlink (FB-5); set on the `/capacity-commitments` screen, which shows the send outcome and the recent sends (FB-6); **checked live** through the API, sent and idempotent (FB-8: WPM held one `ppm` claim, `fte_centi` 250); the withdrawals (FB-5) **not** checked live |
+| People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` | **built** (FB-4): `GET /api/plans/{pid}/people-impact`, shown on a programme's plan page; **checked live** (FB-8): WPM's answer passed through unchanged, `ends_on` from `target_date`, a month-only date sending none |
 | Hire and leave | WPM → CRM | `worker_hired`, `worker_terminated`/`worker_retired` webhooks | CRM's and WPM's; nothing in PPM |
+
+**The live check (FB-8, in part).** On 2026-10-30 WPM, PPM and CRM were run together on one machine with
+authentication on, one PASETO test key trusted by all three and the caller's token forwarded: PPM `e011cc7`, WPM
+`36426f5`, CRM `fad29bd`, that is before FB-5 and FB-6. What passed is marked "checked live" above. It found the
+cross-caller kept-figure leak, fixed since (rule 4, `bbad76e`). **Not exercised live:** the FB-5 withdrawals (a
+zero, `sent_at`, and the withdrawals on unlink) against a real WPM (WPM supports them since `ab1ce88` and
+`ca1462f`); the FB-6 screens against a live service; Keycloak; a mounted ABAC policy.
 
 **The rules for the PPM ↔ WPM bridge.**
 

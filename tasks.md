@@ -2222,7 +2222,8 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   (PPM's side):** a total that rounds to zero is sent and recorded (`sent`, `fte_centi: 0`); unlinking a pool, or
   changing its link, withdraws best effort every figure sent to the old WPM pool, one zero per programme and month
   whose latest send carried a figure, each recorded, listed in the peer-link answer (§8.5a rule 6). **Not
-  verified:** against a running WPM (FB-8): WPM is building its side in parallel; the tests use a stand-in. A
+  verified:** against a running WPM (FB-8 ran before FB-5 and did not exercise it; WPM supports it since `ab1ce88`
+  and `ca1462f`); the tests use a stand-in. A
   withdrawal not sent (no URL, no token, or not answered) is not retried and the figure stays in WPM.
 - [x] **FB-6 (S–M, UI) — Show the bridge.** **Built 2026-10-30:** `/skill-pools` lists every pool with the
   workforce service's pool it is linked to and sets or removes the link (`PUT /api/skill-pools/{pid}/peer-link`;
@@ -2241,4 +2242,14 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   (WPM has `/api/workers/{pid}/skills-as-of`, a different shape); the skill-gap view reports `unknown`. A mapping
   from WPM's catalogue skills to PPM's tags is an owners' decision, not made.
 - [ ] **FB-8 (S) — A live check.** Run PPM against a running WPM with a linked pool on both sides and a real token,
-  and record what was seen.
+  and record what was seen. **Done in part 2026-10-30:** WPM, PPM and CRM run together on one machine with
+  authentication on, one PASETO test key trusted by all three, the caller's token forwarded; PPM `e011cc7`, WPM
+  `36426f5`, CRM `fad29bd` (before FB-5 and FB-6). Passed: the pool link on both sides; demand sent and idempotent
+  (WPM showed one `ppm` claim, `fte_centi` 250); the heatmap showing WPM supply as `live` with `as_of` and age, the
+  entered-here figure not added, and `hidden` under WPM's floor; with WPM stopped, `last_received` with its age,
+  and a refused caller getting `unknown`; people impact passing WPM's answer through unchanged, with `ends_on` from
+  `target_date` and a month-only date sending none; CRM's won deal opening one PPM idea, idempotent. Found the
+  cross-caller kept-figure leak, fixed since in `bbad76e` (FB-2). **Remains:** the FB-5 withdrawals (a zero with
+  `sent_at`, and the withdrawals on unlink) against a real WPM (WPM supports them since `ab1ce88` and `ca1462f`);
+  the FB-6 screens (`/skill-pools`, `/capacity-heatmap`, `/capacity-commitments`) against a live service;
+  Keycloak in place of the PASETO test key; a mounted ABAC policy. The leak fix itself was not re-run live.

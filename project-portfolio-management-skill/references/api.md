@@ -39,4 +39,4 @@ to WPM forwards the caller's own bearer token. Rules: entity spec §8.5a; servic
 | `GET` | `/api/plans/{pid}/people-impact?months=1..36` | WPM's people impact, `source: "wpm"`, `status` `live` or `unknown` with a reason |
 
 Tests: `tests/wpm_bridge.rs` (service, a stand-in WPM, needs the database); `tests/e2e/wpm-bridge.spec.ts` and
-`tests/e2e/capacity-commitments.spec.ts` (UI, stubbed). Not checked against a running WPM (FB-8).
+`tests/e2e/capacity-commitments.spec.ts` (UI, stubbed). Checked against a running WPM in part (FB-8, 2026-10-30: link, supply, demand, people impact through the API); the withdrawals and the screens were not.

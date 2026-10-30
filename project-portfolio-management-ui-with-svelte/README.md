@@ -71,6 +71,8 @@ Every plan route lives under the static `plans/` directory.
 | `/technology` | CTO area: technology radar (`tech:` tags) + dependency-risk lens (fan-out, red predecessors) |
 | `/gantt` | Schedule Gantt (Lily GanttChart) — the selected plan's dated child plans as task bars, dependencies as a text summary per task, critical path in colour and words, zoom and CSV/Excel export (read-only) |
 | `/capacity` | Resource capacity — per-person rollup over a window; over-allocation flagged |
+| `/capacity-heatmap` | Demand and supply by skill pool and month; a linked pool's supply from the workforce service, with its reading and what was entered here beside it (FB-6) |
+| `/skill-pools` | Skill pools and their link to the workforce service's pool: set or remove it (FB-6) |
 | `/ideas` | Idea board — capture, vote, dismiss, convert to a draft proposal |
 | `/objectives` | OKR objectives registry + per-objective alignment rollups |
 | `/proposals` | Work-intake board — proposal pipeline (draft → … → promoted) + duplicate-demand checks + promote-to-plan |

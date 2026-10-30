@@ -1230,6 +1230,8 @@ export interface SkillPool {
   active: boolean;
   roles: string[];
   skills: string[];
+  /** FB-1: the workforce service's pool id this pool is linked to, or null. Older answers may leave it out. */
+  peer_pool_ref?: string | null;
 }
 
 export interface DirectorPackMeta {

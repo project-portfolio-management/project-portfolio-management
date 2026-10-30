@@ -11,6 +11,7 @@ import type { Collection } from "./types";
 import { rowOf } from "#lib/row-of.js";
 import { mspdiReport, simQuery } from "./ppm-types";
 import type { PeopleImpact } from "#lib/people-impact.js";
+import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type {
   AccessRecords,
   Alignment,
@@ -580,6 +581,26 @@ export class PpmClient {
   /** The skill pools. */
   skillPools(): Promise<{ skill_pools: SkillPool[] }> {
     return this.http.get("/api/skill-pools");
+  }
+  /** FB-1: link a skill pool to the workforce service's pool (its id), or remove the link with null. */
+  setSkillPoolPeerLink(
+    pid: string,
+    peerPoolRef: string | null,
+  ): Promise<SkillPool> {
+    return this.http.put(
+      `/api/skill-pools/${encodeURIComponent(pid)}/peer-link`,
+      {
+        body: { peer_pool_ref: peerPoolRef },
+      },
+    );
+  }
+  /** DP-10 / FB-2: demand and supply by skill pool and month, `from` `YYYY-MM`, 1 to 24 months. */
+  capacityHeatmap(from?: string, months?: number): Promise<CapacityHeatmap> {
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (months) params.set("months", String(months));
+    const query = params.toString();
+    return this.http.get(`/api/capacity-heatmap${query ? `?${query}` : ""}`);
   }
   /** The director packs the caller may read, without their bodies. */
   directorPacks(): Promise<{ packs: DirectorPackMeta[] }> {

@@ -4727,4 +4727,105 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae {over} o {considered} mis cronfa dros y terfyn; ni ellir dweud am {unknown}.",
   "p.people_impact.no_total":
     "Ni roddir cyfanswm: gall person gyfrif mewn mwy nag un gronfa.",
+  "l.enum.pk_heat.supply_unknown": "cyflenwad anhysbys",
+  "p.capacity_heatmap.nav": "Map gwres capasiti",
+  "p.capacity_heatmap.title": "Map gwres capasiti — PPM",
+  "p.capacity_heatmap.h1": "Capasiti fesul cronfa sgiliau a mis",
+  "p.capacity_heatmap.lede":
+    "Mae pob sgwâr yn cymharu'r gwaith a ofynnir gan gronfa sgiliau mewn mis â'r bobl sydd ar gael ar ei gyfer, mewn cyfwerth ag amser llawn (FTE).",
+  "p.capacity_heatmap.bridge_note":
+    "Mae cronfa sydd wedi'i chysylltu â'r gwasanaeth gweithlu yn cymryd ei chyflenwad oddi yno. Dangosir yr hyn a gofnodwyd yma ar gyfer y gronfa honno wrth ei ochr ac ni chaiff byth ei adio ato. Dangosir mis heb ffigur gan y gwasanaeth gweithlu fel anhysbys, byth fel sero.",
+  "p.capacity_heatmap.from": "Mis cyntaf",
+  "p.capacity_heatmap.months": "Nifer y misoedd",
+  "p.capacity_heatmap.show": "Dangos",
+  "p.capacity_heatmap.loading": "Yn llwytho'r map gwres…",
+  "p.capacity_heatmap.could_not_load":
+    "Nid oedd modd llwytho'r map gwres capasiti.",
+  "p.capacity_heatmap.none": "Dim cronfa sgiliau a dim galw i'w dangos.",
+  "p.capacity_heatmap.caption":
+    "Galw a chyflenwad mewn cyfwerth ag amser llawn, fesul cronfa sgiliau a mis",
+  "p.capacity_heatmap.col_pool": "Cronfa sgiliau",
+  "p.capacity_heatmap.linked_to": "Wedi'i chysylltu â'r gwasanaeth gweithlu",
+  "p.capacity_heatmap.demand": "Galw: {fte}",
+  "p.capacity_heatmap.supply": "Cyflenwad: {fte}",
+  "p.capacity_heatmap.gap": "Bwlch: {fte}",
+  "p.capacity_heatmap.unknown": "anhysbys",
+  "p.capacity_heatmap.none_recorded": "dim wedi'i gofnodi",
+  "p.capacity_heatmap.source_wpm": "Cyflenwad o'r gwasanaeth gweithlu",
+  "p.capacity_heatmap.source_here": "Cyflenwad a gofnodwyd yma",
+  "p.capacity_heatmap.peer_live": "Byw, wedi'i gymryd {when}.",
+  "p.capacity_heatmap.peer_live_no_time": "Byw.",
+  "p.capacity_heatmap.peer_last":
+    "Derbyniwyd ddiwethaf {age} (wedi'i gymryd {when}); ddim yn fyw nawr: {reason}",
+  "p.capacity_heatmap.peer_hidden":
+    "Cudd: mae'r gwasanaeth gweithlu yn cuddio mis sy'n cynnwys llai o weithwyr na'i isafswm.",
+  "p.capacity_heatmap.peer_unknown": "Anhysbys: {reason}",
+  "p.capacity_heatmap.no_reason":
+    "dim ffigur wedi'i dderbyn gan y gwasanaeth gweithlu",
+  "p.capacity_heatmap.entered_here":
+    "Cofnodwyd yma: {fte} (wedi'i ddangos wrth ei ochr, heb ei adio)",
+  "p.capacity_heatmap.entered_here_none": "Cofnodwyd yma: dim",
+  "p.capacity_heatmap.partners_short":
+    "cyflwynodd partneriaid lai nag a addawyd ganddynt",
+  "p.capacity_heatmap.no_pool": "Dim cronfa wedi'i neilltuo",
+  "p.capacity_heatmap.key":
+    "▲ diffyg · ◆ tynn · ● digon · ○ dim galw · – dim cyflenwad wedi'i gofnodi · ? cyflenwad anhysbys. Mae'r gair bob amser wedi'i ysgrifennu hefyd.",
+  "p.capacity_heatmap.every_figure": "Pob ffigur fel tabl",
+  "p.capacity_heatmap.table_label": "Capasiti fesul cronfa sgiliau a mis",
+  "p.capacity_heatmap.c_pool": "Cronfa sgiliau",
+  "p.capacity_heatmap.c_month": "Mis",
+  "p.capacity_heatmap.c_reading": "Darlleniad",
+  "p.capacity_heatmap.c_demand": "Galw (cyfwerth ag amser llawn)",
+  "p.capacity_heatmap.c_supply": "Cyflenwad (cyfwerth ag amser llawn)",
+  "p.capacity_heatmap.c_source": "Cyflenwad o",
+  "p.capacity_heatmap.c_status": "Darlleniad y gwasanaeth gweithlu",
+  "p.capacity_heatmap.c_entered_here": "Cofnodwyd yma",
+  "p.capacity_heatmap.see_pools":
+    "Cysylltu cronfeydd sgiliau â'r gwasanaeth gweithlu",
+  "p.capacity_heatmap.no_commitment_form":
+    "Gosodir ymrwymiadau galw drwy'r gwasanaeth; nid oes gan y rhyngwyneb hwn ffurflen ar eu cyfer eto, felly ni ddangosir yma ganlyniad anfon galw i'r gwasanaeth gweithlu.",
+  "p.skill_pools.nav": "Cronfeydd sgiliau",
+  "p.skill_pools.title": "Cronfeydd sgiliau — PPM",
+  "p.skill_pools.h1": "Cronfeydd sgiliau",
+  "p.skill_pools.lede":
+    "Mae cronfa sgiliau yn grwpio'r rolau a'r sgiliau sy'n gallu gwneud yr un gwaith. Yma gallwch gysylltu cronfa â'r gronfa gyfatebol yn y gwasanaeth gweithlu.",
+  "p.skill_pools.rule":
+    "Rhaid gosod y cysylltiad ar y ddwy ochr, yma ac yn y gwasanaeth gweithlu, gan berson sy'n gallu gweld y ddau. Nid yw byth yn cael ei baru yn ôl enw. Tra bo cronfa wedi'i chysylltu, daw ei chyflenwad ar y map gwres capasiti o'r gwasanaeth gweithlu ac anfonir ei galw yno.",
+  "p.skill_pools.loading": "Yn llwytho'r cronfeydd sgiliau…",
+  "p.skill_pools.could_not_load": "Nid oedd modd llwytho'r cronfeydd sgiliau.",
+  "p.skill_pools.none": "Nid oes cronfa sgiliau wedi'i chreu eto.",
+  "p.skill_pools.col_name": "Enw",
+  "p.skill_pools.col_roles": "Rolau",
+  "p.skill_pools.col_skills": "Sgiliau",
+  "p.skill_pools.col_state": "Cyflwr",
+  "p.skill_pools.col_link": "Cronfa'r gwasanaeth gweithlu",
+  "p.skill_pools.col_act": "Newid",
+  "p.skill_pools.active": "gweithredol",
+  "p.skill_pools.retired": "wedi'i hymddeol",
+  "p.skill_pools.not_linked": "heb ei chysylltu",
+  "p.skill_pools.change_short": "Newid cysylltiad",
+  "p.skill_pools.change": "Newid cysylltiad ar gyfer {name}",
+  "p.skill_pools.edit_h2": "Cysylltu {name} â'r gwasanaeth gweithlu",
+  "p.skill_pools.ref_label": "Rhif adnabod cronfa'r gwasanaeth gweithlu",
+  "p.skill_pools.ref_hint":
+    "Copïwch ef o'r gronfa yn y gwasanaeth gweithlu: 36 nod, llythrennau bach, gyda chysylltnodau, fel 3f2a8c1e-0b4d-4e6f-9a7b-1c2d3e4f5a6b.",
+  "p.skill_pools.ref_invalid":
+    "Nid yw hwnnw'n rhif adnabod cronfa'r gwasanaeth gweithlu: rhaid iddo fod yn 36 nod, llythrennau bach, gyda chysylltnodau.",
+  "p.skill_pools.save": "Cadw'r cysylltiad",
+  "p.skill_pools.clear": "Dileu'r cysylltiad",
+  "p.skill_pools.cancel": "Canslo",
+  "p.skill_pools.confirm_clear":
+    "Dileu'r cysylltiad rhwng {name} a'r gwasanaeth gweithlu? Bydd ei chyflenwad ar y map gwres unwaith eto'n cynnwys yr hyn a gofnodwyd yma. Mae'r galw a anfonwyd eisoes i'r gwasanaeth gweithlu yn aros yno.",
+  "p.skill_pools.saved":
+    "Mae {name} bellach wedi'i chysylltu â chronfa'r gwasanaeth gweithlu {ref}.",
+  "p.skill_pools.cleared":
+    "Nid yw {name} wedi'i chysylltu â'r gwasanaeth gweithlu mwyach.",
+  "p.skill_pools.taken":
+    "Mae cronfa arall yma eisoes wedi'i chysylltu â chronfa'r gwasanaeth gweithlu honno. Dilëwch y cysylltiad hwnnw yn gyntaf: un gronfa yma i bob cronfa yno.",
+  "p.skill_pools.invalid":
+    "Ni dderbyniodd y gwasanaeth y rhif adnabod hwnnw. Rhaid iddo fod yn rhif adnabod cronfa'r gwasanaeth gweithlu: 36 nod, llythrennau bach, gyda chysylltnodau.",
+  "p.skill_pools.missing":
+    "Nid yw'r gronfa honno'n bodoli mwyach. Mae'r rhestr wedi'i llwytho eto.",
+  "p.skill_pools.could_not_save": "Nid oedd modd newid y cysylltiad.",
+  "p.skill_pools.see_heatmap": "Gweld y map gwres capasiti",
 };

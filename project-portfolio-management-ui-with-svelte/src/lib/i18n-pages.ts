@@ -4621,6 +4621,106 @@ export const PAGES_EN = {
     "{over} of {considered} pool-months are over; {unknown} cannot be said.",
   "p.people_impact.no_total":
     "No total is given: a person can count in more than one pool.",
+  "l.enum.pk_heat.supply_unknown": "supply unknown",
+  "p.capacity_heatmap.nav": "Capacity heatmap",
+  "p.capacity_heatmap.title": "Capacity heatmap — PPM",
+  "p.capacity_heatmap.h1": "Capacity by skill pool and month",
+  "p.capacity_heatmap.lede":
+    "Each square compares the work asked of a skill pool in a month with the people available for it, in full-time equivalents (FTE).",
+  "p.capacity_heatmap.bridge_note":
+    "A pool linked to the workforce service takes its supply from there. What was entered here for that pool is shown beside it and never added to it. A month with no figure from the workforce service is shown as unknown, never as zero.",
+  "p.capacity_heatmap.from": "First month",
+  "p.capacity_heatmap.months": "Number of months",
+  "p.capacity_heatmap.show": "Show",
+  "p.capacity_heatmap.loading": "Loading the heatmap…",
+  "p.capacity_heatmap.could_not_load":
+    "The capacity heatmap could not be loaded.",
+  "p.capacity_heatmap.none": "No skill pool and no demand to show.",
+  "p.capacity_heatmap.caption":
+    "Demand and supply in full-time equivalents, by skill pool and month",
+  "p.capacity_heatmap.col_pool": "Skill pool",
+  "p.capacity_heatmap.linked_to": "Linked to the workforce service",
+  "p.capacity_heatmap.demand": "Demand: {fte}",
+  "p.capacity_heatmap.supply": "Supply: {fte}",
+  "p.capacity_heatmap.gap": "Gap: {fte}",
+  "p.capacity_heatmap.unknown": "unknown",
+  "p.capacity_heatmap.none_recorded": "none recorded",
+  "p.capacity_heatmap.source_wpm": "Supply from the workforce service",
+  "p.capacity_heatmap.source_here": "Supply entered here",
+  "p.capacity_heatmap.peer_live": "Live, taken {when}.",
+  "p.capacity_heatmap.peer_live_no_time": "Live.",
+  "p.capacity_heatmap.peer_last":
+    "Last received {age} (taken {when}); not live now: {reason}",
+  "p.capacity_heatmap.peer_hidden":
+    "Hidden: the workforce service hides a month made up of fewer workers than its floor.",
+  "p.capacity_heatmap.peer_unknown": "Unknown: {reason}",
+  "p.capacity_heatmap.no_reason":
+    "no figure received from the workforce service",
+  "p.capacity_heatmap.entered_here":
+    "Entered here: {fte} (shown beside, not added)",
+  "p.capacity_heatmap.entered_here_none": "Entered here: none",
+  "p.capacity_heatmap.partners_short":
+    "partners delivered less than they committed",
+  "p.capacity_heatmap.no_pool": "No pool assigned",
+  "p.capacity_heatmap.key":
+    "▲ shortfall · ◆ tight · ● enough · ○ no demand · – no supply recorded · ? supply unknown. The word is always written as well.",
+  "p.capacity_heatmap.every_figure": "Every figure as a table",
+  "p.capacity_heatmap.table_label": "Capacity by skill pool and month",
+  "p.capacity_heatmap.c_pool": "Skill pool",
+  "p.capacity_heatmap.c_month": "Month",
+  "p.capacity_heatmap.c_reading": "Reading",
+  "p.capacity_heatmap.c_demand": "Demand (full-time equivalent)",
+  "p.capacity_heatmap.c_supply": "Supply (full-time equivalent)",
+  "p.capacity_heatmap.c_source": "Supply from",
+  "p.capacity_heatmap.c_status": "Workforce service reading",
+  "p.capacity_heatmap.c_entered_here": "Entered here",
+  "p.capacity_heatmap.see_pools": "Link skill pools to the workforce service",
+  "p.capacity_heatmap.no_commitment_form":
+    "Demand commitments are set through the service; this interface has no form for them yet, so the outcome of sending demand to the workforce service is not shown here.",
+  "p.skill_pools.nav": "Skill pools",
+  "p.skill_pools.title": "Skill pools — PPM",
+  "p.skill_pools.h1": "Skill pools",
+  "p.skill_pools.lede":
+    "A skill pool groups the roles and skills that can do the same work. Here you can link a pool to the matching pool in the workforce service.",
+  "p.skill_pools.rule":
+    "The link must be set on both sides, here and in the workforce service, by a person who can see both. It is never matched by name. While a pool is linked, its supply on the capacity heatmap comes from the workforce service and its demand is sent there.",
+  "p.skill_pools.loading": "Loading the skill pools…",
+  "p.skill_pools.could_not_load": "The skill pools could not be loaded.",
+  "p.skill_pools.none": "No skill pool has been made yet.",
+  "p.skill_pools.col_name": "Name",
+  "p.skill_pools.col_roles": "Roles",
+  "p.skill_pools.col_skills": "Skills",
+  "p.skill_pools.col_state": "State",
+  "p.skill_pools.col_link": "Workforce service pool",
+  "p.skill_pools.col_act": "Change",
+  "p.skill_pools.active": "active",
+  "p.skill_pools.retired": "retired",
+  "p.skill_pools.not_linked": "not linked",
+  "p.skill_pools.change_short": "Change link",
+  "p.skill_pools.change": "Change link for {name}",
+  "p.skill_pools.edit_h2": "Link {name} to the workforce service",
+  "p.skill_pools.ref_label": "Workforce service pool id",
+  "p.skill_pools.ref_hint":
+    "Copy it from the pool in the workforce service: 36 characters, lower case, with hyphens, like 3f2a8c1e-0b4d-4e6f-9a7b-1c2d3e4f5a6b.",
+  "p.skill_pools.ref_invalid":
+    "That is not a workforce service pool id: it must be 36 characters, lower case, with hyphens.",
+  "p.skill_pools.save": "Save the link",
+  "p.skill_pools.clear": "Remove the link",
+  "p.skill_pools.cancel": "Cancel",
+  "p.skill_pools.confirm_clear":
+    "Remove the link between {name} and the workforce service? Its supply on the heatmap will again be what was entered here. Demand already sent to the workforce service stays there.",
+  "p.skill_pools.saved":
+    "{name} is now linked to the workforce service pool {ref}.",
+  "p.skill_pools.cleared":
+    "{name} is no longer linked to the workforce service.",
+  "p.skill_pools.taken":
+    "Another pool here is already linked to that workforce service pool. Remove that link first: one pool here per pool there.",
+  "p.skill_pools.invalid":
+    "The service did not accept that id. It must be the workforce service's pool id: 36 characters, lower case, with hyphens.",
+  "p.skill_pools.missing":
+    "That pool no longer exists. The list has been loaded again.",
+  "p.skill_pools.could_not_save": "The link could not be changed.",
+  "p.skill_pools.see_heatmap": "See the capacity heatmap",
 } as const;
 
 /** A key in the page and component catalogue. */

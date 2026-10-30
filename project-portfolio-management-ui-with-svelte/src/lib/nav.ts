@@ -71,6 +71,8 @@ export const KNOWN_NAV_HREFS = [
   "/security",
   "/regulator",
   "/capacity",
+  "/capacity-heatmap",
+  "/skill-pools",
   "/resources",
   "/cost-risk",
   "/reports",

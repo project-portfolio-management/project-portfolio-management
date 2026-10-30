@@ -2214,9 +2214,16 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   `controllers/capacity/people_impact.rs` (FB-8).
 - [ ] **FB-5 (S) — Withdraw a demand figure.** WPM has no route to withdraw a figure and refuses zero, so a programme's
   demand set to zero here leaves WPM's last figure in place. Needs a WPM route first; then PPM sends it on zero.
-- [ ] **FB-6 (S–M, UI) — Show the bridge.** The UI has no capacity-heatmap screen and no skill-pool screen today
-  (only a pool list call), so the source label, "entered here", `unknown`, and a set/clear control for the link are
-  not shown anywhere. Needs those screens first.
+- [x] **FB-6 (S–M, UI) — Show the bridge.** **Built in part 2026-10-30:** `/skill-pools` lists every pool with the
+  workforce service's pool it is linked to and sets or removes the link (`PUT /api/skill-pools/{pid}/peer-link`;
+  the id is checked as a lower-case hyphenated UUID before it is sent, 409 and 422 said plainly, removal confirmed;
+  the page says the link is set on both sides by a person who can see both and never matched by name);
+  `/capacity-heatmap` draws `GET /api/capacity-heatmap` pool by month, each square with the service's word and
+  shape as well as a tone, and for a linked pool the source ("from the workforce service"), the reading (live,
+  last received with its age, hidden, unknown with the reason, never zero) and what was entered here beside it,
+  never added. Both are in the top navigation. **Not built:** the demand send outcome (`peer_demand_send`), because
+  the interface has no form to set a capacity commitment; pools cannot be created or edited here (only linked).
+  **Not verified:** against a running service or WPM (the browser tests stub the service; FB-8).
 - [ ] **FB-7 (S) — Worker skills.** `workers_client` calls `GET /api/workers/{id}/skills`, which WPM does not have
   (WPM has `/api/workers/{pid}/skills-as-of`, a different shape); the skill-gap view reports `unknown`. A mapping
   from WPM's catalogue skills to PPM's tags is an owners' decision, not made.

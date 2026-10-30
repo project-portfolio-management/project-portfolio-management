@@ -49,7 +49,9 @@ test("simple view moves the advanced destinations behind More, drops none, and p
   const nav = page.locator("#primary-nav");
   // Off by default for someone who is not the worker persona: everything is in front.
   await menu.click();
-  await expect(nav.getByRole("link", { name: "Capacity" })).toBeVisible();
+  await expect(
+    nav.getByRole("link", { name: "Capacity", exact: true }),
+  ).toBeVisible();
   await expect(nav.getByText("More", { exact: true })).toHaveCount(0);
   const toggle = page.getByRole("button", { name: /Simple view/ });
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
@@ -59,9 +61,13 @@ test("simple view moves the advanced destinations behind More, drops none, and p
   // The advanced links are one step away, not gone.
   const more = nav.getByText("More", { exact: true });
   await expect(more).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Capacity" })).toBeHidden();
+  await expect(
+    nav.getByRole("link", { name: "Capacity", exact: true }),
+  ).toBeHidden();
   await more.click();
-  await expect(nav.getByRole("link", { name: "Capacity" })).toBeVisible();
+  await expect(
+    nav.getByRole("link", { name: "Capacity", exact: true }),
+  ).toBeVisible();
   // Everything still works at its address.
   await page.goto("/en-001/capacity");
   await expect(page.locator("h1").first()).toBeVisible();

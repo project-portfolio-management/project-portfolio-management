@@ -136,6 +136,11 @@ match breakdown).
                              critical path in colour and words, zoom,
                              CSV/Excel export; read-only)
 /capacity                    resource capacity rollup
+/capacity-heatmap            demand and supply by skill pool and month;
+                             a linked pool's supply from the workforce
+                             service with its reading (FB-6)
+/skill-pools                 skill pools and their link to the
+                             workforce service's pool (FB-6)
 /engineering                 blocked aging + MoSCoW + delivery links
 /calendar                    estate milestone calendar (kind filter)
 /executive                   CEO area: portfolio-health briefing,
@@ -1359,6 +1364,25 @@ other apps, shares a session with them, or fails when they are down.
   reason, and no total; when the answer is `unknown`, only the reason. The service, not the browser, calls WPM
   (`src/lib/people-impact.ts`, `PeopleImpact.svelte`; `tests/unit/people-impact.test.ts`,
   `tests/e2e/people-impact.spec.ts`).
+- **The pool link and the heatmap (FB-6).** `/skill-pools` lists every pool (name, roles, skills, state, the
+  workforce service's pool id it is linked to, or "not linked") in the `DataTable`, and a per-row "Change link"
+  opens a form for that pool. The id is checked before it is sent: a lower-case hyphenated UUID, trimmed, the same
+  rule as the service's (`isPeerPoolRef`); anything else is refused on the page and nothing is sent. The service's
+  `409` (another pool here is already linked to that workforce pool) and `422` (the id was not accepted) are each
+  said in the catalogue's own sentence; the service's text is never shown. Removing a link (`peer_pool_ref: null`)
+  is asked first through `askConfirm`. The page says that the link must be set on both sides by a person who can
+  see both, and is never matched by name. `/capacity-heatmap` draws `GET /api/capacity-heatmap[?from=YYYY-MM]
+  [&months=N]` as a table, pool by month: each square has the service's word and a symbol for the service's
+  `shape` as well as a border tone from its `colour`, so colour is never the only signal; demand, supply and gap
+  are in the reader's locale (`Intl` with `currentLocale()`). For a pool with `supply_source: "wpm"` the square
+  also says "Supply from the workforce service", the reading (`live` with when it was taken, `last_received` with
+  its age and the reason it is not live, `hidden` under the workforce service's floor, `unknown` with the
+  service's reason), and "Entered here" beside it, never added; a `supply_unknown` month says "Supply: unknown",
+  never zero. Every figure is also in a `DataTable` under "Every figure as a table". Both are in the top
+  navigation (`src/lib/nav-items.ts`). Words in `src/lib/capacity-heatmap-view.ts`
+  (`tests/unit/capacity-heatmap-view.test.ts`); browser test `tests/e2e/wpm-bridge.spec.ts`. **Not built:** the
+  demand send outcome (`peer_demand_send`) is not shown, because no screen sets a capacity commitment; pools are
+  not created or edited here. The service's reasons are English and shown as they come.
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 

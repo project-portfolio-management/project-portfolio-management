@@ -168,6 +168,19 @@ export function buildNavItems(): NavEntry[] {
     { href: "/security", label: t("ppm.nav.security") },
     { href: "/regulator", label: t("ppm.nav.regulator") },
     { href: "/capacity", label: t("ppm.nav.capacity") },
+    // FB-6: demand and supply by skill pool and month, with the workforce service's supply for a linked pool.
+    {
+      href: "/capacity-heatmap",
+      get label() {
+        return t("p.capacity_heatmap.nav");
+      },
+    },
+    {
+      href: "/skill-pools",
+      get label() {
+        return t("p.skill_pools.nav");
+      },
+    },
     {
       href: "/resources",
       get label() {

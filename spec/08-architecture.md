@@ -165,7 +165,7 @@ WPM-D135, WPM-D138 to D141).
 | Delivery ideas | CRM → PPM | `POST /api/ideas` `{title, pitch, tags}` → `{pid}` (CRM's `POST /api/bridges/ppm/deals/{pid}`) | exists (PPM's route; CRM calls it) |
 | Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1); set and removed on the `/skill-pools` screen (FB-6) |
 | Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2); shown on the `/capacity-heatmap` screen with its source and reading (FB-6) |
-| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); zero sent as the withdrawal, and every sent figure withdrawn on unlink (FB-5); the send outcome is not shown in the interface (no commitment form there; FB-6) |
+| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); zero sent as the withdrawal, and every sent figure withdrawn on unlink (FB-5); set on the `/capacity-commitments` screen, which shows the send outcome and the recent sends (FB-6) |
 | People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` | **built** (FB-4): `GET /api/plans/{pid}/people-impact`, shown on a programme's plan page |
 | Hire and leave | WPM → CRM | `worker_hired`, `worker_terminated`/`worker_retired` webhooks | CRM's and WPM's; nothing in PPM |
 

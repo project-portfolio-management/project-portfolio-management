@@ -1382,9 +1382,26 @@ other apps, shares a session with them, or fails when they are down.
   service's reason), and "Entered here" beside it, never added; a `supply_unknown` month says "Supply: unknown",
   never zero. Every figure is also in a `DataTable` under "Every figure as a table". Both are in the top
   navigation (`src/lib/nav-items.ts`). Words in `src/lib/capacity-heatmap-view.ts`
-  (`tests/unit/capacity-heatmap-view.test.ts`); browser test `tests/e2e/wpm-bridge.spec.ts`. **Not built:** the
-  demand send outcome (`peer_demand_send`) is not shown, because no screen sets a capacity commitment; pools are
-  not created or edited here. The service's reasons are English and shown as they come.
+  (`tests/unit/capacity-heatmap-view.test.ts`); browser test `tests/e2e/wpm-bridge.spec.ts`. **Not built:** pools
+  are not created or edited here. The service's reasons are English and shown as they come.
+- **Capacity commitments (FB-6 completed, FB-5).** `/capacity-commitments` is the form for
+  `PUT /api/capacity-commitments`: skill pool (active pools only; a linked one says so), programme (every plan the
+  reader can list; `?plan=<pid>` chooses one, and a plan not in the list is fetched by id), supply or demand,
+  optional partner organization, month (`<input type="month">`), committed and optional delivered full-time
+  equivalents read in the reader's own number format through `parseAmount` (0 to 1000), and a note. Every wrong
+  field is named under it (`aria-invalid`, `aria-describedby`) and nothing is sent until all are right; the
+  service's 404 and 422 are said in the catalogue's own sentences. After a save of a demand commitment the page
+  says what happened to the demand sent to the workforce service (`peer_demand_send`) in plain words: started (a
+  figure, or the withdrawal at zero), taken, withdrawn, already there, refused, not reached, not configured, no
+  sign-in, too large, an old zero not sent, or nothing sent because the pool is not linked; the service's
+  English `detail` is never shown. "Recent sends to the workforce service" lists the latest send per programme,
+  pool and month from `GET /api/capacity-commitments` (newest first, at most 20) in a `DataTable`, with a Refresh
+  button, since a started send's answer arrives later. Reached from `/capacity-heatmap` ("Set a capacity
+  commitment") and a programme's plan page ("Capacity commitments for this programme"); not in the top
+  navigation. Words in `src/lib/capacity-commitments-view.ts` (`tests/unit/capacity-commitments-view.test.ts`);
+  browser test `tests/e2e/capacity-commitments.spec.ts` (axe, Welsh). The messages use the neutral banner:
+  `.banner.success` fails colour contrast under the default theme's success colour (seen in axe here; the other
+  pages that use it are not changed).
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 

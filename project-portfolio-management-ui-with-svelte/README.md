@@ -73,6 +73,7 @@ Every plan route lives under the static `plans/` directory.
 | `/capacity` | Resource capacity — per-person rollup over a window; over-allocation flagged |
 | `/capacity-heatmap` | Demand and supply by skill pool and month; a linked pool's supply from the workforce service, with its reading and what was entered here beside it (FB-6) |
 | `/skill-pools` | Skill pools and their link to the workforce service's pool: set or remove it (FB-6) |
+| `/capacity-commitments` | Set a capacity commitment (supply or demand) and see what was sent to the workforce service (FB-6, FB-5) |
 | `/ideas` | Idea board — capture, vote, dismiss, convert to a draft proposal |
 | `/objectives` | OKR objectives registry + per-objective alignment rollups |
 | `/proposals` | Work-intake board — proposal pipeline (draft → … → promoted) + duplicate-demand checks + promote-to-plan |

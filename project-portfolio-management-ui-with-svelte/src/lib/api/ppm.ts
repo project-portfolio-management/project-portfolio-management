@@ -13,6 +13,10 @@ import { mspdiReport, simQuery } from "./ppm-types";
 import type { PeopleImpact } from "#lib/people-impact.js";
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type {
+  CapacityCommitment,
+  CommitmentInput,
+} from "#lib/capacity-commitments-view.js";
+import type {
   AccessRecords,
   Alignment,
   AlignmentCoverage,
@@ -593,6 +597,15 @@ export class PpmClient {
         body: { peer_pool_ref: peerPoolRef },
       },
     );
+  }
+  /** DP-10: the capacity commitments on programmes the caller can read, each demand one with its latest send to
+   *  the workforce service (`peer_demand_send`, FB-3/FB-5). */
+  capacityCommitments(): Promise<{ commitments: CapacityCommitment[] }> {
+    return this.http.get("/api/capacity-commitments");
+  }
+  /** DP-10 / FB-6: set a capacity commitment (one per pool, programme, organization, kind and month). */
+  setCapacityCommitment(body: CommitmentInput): Promise<CapacityCommitment> {
+    return this.http.put("/api/capacity-commitments", { body });
   }
   /** DP-10 / FB-2: demand and supply by skill pool and month, `from` `YYYY-MM`, 1 to 24 months. */
   capacityHeatmap(from?: string, months?: number): Promise<CapacityHeatmap> {

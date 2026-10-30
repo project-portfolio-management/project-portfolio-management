@@ -43,6 +43,7 @@
 <p class="lede">{t("p.capacity_heatmap.lede")}</p>
 <p class="banner" role="note">{t("p.capacity_heatmap.bridge_note")}</p>
 <p><a href={localeHref("/skill-pools")}>{t("p.capacity_heatmap.see_pools")}</a></p>
+<p><a href={localeHref("/capacity-commitments")}>{t("p.capacity_heatmap.set_commitment")}</a></p>
 
 <form class="filter" onsubmit={(e) => { e.preventDefault(); void load(); }}>
   <label>{t("p.capacity_heatmap.from")} <input type="month" bind:value={from} /></label>
@@ -106,7 +107,7 @@
       <DataTable label={t("p.capacity_heatmap.table_label")} {columns} {rows} rowId={(r) => String(r.key)} sortable={false} pageSize={50} searchable />
     </details>
   {/if}
-  <p class="small muted">{t("p.capacity_heatmap.no_commitment_form")}</p>
+
 {:else if !error}
   <p class="muted">{t("p.capacity_heatmap.loading")}</p>
 {/if}

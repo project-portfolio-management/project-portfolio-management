@@ -4782,8 +4782,6 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.capacity_heatmap.c_entered_here": "Cofnodwyd yma",
   "p.capacity_heatmap.see_pools":
     "Cysylltu cronfeydd sgiliau â'r gwasanaeth gweithlu",
-  "p.capacity_heatmap.no_commitment_form":
-    "Gosodir ymrwymiadau galw drwy'r gwasanaeth; nid oes gan y rhyngwyneb hwn ffurflen ar eu cyfer eto, felly ni ddangosir yma ganlyniad anfon galw i'r gwasanaeth gweithlu.",
   "p.skill_pools.nav": "Cronfeydd sgiliau",
   "p.skill_pools.title": "Cronfeydd sgiliau — PPM",
   "p.skill_pools.h1": "Cronfeydd sgiliau",
@@ -4830,4 +4828,96 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.skill_pools.see_heatmap": "Gweld y map gwres capasiti",
   "p.skill_pools.withdrawing":
     "Ffigurau galw sy'n cael eu tynnu'n ôl o gronfa'r gwasanaeth gweithlu yr oedd wedi'i chysylltu â hi: {n}.",
+  "p.capacity_heatmap.set_commitment": "Gosod ymrwymiad capasiti",
+  "p.commitments.title": "Ymrwymiadau capasiti — PPM",
+  "p.commitments.h1": "Ymrwymiadau capasiti",
+  "p.commitments.lede":
+    "Cofnodi capasiti a addawyd i raglen (cyflenwad) neu waith sydd ei angen ar raglen gan gronfa sgiliau (galw), am un mis, mewn cyfwerth ag amser llawn.",
+  "p.commitments.bridge_note":
+    "Ar gyfer cronfa sydd wedi'i chysylltu â'r gwasanaeth gweithlu, mae ymrwymiad galw hefyd yn anfon cyfanswm galw'r rhaglen ar gyfer y gronfa a'r mis hwnnw yno. Mae cyfanswm o sero yn tynnu'r ffigur yn ôl yno. Nid oes dim yn cael ei ailgynnig: cadwch eto i anfon eto.",
+  "p.commitments.see_heatmap": "Gweld y map gwres capasiti",
+  "p.commitments.from_plan": "Ymrwymiadau capasiti ar gyfer y rhaglen hon",
+  "p.commitments.form_h2": "Gosod ymrwymiad",
+  "p.commitments.choose": "Dewiswch…",
+  "p.commitments.pool": "Cronfa sgiliau",
+  "p.commitments.pool_linked":
+    "{name} (wedi'i chysylltu â'r gwasanaeth gweithlu)",
+  "p.commitments.pool_hint": "Dim ond cronfeydd gweithredol a restrir.",
+  "p.commitments.pool_missing": "Dewiswch gronfa sgiliau.",
+  "p.commitments.plan": "Rhaglen",
+  "p.commitments.plan_hint":
+    "Rhaid i'r cynllun fod yn rhaglen (cynllun o'r math Program).",
+  "p.commitments.plan_missing": "Dewiswch raglen.",
+  "p.commitments.kind": "Beth sy'n cael ei ymrwymo",
+  "p.commitments.kind_demand":
+    "Galw: gwaith sydd ei angen ar y rhaglen gan y gronfa",
+  "p.commitments.kind_supply": "Cyflenwad: capasiti a addawyd i'r rhaglen",
+  "p.commitments.organization": "Sefydliad partner (dewisol)",
+  "p.commitments.organization_hint":
+    "Gadewch yn wag ar gyfer eich sefydliad eich hun.",
+  "p.commitments.month": "Mis",
+  "p.commitments.month_hint": "Un mis: blwyddyn a mis.",
+  "p.commitments.month_invalid": "Rhowch fis fel blwyddyn a mis.",
+  "p.commitments.committed": "Wedi'i ymrwymo (cyfwerth ag amser llawn)",
+  "p.commitments.committed_hint":
+    "Rhif o 0 i 1000, wedi'i ysgrifennu fel rydych chi'n ysgrifennu rhifau. Mae sero yn tynnu'n ôl ffigur galw a anfonwyd i'r gwasanaeth gweithlu.",
+  "p.commitments.delivered":
+    "Wedi'i gyflawni (cyfwerth ag amser llawn, dewisol)",
+  "p.commitments.delivered_hint":
+    "Yr hyn a gyflawnwyd mewn gwirionedd, os yw'n hysbys.",
+  "p.commitments.fte_invalid":
+    "Rhif o 0 i 1000, wedi'i ysgrifennu fel rydych chi'n ysgrifennu rhifau.",
+  "p.commitments.note": "Nodyn (dewisol)",
+  "p.commitments.save": "Cadw'r ymrwymiad",
+  "p.commitments.saved": "Wedi'i gadw: {pool}, {plan}, {month}.",
+  "p.commitments.not_found":
+    "Ni chafwyd hyd i'r rhaglen honno, neu ni allwch ei darllen.",
+  "p.commitments.refused":
+    "Ni dderbyniodd y gwasanaeth hyn. Rhaid i'r cynllun fod yn rhaglen, y gronfa'n un weithredol, a phob ffigur o 0 i 1000.",
+  "p.commitments.could_not_save": "Nid oedd modd cadw'r ymrwymiad.",
+  "p.commitments.could_not_load":
+    "Nid oedd modd llwytho'r ymrwymiadau capasiti.",
+  "p.commitments.loading": "Yn llwytho'r anfoniadau diweddar…",
+  "p.commitments.sends_h2": "Anfoniadau diweddar i'r gwasanaeth gweithlu",
+  "p.commitments.sends_note":
+    "Yr anfoniad diweddaraf ar gyfer pob rhaglen, cronfa a mis, y mwyaf newydd yn gyntaf. Mae anfoniad a ddechreuwyd yn dangos ei ateb yma pan fydd yn cyrraedd: adnewyddwch i'w weld.",
+  "p.commitments.refresh": "Adnewyddu",
+  "p.commitments.no_sends":
+    "Nid oes dim wedi'i anfon i'r gwasanaeth gweithlu eto.",
+  "p.commitments.c_pool": "Cronfa sgiliau",
+  "p.commitments.c_programme": "Rhaglen",
+  "p.commitments.c_month": "Mis",
+  "p.commitments.c_sent": "Anfonwyd",
+  "p.commitments.c_outcome": "Beth ddigwyddodd",
+  "p.commitments.c_at": "Pryd",
+  "p.commitments.sent_fte": "{fte} cyfwerth ag amser llawn",
+  "p.commitments.sent_withdrawal": "tynnu'n ôl (sero)",
+  "p.commitments.sent_nothing": "dim",
+  "p.commitments.out_not_sent_at_all":
+    "Nid yw'r ymrwymiad hwn yn cael ei anfon i'r gwasanaeth gweithlu: dim ond galw ar gronfa sydd wedi'i chysylltu ag ef sy'n cael ei anfon.",
+  "p.commitments.out_none_yet":
+    "Nid oes dim wedi'i anfon i'r gwasanaeth gweithlu ar gyfer y rhaglen, y gronfa a'r mis hwn eto.",
+  "p.commitments.out_started":
+    "Yn anfon {fte} cyfwerth ag amser llawn (cyfanswm y rhaglen ar gyfer y gronfa a'r mis hwn) i'r gwasanaeth gweithlu. Mae ei ateb yn ymddangos o dan Anfoniadau diweddar.",
+  "p.commitments.out_started_zero":
+    "Yn tynnu ffigur y rhaglen hon ar gyfer y gronfa a'r mis hwn yn ôl o'r gwasanaeth gweithlu, gan fod y cyfanswm bellach yn sero. Mae ei ateb yn ymddangos o dan Anfoniadau diweddar.",
+  "p.commitments.out_sent":
+    "Cymerodd y gwasanaeth gweithlu {fte} cyfwerth ag amser llawn.",
+  "p.commitments.out_sent_zero":
+    "Tynnodd y gwasanaeth gweithlu ei ffigur yn ôl ar gyfer y rhaglen, y gronfa a'r mis hwn.",
+  "p.commitments.out_duplicate":
+    "Roedd y ffigur hwn gan y gwasanaeth gweithlu eisoes; ni newidiodd dim yno.",
+  "p.commitments.out_refused":
+    "Gwrthododd y gwasanaeth gweithlu hyn. Nid oes dim yn cael ei ailgynnig; cadwch eto i anfon eto.",
+  "p.commitments.out_unreachable":
+    "Nid oedd modd cyrraedd y gwasanaeth gweithlu, neu ni atebodd mewn pryd. Nid oes dim yn cael ei ailgynnig; cadwch eto i anfon eto.",
+  "p.commitments.out_not_configured":
+    "Heb ei anfon: nid yw'r gwasanaeth hwn wedi'i osod i gyrraedd y gwasanaeth gweithlu.",
+  "p.commitments.out_no_token":
+    "Heb ei anfon: nid oedd mewngofnodi i'w drosglwyddo i'r gwasanaeth gweithlu.",
+  "p.commitments.out_too_large":
+    "Heb ei anfon: mae'r gwasanaeth gweithlu yn cymryd 10 000 cyfwerth ag amser llawn ar y mwyaf.",
+  "p.commitments.out_old_zero":
+    "Heb ei anfon: sero a gofnodwyd cyn i seroau gael eu hanfon, felly cadwodd y gwasanaeth gweithlu ei ffigur olaf. Cadwch eto i'w dynnu'n ôl.",
+  "p.commitments.out_other": "Cofnododd y gwasanaeth: {outcome}.",
 };

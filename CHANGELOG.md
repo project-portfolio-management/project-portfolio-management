@@ -15,6 +15,10 @@ workflow yet. Dates are 2026.
 
 ## Unreleased
 
+### 30 October (family bridges, FB-6 completed)
+
+- **The capacity commitment form (FB-6 completed).** Interface only; the service is not changed. `/capacity-commitments` sets a capacity commitment (figures in the reader's number format), says in plain words what happened to the demand sent to the workforce service, the withdrawal at zero included, and lists the recent sends; reached from `/capacity-heatmap` and a programme's plan page. UI spec, entity spec §8.5a table, `tasks.md` FB-6. English and machine-written Welsh (unreviewed). Tests: `tests/unit/capacity-commitments-view.test.ts` (9), `tests/e2e/capacity-commitments.spec.ts` (3, axe, Welsh). **Not built:** editing or deleting a commitment from a list; the programme list is every plan (a non-programme is refused by the service). **Not verified:** against a running service or WPM (FB-8); a screen reader; CI.
+
 ### 30 October (family bridges, FB-5)
 
 - **Withdrawing a figure from the workforce service (FB-5).** Service only. Under the family contract decided 2026-10-30, a programme's demand total of zero on a linked pool is sent to WPM as `fte_centi: 0` (WPM withdraws its claim), every peer-demand send carries `sent_at` (the time of the PPM write, so WPM can ignore an older event arriving late), and unlinking or relinking a pool withdraws, best effort, every figure sent to the old WPM pool, each send recorded. Entity spec §8.5a rules 5 and 6, service spec §9.10a, `tasks.md` FB-5. Tests: a unit test against a stand-in WPM (exact bodies), `tests/wpm_bridge.rs`. **Not verified:** against a running WPM (its side is being built in parallel; FB-8); CI. **Not done:** no retry; the withdrawals on unlink are not shown on `/skill-pools`.

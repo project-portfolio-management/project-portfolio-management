@@ -4675,8 +4675,6 @@ export const PAGES_EN = {
   "p.capacity_heatmap.c_status": "Workforce service reading",
   "p.capacity_heatmap.c_entered_here": "Entered here",
   "p.capacity_heatmap.see_pools": "Link skill pools to the workforce service",
-  "p.capacity_heatmap.no_commitment_form":
-    "Demand commitments are set through the service; this interface has no form for them yet, so the outcome of sending demand to the workforce service is not shown here.",
   "p.skill_pools.nav": "Skill pools",
   "p.skill_pools.title": "Skill pools — PPM",
   "p.skill_pools.h1": "Skill pools",
@@ -4723,6 +4721,94 @@ export const PAGES_EN = {
   "p.skill_pools.see_heatmap": "See the capacity heatmap",
   "p.skill_pools.withdrawing":
     "Demand figures being withdrawn from the workforce service pool it was linked to: {n}.",
+  "p.capacity_heatmap.set_commitment": "Set a capacity commitment",
+  "p.commitments.title": "Capacity commitments — PPM",
+  "p.commitments.h1": "Capacity commitments",
+  "p.commitments.lede":
+    "Record capacity promised to a programme (supply) or work a programme needs from a skill pool (demand), for one month, in full-time equivalents.",
+  "p.commitments.bridge_note":
+    "For a pool linked to the workforce service, a demand commitment also sends the programme's total demand for that pool and month there. A total of zero withdraws the figure there. Nothing is retried: save again to send again.",
+  "p.commitments.see_heatmap": "See the capacity heatmap",
+  "p.commitments.from_plan": "Capacity commitments for this programme",
+  "p.commitments.form_h2": "Set a commitment",
+  "p.commitments.choose": "Choose…",
+  "p.commitments.pool": "Skill pool",
+  "p.commitments.pool_linked": "{name} (linked to the workforce service)",
+  "p.commitments.pool_hint": "Only active pools are listed.",
+  "p.commitments.pool_missing": "Choose a skill pool.",
+  "p.commitments.plan": "Programme",
+  "p.commitments.plan_hint":
+    "The plan must be a programme (a plan of kind Program).",
+  "p.commitments.plan_missing": "Choose a programme.",
+  "p.commitments.kind": "What is committed",
+  "p.commitments.kind_demand": "Demand: work the programme needs from the pool",
+  "p.commitments.kind_supply": "Supply: capacity promised to the programme",
+  "p.commitments.organization": "Partner organization (optional)",
+  "p.commitments.organization_hint":
+    "Leave it empty for your own organization.",
+  "p.commitments.month": "Month",
+  "p.commitments.month_hint": "One month: year and month.",
+  "p.commitments.month_invalid": "Give a month as year and month.",
+  "p.commitments.committed": "Committed (full-time equivalent)",
+  "p.commitments.committed_hint":
+    "A number from 0 to 1000, written as you write numbers. Zero withdraws a demand figure sent to the workforce service.",
+  "p.commitments.delivered": "Delivered (full-time equivalent, optional)",
+  "p.commitments.delivered_hint": "What was actually delivered, if known.",
+  "p.commitments.fte_invalid":
+    "A number from 0 to 1000, written as you write numbers.",
+  "p.commitments.note": "Note (optional)",
+  "p.commitments.save": "Save the commitment",
+  "p.commitments.saved": "Saved: {pool}, {plan}, {month}.",
+  "p.commitments.not_found":
+    "That programme was not found, or you cannot read it.",
+  "p.commitments.refused":
+    "The service did not accept it. The plan must be a programme, the pool an active one, and each figure from 0 to 1000.",
+  "p.commitments.could_not_save": "The commitment could not be saved.",
+  "p.commitments.could_not_load":
+    "The capacity commitments could not be loaded.",
+  "p.commitments.loading": "Loading the recent sends…",
+  "p.commitments.sends_h2": "Recent sends to the workforce service",
+  "p.commitments.sends_note":
+    "The latest send for each programme, pool and month, newest first. A send that was started shows its answer here once it arrives: refresh to see it.",
+  "p.commitments.refresh": "Refresh",
+  "p.commitments.no_sends":
+    "Nothing has been sent to the workforce service yet.",
+  "p.commitments.c_pool": "Skill pool",
+  "p.commitments.c_programme": "Programme",
+  "p.commitments.c_month": "Month",
+  "p.commitments.c_sent": "Sent",
+  "p.commitments.c_outcome": "What happened",
+  "p.commitments.c_at": "When",
+  "p.commitments.sent_fte": "{fte} full-time equivalent",
+  "p.commitments.sent_withdrawal": "a withdrawal (zero)",
+  "p.commitments.sent_nothing": "nothing",
+  "p.commitments.out_not_sent_at_all":
+    "This commitment is not sent to the workforce service: only demand on a pool linked to it is.",
+  "p.commitments.out_none_yet":
+    "Nothing has been sent to the workforce service for this programme, pool and month yet.",
+  "p.commitments.out_started":
+    "Sending {fte} full-time equivalent (the programme's total for this pool and month) to the workforce service. Its answer appears under Recent sends.",
+  "p.commitments.out_started_zero":
+    "Withdrawing this programme's figure for this pool and month from the workforce service, because the total is now zero. Its answer appears under Recent sends.",
+  "p.commitments.out_sent":
+    "The workforce service took {fte} full-time equivalent.",
+  "p.commitments.out_sent_zero":
+    "The workforce service withdrew its figure for this programme, pool and month.",
+  "p.commitments.out_duplicate":
+    "The workforce service already had this figure; nothing changed there.",
+  "p.commitments.out_refused":
+    "The workforce service refused it. Nothing is retried; save again to send again.",
+  "p.commitments.out_unreachable":
+    "The workforce service could not be reached, or did not answer in time. Nothing is retried; save again to send again.",
+  "p.commitments.out_not_configured":
+    "Not sent: this service is not set up to reach the workforce service.",
+  "p.commitments.out_no_token":
+    "Not sent: there was no sign-in to pass on to the workforce service.",
+  "p.commitments.out_too_large":
+    "Not sent: the workforce service takes at most 10 000 full-time equivalent.",
+  "p.commitments.out_old_zero":
+    "Not sent: a zero recorded before zeros were sent, so the workforce service kept its last figure. Save again to withdraw it.",
+  "p.commitments.out_other": "The service recorded: {outcome}.",
 } as const;
 
 /** A key in the page and component catalogue. */

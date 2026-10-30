@@ -2221,15 +2221,18 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   whose latest send carried a figure, each recorded, listed in the peer-link answer (§8.5a rule 6). **Not
   verified:** against a running WPM (FB-8): WPM is building its side in parallel; the tests use a stand-in. A
   withdrawal not sent (no URL, no token, or not answered) is not retried and the figure stays in WPM.
-- [x] **FB-6 (S–M, UI) — Show the bridge.** **Built in part 2026-10-30:** `/skill-pools` lists every pool with the
+- [x] **FB-6 (S–M, UI) — Show the bridge.** **Built 2026-10-30:** `/skill-pools` lists every pool with the
   workforce service's pool it is linked to and sets or removes the link (`PUT /api/skill-pools/{pid}/peer-link`;
   the id is checked as a lower-case hyphenated UUID before it is sent, 409 and 422 said plainly, removal confirmed;
   the page says the link is set on both sides by a person who can see both and never matched by name);
   `/capacity-heatmap` draws `GET /api/capacity-heatmap` pool by month, each square with the service's word and
   shape as well as a tone, and for a linked pool the source ("from the workforce service"), the reading (live,
   last received with its age, hidden, unknown with the reason, never zero) and what was entered here beside it,
-  never added. Both are in the top navigation. **Not built:** the demand send outcome (`peer_demand_send`), because
-  the interface has no form to set a capacity commitment; pools cannot be created or edited here (only linked).
+  never added. Both are in the top navigation. **Completed 2026-10-30:** `/capacity-commitments`, the form for
+  `PUT /api/capacity-commitments` (figures in the reader's number format), reached from the heatmap and a
+  programme's plan page, says after a save what happened to the demand sent to WPM (`peer_demand_send`, the
+  withdrawal at zero included) and lists the recent sends. **Not built:** pools cannot be created or edited here
+  (only linked); a commitment is not edited or deleted from a list (setting it again replaces it).
   **Not verified:** against a running service or WPM (the browser tests stub the service; FB-8).
 - [ ] **FB-7 (S) — Worker skills.** `workers_client` calls `GET /api/workers/{id}/skills`, which WPM does not have
   (WPM has `/api/workers/{pid}/skills-as-of`, a different shape); the skill-gap view reports `unknown`. A mapping

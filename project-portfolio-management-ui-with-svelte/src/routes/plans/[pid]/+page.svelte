@@ -191,6 +191,7 @@
   </div>
 
   {#if record.kind === "Program"}
+    <p><a href={localeHref(`/capacity-commitments?plan=${encodeURIComponent(pid)}`)}>{t("p.commitments.from_plan")}</a></p>
     {#key pid}<PeopleImpact {pid} />{/key}
   {/if}
 

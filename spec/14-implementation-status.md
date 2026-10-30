@@ -29,8 +29,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | Matcher version | 0.2.1 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
 | Migrations | 133 | files named `m2*.rs` in `migration/src` |
-| Mounted route registrations | 675 | `.add(` calls in `src/controllers/*.rs` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |
-| Documented API paths | 445 | quoted `"/api/..."` keys in `src/openapi.rs` and `src/openapi_more.rs` |
+| Mounted routes | 669 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
+| Documented API paths | 532 | path keys in the service's `openapi.json` |
 | Service tests | 1475, plus 267 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 80, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 650 | `it(` / `test(` lines in `tests/unit` |
@@ -45,15 +45,25 @@ no network, database or compilation; counts are source lines, not test runs):
 | RM | 14 | 0 |
 | PL | 10 | 0 |
 | SC | 11 | 0 |
-| PJ | 13 | 0 |
 | KO | 3 | 0 |
 | MS | 4 | 0 |
 | CR | 4 | 0 |
+| PJ | 13 | 0 |
+| T | 1 | 0 |
 | DP | 12 | 0 |
 | EX | 14 | 0 |
 | HD | 13 | 0 |
 | CC | 6 | 0 |
-| **Total** | **116** | **0** |
+| IR | 6 | 0 |
+| PF | 1 | 0 |
+| RG | 16 | 0 |
+| CQ | 23 | 2 |
+| CF | 6 | 1 |
+| WW | 0 | 1 |
+| NC | 13 | 4 |
+| BR | 15 | 2 |
+| FB | 6 | 2 |
+| **Total** | **203** | **12** |
 
 <!-- generated:end -->
 
@@ -112,7 +122,7 @@ migrations (`m20260825_000001` … `m20260826_000003`) and a matcher
 | service | Per-person utilization (T-24 / FR-35) | `working_time_configs` + `non_working_periods`; `GET /api/capacity/utilization?by=plan\|team\|person` under the [`time-based-analysis.md`](time-based-analysis.md) §7.1 obligations — leave leaves the denominator (`null` + `all_non_working`, never 0%), suppression is visible, team ratios sum rather than average, ≥ 100% flags and never clamps; integer arithmetic throughout |
 | service | Total Project Control (T-25 / FR-37) | Pure `src/tpc.rs` (DIPP / progress index / banding / triage; minor units + basis points, no float); migration `m20260825_000001_total_project_control` with the DPI as a `GENERATED ALWAYS` column; `POST`/`GET /api/plans/{pid}/tpc`, `GET …/tpc/report`, `GET /api/tpc`. Mapping doc: [`total-project-control/index.md`](total-project-control/index.md) |
 | service | Controls register (T-26 / FR-38–39, partial) | Pure `src/controls.rs` (three timings, four comparators, verdict derivation, coverage); migration `m20260825_000002_controls` (the `verdict` CHECK keeps `unmeasured` a real third value); nine routes under `/api/plans/{pid}/controls`, `/api/controls`, `/api/readings`, `/api/actions`; feedforward may block, feedback may only record; `POST /api/actions/{pid}/convert` turns an action into a task on its own plan (issue conversion deferred — no `issues` store) |
-| service | OpenAPI + Swagger | Hand-written `src/openapi.rs`, served at `/api-docs/openapi.json` + `/swagger-ui`, with tests pinning that the documented paths match the mounted routes. All mounted route groups — including the new workflow / effort / ceremony / value groups — are documented; that coverage is landing as PRO-P16 concurrently with this snapshot (2026-08-26) |
+| service | OpenAPI + Swagger | `src/openapi*.rs` (request bodies generated into `src/openapi_bodies.rs` by `scripts/generate-openapi-bodies.py`), served at `/api-docs/openapi.json` + `/swagger-ui` and written to `openapi.json`, with tests pinning that the documented paths match the mounted routes (`api-routes.txt`). Every mounted route is documented except the two documentation routes themselves (checked 2026-10-30) |
 | service | API versioning | Version-free URLs; `Accepts-version` header negotiation (`src/version.rs`) |
 | service | **2026-10 delivery (root `tasks.md` series LT / RM / PL / SC / KO / MS / CR / PJ)** | Migrations `m20261002_000001` onward (the migration count is in §14.0). Per-series status lives in [`tasks.md`](../tasks.md) (the LT / RM / PL / SC / KO / MS / CR / PJ series are ticked; the DP, EX and CC series are planned and the HD series is in progress — counts in §14.0); rows below name the controller or module that backs each recent group |
 | service | Cost rates, assignments, work contours (PJ-2 / PJ-5 / PJ-6) | `src/cost_rates.rs`, `controllers/cost_rates.rs`, `controllers/assignments.rs`, `src/work_profile.rs`, `src/scheduling_rules.rs`; migrations `…_000040_assignment_fields`, `…_000041_cost_rates` (effective-dated, append-only rates; no rate is `null`, never zero); finance access decided by the policy (`auth::service_rules`) |
@@ -127,8 +137,12 @@ migrations (`m20260825_000001` … `m20260826_000003`) and a matcher
 | service | Ways of working and governance frameworks (FR-52) — **built** | `src/frameworks.rs` (pure rules and inheritance, 5 unit tests), `controllers/frameworks.rs` (both families from one implementation), migration `…_000080_frameworks`; `POST/GET /api/ways-of-working` and `/api/governance-frameworks`, `PUT/GET /api/plans/{pid}/ways-of-working` and `…/governance-framework`. A plan follows its own, else the nearest ancestor's, resolved on read. Tests: `tests/requests/frameworks.rs` (2), and the private-plan and paging censuses cover the lists. **Not built:** any screen, versions of a record, or checks that a plan's real workflow matches its declared WIP limit | `src/controllers/frameworks.rs` |
 | service | Approval processes and controlled documents (PL-2 / PL-6) — **built** | `src/processes.rs`, `controllers/processes.rs` (migration `…_000046_processes`: versioned definitions, append-only execution log); `src/documents.rs`, `controllers/controlled_documents.rs` (migration `…_000047_controlled_documents`: an effective version is immutable, one effective per document, enforced by trigger and partial unique index); both build on the PL-1 approval request. Front-end: `/documents` for controlled documents; none yet for processes |
 | service | Private-plan guard and paging (RM-8 / RM-8b / RM-12b) | `controllers/plan_access.rs` (`HiddenScope`, applied to every aggregate; path-encoding bypass closed in commit `29154a6`); `controllers/paging.rs` (`paging_mw`: `limit`, `offset`, `X-Total-Count` / `X-Limit` / `X-Offset` on every bare-array `GET`); `controllers/task_get.rs` (single-task read with `?include=`) |
+| service | Capacity heatmap and skill pools (DP-10) | `controllers/capacity_heatmap.rs`: `GET`/`POST /api/skill-pools`, `GET /api/capacity-heatmap`, `GET`/`PUT /api/capacity-commitments`; front-end `/capacity-heatmap`, `/skill-pools`, `/capacity-commitments` |
+| service | Workforce-service bridge (FB-1 to FB-5) — **built** | `src/wpm_bridge.rs`, `controllers/capacity_heatmap.rs`, `controllers/people_impact.rs`, migration `m20261030_000099_peer_pool_link`; the pool link, supply in, demand out with zero as the withdrawal, people impact in; rules in §8.5a; `tests/wpm_bridge.rs` against a stand-in WPM. Not tested against a running WPM |
+| front-end | Workforce-service bridge on screen (FB-6) — **built** | `/skill-pools` (set and clear the link), `/capacity-heatmap` (a linked pool's reading), `/capacity-commitments` (the send outcome and recent sends), the people-impact box on `/plans/[pid]` for a Program; `tests/e2e/wpm-bridge.spec.ts`, `tests/e2e/capacity-commitments.spec.ts` |
+| front-end | Balance, roadmap, plan issues (NC-9, NC-10, NC-1 slice 1) | `/balance` (cost, value and risk by portfolio), `/roadmap` (impact/effort matrix, Now / Next / Later), `/plans/[pid]/issues` |
 | front-end | 2026-10 pages | `/cost-rates`, `/plans/[pid]/costs`, `/work`, `/what-if`, `/onboarding`, `/handover`, `/wbs`, `/resources/rbs`, `/critical-path`, `/leveling`, `/earned-value`, `/schedule-risk`, `/joint-risk`, `/schedule-health`, `/raci`, `/okrs`, `/kpis`, `/milestones`, `/ceo`, `/announcements`, plus the LT-12 plain-language and one-primary-action rules as tested checks. Route list read from `src/routes`; test counts unverified |
-| front-end | Operator SPA |       90 page routes (counted as `+page.svelte` files), including plans list / new / detail / edit / merge, per-plan board / schedule / governance, plus dashboard, executive, financials, technology, board, auditor, compliance, regulator, risk, security, scenarios, proposals, ideas, objectives, prioritization, capacity, calendar, gantt, engineering, lifecycle, reports, reviews, automations, signin, verify |
+| front-end | Operator SPA | 100 page routes (counted as `+page.svelte` files, 2026-10-30), including plans list / new / detail / edit / merge, per-plan board / schedule / governance, plus dashboard, executive, financials, technology, board, auditor, compliance, regulator, risk, security, scenarios, proposals, ideas, objectives, prioritization, capacity, calendar, gantt, engineering, lifecycle, reports, reviews, automations, signin, verify |
 | front-end | Stack + chrome | SvelteKit 2 + Svelte 5 runes, Lily Design System widgets (`@lilydesignsystem` data grid behind one `DataTable` component, Kanban, Gantt, calendar, headless), 10-locale i18n, BFF server routes (`src/lib/server/`) so no token reaches the browser |
 | service | Cross-plan rollup | `GET /api/plans/{pid}/rollup` — flow across a plan and everything it contains: the union of the subtree's tasks (never an average of the children's ratios) plus the per-plan comparison, over a bounded, cycle-safe containment walk that reports its own caps |
 | service | Delivery forecasting | `GET /api/plans/{pid}/forecast` — Monte-Carlo over the plan's **throughput** history (both "how long for N items" and "how many in N periods"), deterministic by seed, refusing below a minimum history rather than computing from noise. Correcting a claim this spec itself had wrong: a batch forecast needs throughput, not cycle time |
@@ -146,13 +160,12 @@ checked against the code on 2026-10-06 unless marked unverified.
 |---|---|
 | No cross-service link write-side (`entity_links`, `linked`/`unlinked` events): no such entity or route exists. The `plan_links` table (LT-8, migration `…_000020`) is a different thing, typed links from a plan to a document, ticket or URL | T-7 |
 | No FHIR surface — **deliberate**, not a gap: no FHIR resource models a plan (`fhir.md` (shared family guidance, not in this repository) §3 puts portfolio out of scope) | — |
-| **Issues register: plan CRUD and the cross-plan register** — `/api/plans/{pid}/issues` and `GET /api/issues` with the `/issues` page exist (IR-1, IR-2, 2026-10-10); raising an issue from a risk or a blocked task exists in the API only (IR-3, no button yet); change requests are built in the API with a list page (IR-4, IR-5); drafting and deciding have no screens, and the director-pack report (IR-6) waits for the pack | FR-14, FR-14a |
+| **Issues register: plan CRUD and the cross-plan register** — `/api/plans/{pid}/issues` and `GET /api/issues` with the `/issues` page exist (IR-1, IR-2, 2026-10-10); raising an issue from a risk has a form on `/plans/[pid]/issues` (NC-1 slice 1); raising one from a blocked task is in the API only (IR-3); change requests are built in the API with a list page (IR-4, IR-5); drafting and deciding have no screens, and the director-pack report (IR-6) waits for the pack | FR-14, FR-14a |
 | Automation breadth: field-change, date-arrival and SLE-breach triggers and multi-action rules — status unverified since 2026-08-26 (see §13 T-21, partly landed) | T-21 |
 | Source-tool import: MS Project (`POST /api/plans/{pid}/import/mspdi`, `src/controllers/mspdi_import.rs`, PJ-10), Jira and Asana (`POST /api/plans/{pid}/import/jira` and `…/asana`, `src/controllers/tracker_import.rs`, T-28n) are **built**. MS Project (MSPDI) **export** is built too (`GET /api/plans/{pid}/export/mspdi`, `src/controllers/mspdi_export.rs`, 2026-10-20; it does not carry assignees, resources, baselines or partial progress). **Not built:** no JSON or live-API pull for Jira / Asana | T-28n, PJ-10 |
 | Hammock follow-ups: no front-end, the MSPDI hammock id is not imported, hammocks link tasks of one plan only | PJ-7 |
 | WBS sibling reordering (`PUT /api/plans/{pid}/task-order`, buttons only, no drag and drop) and the RBS drill-down from a role to its people's open tasks (`GET /api/resource-plan/role-tasks`, resource managers and admins) exist since 2026-10-20. Still missing: a drill-down for skills (they have no people), for the unclassified row, and from a person to their tasks outside a role | PJ-12 |
 | A cancelled export produces no file; a running import may process up to 9 rows after a cancel; simulations are not jobs and cannot be cancelled | PJ-11 |
-| Front-end lint / e2e-in-CI status — unverified since 2026-08-23 | §15 / HD-2 |
 | Members sub-resource (comments landed as LT-4; posts and members not found in the code) | §15 |
 | No cross-service link **aggregator** (`link-graph-service`) — out of this trio's scope | §15 |
 

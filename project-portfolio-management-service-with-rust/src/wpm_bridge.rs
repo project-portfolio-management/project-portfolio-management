@@ -1,4 +1,4 @@
-//! The bridge to the workforce service (WPM, which is the worker service), FB-1 to FB-3 and the entity spec §8.8.
+//! The bridge to the workforce service (WPM, which is the worker service), FB-1 to FB-5 and the entity spec §8.5a.
 //!
 //! The family contract (2026-10-30): a PPM plan is named in WPM as `thing:<plan pid>`; a PPM skill pool may carry
 //! `peer_pool_ref`, WPM's id for the pool that means the same skills, set by a person and never matched by name;

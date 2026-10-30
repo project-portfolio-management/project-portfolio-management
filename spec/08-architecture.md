@@ -13,7 +13,7 @@
 |  lib/api: client.ts → plans.ts + sub-resource repos           |
 +------------------------------+-------------------------------+
                                | REST (raw loco JSON, no envelope)
-                               | PUBLIC_API_BASE_URL (default :5150)
+                               | PROJECT_PORTFOLIO_MANAGEMENT_API_URL (default :5150)
 +------------------------------v-------------------------------+
 |              project-portfolio-management-service-with-rust                     |
 |  loco.rs 0.16 (Axum 0.8) · port 5150                          |
@@ -117,9 +117,9 @@ pure.
 **Not present, and tracked as gaps rather than drawn as if built:**
 `links.rs` / `entity_links` (T-7) and `bulk.rs` / `bulk_jobs` (T-8).
 
-Run with `cargo loco start` (needs PostgreSQL; `auto_migrate` on in
+Run with `cargo run -- start` (needs PostgreSQL; `auto_migrate` on in
 development). The front-end runs with `pnpm dev` against
-`PUBLIC_API_BASE_URL`.
+`PROJECT_PORTFOLIO_MANAGEMENT_API_URL` (server side only; the browser calls the UI's `/api/proxy/…`).
 
 ### 8.4 Matching data flow
 
@@ -188,8 +188,10 @@ WPM-D135, WPM-D138 to D141).
    is kept and shown as `entered_here_supply_fte`, and is **never added** to WPM's figure. Demand stays PPM's
    (allocations plus demand commitments) on both sides.
 4. **WPM is asked under the caller's own token** (WPM-D135: no shared service account), with a 2-second timeout and
-   no redirects, all linked pools in parallel. With no base URL (stub mode), no token, or a failure, the reading
-   says why. Only the live heatmap asks. **Figures received are kept in this process only, by caller**: the
+   no redirects, all linked pools in parallel. The base URL must be `https://` (or `http://` to `localhost`,
+   `127.0.0.1` or `::1`); with `PROJECT_PORTFOLIO_MANAGEMENT_OUTBOUND_STRICT` on, it must also resolve to a public
+   address; any other URL reads as `unreachable` with that reason. With no base URL (stub mode), no token, or a
+   failure, the reading says why. Only the live heatmap asks. **Figures received are kept in this process only, by caller**: the
    authenticated subject (`sub`), or, when the request has none, the SHA-256 of its bearer token (the token itself
    is never kept). When WPM cannot be reached, the heatmap shows the last figure **this caller's** token fetched,
    with its age, or `unknown`; it never shows a figure another caller's token fetched (WPM-D135). The director
@@ -214,8 +216,8 @@ WPM-D135, WPM-D138 to D141).
    there is no outbox and no retry: setting the commitment again sends again. The outcome (`started`, `sent`,
    `duplicate`, `refused`, `unreachable`, `not_configured`, `not_sent_no_token`, `not_sent_too_large`) is in the
    `PUT` answer (`peer_demand_send`) and in `peer_demand_sends` (the latest per pool, programme and month; an older
-   version never overwrites a newer one), shown on `GET /api/capacity-commitments` with each demand commitment that
-   has a send recorded (or, on a linked pool, `null` when none is). `not_sent_zero` is no longer produced (FB-5);
+   version never overwrites a newer one), shown on `GET /api/capacity-commitments` as `peer_demand_send`
+   `{outcome, detail, fte_centi, peer_event_id, at}` with each demand commitment that has a send recorded (or, on a linked pool, `null` when none is). `not_sent_zero` is no longer produced (FB-5);
    the database still accepts it, for rows written before.
 6. **Zero withdraws (FB-5, family contract decided 2026-10-30 at the owner's direction).** A total that rounds to
    zero is **sent** as `fte_centi: 0` with a new `peer_event_id` and its `sent_at`; WPM then withdraws its `ppm`
@@ -237,15 +239,17 @@ WPM-D135, WPM-D138 to D141).
    It is left as it is: the skill-gap view reports `unknown`. No mapping from WPM skills to PPM's tags is invented
    (FB-7).
 8. **People impact in (FB-4).** `GET /api/plans/{pid}/people-impact[?months=N]` (N 1 to 36, WPM's horizon; `422`
-   otherwise; WPM's default when absent) asks `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>`
+   for 0 or above 36; WPM's default when absent) asks `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>`
    under the caller's own token, with the same 2-second timeout and no redirects. WPM holds no programme end, so PPM
    sends `ends_on` from the plan's own `target_date` when it is a full date (`YYYY-MM-DD`, or a timestamp starting
    with one); a month or a year alone is not turned into a day, and then no `ends_on` is sent, `plan_ends_on_reason`
    says why, and WPM's own `unknown` for the engagements part passes through. The answer is WPM's, passed through
    unchanged and labelled `source: "wpm"`: `as_of`, `months`, `floor`, `workers_committed`,
    `contingent_ending_before_end`, `over_committed_pool_months` (each `known` or not with WPM's `reason`; a count
-   under WPM's floor `null` with `hidden: true`), `derivation`, and WPM's echo `programme_ends_on`; other fields WPM
-   may add are left out until named here. PPM adds no figure and no total and never turns unknown or hidden into
+   under WPM's floor `null` with `hidden: true`), `derivation`, and WPM's echoes `programme_ends_on` and
+   `programme_ends_on_source`; other fields WPM may add are left out until named here. PPM's own fields beside
+   them: `plan_pid`, `programme_ref`, `source`, `plan_ends_on`, `plan_ends_on_source` (`target_date`, or `null`
+   when none was sent), `plan_ends_on_reason`, `months_asked`, `status` and `reason`. PPM adds no figure and no total and never turns unknown or hidden into
    zero. `status` is `live`, or `unknown` with a `reason` (every part unknown with that reason, every figure `null`)
    when the URL is not set, the request has no token (nothing is called in either case), WPM cannot be reached, is
    slow, answers 5xx or an unreadable body, or **refuses** the caller (4xx). **Nothing is kept** between calls, so a

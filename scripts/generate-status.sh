@@ -39,8 +39,10 @@ cargo_version() { sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$1" | sed -n 1p; }
 
 generate() {
   migrations=$(find "$API/migration/src" -name 'm2*.rs' | wc -l | tr -d ' ')
-  mounted=$(find "$API/src/controllers" -name '*.rs' -print0 | xargs -0 cat | grep -cE '\.add\(' || true)
-  documented=$(cat "$API/src/openapi.rs" "$API/src/openapi_more.rs" | grep -cE '^[[:space:]]*"/api/[^"]*"[[:space:]]*:' || true)
+  # api-routes.txt is written from the router by a unit test (src/openapi.rs), one `METHOD /path` per line.
+  mounted=$(grep -cE '^[A-Z]+ /' "$API/api-routes.txt" || true)
+  # openapi.json is written by a test with sorted keys and two-space indent: a path key sits four spaces in.
+  documented=$(grep -cE '^    "/' "$API/openapi.json" || true)
   svc_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$API/src" "$API/tests" "$API/migration/src")
   svc_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$API/src" "$API/tests" "$API/migration/src")
   mat_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$MATCHER/src" "$MATCHER/tests")
@@ -62,8 +64,8 @@ generate() {
   echo "| Matcher version | $(cargo_version "$MATCHER/Cargo.toml") | \`version\` in the matcher \`Cargo.toml\` |"
   echo "| Front-end version | $ui_version | \`version\` in the front-end \`package.json\` |"
   echo "| Migrations | $migrations | files named \`m2*.rs\` in \`migration/src\` |"
-  echo "| Mounted route registrations | $mounted | \`.add(\` calls in \`src/controllers/*.rs\` (one per registration; a path registered for several methods counts once per method, so this exceeds the documented-path count) |"
-  echo "| Documented API paths | $documented | quoted \`\"/api/...\"\` keys in \`src/openapi.rs\` and \`src/openapi_more.rs\` |"
+  echo "| Mounted routes | $mounted | \`METHOD /path\` lines in the service's \`api-routes.txt\` (one per method, so this exceeds the path count) |"
+  echo "| Documented API paths | $documented | path keys in the service's \`openapi.json\` |"
   echo "| Service tests | $svc_tests, plus $svc_ignored \`#[ignore]\`d (database or container gated) | \`#[test]\` and \`#[tokio::test]\` lines; \`#[ignore]\` lines, in \`src\`, \`tests\`, \`migration/src\` |"
   echo "| Matcher tests | $mat_tests, plus $mat_ignored \`#[ignore]\`d | the same patterns in the matcher \`src\` and \`tests\` |"
   echo "| Front-end unit tests (vitest) | $vitest | \`it(\` / \`test(\` lines in \`tests/unit\` |"
@@ -75,7 +77,9 @@ generate() {
   echo "| Prefix | Ticked | Open |"
   echo "|---|---|---|"
   tt=0; to=0
-  for p in LT RM PL SC PJ KO MS CR DP EX HD CC; do
+  # Every prefix that heads a task box (`- [x] **XX-n`), in the order of first appearance.
+  prefixes=$(grep -oE '^- \[[x ]\] \*\*[A-Z]+-[0-9]' "$TASKS" | sed -E 's/.*\*\*//; s/-[0-9]$//' | awk '!seen[$0]++')
+  for p in $prefixes; do
     t=$(task_count "$p" x); o=$(task_count "$p" ' ')
     tt=$((tt + t)); to=$((to + o))
     echo "| $p | $t | $o |"

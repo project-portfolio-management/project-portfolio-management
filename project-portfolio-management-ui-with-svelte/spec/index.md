@@ -141,6 +141,9 @@ match breakdown).
                              service with its reading (FB-6)
 /skill-pools                 skill pools and their link to the
                              workforce service's pool (FB-6)
+/capacity-commitments        set a capacity commitment; the outcome of
+                             the demand sent to the workforce service,
+                             the withdrawal at zero included (FB-6, FB-5)
 /engineering                 blocked aging + MoSCoW + delivery links
 /calendar                    estate milestone calendar (kind filter)
 /executive                   CEO area: portfolio-health briefing,
@@ -165,9 +168,29 @@ match breakdown).
 /regulator                   coarse regulator extract (mask-aware)
 /signin · /verify            BFF magic-link sign-in / verification
 
-Roadmap (per-plan project-management sub-routes, §13/§15;
-the board landed 2026-07-20 and is listed above):
-/plans/[pid]/issues          issues list (kind / severity / status)
+/plans/[pid]/issues          the plan's issues register: raise, edit,
+                             raise from a risk (NC-1 slice 1)
+
+Also built, described in the sections below (the list above is not
+every page; `find src/routes -name +page.svelte` gives all 100):
+/announcements /approval-processes /automations /balance /ceo /change-
+requests /cost-rates /cost-risk /demo /director-packs /director-
+packs/[pid] /display /documents /documents/[pid] /email-deliveries
+/escalations /issues /kanban /key-persons /kpis /ledger /lifecycle /me
+/milestone-signoffs /milestones /okrs /onboarding /organizations
+/pipeline /plans/[pid]/buffers /plans/[pid]/cost-risk /plans/[pid]/costs
+/plans/[pid]/critical-chain /plans/[pid]/cutover
+/plans/[pid]/deployment-moves /plans/[pid]/earned-value
+/plans/[pid]/escalations /plans/[pid]/flow /plans/[pid]/governance-
+framework /plans/[pid]/handover /plans/[pid]/import /plans/[pid]/joint-
+risk /plans/[pid]/leveling /plans/[pid]/links /plans/[pid]/onboarding
+/plans/[pid]/raci /plans/[pid]/schedule-health /plans/[pid]/schedule-
+risk /plans/[pid]/tasks/[tpid] /plans/[pid]/tolerances
+/plans/[pid]/ways-of-working /plans/[pid]/wbs /plans/[pid]/what-if
+/plans/[pid]/work /plans/merge /prioritization /resources /resources/rbs
+/reviews /search /start-queue /tolerances /tour
+
+Roadmap (per-plan project-management sub-routes, §13/§15; not built):
 /plans/[pid]/timeline        Gantt / timeline (goal milestones + task date ranges)
 /plans/[pid]/burndown        burndown chart (remaining estimate over time)
 /plans/[pid]/goals           goals panel
@@ -416,9 +439,8 @@ page filters client-side instead), recent activity
 (`GET /api/plans/events/recent`), a per-plan audit timeline
 (`GET /api/plans/{pid}/audit`), and the child roll-up
 (`GET /api/plans?parent={pid}`, exposed as `listPage()`'s `parent`
-scope). There is no `issues` / `goals` / `timeline` sub-resource route
-or endpoint at all yet (service spec §9.4 sub-resources deferred on both
-sides).
+scope). The issues register has a screen (`/issues`, `/plans/[pid]/issues`) over the service's issues routes;
+the goals sub-resource route exists in the service with no screen of its own; there is no `timeline` route.
 
 (Sub-resource verbs/paths track the service spec §9; pin them in tests
 when the controllers land.)
@@ -433,7 +455,9 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 ## 11. Testing strategy
 
 `pnpm run check` (svelte-check strict, 0/0). **vitest** unit tests
-(`tests/unit/`, 8 files / 62 tests as of 2026-08-03) cover:
+(`tests/unit/`; the current count is the generated block in the entity spec's
+[§14](../../spec/14-implementation-status.md), 76 files and 650 tests at 2026-10-30) cover, among others
+(the list below is the first eight files, kept as a description, not as a census):
 
 - `client.test.ts` — the `ApiClient` (verb / body / headers /
   cookie-credentials / error-classification / empty-body, incl.
@@ -442,9 +466,9 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
   verb: `list()` (incl. the `?parent=` roll-up query, though no route
   passes it today), `search()` `/search?q=` URL-encoding,
   `checkDuplicates()`, `merge()` body `{main_pid, duplicate_pid,
-  reason?}`, `recentMerges()`. **No** `audit()` / `recentEvents()` /
-  issues / goals / timeline / burndown methods exist to test — those
-  capabilities are not built (§13);
+  reason?}`, `recentMerges()`. `PlanRepository` has **no** `audit()` /
+  `recentEvents()` / goals / timeline method (the issues and burndown
+  calls are in `PpmClient`, `src/lib/api/ppm.ts`, tested in `ppm.test.ts`);
 - `merge-validation.test.ts` (4 tests) — the pure pre-merge guard (both
   pids required, must differ);
 - `capabilities.test.ts` / `ppm.test.ts` — the `CapabilityClient` /
@@ -461,7 +485,7 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 Component tests run via `@testing-library/svelte` mounted client-side
 by the `svelteTesting()` vite plugin.
 
-**Playwright** smoke tests, 23 tests across two files, with the API
+**Playwright** tests (the count is in the same generated block; 67 spec files at 2026-10-30), with the API
 stubbed via `page.route`, run against the production build
 (`vite preview`) to avoid the `vite dev` cold-start module race:
 

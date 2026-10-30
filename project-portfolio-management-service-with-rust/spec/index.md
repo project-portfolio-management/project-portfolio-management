@@ -301,15 +301,16 @@ match, dedupe, and merge regardless of their (optional) `kind` labels.
 
 | Resource | Base path | Notable fields |
 |---|---|---|
-| Goals | `/api/plans/{pid}/goals` | title, target_date (also in payload via `data.goals[]`) — **deferred, §13**: not yet wired as a sub-resource; only goal titles exist today, via `data.goals[]` |
+| Goals | `/api/plans/{pid}/goals` | the plan's `data.goals[]`, addressed by index: `GET`, `POST`, `PUT /{index}`, `DELETE /{index}` (and `POST /{index}/delete`) — `src/controllers/goals.rs` |
 | Tasks | `/api/plans/{pid}/tasks` | title, assignee_ref, status, goal_id?, parent_task_id?, estimate, remaining, due_date, story_points — **landed 2026-07-20**, §9.14 |
-| Issues | `/api/plans/{pid}/issues` | title, kind, severity, status, assignee_ref — **deferred, §13**: not yet wired |
+| Issues | `/api/plans/{pid}/issues` | the issues register (IR-2, IR-3): `GET`, `POST`, `GET`/`PUT`/`DELETE /{issue_pid}`, `POST /from-risk/{risk_pid}`, `POST /from-task/{task_pid}`; `GET /api/issues` across plans — `src/controllers/issues.rs`, migration `m20261010_000050_issues` |
 
-Only **Tasks** are implemented today (§9.14 has the full route list,
-incl. the Kanban-move `PATCH` and WIP limits); it supports `POST`
-(create), `GET` (list), `PUT /{sub_pid}` (update), `PATCH /{sub_pid}`
-(move), `DELETE /{sub_pid}` (soft-delete). Goals and Issues remain
-deferred roadmap (§13), same as `posts` / `comments` / `members`.
+All three are built. Tasks (§9.14 has the full route list, incl. the
+Kanban-move `PATCH` and WIP limits) support `POST` (create), `GET`
+(list), `PUT /{sub_pid}` (update), `PATCH /{sub_pid}` (move) and
+`DELETE /{sub_pid}` (soft-delete). Comments are the top-level
+`/api/comments` collection; `posts` and `members` sub-resources are
+not built.
 
 ### 9.4 Derived read views
 
@@ -507,10 +508,12 @@ The write is **optimistic** — it stores the assertion and emits an event;
 it does **not** call the target service. Verification status is the
 aggregator's concern (it sees both ends).
 
-### 9.8 Bulk import/export (deferred, §13)
+### 9.8 Bulk import/export
 
-Design drafted in [`spec/bulk-import-export.md`](../../spec/bulk-import-export.md)
-(awaiting approval); the endpoint list below is the intended surface.
+Design in [`spec/bulk-import-export.md`](../../spec/bulk-import-export.md). Built: the endpoints below
+(`src/controllers/bulk.rs`), plus `POST /api/plans/bulk-jobs/{id}/cancel`, `GET /api/plans/bulk-jobs/{id}/errors`,
+`POST /api/plans/bulk-jobs/sweep` and `GET /api/plans/export/{id}/download`; the per-plan importers
+(`POST /api/plans/{pid}/import/mspdi|jira|asana`, `POST /api/import/mspdi-batch`) are listed in [`api-routes.txt`](../api-routes.txt).
 
 The five uniform endpoints on the plans collection
 ([`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md) §4):
@@ -575,25 +578,32 @@ code. Landed 2026-07-18 (T-PPM-A, §13).
 | GET | `/api/reports/{pid}/run?format=json\|csv` | Run synchronously (row cap 1000; RFC-4180 CSV) |
 | GET | `/api/at-a-glance` | ETag-conditional dashboard: per-kind RAG/stage rollups + site tiles |
 
-Landed 2026-07-18 (T-PPM-B, §13). Scheduled/artifact report runs await
-the family bulk machinery (§9.8, deferred).
+Landed 2026-07-18 (T-PPM-B, §13). Scheduled report runs are built
+(`src/controllers/report_schedules.rs`, `tests/report_schedules.rs`).
 
-### 9.10a The workforce-service bridge (FB-1 to FB-4)
+### 9.10a The workforce-service bridge (FB-1 to FB-6)
 
 | Method | Path | Purpose |
 |---|---|---|
 | PUT | `/api/skill-pools/{pid}/peer-link` | Link a skill pool to the workforce service's pool (`peer_pool_ref`, a UUID) or clear it (`null`); clearing or changing it withdraws every figure sent to the old pool (`peer_demand_withdrawals`, FB-5) |
+| GET | `/api/skill-pools` | Each pool with its `peer_pool_ref` (`null` when not linked) |
 | GET | `/api/capacity-heatmap` | For a linked pool: WPM's supply with its source, time and status; what was entered here beside it, never added |
 | PUT | `/api/capacity-commitments` | For a demand commitment on a linked pool: also sends the programme's total to WPM with `sent_at` (`peer_demand_send`); a total of zero is sent as `fte_centi: 0`, the withdrawal (FB-5) |
+| GET | `/api/capacity-commitments` | Each demand commitment on a linked pool, or with a send recorded, carries `peer_demand_send` `{outcome, detail, fte_centi, peer_event_id, at}` (`null` on a linked pool with none) |
 | GET | `/api/plans/{pid}/people-impact` | WPM's people impact for the plan (`?months=1..36`), passed through with `source: "wpm"`, or `unknown` with a reason (FB-4) |
 
 The rules (one owner per fact, the caller's own token, stub-first, zero sent as the withdrawal) are the entity spec's §8.5a.
+The base URL is `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` (unset or empty: stub mode, nothing is called). It
+must be `https://`, or `http://` to `localhost`, `127.0.0.1` or `::1`; with `PROJECT_PORTFOLIO_MANAGEMENT_OUTBOUND_STRICT`
+on it must also resolve to a public address. Any other URL gives the reading `unreachable` with that reason.
+The screens are the UI spec's `/skill-pools`, `/capacity-heatmap`, `/capacity-commitments` and the people-impact box
+on `/plans/{pid}` (FB-6).
 Supply figures received are kept in process **by caller** (subject, else the SHA-256 of the token; never the
 token), recalled only for that caller when WPM cannot be reached, bounded at 1 000 callers × 2 400 figures
 (`KEPT_CALLERS_MAX`, `KEPT_FIGURES_PER_CALLER_MAX`); the views that make no call (director pack, drum, pipeline,
 start check) show `unknown` for a linked pool (§8.5a rule 4).
 Code: `src/wpm_bridge.rs` (rules and the three calls), `src/controllers/capacity_heatmap.rs`,
-`src/controllers/people_impact.rs`, migration 99 (`m20261030_000099_peer_pool_link`). Test: `tests/wpm_bridge.rs` (a stand-in WPM on a local port).
+`src/controllers/people_impact.rs`, migration `m20261030_000099_peer_pool_link`. Test: `tests/wpm_bridge.rs` (a stand-in WPM on a local port).
 
 ### 9.11 Strategy (PPM Phase C)
 

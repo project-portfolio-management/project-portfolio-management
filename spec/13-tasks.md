@@ -3,9 +3,11 @@
 > **Status authority (2026-10-06).** The repo-root
 > [`tasks.md`](../tasks.md) is authoritative for task status. It carries
 > the LT (Leantime), RM (Redmine), PL (Huly), SC / KO / MS / CR
-> (scheduling, cost and KPI canon) and PJ (ProjectLibre) series; at this
-> revision all 71 of its items are ticked, with deviations and "Not
-> taken" decisions recorded beside each. **This file is the older T-n
+> (scheduling, cost and KPI canon) and PJ (ProjectLibre) series and every
+> later prefix (DP, EX, HD, CC, IR, PF, RG, CQ, CF, NC, BR, FB, WW); the
+> ticked and open counts by prefix are the generated table in
+> [§14](14-implementation-status.md), with deviations and "Not taken"
+> decisions recorded beside each item. **This file is the older T-n
 > build-out** and is not duplicated there. Its state at this revision:
 >
 > | Items | State |
@@ -13,7 +15,7 @@
 > | T-8, T-10, T-14 … T-20, T-22 … T-24, T-26, T-27 | landed (ticked below) |
 > | T-21 | partly landed (`[~]`) |
 > | T-25 | **box unticked, but every sub-item beneath it is ticked** and §14.1 lists Total Project Control as delivered; read it as landed |
-> | T-28 | sub-items a-m, o and p ticked; the parent stays open because **T-28n** is partial (MS Project import landed as PJ-10; Jira and Asana open) |
+> | T-28 | sub-items a-m, o and p ticked; the parent stays open because **T-28n** is partial (MS Project import landed as PJ-10; Jira and Asana CSV import landed, `src/controllers/tracker_import.rs`; the `JiraProjectKey` registry-twin dedup and a live-API pull remain) |
 > | T-1 … T-7, T-9 | unticked **historical** build-out entries (the trio exists and is green); only **T-7**, the cross-service link write-side (`entity_links`), is verified as not built |
 >
 > Work done after 2026-10-01 has no T-n entry; look it up in `tasks.md`.
@@ -1128,8 +1130,10 @@ described manual check confirms it. Split tasks too big for one PR
     **Partly landed 2026-10-03: the MS Project half** (MSPDI XML only,
     `POST /api/plans/{pid}/import/mspdi`, root `tasks.md` PJ-10 — idempotent by
     `external_ref`, nothing silently dropped, hard constraints gated). **Jira and
-    Asana remain open**, and so does the registry-twin dedup (`JiraProjectKey`)
-    that this MS Project import does not need.
+    Asana CSV import has landed since** (`POST /api/plans/{pid}/import/jira` and
+    `…/asana`, `src/controllers/tracker_import.rs`). **What remains:** the
+    registry-twin dedup (the project key as `JiraProjectKey`, so the plan
+    deduplicates against its twin) and a pull from the live Jira or Asana API.
     A Jira project export (and Asana's, the two most asked about)
     mapped to plans + tasks: the project key → `JiraProjectKey` so the
     plan deduplicates against its registry twin (R-0), issues → tasks

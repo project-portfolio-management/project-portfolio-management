@@ -331,11 +331,10 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   in the database; a timing difference on a lookup of the hash of a 244-bit
   secret reveals nothing about the secret.
 
-**Not built (verified: no route, no table).** The `goals` sub-resource
-(§9.2) and the `issues` sub-resource (§9.2) have **no** controller and
-no `issues` migration; `goals[]` is reachable only through the plan
-payload. Tasks have `POST`/`GET /api/plans/{pid}/tasks`,
-`PUT`/`PATCH`/`DELETE …/tasks/{t_pid}`.
+**Sub-resources.** Goals: `GET`/`POST /api/plans/{pid}/goals`, `PUT`/`DELETE …/goals/{index}` (the plan's
+`goals[]`, by index). Issues: `GET`/`POST /api/plans/{pid}/issues`, `GET`/`PUT`/`DELETE …/issues/{issue_pid}`,
+`POST …/issues/from-risk/{risk_pid}` and `…/from-task/{task_pid}`, and `GET /api/issues` across plans (IR-2, IR-3).
+Tasks: `POST`/`GET /api/plans/{pid}/tasks`, `PUT`/`PATCH`/`DELETE …/tasks/{t_pid}`.
 
 ### 9.3 Front-end routes
 
@@ -480,87 +479,22 @@ export).
 
 ### 9.7 Route inventory by controller
 
-Mounted routes, generated from each controller's `routes()` (every
-path is under `/api`; `plans.rs` paths are relative to `/api/plans`,
-and its list `GET /` / `POST /` pair is shown as `/`). Routes whose
-verb helper is not a plain `get/post/put/delete/patch` call, if any,
-are **unverified** here. Treat `src/openapi.rs` as the documented
-subset.
+The mounted routes, one `METHOD /path` line each, are
+[`project-portfolio-management-service-with-rust/api-routes.txt`](../project-portfolio-management-service-with-rust/api-routes.txt),
+written from the router by a unit test in `src/openapi.rs` (CQ-9), so it cannot drift: it is the inventory. Every
+route in it is also in `openapi.json` except `GET /api-docs/openapi.json` and `GET /swagger-ui`. The per-controller
+list that stood here was written by hand and had fallen 52 controllers behind (among them the issues register, the
+capacity heatmap and the workforce-service bridge, entity spec §8.5a); it was removed on 2026-10-30.
 
-```
-announcements.rs: GET /announcements; POST /announcements; PUT /announcements/{pid}; DELETE /announcements/{pid}
-approvals.rs: POST /approvals; GET /approvals; POST /approvals/{pid}/decide; POST /approvals/{pid}/withdraw
-assignments.rs: PUT /plans/{pid}/tasks/{t_pid}/assignment; PUT /plans/{pid}/tasks/{t_pid}/contour; GET /plans/{pid}/work-profile; GET /work-profile
-attachments.rs: POST /attachments; GET /attachments; GET /attachments/search; GET /attachments/{pid}/download; DELETE /attachments/{pid}; POST /attachments/{pid}/delete
-automation.rs: POST /automations; GET /automations; GET /automations/runs; POST /automations/{pid}/enable; POST /automations/{pid}/disable; DELETE /automations/{pid}; POST /scheduled-actions; GET /scheduled-actions; POST /scheduled-actions/sweep; POST /automations/milestones/sweep; DELETE /scheduled-actions/{pid}
-availability.rs: POST /availability; GET /availability; DELETE /availability/{pid}; POST /availability/{pid}/delete
-bulk.rs: POST /plans/import; GET /plans/import/{id}; POST /plans/export; GET /plans/export/{id}; GET /plans/export/{id}/download; GET /plans/bulk-jobs; POST /plans/bulk-jobs/sweep; GET /plans/bulk-jobs/{id}/errors; POST /plans/bulk-jobs/{id}/cancel; GET /plans/review-queue; POST /plans/review-queue/{pid}/confirm; POST /plans/review-queue/{pid}/reject
-calendars.rs: GET /plans/{pid}/calendar; PUT /plans/{pid}/calendar; GET /me/calendar; PUT /me/calendar
-canvas.rs: GET /canvas-templates; POST /canvases; GET /canvases; GET /canvases/{pid}; DELETE /canvases/{pid}; POST /canvases/{pid}/items; PUT /canvases/{pid}/items/{item_pid}; DELETE /canvases/{pid}/items/{item_pid}; POST /canvases/{pid}/items/{item_pid}/promote
-ceremony.rs: POST /sprints/{pid}/ceremonies; GET /sprints/{pid}/ceremonies; POST /sprints/{pid}/commit; GET /sprints/{pid}/commitment
-collaboration.rs: POST /reviews; GET /reviews; GET /reviews/consensus; POST /reviews/{pid}/respond; POST /reviews/{pid}/submit; DELETE /reviews/{pid}; POST /plans/{pid}/tasks/{t_pid}/assign; GET /assignees/workload; GET /notifications; POST /notifications/{pid}/read
-compliance.rs: GET /records/verify; GET /audit/verify (both administrators only: they read every plan and audit row, private ones included, and report counts and the rows that differ; `403` otherwise)
-components.rs: POST /plans/{pid}/components; GET /plans/{pid}/components; GET /plans/{pid}/components/summary; PUT /plans/{pid}/components/{c_pid}; DELETE /plans/{pid}/components/{c_pid}
-controlled_documents.rs: POST /documents; GET /documents; GET /documents/{pid}; GET /documents/{pid}/in-force; POST /documents/{pid}/versions; GET /documents/{pid}/versions/{version}; PUT /documents/{pid}/versions/{version}; POST /documents/{pid}/versions/{version}/submit; POST /documents/{pid}/versions/{version}/make-effective
-controls.rs: POST /plans/{pid}/controls; POST /plans/{pid}/controls/register-standard; GET /plans/{pid}/controls; GET /plans/{pid}/controls/coverage; GET /controls/coverage; DELETE /controls/{pid}; POST /controls/{pid}/readings; GET /controls/{pid}/readings; POST /readings/{pid}/actions; POST /actions/{pid}/convert
-cost_rates.rs: POST /cost-rate-tables; GET /cost-rate-tables; POST /cost-rate-tables/{pid}/rates; GET /cost-rates/lookup; POST /plans/{pid}/tasks/{t_pid}/costs; GET /plans/{pid}/tasks/{t_pid}/costs; DELETE /plans/{pid}/tasks/{t_pid}/costs/{c_pid}; GET /plans/{pid}/cost-plan; POST /plans/{pid}/labour-costs/record; GET /plans/{pid}/labour-costs
-cost_risk.rs: GET /plans/{pid}/cost-risk; GET /cost-risk; GET /plans/{pid}/joint-risk; PUT /plans/{pid}/budget-lines/{l_pid}/estimate; PUT /plans/{pid}/risks/{r_pid}/cost-impact
-cpm.rs: GET /plans/{pid}/cpm; PUT /plans/{pid}/tasks/{t_pid}/schedule
-custom_fields.rs: POST /custom-fields; GET /custom-fields; PUT /custom-fields/values; GET /custom-fields/values; GET /custom-fields/search; DELETE /custom-fields/{pid}
-discussion.rs: POST /comments; GET /comments; PUT /comments/{pid}; DELETE /comments/{pid}; POST /comments/{pid}/delete; POST /reactions/remove; GET /comments/{pid}/history; POST /reactions; GET /reactions; DELETE /reactions
-distribution.rs: GET /plans/{pid}/flow-distribution
-docs.rs: GET /api-docs/openapi.json; GET /swagger-ui
-earned_value.rs: GET /plans/{pid}/earned-value; GET /plans/{pid}/earned-value/forecast; GET /plans/{pid}/earned-value/series; GET /plans/{pid}/earned-value/rollup; POST /plans/{pid}/earned-value/snapshot; PUT /plans/{pid}/earned-value-settings; PUT /plans/{pid}/tasks/{t_pid}/percent-complete
-effort.rs: POST /plans/{pid}/time-entries; GET /plans/{pid}/time-entries; GET /plans/{pid}/effort; POST /working-time; POST /non-working; GET /capacity/utilization
-engineering.rs: POST /plans/{pid}/tasks; GET /plans/{pid}/tasks; PUT /plans/{pid}/tasks/{t_pid}; PATCH /plans/{pid}/tasks/{t_pid}; DELETE /plans/{pid}/tasks/{t_pid}; POST /plans/{pid}/sprints; GET /plans/{pid}/sprints; GET /plans/{pid}/burndown; GET /plans/{pid}/velocity; POST /plans/{pid}/sprints/{s_pid}/notes; GET /plans/{pid}/sprints/{s_pid}/notes; POST /plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert; GET /plans/{pid}/standup; POST /devops/events; GET /devops/metrics; GET /devops/releases; GET /engineering/blocked; GET /engineering/moscow; GET /engineering/delivery-links; GET /engineering/milestone-calendar
-feeds.rs: POST /me/feed-token; DELETE /me/feed-token; POST /me/feed-token/revoke; GET /feeds/calendar.ics; GET /feeds/me.atom
-financials.rs: POST /plans/{pid}/budget-baselines; GET /plans/{pid}/budget-baselines; GET /plans/{pid}/financials/forecast; GET /financials/forecast
-governance.rs: POST /proposals; GET /proposals; GET /proposals/forecast; GET /proposals/{pid}; PUT /proposals/{pid}; POST /proposals/{pid}/submit; POST /proposals/{pid}/review; POST /proposals/{pid}/approve; POST /proposals/{pid}/reject; POST /proposals/{pid}/promote; GET /proposals/{pid}/duplicates; POST /plans/{pid}/gate-reviews; GET /plans/{pid}/gate-reviews; POST /plans/{pid}/risks; GET /plans/{pid}/risks; PUT /plans/{pid}/risks/{risk_pid}; POST /plans/{pid}/risks/{risk_pid}/escalate; POST /plans/{pid}/budget-lines; GET /plans/{pid}/budget-lines; POST /plans/{pid}/budget-lines/{line_pid}/actual; POST /plans/{pid}/budget-lines/{line_pid}/release; GET /plans/{pid}/governance
-guests.rs: POST /plans/{pid}/guests; GET /plans/{pid}/guests; POST /plans/{pid}/guests/{grant}/revoke
-hammock.rs: POST /plans/{pid}/tasks/{t_pid}/hammock; GET /plans/{pid}/hammocks; POST /plans/{pid}/hammocks/{h_pid}/links; DELETE /plans/{pid}/hammocks/{h_pid}/links/{member}
-handover.rs: POST /plans/{pid}/handover/preview; POST /plans/{pid}/handover/commit
-insights.rs: GET /executive/health; GET /executive/decisions; GET /executive/benefits; GET /executive/alignment; GET /financials/variance; GET /financials/exposure; GET /technology/dependency-risk; GET /technology/radar; GET /technology/debt; GET /technology/flow
-kpis.rs: POST /kpis; GET /kpis; GET /kpis/{pid}; PUT /kpis/{pid}; DELETE /kpis/{pid}; POST /kpis/{pid}/readings; GET /kpis/{pid}/readings
-leveling.rs: GET /plans/{pid}/leveling; POST /plans/{pid}/leveling/apply
-live.rs: GET /plans/{pid}/live
-metrics.rs: GET /metrics.prom
-milestones.rs: GET /milestones; GET /milestones/{pid}; PUT /plans/{pid}/milestones/{m_pid}/tasks; POST /plans/{pid}/milestones/{m_pid}/reopen
-modules.rs: GET /plans/{pid}/modules; PUT /plans/{pid}/modules
-mspdi_import.rs: POST /plans/{pid}/import/mspdi
-tracker_import.rs: POST /plans/{pid}/import/jira, /plans/{pid}/import/asana (CSV body, dry_run default true, idempotent by external_ref)
-my_work.rs: GET /me/tasks
-notification_prefs.rs: PUT /me/notification-prefs; GET /me/notification-prefs; DELETE /me/notification-prefs; POST /me/notification-prefs/reset; GET /me/inbox
-okr.rs: POST /objectives/{pid}/key-results; GET /objectives/{pid}/key-results; POST /key-results/{pid}/check-ins; GET /key-results/{pid}/check-ins; GET /plans/{pid}/okr; GET /okrs; PUT /objectives/{pid}; DELETE /objectives/{pid}; PUT /key-results/{pid}; DELETE /key-results/{pid}
-onboarding.rs: GET /onboarding/templates; PUT /onboarding/templates/{kind}; DELETE /onboarding/templates/{kind}; POST /plans/{pid}/onboarding/cases; GET /plans/{pid}/onboarding/cases; GET /onboarding/cases/{pid}; PUT /onboarding/cases/{pid}/items/{item}; POST /onboarding/cases/{pid}/complete; POST /onboarding/cases/{pid}/cancel; POST /plans/{pid}/access-records; GET /plans/{pid}/access-records; GET /plans/{pid}/closeout
-oversight.rs: GET /board/pack; GET /board/investments; POST /board/snapshots; GET /board/trends; GET /auditor/trail; GET /auditor/findings; GET /auditor/evidence-pack; GET /compliance/register; GET /compliance/findings; GET /risk/heatmap; GET /security/register; GET /regulator/extract
-pdf.rs: GET /board/pack.pdf; GET /plans/{pid}/summary.pdf
-phase.rs: PUT /plans/{pid}/phase; GET /plans/{pid}/phase-history
-plan_access.rs: GET /plans/{pid}/access; PUT /plans/{pid}/access
-plan_links.rs: GET /plans/{pid}/task-link-counts; POST /plans/{pid}/links; GET /plans/{pid}/links; DELETE /plans/{pid}/links/{lpid}; POST /plans/{pid}/links/{lpid}/delete
-plan_templates.rs: POST /plans/{pid}/save-as-template; POST /plans/from-template/{tpl}; GET /plan-templates; GET /plan-templates/{pid}; DELETE /plan-templates/{pid}; POST /plan-templates/{pid}/delete
-planner.rs: POST /me/planned-slots; DELETE /me/planned-slots/{pid}; POST /me/planned-slots/{pid}/delete; GET /me/plan
-plans.rs: POST /; GET /; GET /search; POST /match; POST /check-duplicates; POST /merge; GET /merges/recent; GET /whoami; GET /audit/recent; GET /events/recent; GET /{pid}; PUT /{pid}; DELETE /{pid}; GET /{pid}/masked; GET /{pid}/export; GET /{pid}/audit
-portfolio_resources.rs: GET /resource-plan; GET /resource-plan/hours; GET /resource-roles; PUT /resource-roles; POST /plans/{pid}/allocations/{a_pid}/resolve
-prioritization.rs: GET /prioritization; GET /lifecycle; GET /plans/{pid}/smart-score; GET /plans/{pid}/lifecycle
-processes.rs: POST /processes; GET /processes; GET /processes/{pid}; PUT /processes/{pid}; DELETE /processes/{pid}; POST /processes/{pid}/start; GET /process-executions; GET /process-executions/{pid}; POST /process-executions/{pid}/steps/{index}/complete; POST /process-executions/{pid}/cancel; POST /process-executions/{pid}/resume
-raci.rs: GET /plans/{pid}/raci; PUT /plans/{pid}/tasks/{t_pid}/raci
-report_schedules.rs: POST /reports/{pid}/schedule; GET /report-schedules; POST /report-schedules/sweep; DELETE /report-schedules/{pid}; POST /report-schedules/{pid}/delete; GET /report-schedules/{pid}/latest
-sandbox.rs: POST /plans/{pid}/sandbox/preview; POST /plans/{pid}/sandbox/commit
-saved_views.rs: POST /saved-views; GET /saved-views; DELETE /saved-views/{pid}; POST /saved-views/{pid}/delete
-schedule_baselines.rs: POST /plans/{pid}/schedule-baselines; GET /plans/{pid}/schedule-baselines; GET /plans/{pid}/schedule-variance
-schedule_health.rs: GET /plans/{pid}/schedule-health
-schedule_risk.rs: GET /plans/{pid}/schedule-risk; PUT /plans/{pid}/tasks/{t_pid}/estimate; PUT /plans/{pid}/risks/{r_pid}/schedule-impact
-sinks.rs: POST /me/notification-sinks; GET /me/notification-sinks; DELETE /me/notification-sinks/{pid}; POST /me/notification-sinks/{pid}/delete; GET /me/notification-sinks/{pid}/deliveries; POST /notification-sinks/dispatch
-strategy.rs: POST /ideas; GET /ideas; POST /ideas/{pid}/vote; POST /ideas/{pid}/dismiss; POST /ideas/{pid}/convert; POST /scenarios; GET /scenarios; POST /scenarios/generate; GET /scenarios/frontier; GET /scenarios/compare; GET /scenarios/{pid}/evaluate; POST /scenarios/{pid}/commit; POST /scenarios/{pid}/rollback; POST /objectives; GET /objectives; GET /objectives/{pid}/alignment; POST /plans/{pid}/objectives; GET /plans/{pid}/objectives; POST /plans/{pid}/benefits; GET /plans/{pid}/benefits; POST /plans/{pid}/benefits/{b_pid}/realize
-task_bulk.rs: POST /tasks/bulk; POST /tasks/copy; POST /tasks/move
-task_get.rs: GET /plans/{pid}/tasks/{t_pid}
-task_relations.rs: POST /plans/{pid}/tasks/{t_pid}/relations; GET /plans/{pid}/tasks/{t_pid}/relations; DELETE /plans/{pid}/tasks/{t_pid}/relations/{r_pid}
-task_tree.rs: GET /plans/{pid}/tasks/{t_pid}/rollup
-tba.rs: GET /flow-classes; GET /plans/{pid}/tasks/{t_pid}/transitions; GET /plans/{pid}/tasks/{t_pid}/time-analysis; GET /plans/{pid}/time-analysis; GET /plans/{pid}/constraints; GET /plans/{pid}/aging-wip; GET /plans/{pid}/flow; GET /plans/{pid}/cumulative-flow; GET /plans/{pid}/forecast; GET /plans/{pid}/rollup
-timesheets.rs: GET /timesheets; POST /timesheets/submit; POST /timesheets/decide; GET /time-reports
-tpc.rs: POST /plans/{pid}/tpc; GET /plans/{pid}/tpc; GET /plans/{pid}/tpc/report; GET /tpc
-value.rs: POST /plans/{pid}/business-case; POST /plans/{pid}/value-points; POST /plans/{pid}/adoption; POST /plans/{pid}/satisfaction; GET /plans/{pid}/value-realization; GET /plans/{pid}/performance
-visibility.rs: POST /dependencies; GET /dependencies; DELETE /dependencies/{pid}; GET /plans/{pid}/schedule; POST /plans/{pid}/milestones; GET /plans/{pid}/milestones; PUT /plans/{pid}/milestones/{m_pid}; POST /plans/{pid}/milestones/{m_pid}/complete; POST /plans/{pid}/allocations; GET /plans/{pid}/allocations; POST /plans/{pid}/allocations/{a_pid}/commit; DELETE /plans/{pid}/allocations/{a_pid}; GET /plans/{pid}/skill-gap; GET /capacity; POST /reports; GET /reports; DELETE /reports/{pid}; GET /reports/{pid}/run; GET /at-a-glance
-watchers.rs: POST /watchers; GET /watchers; DELETE /watchers; POST /watchers/unwatch; GET /me/watching
-workflow.rs: POST /workflows; GET /workflows; DELETE /workflows/{pid}; GET /plans/{pid}/workflow
-```
+### 9.7a The workforce-service bridge (FB-1 to FB-6)
+
+| Method | Path | Bridge |
+| --- | --- | --- |
+| `GET` | `/api/skill-pools` | each pool's `peer_pool_ref` (FB-1) |
+| `PUT` | `/api/skill-pools/{pid}/peer-link` | link or clear (`{peer_pool_ref: <uuid> \| null}`; `409` already linked, `422` not a lower-case UUID); clearing withdraws what was sent (FB-1, FB-5) |
+| `GET` | `/api/capacity-heatmap` | a linked pool's supply from WPM, `supply_source: "wpm"`, `peer_supply` reading (FB-2) |
+| `PUT` | `/api/capacity-commitments` | a demand commitment on a linked pool sends the programme's total to WPM (`peer_demand_send`, FB-3, FB-5) |
+| `GET` | `/api/capacity-commitments` | the latest send per demand commitment (`peer_demand_send`) |
+| `GET` | `/api/plans/{pid}/people-impact` | WPM's people impact for the plan, `?months=1..36` (FB-4) |
+
+The rules are §8.5a; the service detail is the service spec's §9.10a; the screens (FB-6) are the UI spec's.

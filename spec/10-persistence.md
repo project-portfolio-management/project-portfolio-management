@@ -132,7 +132,7 @@ mutation (§10.2).
 migration mentioning issues is the `tasks.flow_type` one. The
 `task_snapshots` table above is likewise not created by any migration
 (unverified whether burndown derives from `task_transitions` instead).
-The migrations are the authoritative table list; §10.8 indexes all 82 migrations.
+The migrations are the authoritative table list; §10.8 indexes all 133 migrations.
 
 ### 10.2 JSONB rationale and the goals bridge
 
@@ -155,7 +155,7 @@ severity, etc. is relational), which is why they are *not* in the JSONB
 
 ### 10.3 Operations
 
-- `auto_migrate` is on in development (`cargo loco start` migrates).
+- `auto_migrate` is on in development (`cargo run -- start` migrates).
 - Soft delete is application-level (`deleted_at`); all queries filter
   `deleted_at IS NULL`. Soft-deleting a plan hides its
   sub-resources from read paths (§5.8); merge re-homes them to the
@@ -288,7 +288,7 @@ Migration files are `migration/src/m20261006_0000NN_*.rs`. Tables carry
 | 47 | `controlled_documents` | `controlled_documents` (`title`, `plan_pid?`, `created_by?`, `deleted_at`), `document_versions` (`document_pid`, `version`, `body`, `change_summary?`, `status`, `approval_pid?`, `effective_from?`, `superseded_on?`, `superseded_by?`, `created_by?`). Status in (`draft`,`in_review`,`approved`,`effective`,`superseded`). Unique `(document_pid, version)`; partial unique **one `effective`** per document and **one in-flight** (`draft`/`in_review`/`approved`) per document. CHECKs: past review needs `approval_pid`; effective/superseded needs `effective_from`; `(status = 'superseded') = (superseded_by AND superseded_on set)`. Trigger `document_versions_guard`: a version past `draft` is never deleted and its `body`, `change_summary`, `version`, `document_pid` never change (the database refuses, not only the handler) |
 | 48 | `onboarding_one_open` | Unique index `onboarding_cases_one_open` on `(plan_pid, kind, COALESCE(subject_ref, ''))` where `status = 'open'`; trigger `plan_dependencies_not_hammock` (BEFORE INSERT on `plan_dependencies`) refuses a dependency naming a hammock |
 
-### 10.8 Migration index (all 82 migrations, by created tables)
+### 10.8 Migration index (all 133 migrations, by created tables)
 
 Verified by listing `migration/src`; `+table` marks columns added to an
 existing table. Migrations 1-7 are dated `20220101`.
@@ -311,7 +311,22 @@ existing table. Migrations 1-7 are dated `20220101`.
 20261004 35 resource_roles; 36 schedule_risk_inputs (+risks tasks)
 20261005 37 kpis kpi_readings; 38 milestone_links (milestone_tasks milestone_slips, +milestones); 39 cost_risk_inputs (+budget_lines risks)
 20261006 40-48 see §10.7
+20261009 49 oxford_spelling
+20261010 50 issues; 51 audit_logs_protected; 52 break_glass; 53 handling_marks; 54 change_requests; 55 director_packs; 56 delivery_confidence; 57 programme_gates; 58 funding_sources; 59 programme_buffers; 60 benefit_validation; 61 capacity_heatmap; 62 pack_rhythm; 63 ccpm_estimates; 64 buffer_management; 65 portfolio_drum; 66 organizations; 67 milestone_signoffs; 68 programme_profiles; 69 external_asks; 70 key_persons; 71 triage_thresholds; 72 email_deliveries; 73 start_control; 74 deployment_moves; 75 cutover_decisions; 76 scorecard_deescalation; 77 portfolio_ledger
+20261019 78 blocked_reason
+20261020 79 task_sibling_position; 80 frameworks; 81 link_systems; 82 plan_tolerances; 83 escalations
+20261021 84 task_links; 85 schedule_tolerance
+20261024 86 deployment_settings; 87 availability_no_overlap; 88 framework_versions
+20261025 89 scoring_inputs; 90 lessons; 91 status_updates; 92 scheduled_job_runs; 93 blueprint_sync; 94 meetings; 95 idempotency_keys; 96 meeting_tasks; 97 status_claims; 98 lesson_links
+20261030 99 peer_pool_link
 ```
+
+From migration 49 on the index gives each migration's name, not its tables (read the file for those). Migration
+99 (`m20261030_000099_peer_pool_link`, FB-1, FB-3) adds `skill_pools.peer_pool_ref` (nullable text, WPM's pool pid,
+CHECKed as a lower-case hyphenated UUID) with the partial unique index `skill_pools_peer_pool_ref` (one PPM pool per
+WPM pool), and `peer_demand_sends` (the latest send per pool, programme and month: unique
+`peer_demand_sends_once (pool_pid, plan_pid, month)`, an outcome CHECK that still admits `not_sent_zero` for rows
+written before FB-5).
 
 Row-level soft delete, append-only logs and immutability are enforced
 in the database (CHECKs and triggers) for the 2026-10 groups above;

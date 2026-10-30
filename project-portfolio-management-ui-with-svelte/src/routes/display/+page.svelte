@@ -127,7 +127,7 @@
     background: none;
     border: 0;
     padding: 0;
-    color: var(--mxi-color-primary);
+    color: var(--mxi-color-link);
     text-decoration: underline;
     cursor: pointer;
     font: inherit;

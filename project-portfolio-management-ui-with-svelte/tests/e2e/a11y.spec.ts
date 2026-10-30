@@ -28,31 +28,37 @@ test.describe("axe audit of every route (LT-12)", () => {
     }
   });
 
-  for (const route of ROUTES) {
-    test(`${route} has no serious or critical violations`, async ({ page }) => {
-      await page.goto(`/en-001${route === "/" ? "" : route}`, {
-        waitUntil: "networkidle",
+  // Every route under the light and the dark system preference: the layout follows the OS preference
+  // (ThemePicker `detectFromSystem`), so the dark theme is what a dark-mode visitor sees first.
+  for (const route of ROUTES)
+    for (const colorScheme of ["light", "dark"] as const) {
+      test(`${route} has no serious or critical violations${colorScheme === "dark" ? " (dark theme)" : ""}`, async ({
+        page,
+      }) => {
+        await page.emulateMedia({ colorScheme });
+        await page.goto(`/en-001${route === "/" ? "" : route}`, {
+          waitUntil: "networkidle",
+        });
+        await expect(page.locator("h1").first()).toBeVisible();
+        await settle(page);
+        const results = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+          .analyze();
+        const bad = results.violations.filter(
+          (v) => v.impact === "serious" || v.impact === "critical",
+        );
+        expect(
+          bad.map(
+            (v) =>
+              `${v.id}: ${v.help} — ${v.nodes
+                .slice(0, 3)
+                .map(
+                  (n) =>
+                    `${n.target.join(" ")} [${n.any[0]?.message ?? n.all[0]?.message ?? ""}]`,
+                )
+                .join("; ")}`,
+          ),
+        ).toEqual([]);
       });
-      await expect(page.locator("h1").first()).toBeVisible();
-      await settle(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-        .analyze();
-      const bad = results.violations.filter(
-        (v) => v.impact === "serious" || v.impact === "critical",
-      );
-      expect(
-        bad.map(
-          (v) =>
-            `${v.id}: ${v.help} — ${v.nodes
-              .slice(0, 3)
-              .map(
-                (n) =>
-                  `${n.target.join(" ")} [${n.any[0]?.message ?? n.all[0]?.message ?? ""}]`,
-              )
-              .join("; ")}`,
-        ),
-      ).toEqual([]);
-    });
-  }
+    }
 });

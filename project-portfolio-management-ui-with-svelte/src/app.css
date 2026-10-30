@@ -15,7 +15,22 @@
     var(--color-base-100, #fafafa)
   );
   --mxi-color-border: var(--color-base-300, #e5e7eb);
-  --mxi-color-primary: var(--color-primary, #2563eb);
+  /* The primary colour as a fill behind --mxi-color-primary-fg (primary buttons, the sign-in button). The dark
+     theme's primary (oklch 58%) measured 4.14:1 under its light primary-content text; a fifth of the theme's
+     neutral (a near-black in the shipped themes) darkens it to 5.9:1 there and 8.6:1 in the light theme. */
+  --mxi-color-primary: color-mix(
+    in oklch,
+    var(--color-primary, #2563eb) 80%,
+    var(--color-neutral, #111827)
+  );
+  /* The primary colour as text on the page background: links, and anything else written in the primary colour.
+     The dark theme's primary measured 3.4:1 as link text on its base-100 (needs 4.5:1); mixing in the theme's text
+     colour keeps the hue and lifts it to 5.6:1 in dark and 10.8:1 in light, as the danger colour does. */
+  --mxi-color-link: color-mix(
+    in oklch,
+    var(--color-primary, #2563eb) 70%,
+    var(--color-base-content, #111827)
+  );
   --mxi-color-primary-fg: var(--color-primary-content, #ffffff);
   /* The theme's error colour is a light tint that fails 4.5:1 as text on the page
      background (2.7:1 measured); mixing in the text colour keeps its hue and passes. */
@@ -95,7 +110,7 @@ th > a {
 }
 
 a {
-  color: var(--mxi-color-primary);
+  color: var(--mxi-color-link);
   text-decoration: none;
 }
 a:hover {
@@ -211,7 +226,13 @@ table {
 .banner.error {
   color: var(--mxi-color-danger);
   border-color: var(--mxi-color-danger);
-  background: #fef2f2;
+  /* A tint of the page background, as the success banner has: the fixed #fef2f2 kept a light background under a
+     dark theme, where the danger text is light (1.6:1 measured). */
+  background: color-mix(
+    in oklch,
+    var(--color-error, #b91c1c) 8%,
+    var(--mxi-color-bg)
+  );
 }
 .banner.success {
   color: var(--mxi-color-success);

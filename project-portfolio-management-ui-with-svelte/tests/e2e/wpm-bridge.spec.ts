@@ -82,6 +82,24 @@ async function poolsPage(
 
 const ok = () => ({ status: 200, json: {} });
 
+/** axe's colour-contrast rule over the whole page, with every finding listed whatever its impact, and a check that
+ *  the rule ran on some text (a rule that found nothing to check would pass silently). */
+async function contrast(page: Page) {
+  await settle(page);
+  const r = await new AxeBuilder({ page })
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(
+    r.violations.flatMap((v) =>
+      v.nodes.map((n) => `${n.target.join(" ")}: ${n.any[0]?.message ?? ""}`),
+    ),
+  ).toEqual([]);
+  expect(
+    r.passes.map((v) => v.id),
+    "the rule ran on the page",
+  ).toContain("color-contrast");
+}
+
 test("a pool is linked to the workforce service with an id checked first, and the rule is on screen", async ({
   page,
 }) => {
@@ -147,9 +165,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       r.passes.map((v) => v.id),
       "the rule ran on the banner",
     ).toContain("color-contrast");
-    // The whole page under the dark theme still has other contrast findings (recorded in CHANGELOG), so the
-    // full audit runs under the light theme, the one the other tests use.
-    if (colorScheme === "light") await audit(page);
+    await audit(page);
   });
 }
 
@@ -411,3 +427,28 @@ test("both screens read in Welsh, and are reachable from the navigation", async 
   );
   await audit(page);
 });
+
+// The links in the text of /skill-pools (the sign-in button, the heatmap link) once measured 3.4:1 and 4.1:1
+// under the dark theme, as the theme's primary colour was used as is for links and for the fill behind
+// primary-content text. Both pages are audited here as populated, in the light and the dark theme.
+for (const colorScheme of ["light", "dark"] as const) {
+  test(`/skill-pools and /capacity-heatmap pass axe colour contrast (${colorScheme} theme)`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme });
+    await poolsPage(page, ok, []);
+    await expect(page.getByRole("row", { name: /Pharmacy/ })).toContainText(
+      PEER,
+    );
+    await contrast(page);
+    await audit(page);
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await heatPage(page, []);
+    await expect(page.getByTestId(`cell-${POOL}-2026-12`)).toContainText(
+      "Last received 2 hours ago",
+    );
+    await contrast(page);
+    await audit(page);
+  });
+}

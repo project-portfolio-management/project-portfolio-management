@@ -314,3 +314,34 @@ test("the form is reached from the heatmap and a programme's plan page, and read
   await expect(page.getByTestId("send-outcome")).not.toContainText("withdrew");
   await audit(page);
 });
+
+// Audited as populated (the form and the recent sends) in the light and the dark theme: under the dark theme the
+// theme's primary colour, used as is for links and the sign-in button, once fell below 4.5:1.
+for (const colorScheme of ["light", "dark"] as const) {
+  test(`/capacity-commitments passes axe colour contrast (${colorScheme} theme)`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme });
+    await stub(page, (b) => saved(b), []);
+    await page.goto(`/en-001/capacity-commitments?plan=${PLAN}`, {
+      waitUntil: "networkidle",
+    });
+    await expect(
+      page.locator('section[aria-labelledby="sends-h"]'),
+    ).toContainText("could not be reached");
+    await settle(page);
+    const r = await new AxeBuilder({ page })
+      .withRules(["color-contrast"])
+      .analyze();
+    expect(
+      r.violations.flatMap((v) =>
+        v.nodes.map((n) => `${n.target.join(" ")}: ${n.any[0]?.message ?? ""}`),
+      ),
+    ).toEqual([]);
+    expect(
+      r.passes.map((v) => v.id),
+      "the rule ran on the page",
+    ).toContain("color-contrast");
+    await audit(page);
+  });
+}

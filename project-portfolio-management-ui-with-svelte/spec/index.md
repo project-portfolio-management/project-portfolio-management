@@ -230,6 +230,20 @@ parity with the rest of the family. Selecting a theme via
 Theme stylesheets are served from `static/assets/themes/` (a symlink
 to the shared design-system themes).
 
+With no stored choice the theme follows the system light / dark preference
+(`detectFromSystem`). The app's own colour tokens (`src/app.css`) are
+derived from the theme's so that text meets WCAG 2 AA (4.5:1) under both
+the `light` and the `dark` theme: `--mxi-color-link` (every link, and text
+written in the primary colour) is the theme's primary mixed 70 / 30 with
+its text colour (the dark theme's primary as is measured 3.4:1 as link
+text); `--mxi-color-primary` (the fill behind primary-content text: primary
+buttons, the sign-in button) is the primary mixed 80 / 20 with the theme's
+neutral (4.14:1 as is under dark); the danger and success colours are mixed
+with the text colour, and the error and success banners sit on a tint of
+the page background. `tests/e2e/a11y.spec.ts` audits every page route
+under both system preferences. The other themes in the catalogue are not
+audited.
+
 ### Money (WW-1.3)
 
 An amount is an integer in the minor unit of the currency the record carries. One module (`src/lib/money.ts`) formats
@@ -1427,7 +1441,10 @@ other apps, shares a session with them, or fails when they are down.
   The success banner (`.banner.success`, `src/app.css`, used by `/skill-pools`) once failed colour contrast under
   the light theme (1.87:1, success colour `#00d390`); its text is now the theme's success colour mixed half and half
   with the theme's text colour, on an 8 % success tint of the page background, so it passes 4.5:1 under the light and
-  the dark theme (`tests/e2e/wpm-bridge.spec.ts`, axe `color-contrast` on the banner in both).
+  the dark theme (`tests/e2e/wpm-bridge.spec.ts`, axe `color-contrast` on the banner in both). `/skill-pools`,
+  `/capacity-heatmap` (`tests/e2e/wpm-bridge.spec.ts`) and `/capacity-commitments`
+  (`tests/e2e/capacity-commitments.spec.ts`) are each audited as populated with axe `color-contrast` over the whole
+  page under both themes (see **Theming**).
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 

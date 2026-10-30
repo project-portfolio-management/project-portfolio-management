@@ -218,7 +218,7 @@
     height: 1.6rem;
     border: 1px solid var(--mxi-color-primary);
     border-radius: 50%;
-    color: var(--mxi-color-primary);
+    color: var(--mxi-color-link);
     font-size: 0.8rem;
     font-weight: 700;
   }

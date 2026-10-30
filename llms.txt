@@ -53,6 +53,7 @@
 - [Locales](spec/locales.md): Locale policy
 - [Locales for major projects with SvelteKit](spec/locales-for-global-sharing-with-svelte/index.md): Topic spec: locale-aware sharing in the Svelte UI
 - [Localex X for roles](spec/locales-x-for-roles/index.md): Topic spec: role guides in every locale
+- [GitHub Pages site](spec/github-pages-site.md): The static documentation site in project-portfolio-management.github.io/: pages, content copy, locale and direction, CSP, tests, git subtree publish (GP-1)
 - [Special files for public repos](spec/special-files-for-public-repos/index.md): Topic spec: the special files a public repository carries
 - [AI Statement](spec/special-files-for-public-repos/AI_STATEMENT.md): The AI statement template that topic spec describes
 
@@ -95,6 +96,7 @@
 - [Tutorial: the bridge to the workforce service (WPM)](operations/wpm-bridge.md): Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact
 - [Operating commitments](operations/commitments.md): Operating commitments
 - [Recovery objectives](operations/recovery-objectives.md): Recovery point and recovery time objectives
+- [GitHub Pages site](project-portfolio-management.github.io/README.md): Build, test and the exact steps to publish the documentation site (not published yet)
 
 ## Governance and security
 

@@ -166,6 +166,11 @@
           "description": "Topic spec: role guides in every locale"
         },
         {
+          "title": "GitHub Pages site",
+          "path": "spec/github-pages-site.md",
+          "description": "The static documentation site in project-portfolio-management.github.io/: pages, content copy, locale and direction, CSP, tests, git subtree publish (GP-1)"
+        },
+        {
           "title": "Special files for public repos",
           "path": "spec/special-files-for-public-repos/index.md",
           "description": "Topic spec: the special files a public repository carries"
@@ -354,6 +359,11 @@
           "title": "Recovery objectives",
           "path": "operations/recovery-objectives.md",
           "description": "Recovery point and recovery time objectives"
+        },
+        {
+          "title": "GitHub Pages site",
+          "path": "project-portfolio-management.github.io/README.md",
+          "description": "Build, test and the exact steps to publish the documentation site (not published yet)"
         }
       ]
     },

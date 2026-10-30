@@ -2253,3 +2253,27 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   `sent_at`, and the withdrawals on unlink) against a real WPM (WPM supports them since `ab1ce88` and `ca1462f`);
   the FB-6 screens (`/skill-pools`, `/capacity-heatmap`, `/capacity-commitments`) against a live service;
   Keycloak in place of the PASETO test key; a mounted ABAC policy. The leak fix itself was not re-run live.
+
+## GitHub Pages site (GP-n)
+
+The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a static site in
+`project-portfolio-management.github.io/`, exported with `git subtree`. Spec:
+[spec/github-pages-site.md](spec/github-pages-site.md).
+
+- [x] **GP-1 (M) — Build the documentation site.** **Built 2026-10-30:** SvelteKit 3 with `adapter-static`, Svelte 5
+  runes, Lily `ThemePicker` (light, dark), `TextSizePicker` and `LocalePicker`; pages from `index.md`, `README.md`,
+  `INSTALL.md`, `operations/wpm-bridge.md`, `spec/index.md`, the skill's `SKILL.md` and the 110 role briefs (10
+  locales, 11 roles) with a list per locale and a locale switcher that opens the same brief; the UI's colour tokens
+  with the `49675dc` contrast fix; a meta content security policy with SvelteKit's hashes and no `style` attribute;
+  the documents copied into `src/content/docs.json` by `scripts/sync-content.mjs` (`--check` in CI);
+  `make github-pages` and `bin/make-github-pages` (`git subtree push --prefix=project-portfolio-management.github.io
+  github-pages main`); the exported repository's `.github/workflows/deploy.yml`; CI job `site`.
+  **Acceptance:** the build prerenders all 126 pages; Playwright with axe (WCAG 2.2 AA tags) finds no serious or
+  critical violation on every document, every locale's list and one brief per locale under light and dark, nor on
+  four pages under a forced `dir="rtl"`; the locale switch, `lang`, the link rewriting and the phone width are
+  tested. **Not built:** the site's own words are English only; no right-to-left brief exists to read; only two themes;
+  the first paint uses the light fallback tokens.
+- [ ] **GP-2 (S, owner) — Publish it.** Create `project-portfolio-management/project-portfolio-management.github.io`,
+  set its Pages source to GitHub Actions, add the `github-pages` remote and run `make github-pages` (the steps are in
+  [the site's README](project-portfolio-management.github.io/README.md#publishing)). Not done: no remote, no
+  repository, nothing pushed.

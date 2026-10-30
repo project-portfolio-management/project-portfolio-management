@@ -282,6 +282,41 @@ jobs:
           args: --offline --config lychee.toml .
           fail: true
 
+  site:
+    name: GitHub Pages site (content copy, check, build, Playwright and axe)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-portfolio-management.github.io
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+          cache-dependency-path: project-portfolio-management.github.io/pnpm-lock.yaml
+      - name: The site's copy of the documents is current
+        run: node scripts/sync-content.mjs --check
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright (every page, axe in light and dark, locale switch, right to left)
+        run: pnpm exec playwright test
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: site-playwright-report
+          path: |
+            project-portfolio-management.github.io/playwright-report
+            project-portfolio-management.github.io/test-results
+          if-no-files-found: ignore
+
   container:
     name: Container (build and compose smoke)
     runs-on: ubuntu-latest
@@ -402,6 +437,7 @@ jobs:
       - deny
       - machete
       - ui
+      - site
       - docs
       - container
       - zap

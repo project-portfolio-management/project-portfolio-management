@@ -34,6 +34,17 @@ updates:
       # svelte-check supports 7; 6.x patch and minor updates still arrive.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: npm
+    directory: /project-portfolio-management.github.io
+    schedule:
+      interval: weekly
+    groups:
+      npm-site:
+        patterns: ["*"]
+    ignore:
+      # The same TypeScript 7 hold as the UI (svelte-check).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

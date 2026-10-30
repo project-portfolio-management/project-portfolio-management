@@ -249,7 +249,14 @@ audited.
 An amount is an integer in the minor unit of the currency the record carries. One module (`src/lib/money.ts`) formats
 it (`Intl.NumberFormat`, the reader's locale, the currency's own number of decimals: JPY 0, EUR 2, KWD 3, CLF 4),
 reads what the reader types in that locale (so "1,5" and "1 234,50" work where the locale uses a decimal comma) and
-scales it by the same exponent. No page divides or multiplies by a fixed 100, and no form starts with a currency: the
+scales it by the same exponent. The exponent is the ISO 4217 minor unit, from a table (`MINOR_UNITS`) that is the
+service's `src/currency.rs` table; `tests/unit/money.test.ts` reads that file and fails if the two differ. `Intl`'s
+digits are used only for a code the table does not hold (and 2 when `Intl` does not know it either), because CLDR,
+where `Intl` takes its digits, differs from ISO 4217 for 16 codes (AFN, ALL, COP, HUF, IDR, IQD, IRR, KPW, LAK, LBP,
+MGA, MMK, PKR, SOS, SYP, YER: 0 places in CLDR, 2 in ISO 4217, or 3 for IQD). Formatting sets both
+`minimumFractionDigits` and `maximumFractionDigits` to the ISO exponent, so a forint amount shows its two places and
+what is shown, typed and stored agree. The same rule holds in the contact relationship and workforce planning UIs'
+`money.ts`; a fix to one is copied to the other two. No page divides or multiplies by a fixed 100, and no form starts with a currency: the
 field is empty and required (an amount without a currency is refused before anything is sent), with the neutral hint
 "for example EUR, JPY or GBP".
 

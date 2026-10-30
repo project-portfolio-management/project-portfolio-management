@@ -1,10 +1,12 @@
 // WW-1.3: one money formatter and parser. No currency is built in, the minor unit is the currency's own
-// (JPY 0, EUR 2, KWD 3, CLF 4), and an amount is read in the reader's own number format.
+// (JPY 0, EUR 2, KWD 3, CLF 4) from the same ISO 4217 table as the service, and an amount is read in the
+// reader's own number format.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  MINOR_UNITS,
   currencyCode,
   exponentOf,
   minorToInput,
@@ -20,6 +22,87 @@ describe("exponentOf", () => {
     expect(exponentOf("EUR", "en-GB")).toBe(2);
     expect(exponentOf("KWD", "en-GB")).toBe(3);
     expect(exponentOf("CLF", "en-GB")).toBe(4);
+  });
+  it("follows ISO 4217, not CLDR, where the two differ, as the service does", () => {
+    // CLDR (and so Intl) shows these with no decimals; ISO 4217 gives them 2, and the Iraqi dinar 3.
+    for (const code of [
+      "AFN",
+      "ALL",
+      "COP",
+      "HUF",
+      "IDR",
+      "IRR",
+      "KPW",
+      "LAK",
+      "LBP",
+      "MGA",
+      "MMK",
+      "PKR",
+      "SOS",
+      "SYP",
+      "YER",
+    ]) {
+      expect(exponentOf(code, "en-GB"), code).toBe(2);
+    }
+    expect(exponentOf("IQD", "en-GB")).toBe(3);
+  });
+  it("falls back to Intl, then 2, for a code the table does not hold", () => {
+    expect(exponentOf("XAU", "en-GB")).toBe(
+      new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: "XAU",
+      }).resolvedOptions().maximumFractionDigits,
+    );
+    expect(exponentOf("not a code", "en-GB")).toBe(2);
+  });
+});
+
+describe("the ISO 4217 table", () => {
+  it("is exactly the service's (src/currency.rs), so both scale by the same exponent", () => {
+    const rust = readFileSync(
+      join(
+        __dirname,
+        "../../../project-portfolio-management-service-with-rust/src/currency.rs",
+      ),
+      "utf8",
+    );
+    const start = rust.indexOf("pub const MINOR_UNITS");
+    const table = rust.slice(start, rust.indexOf("];", start));
+    const service = Object.fromEntries(
+      [...table.matchAll(/\("([A-Z]{3})", (\d)\)/g)].map((m) => [
+        m[1]!,
+        Number(m[2]),
+      ]),
+    );
+    expect(Object.keys(service).length).toBeGreaterThan(150);
+    expect(MINOR_UNITS).toEqual(service);
+  });
+});
+
+describe("round trips in the ISO exponent", () => {
+  // What is typed, what is stored (minor units, as the service reads them) and what is shown agree.
+  it.each([
+    ["HUF", "1500.50", 150_050, "1,500.50"],
+    ["IDR", "1500.50", 150_050, "1,500.50"],
+    ["COP", "1500.50", 150_050, "1,500.50"],
+    ["JPY", "1500", 1500, "1,500"],
+    ["KWD", "1.234", 1234, "1.234"],
+    ["CLF", "1.2345", 12_345, "1.2345"],
+  ] as const)("%s", (code, typed, minor, shown) => {
+    expect(toMinor(typed, code, "en-GB")).toBe(minor);
+    expect(toMinor(minorToInput(minor, code, "en-GB"), code, "en-GB")).toBe(
+      minor,
+    );
+    expect(minorToInput(minor, code, "en-GB")).toBe(typed);
+    expect(money(minor, code, "en-GB")).toContain(shown);
+    // In a decimal-comma locale too.
+    expect(toMinor(minorToInput(minor, code, "de-DE"), code, "de-DE")).toBe(
+      minor,
+    );
+  });
+  it("shows the forint with its two places, not rounded to whole forints", () => {
+    expect(money(150_049, "HUF", "en-GB")).toContain("1,500.49");
+    expect(money(1_500_000, "HUF", "hu-HU")).toMatch(/^15\s000,00\sFt$/u);
   });
 });
 

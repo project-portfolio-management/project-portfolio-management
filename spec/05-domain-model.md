@@ -600,8 +600,10 @@ Four modelling decisions:
 
 - **Money has no built-in currency and no fixed exponent (§2.0, WW-1.3).** A currency is a three-letter code that a
   record carries or a caller names; none is a default. The minor unit has the ISO 4217 number of decimal places (0 for
-  JPY, 2 for EUR, 3 for KWD, 4 for CLF), from one table in the service (`currency.rs`), and the operator interface reads
-  the same from `Intl`; a code the table does not list has 2. One validator (`currency::is_code`) is the shape check
+  JPY, 2 for EUR, 3 for KWD, 4 for CLF), from one table in the service (`currency.rs`); the operator interface holds
+  the same table (`src/lib/money.ts`, compared with `currency.rs` by a unit test) and not CLDR's digits from `Intl`,
+  which differ for 16 codes such as HUF, IDR, COP, PKR and IQD. A code the table does not list has 2 in the service;
+  the interface asks `Intl` for such a code, then uses 2. One validator (`currency::is_code`) is the shape check
   everywhere.
 - **Money is stored in minor units as an integer**, matching
   `strategy::roi_basis_points` and every other money path in the crate,

@@ -1928,6 +1928,9 @@ only as search snippets.
   `GET /api/tpc` needs `currency`, one currency validator and the full ISO 4217 exponent table in the service
   (`currency.rs`), and WW-1.13's validator and error-text items. The owner has not accepted the other decisions; the
   rest of WW-1 is not started. What was not done is in the root `CHANGELOG.md` entry.
+  **2026-10-30:** the interface's exponent now comes from the same ISO 4217 table as `currency.rs` (a unit test
+  compares them), not from `Intl`, whose CLDR digits differ for 16 codes such as HUF and IDR; amounts typed in those
+  currencies from 2026-10-29 were stored 100 times too small and are for an operator to check (root `CHANGELOG.md`).
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

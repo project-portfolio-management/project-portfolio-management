@@ -6,7 +6,7 @@ plan **identity CRUD + matching + merge** over **one recursive
 (Kanban task board, governance, schedule) and a wide set of oversight /
 executive views.
 
-SvelteKit 2 · Svelte 5 (runes) · TypeScript strict · SPA · Lily Design
+SvelteKit 3 · Svelte 5 (runes) · TypeScript strict · SPA · Lily Design
 System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte Headless · 10-locale i18n · full
 theme catalogue.
 

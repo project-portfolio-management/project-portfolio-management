@@ -10,7 +10,7 @@ resources, governance).
 |---|---|---|---|
 | [`project-portfolio-management-matcher-with-rust`](project-portfolio-management-matcher-with-rust) | Rust library: the `Plan` type and the matching engine, embedded by the API | `cargo run` (demo) | `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo fmt --check` |
 | [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | loco.rs REST service; the API DTO is the matcher's `Plan` | `cargo run -- start` (needs Postgres) | `cargo test` (database-free); `DATABASE_URL=… cargo test --test mod -- --ignored --test-threads=1` and the other database binaries (need Postgres; see [AGENTS.md](AGENTS.md)) |
-| [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 2 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
+| [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 3 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
 
 The Rust toolchain is pinned in [`rust-toolchain.toml`](rust-toolchain.toml)
 (1.99.1). The UI needs Node 26 and pnpm; its e2e tests stub the backend, so

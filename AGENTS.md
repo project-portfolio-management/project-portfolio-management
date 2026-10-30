@@ -7,7 +7,7 @@ Entry point for AI coding agents at the repository root. Three projects live her
 | --- | --- | --- |
 | Service (loco.rs REST API, PostgreSQL) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
-| Operator UI (SvelteKit 2, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
+| Operator UI (SvelteKit 3, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
 Versions: service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag `v0.2.0`). Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
 

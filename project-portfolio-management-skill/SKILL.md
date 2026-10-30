@@ -9,7 +9,7 @@ description: How an AI agent works in the Project Portfolio Management repo (Rus
 
 - `project-portfolio-management-matcher-with-rust/`: library; the `Plan` type and matching engine.
 - `project-portfolio-management-service-with-rust/`: loco.rs service under `/api/...`; the DTO is the matcher's `Plan`. The crate and binary are `project-portfolio-management`; its migration crate (`migration/`) is `project-portfolio-management-migration`.
-- `project-portfolio-management-ui-with-svelte/`: SvelteKit 2 / Svelte 5 (runes) SPA with a BFF.
+- `project-portfolio-management-ui-with-svelte/`: SvelteKit 3 / Svelte 5 (runes) SPA with a BFF.
 - `spec/` (entity contract), `agents/` (shared guidance), `tasks.md` (backlog), `plan.md` (research history).
 - Each subproject has `AGENTS.md`, `README.md`, `index.md` and its own `spec/`. Read the subproject `AGENTS.md` before editing it.
 

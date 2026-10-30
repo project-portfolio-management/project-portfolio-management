@@ -350,7 +350,7 @@ keys fall back to `en`.
 
 - **Svelte 5 runes only** (`$state` / `$derived` / `$effect` / `$props`
   / `$bindable`); no `export let`, no `$:`, events are callback props.
-- **SvelteKit 2**, SPA (`ssr = false` / `prerender = false`).
+- **SvelteKit 3**, SPA (`ssr = false` / `prerender = false`).
 - **TypeScript strict** with `noUncheckedIndexedAccess`; no `any`
   without a justifying comment.
 - **Lily DataGrid** (`@lilydesignsystem/svelte-data-grid`, wrapped once
@@ -1074,7 +1074,7 @@ links are **never** a match signal (entity spec §1).
 - Sibling service spec: [project-portfolio-management-service-with-rust/spec](../../project-portfolio-management-service-with-rust/spec/index.md).
 - Entity umbrella: [portfolio/spec](../../spec/index.md);
   [models](../../agents/models.md); [matching](../../agents/matching.md).
-- Family layout shell + theming + locale conventions; SvelteKit 2 +
+- Family layout shell + theming + locale conventions; SvelteKit 3 +
   Svelte 5 runes docs; SVAR Svelte DataGrid; Lily Design System Svelte
   Headless.
 - Auth / sessions (source of truth): `agents/share/authentication-sessions.md`;

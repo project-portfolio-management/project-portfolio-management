@@ -31,7 +31,7 @@ holds no token).
 
 ## What this is
 
-A SvelteKit 2 / Svelte 5 (runes) **SPA**. It calls the portfolio service
+A SvelteKit 3 / Svelte 5 (runes) **SPA**. It calls the portfolio service
 REST API under `/api/plans/...`, whose request/response body for the
 identity record **is** the `project_portfolio_management_matcher::Plan`
 shape itself (the API DTO = the matcher type, persisted as JSONB). There

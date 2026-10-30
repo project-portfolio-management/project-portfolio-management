@@ -5,7 +5,7 @@
 ```
 +--------------------------------------------------------------+
 |              project-portfolio-management-ui-with-svelte                  |
-|  SvelteKit 2 SPA · Svelte 5 runes · TypeScript strict         |
+|  SvelteKit 3 SPA · Svelte 5 runes · TypeScript strict         |
 |  routes: /plans                                               |
 |          /plans/new  /plans/[pid]  /plans/[pid]/edit          |
 |          /plans/[pid]/{goals,tasks,issues}                    |

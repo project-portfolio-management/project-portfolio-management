@@ -11,8 +11,8 @@ System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte
 theme catalogue.
 
 > **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
-> is 0 errors / 0 warnings and the vitest suite passes (912 tests). There are
-> 100 page routes. The live work queue is [`spec/index.md`](spec/index.md) §13;
+> is 0 errors / 0 warnings and the vitest suite passes. There are 100 page
+> routes (2026-10-30). Test, API-route and locale counts are in the entity spec's [§14 generated block](../spec/14-implementation-status.md). The live work queue is [`spec/index.md`](spec/index.md) §13;
 > the repo-level backlog is [`../tasks.md`](../tasks.md). Contributor
 > conventions are in [`AGENTS.md`](AGENTS.md).
 
@@ -167,7 +167,7 @@ dashboard / capacity views) consume those and the PPM endpoints.
 ```bash
 pnpm run check         # svelte-check (strict, 0 errors / 0 warnings)
 pnpm run build
-npx vitest run         # unit suite (tests/unit, jsdom): 912 tests at 2026-10-30
+npx vitest run         # unit suite (tests/unit, jsdom)
 pkill -f 'vite preview'   # clear a stale preview server first
 npx playwright test    # e2e (tests/e2e): builds, serves `vite preview` on :4173
 npx playwright test --project=mobile   # 390x844 audit of every route

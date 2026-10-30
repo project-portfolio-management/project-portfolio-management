@@ -37,7 +37,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DATABASE_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
-| Migrations | `migration/src/` (crate `project-portfolio-management-migration`) — 111 files `m2026…`, latest `m20261010_000077_portfolio_ledger` |
+| Migrations | `migration/src/` (crate `project-portfolio-management-migration`) — files `m2026…`; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
 
 ## API surface
 
@@ -50,7 +50,7 @@ document its `requestBody` (`WRITES_WITHOUT_REQUEST_BODY` only shrinks), and
 `api-routes.txt` (the mounted routes, which the UI's tests check its client
 against) is regenerated with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`. Spec §9 is the
 full contract; this is the map. One module per area in
-`src/controllers/` (77 files), each with a pure-logic sibling in `src/`.
+`src/controllers/`, each with a pure-logic sibling in `src/`.
 
 | Group | Paths |
 |---|---|

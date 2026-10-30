@@ -1,6 +1,6 @@
 # API map
 
-The service mounts 669 routes on 534 paths (2026-10-30). Do not copy them into a document: the complete list is
+The service's route count is in the generated block of `spec/14-implementation-status.md`. Do not copy them into a document: the complete list is
 `project-portfolio-management-service-with-rust/api-routes.txt` (one `METHOD /path` per line, written from the router
 by a unit test), and `openapi.json` beside it documents every route except `GET /api-docs/openapi.json` and
 `GET /swagger-ui`. Read those files for a route; this page only says where things are.

@@ -7,7 +7,7 @@
 - Version: service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag v0.2.0)
 - Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-matcher-with-rust` (matcher), `project-portfolio-management-ui-with-svelte` (ui)
 - Stack: Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18
-- Stack: SvelteKit 2, Svelte 5 (runes), Node 26, pnpm
+- Stack: SvelteKit 3, Svelte 5 (runes), Node 26, pnpm
 - Stack: Lily Design System widgets (@lilydesignsystem/*)
 - Stack: Podman with Compose to run it
 - Run: `podman compose up -d --build --wait`

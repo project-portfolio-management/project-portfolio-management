@@ -1187,7 +1187,7 @@
     },
     "stack": [
       "Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18",
-      "SvelteKit 2, Svelte 5 (runes), Node 26, pnpm",
+      "SvelteKit 3, Svelte 5 (runes), Node 26, pnpm",
       "Lily Design System widgets (@lilydesignsystem/*)",
       "Podman with Compose to run it"
     ],

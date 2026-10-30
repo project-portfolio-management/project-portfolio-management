@@ -39,7 +39,7 @@ Toolchain is pinned in `rust-toolchain.toml` (1.99.1; minimum supported 1.96); t
 
 - A stale `vite preview` on port 4173 can serve an old build to Playwright; kill it first.
 - `tasks.md` is about 150 KB: edit entries surgically; keep history, do not delete.
-- Counts in docs (tests, routes, locales) go stale; verify against code (the UI has 10 locales in `src/lib/locales.ts`).
+- Counts in docs (tests, routes, locales) go stale; do not write them by hand. The current ones are in the generated block of `spec/14-implementation-status.md` (`bash scripts/generate-status.sh`, source-line counts; a test run reports more, as some tests are generated in loops), or verify against code.
 - The API's OpenAPI paths are written by hand in `src/openapi.rs` and `src/openapi_more.rs`; request bodies are generated into `src/openapi_bodies.rs` by `scripts/generate-openapi-bodies.py`. Tests write `openapi.json` and `api-routes.txt` and fail when a mounted route is undocumented. See the API `AGENTS.md`.
 - The WPM bridge is off (stub mode) until `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` is set; it forwards the caller's own token, never stores it, never fails a PPM request, and never adds WPM's supply to PPM's. Do not invent a mapping of WPM skills to PPM tags (FB-7).
 

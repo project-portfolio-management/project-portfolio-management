@@ -10,10 +10,13 @@ holds no token).
 > (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
 >
 > **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
-> is **0 errors / 0 warnings**, `npx vitest run` passes (**912 tests**, 75
-> files in `tests/unit/`), and the Playwright suite (67 files in
-> `tests/e2e/`, 782 tests with axe audits) runs against a production build. There are **100 page
-> routes** under `src/routes` (source-line counts are in the entity spec's §14 generated block). Shipped: the unified identity surface
+> is **0 errors / 0 warnings**, `npx vitest run` passes (`tests/unit/`), and
+> the Playwright suite (`tests/e2e/`, with axe audits) runs against a production
+> build. There are 100 page routes under `src/routes` (2026-10-30). Test counts
+> are not written here, as they go stale: test, API-route, migration and locale
+> counts are in the entity spec's
+> [§14 generated block](../spec/14-implementation-status.md) (`scripts/generate-status.sh`;
+> it counts source lines, so a run reports more, as some tests are generated in loops). Shipped: the unified identity surface
 > (`/plans`, `/plans/new`, `/plans/[pid]`, `/plans/[pid]/edit`,
 > `/plans/merge`), the Kanban board, governance and schedule views, the
 > oversight / executive dashboards (listed in [README.md](README.md)), the
@@ -249,7 +252,7 @@ pnpm install
 pnpm dev                       # http://localhost:5173 (needs the service for real data)
 pnpm run check                 # svelte-kit sync + svelte-check (strict; 0/0 expected)
 pnpm run build
-npx vitest run                 # unit suite (same as `pnpm test`), 703 tests
+npx vitest run                 # unit suite (same as `pnpm test`)
 pkill -f 'vite preview'        # free port 4173 if a stale preview is running
 npx playwright test            # e2e: builds, then `vite preview` on :4173
 npx playwright test --project=mobile   # just the 390x844 audit

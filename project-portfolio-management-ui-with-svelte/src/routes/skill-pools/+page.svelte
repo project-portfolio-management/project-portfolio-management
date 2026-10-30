@@ -3,7 +3,8 @@
   to set or remove that link (`PUT /api/skill-pools/{pid}/peer-link`, FB-1). The id is checked here before it is
   sent (a lower-case hyphenated UUID, as the workforce service writes it); a pool already linked elsewhere (409)
   and an id the service refuses (422) are said plainly; removing a link is confirmed first. The page says that the
-  link is set on both sides by a person who can see both, and is never matched by name.
+  link is set on both sides by a person who can see both, and is never matched by name. Removing or changing a
+  link withdraws every demand figure sent to the old workforce service pool (FB-5); the page says how many.
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -63,8 +64,11 @@
     failure = null;
     done = null;
     try {
-      await ppm.setSkillPoolPeerLink(p.pid, next);
+      const answer = await ppm.setSkillPoolPeerLink(p.pid, next);
       done = next === null ? t("p.skill_pools.cleared", { name: p.name }) : t("p.skill_pools.saved", { name: p.name, ref: next });
+      // FB-5: removing or changing a link withdraws what was sent to the old workforce service pool.
+      const withdrawn = answer.peer_demand_withdrawals?.length ?? 0;
+      if (withdrawn > 0) done = `${done} ${t("p.skill_pools.withdrawing", { n: withdrawn })}`;
       editing = null;
       await load();
     } catch (err) {

@@ -293,7 +293,8 @@ pub fn schemas() -> Value {
         "SkillPoolUpdate": obj(&[], json!({ "active": boolean(), "roles": list(s()), "skills": list(s()) })),
         "SkillPool": obj(&["pid", "name", "active", "roles", "skills"], json!({
             "pid": uuid(), "name": s(), "active": boolean(), "roles": list(s()), "skills": list(s()),
-            "peer_pool_ref": { "type": "string", "format": "uuid", "nullable": true, "description": "The workforce service's id for the same pool; null when not linked." } })),
+            "peer_pool_ref": { "type": "string", "format": "uuid", "nullable": true, "description": "The workforce service's id for the same pool; null when not linked." },
+            "peer_demand_withdrawals": { "type": "array", "items": { "type": "object", "additionalProperties": true }, "description": "Only on a peer-link answer that removed or changed a link: for each programme and month whose figure had been sent to the old WPM pool, the withdrawal started (plan_pid, month, outcome, detail, fte_centi, peer_event_id); FB-5." } })),
         "SkillPoolPeerLinkInput": obj(&["peer_pool_ref"], json!({
             "peer_pool_ref": { "type": "string", "nullable": true, "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", "description": "The workforce service's pool id; null removes the link." } })),
         "SkillPoolList": obj(&["skill_pools"], json!({ "skill_pools": list(r("SkillPool")) })),
@@ -307,7 +308,7 @@ pub fn schemas() -> Value {
             "pid": uuid(), "pool_pid": uuid(), "plan_pid": uuid(), "organization": s_null(),
             "kind": en(&["supply", "demand"]), "month": s(), "committed_fte": num(),
             "delivered_fte": { "type": "number", "nullable": true }, "note": s_null(),
-            "peer_demand_send": { "type": "object", "nullable": true, "additionalProperties": true, "description": "On a demand commitment of a linked pool: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id)." } })),
+            "peer_demand_send": { "type": "object", "nullable": true, "additionalProperties": true, "description": "On a demand commitment of a linked pool, or one with a send recorded: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id, at); fte_centi 0 is a withdrawal (FB-5)." } })),
         "CapacityCommitmentList": obj(&["commitments"], json!({ "commitments": list(r("CapacityCommitment")) })),
         "HeatmapCell": obj(&["month", "state", "word", "shape", "colour", "demand_fte"], json!({
             "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "no_demand", "nothing_recorded", "supply_unknown"]),

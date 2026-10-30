@@ -373,7 +373,7 @@
           },
           "peer_demand_send": {
             "additionalProperties": true,
-            "description": "On a demand commitment of a linked pool: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id).",
+            "description": "On a demand commitment of a linked pool, or one with a send recorded: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id, at); fte_centi 0 is a withdrawal (FB-5).",
             "nullable": true,
             "type": "object"
           },
@@ -3483,6 +3483,14 @@
           "name": {
             "type": "string"
           },
+          "peer_demand_withdrawals": {
+            "description": "Only on a peer-link answer that removed or changed a link: for each programme and month whose figure had been sent to the old WPM pool, the withdrawal started (plan_pid, month, outcome, detail, fte_centi, peer_event_id); FB-5.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
           "peer_pool_ref": {
             "description": "The workforce service's id for the same pool; null when not linked.",
             "format": "uuid",
@@ -5734,7 +5742,7 @@
         ]
       },
       "put": {
-        "description": "Body: pool_pid, plan_pid (a programme), organization (a partner's name as a label; omit for the organization's own), kind (supply: capacity committed to the programme; demand: work owed), month (YYYY-MM), committed_fte, optional delivered_fte and note. One per pool, programme, organization, kind and month; setting it again replaces it. Audited. On a pool linked to the workforce service, a demand commitment also sends the programme's total demand for the pool and month to WPM (POST /api/capacity/peer-demand, programme thing:<plan pid>, in hundredths of an FTE) under the caller's own token, after the write and without holding it up; peer_demand_send says what was started or why nothing was sent (zero is never sent), and the list shows the latest outcome.",
+        "description": "Body: pool_pid, plan_pid (a programme), organization (a partner's name as a label; omit for the organization's own), kind (supply: capacity committed to the programme; demand: work owed), month (YYYY-MM), committed_fte, optional delivered_fte and note. One per pool, programme, organization, kind and month; setting it again replaces it. Audited. On a pool linked to the workforce service, a demand commitment also sends the programme's total demand for the pool and month to WPM (POST /api/capacity/peer-demand, programme thing:<plan pid>, in hundredths of an FTE) under the caller's own token, after the write and without holding it up; each send carries sent_at, the time of the write, so WPM can ignore an older event arriving after a newer one; a total of zero is sent as fte_centi 0, which withdraws the figure in WPM (FB-5). peer_demand_send says what was started or why nothing was sent, and the list shows the latest outcome.",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -31969,7 +31977,7 @@
     },
     "/api/skill-pools/{pid}/peer-link": {
       "put": {
-        "description": "Body: peer_pool_ref, the workforce service's (WPM's) id for the pool that means the same skills (a lower-case hyphenated UUID), or null to remove the link. Set by a person, never matched by name; one pool per WPM pool (409). While linked, the heatmap shows WPM's supply for the pool (labelled with its source and time) beside what was entered here, never added, and demand commitments on it are sent to WPM under the caller's own token. Audited with no figure.",
+        "description": "Body: peer_pool_ref, the workforce service's (WPM's) id for the pool that means the same skills (a lower-case hyphenated UUID), or null to remove the link. Set by a person, never matched by name; one pool per WPM pool (409). While linked, the heatmap shows WPM's supply for the pool (labelled with its source and time) beside what was entered here, never added, and demand commitments on it are sent to WPM under the caller's own token. Removing or changing the link withdraws, best effort, every figure sent to the old WPM pool (fte_centi 0 per programme and month, each send recorded), listed in peer_demand_withdrawals. Audited with no figure.",
         "parameters": [
           {
             "in": "path",

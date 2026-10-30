@@ -9,7 +9,8 @@
 //!
 //! - `GET {base}/api/capacity/peer-supply?pool=<wpm pool>&from=YYYY-MM-01&months=N`: WPM's supply for a linked
 //!   pool, by month, in hundredths of an FTE, a month `null` (hidden) under WPM's small-cell floor.
-//! - `POST {base}/api/capacity/peer-demand` with `{pool_pid, programme_ref, month, fte_centi, peer_event_id}`.
+//! - `POST {base}/api/capacity/peer-demand` with `{pool_pid, programme_ref, month, fte_centi, peer_event_id,
+//!   sent_at}`; `fte_centi: 0` withdraws PPM's figure for that pool, programme and month (FB-5).
 //!
 //! - `GET {base}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` (FB-4):
 //!   counts only, for one programme, each part known or unknown with WPM's reason, a count under WPM's floor
@@ -113,17 +114,11 @@ pub enum DemandPlan {
 }
 
 /// Decide what to send for a programme's total demand (thousandths of an FTE) on a linked pool, with or without
-/// a base URL and a caller token. **Zero is not sent**: WPM takes 1 to 1 000 000 hundredths and has no route to
-/// withdraw a figure, so WPM keeps the last figure sent until it has one (recorded as `not_sent_zero`).
+/// a base URL and a caller token. A total that rounds to **zero is sent as `fte_centi: 0`**, which withdraws PPM's
+/// figure in WPM for that pool, programme and month (FB-5, family contract 2026-10-30); WPM takes 0 to 1 000 000.
 #[must_use]
 pub fn plan_demand(total_milli: i64, configured: bool, has_token: bool) -> DemandPlan {
     let centi = centi_of_milli(total_milli);
-    if centi < 1 {
-        return DemandPlan::Skip(
-            "not_sent_zero",
-            "WPM takes no zero and has no route to withdraw a figure; WPM keeps the last figure sent",
-        );
-    }
     if centi > 1_000_000 {
         return DemandPlan::Skip(
             "not_sent_too_large",
@@ -143,6 +138,16 @@ pub fn plan_demand(total_milli: i64, configured: bool, has_token: bool) -> Deman
         );
     }
     DemandPlan::Send(centi)
+}
+
+/// The words recorded while a send is under way: a figure, or the withdrawal of one.
+#[must_use]
+pub fn started_detail(fte_centi: i64) -> &'static str {
+    if fte_centi == 0 {
+        "withdrawing the figure from the workforce service"
+    } else {
+        "sending to the workforce service"
+    }
 }
 
 /// One month of supply as PPM shows it for a linked pool.
@@ -560,22 +565,32 @@ pub struct DemandSend {
     pub fte_centi: i64,
     /// The id of this version of the figure.
     pub peer_event_id: String,
+    /// The time of the PPM write that produced the figure, sent as `sent_at` so that WPM can ignore an older event
+    /// that arrives after a newer one.
+    pub sent_at: DateTime<Utc>,
 }
 
-/// Send one programme's demand to WPM. Returns the outcome to record (`sent`, `duplicate`, `refused`,
-/// `unreachable`) and a detail.
-pub async fn send_demand(s: &DemandSend) -> (&'static str, String) {
-    if let Err(e) = allowed(&s.base).await {
-        return ("unreachable", e);
-    }
-    let url = format!("{}/api/capacity/peer-demand", s.base.trim_end_matches('/'));
-    let body = serde_json::json!({
+/// The exact body PPM sends to `POST {WPM}/api/capacity/peer-demand`.
+#[must_use]
+pub fn demand_body(s: &DemandSend) -> serde_json::Value {
+    serde_json::json!({
         "pool_pid": s.peer_pool_ref,
         "programme_ref": programme_ref(s.plan_pid),
         "month": s.month.format("%Y-%m-%d").to_string(),
         "fte_centi": s.fte_centi,
         "peer_event_id": s.peer_event_id,
-    });
+        "sent_at": s.sent_at.to_rfc3339_opts(chrono::SecondsFormat::Micros, true),
+    })
+}
+
+/// Send one programme's demand (or, at `fte_centi: 0`, its withdrawal) to WPM. Returns the outcome to record
+/// (`sent`, `duplicate`, `refused`, `unreachable`) and a detail.
+pub async fn send_demand(s: &DemandSend) -> (&'static str, String) {
+    if let Err(e) = allowed(&s.base).await {
+        return ("unreachable", e);
+    }
+    let url = format!("{}/api/capacity/peer-demand", s.base.trim_end_matches('/'));
+    let body = demand_body(s);
     let response = match client()
         .post(&url)
         .bearer_auth(&s.bearer)
@@ -601,6 +616,8 @@ pub async fn send_demand(s: &DemandSend) -> (&'static str, String) {
         .unwrap_or(false);
     if duplicate {
         ("duplicate", "WPM already had this version".to_string())
+    } else if s.fte_centi == 0 {
+        ("sent", "WPM took the withdrawal".to_string())
     } else {
         ("sent", "WPM took the figure".to_string())
     }
@@ -866,16 +883,31 @@ mod tests {
     }
 
     #[test]
-    fn demand_is_sent_only_with_a_figure_a_url_and_a_token() {
+    fn demand_is_sent_with_a_url_and_a_token_and_zero_withdraws() {
         assert_eq!(plan_demand(1500, true, true), DemandPlan::Send(150));
-        assert!(matches!(
+        assert_eq!(
             plan_demand(0, true, true),
-            DemandPlan::Skip("not_sent_zero", _)
+            DemandPlan::Send(0),
+            "zero is sent: it withdraws the figure (FB-5)"
+        );
+        assert_eq!(
+            plan_demand(4, true, true),
+            DemandPlan::Send(0),
+            "0.004 FTE rounds to a withdrawal"
+        );
+        assert!(matches!(
+            plan_demand(0, false, true),
+            DemandPlan::Skip("not_configured", _)
         ));
         assert!(matches!(
-            plan_demand(4, true, true),
-            DemandPlan::Skip("not_sent_zero", _)
+            plan_demand(0, true, false),
+            DemandPlan::Skip("not_sent_no_token", _)
         ));
+        assert_eq!(
+            started_detail(0),
+            "withdrawing the figure from the workforce service"
+        );
+        assert_eq!(started_detail(150), "sending to the workforce service");
         assert!(matches!(
             plan_demand(1500, false, true),
             DemandPlan::Skip("not_configured", _)
@@ -991,6 +1023,98 @@ mod tests {
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].1.centi, Some(300));
         assert_eq!(rows[1].1.centi, None);
+    }
+
+    /// The authorization header and body of each peer-demand call the stand-in saw.
+    type SeenDemand = std::sync::Arc<Mutex<Vec<(Option<String>, serde_json::Value)>>>;
+
+    /// A stand-in WPM that records every peer-demand body and authorization it is sent, answering `duplicate` when
+    /// it has seen the event id before.
+    async fn serve_demand() -> (String, SeenDemand) {
+        let seen: SeenDemand = std::sync::Arc::default();
+        let kept = seen.clone();
+        let app = axum::Router::new().route(
+            "/api/capacity/peer-demand",
+            axum::routing::post(
+                move |h: axum::http::HeaderMap, axum::Json(b): axum::Json<serde_json::Value>| {
+                    let kept = kept.clone();
+                    async move {
+                        let auth = h
+                            .get("authorization")
+                            .and_then(|v| v.to_str().ok())
+                            .map(str::to_string);
+                        let mut k = kept.lock().unwrap();
+                        let duplicate = k
+                            .iter()
+                            .any(|(_, s)| s["peer_event_id"] == b["peer_event_id"]);
+                        k.push((auth, b));
+                        axum::Json(
+                            serde_json::json!({ "pid": Uuid::nil(), "duplicate": duplicate }),
+                        )
+                    }
+                },
+            ),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        (format!("http://{addr}"), seen)
+    }
+
+    #[tokio::test]
+    async fn a_figure_and_its_withdrawal_go_with_the_exact_body_and_the_time_of_the_write() {
+        let (base, seen) = serve_demand().await;
+        let (pool, plan) = (Uuid::from_u128(1), Uuid::from_u128(2));
+        let peer = "3f2c6b7e-0000-4000-8000-0000000000a1".to_string();
+        let at = DateTime::parse_from_rfc3339("2026-10-30T09:15:00.123456Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        let send = |centi: i64, written_at: DateTime<Utc>| DemandSend {
+            base: base.clone(),
+            bearer: "caller-token".to_string(),
+            peer_pool_ref: peer.clone(),
+            plan_pid: plan,
+            month: d("2026-11-01"),
+            fte_centi: centi,
+            peer_event_id: peer_event_id(pool, plan, d("2026-11-01"), written_at),
+            sent_at: written_at,
+        };
+        let figure = send(150, at);
+        assert_eq!(
+            send_demand(&figure).await,
+            ("sent", "WPM took the figure".to_string())
+        );
+        let later = at + chrono::Duration::seconds(5);
+        let zero = send(0, later);
+        assert_eq!(
+            send_demand(&zero).await,
+            ("sent", "WPM took the withdrawal".to_string())
+        );
+        assert_eq!(
+            send_demand(&zero).await.0,
+            "duplicate",
+            "the same version again changes nothing"
+        );
+        let seen = seen.lock().unwrap().clone();
+        assert_eq!(seen.len(), 3);
+        assert_eq!(seen[0].0.as_deref(), Some("Bearer caller-token"));
+        assert_eq!(
+            seen[0].1,
+            serde_json::json!({
+                "pool_pid": peer, "programme_ref": format!("thing:{plan}"), "month": "2026-11-01",
+                "fte_centi": 150, "peer_event_id": figure.peer_event_id, "sent_at": "2026-10-30T09:15:00.123456Z",
+            })
+        );
+        assert_eq!(
+            seen[1].1,
+            serde_json::json!({
+                "pool_pid": peer, "programme_ref": format!("thing:{plan}"), "month": "2026-11-01",
+                "fte_centi": 0, "peer_event_id": zero.peer_event_id, "sent_at": "2026-10-30T09:15:05.123456Z",
+            }),
+            "a withdrawal is a zero with its own event id and a later sent_at"
+        );
+        assert_ne!(seen[0].1["peer_event_id"], seen[1].1["peer_event_id"]);
+        assert_eq!(demand_body(&zero), seen[1].1);
     }
 
     fn got(centi: i64) -> Received {

@@ -1232,6 +1232,16 @@ export interface SkillPool {
   skills: string[];
   /** FB-1: the workforce service's pool id this pool is linked to, or null. Older answers may leave it out. */
   peer_pool_ref?: string | null;
+  /** FB-5: only on a peer-link answer that removed or changed a link: the withdrawal (`fte_centi: 0`) started for
+   *  each programme and month whose figure had been sent to the old workforce service pool. */
+  peer_demand_withdrawals?: {
+    plan_pid: string;
+    month: string;
+    outcome: string;
+    detail: string | null;
+    fte_centi: number | null;
+    peer_event_id: string;
+  }[];
 }
 
 export interface DirectorPackMeta {

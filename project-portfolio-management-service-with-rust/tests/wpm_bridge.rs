@@ -2,7 +2,8 @@
 //! workforce service on a local port: the pool link (set, refused, unique, cleared, audited with no figure), the
 //! heatmap taking a linked pool's supply from WPM with its source and time and never adding what was entered here, the
 //! last figure with its age when WPM is down or slow (only to the caller whose token fetched it), a hidden month as unknown, demand sent under the caller's own
-//! token with the exact body WPM takes, zero never sent, an unlinked pool exactly as before, and (FB-4) a plan's
+//! token with the exact body WPM takes (with `sent_at`), a zero sent as the withdrawal (FB-5), every figure withdrawn
+//! when a pool is unlinked, an unlinked pool exactly as before, and (FB-4) a plan's
 //! people impact passed through from WPM with the plan's own end sent, `unknown` when WPM refuses, is down or slow.
 //!
 //! Its **own test binary** (the verifier is a process-wide `OnceLock`, and this sets the worker-service URL).
@@ -295,7 +296,11 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         wait_for(1).await;
         let (_, _, auth, body) = posts()[0].clone();
         assert_eq!(auth, Some(format!("Bearer {token}")), "the caller's own token, no service account");
-        assert_eq!(body, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{first}"), "fte_centi": 150, "peer_event_id": r["peer_demand_send"]["peer_event_id"] }));
+        let event = r["peer_demand_send"]["peer_event_id"].as_str().unwrap().to_string();
+        let sent_at = body["sent_at"].as_str().unwrap().to_string();
+        assert_eq!(body, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{first}"), "fte_centi": 150, "peer_event_id": event, "sent_at": sent_at }));
+        let at = chrono::DateTime::parse_from_rfc3339(&sent_at).expect("sent_at is RFC 3339");
+        assert!(event.ends_with(&format!(":{}", at.timestamp_micros())), "sent_at is the time of the write the event id names: {event} {sent_at}");
         let mut outcome = Value::Null;
         for _ in 0..50 {
             let l: Value = with!(request.get("/api/capacity-commitments")).await.json();
@@ -316,19 +321,51 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         put(json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month, "committed_fte": 1.0 })).await;
         wait_for(3).await;
         stub.mode.store(0, Ordering::SeqCst);
-        // Zero is never sent.
+        // A total of zero is sent as fte_centi 0: WPM withdraws its ppm claim (FB-5).
         put(json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month, "committed_fte": 0 })).await;
+        wait_for(4).await;
+        assert_eq!(posts()[3].3["fte_centi"], 50, "the first zero still had Acme's 0.5");
         let z = put(json!({ "pool_pid": pool, "plan_pid": prog, "organization": "Acme", "kind": "demand", "month": month, "committed_fte": 0 })).await;
-        assert_eq!(z["peer_demand_send"]["outcome"], "not_sent_zero", "{z}");
-        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-        assert_eq!(posts().len(), 4, "the first zero still had Acme's 0.5; the second is not sent");
-        assert_eq!(posts()[3].3["fte_centi"], 50);
+        assert_eq!((z["peer_demand_send"]["outcome"].as_str(), z["peer_demand_send"]["fte_centi"].as_i64(), z["peer_demand_send"]["detail"].as_str()), (Some("started"), Some(0), Some("withdrawing the figure from the workforce service")), "{z}");
+        wait_for(5).await;
+        let w = posts()[4].3.clone();
+        assert_eq!(w, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{first}"), "fte_centi": 0, "peer_event_id": z["peer_demand_send"]["peer_event_id"], "sent_at": w["sent_at"] }), "the exact withdrawal");
+        let t = |v: &Value| chrono::DateTime::parse_from_rfc3339(v["sent_at"].as_str().unwrap()).unwrap();
+        assert!(t(&w) > t(&posts()[3].3), "a later write, a later sent_at");
+        let send_of = |l: &Value, m: &str| l["commitments"].as_array().unwrap().iter().find(|c| c["pool_pid"] == pool.as_str() && c["kind"] == "demand" && c["month"] == m && c["organization"].is_null()).unwrap()["peer_demand_send"].clone();
+        let mut s = Value::Null;
+        for _ in 0..50 {
+            s = send_of(&with!(request.get("/api/capacity-commitments")).await.json::<Value>(), &month);
+            if s["outcome"] == "sent" { break; }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+        assert_eq!((s["outcome"].as_str(), s["fte_centi"].as_i64(), s["detail"].as_str()), (Some("sent"), Some(0), Some("WPM took the withdrawal")), "{s}");
+        // A figure in the next month, so the unlink below has one to withdraw.
+        let r2 = put(json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month2, "committed_fte": 0.75 })).await;
+        assert_eq!(r2["peer_demand_send"]["fte_centi"], 75);
+        wait_for(6).await;
         // No token is not a send.
         let r = request.put("/api/capacity-commitments").json(&json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month, "committed_fte": 1 })).await;
         assert_eq!(r.status_code(), 401, "this deployment requires a token anyway");
 
-        // ── unlinked again: local figures at once ──
-        link(pool.clone(), Value::Null).await.assert_status_ok();
+        // ── unlinked again: every figure sent there is withdrawn (best effort), then local figures at once ──
+        let u = link(pool.clone(), Value::Null).await;
+        assert_eq!(u.status_code(), 200);
+        let u: Value = u.json();
+        let ws = u["peer_demand_withdrawals"].as_array().unwrap().clone();
+        assert_eq!(ws.len(), 1, "only the month whose latest send carried a figure; the first month is already withdrawn: {u}");
+        assert_eq!((ws[0]["month"].as_str(), ws[0]["outcome"].as_str(), ws[0]["fte_centi"].as_i64()), (Some(month2.as_str()), Some("started"), Some(0)));
+        wait_for(7).await;
+        let w = posts()[6].clone();
+        assert_eq!(w.2, Some(format!("Bearer {token}")), "under the unlinking caller's own token");
+        assert_eq!(w.3, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{next}"), "fte_centi": 0, "peer_event_id": ws[0]["peer_event_id"], "sent_at": w.3["sent_at"] }), "the withdrawal goes to the pool it was linked to");
+        let mut s = Value::Null;
+        for _ in 0..50 {
+            s = send_of(&with!(request.get("/api/capacity-commitments")).await.json::<Value>(), &month2);
+            if s["outcome"] == "sent" { break; }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+        assert_eq!((s["outcome"].as_str(), s["fte_centi"].as_i64()), (Some("sent"), Some(0)), "the withdrawal is recorded and shown after the unlink: {s}");
         let c = cell(&heat().await.json::<Value>(), &month);
         assert_eq!((c["supply_source"].as_str(), c["supply_fte"].as_f64()), (Some("here"), Some(1.5)), "{c}");
         let n = posts().len();
@@ -393,7 +430,11 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!(with!(request.get(&format!("/api/plans/{}/people-impact", uuid::Uuid::new_v4()))).await.status_code(), 404);
 
         // ── stub mode: no URL, no call, and the answer says so ──
-        link(pool.clone(), json!(peer)).await.assert_status_ok();
+        let relinked: Value = link(pool.clone(), json!(peer)).await.json();
+        assert!(relinked["peer_demand_withdrawals"].is_null(), "linking withdraws nothing");
+        let n = posts().len();
+        put(json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month2, "committed_fte": 1 })).await;
+        wait_for(n + 1).await;
         unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL") };
         let calls = stub.seen.lock().unwrap().len();
         let r = put(json!({ "pool_pid": pool, "plan_pid": prog, "kind": "demand", "month": month, "committed_fte": 2.5 })).await;
@@ -404,11 +445,16 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!((v["status"].as_str(), v["reason"].as_str()), (Some("unknown"), Some("the worker service URL is not set, so WPM was not asked")));
         assert_eq!(stub.seen.lock().unwrap().len(), calls, "nothing is called without a URL");
         let fresh = uuid::Uuid::new_v4().to_string();
-        link(pool.clone(), json!(fresh)).await.assert_status_ok();
+        let changed: Value = link(pool.clone(), json!(fresh)).await.json();
+        let ws = changed["peer_demand_withdrawals"].as_array().unwrap();
+        assert_eq!(ws.len(), 1, "a changed link withdraws from the old pool; a month never sent is not withdrawn: {changed}");
+        assert_eq!((ws[0]["month"].as_str(), ws[0]["outcome"].as_str()), (Some(month2.as_str()), Some("not_configured")), "recorded as not sent with no URL");
+        assert_eq!(stub.seen.lock().unwrap().len(), calls, "and nothing is called");
         let c = cell(&heat().await.json::<Value>(), &month);
         assert_eq!((c["peer_supply"]["status"].as_str(), c["state"].as_str()), (Some("unknown"), Some("supply_unknown")), "nothing received is unknown, never zero: {c}");
         assert!(c["supply_fte"].is_null());
-        link(pool.clone(), Value::Null).await.assert_status_ok();
+        let gone: Value = link(pool.clone(), Value::Null).await.json();
+        assert_eq!(gone["peer_demand_withdrawals"], json!([]), "nothing was sent to the fresh pool");
     })
     .await;
 }

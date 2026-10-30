@@ -1370,7 +1370,9 @@ other apps, shares a session with them, or fails when they are down.
   rule as the service's (`isPeerPoolRef`); anything else is refused on the page and nothing is sent. The service's
   `409` (another pool here is already linked to that workforce pool) and `422` (the id was not accepted) are each
   said in the catalogue's own sentence; the service's text is never shown. Removing a link (`peer_pool_ref: null`)
-  is asked first through `askConfirm`. The page says that the link must be set on both sides by a person who can
+  is asked first through `askConfirm`, which says that every demand figure already sent to the workforce service
+  for the pool will be withdrawn there (FB-5); after it, the page says how many withdrawals the service started
+  (`peer_demand_withdrawals`). The page says that the link must be set on both sides by a person who can
   see both, and is never matched by name. `/capacity-heatmap` draws `GET /api/capacity-heatmap[?from=YYYY-MM]
   [&months=N]` as a table, pool by month: each square has the service's word and a symbol for the service's
   `shape` as well as a border tone from its `colour`, so colour is never the only signal; demand, supply and gap

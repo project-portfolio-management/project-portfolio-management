@@ -2205,15 +2205,22 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   and start check show `unknown` for a linked pool (§8.5a rule 4).
 - [x] **FB-3 (M) — Demand out.** A demand commitment on a linked pool sends the programme's total to
   `POST {WPM}/api/capacity/peer-demand` under the caller's own token, after the write, outcome recorded.
-  **Built 2026-10-30.** No outbox or retry (the token is not stored); zero is not sent (FB-5). Same caveat as FB-2.
+  **Built 2026-10-30.** No outbox or retry (the token is not stored); zero is sent as the withdrawal (FB-5). Same caveat as FB-2.
 - [x] **FB-4 (M) — People impact in.** PPM's client for `GET {WPM}/api/capacity/people-impact?programme=thing:<pid>`,
   shown on the programme. **Built 2026-10-30:** `GET /api/plans/{pid}/people-impact` (WPM's answer passed through,
   `source: "wpm"`, the plan's own full `target_date` sent as `ends_on`, `unknown` with a reason when not configured,
   no token, unreachable, slow or refused; nothing kept), and a box on a programme's plan page, asked on request.
   **Not verified against a running WPM**: the tests use a stand-in with the shape read from WPM's
   `controllers/capacity/people_impact.rs` (FB-8).
-- [ ] **FB-5 (S) — Withdraw a demand figure.** WPM has no route to withdraw a figure and refuses zero, so a programme's
-  demand set to zero here leaves WPM's last figure in place. Needs a WPM route first; then PPM sends it on zero.
+- [x] **FB-5 (S) — Withdraw a demand figure.** Family contract decided 2026-10-30 at the owner's direction: PPM sends
+  `fte_centi: 0` with a new `peer_event_id` to `POST {WPM}/api/capacity/peer-demand`, and WPM withdraws its `ppm`
+  claim for that pool, programme and month; every send also carries `sent_at` (RFC 3339, the time of the PPM write
+  that produced the figure) so WPM can ignore an older event arriving after a newer one. **Built 2026-10-30
+  (PPM's side):** a total that rounds to zero is sent and recorded (`sent`, `fte_centi: 0`); unlinking a pool, or
+  changing its link, withdraws best effort every figure sent to the old WPM pool, one zero per programme and month
+  whose latest send carried a figure, each recorded, listed in the peer-link answer (§8.5a rule 6). **Not
+  verified:** against a running WPM (FB-8): WPM is building its side in parallel; the tests use a stand-in. A
+  withdrawal not sent (no URL, no token, or not answered) is not retried and the figure stays in WPM.
 - [x] **FB-6 (S–M, UI) — Show the bridge.** **Built in part 2026-10-30:** `/skill-pools` lists every pool with the
   workforce service's pool it is linked to and sets or removes the link (`PUT /api/skill-pools/{pid}/peer-link`;
   the id is checked as a lower-case hyphenated UUID before it is sent, 409 and 422 said plainly, removal confirmed;

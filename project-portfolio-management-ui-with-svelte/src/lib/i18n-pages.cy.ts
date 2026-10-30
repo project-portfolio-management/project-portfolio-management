@@ -4815,7 +4815,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.skill_pools.clear": "Dileu'r cysylltiad",
   "p.skill_pools.cancel": "Canslo",
   "p.skill_pools.confirm_clear":
-    "Dileu'r cysylltiad rhwng {name} a'r gwasanaeth gweithlu? Bydd ei chyflenwad ar y map gwres unwaith eto'n cynnwys yr hyn a gofnodwyd yma. Mae'r galw a anfonwyd eisoes i'r gwasanaeth gweithlu yn aros yno.",
+    "Dileu'r cysylltiad rhwng {name} a'r gwasanaeth gweithlu? Bydd ei chyflenwad ar y map gwres unwaith eto'n cynnwys yr hyn a gofnodwyd yma. Bydd pob ffigur galw a anfonwyd eisoes i'r gwasanaeth gweithlu ar gyfer y gronfa hon yn cael ei dynnu'n ôl yno (wedi'i anfon fel sero).",
   "p.skill_pools.saved":
     "Mae {name} bellach wedi'i chysylltu â chronfa'r gwasanaeth gweithlu {ref}.",
   "p.skill_pools.cleared":
@@ -4828,4 +4828,6 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Nid yw'r gronfa honno'n bodoli mwyach. Mae'r rhestr wedi'i llwytho eto.",
   "p.skill_pools.could_not_save": "Nid oedd modd newid y cysylltiad.",
   "p.skill_pools.see_heatmap": "Gweld y map gwres capasiti",
+  "p.skill_pools.withdrawing":
+    "Ffigurau galw sy'n cael eu tynnu'n ôl o gronfa'r gwasanaeth gweithlu yr oedd wedi'i chysylltu â hi: {n}.",
 };

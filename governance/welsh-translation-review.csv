@@ -4246,7 +4246,7 @@ p.skill_pools.ref_invalid,"That is not a workforce service pool id: it must be 3
 p.skill_pools.save,Save the link,Cadw'r cysylltiad,,,
 p.skill_pools.clear,Remove the link,Dileu'r cysylltiad,,,
 p.skill_pools.cancel,Cancel,Canslo,,,
-p.skill_pools.confirm_clear,Remove the link between {name} and the workforce service? Its supply on the heatmap will again be what was entered here. Demand already sent to the workforce service stays there.,Dileu'r cysylltiad rhwng {name} a'r gwasanaeth gweithlu? Bydd ei chyflenwad ar y map gwres unwaith eto'n cynnwys yr hyn a gofnodwyd yma. Mae'r galw a anfonwyd eisoes i'r gwasanaeth gweithlu yn aros yno.,,,
+p.skill_pools.confirm_clear,Remove the link between {name} and the workforce service? Its supply on the heatmap will again be what was entered here. Every demand figure already sent to the workforce service for this pool will be withdrawn there (sent as zero).,Dileu'r cysylltiad rhwng {name} a'r gwasanaeth gweithlu? Bydd ei chyflenwad ar y map gwres unwaith eto'n cynnwys yr hyn a gofnodwyd yma. Bydd pob ffigur galw a anfonwyd eisoes i'r gwasanaeth gweithlu ar gyfer y gronfa hon yn cael ei dynnu'n ôl yno (wedi'i anfon fel sero).,,,
 p.skill_pools.saved,{name} is now linked to the workforce service pool {ref}.,Mae {name} bellach wedi'i chysylltu â chronfa'r gwasanaeth gweithlu {ref}.,,,
 p.skill_pools.cleared,{name} is no longer linked to the workforce service.,Nid yw {name} wedi'i chysylltu â'r gwasanaeth gweithlu mwyach.,,,
 p.skill_pools.taken,Another pool here is already linked to that workforce service pool. Remove that link first: one pool here per pool there.,Mae cronfa arall yma eisoes wedi'i chysylltu â chronfa'r gwasanaeth gweithlu honno. Dilëwch y cysylltiad hwnnw yn gyntaf: un gronfa yma i bob cronfa yno.,,,
@@ -4254,3 +4254,4 @@ p.skill_pools.invalid,"The service did not accept that id. It must be the workfo
 p.skill_pools.missing,That pool no longer exists. The list has been loaded again.,Nid yw'r gronfa honno'n bodoli mwyach. Mae'r rhestr wedi'i llwytho eto.,,,
 p.skill_pools.could_not_save,The link could not be changed.,Nid oedd modd newid y cysylltiad.,,,
 p.skill_pools.see_heatmap,See the capacity heatmap,Gweld y map gwres capasiti,,,
+p.skill_pools.withdrawing,Demand figures being withdrawn from the workforce service pool it was linked to: {n}.,Ffigurau galw sy'n cael eu tynnu'n ôl o gronfa'r gwasanaeth gweithlu yr oedd wedi'i chysylltu â hi: {n}.,,,

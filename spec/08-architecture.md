@@ -165,7 +165,7 @@ WPM-D135, WPM-D138 to D141).
 | Delivery ideas | CRM → PPM | `POST /api/ideas` `{title, pitch, tags}` → `{pid}` (CRM's `POST /api/bridges/ppm/deals/{pid}`) | exists (PPM's route; CRM calls it) |
 | Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1); set and removed on the `/skill-pools` screen (FB-6) |
 | Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2); shown on the `/capacity-heatmap` screen with its source and reading (FB-6) |
-| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); the send outcome is not shown in the interface (no commitment form there; FB-6) |
+| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3); zero sent as the withdrawal, and every sent figure withdrawn on unlink (FB-5); the send outcome is not shown in the interface (no commitment form there; FB-6) |
 | People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` | **built** (FB-4): `GET /api/plans/{pid}/people-impact`, shown on a programme's plan page |
 | Hire and leave | WPM → CRM | `worker_hired`, `worker_terminated`/`worker_retired` webhooks | CRM's and WPM's; nothing in PPM |
 
@@ -203,19 +203,35 @@ WPM-D135, WPM-D138 to D141).
    so the drum and pipeline treat that pool's supply as unknown.
 5. **Demand out.** When a demand commitment on a linked pool is set (`PUT /api/capacity-commitments`, kind
    `demand`), PPM sends `POST {WPM}/api/capacity/peer-demand` with `{pool_pid: <WPM pool pid>, programme_ref:
-   "thing:<plan pid>", month: "YYYY-MM-01", fte_centi, peer_event_id}`. `fte_centi` is the programme's **total**
+   "thing:<plan pid>", month: "YYYY-MM-01", fte_centi, peer_event_id, sent_at}`. `fte_centi` is the programme's **total**
    demand commitments on the pool for the month (every organization's), rounded half up to hundredths, because WPM
    keeps one figure per programme, pool and month and would otherwise overwrite one partner's figure with
    another's. `peer_event_id` is `ppm:<pool>:<plan>:<YYYY-MM>:<microseconds of the write>`: the same version, the
-   same id (WPM then changes nothing); a new write, a new id. The send runs after the write has been stored and
+   same id (WPM then changes nothing); a new write, a new id. `sent_at` (RFC 3339, UTC, to the microsecond) is the
+   time of the PPM write that produced the figure, the same moment the event id names, so that WPM can ignore an
+   older event that arrives after a newer one (two sends are not ordered on the wire). The send runs after the write has been stored and
    never holds it up or fails it; the caller's token is held in memory for that one send and **never stored**, so
    there is no outbox and no retry: setting the commitment again sends again. The outcome (`started`, `sent`,
-   `duplicate`, `refused`, `unreachable`, `not_configured`, `not_sent_no_token`, `not_sent_zero`,
-   `not_sent_too_large`) is in the `PUT` answer (`peer_demand_send`) and in `peer_demand_sends` (the latest per pool,
-   programme and month; an older version never overwrites a newer one), shown on `GET /api/capacity-commitments`.
-6. **Zero and delete.** WPM takes 1 to 1 000 000 hundredths and has no route to withdraw a figure, and PPM has no
-   route to delete a commitment. So a total that rounds to zero is **not sent** (`not_sent_zero`) and WPM keeps the
-   last figure it was sent until WPM adds a withdrawal (FB-5). Unlinking a pool sends nothing either.
+   `duplicate`, `refused`, `unreachable`, `not_configured`, `not_sent_no_token`, `not_sent_too_large`) is in the
+   `PUT` answer (`peer_demand_send`) and in `peer_demand_sends` (the latest per pool, programme and month; an older
+   version never overwrites a newer one), shown on `GET /api/capacity-commitments` with each demand commitment that
+   has a send recorded (or, on a linked pool, `null` when none is). `not_sent_zero` is no longer produced (FB-5);
+   the database still accepts it, for rows written before.
+6. **Zero withdraws (FB-5, family contract decided 2026-10-30 at the owner's direction).** A total that rounds to
+   zero is **sent** as `fte_centi: 0` with a new `peer_event_id` and its `sent_at`; WPM then withdraws its `ppm`
+   claim for that pool, programme and month. It is recorded like any other send (`sent` with `fte_centi: 0` and
+   the detail "WPM took the withdrawal"). PPM still has no route to delete a commitment; setting it to zero is the
+   way to withdraw. **Unlinking a pool** (or changing its link to another WPM pool) withdraws, best effort, every
+   figure PPM sent to the WPM pool it was linked to: for each programme and month of that pool whose latest
+   recorded send carried a figure above zero (whatever its outcome, since an `unreachable` send may still have
+   arrived), PPM sends `fte_centi: 0` with a new event id and the time of the unlink as `sent_at`, one after
+   another, after the unlink is stored and without holding it up, under the unlinking caller's own token, each
+   recorded in `peer_demand_sends` against the old WPM pool. The `PUT …/peer-link` answer lists them
+   (`peer_demand_withdrawals`: `plan_pid`, `month`, `outcome`, `detail`, `fte_centi`, `peer_event_id`). With no
+   base URL or no token, each is recorded as not sent (`not_configured`, `not_sent_no_token`) and the figure stays
+   in WPM; there is no retry, and a later unlink does not try again (the latest record carries no figure). At most
+   2 400 are sent for one unlink. A WPM that has already removed its side of the link refuses, recorded
+   `refused`.
 7. **Worker skills do not cross.** `src/workers_client.rs` calls `GET {base}/api/workers/{id}/skills`, which WPM
    does not have (WPM has `/api/workers/{pid}/skills-as-of`, catalogue skills with proficiency, a different shape).
    It is left as it is: the skill-gap view reports `unknown`. No mapping from WPM skills to PPM's tags is invented

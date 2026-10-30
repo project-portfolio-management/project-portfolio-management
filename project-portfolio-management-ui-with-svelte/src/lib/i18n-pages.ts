@@ -4708,7 +4708,7 @@ export const PAGES_EN = {
   "p.skill_pools.clear": "Remove the link",
   "p.skill_pools.cancel": "Cancel",
   "p.skill_pools.confirm_clear":
-    "Remove the link between {name} and the workforce service? Its supply on the heatmap will again be what was entered here. Demand already sent to the workforce service stays there.",
+    "Remove the link between {name} and the workforce service? Its supply on the heatmap will again be what was entered here. Every demand figure already sent to the workforce service for this pool will be withdrawn there (sent as zero).",
   "p.skill_pools.saved":
     "{name} is now linked to the workforce service pool {ref}.",
   "p.skill_pools.cleared":
@@ -4721,6 +4721,8 @@ export const PAGES_EN = {
     "That pool no longer exists. The list has been loaded again.",
   "p.skill_pools.could_not_save": "The link could not be changed.",
   "p.skill_pools.see_heatmap": "See the capacity heatmap",
+  "p.skill_pools.withdrawing":
+    "Demand figures being withdrawn from the workforce service pool it was linked to: {n}.",
 } as const;
 
 /** A key in the page and component catalogue. */

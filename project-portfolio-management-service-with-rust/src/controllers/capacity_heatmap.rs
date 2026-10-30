@@ -247,11 +247,13 @@ pub(crate) struct PeerLink {
 /// `PUT /api/skill-pools/{pid}/peer-link` — link the pool to the workforce service's pool, or remove the link
 /// (FB-1). A link is set by a person, never matched by name; one PPM pool per WPM pool. While linked, the pool's
 /// supply on the heatmap is the workforce service's and its demand commitments are sent there; unlinked, it is as
-/// before. Audited with no figure.
+/// before. Audited with no figure. Removing or changing a link withdraws every figure sent to the old WPM pool
+/// (`fte_centi: 0` per programme and month, best effort, FB-5), listed in `peer_demand_withdrawals`.
 #[debug_handler]
 async fn set_peer_link(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    headers: axum::http::HeaderMap,
     Path(pid): Path<Uuid>,
     Json(b): Json<PeerLink>,
 ) -> Result<Response> {
@@ -274,6 +276,10 @@ async fn set_peer_link(
     } else {
         "skill_pool_peer_unlinked"
     };
+    let before = row
+        .peer_pool_ref
+        .clone()
+        .filter(|o| Some(o) != peer.as_ref());
     let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
     let mut a: pools::ActiveModel = row.into();
     a.peer_pool_ref = ActiveValue::set(peer);
@@ -287,7 +293,105 @@ async fn set_peer_link(
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    format::json(pool_json(&row, &ms))
+    let mut out = pool_json(&row, &ms);
+    if let Some(old) = before {
+        out["peer_demand_withdrawals"] = withdraw_on_unlink(&ctx, &headers, pid, old).await?;
+    }
+    format::json(out)
+}
+
+/// The most withdrawals one unlink sends (FB-5); beyond it nothing more is sent and the rows keep their outcome.
+const WITHDRAWALS_MAX: u64 = 2_400;
+
+/// When a pool's link to the workforce service is removed or changed (FB-5), withdraw from the WPM pool it was linked
+/// to every figure PPM sent there: for each programme and month whose latest send carried a figure above zero, send
+/// `fte_centi: 0` with a new event id and the time of the unlink. Best effort, in order, after the unlink has been
+/// stored and without holding it up; each one is recorded in `peer_demand_sends` like any other send. With no base
+/// URL or no token, each is recorded as not sent and the figure stays in WPM.
+async fn withdraw_on_unlink(
+    ctx: &AppContext,
+    headers: &axum::http::HeaderMap,
+    pool: Uuid,
+    old: String,
+) -> Result<serde_json::Value> {
+    use crate::wpm_bridge::{self as bridge, DemandPlan};
+    let rows = peer_demand_sends::Entity::find()
+        .filter(peer_demand_sends::Column::PoolPid.eq(pool))
+        .filter(peer_demand_sends::Column::PeerPoolRef.eq(&old))
+        .filter(peer_demand_sends::Column::FteCenti.gt(0))
+        .order_by_asc(peer_demand_sends::Column::Month)
+        .order_by_asc(peer_demand_sends::Column::PlanPid)
+        .limit(WITHDRAWALS_MAX)
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    let unlinked_at = chrono::Utc::now();
+    let base = bridge::base_url();
+    let bearer = bridge::bearer_of(headers);
+    let decided = bridge::plan_demand(0, base.is_some(), bearer.is_some());
+    let mut answer = Vec::with_capacity(rows.len());
+    let mut sends = Vec::new();
+    for r in &rows {
+        let event = bridge::peer_event_id(pool, r.plan_pid, r.month, unlinked_at);
+        let (outcome, detail, centi) = match &decided {
+            DemandPlan::Send(c) => ("started", bridge::started_detail(*c), Some(*c)),
+            DemandPlan::Skip(o, d) => (*o, *d, None),
+        };
+        record_send(
+            &ctx.db,
+            pool,
+            r.plan_pid,
+            r.month,
+            &old,
+            centi,
+            &event,
+            unlinked_at,
+            outcome,
+            detail,
+        )
+        .await?;
+        answer.push(serde_json::json!({
+            "plan_pid": r.plan_pid, "month": r.month.format("%Y-%m").to_string(),
+            "outcome": outcome, "detail": detail, "fte_centi": centi, "peer_event_id": event,
+        }));
+        if let (DemandPlan::Send(c), Some(base), Some(bearer)) = (&decided, &base, &bearer) {
+            sends.push(bridge::DemandSend {
+                base: base.clone(),
+                bearer: bearer.clone(),
+                peer_pool_ref: old.clone(),
+                plan_pid: r.plan_pid,
+                month: r.month,
+                fte_centi: *c,
+                peer_event_id: event,
+                sent_at: unlinked_at,
+            });
+        }
+    }
+    if !sends.is_empty() {
+        let db = ctx.db.clone();
+        tokio::spawn(async move {
+            for send in sends {
+                let (outcome, detail) = bridge::send_demand(&send).await;
+                if let Err(e) = record_send(
+                    &db,
+                    pool,
+                    send.plan_pid,
+                    send.month,
+                    &send.peer_pool_ref,
+                    Some(send.fte_centi),
+                    &send.peer_event_id,
+                    send.sent_at,
+                    outcome,
+                    &detail,
+                )
+                .await
+                {
+                    tracing::warn!(error = %e, "could not record the outcome of a withdrawal sent to the workforce service");
+                }
+            }
+        });
+    }
+    Ok(serde_json::Value::Array(answer))
 }
 
 // ---- commitments ----------------------------------------------------------------------------
@@ -476,7 +580,8 @@ async fn set_commitment(
 
 /// Send a programme's demand on a linked pool for a month to the workforce service (FB-3), without holding up or
 /// failing the write that asked for it. The figure is the programme's total demand commitments on the pool for the
-/// month (every organization's), because WPM keeps one figure per programme, pool and month. The outcome is recorded
+/// month (every organization's), because WPM keeps one figure per programme, pool and month; a total of zero is sent
+/// as `fte_centi: 0`, which withdraws the figure there (FB-5). The outcome is recorded
 /// in `peer_demand_sends` (the latest per pool, programme and month; an older version never overwrites a newer
 /// one); the caller's token is held in memory for the one send and never stored, so a failed send is not retried:
 /// setting the commitment again sends again.
@@ -506,7 +611,7 @@ async fn start_demand_send(
     let bearer = bridge::bearer_of(headers);
     let decided = bridge::plan_demand(total, base.is_some(), bearer.is_some());
     let (outcome, detail, centi) = match &decided {
-        DemandPlan::Send(c) => ("started", "sending to the workforce service", Some(*c)),
+        DemandPlan::Send(c) => ("started", bridge::started_detail(*c), Some(*c)),
         DemandPlan::Skip(o, d) => (*o, *d, None),
     };
     record_send(
@@ -522,6 +627,7 @@ async fn start_demand_send(
             month,
             fte_centi: c,
             peer_event_id: event.clone(),
+            sent_at: written_at,
         };
         let db = ctx.db.clone();
         tokio::spawn(async move {
@@ -644,8 +750,9 @@ async fn list_commitments(
             .filter(|r| !belongs || r.organization_pid.is_some_and(|o| mine.contains(&o)))
             .map(|r| {
                 let mut j = commitment_json(r);
-                if r.kind == "demand" && linked.contains(&r.pool_pid) {
-                    j["peer_demand_send"] = sends.get(&(r.pool_pid, r.plan_pid, r.month)).map_or(serde_json::Value::Null, |s| serde_json::json!({
+                let sent = sends.get(&(r.pool_pid, r.plan_pid, r.month));
+                if r.kind == "demand" && (linked.contains(&r.pool_pid) || sent.is_some()) {
+                    j["peer_demand_send"] = sent.map_or(serde_json::Value::Null, |s| serde_json::json!({
                         "outcome": s.outcome, "detail": s.detail, "fte_centi": s.fte_centi,
                         "peer_event_id": s.peer_event_id, "at": s.updated_at,
                     }));

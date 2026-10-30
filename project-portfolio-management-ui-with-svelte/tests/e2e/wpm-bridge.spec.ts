@@ -152,12 +152,27 @@ test("removing a link asks first; Cancel sends nothing, OK sends null", async ({
   page,
 }) => {
   const puts: Put[] = [];
-  await poolsPage(page, ok, puts);
+  // FB-5: the service withdraws what was sent to the old workforce service pool and lists it.
+  const withdrawals = () => ({
+    status: 200,
+    json: {
+      peer_demand_withdrawals: ["2026-11", "2026-12"].map((month) => ({
+        plan_pid: POOL,
+        month,
+        outcome: "started",
+        detail: "withdrawing the figure from the workforce service",
+        fte_centi: 0,
+        peer_event_id: `ppm:${OTHER}:${POOL}:${month}:1`,
+      })),
+    },
+  });
+  await poolsPage(page, withdrawals, puts);
   await page.getByRole("button", { name: "Change link for Pharmacy" }).click();
   await expect(page.getByLabel("Workforce service pool id")).toHaveValue(PEER);
   await page.getByRole("button", { name: "Remove the link" }).click();
   const ask = page.getByRole("alertdialog");
   await expect(ask).toContainText("Remove the link between Pharmacy");
+  await expect(ask).toContainText("will be withdrawn there (sent as zero)");
   await ask.getByRole("button", { name: "Cancel" }).click();
   expect(puts).toEqual([]);
   await page.getByRole("button", { name: "Remove the link" }).click();
@@ -167,6 +182,9 @@ test("removing a link asks first; Cancel sends nothing, OK sends null", async ({
     .click();
   await expect(page.getByTestId("link-done")).toContainText(
     "Pharmacy is no longer linked",
+  );
+  await expect(page.getByTestId("link-done")).toContainText(
+    "Demand figures being withdrawn from the workforce service pool it was linked to: 2.",
   );
   expect(puts).toEqual([{ pid: OTHER, body: { peer_pool_ref: null } }]);
   await expect(page.getByRole("row", { name: /Pharmacy/ })).toContainText(

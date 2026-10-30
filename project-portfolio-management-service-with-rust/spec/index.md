@@ -582,12 +582,12 @@ the family bulk machinery (§9.8, deferred).
 
 | Method | Path | Purpose |
 |---|---|---|
-| PUT | `/api/skill-pools/{pid}/peer-link` | Link a skill pool to the workforce service's pool (`peer_pool_ref`, a UUID) or clear it (`null`) |
+| PUT | `/api/skill-pools/{pid}/peer-link` | Link a skill pool to the workforce service's pool (`peer_pool_ref`, a UUID) or clear it (`null`); clearing or changing it withdraws every figure sent to the old pool (`peer_demand_withdrawals`, FB-5) |
 | GET | `/api/capacity-heatmap` | For a linked pool: WPM's supply with its source, time and status; what was entered here beside it, never added |
-| PUT | `/api/capacity-commitments` | For a demand commitment on a linked pool: also sends the programme's total to WPM (`peer_demand_send`) |
+| PUT | `/api/capacity-commitments` | For a demand commitment on a linked pool: also sends the programme's total to WPM with `sent_at` (`peer_demand_send`); a total of zero is sent as `fte_centi: 0`, the withdrawal (FB-5) |
 | GET | `/api/plans/{pid}/people-impact` | WPM's people impact for the plan (`?months=1..36`), passed through with `source: "wpm"`, or `unknown` with a reason (FB-4) |
 
-The rules (one owner per fact, the caller's own token, stub-first, zero never sent) are the entity spec's §8.5a.
+The rules (one owner per fact, the caller's own token, stub-first, zero sent as the withdrawal) are the entity spec's §8.5a.
 Supply figures received are kept in process **by caller** (subject, else the SHA-256 of the token; never the
 token), recalled only for that caller when WPM cannot be reached, bounded at 1 000 callers × 2 400 figures
 (`KEPT_CALLERS_MAX`, `KEPT_FIGURES_PER_CALLER_MAX`); the views that make no call (director pack, drum, pipeline,

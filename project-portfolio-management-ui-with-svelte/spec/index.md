@@ -1399,9 +1399,11 @@ other apps, shares a session with them, or fails when they are down.
   button, since a started send's answer arrives later. Reached from `/capacity-heatmap` ("Set a capacity
   commitment") and a programme's plan page ("Capacity commitments for this programme"); not in the top
   navigation. Words in `src/lib/capacity-commitments-view.ts` (`tests/unit/capacity-commitments-view.test.ts`);
-  browser test `tests/e2e/capacity-commitments.spec.ts` (axe, Welsh). The messages use the neutral banner:
-  `.banner.success` fails colour contrast under the default theme's success colour (seen in axe here; the other
-  pages that use it are not changed).
+  browser test `tests/e2e/capacity-commitments.spec.ts` (axe, Welsh). The messages use the neutral banner.
+  The success banner (`.banner.success`, `src/app.css`, used by `/skill-pools`) once failed colour contrast under
+  the light theme (1.87:1, success colour `#00d390`); its text is now the theme's success colour mixed half and half
+  with the theme's text colour, on an 8 % success tint of the page background, so it passes 4.5:1 under the light and
+  the dark theme (`tests/e2e/wpm-bridge.spec.ts`, axe `color-contrast` on the banner in both).
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 

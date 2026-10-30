@@ -122,6 +122,37 @@ test("a pool is linked to the workforce service with an id checked first, and th
   expect(puts).toEqual([{ pid: POOL, body: { peer_pool_ref: PEER } }]);
 });
 
+// The success banner (`.banner.success`, app.css) once measured 1.87:1 under the light theme, whose success
+// colour is a light green fill (#00d390). It is audited here as shown, in the light and the dark theme.
+for (const colorScheme of ["light", "dark"] as const) {
+  test(`the success banner after linking passes axe colour contrast (${colorScheme} theme)`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme });
+    const puts: Put[] = [];
+    await poolsPage(page, ok, puts);
+    await page.getByRole("button", { name: "Change link for Nursing" }).click();
+    await page.getByLabel("Workforce service pool id").fill(PEER);
+    await page.getByRole("button", { name: "Save the link" }).click();
+    const done = page.getByTestId("link-done");
+    await expect(done).toContainText("Nursing is now linked");
+    await expect(done).toHaveClass(/banner success/);
+    await settle(page);
+    const r = await new AxeBuilder({ page })
+      .include('[data-testid="link-done"]')
+      .withRules(["color-contrast"])
+      .analyze();
+    expect(r.violations.map((v) => v.id)).toEqual([]);
+    expect(
+      r.passes.map((v) => v.id),
+      "the rule ran on the banner",
+    ).toContain("color-contrast");
+    // The whole page under the dark theme still has other contrast findings (recorded in CHANGELOG), so the
+    // full audit runs under the light theme, the one the other tests use.
+    if (colorScheme === "light") await audit(page);
+  });
+}
+
 test("a workforce pool already linked here (409) and an id the service refuses (422) are said plainly", async ({
   page,
 }) => {

@@ -24,7 +24,13 @@
     var(--color-error, #b91c1c) 55%,
     var(--color-base-content, #111827)
   );
-  --mxi-color-success: var(--color-success, #15803d);
+  /* Same reason as the danger colour: the default theme's success colour (#00d390, a light green fill) measured
+     1.87:1 as text on the success banner. Mixing in the theme's text colour keeps the hue and passes 4.5:1. */
+  --mxi-color-success: color-mix(
+    in oklch,
+    var(--color-success, #15803d) 50%,
+    var(--color-base-content, #111827)
+  );
   --mxi-color-surface: var(--color-base-200, #ffffff);
   --mxi-radius: var(--radius-field, 6px);
   --mxi-spacing: 1rem;
@@ -210,7 +216,12 @@ table {
 .banner.success {
   color: var(--mxi-color-success);
   border-color: var(--mxi-color-success);
-  background: #f0fdf4;
+  /* A tint of the page background, not a fixed light green, so a dark theme keeps light text on a dark banner. */
+  background: color-mix(
+    in oklch,
+    var(--color-success, #15803d) 8%,
+    var(--mxi-color-bg)
+  );
 }
 
 .muted {

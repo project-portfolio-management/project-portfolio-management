@@ -57,7 +57,7 @@ supplier) and what they said:* ‹buyer›.
 | Is there a less intrusive way? | The design minimizes: people are **references** held elsewhere, not copies of their details; per-person detail is masked from people who may not manage people | ‹buyer› |
 | Data minimization | No names, e-mail addresses (other than a user's own notification destination), dates of birth, or special-category fields exist in the schema | ‹buyer› |
 | Accuracy | Records are corrected in place with the old value kept in the audit trail; timesheets are submitted and decided by the people concerned | ‹buyer› |
-| Storage limitation | See the [retention schedule](retention-schedule.md); **a purge task covers read notifications, delivery logs and trend snapshots (`cargo loco task retention_purge`, dry run by default); the personal records themselves (plans, tasks, time, documents) are not purged, which is the buyer's decision** (gap) | ‹buyer› |
+| Storage limitation | See the [retention schedule](retention-schedule.md); **a purge task covers read notifications, delivery logs and trend snapshots (`project-portfolio-management task retention_purge`, dry run by default); the personal records themselves (plans, tasks, time, documents) are not purged, which is the buyer's decision** (gap) | ‹buyer› |
 | Transparency | Provide a privacy notice that names this processing | ‹buyer› |
 | Individuals' rights | See section 6 | ‹buyer› |
 | Processors | None built in; list yours | ‹buyer› |

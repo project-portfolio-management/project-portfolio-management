@@ -2,8 +2,8 @@
 
 ISO 14971 is the international standard for **risk management of medical devices** (current edition: ISO 14971:2019;
 in Europe, EN ISO 14971:2019/A11:2021, whose technical content is the same). This page asks what it requires of this
-repository. It was written from the repository as it stood on **2026-10-28**, for the **service 0.3.0**, the **matcher
-library 0.2.0** and the **web client 0.1.0**.
+repository. It was written from the repository as it stood on **2026-10-28**, for the **service 0.2.0**, the **matcher
+library 0.2.1** and the **web client 0.2.0**.
 
 > ⚠️ **This is a self-assessment, written by the maintainer's AI coding assistant. Nobody independent has reviewed it,
 > and it is not regulatory advice.** **The standard itself was not read:** it is sold by ISO and was not available

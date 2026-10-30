@@ -483,7 +483,7 @@ fn aux_paths() -> Value {
                 "get": {
                     "tags": ["observability"],
                     "summary": "Prometheus metrics (text-exposition format)",
-                    "description": "Process-wide metric registry rendered as text/plain; version=0.0.4. Mounted at the root (not under /api) and public even under blanket auth enforcement. Configure your scraper with metrics_path: /metrics.prom.",
+                    "description": "Process-wide metric registry rendered as text/plain; version=0.0.4. Mounted at the root (not under /api). Not public: under blanket auth enforcement it needs a bearer token like any other route, since it shows route and traffic shape. Configure your scraper with metrics_path: /metrics.prom and a bearer token.",
                     "responses": { "200": { "description": "Prometheus text exposition",
                         "content": { "text/plain": { "schema": { "type": "string" } } } } }
                 }

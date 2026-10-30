@@ -7,12 +7,12 @@ plan **identity CRUD + matching + merge** over **one recursive
 executive views.
 
 SvelteKit 2 · Svelte 5 (runes) · TypeScript strict · SPA · Lily Design
-System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte Headless · 13-locale i18n · full
+System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte Headless · 10-locale i18n · full
 theme catalogue.
 
-> **Status: implemented (v0.1.0), verified 2026-10-06.** `pnpm run check`
-> is 0 errors / 0 warnings and the vitest suite passes (529 tests). There are
-> 64 page routes. The live work queue is [`spec/index.md`](spec/index.md) §13;
+> **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
+> is 0 errors / 0 warnings and the vitest suite passes (912 tests). There are
+> 100 page routes. The live work queue is [`spec/index.md`](spec/index.md) §13;
 > the repo-level backlog is [`../tasks.md`](../tasks.md). Contributor
 > conventions are in [`AGENTS.md`](AGENTS.md).
 
@@ -149,8 +149,9 @@ recent-merge history table (`GET /api/plans/merges/recent`).
 per-plan audit timeline (`GET /api/plans/{pid}/audit`), a recent-activity
 feed (`GET /api/plans/events/recent`), a per-component match-score
 breakdown visual, and a child-plan roll-up on the detail page
-(`GET /api/plans?parent={pid}`) — none of these has a repository method,
-a type, or a UI element yet. The one partial exception is name search:
+(`GET /api/plans?parent={pid}`). The roll-up has a repository method
+(`listPage()`'s `parent` scope) that no page calls; the others have no
+repository method, type or UI element yet. The one partial exception is name search:
 `PlanRepository.search()` wraps `GET /api/plans/search?q=` and is unit-
 tested, but no route calls it — the list page's search box filters
 client-side over the already-loaded rows instead.
@@ -166,7 +167,7 @@ dashboard / capacity views) consume those and the PPM endpoints.
 ```bash
 pnpm run check         # svelte-check (strict, 0 errors / 0 warnings)
 pnpm run build
-npx vitest run         # unit suite (tests/unit, jsdom): 529 tests
+npx vitest run         # unit suite (tests/unit, jsdom): 912 tests at 2026-10-30
 pkill -f 'vite preview'   # clear a stale preview server first
 npx playwright test    # e2e (tests/e2e): builds, serves `vite preview` on :4173
 npx playwright test --project=mobile   # 390x844 audit of every route

@@ -2,8 +2,8 @@
 
 For an organization that gives PPM a **medical purpose** and so has to run a risk management process on it. It
 follows the shape of [ISO 14971 as scoped on this project](index.md) and is modelled on the sibling project
-CRM's `spec/compliance/risk-management.md`. Written on **2026-10-28** for the service 0.3.0, the matcher 0.2.0 and
-the web client 0.1.0.
+CRM's `spec/compliance/risk-management.md`. Written on **2026-10-28** for the service 0.2.0, the matcher 0.2.1 and
+the web client 0.2.0.
 
 > ⚠️ **This is not a risk management file, claims no conformity with ISO 14971 or ISO/TR 24971, and invents no
 > severity or probability.** It was written by the maintainer's AI coding assistant; **the standard itself was not

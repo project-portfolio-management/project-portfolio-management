@@ -37,7 +37,7 @@ See [Recovery objectives](../operations/recovery-objectives.md).
 These are things the schedule needs and the software does not yet do. Each is a
 decision for the buyer to plan around until it is built:
 
-1. **The retention purge is partial.** `cargo loco task retention_purge` (dry run
+1. **The retention purge is partial.** `project-portfolio-management task retention_purge` (dry run
    unless `apply:true`; one audit row per table purged) removes read
    notifications (90 calendar days), the webhook and notification delivery logs
    (30 calendar days) and the trend snapshots (3 years); each period can be

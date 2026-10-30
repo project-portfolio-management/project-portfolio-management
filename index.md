@@ -5,7 +5,7 @@
 | [README.md](README.md) | Overview, how to run and test each subproject |
 | [spec/index.md](spec/index.md) | Entity-wide living specification (numbered files `01-` to `18-`, plus topic specs) |
 | [agents/index.md](agents/index.md) | Shared agent guidance (matching, models, REST, spec-driven development, testing) |
-| [tasks.md](tasks.md) | Backlog of record, all items ticked as of 2026-10-06 |
+| [tasks.md](tasks.md) | Backlog of record; ticked and open counts by prefix are generated into [spec/14](spec/14-implementation-status.md) |
 | [plan.md](plan.md) | Research and decisions behind the backlog |
 | [project-portfolio-management-skill/SKILL.md](project-portfolio-management-skill/SKILL.md) | Agent skill for working in this repo |
 | [project-portfolio-management-matcher-with-rust/index.md](project-portfolio-management-matcher-with-rust/index.md) | Matcher library docs |

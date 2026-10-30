@@ -12,8 +12,8 @@ masking + GDPR export, and row-level integrity verification (spec
 the derived `/timeline` view remain deferred (§13) — `tasks` and
 `/burndown` are wired.
 
-> **Implemented (MVP v0.1.0 + PPM Phases A/B/C).** The crate exists and
-> builds (`src/`, 13 migrations); the remaining deferrals live in the
+> **Implemented (v0.2.0).** The crate exists and
+> builds (`src/`, 133 migrations); the remaining deferrals live in the
 > work queue at [spec §13](./spec/index.md).
 
 ## Start here

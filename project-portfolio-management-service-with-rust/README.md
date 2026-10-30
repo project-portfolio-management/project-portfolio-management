@@ -11,7 +11,7 @@ A *plan* is a matchable identity in one recursive collection. Its `kind`
 required discriminator and not a separate collection. The service has
 two faces that share one record: a deduplicated, matchable identity
 registry (the thin `Plan` payload) and a project workspace — each plan
-*owns* operational sub-resources (tasks, sprints and more; the goals and issues stores are specified but not yet built) plus derived
+*owns* operational sub-resources (tasks, sprints, goals, the issues register and more) plus derived
 timeline / burndown views. Any plan may contain any other plan via a
 `parent_ref` to its parent (a recursive tree); a `parent_ref` that
 points a plan at itself or at one of its descendants is rejected (`422`,
@@ -22,8 +22,8 @@ containment-cycle check).
 - Agent guide: [AGENTS.md](./AGENTS.md)
 - Sibling UI: [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte)
 
-> **Status: v0.3.0, a full project-management tool.** Deferred items
-> (`/plans/deduplicate`, `/goals`, `/issues`, `/timeline`) live in
+> **Status: v0.2.0, a full project-management tool.** Deferred items
+> (`/plans/deduplicate`, `/timeline`) live in
 > [spec §13](./spec/index.md); see [CHANGELOG.md](./CHANGELOG.md).
 
 ## API
@@ -47,7 +47,7 @@ sub-resources hang off `/api/plans/{pid}/...`.
 | POST | `/api/plans/merge` | Merge a duplicate into any survivor plan |
 | GET | `/api/plans/merges/recent` | Merge-history records |
 | GET | `/api/plans/{pid}/masked` · `/export` | Masked view (always redacted) · audited GDPR export |
-| * | `/api/plans/{pid}/tasks` | Task-board CRUD + Kanban `PATCH` move (story points, WIP limits) — `/goals` · `/issues` **deferred, spec §13** |
+| * | `/api/plans/{pid}/tasks` | Task-board CRUD + Kanban `PATCH` move (story points, WIP limits); `/goals` and `/issues` are built too (see `api-routes.txt`) |
 | GET | `/api/plans/{pid}/sprints` · `/burndown` · `/velocity` · `/standup` | Sprint tooling — `/timeline` (Gantt) **deferred, spec §13** |
 | POST·GET·DELETE | `/api/plans/{pid}/links` | Typed links on a plan (stored and returned, never fetched) |
 | POST·GET | `/api/plans/import` · `/export` · `/bulk-jobs` · `/review-queue` | Bulk import/export jobs (202 + job id, progress, cooperative cancel) and the review queue |
@@ -103,15 +103,15 @@ matcher (goal **titles** bridge in via `data.goals[]`).
 
 ## Quick start
 
-> The goals / tasks / issues sub-resource routes in the route contract
-> are deferred (spec §13); the commands below run against the shipped
-> crate.
+> Every mounted route is listed in [`api-routes.txt`](api-routes.txt) and documented in
+> [`openapi.json`](openapi.json). The bridge to the workforce service is off until configured; see
+> [the WPM bridge tutorial](../operations/wpm-bridge.md).
 
 Requires PostgreSQL.
 
 ```bash
 export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
-cargo loco start        # migrations auto-run in development
+cargo run -- start      # migrations auto-run in development
 
 # Create a plan labelled as a portfolio (the umbrella kind)
 curl -s localhost:5150/api/plans -H 'content-type: application/json' \
@@ -167,11 +167,11 @@ because the token verifier is a process-wide `OnceLock`. Details in
 
 ## Status
 
-v0.3.0. Beyond the registry core (CRUD, Tantivy search, kind-agnostic
+v0.2.0. Beyond the registry core (CRUD, Tantivy search, kind-agnostic
 matching, merge, validation, audit, events, OpenAPI, Prometheus, offline
 PASETO auth, field masking and GDPR export), the service ships the areas
-listed above; migrations run `m20260…` through
-`m20261006_000048_onboarding_one_open`. Event delivery is in-memory by
+listed above; migrations run `m20220101…` through
+`m20261030_000099_peer_pool_link` (133 files). Event delivery is in-memory by
 default, a durable outbox relay when
 `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`, a Fluvio sink behind
 the `fluvio` feature, and optional signed webhooks. Blanket `/api/*` auth
@@ -181,7 +181,7 @@ false`; production refuses to start that way, and so does enforcement on with
 no token verifier). Security headers, an explicit CORS allow-list
 (`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`) and per-caller rate limiting
 (`PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT*`) are built in. Deferred ([spec §13](./spec/index.md)): `/plans/deduplicate`,
-`/goals`, `/issues`, `/timeline`, gRPC. Credentials are issued by the
+`/timeline`, gRPC. Credentials are issued by the
 central authentication-service (offline PASETO v4.public verification).
 
 ## Licence

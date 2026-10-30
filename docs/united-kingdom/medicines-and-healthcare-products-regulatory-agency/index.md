@@ -3,8 +3,8 @@
 The [Medicines and Healthcare products Regulatory Agency](https://www.gov.uk/government/organisations/medicines-and-healthcare-products-regulatory-agency)
 (MHRA) "regulates medicines, medical devices and blood components for transfusion in the UK". This page asks one
 question of this repository: **is PPM a medical device, and if not, which MHRA duties fall away?** It was written from
-the repository as it stood on **2026-10-28**, for the **service 0.3.0**, the **matcher library 0.2.0** and the **web
-client 0.1.0**.
+the repository as it stood on **2026-10-28**, for the **service 0.2.0**, the **matcher library 0.2.1** and the **web
+client 0.2.0**.
 
 > ⚠️ **This is a self-assessment, written by the maintainer's AI coding assistant. Nobody independent has reviewed it,
 > and it is not legal or regulatory advice.** The MHRA's own pages recommend professional advice. It is **not** a

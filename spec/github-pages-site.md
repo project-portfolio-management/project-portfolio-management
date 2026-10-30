@@ -68,6 +68,9 @@ suite.
 `git subtree push --prefix=project-portfolio-management.github.io github-pages main` after checking that the
 `github-pages` remote exists, the content copy is current and the directory has no uncommitted change. The exported
 repository deploys with its own `.github/workflows/deploy.yml` (GitHub Pages' actions; inert inside the monorepo).
+Each action there is pinned to a full commit SHA with its release tag in a comment (`# v7.0.1`), as the workforce
+repository's site does, so a moved tag cannot change what runs. No Dependabot entry watches that file (the site's
+entry is npm only, and the `github-actions` entry reads the root `.github`), so the pins are moved by hand.
 The remote and the repository are created by the owner; the steps are in the site's
 [`README.md`](../project-portfolio-management.github.io/README.md#publishing).
 

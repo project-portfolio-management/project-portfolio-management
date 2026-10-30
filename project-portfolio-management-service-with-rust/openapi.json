@@ -22945,6 +22945,46 @@
         ]
       }
     },
+    "/api/plans/{pid}/people-impact": {
+      "get": {
+        "description": "Asks the workforce service (WPM) GET /api/capacity/people-impact?programme=thing:<pid> under the caller's own token, with ends_on set to the plan's own target_date when it is a full date (WPM holds no programme end; otherwise none is sent and plan_ends_on_reason says why) and ?months=1 to 36 passed on when given. WPM's answer is passed through unchanged with source wpm: as_of, months, floor, workers_committed, contingent_ending_before_end and over_committed_pool_months, each known or unknown with WPM's reason, a count under WPM's floor null with hidden true, and no total. status is live, or unknown with a reason (and every part unknown, every figure null, never zero) when the worker service URL is not set, the request has no token, or WPM cannot be reached, is slow (2 seconds), answers badly or refuses the caller. Nothing is kept between calls, so a refused caller is never shown another caller's answer. This read never fails because WPM is down. Counts only: no person is named.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "1 to 36",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "plan_pid, programme_ref, source, status, reason, as_of, plan_ends_on, workers_committed, contingent_ending_before_end, over_committed_pool_months"
+          },
+          "404": {
+            "description": "Unknown plan, or a private plan you are not a member of"
+          },
+          "422": {
+            "description": "months out of range"
+          }
+        },
+        "summary": "A programme's people impact, from the workforce service",
+        "tags": [
+          "capacity"
+        ]
+      }
+    },
     "/api/plans/{pid}/performance": {
       "get": {
         "description": "SPI and CPI need a phased budget baseline this service does not yet hold, so they are reported as unmeasured with the reason — rather than omitted (which would look like nothing to say) or defaulted to 1.0 (which would say 'exactly on plan').",

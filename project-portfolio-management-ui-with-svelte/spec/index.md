@@ -1352,6 +1352,13 @@ other apps, shares a session with them, or fails when they are down.
 - **Inbound.** The other apps may link to `/plans`, `/plans/{pid}`, `/plans/{pid}/work`,
   `/plans/{pid}/raci` and `/me` (with the locale prefix the app adds). These routes are part of the
   contract: `tests/unit/bridge.test.ts` fails if one stops existing.
+- **People impact (FB-4).** On `/plans/{pid}` for a plan of kind Program, a "People impact (from the workforce
+  service)" box asks the service's `GET /api/plans/{pid}/people-impact` when the reader presses its button (never
+  on load), and shows the answer as WPM gave it: the date it is as of, the end date sent (or why none), each part's
+  counts by pool, a count under WPM's floor as "hidden (fewer than N)", never zero, an unknown part with WPM's
+  reason, and no total; when the answer is `unknown`, only the reason. The service, not the browser, calls WPM
+  (`src/lib/people-impact.ts`, `PeopleImpact.svelte`; `tests/unit/people-impact.test.ts`,
+  `tests/e2e/people-impact.spec.ts`).
 - **Not built:** the other two apps do not yet link here (their repositories are not changed by this);
   there is no shared sign-in, so a reader signs in to each app; no data is copied between the apps.
 

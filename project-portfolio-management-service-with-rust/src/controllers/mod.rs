@@ -428,6 +428,7 @@ pub mod mspdi_import;
 pub mod organizations;
 pub mod paging;
 pub mod pdf;
+pub mod people_impact;
 pub mod plan_access;
 pub mod plan_links;
 pub mod plan_templates;

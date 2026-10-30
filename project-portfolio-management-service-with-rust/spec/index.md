@@ -578,17 +578,18 @@ code. Landed 2026-07-18 (T-PPM-A, §13).
 Landed 2026-07-18 (T-PPM-B, §13). Scheduled/artifact report runs await
 the family bulk machinery (§9.8, deferred).
 
-### 9.10a The workforce-service bridge (FB-1 to FB-3)
+### 9.10a The workforce-service bridge (FB-1 to FB-4)
 
 | Method | Path | Purpose |
 |---|---|---|
 | PUT | `/api/skill-pools/{pid}/peer-link` | Link a skill pool to the workforce service's pool (`peer_pool_ref`, a UUID) or clear it (`null`) |
 | GET | `/api/capacity-heatmap` | For a linked pool: WPM's supply with its source, time and status; what was entered here beside it, never added |
 | PUT | `/api/capacity-commitments` | For a demand commitment on a linked pool: also sends the programme's total to WPM (`peer_demand_send`) |
+| GET | `/api/plans/{pid}/people-impact` | WPM's people impact for the plan (`?months=1..36`), passed through with `source: "wpm"`, or `unknown` with a reason (FB-4) |
 
 The rules (one owner per fact, the caller's own token, stub-first, zero never sent) are the entity spec's §8.5a.
-Code: `src/wpm_bridge.rs` (rules and the two calls), `src/controllers/capacity_heatmap.rs`, migration 99
-(`m20261030_000099_peer_pool_link`). Test: `tests/wpm_bridge.rs` (a stand-in WPM on a local port).
+Code: `src/wpm_bridge.rs` (rules and the three calls), `src/controllers/capacity_heatmap.rs`,
+`src/controllers/people_impact.rs`, migration 99 (`m20261030_000099_peer_pool_link`). Test: `tests/wpm_bridge.rs` (a stand-in WPM on a local port).
 
 ### 9.11 Strategy (PPM Phase C)
 

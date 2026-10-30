@@ -273,6 +273,7 @@ impl Hooks for App {
             .add_route(controllers::key_persons::routes())
             .add_route(controllers::register::routes())
             .add_route(controllers::programme_profile::routes())
+            .add_route(controllers::people_impact::routes())
             .add_route(controllers::milestone_signoffs::routes())
             .add_route(controllers::leveling::routes())
             .add_route(controllers::milestones::routes())

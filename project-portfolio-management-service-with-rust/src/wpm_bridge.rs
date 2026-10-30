@@ -11,7 +11,11 @@
 //!   pool, by month, in hundredths of an FTE, a month `null` (hidden) under WPM's small-cell floor.
 //! - `POST {base}/api/capacity/peer-demand` with `{pool_pid, programme_ref, month, fte_centi, peer_event_id}`.
 //!
-//! Both go out **under the caller's own bearer token** (WPM-D135: no shared service account), with a short
+//! - `GET {base}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` (FB-4):
+//!   counts only, for one programme, each part known or unknown with WPM's reason, a count under WPM's floor
+//!   `null` and `hidden`, no total. PPM passes the answer through unchanged and keeps nothing.
+//!
+//! All go out **under the caller's own bearer token** (WPM-D135: no shared service account), with a short
 //! timeout and no redirects, to the one operator-configured base URL ([`crate::workers_client::BASE_URL_ENV`],
 //! the same worker service). **Stub-first:** with no base URL, no token, or a pool that is not linked, nothing
 //! is called and the answer says why. A PPM request never fails because WPM is down or slow.
@@ -473,6 +477,219 @@ pub async fn send_demand(s: &DemandSend) -> (&'static str, String) {
     }
 }
 
+// ---- people impact (FB-4) ------------------------------------------------------------------------------------
+
+/// The most months WPM looks over for a programme's over-committed pool-months (WPM's `MAX_HORIZON_MONTHS`).
+pub const PEOPLE_IMPACT_MAX_MONTHS: u32 = 36;
+
+/// The parts of WPM's people-impact answer PPM passes through, unchanged. Anything else WPM adds is left out
+/// until this list names it, so nothing PPM has not read is shown as if it had.
+const PEOPLE_IMPACT_KEYS: &[&str] = &[
+    "as_of",
+    "programme_ends_on",
+    "programme_ends_on_source",
+    "months",
+    "floor",
+    "workers_committed",
+    "contingent_ending_before_end",
+    "over_committed_pool_months",
+    "derivation",
+];
+
+/// The three parts of the answer, each `{known, reason, …}`.
+const PEOPLE_IMPACT_PARTS: &[&str] = &[
+    "workers_committed",
+    "contingent_ending_before_end",
+    "over_committed_pool_months",
+];
+
+/// The programme's end to send to WPM (which holds none): the plan's own `target_date` when it is a full date
+/// (`YYYY-MM-DD`, or a timestamp beginning with one), else why none is sent. A month or a year alone is not
+/// turned into a day.
+///
+/// # Errors
+///
+/// The reason no end date is sent.
+pub fn programme_end(target_date: Option<&str>) -> Result<NaiveDate, &'static str> {
+    let Some(t) = target_date.map(str::trim).filter(|t| !t.is_empty()) else {
+        return Err("the plan has no target_date, so no end date was sent to WPM");
+    };
+    t.get(..10)
+        .and_then(|d| NaiveDate::parse_from_str(d, "%Y-%m-%d").ok())
+        .ok_or("the plan's target_date is not a full date (YYYY-MM-DD), so no end date was sent to WPM")
+}
+
+/// The query PPM sends to WPM's people-impact route. Every part is a UUID, a date or a number, so nothing needs
+/// escaping (`:` is allowed in a query).
+#[must_use]
+pub fn people_impact_query(plan: Uuid, ends_on: Option<NaiveDate>, months: Option<u32>) -> String {
+    format!(
+        "programme={}{}{}",
+        programme_ref(plan),
+        ends_on.map_or(String::new(), |e| format!(
+            "&ends_on={}",
+            e.format("%Y-%m-%d")
+        )),
+        months.map_or(String::new(), |m| format!("&months={m}"))
+    )
+}
+
+/// Whether a body is WPM's people-impact answer: an object whose three parts each say whether they are known.
+fn people_impact_readable(body: &serde_json::Value) -> bool {
+    PEOPLE_IMPACT_PARTS
+        .iter()
+        .all(|k| body[*k].is_object() && body[*k]["known"].is_boolean())
+}
+
+async fn fetch_people_impact(
+    base: &str,
+    bearer: &str,
+    query: &str,
+) -> Result<serde_json::Value, Fetch> {
+    allowed(base).await.map_err(Fetch::Unreachable)?;
+    let url = format!(
+        "{}/api/capacity/people-impact?{query}",
+        base.trim_end_matches('/')
+    );
+    let response = client()
+        .get(&url)
+        .bearer_auth(bearer)
+        .send()
+        .await
+        .map_err(|e| {
+            Fetch::Unreachable(if e.is_timeout() {
+                "WPM did not answer in time".to_string()
+            } else {
+                "WPM could not be reached".to_string()
+            })
+        })?;
+    let status = response.status();
+    if status.is_client_error() {
+        return Err(Fetch::Refused(format!(
+            "WPM refused this caller ({})",
+            status.as_u16()
+        )));
+    }
+    if !status.is_success() {
+        return Err(Fetch::Unreachable(format!(
+            "WPM answered {}",
+            status.as_u16()
+        )));
+    }
+    let body: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|_| Fetch::Unreachable("WPM's answer could not be read".to_string()))?;
+    if !people_impact_readable(&body) {
+        return Err(Fetch::Unreachable(
+            "WPM's answer could not be read".to_string(),
+        ));
+    }
+    Ok(body)
+}
+
+/// The three parts when WPM gave no answer: each unknown with the one reason, in the shape WPM gives an unknown
+/// part (every figure `null`, never zero).
+fn people_impact_unknown_parts(reason: &str) -> serde_json::Value {
+    serde_json::json!({
+        "workers_committed": { "known": false, "reason": reason, "pools": null, "in_no_pool": null },
+        "contingent_ending_before_end": {
+            "known": false, "reason": reason, "pools": null, "in_no_pool": null, "end_not_recorded": null,
+        },
+        "over_committed_pool_months": {
+            "known": false, "reason": reason, "considered": null, "over": null, "unknown": null, "pools": null,
+        },
+    })
+}
+
+/// PPM's answer for a plan's people impact: WPM's answer passed through (`status: "live"`), or every part
+/// unknown with the reason (`status: "unknown"`). Always `source: "wpm"`: PPM adds no figure of its own, no total,
+/// and never turns an unknown or hidden count into zero.
+#[must_use]
+pub fn people_impact_view(
+    plan: Uuid,
+    sent_end: &Result<NaiveDate, &'static str>,
+    months: Option<u32>,
+    got: Result<serde_json::Value, String>,
+) -> serde_json::Value {
+    let mut o = serde_json::Map::new();
+    o.insert("plan_pid".into(), plan.to_string().into());
+    o.insert("programme_ref".into(), programme_ref(plan).into());
+    o.insert("source".into(), "wpm".into());
+    o.insert(
+        "plan_ends_on".into(),
+        serde_json::json!(
+            sent_end
+                .as_ref()
+                .ok()
+                .map(|d| d.format("%Y-%m-%d").to_string())
+        ),
+    );
+    o.insert(
+        "plan_ends_on_source".into(),
+        serde_json::json!(sent_end.as_ref().ok().map(|_| "target_date")),
+    );
+    o.insert(
+        "plan_ends_on_reason".into(),
+        serde_json::json!(sent_end.as_ref().err()),
+    );
+    o.insert("months_asked".into(), serde_json::json!(months));
+    match got {
+        Ok(body) => {
+            o.insert("status".into(), "live".into());
+            o.insert("reason".into(), serde_json::Value::Null);
+            for k in PEOPLE_IMPACT_KEYS {
+                o.insert((*k).to_string(), body[*k].clone());
+            }
+        }
+        Err(reason) => {
+            o.insert("status".into(), "unknown".into());
+            for k in PEOPLE_IMPACT_KEYS {
+                o.insert((*k).to_string(), serde_json::Value::Null);
+            }
+            if let serde_json::Value::Object(parts) = people_impact_unknown_parts(&reason) {
+                o.extend(parts);
+            }
+            o.insert("reason".into(), reason.into());
+        }
+    }
+    serde_json::Value::Object(o)
+}
+
+/// Ask WPM for a plan's people impact under the caller's own token, sending the plan's own end date when it has
+/// one. Stub-first: with no base URL or no token nothing is called. Every failure, a refusal included, is a reason
+/// on an `unknown` answer, never an error and never a figure fetched under another caller's token (nothing is
+/// kept between calls).
+pub async fn people_impact(
+    plan: Uuid,
+    target_date: Option<&str>,
+    months: Option<u32>,
+    bearer: Option<&str>,
+) -> serde_json::Value {
+    people_impact_at(base_url(), plan, target_date, months, bearer).await
+}
+
+async fn people_impact_at(
+    base: Option<String>,
+    plan: Uuid,
+    target_date: Option<&str>,
+    months: Option<u32>,
+    bearer: Option<&str>,
+) -> serde_json::Value {
+    let end = programme_end(target_date);
+    let got = match (base, bearer) {
+        (None, _) => Err("the worker service URL is not set, so WPM was not asked".to_string()),
+        (Some(_), None) => Err("the request carried no bearer token to forward to WPM".to_string()),
+        (Some(b), Some(t)) => {
+            let q = people_impact_query(plan, end.ok(), months);
+            fetch_people_impact(&b, t, &q).await.map_err(|e| match e {
+                Fetch::Unreachable(r) | Fetch::Refused(r) => r,
+            })
+        }
+    };
+    people_impact_view(plan, &end, months, got)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -645,5 +862,252 @@ mod tests {
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].1.centi, Some(300));
         assert_eq!(rows[1].1.centi, None);
+    }
+
+    // ---- people impact (FB-4) ----
+
+    /// What a stand-in people-impact route saw: the raw query and the authorization header.
+    type SeenImpact = std::sync::Arc<Mutex<Vec<(String, Option<String>)>>>;
+
+    /// A stand-in WPM people-impact route: records each call, then answers `status` with `body` after `delay`.
+    async fn serve_impact(
+        status: u16,
+        body: serde_json::Value,
+        delay: Duration,
+    ) -> (String, SeenImpact) {
+        use axum::extract::RawQuery;
+        use axum::http::HeaderMap;
+        use axum::response::IntoResponse;
+        let seen: SeenImpact = std::sync::Arc::default();
+        let log = seen.clone();
+        let app = axum::Router::new().route(
+            "/api/capacity/people-impact",
+            axum::routing::get(move |h: HeaderMap, RawQuery(q): RawQuery| {
+                let (body, log) = (body.clone(), log.clone());
+                async move {
+                    let auth = h
+                        .get("authorization")
+                        .and_then(|v| v.to_str().ok())
+                        .map(str::to_string);
+                    log.lock().unwrap().push((q.unwrap_or_default(), auth));
+                    tokio::time::sleep(delay).await;
+                    (
+                        axum::http::StatusCode::from_u16(status).unwrap(),
+                        axum::Json(body),
+                    )
+                        .into_response()
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        (format!("http://{addr}"), seen)
+    }
+
+    /// WPM's answer, in the shape read from its `controllers/capacity/people_impact.rs`.
+    fn wpm_answer(plan: Uuid) -> serde_json::Value {
+        serde_json::json!({
+            "programme_ref": format!("thing:{plan}"), "source": "wpm", "as_of": "2026-10-30",
+            "programme_ends_on": "2027-06-30", "programme_ends_on_source": "caller",
+            "months": ["2026-10-01", "2026-11-01"], "floor": 10,
+            "workers_committed": { "known": true, "reason": null,
+                "pools": [ { "pool_pid": "a", "pool": "Nursing", "count": 12, "hidden": false },
+                           { "pool_pid": "b", "pool": "Pharmacy", "count": null, "hidden": true },
+                           { "pool_pid": "c", "pool": "Estates", "count": 0, "hidden": false } ],
+                "in_no_pool": { "count": null, "hidden": true } },
+            "contingent_ending_before_end": { "known": true, "reason": null, "pools": [],
+                "in_no_pool": { "count": 0, "hidden": false }, "end_not_recorded": { "count": null, "hidden": true } },
+            "over_committed_pool_months": { "known": false, "reason": "the programme holds no demand claim",
+                "considered": null, "over": null, "unknown": null, "pools": null },
+            "derivation": "Workers committed = …",
+            "a_field_ppm_has_not_read": 99,
+        })
+    }
+
+    #[test]
+    fn the_end_sent_is_the_plans_own_full_target_date_or_nothing_with_why() {
+        assert_eq!(programme_end(Some("2027-06-30")), Ok(d("2027-06-30")));
+        assert_eq!(
+            programme_end(Some("2027-06-30T17:00:00Z")),
+            Ok(d("2027-06-30"))
+        );
+        assert!(programme_end(None).unwrap_err().contains("no target_date"));
+        assert!(
+            programme_end(Some("  "))
+                .unwrap_err()
+                .contains("no target_date")
+        );
+        assert!(
+            programme_end(Some("2027-06"))
+                .unwrap_err()
+                .contains("not a full date"),
+            "a month is not turned into a day"
+        );
+        assert!(programme_end(Some("2027")).is_err());
+        let plan = Uuid::from_u128(9);
+        assert_eq!(
+            people_impact_query(plan, Some(d("2027-06-30")), Some(6)),
+            format!("programme=thing:{plan}&ends_on=2027-06-30&months=6")
+        );
+        assert_eq!(
+            people_impact_query(plan, None, None),
+            format!("programme=thing:{plan}")
+        );
+    }
+
+    #[tokio::test]
+    async fn a_live_answer_passes_through_unchanged_under_the_callers_token() {
+        let plan = Uuid::new_v4();
+        let (base, seen) = serve_impact(200, wpm_answer(plan), Duration::ZERO).await;
+        let v =
+            people_impact_at(Some(base), plan, Some("2027-06-30"), Some(6), Some("tok-1")).await;
+        assert_eq!(
+            seen.lock().unwrap().clone(),
+            vec![(
+                format!("programme=thing:{plan}&ends_on=2027-06-30&months=6"),
+                Some("Bearer tok-1".to_string())
+            )],
+            "the exact query, the plan's own end, the caller's own token"
+        );
+        assert_eq!(
+            (v["source"].as_str(), v["status"].as_str()),
+            (Some("wpm"), Some("live"))
+        );
+        assert_eq!(v["as_of"], "2026-10-30");
+        assert_eq!(v["plan_ends_on"], "2027-06-30");
+        assert_eq!(v["plan_ends_on_source"], "target_date");
+        let w = wpm_answer(plan);
+        for k in PEOPLE_IMPACT_KEYS {
+            assert_eq!(v[*k], w[*k], "{k} is passed through unchanged");
+        }
+        let pools = &v["workers_committed"]["pools"];
+        assert!(
+            pools[1]["count"].is_null() && pools[1]["hidden"] == true,
+            "hidden stays null, not zero"
+        );
+        assert_eq!(pools[2]["count"], 0, "WPM's zero stays a zero");
+        assert_eq!(
+            v["over_committed_pool_months"]["known"], false,
+            "WPM's unknown stays unknown"
+        );
+        assert!(v["over_committed_pool_months"]["over"].is_null());
+        assert!(
+            v.get("a_field_ppm_has_not_read").is_none(),
+            "only the parts PPM has read"
+        );
+        assert!(
+            v.get("total").is_none() && v["workers_committed"].get("total").is_none(),
+            "no total"
+        );
+    }
+
+    #[tokio::test]
+    async fn with_no_end_date_nothing_is_sent_and_wpms_unknown_passes_through() {
+        let plan = Uuid::new_v4();
+        let mut answer = wpm_answer(plan);
+        answer["programme_ends_on"] = serde_json::Value::Null;
+        answer["contingent_ending_before_end"] = serde_json::json!({ "known": false,
+            "reason": "WPM holds no end date for a programme", "pools": null, "in_no_pool": null, "end_not_recorded": null });
+        let (base, seen) = serve_impact(200, answer, Duration::ZERO).await;
+        let v = people_impact_at(Some(base), plan, Some("2027-06"), None, Some("t")).await;
+        assert_eq!(seen.lock().unwrap()[0].0, format!("programme=thing:{plan}"));
+        assert!(v["plan_ends_on"].is_null());
+        assert!(
+            v["plan_ends_on_reason"]
+                .as_str()
+                .unwrap()
+                .contains("not a full date")
+        );
+        assert_eq!(v["contingent_ending_before_end"]["known"], false);
+        assert_eq!(
+            v["contingent_ending_before_end"]["reason"],
+            "WPM holds no end date for a programme"
+        );
+        assert!(v["contingent_ending_before_end"]["pools"].is_null());
+    }
+
+    fn assert_unknown(v: &serde_json::Value, reason: &str) {
+        assert_eq!(
+            (v["source"].as_str(), v["status"].as_str()),
+            (Some("wpm"), Some("unknown")),
+            "{v}"
+        );
+        assert_eq!(v["reason"], reason);
+        assert!(v["as_of"].is_null());
+        for p in PEOPLE_IMPACT_PARTS {
+            assert_eq!(v[*p]["known"], false, "{p}");
+            assert_eq!(v[*p]["reason"], reason, "{p}");
+            for (k, x) in v[*p].as_object().unwrap() {
+                assert!(
+                    k == "known" || k == "reason" || x.is_null(),
+                    "{p}.{k} is null, never zero: {x}"
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn a_refusal_is_unknown_with_the_reason_and_no_figure() {
+        let plan = Uuid::new_v4();
+        let (base, seen) = serve_impact(403, wpm_answer(plan), Duration::ZERO).await;
+        let v = people_impact_at(Some(base), plan, None, None, Some("t")).await;
+        assert_eq!(seen.lock().unwrap().len(), 1);
+        assert_unknown(&v, "WPM refused this caller (403)");
+    }
+
+    #[tokio::test]
+    async fn unreachable_slow_down_and_unreadable_are_unknown_never_an_error() {
+        let plan = Uuid::new_v4();
+        let v = people_impact_at(
+            Some("http://127.0.0.1:9".into()),
+            plan,
+            None,
+            None,
+            Some("t"),
+        )
+        .await;
+        assert_unknown(&v, "WPM could not be reached");
+        let (slow, _) = serve_impact(200, wpm_answer(plan), Duration::from_secs(10)).await;
+        let started = std::time::Instant::now();
+        let v = people_impact_at(Some(slow), plan, None, None, Some("t")).await;
+        assert!(
+            started.elapsed() < Duration::from_secs(5),
+            "bounded by the timeout"
+        );
+        assert_unknown(&v, "WPM did not answer in time");
+        let (down, _) = serve_impact(503, serde_json::json!({}), Duration::ZERO).await;
+        assert_unknown(
+            &people_impact_at(Some(down), plan, None, None, Some("t")).await,
+            "WPM answered 503",
+        );
+        let (odd, _) = serve_impact(
+            200,
+            serde_json::json!({ "workers_committed": 3 }),
+            Duration::ZERO,
+        )
+        .await;
+        assert_unknown(
+            &people_impact_at(Some(odd), plan, None, None, Some("t")).await,
+            "WPM's answer could not be read",
+        );
+    }
+
+    #[tokio::test]
+    async fn with_no_url_or_no_token_nothing_is_called() {
+        let plan = Uuid::new_v4();
+        let (base, seen) = serve_impact(200, wpm_answer(plan), Duration::ZERO).await;
+        let v = people_impact_at(None, plan, Some("2027-06-30"), None, Some("t")).await;
+        assert_unknown(
+            &v,
+            "the worker service URL is not set, so WPM was not asked",
+        );
+        assert_eq!(
+            v["plan_ends_on"], "2027-06-30",
+            "the plan's end is still shown"
+        );
+        let v = people_impact_at(Some(base), plan, None, None, None).await;
+        assert_unknown(&v, "the request carried no bearer token to forward to WPM");
+        assert!(seen.lock().unwrap().is_empty(), "nothing is called");
     }
 }

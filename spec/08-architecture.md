@@ -166,7 +166,7 @@ WPM-D135, WPM-D138 to D141).
 | Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1) |
 | Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2) |
 | Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3) |
-| People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>` (WPM is building it) | **not built**: PPM's client is next (FB-4) |
+| People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>[&ends_on=YYYY-MM-DD][&months=N]` | **built** (FB-4): `GET /api/plans/{pid}/people-impact`, shown on a programme's plan page |
 | Hire and leave | WPM → CRM | `worker_hired`, `worker_terminated`/`worker_retired` webhooks | CRM's and WPM's; nothing in PPM |
 
 **The rules for the PPM ↔ WPM bridge.**
@@ -212,6 +212,22 @@ WPM-D135, WPM-D138 to D141).
    does not have (WPM has `/api/workers/{pid}/skills-as-of`, catalogue skills with proficiency, a different shape).
    It is left as it is: the skill-gap view reports `unknown`. No mapping from WPM skills to PPM's tags is invented
    (FB-7).
+8. **People impact in (FB-4).** `GET /api/plans/{pid}/people-impact[?months=N]` (N 1 to 36, WPM's horizon; `422`
+   otherwise; WPM's default when absent) asks `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>`
+   under the caller's own token, with the same 2-second timeout and no redirects. WPM holds no programme end, so PPM
+   sends `ends_on` from the plan's own `target_date` when it is a full date (`YYYY-MM-DD`, or a timestamp starting
+   with one); a month or a year alone is not turned into a day, and then no `ends_on` is sent, `plan_ends_on_reason`
+   says why, and WPM's own `unknown` for the engagements part passes through. The answer is WPM's, passed through
+   unchanged and labelled `source: "wpm"`: `as_of`, `months`, `floor`, `workers_committed`,
+   `contingent_ending_before_end`, `over_committed_pool_months` (each `known` or not with WPM's `reason`; a count
+   under WPM's floor `null` with `hidden: true`), `derivation`, and WPM's echo `programme_ends_on`; other fields WPM
+   may add are left out until named here. PPM adds no figure and no total and never turns unknown or hidden into
+   zero. `status` is `live`, or `unknown` with a `reason` (every part unknown with that reason, every figure `null`)
+   when the URL is not set, the request has no token (nothing is called in either case), WPM cannot be reached, is
+   slow, answers 5xx or an unreadable body, or **refuses** the caller (4xx). **Nothing is kept** between calls, so a
+   refused caller is never shown an answer fetched under another caller's token. The private-plan guard applies as
+   to any `/api/plans/{pid}/…` route (a non-member gets `404` and WPM is not asked). The plan may be of any kind;
+   the interface offers it on a plan of kind Program, asked only when the reader presses the button.
 
 ### 8.6 Deployment topology (government-portfolio scale)
 

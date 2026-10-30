@@ -2,12 +2,13 @@
 //! workforce service on a local port: the pool link (set, refused, unique, cleared, audited with no figure), the
 //! heatmap taking a linked pool's supply from WPM with its source and time and never adding what was entered here, the
 //! last figure with its age when WPM is down or slow, a hidden month as unknown, demand sent under the caller's own
-//! token with the exact body WPM takes, zero never sent, and an unlinked pool exactly as before.
+//! token with the exact body WPM takes, zero never sent, an unlinked pool exactly as before, and (FB-4) a plan's
+//! people impact passed through from WPM with the plan's own end sent, `unknown` when WPM refuses, is down or slow.
 //!
 //! Its **own test binary** (the verifier is a process-wide `OnceLock`, and this sets the worker-service URL).
 //! `#[ignore]`d — needs PostgreSQL. Run with `cargo test --test wpm_bridge -- --ignored`.
 //!
-//! The stand-in answers with the shapes read from WPM's `src/controllers/capacity/peer.rs`; **no running WPM is
+//! The stand-in answers with the shapes read from WPM's `src/controllers/capacity/peer.rs` and `people_impact.rs`; **no running WPM is
 //! called**.
 
 #![expect(
@@ -80,12 +81,13 @@ const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000b1";
 /// One request the stand-in saw: method, query, authorization header, body.
 type Seen = (String, String, Option<String>, Value);
 
-/// What the stand-in WPM saw, and how it behaves: 0 answers, 1 is down (503), 2 is slow (10 s).
+/// What the stand-in WPM saw, and how it behaves: 0 answers, 1 is down (503), 2 is slow (10 s), 3 refuses (403).
 #[derive(Default)]
 struct Stub {
     mode: AtomicU8,
     seen: Mutex<Vec<Seen>>,
     supply: Mutex<Value>,
+    impact: Mutex<Value>,
 }
 
 async fn stand_in(stub: Arc<Stub>) -> String {
@@ -100,6 +102,7 @@ async fn stand_in(stub: Arc<Stub>) -> String {
     async fn behave(s: &Stub) -> Option<StatusCode> {
         match s.mode.load(Ordering::SeqCst) {
             1 => Some(StatusCode::SERVICE_UNAVAILABLE),
+            3 => Some(StatusCode::FORBIDDEN),
             2 => {
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 None
@@ -122,6 +125,23 @@ async fn stand_in(stub: Arc<Stub>) -> String {
                         return code.into_response();
                     }
                     Json(s.supply.lock().unwrap().clone()).into_response()
+                },
+            ),
+        )
+        .route(
+            "/api/capacity/people-impact",
+            axum::routing::get(
+                |State(s): State<Arc<Stub>>, h: HeaderMap, RawQuery(q): RawQuery| async move {
+                    s.seen.lock().unwrap().push((
+                        "IMPACT".into(),
+                        q.unwrap_or_default(),
+                        auth(&h),
+                        Value::Null,
+                    ));
+                    if let Some(code) = behave(&s).await {
+                        return code.into_response();
+                    }
+                    Json(s.impact.lock().unwrap().clone()).into_response()
                 },
             ),
         )
@@ -309,6 +329,62 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         tokio::time::sleep(std::time::Duration::from_millis(300)).await;
         assert_eq!(posts().len(), n, "an unlinked pool sends nothing");
 
+        // ── people impact (FB-4): WPM's answer passed through, the plan's own end sent, the caller's token ──
+        let impacts = || stub.seen.lock().unwrap().iter().filter(|s| s.0 == "IMPACT").cloned().collect::<Vec<_>>();
+        with!(request.put(&format!("/api/plans/{prog}"))).json(&json!({ "kind": "Program", "name": format!("Care {tag}"), "target_date": "2027-06-30" })).await.assert_status_ok();
+        *stub.impact.lock().unwrap() = json!({
+            "programme_ref": format!("thing:{prog}"), "source": "wpm", "as_of": "2026-10-30",
+            "programme_ends_on": "2027-06-30", "programme_ends_on_source": "caller", "months": [format!("{first}")], "floor": 10,
+            "workers_committed": { "known": true, "reason": null,
+                "pools": [{ "pool_pid": peer, "pool": "Nursing", "count": null, "hidden": true }], "in_no_pool": { "count": 0, "hidden": false } },
+            "contingent_ending_before_end": { "known": true, "reason": null, "pools": [], "in_no_pool": { "count": 0, "hidden": false }, "end_not_recorded": { "count": null, "hidden": true } },
+            "over_committed_pool_months": { "known": false, "reason": "no claim", "considered": null, "over": null, "unknown": null, "pools": null },
+            "derivation": "…",
+        });
+        let impact = |q: &'static str| { let request = &request; let w = writer.clone(); let prog = prog.clone(); async move { request.get(&format!("/api/plans/{prog}/people-impact{q}")).add_header(w.0, w.1).await } };
+        let r = impact("?months=3").await;
+        assert_eq!(r.status_code(), 200);
+        let v: Value = r.json();
+        assert_eq!((v["source"].as_str(), v["status"].as_str(), v["as_of"].as_str()), (Some("wpm"), Some("live"), Some("2026-10-30")), "{v}");
+        let (_, q, auth, _) = impacts()[0].clone();
+        assert_eq!(q, format!("programme=thing:{prog}&ends_on=2027-06-30&months=3"), "the plan's own end, sent");
+        assert_eq!(auth, Some(format!("Bearer {token}")), "the caller's own token");
+        assert_eq!(v["workers_committed"], stub.impact.lock().unwrap()["workers_committed"], "passed through unchanged");
+        assert!(v["workers_committed"]["pools"][0]["count"].is_null(), "hidden is not zero");
+        assert_eq!(v["over_committed_pool_months"]["known"], false);
+        assert_eq!(impact("?months=0").await.status_code(), 422);
+        assert_eq!(impact("?months=37").await.status_code(), 422);
+        assert_eq!(impacts().len(), 1, "a bad window asks WPM nothing");
+        // A refusal is unknown with the reason: no figure, none kept from the call before.
+        stub.mode.store(3, Ordering::SeqCst);
+        let v: Value = impact("").await.json();
+        assert_eq!((v["status"].as_str(), v["reason"].as_str()), (Some("unknown"), Some("WPM refused this caller (403)")), "{v}");
+        assert!(v["workers_committed"]["pools"].is_null() && v["as_of"].is_null(), "no figure: {v}");
+        // Down, then slow: unknown, and the read still succeeds.
+        stub.mode.store(1, Ordering::SeqCst);
+        assert_eq!(impact("").await.json::<Value>()["reason"], "WPM answered 503");
+        stub.mode.store(2, Ordering::SeqCst);
+        let started = std::time::Instant::now();
+        let r = impact("").await;
+        assert!(started.elapsed() < std::time::Duration::from_secs(6), "a slow WPM is abandoned");
+        assert_eq!((r.status_code().as_u16(), r.json::<Value>()["reason"].as_str()), (200, Some("WPM did not answer in time")));
+        stub.mode.store(0, Ordering::SeqCst);
+        // A plan with no full end date sends none.
+        with!(request.put(&format!("/api/plans/{prog}"))).json(&json!({ "kind": "Program", "name": format!("Care {tag}"), "target_date": "2027-06" })).await.assert_status_ok();
+        let v: Value = impact("").await.json();
+        assert_eq!(impacts().last().unwrap().1, format!("programme=thing:{prog}"));
+        assert!(v["plan_ends_on"].is_null() && v["plan_ends_on_reason"].as_str().unwrap().contains("not a full date"), "{v}");
+        // The private-plan guard: a non-member gets 404 and WPM is not asked.
+        let secret: Value = with!(request.post("/api/plans")).json(&json!({ "kind": "Program", "name": format!("Secret {tag}") })).await.json();
+        let secret = secret["pid"].as_str().unwrap().to_string();
+        with!(request.put(&format!("/api/plans/{secret}/access"))).json(&json!({ "private": true, "members": [] })).await.assert_status_ok();
+        let outsider = auth_header(&mint(&kid, "3f2c6b7e-0000-4000-8000-0000000000b2", &[("access", "write")]));
+        let n = impacts().len();
+        let r = request.get(&format!("/api/plans/{secret}/people-impact")).add_header(outsider.0, outsider.1).await;
+        assert_eq!(r.status_code(), 404, "a private plan is not disclosed");
+        assert_eq!(impacts().len(), n, "and WPM is not asked");
+        assert_eq!(with!(request.get(&format!("/api/plans/{}/people-impact", uuid::Uuid::new_v4()))).await.status_code(), 404);
+
         // ── stub mode: no URL, no call, and the answer says so ──
         link(pool.clone(), json!(peer)).await.assert_status_ok();
         unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL") };
@@ -317,6 +393,8 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!(r["peer_demand_send"]["outcome"], "not_configured");
         let c = cell(&heat().await.json::<Value>(), &month);
         assert_eq!(c["peer_supply"]["status"], "last_received", "the figure received earlier, with its age: {c}");
+        let v: Value = impact("").await.json();
+        assert_eq!((v["status"].as_str(), v["reason"].as_str()), (Some("unknown"), Some("the worker service URL is not set, so WPM was not asked")));
         assert_eq!(stub.seen.lock().unwrap().len(), calls, "nothing is called without a URL");
         let fresh = uuid::Uuid::new_v4().to_string();
         link(pool.clone(), json!(fresh)).await.assert_status_ok();

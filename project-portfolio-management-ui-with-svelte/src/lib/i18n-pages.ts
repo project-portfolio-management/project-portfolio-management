@@ -4597,6 +4597,30 @@ export const PAGES_EN = {
   "p.roadmap.h_unrated": "Not yet rated",
   "p.roadmap.nothing_here": "Nothing here.",
   "p.roadmap.see_ideas": "See ideas and proposals on the roadmap",
+  "p.people_impact.title": "People impact (from the workforce service)",
+  "p.people_impact.intro":
+    "Counts only, from the workforce service (WPM), asked under your own sign-in. No person is named and nothing is added up.",
+  "p.people_impact.ask": "Ask the workforce service",
+  "p.people_impact.asking": "Asking…",
+  "p.people_impact.failed": "The people impact could not be loaded.",
+  "p.people_impact.not_known": "Not known.",
+  "p.people_impact.source": "From the workforce service, as of {date}.",
+  "p.people_impact.unknown": "Not known: {reason}",
+  "p.people_impact.end_sent":
+    "End date sent: {date} (this plan's target date).",
+  "p.people_impact.committed": "People committed, by pool",
+  "p.people_impact.ending":
+    "Fixed-term and contract engagements ending before the end",
+  "p.people_impact.in_no_pool": "In no pool",
+  "p.people_impact.end_not_recorded": "No end recorded (not counted as ending)",
+  "p.people_impact.hidden": "hidden (fewer than {floor})",
+  "p.people_impact.no_pools": "No pool to show.",
+  "p.people_impact.part_unknown": "Not known: {reason}",
+  "p.people_impact.over": "Over-committed pool-months",
+  "p.people_impact.over_counts":
+    "{over} of {considered} pool-months are over; {unknown} cannot be said.",
+  "p.people_impact.no_total":
+    "No total is given: a person can count in more than one pool.",
 } as const;
 
 /** A key in the page and component catalogue. */

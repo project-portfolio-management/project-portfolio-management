@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — people impact on a programme's plan page (FB-4, 2026-10-30)
+
+`PeopleImpact.svelte` on `/plans/[pid]` for a plan of kind Program: asks `GET /api/plans/{pid}/people-impact` on a button press and shows WPM's answer as it came (as-of date, end date sent or why not, counts by pool, hidden as "hidden (fewer than N)", unknown parts with WPM's reason, no total), or only the reason when `unknown`. `src/lib/people-impact.ts`, `tests/unit/people-impact.test.ts`, `tests/e2e/people-impact.spec.ts` (axe). Welsh is machine-written and unreviewed; other locales fall back to English; WPM's reasons are shown in English. Not verified: against a real service and WPM (the e2e stubs the service); not checked in a screen reader.
+
 ### Added — the API client is checked against the service's routes (CQ-9, part, 2026-10-22)
 
 `tests/unit/client-routes.test.ts` reads every `this.http.*` call in `src/lib/api/*.ts` (292), works out each path it can produce (choices written in the call are expanded, and so is a parameter typed as a union of words such as `action: "submit" | "approve"`), and requires each to be in the service's `api-routes.txt` with the same method, a value only where the route has a parameter. All 292 match today; a misspelt path and an invented action both fail it. Not done: request and response bodies and types are not checked (types are still hand-written); `ppm.ts` is not split.

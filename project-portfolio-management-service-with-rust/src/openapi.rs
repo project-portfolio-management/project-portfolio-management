@@ -2367,6 +2367,7 @@ mod tests {
             crate::controllers::key_persons::routes(),
             crate::controllers::register::routes(),
             crate::controllers::programme_profile::routes(),
+            crate::controllers::people_impact::routes(),
             crate::controllers::milestone_signoffs::routes(),
             crate::controllers::leveling::routes(),
             crate::controllers::milestones::routes(),

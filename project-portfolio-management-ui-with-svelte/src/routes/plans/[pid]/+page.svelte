@@ -2,7 +2,8 @@
   Plan detail route (`/plans/[pid]`).
 
   Loads one plan, renders its fields, and offers edit / delete /
-  check-duplicates (kind does not gate matching).
+  check-duplicates (kind does not gate matching). A programme also offers its
+  people impact from the workforce service, asked on request (FB-4).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -16,6 +17,7 @@
   import { t, localeHref } from "#lib/i18n.svelte.js";
   import { PpmClient } from "#lib/api/ppm.js";
   import { visiblePlanLinks } from "#lib/modules.js";
+  import PeopleImpact from "#lib/components/PeopleImpact.svelte";
 
   // Reactive: following a link to another plan (a duplicate below) reuses this page, so the
   // record must follow the URL, not the plan the page first opened on (CQ-18).
@@ -187,6 +189,10 @@
     </button>
     <button onclick={handleDelete}>{t("detail.delete")}</button>
   </div>
+
+  {#if record.kind === "Program"}
+    {#key pid}<PeopleImpact {pid} />{/key}
+  {/if}
 
   {#if duplicates}
     <h2>{t("detail.potentialDuplicates")}</h2>

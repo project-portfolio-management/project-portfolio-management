@@ -4702,4 +4702,29 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.roadmap.h_unrated": "Heb eu graddio eto",
   "p.roadmap.nothing_here": "Dim byd yma.",
   "p.roadmap.see_ideas": "Gweld syniadau a chynigion ar y map ffordd",
+  "p.people_impact.title": "Effaith ar bobl (o'r gwasanaeth gweithlu)",
+  "p.people_impact.intro":
+    "Cyfrifon yn unig, o'r gwasanaeth gweithlu (WPM), wedi'u gofyn dan eich mewngofnod eich hun. Nid enwir neb ac ni adiir dim.",
+  "p.people_impact.ask": "Gofyn i'r gwasanaeth gweithlu",
+  "p.people_impact.asking": "Yn gofyn…",
+  "p.people_impact.failed": "Nid oedd modd llwytho'r effaith ar bobl.",
+  "p.people_impact.not_known": "Ddim yn hysbys.",
+  "p.people_impact.source": "O'r gwasanaeth gweithlu, ar {date}.",
+  "p.people_impact.unknown": "Ddim yn hysbys: {reason}",
+  "p.people_impact.end_sent":
+    "Dyddiad gorffen a anfonwyd: {date} (dyddiad targed y cynllun hwn).",
+  "p.people_impact.committed": "Pobl wedi'u hymrwymo, fesul cronfa",
+  "p.people_impact.ending":
+    "Ymrwymiadau cyfnod penodol a chontract sy'n dod i ben cyn y diwedd",
+  "p.people_impact.in_no_pool": "Mewn dim cronfa",
+  "p.people_impact.end_not_recorded":
+    "Dim diwedd wedi'i gofnodi (heb ei gyfrif fel yn dod i ben)",
+  "p.people_impact.hidden": "cudd (llai na {floor})",
+  "p.people_impact.no_pools": "Dim cronfa i'w dangos.",
+  "p.people_impact.part_unknown": "Ddim yn hysbys: {reason}",
+  "p.people_impact.over": "Misoedd cronfa wedi'u gor-ymrwymo",
+  "p.people_impact.over_counts":
+    "Mae {over} o {considered} mis cronfa dros y terfyn; ni ellir dweud am {unknown}.",
+  "p.people_impact.no_total":
+    "Ni roddir cyfanswm: gall person gyfrif mewn mwy nag un gronfa.",
 };

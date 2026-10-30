@@ -519,6 +519,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/plans/{pid}/okr", "okr", "`GET /api/plans/{pid}/okr` — the plan's alignment-weighted score and the objectives behind it.  An objective with no measurable key result reports `unmeasured` and is excluded from the weighted mean — it must neither drag the plan down nor silently lift it."),
     ("get", "/api/plans/{pid}/onboarding/cases", "onboarding", "`GET /api/plans/{pid}/onboarding/cases` — the plan's checklists with their progress. Cases about a person are listed (and counted) only for who may manage people."),
     ("post", "/api/plans/{pid}/onboarding/cases", "onboarding", "`POST /api/plans/{pid}/onboarding/cases` — start an onboarding or offboarding."),
+    ("get", "/api/plans/{pid}/people-impact", "people_impact", "`GET /api/plans/{pid}/people-impact[?months=N]` — the workforce service's people impact for the plan, passed through with `source: \"wpm\"`, or `unknown` with the reason."),
     ("get", "/api/plans/{pid}/performance", "value", "`GET /api/plans/{pid}/performance` — the six-dimension view."),
     ("put", "/api/plans/{pid}/phase", "phase", "`PUT /api/plans/{pid}/phase` — advance one step, or move back with a stated reason."),
     ("get", "/api/plans/{pid}/phase-history", "phase", "`GET /api/plans/{pid}/phase-history` — the transitions and the time spent in each phase, **every phase present even at zero**."),

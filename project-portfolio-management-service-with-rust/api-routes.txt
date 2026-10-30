@@ -430,6 +430,7 @@ POST /api/plans/{pid}/objectives
 GET /api/plans/{pid}/okr
 GET /api/plans/{pid}/onboarding/cases
 POST /api/plans/{pid}/onboarding/cases
+GET /api/plans/{pid}/people-impact
 GET /api/plans/{pid}/performance
 PUT /api/plans/{pid}/phase
 GET /api/plans/{pid}/phase-history

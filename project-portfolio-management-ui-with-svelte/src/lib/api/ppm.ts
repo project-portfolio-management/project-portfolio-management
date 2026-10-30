@@ -10,6 +10,7 @@ import { ApiClient } from "./client";
 import type { Collection } from "./types";
 import { rowOf } from "#lib/row-of.js";
 import { mspdiReport, simQuery } from "./ppm-types";
+import type { PeopleImpact } from "#lib/people-impact.js";
 import type {
   AccessRecords,
   Alignment,
@@ -1618,6 +1619,10 @@ export class PpmClient {
   /** Which feature modules this plan exposes (RM-7). */
   planModules(pid: string): Promise<PlanModules> {
     return this.http.get(`/api/plans/${pid}/modules`);
+  }
+  /** FB-4: a programme's people impact from the workforce service, passed through (`source: "wpm"`). */
+  planPeopleImpact(pid: string): Promise<PeopleImpact> {
+    return this.http.get(`/api/plans/${pid}/people-impact`);
   }
   /** Set a plan's modules, apply the personal preset, or reset to default. */
   setPlanModules(

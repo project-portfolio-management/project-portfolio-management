@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **People impact in from the workforce service (FB-4, 2026-10-30).** `GET /api/plans/{pid}/people-impact[?months=1..36]`: WPM's answer passed through unchanged with `source: "wpm"`, the plan's full `target_date` sent as `ends_on`, `unknown` with a reason when not configured, no token, unreachable, slow, unreadable or refused; nothing kept. `src/wpm_bridge.rs`, `src/controllers/people_impact.rs`, `tests/wpm_bridge.rs`. **Not verified:** against a running WPM (FB-8): every test uses a stand-in answering with the shape read from WPM's `controllers/capacity/people_impact.rs`; the stand-in's answer is not checked against WPM's real output, so a later change to WPM's shape would read as `unknown` (unreadable) or pass through unnoticed for fields PPM does not check; CI.
+
 - **The bridge to the workforce service (FB-1 to FB-3, 2026-10-30).** `PUT /api/skill-pools/{pid}/peer-link`; WPM's supply for a linked pool on `GET /api/capacity-heatmap` with its source, time and status, never added to what was entered here; demand commitments on a linked pool sent to WPM under the caller's token, outcome recorded (`peer_demand_sends`, migration 99). `src/wpm_bridge.rs`, `tests/wpm_bridge.rs`. **Not built:** people impact in (FB-4), withdrawing a figure (zero is not sent, FB-5), retries, the UI (FB-6). **Not verified:** against a running WPM (a stand-in on a local port answers with the shapes read from WPM's code).
 
 ### Changed

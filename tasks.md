@@ -2203,8 +2203,12 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
 - [x] **FB-3 (M) — Demand out.** A demand commitment on a linked pool sends the programme's total to
   `POST {WPM}/api/capacity/peer-demand` under the caller's own token, after the write, outcome recorded.
   **Built 2026-10-30.** No outbox or retry (the token is not stored); zero is not sent (FB-5). Same caveat as FB-2.
-- [ ] **FB-4 (M) — People impact in.** PPM's client for `GET {WPM}/api/capacity/people-impact?programme=thing:<pid>`
-  (WPM is building the route), shown on the programme. **Next.** Needs WPM's answer shape.
+- [x] **FB-4 (M) — People impact in.** PPM's client for `GET {WPM}/api/capacity/people-impact?programme=thing:<pid>`,
+  shown on the programme. **Built 2026-10-30:** `GET /api/plans/{pid}/people-impact` (WPM's answer passed through,
+  `source: "wpm"`, the plan's own full `target_date` sent as `ends_on`, `unknown` with a reason when not configured,
+  no token, unreachable, slow or refused; nothing kept), and a box on a programme's plan page, asked on request.
+  **Not verified against a running WPM**: the tests use a stand-in with the shape read from WPM's
+  `controllers/capacity/people_impact.rs` (FB-8).
 - [ ] **FB-5 (S) — Withdraw a demand figure.** WPM has no route to withdraw a figure and refuses zero, so a programme's
   demand set to zero here leaves WPM's last figure in place. Needs a WPM route first; then PPM sends it on zero.
 - [ ] **FB-6 (S–M, UI) — Show the bridge.** The UI has no capacity-heatmap screen and no skill-pool screen today

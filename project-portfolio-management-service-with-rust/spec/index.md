@@ -588,6 +588,10 @@ the family bulk machinery (§9.8, deferred).
 | GET | `/api/plans/{pid}/people-impact` | WPM's people impact for the plan (`?months=1..36`), passed through with `source: "wpm"`, or `unknown` with a reason (FB-4) |
 
 The rules (one owner per fact, the caller's own token, stub-first, zero never sent) are the entity spec's §8.5a.
+Supply figures received are kept in process **by caller** (subject, else the SHA-256 of the token; never the
+token), recalled only for that caller when WPM cannot be reached, bounded at 1 000 callers × 2 400 figures
+(`KEPT_CALLERS_MAX`, `KEPT_FIGURES_PER_CALLER_MAX`); the views that make no call (director pack, drum, pipeline,
+start check) show `unknown` for a linked pool (§8.5a rule 4).
 Code: `src/wpm_bridge.rs` (rules and the three calls), `src/controllers/capacity_heatmap.rs`,
 `src/controllers/people_impact.rs`, migration 99 (`m20261030_000099_peer_pool_link`). Test: `tests/wpm_bridge.rs` (a stand-in WPM on a local port).
 

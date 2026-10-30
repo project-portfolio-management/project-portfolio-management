@@ -189,10 +189,18 @@ WPM-D135, WPM-D138 to D141).
    (allocations plus demand commitments) on both sides.
 4. **WPM is asked under the caller's own token** (WPM-D135: no shared service account), with a 2-second timeout and
    no redirects, all linked pools in parallel. With no base URL (stub mode), no token, or a failure, the reading
-   says why. Only the live heatmap asks; the director pack, the drum, the pipeline and the start check read the
-   figures already received and make no call. **Figures received are kept in this process only**: they are lost
-   at restart (then `unknown` until WPM answers again), and a figure one caller received is shown to the next
-   caller of this PPM for that pool. Both are accepted limits, recorded here.
+   says why. Only the live heatmap asks. **Figures received are kept in this process only, by caller**: the
+   authenticated subject (`sub`), or, when the request has none, the SHA-256 of its bearer token (the token itself
+   is never kept). When WPM cannot be reached, the heatmap shows the last figure **this caller's** token fetched,
+   with its age, or `unknown`; it never shows a figure another caller's token fetched (WPM-D135). The director
+   pack, the drum, the pipeline and the start check make no call and show **no kept figure**: a linked pool's
+   supply is `unknown` there, with the reason. (The pack is stored and read by others, and the start check looks
+   at every plan for no one caller, so a figure kept for one caller would reach another.) The store is bounded:
+   at most 1 000 callers (the one not seen for longest is dropped) and 2 400 figures per caller (the
+   oldest-received is dropped). What remains, accepted and recorded here: figures are lost at restart (then
+   `unknown` until WPM answers again); one subject's figure is shown to the same subject under another of its
+   tokens, even one WPM would answer differently; and those four views cannot use WPM's supply for a linked pool,
+   so the drum and pipeline treat that pool's supply as unknown.
 5. **Demand out.** When a demand commitment on a linked pool is set (`PUT /api/capacity-commitments`, kind
    `demand`), PPM sends `POST {WPM}/api/capacity/peer-demand` with `{pool_pid: <WPM pool pid>, programme_ref:
    "thing:<plan pid>", month: "YYYY-MM-01", fte_centi, peer_event_id}`. `fte_centi` is the programme's **total**

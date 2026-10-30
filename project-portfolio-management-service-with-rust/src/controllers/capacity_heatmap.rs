@@ -857,7 +857,7 @@ pub(crate) async fn heatmap(
         "pools": out_pools,
         "table": table,
         "partner_names_shown": names,
-        "note": "Demand is the committed allocations on plans you may read (by the role they ask for) plus work partners owe; supply is the organization's own people with the pool's roles, read from their availability, plus partners' commitments. Everything is in FTE. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is supply under 110 % of demand. Proposed bookings are not demand. Skills are not used: a role maps to at most one pool, so nothing is counted twice. Partner organizations are labels until they exist as records, and partner names are hidden unless the deployment shows them. No person appears. A pool linked to the workforce service takes its supply from there (source wpm, with the time it was taken): what was entered here for it is shown as entered_here_supply_fte and never added; when the workforce service cannot be reached the last figure received is shown with its age, and with none the supply is unknown, never zero.",
+        "note": "Demand is the committed allocations on plans you may read (by the role they ask for) plus work partners owe; supply is the organization's own people with the pool's roles, read from their availability, plus partners' commitments. Everything is in FTE. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is supply under 110 % of demand. Proposed bookings are not demand. Skills are not used: a role maps to at most one pool, so nothing is counted twice. Partner organizations are labels until they exist as records, and partner names are hidden unless the deployment shows them. No person appears. A pool linked to the workforce service takes its supply from there (source wpm, with the time it was taken): what was entered here for it is shown as entered_here_supply_fte and never added; when the workforce service cannot be reached the last figure your own token fetched is shown with its age (never one fetched for another caller), and with none the supply is unknown, never zero.",
     }))
 }
 
@@ -897,7 +897,8 @@ async fn live(
         .map(|p| p.pid)
         .collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
-    let read = crate::wpm_bridge::SupplyRead::Live(crate::wpm_bridge::bearer_of(&headers));
+    let read =
+        crate::wpm_bridge::SupplyRead::live(caller.actor(), crate::wpm_bridge::bearer_of(&headers));
     format::json(heatmap(&ctx, &readable, from, months, &read).await?)
 }
 

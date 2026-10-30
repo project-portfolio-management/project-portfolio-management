@@ -1,7 +1,7 @@
 //! The bridge to the workforce service (FB-1 to FB-3), end to end with real PASETO identities and a stand-in
 //! workforce service on a local port: the pool link (set, refused, unique, cleared, audited with no figure), the
 //! heatmap taking a linked pool's supply from WPM with its source and time and never adding what was entered here, the
-//! last figure with its age when WPM is down or slow, a hidden month as unknown, demand sent under the caller's own
+//! last figure with its age when WPM is down or slow (only to the caller whose token fetched it), a hidden month as unknown, demand sent under the caller's own
 //! token with the exact body WPM takes, zero never sent, an unlinked pool exactly as before, and (FB-4) a plan's
 //! people impact passed through from WPM with the plan's own end sent, `unknown` when WPM refuses, is down or slow.
 //!
@@ -268,6 +268,13 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!((c["peer_supply"]["status"].as_str(), c["supply_fte"].as_f64()), (Some("last_received"), Some(3.0)), "{c}");
         assert!(c["peer_supply"]["age_seconds"].as_i64().unwrap() >= 0);
         assert_eq!(c["peer_supply"]["reason"], "WPM answered 503");
+        // Another caller, WPM still down: never the figure the first caller's token fetched (WPM-D135).
+        let second = auth_header(&mint(&kid, "3f2c6b7e-0000-4000-8000-0000000000b3", &[("access", "write")]));
+        let r = request.get(&format!("/api/capacity-heatmap?from={month}&months=2")).add_header(second.0.clone(), second.1.clone()).await;
+        assert_eq!(r.status_code(), 200);
+        let c = cell(&r.json::<Value>(), &month);
+        assert_eq!((c["peer_supply"]["status"].as_str(), c["state"].as_str()), (Some("unknown"), Some("supply_unknown")), "another caller's figure is not shown: {c}");
+        assert!(c["supply_fte"].is_null(), "{c}");
         stub.mode.store(2, Ordering::SeqCst);
         let started = std::time::Instant::now();
         let r = heat().await;
@@ -275,7 +282,7 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!(r.status_code(), 200);
         assert_eq!(cell(&r.json::<Value>(), &month)["peer_supply"]["status"], "last_received");
         stub.mode.store(0, Ordering::SeqCst);
-        // The pack-style reads (the drum) ask nothing and use what was received.
+        // The pack-style reads (the drum) ask nothing and show no kept figure.
         let before = stub.seen.lock().unwrap().len();
         with!(request.get(&format!("/api/portfolio-drum?from={month}&months=2"))).await.assert_status_ok();
         assert_eq!(stub.seen.lock().unwrap().len(), before, "the drum makes no call");

@@ -2200,6 +2200,9 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   labelled with its source and time, what was entered here beside it and never added, the last figure with its age
   when WPM cannot be reached, `unknown` with none; never zero. **Built 2026-10-30** (`src/wpm_bridge.rs`). **Not
   verified against a running WPM**: the test uses a stand-in with the shapes read from WPM's `peer.rs`.
+  **Fixed 2026-10-30:** a refusal reads `unknown`; kept figures are keyed by caller (subject, else the token's
+  SHA-256) and recalled only for that caller, bounded at 1 000 callers × 2 400 figures; the pack, drum, pipeline
+  and start check show `unknown` for a linked pool (§8.5a rule 4).
 - [x] **FB-3 (M) — Demand out.** A demand commitment on a linked pool sends the programme's total to
   `POST {WPM}/api/capacity/peer-demand` under the caller's own token, after the write, outcome recorded.
   **Built 2026-10-30.** No outbox or retry (the token is not stored); zero is not sent (FB-5). Same caveat as FB-2.

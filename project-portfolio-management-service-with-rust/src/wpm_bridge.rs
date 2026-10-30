@@ -20,9 +20,11 @@
 //! the same worker service). **Stub-first:** with no base URL, no token, or a pool that is not linked, nothing
 //! is called and the answer says why. A PPM request never fails because WPM is down or slow.
 //!
-//! Supply figures received are kept **in this process** (not in the database) so that, when WPM cannot be
-//! reached, the last figure is shown with its age, or `unknown` when there is none. They are lost at restart,
-//! and one caller's figure is shown to the next caller of this PPM (stated in the spec as a limit).
+//! Supply figures received are kept **in this process** (not in the database), **by caller** (the authenticated
+//! subject, else the SHA-256 of the bearer token; never the token), so that when WPM cannot be reached the
+//! capacity heatmap shows the last figure *this caller's* token fetched, with its age, or `unknown` when there is
+//! none. A refusal, and every view that does not ask WPM, reads `unknown`. The store is bounded
+//! ([`KEPT_CALLERS_MAX`] callers, [`KEPT_FIGURES_PER_CALLER_MAX`] figures each) and lost at restart.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -215,25 +217,115 @@ pub fn read_month(
 
 // ---- the in-process store of figures received ---------------------------------------------------------------
 
-type Store = Mutex<HashMap<(String, NaiveDate), Received>>;
+/// The most callers whose figures are kept; past it the caller not seen for longest is dropped.
+pub const KEPT_CALLERS_MAX: usize = 1_000;
+/// The most figures (pool × month) kept for one caller; past it that caller's oldest-received figure is dropped.
+pub const KEPT_FIGURES_PER_CALLER_MAX: usize = 2_400;
 
-fn store() -> &'static Store {
-    static STORE: OnceLock<Store> = OnceLock::new();
-    STORE.get_or_init(|| Mutex::new(HashMap::new()))
+/// Who a kept figure belongs to: the caller whose token fetched it. The authenticated subject when the request
+/// has one, else the SHA-256 of the bearer token (the token itself is never kept); `None` keeps and recalls
+/// nothing. A figure is recalled only for the same caller, so one caller's figure never reaches another
+/// (WPM-D135).
+#[must_use]
+pub fn caller_key(subject: Option<&str>, bearer: Option<&str>) -> Option<String> {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write;
+    if let Some(s) = subject.filter(|s| !s.is_empty()) {
+        return Some(format!("sub:{s}"));
+    }
+    let t = bearer.filter(|t| !t.is_empty())?;
+    let hex = Sha256::digest(t.as_bytes())
+        .iter()
+        .fold(String::new(), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        });
+    Some(format!("token:{hex}"))
 }
 
-fn remember(peer_pool_ref: &str, month: NaiveDate, r: Received) {
-    let mut g = store()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    g.insert((peer_pool_ref.to_string(), month), r);
+/// One caller's kept figures, each with the order it was received in, and when the caller was last seen.
+#[derive(Default)]
+struct CallerFigures {
+    seen: u64,
+    figures: HashMap<(String, NaiveDate), (u64, Received)>,
 }
 
-fn recall(peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
-    let g = store()
+/// The figures received, by caller, bounded by caller count and by figures per caller.
+struct Kept {
+    callers_max: usize,
+    per_caller_max: usize,
+    tick: u64,
+    by_caller: HashMap<String, CallerFigures>,
+}
+
+impl Kept {
+    fn new(callers_max: usize, per_caller_max: usize) -> Self {
+        Self {
+            callers_max: callers_max.max(1),
+            per_caller_max: per_caller_max.max(1),
+            tick: 0,
+            by_caller: HashMap::new(),
+        }
+    }
+
+    fn remember(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
+        self.tick += 1;
+        let tick = self.tick;
+        if !self.by_caller.contains_key(caller)
+            && self.by_caller.len() >= self.callers_max
+            && let Some(stale) = self
+                .by_caller
+                .iter()
+                .min_by_key(|(_, c)| c.seen)
+                .map(|(k, _)| k.clone())
+        {
+            self.by_caller.remove(&stale);
+        }
+        let entry = self.by_caller.entry(caller.to_string()).or_default();
+        entry.seen = tick;
+        let key = (peer_pool_ref.to_string(), month);
+        if !entry.figures.contains_key(&key)
+            && entry.figures.len() >= self.per_caller_max
+            && let Some(oldest) = entry
+                .figures
+                .iter()
+                .min_by_key(|(_, (t, _))| *t)
+                .map(|(k, _)| k.clone())
+        {
+            entry.figures.remove(&oldest);
+        }
+        entry.figures.insert(key, (tick, r));
+    }
+
+    fn recall(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
+        self.tick += 1;
+        let tick = self.tick;
+        let entry = self.by_caller.get_mut(caller)?;
+        entry.seen = tick;
+        entry
+            .figures
+            .get(&(peer_pool_ref.to_string(), month))
+            .map(|(_, r)| *r)
+    }
+}
+
+fn store() -> &'static Mutex<Kept> {
+    static STORE: OnceLock<Mutex<Kept>> = OnceLock::new();
+    STORE.get_or_init(|| Mutex::new(Kept::new(KEPT_CALLERS_MAX, KEPT_FIGURES_PER_CALLER_MAX)))
+}
+
+fn remember(caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
+    store()
         .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    g.get(&(peer_pool_ref.to_string(), month)).copied()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .remember(caller, peer_pool_ref, month, r);
+}
+
+fn recall(caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
+    store()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .recall(caller, peer_pool_ref, month)
 }
 
 // ---- the calls ----------------------------------------------------------------------------------------------
@@ -347,10 +439,28 @@ async fn fetch_supply(
 /// Whether to call WPM for supply on this read.
 #[derive(Debug, Clone)]
 pub enum SupplyRead {
-    /// Show only figures already received (the director pack, the drum, the start check): no call.
+    /// A view that does not ask WPM (the director pack, the drum, the pipeline, the start check): no call, and
+    /// **no kept figure** either, so a linked pool's supply is `unknown` there. The pack is stored and read by
+    /// others and the start check looks at every plan for no one caller, so any kept figure shown there would be
+    /// one caller's figure shown to another (WPM-D135).
     Kept,
-    /// Ask WPM now under this caller's token (or none, which makes no call).
-    Live(Option<String>),
+    /// Ask WPM now under this caller's token (or none, which makes no call). When WPM cannot be reached, the
+    /// figure shown is the last one *this caller's* token fetched ([`caller_key`]), or `unknown`.
+    Live {
+        /// The caller's bearer token, forwarded unchanged.
+        bearer: Option<String>,
+        /// Whose kept figures to keep and recall; `None` keeps and recalls nothing.
+        caller: Option<String>,
+    },
+}
+
+impl SupplyRead {
+    /// A live read for a request: its token, and the caller keyed by subject, else by the token's hash.
+    #[must_use]
+    pub fn live(subject: Option<&str>, bearer: Option<String>) -> Self {
+        let caller = caller_key(subject, bearer.as_deref());
+        Self::Live { bearer, caller }
+    }
 }
 
 /// The supply of each linked pool for each month of the window, keyed by PPM pool pid. Calls go out in
@@ -360,7 +470,15 @@ pub async fn supply_for(
     months: &[NaiveDate],
     read: &SupplyRead,
 ) -> HashMap<Uuid, Vec<SupplyReading>> {
-    let base = base_url();
+    supply_at(base_url(), linked, months, read).await
+}
+
+async fn supply_at(
+    base: Option<String>,
+    linked: &[(Uuid, String)],
+    months: &[NaiveDate],
+    read: &SupplyRead,
+) -> HashMap<Uuid, Vec<SupplyReading>> {
     let mut set = tokio::task::JoinSet::new();
     let first = months.first().copied();
     let n = u32::try_from(months.len()).unwrap_or(u32::MAX);
@@ -368,29 +486,36 @@ pub async fn supply_for(
         let (pool, peer, base, read) = (*pool, peer.clone(), base.clone(), read.clone());
         set.spawn(async move {
             let live = match (&read, base.as_deref(), first) {
-                (SupplyRead::Kept, _, _) => Err(Fetch::Unreachable(
-                    "figures kept from earlier reads only on this view".to_string(),
+                (SupplyRead::Kept, _, _) => Err(Fetch::Refused(
+                    "this view does not ask WPM and shows no kept figure; the capacity heatmap asks under your own token"
+                        .to_string(),
                 )),
-                (SupplyRead::Live(_), None, _) => Err(Fetch::Unreachable(
+                (SupplyRead::Live { .. }, None, _) => Err(Fetch::Unreachable(
                     "the worker service URL is not set".to_string(),
                 )),
-                (SupplyRead::Live(None), Some(_), _) => Err(Fetch::Unreachable(
+                (SupplyRead::Live { bearer: None, .. }, Some(_), _) => Err(Fetch::Unreachable(
                     "the request carried no bearer token to forward to WPM".to_string(),
                 )),
-                (SupplyRead::Live(Some(_)), Some(_), None) => Ok(Vec::new()),
-                (SupplyRead::Live(Some(t)), Some(b), Some(f)) => {
+                (SupplyRead::Live { bearer: Some(_), .. }, Some(_), None) => Ok(Vec::new()),
+                (SupplyRead::Live { bearer: Some(t), .. }, Some(b), Some(f)) => {
                     fetch_supply(b, t, &peer, f, n).await
                 }
             };
             (pool, peer, live)
         });
     }
+    let caller = match read {
+        SupplyRead::Live { caller, .. } => caller.as_deref(),
+        SupplyRead::Kept => None,
+    };
     let mut out = HashMap::new();
     while let Some(Ok((pool, peer, live))) = set.join_next().await {
         let (got, why, refused): (HashMap<NaiveDate, Received>, Option<String>, bool) = match live {
             Ok(rows) => {
-                for (m, r) in &rows {
-                    remember(&peer, *m, *r);
+                if let Some(c) = caller {
+                    for (m, r) in &rows {
+                        remember(c, &peer, *m, *r);
+                    }
                 }
                 (rows.into_iter().collect(), None, false)
             }
@@ -405,7 +530,11 @@ pub async fn supply_for(
                 } else {
                     Some("WPM gave no figure for this month")
                 });
-                let last = if refused { None } else { recall(&peer, *m) };
+                // Only this caller's own kept figure, and none after a refusal (WPM-D135).
+                let last = match (refused, caller) {
+                    (false, Some(c)) => recall(c, &peer, *m),
+                    _ => None,
+                };
                 read_month(got.get(m).copied(), last, why)
             })
             .collect();
@@ -862,6 +991,128 @@ mod tests {
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].1.centi, Some(300));
         assert_eq!(rows[1].1.centi, None);
+    }
+
+    fn got(centi: i64) -> Received {
+        Received {
+            centi: Some(centi),
+            as_of: DateTime::parse_from_rfc3339("2026-10-30T09:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        }
+    }
+
+    #[test]
+    fn the_caller_is_the_subject_else_a_hash_of_the_token_never_the_token() {
+        assert_eq!(
+            caller_key(Some("u1"), Some("tok")),
+            Some("sub:u1".to_string())
+        );
+        let k = caller_key(None, Some("secret-token")).unwrap();
+        assert!(k.starts_with("token:") && k.len() == 6 + 64, "{k}");
+        assert!(
+            !k.contains("secret-token"),
+            "the token itself is never kept"
+        );
+        assert_eq!(caller_key(None, Some("secret-token")), Some(k));
+        assert_ne!(caller_key(None, Some("a")), caller_key(None, Some("b")));
+        assert_eq!(caller_key(Some(""), None), None);
+        assert_eq!(caller_key(None, None), None);
+    }
+
+    #[test]
+    fn a_kept_figure_is_recalled_only_for_the_caller_who_fetched_it() {
+        let mut k = Kept::new(10, 10);
+        let m = d("2026-11-01");
+        k.remember("sub:a", "p", m, got(300));
+        assert_eq!(k.recall("sub:a", "p", m), Some(got(300)));
+        assert_eq!(k.recall("sub:b", "p", m), None, "never another caller's");
+        assert_eq!(k.recall("sub:a", "q", m), None);
+    }
+
+    #[test]
+    fn the_store_is_bounded_by_callers_and_by_figures_per_caller() {
+        let m = d("2026-11-01");
+        // Callers: past the cap, the one not seen for longest goes.
+        let mut k = Kept::new(2, 10);
+        k.remember("a", "p", m, got(1));
+        k.remember("b", "p", m, got(2));
+        assert!(
+            k.recall("a", "p", m).is_some(),
+            "a is now seen more recently than b"
+        );
+        k.remember("c", "p", m, got(3));
+        assert_eq!(k.by_caller.len(), 2);
+        assert_eq!(k.recall("b", "p", m), None, "b was dropped");
+        assert!(k.recall("a", "p", m).is_some() && k.recall("c", "p", m).is_some());
+        // Figures: past one caller's cap, its oldest-received figure goes; a refresh is not growth.
+        let mut k = Kept::new(10, 2);
+        k.remember("a", "p", d("2026-11-01"), got(1));
+        k.remember("a", "p", d("2026-12-01"), got(2));
+        k.remember("a", "p", d("2026-11-01"), got(9));
+        assert_eq!(k.by_caller["a"].figures.len(), 2);
+        k.remember("a", "p", d("2027-01-01"), got(3));
+        assert_eq!(k.by_caller["a"].figures.len(), 2);
+        assert_eq!(
+            k.recall("a", "p", d("2026-12-01")),
+            None,
+            "the oldest received went"
+        );
+        assert_eq!(k.recall("a", "p", d("2026-11-01")), Some(got(9)));
+        // Many callers cannot grow it past the caps.
+        let mut k = Kept::new(5, 3);
+        for c in 0..100 {
+            for i in 0..10 {
+                k.remember(&format!("c{c}"), &format!("p{i}"), m, got(i));
+            }
+        }
+        assert_eq!(k.by_caller.len(), 5);
+        assert!(k.by_caller.values().all(|c| c.figures.len() == 3));
+    }
+
+    #[tokio::test]
+    async fn when_wpm_is_unreachable_a_caller_sees_only_its_own_kept_figure() {
+        let peer = Uuid::new_v4().to_string();
+        let pool = Uuid::new_v4();
+        let m = d("2026-11-01");
+        let base = serve(
+            serde_json::json!({ "as_of": "2026-10-30T09:00:00Z", "months": [
+                { "month": "2026-11-01", "supply_centi": 300, "hidden": false } ] }),
+            Duration::ZERO,
+        )
+        .await;
+        let linked = vec![(pool, peer.clone())];
+        let a = SupplyRead::live(None, Some(format!("token-a-{peer}")));
+        let b = SupplyRead::live(None, Some(format!("token-b-{peer}")));
+        let live = supply_at(Some(base), &linked, &[m], &a).await;
+        assert_eq!(live[&pool][0].status, "live");
+        let gone = Some("http://127.0.0.1:9".to_string());
+        let own = supply_at(gone.clone(), &linked, &[m], &a).await;
+        assert_eq!(
+            (own[&pool][0].status, own[&pool][0].milli),
+            ("last_received", Some(3000)),
+            "A's own figure"
+        );
+        let other = supply_at(gone.clone(), &linked, &[m], &b).await;
+        assert_eq!(
+            (other[&pool][0].status, other[&pool][0].milli),
+            ("unknown", None),
+            "never A's figure for B"
+        );
+        let nobody = SupplyRead::Live {
+            bearer: Some("x".to_string()),
+            caller: None,
+        };
+        assert_eq!(
+            supply_at(gone, &linked, &[m], &nobody).await[&pool][0].status,
+            "unknown"
+        );
+        // A view that does not ask WPM shows no kept figure, for anyone.
+        let kept = supply_at(None, &linked, &[m], &SupplyRead::Kept).await;
+        assert_eq!(
+            (kept[&pool][0].status, kept[&pool][0].milli),
+            ("unknown", None)
+        );
     }
 
     // ---- people impact (FB-4) ----

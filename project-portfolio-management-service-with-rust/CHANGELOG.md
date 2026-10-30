@@ -17,6 +17,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- **Kept WPM supply figures are keyed by caller (FB-2 fix, 2026-10-30).** `src/wpm_bridge.rs`: the in-process store is keyed by caller (subject, else the SHA-256 of the bearer token, never the token), pool and month; when WPM cannot be reached the heatmap recalls only the figure this caller's token fetched; bounded at 1 000 callers × 2 400 figures. The director pack, drum, pipeline and start check make no call and now show `unknown` for a linked pool rather than any kept figure. Unit tests and `tests/wpm_bridge.rs` (a second caller with WPM down sees `unknown`). **Not verified:** against a running WPM (FB-8); a drum over a linked pool (no test); the same `sub` from two issuers would share figures; CI.
+
 - **The mounted routes are written to `api-routes.txt` (CQ-9, 2026-10-22).** `openapi::tests::api_routes_file_is_current` fails when the file differs from the router (regenerate with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`); the UI's tests read it to check the client's paths.
 
 - **Request bodies can no longer go undocumented unnoticed (CQ-8, part, 2026-10-22).** Of 260 documented writes (`post`, `put`, `patch`), 227 have no `requestBody` in the OpenAPI document. They are now listed in `openapi::tests::WRITES_WITHOUT_REQUEST_BODY`, and `every_documented_write_has_a_request_body_or_is_listed` fails on a new write without one and on a listed write that gained one, so the list can only shrink. Not done: no body was documented; some listed writes take no body at all (approvals, POST twins of deletes) and are not told apart from real gaps; response bodies are not checked.

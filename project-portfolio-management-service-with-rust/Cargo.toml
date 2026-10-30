@@ -38,7 +38,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 # Request-body schemas for the OpenAPI document (CQ-8): derived from the handlers' own types.
 schemars = { version = "1", features = ["chrono04", "uuid1"] }
-tokio = { version = "1.53", default-features = false, features = [
+tokio = { version = "1.54", default-features = false, features = [
   "rt-multi-thread",
   # `sync` for the live-update broadcast channel (src/live.rs); `time` for
   # its SSE keep-alive.
@@ -71,7 +71,7 @@ sea-orm = { version = "2.0", features = [
 chrono = { version = "0.4" }
 # IANA zones for per-request "today" (LT-3 / LT-9). Never read from the process.
 chrono-tz = { version = "0.10" }
-uuid = { version = "1.26", features = ["v4", "serde"] }
+uuid = { version = "1.29", features = ["v4", "serde"] }
 mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }
 
@@ -151,7 +151,7 @@ axum-test = { version = "17.3.0" }
 # `#[tokio::test]` + a local ephemeral-port HTTP listener for the boot-time key-set fetch tests.
 # `time` also lets tests/otlp_collector's `wait_for` poll with
 # `tokio::time::sleep` instead of busy-waiting.
-tokio = { version = "1.53", default-features = false, features = [
+tokio = { version = "1.54", default-features = false, features = [
   "rt-multi-thread",
   "macros",
   "net",
@@ -162,7 +162,7 @@ serial_test = { version = "4.0.1" }
 # tests (security headers, CORS, rate limiting). Already in the tree via axum.
 tower = { version = "0.5", features = ["util"] }
 rstest = { version = "0.28" }
-insta = { version = "1.48", features = ["redactions", "yaml", "filters"] }
+insta = { version = "1.49", features = ["redactions", "yaml", "filters"] }
 # Mint PASETO v4.public tokens + a matching Ed25519 key set in-process so the extractor.s
 # happy path is verified un-gated (no auth-service / network dependency).
 ed25519-dalek = { version = "3.0" }

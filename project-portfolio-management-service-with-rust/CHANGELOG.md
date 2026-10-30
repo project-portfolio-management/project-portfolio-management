@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- **The bridge to the workforce service (FB-1 to FB-3, 2026-10-30).** `PUT /api/skill-pools/{pid}/peer-link`; WPM's supply for a linked pool on `GET /api/capacity-heatmap` with its source, time and status, never added to what was entered here; demand commitments on a linked pool sent to WPM under the caller's token, outcome recorded (`peer_demand_sends`, migration 99). `src/wpm_bridge.rs`, `tests/wpm_bridge.rs`. **Not built:** people impact in (FB-4), withdrawing a figure (zero is not sent, FB-5), retries, the UI (FB-6). **Not verified:** against a running WPM (a stand-in on a local port answers with the shapes read from WPM's code).
+
 ### Changed
 
 - **The mounted routes are written to `api-routes.txt` (CQ-9, 2026-10-22).** `openapi::tests::api_routes_file_is_current` fails when the file differs from the router (regenerate with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`); the UI's tests read it to check the client's paths.

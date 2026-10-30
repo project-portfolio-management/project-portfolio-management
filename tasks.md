@@ -2188,3 +2188,30 @@ Helpdesk and ticket portal, lead forms, billing, whiteboards, the document edito
 web push, a personal capture inbox and focus timer, AI writing or extraction inside the service, SQLite by default,
 their commercial model, software-release versions with a public changelog, client invoicing from logged time, a free
 tier and per-seat pricing, and install-as-app. Reasons are in [plan.md §74 and §80](plan.md).
+
+## Family bridges (FB-n)
+
+The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). WPM is the worker service.
+
+- [x] **FB-1 (S) — The pool link.** `skill_pools.peer_pool_ref` (WPM's pool pid, nullable, one PPM pool per WPM pool)
+  and `PUT /api/skill-pools/{pid}/peer-link`, set by a person, never matched by name, audited with no figure.
+  **Built 2026-10-30** (migration 99, `tests/wpm_bridge.rs`).
+- [x] **FB-2 (M) — Supply in.** For a linked pool the heatmap shows WPM's supply (`GET {WPM}/api/capacity/peer-supply`)
+  labelled with its source and time, what was entered here beside it and never added, the last figure with its age
+  when WPM cannot be reached, `unknown` with none; never zero. **Built 2026-10-30** (`src/wpm_bridge.rs`). **Not
+  verified against a running WPM**: the test uses a stand-in with the shapes read from WPM's `peer.rs`.
+- [x] **FB-3 (M) — Demand out.** A demand commitment on a linked pool sends the programme's total to
+  `POST {WPM}/api/capacity/peer-demand` under the caller's own token, after the write, outcome recorded.
+  **Built 2026-10-30.** No outbox or retry (the token is not stored); zero is not sent (FB-5). Same caveat as FB-2.
+- [ ] **FB-4 (M) — People impact in.** PPM's client for `GET {WPM}/api/capacity/people-impact?programme=thing:<pid>`
+  (WPM is building the route), shown on the programme. **Next.** Needs WPM's answer shape.
+- [ ] **FB-5 (S) — Withdraw a demand figure.** WPM has no route to withdraw a figure and refuses zero, so a programme's
+  demand set to zero here leaves WPM's last figure in place. Needs a WPM route first; then PPM sends it on zero.
+- [ ] **FB-6 (S–M, UI) — Show the bridge.** The UI has no capacity-heatmap screen and no skill-pool screen today
+  (only a pool list call), so the source label, "entered here", `unknown`, and a set/clear control for the link are
+  not shown anywhere. Needs those screens first.
+- [ ] **FB-7 (S) — Worker skills.** `workers_client` calls `GET /api/workers/{id}/skills`, which WPM does not have
+  (WPM has `/api/workers/{pid}/skills-as-of`, a different shape); the skill-gap view reports `unknown`. A mapping
+  from WPM's catalogue skills to PPM's tags is an owners' decision, not made.
+- [ ] **FB-8 (S) — A live check.** Run PPM against a running WPM with a linked pool on both sides and a real token,
+  and record what was seen.

@@ -292,7 +292,10 @@ pub fn schemas() -> Value {
         "SkillPoolInput": obj(&["name"], json!({ "name": { "type": "string", "minLength": 2, "maxLength": 120 }, "roles": list(s()), "skills": list(s()) })),
         "SkillPoolUpdate": obj(&[], json!({ "active": boolean(), "roles": list(s()), "skills": list(s()) })),
         "SkillPool": obj(&["pid", "name", "active", "roles", "skills"], json!({
-            "pid": uuid(), "name": s(), "active": boolean(), "roles": list(s()), "skills": list(s()) })),
+            "pid": uuid(), "name": s(), "active": boolean(), "roles": list(s()), "skills": list(s()),
+            "peer_pool_ref": { "type": "string", "format": "uuid", "nullable": true, "description": "The workforce service's id for the same pool; null when not linked." } })),
+        "SkillPoolPeerLinkInput": obj(&["peer_pool_ref"], json!({
+            "peer_pool_ref": { "type": "string", "nullable": true, "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", "description": "The workforce service's pool id; null removes the link." } })),
         "SkillPoolList": obj(&["skill_pools"], json!({ "skill_pools": list(r("SkillPool")) })),
         "CapacityCommitmentInput": obj(&["pool_pid", "plan_pid", "kind", "month", "committed_fte"], json!({
             "pool_pid": uuid(), "plan_pid": uuid(),
@@ -303,10 +306,13 @@ pub fn schemas() -> Value {
         "CapacityCommitment": obj(&["pid", "pool_pid", "plan_pid", "kind", "month", "committed_fte"], json!({
             "pid": uuid(), "pool_pid": uuid(), "plan_pid": uuid(), "organization": s_null(),
             "kind": en(&["supply", "demand"]), "month": s(), "committed_fte": num(),
-            "delivered_fte": { "type": "number", "nullable": true }, "note": s_null() })),
+            "delivered_fte": { "type": "number", "nullable": true }, "note": s_null(),
+            "peer_demand_send": { "type": "object", "nullable": true, "additionalProperties": true, "description": "On a demand commitment of a linked pool: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id)." } })),
         "CapacityCommitmentList": obj(&["commitments"], json!({ "commitments": list(r("CapacityCommitment")) })),
         "HeatmapCell": obj(&["month", "state", "word", "shape", "colour", "demand_fte"], json!({
-            "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "no_demand", "nothing_recorded"]),
+            "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "no_demand", "nothing_recorded", "supply_unknown"]),
+            "supply_source": en(&["here", "wpm"]), "entered_here_supply_fte": { "type": "number", "nullable": true },
+            "peer_supply": { "type": "object", "additionalProperties": true, "description": "For a linked pool: source wpm, status (live, last_received, hidden, unknown), supply_fte, as_of, age_seconds, reason." },
             "word": s(), "shape": s(), "colour": s(), "demand_fte": num(), "own_demand_fte": num(), "partner_demand_fte": num(),
             "supply_fte": { "type": "number", "nullable": true }, "own_supply_fte": { "type": "number", "nullable": true },
             "partner_supply_committed_fte": { "type": "number", "nullable": true },
@@ -315,7 +321,7 @@ pub fn schemas() -> Value {
             "by_organization": list(any_object()) })),
         "CapacityHeatmap": obj(&["months", "pools", "table"], json!({
             "months": list(s()),
-            "pools": list(obj(&["name", "cells"], json!({ "pool_pid": uuid_null(), "name": s(), "cells": list(r("HeatmapCell")) }))),
+            "pools": list(obj(&["name", "cells"], json!({ "pool_pid": uuid_null(), "name": s(), "peer_pool_ref": s_null(), "cells": list(r("HeatmapCell")) }))),
             "table": list(any_object()), "partner_names_shown": boolean(), "note": s() })),
 
         // ── validated benefits ──
@@ -679,6 +685,12 @@ pub const ATTACH: &[Attach] = &[
         "put",
         "/api/skill-pools/{pid}",
         Some("SkillPoolUpdate"),
+        &[("200", "SkillPool")],
+    ),
+    (
+        "put",
+        "/api/skill-pools/{pid}/peer-link",
+        Some("SkillPoolPeerLinkInput"),
         &[("200", "SkillPool")],
     ),
     (

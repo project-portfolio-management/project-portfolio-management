@@ -151,6 +151,66 @@ is a separate service, out of scope for this trio (§2.3). `EntityRef`s
 are never a match signal (§7 there); `parent_ref` is an in-entity
 reference and **is** a (supporting) match signal (§5.5).
 
+### 8.5a Family bridges (FB-n)
+
+Decided 2026-10-30 at the owner's direction, for the family of three apps that meet here: contact-relationship
+management (CRM), this portfolio service (PPM) and workforce planning (WPM, which **is** the worker service:
+one base URL, `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL`). Each app owns its model and is complete without
+the others: with no link configured nothing is called, and a peer that is down, absent or slow never fails a PPM
+request and never changes a number silently. WPM's side is in its `spec/cross-app-bridges.md` (WPM-R213,
+WPM-D135, WPM-D138 to D141).
+
+| Bridge | Direction | Contract | State in PPM |
+| --- | --- | --- | --- |
+| Delivery ideas | CRM → PPM | `POST /api/ideas` `{title, pitch, tags}` → `{pid}` (CRM's `POST /api/bridges/ppm/deals/{pid}`) | exists (PPM's route; CRM calls it) |
+| Pool link | PPM ↔ WPM | `skill_pools.peer_pool_ref` = WPM's pool pid, set on both sides by a person | **built** (FB-1) |
+| Supply in | WPM → PPM | `GET {WPM}/api/capacity/peer-supply?pool=&from=YYYY-MM-01&months=N` | **built** (FB-2) |
+| Demand out | PPM → WPM | `POST {WPM}/api/capacity/peer-demand` | **built** (FB-3) |
+| People impact | WPM → PPM | `GET {WPM}/api/capacity/people-impact?programme=thing:<plan pid>` (WPM is building it) | **not built**: PPM's client is next (FB-4) |
+| Hire and leave | WPM → CRM | `worker_hired`, `worker_terminated`/`worker_retired` webhooks | CRM's and WPM's; nothing in PPM |
+
+**The rules for the PPM ↔ WPM bridge.**
+
+1. **Programme identity.** A PPM plan is named in WPM as `thing:<plan pid>`. PPM sends the plan of a commitment
+   (which must be of kind Program) under that name; no other mapping exists.
+2. **The pool link is explicit.** `PUT /api/skill-pools/{pid}/peer-link` `{peer_pool_ref: <uuid> | null}` sets or
+   clears it: a lower-case hyphenated UUID (as WPM writes its pids), never a name, at most one PPM pool per WPM pool
+   (a partial unique index; `409`), audited (`skill_pool_peer_linked`, `skill_pool_peer_unlinked`) with no figure.
+   The pool list shows the link. An unlinked pool behaves exactly as before.
+3. **One owner per fact for a linked pool: supply is WPM's, demand is PPM's.** `GET /api/capacity-heatmap` counts,
+   for a linked pool, WPM's supply alone (hundredths of an FTE, shown in FTE) with `supply_source: "wpm"` and a
+   `peer_supply` reading: `live`, `last_received` (with `as_of`, the time WPM took it, and `age_seconds`),
+   `hidden` (WPM hides a month made up of fewer workers than its floor) or `unknown` (nothing received). A hidden
+   or unknown month is the state `supply_unknown`, never zero and never a fall back to the local figure. Everything
+   PPM holds on the supply side for that pool (its people's availability, its own and partners' supply commitments)
+   is kept and shown as `entered_here_supply_fte`, and is **never added** to WPM's figure. Demand stays PPM's
+   (allocations plus demand commitments) on both sides.
+4. **WPM is asked under the caller's own token** (WPM-D135: no shared service account), with a 2-second timeout and
+   no redirects, all linked pools in parallel. With no base URL (stub mode), no token, or a failure, the reading
+   says why. Only the live heatmap asks; the director pack, the drum, the pipeline and the start check read the
+   figures already received and make no call. **Figures received are kept in this process only**: they are lost
+   at restart (then `unknown` until WPM answers again), and a figure one caller received is shown to the next
+   caller of this PPM for that pool. Both are accepted limits, recorded here.
+5. **Demand out.** When a demand commitment on a linked pool is set (`PUT /api/capacity-commitments`, kind
+   `demand`), PPM sends `POST {WPM}/api/capacity/peer-demand` with `{pool_pid: <WPM pool pid>, programme_ref:
+   "thing:<plan pid>", month: "YYYY-MM-01", fte_centi, peer_event_id}`. `fte_centi` is the programme's **total**
+   demand commitments on the pool for the month (every organization's), rounded half up to hundredths, because WPM
+   keeps one figure per programme, pool and month and would otherwise overwrite one partner's figure with
+   another's. `peer_event_id` is `ppm:<pool>:<plan>:<YYYY-MM>:<microseconds of the write>`: the same version, the
+   same id (WPM then changes nothing); a new write, a new id. The send runs after the write has been stored and
+   never holds it up or fails it; the caller's token is held in memory for that one send and **never stored**, so
+   there is no outbox and no retry: setting the commitment again sends again. The outcome (`started`, `sent`,
+   `duplicate`, `refused`, `unreachable`, `not_configured`, `not_sent_no_token`, `not_sent_zero`,
+   `not_sent_too_large`) is in the `PUT` answer (`peer_demand_send`) and in `peer_demand_sends` (the latest per pool,
+   programme and month; an older version never overwrites a newer one), shown on `GET /api/capacity-commitments`.
+6. **Zero and delete.** WPM takes 1 to 1 000 000 hundredths and has no route to withdraw a figure, and PPM has no
+   route to delete a commitment. So a total that rounds to zero is **not sent** (`not_sent_zero`) and WPM keeps the
+   last figure it was sent until WPM adds a withdrawal (FB-5). Unlinking a pool sends nothing either.
+7. **Worker skills do not cross.** `src/workers_client.rs` calls `GET {base}/api/workers/{id}/skills`, which WPM
+   does not have (WPM has `/api/workers/{pid}/skills-as-of`, catalogue skills with proficiency, a different shape).
+   It is left as it is: the skill-gap view reports `unknown`. No mapping from WPM skills to PPM's tags is invented
+   (FB-7).
+
 ### 8.6 Deployment topology (government-portfolio scale)
 
 Target shape *(roadmap, §15)*, consistent with

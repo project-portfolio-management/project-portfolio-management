@@ -623,6 +623,7 @@ PUT /api/settings/today-time-zone
 GET /api/skill-pools
 POST /api/skill-pools
 PUT /api/skill-pools/{pid}
+PUT /api/skill-pools/{pid}/peer-link
 GET /api/sprints/{pid}/ceremonies
 POST /api/sprints/{pid}/ceremonies
 POST /api/sprints/{pid}/commit

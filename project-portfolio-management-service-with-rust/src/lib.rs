@@ -236,3 +236,5 @@ pub mod workers_client;
 /// Custom workflows: configurable task and issue state vocabularies,
 /// each state declaring the category every derived view computes from.
 pub mod workflow;
+/// The bridge to the workforce service (WPM): the pool link, its supply in and demand out (FB-1 to FB-3).
+pub mod wpm_bridge;

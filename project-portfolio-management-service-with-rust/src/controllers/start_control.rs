@@ -72,7 +72,14 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     // The constraint pool and its short months, from the capacity heatmap over every plan.
     let everyone: HashSet<Uuid> = all.iter().map(|p| p.pid).collect();
     let first = today.with_day(1).unwrap_or(today);
-    let heat = super::capacity_heatmap::heatmap(ctx, &everyone, first, 6).await?;
+    let heat = super::capacity_heatmap::heatmap(
+        ctx,
+        &everyone,
+        first,
+        6,
+        &crate::wpm_bridge::SupplyRead::Kept,
+    )
+    .await?;
     let pool = super::drum::constraint_pool(ctx, &heat).await?;
     let short: Vec<String> = pool
         .as_ref()

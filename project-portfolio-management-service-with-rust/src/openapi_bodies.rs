@@ -710,6 +710,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/skill-pools", "capacity_heatmap", "`GET /api/skill-pools`."),
     ("post", "/api/skill-pools", "capacity_heatmap", "`POST /api/skill-pools` — a pool, with the roles and skills it groups."),
     ("put", "/api/skill-pools/{pid}", "capacity_heatmap", "`PUT /api/skill-pools/{pid}` — retire or restore a pool, or replace its roles and skills."),
+    ("put", "/api/skill-pools/{pid}/peer-link", "capacity_heatmap", "`PUT /api/skill-pools/{pid}/peer-link` — link the pool to the workforce service's pool, or remove the link (FB-1). A link is set by a person, never matched by name; one PPM pool per WPM pool. While linked, the pool's supply on the heatmap is the workforce service's and its demand commitments are sent there; unlinked, it is as before. Audited with no figure."),
     ("get", "/api/sprints/{pid}/ceremonies", "ceremony", "`GET /api/sprints/{pid}/ceremonies` — with the retrospective notes already stored against the sprint."),
     ("post", "/api/sprints/{pid}/ceremonies", "ceremony", "`POST /api/sprints/{pid}/ceremonies` — hold a ceremony."),
     ("post", "/api/sprints/{pid}/commit", "ceremony", "`POST /api/sprints/{pid}/commit` — snapshot the committed task set.  Refuses a second call: a rewritable commitment is not a commitment, and a sprint that grew by half would otherwise look like one that was always that size."),
@@ -1006,6 +1007,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/settings/today-time-zone", crate::controllers::settings::ZoneBody);
     body!("post", "/api/skill-pools", crate::controllers::capacity_heatmap::NewPool);
     body!("put", "/api/skill-pools/{pid}", crate::controllers::capacity_heatmap::UpdatePool);
+    body!("put", "/api/skill-pools/{pid}/peer-link", crate::controllers::capacity_heatmap::PeerLink);
     body!("post", "/api/sprints/{pid}/ceremonies", crate::controllers::ceremony::CeremonyPayload);
     body!("post", "/api/tasks/bulk", crate::controllers::task_bulk::EditBody);
     body!("post", "/api/tasks/copy", crate::controllers::task_bulk::TransferBody);

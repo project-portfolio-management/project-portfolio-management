@@ -20,14 +20,21 @@ use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::capacity_heatmap::{self as rules, Inputs};
 use crate::models::_entities::{
-    allocations, capacity_commitments as commitments, organizations, plans, resource_roles,
-    skill_pool_members as members, skill_pools as pools,
+    allocations, capacity_commitments as commitments, organizations, peer_demand_sends, plans,
+    resource_roles, skill_pool_members as members, skill_pools as pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::{self as pr, Grain, GroupBy, Person};
 
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
+    if t.contains("skill_pools_peer_pool_ref") {
+        return refuse(
+            StatusCode::CONFLICT,
+            "conflict",
+            "another pool is already linked to that workforce-service pool",
+        );
+    }
     if t.contains("spm_once") {
         return refuse(
             StatusCode::CONFLICT,
@@ -52,6 +59,7 @@ pub fn routes() -> Routes {
         .add("/skill-pools", get(list_pools))
         .add("/skill-pools", post(create_pool))
         .add("/skill-pools/{pid}", put(update_pool))
+        .add("/skill-pools/{pid}/peer-link", put(set_peer_link))
         .add("/capacity-commitments", get(list_commitments))
         .add("/capacity-commitments", put(set_commitment))
         .add("/capacity-heatmap", get(live))
@@ -116,7 +124,7 @@ fn pool_json(p: &pools::Model, ms: &[members::Model]) -> serde_json::Value {
         v.sort_unstable();
         v
     };
-    serde_json::json!({ "pid": p.pid, "name": p.name, "active": p.active, "roles": of("role"), "skills": of("skill") })
+    serde_json::json!({ "pid": p.pid, "name": p.name, "active": p.active, "roles": of("role"), "skills": of("skill"), "peer_pool_ref": p.peer_pool_ref })
 }
 
 /// `POST /api/skill-pools` — a pool, with the roles and skills it groups.
@@ -229,6 +237,59 @@ async fn list_pools(State(ctx): State<AppContext>) -> Result<Response> {
     )
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PeerLink {
+    /// The workforce service's id for the pool that means the same skills (a lower-case hyphenated UUID);
+    /// `null` removes the link.
+    peer_pool_ref: Option<String>,
+}
+
+/// `PUT /api/skill-pools/{pid}/peer-link` — link the pool to the workforce service's pool, or remove the link
+/// (FB-1). A link is set by a person, never matched by name; one PPM pool per WPM pool. While linked, the pool's
+/// supply on the heatmap is the workforce service's and its demand commitments are sent there; unlinked, it is as
+/// before. Audited with no figure.
+#[debug_handler]
+async fn set_peer_link(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<Uuid>,
+    Json(b): Json<PeerLink>,
+) -> Result<Response> {
+    let peer = b.peer_pool_ref.map(|t| t.trim().to_string());
+    if let Some(t) = &peer
+        && !crate::wpm_bridge::peer_pool_ref_ok(t)
+    {
+        return Err(unprocessable(
+            "peer_pool_ref must be the workforce service's pool id: a lower-case hyphenated UUID, or null",
+        ));
+    }
+    let row = pools::Entity::find()
+        .filter(pools::Column::Pid.eq(pid))
+        .one(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .ok_or(Error::NotFound)?;
+    let action = if peer.is_some() {
+        "skill_pool_peer_linked"
+    } else {
+        "skill_pool_peer_unlinked"
+    };
+    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
+    let mut a: pools::ActiveModel = row.into();
+    a.peer_pool_ref = ActiveValue::set(peer);
+    let row = a.update(&tx).await.map_err(|e| db_err(&e))?;
+    AuditModel::record(&tx, pid, action, caller.actor(), None)
+        .await
+        .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await.map_err(|e| db_err(&e))?;
+    let ms = members::Entity::find()
+        .filter(members::Column::PoolPid.eq(pid))
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?;
+    format::json(pool_json(&row, &ms))
+}
+
 // ---- commitments ----------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -265,6 +326,7 @@ fn milli(f: f64) -> Option<i32> {
 async fn set_commitment(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    headers: axum::http::HeaderMap,
     Json(b): Json<CommitBody>,
 ) -> Result<Response> {
     let mut problems = Vec::new();
@@ -312,9 +374,9 @@ async fn set_commitment(
         .one(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    if !pool.is_some_and(|p| p.active) {
+    let Some(pool) = pool.filter(|p| p.active) else {
         return Err(unprocessable("pool_pid is not an active skill pool"));
-    }
+    };
     // An organization record, if one is named (by pid, or by a label that matches one); else a label.
     let mut org_pid: Option<Uuid> = None;
     let mut label = b
@@ -402,7 +464,128 @@ async fn set_commitment(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    format::json(commitment_json(&row))
+    let mut out = commitment_json(&row);
+    if b.kind == "demand"
+        && let Some(peer) = pool.peer_pool_ref.clone()
+    {
+        out["peer_demand_send"] =
+            start_demand_send(&ctx, &headers, pool.pid, peer, plan.pid, month).await?;
+    }
+    format::json(out)
+}
+
+/// Send a programme's demand on a linked pool for a month to the workforce service (FB-3), without holding up or
+/// failing the write that asked for it. The figure is the programme's total demand commitments on the pool for the
+/// month (every organization's), because WPM keeps one figure per programme, pool and month. The outcome is recorded
+/// in `peer_demand_sends` (the latest per pool, programme and month; an older version never overwrites a newer
+/// one); the caller's token is held in memory for the one send and never stored, so a failed send is not retried:
+/// setting the commitment again sends again.
+async fn start_demand_send(
+    ctx: &AppContext,
+    headers: &axum::http::HeaderMap,
+    pool: Uuid,
+    peer: String,
+    plan: Uuid,
+    month: NaiveDate,
+) -> Result<serde_json::Value> {
+    use crate::wpm_bridge::{self as bridge, DemandPlan};
+    let total: i64 = commitments::Entity::find()
+        .filter(commitments::Column::PoolPid.eq(pool))
+        .filter(commitments::Column::PlanPid.eq(plan))
+        .filter(commitments::Column::Kind.eq("demand"))
+        .filter(commitments::Column::Month.eq(month))
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .iter()
+        .map(|c| i64::from(c.committed_milli_fte))
+        .sum();
+    let written_at = chrono::Utc::now();
+    let event = bridge::peer_event_id(pool, plan, month, written_at);
+    let base = bridge::base_url();
+    let bearer = bridge::bearer_of(headers);
+    let decided = bridge::plan_demand(total, base.is_some(), bearer.is_some());
+    let (outcome, detail, centi) = match &decided {
+        DemandPlan::Send(c) => ("started", "sending to the workforce service", Some(*c)),
+        DemandPlan::Skip(o, d) => (*o, *d, None),
+    };
+    record_send(
+        &ctx.db, pool, plan, month, &peer, centi, &event, written_at, outcome, detail,
+    )
+    .await?;
+    if let (DemandPlan::Send(c), Some(base), Some(bearer)) = (decided, base, bearer) {
+        let send = bridge::DemandSend {
+            base,
+            bearer,
+            peer_pool_ref: peer.clone(),
+            plan_pid: plan,
+            month,
+            fte_centi: c,
+            peer_event_id: event.clone(),
+        };
+        let db = ctx.db.clone();
+        tokio::spawn(async move {
+            let (outcome, detail) = bridge::send_demand(&send).await;
+            if let Err(e) = record_send(
+                &db,
+                pool,
+                plan,
+                month,
+                &send.peer_pool_ref,
+                Some(send.fte_centi),
+                &send.peer_event_id,
+                written_at,
+                outcome,
+                &detail,
+            )
+            .await
+            {
+                tracing::warn!(error = %e, "could not record the outcome of a demand sent to the workforce service");
+            }
+        });
+    }
+    Ok(
+        serde_json::json!({ "outcome": outcome, "detail": detail, "fte_centi": centi, "peer_event_id": event }),
+    )
+}
+
+#[expect(clippy::too_many_arguments)]
+async fn record_send(
+    db: &sea_orm::DatabaseConnection,
+    pool: Uuid,
+    plan: Uuid,
+    month: NaiveDate,
+    peer: &str,
+    centi: Option<i64>,
+    event: &str,
+    version_at: chrono::DateTime<chrono::Utc>,
+    outcome: &str,
+    detail: &str,
+) -> Result<()> {
+    use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
+    db.execute_raw(Statement::from_sql_and_values(
+        DatabaseBackend::Postgres,
+        "INSERT INTO peer_demand_sends (pid, pool_pid, plan_pid, month, peer_pool_ref, fte_centi, peer_event_id, version_at, outcome, detail, created_at, updated_at) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) \
+         ON CONFLICT (pool_pid, plan_pid, month) DO UPDATE SET peer_pool_ref = EXCLUDED.peer_pool_ref, fte_centi = EXCLUDED.fte_centi, \
+         peer_event_id = EXCLUDED.peer_event_id, version_at = EXCLUDED.version_at, outcome = EXCLUDED.outcome, detail = EXCLUDED.detail, updated_at = now() \
+         WHERE peer_demand_sends.version_at <= EXCLUDED.version_at",
+        [
+            Uuid::new_v4().into(),
+            pool.into(),
+            plan.into(),
+            month.into(),
+            peer.to_string().into(),
+            centi.into(),
+            event.to_string().into(),
+            version_at.into(),
+            outcome.to_string().into(),
+            detail.to_string().into(),
+        ],
+    ))
+    .await
+    .map_err(|e| db_err(&e))?;
+    Ok(())
 }
 
 fn commitment_json(c: &commitments::Model) -> serde_json::Value {
@@ -439,11 +622,36 @@ async fn list_commitments(
     let belongs = caller
         .claims()
         .is_some_and(|c| c.attrs.contains_key("organization"));
+    let sends: HashMap<(Uuid, Uuid, NaiveDate), peer_demand_sends::Model> =
+        peer_demand_sends::Entity::find()
+            .all(&ctx.db)
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .map(|s| ((s.pool_pid, s.plan_pid, s.month), s))
+            .collect();
+    let linked: HashSet<Uuid> = pools::Entity::find()
+        .filter(pools::Column::PeerPoolRef.is_not_null())
+        .all(&ctx.db)
+        .await
+        .map_err(|e| db_err(&e))?
+        .into_iter()
+        .map(|p| p.pid)
+        .collect();
     format::json(serde_json::json!({
         "commitments": rows.iter()
             .filter(|r| readable.contains(&r.plan_pid))
             .filter(|r| !belongs || r.organization_pid.is_some_and(|o| mine.contains(&o)))
-            .map(commitment_json).collect::<Vec<_>>(),
+            .map(|r| {
+                let mut j = commitment_json(r);
+                if r.kind == "demand" && linked.contains(&r.pool_pid) {
+                    j["peer_demand_send"] = sends.get(&(r.pool_pid, r.plan_pid, r.month)).map_or(serde_json::Value::Null, |s| serde_json::json!({
+                        "outcome": s.outcome, "detail": s.detail, "fte_centi": s.fte_centi,
+                        "peer_event_id": s.peer_event_id, "at": s.updated_at,
+                    }));
+                }
+                j
+            }).collect::<Vec<_>>(),
     }))
 }
 
@@ -469,6 +677,7 @@ pub(crate) async fn heatmap(
     include: &HashSet<Uuid>,
     from: NaiveDate,
     months: u32,
+    read: &crate::wpm_bridge::SupplyRead,
 ) -> Result<serde_json::Value> {
     let last = rules::add_months(from, months).pred_opt().unwrap_or(from);
     let periods = pr::periods(from, last, Grain::Month).map_err(|m| unprocessable(&m))?;
@@ -515,6 +724,14 @@ pub(crate) async fn heatmap(
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
+    // Linked pools take their supply from the workforce service (FB-2): asked now or as last received.
+    let linked: Vec<(Uuid, String)> = all_pools
+        .iter()
+        .filter_map(|p| p.peer_pool_ref.clone().map(|r| (p.pid, r)))
+        .collect();
+    let starts: Vec<NaiveDate> = periods.iter().map(|p| p.from).collect();
+    let peer = crate::wpm_bridge::supply_for(&linked, &starts, read).await;
+    let peer_ref_of: HashMap<Uuid, String> = linked.into_iter().collect();
     let pool_of_role: HashMap<String, Uuid> = pool_members
         .iter()
         .filter(|m| m.kind == "role")
@@ -591,7 +808,12 @@ pub(crate) async fn heatmap(
         let mut out_cells = Vec::new();
         for (mi, month) in month_names.iter().enumerate() {
             let cell = cells.remove(&(*pid, mi)).unwrap_or_default();
-            let v = rules::verdict(&cell.inputs);
+            let here = rules::verdict(&cell.inputs);
+            let reading = pid.and_then(|p| peer.get(&p)).and_then(|r| r.get(mi));
+            let v = reading.map_or_else(
+                || here.clone(),
+                |r| rules::linked_verdict(&cell.inputs, r.milli),
+            );
             let i = &cell.inputs;
             let mut j = serde_json::json!({
                 "month": month, "state": v.state, "word": v.word, "shape": v.shape, "colour": v.colour,
@@ -601,7 +823,17 @@ pub(crate) async fn heatmap(
                 "partner_supply_delivered_fte": i.partner_delivered.map(fte),
                 "gap_fte": v.gap.map(fte), "partner_delivery_short": v.partner_delivery_short,
                 "partners": cell.partners.len(),
+                "supply_source": if reading.is_some() { "wpm" } else { "here" },
             });
+            if let Some(r) = reading {
+                // The workforce service owns this pool's supply; what was entered here is shown beside it, never added.
+                j["entered_here_supply_fte"] = here.supply.map(fte).into();
+                j["peer_supply"] = serde_json::json!({
+                    "source": "wpm", "status": r.status, "supply_fte": r.milli.map(fte),
+                    "as_of": r.as_of, "age_seconds": r.as_of.map(|t| (chrono::Utc::now() - t).num_seconds().max(0)),
+                    "reason": r.reason,
+                });
+            }
             if names && !cell.by_org.is_empty() {
                 j["by_organization"] = cell
                     .by_org
@@ -613,17 +845,19 @@ pub(crate) async fn heatmap(
             table.push(serde_json::json!({
                 "pool": name, "month": month, "word": v.word, "shape": v.shape, "colour": v.colour,
                 "demand_fte": fte(v.demand), "supply_fte": v.supply.map(fte), "gap_fte": v.gap.map(fte),
+                "supply_source": if reading.is_some() { "wpm" } else { "here" },
             }));
             out_cells.push(j);
         }
-        out_pools.push(serde_json::json!({ "pool_pid": pid, "name": name, "cells": out_cells }));
+        let peer_pool_ref = pid.and_then(|p| peer_ref_of.get(&p).cloned());
+        out_pools.push(serde_json::json!({ "pool_pid": pid, "name": name, "peer_pool_ref": peer_pool_ref, "cells": out_cells }));
     }
     Ok(serde_json::json!({
         "months": month_names,
         "pools": out_pools,
         "table": table,
         "partner_names_shown": names,
-        "note": "Demand is the committed allocations on plans you may read (by the role they ask for) plus work partners owe; supply is the organization's own people with the pool's roles, read from their availability, plus partners' commitments. Everything is in FTE. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is supply under 110 % of demand. Proposed bookings are not demand. Skills are not used: a role maps to at most one pool, so nothing is counted twice. Partner organizations are labels until they exist as records, and partner names are hidden unless the deployment shows them. No person appears.",
+        "note": "Demand is the committed allocations on plans you may read (by the role they ask for) plus work partners owe; supply is the organization's own people with the pool's roles, read from their availability, plus partners' commitments. Everything is in FTE. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is supply under 110 % of demand. Proposed bookings are not demand. Skills are not used: a role maps to at most one pool, so nothing is counted twice. Partner organizations are labels until they exist as records, and partner names are hidden unless the deployment shows them. No person appears. A pool linked to the workforce service takes its supply from there (source wpm, with the time it was taken): what was entered here for it is shown as entered_here_supply_fte and never added; when the workforce service cannot be reached the last figure received is shown with its age, and with none the supply is unknown, never zero.",
     }))
 }
 
@@ -640,6 +874,7 @@ pub(crate) struct HeatQuery {
 async fn live(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
+    headers: axum::http::HeaderMap,
     Query(q): Query<HeatQuery>,
 ) -> Result<Response> {
     let months = q.months.unwrap_or(6);
@@ -662,7 +897,8 @@ async fn live(
         .map(|p| p.pid)
         .collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
-    format::json(heatmap(&ctx, &readable, from, months).await?)
+    let read = crate::wpm_bridge::SupplyRead::Live(crate::wpm_bridge::bearer_of(&headers));
+    format::json(heatmap(&ctx, &readable, from, months, &read).await?)
 }
 
 /// The pack's heatmap: six months from the month of the cut-off.
@@ -676,5 +912,5 @@ pub(crate) async fn pack_section(
     cut_off: chrono::DateTime<chrono::Utc>,
 ) -> Result<serde_json::Value> {
     let from = cut_off.date_naive().with_day(1).unwrap_or_default();
-    heatmap(ctx, include, from, 6).await
+    heatmap(ctx, include, from, 6, &crate::wpm_bridge::SupplyRead::Kept).await
 }

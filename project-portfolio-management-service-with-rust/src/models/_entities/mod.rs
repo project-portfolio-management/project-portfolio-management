@@ -97,6 +97,7 @@ pub mod onboarding_cases;
 pub mod onboarding_items;
 pub mod onboarding_templates;
 pub mod organizations;
+pub mod peer_demand_sends;
 pub mod person_availabilities;
 pub mod phase_transitions;
 pub mod plan_access_settings;

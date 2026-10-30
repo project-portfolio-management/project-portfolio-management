@@ -24,6 +24,11 @@
 //! note; inventing that endpoint inside the worker crate as a side
 //! effect of this task would be exactly the kind of unsupervised
 //! cross-crate decision the family's discipline avoids.
+//!
+//! **Read again 2026-10-30 (FB-7):** the worker service is the workforce service (WPM), and it still has no
+//! `GET /api/workers/{id}/skills`; it has `/api/workers/{pid}/skills-as-of`, catalogue skills with a proficiency,
+//! a different shape. This client is left as it is and reports `unknown`; no mapping is invented here. The
+//! capacity bridge to the same service is [`crate::wpm_bridge`].
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};

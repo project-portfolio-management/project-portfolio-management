@@ -371,6 +371,12 @@
             "nullable": true,
             "type": "string"
           },
+          "peer_demand_send": {
+            "additionalProperties": true,
+            "description": "On a demand commitment of a linked pool: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id).",
+            "nullable": true,
+            "type": "object"
+          },
           "pid": {
             "format": "uuid",
             "type": "string"
@@ -483,6 +489,10 @@
                   "type": "array"
                 },
                 "name": {
+                  "type": "string"
+                },
+                "peer_pool_ref": {
+                  "nullable": true,
                   "type": "string"
                 },
                 "pool_pid": {
@@ -2281,6 +2291,10 @@
             "format": "double",
             "type": "number"
           },
+          "entered_here_supply_fte": {
+            "nullable": true,
+            "type": "number"
+          },
           "gap_fte": {
             "nullable": true,
             "type": "number"
@@ -2315,6 +2329,11 @@
             "format": "int64",
             "type": "integer"
           },
+          "peer_supply": {
+            "additionalProperties": true,
+            "description": "For a linked pool: source wpm, status (live, last_received, hidden, unknown), supply_fte, as_of, age_seconds, reason.",
+            "type": "object"
+          },
           "shape": {
             "type": "string"
           },
@@ -2325,13 +2344,21 @@
               "enough",
               "no_supply_recorded",
               "no_demand",
-              "nothing_recorded"
+              "nothing_recorded",
+              "supply_unknown"
             ],
             "type": "string"
           },
           "supply_fte": {
             "nullable": true,
             "type": "number"
+          },
+          "supply_source": {
+            "enum": [
+              "here",
+              "wpm"
+            ],
+            "type": "string"
           },
           "word": {
             "type": "string"
@@ -3456,6 +3483,12 @@
           "name": {
             "type": "string"
           },
+          "peer_pool_ref": {
+            "description": "The workforce service's id for the same pool; null when not linked.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "pid": {
             "format": "uuid",
             "type": "string"
@@ -3518,6 +3551,20 @@
         },
         "required": [
           "skill_pools"
+        ],
+        "type": "object"
+      },
+      "SkillPoolPeerLinkInput": {
+        "properties": {
+          "peer_pool_ref": {
+            "description": "The workforce service's pool id; null removes the link.",
+            "nullable": true,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "peer_pool_ref"
         ],
         "type": "object"
       },
@@ -5687,7 +5734,7 @@
         ]
       },
       "put": {
-        "description": "Body: pool_pid, plan_pid (a programme), organization (a partner's name as a label; omit for the organization's own), kind (supply: capacity committed to the programme; demand: work owed), month (YYYY-MM), committed_fte, optional delivered_fte and note. One per pool, programme, organization, kind and month; setting it again replaces it. Audited.",
+        "description": "Body: pool_pid, plan_pid (a programme), organization (a partner's name as a label; omit for the organization's own), kind (supply: capacity committed to the programme; demand: work owed), month (YYYY-MM), committed_fte, optional delivered_fte and note. One per pool, programme, organization, kind and month; setting it again replaces it. Audited. On a pool linked to the workforce service, a demand commitment also sends the programme's total demand for the pool and month to WPM (POST /api/capacity/peer-demand, programme thing:<plan pid>, in hundredths of an FTE) under the caller's own token, after the write and without holding it up; peer_demand_send says what was started or why nothing was sent (zero is never sent), and the list shows the latest outcome.",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -5725,7 +5772,7 @@
     },
     "/api/capacity-heatmap": {
       "get": {
-        "description": "For each active pool and each month (?from=YYYY-MM, default this month; ?months=1 to 24, default 6): demand (committed allocations on plans you may read, by role, plus work partners owe), supply (the organization's own people with the pool's roles, from their availability, plus partners' commitments), the gap, and a word, a shape and a colour. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is under 110 % of demand. Partner supply is shown apart from the organization's own and combined; partner names only when the deployment shows them. Roles in no pool are under no pool assigned. A flat table twin is included. No person appears.",
+        "description": "For each active pool and each month (?from=YYYY-MM, default this month; ?months=1 to 24, default 6): demand (committed allocations on plans you may read, by role, plus work partners owe), supply (the organization's own people with the pool's roles, from their availability, plus partners' commitments), the gap, and a word, a shape and a colour. A pool with no supplier and no partner commitment is no supply recorded, not zero capacity. Shortfall is supply under demand; tight is under 110 % of demand. Partner supply is shown apart from the organization's own and combined; partner names only when the deployment shows them. Roles in no pool are under no pool assigned. A flat table twin is included. No person appears. A pool linked to the workforce service (peer_pool_ref) takes its supply from there: supply_source wpm, peer_supply with status live, last_received (with as_of and age_seconds), hidden (under WPM's floor) or unknown, never zero; what was entered here is entered_here_supply_fte and is not added. WPM is asked under the caller's own token with a 2-second timeout, so this read never fails because WPM is down or slow.",
         "parameters": [
           {
             "description": "YYYY-MM",
@@ -31875,6 +31922,57 @@
           }
         },
         "summary": "Retire, restore or regroup a skill pool",
+        "tags": [
+          "capacity"
+        ]
+      }
+    },
+    "/api/skill-pools/{pid}/peer-link": {
+      "put": {
+        "description": "Body: peer_pool_ref, the workforce service's (WPM's) id for the pool that means the same skills (a lower-case hyphenated UUID), or null to remove the link. Set by a person, never matched by name; one pool per WPM pool (409). While linked, the heatmap shows WPM's supply for the pool (labelled with its source and time) beside what was entered here, never added, and demand commitments on it are sent to WPM under the caller's own token. Audited with no figure.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillPoolPeerLinkInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillPool"
+                }
+              }
+            },
+            "description": "The pool"
+          },
+          "404": {
+            "description": "No such pool"
+          },
+          "409": {
+            "description": "Another pool is linked to that WPM pool"
+          },
+          "422": {
+            "description": "Not a lower-case hyphenated UUID"
+          }
+        },
+        "summary": "Link a skill pool to the workforce service's pool, or remove the link",
         "tags": [
           "capacity"
         ]

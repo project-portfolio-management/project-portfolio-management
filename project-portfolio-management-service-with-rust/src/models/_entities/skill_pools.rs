@@ -16,6 +16,8 @@ pub struct Model {
     pub pid: Uuid,
     pub name: String,
     pub active: bool,
+    /// The workforce service's id for the pool that means the same skills (FB-1); none is a pool that stays local.
+    pub peer_pool_ref: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

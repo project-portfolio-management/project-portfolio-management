@@ -87,6 +87,30 @@ pub fn verdict(i: &Inputs) -> Verdict {
     }
 }
 
+/// Read a cell of a pool linked to the workforce service (FB-2): demand is this service's, supply is the
+/// workforce service's figure (`None` when hidden there or unknown), and nothing entered here is added to it.
+#[must_use]
+pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Verdict {
+    let demand_only = Inputs {
+        own_demand: i.own_demand,
+        partner_demand: i.partner_demand,
+        own_supply: peer_supply,
+        partner_committed: None,
+        partner_delivered: None,
+    };
+    let v = verdict(&demand_only);
+    if peer_supply.is_some() {
+        return v;
+    }
+    Verdict {
+        state: "supply_unknown",
+        word: "supply unknown",
+        shape: "question mark",
+        colour: "grey",
+        ..v
+    }
+}
+
 /// The first day of the month `n` months after `from` (a first of a month).
 #[must_use]
 pub fn add_months(from: chrono::NaiveDate, n: u32) -> chrono::NaiveDate {
@@ -166,6 +190,7 @@ mod tests {
             verdict(&i(1000, 0, None, None, None)),
             verdict(&i(0, 0, Some(500), None, None)),
             verdict(&i(0, 0, None, None, None)),
+            linked_verdict(&i(1000, 0, Some(9000), None, None), None),
         ];
         let shapes: std::collections::BTreeSet<_> = all.iter().map(|v| v.shape).collect();
         let words: std::collections::BTreeSet<_> = all.iter().map(|v| v.word).collect();
@@ -186,6 +211,28 @@ mod tests {
         );
         // Partner supply alone is supply.
         assert_eq!(verdict(&i(500, 0, None, Some(600), None)).state, "enough");
+    }
+
+    #[test]
+    fn a_linked_pool_counts_the_peer_supply_alone_and_unknown_is_not_zero() {
+        // 1.0 FTE entered here and 0.8 committed by a partner are not added to the peer's 1.5.
+        let cell = i(1000, 500, Some(1000), Some(800), None);
+        let v = linked_verdict(&cell, Some(1500));
+        assert_eq!(
+            (v.demand, v.supply, v.gap, v.state),
+            (1500, Some(1500), Some(0), "tight")
+        );
+        let u = linked_verdict(&cell, None);
+        assert_eq!(
+            (u.state, u.word, u.supply, u.gap),
+            ("supply_unknown", "supply unknown", None, None)
+        );
+        assert_eq!(u.demand, 1500, "demand stays this service's");
+        assert_eq!(
+            linked_verdict(&i(1000, 0, None, None, None), Some(0)).state,
+            "shortfall",
+            "a real zero from the peer is a figure"
+        );
     }
 
     #[test]

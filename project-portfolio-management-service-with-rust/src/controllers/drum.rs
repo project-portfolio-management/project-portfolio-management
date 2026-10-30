@@ -245,7 +245,14 @@ async fn show_drum(
 ) -> Result<Response> {
     let (from, months) = window(&q)?;
     let readable = readable_set(&ctx, &caller).await?;
-    let heat = super::capacity_heatmap::heatmap(&ctx, &readable, from, months).await?;
+    let heat = super::capacity_heatmap::heatmap(
+        &ctx,
+        &readable,
+        from,
+        months,
+        &crate::wpm_bridge::SupplyRead::Kept,
+    )
+    .await?;
     let history = drums::Entity::find()
         .order_by_desc(drums::Column::Id)
         .all(&ctx.db)
@@ -274,7 +281,14 @@ async fn pipeline(
 ) -> Result<Response> {
     let (from, months) = window(&q)?;
     let readable = readable_set(&ctx, &caller).await?;
-    let heat = super::capacity_heatmap::heatmap(&ctx, &readable, from, months).await?;
+    let heat = super::capacity_heatmap::heatmap(
+        &ctx,
+        &readable,
+        from,
+        months,
+        &crate::wpm_bridge::SupplyRead::Kept,
+    )
+    .await?;
     let (buffer, unusable) = buffer_days();
     let mut out = json!({
         "advisory": true, "capacity_buffer_days": buffer, "capacity_buffer_setting_unusable": unusable,

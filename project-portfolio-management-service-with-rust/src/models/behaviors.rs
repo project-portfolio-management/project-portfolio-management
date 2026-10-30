@@ -107,6 +107,7 @@ impl ActiveModelBehavior for buffer_recovery_actions::ActiveModel {}
 impl ActiveModelBehavior for task_ccpm_estimates::ActiveModel {}
 impl ActiveModelBehavior for benefit_validations::ActiveModel {}
 impl ActiveModelBehavior for skill_pools::ActiveModel {}
+impl ActiveModelBehavior for peer_demand_sends::ActiveModel {}
 impl ActiveModelBehavior for director_pack_schedules::ActiveModel {}
 impl ActiveModelBehavior for director_pack_subscriptions::ActiveModel {}
 impl ActiveModelBehavior for skill_pool_members::ActiveModel {}

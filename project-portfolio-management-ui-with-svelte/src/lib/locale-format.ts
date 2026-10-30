@@ -2,8 +2,8 @@
 // "Numbers, dates and plurals"). Money is `money.ts`.
 //
 // SHARED IN BEHAVIOUR WITH THE FAMILY: this is a port of the workforce planning management UI's
-// `src/lib/locale-format.ts` (WPM-T375, WPM-T377), and the contact relationship management UI is to format the same
-// way (its `main` had no such module when this was written, 2026-10-30). There is no shared package (the family
+// `src/lib/locale-format.ts` (WPM-T375, WPM-T377); the contact relationship management UI has its own port of the
+// same file (CRM-T172, commit 27da15d). There is no shared package (the family
 // copy-adapts between front-ends, repo decision 2026-06-02); a fix to one copy is copied to the others. Adapted here:
 // no centi-FTE helper (a WPM unit), and `i18n.locale` is PPM's (the locale in the URL).
 //

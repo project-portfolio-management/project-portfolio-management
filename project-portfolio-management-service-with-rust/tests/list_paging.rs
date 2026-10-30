@@ -324,6 +324,7 @@ async fn every_list_pages_the_same_way() {
             ("/api/plans/{pid}/burndown", format!("sprint={sprint}")),
             ("/api/scenarios/compare", format!("a={scen_a}&b={scen_b}")),
             ("/api/scenarios/frontier", "currency=GBP&steps=4".to_string()),
+            ("/api/tpc", "currency=EUR".to_string()),
         ]);
         let docs: Value = request.get("/api-docs/openapi.json").add_header(who.0.clone(), who.1.clone()).await.json();
         let (mut lists, mut unreached, mut broken, mut undocumented) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());

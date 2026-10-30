@@ -11,6 +11,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate, formatPercentValue } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, type ResourcePlan } from "#lib/api/ppm.js";
   import { gapCell, maxAbsGap, periodLabel } from "#lib/scheduling-view.js";
@@ -122,7 +123,7 @@
     <h2>{t("p.resources.roles_asked_for_with_no")}</h2>
     <ul>
       {#each plan.placeholders as ph (ph.allocation_pid)}
-        <li>{ph.role ?? t("p.resources.unclassified")}: {ph.percent}% {ph.start_date ? t("p.resources.from_date", { date: ph.start_date }) : ""} {ph.end_date ? t("p.resources.to_date", { date: ph.end_date }) : ""} ({ph.booking})</li>
+        <li>{ph.role ?? t("p.resources.unclassified")}: {formatPercentValue(ph.percent)} {ph.start_date ? t("p.resources.from_date", { date: formatDate(ph.start_date) }) : ""} {ph.end_date ? t("p.resources.to_date", { date: formatDate(ph.end_date) }) : ""} ({ph.booking})</li>
       {/each}
     </ul>
   {/if}

@@ -756,8 +756,9 @@ export const PAGES_EN = {
   "p.lifecycle.lifecycle": "Lifecycle",
   "p.lifecycle.lifecycle_ppm": "Lifecycle — PPM",
   "p.lifecycle.live": "Live",
-  "p.lifecycle.live_item_s_stall_threshold":
-    "{total} live item(s) · stall threshold {stall_days} calendar day(s)",
+  "p.lifecycle.live_items_one": "{total} live item · stall threshold {stall}",
+  "p.lifecycle.live_items_other":
+    "{total} live items · stall threshold {stall}",
   "p.lifecycle.phase": "Phase",
   "p.lifecycle.share": "Share",
   "p.lifecycle.stalled": "Stalled",
@@ -1621,7 +1622,8 @@ export const PAGES_EN = {
     "No evidence for any component — this plan is unscored.",
   "p.prioritization.no_plans_match_that_filter": "No plans match that filter.",
   "p.prioritization.none": "none",
-  "p.prioritization.of_plan_s": "{length} of {scored_of} plan(s)",
+  "p.prioritization.of_plans_one": "{length} of {scored_of} plan",
+  "p.prioritization.of_plans_other": "{length} of {scored_of} plans",
   "p.prioritization.plan": "Plan",
   "p.prioritization.points": "Points",
   "p.prioritization.prioritization": "Prioritization",
@@ -1923,10 +1925,14 @@ export const PAGES_EN = {
     "Days are whole numbers from 1 to 366 and the limit from 1 to 1000.",
   "p.frameworks.path_problem":
     "Each escalation level is a different whole number from 1 to 9, with who hears it and what sends it there.",
-  "p.frameworks.confirm_shared":
-    "This is shared: saving changes it for {n} other plan(s) too.",
-  "p.frameworks.confirm_problem":
-    "Tick the box to confirm the change for {n} other plan(s).",
+  "p.frameworks.confirm_shared_one":
+    "This is shared: saving changes it for {n} other plan too.",
+  "p.frameworks.confirm_shared_other":
+    "This is shared: saving changes it for {n} other plans too.",
+  "p.frameworks.confirm_problem_one":
+    "Tick the box to confirm the change for {n} other plan.",
+  "p.frameworks.confirm_problem_other":
+    "Tick the box to confirm the change for {n} other plans.",
   "p.frameworks.deleted": "Deleted {name}.",
   "p.frameworks.delete": "Delete {name} (nobody follows it)",
   "p.frameworks.text_problem": "A definition is at most 10000 characters.",
@@ -2032,7 +2038,8 @@ export const PAGES_EN = {
   "p.tolerances.escalate_all": "Escalate every red tolerance",
   "p.tolerances.escalate_all_intro":
     "Every dimension that is over tolerance and not yet escalated gets an escalation at the first level of the escalation path. Nothing is escalated on its own.",
-  "p.tolerances.escalated": "Raised {n} escalation(s).",
+  "p.tolerances.escalated_one": "Raised {n} escalation.",
+  "p.tolerances.escalated_other": "Raised {n} escalations.",
   "p.tolerances.escalations_one": "{n} open escalation",
   "p.tolerances.escalations_other": "{n} open escalations",
   "p.resources.rbs.by_role": "By role",
@@ -2492,7 +2499,6 @@ export const PAGES_EN = {
     "adds {schedule_impact_days} business days to a task",
   "c.RiskInputs.adds": "adds {toFixed} {cost_currency}",
   "c.RiskInputs.not_used_in_the_simulations": "Not used in the simulations",
-  "l.cpm_view.business_day": "business day",
   "l.cpm_view.cannot_meet_its_constraint_or":
     "Cannot meet its constraint or deadline: {plural} short",
   "l.cpm_view.on_the_critical_path_any":

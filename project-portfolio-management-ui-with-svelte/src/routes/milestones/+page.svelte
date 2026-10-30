@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneList, type MilestoneStatus } from "#lib/api/ppm.js";
   import MilestoneCard from "#lib/components/MilestoneCard.svelte";
@@ -74,7 +74,7 @@
   {#if list.milestones.length === 0}
     <p>{status ? t("p.milestones.none_with_status") : t("p.milestones.none")}</p>
   {:else}
-    <p class="small muted" aria-live="polite">{(list.milestones.length === 1 ? t("p.milestones.milestone_by_due_date_one", { length: list.milestones.length }) : t("p.milestones.milestone_by_due_date_other", { length: list.milestones.length }))}</p>
+    <p class="small muted" aria-live="polite">{tn("p.milestones.milestone_by_due_date", list.milestones.length, { length: list.milestones.length })}</p>
     {#each list.milestones as item (item.pid)}
       <MilestoneCard {item} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
     {/each}

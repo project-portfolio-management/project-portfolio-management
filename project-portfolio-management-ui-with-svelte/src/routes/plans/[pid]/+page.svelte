@@ -15,6 +15,7 @@
   import { PlanRepository } from "#lib/api/plans.js";
   import type { ScoredRef, Plan } from "#lib/api/types.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDecimal } from "#lib/locale-format.js";
   import { PpmClient } from "#lib/api/ppm.js";
   import { visiblePlanLinks } from "#lib/modules.js";
   import PeopleImpact from "#lib/components/PeopleImpact.svelte";
@@ -204,7 +205,7 @@
         {#each duplicates as dup (dup.pid)}
           <li class="surface row">
             <a href={localeHref(`/plans/${dup.pid}`)}>{dup.name}</a>
-            <span>{dup.score.toFixed(3)} · {dup.confidence}</span>
+            <span>{formatDecimal(dup.score, 3)} · {dup.confidence}</span>
           </li>
         {/each}
       </ul>

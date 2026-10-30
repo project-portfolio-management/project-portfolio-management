@@ -31,6 +31,7 @@
   import { validateMerge } from "#lib/components/merge-validation.js";
   import type { MergeRecordRow, MergeResponse, Plan } from "#lib/api/types.js";
   import { t, translate, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDateTime } from "#lib/locale-format.js";
   import { askConfirm } from "#lib/confirm.svelte.js";
 
   const repo = PlanRepository.withFetch();
@@ -119,7 +120,7 @@
   onMount(loadRecent);
 
   const mergeColumns: DataGridColumn[] = $derived([
-    { id: "created_at", header: t("merge.mergedAt"), rowHeader: true, format: (v) => new Date(String(v)).toLocaleString() },
+    { id: "created_at", header: t("merge.mergedAt"), rowHeader: true, format: (v) => formatDateTime(String(v)) },
     { id: "main_pid", header: t("merge.main"), cell: mainCell },
     { id: "duplicate_pid", header: t("merge.duplicate"), cell: codeCell },
     { id: "reason", header: t("merge.reason"), format: (v) => (v ? String(v) : "—") },

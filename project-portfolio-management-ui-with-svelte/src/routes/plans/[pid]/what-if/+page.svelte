@@ -11,7 +11,8 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -107,7 +108,7 @@
     busy = true;
     try {
       const r = await ppm.sandboxCommit(pid, edits, preview.plan_etag, reason);
-      status = t(r.audit_entries === 1 ? "p.plans.pid.what_if.committed_one" : "p.plans.pid.what_if.committed_other", { count: r.audit_entries });
+      status = tn("p.plans.pid.what_if.committed", r.audit_entries, { count: r.audit_entries });
       edits = [];
       preview = null;
       reason = "";
@@ -123,7 +124,7 @@
     }
   }
   const dates = (d: { early_start: string; early_finish: string; total_float: number; critical: boolean } | null) =>
-    d ? t("p.plans.pid.what_if.to", { early_start: d.early_start, early_finish: d.early_finish }) : t("p.plans.pid.what_if.not_scheduled");
+    d ? t("p.plans.pid.what_if.to", { early_start: formatDate(d.early_start), early_finish: formatDate(d.early_finish) }) : t("p.plans.pid.what_if.not_scheduled");
 
   type PRow = SandboxPreview["tasks"][number];
   const columns: DataGridColumn[] = $derived([

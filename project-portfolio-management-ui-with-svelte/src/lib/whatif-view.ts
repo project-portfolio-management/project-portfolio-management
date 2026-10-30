@@ -2,7 +2,7 @@
 // words, and summarizing a preview. Pure and tested.
 
 import type { SandboxEdit, SandboxPreview } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
 import { signedMoney } from "./money.js";
 
 export type FieldValue = string | number | null | undefined;
@@ -152,12 +152,10 @@ export function describeEdit(
     case "duration":
       return e.duration_days === 0
         ? t("l.whatif_view.make_a_milestone", { name: name(e.task_pid) })
-        : t(
-            e.duration_days === 1
-              ? "l.whatif_view.set_duration_one"
-              : "l.whatif_view.set_duration_other",
-            { name: name(e.task_pid), duration_days: e.duration_days },
-          );
+        : tn("l.whatif_view.set_duration", e.duration_days, {
+            name: name(e.task_pid),
+            duration_days: e.duration_days,
+          });
     case "constraint":
       return e.constraint_kind
         ? t("l.whatif_view.for", {

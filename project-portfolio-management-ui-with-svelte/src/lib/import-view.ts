@@ -1,7 +1,7 @@
 // Tracker import (T-28n): the words for a preview and its report. Pure and tested.
 
 import type { ImportUnmapped, TrackerImportReport } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
 
 export const SOURCE_LABEL = {
   get jira() {
@@ -86,14 +86,9 @@ export function unmappedGroups(
     .map(([what, reasons]) => ({ title: WHAT[what] ?? what, reasons }));
 }
 
-const taskCount = (n: number): string =>
-  n === 1
-    ? t("l.import_view.task_one", { n })
-    : t("l.import_view.task_other", { n });
+const taskCount = (n: number): string => tn("l.import_view.task", n, { n });
 const dependencyCount = (n: number): string =>
-  n === 1
-    ? t("l.import_view.dependency_one", { n })
-    : t("l.import_view.dependency_other", { n });
+  tn("l.import_view.dependency", n, { n });
 
 /** "Would create 3 tasks and update 2; 1 dependency." — or the same in the past tense. */
 export function summaryText(r: TrackerImportReport): string {

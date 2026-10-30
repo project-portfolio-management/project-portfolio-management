@@ -8,6 +8,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { page } from "$app/state";
@@ -53,7 +54,7 @@
   </section>
 
   <DataTable label={t("ppm.dashboard.title")} {columns} rows={board.collections} rowId={(r) => String(r.collection)} />
-  <p class="small muted">{t("ppm.common.asOf")} {board.as_of}</p>
+  <p class="small muted">{t("ppm.common.asOf")} {formatDate(board.as_of)}</p>
 {:else if !error}
   <p>{t("ppm.common.loading")}</p>
 {/if}

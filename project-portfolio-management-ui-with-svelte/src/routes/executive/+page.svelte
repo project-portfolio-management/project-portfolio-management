@@ -13,6 +13,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate, formatPercent } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -99,7 +100,7 @@
   {:else if value === null}
     <span class="muted">{t("p.executive.no_target")}</span>
   {:else if typeof value === "number"}
-    {(value * 100).toFixed(0)}%
+    {formatPercent(value)}
   {/if}
 {/snippet}
 
@@ -111,7 +112,7 @@
 
 {#if health}
   <h2>{t("p.executive.portfolio_health")}</h2>
-  <p class="muted">{t("p.executive.as_of", { as_of: health.as_of, derivation: health.derivation })}</p>
+  <p class="muted">{t("p.executive.as_of", { as_of: formatDate(health.as_of), derivation: health.derivation })}</p>
   <DataTable label={t("p.executive.portfolio")} columns={healthColumns} rows={health.portfolios} rowId={(r) => String(rowOf<Health>(r).portfolio?.pid ?? "unassigned")} testid="exec-health" />
 {/if}
 

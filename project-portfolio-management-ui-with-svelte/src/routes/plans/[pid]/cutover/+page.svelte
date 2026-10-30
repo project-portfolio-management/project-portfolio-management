@@ -7,6 +7,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type CutoverDecision } from "#lib/api/ppm.js";
@@ -103,7 +104,7 @@
     <section class="decision" aria-labelledby={`co-${d.pid}`}>
       <h2 id={`co-${d.pid}`}>{d.title} <small>({t("p.cutover.version", { n: d.version })}, {status(d.status)})</small></h2>
       {#if d.outcome && d.decided_on}
-        <p class="banner" role="note">{t("p.cutover.decided_line", { on: d.decided_on.slice(0, 10), outcome: outcomeWord(d.outcome), why: d.decision_reason ?? "" })}</p>
+        <p class="banner" role="note">{t("p.cutover.decided_line", { on: formatDate(d.decided_on), outcome: outcomeWord(d.outcome), why: d.decision_reason ?? "" })}</p>
       {/if}
 
       <h3>{t("p.cutover.criteria_h3")}</h3>

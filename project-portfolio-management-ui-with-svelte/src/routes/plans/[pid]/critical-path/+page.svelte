@@ -10,6 +10,7 @@
   import { errorText } from "#lib/error-text.js";
   import { taskEstimateProblems, taskRangeText } from "#lib/simulation-inputs.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -194,7 +195,7 @@
 
 {#if cpm}
   <p class="small muted">
-    {cpm.project_finish ? t("p.plans.pid.critical_path.finishes", { date: cpm.project_finish }) : t("p.plans.pid.critical_path.nothing_scheduled")}
+    {cpm.project_finish ? t("p.plans.pid.critical_path.finishes", { date: formatDate(cpm.project_finish) }) : t("p.plans.pid.critical_path.nothing_scheduled")}
     {t("p.plans.pid.critical_path.calendar_label", { calendar: cpm.calendar === "plan" ? t("p.plans.pid.critical_path.calendar_plan") : t("p.plans.pid.critical_path.calendar_default") })}
     {#if cpm.critical_chains.length > 1}
       {t("p.plans.pid.critical_path.critical_chains", { count: cpm.critical_chains.length, more: cpm.chains_truncated ? t("p.plans.pid.critical_path.more_not_shown") : "" })}
@@ -247,7 +248,7 @@
         {t("p.plans.pid.critical_path.compare_with")}
         <select bind:value={chosen} onchange={() => void loadBaselines()}>
           {#each baselines as b (b.pid)}
-            <option value={b.version}>{t("p.plans.pid.critical_path.version", { version: b.version, reason: b.reason, slice: b.created_at.slice(0, 10) })}</option>
+            <option value={b.version}>{t("p.plans.pid.critical_path.version", { version: b.version, reason: b.reason, slice: formatDate(b.created_at) })}</option>
           {/each}
         </select>
       </label>

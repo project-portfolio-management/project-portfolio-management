@@ -59,7 +59,7 @@ test.describe("my kanban board", () => {
       ).toBeVisible();
     await expect(
       board.getByText(
-        "Survey the cable route · North Line · due 2026-10-01 · 3 points",
+        "Survey the cable route · North Line · due 1 Oct 2026 · 3 points",
       ),
     ).toBeVisible();
     await expect(

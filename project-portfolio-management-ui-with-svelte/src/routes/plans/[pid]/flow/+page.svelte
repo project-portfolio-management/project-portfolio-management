@@ -22,7 +22,8 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDecimal } from "#lib/locale-format.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
   import {
@@ -153,7 +154,7 @@
       {#if sle?.within_days !== null && sle?.within_days !== undefined}
         <span class="tile-value">{days(sle.within_days)}</span>
         <span class="tile-note">
-          {(sle.sample === 1 ? t("p.plans.pid.flow.of_items_finish_within_this_one", { percent: percent(sle.percentile), sample: sle.sample }) : t("p.plans.pid.flow.of_items_finish_within_this_other", { percent: percent(sle.percentile), sample: sle.sample }))}
+          {tn("p.plans.pid.flow.of_items_finish_within_this", sle.sample, { percent: percent(sle.percentile), sample: sle.sample })}
         </span>
       {:else}
         <span class="tile-value muted">—</span>
@@ -181,7 +182,7 @@
       <span class="tile-label">{t("p.plans.pid.flow.first_pass_yield")}</span>
       <span class="tile-value">{percent(summary.rolled_first_pass_yield)}</span>
       <span class="tile-note">
-        {(summary.rework_count === 1 ? t("p.plans.pid.flow.finished_without_ever_moving_backwar_one", { rework_count: summary.rework_count }) : t("p.plans.pid.flow.finished_without_ever_moving_backwar_other", { rework_count: summary.rework_count }))}
+        {tn("p.plans.pid.flow.finished_without_ever_moving_backwar", summary.rework_count, { rework_count: summary.rework_count })}
       </span>
     </div>
 
@@ -217,7 +218,7 @@
     <DataTable label={t("p.plans.pid.flow.item")} columns={agingColumns} rows={aging.aging} rowId={(r) => String(rowOf<Aging>(r).task.pid)} testid="aging-wip" />
     {#if overdue.length > 0}
       <p class="finding">
-        {overdue.length === 1 ? t("p.plans.pid.flow.overdue_one", { count: overdue.length }) : t("p.plans.pid.flow.overdue_other", { count: overdue.length })}
+        {tn("p.plans.pid.flow.overdue", overdue.length, { count: overdue.length })}
       </p>
     {/if}
   {/if}
@@ -261,14 +262,14 @@
     <tbody>
       <tr>
         <th scope="row">{t("p.plans.pid.flow.arrival_rate")}</th>
-        <td>{t("p.plans.pid.flow.calendar_day", { v: flow.flow.arrival_rate_per_day?.toFixed(2) ?? "—" })}</td>
+        <td>{t("p.plans.pid.flow.calendar_day", { v: formatDecimal(flow.flow.arrival_rate_per_day, 2) })}</td>
         <th scope="row">{t("p.plans.pid.flow.throughput")}</th>
-        <td>{t("p.plans.pid.flow.calendar_day", { v: flow.flow.throughput_per_day?.toFixed(2) ?? "—" })}</td>
+        <td>{t("p.plans.pid.flow.calendar_day", { v: formatDecimal(flow.flow.throughput_per_day, 2) })}</td>
       </tr>
       <tr>
         <th scope="row">{t("p.plans.pid.flow.utilization")}</th>
         <td>
-          {flow.flow.utilization?.toFixed(2) ?? "—"}
+          {formatDecimal(flow.flow.utilization, 2)}
           {#if flow.flow.utilization_reason}
             <span class="muted">— {flow.flow.utilization_reason}</span>
           {/if}

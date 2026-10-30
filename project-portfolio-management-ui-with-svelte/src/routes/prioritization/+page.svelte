@@ -12,7 +12,8 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDecimal, formatPercent } from "#lib/locale-format.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import {
@@ -57,17 +58,17 @@
   type PRow = Prioritization["plans"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.prioritization.plan"), rowHeader: true, cell: planCell },
-    { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(1)) },
+    { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : formatDecimal(Number(v), 1)) },
     { id: "band", header: t("p.prioritization.band_2"), format: (v) => enumLabel("band", String(v)), cell: bandCell },
-    { id: "coverage", header: t("p.prioritization.coverage_2"), align: "end", format: (v) => `${Math.round(Number(v) * 100)}%` },
+    { id: "coverage", header: t("p.prioritization.coverage_2"), align: "end", format: (v) => formatPercent(Number(v)) },
     { id: "missing_evidence", header: t("p.prioritization.missing_evidence"), accessor: (r) => (rowOf<PRow>(r).missing_evidence.length === 0 ? t("p.prioritization.none") : rowOf<PRow>(r).missing_evidence.join(", ")) },
     { id: "pid", header: "", sortable: false, cell: explainCell },
   ]);
   const componentColumns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.prioritization.component"), rowHeader: true },
-    { id: "weight", header: t("p.prioritization.weight"), align: "end", format: (v) => `${Math.round(Number(v) * 100)}%` },
-    { id: "raw", header: t("p.prioritization.value"), align: "end", format: (v) => Number(v).toFixed(2) },
-    { id: "contribution", header: t("p.prioritization.points"), align: "end", format: (v) => Number(v).toFixed(1) },
+    { id: "weight", header: t("p.prioritization.weight"), align: "end", format: (v) => formatPercent(Number(v)) },
+    { id: "raw", header: t("p.prioritization.value"), align: "end", format: (v) => formatDecimal(Number(v), 2) },
+    { id: "contribution", header: t("p.prioritization.points"), align: "end", format: (v) => formatDecimal(Number(v), 1) },
   ]);
 </script>
 
@@ -112,7 +113,7 @@
 </form>
 
 {#if view}
-  <p class="small muted">{t("p.prioritization.of_plan_s", { length: view.plans.length, scored_of: view.scored_of })}</p>
+  <p class="small muted">{tn("p.prioritization.of_plans", view.scored_of, { length: view.plans.length, scored_of: view.scored_of })}</p>
   <DataTable label={t("p.prioritization.plan")} columns={columns} rows={view.plans} rowId={(r) => String(r.pid)} searchable grid storageKey="prioritization-queue" />
   {#if expanded}
     {@const open = view.plans.find((p) => p.pid === expanded)}

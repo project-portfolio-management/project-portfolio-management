@@ -11,7 +11,7 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type LevelingApplyResult, type LevelingProposal } from "#lib/api/ppm.js";
@@ -70,7 +70,7 @@
     { id: "person", header: t("p.plans.pid.leveling.person"), accessor: (r) => { const m = rowOf<Move>(r); return m.masked ? m.person : (m.person_ref ?? m.person); } },
     { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => `${rowOf<Move>(r).from_start} → ${rowOf<Move>(r).scheduled_start}` },
     { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => `${rowOf<Move>(r).from_finish} → ${rowOf<Move>(r).to_finish}` },
-    { id: "delay_days", header: t("p.plans.pid.leveling.later_by"), align: "end", format: (v) => (Number(v) === 1 ? t("p.plans.pid.leveling.business_day_one", { delay_days: Number(v) }) : t("p.plans.pid.leveling.business_day_other", { delay_days: Number(v) })) },
+    { id: "delay_days", header: t("p.plans.pid.leveling.later_by"), align: "end", format: (v) => tn("p.plans.pid.leveling.business_day", Number(v), { delay_days: Number(v) }) },
     { id: "float", header: t("p.plans.pid.leveling.float"), accessor: (r) => `${rowOf<Move>(r).float_before} → ${rowOf<Move>(r).float_after}` },
   ]);
 </script>
@@ -96,7 +96,7 @@
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 {#if result}
   <p class="banner" role="status">
-    {t(result.requested === 1 ? "p.plans.pid.leveling.applied_one" : "p.plans.pid.leveling.applied_other", { ok: result.ok, requested: result.requested, refused: result.refused > 0 ? t("p.plans.pid.leveling.applied_refused", { refused: result.refused }) : "" })}
+    {tn("p.plans.pid.leveling.applied", result.requested, { ok: result.ok, requested: result.requested, refused: result.refused > 0 ? t("p.plans.pid.leveling.applied_refused", { refused: result.refused }) : "" })}
     {finishEffectText(result.finish_before, result.finish_after, result.finish_delay_days)}
   </p>
   {#each result.results.filter((r) => r.result === "refused") as r (r.pid)}
@@ -136,7 +136,7 @@
         <DataTable label={t("p.plans.pid.leveling.each_start_date_the_proposal")} {columns} rows={proposal.moves} rowId={(r) => String(r.pid)} sortable={false} />
       {#if proposal.effects.length > 0}
         <details>
-          <summary>{(proposal.effects.length === 1 ? t("p.plans.pid.leveling.other_task_would_be_pushed_one", { length: proposal.effects.length }) : t("p.plans.pid.leveling.other_task_would_be_pushed_other", { length: proposal.effects.length }))}</summary>
+          <summary>{tn("p.plans.pid.leveling.other_task_would_be_pushed", proposal.effects.length, { length: proposal.effects.length })}</summary>
           <ul>
             {#each proposal.effects as e (e.pid)}
               <li>{t("p.plans.pid.leveling.start_finish_business_days", { pid: e.title ?? e.pid, v: e.start_days >= 0 ? "+" : "", start_days: e.start_days, v2: e.finish_days >= 0 ? "+" : "", finish_days: e.finish_days })}</li>
@@ -149,7 +149,7 @@
         <label>{t("p.plans.pid.leveling.why_kept_with_each_audit")} <input type="text" bind:value={reason} maxlength="500" /></label>
         <label class="check"><input type="checkbox" bind:checked={confirmed} /> {t("p.plans.pid.leveling.i_have_read_the_proposal")}</label>
         <button class="button primary" type="submit" disabled={!confirmed || chosen.length === 0 || busy}>
-          {(chosen.length === 1 ? t("p.plans.pid.leveling.apply_move_one", { length: chosen.length }) : t("p.plans.pid.leveling.apply_move_other", { length: chosen.length }))}
+          {tn("p.plans.pid.leveling.apply_move", chosen.length, { length: chosen.length })}
         </button>
       </fieldset>
     </form>

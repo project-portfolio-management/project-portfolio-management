@@ -262,10 +262,10 @@ describe("risk histogram", () => {
   });
   it("says things in words", () => {
     expect(confidenceText(6200, "2026-10-13")).toBe(
-      "62% of the simulated outcomes finish on or before 2026-10-13.",
+      "62% of the simulated outcomes finish on or before 13 Oct 2026.",
     );
     expect(percentileText({ p: 80, finish: "2026-10-15" })).toBe(
-      "P80: 2026-10-15",
+      "P80: 15 Oct 2026",
     );
     expect(criticalityText(3333)).toBe("33%");
     expect(sensitivityText(null)).toBe("No variation");

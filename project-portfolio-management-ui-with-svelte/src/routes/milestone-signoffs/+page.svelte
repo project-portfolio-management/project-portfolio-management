@@ -6,6 +6,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
+  import { formatBasisPoints, formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneSignoffs, type Organization } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -48,7 +49,7 @@
   const stateWord = (s: string) => tDynamic(`p.signoffs.state_${s === "not_required" ? "met" : s}`);
   const columns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.signoffs.col_milestone"), rowHeader: true },
-    { id: "due", header: t("p.signoffs.col_due"), format: (v) => (v ? String(v).slice(0, 10) : "") },
+    { id: "due", header: t("p.signoffs.col_due"), format: (v) => (v ? formatDate(String(v)) : "") },
     { id: "state", header: t("p.signoffs.col_state"), accessor: (r) => rowOf<Row>(r).signoff.state, format: (v) => stateWord(String(v)), cell: stateCell, cellClass: (c) => (c.value === "delivered_not_met" ? "cell-red" : c.value === "met" ? "cell-green" : "") },
     { id: "delivered_on", header: t("p.signoffs.col_delivered"), accessor: (r) => rowOf<Row>(r).signoff.delivered_on ?? "" },
     { id: "met_on", header: t("p.signoffs.col_met"), accessor: (r) => rowOf<Row>(r).signoff.met_on ?? "" },
@@ -56,7 +57,7 @@
     { id: "milestone_pid", header: t("p.signoffs.col_act"), sortable: false, cell: actCell },
   ]);
   const share = $derived(
-    data?.totals.met_share_of_delivered_bp == null ? t("p.signoffs.no_share") : `${Math.round(data.totals.met_share_of_delivered_bp / 100)}%`,
+    data?.totals.met_share_of_delivered_bp == null ? t("p.signoffs.no_share") : formatBasisPoints(data.totals.met_share_of_delivered_bp, 0),
   );
 </script>
 

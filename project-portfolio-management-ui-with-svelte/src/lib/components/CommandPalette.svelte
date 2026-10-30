@@ -9,7 +9,7 @@
   import { Combobox, Dialog } from "@lilydesignsystem/svelte-headless";
   import { goto } from "$app/navigation";
   import { PlanRepository } from "#lib/api/plans.js";
-  import { localeHref, t } from "#lib/i18n.svelte.js";
+  import { localeHref, t, tn } from "#lib/i18n.svelte.js";
   import { paletteRequests } from "#lib/palette.svelte.js";
   import {
     RECENT_KEY,
@@ -184,7 +184,7 @@
       {:else if shown.length === 0}
         {t("c.CommandPalette.none")}
       {:else}
-        {t(shown.length === 1 ? "c.CommandPalette.count_one" : "c.CommandPalette.count_other", { n: shown.length })}
+        {tn("c.CommandPalette.count", shown.length, { n: shown.length })}
       {/if}
     </p>
   </div>

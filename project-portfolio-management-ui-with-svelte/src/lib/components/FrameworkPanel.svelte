@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { errorReason, errorText } from "#lib/error-text.js";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type Framework, type FrameworkFamily, type FrameworkInForce } from "#lib/api/ppm.js";
   import {
@@ -92,7 +92,7 @@
   async function save(e: SubmitEvent, isNew: boolean) {
     e.preventDefault();
     problems = frameworkProblems(family, form);
-    if (!isNew && sharedWith > 0 && !confirmShared) problems = [...problems, t("p.frameworks.confirm_problem", { n: sharedWith })];
+    if (!isNew && sharedWith > 0 && !confirmShared) problems = [...problems, tn("p.frameworks.confirm_problem", sharedWith, { n: sharedWith })];
     if (problems.length > 0) return;
     try {
       if (isNew) {
@@ -242,7 +242,7 @@
           </fieldset>
         {/if}
         {#if !creating && sharedWith > 0}
-          <label class="shared"><input type="checkbox" bind:checked={confirmShared} /> {t("p.frameworks.confirm_shared", { n: sharedWith })}</label>
+          <label class="shared"><input type="checkbox" bind:checked={confirmShared} /> {tn("p.frameworks.confirm_shared", sharedWith, { n: sharedWith })}</label>
         {/if}
         {#if problems.length > 0}<ul class="banner" role="alert">{#each problems as m (m)}<li>{m}</li>{/each}</ul>{/if}
         <span class="actions">

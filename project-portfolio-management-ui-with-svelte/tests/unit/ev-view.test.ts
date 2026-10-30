@@ -289,7 +289,7 @@ describe("sCurve", () => {
     expect(g.ev).toHaveLength(1);
     expect(g.ac).toHaveLength(1);
     expect(g.ev[0]!.x).toBeCloseTo(320);
-    expect(g.ev[0]!.label).toBe("2026-01-11: earned 80000");
+    expect(g.ev[0]!.label).toBe("11 Jan 2026: earned 80000");
     expect(g.bacY).toBe(0);
     expect(g.pv.startsWith("0.0,260.0")).toBe(true);
   });

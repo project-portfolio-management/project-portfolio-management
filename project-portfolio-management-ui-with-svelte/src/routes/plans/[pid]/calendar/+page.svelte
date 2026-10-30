@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type WorkCalendarView } from "#lib/api/ppm.js";
@@ -73,7 +73,7 @@
   <h2>{t("p.plans.pid.calendar.holidays")}</h2>
   <CalendarMonth bind:year bind:month {mask} {holidays} editable ontoggle={(d) => (holidays = toggleHoliday(holidays, d))} />
   {#if holidays.length > 0}
-    <p class="small">{(holidays.length === 1 ? t("p.plans.pid.calendar.holiday_one", { length: holidays.length, join: holidays.join(", ") }) : t("p.plans.pid.calendar.holiday_other", { length: holidays.length, join: holidays.join(", ") }))}</p>
+    <p class="small">{tn("p.plans.pid.calendar.holiday", holidays.length, { length: holidays.length, join: holidays.join(", ") })}</p>
   {/if}
   <p><button class="button primary" type="button" onclick={() => void save()} disabled={!valid}>{t("p.plans.pid.calendar.save_calendar")}</button>
     {#if saved}<span role="status"> {t("p.plans.pid.calendar.saved")}</span>{/if}</p>

@@ -172,7 +172,7 @@ test("an approved version comes into force; a final version is read-only; the da
   await page.getByLabel("Date", { exact: true }).fill("2026-10-02");
   await page.getByRole("button", { name: "Look up" }).click();
   await expect(page.getByTestId("in-force")).toContainText(
-    "Version 1 was in force on 2026-10-02.",
+    "Version 1 was in force on 2 Oct 2026.",
   );
   await page.getByRole("button", { name: "Bring into force today" }).click();
   await expect(page.getByRole("status")).toContainText("In force from today.");

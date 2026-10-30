@@ -26,7 +26,7 @@
     type Task,
     type Velocity,
   } from "#lib/api/ppm.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import PasteTasks from "#lib/components/PasteTasks.svelte";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
@@ -123,7 +123,7 @@
       // A non-colour status: said in words, and announced with the card.
       flag:
         task.blocked_days !== null
-          ? t(task.blocked_days === 1 ? "p.plans.pid.board.blocked_calendar_day_one" : "p.plans.pid.board.blocked_calendar_day_other", { blocked_days: task.blocked_days })
+          ? tn("p.plans.pid.board.blocked_calendar_day", task.blocked_days, { blocked_days: task.blocked_days })
           : undefined,
       values: { assignee: task.assignee_ref ?? t("p.plans.pid.board.unassigned"), points: task.points ?? null },
     })),
@@ -269,7 +269,7 @@
     {#if standup.blocked_now.length > 0}
       <ul>
         {#each standup.blocked_now as task (task.pid)}
-          <li>{task.title} <span class="muted">{(task.blocked_days === 1 ? t("p.plans.pid.board.blocked_calendar_day_one", { blocked_days: task.blocked_days }) : t("p.plans.pid.board.blocked_calendar_day_other", { blocked_days: task.blocked_days }))}</span></li>
+          <li>{task.title} <span class="muted">{tn("p.plans.pid.board.blocked_calendar_day", task.blocked_days ?? 0, { blocked_days: task.blocked_days })}</span></li>
         {/each}
       </ul>
     {/if}

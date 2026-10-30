@@ -6,6 +6,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, money, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
@@ -30,7 +31,7 @@
     }
   }
   const cur = () => trace?.currency ?? "";
-  const label = (a: FundingAllocation) => `${a.funding_source} ${a.allocated_on}`;
+  const label = (a: FundingAllocation) => `${a.funding_source} ${formatDate(a.allocated_on)}`;
   const num = (a: unknown, b: unknown) => Number(a) - Number(b);
   const allocColumns: DataGridColumn[] = $derived([
     { id: "funding_source", header: t("p.ledger.col_source"), rowHeader: true },

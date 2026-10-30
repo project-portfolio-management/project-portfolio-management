@@ -7,6 +7,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { askConfirm } from "#lib/confirm.svelte.js";
   import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection } from "#lib/api/ppm.js";
   import { percentText, progressValue, keyResultProgress, valueText, confidenceText } from "#lib/okr-view.js";
@@ -149,7 +150,7 @@
             {t("c.ObjectiveCard.from", { valueText: valueText(k.current_value, k.target_value, k.unit), start_value: k.start_value })}
             {#if k.tolerance !== null} {t("c.ObjectiveCard.tolerance", { tolerance: k.tolerance })}{/if}
             {#if kr.latest_check_in}
-              {t("c.ObjectiveCard.last_check_in", { slice: kr.latest_check_in.observed_at.slice(0, 10) })}
+              {t("c.ObjectiveCard.last_check_in", { slice: formatDate(kr.latest_check_in.observed_at) })}
               {#if confidenceText(kr.latest_check_in.confidence)}· {confidenceText(kr.latest_check_in.confidence)}{/if}
               {#if kr.latest_check_in.note}· “{kr.latest_check_in.note}”{/if}
             {/if}

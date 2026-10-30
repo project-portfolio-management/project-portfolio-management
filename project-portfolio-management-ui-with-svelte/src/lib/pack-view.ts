@@ -3,6 +3,7 @@
 // fixed word comes through `deps.t` / `deps.label`; free text (names, causes, decisions) is shown as
 // entered. A server sentence in the JSON (`note`, `basis`) is not shown: the catalogue carries it.
 
+import { formatBasisPoints, formatPercentValue } from "./locale-format.js";
 import { exponentOf, money } from "./money.js";
 
 export type Tone = "red" | "amber" | "green" | "grey";
@@ -169,7 +170,7 @@ export function buildPackView(
   const rc = obj(dq.register_completeness);
   const rcRows: Cell[][] = arr(rc.incomplete).map((r) => [
     plain(str(r.name)),
-    plain(`${fixed(numOrNull(r.score_pct), 0, d.locale)}%`),
+    plain(formatPercentValue(numOrNull(r.score_pct), 0, d.locale)),
     {
       text: (Array.isArray(r.missing) ? r.missing : [])
         .map((f) => d.t(`${K}rf_${String(f)}`))
@@ -733,7 +734,7 @@ export function buildPackView(
         share:
           soShare === null
             ? d.t(`${K}so_no_share`)
-            : `${fixed(soShare / 100, 0, d.locale)}%`,
+            : formatBasisPoints(soShare, 0, d.locale),
       }),
     ],
     soRows.length
@@ -793,9 +794,7 @@ export function buildPackView(
     plain(fixed(numOrNull(r.contingent), 0, d.locale)),
     numOrNull(r.contingent_share_bp) === null
       ? { text: d.t(`${K}kp_no_people`), symbol: dash, tone: "grey" as Tone }
-      : plain(
-          `${fixed((numOrNull(r.contingent_share_bp) as number) / 100, 0, d.locale)}%`,
-        ),
+      : plain(formatBasisPoints(numOrNull(r.contingent_share_bp), 0, d.locale)),
   ]);
   const rd = obj(kp.readiness);
   add(
@@ -1041,7 +1040,11 @@ export function buildPackView(
     wmRows.push([
       plain(d.t(`${K}wm_signoff`)),
       plain(
-        `${fixed((numOrNull(obj(sg).met_share_of_delivered_bp) ?? 0) / 100, 0, d.locale)}%`,
+        formatBasisPoints(
+          numOrNull(obj(sg).met_share_of_delivered_bp) ?? 0,
+          0,
+          d.locale,
+        ),
       ),
       plain(
         d.t(`${K}wm_signoff_of`, {

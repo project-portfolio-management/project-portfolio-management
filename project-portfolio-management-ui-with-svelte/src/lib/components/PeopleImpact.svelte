@@ -8,6 +8,7 @@
   import { PpmClient } from "#lib/api/ppm.js";
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { peopleRows, type ImpactRow, type PeopleImpact } from "#lib/people-impact.js";
 
   let { pid }: { pid: string } = $props();
@@ -63,7 +64,7 @@
   {#if failed}<p class="banner" role="alert">{failed}</p>{/if}
   {#if impact}
     {#if impact.status === "live"}
-      <p data-testid="people-impact-source">{t("p.people_impact.source", { date: impact.as_of ?? "?" })}</p>
+      <p data-testid="people-impact-source">{t("p.people_impact.source", { date: impact.as_of ? formatDate(impact.as_of) : "?" })}</p>
     {:else}
       <p class="banner" role="note" data-testid="people-impact-unknown">
         {t("p.people_impact.unknown", { reason: impact.reason ?? fallback })}
@@ -71,7 +72,7 @@
     {/if}
     <p class="small">
       {impact.plan_ends_on
-        ? t("p.people_impact.end_sent", { date: impact.plan_ends_on })
+        ? t("p.people_impact.end_sent", { date: formatDate(impact.plan_ends_on) })
         : (impact.plan_ends_on_reason ?? "")}
     </p>
     {#if impact.status === "live"}

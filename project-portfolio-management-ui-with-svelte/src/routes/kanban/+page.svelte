@@ -10,6 +10,7 @@
   import KanbanBoard from "@lilydesignsystem/svelte-kanban-board";
   import type { KanbanCard, KanbanColumn } from "@lilydesignsystem/svelte-kanban-board";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyTask } from "#lib/api/ppm.js";
 
@@ -39,7 +40,7 @@
     (tasks ?? []).map((x) => ({
       id: x.pid,
       columnId: (STATUSES as readonly string[]).includes(x.status) ? x.status : "todo",
-      title: [x.title, x.plan_name, x.due_date ? t("p.kanban.due", { date: x.due_date.slice(0, 10) }) : null, x.points != null ? t("p.kanban.points", { n: x.points }) : null]
+      title: [x.title, x.plan_name, x.due_date ? t("p.kanban.due", { date: formatDate(x.due_date) }) : null, x.points != null ? t("p.kanban.points", { n: x.points }) : null]
         .filter(Boolean)
         .join(" · "),
     })),

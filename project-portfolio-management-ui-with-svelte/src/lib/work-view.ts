@@ -10,7 +10,8 @@ import type {
   AssignmentResult,
   SchedulingRule,
 } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
+import { formatNumber } from "#lib/locale-format.js";
 import { currentLocale, toMinor } from "./money.js";
 
 export type FieldValue = string | number | null | undefined;
@@ -44,7 +45,7 @@ export const RULE_HELP: Record<SchedulingRule, string> = {
 /** 90 → "1.5 h"; 0 → "0 h". */
 export function hoursText(minutes: number): string {
   const h = minutes / 60;
-  return `${Number.isInteger(h) ? h : h.toFixed(2).replace(/0$/, "")} h`;
+  return `${formatNumber(h, { maximumFractionDigits: 2 })} h`;
 }
 
 /** Hours as typed → whole minutes, or null when it is not a positive number of hours. */
@@ -143,12 +144,11 @@ export function capacityText(c: AssignmentResult["capacity"]): string {
       ? t("l.work_view.capacity_not_checked_the_task")
       : "";
   if (c.over_capacity)
-    return t(
-      c.days_over === 1
-        ? "l.work_view.over_capacity_one"
-        : "l.work_view.over_capacity_other",
-      { days_over: c.days_over, from: c.from, to: c.to },
-    );
+    return tn("l.work_view.over_capacity", c.days_over ?? 0, {
+      days_over: c.days_over,
+      from: c.from,
+      to: c.to,
+    });
   return t("l.work_view.within_the_person_s_capacity");
 }
 

@@ -12,6 +12,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatPercent } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -126,7 +127,7 @@
       <strong>
         {metrics.change_failure_rate === null
           ? "—"
-          : `${(metrics.change_failure_rate * 100).toFixed(0)}%`}
+          : formatPercent(metrics.change_failure_rate)}
       </strong>
       <span>{t("p.engineering.declared_cause_failure_rate")}</span>
     </div>

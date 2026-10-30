@@ -5,6 +5,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, type StartQueue, type StartRefusal } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -46,7 +47,7 @@
   const columns: DataGridColumn[] = $derived([
     { id: "position", header: t("p.start_queue.col_pos"), align: "end" },
     { id: "name", header: t("p.start_queue.col_prog"), rowHeader: true, accessor: (r) => (r.name as string | null) ?? String(r.plan_pid) },
-    { id: "queued_on", header: t("p.start_queue.col_asked"), format: (v) => String(v).slice(0, 10) },
+    { id: "queued_on", header: t("p.start_queue.col_asked"), format: (v) => formatDate(String(v)) },
     { id: "refusals", header: t("p.start_queue.col_why"), sortable: false, format: (v) => (v as StartRefusal[]).map(why).join(" "), cell: whyCell },
     { id: "plan_pid", header: t("p.start_queue.col_act"), sortable: false, cell: actCell },
   ]);

@@ -12,7 +12,8 @@ import type {
   MilestoneView,
 } from "#lib/api/ppm.js";
 import { businessDays, calendarDays } from "./units.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
+import { formatDate } from "#lib/locale-format.js";
 
 export const STATUS_ORDER: readonly MilestoneStatus[] = [
   "late",
@@ -108,10 +109,9 @@ export function forecastText(
 /** How far a milestone has moved, or `null` when it never has. */
 export function slipText(slip: MilestoneSlip): string | null {
   if (slip.reschedules === 0) return null;
-  const times =
-    slip.reschedules === 1
-      ? t("l.milestone_view.rescheduled_one", { count: slip.reschedules })
-      : t("l.milestone_view.rescheduled_other", { count: slip.reschedules });
+  const times = tn("l.milestone_view.rescheduled", slip.reschedules, {
+    count: slip.reschedules,
+  });
   const later =
     slip.later_moves === 0
       ? ""
@@ -145,7 +145,7 @@ export function achievedText(
 ): string | null {
   if (!m.achieved) return null;
   const on = m.achieved_on
-    ? t("l.milestone_view.on", { achieved_on: m.achieved_on })
+    ? t("l.milestone_view.on", { achieved_on: formatDate(m.achieved_on) })
     : "";
   if (m.achieved_by === "tasks")
     return t("l.milestone_view.achieved_every_task_it_waits", { on });
@@ -163,15 +163,10 @@ export function openTasksText(
   >,
 ): string | null {
   if (m.completion_mode !== "linked" || m.achieved) return null;
-  return m.linked_tasks === 1
-    ? t("l.milestone_view.open_of_linked_one", {
-        open_tasks: m.open_tasks,
-        linked_tasks: m.linked_tasks,
-      })
-    : t("l.milestone_view.open_of_linked_other", {
-        open_tasks: m.open_tasks,
-        linked_tasks: m.linked_tasks,
-      });
+  return tn("l.milestone_view.open_of_linked", m.linked_tasks, {
+    open_tasks: m.open_tasks,
+    linked_tasks: m.linked_tasks,
+  });
 }
 
 /** One line for a milestone row, readable aloud. */

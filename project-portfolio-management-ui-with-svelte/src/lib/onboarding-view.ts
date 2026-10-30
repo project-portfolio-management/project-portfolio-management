@@ -7,7 +7,7 @@ import type {
   OnboardingKind,
   OnboardingProgress,
 } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
 
 export type FieldValue = string | number | null | undefined;
 const str = (v: FieldValue) => (v === null || v === undefined ? "" : String(v));
@@ -149,18 +149,7 @@ export function handoverText(
   to: string | null,
 ): string {
   if (n === 0) return t("l.onboarding_view.this_person_holds_nothing_live");
-  const one = n === 1;
   return action === "reassign"
-    ? t(
-        one
-          ? "l.onboarding_view.would_move_one"
-          : "l.onboarding_view.would_move_other",
-        { n, to },
-      )
-    : t(
-        one
-          ? "l.onboarding_view.would_release_one"
-          : "l.onboarding_view.would_release_other",
-        { n },
-      );
+    ? tn("l.onboarding_view.would_move", n, { n, to })
+    : tn("l.onboarding_view.would_release", n, { n });
 }

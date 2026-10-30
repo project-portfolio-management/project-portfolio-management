@@ -133,7 +133,7 @@ describe("CpmTable", () => {
     ]);
     expect(root.querySelectorAll("tbody th[scope=row]")).toHaveLength(3);
     const text = root.textContent ?? "";
-    expect(text).toContain("FNLT 2026-10-06");
+    expect(text).toContain("FNLT 6 Oct 2026");
     expect(text).toContain("overrides its predecessors");
     expect(text).toContain("plan + assignee");
     done();

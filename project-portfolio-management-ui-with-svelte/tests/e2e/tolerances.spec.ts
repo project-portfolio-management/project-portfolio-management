@@ -244,9 +244,7 @@ test("a plan with red tolerances can escalate them all in one go", async ({
   await page
     .getByRole("button", { name: "Escalate every red tolerance" })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "Raised 1 escalation(s).",
-  );
+  await expect(page.getByRole("status")).toContainText("Raised 1 escalation.");
   await expect(
     page.getByRole("button", { name: "Escalate every red tolerance" }),
   ).toHaveCount(0);

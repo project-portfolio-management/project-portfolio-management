@@ -6,6 +6,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic } from "#lib/i18n.svelte.js";
+  import { arrow, formatDate } from "#lib/locale-format.js";
   import { signedMoney } from "#lib/money.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -56,7 +57,7 @@
   const title = (taskPid: string) => tasks.find((x) => x.pid === taskPid)?.title ?? taskPid;
   const columns: DataGridColumn[] = $derived([
     { id: "task_pid", header: t("p.moves.col_task"), rowHeader: true, format: (v) => title(String(v)) },
-    { id: "to_start", header: t("p.moves.col_dates"), format: (v, r) => `${r.from_start} → ${v}` },
+    { id: "to_start", header: t("p.moves.col_dates"), format: (v, r) => `${formatDate(String(r.from_start))} ${arrow()} ${formatDate(String(v))}` },
     { id: "reason", header: t("p.moves.col_reason") },
     { id: "requested_by", header: t("p.moves.col_by"), format: (v) => (v ? String(v) : "") },
     { id: "approver_ref", header: t("p.moves.col_approver") },
@@ -69,7 +70,7 @@
 {#snippet statusCell({ value, formatted, row }: DataGridCellContext)}
   {@const m = rowOf<DeploymentMove>(row)}
   <span aria-hidden="true">{value === "approved" ? "●" : value === "refused" ? "✖" : "◆"}</span> {formatted}
-  {#if m.decided_on}<br /><small>{t("p.moves.decided", { by: m.decided_by ?? "", on: m.decided_on.slice(0, 10), why: m.decision_reason ?? "" })}</small>{/if}
+  {#if m.decided_on}<br /><small>{t("p.moves.decided", { by: m.decided_by ?? "", on: formatDate(m.decided_on), why: m.decision_reason ?? "" })}</small>{/if}
 {/snippet}
 
 {#snippet decideCell({ row }: DataGridCellContext)}

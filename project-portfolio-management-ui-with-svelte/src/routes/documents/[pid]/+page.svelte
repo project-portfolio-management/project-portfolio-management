@@ -10,6 +10,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { PpmClient, type ControlledDocument, type DocumentInForce, type DocumentVersion } from "#lib/api/ppm.js";
   import { ACTION_LABEL, STATUS_SYMBOL, STEP_HELP, STEP_TITLE, approverRef, inFlight, isEditable, nextAction, versionLine } from "#lib/document-view.js";
 
@@ -146,7 +147,7 @@
     <button class="button" type="submit">{t("p.documents.pid.look_up")}</button>
     {#if inForce}
       <p data-testid="in-force">
-        {#if inForce.in_force}{t("p.documents.pid.version_was_in_force_on", { version: inForce.in_force.version, on: inForce.on })}{:else}{t("p.documents.pid.nothing_was_in_force_on", { on: inForce.on })}{/if}
+        {#if inForce.in_force}{t("p.documents.pid.version_was_in_force_on", { version: inForce.in_force.version, on: formatDate(inForce.on) })}{:else}{t("p.documents.pid.nothing_was_in_force_on", { on: formatDate(inForce.on) })}{/if}
       </p>
     {/if}
   </form>

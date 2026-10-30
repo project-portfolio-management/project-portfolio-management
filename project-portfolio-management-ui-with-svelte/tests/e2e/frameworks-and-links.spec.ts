@@ -379,11 +379,11 @@ test("a shared way of working asks for confirmation before it is changed for oth
   await page.getByLabel("Iteration length (days)").fill("7");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("alert")).toContainText(
-    "Tick the box to confirm the change for 2 other plan(s).",
+    "Tick the box to confirm the change for 2 other plans.",
   );
   expect(saved).toBeNull();
   await page
-    .getByLabel("This is shared: saving changes it for 2 other plan(s) too.")
+    .getByLabel("This is shared: saving changes it for 2 other plans too.")
     .check();
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status")).toContainText("Saved.");

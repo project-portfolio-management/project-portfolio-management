@@ -244,9 +244,13 @@ describe("no unused page keys", () => {
   const dynamic = [...text.matchAll(/[`"']([A-Za-z0-9_.]+)\$\{/g)]
     .map((m) => m[1]!)
     .filter((p) => p.length > 2);
+  // A plural group's forms (`<base>_one`, `<base>_other`) are named by their base in a `tn("<base>", …)` call.
+  const pluralBase = (k: string) =>
+    /^(.+)_(?:zero|one|two|few|many|other)$/.exec(k)?.[1];
   const unused = Object.keys(PAGES_EN).filter(
     (k) =>
       !text.includes(k) &&
+      !(pluralBase(k) && text.includes(`"${pluralBase(k)}"`)) &&
       !dynamic.some((p) => k.startsWith(p)) &&
       !SET_PREFIXES.some((p) => k.startsWith(p)),
   );

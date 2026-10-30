@@ -13,7 +13,8 @@ import type {
   EvSeries,
   EvTcpi,
 } from "./api/ppm";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
+import { formatDate } from "./locale-format.js";
 import { calendarDays } from "./units.js";
 
 /** `8000` → `"0.80"`; `null` → `"—"`. Two decimals, half-up, integer arithmetic. */
@@ -186,19 +187,14 @@ export function methodSentence(pc: {
         ? t("l.ev_view.finished_work_counts_for_its")
         : t("l.ev_view.only_finished_work_counts");
   const parts = [
-    t(
-      pc.tasks_counted === 1
-        ? "l.ev_view.tasks_counted_one"
-        : "l.ev_view.tasks_counted_other",
-      {
-        count: pc.tasks_counted,
-        weighting:
-          pc.weighting === "points"
-            ? t("l.ev_view.by_story_points")
-            : t("l.ev_view.equally"),
-        how,
-      },
-    ),
+    tn("l.ev_view.tasks_counted", pc.tasks_counted, {
+      count: pc.tasks_counted,
+      weighting:
+        pc.weighting === "points"
+          ? t("l.ev_view.by_story_points")
+          : t("l.ev_view.equally"),
+      how,
+    }),
   ];
   if (pc.manual_tasks.length > 0)
     parts.push(
@@ -345,14 +341,20 @@ export function sCurve(
       .map((p) => ({
         x: x(at(p.date)),
         y: y(p.ev_minor ?? 0),
-        label: t("l.ev_view.earned", { date: p.date, ev_minor: p.ev_minor }),
+        label: t("l.ev_view.earned", {
+          date: formatDate(p.date),
+          ev_minor: p.ev_minor,
+        }),
       })),
     ac: curve.points
       .filter((p) => p.ac_minor !== null)
       .map((p) => ({
         x: x(at(p.date)),
         y: y(p.ac_minor ?? 0),
-        label: t("l.ev_view.spent", { date: p.date, ac_minor: p.ac_minor }),
+        label: t("l.ev_view.spent", {
+          date: formatDate(p.date),
+          ac_minor: p.ac_minor,
+        }),
       })),
     bacY: y(curve.bac_minor),
     from: curve.points[0]?.date ?? "",

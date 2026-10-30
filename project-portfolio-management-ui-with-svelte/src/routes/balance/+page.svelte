@@ -15,6 +15,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatPercent } from "#lib/locale-format.js";
   import {
     PpmClient,
     money,
@@ -54,7 +55,7 @@
   const box = BALANCE_BOX;
 
   const nameOf = (g: BalanceGroup) => g.name ?? t("p.balance.unassigned");
-  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  const pct = (x: number) => formatPercent(x);
   const flagText = (g: BalanceGroup, f: BalanceFlag): string => {
     const values = { name: nameOf(g), percent: f.percent ?? 0, currency };
     switch (f.kind) {

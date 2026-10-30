@@ -10,7 +10,7 @@
   import { isAbsent } from "#lib/absent.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type Task } from "#lib/api/ppm.js";
@@ -93,8 +93,8 @@
           <li style:margin-inline-start="{r.depth * 1.5}rem">
             <span class="code">{r.code}</span>
             {#if r.restricted}<em>{r.title}</em>{:else}<a href={localeHref(`/plans/${pid}/tasks/${r.key}`)}>{r.title}</a>{/if}
-            {#if r.children > 0}<span class="small muted"> {(r.children === 1 ? t("p.plans.pid.wbs.sub_task_one", { children: r.children }) : t("p.plans.pid.wbs.sub_task_other", { children: r.children }))}</span>{/if}
-            {#if r.links > 0}<span class="small muted"> {(r.links === 1 ? t("p.plans.pid.wbs.link_one", { links: r.links }) : t("p.plans.pid.wbs.link_other", { links: r.links }))}</span>{/if}
+            {#if r.children > 0}<span class="small muted"> {tn("p.plans.pid.wbs.sub_task", r.children, { children: r.children })}</span>{/if}
+            {#if r.links > 0}<span class="small muted"> {tn("p.plans.pid.wbs.link", r.links, { links: r.links })}</span>{/if}
             {#if !r.restricted}
               <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "up")} aria-label={t("p.plans.pid.wbs.move_up", { title: r.title })} onclick={() => move(r.key, r.title, "up")}><span aria-hidden="true">↑</span></button>
               <button type="button" class="move" disabled={!siblingMove(tasks ?? [], r.key, "down")} aria-label={t("p.plans.pid.wbs.move_down", { title: r.title })} onclick={() => move(r.key, r.title, "down")}><span aria-hidden="true">↓</span></button>

@@ -11,7 +11,8 @@
   import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ScheduleHealth } from "#lib/api/ppm.js";
@@ -50,7 +51,7 @@
     {c.pass === false ? t("p.plans.pid.schedule_health.see_the_note") : "—"}
   {:else}
     <details>
-      <summary>{(c.offenders.length === 1 ? t("p.plans.pid.schedule_health.task_one", { length: c.offenders.length }) : t("p.plans.pid.schedule_health.task_other", { length: c.offenders.length }))}</summary>
+      <summary>{tn("p.plans.pid.schedule_health.task", c.offenders.length, { length: c.offenders.length })}</summary>
       <ul>
         {#each c.offenders as o (o.pid)}
           <li><a href={localeHref(offenderHref(pid, o.pid))}>{o.title ?? o.pid}</a></li>
@@ -73,8 +74,8 @@
 {#if report}
   <p class="banner" role="note">{report.disclaimer}</p>
   <p class="small muted">
-    {t("p.plans.pid.schedule_health.as_of", { as_of: report.as_of })}
-    {#if report.baseline}{t("p.plans.pid.schedule_health.baseline_version", { version: report.baseline.version })}{:else}{t("p.plans.pid.schedule_health.no_baseline_taken")}{/if} {(report.tasks === 1 ? t("p.plans.pid.schedule_health.preset_thresholds_task_one", { preset: report.preset, source: report.thresholds.source, tasks: report.tasks }) : t("p.plans.pid.schedule_health.preset_thresholds_task_other", { preset: report.preset, source: report.thresholds.source, tasks: report.tasks }))}
+    {t("p.plans.pid.schedule_health.as_of", { as_of: formatDate(report.as_of) })}
+    {#if report.baseline}{t("p.plans.pid.schedule_health.baseline_version", { version: report.baseline.version })}{:else}{t("p.plans.pid.schedule_health.no_baseline_taken")}{/if} {tn("p.plans.pid.schedule_health.preset_thresholds_task", report.tasks, { preset: report.preset, source: report.thresholds.source, tasks: report.tasks })}
   </p>
   <p aria-live="polite"><strong>{healthSummary(report)}.</strong></p>
   <form class="filter" onsubmit={(e) => { e.preventDefault(); void load(); }}>

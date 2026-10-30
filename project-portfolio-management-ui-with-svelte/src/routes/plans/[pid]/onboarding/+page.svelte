@@ -8,7 +8,8 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -162,24 +163,24 @@
   {#each cases as c (c.pid)}
     <li class="surface">
       <button class="button" type="button" onclick={() => show(c)} aria-label={`Open ${c.title}`}>{c.title}</button>
-      <span class="small muted">{t("p.plans.pid.onboarding.from", { status: c.status, effective_date: c.effective_date, progressText: progressText(c.progress) })}</span>
+      <span class="small muted">{t("p.plans.pid.onboarding.from", { status: c.status, effective_date: formatDate(c.effective_date), progressText: progressText(c.progress) })}</span>
     </li>
   {/each}
 </ul>
-{#if hidden}<p class="small muted">{(hidden === 1 ? t("p.plans.pid.onboarding.checklist_about_people_not_shown_one", { hidden }) : t("p.plans.pid.onboarding.checklist_about_people_not_shown_other", { hidden }))}</p>{/if}
+{#if hidden}<p class="small muted">{tn("p.plans.pid.onboarding.checklist_about_people_not_shown", hidden, { hidden })}</p>{/if}
 
 {#if open}
   <section class="surface stack" aria-labelledby="case-h" data-testid="case">
     <h2 id="case-h">{open.title}</h2>
     <p class="small muted">
-      {t("p.plans.pid.onboarding.effective", { status: open.status, v: open.subject_ref ? ` · ${open.subject_ref}` : "", effective_date: open.effective_date, progressText: progressText(open.progress) })}
+      {t("p.plans.pid.onboarding.effective", { status: open.status, v: open.subject_ref ? ` · ${open.subject_ref}` : "", effective_date: formatDate(open.effective_date), progressText: progressText(open.progress) })}
     </p>
     <ol class="plain stack">
       {#each open.items as i (i.pid)}
         {@const st = itemState(i)}
         <li>
           <strong><span aria-hidden="true">{st.symbol}</span> {i.title}</strong>
-          <span class="small"> — {st.word}{i.due_date ? t("p.plans.pid.onboarding.due", { date: i.due_date }) : ""}{i.owner_ref ? `, ${i.owner_ref}` : ""}</span>
+          <span class="small"> — {st.word}{i.due_date ? t("p.plans.pid.onboarding.due", { date: formatDate(i.due_date) }) : ""}{i.owner_ref ? `, ${i.owner_ref}` : ""}</span>
           {#if i.note}<span class="small muted"> ({i.note})</span>{/if}
           {#if open.status === "open"}
             <div class="row">
@@ -232,7 +233,7 @@
     <p>{t("p.plans.pid.onboarding.no_access_is_outstanding")}</p>
   {:else}
     <ul data-testid="outstanding">
-      {#each access.outstanding as o, i (i)}<li>{t("p.plans.pid.onboarding.since", { person_ref: o.person_ref, access: o.access, granted_on: o.granted_on })}</li>{/each}
+      {#each access.outstanding as o, i (i)}<li>{t("p.plans.pid.onboarding.since", { person_ref: o.person_ref, access: o.access, granted_on: formatDate(o.granted_on) })}</li>{/each}
     </ul>
   {/if}
   <form class="surface stack" onsubmit={recordAccess} aria-labelledby="acc-h">

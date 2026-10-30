@@ -10,6 +10,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type RiskHeatmap } from "#lib/api/ppm.js";
@@ -101,7 +102,7 @@
     <h2>{t("p.risk.overdue_reviews")}</h2>
     <ul data-testid="risk-overdue">
       {#each heatmap.overdue_reviews as row (row.pid)}
-        <li>{row.title} <span class="muted">{t("p.risk.review_due", { review_date: row.review_date })}</span></li>
+        <li>{row.title} <span class="muted">{t("p.risk.review_due", { review_date: formatDate(row.review_date) })}</span></li>
       {/each}
     </ul>
   {/if}

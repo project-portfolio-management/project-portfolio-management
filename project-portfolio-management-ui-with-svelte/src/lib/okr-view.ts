@@ -7,13 +7,13 @@
 
 import type { OkrKeyResult } from "#lib/api/ppm.js";
 import { t } from "./i18n.svelte.js";
+import { formatBasisPoints } from "#lib/locale-format.js";
 
 /** "40%" for 4000 basis points; "Not measured" for `null`. */
 export function percentText(basisPoints: number | null | undefined): string {
   if (basisPoints === null || basisPoints === undefined)
     return t("l.okr_view.not_measured");
-  const pct = basisPoints / 100;
-  return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
+  return formatBasisPoints(basisPoints, basisPoints % 100 === 0 ? 0 : 1);
 }
 
 /** The value for a `<progress>` element (0-100), or `null` when unmeasured. */

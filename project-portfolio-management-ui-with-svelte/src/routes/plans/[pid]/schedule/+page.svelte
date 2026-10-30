@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { page } from "$app/state";
@@ -51,7 +52,7 @@
     <div class="banner" role="alert" data-testid="violations">
       {#each schedule.violations as violation (violation.edge_pid)}
         <p class="small">
-          {t("p.plans.pid.schedule.dependency_violated_successor_starts", { actual_start: violation.actual_start, earliest_start: violation.earliest_start })}
+          {t("p.plans.pid.schedule.dependency_violated_successor_starts", { actual_start: formatDate(violation.actual_start), earliest_start: formatDate(violation.earliest_start) })}
         </p>
       {/each}
     </div>

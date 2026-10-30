@@ -10,6 +10,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDecimal } from "#lib/locale-format.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { currencyCode, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
@@ -161,7 +162,7 @@
       {#each duplicates[proposal.pid] ?? [] as hit (hit.pid)}
         <span class="chip">
           {hit.source === "plan" ? t("p.proposals.live") : t("p.proposals.proposal")}
-          {hit.name} ({hit.score.toFixed(2)})
+          {hit.name} ({formatDecimal(hit.score, 2)})
         </span>
       {/each}
     {/if}

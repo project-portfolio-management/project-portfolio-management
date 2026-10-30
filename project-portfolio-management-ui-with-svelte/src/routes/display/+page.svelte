@@ -11,7 +11,7 @@
   Choices are kept on this device and, when you are signed in, on your account.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple } from "#lib/preferences.js";
@@ -88,7 +88,7 @@
     {#if hidden.size === 0}
       {t("p.display.sections_none_hidden")}
     {:else}
-      {hidden.size === 1 ? t("p.display.sections_hidden_count_one", { n: 1 }) : t("p.display.sections_hidden_count_other", { n: hidden.size })}
+      {tn("p.display.sections_hidden_count", hidden.size, { n: hidden.size })}
       <button type="button" class="linklike" onclick={() => void display.showAllSections(signedIn)}>
         {t("p.display.sections_show_all")}
       </button>

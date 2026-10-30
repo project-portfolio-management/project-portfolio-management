@@ -370,7 +370,7 @@ test("schedule risk: P50, P80 and P90 are labelled, the figures have a table twi
     await expect(svg.getByText(label, { exact: true })).toBeVisible();
   await expect(
     page.getByText(
-      "25% of the simulated outcomes finish on or before 2026-10-12.",
+      "25% of the simulated outcomes finish on or before 12 Oct 2026.",
     ),
   ).toBeVisible();
   await expect(page.getByText(/drawn independently/)).toBeVisible();

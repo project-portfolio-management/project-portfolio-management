@@ -8,7 +8,7 @@
   import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, money, type ChangeRequestList } from "#lib/api/ppm.js";
@@ -88,7 +88,7 @@
     <p>{!status && !openOnly ? t("p.change_requests.none") : t("p.change_requests.none_match")}</p>
   {:else}
     <p class="small muted" aria-live="polite">
-      {list.change_requests.length === 1 ? t("p.change_requests.count_one", { n: 1 }) : t("p.change_requests.count_other", { n: list.change_requests.length })}
+      {tn("p.change_requests.count", list.change_requests.length, { n: list.change_requests.length })}
     </p>
     <DataTable label={t("p.change_requests.title_col")} columns={columns} rows={list.change_requests} rowId={(r) => String(r.pid)} searchable />
   {/if}

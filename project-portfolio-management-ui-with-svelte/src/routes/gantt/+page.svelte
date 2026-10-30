@@ -16,6 +16,7 @@
   import type { PlanRef } from "#lib/api/types.js";
   import type { ScheduleView } from "#lib/api/ppm.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDateRange } from "#lib/locale-format.js";
 
   const client = PpmClient.withFetch();
 
@@ -69,7 +70,7 @@
   // Every item is a row; dated ones get a bar, undated ones are listed with none.
   const chart = $derived(schedule ? chartTasks(schedule) : []);
   const tasks = $derived(
-    chart.flatMap((c) => (c.start && c.end ? [{ id: c.id, text: c.label, start: new Date(c.start), end: new Date(c.end) }] : [])),
+    chart.flatMap((c) => (c.start && c.end ? [{ id: c.id, text: c.label, start: c.start, end: c.end }] : [])),
   );
 
   const undated = $derived(
@@ -115,7 +116,7 @@
       <li>
         <a href={localeHref(`/plans/${task.id}`)}>{task.text}</a>
         <span class="dates"
-          >{task.start.toLocaleDateString()} – {task.end.toLocaleDateString()}</span
+          >{formatDateRange(task.start, task.end)}</span
         >
       </li>
     {/each}

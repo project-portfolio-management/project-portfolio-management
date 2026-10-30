@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { PpmClient, type OkrList } from "#lib/api/ppm.js";
   import ObjectiveCard from "#lib/components/ObjectiveCard.svelte";
@@ -70,7 +70,7 @@
   {#if list.objectives.length === 0}
     <p>{list.period ? t("p.okrs.none_for_period", { period: list.period }) : t("p.okrs.none")}</p>
   {:else}
-    <p class="small muted" aria-live="polite">{(list.objectives.length === 1 ? t("p.okrs.objective_least_progressed_first_one", { length: list.objectives.length }) : t("p.okrs.objective_least_progressed_first_other", { length: list.objectives.length }))}</p>
+    <p class="small muted" aria-live="polite">{tn("p.okrs.objective_least_progressed_first", list.objectives.length, { length: list.objectives.length })}</p>
     {#each list.objectives as item (item.objective.pid)}
       <ObjectiveCard {item} {ppm} onchange={refresh} onerror={(m) => (error = m)} />
     {/each}

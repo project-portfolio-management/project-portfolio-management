@@ -9,7 +9,7 @@
   import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { money, type CostRisk } from "#lib/api/ppm.js";
   import { budgetConfidenceText, costHistogramGeometry, costSkippedText, eventHitText, lineSourceText, sensitivityText } from "#lib/scheduling-view.js";
 
@@ -53,7 +53,7 @@
 
 
 <p class="small muted">
-  {result.scope.kind === "portfolio" ? (result.scope.plans === 1 ? t("c.CostRiskView.scope_all_one", { plans: result.scope.plans }) : t("c.CostRiskView.scope_all_other", { plans: result.scope.plans })) : t("c.CostRiskView.scope_this_plan")} ·
+  {result.scope.kind === "portfolio" ? tn("c.CostRiskView.scope_all", result.scope.plans, { plans: result.scope.plans }) : t("c.CostRiskView.scope_this_plan")} ·
   {t("c.CostRiskView.run_summary", { seed: a.seed, iterations: a.iterations, distribution: a.distribution === "pert" ? t("c.CostRiskView.dist_pert") : t("c.CostRiskView.dist_triangular") })}
 </p>
 
@@ -117,7 +117,7 @@
   <p class="small muted">{t("c.CostRiskView.no_register_risk_was_used")}</p>
 {/if}
 {#if result.events.risks_without_cost_fields > 0}
-  <p class="small muted">{result.events.risks_without_cost_fields === 1 ? t("c.CostRiskView.risks_without_cost_one", { count: result.events.risks_without_cost_fields }) : t("c.CostRiskView.risks_without_cost_other", { count: result.events.risks_without_cost_fields })}</p>
+  <p class="small muted">{tn("c.CostRiskView.risks_without_cost", result.events.risks_without_cost_fields, { count: result.events.risks_without_cost_fields })}</p>
 {/if}
 
 <h2>{t("c.CostRiskView.assumptions")}</h2>

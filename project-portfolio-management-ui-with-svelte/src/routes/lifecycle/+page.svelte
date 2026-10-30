@@ -12,7 +12,9 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
+  import { calendarDays } from "#lib/units.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { CapabilityClient, type LifecycleFunnel } from "#lib/api/capabilities.js";
 
@@ -59,13 +61,13 @@
 
 {#if view}
   <p class="small muted">
-    {t("p.lifecycle.live_item_s_stall_threshold", { total, stall_days: view.stall_days })}
+    {tn("p.lifecycle.live_items", total, { total, stall: calendarDays(view.stall_days) })}
     {#if view.unknown_phase > 0}
       · <strong>{view.unknown_phase}</strong> {t("p.lifecycle.in_an_unrecognized_phase")}
     {/if}
   </p>
   <DataTable label={t("p.lifecycle.phase")} {columns} rows={view.phases} rowId={(r) => String(r.phase)} />
-  <p class="small muted">{t("p.lifecycle.as_of", { as_of: view.as_of })}</p>
+  <p class="small muted">{t("p.lifecycle.as_of", { as_of: formatDate(view.as_of) })}</p>
 {/if}
 
 <style>

@@ -6,7 +6,7 @@
   ("SS +1 business day"). The list under the picture says the same thing in words.
 -->
 <script lang="ts">
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { businessDays } from "#lib/units.js";
   import type { CpmEdge, CpmNode } from "#lib/api/ppm.js";
   import { floatState, layoutNetwork } from "#lib/cpm-view.js";
@@ -132,7 +132,7 @@
         {#each edges as e (e.pid)}
           <li>
             {byPid.get(e.predecessor_pid)?.title ?? "?"} → {byPid.get(e.successor_pid)?.title ?? "?"}
-            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : Math.abs(e.lag_days) === 1 ? t("c.NetworkDiagram.lag_one", { lag_days: e.lag_days }) : t("c.NetworkDiagram.lag_other", { lag_days: e.lag_days })})
+            ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : tn("c.NetworkDiagram.lag", e.lag_days, { lag_days: e.lag_days })})
           </li>
         {/each}
         {#if edges.length === 0}<li>{t("c.NetworkDiagram.no_dependencies")}</li>{/if}

@@ -10,7 +10,7 @@
 
 import { dateOf, dayNumber } from "./lily-grids";
 import { businessDays } from "./units.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
 import { lazyArray } from "./lazy.js";
 
 /** Monday first; looked up when read, so it follows the language. */
@@ -146,9 +146,6 @@ export function shiftMonth(
   };
 }
 
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${Math.abs(n) === 1 ? one : many}`;
-
 /**
  * A plain sentence for a task's float, for the worker as much as the planner.
  * Negative float means a constraint or deadline cannot be met; it is said so,
@@ -161,19 +158,11 @@ export function floatLabel(n: {
 }): string {
   if (n.total_float < 0) {
     return t("l.cpm_view.cannot_meet_its_constraint_or", {
-      plural: plural(
-        -n.total_float,
-        t("l.cpm_view.business_day"),
-        t("p.plans.pid.critical_path.business_days"),
-      ),
+      plural: businessDays(-n.total_float),
     });
   }
   if (n.critical) return t("l.cpm_view.on_the_critical_path_any");
-  const d = plural(
-    n.total_float,
-    t("l.cpm_view.business_day"),
-    t("p.plans.pid.critical_path.business_days"),
-  );
+  const d = businessDays(n.total_float);
   return n.near_critical
     ? t("l.cpm_view.of_float_near_critical", { d })
     : t("l.cpm_view.of_float", { d });
@@ -499,7 +488,5 @@ export function diagramFits(nodeCount: number): boolean {
 /** The sentence for dependencies the reader may not see: how many, never what. */
 export function restrictedText(n: number): string {
   if (n === 0) return "";
-  return n === 1
-    ? t("l.cpm_view.restricted_one", { n })
-    : t("l.cpm_view.restricted_other", { n });
+  return tn("l.cpm_view.restricted", n, { n });
 }

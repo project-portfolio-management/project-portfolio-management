@@ -13,7 +13,8 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatBasisPoints, formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import {
@@ -150,7 +151,7 @@
 {#if namesTruncated}<p class="banner" role="note" data-testid="ev-names-truncated">{t("p.plans.pid.earned_value.names_truncated")}</p>{/if}
 
 {#if ev}
-  <p class="small muted">{t("p.plans.pid.earned_value.measured_as_of_percent_complete", { as_of: ev.as_of })}</p>
+  <p class="small muted">{t("p.plans.pid.earned_value.measured_as_of_percent_complete", { as_of: formatDate(ev.as_of) })}</p>
 
   {#if ev.blocks === null}
     <p class="banner" role="status" data-testid="ev-absent">{ev.reason}</p>
@@ -256,7 +257,7 @@
         </section>
       {/each}
       {#if rollup.plans_without_figures > 0}
-        <p class="small muted">{(rollup.plans_without_figures === 1 ? t("p.plans.pid.earned_value.plan_below_have_no_figures_one", { plans_without_figures: rollup.plans_without_figures }) : t("p.plans.pid.earned_value.plan_below_have_no_figures_other", { plans_without_figures: rollup.plans_without_figures }))}</p>
+        <p class="small muted">{tn("p.plans.pid.earned_value.plan_below_have_no_figures", rollup.plans_without_figures, { plans_without_figures: rollup.plans_without_figures })}</p>
       {/if}
     {/if}
 
@@ -264,7 +265,7 @@
     <ul class="small">
       {#each ev.percent_complete?.tasks ?? [] as row (row.pid)}
         <li>
-          {titleOf.get(row.pid) ?? t("p.plans.pid.earned_value.task")}: {Math.round(row.percent_bp / 100)}%
+          {titleOf.get(row.pid) ?? t("p.plans.pid.earned_value.task")}: {formatBasisPoints(row.percent_bp, 0)}
           ({row.method === "manual" ? t("p.plans.pid.earned_value.manual") : row.method === "fifty_fifty" ? t("p.plans.pid.earned_value.half_for_started") : t("p.plans.pid.earned_value.finished_only")}{ev.percent_complete?.weighting === "points" ? t("p.plans.pid.earned_value.weight_points", { weight: row.weight }) : ""})
           <button type="button" onclick={() => edit(row.pid)}>{t("p.plans.pid.earned_value.change")}</button>
         </li>

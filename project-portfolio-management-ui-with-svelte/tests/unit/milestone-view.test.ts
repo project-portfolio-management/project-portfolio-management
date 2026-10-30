@@ -147,7 +147,7 @@ describe("milestone words", () => {
         achieved_on: "2026-10-14",
         done_reason: null,
       }),
-    ).toBe("Achieved on 2026-10-14: every task it waits for is done.");
+    ).toBe("Achieved on 14 Oct 2026: every task it waits for is done.");
     expect(
       achievedText({
         achieved: true,
@@ -155,7 +155,7 @@ describe("milestone words", () => {
         achieved_on: "2026-10-14",
         done_reason: "scope cut",
       }),
-    ).toBe("Marked done on 2026-10-14. Reason: scope cut");
+    ).toBe("Marked done on 14 Oct 2026. Reason: scope cut");
   });
 
   it("knows when completing needs a reason", () => {

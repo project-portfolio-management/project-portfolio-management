@@ -260,6 +260,29 @@ what is shown, typed and stored agree. The same rule holds in the contact relati
 field is empty and required (an amount without a currency is refused before anything is sent), with the neutral hint
 "for example EUR, JPY or GBP".
 
+### Numbers, dates and plurals (WW-1.16, WW-1.24 in part)
+
+Every number, percentage and date a person reads goes through `src/lib/locale-format.ts` in the page's locale (the one
+in the URL): grouping and decimal mark, the locale's percent form ("25 %" in German), and a civil ISO date as the
+locale's date ("30 Oct 2026", "30.10.2026", "30 Hyd 2026"), formatted in UTC so it is the same day everywhere; a
+timestamp is shown in the reader's time zone. An unknown figure is "—", never 0. Display only: the API still sends and
+takes ISO dates, basis points and fractions. The module is a port of the workforce planning management UI's
+`locale-format.ts` (WPM-T375, WPM-T377) and shares its behaviour; the contact relationship management UI is to format
+the same way (it had no such module on 2026-10-30). PPM adds `formatDayMonth` for chart axes. Gregorian only.
+
+A string that fills a count is a plural group (`<base>_one`, `<base>_other`, and `_zero`, `_two`, `_few`, `_many` where
+a language uses them) chosen by `tn(base, count, values)` with `Intl.PluralRules` in the page's locale, as WPM's `tn`;
+code never picks `_one` with `n === 1`. A locale with no text for a group reads English by English's rules, as for any
+missing key. `tests/unit/locale-format.test.ts` scans `src/` (not the catalogues) for `toFixed`, `toLocale*`, a percent
+sign glued to a number, a timestamp sliced to a date and an ISO date field put straight into markup or a placeholder;
+`tests/unit/plurals.test.ts` holds the plural forms and scans `src/` for a plural form chosen by hand.
+
+Not covered yet (for the owner, WW-1): catalogue strings that put "%" after a number placeholder (30 in English and in
+Welsh, counted so the number can only fall); placeholder numbers are not locale-formatted by the page catalogue's
+`interpolate`; Welsh holds only one and other for each plural group (Welsh also has zero, two, few and many); dates in
+table columns and labels the scan does not see (for example the costs page's bucket headers, the network diagram's
+"MM-DD" labels, the variance and leveling tables' "→" ranges, the burndown and capacity window dates) are still ISO.
+
 ### Locale / i18n
 
 `LocalePicker` (`lily-design-system-svelte-locale-picker`) sets `lang`

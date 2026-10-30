@@ -1931,6 +1931,9 @@ only as search snippets.
   **2026-10-30:** the interface's exponent now comes from the same ISO 4217 table as `currency.rs` (a unit test
   compares them), not from `Intl`, whose CLDR digits differ for 16 codes such as HUF and IDR; amounts typed in those
   currencies from 2026-10-29 were stored 100 times too small and are for an operator to check (root `CHANGELOG.md`).
+  **2026-10-30, harmonization (no owner decision needed):** the interface formats numbers, percentages and dates and
+  chooses plural forms the way the workforce UI does (`src/lib/locale-format.ts` and `tn`, ports of WPM's), with scan
+  tests; WW-1.15, WW-1.16 and WW-1.24 are marked "harmonized in part" in the audit with what remains for the owner.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

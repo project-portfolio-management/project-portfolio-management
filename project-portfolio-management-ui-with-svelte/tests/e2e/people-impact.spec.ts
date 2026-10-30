@@ -127,9 +127,9 @@ test("a programme's people impact is asked on request and shown as WPM gave it",
   );
   await box.getByRole("button", { name: "Ask the workforce service" }).click();
   await expect(page.getByTestId("people-impact-source")).toContainText(
-    "2026-10-30",
+    "30 Oct 2026",
   );
-  await expect(box).toContainText("End date sent: 2027-06-30");
+  await expect(box).toContainText("End date sent: 30 Jun 2027");
   await expect(
     box.getByRole("listitem").filter({ hasText: "Nursing" }),
   ).toContainText("12");

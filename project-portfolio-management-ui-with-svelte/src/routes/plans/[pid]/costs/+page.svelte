@@ -10,7 +10,7 @@
   import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
@@ -67,7 +67,7 @@
   async function record() {
     try {
       const r = await ppm.recordLabourCosts(pid);
-      status = t(r.recorded === 1 ? "p.plans.pid.costs.recorded_one" : "p.plans.pid.costs.recorded_other", { recorded: r.recorded, already_recorded: r.already_recorded, length: r.no_rate.length });
+      status = tn("p.plans.pid.costs.recorded", r.recorded, { recorded: r.recorded, already_recorded: r.already_recorded, length: r.no_rate.length });
       await load();
     } catch (err) {
       status = errorText(err, "p.plans.pid.costs.could_not_record");
@@ -117,7 +117,7 @@
   <h2>{t("p.plans.pid.costs.recorded_labour_cost")}</h2>
   {#if actuals}
     {#each actuals.currencies as c (c.currency)}
-      <p>{(c.entries === 1 ? t("p.plans.pid.costs.for_across_one", { money: money(c.cost_minor, c.currency), hoursText: hoursText(c.minutes), entries: c.entries }) : t("p.plans.pid.costs.for_across_other", { money: money(c.cost_minor, c.currency), hoursText: hoursText(c.minutes), entries: c.entries }))}</p>
+      <p>{tn("p.plans.pid.costs.for_across", c.entries, { money: money(c.cost_minor, c.currency), hoursText: hoursText(c.minutes), entries: c.entries })}</p>
     {/each}
     {#if actuals.currencies.length === 0}<p class="muted">{t("p.plans.pid.costs.no_time_has_been_costed")}</p>{/if}
     {#if actuals.unpriced.entries}

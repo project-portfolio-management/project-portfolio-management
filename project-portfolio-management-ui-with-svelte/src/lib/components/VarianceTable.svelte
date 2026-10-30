@@ -9,7 +9,7 @@
   import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import type { ScheduleVariance } from "#lib/api/ppm.js";
   import { standingText } from "#lib/cpm-view.js";
 
@@ -42,7 +42,7 @@
     {:else if s.plan_finish_slip_days === 0}
       {t("c.VarianceTable.the_plan_s_finish_is")}
     {:else}
-      {t(s.plan_finish_slip_days > 0 ? (Math.abs(s.plan_finish_slip_days) === 1 ? "c.VarianceTable.finish_later_one" : "c.VarianceTable.finish_later_other") : (Math.abs(s.plan_finish_slip_days) === 1 ? "c.VarianceTable.finish_earlier_one" : "c.VarianceTable.finish_earlier_other"), { days: Math.abs(s.plan_finish_slip_days), note: s.removed > 0 && s.plan_finish_slip_days < 0 ? t("c.VarianceTable.check_removed") : "" })}
+      {tn(s.plan_finish_slip_days > 0 ? "c.VarianceTable.finish_later" : "c.VarianceTable.finish_earlier", Math.abs(s.plan_finish_slip_days), { days: Math.abs(s.plan_finish_slip_days), note: s.removed > 0 && s.plan_finish_slip_days < 0 ? t("c.VarianceTable.check_removed") : "" })}
     {/if}
   </p>
     <DataTable label={t("c.VarianceTable.schedule_variance_against_the_baseli")} columns={columns} rows={variance.rows} rowId={(r) => String(r.task_pid)} />

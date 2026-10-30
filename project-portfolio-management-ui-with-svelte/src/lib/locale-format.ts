@@ -1,0 +1,316 @@
+// The one number, percentage and date formatter for everything that is not money (WW-1.16, WW-1.24 in part; UI spec
+// "Numbers, dates and plurals"). Money is `money.ts`.
+//
+// SHARED IN BEHAVIOUR WITH THE FAMILY: this is a port of the workforce planning management UI's
+// `src/lib/locale-format.ts` (WPM-T375, WPM-T377), and the contact relationship management UI is to format the same
+// way (its `main` had no such module when this was written, 2026-10-30). There is no shared package (the family
+// copy-adapts between front-ends, repo decision 2026-06-02); a fix to one copy is copied to the others. Adapted here:
+// no centi-FTE helper (a WPM unit), and `i18n.locale` is PPM's (the locale in the URL).
+//
+// Every figure a person reads goes through `Intl` in the page's locale (`i18n.locale`), so a German page shows
+// "1.234,5", a French one "25 %", and a date reads "30 Oct 2026" or "30.10.2026" rather than "2026-10-30". The values
+// themselves are unchanged: the API still sends and takes ISO dates, basis points and fractions, and this module only
+// turns them into text (and typed text back into a number, through `money.ts`'s parser). An unknown value is "—",
+// never 0. Gregorian only: no fiscal-year or other calendar (WW-1.16, for the owner).
+//
+// `tests/unit/locale-format.test.ts` fails on new hand-rolled formatting in `src/` (`toFixed`, `toLocale*`, a
+// percent sign glued to a number, a timestamp sliced to a date).
+
+import { i18n } from "./i18n.svelte.js";
+import { isRtl } from "./locales.js";
+import { parseAmount } from "./money.js";
+
+/** What an absent or unknown figure shows. */
+export const DASH = "—";
+
+type Num = number | null | undefined;
+
+function locale(given?: string): string {
+  return given ?? i18n.locale;
+}
+
+function nf(loc: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  try {
+    return new Intl.NumberFormat(loc, options);
+  } catch {
+    return new Intl.NumberFormat("en", options);
+  }
+}
+
+/** A number in the page's format: grouping, the locale's decimal mark and digits, at most three decimals. */
+export function formatNumber(
+  n: Num,
+  options: Intl.NumberFormatOptions = {},
+  loc?: string,
+): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return DASH;
+  return nf(locale(loc), options).format(n);
+}
+
+/** A count or other whole number ("1,234"); a fraction is rounded. */
+export function formatInteger(n: Num, loc?: string): string {
+  return formatNumber(n, { maximumFractionDigits: 0 }, loc);
+}
+
+/** A number with exactly `digits` decimals ("2.50", "2,50"): the locale's own `toFixed`. */
+export function formatDecimal(n: Num, digits: number, loc?: string): string {
+  return formatNumber(
+    n,
+    { minimumFractionDigits: digits, maximumFractionDigits: digits },
+    loc,
+  );
+}
+
+/** A fraction as a percentage in the locale's own form: 0.25 is "25%" in English, "25 %" in German, "%25" in Turkish. */
+export function formatPercent(fraction: Num, digits = 0, loc?: string): string {
+  return formatNumber(
+    fraction,
+    {
+      style: "percent",
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    },
+    loc,
+  );
+}
+
+/** A value that is already in percent (8.3 means 8.3%), as a percentage. */
+export function formatPercentValue(
+  value: Num,
+  digits = 0,
+  loc?: string,
+): string {
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return DASH;
+  // "8.3e-2" is exactly 0.083, where 8.3 / 100 is not.
+  return formatPercent(Number(`${value}e-2`), digits, loc);
+}
+
+/** Basis points (hundredths of a percent) as a percentage: 10456 is "104.56%"; `digits` defaults to 2. */
+export function formatBasisPoints(bp: Num, digits = 2, loc?: string): string {
+  if (bp === null || bp === undefined || !Number.isFinite(bp)) return DASH;
+  return formatPercent(Number(`${Math.trunc(bp)}e-4`), digits, loc);
+}
+
+/** A number with its sign always shown ("+3", "-1.5", "0"), for a change. */
+export function formatSigned(
+  n: Num,
+  options: Intl.NumberFormatOptions = {},
+  loc?: string,
+): string {
+  return formatNumber(n, { signDisplay: "exceptZero", ...options }, loc);
+}
+
+// Dates. A civil date ("2026-10-30", no time and no zone) is the same day everywhere, so it is formatted in UTC;
+// a timestamp ("2026-10-30T09:15:00Z") is an instant, so it is shown in the reader's own time zone.
+
+const CIVIL = /^(\d{4})-(\d{2})-(\d{2})$/;
+const MONTH = /^(\d{4})-(\d{2})$/;
+
+function instant(iso: string): { date: Date; civil: boolean } | null {
+  const s = iso.trim();
+  const c = CIVIL.exec(s);
+  if (c) {
+    const date = new Date(`${s}T00:00:00Z`);
+    return Number.isNaN(date.getTime()) ? null : { date, civil: true };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(s)) return null;
+  const date = new Date(s);
+  return Number.isNaN(date.getTime()) ? null : { date, civil: false };
+}
+
+function dtf(
+  loc: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  try {
+    return new Intl.DateTimeFormat(loc, options);
+  } catch {
+    return new Intl.DateTimeFormat("en", options);
+  }
+}
+
+/** Whether `value` is an ISO civil date ("2026-10-30"). */
+export function isCivilDate(value: unknown): value is string {
+  return (
+    typeof value === "string" && CIVIL.test(value) && instant(value) !== null
+  );
+}
+
+/**
+ * An ISO date or timestamp as a date in the page's locale ("30 Oct 2026" in en-001, "30.10.2026" in de-001).
+ * `null`, `undefined` or "" is "—"; text that is not an ISO date is shown as given.
+ */
+export function formatDate(
+  iso: string | null | undefined,
+  style: "short" | "medium" | "long" | "full" = "medium",
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const at = instant(iso);
+  if (!at) return iso;
+  return dtf(locale(loc), {
+    dateStyle: style,
+    ...(at.civil ? { timeZone: "UTC" } : {}),
+  }).format(at.date);
+}
+
+/** An ISO timestamp as a date and time in the page's locale and the reader's time zone. */
+export function formatDateTime(
+  iso: string | null | undefined,
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const at = instant(iso);
+  if (!at) return iso;
+  if (at.civil) return formatDate(iso, "medium", loc);
+  return dtf(locale(loc), { dateStyle: "medium", timeStyle: "short" }).format(
+    at.date,
+  );
+}
+
+/** An ISO timestamp's time of day in the page's locale and the reader's time zone ("09:15", "9:15 am"). */
+export function formatTime(
+  iso: string | null | undefined,
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const at = instant(iso);
+  if (!at || at.civil) return iso;
+  return dtf(locale(loc), { timeStyle: "short" }).format(at.date);
+}
+
+/** A month ("2026-10" or the first of it, "2026-10-01") as a month and year ("Oct 2026"). */
+export function formatMonth(
+  iso: string | null | undefined,
+  month: "short" | "long" = "short",
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const s = iso.trim();
+  const m = MONTH.exec(s) ?? CIVIL.exec(s);
+  if (!m) return iso;
+  const date = new Date(`${m[1]}-${m[2]}-01T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return dtf(locale(loc), { month, year: "numeric", timeZone: "UTC" }).format(
+    date,
+  );
+}
+
+/**
+ * A day and month with no year ("30 Oct", "30. Okt.", "10月30日"), for chart axes and compact labels. A PPM addition
+ * (WPM has none): an ISO civil date is read in UTC, a timestamp in the reader's time zone.
+ */
+export function formatDayMonth(
+  iso: string | null | undefined,
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const at = instant(iso);
+  if (!at) return iso;
+  return dtf(locale(loc), {
+    day: "numeric",
+    month: "short",
+    ...(at.civil ? { timeZone: "UTC" } : {}),
+  }).format(at.date);
+}
+
+// Ranges and arrows (as WPM-T377). A literal "→" between two dates points the wrong way on a right-to-left page, so a
+// range of dates is `Intl.DateTimeFormat#formatRange` in the page's locale ("1–30 Sept 2026", "1 Sept – 30 Oct 2026"),
+// whose separator is the locale's own and has no direction; an end that is not known is "…". An arrow that means
+// "becomes" (3 → 4, a stage to the next) is `arrow()`, which points along the page's writing direction.
+
+/** The end of a range that is not known. */
+export const OPEN_END = "…";
+
+/** The separator between two ends when `formatRange` cannot be used (an unknown or non-ISO end): an en dash, no direction. */
+const RANGE_SEPARATOR = " – ";
+
+/**
+ * Two ISO dates (or two timestamps) as one range in the page's locale: "1–30 Sept 2026" in en-001, "01.–30.09.2026"
+ * in de-001. A missing end is "…"; a value that is not an ISO date is shown as given, with an en dash between.
+ * Both civil dates are formatted in UTC (the same day everywhere); two timestamps in the reader's time zone.
+ */
+export function formatDateRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  style: "short" | "medium" | "long" | "full" = "medium",
+  loc?: string,
+): string {
+  const a = start ? instant(start) : null;
+  const b = end ? instant(end) : null;
+  if (a && b && a.civil === b.civil && a.date.getTime() <= b.date.getTime()) {
+    const f = dtf(locale(loc), {
+      dateStyle: style,
+      ...(a.civil ? { timeZone: "UTC" } : {}),
+    });
+    return f.formatRange(a.date, b.date);
+  }
+  const side = (v: string | null | undefined) =>
+    v === null || v === undefined || v === ""
+      ? OPEN_END
+      : formatDate(v, style, loc);
+  return `${side(start)}${RANGE_SEPARATOR}${side(end)}`;
+}
+
+/**
+ * Two ISO timestamps as one date-and-time range in the page's locale and the reader's time zone ("1 Sept 2026,
+ * 09:00 – 17:00"). A missing or non-timestamp end falls back to `formatDateTime` on each side.
+ */
+export function formatDateTimeRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  loc?: string,
+): string {
+  const a = start ? instant(start) : null;
+  const b = end ? instant(end) : null;
+  if (a && b && !a.civil && !b.civil && a.date.getTime() <= b.date.getTime()) {
+    return dtf(locale(loc), {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).formatRange(a.date, b.date);
+  }
+  const side = (v: string | null | undefined) =>
+    v === null || v === undefined || v === ""
+      ? OPEN_END
+      : formatDateTime(v, loc);
+  return `${side(start)}${RANGE_SEPARATOR}${side(end)}`;
+}
+
+/** An arrow meaning "becomes" or "goes to", pointing along the page's writing direction: "→", or "←" in Arabic. */
+export function arrow(loc?: string): string {
+  return isRtl(locale(loc)) ? "←" : "→";
+}
+
+// Typed numbers. The parsing core is `money.ts`'s `parseAmount`, so a decimal typed into any field is read the same
+// way an amount is: the locale's decimal mark is the only decimal mark, its group mark and spaces are ignored, and
+// its own digits are digits.
+
+/** A number typed in the page's format ("2,5" in German), or `null` when it is not a plain number. */
+export function parseNumber(text: string, loc?: string): number | null {
+  return parseAmount(text, locale(loc));
+}
+
+/**
+ * A number typed in the page's format, scaled by 10^`exponent` and rounded to an integer: a percentage typed as
+ * "2,5" with exponent 2 is 250 basis points, a ratio typed as "0,8" with exponent 4 is 8000 basis points. `null` when it is not a number.
+ */
+export function parseScaled(
+  text: string,
+  exponent: number,
+  loc?: string,
+): number | null {
+  const n = parseNumber(text, loc);
+  if (n === null) return null;
+  const scaled = Number(`${n}e${exponent}`);
+  return Number.isFinite(scaled) ? Math.round(scaled) : null;
+}
+
+/** A number for a text input in the page's format, no grouping ("2,5" in German), or "" when absent. */
+export function numberToInput(n: Num, loc?: string): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return "";
+  return nf(locale(loc), {
+    useGrouping: false,
+    maximumFractionDigits: 20,
+  }).format(n);
+}

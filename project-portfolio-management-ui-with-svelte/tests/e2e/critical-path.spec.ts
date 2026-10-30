@@ -105,7 +105,7 @@ test.describe("critical path", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Critical path" }),
     ).toBeVisible();
-    await expect(page.getByText("Finishes 2026-10-16.")).toBeVisible();
+    await expect(page.getByText("Finishes 16 Oct 2026.")).toBeVisible();
     await page.getByRole("button", { name: "Table", exact: true }).click();
     await expect(page.getByRole("row", { name: /^Design/ })).toContainText(
       "On the critical path: any slip moves the finish",

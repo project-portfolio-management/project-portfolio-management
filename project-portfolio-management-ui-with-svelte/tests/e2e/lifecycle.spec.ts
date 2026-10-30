@@ -25,7 +25,7 @@ test.describe("lifecycle", () => {
       page.getByRole("heading", { level: 1, name: "Lifecycle" }),
     ).toBeVisible();
     await expect(
-      page.getByText("9 live item(s) · stall threshold 14 calendar day(s)"),
+      page.getByText("9 live items · stall threshold 14 calendar days"),
     ).toBeVisible();
     await expect(page.getByText("in an unrecognized phase")).toBeVisible();
     await expect(
@@ -37,7 +37,7 @@ test.describe("lifecycle", () => {
     await expect(
       page.getByRole("row", { name: /^closed\s+0\s+0/ }),
     ).toBeVisible();
-    await expect(page.getByText("as of 2026-10-12T09:00:00Z")).toBeVisible();
+    await expect(page.getByText(/^as of 12 Oct 2026$/)).toBeVisible();
   });
 
   test("says so when the funnel cannot be loaded", async ({ page }) => {

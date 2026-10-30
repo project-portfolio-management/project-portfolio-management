@@ -11,6 +11,7 @@
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
   import { floatText } from "#lib/my-work-view.js";
@@ -73,7 +74,7 @@
             <li>
               <a href={localeHref(`/plans/${task.plan_pid}`)}>{task.title}</a>
               <span class="small muted">
-                — {task.plan_name}{#if task.due_date} {t("p.me.due", { due_date: task.due_date })}{/if}
+                — {task.plan_name}{#if task.due_date} {t("p.me.due", { due_date: formatDate(task.due_date) })}{/if}
               </span>
               <!-- SC-10: the task's own float, in words (never colour alone);
                    nothing at all when there is no schedule data. -->

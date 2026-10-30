@@ -13,6 +13,7 @@
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient } from "./client";
 import { t } from "../i18n.svelte.js";
+import { formatDecimal, formatPercent } from "../locale-format.js";
 
 // ---- wire shapes (mirroring the service responses) ----
 
@@ -404,14 +405,16 @@ export class TbaClient {
 export function percent(value: number | null | undefined, digits = 0): string {
   if (value === null || value === undefined || !Number.isFinite(value))
     return "—";
-  return `${(value * 100).toFixed(digits)}%`;
+  return formatPercent(value, digits);
 }
 
 /** A duration in calendar days ("2.3 calendar days"), or an em-dash when there is none. */
 export function days(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || !Number.isFinite(value))
     return "—";
-  return t("l.api_tba.calendar_days", { toFixed: value.toFixed(digits) });
+  return t("l.api_tba.calendar_days", {
+    toFixed: formatDecimal(value, digits),
+  });
 }
 
 /** Milliseconds as a calendar-days string. */

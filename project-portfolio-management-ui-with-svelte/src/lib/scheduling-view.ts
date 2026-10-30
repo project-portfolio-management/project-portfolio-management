@@ -16,6 +16,13 @@ import type {
 } from "#lib/api/ppm.js";
 import { businessDays } from "./units.js";
 import { t } from "./i18n.svelte.js";
+import {
+  formatBasisPoints,
+  formatDate,
+  formatDecimal,
+  formatPercent,
+  formatPercentValue,
+} from "#lib/locale-format.js";
 
 // ───────────────────────── schedule health (SC-9) ─────────────────────────
 
@@ -93,8 +100,8 @@ export function thresholdSentence(c: Pick<HealthCheck, "threshold">): string {
         ? t("l.scheduling_view.at_least")
         : t("l.scheduling_view.exactly");
   if (unit === "milli")
-    return `${word[0]?.toUpperCase()}${word.slice(1)} ${((limit ?? 0) / 1000).toFixed(2)}`;
-  return `${word[0]?.toUpperCase()}${word.slice(1)} ${limit}%`;
+    return `${word[0]?.toUpperCase()}${word.slice(1)} ${formatDecimal((limit ?? 0) / 1000, 2)}`;
+  return `${word[0]?.toUpperCase()}${word.slice(1)} ${formatPercentValue(limit)}`;
 }
 
 /** What was found, in words. Null-value checks say there is nothing to show. */
@@ -107,7 +114,7 @@ export function healthValue(c: HealthCheck): string {
     });
   if (c.threshold.unit === "milli")
     return t("l.scheduling_view.of", {
-      toFixed: c.value.toFixed(2),
+      toFixed: formatDecimal(c.value, 2),
       count: c.count,
       of: c.of,
     });
@@ -362,18 +369,20 @@ export function histogramGeometry(
 /** How likely the plan's own critical-path finish is, in words. */
 export function confidenceText(bp: number, cpmFinish: string | null): string {
   const pct = Math.round(bp / 100);
-  const date = cpmFinish ?? t("l.scheduling_view.the_critical_path_finish");
+  const date = cpmFinish
+    ? formatDate(cpmFinish)
+    : t("l.scheduling_view.the_critical_path_finish");
   return t("l.scheduling_view.of_the_simulated_outcomes_finish", { pct, date });
 }
 
 /** "P80: 2026-11-05" style line. */
 export function percentileText(p: { p: number; finish: string }): string {
-  return `P${p.p}: ${p.finish}`;
+  return `P${p.p}: ${formatDate(p.finish)}`;
 }
 
 /** Criticality as a percent, rounded. */
 export function criticalityText(bp: number): string {
-  return `${Math.round(bp / 100)}%`;
+  return formatBasisPoints(bp, 0);
 }
 
 /** Sensitivity in words; null means the duration or the finish never varied. */
@@ -385,7 +394,7 @@ export function sensitivityText(r: number | null): string {
       : Math.abs(r) >= 0.4
         ? t("l.scheduling_view.strength_moderate")
         : t("l.scheduling_view.strength_weak");
-  return `${r.toFixed(2)} (${strength})`;
+  return `${formatDecimal(r, 2)} (${strength})`;
 }
 
 /** The estimate source in words, flagging a fallback loudly. */
@@ -541,7 +550,7 @@ export function lineSourceText(l: {
 export function eventHitText(probabilityBp: number, hitBp: number): string {
   return t("l.scheduling_view.stated_struck_in_of_runs", {
     round: Math.round(probabilityBp / 100),
-    toFixed: (hitBp / 100).toFixed(1),
+    toFixed: formatDecimal(hitBp / 100, 1),
   });
 }
 
@@ -562,7 +571,7 @@ export function quadrantRows(q: {
 }): QuadrantRow[] {
   const total = q.both + q.budget_only + q.time_only + q.neither;
   const share = (n: number): string =>
-    total === 0 ? "—" : `${((n / total) * 100).toFixed(1)}%`;
+    total === 0 ? "—" : formatPercent(n / total, 1);
   return [
     {
       key: "both",
@@ -601,7 +610,7 @@ export function jointConfidenceText(c: {
   finish_bp: number;
   joint_bp: number;
 }): string {
-  const pct = (bp: number): string => `${Math.round(bp / 100)}%`;
+  const pct = (bp: number): string => formatBasisPoints(bp, 0);
   return t("l.scheduling_view.both_within_budget_and_on", {
     pct: pct(c.joint_bp),
     pct2: pct(c.budget_bp),

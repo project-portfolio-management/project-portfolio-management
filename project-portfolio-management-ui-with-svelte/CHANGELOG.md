@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — numbers, dates and plurals follow the page's locale, as in the workforce UI (WW-1.15, WW-1.16, WW-1.24 in part, 2026-10-30)
+
+`src/lib/locale-format.ts` (a port of WPM's, shared in behaviour) formats every number, percentage and date the scan finds; `tn` in `src/lib/i18n.svelte.ts` (a port of WPM's) chooses plural forms with `Intl.PluralRules`; the five "(s)" strings are plural groups (Welsh machine-written, unreviewed). Tests: `tests/unit/locale-format.test.ts`, `tests/unit/plurals.test.ts`. Not done: "%" after a placeholder in 30 catalogue strings; locale numbers inside page-catalogue placeholders; Welsh zero, two, few and many forms; dates in table columns the scan does not see. Not verified: screen reader, visual check of longer labels. Full entry in the root `CHANGELOG.md`.
+
 ### Fixed — money is scaled by the ISO 4217 minor unit, as the service scales it (2026-10-30)
 
 `src/lib/money.ts` took the exponent from `Intl` (CLDR), which differs from ISO 4217 for 16 codes (AFN, ALL, COP, HUF, IDR, IQD, IRR, KPW, LAK, LBP, MGA, MMK, PKR, SOS, SYP, YER), so a forint amount was stored at a hundredth of what the service reads (a thousandth for IQD). The exponent now comes from `MINOR_UNITS`, the service's `src/currency.rs` table, with `Intl` as the fallback for a code not in it; `money()` sets `minimumFractionDigits` and `maximumFractionDigits` to the exponent. The header comment names the three family `money.ts` files that share the rule. Tests: `tests/unit/money.test.ts` (the table against `currency.rs`, the 16 codes, the fallback, round trips for HUF, IDR, COP, JPY, KWD, CLF). **Not done:** no migration of amounts already stored (see the root `CHANGELOG.md` for what an operator should check); WPM's copy not changed. **Not verified:** against a running service.

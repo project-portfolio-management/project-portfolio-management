@@ -5,6 +5,7 @@
 <script lang="ts">
   import { resource } from "#lib/resource.svelte.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type Task } from "#lib/api/ppm.js";
@@ -36,7 +37,7 @@
 {#if task}
   <dl>
     <dt>{t("p.task.status")}</dt><dd>{STATUS[task.status] ?? task.status}</dd>
-    {#if task.due_date}<dt>{t("p.task.due")}</dt><dd>{task.due_date}</dd>{/if}
+    {#if task.due_date}<dt>{t("p.task.due")}</dt><dd>{formatDate(task.due_date)}</dd>{/if}
     {#if task.assignee_ref}<dt>{t("p.task.assignee")}</dt><dd>{task.assignee_ref}</dd>{/if}
     {#if task.description}<dt>{t("p.task.description")}</dt><dd>{task.description}</dd>{/if}
   </dl>

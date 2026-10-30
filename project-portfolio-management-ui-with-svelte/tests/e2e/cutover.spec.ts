@@ -122,7 +122,7 @@ test.describe("cutover go/no-go", () => {
     ).toBeVisible();
     await expect(
       page.getByText(
-        "Decided on 2026-09-20: delay for safety. Rollback not ready",
+        "Decided on 20 Sept 2026: delay for safety. Rollback not ready",
       ),
     ).toBeVisible();
     await page

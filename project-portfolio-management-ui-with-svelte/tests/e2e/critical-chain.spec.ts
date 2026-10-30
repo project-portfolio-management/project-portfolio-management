@@ -358,7 +358,7 @@ test.describe("critical chain, buffers and the drum (CC-6)", () => {
       ),
     ).toBeVisible();
     await expect(
-      page.getByRole("row", { name: /2026-10-08.*amber/ }),
+      page.getByRole("row", { name: /8 Oct 2026.*amber/ }),
     ).toContainText("◆");
   });
 

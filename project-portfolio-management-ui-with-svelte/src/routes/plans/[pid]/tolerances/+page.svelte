@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { errorReason, errorText } from "#lib/error-text.js";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ToleranceDimension, type TolerancePicture } from "#lib/api/ppm.js";
@@ -78,7 +78,7 @@
       const r = await ppm.escalateTolerances(pid);
       picture = r.tolerances;
       fill(picture);
-      notice = t("p.tolerances.escalated", { n: r.raised.length });
+      notice = tn("p.tolerances.escalated", r.raised.length, { n: r.raised.length });
     } catch (err) {
       notice = t("p.tolerances.could_not", { reason: errorReason(err) });
     }
@@ -138,7 +138,7 @@
         <dt>{t("p.tolerances.how")}</dt>
         <dd class="small">{d.basis}</dd>
         {#if d.note}<dt>{t("p.tolerances.note")}</dt><dd>{d.note}</dd>{/if}
-        {#if d.open_escalations}<dt>{t("p.escalations.escalations")}</dt><dd><a href={localeHref(`/plans/${pid}/escalations`)}>{d.open_escalations === 1 ? t("p.tolerances.escalations_one", { n: 1 }) : t("p.tolerances.escalations_other", { n: d.open_escalations })}</a></dd>{/if}
+        {#if d.open_escalations}<dt>{t("p.escalations.escalations")}</dt><dd><a href={localeHref(`/plans/${pid}/escalations`)}>{tn("p.tolerances.escalations", d.open_escalations, { n: d.open_escalations })}</a></dd>{/if}
       </dl>
       {#if d.escalation_needed}
         <p class="needed" role="note"><strong>{t("p.tolerances.needs_escalation")}</strong> <a href={localeHref(`/plans/${pid}/escalations?reason=tolerance&dimension=${d.dimension}`)}>{t("p.tolerances.raise_one")}</a></p>

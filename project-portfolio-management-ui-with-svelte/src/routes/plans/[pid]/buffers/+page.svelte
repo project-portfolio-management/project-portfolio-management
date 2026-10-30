@@ -9,6 +9,7 @@
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type BufferManagement, type BufferReading, type RecoveryAction } from "#lib/api/ppm.js";
@@ -84,11 +85,11 @@
     { id: "buffer_key", header: t("p.critical_chain.col_buffer_name"), rowHeader: true, format: (v) => labelOf.get(String(v)) ?? String(v) },
     { id: "action", header: t("p.critical_chain.col_action") },
     { id: "owner", header: t("p.critical_chain.col_owner"), accessor: (r) => { const a = rowOf<Action>(r); return a.owner_ref ?? (a.owner ? `${a.owner} ${t("p.critical_chain.hidden")}` : ""); } },
-    { id: "due_date", header: t("p.critical_chain.col_due"), format: (v) => (v ? String(v) : "") },
+    { id: "due_date", header: t("p.critical_chain.col_due"), format: (v) => (v ? formatDate(String(v)) : "") },
     { id: "status", header: t("p.critical_chain.col_status"), format: (v) => statusText(String(v) as Action["status"]), cell: statusCell },
   ]);
   const snapColumns: DataGridColumn[] = $derived([
-    { id: "taken_on", header: t("p.critical_chain.col_snap_date"), rowHeader: true },
+    { id: "taken_on", header: t("p.critical_chain.col_snap_date"), rowHeader: true, format: (v) => formatDate(String(v)) },
     ...(data?.readings ?? []).map((r): DataGridColumn => ({
       id: `z-${r.key}`, header: label(r), accessor: (row) => (rowOf<Snap>(row).zones[r.key] ?? null), cell: snapZoneCell, cellClass: (c) => tone(c.value),
     })),
@@ -116,7 +117,7 @@
 {/if}
 
 {#if data?.state === "readings" && data.readings && data.lines}
-  <p class="small muted">{t("p.critical_chain.frozen_on", { date: data.buffer_plan?.taken_on ?? "" })}</p>
+  <p class="small muted">{t("p.critical_chain.frozen_on", { date: formatDate(data.buffer_plan?.taken_on) })}</p>
 
   <section aria-labelledby="bm-alerts">
     <h2 id="bm-alerts">{t("p.critical_chain.alerts_h2")}</h2>

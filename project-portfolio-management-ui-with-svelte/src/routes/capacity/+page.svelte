@@ -8,6 +8,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatPercentValue } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { PpmClient, type CapacityView } from "#lib/api/ppm.js";
   import CapacityMeter from "#lib/components/CapacityMeter.svelte";
@@ -24,8 +25,8 @@
   type Person = CapacityView["people"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "person_ref", header: t("ppm.capacity.person"), rowHeader: true },
-    { id: "allocated_percent", header: t("ppm.capacity.allocated"), align: "end", format: (v) => `${v}%`, cell: allocCell, cellClass: (c) => ((rowOf<Person>(c.row)).over_allocated ? "cell-red" : "") },
-    { id: "proposed", header: t("p.capacity.proposed"), align: "end", accessor: (r) => rowOf<Person>(r).proposed.percent, format: (_v, r) => (rowOf<Person>(r).proposed.allocations > 0 ? `${rowOf<Person>(r).proposed.percent}%` : "—") },
+    { id: "allocated_percent", header: t("ppm.capacity.allocated"), align: "end", format: (v) => formatPercentValue(Number(v)), cell: allocCell, cellClass: (c) => ((rowOf<Person>(c.row)).over_allocated ? "cell-red" : "") },
+    { id: "proposed", header: t("p.capacity.proposed"), align: "end", accessor: (r) => rowOf<Person>(r).proposed.percent, format: (_v, r) => (rowOf<Person>(r).proposed.allocations > 0 ? formatPercentValue(rowOf<Person>(r).proposed.percent) : "—") },
     { id: "load", header: t("ppm.capacity.load"), sortable: false, accessor: (r) => rowOf<Person>(r).allocated_percent, cell: loadCell },
     { id: "allocations", header: t("ppm.nav.capacity"), align: "end" },
   ]);

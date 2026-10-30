@@ -13,6 +13,7 @@
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import Term from "#lib/components/Term.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -88,7 +89,7 @@
 
 {#if radar}
   <h2>{t("p.technology.technology_radar")}</h2>
-  <p class="muted">{t("p.technology.as_of", { as_of: radar.as_of, convention: radar.convention })}</p>
+  <p class="muted">{t("p.technology.as_of", { as_of: formatDate(radar.as_of), convention: radar.convention })}</p>
   {#each RINGS as ring (ring)}
     {@const inRing = radar.technologies.filter((tech) => tech.ring === ring)}
     {#if inRing.length > 0}
@@ -115,7 +116,7 @@
 
 {#if risk}
   <h2>{t("p.technology.dependency_risk")}</h2>
-  <p class="muted">{t("p.technology.as_of_edges", { as_of: risk.as_of, edges: risk.edges })}</p>
+  <p class="muted">{t("p.technology.as_of_edges", { as_of: formatDate(risk.as_of), edges: risk.edges })}</p>
 
   <h3>{t("p.technology.most_depended_on_single_point")}</h3>
   <DataTable label={t("p.technology.item")} columns={fanColumns} rows={risk.top_fan_out} rowId={(r) => String(rowOf<Fan>(r).item.pid)} emptyText={t("p.technology.no_dependencies_recorded_yet")} testid="tech-fan-out" />

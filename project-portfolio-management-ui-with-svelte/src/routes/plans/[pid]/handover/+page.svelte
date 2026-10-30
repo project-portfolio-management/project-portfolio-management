@@ -10,7 +10,7 @@
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
   import { PpmClient, type HandoverPreview } from "#lib/api/ppm.js";
@@ -48,7 +48,7 @@
     busy = true;
     try {
       const r = await ppm.handoverCommit(pid, { from_person: preview.from_person, to_person: preview.to_person, reason: reason || undefined }, preview.handover_etag);
-      status = t(r.audit_entries === 1 ? "p.plans.pid.handover.done_one" : "p.plans.pid.handover.done_other", { count: r.audit_entries });
+      status = tn("p.plans.pid.handover.done", r.audit_entries, { count: r.audit_entries });
       preview = null;
       reason = "";
     } catch (err) {

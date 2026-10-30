@@ -766,8 +766,10 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.lifecycle.lifecycle": "Cylch bywyd",
   "p.lifecycle.lifecycle_ppm": "Cylch bywyd — PPM",
   "p.lifecycle.live": "Byw",
-  "p.lifecycle.live_item_s_stall_threshold":
-    "{total} eitem fyw · trothwy aros yn ei unfan {stall_days} diwrnod calendr",
+  "p.lifecycle.live_items_one":
+    "{total} eitem fyw · trothwy aros yn ei unfan {stall}",
+  "p.lifecycle.live_items_other":
+    "{total} eitem fyw · trothwy aros yn ei unfan {stall}",
   "p.lifecycle.phase": "Cam",
   "p.lifecycle.share": "Rhannu",
   "p.lifecycle.stalled": "Wedi aros yn ei unfan",
@@ -1649,7 +1651,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.prioritization.no_plans_match_that_filter":
     "Nid oes unrhyw gynlluniau'n cyfateb i'r hidlydd hwnnw.",
   "p.prioritization.none": "dim",
-  "p.prioritization.of_plan_s": "{length} o {scored_of} cynllun",
+  "p.prioritization.of_plans_one": "{length} o {scored_of} cynllun",
+  "p.prioritization.of_plans_other": "{length} o {scored_of} cynllun",
   "p.prioritization.plan": "Cynllun",
   "p.prioritization.points": "Pwyntiau",
   "p.prioritization.prioritization": "Blaenoriaethu",
@@ -1964,9 +1967,13 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae diwrnodau'n rhifau cyfan o 1 i 366 a'r terfyn o 1 i 1000.",
   "p.frameworks.path_problem":
     "Mae pob lefel uwchgyfeirio'n rhif cyfan gwahanol o 1 i 9, gyda phwy sy'n ei glywed a beth sy'n ei anfon yno.",
-  "p.frameworks.confirm_shared":
+  "p.frameworks.confirm_shared_one":
     "Mae hwn wedi'i rannu: mae cadw'n ei newid ar gyfer {n} cynllun arall hefyd.",
-  "p.frameworks.confirm_problem":
+  "p.frameworks.confirm_shared_other":
+    "Mae hwn wedi'i rannu: mae cadw'n ei newid ar gyfer {n} cynllun arall hefyd.",
+  "p.frameworks.confirm_problem_one":
+    "Ticiwch y blwch i gadarnhau'r newid ar gyfer {n} cynllun arall.",
+  "p.frameworks.confirm_problem_other":
     "Ticiwch y blwch i gadarnhau'r newid ar gyfer {n} cynllun arall.",
   "p.frameworks.deleted": "Dilëwyd {name}.",
   "p.frameworks.delete": "Dileu {name} (nid oes neb yn ei ddilyn)",
@@ -2079,7 +2086,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.tolerances.escalate_all": "Uwchgyfeirio pob goddefgarwch coch",
   "p.tolerances.escalate_all_intro":
     "Mae pob dimensiwn sydd dros y goddefgarwch heb ei uwchgyfeirio yn cael uwchgyfeiriad ar lefel gyntaf y llwybr uwchgyfeirio. Ni chaiff dim ei uwchgyfeirio ar ei ben ei hun.",
-  "p.tolerances.escalated": "Codwyd {n} uwchgyfeiriad.",
+  "p.tolerances.escalated_one": "Codwyd {n} uwchgyfeiriad.",
+  "p.tolerances.escalated_other": "Codwyd {n} uwchgyfeiriad.",
   "p.tolerances.escalations_one": "{n} uwchgyfeiriad ar agor",
   "p.tolerances.escalations_other": "{n} uwchgyfeiriad ar agor",
   "p.resources.rbs.by_role": "Fesul rôl",
@@ -2553,7 +2561,6 @@ export const PAGES_CY: Record<PageKey, string> = {
   "c.RiskInputs.adds": "yn ychwanegu {toFixed} {cost_currency}",
   "c.RiskInputs.not_used_in_the_simulations":
     "Heb ei ddefnyddio yn yr efelychiadau",
-  "l.cpm_view.business_day": "diwrnod gwaith",
   "l.cpm_view.cannot_meet_its_constraint_or":
     "Ni all fodloni ei gyfyngiad na'i derfyn amser: {plural} yn brin",
   "l.cpm_view.on_the_critical_path_any":

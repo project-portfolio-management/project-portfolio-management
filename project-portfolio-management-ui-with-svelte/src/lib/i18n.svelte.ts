@@ -3982,6 +3982,98 @@ export function tDynamic(key: string, values?: MessageValues): string {
   return STRING_KEY_SET.has(key) ? t(key as StringKey, values) : key;
 }
 
+// Plurals (WW-1.24 in part). SHARED IN BEHAVIOUR with the workforce planning management UI's `tn` in its
+// `i18n.svelte.ts` (WPM-T374): a string that fills a count is a *plural group*, chosen with `Intl.PluralRules` in the
+// page's locale, never with `n === 1` (English's rule). Adapted to this catalogue, which is flat: a group is the keys
+// `<base>_one`, `<base>_other` and, where a language uses them, `<base>_zero`, `_two`, `_few`, `_many` (CLDR's names),
+// where WPM nests them as `<base>.one`. `tests/unit/plurals.test.ts` holds the forms and scans `src/` for the old
+// `=== 1 ? …_one : …_other` pattern.
+
+/** The CLDR plural categories, in CLDR's order. */
+export const PLURAL_CATEGORIES = [
+  "zero",
+  "one",
+  "two",
+  "few",
+  "many",
+  "other",
+] as const;
+export type PluralCategory = (typeof PLURAL_CATEGORIES)[number];
+
+/** The base key of a plural group: `p.common.business_day` for `…_one` and `…_other`. */
+type PluralBase<K> = K extends `${infer B}_other`
+  ? `${B}_one` extends StringKey
+    ? B
+    : never
+  : never;
+export type PluralKey = PluralBase<StringKey>;
+
+/** Every plural group's base key, from the English catalogue (a key `X_other` with an `X_one` beside it). */
+export const PLURAL_KEYS = STRING_KEYS.filter(
+  (k) => k.endsWith("_other") && STRING_KEY_SET.has(`${k.slice(0, -6)}_one`),
+).map((k) => k.slice(0, -6)) as PluralKey[];
+
+/** The plural categories `locale` uses for whole and decimal counts (`Intl.PluralRules`). */
+export function pluralCategories(locale: string): PluralCategory[] {
+  try {
+    const have = new Intl.PluralRules(locale).resolvedOptions()
+      .pluralCategories as string[];
+    return PLURAL_CATEGORIES.filter((c) => have.includes(c));
+  } catch {
+    return ["one", "other"];
+  }
+}
+
+/** The CLDR plural category of `count` in `locale`: "one" for 1 in English, "few" for 3 in Arabic, "other" for anything in Chinese. */
+export function pluralCategory(count: number, locale: string): PluralCategory {
+  try {
+    return new Intl.PluralRules(locale).select(count) as PluralCategory;
+  } catch {
+    return Math.abs(count) === 1 ? "one" : "other";
+  }
+}
+
+/**
+ * The key of plural group `base` for `count` in `locale`: the locale's own category, then the group's `other` in that
+ * locale, and only then English's form by English's rules (a locale with no text for the group reads English, as
+ * {@link translate} does for any missing key). Pure.
+ */
+export function pluralKey(
+  base: PluralKey,
+  count: number,
+  locale: Locale = current,
+): StringKey {
+  const table = STRINGS[locale] as Record<string, string>;
+  const category = pluralCategory(count, locale);
+  for (const k of [`${base}_${category}`, `${base}_other`])
+    if (table[k] !== undefined) return k as StringKey;
+  const en = `${base}_${pluralCategory(count, DEFAULT_LOCALE)}`;
+  return (STRING_KEY_SET.has(en) ? en : `${base}_other`) as StringKey;
+}
+
+/** The text of plural group `base` for `count` in `locale`, placeholders filled. Pure. */
+export function translatePlural(
+  base: PluralKey,
+  count: number,
+  locale: Locale = current,
+  values?: MessageValues,
+): string {
+  return translate(pluralKey(base, count, locale), locale, values);
+}
+
+/**
+ * Reactive plural translation: `tn("p.common.business_day", n, { n })` picks the CLDR form for `n` in the page's
+ * locale and fills the placeholders. The count is passed in `values` under the name the string uses; `count` only
+ * chooses the form.
+ */
+export function tn(
+  base: PluralKey,
+  count: number,
+  values?: MessageValues,
+): string {
+  return translatePlural(base, count, current, values);
+}
+
 /**
  * An app path under the current locale: `localeHref("/plans")` is
  * `/cy-001/plans` while Welsh is showing. Reactive, like {@link t}. Use it for

@@ -13,6 +13,7 @@
   import RiskInputs from "#lib/components/RiskInputs.svelte";
   import LineRange from "#lib/components/LineRange.svelte";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate, formatDecimal, formatPercentValue } from "#lib/locale-format.js";
   import { currencyCode, minorToInput, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -344,7 +345,7 @@
       <p class="small">
         <strong>{total.currency}</strong>{t("p.plans.pid.governance.target_realized_spend", { money: money(total.target_minor, total.currency), money2: money(total.realized_minor, total.currency), money3: money(total.spend_minor, total.currency) })}
         {#if total.roi_basis_points !== null}
-          {t("p.plans.pid.governance.roi", { toFixed: (total.roi_basis_points / 100).toFixed(1) })}
+          {t("p.plans.pid.governance.roi", { toFixed: formatDecimal(total.roi_basis_points / 100, 1) })}
         {/if}
       </p>
     {/each}
@@ -419,7 +420,7 @@
   <ul>
     {#each milestones as milestone (milestone.pid)}
       <li class="small">
-        {milestone.name} — {milestone.due}
+        {milestone.name} — {formatDate(milestone.due)}
         {#if milestone.done}<span class="chip green">{t("ppm.gov.done")}</span>
         {:else if milestone.overdue}<span class="chip red">{t("ppm.gov.overdue")}</span>
         {:else}
@@ -450,7 +451,7 @@
   <ul>
     {#each allocations as allocation (allocation.pid)}
       <li class="small">
-        {allocation.person_ref} — {allocation.percent}%
+        {allocation.person_ref} — {formatPercentValue(allocation.percent)}
         {#if allocation.role}({allocation.role}){/if}
         {#if allocation.booking === "proposed"}
           <span class="chip">{t("p.plans.pid.governance.proposed_not_counted", { requested: allocation.requested ? t("p.plans.pid.governance.requested") : "" })}</span>

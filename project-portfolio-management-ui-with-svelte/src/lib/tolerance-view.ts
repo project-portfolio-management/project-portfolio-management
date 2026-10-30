@@ -4,7 +4,8 @@
 // be measured) and `not_set` (no limit) are their own states, and neither is green.
 
 import type { ToleranceDimension, ToleranceStatus } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
+import { formatNumber } from "#lib/locale-format.js";
 
 export type DimensionKey = ToleranceDimension["dimension"];
 
@@ -74,10 +75,12 @@ export function amountText(
 ): string {
   if (value === null || value === undefined) return "";
   if (d === "time" || d === "schedule")
-    return value === 1
-      ? t("l.tolerance.day_one", { n: value })
-      : t("l.tolerance.day_other", { n: value });
-  if (d === "cost") return `${value / 100}%`;
+    return tn("l.tolerance.day", value, { n: value });
+  if (d === "cost")
+    return formatNumber(Number(`${value}e-4`), {
+      style: "percent",
+      maximumFractionDigits: 2,
+    });
   if (d === "risk") return t("l.tolerance.score", { n: value });
   return t("l.tolerance.points", { n: value });
 }

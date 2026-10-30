@@ -11,7 +11,8 @@
   import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDate, formatPercentValue } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { PpmClient, type ScheduleRisk } from "#lib/api/ppm.js";
@@ -54,13 +55,13 @@
     { id: "value", header: t("p.plans.pid.schedule_risk.finish"), align: "end" },
   ]);
   const finishRows = (run: Run) => [
-    ...run.percentiles.map((p) => ({ label: pName(p.p), value: p.finish })),
-    { label: t("p.plans.pid.schedule_risk.critical_path_finish_the_plan"), value: run.cpm_finish ?? t("p.plans.pid.schedule_risk.not_enough_data") },
+    ...run.percentiles.map((p) => ({ label: pName(p.p), value: formatDate(p.finish) })),
+    { label: t("p.plans.pid.schedule_risk.critical_path_finish_the_plan"), value: run.cpm_finish ? formatDate(run.cpm_finish) : t("p.plans.pid.schedule_risk.not_enough_data") },
   ];
   const histogramColumns = (iterations: number): DataGridColumn[] => [
-    { id: "date", header: t("p.plans.pid.schedule_risk.finish_date"), rowHeader: true },
+    { id: "date", header: t("p.plans.pid.schedule_risk.finish_date"), rowHeader: true, format: (v) => formatDate(String(v)) },
     { id: "count", header: t("p.plans.pid.schedule_risk.simulations"), align: "end" },
-    { id: "share", header: t("p.plans.pid.schedule_risk.share"), align: "end", accessor: (r) => ((r as { count: number }).count / iterations) * 100, format: (v) => `${Number(v).toFixed(1)}%` },
+    { id: "share", header: t("p.plans.pid.schedule_risk.share"), align: "end", accessor: (r) => ((r as { count: number }).count / iterations) * 100, format: (v) => formatPercentValue(Number(v), 1) },
   ];
   const taskColumns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.plans.pid.schedule_risk.task"), rowHeader: true, accessor: (r) => rowOf<RTask>(r).title ?? rowOf<RTask>(r).pid },
@@ -97,19 +98,19 @@
 
 {#if run}
   <p class="small muted">
-    {t("p.plans.pid.schedule_risk.run_on_against_the_plan", { ranOn, seed: run.assumptions.seed, iterations: run.assumptions.iterations, distributionText: distributionText(run.assumptions), calendar: run.calendar })}
+    {t("p.plans.pid.schedule_risk.run_on_against_the_plan", { ranOn: formatDate(ranOn), seed: run.assumptions.seed, iterations: run.assumptions.iterations, distributionText: distributionText(run.assumptions), calendar: run.calendar })}
   </p>
 
   <h2>{t("p.plans.pid.schedule_risk.when_it_finishes")}</h2>
     <DataTable label={t("p.plans.pid.schedule_risk.finish_date_at_each_percentile")} columns={finishColumns} rows={finishRows(run)} rowId={(r) => String(r.label)} sortable={false} />
   <p>{confidenceText(run.cpm_finish_confidence_bp, run.cpm_finish)}</p>
-  <p class="small muted">{t("p.plans.pid.schedule_risk.earliest_latest", { join: run.percentiles.map(percentileText).join(" · "), earliest: run.earliest, latest: run.latest })}</p>
+  <p class="small muted">{t("p.plans.pid.schedule_risk.earliest_latest", { join: run.percentiles.map(percentileText).join(" · "), earliest: formatDate(run.earliest), latest: formatDate(run.latest) })}</p>
 
   {#if g}
     <figure>
       <svg viewBox="0 0 {g.width} {g.height}" role="img" aria-label={t("p.plans.pid.schedule_risk.histogram_of_simulated_finish_dates")} width="100%" style:max-width="44rem">
         {#each g.bars as b (b.date)}
-          <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("p.plans.pid.schedule_risk.of", { date: b.date, count: b.count, iterations: run.assumptions.iterations })}</title></rect>
+          <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar"><title>{t("p.plans.pid.schedule_risk.of", { date: formatDate(b.date), count: b.count, iterations: run.assumptions.iterations })}</title></rect>
         {/each}
         <line x1="24" x2={g.width - 24} y1={g.baseline} y2={g.baseline} class="axis" />
         {#if g.cpmX !== null}
@@ -138,7 +139,7 @@
   {:else}
     <ul>
       {#each run.events.used as e (e.risk_pid)}
-        <li>{(e.impact_days === 1 ? t("p.plans.pid.schedule_risk.chance_of_adding_business_day_one", { title: e.title, probability_percent: e.probability_percent, impact_days: e.impact_days }) : t("p.plans.pid.schedule_risk.chance_of_adding_business_day_other", { title: e.title, probability_percent: e.probability_percent, impact_days: e.impact_days }))}</li>
+        <li>{tn("p.plans.pid.schedule_risk.chance_of_adding_business_day", e.impact_days, { title: e.title, probability_percent: e.probability_percent, impact_days: e.impact_days })}</li>
       {/each}
     </ul>
   {/if}
@@ -151,7 +152,7 @@
     </ul>
   {/if}
   {#if run.events.risks_without_schedule_fields > 0}
-    <p class="small muted">{run.events.risks_without_schedule_fields === 1 ? t("p.plans.pid.schedule_risk.risks_without_schedule_one", { count: run.events.risks_without_schedule_fields }) : t("p.plans.pid.schedule_risk.risks_without_schedule_other", { count: run.events.risks_without_schedule_fields })}</p>
+    <p class="small muted">{tn("p.plans.pid.schedule_risk.risks_without_schedule", run.events.risks_without_schedule_fields, { count: run.events.risks_without_schedule_fields })}</p>
   {/if}
   {#if run.unscheduled.length > 0}
     <p class="small">{t("p.plans.pid.schedule_risk.not_simulated_because_the_schedule", { join: run.unscheduled.map((u) => `${u.title ?? u.pid} (${u.reason})`).join(", ") })}</p>

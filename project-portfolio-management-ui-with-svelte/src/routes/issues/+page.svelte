@@ -8,7 +8,7 @@
   import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type IssueRegister } from "#lib/api/ppm.js";
@@ -109,7 +109,7 @@
     <p>{register.matching === 0 && register.summary.oldest_open === null && !status && !severity && !openOnly && minAge === undefined ? t("p.issues.none") : t("p.issues.none_match")}</p>
   {:else}
     <p class="small muted" aria-live="polite">
-      {register.matching === 1 ? t("p.issues.count_one", { n: register.matching }) : t("p.issues.count_other", { n: register.matching })}
+      {tn("p.issues.count", register.matching, { n: register.matching })}
     </p>
     {#if register.truncated}<p class="small muted">{t("p.issues.truncated", { n: register.issues.length })}</p>{/if}
     <DataTable label={t("p.issues.title_col")} columns={columns} rows={register.issues} rowId={(r) => String(r.pid)} searchable />

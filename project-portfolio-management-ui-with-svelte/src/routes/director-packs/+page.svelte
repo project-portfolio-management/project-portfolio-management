@@ -7,6 +7,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type DirectorPackMeta } from "#lib/api/ppm.js";
@@ -23,7 +24,7 @@
     { id: "audience", header: t("p.director_pack.col_audience") },
     { id: "version", header: t("p.director_pack.col_version"), align: "end" },
     { id: "status", header: t("p.director_pack.col_status"), format: (v) => (v === "issued" ? t("p.director_pack.status_issued") : t("p.director_pack.status_draft")) },
-    { id: "issued_at", header: t("p.director_pack.col_issued"), format: (v) => (v ? String(v).slice(0, 10) : "–") },
+    { id: "issued_at", header: t("p.director_pack.col_issued"), format: (v) => (v ? formatDate(String(v)) : "–") },
   ]);
 </script>
 

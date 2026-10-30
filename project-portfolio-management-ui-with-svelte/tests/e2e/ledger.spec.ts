@@ -69,7 +69,7 @@ test.describe("funding ledger", () => {
       }),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Trace Treasury 2026-04-01" })
+      .getByRole("button", { name: "Trace Treasury 1 Apr 2026" })
       .click();
     await expect(
       page.getByText(

@@ -23,6 +23,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDayMonth } from "#lib/locale-format.js";
   import type { FlowSample } from "#lib/api/tba.js";
 
   interface Props {
@@ -111,8 +112,7 @@
   );
 
   function dayLabel(ms: number): string {
-    const d = new Date(ms);
-    return `${d.getUTCDate()} ${d.toLocaleString("en", { month: "short", timeZone: "UTC" })}`;
+    return formatDayMonth(new Date(ms).toISOString().slice(0, 10));
   }
 
   /** The sample under the pointer, narrowed for the template. */

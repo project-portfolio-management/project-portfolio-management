@@ -10,6 +10,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import {
     PpmClient,
@@ -60,7 +61,7 @@
 
 {#if exposure}
   <h2>{t("p.financials.currency_exposure")}</h2>
-  <p class="muted">{t("p.financials.as_of", { as_of: exposure.as_of, note: exposure.note })}</p>
+  <p class="muted">{t("p.financials.as_of", { as_of: formatDate(exposure.as_of), note: exposure.note })}</p>
   <DataTable label={t("p.financials.currency_exposure")} columns={exposureColumns} rows={exposure.currencies} rowId={(r) => String(r.currency)} emptyText={t("p.financials.no_budget_lines_recorded_yet")} testid="fin-exposure" />
 {/if}
 

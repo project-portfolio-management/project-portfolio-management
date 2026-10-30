@@ -166,6 +166,6 @@ test("the critical path offers the critical part when the full answer is refused
   await expect(page.getByTestId("cpm-critical-only")).toContainText(
     "critical and near-critical",
   );
-  await expect(page.getByText("Finishes 2026-10-09.")).toBeVisible();
+  await expect(page.getByText("Finishes 9 Oct 2026.")).toBeVisible();
   expect(asked.at(-1)).toContain("only=critical");
 });

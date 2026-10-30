@@ -5,7 +5,7 @@
 // know either, and the view says so rather than inventing a figure.
 
 import type { ResourcePlan } from "#lib/api/ppm.js";
-import { t } from "./i18n.svelte.js";
+import { t, tn } from "./i18n.svelte.js";
 
 export interface RbsPerson {
   ref: string;
@@ -95,7 +95,7 @@ export function canDrill(r: RbsRole, masked: boolean): boolean {
 /** A role in words: "Engineer: 3 people, demand 2.5 FTE, supply 3 FTE". */
 export function roleText(r: RbsRole, masked: boolean): string {
   const people = masked
-    ? t(r.headcount === 1 ? "l.rbs.headcount_one" : "l.rbs.headcount_other", {
+    ? tn("l.rbs.headcount", r.headcount, {
         headcount: r.headcount,
       })
     : t("l.rbs.named", { length: r.people.length });

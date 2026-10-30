@@ -11,7 +11,8 @@
   import { resource } from "#lib/resource.svelte.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { t, localeHref, tn } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { currencyCode } from "#lib/money.js";
   import { minorFromMajor } from "#lib/work-view.js";
   import { onMount } from "svelte";
@@ -92,8 +93,8 @@
     ...result.cost.percentiles.map((p) => ({ label: `P${p.p}`, value: money(p.minor, result.currency) })),
   ];
   const finishRows = (result: JointRisk) => [
-    ...result.schedule.percentiles.map((p) => ({ label: `P${p.p}`, value: p.finish })),
-    { label: t("p.plans.pid.joint_risk.critical_path_finish_the_plan"), value: result.schedule.cpm_finish ?? t("p.plans.pid.joint_risk.not_enough_data") },
+    ...result.schedule.percentiles.map((p) => ({ label: `P${p.p}`, value: formatDate(p.finish) })),
+    { label: t("p.plans.pid.joint_risk.critical_path_finish_the_plan"), value: result.schedule.cpm_finish ? formatDate(result.schedule.cpm_finish) : t("p.plans.pid.joint_risk.not_enough_data") },
   ];
 </script>
 
@@ -165,7 +166,7 @@
 
   <h2>{t("p.plans.pid.joint_risk.risks")}</h2>
   {#if result.assumptions.shared_events.length > 0}
-    <p class="small">{(result.assumptions.shared_events.length === 1 ? t("p.plans.pid.joint_risk.risk_affect_both_the_schedule_one", { length: result.assumptions.shared_events.length }) : t("p.plans.pid.joint_risk.risk_affect_both_the_schedule_other", { length: result.assumptions.shared_events.length }))}</p>
+    <p class="small">{tn("p.plans.pid.joint_risk.risk_affect_both_the_schedule", result.assumptions.shared_events.length, { length: result.assumptions.shared_events.length })}</p>
   {/if}
   {#if result.events.schedule.skipped.length + result.events.cost.skipped.length > 0}
     <ul class="small">

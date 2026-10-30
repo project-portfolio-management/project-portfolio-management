@@ -8,6 +8,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { i18n } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
@@ -66,9 +67,9 @@
     {t("p.director_pack.version_line", {
       version: pack.pack.version,
       status: pack.pack.status === "issued" ? t("p.director_pack.status_issued") : t("p.director_pack.status_draft"),
-      cutoff: pack.pack.cut_off.slice(0, 10),
+      cutoff: formatDate(pack.pack.cut_off),
     })}
-    {#if pack.pack.issued_at}· {t("p.director_pack.issued_on", { when: pack.pack.issued_at.slice(0, 10) })}{/if}
+    {#if pack.pack.issued_at}· {t("p.director_pack.issued_on", { when: formatDate(pack.pack.issued_at) })}{/if}
   </p>
   {#if pack.pack.status !== "issued"}<p class="banner" role="status">{t("p.director_pack.draft_note")}</p>{/if}
   {#if pack.pack.change_note}<p>{t("p.director_pack.change_note", { note: pack.pack.change_note })}</p>{/if}

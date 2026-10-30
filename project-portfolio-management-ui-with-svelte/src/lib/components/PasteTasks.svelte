@@ -8,7 +8,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import { PpmClient, type TrackerImportReport } from "#lib/api/ppm.js";
   import { errorText } from "#lib/error-text.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, tn } from "#lib/i18n.svelte.js";
   import { summaryText, unmappedGroups } from "#lib/import-view.js";
   import { counts, parsePasted, toImportCsv, type Problem } from "#lib/paste-view.js";
 
@@ -85,9 +85,7 @@
   const label = $derived(
     !preview
       ? t("c.PasteTasks.check")
-      : tally.good === 1
-        ? t("c.PasteTasks.create_one")
-        : t("c.PasteTasks.create_other", { n: tally.good }),
+      : tn("c.PasteTasks.create", tally.good, { n: tally.good }),
   );
 </script>
 

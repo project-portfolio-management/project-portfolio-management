@@ -119,6 +119,61 @@
           "title": "UI spec",
           "path": "project-portfolio-management-ui-with-svelte/spec/index.md",
           "description": "Living spec for the SvelteKit operator UI"
+        },
+        {
+          "title": "01-purpose-and-vision",
+          "path": "spec/01-purpose-and-vision.md",
+          "description": "Why the trio exists and what it is for"
+        },
+        {
+          "title": "02-scope",
+          "path": "spec/02-scope.md",
+          "description": "What is in and out of scope"
+        },
+        {
+          "title": "03-stakeholders-and-users",
+          "path": "spec/03-stakeholders-and-users.md",
+          "description": "Who uses it and in which role"
+        },
+        {
+          "title": "04-glossary",
+          "path": "spec/04-glossary.md",
+          "description": "Terms used across the specs"
+        },
+        {
+          "title": "07-non-functional-requirements",
+          "path": "spec/07-non-functional-requirements.md",
+          "description": "Performance, security, privacy, accessibility and other qualities"
+        },
+        {
+          "title": "17-references",
+          "path": "spec/17-references.md",
+          "description": "Sources cited by the specs"
+        },
+        {
+          "title": "Locales",
+          "path": "spec/locales.md",
+          "description": "Locale policy"
+        },
+        {
+          "title": "Locales for major projects with SvelteKit",
+          "path": "spec/locales-for-global-sharing-with-svelte/index.md",
+          "description": "Topic spec: locale-aware sharing in the Svelte UI"
+        },
+        {
+          "title": "Localex X for roles",
+          "path": "spec/locales-x-for-roles/index.md",
+          "description": "Topic spec: role guides in every locale"
+        },
+        {
+          "title": "Special files for public repos",
+          "path": "spec/special-files-for-public-repos/index.md",
+          "description": "Topic spec: the special files a public repository carries"
+        },
+        {
+          "title": "AI Statement",
+          "path": "spec/special-files-for-public-repos/AI_STATEMENT.md",
+          "description": "The AI statement template that topic spec describes"
         }
       ]
     },
@@ -184,6 +239,56 @@
           "title": "Spec-driven development",
           "path": "agents/spec-driven-development.md",
           "description": "Authority model and three-part PR discipline"
+        },
+        {
+          "title": "CLAUDE.md",
+          "path": "CLAUDE.md",
+          "description": "Claude Code entry point; includes AGENTS.md"
+        },
+        {
+          "title": "database-reviewer agent",
+          "path": ".claude/agents/database-reviewer.md",
+          "description": "Reviewer agent: the Database section of agents/review-checklist.md"
+        },
+        {
+          "title": "rust-reviewer agent",
+          "path": ".claude/agents/rust-reviewer.md",
+          "description": "Reviewer agent: the Rust section of agents/review-checklist.md"
+        },
+        {
+          "title": "security-reviewer agent",
+          "path": ".claude/agents/security-reviewer.md",
+          "description": "Reviewer agent: the Security section of agents/review-checklist.md"
+        },
+        {
+          "title": "ui-reviewer agent",
+          "path": ".claude/agents/ui-reviewer.md",
+          "description": "Reviewer agent: the UI section of agents/review-checklist.md"
+        },
+        {
+          "title": "AGENTS directory — Portfolio Matcher",
+          "path": "project-portfolio-management-matcher-with-rust/agents/index.md",
+          "description": "Matcher agent guides index"
+        },
+        {
+          "title": "Matching algorithm — project-portfolio-management-matcher",
+          "path": "project-portfolio-management-matcher-with-rust/agents/matching-algorithm.md",
+          "description": "The matching algorithm in detail"
+        },
+        {
+          "title": "Normalization — project-portfolio-management-matcher",
+          "path": "project-portfolio-management-matcher-with-rust/agents/normalization.md",
+          "description": "Field normalization rules"
+        },
+        {
+          "title": "Spec-Driven Development — Agent Guide",
+          "path": "project-portfolio-management-matcher-with-rust/agents/spec-driven-development.md",
+          "description": "Spec-driven development in the matcher"
+        },
+        {
+          "title": "Testing — project-portfolio-management-matcher",
+          "path": "project-portfolio-management-matcher-with-rust/agents/testing.md",
+          "description": "Matcher testing"
         }
       ]
     },
@@ -234,6 +339,21 @@
           "title": "Email with Stalwart",
           "path": "operations/email-with-stalwart.md",
           "description": "Outgoing mail with a local Stalwart server"
+        },
+        {
+          "title": "Tutorial: the bridge to the workforce service (WPM)",
+          "path": "operations/wpm-bridge.md",
+          "description": "Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact"
+        },
+        {
+          "title": "Operating commitments",
+          "path": "operations/commitments.md",
+          "description": "Operating commitments"
+        },
+        {
+          "title": "Recovery objectives",
+          "path": "operations/recovery-objectives.md",
+          "description": "Recovery point and recovery time objectives"
         }
       ]
     },
@@ -274,6 +394,41 @@
           "title": "AI statement",
           "path": "AI_STATEMENT.md",
           "description": "How AI was used to build this repository"
+        },
+        {
+          "title": "Assurance checklist",
+          "path": "governance/assurance-checklist.md",
+          "description": "Assurance checklist"
+        },
+        {
+          "title": "Data-flow diagram",
+          "path": "governance/data-flow.md",
+          "description": "Where personal and operational data goes, including the WPM bridge"
+        },
+        {
+          "title": "Data protection impact assessment (template)",
+          "path": "governance/dpia.md",
+          "description": "Data protection impact assessment"
+        },
+        {
+          "title": "DTAC checklist",
+          "path": "governance/dtac-checklist.md",
+          "description": "DTAC checklist"
+        },
+        {
+          "title": "Record of processing",
+          "path": "governance/record-of-processing.md",
+          "description": "Record of processing activities"
+        },
+        {
+          "title": "Retention schedule",
+          "path": "governance/retention-schedule.md",
+          "description": "Retention schedule and the purge task"
+        },
+        {
+          "title": "Worldwide equity audit (WW-1)",
+          "path": "governance/worldwide-equity-audit.md",
+          "description": "Worldwide equity audit"
         }
       ]
     },
@@ -319,6 +474,46 @@
           "title": "UI README",
           "path": "project-portfolio-management-ui-with-svelte/README.md",
           "description": "Overview and run instructions for the UI"
+        },
+        {
+          "title": "Repository index",
+          "path": "index.md",
+          "description": "Repository index of documents"
+        },
+        {
+          "title": "Matcher index",
+          "path": "project-portfolio-management-matcher-with-rust/index.md",
+          "description": "Matcher documents index"
+        },
+        {
+          "title": "Service index",
+          "path": "project-portfolio-management-service-with-rust/index.md",
+          "description": "Service documents index"
+        },
+        {
+          "title": "UI index",
+          "path": "project-portfolio-management-ui-with-svelte/index.md",
+          "description": "UI documents index"
+        },
+        {
+          "title": "UI changelog",
+          "path": "project-portfolio-management-ui-with-svelte/CHANGELOG.md",
+          "description": "UI changelog"
+        },
+        {
+          "title": "SvelteKit 3 migration tasks",
+          "path": "project-portfolio-management-ui-with-svelte/MIGRATION_TASKS.md",
+          "description": "UI migration task list"
+        },
+        {
+          "title": "Matcher fuzzing",
+          "path": "project-portfolio-management-matcher-with-rust/fuzz/README.md",
+          "description": "Matcher fuzz targets"
+        },
+        {
+          "title": "Service fuzzing",
+          "path": "project-portfolio-management-service-with-rust/fuzz/README.md",
+          "description": "Service fuzz targets"
         }
       ]
     },
@@ -364,6 +559,16 @@
           "title": "Request for comments",
           "path": "RFC.md",
           "description": "Open proposals"
+        },
+        {
+          "title": "Licence",
+          "path": "LICENSE.md",
+          "description": "The licence choices and their texts"
+        },
+        {
+          "title": "Maintainers",
+          "path": "MAINTAINERS.md",
+          "description": "Who maintains the repository"
         }
       ]
     },
@@ -379,12 +584,602 @@
           "title": "Skill commands",
           "path": "project-portfolio-management-skill/references/commands.md",
           "description": "The exact commands for building, testing and checking each project"
+        },
+        {
+          "title": "Skill: API map",
+          "path": "project-portfolio-management-skill/references/api.md",
+          "description": "Where the routes are, the families, and the WPM bridge routes"
+        }
+      ]
+    },
+    {
+      "title": "Regulatory assessments",
+      "links": [
+        {
+          "title": "ISO 14971 scoping assessment of Project Portfolio Management (PPM)",
+          "path": "docs/international-organization-for-standardization/iso-14971/index.md",
+          "description": "ISO 14971 risk management, as of 2026-10-28"
+        },
+        {
+          "title": "A starting hazard analysis for PPM, in the manner of ISO 14971",
+          "path": "docs/international-organization-for-standardization/iso-14971/hazard-analysis.md",
+          "description": "ISO 14971 hazard analysis"
+        },
+        {
+          "title": "MHRA medical device regulation: scoping assessment of Project Portfolio Management (PPM)",
+          "path": "docs/united-kingdom/medicines-and-healthcare-products-regulatory-agency/index.md",
+          "description": "MHRA medical-device question, as of 2026-10-28"
+        },
+        {
+          "title": "DTAC v2.0 assessment of Project Portfolio Management (PPM)",
+          "path": "docs/united-kingdom/national-health-service/digital-technology-assessment-criteria/2.0/index.md",
+          "description": "NHS DTAC 2.0 assessment, as of 2026-10-10"
+        },
+        {
+          "title": "UK NHS Digital Technology Assessment Criteria (DTAC) checklist",
+          "path": "docs/united-kingdom/national-health-service/digital-technology-assessment-criteria/2.0/checklist.md",
+          "description": "NHS DTAC 2.0 checklist"
+        }
+      ]
+    },
+    {
+      "title": "Role guides by locale",
+      "links": [
+        {
+          "title": "Chief executive officer (cy-001)",
+          "path": "locales/cy-001/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief information officer (cy-001)",
+          "path": "locales/cy-001/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief legal officer (cy-001)",
+          "path": "locales/cy-001/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief operating officer (cy-001)",
+          "path": "locales/cy-001/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief people officer (cy-001)",
+          "path": "locales/cy-001/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief risk officer (cy-001)",
+          "path": "locales/cy-001/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief security officer (cy-001)",
+          "path": "locales/cy-001/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief strategy officer (cy-001)",
+          "path": "locales/cy-001/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale cy-001"
+        },
+        {
+          "title": "Chief technology officer (cy-001)",
+          "path": "locales/cy-001/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale cy-001"
+        },
+        {
+          "title": "Governance risk compliance (cy-001)",
+          "path": "locales/cy-001/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale cy-001"
+        },
+        {
+          "title": "Independent security tester (cy-001)",
+          "path": "locales/cy-001/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale cy-001"
+        },
+        {
+          "title": "Chief executive officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief information officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief legal officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief operating officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief people officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief risk officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief security officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief strategy officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale cy-gb"
+        },
+        {
+          "title": "Chief technology officer (cy-gb)",
+          "path": "locales/cy-gb/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale cy-gb"
+        },
+        {
+          "title": "Governance risk compliance (cy-gb)",
+          "path": "locales/cy-gb/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale cy-gb"
+        },
+        {
+          "title": "Independent security tester (cy-gb)",
+          "path": "locales/cy-gb/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale cy-gb"
+        },
+        {
+          "title": "Chief executive officer (en-001)",
+          "path": "locales/en-001/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale en-001"
+        },
+        {
+          "title": "Chief information officer (en-001)",
+          "path": "locales/en-001/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale en-001"
+        },
+        {
+          "title": "Chief legal officer (en-001)",
+          "path": "locales/en-001/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale en-001"
+        },
+        {
+          "title": "Chief operating officer (en-001)",
+          "path": "locales/en-001/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale en-001"
+        },
+        {
+          "title": "Chief people officer (en-001)",
+          "path": "locales/en-001/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale en-001"
+        },
+        {
+          "title": "Chief risk officer (en-001)",
+          "path": "locales/en-001/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale en-001"
+        },
+        {
+          "title": "Chief security officer (en-001)",
+          "path": "locales/en-001/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale en-001"
+        },
+        {
+          "title": "Chief strategy officer (en-001)",
+          "path": "locales/en-001/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale en-001"
+        },
+        {
+          "title": "Chief technology officer (en-001)",
+          "path": "locales/en-001/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale en-001"
+        },
+        {
+          "title": "Governance risk compliance (en-001)",
+          "path": "locales/en-001/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale en-001"
+        },
+        {
+          "title": "Independent security tester (en-001)",
+          "path": "locales/en-001/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale en-001"
+        },
+        {
+          "title": "Chief executive officer (en-gb)",
+          "path": "locales/en-gb/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief information officer (en-gb)",
+          "path": "locales/en-gb/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief legal officer (en-gb)",
+          "path": "locales/en-gb/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief operating officer (en-gb)",
+          "path": "locales/en-gb/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief people officer (en-gb)",
+          "path": "locales/en-gb/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief risk officer (en-gb)",
+          "path": "locales/en-gb/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief security officer (en-gb)",
+          "path": "locales/en-gb/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief strategy officer (en-gb)",
+          "path": "locales/en-gb/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale en-gb"
+        },
+        {
+          "title": "Chief technology officer (en-gb)",
+          "path": "locales/en-gb/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale en-gb"
+        },
+        {
+          "title": "Governance risk compliance (en-gb)",
+          "path": "locales/en-gb/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale en-gb"
+        },
+        {
+          "title": "Independent security tester (en-gb)",
+          "path": "locales/en-gb/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale en-gb"
+        },
+        {
+          "title": "Chief executive officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief information officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief legal officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief operating officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief people officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief risk officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief security officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief strategy officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief technology officer (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Governance risk compliance (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Independent security tester (en-gb-oxendict)",
+          "path": "locales/en-gb-oxendict/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale en-gb-oxendict"
+        },
+        {
+          "title": "Chief executive officer (en-us)",
+          "path": "locales/en-us/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale en-us"
+        },
+        {
+          "title": "Chief information officer (en-us)",
+          "path": "locales/en-us/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale en-us"
+        },
+        {
+          "title": "Chief legal officer (en-us)",
+          "path": "locales/en-us/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale en-us"
+        },
+        {
+          "title": "Chief operating officer (en-us)",
+          "path": "locales/en-us/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale en-us"
+        },
+        {
+          "title": "Chief people officer (en-us)",
+          "path": "locales/en-us/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale en-us"
+        },
+        {
+          "title": "Chief risk officer (en-us)",
+          "path": "locales/en-us/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale en-us"
+        },
+        {
+          "title": "Chief security officer (en-us)",
+          "path": "locales/en-us/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale en-us"
+        },
+        {
+          "title": "Chief strategy officer (en-us)",
+          "path": "locales/en-us/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale en-us"
+        },
+        {
+          "title": "Chief technology officer (en-us)",
+          "path": "locales/en-us/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale en-us"
+        },
+        {
+          "title": "Governance risk compliance (en-us)",
+          "path": "locales/en-us/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale en-us"
+        },
+        {
+          "title": "Independent security tester (en-us)",
+          "path": "locales/en-us/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale en-us"
+        },
+        {
+          "title": "Chief executive officer (hi-001)",
+          "path": "locales/hi-001/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief information officer (hi-001)",
+          "path": "locales/hi-001/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief legal officer (hi-001)",
+          "path": "locales/hi-001/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief operating officer (hi-001)",
+          "path": "locales/hi-001/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief people officer (hi-001)",
+          "path": "locales/hi-001/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief risk officer (hi-001)",
+          "path": "locales/hi-001/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief security officer (hi-001)",
+          "path": "locales/hi-001/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief strategy officer (hi-001)",
+          "path": "locales/hi-001/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale hi-001"
+        },
+        {
+          "title": "Chief technology officer (hi-001)",
+          "path": "locales/hi-001/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale hi-001"
+        },
+        {
+          "title": "Governance risk compliance (hi-001)",
+          "path": "locales/hi-001/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale hi-001"
+        },
+        {
+          "title": "Independent security tester (hi-001)",
+          "path": "locales/hi-001/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale hi-001"
+        },
+        {
+          "title": "Chief executive officer (hi-in)",
+          "path": "locales/hi-in/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief information officer (hi-in)",
+          "path": "locales/hi-in/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief legal officer (hi-in)",
+          "path": "locales/hi-in/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief operating officer (hi-in)",
+          "path": "locales/hi-in/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief people officer (hi-in)",
+          "path": "locales/hi-in/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief risk officer (hi-in)",
+          "path": "locales/hi-in/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief security officer (hi-in)",
+          "path": "locales/hi-in/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief strategy officer (hi-in)",
+          "path": "locales/hi-in/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale hi-in"
+        },
+        {
+          "title": "Chief technology officer (hi-in)",
+          "path": "locales/hi-in/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale hi-in"
+        },
+        {
+          "title": "Governance risk compliance (hi-in)",
+          "path": "locales/hi-in/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale hi-in"
+        },
+        {
+          "title": "Independent security tester (hi-in)",
+          "path": "locales/hi-in/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale hi-in"
+        },
+        {
+          "title": "Chief executive officer (zh-001)",
+          "path": "locales/zh-001/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief information officer (zh-001)",
+          "path": "locales/zh-001/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief legal officer (zh-001)",
+          "path": "locales/zh-001/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief operating officer (zh-001)",
+          "path": "locales/zh-001/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief people officer (zh-001)",
+          "path": "locales/zh-001/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief risk officer (zh-001)",
+          "path": "locales/zh-001/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief security officer (zh-001)",
+          "path": "locales/zh-001/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief strategy officer (zh-001)",
+          "path": "locales/zh-001/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale zh-001"
+        },
+        {
+          "title": "Chief technology officer (zh-001)",
+          "path": "locales/zh-001/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale zh-001"
+        },
+        {
+          "title": "Governance risk compliance (zh-001)",
+          "path": "locales/zh-001/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale zh-001"
+        },
+        {
+          "title": "Independent security tester (zh-001)",
+          "path": "locales/zh-001/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale zh-001"
+        },
+        {
+          "title": "Chief executive officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-executive-officer/index.md",
+          "description": "Chief executive officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief information officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-information-officer/index.md",
+          "description": "Chief information officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief legal officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-legal-officer/index.md",
+          "description": "Chief legal officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief operating officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-operating-officer/index.md",
+          "description": "Chief operating officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief people officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-people-officer/index.md",
+          "description": "Chief people officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief risk officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-risk-officer/index.md",
+          "description": "Chief risk officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief security officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-security-officer/index.md",
+          "description": "Chief security officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief strategy officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-strategy-officer/index.md",
+          "description": "Chief strategy officer guide, locale zh-cn"
+        },
+        {
+          "title": "Chief technology officer (zh-cn)",
+          "path": "locales/zh-cn/for/chief-technology-officer/index.md",
+          "description": "Chief technology officer guide, locale zh-cn"
+        },
+        {
+          "title": "Governance risk compliance (zh-cn)",
+          "path": "locales/zh-cn/for/governance-risk-compliance/index.md",
+          "description": "Governance risk compliance guide, locale zh-cn"
+        },
+        {
+          "title": "Independent security tester (zh-cn)",
+          "path": "locales/zh-cn/for/independent-security-tester/index.md",
+          "description": "Independent security tester guide, locale zh-cn"
         }
       ]
     }
   ],
   "facts": {
-    "version": "0.1.0",
+    "version": "service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag v0.2.0)",
     "layout": {
       "service": "project-portfolio-management-service-with-rust",
       "matcher": "project-portfolio-management-matcher-with-rust",
@@ -398,11 +1193,12 @@
     ],
     "run": [
       "podman compose up -d --build --wait",
-      "cd project-portfolio-management-ui-with-svelte && pnpm install && pnpm dev"
+      "cd project-portfolio-management-ui-with-svelte && pnpm install && pnpm dev",
+      "cd project-portfolio-management-service-with-rust && cargo run -- start"
     ],
     "check": [
-      "cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib",
-      "cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest run && pnpm exec playwright test"
+      "cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib",
+      "cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && pnpm exec playwright test"
     ],
     "rules": [
       "Spec first: a behavioural change is one commit with a spec edit, a code edit and a test edit.",

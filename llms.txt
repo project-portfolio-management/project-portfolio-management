@@ -4,7 +4,7 @@
 
 ## Facts
 
-- Version: 0.1.0
+- Version: service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag v0.2.0)
 - Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-matcher-with-rust` (matcher), `project-portfolio-management-ui-with-svelte` (ui)
 - Stack: Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18
 - Stack: SvelteKit 2, Svelte 5 (runes), Node 26, pnpm
@@ -12,8 +12,9 @@
 - Stack: Podman with Compose to run it
 - Run: `podman compose up -d --build --wait`
 - Run: `cd project-portfolio-management-ui-with-svelte && pnpm install && pnpm dev`
-- Check: `cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib`
-- Check: `cd project-portfolio-management-ui-with-svelte && pnpm run check && npx vitest run && pnpm exec playwright test`
+- Run: `cd project-portfolio-management-service-with-rust && cargo run -- start`
+- Check: `cd project-portfolio-management-service-with-rust && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib`
+- Check: `cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && pnpm exec playwright test`
 - Rule: Spec first: a behavioural change is one commit with a spec edit, a code edit and a test edit.
 - Rule: Say plainly what is not built or not tested.
 - Rule: Stage named files; run scripts/generate-status.sh after adding tests.
@@ -43,6 +44,17 @@
 - [API crate spec](project-portfolio-management-service-with-rust/spec/index.md): Living spec for the Rust service, including section 9 routes and section 13 tasks
 - [Matcher crate spec](project-portfolio-management-matcher-with-rust/spec/index.md): Living spec for the matching library: weights, rules, normalization
 - [UI spec](project-portfolio-management-ui-with-svelte/spec/index.md): Living spec for the SvelteKit operator UI
+- [01-purpose-and-vision](spec/01-purpose-and-vision.md): Why the trio exists and what it is for
+- [02-scope](spec/02-scope.md): What is in and out of scope
+- [03-stakeholders-and-users](spec/03-stakeholders-and-users.md): Who uses it and in which role
+- [04-glossary](spec/04-glossary.md): Terms used across the specs
+- [07-non-functional-requirements](spec/07-non-functional-requirements.md): Performance, security, privacy, accessibility and other qualities
+- [17-references](spec/17-references.md): Sources cited by the specs
+- [Locales](spec/locales.md): Locale policy
+- [Locales for major projects with SvelteKit](spec/locales-for-global-sharing-with-svelte/index.md): Topic spec: locale-aware sharing in the Svelte UI
+- [Localex X for roles](spec/locales-x-for-roles/index.md): Topic spec: role guides in every locale
+- [Special files for public repos](spec/special-files-for-public-repos/index.md): Topic spec: the special files a public repository carries
+- [AI Statement](spec/special-files-for-public-repos/AI_STATEMENT.md): The AI statement template that topic spec describes
 
 ## Agent guides
 
@@ -58,6 +70,16 @@
 - [REST conventions](agents/restful.md): Registry endpoints, paging, status codes, front-end consumption
 - [Testing](agents/testing.md): Test layers, quality gates and contract seams
 - [Spec-driven development](agents/spec-driven-development.md): Authority model and three-part PR discipline
+- [CLAUDE.md](CLAUDE.md): Claude Code entry point; includes AGENTS.md
+- [database-reviewer agent](.claude/agents/database-reviewer.md): Reviewer agent: the Database section of agents/review-checklist.md
+- [rust-reviewer agent](.claude/agents/rust-reviewer.md): Reviewer agent: the Rust section of agents/review-checklist.md
+- [security-reviewer agent](.claude/agents/security-reviewer.md): Reviewer agent: the Security section of agents/review-checklist.md
+- [ui-reviewer agent](.claude/agents/ui-reviewer.md): Reviewer agent: the UI section of agents/review-checklist.md
+- [AGENTS directory — Portfolio Matcher](project-portfolio-management-matcher-with-rust/agents/index.md): Matcher agent guides index
+- [Matching algorithm — project-portfolio-management-matcher](project-portfolio-management-matcher-with-rust/agents/matching-algorithm.md): The matching algorithm in detail
+- [Normalization — project-portfolio-management-matcher](project-portfolio-management-matcher-with-rust/agents/normalization.md): Field normalization rules
+- [Spec-Driven Development — Agent Guide](project-portfolio-management-matcher-with-rust/agents/spec-driven-development.md): Spec-driven development in the matcher
+- [Testing — project-portfolio-management-matcher](project-portfolio-management-matcher-with-rust/agents/testing.md): Matcher testing
 
 ## Install and operate
 
@@ -70,6 +92,9 @@
 - [Demo](operations/demo.md): A seeded demonstration stack
 - [Sign in with Entra](operations/sign-in-with-entra.md): Single sign-on through Keycloak and Microsoft Entra
 - [Email with Stalwart](operations/email-with-stalwart.md): Outgoing mail with a local Stalwart server
+- [Tutorial: the bridge to the workforce service (WPM)](operations/wpm-bridge.md): Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact
+- [Operating commitments](operations/commitments.md): Operating commitments
+- [Recovery objectives](operations/recovery-objectives.md): Recovery point and recovery time objectives
 
 ## Governance and security
 
@@ -80,6 +105,13 @@
 - [Welsh translation review](governance/welsh-translation-review.md): How the machine-written Welsh is reviewed; every string is in the CSV, none reviewed yet
 - [Production readiness](governance/production-readiness.md): What must hold before production use
 - [AI statement](AI_STATEMENT.md): How AI was used to build this repository
+- [Assurance checklist](governance/assurance-checklist.md): Assurance checklist
+- [Data-flow diagram](governance/data-flow.md): Where personal and operational data goes, including the WPM bridge
+- [Data protection impact assessment (template)](governance/dpia.md): Data protection impact assessment
+- [DTAC checklist](governance/dtac-checklist.md): DTAC checklist
+- [Record of processing](governance/record-of-processing.md): Record of processing activities
+- [Retention schedule](governance/retention-schedule.md): Retention schedule and the purge task
+- [Worldwide equity audit (WW-1)](governance/worldwide-equity-audit.md): Worldwide equity audit
 
 ## Work queue
 
@@ -93,6 +125,14 @@
 - [Matcher README](project-portfolio-management-matcher-with-rust/README.md): Usage and weights table for the matching library
 - [Matcher changelog](project-portfolio-management-matcher-with-rust/CHANGELOG.md): Release notes for the matcher
 - [UI README](project-portfolio-management-ui-with-svelte/README.md): Overview and run instructions for the UI
+- [Repository index](index.md): Repository index of documents
+- [Matcher index](project-portfolio-management-matcher-with-rust/index.md): Matcher documents index
+- [Service index](project-portfolio-management-service-with-rust/index.md): Service documents index
+- [UI index](project-portfolio-management-ui-with-svelte/index.md): UI documents index
+- [UI changelog](project-portfolio-management-ui-with-svelte/CHANGELOG.md): UI changelog
+- [SvelteKit 3 migration tasks](project-portfolio-management-ui-with-svelte/MIGRATION_TASKS.md): UI migration task list
+- [Matcher fuzzing](project-portfolio-management-matcher-with-rust/fuzz/README.md): Matcher fuzz targets
+- [Service fuzzing](project-portfolio-management-service-with-rust/fuzz/README.md): Service fuzz targets
 
 ## Project documents
 
@@ -104,8 +144,132 @@
 - [Benchmarks](BENCHMARKS.md): Measured performance and the machine it was measured on
 - [News](NEWS.md): Release announcements
 - [Request for comments](RFC.md): Open proposals
+- [Licence](LICENSE.md): The licence choices and their texts
+- [Maintainers](MAINTAINERS.md): Who maintains the repository
 
 ## AI agent skill
 
 - [Skill](project-portfolio-management-skill/SKILL.md): Working in this repository: layout, commands, conventions
 - [Skill commands](project-portfolio-management-skill/references/commands.md): The exact commands for building, testing and checking each project
+- [Skill: API map](project-portfolio-management-skill/references/api.md): Where the routes are, the families, and the WPM bridge routes
+
+## Regulatory assessments
+
+- [ISO 14971 scoping assessment of Project Portfolio Management (PPM)](docs/international-organization-for-standardization/iso-14971/index.md): ISO 14971 risk management, as of 2026-10-28
+- [A starting hazard analysis for PPM, in the manner of ISO 14971](docs/international-organization-for-standardization/iso-14971/hazard-analysis.md): ISO 14971 hazard analysis
+- [MHRA medical device regulation: scoping assessment of Project Portfolio Management (PPM)](docs/united-kingdom/medicines-and-healthcare-products-regulatory-agency/index.md): MHRA medical-device question, as of 2026-10-28
+- [DTAC v2.0 assessment of Project Portfolio Management (PPM)](docs/united-kingdom/national-health-service/digital-technology-assessment-criteria/2.0/index.md): NHS DTAC 2.0 assessment, as of 2026-10-10
+- [UK NHS Digital Technology Assessment Criteria (DTAC) checklist](docs/united-kingdom/national-health-service/digital-technology-assessment-criteria/2.0/checklist.md): NHS DTAC 2.0 checklist
+
+## Role guides by locale
+
+- [Chief executive officer (cy-001)](locales/cy-001/for/chief-executive-officer/index.md): Chief executive officer guide, locale cy-001
+- [Chief information officer (cy-001)](locales/cy-001/for/chief-information-officer/index.md): Chief information officer guide, locale cy-001
+- [Chief legal officer (cy-001)](locales/cy-001/for/chief-legal-officer/index.md): Chief legal officer guide, locale cy-001
+- [Chief operating officer (cy-001)](locales/cy-001/for/chief-operating-officer/index.md): Chief operating officer guide, locale cy-001
+- [Chief people officer (cy-001)](locales/cy-001/for/chief-people-officer/index.md): Chief people officer guide, locale cy-001
+- [Chief risk officer (cy-001)](locales/cy-001/for/chief-risk-officer/index.md): Chief risk officer guide, locale cy-001
+- [Chief security officer (cy-001)](locales/cy-001/for/chief-security-officer/index.md): Chief security officer guide, locale cy-001
+- [Chief strategy officer (cy-001)](locales/cy-001/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale cy-001
+- [Chief technology officer (cy-001)](locales/cy-001/for/chief-technology-officer/index.md): Chief technology officer guide, locale cy-001
+- [Governance risk compliance (cy-001)](locales/cy-001/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale cy-001
+- [Independent security tester (cy-001)](locales/cy-001/for/independent-security-tester/index.md): Independent security tester guide, locale cy-001
+- [Chief executive officer (cy-gb)](locales/cy-gb/for/chief-executive-officer/index.md): Chief executive officer guide, locale cy-gb
+- [Chief information officer (cy-gb)](locales/cy-gb/for/chief-information-officer/index.md): Chief information officer guide, locale cy-gb
+- [Chief legal officer (cy-gb)](locales/cy-gb/for/chief-legal-officer/index.md): Chief legal officer guide, locale cy-gb
+- [Chief operating officer (cy-gb)](locales/cy-gb/for/chief-operating-officer/index.md): Chief operating officer guide, locale cy-gb
+- [Chief people officer (cy-gb)](locales/cy-gb/for/chief-people-officer/index.md): Chief people officer guide, locale cy-gb
+- [Chief risk officer (cy-gb)](locales/cy-gb/for/chief-risk-officer/index.md): Chief risk officer guide, locale cy-gb
+- [Chief security officer (cy-gb)](locales/cy-gb/for/chief-security-officer/index.md): Chief security officer guide, locale cy-gb
+- [Chief strategy officer (cy-gb)](locales/cy-gb/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale cy-gb
+- [Chief technology officer (cy-gb)](locales/cy-gb/for/chief-technology-officer/index.md): Chief technology officer guide, locale cy-gb
+- [Governance risk compliance (cy-gb)](locales/cy-gb/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale cy-gb
+- [Independent security tester (cy-gb)](locales/cy-gb/for/independent-security-tester/index.md): Independent security tester guide, locale cy-gb
+- [Chief executive officer (en-001)](locales/en-001/for/chief-executive-officer/index.md): Chief executive officer guide, locale en-001
+- [Chief information officer (en-001)](locales/en-001/for/chief-information-officer/index.md): Chief information officer guide, locale en-001
+- [Chief legal officer (en-001)](locales/en-001/for/chief-legal-officer/index.md): Chief legal officer guide, locale en-001
+- [Chief operating officer (en-001)](locales/en-001/for/chief-operating-officer/index.md): Chief operating officer guide, locale en-001
+- [Chief people officer (en-001)](locales/en-001/for/chief-people-officer/index.md): Chief people officer guide, locale en-001
+- [Chief risk officer (en-001)](locales/en-001/for/chief-risk-officer/index.md): Chief risk officer guide, locale en-001
+- [Chief security officer (en-001)](locales/en-001/for/chief-security-officer/index.md): Chief security officer guide, locale en-001
+- [Chief strategy officer (en-001)](locales/en-001/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale en-001
+- [Chief technology officer (en-001)](locales/en-001/for/chief-technology-officer/index.md): Chief technology officer guide, locale en-001
+- [Governance risk compliance (en-001)](locales/en-001/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale en-001
+- [Independent security tester (en-001)](locales/en-001/for/independent-security-tester/index.md): Independent security tester guide, locale en-001
+- [Chief executive officer (en-gb)](locales/en-gb/for/chief-executive-officer/index.md): Chief executive officer guide, locale en-gb
+- [Chief information officer (en-gb)](locales/en-gb/for/chief-information-officer/index.md): Chief information officer guide, locale en-gb
+- [Chief legal officer (en-gb)](locales/en-gb/for/chief-legal-officer/index.md): Chief legal officer guide, locale en-gb
+- [Chief operating officer (en-gb)](locales/en-gb/for/chief-operating-officer/index.md): Chief operating officer guide, locale en-gb
+- [Chief people officer (en-gb)](locales/en-gb/for/chief-people-officer/index.md): Chief people officer guide, locale en-gb
+- [Chief risk officer (en-gb)](locales/en-gb/for/chief-risk-officer/index.md): Chief risk officer guide, locale en-gb
+- [Chief security officer (en-gb)](locales/en-gb/for/chief-security-officer/index.md): Chief security officer guide, locale en-gb
+- [Chief strategy officer (en-gb)](locales/en-gb/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale en-gb
+- [Chief technology officer (en-gb)](locales/en-gb/for/chief-technology-officer/index.md): Chief technology officer guide, locale en-gb
+- [Governance risk compliance (en-gb)](locales/en-gb/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale en-gb
+- [Independent security tester (en-gb)](locales/en-gb/for/independent-security-tester/index.md): Independent security tester guide, locale en-gb
+- [Chief executive officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-executive-officer/index.md): Chief executive officer guide, locale en-gb-oxendict
+- [Chief information officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-information-officer/index.md): Chief information officer guide, locale en-gb-oxendict
+- [Chief legal officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-legal-officer/index.md): Chief legal officer guide, locale en-gb-oxendict
+- [Chief operating officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-operating-officer/index.md): Chief operating officer guide, locale en-gb-oxendict
+- [Chief people officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-people-officer/index.md): Chief people officer guide, locale en-gb-oxendict
+- [Chief risk officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-risk-officer/index.md): Chief risk officer guide, locale en-gb-oxendict
+- [Chief security officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-security-officer/index.md): Chief security officer guide, locale en-gb-oxendict
+- [Chief strategy officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale en-gb-oxendict
+- [Chief technology officer (en-gb-oxendict)](locales/en-gb-oxendict/for/chief-technology-officer/index.md): Chief technology officer guide, locale en-gb-oxendict
+- [Governance risk compliance (en-gb-oxendict)](locales/en-gb-oxendict/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale en-gb-oxendict
+- [Independent security tester (en-gb-oxendict)](locales/en-gb-oxendict/for/independent-security-tester/index.md): Independent security tester guide, locale en-gb-oxendict
+- [Chief executive officer (en-us)](locales/en-us/for/chief-executive-officer/index.md): Chief executive officer guide, locale en-us
+- [Chief information officer (en-us)](locales/en-us/for/chief-information-officer/index.md): Chief information officer guide, locale en-us
+- [Chief legal officer (en-us)](locales/en-us/for/chief-legal-officer/index.md): Chief legal officer guide, locale en-us
+- [Chief operating officer (en-us)](locales/en-us/for/chief-operating-officer/index.md): Chief operating officer guide, locale en-us
+- [Chief people officer (en-us)](locales/en-us/for/chief-people-officer/index.md): Chief people officer guide, locale en-us
+- [Chief risk officer (en-us)](locales/en-us/for/chief-risk-officer/index.md): Chief risk officer guide, locale en-us
+- [Chief security officer (en-us)](locales/en-us/for/chief-security-officer/index.md): Chief security officer guide, locale en-us
+- [Chief strategy officer (en-us)](locales/en-us/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale en-us
+- [Chief technology officer (en-us)](locales/en-us/for/chief-technology-officer/index.md): Chief technology officer guide, locale en-us
+- [Governance risk compliance (en-us)](locales/en-us/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale en-us
+- [Independent security tester (en-us)](locales/en-us/for/independent-security-tester/index.md): Independent security tester guide, locale en-us
+- [Chief executive officer (hi-001)](locales/hi-001/for/chief-executive-officer/index.md): Chief executive officer guide, locale hi-001
+- [Chief information officer (hi-001)](locales/hi-001/for/chief-information-officer/index.md): Chief information officer guide, locale hi-001
+- [Chief legal officer (hi-001)](locales/hi-001/for/chief-legal-officer/index.md): Chief legal officer guide, locale hi-001
+- [Chief operating officer (hi-001)](locales/hi-001/for/chief-operating-officer/index.md): Chief operating officer guide, locale hi-001
+- [Chief people officer (hi-001)](locales/hi-001/for/chief-people-officer/index.md): Chief people officer guide, locale hi-001
+- [Chief risk officer (hi-001)](locales/hi-001/for/chief-risk-officer/index.md): Chief risk officer guide, locale hi-001
+- [Chief security officer (hi-001)](locales/hi-001/for/chief-security-officer/index.md): Chief security officer guide, locale hi-001
+- [Chief strategy officer (hi-001)](locales/hi-001/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale hi-001
+- [Chief technology officer (hi-001)](locales/hi-001/for/chief-technology-officer/index.md): Chief technology officer guide, locale hi-001
+- [Governance risk compliance (hi-001)](locales/hi-001/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale hi-001
+- [Independent security tester (hi-001)](locales/hi-001/for/independent-security-tester/index.md): Independent security tester guide, locale hi-001
+- [Chief executive officer (hi-in)](locales/hi-in/for/chief-executive-officer/index.md): Chief executive officer guide, locale hi-in
+- [Chief information officer (hi-in)](locales/hi-in/for/chief-information-officer/index.md): Chief information officer guide, locale hi-in
+- [Chief legal officer (hi-in)](locales/hi-in/for/chief-legal-officer/index.md): Chief legal officer guide, locale hi-in
+- [Chief operating officer (hi-in)](locales/hi-in/for/chief-operating-officer/index.md): Chief operating officer guide, locale hi-in
+- [Chief people officer (hi-in)](locales/hi-in/for/chief-people-officer/index.md): Chief people officer guide, locale hi-in
+- [Chief risk officer (hi-in)](locales/hi-in/for/chief-risk-officer/index.md): Chief risk officer guide, locale hi-in
+- [Chief security officer (hi-in)](locales/hi-in/for/chief-security-officer/index.md): Chief security officer guide, locale hi-in
+- [Chief strategy officer (hi-in)](locales/hi-in/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale hi-in
+- [Chief technology officer (hi-in)](locales/hi-in/for/chief-technology-officer/index.md): Chief technology officer guide, locale hi-in
+- [Governance risk compliance (hi-in)](locales/hi-in/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale hi-in
+- [Independent security tester (hi-in)](locales/hi-in/for/independent-security-tester/index.md): Independent security tester guide, locale hi-in
+- [Chief executive officer (zh-001)](locales/zh-001/for/chief-executive-officer/index.md): Chief executive officer guide, locale zh-001
+- [Chief information officer (zh-001)](locales/zh-001/for/chief-information-officer/index.md): Chief information officer guide, locale zh-001
+- [Chief legal officer (zh-001)](locales/zh-001/for/chief-legal-officer/index.md): Chief legal officer guide, locale zh-001
+- [Chief operating officer (zh-001)](locales/zh-001/for/chief-operating-officer/index.md): Chief operating officer guide, locale zh-001
+- [Chief people officer (zh-001)](locales/zh-001/for/chief-people-officer/index.md): Chief people officer guide, locale zh-001
+- [Chief risk officer (zh-001)](locales/zh-001/for/chief-risk-officer/index.md): Chief risk officer guide, locale zh-001
+- [Chief security officer (zh-001)](locales/zh-001/for/chief-security-officer/index.md): Chief security officer guide, locale zh-001
+- [Chief strategy officer (zh-001)](locales/zh-001/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale zh-001
+- [Chief technology officer (zh-001)](locales/zh-001/for/chief-technology-officer/index.md): Chief technology officer guide, locale zh-001
+- [Governance risk compliance (zh-001)](locales/zh-001/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale zh-001
+- [Independent security tester (zh-001)](locales/zh-001/for/independent-security-tester/index.md): Independent security tester guide, locale zh-001
+- [Chief executive officer (zh-cn)](locales/zh-cn/for/chief-executive-officer/index.md): Chief executive officer guide, locale zh-cn
+- [Chief information officer (zh-cn)](locales/zh-cn/for/chief-information-officer/index.md): Chief information officer guide, locale zh-cn
+- [Chief legal officer (zh-cn)](locales/zh-cn/for/chief-legal-officer/index.md): Chief legal officer guide, locale zh-cn
+- [Chief operating officer (zh-cn)](locales/zh-cn/for/chief-operating-officer/index.md): Chief operating officer guide, locale zh-cn
+- [Chief people officer (zh-cn)](locales/zh-cn/for/chief-people-officer/index.md): Chief people officer guide, locale zh-cn
+- [Chief risk officer (zh-cn)](locales/zh-cn/for/chief-risk-officer/index.md): Chief risk officer guide, locale zh-cn
+- [Chief security officer (zh-cn)](locales/zh-cn/for/chief-security-officer/index.md): Chief security officer guide, locale zh-cn
+- [Chief strategy officer (zh-cn)](locales/zh-cn/for/chief-strategy-officer/index.md): Chief strategy officer guide, locale zh-cn
+- [Chief technology officer (zh-cn)](locales/zh-cn/for/chief-technology-officer/index.md): Chief technology officer guide, locale zh-cn
+- [Governance risk compliance (zh-cn)](locales/zh-cn/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale zh-cn
+- [Independent security tester (zh-cn)](locales/zh-cn/for/independent-security-tester/index.md): Independent security tester guide, locale zh-cn

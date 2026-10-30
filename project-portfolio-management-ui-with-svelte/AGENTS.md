@@ -9,11 +9,11 @@ holds no token).
 > Read [`spec/index.md`](./spec/index.md) first — the living spec
 > (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
 >
-> **Status: implemented (v0.1.0), verified 2026-10-18.** `pnpm run check`
-> is **0 errors / 0 warnings**, `npx vitest run` passes (**703 tests**, 51
-> files in `tests/unit/`), and the Playwright suite (40 files in
-> `tests/e2e/`, about 600 tests with axe audits) runs against a production build. There are **85 page
-> routes** under `src/routes`. Shipped: the unified identity surface
+> **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
+> is **0 errors / 0 warnings**, `npx vitest run` passes (**912 tests**, 75
+> files in `tests/unit/`), and the Playwright suite (67 files in
+> `tests/e2e/`, 782 tests with axe audits) runs against a production build. There are **100 page
+> routes** under `src/routes` (source-line counts are in the entity spec's §14 generated block). Shipped: the unified identity surface
 > (`/plans`, `/plans/new`, `/plans/[pid]`, `/plans/[pid]/edit`,
 > `/plans/merge`), the Kanban board, governance and schedule views, the
 > oversight / executive dashboards (listed in [README.md](README.md)), the
@@ -147,6 +147,12 @@ src/
 ## API consumption
 
 Every plan lives under `/api/plans` (one recursive collection).
+
+The workforce-service bridge has four screens (FB-6): `/skill-pools` (set or clear a pool's link), `/capacity-heatmap`
+(a linked pool's reading from WPM), `/capacity-commitments` (the outcome of the demand sent) and the people-impact box
+on `/plans/[pid]` for a Program (`src/lib/components/PeopleImpact.svelte`). The browser never calls WPM; the service
+does, under the signed-in person's token. Rules: entity spec §8.5a; tests: `tests/e2e/wpm-bridge.spec.ts`,
+`tests/e2e/capacity-commitments.spec.ts`.
 
 Rows below are endpoints an actual route calls today. `PlanRepository`
 also defines `search()` (`GET /api/plans/search?q=`) and `listPage()`'s

@@ -29,7 +29,7 @@ service crate + matcher crate + front-end.
 |---|---|
 | [../spec/index.md](../spec/index.md) | Entity-level living spec |
 | [../project-portfolio-management-service-with-rust/AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md) | Service guide: route map, middleware, gotchas, testing |
-| [../tasks.md](../tasks.md) · [../plan.md](../plan.md) | Leantime-derived `LT-n` work queue and its research |
+| [../tasks.md](../tasks.md) · [../plan.md](../plan.md) | The work queue (`LT-n` from Leantime, then RM, PL, SC, PJ, DP, EX, HD, CC, IR, RG, CQ, CF, NC, BR, FB, WW and others) and its research |
 | [../spec/13-tasks.md](../spec/13-tasks.md) | Numbered build-out (`T-n`) |
 
 Shared documents the older notes cite as `agents/share/…` (privacy,

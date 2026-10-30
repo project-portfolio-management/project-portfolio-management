@@ -9,7 +9,7 @@ Entry point for AI coding agents at the repository root. Three projects live her
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 2, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
-Version 0.1.0. Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
+Versions: service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag `v0.2.0`). Rust 1.99.1 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.96), Node 26, pnpm, Podman.
 
 ## How work is done here
 
@@ -34,9 +34,12 @@ agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `u
 
 ```bash
 # service and matcher
-cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --lib
+cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
 # database tests need Postgres 18 (the file also starts a Redis on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
 #   then DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
+#   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
+#   and every real-token binary, as CI's `db` job loops over tests/*.rs: cargo test --test <name> -- --ignored --test-threads=1
+#   (all but mod, matching, otlp_export, otlp_middleware, licence_files, keycloak_container, fluvio_relay)
 # restore drill, as CI runs it (the whole suite on a restored copy; run it alone, two at once collide):
 #   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
@@ -54,3 +57,8 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   together with `rust-toolchain.toml`.
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
+- The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no `cargo loco`
+  subcommand installed here.
+- The bridge to the workforce service (WPM) is entity spec §8.5a and service spec §9.10a; it is off (stub mode)
+  until `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` is set, and every call carries the caller's own token.
+  Walk-through: [`operations/wpm-bridge.md`](operations/wpm-bridge.md).

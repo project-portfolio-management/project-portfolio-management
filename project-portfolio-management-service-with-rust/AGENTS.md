@@ -1,7 +1,7 @@
 # AGENTS.md — Portfolio Service
 
 Entry point for AI coding agents working in the
-`project-portfolio-management` crate (v0.1.0, edition 2024, Rust 1.99.1 with a
+`project-portfolio-management` crate (v0.2.0, edition 2024, Rust 1.99.1 with a
 minimum of 1.96, loco-rs 1.2, sea-orm 2.0, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
@@ -32,7 +32,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 
 | Question | Answer |
 |---|---|
-| Run | `cargo loco start` (needs Postgres; port 5150; migrations auto-run in development) |
+| Run | `cargo run -- start` (needs Postgres; port 5150; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DATABASE_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
@@ -83,10 +83,21 @@ full contract; this is the map. One module per area in
 Every plan/record write writes an `audit_logs` row (or, if that insert fails, logs it and counts it in
 `audit_write_failed_total` via `AuditModel::record_or_log`; never `record(..).await.ok()`, CQ-3) and publishes a
 `created`/`updated`/`deleted` (and `merged`) event. **Not wired** (spec
-§13): `POST /plans/deduplicate`, `/plans/{pid}/{goals,issues}`,
-`/plans/{pid}/timeline`, gRPC, `posts`/`comments`/`members` plan
+§13): `POST /plans/deduplicate`, `/plans/{pid}/timeline`, gRPC, `posts`/`members` plan
 sub-resources (a `/comments` route exists, as the discussion feature, not
-as that sub-resource).
+as that sub-resource). Goals (`/plans/{pid}/goals`) and the issues register
+(`/plans/{pid}/issues`, `/api/issues`) are built. The full route list is
+`api-routes.txt`, written by a unit test; `openapi.json` documents every route in it.
+
+**The workforce-service bridge (FB-1 to FB-5).** `src/wpm_bridge.rs` (the rules and the three outbound
+calls), `controllers/capacity_heatmap.rs` (`PUT /api/skill-pools/{pid}/peer-link`, the heatmap's supply reading,
+the demand send on `PUT /api/capacity-commitments`), `controllers/people_impact.rs`
+(`GET /api/plans/{pid}/people-impact`), migration `m20261030_000099_peer_pool_link`. Off until
+`PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` is set; the URL must be `https://` or loopback `http://`. Every call
+forwards the caller's own bearer token (no service account), has a 2-second timeout, follows no redirects and never
+fails the PPM request. Supply figures are kept per caller in memory only; nothing else is kept. Test:
+`tests/wpm_bridge.rs` (a stand-in WPM on a local port; `--ignored`, needs the database). Rules: entity spec §8.5a.
+Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 
 ## Cross-cutting machinery
 
@@ -119,7 +130,7 @@ as that sub-resource).
   sees the world as if the private plan did not exist; member and admin see
   full, identical totals) and **enumerates the mounted GET routes**, so a
   new aggregate route fails it until someone decides whether it filters.
-- **Auth** (`src/auth.rs`): offline PASETO v4.public verification via
+- **Auth** (`src/auth/`: `verifier.rs`, `enforcement.rs`, `policy.rs`, `areas.rs`, `identity.rs`): offline PASETO v4.public verification via
   `authentication-verifier` (published Ed25519 key; boot fetch from
   `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL`, env
   `…_PASETO_KEYS` fallback, service always boots). `AuthUser` requires a

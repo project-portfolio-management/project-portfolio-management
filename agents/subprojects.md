@@ -43,7 +43,7 @@ link aggregator's job.
 
 | Integration (sibling repositories, not in this repository) | Direction | Purpose |
 |---|---|---|
-| authentication-service | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth.rs` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. RS256/JWKS is not used. |
+| authentication-service | portfolio ← PASETO | Offline PASETO v4.public verification (`src/auth/` via `authentication-verifier`, published Ed25519 key); audit `actor` is an auth user id. RS256/JWKS is not used. |
 | person-service | portfolio → person `pid` | `lead_ref`, task / issue `assignee_ref` people references |
 | worker-service | portfolio → worker `pid` | `lead_ref`, assignee references on tasks / issues |
 | organization-service | portfolio → org `pid` | `owner_org_id` sponsor, `OwnerOrg` match component |
@@ -60,13 +60,13 @@ cargo run                    # demo binary (not SemVer surface)
 # Service — needs PostgreSQL; port 5150
 cd project-portfolio-management-service-with-rust
 export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
-cargo loco start             # migrations auto-run in development
+cargo run -- start           # migrations auto-run in development
 cargo test --lib             # DB-free unit tests
 cargo test --test matching   # DB-free embedding tests
 
 # Front-end — needs the service running
 cd project-portfolio-management-ui-with-svelte
-cp .env.example .env         # PUBLIC_API_BASE_URL=http://localhost:5150
+cp .env.example .env         # PROJECT_PORTFOLIO_MANAGEMENT_API_URL=http://localhost:5150
 pnpm install
 pnpm dev                     # http://localhost:5173
 pnpm run check               # svelte-check strict (0/0 expected)

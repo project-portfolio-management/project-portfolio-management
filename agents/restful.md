@@ -85,7 +85,7 @@ target.
 
 Short-lived **PASETO v4.public** tokens are verified offline against the
 auth-service's published **Ed25519 key** via the embedded
-`authentication-verifier` (`src/auth.rs`). The `AuthUser` extractor
+`authentication-verifier` (`src/auth/`). The `AuthUser` extractor
 requires a token; `MaybeAuthUser` is optional and feeds the audit
 `actor`. Blanket `/api/*` auth enforcement is **on by default** (only an explicit
 `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` turns it off, and the service
@@ -149,8 +149,9 @@ curl -s localhost:5150/api/plans \
 
 The UI project owns its route list; see its [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) and spec.
 
-A plan detail also rolls up its child plans (recursive containment). Base
-URL: `PUBLIC_API_BASE_URL` (default `http://localhost:5150`).
+A plan detail also rolls up its child plans (recursive containment). The UI's
+server side reaches the service at `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` (default `http://localhost:5150`,
+`src/lib/server/config.ts`); the browser only calls the UI's own `/api/proxy/…`.
 
 ## Matcher library API
 

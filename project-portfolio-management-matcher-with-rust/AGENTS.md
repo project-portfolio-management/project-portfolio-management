@@ -10,7 +10,7 @@ crate.
 
 | Question | Answer |
 |---|---|
-| What does the crate do? | Pairwise plan record matching, deterministic + probabilistic, for dedup. Plans live in one recursive tree; the optional `kind` label (Portfolio / Project / Product / Program / Practice / Process / Purpose / Pathway / Proposal) is descriptive metadata and does not gate matching. v0.2.0. |
+| What does the crate do? | Pairwise plan record matching, deterministic + probabilistic, for dedup. Plans live in one recursive tree; the optional `kind` label (Portfolio / Project / Product / Program / Practice / Process / Purpose / Pathway / Proposal) is descriptive metadata and does not gate matching. v0.2.1. |
 | Canonical spec? | [`spec/index.md`](./spec/index.md). |
 | Entity domain model? | [`../spec/index.md`](../spec/index.md) §5 (entity-level umbrella). |
 | Build / test / lint / fmt | `cargo build` · `cargo test` (unit, `tests/public_api.rs`, `tests/property_tests.rs` with proptest, doctests) · `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` · `cargo bench` (`benches/match_pair.rs`) |

@@ -19,7 +19,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /mobile\.spec\.ts/,
+      testIgnore: [/mobile\.spec\.ts/, /every-locale\.spec\.ts/],
     },
     // T-28k (repo tasks.md EV-1): a phone-width audit across every
     // route — 390x844 per the task's own spec (roughly an iPhone 12
@@ -34,6 +34,15 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         viewport: { width: 390, height: 844 },
       },
+    },
+    // WW-1.1: every page route in every locale is about 900 page loads. Run alongside the other specs it slowed the
+    // preview server enough that axe audits in CI ran on pages not yet drawn (no title, main or h1), so it runs
+    // after the other two projects, on its own.
+    {
+      name: "every-locale",
+      testMatch: /every-locale\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["chromium", "mobile"],
     },
   ],
   // Test the production build via `vite preview`: it serves static,

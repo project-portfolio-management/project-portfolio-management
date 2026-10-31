@@ -1938,6 +1938,8 @@ only as search snippets.
   in audit order; each row of the audit says what is done.
   **WW-1.1 done 2026-10-31:** every locale has a complete page catalogue (machine drafts, unreviewed), unit and
   browser guards, and a review record (`governance/translation-reviews/`).
+  **WW-1.2 done 2026-10-31:** compliance mapping by region (`spec/12-compliance.md` §12.2a), neutral wording in the
+  record of processing and the DPIA.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

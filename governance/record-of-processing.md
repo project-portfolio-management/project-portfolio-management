@@ -1,6 +1,7 @@
 # Record of processing
 
-The record a controller keeps under UK GDPR / EU GDPR Article 30, pre-filled with
+The record a controller keeps under the applicable data-protection law (for example Article 30 of the EU GDPR or
+the UK GDPR; other laws ask for an equivalent record, see `spec/12-compliance.md` §12.2a), pre-filled with
 what the **software** does. Fields marked `‹buyer›` are the controller's. If you
 act as a processor for someone else, keep the processor version of the record
 (categories of processing carried out for each controller) instead.
@@ -35,14 +36,14 @@ people **references**, not for health, beliefs or similar. Free-text fields
 operator guidance is that they must not be, and there is no technical block.
 ‹buyer: state how you tell your users, and what you do if it happens›
 
-## 4. Transfers outside the UK or EEA
+## 4. Transfers across borders
 
 The software makes none by itself. Transfers depend on **where you host** the
 service, the database, the backups, the mail server and the telemetry collector,
 and on your identity provider (Microsoft Entra ID, Keycloak, or the
 authentication service). **A user who sets a chat webhook as a notification
 destination sends notification text to that chat service**, which may be
-outside the UK or EEA. ‹buyer: list each and the safeguard›
+outside the country or region whose law applies to you. ‹buyer: name the law, list each transfer and its safeguard›
 
 ## 5. Retention
 

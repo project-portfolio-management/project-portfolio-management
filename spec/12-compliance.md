@@ -19,8 +19,10 @@ Two angles keep the data-protection posture in force:
   `assignee_ref`s are `EntityRef`s to **people** (person / worker /
   authentication identities). Who leads or staffs a plan — and the
   audit trail of who changed what — is personal data about identifiable
-  individuals. **GDPR / UK DPA 2018 apply** to these references and to
-  the audit log.
+  individuals. **The applicable data-protection law applies** to these
+  references and to the audit log: whichever law governs the deployer and
+  the people concerned (§12.2a lists the common ones by region; GDPR and the
+  UK GDPR are two of them, not the default).
 - **Free-text fields can leak.** `keywords`, `tags`, goal titles, and
   issue / task text MUST never carry special-category or unnecessary
   personal data; this is an operator-training point and is why export
@@ -34,11 +36,42 @@ is retained for governmental information governance.
 
 | Framework | Application to this entity |
 |---|---|
-| UK DPA 2018 / UK GDPR / EU GDPR | Apply to the people references (`lead_ref`, task assignees) and operator identities in audit data; lawful-basis and accountability documentation deployment-side; soft delete supports retention policy; bulk export of these references is a compliance event (§9.6) |
+| The applicable data-protection law (§12.2a; for example the EU GDPR, the UK GDPR and DPA 2018, Brazil's LGPD, India's DPDP Act) | Applies to the people references (`lead_ref`, task assignees) and operator identities in audit data; lawful-basis and accountability documentation deployment-side; soft delete supports retention policy; bulk export of these references is a compliance event (§9.6) |
 | US HIPAA | Not engaged — no PHI; HIPAA-grade audit trails (who/what/when) are still the bar for registry + sub-resource operations as a governance baseline |
 | UK NHS Act 2006 s251 / Common Law Duty of Confidentiality | Not engaged — no confidential patient information by design |
 | ISO/IEC 27001 | ISMS operational controls (deployment-side): access control, backups, logging |
 | ISO/IEC 42001:2023 | AIMS controls if matcher weights/thresholds are ever ML-tuned (today they are hand-set constants, §7 NFR-8) |
+
+### 12.2a Data-protection law by region (WW-1.2)
+
+The service is built for any country (§2.0), so no one law is the default. The deployer names the law that applies to
+it in its record of processing (`governance/record-of-processing.md`); the table maps the common ones to what each
+drives in this service. It is a map, not legal advice, written from general knowledge on 2026-10-31 and **not checked
+against each law's current text**; a deployer confirms its own obligations. Where the table says "deployment", the
+software does not do it for the deployer.
+
+| Region | Law (examples) | Trigger here | Erasure | Residency and transfer | Breach notice |
+|---|---|---|---|---|---|
+| European Union and EEA | GDPR (Reg. (EU) 2016/679) | people references and audit identities | right to erasure: the subject erasure path (§9.6; WW-1.8) | deployment hosts in region; transfers under Chapter V | to the supervisory authority within 72 hours (deployment) |
+| United Kingdom | UK GDPR and Data Protection Act 2018 | the same | the same | the same, under the UK's own adequacy rules | to the ICO within 72 hours (deployment) |
+| Switzerland | Federal Act on Data Protection (revised, 2023) | the same | the same | transfers to countries the Federal Council lists, or with safeguards | to the FDPIC as soon as possible (deployment) |
+| Canada | PIPEDA; the federal Privacy Act for federal bodies; provincial laws such as Québec's Law 25 | the same | correction and deletion requests | provincial public-sector laws may require hosting in Canada (deployment) | to the regulator and the people affected where there is a real risk of significant harm (deployment) |
+| United States | no general federal law; the Privacy Act of 1974 for federal agencies; state laws such as California's CCPA/CPRA; every state's breach-notification law | the same, where a state law reaches the deployer | deletion requests under state laws | no general residency rule; agency rules (for example FedRAMP) are deployment matters | under each state's law (deployment) |
+| Brazil | LGPD (Law 13.709/2018) | the same | deletion and anonymization | international transfers under the LGPD's mechanisms | to the ANPD and the people affected (deployment) |
+| Rest of Latin America | for example Argentina's Law 25.326, Mexico's federal personal-data laws, Chile's Law 21.719 | the same | deletion requests | each law's transfer rule (deployment) | each law's rule (deployment) |
+| India | Digital Personal Data Protection Act 2023 and its rules | the same | erasure on withdrawal of consent or when the purpose ends | transfers allowed except to countries the government restricts | to the Data Protection Board and the people affected (deployment) |
+| China | Personal Information Protection Law (PIPL) | the same | deletion | cross-border transfer needs a security assessment, standard contract or certification; some operators must store in China | to the authorities and the people affected (deployment) |
+| Japan, South Korea, Singapore | APPI; PIPA; PDPA | the same | deletion or suspension of use | each law's transfer rule (deployment) | to the PPC; to the PIPC; to the PDPC (deployment) |
+| Australia and New Zealand | Privacy Act 1988 (Australian Privacy Principles); Privacy Act 2020 | the same | correction; deletion when no longer needed | cross-border disclosure rules (APP 8; IPP 12) | under the notifiable data breach schemes (deployment) |
+| Africa | for example South Africa's POPIA, Nigeria's NDPA 2023, Kenya's Data Protection Act 2019 | the same | deletion | each law's transfer rule (deployment) | to the regulator (Information Regulator, NDPC, ODPC) (deployment) |
+| Middle East and Türkiye | for example Saudi Arabia's PDPL, the UAE's federal PDPL, Türkiye's KVKK | the same | deletion | transfer rules, some with localisation (deployment) | to the regulator (SDAIA, UAE Data Office, KVKK Board) (deployment) |
+
+What the software gives every row alike: masked export by default and a per-subject export (§9.6), a subject
+erasure path (pseudonymisation; a deletion choice is WW-1.8), an append-only audit log, retention purges
+(`retention.rs`) and no transfer of its own (§12.3). Residency, transfer safeguards and breach notices are
+the deployer's. **Kept as deliberate limits:** the HIPAA, NHS (s251) and ONC rows of §12.2 and §12.4 stay, as "not
+engaged" with their reasons, because they are the regimes a health-sector buyer asks about first; they are not a sign
+that the service is for one country.
 
 ### 12.3 Information-governance posture
 

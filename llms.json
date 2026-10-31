@@ -81,9 +81,14 @@
           "description": "Design of asynchronous import and export jobs"
         },
         {
+          "title": "Project management standards",
+          "path": "spec/project-management-standards/index.md",
+          "description": "ISO 21502, PMI and IPMA mapped onto the service; which terms are one method's"
+        },
+        {
           "title": "PRINCE2 mapping",
           "path": "spec/prince2/index.md",
-          "description": "How the service maps to PRINCE2"
+          "description": "How the service maps to PRINCE2, one example method"
         },
         {
           "title": "Brainitive lessons",

@@ -36,7 +36,8 @@
 - [Change control](spec/18-change-control.md): How spec changes are made
 - [Time-based analysis](spec/time-based-analysis.md): Cycle and lead time, flow efficiency, forecasting rules
 - [Bulk import/export](spec/bulk-import-export.md): Design of asynchronous import and export jobs
-- [PRINCE2 mapping](spec/prince2/index.md): How the service maps to PRINCE2
+- [Project management standards](spec/project-management-standards/index.md): ISO 21502, PMI and IPMA mapped onto the service; which terms are one method's
+- [PRINCE2 mapping](spec/prince2/index.md): How the service maps to PRINCE2, one example method
 - [Brainitive lessons](spec/brainitive-lessons/index.md): Ideas from an open-source team workspace: retry-safe writes, evidence-backed status, webhook signing, security sweeps
 - [Total Project Control](spec/total-project-control/index.md): DIPP, banding and portfolio triage
 - [Flow framework metrics](spec/flow-framework-metrics/index.md): Flow distribution and related metrics

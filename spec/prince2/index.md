@@ -1,5 +1,10 @@
 # PRINCE2
 
+> **One example method (WW-1.22).** PRINCE2 is of UK government origin and is mapped here because it was mapped
+> first, not because the product follows it. The international guidance standard (ISO 21502) and the PMI and IPMA
+> bodies of knowledge are mapped in [project management standards](../project-management-standards/index.md), with
+> the terms this repository shares with PRINCE2 (tolerance, exception) checked there.
+
 **PRINCE2** (PRojects IN Controlled Environments) is a structured,
 process-based project management method that separates **governance**
 from **delivery**. Developed by the UK government, now owned by

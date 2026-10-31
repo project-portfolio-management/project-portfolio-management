@@ -72,8 +72,10 @@ kept whole rather than split across them:
   time, flow efficiency, rework and first-pass yield, cycle-time
   percentiles and the service level expectation, aging WIP, constraint
   ranking, and queueing-theory flow. Spans §5, §9, §10 and §12.
-- [PRINCE2](prince2/index.md) — the UK-government project management
-  method (PRINCE2 7): its seven principles, practices and processes
+- [Project management standards](project-management-standards/index.md) — ISO 21502, PMI (PMBOK 7) and IPMA
+  (ICB4) mapped onto the service, and which of its terms are one method's (WW-1.22).
+- [PRINCE2](prince2/index.md) — one example method, of UK-government origin
+  (PRINCE2 7): its seven principles, practices and processes
   mapped onto what this entity already provides and what it would have
   to build, plus **the vocabulary trap** — a PRINCE2 management stage is
   a *fourth* ordered sequence, not the gate stage and not the project

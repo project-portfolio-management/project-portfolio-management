@@ -1970,6 +1970,8 @@ only as search snippets.
   statement; statutory language duties are named for several countries.
   **WW-1.21 done 2026-10-31:** a generic assurance mapping (ISO/IEC 27001, SOC 2, national schemes as examples), the
   `docs/<country-or-body>/` convention stated, the UK material labelled a worked example.
+  **WW-1.22 done 2026-10-31:** PRINCE2 labelled one example; ISO 21502, PMI and IPMA maps and a check of the shared
+  terms in `spec/project-management-standards/`.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

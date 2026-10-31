@@ -15,6 +15,10 @@ Claude (the AI assistant) and **none has been reviewed** by a speaker or a profe
 | `zh-001` | Chinese (Simplified) | [zh-001.md](zh-001.md) | [zh-001.csv](zh-001.csv) | no |
 | `zh-cn` | Chinese (Simplified, China) | [zh-cn.md](zh-cn.md) | [zh-cn.csv](zh-cn.csv) | no |
 
+**Widget labels (WW-1.17, a stated limit).** For every locale but English and Welsh, the words inside Lily's widgets
+come from a pack of `@lilydesignsystem/svelte-locale-translations` 0.4.0 that ships marked `"reviewed": false`; each
+record above names its pack and says it is not reviewed. They are used as they are rather than falling back to English.
+
 `project-portfolio-management-ui-with-svelte/tests/unit/review-records.test.ts` fails when a supported locale has no
 record, or when a record claims a review its log does not show. `python3 scripts/export-translation-review.py --check`
 fails when a working file is out of date with the catalogues.

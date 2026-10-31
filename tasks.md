@@ -1962,6 +1962,7 @@ only as search snippets.
   geometry left to right is a stated limit.
   **WW-1.16 done 2026-10-31:** table date columns, chart axes, the network diagram and the variance and leveling ranges
   follow the locale; Gregorian-only and the browser's time zone are stated limits.
+  **WW-1.17 done 2026-10-31 (as a limit):** each review record names its widget-label pack, unreviewed, with a test.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

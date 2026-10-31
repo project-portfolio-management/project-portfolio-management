@@ -53,4 +53,42 @@ describe("translation review records", () => {
       });
     expect(missing).toEqual([]);
   });
+
+  // WW-1.17: the widget-label packs are a stated limit: each locale that uses one names it in its record, and a
+  // pack that says it is reviewed must have that review logged here, not just claimed by the package.
+  it("name the widget-label pack each locale uses, and claim no review of it", () => {
+    const pkg = join(
+      process.cwd(),
+      "node_modules",
+      "@lilydesignsystem",
+      "svelte-locale-translations",
+    );
+    const version = (
+      JSON.parse(readFileSync(join(pkg, "package.json"), "utf8")) as {
+        version: string;
+      }
+    ).version;
+    const packOf = (l: string) =>
+      l === "de-de" ? "de-001" : l === "zh-cn" ? "zh-001" : l;
+    const wrong = others
+      .filter((l) => l !== "cy-001")
+      .filter((l) => {
+        const text = readFileSync(recordOf(l), "utf8");
+        const pack = JSON.parse(
+          readFileSync(join(pkg, "label-packs", `${packOf(l)}.json`), "utf8"),
+        ) as {
+          reviewed: boolean;
+        };
+        const names = text.includes(
+          `\`${packOf(l)}\` pack of \`@lilydesignsystem/svelte-locale-translations\` ${version}`,
+        );
+        const logged = /No review yet\./.test(text) === false;
+        return (
+          !names ||
+          (pack.reviewed && !logged) ||
+          !/not reviewed/.test(text.split("## Widget labels")[1] ?? "")
+        );
+      });
+    expect(wrong).toEqual([]);
+  });
 });

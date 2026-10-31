@@ -8,7 +8,7 @@ Chinese (Simplified, China). One record per locale (WW-1.1); Welsh keeps its own
 | Status | **draft: machine-written by Claude (the AI assistant), not reviewed** by a speaker or a professional translator |
 | Page and component text | `project-portfolio-management-ui-with-svelte/src/lib/i18n-pages.zh.ts` |
 | Navigation, forms and other interface text | the `zh-cn` block of `project-portfolio-management-ui-with-svelte/src/lib/i18n.svelte.ts` |
-| Widget labels | the `@lilydesignsystem/svelte-locale-translations` pack for this language (WW-1.17; not reviewed either) |
+| Widget labels | the `zh-001` pack of `@lilydesignsystem/svelte-locale-translations` 0.4.0 (see below) |
 | Working file | [`zh-cn.csv`](./zh-cn.csv) (`python3 scripts/export-translation-review.py zh-cn`) |
 | Texts reviewed | 0 |
 | Reviewer | none |
@@ -30,6 +30,16 @@ Chinese (Simplified, China). One record per locale (WW-1.1); Welsh keeps its own
 ## Known weak spots
 
 - Shares the page catalogue of `zh-001` (`i18n-pages.zh.ts`); only the `zh-cn` block of `i18n.svelte.ts` is its own.
+
+## Widget labels (WW-1.17, a stated limit)
+
+The words inside Lily's widgets (table sorting, paging, export and filter labels, the date picker, the Gantt chart's
+controls) come from the `zh-001` pack of `@lilydesignsystem/svelte-locale-translations` 0.4.0, not from this
+repository's catalogues (`src/lib/lily-labels.ts`). The pack ships with `"reviewed": false`: it is a machine draft and
+**not reviewed** by a speaker, and nobody in this repository has read or reviewed it either. It is used as it is, a
+limit kept on purpose because the alternative is English labels. It is not in the working file above; a review of it
+is done in the package, and this record then logs it. `tests/unit/review-records.test.ts` fails if the pack says it
+is reviewed while this record logs no review of it.
 
 ## Review log
 

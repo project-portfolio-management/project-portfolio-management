@@ -298,7 +298,9 @@ language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|de|es|fr|hi|zh>.ts`;
 English keys, `tests/unit/catalogue-coverage.test.ts` checks keys,
 placeholders and copied English for each, and `tests/e2e/every-locale.spec.ts`
 opens every page route in every locale. A missing key would still fall back
-to English at run time. Every translation is a machine draft, recorded
+to English at run time. English and Welsh are bundled; the other six page
+catalogues are loaded only for their own locale (`loadLocale`, awaited by
+the root layout's load), so a page does not carry every language. Every translation is a machine draft, recorded
 unreviewed per locale in `governance/translation-reviews/` (Welsh in
 `governance/welsh-translation-review.md`).
 

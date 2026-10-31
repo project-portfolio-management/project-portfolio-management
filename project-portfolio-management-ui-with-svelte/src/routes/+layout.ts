@@ -1,6 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import type { LayoutLoad } from "./$types";
-import { LOCALE_KEY } from "#lib/i18n.svelte.js";
+import { LOCALE_KEY, loadLocale } from "#lib/i18n.svelte.js";
 import {
   DEFAULT_LOCALE,
   type Locale,
@@ -40,8 +40,11 @@ function preferredLocale(): Locale {
 // navigation to a bare URL (`goto("/plans")`) never reaches the
 // server's redirect, so it is localized here, the same way.
 // A universal load replaces the server layout's data, so pass it through.
-export const load: LayoutLoad = ({ url, data }) => {
+// The locale's page catalogue is loaded here, before the page is drawn (WW-1.1: they are loaded per locale).
+export const load: LayoutLoad = async ({ url, data }) => {
   const to = localeRedirect(url, preferredLocale());
   if (to) redirect(to.status, to.location);
-  return { ...data, locale: localeOfPath(url.pathname) ?? DEFAULT_LOCALE };
+  const locale = localeOfPath(url.pathname) ?? DEFAULT_LOCALE;
+  await loadLocale(locale);
+  return { ...data, locale };
 };

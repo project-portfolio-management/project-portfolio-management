@@ -49,6 +49,7 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.{test,spec}.{ts,js}"],
     environment: "jsdom",
+    setupFiles: ["tests/unit/setup-locales.ts"],
     globals: true,
     // The package's compiled `dist/index.js` imports "./label-pack" without a file extension, which
     // Node's ESM loader rejects; Vite resolves it, so it is processed by Vite rather than loaded by Node.

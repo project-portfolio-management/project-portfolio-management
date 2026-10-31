@@ -40,12 +40,6 @@ import {
 } from "./locales.js";
 import { PAGES_EN, PAGE_KEYS } from "./i18n-pages";
 import { PAGES_CY } from "./i18n-pages.cy";
-import { PAGES_AR } from "./i18n-pages.ar";
-import { PAGES_DE } from "./i18n-pages.de";
-import { PAGES_ES } from "./i18n-pages.es";
-import { PAGES_FR } from "./i18n-pages.fr";
-import { PAGES_HI } from "./i18n-pages.hi";
-import { PAGES_ZH } from "./i18n-pages.zh";
 
 export { LOCALES, DEFAULT_LOCALE, LOCALE_LABELS, RTL_LOCALES, isRtl };
 export type { Locale };
@@ -62,7 +56,6 @@ export const LOCALE_KEY = "mxi.case.locale";
 // missing translation is a type error (the `StringKey` union below).
 const STRINGS = {
   "ar-001": {
-    ...PAGES_AR,
     // Merge page (/plans/merge)
     "nav.merge": "دمج",
     "merge.title": "دمج الخطط",
@@ -818,7 +811,6 @@ const STRINGS = {
       "Nid yw'r gwasanaeth mewngofnodi ar gael. Rhowch gynnig arall arni yn nes ymlaen.",
   },
   "de-001": {
-    ...PAGES_DE,
     // Merge page (/plans/merge)
     "nav.merge": "Zusammenführen",
     "merge.title": "Pläne zusammenführen",
@@ -1202,7 +1194,6 @@ const STRINGS = {
       "Fügen Sie „Meilensteine“ hinzu, schließen Sie sie ab und nutzen Sie „Zuweisen“, um Menschen Kapazität zu geben. Der Link „Zeitplan“ zeichnet Termine und Abhängigkeiten.",
   },
   "de-de": {
-    ...PAGES_DE,
     // Merge page (/plans/merge)
     "nav.merge": "Zusammenführen",
     "merge.title": "Pläne zusammenführen",
@@ -1972,7 +1963,6 @@ const STRINGS = {
       "The sign-in service cannot be reached. Please try again later.",
   },
   "es-001": {
-    ...PAGES_ES,
     // Merge page (/plans/merge)
     "nav.merge": "Combinar",
     "merge.title": "Combinar planes",
@@ -2357,7 +2347,6 @@ const STRINGS = {
       "No se puede acceder al servicio de inicio de sesión. Inténtelo más tarde.",
   },
   "fr-001": {
-    ...PAGES_FR,
     // Merge page (/plans/merge)
     "nav.merge": "Fusionner",
     "merge.title": "Fusionner des plans",
@@ -2740,7 +2729,6 @@ const STRINGS = {
       "Le service de connexion est injoignable. Veuillez réessayer plus tard.",
   },
   "hi-001": {
-    ...PAGES_HI,
     // Merge page (/plans/merge)
     "nav.merge": "विलय",
     "merge.title": "योजनाओं का विलय",
@@ -3120,7 +3108,6 @@ const STRINGS = {
       "साइन-इन सेवा उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें।",
   },
   "zh-001": {
-    ...PAGES_ZH,
     // Merge page (/plans/merge)
     "nav.merge": "合并",
     "merge.title": "合并计划",
@@ -3475,7 +3462,6 @@ const STRINGS = {
     "signin.oidcUnavailable": "无法访问登录服务，请稍后再试。",
   },
   "zh-cn": {
-    ...PAGES_ZH,
     // Merge page (/plans/merge)
     "nav.merge": "合并",
     "merge.title": "合并计划",
@@ -3840,6 +3826,42 @@ export type StringKey = keyof (typeof STRINGS)["en-001"];
  */
 export const STRING_KEYS = Object.keys(STRINGS["en-001"]) as StringKey[];
 
+// WW-1.1: the page catalogues of the six languages beyond English and Welsh (about 2 MB together) are loaded only
+// when their locale is used, so a page carries English, Welsh and the one language it shows, not all of them.
+// Loading merges the catalogue into that locale's table; until then its page keys read English.
+const LAZY_PAGES: Partial<
+  Record<Locale, () => Promise<Record<string, string>>>
+> = {
+  "ar-001": () => import("./i18n-pages.ar").then((m) => m.PAGES_AR),
+  "de-001": () => import("./i18n-pages.de").then((m) => m.PAGES_DE),
+  "de-de": () => import("./i18n-pages.de").then((m) => m.PAGES_DE),
+  "es-001": () => import("./i18n-pages.es").then((m) => m.PAGES_ES),
+  "fr-001": () => import("./i18n-pages.fr").then((m) => m.PAGES_FR),
+  "hi-001": () => import("./i18n-pages.hi").then((m) => m.PAGES_HI),
+  "zh-001": () => import("./i18n-pages.zh").then((m) => m.PAGES_ZH),
+  "zh-cn": () => import("./i18n-pages.zh").then((m) => m.PAGES_ZH),
+};
+// Not reactive on purpose: `pagesVersion` is what redraws; this only remembers what was loaded.
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const loadedPages = new Set<Locale>();
+// Bumped when a catalogue arrives, so text already drawn through `t` is drawn again.
+let pagesVersion = $state(0);
+
+/** Load `locale`'s page catalogue if it is loaded lazily and not yet loaded. The root layout awaits it. */
+export async function loadLocale(locale: Locale): Promise<void> {
+  if (loadedPages.has(locale)) return;
+  const load = LAZY_PAGES[locale];
+  if (load)
+    Object.assign(STRINGS[locale] as Record<string, string>, await load());
+  loadedPages.add(locale);
+  pagesVersion += 1;
+}
+
+/** Every locale's page catalogue (for tests and tools that read all of them). */
+export async function loadAllLocales(): Promise<void> {
+  await Promise.all(LOCALES.map((l) => loadLocale(l)));
+}
+
 /** Raw per-locale strings table, exposed for coverage testing. */
 export const STRINGS_BY_LOCALE: Record<
   Locale,
@@ -3909,6 +3931,7 @@ export const i18n = {
     const locale = normalizeLocale(next) ?? DEFAULT_LOCALE;
     current = locale;
     void sveltiaLocale.set(locale);
+    void loadLocale(locale);
     if (browser && typeof localStorage !== "undefined")
       localStorage.setItem(LOCALE_KEY, locale);
   },
@@ -3982,6 +4005,7 @@ export function interpolate(template: string, values?: MessageValues): string {
  * @returns The translated string in the current locale.
  */
 export function t(key: StringKey, values?: MessageValues): string {
+  void pagesVersion;
   return translate(key, current, values);
 }
 
@@ -4085,6 +4109,7 @@ export function tn(
   count: number,
   values?: MessageValues,
 ): string {
+  void pagesVersion;
   return translatePlural(base, count, current, values);
 }
 

@@ -1968,6 +1968,8 @@ only as search snippets.
   guides and the un-updated translated guides are recorded gaps; the English guides name the applicable law.
   **WW-1.20 done 2026-10-31:** the language statement gives every language its own row, record link and the same
   statement; statutory language duties are named for several countries.
+  **WW-1.21 done 2026-10-31:** a generic assurance mapping (ISO/IEC 27001, SOC 2, national schemes as examples), the
+  `docs/<country-or-body>/` convention stated, the UK material labelled a worked example.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

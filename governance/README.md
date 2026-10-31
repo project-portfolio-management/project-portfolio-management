@@ -17,7 +17,8 @@ decisions that belong to the buyer clearly marked.
 | [Language statement](language-statement.md) | Which languages the interface is available in and how complete each is |
 | [Production readiness](production-readiness.md) | An honest assessment of readiness for major medical and governmental organizations: what is strong, what is not ready |
 | [Assurance checklist](assurance-checklist.md) | What an assessor will ask for, who owns each item, and what the project can supply |
-| [DTAC checklist](dtac-checklist.md) | Answers to the Digital Technology Assessment Criteria, section by section, with the evidence |
+| [Assurance mapping](assurance-mapping.md) | The checklist against ISO/IEC 27001 and SOC 2, and national and sector schemes as examples (WW-1.21) |
+| [DTAC checklist](dtac-checklist.md) | Answers to the UK NHS's Digital Technology Assessment Criteria, section by section, with the evidence: one national scheme, kept as a worked example |
 | [Welsh translation review record](welsh-translation-review.md) | Where the translator's review of the Welsh text is recorded |
 
 ## How to use it

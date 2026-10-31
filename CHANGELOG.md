@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (WW-1.21, a generic assurance mapping)
+
+- **The assurance pack has a scheme-neutral map, and the UK material is labelled a worked example (WW-1.21, accepted 2026-10-31).** New `governance/assurance-mapping.md`: the 14 items of the assurance checklist against ISO/IEC 27001:2022 (Annex A themes, example controls) and SOC 2 (criteria categories); national and sector schemes by region as examples (for example BSI C5, SecNumCloud, FedRAMP, IRAP, ISMAP, MTCS, ISMS-P); the NHS DTAC checklist and the UK folders under `docs/` named as one country's worked examples; and the `docs/<country-or-body>/<body>/<scheme>/<version>/` convention. The governance index, the checklist (now "in any country") and `llms.json` link it. Documentation only. **Not done:** none of the standards' or schemes' texts was read and no control reference was checked against them (the file says so); no other country's scheme was answered item by item. **Not verified:** CI before the push (the docs link check).
+
 ### 31 October (WW-1.20, one language statement for every language)
 
 - **The language statement treats every language alike (WW-1.20, accepted 2026-10-31).** `governance/language-statement.md` gave Welsh its own statement and the other eight locales one line. It now has a row per locale with its review record, one statement for all (machine drafts, none reviewed; Welsh is not ahead in anything the software checks), the widget-label packs' state (WW-1.17), the Traditional Chinese limit (WW-1.14), a test section titled for every language, "statutory language duties" with examples beyond Wales (Canada's Official Languages Act, Québec's Charter of the French Language, India's official-languages rules), and correction instructions for every catalogue. Documentation only. **Not done:** the language laws named were not read (named from general knowledge); no translation was reviewed. **Not verified:** CI before the push.

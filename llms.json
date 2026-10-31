@@ -456,6 +456,11 @@
           "description": "Assurance checklist"
         },
         {
+          "title": "Assurance mapping",
+          "path": "governance/assurance-mapping.md",
+          "description": "The assurance checklist against ISO/IEC 27001, SOC 2 and national schemes; the docs/<country-or-body>/ convention"
+        },
+        {
           "title": "Data-flow diagram",
           "path": "governance/data-flow.md",
           "description": "Where personal and operational data goes, including the WPM bridge"

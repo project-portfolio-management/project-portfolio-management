@@ -117,6 +117,7 @@
 - [Production readiness](governance/production-readiness.md): What must hold before production use
 - [AI statement](AI_STATEMENT.md): How AI was used to build this repository
 - [Assurance checklist](governance/assurance-checklist.md): Assurance checklist
+- [Assurance mapping](governance/assurance-mapping.md): The assurance checklist against ISO/IEC 27001, SOC 2 and national schemes; the docs/<country-or-body>/ convention
 - [Data-flow diagram](governance/data-flow.md): Where personal and operational data goes, including the WPM bridge
 - [Data protection impact assessment (template)](governance/dpia.md): Data protection impact assessment
 - [DTAC checklist](governance/dtac-checklist.md): DTAC checklist

@@ -1,6 +1,6 @@
 # Assurance checklist
 
-What an assessor at a health body or a government department will ask for, who
+What an assessor at a health body or a government department, in any country, will ask for, who
 owns each item, what the project can supply, and what only the deployer can do.
 Nothing here is done by the software alone. Items marked **open** have not been
 done for this project.
@@ -21,6 +21,9 @@ done for this project.
 | 12 | Incident response and breach notification process | Deployer | The [runbook](../operations/runbook.md) gives the technical steps | **open** |
 | 13 | Language-duty review (Welsh or others) by a professional translator | Deployer or supplier | [Review record](welsh-translation-review.md) and a CSV export for the translator | **open** |
 | 14 | Records management: retention periods agreed, purge scheduled, legal hold procedure | Deployer's records manager | Retention schedule; the purge task; no legal-hold feature | **open** |
+
+The [assurance mapping](assurance-mapping.md) lines these items up with ISO/IEC 27001, SOC 2 and national schemes
+(WW-1.21).
 
 Keep the evidence an assessor sees (reports, dates, who signed) with your own
 records. The project cannot hold it for you.

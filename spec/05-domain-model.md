@@ -525,8 +525,8 @@ Four decisions worth not re-litigating:
 - **`approved_at` on the business case is the clock start**, captured
   once at approval. Time to Value measured from a date that moves is not
   a measurement — the same rule as an OKR baseline (§5.9.2).
-- **`method` is recorded on every value point.** A measured £2m and an
-  asserted £2m are different kinds of evidence, and a realized-value
+- **`method` is recorded on every value point.** A measured 2 million (in
+  any currency: EUR, JPY, INR, …) and an asserted 2 million are different kinds of evidence, and a realized-value
   figure that cannot say which it is has no audit standing. Roll-ups
   report the mix.
 - **`AdoptionSnapshot` carries its own `definition` and `window_days`.**

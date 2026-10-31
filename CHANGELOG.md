@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (WW-1.23, the last pound sign in the specification)
+
+- **The domain model's example amount names no currency (WW-1.23, accepted 2026-10-31).** `spec/05-domain-model.md` said "a measured £2m and an asserted £2m"; it now says "2 million (in any currency: EUR, JPY, INR, …)". The six "Currency (e.g. GBP)" help texts the audit counted were already "for example EUR, JPY or GBP" in every language (WW-1.3, 29 October), and the review CSVs, Welsh included, are current (`export-translation-review.py --check`), so nothing needed regenerating. Documentation only. **Not done:** the catalogue key keeps its old name `c.ObjectiveCard.currency_e_g_gbp` (no reader sees it). **Not verified:** CI before the push.
+
 ### 31 October (WW-1.22, PRINCE2 as one example among standards)
 
 - **PRINCE2 is labelled one example, and the international standard and two other bodies of knowledge are mapped (WW-1.22, accepted 2026-10-31).** The PRINCE2 chapter now opens by saying it is one method, of UK government origin, mapped first. New `spec/project-management-standards/index.md`: ISO 21502's management practices against what the service has (procurement not built, quality weak), PMI's eight performance domains (PMBOK 7) and IPMA's ICB4 competence areas; and a check of the terms against this repository's code: tolerance and exception are PRINCE2's words used neutrally, escalation is generic, the gate stage's name is generic while `g0_concept` to `g5_benefits` are the product's own, and the phase names are PMI-style. `spec/index.md` and `llms.json` list it. Documentation only. **Not done:** no publication's text was read (the chapter says so and gives no clause numbers); ISO 21503 and 21504 and PMI's portfolio and program standards are not mapped; there is no per-deployment vocabulary setting. **Not verified:** CI before the push.

@@ -54,6 +54,28 @@ version that carries the same information in plain markup (the "table twin"),
 which is the accessible route for the Gantt, the board and the network
 diagram. Use it if the interactive view does not work for you.
 
+## Which law applies (WW-1.25)
+
+WCAG 2.2 AA is international; most countries' accessibility law points to it, directly or through a national
+standard. This statement does not choose a law for you: name the one that applies to your organization here,
+**‹buyer: the law and the standard it cites›**. Common ones, written from general knowledge on 2026-10-31 and **not
+checked against each law's current text** (not legal advice):
+
+| Where | Law or policy (examples) | Standard it points to |
+|---|---|---|
+| European Union | the Web Accessibility Directive (public bodies); the European Accessibility Act (some private services) | EN 301 549, which incorporates WCAG |
+| United Kingdom | the Public Sector Bodies Accessibility Regulations 2018; the Equality Act 2010 | WCAG |
+| United States | Section 508 of the Rehabilitation Act (federal); the ADA | Section 508 standards, which incorporate WCAG |
+| Canada | the Accessible Canada Act; provincial laws such as Ontario's AODA | WCAG; EN 301 549 in federal procurement |
+| Australia | the Disability Discrimination Act 1992 | WCAG; AS EN 301 549 in procurement |
+| India | the Rights of Persons with Disabilities Act 2016 | the government's GIGW guidelines, based on WCAG |
+| Japan | the Act for Eliminating Discrimination against Persons with Disabilities | JIS X 8341-3, harmonised with WCAG |
+| Israel | the Equal Rights for Persons with Disabilities regulations | IS 5568, based on WCAG |
+| Brazil | the Brazilian Inclusion Law (13.146/2015) | eMAG for government sites, and WCAG |
+
+The automated audit tests WCAG success criteria only; a national standard's own extra clauses (for example the
+non-web sections of EN 301 549) are not tested.
+
 ## Feedback and contact
 
 If you find something you cannot use, tell us: **‹buyer: contact route and response time›**.

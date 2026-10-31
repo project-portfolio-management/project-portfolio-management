@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (WW-1.25, accessibility law by country)
+
+- **The accessibility statement maps the common national laws (WW-1.25, accepted 2026-10-31, "extend lightly").** `governance/accessibility-statement.md` cited only WCAG 2.2 AA. A new "Which law applies" section asks the deployer to name its law (a `‹buyer›` marker) and lists common ones with the standard each points to: the EU's Web Accessibility Directive and European Accessibility Act (EN 301 549), the UK's Public Sector Bodies Accessibility Regulations 2018, Section 508 and the ADA, the Accessible Canada Act and Ontario's AODA, Australia's Disability Discrimination Act, India's RPwD Act with GIGW, Japan's JIS X 8341-3, Israel's IS 5568 and Brazil's Inclusion Law with eMAG. It adds that the automated audit tests WCAG criteria only, not a national standard's other clauses. Documentation only. **Not done:** the laws were named from general knowledge and not read or checked (the section says so). **Not verified:** CI before the push.
+
 ### 31 October (WW-1.24, the formats policy)
 
 - **A requirement now states how numbers, dates, names, addresses and right-to-left are handled (WW-1.24, accepted 2026-10-31).** New NFR-19a in `spec/07-non-functional-requirements.md`: numbers, percentages, amounts and dates follow the page's locale through one module and typed numbers are read in it; plural forms come from `Intl.PluralRules`; logical CSS mirrors a right-to-left page and "becomes" arrows follow the writing direction; names are free text with no split, order or character check; no address or phone format is imposed because the product stores none. It names the scan tests that enforce the first three and lists the limits (Gregorian only; English and ISO in the API's text, exports and PDFs; `one` and `other` only in each plural group; about 30 "%" strings; charts left to right). Documentation only. **Not done:** the plural groups and the "%" strings were not changed. **Not verified:** CI before the push.

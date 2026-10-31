@@ -10,6 +10,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-31
+
+Published to crates.io on 2026-10-31 at the product owner's direction; the service depends on it.
+
 ### Changed — codes keep every script; Soundex declines non-Latin names (WW-1.10)
 
 - `normalize::code` now applies NFKC and keeps alphanumerics of any script (it kept ASCII only), so a code such as
@@ -20,8 +24,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   code from its Latin fragment. Phonetic matching is a stated Latin-only limit (spec §9); locale-aware case folding
   and word segmentation are stated limits (spec §8).
 - Tests: `code_keeps_every_script`, `soundex_is_for_latin_script_only`.
-- Not done: no phonetic algorithm for other scripts; not released (the service still uses the published 0.2.1, so
-  none of this reaches it until a release).
+- Not done: no phonetic algorithm for other scripts.
 
 ## [0.2.1] - 2026-10-19
 

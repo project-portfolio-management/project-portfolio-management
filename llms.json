@@ -1244,7 +1244,7 @@
     }
   ],
   "facts": {
-    "version": "service 0.2.0, matcher 0.2.1, UI 0.2.0 (tag v0.2.0)",
+    "version": "service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag v0.2.0)",
     "layout": {
       "service": "project-portfolio-management-service-with-rust",
       "matcher": "project-portfolio-management-matcher-with-rust",

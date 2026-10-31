@@ -1951,7 +1951,7 @@ only as search snippets.
   **WW-1.9 done 2026-10-31 (as a limit):** the PDFs stay Latin-1, a stated limit, and now say on their last line how
   many characters they replaced and where the full text is.
   **WW-1.10 done 2026-10-31 in the matcher source:** `code()` keeps every script; Soundex is Latin-only and declines
-  other scripts; case folding and segmentation are stated limits. Not released, so the service does not have it yet.
+  other scripts; case folding and segmentation are stated limits. Released in matcher 0.2.2 (2026-10-31), which the service uses.
   **WW-1.11 done 2026-10-31:** handling-mark codes may be in any script; the header carries them RFC 8187-encoded.
   **WW-1.12 done 2026-10-31:** access tokens from any OIDC provider with standard discovery (`OIDC_ISSUER`), no
   build feature and no Keycloak needed.

@@ -26,7 +26,7 @@
 # test module docs.
 services:
   sc:
-    image: docker.io/infinyon/fluvio:stable
+    image: docker.io/infinyon/fluvio:stable@sha256:4adb6669eeda7a6b137a5e09a9f68a63cd3dd034419d4c5cf2d25b3634c83ce2
     container_name: mxi-project-portfolio-management-fluvio-sc
     hostname: sc
     ports:
@@ -58,7 +58,7 @@ services:
       - sc
 
   spu:
-    image: docker.io/infinyon/fluvio:stable
+    image: docker.io/infinyon/fluvio:stable@sha256:4adb6669eeda7a6b137a5e09a9f68a63cd3dd034419d4c5cf2d25b3634c83ce2
     container_name: mxi-project-portfolio-management-fluvio-spu
     hostname: spu
     volumes:

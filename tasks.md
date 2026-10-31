@@ -2299,9 +2299,15 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   entered-here figure not added, and `hidden` under WPM's floor; with WPM stopped, `last_received` with its age,
   and a refused caller getting `unknown`; people impact passing WPM's answer through unchanged, with `ends_on` from
   `target_date` and a month-only date sending none; CRM's won deal opening one PPM idea, idempotent. Found the
-  cross-caller kept-figure leak, fixed since in `bbad76e` (FB-2). **Remains:** the FB-5 withdrawals (a zero with
-  `sent_at`, and the withdrawals on unlink) against a real WPM (WPM supports them since `ab1ce88` and `ca1462f`);
-  the FB-6 screens (`/skill-pools`, `/capacity-heatmap`, `/capacity-commitments`) against a live service;
+  cross-caller kept-figure leak, fixed since in `bbad76e` (FB-2). **Done in part again 2026-10-31** (PPM `8c5abc1`,
+  WPM `672773e`; two services only, authentication on, one PASETO test key, the same token to both): pools linked on
+  both sides; demand 2.5 FTE sent (`sent`, WPM's `programme_demands` row `ppm`/`proposed`/250); a zero sent
+  (`closed`); 1.5 FTE sent after it (`proposed`/150, the claim reopened); the heatmap `live` for the linked pool; people
+  impact answered; unlinking sent one withdrawal and WPM's claim was `closed`. **Seen on the way:** WPM answers `404`
+  to a pool create unless the token's `sub` has a live `organization_memberships` row for the organization (the
+  scope check hides a refusal as not found); the run seeded that row by SQL. The pool had no members, so supply was 0.0, not a
+  tested figure. **Not checked:** that `sent_at` makes WPM ignore an older event (sent by PPM, never replayed
+  late); CRM was not started. **Remains:** the FB-6 screens (`/skill-pools`, `/capacity-heatmap`, `/capacity-commitments`) against a live service;
   Keycloak in place of the PASETO test key; a mounted ABAC policy. The leak fix itself was not re-run live.
 
 ## GitHub Pages site (GP-n)

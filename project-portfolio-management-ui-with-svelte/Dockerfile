@@ -10,7 +10,7 @@
 # with no proxy the server treats requests as plain http.
 # The Node version equals `engines.node` in package.json.
 
-FROM docker.io/library/node:26-slim AS builder
+FROM docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39 AS builder
 RUN npm install --global pnpm@12.10.1
 WORKDIR /ui
 COPY project-portfolio-management-ui-with-svelte/package.json project-portfolio-management-ui-with-svelte/pnpm-lock.yaml project-portfolio-management-ui-with-svelte/pnpm-workspace.yaml project-portfolio-management-ui-with-svelte/.npmrc ./
@@ -19,7 +19,7 @@ COPY project-portfolio-management-ui-with-svelte/ ./
 RUN pnpm run build \
  && pnpm install --frozen-lockfile --prod
 
-FROM docker.io/library/node:26-slim
+FROM docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39
 ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0 PROTOCOL_HEADER=x-forwarded-proto
 WORKDIR /app
 COPY --from=builder /ui/build ./build

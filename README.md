@@ -39,6 +39,14 @@ Without a key set the service refuses to start, and it refuses to start in
 builds and tests everything on every push and pull request; releases are cut by
 pushing a `vX.Y.Z` tag (`.github/workflows/release.yml`).
 
+## Works on its own
+
+This repository builds, runs and is tested **without** the contact-relationship (CRM) or workforce-planning (WPM)
+repositories: nothing here depends on their code, and CI builds it from a fresh clone. The bridges are opt-in. Until you set
+`PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` and link a skill pool, the capacity views say `unknown` where WPM's supply
+would be, and nothing is sent anywhere. A bridge carries references and counts, never a record, and always under the caller's own
+token. Walk-through: [operations/wpm-bridge.md](operations/wpm-bridge.md).
+
 ## Where things live
 
 - [`spec/`](spec) is the entity-wide specification (start at

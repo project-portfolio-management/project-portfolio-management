@@ -18,7 +18,7 @@
 # Toolchain: the base image tag below must equal `channel` in the root
 # rust-toolchain.toml; the first RUN step fails the build if they drift.
 
-FROM docker.io/library/rust:1.99.1-slim AS builder
+FROM docker.io/library/rust:1.99.1-slim@sha256:b8e062b1c3a80183df83d9ba187cadd2b5ab84bc78d453dbfeb2fccd5f982247 AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -66,7 +66,7 @@ ARG CARGO_FEATURES="keycloak"
 RUN cargo build --release --locked --features "${CARGO_FEATURES}" --bin project-portfolio-management
 
 # ---- runtime ---------------------------------------------------------------
-FROM docker.io/library/debian:13-slim
+FROM docker.io/library/debian:13-slim@sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4
 
 ARG VERSION=""
 ARG REVISION=""

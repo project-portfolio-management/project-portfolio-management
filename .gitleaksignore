@@ -1,0 +1,13 @@
+# Findings reviewed and accepted: all are test fixtures or development-profile defaults, none protects real data.
+# Format: <commit>:<file>:<rule>:<line>. Production reads its secrets from the environment.
+
+# a P-256 key made for the OIDC test provider only; it protects nothing
+46a50f56ef0cf30cdd74a2eab4d7054d6d6d2114:project-portfolio-management-service-with-rust/tests/oidc_provider.rs:private-key:16
+# a P-256 key made for the OIDC unit tests only; it protects nothing
+46a50f56ef0cf30cdd74a2eab4d7054d6d6d2114:project-portfolio-management-service-with-rust/src/auth/oidc.rs:private-key:469
+# a throwaway RSA key for the mock identity provider, in the since-removed api directory
+e22b067ec1218d257f970e720188d513f305eaaf:project-portfolio-management-api-with-rust/tests/keycloak_entra_broker.rs:private-key:61
+# the scaffold's generated test-profile JWT secret from the since-removed loco template; production reads its secret from the environment
+2852064dda3de67d9c41b8824f5b97ca4c62b786:project-portfolio-management-service-with-loco/config/test.yaml:generic-api-key:93
+# the scaffold's generated development-profile JWT secret from the since-removed loco template; production reads its secret from the environment
+2852064dda3de67d9c41b8824f5b97ca4c62b786:project-portfolio-management-service-with-loco/config/development.yaml:generic-api-key:96

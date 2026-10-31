@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (supply-chain gates matched across the family)
+
+- Every GitHub Action is pinned to a commit SHA (it was a movable tag). `scripts/check-actions-pinned.py --actions-only`
+  and `zizmor` run in CI (`pins` job, which also checks images). Checkouts no longer persist credentials; release jobs use no build cache.
+- A whole-history secret scan (`gitleaks`, pinned by SHA-256) runs in CI (`secrets` job). Its five reviewed findings are
+  listed with reasons in `.gitleaksignore`; all are test keys or scaffold defaults.
+- Every container image reference (compose files, Dockerfiles, CI service containers, scripts, `.woodpecker.yml`) now carries an
+  `@sha256` digest (16 references; the same digests as WPM where the tag matches). `scripts/check-actions-pinned.py` checks images
+  too, and skips `*:local` images the compose file builds itself. Dependabot's docker entries keep the digests current.
+- README: "Works on its own".
+
 ### 31 October (matcher 0.2.2)
 
 - **Matcher 0.2.2 published; the service uses it.** `project-portfolio-management-matcher` 0.2.2 (WW-1.10: codes keep every script; Soundex declines non-Latin names) is on crates.io, published at the product owner's direction, and the service now depends on `0.2.2` instead of 0.2.1, so plan codes in another script now reach the duplicate check. Verified locally: the matcher's tests, `cargo publish --dry-run`, the service's clippy and library tests and the matching test binary. Not verified: the database test run against 0.2.2 (read CI). A published version cannot be deleted, only yanked.

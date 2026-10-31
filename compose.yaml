@@ -94,7 +94,7 @@ x-api-build: &api-build
 
 services:
   postgres:
-    image: docker.io/library/postgres:18-alpine
+    image: docker.io/library/postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     environment:
       POSTGRES_USER: ppm
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}
@@ -112,7 +112,7 @@ services:
   # The cache. Not published on the host; only the API reaches it. It holds nothing that cannot be rebuilt
   # (cached reads, each with a short lifetime), so there is no volume.
   redis:
-    image: docker.io/library/redis:7-alpine
+    image: docker.io/library/redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
     command: ["redis-server", "--requirepass", "${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASS\" --no-auth-warning ping | grep -q PONG"]
@@ -238,7 +238,7 @@ services:
 
   seed-demo:
     profiles: ["demo"]
-    image: docker.io/library/node:26-slim
+    image: docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39
     working_dir: /repo
     command: ["node", "scripts/seed-demo.mjs"]
     environment:
@@ -277,7 +277,7 @@ services:
   # Optional mail server (profile `mail`): Stalwart. Pinned to a release line, not to `latest`.
   mail:
     profiles: ["mail"]
-    image: docker.io/stalwartlabs/stalwart:v0.16
+    image: docker.io/stalwartlabs/stalwart:v0.16@sha256:c429b311c93db5606598abc1c68225a85a6953183848ae01bee9c6a98885836c
     hostname: mail
     environment:
       # Optional: PPM_MAIL_ADMIN=admin:<password> pins the bootstrap administrator. Empty (the default) leaves

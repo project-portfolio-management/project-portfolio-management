@@ -115,13 +115,13 @@
 <style>
   .scroll { overflow-x: auto; }
   table { border-collapse: collapse; width: 100%; }
-  th, td { text-align: left; vertical-align: top; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--mxi-color-border, #ddd); }
-  .cell { min-width: 11rem; border-left: 6px solid var(--mxi-color-border, #ddd); }
-  .cell.tone-red { border-left-color: #b91c1c; }
-  .cell.tone-amber { border-left-color: #b45309; }
-  .cell.tone-green { border-left-color: #15803d; }
-  .cell.tone-grey { border-left-color: #6b7280; }
-  .cell.tone-none { border-left-style: dashed; }
+  th, td { text-align: start; vertical-align: top; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--mxi-color-border, #ddd); }
+  .cell { min-width: 11rem; border-inline-start: 6px solid var(--mxi-color-border, #ddd); }
+  .cell.tone-red { border-inline-start-color: #b91c1c; }
+  .cell.tone-amber { border-inline-start-color: #b45309; }
+  .cell.tone-green { border-inline-start-color: #15803d; }
+  .cell.tone-grey { border-inline-start-color: #6b7280; }
+  .cell.tone-none { border-inline-start-style: dashed; }
   .line { display: block; }
   .source { font-weight: 600; }
   .linked { display: block; font-weight: normal; }

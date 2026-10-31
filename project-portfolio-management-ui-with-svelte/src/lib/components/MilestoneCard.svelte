@@ -224,7 +224,7 @@
     color: var(--danger, #b00020);
   }
   .links {
-    padding-left: 1.25rem;
+    padding-inline-start: 1.25rem;
   }
   .inline {
     display: flex;

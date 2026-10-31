@@ -304,6 +304,14 @@ the root layout's load), so a page does not carry every language. Every translat
 unreviewed per locale in `governance/translation-reviews/` (Welsh in
 `governance/welsh-translation-review.md`).
 
+**Right-to-left (WW-1.15).** `ar-001` sets `dir="rtl"`. Stylesheets use logical properties only
+(`margin-inline-start`, `border-inline-start`, `text-align: start`, …) so the layout mirrors;
+`tests/unit/logical-css.test.ts` fails on a physical `left`/`right` margin, padding, border, `text-align`, `float` or
+`clear` in any `src/` stylesheet. **Limits:** chart and timeline geometry (`style:left` percentages on Gantt,
+critical-chain, capacity and pipeline bars, and the SVG charts) runs left to right in every locale; the font stack names
+system faces that cover Arabic, Devanagari and Simplified Chinese after the platform's UI font, and no font is bundled
+or downloaded, so a system without one shows the browser's fallback. Arabic is the only right-to-left locale.
+
 **How a reader's language is resolved (WW-1.14),** in `normalizeLocale` and tested case by case: an exact supported
 code; Traditional Chinese tags (`zh-Hant…`, `zh-TW`, `zh-HK`, `zh-MO`) read `zh-001`, Simplified, by a stated rule (there
 is no Traditional catalogue: a **limit**); any other region reads its language's world locale (`fr-CA` reads `fr-001`,

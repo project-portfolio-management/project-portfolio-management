@@ -139,7 +139,7 @@
   }
   th,
   td {
-    text-align: left;
+    text-align: start;
     padding: 0.4rem 0.5rem;
     border-bottom: 1px solid var(--mxi-color-border, #ddd);
   }

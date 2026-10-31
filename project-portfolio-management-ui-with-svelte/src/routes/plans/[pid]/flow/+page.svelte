@@ -347,7 +347,7 @@
   .finding {
     margin: 0.75rem 0;
     padding: 0.6rem 0.8rem;
-    border-left: 3px solid rgb(128 128 128 / 0.4);
+    border-inline-start: 3px solid rgb(128 128 128 / 0.4);
     font-size: 0.9rem;
   }
   .window {
@@ -364,7 +364,7 @@
   }
   th,
   td {
-    text-align: left;
+    text-align: start;
     padding: 0.3rem 0.5rem;
     vertical-align: top;
   }

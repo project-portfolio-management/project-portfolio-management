@@ -268,6 +268,6 @@
   progress {
     vertical-align: middle;
     width: 8rem;
-    margin-left: 0.5rem;
+    margin-inline-start: 0.5rem;
   }
 </style>

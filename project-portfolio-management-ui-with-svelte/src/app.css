@@ -49,11 +49,22 @@
   --mxi-color-surface: var(--color-base-200, #ffffff);
   --mxi-radius: var(--radius-field, 6px);
   --mxi-spacing: 1rem;
+  /* WW-1.15: after the platform's own UI font, faces that cover the scripts of the supported locales (Arabic,
+     Devanagari, Simplified Chinese) where the system has them. No font is downloaded or bundled: a system without
+     any of them shows the browser's own fallback, a stated limit. */
   font-family:
     system-ui,
     -apple-system,
     "Segoe UI",
     Roboto,
+    "Noto Sans",
+    "Noto Sans Arabic",
+    "Segoe UI Arabic",
+    "Noto Sans Devanagari",
+    "Nirmala UI",
+    "Noto Sans SC",
+    "PingFang SC",
+    "Microsoft YaHei",
     sans-serif;
   color: var(--mxi-color-fg);
   background: var(--mxi-color-bg);

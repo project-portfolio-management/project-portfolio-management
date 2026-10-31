@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (WW-1.19, the locale documents reconciled)
+
+- **`spec/locales.md` describes the `/locales` directory, and the English reader guides name no one country's law (WW-1.19, accepted 2026-10-31).** The chapter said the repository had no locale directories; `/locales/<code>/for/<role>/` holds the reader guides for eleven roles in ten document locales (`cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`, `hi-001`, `hi-in`, `zh-001`, `zh-cn`), a different set from the interface's. The chapter now says so and records two gaps: no guides for `ar-001`, `de-001`, `de-de`, `es-001` and `fr-001`, and the Welsh, Hindi and Chinese guides not updated to match. In the four English variants, the chief legal officer's and the governance-risk-compliance guides now speak of the applicable data-protection law (with the examples and link of `spec/12-compliance.md` §12.2a), call the NHS DTAC one national scheme kept as a worked example, point to the assurance checklist for other schemes, and describe the erasure policy choice (WW-1.8). Documentation only. **Not done:** no guides added for the missing locales; the translated guides were not changed. **Not verified:** CI before the push (the Pages job copies these files).
+
 ### 31 October (WW-1.18, sign-in methods stated as a limit)
 
 - **The sign-in methods and what is missing are stated (WW-1.18, accepted 2026-10-31, a limit).** The UI spec now says the two ways in are the e-mail magic link and, where `OIDC_ISSUER` is set, an OpenID Connect provider (the audit said magic link only, missing the OIDC flow), that there is no sign-in by phone and no national identity scheme of the product's own, and that a national or sector eID offering OpenID Connect can come in through the OIDC path, which the API now accepts from any issuer (WW-1.12). Documentation only. **Not done:** no phone sign-in; no eID or other real provider tried. **Not verified:** CI before the push.

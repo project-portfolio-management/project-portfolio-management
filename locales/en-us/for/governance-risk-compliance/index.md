@@ -19,8 +19,8 @@
 
 | Area | Where | State |
 |---|---|---|
-| UK GDPR / EU GDPR | [DPIA](../../../../governance/dpia.md), [record of processing](../../../../governance/record-of-processing.md), [personal-data inventory](../../../../governance/personal-data-inventory.csv), [retention schedule](../../../../governance/retention-schedule.md), [data flow](../../../../governance/data-flow.md) | Pre-filled; `‹buyer›` markers are yours; retention only partly enforced |
-| NHS DTAC | [DTAC checklist](../../../../governance/dtac-checklist.md) | Answered section by section; buyer and supplier rows open |
+| Data protection (the applicable law; [§12.2a](../../../../spec/12-compliance.md) maps GDPR, UK GDPR, LGPD, PIPL, DPDP, PIPEDA, CCPA and others) | [DPIA](../../../../governance/dpia.md), [record of processing](../../../../governance/record-of-processing.md), [personal-data inventory](../../../../governance/personal-data-inventory.csv), [retention schedule](../../../../governance/retention-schedule.md), [data flow](../../../../governance/data-flow.md) | Pre-filled; `‹buyer›` markers are yours; retention only partly enforced |
+| UK NHS DTAC (one national scheme, a worked example; other schemes start from the [assurance checklist](../../../../governance/assurance-checklist.md)) | [DTAC checklist](../../../../governance/dtac-checklist.md) | Answered section by section; buyer and supplier rows open |
 | Accessibility | [statement](../../../../governance/accessibility-statement.md) | WCAG 2.2 AA automated; no manual test |
 | Language duties | [language statement](../../../../governance/language-statement.md) | Translations are drafts |
 | ISO/IEC 27001 | [compliance spec](../../../../spec/12-compliance.md) | Deployment-side controls; not certified |

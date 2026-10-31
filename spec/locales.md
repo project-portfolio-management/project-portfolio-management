@@ -18,9 +18,19 @@ directory or file stem that is named for a locale.
   file. `/en/plans` is an ordinary unprefixed path: it gains the reader's own locale prefix
   like any other bare path and then finds no page. There is **no forwarding** from `/en/…`
   to `/en-001/…` (removed 2026-10-07).
-- **No `locales/en/` directory exists, or may.** The repository has no locale directories at
-  all: strings live in `src/lib/i18n.svelte.ts`, keyed by these codes. Should locale files
-  ever be split out, they are named `<language>-<region>`.
+- **No `locales/en/` directory exists, or may.** Interface strings live in the UI's
+  `src/lib/i18n.svelte.ts` and `i18n-pages*.ts`, keyed by these codes; any locale directory or
+  file is named `<language>-<region>`.
+- **`/locales` holds documents, not interface strings (WW-1.19).** `locales/<code>/for/<role>/index.md`
+  are the reader guides for eleven roles (chief executive, legal, security, …), in ten
+  **document locales**: `cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`,
+  `hi-001`, `hi-in`, `zh-001`, `zh-cn`. That set is not the interface's (§2): five are regional
+  document variants (British, Oxford and US English, Welsh and Hindi with a region) the interface
+  does not have, and **`ar-001`, `de-001`, `de-de`, `es-001` and `fr-001` have no reader guides:
+  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). The
+  English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
+  example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still
+  name UK GDPR and the DTAC alone (a recorded gap).
 - `tests/unit/locale-names.test.ts` fails the build if a bare two-letter locale directory or
   file appears, or if a locale directory holds a badly named entry.
 

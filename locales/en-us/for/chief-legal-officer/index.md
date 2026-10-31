@@ -6,20 +6,20 @@
 
 Offered under any one of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only or GPL-3.0-only, or custom terms by arrangement. The choice and the texts are in [`LICENSE.md`](../../../../LICENSE.md) and `LICENSE/`; a test keeps every manifest consistent with them.
 
-## Data protection (UK GDPR / EU GDPR)
+## Data protection (the law that applies to you)
 
-Pre-filled documents you adapt; every `‹buyer›` marker is a decision that is yours (controller, lawful basis, retention periods, processors, sign-off):
+Written for any data-protection law: the [compliance spec §12.2a](../../../../spec/12-compliance.md) maps the common ones by region (the GDPR and UK GDPR, the LGPD, the PIPL, the DPDP Act, PIPEDA, the CCPA and others) to what each drives here, from general knowledge and not checked against each law's text. Pre-filled documents you adapt; every `‹buyer›` marker is a decision that is yours (controller, lawful basis, retention periods, processors, sign-off):
 
 - [DPIA template](../../../../governance/dpia.md) and [record of processing](../../../../governance/record-of-processing.md)
 - [Personal-data inventory](../../../../governance/personal-data-inventory.csv): every column that can hold personal data
 - [Retention schedule](../../../../governance/retention-schedule.md): proposals, with what the code enforces today
 - [Data-flow diagram](../../../../governance/data-flow.md)
 
-The software holds people as opaque references plus recorded time, availability and cost rates, which is monitoring-adjacent and so warrants a DPIA. It offers a data-subject export and pseudonymization (administrators only, preview first). Frozen director packs and append-only confidence history are blanked of the person who drafted or assessed, never deleted, so an erasure request can be met without breaking the record. It does **not** find names typed into free text, and backups hold records the application has deleted.
+The software holds people as opaque references plus recorded time, availability and cost rates, which is monitoring-adjacent and so warrants a DPIA. It offers a data-subject export and erasure by pseudonymization or, if the deployment chooses, deletion (administrators only, preview first; WW-1.8). Frozen director packs and append-only confidence history are blanked of the person who drafted or assessed, never deleted, so an erasure request can be met without breaking the record. It does **not** find names typed into free text, and backups hold records the application has deleted.
 
 ## Frameworks
 
-HIPAA and the US health-data certification regimes are **not engaged** (no patient data); the clinical-device regime is not engaged. NHS DTAC answers are in the [DTAC checklist](../../../../governance/dtac-checklist.md). Nothing is certified.
+HIPAA and the US health-data certification regimes are **not engaged** (no patient data); the clinical-device regime is not engaged. The [DTAC checklist](../../../../governance/dtac-checklist.md) answers the UK NHS's Digital Technology Assessment Criteria, one national scheme kept as a worked example; for other countries' and sectors' schemes (ISO/IEC 27001, SOC 2, national cloud and public-sector schemes) start from the [assurance checklist](../../../../governance/assurance-checklist.md). Nothing is certified.
 
 ## Accessibility and language
 

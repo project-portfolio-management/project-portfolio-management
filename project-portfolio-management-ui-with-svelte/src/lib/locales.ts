@@ -61,18 +61,33 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 export const RTL_LOCALES = ["ar-001"] as const satisfies readonly Locale[];
 
 /**
- * Normalize raw input to a supported locale, or null if unsupported.
- * Case-insensitive and hyphen/underscore-insensitive. A region or legacy
- * code resolves by primary language (`es-MX`, `en_US`, `zh`, `en` all map
- * to the one supported locale of that language).
+ * Tags written in Traditional Chinese characters (the `Hant` script, or a region that uses it by default:
+ * Taiwan, Hong Kong, Macao). **A stated limit (WW-1.14):** there is no Traditional Chinese catalogue, so these
+ * fall back, on purpose and by this rule rather than by accident, to `zh-001` (Simplified): most readers of
+ * Traditional characters read Simplified more easily than English. Adding a `zh-hant` locale removes the
+ * fallback.
+ */
+const TRADITIONAL_CHINESE = /^zh-(hant(-|$)|tw$|hk$|mo$)/;
+
+/**
+ * How a tag that is not itself a supported locale is resolved (WW-1.14), stated so it can be tested:
+ *
+ * 1. an exact supported code (`de-de`);
+ * 2. Traditional Chinese tags to `zh-001`, the stated limit above;
+ * 3. otherwise by primary language: a region the UI has no variant for reads the language's world locale
+ *    (`es-MX`, `fr-CA`, `en-IN` and `en-US` read `es-001`, `fr-001`, `en-001`; `de-AT` reads `de-001`, not
+ *    `de-de`). Regional spelling and vocabulary are therefore not served: a stated limit;
+ * 4. a language with no catalogue (`ja`, `pt`, `sw`, …) is `null`, and the caller tries the reader's next
+ *    preference and finally {@link DEFAULT_LOCALE}.
  */
 export function normalizeLocale(raw: string | null | undefined): Locale | null {
   if (!raw) return null;
   const normalized = raw.trim().replace(/_/g, "-").toLowerCase();
   const exact = LOCALES.find((l) => l === normalized);
   if (exact) return exact;
+  if (TRADITIONAL_CHINESE.test(normalized)) return "zh-001";
   const primary = normalized.split("-")[0] ?? "";
-  return LOCALES.find((l) => l.split("-")[0] === primary) ?? null;
+  return LOCALES.find((l) => l === `${primary}-001`) ?? null;
 }
 
 /**

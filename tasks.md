@@ -1956,6 +1956,8 @@ only as search snippets.
   **WW-1.12 done 2026-10-31:** access tokens from any OIDC provider with standard discovery (`OIDC_ISSUER`), no
   build feature and no Keycloak needed.
   **WW-1.13 done 2026-10-31:** time-zone examples from several regions; the API reference's English is a stated limit.
+  **WW-1.14 done 2026-10-31:** a stated criterion for adding a locale; the region and Traditional-Chinese fallbacks
+  are an explicit, tested rule; Simplified-only is a stated limit. No locale added.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

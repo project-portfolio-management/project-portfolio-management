@@ -304,6 +304,22 @@ the root layout's load), so a page does not carry every language. Every translat
 unreviewed per locale in `governance/translation-reviews/` (Welsh in
 `governance/welsh-translation-review.md`).
 
+**How a reader's language is resolved (WW-1.14),** in `normalizeLocale` and tested case by case: an exact supported
+code; Traditional Chinese tags (`zh-Hant…`, `zh-TW`, `zh-HK`, `zh-MO`) read `zh-001`, Simplified, by a stated rule (there
+is no Traditional catalogue: a **limit**); any other region reads its language's world locale (`fr-CA` reads `fr-001`,
+`en-IN` `en-001`, `de-AT` `de-001`, never another region's variant; regional spelling is a limit); a language with no
+catalogue is no match, so the reader's next `Accept-Language` preference is tried and then English.
+
+**When a locale is added (WW-1.14, the criterion).** A language is added when someone will carry it to the same bar as
+every other (§2.0, NFR-19): a complete page catalogue and `STRINGS` entry (the typed record and
+`catalogue-coverage.test.ts`), the `lily-labels` pack or a recorded fallback for it, a review record in
+`governance/translation-reviews/` saying the text is a machine draft until a speaker reviews it, its `dir`, and a pass
+of `every-locale.spec.ts`. Which language comes next is chosen by reach where the product is used and by whether a
+reviewer can be found, not by region; the candidates are the 47 in
+`spec/locales-for-global-sharing-with-svelte/locales.tsv`. Today's ten include no African language and none of
+Japanese, Korean, Portuguese, Indonesian, Bengali, Swahili, Turkish, Russian, Persian or Urdu: a stated gap, not a
+choice against them.
+
 ## 6. Functional requirements
 
 1. **List** active plans (`GET /api/plans`) in a **SVAR DataGrid** (name,

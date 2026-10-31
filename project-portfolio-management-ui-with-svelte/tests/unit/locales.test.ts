@@ -139,6 +139,44 @@ describe("navigator.language on the root route", () => {
     expect(normalizeLocale("zh_CN")).toBe("zh-cn");
     expect(normalizeLocale("es-MX")).toBe("es-001");
   });
+  // WW-1.14: the fallback rule, stated in normalizeLocale, case by case.
+  it("a region with no variant reads its language's world locale, never another region's", () => {
+    expect(normalizeLocale("fr-CA")).toBe("fr-001");
+    expect(normalizeLocale("en-IN")).toBe("en-001");
+    expect(normalizeLocale("en-US")).toBe("en-001");
+    expect(normalizeLocale("de-AT")).toBe("de-001");
+    expect(normalizeLocale("zh-SG")).toBe("zh-001");
+    expect(normalizeLocale("ar-EG")).toBe("ar-001");
+  });
+  it("Traditional Chinese reads Simplified, by the stated rule", () => {
+    for (const tag of [
+      "zh-TW",
+      "zh-HK",
+      "zh-MO",
+      "zh-Hant",
+      "zh-Hant-TW",
+      "zh_Hant_HK",
+    ])
+      expect(normalizeLocale(tag), tag).toBe("zh-001");
+    expect(normalizeLocale("zh-Hans-CN")).toBe("zh-001");
+  });
+  it("languages with no catalogue are null, so the next preference is tried", () => {
+    for (const tag of [
+      "pt-BR",
+      "ja",
+      "ko",
+      "sw-KE",
+      "yo",
+      "tr",
+      "ru",
+      "fa",
+      "ur",
+      "bn",
+      "id",
+    ])
+      expect(normalizeLocale(tag), tag).toBeNull();
+    expect(localeFromAcceptLanguage("sw-KE,sw;q=0.9,fr;q=0.5")).toBe("fr-001");
+  });
   it("a language the app does not have resolves to nothing, so the default applies", () => {
     expect(normalizeLocale("ja-JP")).toBeNull();
     expect(normalizeLocale("")).toBeNull();

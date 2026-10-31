@@ -7,7 +7,9 @@
 //! ```
 //!
 //! Schedule it (cron, a Kubernetes `CronJob`, a systemd timer) once a day after the dry run has
-//! shown what it would remove. See `governance/retention-schedule.md` for what is and is not covered.
+//! shown what it would remove. Each period is also a deployment setting,
+//! `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS` (WW-1.7), which the scheduled job reads too; an argument
+//! here wins over it. See `governance/retention-schedule.md` for what is and is not covered.
 
 use chrono::Utc;
 use loco_rs::prelude::*;
@@ -39,7 +41,8 @@ impl Task for RetentionPurge {
     /// a database statement fails.
     async fn run(&self, ctx: &AppContext, vars: &task::Vars) -> Result<()> {
         let mut apply = false;
-        let mut overrides = Vec::new();
+        // WW-1.7: the deployment's settings first; an argument on the command line wins over them.
+        let mut overrides = retention::env_overrides().map_err(|m| Error::string(&m))?;
         for (key, value) in &vars.cli {
             if key == "apply" {
                 apply = matches!(
@@ -51,6 +54,7 @@ impl Task for RetentionPurge {
                     return Err(Error::string(&format!("unknown rule {name:?}")));
                 }
                 let days = retention::parse_days(name, value).map_err(|m| Error::string(&m))?;
+                overrides.retain(|(n, _)| n != name);
                 overrides.push((name.to_string(), days));
             } else {
                 return Err(Error::string(&format!("unknown argument {key:?}")));

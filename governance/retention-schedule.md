@@ -41,7 +41,11 @@ decision for the buyer to plan around until it is built:
    unless `apply:true`; one audit row per table purged) removes read
    notifications (90 calendar days), the webhook and notification delivery logs
    (30 calendar days) and the trend snapshots (3 years); each period can be
-   overridden. `OPS`, `PPL`, the rest of `COM`, `AUD` and `DOC` records still
+   overridden on the command line or, for every run including the scheduled
+   job, by the deployment setting `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS`
+   (WW-1.7; for example `..._RETENTION_NOTIFICATIONS_DAYS=30`). The defaults
+   are this service's working choices, each with its reason in
+   `src/retention.rs` (`Rule::basis`); none was taken from a law. `OPS`, `PPL`, the rest of `COM`, `AUD` and `DOC` records still
    accumulate until an operator removes them: how long to keep a plan, a
    timesheet or a document is the buyer's decision, and each needs its own rule
    (RG-4 follow-up).
@@ -55,3 +59,9 @@ decision for the buyer to plan around until it is built:
    reference with a stable pseudonym everywhere, the audit trail included
    (`/api/admin/subjects/...`; see the DPIA, risk 7). Free text, uploaded files,
    audit snapshots and backups are not found automatically.
+5. **The audit-trail retention (`AUD`, 6 years) is not enforced in code.** It
+   is policy only: no rule in the retention purge covers `audit_logs`, the rows
+   are append-only and are never deleted, so they are kept for longer than the
+   proposed period, not shorter. The 6 years is a starting proposal, not a
+   period any one law sets for every country (WW-1.7); a deployment that must
+   delete audit records after a period has no setting for it yet.

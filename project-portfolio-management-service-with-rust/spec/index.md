@@ -1646,3 +1646,12 @@ it is the calendar year (January), the same default as the contact relationship 
 `PROJECT_PORTFOLIO_MANAGEMENT_SUPPRESSION_FLOOR_MINUTES` of declared capacity (default 2400, one nominal week). The
 defaults are working rules (five is a common statistical-disclosure convention), not a threshold any law sets; the
 answer's `suppression` object names the two values used.
+
+## Retention periods (WW-1.7)
+
+Each retention-purge rule's period is a deployment setting, `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS`
+(1 to 36 500 calendar days), read by `task retention_purge` (where a `<rule>_days:` argument wins) and by the
+scheduled `retention_purge` job, which before 2026-10-31 always used the defaults. A value outside the range fails the
+run; it never purges by the default instead. Each default states its reason (`Rule::basis`); none is a period a law
+sets. The audit trail (`AUD`, proposed 6 years) is not purged by any rule: the rows are kept, so the period is policy
+only, a known gap in `governance/retention-schedule.md`.

@@ -1944,6 +1944,8 @@ only as search snippets.
   length (`working_time.rs`); the export writes a calendar-less plan's real week. The UI week start is not done.
   **WW-1.5 done 2026-10-31:** the financial year defaults to the calendar year, not April.
   **WW-1.6 done 2026-10-31:** the small-cell minimum and the suppression floor are deployment settings, stated in the answer.
+  **WW-1.7 done 2026-10-31:** every retention period is a deployment setting the scheduled job reads, each default
+  with its reason; the unenforced audit-trail retention is a listed gap.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

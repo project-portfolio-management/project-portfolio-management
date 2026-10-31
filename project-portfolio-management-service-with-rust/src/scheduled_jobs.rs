@@ -186,7 +186,10 @@ async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Strin
             let apply = std::env::var(RETENTION_APPLY_ENV).is_ok_and(|v| {
                 matches!(v.trim().to_ascii_lowercase().as_str(), "true" | "yes" | "1")
             });
-            let out = crate::retention::run(&ctx.db, now, &[], apply).await?;
+            // WW-1.7: the deployment's periods; a bad setting fails the run rather than purge by the default.
+            let overrides =
+                crate::retention::env_overrides().map_err(|m| loco_rs::Error::string(&m))?;
+            let out = crate::retention::run(&ctx.db, now, &overrides, apply).await?;
             let matched: u64 = out.iter().map(|o| o.matched).sum();
             let deleted: u64 = out.iter().map(|o| o.deleted).sum();
             Ok(format!(

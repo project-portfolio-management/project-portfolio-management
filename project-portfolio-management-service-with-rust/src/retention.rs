@@ -1,6 +1,7 @@
 //! Retention purge (RG-4): which records are past their period, and the runner that removes them.
 //!
-//! The periods are the starting ones in `governance/retention-schedule.md`. **Only records whose
+//! The periods are the starting ones in `governance/retention-schedule.md`, each a deployment setting
+//! (`PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS`, WW-1.7) with its reason in [`Rule::basis`]. **Only records whose
 //! deletion is unambiguous are covered**: read notifications (`COM`), the webhook and notification
 //! delivery logs (`EVT`), and the trend snapshots (`DRV`). Plans, tasks, documents, time records and
 //! the audit trail itself are *not* purged here: how long to keep them is the buyer's decision, and
@@ -32,6 +33,10 @@ pub struct Rule {
     pub also: &'static str,
     /// The default period, in calendar days.
     pub default_days: i64,
+    /// Why the default is what it is (WW-1.7). None of these is set by a law: a deployment whose
+    /// records manager or applicable law asks for another period sets
+    /// `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<NAME>_DAYS` ([`Rule::env_name`]).
+    pub basis: &'static str,
 }
 
 /// Every rule, in the order they run.
@@ -43,6 +48,7 @@ pub const RULES: &[Rule] = &[
         age_column: "read_at",
         also: "",
         default_days: 90,
+        basis: "a read notification has done its job; 90 days leaves a quarter to look back on it",
     },
     Rule {
         name: "webhook_log",
@@ -51,6 +57,7 @@ pub const RULES: &[Rule] = &[
         age_column: "created_at",
         also: "",
         default_days: 30,
+        basis: "a delivery log is for diagnosing a failed delivery, which is noticed within days",
     },
     Rule {
         name: "sink_log",
@@ -59,6 +66,7 @@ pub const RULES: &[Rule] = &[
         age_column: "created_at",
         also: "next_attempt_at IS NULL",
         default_days: 30,
+        basis: "as the webhook log: a settled delivery is only kept for diagnosis",
     },
     Rule {
         name: "idempotency_keys",
@@ -67,6 +75,7 @@ pub const RULES: &[Rule] = &[
         age_column: "created_at",
         also: "",
         default_days: 1,
+        basis: "a retry with the same key comes within minutes; one day is ample (NFR on idempotency)",
     },
     Rule {
         name: "insight_snapshots",
@@ -75,6 +84,7 @@ pub const RULES: &[Rule] = &[
         age_column: "taken_at",
         also: "",
         default_days: 3 * 365,
+        basis: "three years of trend gives a comparison across a typical portfolio planning cycle",
     },
     Rule {
         name: "adoption_snapshots",
@@ -83,8 +93,42 @@ pub const RULES: &[Rule] = &[
         age_column: "observed_at",
         also: "",
         default_days: 3 * 365,
+        basis: "as the trend snapshots: three years of history for comparison",
     },
 ];
+
+/// The prefix of the deployment setting for a rule's period: `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<NAME>_DAYS`.
+pub const ENV_PREFIX: &str = "PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_";
+
+/// The periods a deployment sets (WW-1.7), read through `lookup` (the environment in production, a map in
+/// tests). An unset rule keeps its default. A set value that is not a whole number of days from 1 to
+/// [`MAX_DAYS`] is an error, not a silent fall-back: a mistyped period must not delete by another one.
+///
+/// # Errors
+///
+/// The message names the setting and the value it refused.
+pub fn deployment_overrides(
+    lookup: impl Fn(&str) -> Option<String>,
+) -> Result<Vec<(String, i64)>, String> {
+    let mut out = Vec::new();
+    for rule in RULES {
+        let key = rule.env_name();
+        if let Some(raw) = lookup(&key) {
+            let days = parse_days(rule.name, &raw).map_err(|m| format!("{key}: {m}"))?;
+            out.push((rule.name.to_string(), days));
+        }
+    }
+    Ok(out)
+}
+
+/// The deployment's periods from the environment ([`deployment_overrides`]).
+///
+/// # Errors
+///
+/// As [`deployment_overrides`].
+pub fn env_overrides() -> Result<Vec<(String, i64)>, String> {
+    deployment_overrides(|k| std::env::var(k).ok())
+}
 
 /// The instant before which a record is past its period.
 #[must_use]
@@ -111,6 +155,12 @@ pub fn parse_days(name: &str, raw: &str) -> Result<i64, String> {
 pub const MAX_DAYS: i64 = 36_500;
 
 impl Rule {
+    /// The deployment setting that overrides this rule's period.
+    #[must_use]
+    pub fn env_name(&self) -> String {
+        format!("{ENV_PREFIX}{}_DAYS", self.name.to_ascii_uppercase())
+    }
+
     /// The `WHERE` clause for rows past the cut-off, which is bound as `$1` (CQ-12): only the
     /// rule's own fixed identifiers are written into the SQL.
     #[must_use]
@@ -285,6 +335,43 @@ mod tests {
         assert_eq!(days("notifications"), 90);
         assert_eq!(days("webhook_log"), 30);
         assert_eq!(days("insight_snapshots"), 3 * 365);
+    }
+
+    #[test]
+    fn every_default_states_its_basis() {
+        for r in RULES {
+            assert!(r.basis.len() > 20, "{} has no stated basis", r.name);
+        }
+    }
+
+    /// WW-1.7: a deployment sets each period; unset keeps the default; a bad value is refused, not ignored.
+    #[test]
+    fn a_deployment_sets_the_periods() {
+        assert_eq!(
+            RULES[0].env_name(),
+            "PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_NOTIFICATIONS_DAYS"
+        );
+        assert_eq!(deployment_overrides(|_| None), Ok(vec![]));
+        let set = |k: &str| match k {
+            "PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_NOTIFICATIONS_DAYS" => Some("30".to_string()),
+            "PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_INSIGHT_SNAPSHOTS_DAYS" => {
+                Some(" 3650 ".to_string())
+            }
+            _ => None,
+        };
+        assert_eq!(
+            deployment_overrides(set),
+            Ok(vec![
+                ("notifications".to_string(), 30),
+                ("insight_snapshots".to_string(), 3650)
+            ])
+        );
+        let bad = |k: &str| {
+            (k == "PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_WEBHOOK_LOG_DAYS")
+                .then(|| "0".to_string())
+        };
+        let e = deployment_overrides(bad).unwrap_err();
+        assert!(e.contains("RETENTION_WEBHOOK_LOG_DAYS"), "{e}");
     }
 
     #[test]

@@ -36,14 +36,54 @@ use serde::{Deserialize, Serialize};
 /// Basis-point scale.
 pub const BASIS_POINTS: i64 = 10_000;
 
-/// Minutes of declared capacity below which a utilization figure is
-/// suppressed. One nominal working week.
+/// Minutes of declared capacity below which a utilization figure is suppressed, when the deployment sets none
+/// (`PROJECT_PORTFOLIO_MANAGEMENT_SUPPRESSION_FLOOR_MINUTES`, WW-1.6). One nominal working week (5 × 480): below
+/// it a ratio rests on too little capacity to mean anything. A working rule of this service, not a legal threshold.
 pub const DEFAULT_SUPPRESSION_FLOOR_MINUTES: i64 = 2_400;
 
-/// The fewest people a team or plan utilization figure may cover. Below it the figure is withheld
-/// (small-cell suppression): with one person it is that person's figure, with two or three the
-/// others can be recovered by anyone who knows one.
+/// The fewest people a team or plan utilization figure may cover, when the deployment sets none
+/// (`PROJECT_PORTFOLIO_MANAGEMENT_MIN_GROUP_PEOPLE`, WW-1.6). Below it the figure is withheld (small-cell
+/// suppression): with one person it is that person's figure, with two or three the others can be recovered by
+/// anyone who knows one. Five is a common statistical-disclosure convention, not a number any law sets; a
+/// deployment whose data-protection officer or works council asks for more (or for a different rule) sets it.
 pub const MIN_GROUP_PEOPLE: usize = 5;
+
+/// The suppression floor from a setting's text: 0 to 100 000 minutes, else the default.
+#[must_use]
+pub fn parse_floor_minutes(raw: Option<&str>) -> i64 {
+    raw.and_then(|v| v.trim().parse::<i64>().ok())
+        .filter(|m| (0..=100_000).contains(m))
+        .unwrap_or(DEFAULT_SUPPRESSION_FLOOR_MINUTES)
+}
+
+/// The small-cell minimum from a setting's text: 2 to 1000 people, else the default. One is refused: it would
+/// publish a single person's figure as a group's.
+#[must_use]
+pub fn parse_min_group_people(raw: Option<&str>) -> usize {
+    raw.and_then(|v| v.trim().parse::<usize>().ok())
+        .filter(|n| (2..=1000).contains(n))
+        .unwrap_or(MIN_GROUP_PEOPLE)
+}
+
+/// The deployment's suppression floor.
+#[must_use]
+pub fn floor_minutes() -> i64 {
+    parse_floor_minutes(
+        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_SUPPRESSION_FLOOR_MINUTES")
+            .ok()
+            .as_deref(),
+    )
+}
+
+/// The deployment's small-cell minimum.
+#[must_use]
+pub fn min_group_people() -> usize {
+    parse_min_group_people(
+        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_MIN_GROUP_PEOPLE")
+            .ok()
+            .as_deref(),
+    )
+}
 
 /// How effort is categorized for the capex / opex split the budget
 /// lines already use.
@@ -263,10 +303,14 @@ pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilizati
 }
 
 /// [`team_utilization`], or a figure with nothing in it when the group is under
-/// [`MIN_GROUP_PEOPLE`] people (small-cell suppression).
+/// `min_people` people (small-cell suppression; [`min_group_people`]).
 #[must_use]
-pub fn group_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilization {
-    if facts.len() < MIN_GROUP_PEOPLE {
+pub fn group_utilization(
+    facts: &[CapacityFact],
+    floor_minutes: i64,
+    min_people: usize,
+) -> Utilization {
+    if facts.len() < min_people {
         return Utilization {
             actor_ref: "team".to_string(),
             basis_points: None,
@@ -285,6 +329,39 @@ pub fn group_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilizat
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_small_cell_minimum_and_the_floor_are_settings_with_stated_defaults() {
+        assert_eq!(parse_min_group_people(None), 5);
+        assert_eq!(parse_min_group_people(Some("10")), 10);
+        for bad in ["1", "0", "-3", "many", "1001"] {
+            assert_eq!(parse_min_group_people(Some(bad)), 5, "{bad}");
+        }
+        assert_eq!(parse_floor_minutes(None), 2_400);
+        assert_eq!(parse_floor_minutes(Some("2250")), 2_250);
+        assert_eq!(parse_floor_minutes(Some("0")), 0);
+        for bad in ["-1", "100001", "a week"] {
+            assert_eq!(parse_floor_minutes(Some(bad)), 2_400, "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_larger_minimum_withholds_a_group_the_default_would_show() {
+        let people = |n: usize| -> Vec<CapacityFact> {
+            (0..n)
+                .map(|i| CapacityFact {
+                    actor_ref: format!("person:{i}"),
+                    declared_minutes: 4_800,
+                    non_working_minutes: 0,
+                    effort_minutes: 2_400,
+                })
+                .collect()
+        };
+        assert!(group_utilization(&people(6), 0, 5).basis_points.is_some());
+        let u = group_utilization(&people(6), 0, 10);
+        assert_eq!(u.basis_points, None);
+        assert_eq!(u.unavailable, Some(Unavailable::SmallGroup));
+    }
 
     fn entry(actor: &str, minutes: i64, category: EffortCategory, billable: bool) -> EffortFact {
         EffortFact {
@@ -442,7 +519,7 @@ mod tests {
     #[test]
     fn a_small_group_is_withheld_whole() {
         for n in 0..MIN_GROUP_PEOPLE {
-            let u = group_utilization(&people(n), 0);
+            let u = group_utilization(&people(n), 0, MIN_GROUP_PEOPLE);
             assert_eq!(u.basis_points, None, "{n} people");
             assert_eq!(u.unavailable, Some(Unavailable::SmallGroup), "{n} people");
             assert_eq!(
@@ -460,7 +537,7 @@ mod tests {
 
     #[test]
     fn a_group_of_five_is_reported() {
-        let u = group_utilization(&people(MIN_GROUP_PEOPLE), 0);
+        let u = group_utilization(&people(MIN_GROUP_PEOPLE), 0, MIN_GROUP_PEOPLE);
         assert_eq!(u.basis_points, Some(5_000));
         assert_eq!(u.unavailable, None);
         assert_eq!(u.effort_minutes, 6_000);

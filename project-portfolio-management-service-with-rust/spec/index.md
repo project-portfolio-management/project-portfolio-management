@@ -1638,3 +1638,11 @@ none. Limits: `scheduling_rules.rs` keeps 480 minutes per business day for work 
 The financial year starts on the first of `PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH` (1 to 12). Unset,
 it is the calendar year (January), the same default as the contact relationship service's organization fiscal year
 (CRM-T171); until 2026-10-31 it was April. A year that starts in January is labelled `2026`, any other `2026/27`.
+
+## Small-cell suppression (WW-1.6)
+
+`GET /api/capacity/utilization` withholds a team or plan figure over fewer than
+`PROJECT_PORTFOLIO_MANAGEMENT_MIN_GROUP_PEOPLE` people (default 5, at least 2) and suppresses a figure on less than
+`PROJECT_PORTFOLIO_MANAGEMENT_SUPPRESSION_FLOOR_MINUTES` of declared capacity (default 2400, one nominal week). The
+defaults are working rules (five is a common statistical-disclosure convention), not a threshold any law sets; the
+answer's `suppression` object names the two values used.

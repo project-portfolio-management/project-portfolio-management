@@ -390,13 +390,16 @@ async fn utilization(
         })
         .collect();
 
-    let floor = rules::DEFAULT_SUPPRESSION_FLOOR_MINUTES;
+    // WW-1.6: both thresholds are the deployment's; the answer says which were used.
+    let floor = rules::floor_minutes();
+    let min_people = rules::min_group_people();
     let body = match by.as_str() {
         "person" => serde_json::json!({
             "by": "person",
             "window_days": window_days,
             // Stable order by actor, **not** sorted by utilization.
             "utilization": facts.iter().map(|f| rules::utilization(f, floor)).collect::<Vec<_>>(),
+            "suppression": { "floor_minutes": floor, "min_group_people": min_people },
             "note": "Utilization near or above 100% is a warning about the queue, \
                      not an achievement. No per-person cycle time, throughput or \
                      flow efficiency is served here or derivable from it.",
@@ -404,8 +407,9 @@ async fn utilization(
         _ => serde_json::json!({
             "by": by,
             "window_days": window_days,
-            "utilization": rules::group_utilization(&facts, floor),
+            "utilization": rules::group_utilization(&facts, floor, min_people),
             "people_counted": facts.len(),
+            "suppression": { "floor_minutes": floor, "min_group_people": min_people },
         }),
     };
     let etag = super::etag_of(&body);

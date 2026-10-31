@@ -1943,6 +1943,7 @@ only as search snippets.
   **WW-1.4 done in the service 2026-10-31:** planned hours follow each plan's calendar and the organization's day
   length (`working_time.rs`); the export writes a calendar-less plan's real week. The UI week start is not done.
   **WW-1.5 done 2026-10-31:** the financial year defaults to the calendar year, not April.
+  **WW-1.6 done 2026-10-31:** the small-cell minimum and the suppression floor are deployment settings, stated in the answer.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

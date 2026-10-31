@@ -270,6 +270,9 @@ async fn a_team_under_five_is_withheld_and_a_team_of_five_is_reported() {
         assert_eq!(u["unavailable"], "small_group");
         assert_eq!(u["effort_minutes"], 0, "the numerator is withheld too");
         assert_eq!(u["available_minutes"], 0, "and the denominator");
+        // WW-1.6: the answer names the thresholds it used (the deployment's, here the stated defaults).
+        assert_eq!(four["suppression"]["min_group_people"], 5);
+        assert_eq!(four["suppression"]["floor_minutes"], 2_400);
 
         // The per-person view is unchanged at this size.
         let people: Value = request

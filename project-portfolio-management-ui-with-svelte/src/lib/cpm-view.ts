@@ -9,6 +9,7 @@
  */
 
 import { dateOf, dayNumber } from "./lily-grids";
+import { formatDayMonth, formatMonth } from "./locale-format.js";
 import { businessDays } from "./units.js";
 import { t, tn } from "./i18n.svelte.js";
 import { lazyArray } from "./lazy.js";
@@ -302,12 +303,12 @@ export function cpmBars(
   if (days <= 56) {
     for (let d = first; d <= last; d++) {
       if (mondayIndex(d) === 0)
-        ticks.push({ pct: pct(d), label: dateOf(d).slice(5) });
+        ticks.push({ pct: pct(d), label: formatDayMonth(dateOf(d)) });
     }
   } else {
     for (let d = first; d <= last; d++) {
       if (dateOf(d).endsWith("-01"))
-        ticks.push({ pct: pct(d), label: dateOf(d).slice(0, 7) });
+        ticks.push({ pct: pct(d), label: formatMonth(dateOf(d)) });
     }
   }
   return { from: dateOf(first), to: dateOf(last), days, ticks, bars };

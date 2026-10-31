@@ -83,7 +83,7 @@ test.describe("milestone sign-off", () => {
     });
     await expect(gap).toContainText("▲");
     await expect(
-      page.getByRole("row", { name: /Handover.*met.*2026-12-02/ }),
+      page.getByRole("row", { name: /Handover.*met.*2 Dec 2026/ }),
     ).toContainText("●");
     await page
       .getByRole("button", { name: "Sign Go-live as the chosen organization" })

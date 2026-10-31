@@ -115,7 +115,7 @@ test.describe("critical path", () => {
     ).not.toContainText("On the critical path");
     await expect(
       page.getByRole("row", {
-        name: /^Write docs\s+2026-10-05\s+2026-10-07\s+6\s+6/,
+        name: /^Write docs\s+5 Oct 2026\s+7 Oct 2026\s+6\s+6/,
       }),
     ).toBeVisible();
     await expect(

@@ -16,6 +16,7 @@
   import { t, tDynamic, i18n } from "#lib/i18n.svelte.js";
   import { exportLabels } from "#lib/table-labels.js";
   import { hasOwnWidgetWords, packLabels } from "#lib/lily-labels.js";
+  import { formatDate, isCivilDate } from "#lib/locale-format.js";
 
   let {
     label,
@@ -84,7 +85,18 @@
 
   // Sort on every column unless it says no. Done here so a table's column list stays short.
   const canHide = $derived(hideable ?? columns.length >= 5);
-  const cols = $derived(columns.map((c) => ({ sortable, hidable: canHide && !c.rowHeader && c.header !== "", ...c })));
+  // WW-1.16: a plain column whose value is an ISO civil date shows it as the page's locale writes a date, and still
+  // sorts and exports the ISO value. A column with its own `format`, `cell` or `type` is left alone.
+  const read = (c: DataGridColumn, row: DataGridRow) => (c.accessor ? c.accessor(row) : row[c.id]);
+  const dated = (c: DataGridColumn): DataGridColumn =>
+    c.format || c.cell || c.type
+      ? c
+      : {
+          format: (v: unknown) => (isCivilDate(v) ? formatDate(v, "medium", i18n.locale) : v === null || v === undefined ? "" : String(v)),
+          exportValue: c.exportValue ?? ((row: DataGridRow) => read(c, row)),
+          ...c,
+        };
+  const cols = $derived(columns.map((c) => ({ sortable, hidable: canHide && !c.rowHeader && c.header !== "", ...dated(c) })));
   // The filter box's name is its aria-label; give sighted readers the same words as a placeholder
   // (the grid sets no placeholder of its own).
   let host = $state<HTMLElement | undefined>();

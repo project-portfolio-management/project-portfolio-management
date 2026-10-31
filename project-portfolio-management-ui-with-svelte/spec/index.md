@@ -277,11 +277,21 @@ missing key. `tests/unit/locale-format.test.ts` scans `src/` (not the catalogues
 sign glued to a number, a timestamp sliced to a date and an ISO date field put straight into markup or a placeholder;
 `tests/unit/plurals.test.ts` holds the plural forms and scans `src/` for a plural form chosen by hand.
 
+**Tables and chart labels (WW-1.16, 2026-10-31).** `DataTable` shows any plain column whose value is an ISO civil date
+as the locale's date (sorting and export keep the ISO value; a column with its own `format`, `cell` or `type` is left
+alone); the critical-path Gantt's and the Gantt view's axis labels, the network diagram's early start and finish, the
+variance table's ranges (`formatDateRange`), the leveling table's moves and the calendar's week heading are
+locale-formatted, and every "→" meaning "becomes" or "then" is `arrow()`, which points along the writing direction.
+
+**Stated limits (WW-1.16).** Gregorian calendar only: no Hijri, Persian, Hebrew, Buddhist, Japanese-era or Indian
+national calendar display, and no fiscal-year calendar in the interface (the service's financial year, WW-1.5, is not
+shown as a calendar). Timestamps are shown in the reader's browser time zone; there is no time-zone setting in the
+interface (the person's zone the service asks for in `/api/me/tasks` is not used for display).
+
 Not covered yet (for the owner, WW-1): catalogue strings that put "%" after a number placeholder (30 in English and in
 Welsh, counted so the number can only fall); placeholder numbers are not locale-formatted by the page catalogue's
-`interpolate`; Welsh holds only one and other for each plural group (Welsh also has zero, two, few and many); dates in
-table columns and labels the scan does not see (for example the costs page's bucket headers, the network diagram's
-"MM-DD" labels, the variance and leveling tables' "→" ranges, the burndown and capacity window dates) are still ISO.
+`interpolate`; Welsh holds only one and other for each plural group (Welsh also has zero, two, few and many); dates
+built inside a catalogue string or a column with its own `format` were not each re-checked.
 
 ### Locale / i18n
 

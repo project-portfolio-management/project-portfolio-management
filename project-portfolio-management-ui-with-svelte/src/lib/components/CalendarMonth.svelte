@@ -10,6 +10,7 @@
   import type { CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
   import { onMount } from "svelte";
   import { t } from "#lib/i18n.svelte.js";
+  import { formatDateRange } from "#lib/locale-format.js";
   import { lazyArray } from "#lib/lazy.js";
   import { WEEKDAY_NAMES, dayState } from "#lib/cpm-view.js";
 
@@ -56,7 +57,7 @@
     "c.CalendarMonth.september", "c.CalendarMonth.october", "c.CalendarMonth.november", "c.CalendarMonth.december",
   ]);
   const heading = $derived(
-    view === "month" || !range ? `${MONTHS[month - 1]} ${year}` : `${range[0]} – ${range[1]}`,
+    view === "month" || !range ? `${MONTHS[month - 1]} ${year}` : formatDateRange(range[0], range[1]),
   );
 
   const outside = (d: string) => view === "month" && d.slice(0, 7) !== anchorDate.slice(0, 7);

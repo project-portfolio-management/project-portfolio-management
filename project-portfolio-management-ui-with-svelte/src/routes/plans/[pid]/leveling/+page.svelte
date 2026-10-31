@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
+  import { arrow, formatDate } from "#lib/locale-format.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
@@ -68,8 +69,8 @@
     { id: "apply", header: t("p.plans.pid.leveling.apply"), sortable: false, accessor: (r) => picked[rowOf<Move>(r).pid] ?? false, cell: applyCell },
     { id: "title", header: t("p.plans.pid.leveling.task"), rowHeader: true, cell: moveTaskCell, accessor: (r) => rowOf<Move>(r).title ?? rowOf<Move>(r).pid },
     { id: "person", header: t("p.plans.pid.leveling.person"), accessor: (r) => { const m = rowOf<Move>(r); return m.masked ? m.person : (m.person_ref ?? m.person); } },
-    { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => `${rowOf<Move>(r).from_start} → ${rowOf<Move>(r).scheduled_start}` },
-    { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => `${rowOf<Move>(r).from_finish} → ${rowOf<Move>(r).to_finish}` },
+    { id: "start", header: t("p.plans.pid.leveling.start"), accessor: (r) => rowOf<Move>(r).scheduled_start, format: (_v, r) => `${formatDate(rowOf<Move>(r).from_start)} ${arrow()} ${formatDate(rowOf<Move>(r).scheduled_start)}` },
+    { id: "finish", header: t("p.plans.pid.leveling.finish"), accessor: (r) => rowOf<Move>(r).to_finish, format: (_v, r) => `${formatDate(rowOf<Move>(r).from_finish)} ${arrow()} ${formatDate(rowOf<Move>(r).to_finish)}` },
     { id: "delay_days", header: t("p.plans.pid.leveling.later_by"), align: "end", format: (v) => tn("p.plans.pid.leveling.business_day", Number(v), { delay_days: Number(v) }) },
     { id: "float", header: t("p.plans.pid.leveling.float"), accessor: (r) => `${rowOf<Move>(r).float_before} → ${rowOf<Move>(r).float_after}` },
   ]);

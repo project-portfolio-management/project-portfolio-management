@@ -316,7 +316,7 @@ test.describe("critical chain, buffers and the drum (CC-6)", () => {
       page.getByRole("row", { name: /Paperwork.*no$/ }),
     ).toBeVisible();
     await expect(
-      page.getByRole("row", { name: /Build.*person:ada.*2026-10-01/ }),
+      page.getByRole("row", { name: /Build.*person:ada.*1 Oct 2026/ }),
     ).toBeVisible();
     await expect(page.getByText("Loose end")).toBeVisible();
   });
@@ -410,7 +410,7 @@ test.describe("critical chain, buffers and the drum (CC-6)", () => {
       ),
     ).toBeVisible();
     const gemini = page.getByRole("row", {
-      name: /Gemini.*start later.*2026-11-08.*38/,
+      name: /Gemini.*start later.*8 Nov 2026.*38/,
     });
     await expect(gemini).toContainText("◆");
     await expect(gemini).toContainText("no date has been changed");

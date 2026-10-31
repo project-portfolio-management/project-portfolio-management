@@ -1960,6 +1960,8 @@ only as search snippets.
   are an explicit, tested rule; Simplified-only is a stated limit. No locale added.
   **WW-1.15 done 2026-10-31:** logical CSS everywhere with a scan test; script fonts in the stack (system only); chart
   geometry left to right is a stated limit.
+  **WW-1.16 done 2026-10-31:** table date columns, chart axes, the network diagram and the variance and leveling ranges
+  follow the locale; Gregorian-only and the browser's time zone are stated limits.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

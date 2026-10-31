@@ -6,6 +6,7 @@
   has its words and, where a state matters, a shape.
 -->
 <script lang="ts">
+  import { arrow } from "#lib/locale-format.js";
   import { errorText } from "#lib/error-text.js";
   import { rowOf } from "#lib/row-of.js";
   import { t, localeHref } from "#lib/i18n.svelte.js";
@@ -52,7 +53,7 @@
       out.push({ key: "project", label: t("p.critical_chain.project_buffer_bar"), work: buffers.chain_days_at_aggressive ?? 0, buffer: buffers.project_buffer.days });
     }
     (buffers.feeding_buffers ?? []).forEach((f, i) => {
-      out.push({ key: `f${i}`, label: f.tasks.map((x) => x.title ?? x.pid).join(" → "), work: f.duration_days, buffer: f.buffer_days });
+      out.push({ key: `f${i}`, label: f.tasks.map((x) => x.title ?? x.pid).join(` ${arrow()} `), work: f.duration_days, buffer: f.buffer_days });
     });
     return out;
   });
@@ -75,7 +76,7 @@
     { id: "on_critical_path", header: t("p.critical_chain.col_on_path"), format: (v) => (v ? t("p.critical_chain.yes") : t("p.critical_chain.no")) },
   ]);
   const feedingColumns: DataGridColumn[] = $derived([
-    { id: "tasks", header: t("p.critical_chain.col_feeding_tasks"), rowHeader: true, accessor: (r) => rowOf<Feeding>(r).tasks.map((x) => x.title ?? x.pid).join(" → ") },
+    { id: "tasks", header: t("p.critical_chain.col_feeding_tasks"), rowHeader: true, accessor: (r) => rowOf<Feeding>(r).tasks.map((x) => x.title ?? x.pid).join(` ${arrow()} `) },
     { id: "joins", header: t("p.critical_chain.col_joins"), accessor: (r) => rowOf<Feeding>(r).joins.title ?? rowOf<Feeding>(r).joins.pid },
     { id: "duration_days", header: t("p.critical_chain.col_days"), align: "end" },
     { id: "buffer_days", header: t("p.critical_chain.col_buffer"), align: "end", format: (v) => (v === null || v === undefined ? t("p.critical_chain.unsized") : String(v)) },

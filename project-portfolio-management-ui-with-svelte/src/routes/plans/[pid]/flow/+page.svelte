@@ -23,7 +23,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref, tn } from "#lib/i18n.svelte.js";
-  import { formatDecimal } from "#lib/locale-format.js";
+  import { arrow, formatDecimal } from "#lib/locale-format.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
   import {
@@ -311,7 +311,7 @@
     {#each Object.entries(analysis.classification.classes) as [status, category], i (status)}{i >
       0
         ? " · "
-        : ""}{status} → {category}{/each}
+        : ""}{status} {arrow()} {category}{/each}
   </p>
 {/if}
 

@@ -11,6 +11,7 @@
   import { onMount } from "svelte";
   import { t, tDynamic, i18n } from "#lib/i18n.svelte.js";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
+  import { formatDayMonth, formatMonth } from "#lib/locale-format.js";
   import {
     chartRange,
     GANTT_COLUMNS,
@@ -76,7 +77,7 @@
 
   const labels = $derived({
     taskColumnHeader: t("c.GanttView.task"),
-    columnLabel: (start: string, _end: string, unit: GanttTimeUnit) => (unit === "month" ? start.slice(0, 7) : start.slice(5)),
+    columnLabel: (start: string, _end: string, unit: GanttTimeUnit) => (unit === "month" ? formatMonth(start) : formatDayMonth(start)),
     dependencySummary: (names: string[]) => t("c.GanttView.depends_on", { names: names.join(", ") }),
     zoomIn: t("c.GanttView.zoom_in"),
     zoomOut: t("c.GanttView.zoom_out"),

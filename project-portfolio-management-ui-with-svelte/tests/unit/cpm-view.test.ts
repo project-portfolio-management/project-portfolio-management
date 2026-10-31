@@ -172,24 +172,25 @@ describe("cpmBars", () => {
     expect(c.bars[0]!.state).toBe("late");
     expect(c.bars[1]!.limitPct).toBeNull();
   });
+  // WW-1.16: the axis labels are the page's locale's dates (English here), not ISO slices.
   it("uses weekly ticks for short spans and monthly for long ones", () => {
     const short = cpmBars([
       node("a", "2026-10-05", "2026-10-30", "2026-10-30", 0),
     ])!;
     expect(short.ticks.map((t) => t.label)).toEqual([
-      "10-05",
-      "10-12",
-      "10-19",
-      "10-26",
+      "5 Oct",
+      "12 Oct",
+      "19 Oct",
+      "26 Oct",
     ]);
     const long = cpmBars([
       node("a", "2026-10-05", "2027-02-10", "2027-02-10", 0),
     ])!;
     expect(long.ticks.map((t) => t.label)).toEqual([
-      "2026-11",
-      "2026-12",
-      "2027-01",
-      "2027-02",
+      "Nov 2026",
+      "Dec 2026",
+      "Jan 2027",
+      "Feb 2027",
     ]);
   });
   it("is null with nothing to draw and skips malformed dates", () => {

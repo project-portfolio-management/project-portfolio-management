@@ -8,6 +8,7 @@
 <script lang="ts">
   import { t, tn } from "#lib/i18n.svelte.js";
   import { businessDays } from "#lib/units.js";
+  import { arrow, formatDayMonth } from "#lib/locale-format.js";
   import type { CpmEdge, CpmNode } from "#lib/api/ppm.js";
   import { floatState, layoutNetwork } from "#lib/cpm-view.js";
 
@@ -121,7 +122,7 @@
             <title>{n.title}</title>
             <rect width={W} height={H} rx="6" />
             <text x="8" y="19" class="t">{st.marker} {trim(n.title ?? "(untitled)")}</text>
-            <text x="8" y="38" class="s">{t("c.NetworkDiagram.float", { slice: n.early_start.slice(5), slice2: n.early_finish.slice(5), total_float: n.total_float })}</text>
+            <text x="8" y="38" class="s">{t("c.NetworkDiagram.float", { slice: formatDayMonth(n.early_start), slice2: formatDayMonth(n.early_finish), total_float: n.total_float })}</text>
           </g>
         {/if}
       {/each}
@@ -131,7 +132,7 @@
       <ul class="small">
         {#each edges as e (e.pid)}
           <li>
-            {byPid.get(e.predecessor_pid)?.title ?? "?"} → {byPid.get(e.successor_pid)?.title ?? "?"}
+            {byPid.get(e.predecessor_pid)?.title ?? "?"} {arrow()} {byPid.get(e.successor_pid)?.title ?? "?"}
             ({e.kind.toUpperCase()}{e.lag_days === 0 ? "" : tn("c.NetworkDiagram.lag", e.lag_days, { lag_days: e.lag_days })})
           </li>
         {/each}

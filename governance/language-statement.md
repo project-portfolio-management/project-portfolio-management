@@ -10,14 +10,28 @@ are what the software does today and are checked by tests where a test can check
 |---|---|---|
 | `en-001` | English (source language) | Complete |
 | `cy-001` | Welsh (Cymraeg) | **Complete in text, draft in review**: every interface text exists in Welsh. It was drafted for this release and has **not yet been reviewed by a professional Welsh translator** (see the [review record](welsh-translation-review.md)). |
-| `ar-001`, `de-001`, `de-de`, `es-001`, `fr-001`, `hi-001`, `zh-001`, `zh-cn` | Arabic, German, Spanish, French, Hindi, Chinese (Simplified) | **Complete in text, machine draft** (WW-1.1, 2026-10-31): every interface text exists in each, written by Claude (the AI assistant) and **not reviewed** by a speaker or a professional translator. One review record per locale: [`translation-reviews/`](translation-reviews/README.md). `de-de` and `zh-cn` share the page text of `de-001` and `zh-001`. |
+| `ar-001` | Arabic (العربية), right to left | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/ar-001.md)) |
+| `de-001` | German (Deutsch) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/de-001.md)) |
+| `de-de` | German (Germany) | as `de-001`, whose page text it shares ([record](translation-reviews/de-de.md)) |
+| `es-001` | Spanish (Español) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/es-001.md)) |
+| `fr-001` | French (Français) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/fr-001.md)) |
+| `hi-001` | Hindi (हिन्दी) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/hi-001.md)) |
+| `zh-001` | Chinese, Simplified (中文) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/zh-001.md)); Traditional Chinese readers get Simplified, a stated limit (WW-1.14) |
+| `zh-cn` | Chinese (China) | as `zh-001`, whose page text it shares ([record](translation-reviews/zh-cn.md)) |
+
+Every language but English has the same statement and the same kind of record (WW-1.20): the text was written by
+Claude (the AI assistant) for WW-1.1 on 2026-10-31, or for Welsh earlier, and **no language has been reviewed** by a
+speaker or a professional translator. Welsh is not ahead of the others in any way the software checks; its record is
+older. The words inside Lily's widgets (tables, the date picker, the Gantt chart) come, for every language but English
+and Welsh, from a package's packs that are also unreviewed drafts (WW-1.17; each record says so). How a language is
+added, and the languages missing today, are in the UI spec (WW-1.14).
 
 A person chooses the language from the picker in the header; the choice is the first
 path segment of every address (`/cy-001/plans`), so a link keeps its language. English is
 used for any text that has no translation in the chosen language. Right-to-left layout is
 supported (Arabic).
 
-## What "every page in Welsh" means here
+## What "every page in every language" means here
 
 - All text that a page or a component prints is in a catalogue, not in the page. Two tests
   guard this and run in CI:
@@ -46,16 +60,19 @@ supported (Arabic).
 - **Exports** (CSV, evidence packs) keep their English column names so that they can be
   read by other tools.
 
-## Welsh Language Standards and similar duties
+## Statutory language duties
 
-Whether a deployment must meet a statutory language duty is for the buyer to decide. This
-software provides the mechanism: a complete Welsh interface, language in the address,
-and a recorded review. It does not make a buyer compliant by itself. The review record
-and the choice of Welsh wording for the buyer's own terms belong to the buyer.
+Several countries set duties on the language of a public service: for example the Welsh Language Standards in Wales,
+the Official Languages Act in Canada and Québec's Charter of the French Language, the official-languages rules of
+India's union and states, and the language laws of several European and Asian countries (named from general
+knowledge, not checked against each law). Whether a deployment must meet one is for the buyer to decide. This
+software provides the mechanism for each supported language alike: a complete interface, the language in the
+address, and a review record waiting for its reviewer. It does not make a buyer compliant by itself. The review record
+and the choice of wording for the buyer's own terms, in each language, belong to the buyer.
 
 ## How to ask for a correction
 
 Send the key (from the review file) and the wording you would use to the contact named in
-your published copy of this statement. Corrections to Welsh text change
-`src/lib/i18n-pages.cy.ts` (page text) or the `cy-001` block of `src/lib/i18n.svelte.ts`;
-the export script then refreshes the review file without losing recorded verdicts.
+your published copy of this statement. Corrections change the
+language's page catalogue (`src/lib/i18n-pages.<cy|ar|de|es|fr|hi|zh>.ts`) or its block of `src/lib/i18n.svelte.ts`;
+the export script then refreshes the review file without losing recorded verdicts. Each record says how.

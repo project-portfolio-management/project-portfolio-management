@@ -1966,6 +1966,8 @@ only as search snippets.
   **WW-1.18 done 2026-10-31 (as a limit):** no phone or national-identity sign-in; stated in the UI spec.
   **WW-1.19 done 2026-10-31:** `spec/locales.md` describes `/locales` and its document locales; the missing reader
   guides and the un-updated translated guides are recorded gaps; the English guides name the applicable law.
+  **WW-1.20 done 2026-10-31:** the language statement gives every language its own row, record link and the same
+  statement; statutory language duties are named for several countries.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

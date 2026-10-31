@@ -28,7 +28,7 @@ const ROW_CAP: u64 = 500;
 /// `GET /api/me/tasks?tz=&as_of=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MyTasksParams {
-    /// IANA zone, e.g. `Europe/London`. Required: the server will not
+    /// IANA zone, e.g. `Asia/Kolkata` or `America/Sao_Paulo`. Required: the server will not
     /// guess a zone for you (time-zone doctrine).
     tz: String,
     /// Evaluate as of this RFC 3339 instant instead of now — for "what

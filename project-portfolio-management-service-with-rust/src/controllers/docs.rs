@@ -14,6 +14,8 @@ async fn openapi_json() -> Result<Response> {
 /// A Swagger UI page wired to `/api-docs/openapi.json`.
 #[debug_handler]
 async fn swagger_ui() -> Result<Response> {
+    // `lang="en"` is the truth, not a default (WW-1.13): Swagger UI's own labels and every description in the
+    // `OpenAPI` document are English. Translating the API reference is a stated limit (service spec).
     let html = r#"<!DOCTYPE html>
 <html lang="en">
 <head>

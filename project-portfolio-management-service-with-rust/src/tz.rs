@@ -33,11 +33,11 @@ pub use chrono_tz::Tz;
 pub fn parse_zone(name: &str) -> Result<Tz, String> {
     let name = name.trim();
     if name.is_empty() {
-        return Err("time zone is required (an IANA name such as Europe/London)".to_string());
+        return Err("time zone is required (an IANA name such as Asia/Kolkata, America/Sao_Paulo or Africa/Lagos)".to_string());
     }
     name.parse::<Tz>().map_err(|_| {
         format!(
-            "unknown time zone {name:?}: use an IANA name such as Europe/London \
+            "unknown time zone {name:?}: use an IANA name such as Asia/Kolkata, America/Sao_Paulo or Africa/Lagos \
              (fixed offsets and abbreviations are refused: they cannot follow daylight saving)"
         )
     })
@@ -140,6 +140,17 @@ mod tests {
             assert!(parse_zone(bad).is_err(), "{bad:?} should be refused");
         }
         assert!(parse_zone(" Europe/London ").is_ok(), "trimmed");
+        // WW-1.13: the examples the messages give are real zones.
+        for zone in [
+            "Asia/Kolkata",
+            "America/Sao_Paulo",
+            "Africa/Lagos",
+            "Pacific/Auckland",
+        ] {
+            assert!(parse_zone(zone).is_ok(), "{zone}");
+        }
+        let e = parse_zone("").unwrap_err();
+        assert!(e.contains("Asia/Kolkata") && !e.contains("London"), "{e}");
     }
 
     /// Whether `needle` occurs in `text` as a whole identifier path — not as

@@ -1698,3 +1698,10 @@ twice and refused. Codes and clearances are compared exactly as written (no Unic
 another normal form than the scheme counts as the lowest level). `X-Handling-Mark` carries an ASCII mark as is and any
 other as the RFC 8187 extended value `UTF-8''` + percent-encoded UTF-8.
 
+## Examples and the API reference's language (WW-1.13)
+
+Error and reference text that gives an example time zone names several regions (`Asia/Kolkata`, `America/Sao_Paulo`,
+`Africa/Lagos`, `Pacific/Auckland`), not one country's. The Swagger UI page (`/swagger-ui`) declares `lang="en"`
+because its labels and the whole `OpenAPI` document are English: the API reference is English only, a stated limit
+(the operator interface is translated; the API's machine fields are language-neutral codes).
+

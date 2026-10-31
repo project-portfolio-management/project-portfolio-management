@@ -1568,7 +1568,7 @@ fn discussion_paths() -> Value {
 /// the inbox (PL-5). All require a bearer token.
 fn personal_paths() -> Value {
     let tz = json!({ "name": "tz", "in": "query", "required": true,
-        "description": "An IANA zone such as Europe/London. Fixed offsets and abbreviations are refused: they cannot follow daylight saving.",
+        "description": "An IANA zone such as Asia/Kolkata, America/Sao_Paulo or Africa/Lagos. Fixed offsets and abbreviations are refused: they cannot follow daylight saving.",
         "schema": { "type": "string" } });
     json!({
         "/api/me/tasks": {
@@ -1673,7 +1673,7 @@ fn settings_paths() -> Value {
             "put": {
                 "tags": ["settings"],
                 "summary": "Set the time zone that defines \"today\" (administrator)",
-                "description": "Body { time_zone }, an IANA name such as Europe/London or Pacific/Auckland. Fixed offsets and abbreviations are refused because they cannot follow daylight saving. It changes which calendar day a portfolio-wide default or overdue test means; it never moves a stored date or instant. Audited with the before and after.",
+                "description": "Body { time_zone }, an IANA name such as Asia/Kolkata, America/Sao_Paulo or Pacific/Auckland. Fixed offsets and abbreviations are refused because they cannot follow daylight saving. It changes which calendar day a portfolio-wide default or overdue test means; it never moves a stored date or instant. Audited with the before and after.",
                 "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["time_zone"], "properties": { "time_zone": { "type": "string" } } } } } },
                 "responses": {
                     "200": { "description": "The new view, as GET" },

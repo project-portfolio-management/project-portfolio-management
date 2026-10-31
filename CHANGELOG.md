@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 31 October (WW-1.18, sign-in methods stated as a limit)
+
+- **The sign-in methods and what is missing are stated (WW-1.18, accepted 2026-10-31, a limit).** The UI spec now says the two ways in are the e-mail magic link and, where `OIDC_ISSUER` is set, an OpenID Connect provider (the audit said magic link only, missing the OIDC flow), that there is no sign-in by phone and no national identity scheme of the product's own, and that a national or sector eID offering OpenID Connect can come in through the OIDC path, which the API now accepts from any issuer (WW-1.12). Documentation only. **Not done:** no phone sign-in; no eID or other real provider tried. **Not verified:** CI before the push.
+
 ### 31 October (WW-1.17, the widget-label packs are a recorded limit)
 
 - **Every locale's review record names the widget-label pack it uses and says it is unreviewed (WW-1.17, accepted 2026-10-31, a limit).** For the eight non-English, non-Welsh locales the words inside Lily's widgets come from `@lilydesignsystem/svelte-locale-translations` 0.4.0, whose packs ship marked `"reviewed": false`. Each record in `governance/translation-reviews/` now has a "Widget labels" section naming its pack and version, saying it is a machine draft that nobody here has read, and that it is used rather than English labels on purpose; the index says the same. `tests/unit/review-records.test.ts` gains a test that fails when a record does not name its pack and the installed version, or when a pack says it is reviewed while the record logs no review. Gates run: all unit tests. **Not done:** no pack was reviewed or read by a speaker; the packs' words are not in the reviewers' CSV files. **Not verified:** CI before the push.

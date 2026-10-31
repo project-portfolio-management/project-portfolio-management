@@ -62,7 +62,14 @@ tasks / goals / issues as sub-resources — see entity spec §5; posts /
 comments / members are roadmap-only). There is **no password /
 credential form** — sign-on is passwordless magic-link, run through this
 app's own `/signin` + `/verify` BFF routes against the central
-authentication-service (sibling repository, not in this repository).
+authentication-service (sibling repository, not in this repository), or, when
+`OIDC_ISSUER` is set, the authorization-code flow against an OpenID Connect
+provider (`/signin/oidc`, NFR-18). **Stated limit (WW-1.18):** those are the
+only two ways in. There is no sign-in by phone (an SMS or voice code), and no
+national identity scheme of its own; a national or sector eID that offers
+OpenID Connect can be used through the OIDC path (the API accepts any OIDC
+issuer, WW-1.12), but none has been tried. An e-mail address is therefore
+needed for the magic link wherever no OIDC provider is configured.
 Per the BFF + httpOnly-cookie model
 (`../../../agents/share/authentication-sessions.md` (shared family guidance, not in this repository))
 the browser holds only the `__Host-mxi_session` cookie and the SvelteKit

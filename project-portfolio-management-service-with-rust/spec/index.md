@@ -1621,3 +1621,14 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 Update this spec with any behavioural change; bump `CHANGELOG.md`. When
 the integration contract changes, also update the
 [portfolio entity spec](../../spec/index.md).
+
+## Working time (WW-1.4)
+
+Planned hours (`GET /api/resource-plan/hours`) are a committed allocation's percent of a working day on each working
+day of the window. Which days work is the plan's own calendar (`PUT /api/plans/{pid}/calendar`: weekday mask and
+holidays); a plan with none uses the deployment's `PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_WORKING_WEEK` (default
+`1111100`, Monday first). The day's length is the organization's `POST /api/working-time` `minutes_per_day`, else
+`PROJECT_PORTFOLIO_MANAGEMENT_MINUTES_PER_DAY` (default 480). Both defaults are stated defaults, not a rule about any
+country's week. The MS Project export writes the calendar the plan is scheduled on: its own, or every day when it has
+none. Limits: `scheduling_rules.rs` keeps 480 minutes per business day for work = duration × units; ISO 8601 weeks
+(Monday first) are the API's week buckets.

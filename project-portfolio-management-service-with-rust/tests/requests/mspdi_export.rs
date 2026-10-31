@@ -94,6 +94,16 @@ async fn a_plan_exports_as_an_ms_project_file_that_reads_back() {
             "the file says what it leaves out"
         );
         assert!(xml.contains("Draft &amp; sketch"), "escaped");
+        // WW-1.4: this plan has no calendar, so it is scheduled on every day, and that is what is exported
+        // (Sunday, day type 1, and Saturday, 7, both working), not an assumed Monday to Friday.
+        for day_type in 1..=7 {
+            assert!(
+                xml.contains(&format!(
+                    "<DayType>{day_type}</DayType><DayWorking>1</DayWorking>"
+                )),
+                "day type {day_type} works"
+            );
+        }
         // Imported UIDs survive; the new task gets one above them; the new task is first.
         for uid in [10, 20, 30, 40] {
             assert!(xml.contains(&format!("<UID>{uid}</UID>")), "UID {uid}");

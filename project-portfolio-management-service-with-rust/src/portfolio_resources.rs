@@ -24,7 +24,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use chrono::{Datelike, Duration, NaiveDate, Weekday};
+use chrono::{Datelike, Duration, NaiveDate};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -34,8 +34,9 @@ use crate::availability::{Range, capacity_on};
 pub const MAX_PERIODS: usize = 120;
 /// Longest window, in calendar days.
 pub const MAX_DAYS: i64 = 3_660;
-/// Minutes a full-time person works on a weekday, for planned hours.
-pub const MINUTES_PER_DAY: i64 = 480;
+/// Minutes a full-time person works on a working day, for planned hours, when the deployment sets none
+/// (`working_time::minutes_per_day`, WW-1.4).
+pub const MINUTES_PER_DAY: i64 = crate::working_time::DEFAULT_MINUTES_PER_DAY;
 /// The row for demand or supply that names no role.
 pub const UNCLASSIFIED: &str = "unclassified";
 /// The row for demand that names no skill.
@@ -356,7 +357,7 @@ pub struct HoursRow {
     pub plan: Uuid,
     /// The person; `None` for placeholder demand.
     pub person: Option<String>,
-    /// Planned minutes (Monday–Friday, `percent × 8h`); zero for unplanned work.
+    /// Planned minutes (the plan's working days, `percent × minutes per day`); zero for unplanned work.
     pub planned_minutes: i64,
     /// Recorded minutes, or `None` when nothing was recorded.
     pub actual_minutes: Option<i64>,
@@ -364,19 +365,20 @@ pub struct HoursRow {
     pub unplanned: bool,
 }
 
-/// Weekdays of `[start, end]` inside `[from, to]`.
-fn weekdays(
+/// Working days of `[start, end]` inside `[from, to]`, by `working` (the plan's calendar, WW-1.4).
+fn working_days(
     start: Option<NaiveDate>,
     end: Option<NaiveDate>,
     from: NaiveDate,
     to: NaiveDate,
+    working: impl Fn(NaiveDate) -> bool,
 ) -> i64 {
     let s = start.map_or(from, |s| s.max(from));
     let e = end.map_or(to, |e| e.min(to));
     let mut n = 0;
     let mut day = s;
     while day <= e {
-        if !matches!(day.weekday(), Weekday::Sat | Weekday::Sun) {
+        if working(day) {
             n += 1;
         }
         day += Duration::days(1);
@@ -400,6 +402,8 @@ pub struct Actual {
 /// `actual_minutes: None`; time with no allocation at all is `unplanned`.
 /// `any_allocation` names every (plan, person) with a live allocation, proposed
 /// or not, that overlaps the window — that is what "matching" means.
+/// Planned days are the days `working(plan, day)` says work (the plan's calendar, or the deployment's default
+/// week), each `minutes_per_day` long (WW-1.4).
 #[must_use]
 pub fn hours<S: std::hash::BuildHasher>(
     from: NaiveDate,
@@ -407,15 +411,17 @@ pub fn hours<S: std::hash::BuildHasher>(
     allocs: &[Alloc],
     any_allocation: &HashSet<(Uuid, String), S>,
     actuals: &[Actual],
+    working: impl Fn(Uuid, NaiveDate) -> bool,
+    minutes_per_day: i64,
 ) -> Vec<HoursRow> {
     let mut planned: BTreeMap<(Uuid, Option<String>), i64> = BTreeMap::new();
     for a in allocs.iter().filter(|a| !a.proposed) {
-        let days = weekdays(a.start, a.end, from, to);
+        let days = working_days(a.start, a.end, from, to, |d| working(a.plan, d));
         if days == 0 {
             continue;
         }
         *planned.entry((a.plan, a.person.clone())).or_default() +=
-            days * i64::from(a.percent) * MINUTES_PER_DAY;
+            days * i64::from(a.percent) * minutes_per_day;
     }
     let mut spent: BTreeMap<(Uuid, String), i64> = BTreeMap::new();
     for a in actuals {
@@ -449,6 +455,7 @@ pub fn hours<S: std::hash::BuildHasher>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Weekday;
 
     fn d(y: i32, m: u32, day: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(y, m, day).unwrap()
@@ -629,6 +636,44 @@ mod tests {
         assert_eq!(per.total_demand_percent_days, 420, "each allocation once");
     }
 
+    fn mon_fri(_: Uuid, d: NaiveDate) -> bool {
+        !matches!(d.weekday(), Weekday::Sat | Weekday::Sun)
+    }
+
+    #[test]
+    fn planned_hours_follow_each_plan_s_week_and_the_day_length() {
+        // 2026-10-04 is a Sunday; the window is one week, Sunday to Saturday.
+        let from = d(2026, 10, 4);
+        let to = d(2026, 10, 10);
+        let allocs = [
+            alloc(1, Some("person:a"), Some("dev"), 100),
+            alloc(2, Some("person:b"), Some("dev"), 100),
+        ];
+        let any: HashSet<(Uuid, String)> = HashSet::new();
+        // Plan 1 works Sunday to Thursday; plan 2 Monday to Saturday.
+        let week = |plan: Uuid, day: NaiveDate| {
+            let i = day.weekday().num_days_from_monday() as usize;
+            let mask = if plan == id(1) { "1111001" } else { "1111110" };
+            mask.as_bytes()[i] == b'1'
+        };
+        let rows = hours(from, to, &allocs, &any, &[], week, 450);
+        let get = |p: &str| {
+            rows.iter()
+                .find(|r| r.person.as_deref() == Some(p))
+                .unwrap()
+        };
+        assert_eq!(
+            get("person:a").planned_minutes,
+            5 * 450,
+            "Sunday to Thursday"
+        );
+        assert_eq!(
+            get("person:b").planned_minutes,
+            6 * 450,
+            "Monday to Saturday"
+        );
+    }
+
     #[test]
     fn hours_list_unplanned_actuals_and_never_invent_zero() {
         let from = d(2026, 10, 5);
@@ -643,7 +688,7 @@ mod tests {
             person: "person:z".into(),
             minutes: 90,
         }];
-        let rows = hours(from, to, &allocs, &any, &actuals);
+        let rows = hours(from, to, &allocs, &any, &actuals, mon_fri, MINUTES_PER_DAY);
         let a = rows
             .iter()
             .find(|r| r.person.as_deref() == Some("person:a"))

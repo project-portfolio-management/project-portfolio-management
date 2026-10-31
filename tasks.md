@@ -1940,6 +1940,8 @@ only as search snippets.
   browser guards, and a review record (`governance/translation-reviews/`).
   **WW-1.2 done 2026-10-31:** compliance mapping by region (`spec/12-compliance.md` §12.2a), neutral wording in the
   record of processing and the DPIA.
+  **WW-1.4 done in the service 2026-10-31:** planned hours follow each plan's calendar and the organization's day
+  length (`working_time.rs`); the export writes a calendar-less plan's real week. The UI week start is not done.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

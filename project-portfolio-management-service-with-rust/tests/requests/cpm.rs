@@ -1842,6 +1842,34 @@ async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
         let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
         assert_eq!(plan_a["planned_minutes"], 5 * 480);
         assert!(plan_a["actual_minutes"].is_null());
+
+        // WW-1.4: planned hours follow the plan's own calendar, not an assumed Monday to Friday. Monday to
+        // Saturday, with Wednesday a holiday, is five working days in this week.
+        request
+            .put(&format!("/api/plans/{a}/calendar"))
+            .json(&json!({ "weekdays": "1111110", "holidays": ["2026-10-07"] }))
+            .await
+            .assert_status_ok();
+        let h: Value = request.get("/api/resource-plan/hours?from=2026-10-05&to=2026-10-11").await.json();
+        let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
+        assert_eq!(plan_a["planned_minutes"], 5 * 480, "Monday to Saturday less one holiday");
+        request
+            .put(&format!("/api/plans/{a}/calendar"))
+            .json(&json!({ "weekdays": "1111111" }))
+            .await
+            .assert_status_ok();
+        let h: Value = request.get("/api/resource-plan/hours?from=2026-10-05&to=2026-10-11").await.json();
+        let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
+        assert_eq!(plan_a["planned_minutes"], 7 * 480, "every day");
+        // The organization's working day, not a fixed eight hours: seven and a half hours.
+        request
+            .post("/api/working-time")
+            .json(&json!({ "minutes_per_day": 450, "working_days_per_week": 7 }))
+            .await
+            .assert_status_success();
+        let h: Value = request.get("/api/resource-plan/hours?from=2026-10-05&to=2026-10-11").await.json();
+        let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
+        assert_eq!(plan_a["planned_minutes"], 7 * 450, "the organization's day length");
     })
     .await;
 }

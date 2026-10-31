@@ -224,7 +224,15 @@ async fn export(
 
     let calendar = super::calendars::plan_calendar_spec(&ctx, plan.pid)
         .await?
-        .map(|(weekdays, holidays)| MsCalendar { weekdays, holidays });
+        .map(|(weekdays, holidays)| MsCalendar { weekdays, holidays })
+        // WW-1.4: a plan with no calendar is scheduled on every day (`plan_calendar`'s default), so that is the
+        // calendar exported, not an assumed Monday to Friday.
+        .or_else(|| {
+            Some(MsCalendar {
+                weekdays: "1111111".into(),
+                holidays: Vec::new(),
+            })
+        });
     let xml = mspdi::write(
         &plan.name,
         NOT_EXPORTED,

@@ -299,7 +299,45 @@ async fn hours(
             minutes: e.minutes,
         })
         .collect();
-    let table = rules::hours(from, to, &allocs, &any, &actuals);
+    // WW-1.4: each plan's own calendar decides its working days; a plan with none uses the deployment's week.
+    let default_week = crate::calendars::build(&crate::working_time::working_week(), &[])
+        .unwrap_or_else(|_| crate::cpm::WorkCalendar::mon_fri());
+    let mut plan_weeks: HashMap<Uuid, crate::cpm::WorkCalendar> = HashMap::new();
+    let mut alloc_plans: Vec<Uuid> = allocs.iter().map(|a| a.plan).collect();
+    alloc_plans.sort();
+    alloc_plans.dedup();
+    for plan in alloc_plans {
+        if let Some((weekdays, holidays)) = super::calendars::plan_calendar_spec(&ctx, plan).await?
+            && let Ok(cal) = crate::calendars::build(&weekdays, &holidays)
+        {
+            plan_weeks.insert(plan, cal);
+        }
+    }
+    // The organization's working-time setting (`POST /api/working-time`) gives the day's length; without one, the
+    // deployment's (`PROJECT_PORTFOLIO_MANAGEMENT_MINUTES_PER_DAY`, default 480).
+    let minutes_per_day = crate::models::_entities::working_time_configs::Entity::find()
+        .filter(crate::models::_entities::working_time_configs::Column::ScopeRef.is_null())
+        .filter(crate::models::_entities::working_time_configs::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .map_or_else(crate::working_time::minutes_per_day, |c| {
+            i64::from(c.minutes_per_day)
+        });
+    let table = rules::hours(
+        from,
+        to,
+        &allocs,
+        &any,
+        &actuals,
+        |plan, day| {
+            plan_weeks
+                .get(&plan)
+                .unwrap_or(&default_week)
+                .is_working(day)
+        },
+        minutes_per_day,
+    );
     let see = may_manage_people(&caller);
 
     let mut plans: BTreeMap<Uuid, Vec<&rules::HoursRow>> = BTreeMap::new();

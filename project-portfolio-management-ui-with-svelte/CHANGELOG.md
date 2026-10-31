@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the Display page fits a phone again (2026-10-31)
+
+The first-day-of-week choice added for WW-1.4 widened the page past a 390-pixel screen: the section's grid column grew to the select's longest option. The column may now shrink and the select keeps within it. Found by CI's phone-width test (run 41199625155); the phone-width suite passes locally (100 tests). Not checked by eye in a right-to-left locale.
+
 ### Changed — numbers, dates and plurals follow the page's locale, as in the workforce UI (WW-1.15, WW-1.16, WW-1.24 in part, 2026-10-30)
 
 `src/lib/locale-format.ts` (a port of WPM's, shared in behaviour) formats every number, percentage and date the scan finds; `tn` in `src/lib/i18n.svelte.ts` (a port of WPM's) chooses plural forms with `Intl.PluralRules`; the five "(s)" strings are plural groups (Welsh machine-written, unreviewed). Tests: `tests/unit/locale-format.test.ts`, `tests/unit/plurals.test.ts`. Not done: "%" after a placeholder in 30 catalogue strings; locale numbers inside page-catalogue placeholders; Welsh zero, two, few and many forms; dates in table columns the scan does not see. Not verified: screen reader, visual check of longer labels. Full entry in the root `CHANGELOG.md`.

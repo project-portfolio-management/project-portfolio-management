@@ -127,6 +127,7 @@
 <style>
   .stack {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.6rem;
     margin: 1rem 0;
   }
@@ -151,6 +152,11 @@
     gap: 0.3rem;
     max-width: 22rem;
     font-weight: 600;
+  }
+  /* A long option ("Your language's default (Monday)" in some languages) must not widen the page on a phone. */
+  .field select {
+    min-width: 0;
+    max-width: 100%;
   }
   .linklike {
     background: none;

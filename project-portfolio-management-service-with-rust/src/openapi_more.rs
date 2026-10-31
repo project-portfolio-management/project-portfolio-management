@@ -1486,7 +1486,7 @@ fn handling_marks_paths() -> Value {
         },
         "/api/plans/{pid}/handling-mark": {
             "get": op("handling-marks", "A plan's handling mark",
-                "Returns scheme, mark (as stored, null when none) and effective (what applies: the lowest level when none). With a scheme on, every response about a plan carries X-Handling-Mark, and a plan marked above the caller's clearance attribute is 404 to them, administrators included.",
+                "Returns scheme, mark (as stored, null when none) and effective (what applies: the lowest level when none). With a scheme on, every response about a plan carries X-Handling-Mark (a mark with a non-ASCII character as the RFC 8187 value UTF-8''<percent-encoded>; codes may be in any script, WW-1.11), and a plan marked above the caller's clearance attribute is 404 to them, administrators included.",
                 vec![uuid_param("pid")], &[("200", "plan_pid, scheme, mark, effective"), ("404", "Unknown plan, or above your clearance")]),
             "put": op("handling-marks", "Set or reset a plan's handling mark",
                 "Send {mark: code} (one of the scheme) or {mark: null} to reset to the lowest level. You may set a mark only up to your own clearance and only on a plan you can see (403 otherwise, 404 when no scheme is configured). Audited.",

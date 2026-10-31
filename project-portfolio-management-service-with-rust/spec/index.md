@@ -1683,3 +1683,11 @@ field uses the matcher's Soundex, which is Latin script only. These are stated l
 and Latin-only Soundex (matcher spec §8 and §9, 2026-10-31) are not yet in the released crate this service depends on
 (0.2.1).
 
+## Handling marks in any script (WW-1.11)
+
+A handling-mark code is 1 to 40 letters or digits of **any script** (`char::is_alphanumeric`), spaces, `-`, `_` or
+`/`; before 2026-10-31 only ASCII letters and digits were allowed. Two codes that differ only in case are one code
+twice and refused. Codes and clearances are compared exactly as written (no Unicode normalization: a clearance in
+another normal form than the scheme counts as the lowest level). `X-Handling-Mark` carries an ASCII mark as is and any
+other as the RFC 8187 extended value `UTF-8''` + percent-encoded UTF-8.
+

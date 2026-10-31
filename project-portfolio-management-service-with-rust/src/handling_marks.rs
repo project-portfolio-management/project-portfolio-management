@@ -16,7 +16,15 @@
 //!
 //! This hides and labels; it does not encrypt, and it does not stop a person with clearance from
 //! copying what they read. The mark is sent as `X-Handling-Mark` on every response about a plan.
+//!
+//! **Any script (WW-1.11).** A code is letters and digits of any script (`char::is_alphanumeric`), so a
+//! scheme can be written in the language it is used in (`["公开","内部","秘密"]`, `["عام","سري"]`); before
+//! 2026-10-31 only ASCII letters were allowed. Codes are compared exactly, as stored: a clearance must be
+//! written in the same Unicode form (NFC is usual) or it does not match and counts as the lowest level. An
+//! HTTP header carries ASCII only, so a mark with any other character is sent as an RFC 8187 extended value,
+//! `UTF-8''` followed by its percent-encoded UTF-8 ([`header_value`]).
 
+use std::fmt::Write as _;
 use std::sync::OnceLock;
 
 /// The environment variable holding the scheme as a JSON array of strings, lowest first.
@@ -26,6 +34,24 @@ pub const SCHEME_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_HANDLING_MARKS";
 pub const MAX_CODE: usize = 40;
 /// The most levels a scheme may have.
 pub const MAX_LEVELS: usize = 12;
+
+/// The `X-Handling-Mark` header value for a mark: the mark itself when it is ASCII, else the RFC 8187
+/// extended value `UTF-8''<percent-encoded UTF-8>` (a code never holds `'`, so the two cannot be confused).
+#[must_use]
+pub fn header_value(mark: &str) -> String {
+    if mark.is_ascii() {
+        return mark.to_string();
+    }
+    let mut out = String::from("UTF-8''");
+    for b in mark.bytes() {
+        if b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.' | b'~') {
+            out.push(char::from(b));
+        } else {
+            let _ = write!(out, "%{b:02X}");
+        }
+    }
+    out
+}
 
 /// An ordered scheme of marks, lowest first.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -57,13 +83,16 @@ impl Scheme {
                 && code == code.trim()
                 && code
                     .chars()
-                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, ' ' | '-' | '_' | '/'));
+                    .all(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | '/'));
             if !ok {
                 return Err(format!(
                     "{code:?} is not a valid mark: 1 to {MAX_CODE} letters, digits, spaces, '-', '_' or '/', with no leading or trailing space"
                 ));
             }
-            if levels.iter().any(|l| l.eq_ignore_ascii_case(&code)) {
+            if levels
+                .iter()
+                .any(|l| l.to_lowercase() == code.to_lowercase())
+            {
                 return Err(format!("{code:?} appears twice"));
             }
             levels.push(code);
@@ -213,6 +242,26 @@ mod tests {
                 .join(",")
         );
         assert!(Scheme::parse(&many).is_err());
+    }
+
+    /// WW-1.11: a scheme in another script is accepted, case-insensitive duplicates are still refused,
+    /// and the header carries it as an extended value.
+    #[test]
+    fn a_scheme_can_be_written_in_any_script() {
+        let zh = Scheme::parse(r#"["公开","内部","秘密"]"#).unwrap();
+        assert_eq!(zh.level_of("秘密"), Some(2));
+        assert!(zh.can_see(Some("内部"), Some("秘密")));
+        assert!(!zh.can_see(Some("秘密"), Some("内部")));
+        assert!(Scheme::parse(r#"["عام","سري"]"#).is_ok());
+        assert!(Scheme::parse(r#"["Öffentlich","VS-NfD"]"#).is_ok());
+        assert!(
+            Scheme::parse(r#"["ГРИФ","гриф"]"#).is_err(),
+            "a duplicate in another case"
+        );
+        assert!(Scheme::parse(r#"["秘密;"]"#).is_err());
+        assert_eq!(header_value("OFFICIAL-SENSITIVE"), "OFFICIAL-SENSITIVE");
+        assert_eq!(header_value("秘密"), "UTF-8''%E7%A7%98%E5%AF%86");
+        assert!(axum::http::HeaderValue::from_str(&header_value("سري 2")).is_ok());
     }
 
     #[test]

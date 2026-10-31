@@ -1952,6 +1952,7 @@ only as search snippets.
   many characters they replaced and where the full text is.
   **WW-1.10 done 2026-10-31 in the matcher source:** `code()` keeps every script; Soundex is Latin-only and declines
   other scripts; case folding and segmentation are stated limits. Not released, so the service does not have it yet.
+  **WW-1.11 done 2026-10-31:** handling-mark codes may be in any script; the header carries them RFC 8187-encoded.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

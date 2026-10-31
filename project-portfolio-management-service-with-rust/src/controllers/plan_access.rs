@@ -724,7 +724,7 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
     }
     let mut response = next.run(req).await;
     if let Some(l) = label
-        && let Ok(v) = axum::http::HeaderValue::from_str(&l)
+        && let Ok(v) = axum::http::HeaderValue::from_str(&crate::handling_marks::header_value(&l))
     {
         response.headers_mut().insert("x-handling-mark", v);
     }

@@ -20054,7 +20054,7 @@
     },
     "/api/plans/{pid}/handling-mark": {
       "get": {
-        "description": "Returns scheme, mark (as stored, null when none) and effective (what applies: the lowest level when none). With a scheme on, every response about a plan carries X-Handling-Mark, and a plan marked above the caller's clearance attribute is 404 to them, administrators included.",
+        "description": "Returns scheme, mark (as stored, null when none) and effective (what applies: the lowest level when none). With a scheme on, every response about a plan carries X-Handling-Mark (a mark with a non-ASCII character as the RFC 8187 value UTF-8''<percent-encoded>; codes may be in any script, WW-1.11), and a plan marked above the caller's clearance attribute is 404 to them, administrators included.",
         "parameters": [
           {
             "in": "path",

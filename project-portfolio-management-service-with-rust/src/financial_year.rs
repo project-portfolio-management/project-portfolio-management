@@ -1,7 +1,8 @@
 //! Financial years and the money view grouped by funding source (DP-6). Pure rules; the database work
 //! is in [`crate::controllers::funding`].
 //!
-//! A financial year starts on the first of a configured month (default April, so 1 April to 31 March).
+//! A financial year starts on the first of a configured month (WW-1.5: default January, the calendar year, so no
+//! country's financial year is assumed; a deployment sets 4 for April, 7 for July, 10 for October and so on).
 //! A budget line belongs to the year its **period start** falls in, or its period end when it has no
 //! start; a line with neither is **undated** and sits outside every year. Currencies are never summed,
 //! and capital (`capex`) and revenue (`opex`) are never summed unless the caller asks.
@@ -13,15 +14,26 @@ use std::collections::BTreeMap;
 use chrono::{Datelike, NaiveDate};
 use uuid::Uuid;
 
+/// The month a financial year starts in when the deployment sets none: January (the calendar year).
+pub const DEFAULT_START_MONTH: u32 = 1;
+
+/// The start month from a setting's text: 1 to 12, else [`DEFAULT_START_MONTH`].
+#[must_use]
+pub fn parse_start_month(raw: Option<&str>) -> u32 {
+    raw.and_then(|v| v.trim().parse::<u32>().ok())
+        .filter(|m| (1..=12).contains(m))
+        .unwrap_or(DEFAULT_START_MONTH)
+}
+
 /// The month a financial year starts in: `PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH`,
-/// 1 to 12, default 4 (April).
+/// 1 to 12, default 1 (January; WW-1.5).
 #[must_use]
 pub fn start_month() -> u32 {
-    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH")
-        .ok()
-        .and_then(|v| v.trim().parse::<u32>().ok())
-        .filter(|m| (1..=12).contains(m))
-        .unwrap_or(4)
+    parse_start_month(
+        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH")
+            .ok()
+            .as_deref(),
+    )
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -177,6 +189,25 @@ mod tests {
 
     fn d(s: &str) -> NaiveDate {
         NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    }
+
+    #[test]
+    fn the_start_month_has_no_country_default() {
+        // WW-1.5: unset is the calendar year, not April.
+        assert_eq!(parse_start_month(None), 1);
+        assert_eq!(
+            year_of(d("2026-03-31"), parse_start_month(None)).label,
+            "2026"
+        );
+        for (raw, m) in [("4", 4), ("7", 7), (" 10 ", 10), ("12", 12)] {
+            assert_eq!(parse_start_month(Some(raw)), m, "{raw}");
+        }
+        for bad in ["0", "13", "April", ""] {
+            assert_eq!(parse_start_month(Some(bad)), 1, "{bad}");
+        }
+        // A July year (Australia, for one) and an October year (the US federal government, for one).
+        assert_eq!(year_of(d("2026-06-30"), 7).label, "2025/26");
+        assert_eq!(year_of(d("2026-10-01"), 10).label, "2026/27");
     }
     #[expect(clippy::too_many_arguments)]
     fn line(

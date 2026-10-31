@@ -64,6 +64,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Files | `ARTIFACT_DIR` | `/app/data/artifacts` (a volume in Compose); `ATTACHMENT_MAX_BYTES` (10 MiB); `BULK_MAX_BYTES`; `BULK_TTL_HOURS`; `REPORT_TTL_DAYS` (calendar days) |
 | Search | `SEARCH_INDEX_PATH` | `/app/data/search-index`; `SEARCH_BOOT_REINDEX` |
 | Events | `EVENT_TRANSPORT` (`memory`), `EVENT_RELAY`, `EVENT_RETENTION_DAYS` (7 calendar days) | the durable outbox relay is opt-in |
+| Financial year | `FINANCIAL_YEAR_START_MONTH` (1, January) | the month the financial year starts in, for `GET /api/portfolio-money` and the director pack's funding section: 4 for April, 7 for July, 10 for October; unset is the calendar year, so no country's year is assumed (WW-1.5) |
 | Working time | `MINUTES_PER_DAY` (480), `DEFAULT_WORKING_WEEK` (`1111100`, Monday first) | for planned hours (`GET /api/resource-plan/hours`): a plan's own calendar decides its working days and the organization's `POST /api/working-time` its day length; these fill in where neither is set (WW-1.4). A week such as Sunday to Thursday is `1111001` |
 | Mail | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM` | for notifications; an optional bundled server is in [email with Stalwart](email-with-stalwart.md) |
 | Telemetry | `OTLP_ENDPOINT`, `OTLP_SERVICE_NAME`, `RUST_LOG` | **`OTLP_ENDPOINT` unset means export ON to `http://localhost:4317`**; set it to the empty string to disable, or to your collector |

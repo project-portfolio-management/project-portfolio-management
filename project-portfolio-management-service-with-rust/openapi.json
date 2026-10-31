@@ -28583,7 +28583,7 @@
     },
     "/api/portfolio-money": {
       "get": {
-        "description": "For the programmes you can read: budget (planned_minor), spend to date (actual_minor) and variance by funding source, class (capex is capital, opex is revenue) and currency, with the existing whole-life forecast per currency. ?fy= is the year the financial year starts in (default: the one containing today); ?combine_classes=true sums capital and revenue, otherwise they are never summed. Currencies are never summed. A line with no funding source is counted and listed under data_quality; a line belongs to the year its period start falls in; a line with no dates is outside every year and counted. The year starts in PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH (default 4).",
+        "description": "For the programmes you can read: budget (planned_minor), spend to date (actual_minor) and variance by funding source, class (capex is capital, opex is revenue) and currency, with the existing whole-life forecast per currency. ?fy= is the year the financial year starts in (default: the one containing today); ?combine_classes=true sums capital and revenue, otherwise they are never summed. Currencies are never summed. A line with no funding source is counted and listed under data_quality; a line belongs to the year its period start falls in; a line with no dates is outside every year and counted. The year starts in PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH (1 to 12; default 1, the calendar year: no country's financial year is assumed).",
         "parameters": [
           {
             "description": "year the financial year starts in",

@@ -131,6 +131,10 @@ async fn money_by_funding_source_keeps_its_promises() {
         with!(request.put(&format!("/api/funding-sources/{retired_pid}")), writer).json(&json!({ "active": false })).await.assert_status_ok();
 
         // ── budget lines: both sides of the 31 March / 1 April boundary ──
+        // WW-1.5: the default is the calendar year, so this test sets an April year, as a deployment would.
+        // SAFETY: this binary's tests run one at a time (`--test-threads=1`, `serial`); nothing else reads the
+        // environment concurrently.
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH", "4") };
         let line = |plan: String, category: &'static str, currency: &'static str, planned: i64, start: Option<&'static str>, source: Option<String>| {
             let (request, writer) = (&request, writer.clone());
             async move {
@@ -186,6 +190,15 @@ async fn money_by_funding_source_keeps_its_promises() {
         let comb = find(&rows_of(&both, "Digital Care"), "Departmental grant", "all", "GBP").unwrap();
         assert_eq!(comb["budget_minor"], 150_000, "capital and revenue summed on request, pounds only");
         assert_eq!(with!(request.get("/api/portfolio-money?fy=1999"), writer).await.status_code(), 422);
+
+        // ── WW-1.5: with no setting the year is the calendar year, and both boundary lines fall in 2026 ──
+        // SAFETY: as above, one test at a time.
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH") };
+        let calendar: Value = with!(request.get("/api/portfolio-money?fy=2026"), writer).await.json();
+        assert_eq!(calendar["financial_year"]["label"], "2026");
+        assert_eq!(calendar["financial_year"]["start"], "2026-01-01");
+        assert_eq!(calendar["financial_year"]["end"], "2026-12-31");
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH", "4") };
 
         // ── a private project's money is nowhere, for anyone ──
         assert!(!this.to_string().contains("777000") && !this.to_string().contains("Secret works"));

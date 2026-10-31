@@ -1632,3 +1632,9 @@ holidays); a plan with none uses the deployment's `PROJECT_PORTFOLIO_MANAGEMENT_
 country's week. The MS Project export writes the calendar the plan is scheduled on: its own, or every day when it has
 none. Limits: `scheduling_rules.rs` keeps 480 minutes per business day for work = duration × units; ISO 8601 weeks
 (Monday first) are the API's week buckets.
+
+## Financial year (WW-1.5)
+
+The financial year starts on the first of `PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH` (1 to 12). Unset,
+it is the calendar year (January), the same default as the contact relationship service's organization fiscal year
+(CRM-T171); until 2026-10-31 it was April. A year that starts in January is labelled `2026`, any other `2026/27`.

@@ -35,7 +35,7 @@ agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `u
 ```bash
 # service and matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
-# database tests need Postgres 18 (the file also starts a Redis on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
+# database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
 #   then DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
 #   and every real-token binary, as CI's `db` job loops over tests/*.rs: cargo test --test <name> -- --ignored --test-threads=1

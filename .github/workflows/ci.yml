@@ -221,9 +221,10 @@ jobs:
         working-directory: project-portfolio-management-ui-with-svelte
     # A real Redis, so the shared session store (RG-12) is tested against the real thing and not
     # only a stand-in, in unit tests and in the browser sign-in flow.
+    # Redis 8 (AGPL-3.0, RSALv2 or SSPLv1; tests only, see LICENSE.md).
     services:
       redis:
-        image: redis:7-alpine
+        image: redis:8-alpine
         ports:
           - "6379:6379"
         options: >-

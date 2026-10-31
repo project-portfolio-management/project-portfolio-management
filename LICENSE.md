@@ -34,3 +34,12 @@ a root `LICENSE` file, so it may not recognize this layout; this file and the
 
 `tests/licence_files.rs` in the API crate keeps the manifests, the expression,
 `LICENSE/` and this file consistent.
+
+## Services used only for development and testing
+
+These are not part of this repository and are not distributed with it; they are pulled as container images to
+run tests.
+
+| Service | Where | Licence | Use |
+|---|---|---|---|
+| Redis 8 (`redis:8-alpine`) | `project-portfolio-management-service-with-rust/compose.test.yaml`; CI's `ui` job service container | Redis 8 is offered under a choice of AGPL-3.0-only, RSALv2 or SSPLv1 | development and tests only: the UI's session-store tests against a real Redis, and running the service against Redis by hand. The root `compose.yaml` (the example deployment) still pins Redis 7 (`redis:7-alpine`, BSD-3-Clause); a deployer who moves it to 8 takes on one of the three licences above |

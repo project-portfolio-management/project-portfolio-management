@@ -13,6 +13,9 @@
 #
 #   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:loco@127.0.0.1:6379/0 LOCO_ENV=production ...
 #
+# Redis is 8 (AGPL-3.0, RSALv2 or SSPLv1, at the user's choice; used here for development and tests only, see the
+# root LICENSE.md).
+#
 # The file is plain Compose spec.
 #
 # The connection details deliberately match what CI provides
@@ -59,7 +62,7 @@ services:
   # The production cache provider, for running the service against Redis locally. Throwaway: nothing is
   # saved to disk. Bound to the loopback address only.
   redis:
-    image: docker.io/library/redis:7-alpine
+    image: docker.io/library/redis:8-alpine
     container_name: mxi-project-portfolio-management-test-redis
     command: ["redis-server", "--requirepass", "loco", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
     ports:

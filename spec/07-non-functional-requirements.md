@@ -198,8 +198,9 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   anyone below its level; **attachment content checks** with an
   optional virus-scan hook that fails closed; and an
   administrator-only **data-subject tool** that exports everything held about a
-  person reference and pseudonymises it (not deletes it) across the schema, audit
-  trail included. The limits
+  person reference and erases it across the schema, audit trail included, under the
+  deployment's policy: pseudonymise (the default) or delete the person's own rows and
+  make every other reference unlinkable (WW-1.8; audit rows are never deleted). The limits
   are stated where the controls are: a database administrator can disable the
   trigger; the purge covers only the records whose deletion is unambiguous. The
   honest assessment is [`governance/production-readiness.md`](../governance/production-readiness.md).

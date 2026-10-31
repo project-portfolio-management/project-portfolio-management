@@ -904,7 +904,7 @@ fn pdf_paths() -> Value {
         false,
         "An RFC 3339 instant to stamp the document with; without it, now",
     );
-    let rules = "A PDF is never more permissive than its JSON, is deterministic when stamped (pass as_of and two renders of unchanged data are byte-identical), and is NOT signed: signing needs a named signer and a key policy, which is an open decision. Text outside WinAnsi (Latin-1) is written as a question mark rather than guessed.";
+    let rules = "A PDF is never more permissive than its JSON, is deterministic when stamped (pass as_of and two renders of unchanged data are byte-identical), and is NOT signed: signing needs a named signer and a key policy, which is an open decision. Text outside WinAnsi (Latin-1) is written as a question mark rather than guessed, and the last line then counts how many were replaced and points to the JSON and the interface's view (a stated limit, WW-1.9: no Unicode font is embedded).";
     json!({
         "/api/board/pack.pdf": {
             "get": op("pdf", "The board pack as a PDF document",
@@ -1380,7 +1380,7 @@ fn director_pack_paths() -> Value {
         },
         "/api/director-packs/{pid}/pdf": {
             "get": op("director-packs", "A director pack as a PDF",
-                "The same pack, made from the stored JSON alone, so it shows no figure the JSON does not; readable by the same audiences as the JSON (a pack you may not read is a 404). An issued pack gives the same bytes on every read. The fixed words are English because the PDF writer is Latin-1 only: Welsh, Chinese and Hindi text cannot be carried (free text outside Latin-1 becomes a question mark); the interface shows the translated page, which can be printed. A draft is marked DRAFT. Inputs: the stored pack only.",
+                "The same pack, made from the stored JSON alone, so it shows no figure the JSON does not; readable by the same audiences as the JSON (a pack you may not read is a 404). An issued pack gives the same bytes on every read. The fixed words are English because the PDF writer is Latin-1 only: Welsh, Chinese and Hindi text cannot be carried (free text outside Latin-1 becomes a question mark, and the last line says how many); the interface shows the translated page, which can be printed. A stated limit (WW-1.9). A draft is marked DRAFT. Inputs: the stored pack only.",
                 vec![uuid_param("pid")], &[("200", "application/pdf"), ("404", "No such pack, or not one you may read")])
         },
         "/api/director-packs/{pid}": {

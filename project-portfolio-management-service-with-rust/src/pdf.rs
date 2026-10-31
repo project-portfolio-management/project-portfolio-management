@@ -7,6 +7,13 @@
 //! written in `WinAnsi` (Latin-1): a character outside it is written as `?`
 //! rather than guessed, and `(`, `)` and `\` are escaped, so a plan name can
 //! never break out of its string or inject PDF syntax.
+//!
+//! **A stated limit (WW-1.9):** the writer embeds no font, so it carries Latin-1 only. Welsh `ŵ` and `ŷ`,
+//! Arabic, Chinese, Hindi and every other script outside Latin-1 cannot be printed by it. Embedding a Unicode
+//! font with shaping and right-to-left layout was weighed and not done (a font of the size those scripts need
+//! and a shaping engine, for a document that already has a full-text route). Instead the PDF **says** when it
+//! replaced anything: its last line counts the characters written as `?` and names the route that carries them
+//! (the record's JSON and the interface's translated view, which a reader prints).
 
 /// Characters per wrapped line at 10 pt Helvetica on A4 with 50 pt margins.
 const WRAP: usize = 96;
@@ -30,6 +37,23 @@ fn escape(s: &str) -> Vec<u8> {
         out.push(b);
     }
     out
+}
+
+/// How many characters of `s` the writer cannot carry and writes as `?`.
+#[must_use]
+pub fn unprintable(s: &str) -> usize {
+    s.chars()
+        .filter(|c| !((' '..='~').contains(c) || ('\u{A0}'..='\u{FF}').contains(c)))
+        .count()
+}
+
+/// The closing line of a PDF that replaced `n` characters (WW-1.9).
+#[must_use]
+pub fn unprintable_note(n: usize) -> String {
+    format!(
+        "Note: characters outside Latin-1 shown as ?: {n}. This PDF carries Latin-1 only, a stated limit; \
+         the record's JSON and the interface's own view carry the full text in every script."
+    )
 }
 
 /// Wrap `text` to `width` characters, breaking at spaces where it can and
@@ -68,6 +92,11 @@ pub fn render(title: &str, lines: &[String]) -> Vec<u8> {
     let mut wrapped: Vec<String> = Vec::new();
     for l in lines {
         wrapped.extend(wrap(l, WRAP));
+    }
+    let lost = unprintable(title) + lines.iter().map(|l| unprintable(l)).sum::<usize>();
+    if lost > 0 {
+        wrapped.push(String::new());
+        wrapped.extend(wrap(&unprintable_note(lost), WRAP));
     }
     let pages: Vec<&[String]> = if wrapped.is_empty() {
         vec![&[][..]]
@@ -215,6 +244,21 @@ mod tests {
         let text = text_of(&render("x", &lines(&["café Артемида 日本"])));
         assert!(text.contains("caf\u{e9}") || text.contains("caf"), "{text}");
         assert!(text.contains("????????") && !text.contains('А'), "{text}");
+    }
+
+    /// WW-1.9: a PDF that could not carry a script says so, and counts what it replaced; one that could, does not.
+    #[test]
+    fn a_pdf_says_when_it_replaced_characters() {
+        assert_eq!(unprintable("café"), 0);
+        assert_eq!(unprintable("Ŵyl 日本 مرحبا"), 8);
+        let text = text_of(&render("Cynllun ŵ", &lines(&["日本", "plain"])));
+        assert!(
+            text.contains("Note: characters outside Latin-1 shown as ?: 3."),
+            "{text}"
+        );
+        assert!(text.contains("full text in every script"), "{text}");
+        let plain = text_of(&render("Plan", &lines(&["café"])));
+        assert!(!plain.contains("Note:"), "{plain}");
     }
 
     #[test]

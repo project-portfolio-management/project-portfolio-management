@@ -1948,6 +1948,8 @@ only as search snippets.
   with its reason; the unenforced audit-trail retention is a listed gap.
   **WW-1.8 done 2026-10-31:** a deployment chooses the erasure policy (pseudonymise or delete, `POST …/erase`); the
   exports are named for no one law and §12.2a maps each law's rights to them.
+  **WW-1.9 done 2026-10-31 (as a limit):** the PDFs stay Latin-1, a stated limit, and now say on their last line how
+  many characters they replaced and where the full text is.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

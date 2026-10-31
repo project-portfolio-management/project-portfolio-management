@@ -2,7 +2,8 @@
 //! JSON**, so the PDF can never show a figure the JSON does not. Fixed words are English: the PDF
 //! writer (`crate::pdf`) is Latin-1 only, so it cannot carry Welsh, Chinese or Hindi text; the HTML view in
 //! the interface is translated, and a reader of another language prints that. Free text is shown as
-//! entered (anything outside Latin-1 becomes `?` in the PDF, as everywhere else).
+//! entered (anything outside Latin-1 becomes `?` in the PDF, as everywhere else, and the PDF's last line counts
+//! them). A stated limit (WW-1.9), not a choice of English: see [`crate::pdf`].
 
 use serde_json::Value;
 

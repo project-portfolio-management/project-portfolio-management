@@ -1666,3 +1666,11 @@ nor recorded, so the records are no longer known to be one person's. Shared reco
 Any other value answers `503` and changes nothing. `.../pseudonymise` keeps its fixed policy. The export routes are
 named for no one law (§12.2a of the root spec maps each law's right to them).
 
+## Printed documents and scripts (WW-1.9, a stated limit)
+
+The PDFs (`/api/board/pack.pdf`, `/api/plans/{pid}/summary.pdf`, `/api/director-packs/{pid}/pdf`, the meeting PDF)
+come from `pdf.rs`, which embeds no font and carries Latin-1 only; the fixed words are English. Any other character is
+written as `?` and the PDF's last line then says how many were replaced and that the record's JSON and the interface's
+translated view carry the full text, which a reader prints. Embedding a Unicode font with shaping and right-to-left
+layout is not done: it is the named limit, and the HTML view is the route for every other script.
+

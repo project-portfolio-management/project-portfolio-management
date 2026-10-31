@@ -53,8 +53,8 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   `project-portfolio-management-migration`; the directories keep their `-service-with-rust` names.
 - The UI wraps one table component (`DataTable`) and Lily widgets (`@lilydesignsystem/*`); there is no SVAR.
   Computed styles use Svelte's `style:` directive, never a `style="…"` attribute (the CSP blocks those).
-- `axum-test` and `jsonwebtoken` follow `loco-rs`; do not bump them alone. `dtolnay/rust-toolchain` is bumped by hand
-  together with `rust-toolchain.toml`.
+- `axum-test` and `jsonwebtoken` follow `loco-rs`; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA and
+  given an explicit `toolchain:` input; bump both by hand together with `rust-toolchain.toml` (the `fresh-clone` job checks they agree).
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
 - The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no `cargo loco`

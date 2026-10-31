@@ -1950,6 +1950,8 @@ only as search snippets.
   exports are named for no one law and §12.2a maps each law's rights to them.
   **WW-1.9 done 2026-10-31 (as a limit):** the PDFs stay Latin-1, a stated limit, and now say on their last line how
   many characters they replaced and where the full text is.
+  **WW-1.10 done 2026-10-31 in the matcher source:** `code()` keeps every script; Soundex is Latin-only and declines
+  other scripts; case folding and segmentation are stated limits. Not released, so the service does not have it yet.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

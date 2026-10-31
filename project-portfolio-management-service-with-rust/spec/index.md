@@ -1674,3 +1674,12 @@ written as `?` and the PDF's last line then says how many were replaced and that
 translated view carry the full text, which a reader prints. Embedding a Unicode font with shaping and right-to-left
 layout is not done: it is the named limit, and the HTML view is the route for every other script.
 
+## Search and matching across scripts (WW-1.10, limits)
+
+The search index tokenizes on any non-alphanumeric character with Unicode's default lower-casing (`search/mod.rs`
+`tokenize`): there is no word segmentation for Chinese, Japanese or Thai (a run of such text is one token, so a word
+inside it is found only by a fuzzy or whole-run query) and no locale-aware case folding (Turkish `İ`/`ı`). Its phonetic
+field uses the matcher's Soundex, which is Latin script only. These are stated limits. The matcher's Unicode `code()`
+and Latin-only Soundex (matcher spec §8 and §9, 2026-10-31) are not yet in the released crate this service depends on
+(0.2.1).
+

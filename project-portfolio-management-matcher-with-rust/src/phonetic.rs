@@ -7,6 +7,17 @@
 //! consonant runs collapsed, mapped by group, then truncated /
 //! zero-padded to four characters. Examples:
 //!
+//! **Latin script only (WW-1.10, a stated limit).** Soundex is a rule for
+//! English spellings of names. Before encoding, accents are removed (NFD and
+//! the combining marks dropped, so `Müller` is `Muller`) and a few Latin
+//! letters are spelled out (`ß` `SS`, `æ` `AE`, `ø` `O`, `œ` `OE`, `ł` `L`,
+//! `đ` `D`, `þ` `TH`). A name with any other letter (Cyrillic, Greek, Arabic,
+//! Devanagari, Han and every other script) gets **no** code, so it gets no
+//! phonetic bonus: the encoder declines rather than encode a Latin fragment of
+//! it. Other scripts are matched by Jaro-Winkler alone. Phonetic algorithms for
+//! other languages (Daitch-Mokotoff, Cologne, pinyin keys and the like) are not
+//! built.
+//!
 //! | input  | code |
 //! |--------|------|
 //! | smith  | S530 |
@@ -14,8 +25,38 @@
 //! | robert | R163 |
 //! | rupert | R163 |
 
+/// The Latin letters of `s`, unaccented and upper-case, or `None` when `s` has
+/// a letter outside the Latin script that cannot be spelled out.
+fn latin_letters(s: &str) -> Option<Vec<char>> {
+    use unicode_normalization::UnicodeNormalization;
+    let mut out = Vec::new();
+    for c in s.nfd() {
+        if ('\u{300}'..='\u{36F}').contains(&c) {
+            continue; // a combining accent
+        }
+        let spelled: &str = match c {
+            'ß' | 'ẞ' => "SS",
+            'æ' | 'Æ' => "AE",
+            'ø' | 'Ø' => "O",
+            'œ' | 'Œ' => "OE",
+            'ł' | 'Ł' => "L",
+            'đ' | 'Đ' => "D",
+            'þ' | 'Þ' => "TH",
+            c if c.is_ascii_alphabetic() => {
+                out.push(c.to_ascii_uppercase());
+                continue;
+            }
+            c if c.is_alphabetic() => return None,
+            _ => continue,
+        };
+        out.extend(spelled.chars());
+    }
+    Some(out)
+}
+
 /// Encode `s` into a 4-character Soundex code. Returns `None` for
-/// inputs with no ASCII-alphabetic characters.
+/// inputs with no Latin letter, and for any input holding a letter of
+/// another script (see the module documentation).
 ///
 /// Implements classic American (Russell) Soundex: retain the first
 /// letter, map the rest to digit groups via [`digit`], drop zeros
@@ -29,10 +70,7 @@
 pub fn soundex(s: &str) -> Option<String> {
     // Keep only letters, uppercased, so digits/punctuation/case do not
     // affect the encoding.
-    let mut chars = s
-        .chars()
-        .filter(char::is_ascii_alphabetic)
-        .map(|c| c.to_ascii_uppercase());
+    let mut chars = latin_letters(s)?.into_iter();
     // The first letter is retained verbatim and seeds `prev`, so a digit
     // equal to the first letter's group is not re-emitted (the standard
     // "first letter" collapse rule).
@@ -108,6 +146,25 @@ mod tests {
 
     // Pins the canonical textbook Soundex codes (Robert/Rupert → R163,
     // Smith/Smyth → S530, plus the H/W edge cases Ashcraft & Tymczak).
+    /// WW-1.10: accents and spelled-out letters encode; other scripts decline.
+    #[test]
+    fn soundex_is_for_latin_script_only() {
+        assert_eq!(soundex("Müller"), soundex("Muller"));
+        assert_eq!(soundex("Strauß"), soundex("Strauss"));
+        assert_eq!(soundex("Søren"), soundex("Soren"));
+        assert!(soundex("Иванов").is_none());
+        assert!(
+            soundex("Ivan Иванов").is_none(),
+            "no code from a Latin fragment"
+        );
+        assert!(soundex("王伟").is_none());
+        assert!(soundex("محمد").is_none());
+        assert!(
+            !same("王伟", "王伟"),
+            "no phonetic bonus outside Latin script"
+        );
+    }
+
     #[test]
     fn classic_examples() {
         assert_eq!(soundex("Robert").as_deref(), Some("R163"));

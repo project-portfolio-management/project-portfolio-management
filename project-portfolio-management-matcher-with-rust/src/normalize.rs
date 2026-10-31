@@ -19,21 +19,28 @@ pub fn fold(s: &str) -> String {
     s.trim().nfkc().collect::<String>().to_lowercase()
 }
 
-/// Normalize an owner-scoped `code`: keep only alphanumerics, uppercased.
-/// Drops whitespace, hyphens, and other punctuation so `"PROJ-2026"` and
-/// `"proj 2026"` compare equal.
+/// Normalize an owner-scoped `code`: NFKC, then keep only alphanumerics in
+/// **any script**, uppercased where the script has case. Drops whitespace,
+/// hyphens, and other punctuation so `"PROJ-2026"` and `"proj 2026"` compare
+/// equal, and `"项目-2026"` is `"项目2026"`, not empty (WW-1.10: before
+/// 2026-10-31 only ASCII letters and digits were kept, so a code in another
+/// script collapsed to empty and could not match deterministically). NFKC
+/// makes full-width `"ＰＲＯＪ１"` the same as `"PROJ1"`.
 ///
 /// Codes are formatted inconsistently across tools (spaces vs hyphens vs
 /// none), so a stricter, punctuation-free canonical form is used for the
 /// `R-1` short-circuit and the code component — more aggressive than
 /// [`fold`], which keeps separators.
 ///
+/// Upper-casing is Unicode's default, not a locale's: a Turkish dotless `ı`
+/// becomes `I` like any `i` (a stated limit; see the spec §8).
+///
 /// `s` is the raw code. Returns the uppercased alphanumeric-only form
 /// (empty when `s` has no alphanumeric characters).
 #[must_use]
 pub fn code(s: &str) -> String {
-    s.chars()
-        .filter(char::is_ascii_alphanumeric)
+    s.nfkc()
+        .filter(|c| c.is_alphanumeric())
         .collect::<String>()
         .to_uppercase()
 }
@@ -148,6 +155,19 @@ mod tests {
     #[test]
     fn code_strips_whitespace_and_uppercases() {
         assert_eq!(code(" proj 26 "), "PROJ26");
+    }
+
+    // WW-1.10: a code in another script keeps its letters and digits.
+    #[test]
+    fn code_keeps_every_script() {
+        assert_eq!(code("项目-2026"), "项目2026");
+        assert_eq!(code("Проект 7"), "ПРОЕКТ7");
+        assert_eq!(code("परियोजना-१"), code("परियोजना १"));
+        assert!(!code("परियोजना-१").is_empty());
+        assert_eq!(code("مشروع ٣"), "مشروع٣");
+        assert_eq!(code("ＰＲＯＪ－１"), "PROJ1");
+        assert_eq!(code("café-1"), "CAFÉ1");
+        assert_eq!(code("- / ·"), "");
     }
 
     #[test]

@@ -10,6 +10,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — codes keep every script; Soundex declines non-Latin names (WW-1.10)
+
+- `normalize::code` now applies NFKC and keeps alphanumerics of any script (it kept ASCII only), so a code such as
+  `项目-2026` is `项目2026`, not empty, and the R-1 rule and the code component can match it. Full-width forms equal
+  their ASCII ones. Behaviour change: an accented code keeps its accents (`café-1` is `CAFÉ1`, it was `CAF1`).
+- `phonetic::soundex` removes accents and spells out `ß` `æ` `ø` `œ` `ł` `đ` `þ` first (`Müller` = `Muller`), and
+  returns `None` for a name holding a letter of another script, so a Cyrillic, Arabic or Han name no longer gets a
+  code from its Latin fragment. Phonetic matching is a stated Latin-only limit (spec §9); locale-aware case folding
+  and word segmentation are stated limits (spec §8).
+- Tests: `code_keeps_every_script`, `soundex_is_for_latin_script_only`.
+- Not done: no phonetic algorithm for other scripts; not released (the service still uses the published 0.2.1, so
+  none of this reaches it until a release).
+
 ## [0.2.1] - 2026-10-19
 
 Published to crates.io from this repository. A version 0.2.0 was already on crates.io, built from a different copy

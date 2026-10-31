@@ -210,14 +210,22 @@ identical `MatchConfig`.
 ## 8. Normalization
 
 `fold` (trim + NFKC + lowercase, diacritic-preserving); `code`
-(alphanumeric-only, uppercased — so `"PROJ-01"` ≡ `"proj 01"`);
-`fold_set` (fold + sort + dedupe). Goal titles and keywords are compared
-through `fold_set`.
+(NFKC, then alphanumerics of **any script** only, uppercased — so `"PROJ-01"` ≡ `"proj 01"`,
+`"项目-2026"` is `"项目2026"` and full-width `"ＰＲＯＪ１"` ≡ `"PROJ1"`; before 2026-10-31 only ASCII was kept and a
+code in another script collapsed to empty, WW-1.10); `fold_set` (fold + sort + dedupe). Goal titles and keywords are
+compared through `fold_set`.
+
+**Stated limits (WW-1.10).** Case folding is Unicode's default, not a locale's (`to_lowercase`/`to_uppercase`): the
+Turkish and Azerbaijani dotted and dotless `i` fold as in English, so `"İ"` and `"i"` may not compare as a Turkish
+reader expects. There is no word segmentation for scripts written without spaces (Chinese, Japanese, Thai): a run of
+such text is one token for the set components.
 
 ## 9. Name similarity
 
 Best Jaro-Winkler over `name` + `alternate_names` (folded), with a
-Soundex +0.05 bonus on the primary names capped at 0.95. `name` is
+Soundex +0.05 bonus on the primary names capped at 0.95. Soundex is for **Latin script only** (a stated limit,
+WW-1.10): accents are removed and `ß`, `æ`, `ø`, `œ`, `ł`, `đ`, `þ` spelled out before encoding; a name holding a letter
+of any other script gets no code and so no bonus (Jaro-Winkler alone), rather than a code from a Latin fragment of it. `name` is
 required, so this component is **always** present.
 
 ## 10. Goals

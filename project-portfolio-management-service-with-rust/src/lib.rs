@@ -159,7 +159,7 @@ pub mod plan_templates;
 pub mod planner;
 pub mod portfolio_resources;
 pub mod prioritization;
-/// Field masking (owner org, lead ref) + the GDPR right-of-access export envelope.
+/// Field masking (owner org, lead ref) + the data-subject access export envelope.
 pub mod privacy;
 pub mod processes;
 pub mod product_flow;

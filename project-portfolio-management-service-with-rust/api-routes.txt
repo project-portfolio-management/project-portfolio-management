@@ -2,6 +2,7 @@ GET /api-docs/openapi.json
 GET /api/access-review
 POST /api/actions/{pid}/convert
 GET /api/admin/subjects/{subject}
+POST /api/admin/subjects/{subject}/erase
 POST /api/admin/subjects/{subject}/pseudonymise
 GET /api/announcements
 POST /api/announcements

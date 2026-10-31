@@ -134,6 +134,7 @@ async fn rates_labour_cost_and_publishing_follow_the_policy() {
             ("GET", format!("/api/admin/subjects/{who}")),
             ("POST", format!("/api/admin/subjects/{who}/pseudonymise")),
             ("POST", format!("/api/admin/subjects/{who}/pseudonymise?apply=true")),
+            ("POST", format!("/api/admin/subjects/{who}/erase")),
             ("GET", "/api/access-review".to_string()),
             ("GET", "/api/access-review?format=csv".to_string()),
         ] {

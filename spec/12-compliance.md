@@ -67,9 +67,13 @@ software does not do it for the deployer.
 | Middle East and Türkiye | for example Saudi Arabia's PDPL, the UAE's federal PDPL, Türkiye's KVKK | the same | deletion | transfer rules, some with localisation (deployment) | to the regulator (SDAIA, UAE Data Office, KVKK Board) (deployment) |
 
 What the software gives every row alike: masked export by default and a per-subject export (§9.6), a subject
-erasure path (pseudonymisation; a deletion choice is WW-1.8), an append-only audit log, retention purges
+erasure path whose policy the deployment chooses (pseudonymise, the default, or delete the person's own rows and
+replace every other reference with an unlinkable one: `POST /api/admin/subjects/{ref}/erase`, WW-1.8), an append-only audit log, retention purges
 (`retention.rs`) and no transfer of its own (§12.3). Residency, transfer safeguards and breach notices are
-the deployer's. **Kept as deliberate limits:** the HIPAA, NHS (s251) and ONC rows of §12.2 and §12.4 stay, as "not
+the deployer's. The rights are named differently by each law (the right of access under the GDPR and its
+neighbours, the right to know under the CCPA, confirmation and access under the LGPD, access under the PIPL and the
+DPDP Act; erasure, deletion or anonymization); every one of them maps to the same two routes, the subject export and
+the subject erasure, and the per-plan export (`GET /api/plans/{pid}/export`), which is named for no one law. **Kept as deliberate limits:** the HIPAA, NHS (s251) and ONC rows of §12.2 and §12.4 stay, as "not
 engaged" with their reasons, because they are the regimes a health-sector buyer asks about first; they are not a sign
 that the service is for one country.
 

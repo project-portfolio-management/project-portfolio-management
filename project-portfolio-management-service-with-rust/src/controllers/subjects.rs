@@ -201,6 +201,148 @@ async fn touch(
     Ok(n)
 }
 
+/// Count (preview) or delete (apply) the rows of one person-only column ([`rules::OWN_ROWS`]) that hold
+/// any form of the subject.
+async fn remove(
+    tx: &sea_orm::DatabaseTransaction,
+    table: &str,
+    column: &str,
+    forms: &[String],
+    apply: bool,
+) -> Result<u64> {
+    if !rules::is_plain_identifier(table) || !rules::is_plain_identifier(column) {
+        return Err(Error::string("not a known table or column"));
+    }
+    let (marks, values) = in_list(forms);
+    if apply {
+        let sql = format!("DELETE FROM \"{table}\" WHERE \"{column}\" IN ({marks})");
+        return Ok(tx
+            .execute_raw(Statement::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                sql,
+                values,
+            ))
+            .await
+            .map_err(|error| {
+                tracing::error!(table, column, %error, "erasure delete refused");
+                Error::CustomError(
+                    StatusCode::CONFLICT,
+                    ErrorDetail::new(
+                        "conflict",
+                        format!("{table} rows could not be deleted; nothing was changed"),
+                    ),
+                )
+            })?
+            .rows_affected());
+    }
+    let sql = format!("SELECT COUNT(*) AS n FROM \"{table}\" WHERE \"{column}\" IN ({marks})");
+    let row = tx
+        .query_one_raw(Statement::from_sql_and_values(
+            DatabaseBackend::Postgres,
+            sql,
+            values,
+        ))
+        .await
+        .map_err(db_err)?;
+    Ok(u64::try_from(
+        row.and_then(|r| r.try_get::<i64>("", "n").ok())
+            .unwrap_or(0),
+    )
+    .unwrap_or(0))
+}
+
+/// Erase one subject under `policy`: a preview (counts only, rolled back) unless `apply`.
+async fn erase_under(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    subject: &str,
+    apply: bool,
+    policy: rules::ErasurePolicy,
+) -> Result<Response> {
+    if !allowed(caller) {
+        return Err(forbidden());
+    }
+    let forms = rules::forms(subject);
+    if forms.is_empty() {
+        return Err(unprocessable("the subject reference is empty"));
+    }
+    if rules::is_pseudonym(subject) {
+        return Err(unprocessable("that reference is already a pseudonym"));
+    }
+    let deleting = policy == rules::ErasurePolicy::Delete;
+    let replacement = if deleting {
+        rules::erasure_marker()
+    } else {
+        let salt = std::env::var(SALT_ENV).unwrap_or_default();
+        rules::pseudonym(subject, &salt)
+    };
+    let tx = ctx.db.begin().await.map_err(db_err)?;
+    tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)")
+        .await
+        .map_err(db_err)?;
+    let mut changed = Vec::new();
+    let mut deleted = Vec::new();
+    let mut total: u64 = 0;
+    for (table, column) in COLUMNS {
+        if deleting && rules::OWN_ROWS.contains(&(*table, *column)) {
+            let n = remove(&tx, table, column, &forms, apply).await?;
+            if n > 0 {
+                total += n;
+                deleted.push(serde_json::json!({ "table": table, "column": column, "rows": n }));
+            }
+            continue;
+        }
+        let n = touch(&tx, table, column, &forms, replacement, apply).await?;
+        if n > 0 {
+            total += n;
+            changed.push(serde_json::json!({ "table": table, "column": column, "rows": n }));
+        }
+    }
+    if apply {
+        // Under delete the random reference is written nowhere outside the records it replaced, not even here.
+        let detail = if deleting {
+            serde_json::json!({ "policy": policy.name(), "tables": changed.len() + deleted.len(), "rows": total })
+        } else {
+            serde_json::json!({ "pseudonym": replacement, "tables": changed.len(), "rows": total })
+        };
+        AuditModel::record(
+            &tx,
+            Uuid::nil(),
+            if deleting {
+                "subject_erased"
+            } else {
+                "subject_pseudonymised"
+            },
+            caller.actor(),
+            Some(detail),
+        )
+        .await
+        .map_err(|e| Error::string(&e.to_string()))?;
+        tx.commit().await.map_err(db_err)?;
+    } else {
+        tx.rollback().await.map_err(db_err)?;
+    }
+    let mut out = serde_json::json!({
+        "applied": apply,
+        "policy": policy.name(),
+        "total_rows": total,
+        "changed": changed,
+        "note": if !apply {
+            "Preview only: nothing was changed. Repeat with ?apply=true to apply."
+        } else if deleting {
+            "Done. The person's own rows are deleted and every other reference is replaced by a random one nothing can recompute. Free text, uploaded files, audit snapshots and backups are not covered."
+        } else {
+            "Done. The reference is replaced everywhere listed. Free text, uploaded files, audit snapshots, notification destinations and backups are not covered."
+        },
+    });
+    if deleting {
+        out["deleted"] = serde_json::Value::from(deleted);
+    } else {
+        out["pseudonym"] = serde_json::json!(replacement);
+    }
+    format::json(out)
+}
+
 /// `POST /api/admin/subjects/{subject}/pseudonymise` — replace the reference with a stable
 /// pseudonym everywhere it is held. A preview (counts only) unless `?apply=true`.
 #[debug_handler]
@@ -210,59 +352,36 @@ async fn pseudonymise(
     Path(subject): Path<String>,
     Query(q): Query<ApplyParams>,
 ) -> Result<Response> {
+    erase_under(
+        &ctx,
+        &caller,
+        &subject,
+        q.apply == Some(true),
+        rules::ErasurePolicy::Pseudonymise,
+    )
+    .await
+}
+
+/// `POST /api/admin/subjects/{subject}/erase` — erase the person under the deployment's erasure policy
+/// (`PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY`: `pseudonymise`, the default, or `delete`; WW-1.8). A preview
+/// (counts only) unless `?apply=true`.
+#[debug_handler]
+async fn erase(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(subject): Path<String>,
+    Query(q): Query<ApplyParams>,
+) -> Result<Response> {
     if !allowed(&caller) {
         return Err(forbidden());
     }
-    let forms = rules::forms(&subject);
-    if forms.is_empty() {
-        return Err(unprocessable("the subject reference is empty"));
-    }
-    if rules::is_pseudonym(&subject) {
-        return Err(unprocessable("that reference is already a pseudonym"));
-    }
-    let salt = std::env::var(SALT_ENV).unwrap_or_default();
-    let pseudo = rules::pseudonym(&subject, &salt);
-    let apply = q.apply == Some(true);
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)")
-        .await
-        .map_err(db_err)?;
-    let mut changed = Vec::new();
-    let mut total: u64 = 0;
-    for (table, column) in COLUMNS {
-        let n = touch(&tx, table, column, &forms, pseudo, apply).await?;
-        if n > 0 {
-            total += n;
-            changed.push(serde_json::json!({ "table": table, "column": column, "rows": n }));
-        }
-    }
-    if apply {
-        AuditModel::record(
-            &tx,
-            Uuid::nil(),
-            "subject_pseudonymised",
-            caller.actor(),
-            Some(
-                serde_json::json!({ "pseudonym": pseudo, "tables": changed.len(), "rows": total }),
-            ),
+    let policy = rules::deployment_policy().map_err(|m| {
+        Error::CustomError(
+            StatusCode::SERVICE_UNAVAILABLE,
+            ErrorDetail::new("misconfigured", m),
         )
-        .await
-        .map_err(|e| Error::string(&e.to_string()))?;
-        tx.commit().await.map_err(db_err)?;
-    } else {
-        tx.rollback().await.map_err(db_err)?;
-    }
-    format::json(serde_json::json!({
-        "applied": apply,
-        "pseudonym": pseudo,
-        "total_rows": total,
-        "changed": changed,
-        "note": if apply {
-            "Done. The reference is replaced everywhere listed. Free text, uploaded files, audit snapshots, notification destinations and backups are not covered."
-        } else {
-            "Preview only: nothing was changed. Repeat with ?apply=true to apply."
-        },
-    }))
+    })?;
+    erase_under(&ctx, &caller, &subject, q.apply == Some(true), policy).await
 }
 
 /// The data-subject routes.
@@ -271,4 +390,5 @@ pub fn routes() -> Routes {
         .prefix("/api/admin/subjects")
         .add("/{subject}", get(export))
         .add("/{subject}/pseudonymise", post(pseudonymise))
+        .add("/{subject}/erase", post(erase))
 }

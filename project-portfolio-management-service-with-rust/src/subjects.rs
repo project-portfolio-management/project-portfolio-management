@@ -1,10 +1,16 @@
 //! Data-subject requests (RG-6): everything held about one person reference, and its replacement by
 //! a pseudonym. The pure parts, unit-tested; the SQL runner is in [`crate::controllers::subjects`].
 //!
-//! **Policy: pseudonymise, do not delete.** The audit trail exists to show who did what; deleting a
-//! person's rows would destroy that evidence. Replacing the reference with a stable pseudonym keeps
-//! the evidence and removes the link to the person. (Plan §62 question 2 recommended this; the owner
-//! has not ruled otherwise.)
+//! **Policy: the deployment chooses (WW-1.8), pseudonymise by default.** [`ErasurePolicy::Pseudonymise`]
+//! replaces the reference with a stable pseudonym: the audit trail keeps showing that one (unnamed)
+//! person did these things, and the link to the person is gone (plan §62 question 2 recommended it).
+//! [`ErasurePolicy::Delete`] deletes the rows that exist only for the person ([`OWN_ROWS`]: their
+//! preferences, tokens, saved views, notifications and the like) and replaces every other reference,
+//! the audit trail's included, with a random reference that nothing can recompute, so even records of
+//! the same person are no longer known to be one person's. Shared records (a task, a risk, an audit
+//! row) are never deleted under either policy: they are other people's evidence too. The policy is
+//! `PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY`; which one a law requires is for the deployment's
+//! data-protection officer, and this code takes no position on it.
 //!
 //! **What this does not find:** a name or an e-mail address typed into free text (a title, a comment,
 //! a document), the content of uploaded files, the `snapshot` JSON of an audit row, and backups.
@@ -160,6 +166,80 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("issues", "raised_by"),
 ];
 
+/// The `(table, column)` pairs whose rows exist only for the person they name: under
+/// [`ErasurePolicy::Delete`] those rows are deleted rather than re-pointed. Each is also in [`COLUMNS`]
+/// (a test checks), and no table refers to these rows by a foreign key.
+pub const OWN_ROWS: &[(&str, &str)] = &[
+    ("director_pack_subscriptions", "person_ref"),
+    ("feed_tokens", "sub"),
+    ("notification_prefs", "sub"),
+    ("notification_sinks", "sub"),
+    ("notifications", "recipient_ref"),
+    ("planned_slots", "sub"),
+    ("reactions", "sub"),
+    ("saved_views", "sub"),
+    ("watchers", "sub"),
+];
+
+/// The deployment setting that chooses the erasure policy (WW-1.8).
+pub const POLICY_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY";
+
+/// What an erasure does to a person's references (WW-1.8). See the module documentation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErasurePolicy {
+    /// Replace every reference with a stable pseudonym (the default).
+    Pseudonymise,
+    /// Delete the person's own rows and replace every other reference with a random one.
+    Delete,
+}
+
+impl ErasurePolicy {
+    /// The policy's name, as the setting and the answer spell it.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Pseudonymise => "pseudonymise",
+            Self::Delete => "delete",
+        }
+    }
+}
+
+/// The policy from the setting's text: unset or blank is [`ErasurePolicy::Pseudonymise`].
+///
+/// # Errors
+///
+/// Any other value than `pseudonymise` or `delete` (in any case): an erasure must not run under a
+/// policy nobody chose.
+pub fn parse_policy(raw: Option<&str>) -> Result<ErasurePolicy, String> {
+    match raw.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+        None | Some("" | "pseudonymise" | "pseudonymize") => Ok(ErasurePolicy::Pseudonymise),
+        Some("delete") => Ok(ErasurePolicy::Delete),
+        Some(other) => Err(format!(
+            "{POLICY_ENV} must be pseudonymise or delete (got {other:?})"
+        )),
+    }
+}
+
+/// The deployment's erasure policy ([`parse_policy`] of [`POLICY_ENV`]).
+///
+/// # Errors
+///
+/// As [`parse_policy`].
+pub fn deployment_policy() -> Result<ErasurePolicy, String> {
+    parse_policy(std::env::var(POLICY_ENV).ok().as_deref())
+}
+
+/// A random reference for [`ErasurePolicy::Delete`]: a version-8 UUID like a pseudonym (so it is
+/// refused as a subject again), but from random bytes, so neither the salt nor the identifier can
+/// recompute it.
+#[must_use]
+pub fn erasure_marker() -> Uuid {
+    let mut bytes = *Uuid::new_v4().as_bytes();
+    bytes[6] = (bytes[6] & 0x0f) | 0x80;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
+}
+
 /// Identifier columns in the inventory that are **not** person references, with the reason.
 pub const EXCLUDED: &[(&str, &str, &str)] = &[
     (
@@ -290,6 +370,40 @@ mod tests {
         assert!(is_pseudonym(&a.to_string()));
         assert!(is_pseudonym(&format!("person:{a}")));
         assert!(!is_pseudonym("3f2c6b7e-0000-4000-8000-00000000000a"));
+    }
+
+    /// WW-1.8: the deployment chooses the policy; unset is pseudonymise; a typo is refused.
+    #[test]
+    fn the_erasure_policy_is_a_setting() {
+        assert_eq!(parse_policy(None), Ok(ErasurePolicy::Pseudonymise));
+        assert_eq!(parse_policy(Some(" ")), Ok(ErasurePolicy::Pseudonymise));
+        assert_eq!(
+            parse_policy(Some("Pseudonymize")),
+            Ok(ErasurePolicy::Pseudonymise)
+        );
+        assert_eq!(parse_policy(Some(" DELETE ")), Ok(ErasurePolicy::Delete));
+        let e = parse_policy(Some("purge")).unwrap_err();
+        assert!(e.contains(POLICY_ENV), "{e}");
+        assert_eq!(ErasurePolicy::Delete.name(), "delete");
+    }
+
+    #[test]
+    fn the_erasure_marker_is_random_and_refused_as_a_subject() {
+        let (a, b) = (erasure_marker(), erasure_marker());
+        assert_ne!(a, b);
+        assert!(is_pseudonym(&a.to_string()));
+        assert!(is_pseudonym(&format!("person:{b}")));
+    }
+
+    #[test]
+    fn a_persons_own_rows_are_listed_columns() {
+        for pair in OWN_ROWS {
+            assert!(COLUMNS.contains(pair), "{pair:?} is not in COLUMNS");
+        }
+        // The audit trail and shared work records are never among the rows deleted.
+        for shared in ["audit_logs", "tasks", "risks", "time_entries", "comments"] {
+            assert!(!OWN_ROWS.iter().any(|(t, _)| *t == shared), "{shared}");
+        }
     }
 
     #[test]

@@ -276,7 +276,7 @@ for a malformed body; `409 Conflict` for a real-time create duplicate
 | GET | `/api/plans/search?q=` | Tantivy full-text search (`?fuzzy=`, `?phonetic=`, `?kind=`) |
 | GET | `/api/plans/{pid}` | Fetch the stored `Plan` (record-level ABAC; a `mask`-obligation allow returns the redacted view) |
 | GET | `/api/plans/{pid}/masked` | The masked view: `lead_ref` dropped, `owner_org_id`/`owner_org_name` redacted |
-| GET | `/api/plans/{pid}/export` | GDPR right-of-access export (audited; masked when the policy says so) |
+| GET | `/api/plans/{pid}/export` | Data-subject access export (any law's right of access, §12.2a; audited; masked when the policy says so) |
 | PUT | `/api/plans/{pid}` | Replace payload |
 | DELETE | `/api/plans/{pid}` | Soft-delete |
 
@@ -792,7 +792,7 @@ Plans are business / operational data (no patient data), so the
 default posture is light masking. However, **lead / assignee / member /
 person refs are personal data** — leads, assignees, and owners are user
 identities — so any read or export that surfaces them is audited, and
-GDPR data-subject obligations apply to those people. The `entity_links`
+data-subject obligations under the applicable law (root `spec/12-compliance.md` §12.2a) apply to those people. The `entity_links`
 edges follow the cross-service linking §10
 governance for whatever target entity they reference. Honour the family
 HIPAA/NHS/GDPR posture for audit and access controls.
@@ -1655,3 +1655,14 @@ scheduled `retention_purge` job, which before 2026-10-31 always used the default
 run; it never purges by the default instead. Each default states its reason (`Rule::basis`); none is a period a law
 sets. The audit trail (`AUD`, proposed 6 years) is not purged by any rule: the rows are kept, so the period is policy
 only, a known gap in `governance/retention-schedule.md`.
+
+## Erasure policy (WW-1.8)
+
+`POST /api/admin/subjects/{subject}/erase` (administrators only, a preview unless `?apply=true`, one transaction)
+applies the deployment's `PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY`: `pseudonymise` (unset; the stable salted
+pseudonym of `.../pseudonymise`) or `delete`: the rows that exist only for the person (`subjects::OWN_ROWS`) are deleted
+and every other reference, the audit trail's actor included, becomes a random version-8 UUID that is neither returned
+nor recorded, so the records are no longer known to be one person's. Shared records and audit rows are never deleted.
+Any other value answers `503` and changes nothing. `.../pseudonymise` keeps its fixed policy. The export routes are
+named for no one law (§12.2a of the root spec maps each law's right to them).
+

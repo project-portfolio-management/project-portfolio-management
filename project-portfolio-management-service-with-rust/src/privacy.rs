@@ -1,4 +1,5 @@
-//! Privacy: field masking and the GDPR right-of-access export.
+//! Privacy: field masking and the data-subject access export (the right of access under GDPR, the right to
+//! know under the CCPA, and their equivalents elsewhere; `spec/12-compliance.md` §12.2a maps them, WW-1.8).
 //!
 //! ## What is sensitive about a plan
 //!
@@ -93,7 +94,7 @@ fn mask_value(value: &str, visible_chars: usize) -> String {
         .collect()
 }
 
-/// Build the GDPR right-of-access payload for one plan.
+/// Build the data-subject access payload for one plan (any regime's right of access; WW-1.8).
 ///
 /// An **envelope**, not the bare record: an access request has to be
 /// answerable as "here is everything held about this subject, as of

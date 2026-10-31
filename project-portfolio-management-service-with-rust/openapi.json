@@ -3764,9 +3764,9 @@
         ]
       }
     },
-    "/api/admin/subjects/{subject}/pseudonymise": {
+    "/api/admin/subjects/{subject}/erase": {
       "post": {
-        "description": "Administrators only. A preview (counts only, nothing changed) unless ?apply=true. Applying replaces the reference in every column that holds one, in one transaction (all or nothing; 409 if a uniqueness rule blocks a change), keeping its shape (person:<id> becomes person:<pseudonym>), including the audit trail's actor column (the audit trigger allows this only inside this transaction). The pseudonym is a stable version-8 UUID derived from the identifier and the optional secret PSEUDONYM_SALT, so one person's records stay linked to each other but not to the person. Policy: pseudonymise, do not delete. Audited with the pseudonym, never the original reference.",
+        "description": "Administrators only. A preview (counts only, nothing changed) unless ?apply=true. The policy is the deployment's ERASURE_POLICY (WW-1.8): pseudonymise (the default) does what POST .../pseudonymise does; delete deletes the rows that exist only for the person (subscriptions, feed tokens, notification preferences and destinations, notifications, planned slots, reactions, saved views, watches; listed under deleted) and replaces every other reference, the audit trail's actor included, with a random version-8 UUID that is returned and recorded nowhere, so the records are no longer linked to each other as one person's. Shared records (tasks, risks, audit rows) are never deleted. One transaction, all or nothing. Which policy a law requires is the deployment's decision. Audited as subject_erased with counts only. 503 when the setting holds anything but pseudonymise or delete.",
         "parameters": [
           {
             "in": "path",
@@ -3788,7 +3788,52 @@
         ],
         "responses": {
           "200": {
-            "description": "applied, pseudonym, total_rows, changed, note"
+            "description": "applied, policy, total_rows, changed, deleted (delete) or pseudonym (pseudonymise), note"
+          },
+          "403": {
+            "description": "Not an administrator"
+          },
+          "409": {
+            "description": "A uniqueness rule blocked the change"
+          },
+          "422": {
+            "description": "Empty reference, or already a pseudonym"
+          },
+          "503": {
+            "description": "ERASURE_POLICY is not pseudonymise or delete"
+          }
+        },
+        "summary": "Erase a person reference under the deployment's erasure policy",
+        "tags": [
+          "subjects"
+        ]
+      }
+    },
+    "/api/admin/subjects/{subject}/pseudonymise": {
+      "post": {
+        "description": "Administrators only. A preview (counts only, nothing changed) unless ?apply=true. Applying replaces the reference in every column that holds one, in one transaction (all or nothing; 409 if a uniqueness rule blocks a change), keeping its shape (person:<id> becomes person:<pseudonym>), including the audit trail's actor column (the audit trigger allows this only inside this transaction). The pseudonym is a stable version-8 UUID derived from the identifier and the optional secret PSEUDONYM_SALT, so one person's records stay linked to each other but not to the person. Always pseudonymises, whatever the deployment's erasure policy (POST .../erase follows the policy). Audited with the pseudonym, never the original reference.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subject",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "true to apply; absent is a preview",
+            "in": "query",
+            "name": "apply",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "applied, policy, pseudonym, total_rows, changed, note"
           },
           "403": {
             "description": "Not an administrator"
@@ -19040,7 +19085,7 @@
     },
     "/api/plans/{pid}/export": {
       "get": {
-        "description": "GDPR right-of-access export for one plan.  `GET /api/plans/{pid}/export`. Returns `200` with the envelope from [`crate::privacy::export_plan`]; `404` for an unknown pid.  **Every export is audited**, including a masked one: a read of owner/lead information is itself worth recording. The audit row is written before the response so a failure to record it cannot be traded for a silent disclosure.  A caller the policy would mask gets a **masked** export, and the envelope says so — an access request answered with redactions must not look like a complete answer.  # Errors  `404` unknown pid; `403` when the record-level ABAC policy denies reading this specific plan; otherwise DB/parse errors.",
+        "description": "Data-subject access export for one plan (the right of access under any applicable law; WW-1.8).  `GET /api/plans/{pid}/export`. Returns `200` with the envelope from [`crate::privacy::export_plan`]; `404` for an unknown pid.  **Every export is audited**, including a masked one: a read of owner/lead information is itself worth recording. The audit row is written before the response so a failure to record it cannot be traded for a silent disclosure.  A caller the policy would mask gets a **masked** export, and the envelope says so — an access request answered with redactions must not look like a complete answer.  # Errors  `404` unknown pid; `403` when the record-level ABAC policy denies reading this specific plan; otherwise DB/parse errors.",
         "parameters": [
           {
             "in": "path",
@@ -19056,7 +19101,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "GDPR right-of-access export for one plan",
+        "summary": "Data-subject access export for one plan (the right of access under any applicable law; WW-1.8)",
         "tags": [
           "plans"
         ]

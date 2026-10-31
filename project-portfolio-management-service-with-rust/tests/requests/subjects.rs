@@ -203,3 +203,141 @@ async fn a_blocked_change_rolls_back_everything_and_says_so() {
     })
     .await;
 }
+
+/// Sets the erasure policy for one test and clears it again, even when the test fails.
+struct PolicyGuard;
+
+impl PolicyGuard {
+    fn set(value: &str) -> Self {
+        // SAFETY: the request tests run one at a time (`#[serial]`, `--test-threads=1`).
+        unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY", value) };
+        Self
+    }
+}
+
+impl Drop for PolicyGuard {
+    fn drop(&mut self) {
+        // SAFETY: as above.
+        unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY") };
+    }
+}
+
+/// WW-1.8: a deployment that chooses `delete` gets the person's own rows deleted and every other
+/// reference replaced by one that links to nothing; shared records stay; a typo in the setting
+/// refuses the erasure; unset, `/erase` pseudonymises.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+async fn a_deployment_can_choose_to_delete_instead_of_pseudonymise() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let db = &ctx.db;
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Apollo" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().unwrap().to_string();
+        let task: Value = request
+            .post(&format!("/api/plans/{p}/tasks"))
+            .json(&json!({ "title": "Wire it", "assignee_ref": format!("person:{ADA}") }))
+            .await
+            .json();
+        let t = task["pid"].as_str().unwrap().to_string();
+        for who in [ADA, BOB] {
+            db.execute_unprepared(&format!(
+                "INSERT INTO watchers (pid, subject_kind, subject_pid, sub) VALUES (gen_random_uuid(), 'plan', '{p}', '{who}'); \
+                 INSERT INTO notifications (pid, recipient_ref, subject_kind, subject_pid, kind, message) \
+                 VALUES (gen_random_uuid(), 'person:{who}', 'plan', '{p}', 'note', 'hello')"
+            ))
+            .await
+            .expect("seed");
+        }
+        db.execute_unprepared(&format!(
+            "INSERT INTO audit_logs (entity_pid, action, actor, created_at, updated_at) \
+             VALUES (gen_random_uuid(), 'ada_did_a_thing', '{ADA}', now(), now())"
+        ))
+        .await
+        .expect("audit seed");
+
+        // Unset, /erase is the default policy.
+        let preview: Value = request
+            .post(&format!("/api/admin/subjects/{ADA}/erase"))
+            .await
+            .json();
+        assert_eq!(preview["policy"], "pseudonymise");
+        assert!(preview["pseudonym"].is_string(), "{preview}");
+
+        {
+            let _bad = PolicyGuard::set("purge");
+            let refused = request
+                .post(&format!("/api/admin/subjects/{ADA}/erase?apply=true"))
+                .await;
+            assert_eq!(refused.status_code(), 503, "{}", refused.text());
+        }
+
+        let _policy = PolicyGuard::set("delete");
+        let preview: Value = request
+            .post(&format!("/api/admin/subjects/{ADA}/erase"))
+            .await
+            .json();
+        assert_eq!(preview["applied"], false);
+        assert_eq!(preview["policy"], "delete");
+        assert!(preview.get("pseudonym").is_none(), "{preview}");
+        assert_eq!(
+            count(db, &format!("SELECT COUNT(*) AS n FROM watchers WHERE sub = '{ADA}'")).await,
+            1,
+            "a preview deletes nothing"
+        );
+
+        let done: Value = request
+            .post(&format!("/api/admin/subjects/person:{ADA}/erase?apply=true"))
+            .await
+            .json();
+        assert_eq!(done["applied"], true, "{done}");
+        let deleted: Vec<&str> = done["deleted"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["table"].as_str().unwrap())
+            .collect();
+        assert!(deleted.contains(&"watchers") && deleted.contains(&"notifications"), "{deleted:?}");
+
+        // Ada's own rows are gone, Bob's are not.
+        assert_eq!(count(db, &format!("SELECT COUNT(*) AS n FROM watchers WHERE sub = '{ADA}'")).await, 0);
+        assert_eq!(
+            count(db, &format!("SELECT COUNT(*) AS n FROM notifications WHERE recipient_ref = 'person:{ADA}'")).await,
+            0
+        );
+        assert_eq!(count(db, &format!("SELECT COUNT(*) AS n FROM watchers WHERE sub = '{BOB}'")).await, 1);
+        // The task and the audit row stay, pointing at a reference that is not Ada and not her pseudonym.
+        let salt = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_PSEUDONYM_SALT").unwrap_or_default();
+        let pseudo = project_portfolio_management::subjects::pseudonym(ADA, &salt);
+        let row = db
+            .query_one_raw(Statement::from_string(
+                DatabaseBackend::Postgres,
+                format!("SELECT assignee_ref FROM tasks WHERE pid = '{t}'"),
+            ))
+            .await
+            .unwrap()
+            .unwrap();
+        let now_ref: String = row.try_get("", "assignee_ref").unwrap();
+        assert!(now_ref.starts_with("person:"), "{now_ref}");
+        assert_ne!(now_ref, format!("person:{ADA}"));
+        assert_ne!(now_ref, format!("person:{pseudo}"), "delete is not the stable pseudonym");
+        assert_eq!(
+            count(db, &format!("SELECT COUNT(*) AS n FROM audit_logs WHERE actor = '{ADA}'")).await,
+            0
+        );
+        assert_eq!(
+            count(db, "SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'ada_did_a_thing'").await,
+            1,
+            "the audit row itself stays"
+        );
+        assert_eq!(
+            count(db, "SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'subject_erased'").await,
+            1
+        );
+    })
+    .await;
+}

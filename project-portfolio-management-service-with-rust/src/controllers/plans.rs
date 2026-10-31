@@ -433,7 +433,7 @@ async fn get_masked(Path(pid): Path<String>, State(ctx): State<AppContext>) -> R
     format::json(crate::privacy::mask_plan(&model.to_plan()?))
 }
 
-/// GDPR right-of-access export for one plan.
+/// Data-subject access export for one plan (the right of access under any applicable law; WW-1.8).
 ///
 /// `GET /api/plans/{pid}/export`. Returns `200` with the envelope from
 /// [`crate::privacy::export_plan`]; `404` for an unknown pid.

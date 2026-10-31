@@ -156,7 +156,11 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   front-end's server side runs the authorization-code flow with PKCE against an
   OIDC provider (directly, or a Keycloak realm that brokers Entra), keeps tokens
   server-side, and calls the API with the provider's access token, which the API
-  verifies. Roles or groups reach ABAC only through an explicit map. The path
+  verifies: a Keycloak realm's (the `keycloak` build feature), or, with no feature,
+  a signed JWT from **any** provider that publishes standard OIDC discovery and a
+  key set (`PROJECT_PORTFOLIO_MANAGEMENT_OIDC_ISSUER`, WW-1.12), so a national,
+  sector or institutional federation need not be brokered through Keycloak. The
+  set of accepted providers names no product and no country. Roles or groups reach ABAC only through an explicit map. The path
   is documented and covered by an end-to-end test that signs in through an
   Entra-compatible provider.
 - **NFR-19 — Every page in every supported locale.** All text a person reads on

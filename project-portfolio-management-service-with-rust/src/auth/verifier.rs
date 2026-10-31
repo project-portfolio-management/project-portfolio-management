@@ -43,6 +43,7 @@ pub async fn init() {
     init_paseto().await;
     #[cfg(feature = "keycloak")]
     init_keycloak();
+    super::oidc::init_oidc().await;
 }
 
 /// Seed the PASETO [`verifier`] (the `paseto` half of [`init`]).
@@ -287,7 +288,8 @@ pub(super) fn bearer_token(headers: &HeaderMap) -> Result<&str, (StatusCode, Str
 
 /// Authenticate a request through every credential type this build
 /// accepts, against the process-wide verifiers. A token beginning `v4.` is
-/// a PASETO; anything else is offered to Keycloak when configured. Each
+/// a PASETO; a JWT from the configured OIDC issuer goes to [`super::oidc`]; anything else is offered to
+/// Keycloak when configured. Each
 /// path fails closed with `401`.
 ///
 /// # Errors
@@ -299,6 +301,17 @@ pub(super) fn bearer_token(headers: &HeaderMap) -> Result<&str, (StatusCode, Str
 #[allow(clippy::unused_async)]
 pub async fn request_claims(headers: &HeaderMap) -> Result<Claims, (StatusCode, String)> {
     let token = bearer_token(headers)?;
+    // WW-1.12: a JWT whose (unverified) issuer is the configured OpenID Connect provider goes to that verifier,
+    // which then checks everything, the issuer included. Any other non-PASETO token falls through to Keycloak.
+    if !token.starts_with("v4.")
+        && let Some(oidc) = super::oidc::oidc_verifier()
+        && super::oidc::unverified_issuer(token).as_deref() == Some(oidc.issuer())
+    {
+        return oidc
+            .verify(token)
+            .await
+            .map_err(|e| (StatusCode::UNAUTHORIZED, e));
+    }
     #[cfg(feature = "keycloak")]
     if !token.starts_with("v4.")
         && let Some(keycloak) = keycloak_verifier()

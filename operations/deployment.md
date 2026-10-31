@@ -11,7 +11,7 @@ is what the root [`compose.yaml`](../compose.yaml) runs. Read
   (or build the image yourself: `podman compose build`).
 - A **token issuer**: login is enforced, so the API must be able to verify the
   bearer tokens your identity provider issues (PASETO keys from your
-  authentication service, or a Keycloak realm; see
+  authentication service, any OpenID Connect provider through `OIDC_ISSUER`, or a Keycloak realm; see
   [sign in with Microsoft Entra ID](sign-in-with-entra.md)). Without a key set
   the service **refuses to start**.
 - PostgreSQL 18 (the Compose file uses `postgres:18-alpine`).
@@ -56,6 +56,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Listen | `PORT`, `HOST` | `5150` |
 | Login | `REQUIRE_AUTH` | **on**; only `false` turns it off, and production refuses that |
 | Token keys | `PASETO_KEYS_URL`, `PASETO_KEYS`, `PASETO_KEYS_REFRESH_SECS`, `TOKEN_ISSUER`, `TOKEN_AUDIENCE` | keys are fetched at boot and refreshed; set one of URL or inline keys |
+| OpenID Connect tokens | `OIDC_ISSUER`, `OIDC_AUDIENCES`, `OIDC_ROLES_CLAIM` (`roles`; a dotted path such as `realm_access.roles` allowed), `OIDC_ROLE_MAP`, `OIDC_REQUIRE_VERIFIED_EMAIL` (`true`) | any provider with standard discovery (`{issuer}/.well-known/openid-configuration`) and a JWKS, no build feature (WW-1.12). Unset: off. HTTPS only (loopback excepted); the discovery `issuer` and each token's `iss` must equal `OIDC_ISSUER` exactly; one of `OIDC_AUDIENCES` (required) must be in `aud`; RS, PS, ES or EdDSA signatures only; keys refetched when a token names an unknown key id, at most once a minute. A role reaches ABAC only through the map. One issuer per deployment |
 | Keycloak tokens | `KEYCLOAK_URL`, `…_REALM`, `…_AUDIENCES`, `…_ROLE_MAP` | needs a build with the `keycloak` feature; see the Entra guide |
 | Access policy | `ABAC_POLICY` or `ABAC_POLICY_FILE` | built-in default (read for any signed-in caller, `access=write` to write); a file is re-read without a restart |
 | Browser access | `CORS_ORIGINS` | none (same-origin only); exact origins, comma-separated, no wildcard |

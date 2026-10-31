@@ -76,7 +76,9 @@ pub(super) fn verifier_configured() -> bool {
     if keycloak_verifier().is_some() {
         return true;
     }
-    false
+    // WW-1.12: a configured OIDC provider counts even before its keys arrive (they are fetched again on the
+    // first token), as a configured PASETO key URL does.
+    super::oidc::oidc_verifier().is_some()
 }
 
 /// The startup gate, pure. `Err(message)` means the service must refuse to
@@ -111,8 +113,8 @@ pub fn startup_verdict(
         return Err(
             "refusing to start: authentication enforcement is on but no token verifier is \
              configured, so every request would be 401. Set \
-             PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS (or ..._PASETO_KEYS_URL, or the \
-             Keycloak settings), or explicitly opt out for development with \
+             PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS (or ..._PASETO_KEYS_URL, ..._OIDC_ISSUER \
+             or the Keycloak settings), or explicitly opt out for development with \
              PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false."
                 .to_string(),
         );

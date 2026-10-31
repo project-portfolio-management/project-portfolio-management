@@ -465,7 +465,14 @@ rotation-triggered refetch is a future item, §16) /
 `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS` (the auth-service's published Ed25519 public-key
 set; absent ⇒ empty key set, all tokens rejected) / `PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER`
 (default `authentication-service`) / `PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE` (default
-`main-x-service`). Auth source of truth (supersedes the RS256-JWT model):
+`main-x-service`). **Any OIDC provider (WW-1.12).** With `PROJECT_PORTFOLIO_MANAGEMENT_OIDC_ISSUER` set (no build feature), a
+bearer that is not a PASETO and whose `iss` is that issuer is verified by `auth/oidc.rs`: discovery and JWKS from the
+issuer (HTTPS, loopback excepted; the document's `issuer` must equal it), RS/PS/ES/EdDSA only (never `none` or HS, and
+never an `oct` key), `iss`, one of `OIDC_AUDIENCES` in `aud`, `exp` required, `nbf` honoured, 60 s leeway, a verified
+email when one is present, and roles from `OIDC_ROLES_CLAIM` mapped by `OIDC_ROLE_MAP` only. Keys are refetched for an
+unknown key id at most once a minute. A configured issuer satisfies the start-up gate. Other non-PASETO tokens go to
+Keycloak when that feature is built. Not audited: the external `authentication-verifier` crate.
+Auth source of truth (supersedes the RS256-JWT model):
 `agents/share/authentication-sessions.md`;
 blanket-enforcement contract: `agents/share/jwt-enforcement.md`.
 

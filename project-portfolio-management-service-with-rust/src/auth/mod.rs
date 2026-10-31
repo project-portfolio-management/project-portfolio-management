@@ -105,6 +105,7 @@ pub const DESTRUCTIVE_POST_SUFFIXES: [&str; 3] = ["/merge", "/deduplicate", "/im
 mod areas;
 mod enforcement;
 mod identity;
+pub mod oidc;
 mod policy;
 mod verifier;
 

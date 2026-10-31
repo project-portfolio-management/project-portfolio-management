@@ -112,6 +112,11 @@ reqwest = { version = "0.13", default-features = false, features = [
   "json",
 ] }
 
+# Any OpenID Connect provider's signed JWT access tokens (src/auth/oidc.rs, WW-1.12): JWKS keys and
+# RS/PS/ES/EdDSA verification. The same 9.x already in the tree (the verifier's Keycloak engine and the
+# dev-dependency below); it uses `ring`, not `rsa`. Follows loco-rs like the dev-dependency: do not bump alone.
+jsonwebtoken = { version = "9" }
+
 [features]
 # PASETO bearer verification (the family default): `Verifier`, the boot key
 # fetch and the rotation refresh. Turn it off (`--no-default-features`) for a

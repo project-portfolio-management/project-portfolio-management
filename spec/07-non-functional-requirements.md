@@ -161,11 +161,15 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   Entra-compatible provider.
 - **NFR-19 — Every page in every supported locale.** All text a person reads on
   a page comes from the locale catalogue (`i18n.svelte.ts`), none is hard-coded
-  in English, and Welsh (`cy-001`) is complete: every English key has a Welsh
-  entry. A CI test fails when a template or helper holds visible English text
-  outside the catalogue, or when `cy-001` lacks a key. Translations are
-  reviewed by a professional translator and the review is recorded; until then
-  they are marked draft. Text that the API itself generates (derived sentences
+  in English, and **every supported locale is complete** (WW-1.1, accepted
+  2026-10-31; until then only Welsh was): every English key has an entry in
+  each locale. A CI test fails when a template or helper holds visible English
+  text outside the catalogue, when a locale lacks a key or a placeholder, or
+  when a page shows a line of English in another locale. Each locale has a
+  review record (`governance/translation-reviews/`, Welsh in
+  `governance/welsh-translation-review.md`). Translations are reviewed by a
+  speaker or a professional translator and the review is recorded; until then
+  they are marked machine draft. Text that the API itself generates (derived sentences
   in responses) is not part of the catalogue and is listed as a limitation.
 
 - **NFR-20 — Public-repository files.** The repository root carries the

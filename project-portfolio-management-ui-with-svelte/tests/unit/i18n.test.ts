@@ -18,6 +18,7 @@ import {
   toMessageFormat,
   type Locale,
 } from "../../src/lib/i18n.svelte";
+import { PAGE_KEYS } from "../../src/lib/i18n-pages";
 
 describe("i18n catalog", () => {
   it("supports exactly the required locales, sorted by code", () => {
@@ -117,11 +118,15 @@ describe("i18n catalog", () => {
     ).toEqual([]);
   });
 
-  it("a locale without a page key shows the English text, with its values filled in", () => {
-    expect(
-      STRINGS_BY_LOCALE["de-de"]["p.cost_rates.a_person" as never],
-    ).toBeUndefined();
-    expect(translate("p.cost_rates.a_person" as never, "de-de")).toBe(
+  it("every locale has its own text for every page key (WW-1.1); none falls back to English", () => {
+    for (const locale of LOCALES) {
+      const table = STRINGS_BY_LOCALE[locale] as Record<string, string>;
+      expect(
+        [...PAGE_KEYS].filter((k) => table[k] === undefined),
+        locale,
+      ).toEqual([]);
+    }
+    expect(translate("p.cost_rates.a_person" as never, "de-de")).not.toBe(
       translate("p.cost_rates.a_person" as never, "en-001"),
     );
   });

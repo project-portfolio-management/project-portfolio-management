@@ -11,6 +11,12 @@ import { join } from "node:path";
 import { parse } from "svelte/compiler";
 import { PAGES_EN } from "../../src/lib/i18n-pages";
 import { PAGES_CY } from "../../src/lib/i18n-pages.cy";
+import { PAGES_AR } from "../../src/lib/i18n-pages.ar";
+import { PAGES_DE } from "../../src/lib/i18n-pages.de";
+import { PAGES_ES } from "../../src/lib/i18n-pages.es";
+import { PAGES_FR } from "../../src/lib/i18n-pages.fr";
+import { PAGES_HI } from "../../src/lib/i18n-pages.hi";
+import { PAGES_ZH } from "../../src/lib/i18n-pages.zh";
 
 /** English strings that are correct, unchanged, in Welsh (names, units, codes, symbols). */
 const SAME_IN_WELSH = new Set([
@@ -142,6 +148,61 @@ describe("the Welsh page catalogue", () => {
     expect(same).toEqual([]);
   });
 });
+
+// WW-1.1: the same three guards for every other locale's page catalogue (machine drafts, unreviewed; see
+// governance/translation-reviews/). A string left identical to the English must be a name or code (the Welsh
+// allow-list and `CODE` below). Arabic, Hindi and Chinese may leave nothing else. German, Spanish and French share
+// many words with English (Status, Budget, Plan, Description, Total); those are counted, and the count in
+// `SAME_LIMIT` may only fall, so a new English string copied across unchanged fails.
+const OTHERS = {
+  ar: PAGES_AR,
+  de: PAGES_DE,
+  es: PAGES_ES,
+  fr: PAGES_FR,
+  hi: PAGES_HI,
+  zh: PAGES_ZH,
+} as const;
+/** Code and identifiers shown as written in every language. */
+const CODE = new Set(["organization:…", "HTTP {status}", "bearer sub"]);
+/** Upper bound on strings identical to English and not on the name list, per language. It may only fall. */
+const SAME_LIMIT: Record<keyof typeof OTHERS, number> = {
+  ar: 0,
+  de: 114,
+  es: 52,
+  fr: 137,
+  hi: 0,
+  zh: 0,
+};
+
+for (const [lang, pages] of Object.entries(OTHERS) as [
+  keyof typeof OTHERS,
+  Record<string, string>,
+][]) {
+  describe(`the ${lang} page catalogue`, () => {
+    const keys = Object.keys(PAGES_EN) as (keyof typeof PAGES_EN)[];
+    it("has every key, and no others", () => {
+      expect(Object.keys(pages).sort()).toEqual([...keys].sort());
+    });
+    it("keeps the placeholders of the English text", () => {
+      const bad = keys.filter(
+        (k) =>
+          placeholders(PAGES_EN[k]).join() !== placeholders(pages[k]!).join(),
+      );
+      expect(bad).toEqual([]);
+    });
+    it("is translated: few strings are left identical to the English", () => {
+      const same = keys.filter(
+        (k) =>
+          pages[k] === PAGES_EN[k] &&
+          /[A-Za-z]{3,}/.test(PAGES_EN[k]) &&
+          !SAME_IN_WELSH.has(PAGES_EN[k]) &&
+          !CODE.has(PAGES_EN[k]) &&
+          !SAME_PREFIX.test(PAGES_EN[k]),
+      );
+      expect(same.length).toBeLessThanOrEqual(SAME_LIMIT[lang]);
+    });
+  });
+}
 
 describe("no visible English outside the catalogue", () => {
   const found: string[] = [];

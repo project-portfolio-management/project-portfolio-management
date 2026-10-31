@@ -1936,6 +1936,8 @@ only as search snippets.
   tests; WW-1.15, WW-1.16 and WW-1.24 are marked "harmonized in part" in the audit with what remains for the owner.
   **Accepted by the product owner, 2026-10-31:** all 25 proposed decisions in the audit, as written. The fixes follow
   in audit order; each row of the audit says what is done.
+  **WW-1.1 done 2026-10-31:** every locale has a complete page catalogue (machine drafts, unreviewed), unit and
+  browser guards, and a review record (`governance/translation-reviews/`).
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

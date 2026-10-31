@@ -277,6 +277,8 @@ jobs:
         run: python3 scripts/generate-openapi-bodies.py --check
       - name: llms.txt matches llms.json and every listed file exists
         run: python3 scripts/generate-llms.py --check
+      - name: Translation review working files are current
+        run: python3 scripts/export-translation-review.py --check
       - name: Link check (offline)
         uses: lycheeverse/lychee-action@v2
         with:

@@ -183,7 +183,7 @@ const ALLOW: Record<string, string> = {
   'src/routes/capacity-heatmap/+page.svelte:<td class={`cell tone-${v.tone}`} data-testid={`cell-${p.pool_pid ?? "none"}-${c.month}`} data-state={c.state}>':
     "a test id, never shown",
 };
-const CATALOGUES = /i18n\.svelte\.ts$|i18n-pages(?:\.cy)?\.ts$/;
+const CATALOGUES = /i18n\.svelte\.ts$|i18n-pages(?:\.[a-z]+)?\.ts$/;
 const FIELD = String.raw`[\w.?]*?(?:\w+_(?:on|at|date|start|end|until|from|due|day)\b|decide_by|remedy_by|as_of|\.date\b|\.on\b|\.month\b)`;
 const RULES: [string, RegExp][] = [
   ["toFixed", /\.toFixed\(/],

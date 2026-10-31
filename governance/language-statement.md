@@ -10,7 +10,7 @@ are what the software does today and are checked by tests where a test can check
 |---|---|---|
 | `en-001` | English (source language) | Complete |
 | `cy-001` | Welsh (Cymraeg) | **Complete in text, draft in review**: every interface text exists in Welsh. It was drafted for this release and has **not yet been reviewed by a professional Welsh translator** (see the [review record](welsh-translation-review.md)). |
-| `ar-001`, `de-001`, `de-de`, `es-001`, `fr-001`, `hi-001`, `zh-001`, `zh-cn` | Arabic, German, Spanish, French, Hindi, Chinese | Navigation, sign-in, forms and the long-standing screens are translated. **Text added for the pages and components in HD-13 falls back to English** until a translation is supplied. |
+| `ar-001`, `de-001`, `de-de`, `es-001`, `fr-001`, `hi-001`, `zh-001`, `zh-cn` | Arabic, German, Spanish, French, Hindi, Chinese (Simplified) | **Complete in text, machine draft** (WW-1.1, 2026-10-31): every interface text exists in each, written by Claude (the AI assistant) and **not reviewed** by a speaker or a professional translator. One review record per locale: [`translation-reviews/`](translation-reviews/README.md). `de-de` and `zh-cn` share the page text of `de-001` and `zh-001`. |
 
 A person chooses the language from the picker in the header; the choice is the first
 path segment of every address (`/cy-001/plans`), so a link keeps its language. English is
@@ -24,9 +24,11 @@ supported (Arabic).
   - `tests/unit/catalogue-coverage.test.ts` fails when a template carries literal English
     words outside the catalogue, when the Welsh catalogue lacks a key or a `{placeholder}`
     the English has, or when a Welsh string is simply the English copied (except the short
-    allow-list of words that are the same in both languages, such as names and units).
+    allow-list of words that are the same in both languages, such as names and units). The same
+    checks run for every other locale's page catalogue.
   - `tests/e2e/welsh.spec.ts` opens **every page route** in English and in Welsh and fails
-    when a line of visible text is identical in both and is not data or a name.
+    when a line of visible text is identical in both and is not data or a name;
+    `tests/e2e/every-locale.spec.ts` does the same for every supported locale.
 - Dates, numbers and currency amounts use the conventions of the chosen locale.
 - Words that the service sends as codes (a task status, a kind of plan, a proposal status)
   are shown through the catalogue, not as the code.

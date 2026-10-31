@@ -396,6 +396,51 @@
           "description": "How the machine-written Welsh is reviewed; every string is in the CSV, none reviewed yet"
         },
         {
+          "title": "Translation review records",
+          "path": "governance/translation-reviews/README.md",
+          "description": "One review record and working CSV per locale; every translation is a machine draft, none reviewed"
+        },
+        {
+          "title": "Translation review: ar-001",
+          "path": "governance/translation-reviews/ar-001.md",
+          "description": "Review record for ar-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: de-001",
+          "path": "governance/translation-reviews/de-001.md",
+          "description": "Review record for de-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: de-de",
+          "path": "governance/translation-reviews/de-de.md",
+          "description": "Review record for de-de: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: es-001",
+          "path": "governance/translation-reviews/es-001.md",
+          "description": "Review record for es-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: fr-001",
+          "path": "governance/translation-reviews/fr-001.md",
+          "description": "Review record for fr-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: hi-001",
+          "path": "governance/translation-reviews/hi-001.md",
+          "description": "Review record for hi-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: zh-001",
+          "path": "governance/translation-reviews/zh-001.md",
+          "description": "Review record for zh-001: machine draft, not reviewed"
+        },
+        {
+          "title": "Translation review: zh-cn",
+          "path": "governance/translation-reviews/zh-cn.md",
+          "description": "Review record for zh-cn: machine draft, not reviewed"
+        },
+        {
           "title": "Production readiness",
           "path": "governance/production-readiness.md",
           "description": "What must hold before production use"

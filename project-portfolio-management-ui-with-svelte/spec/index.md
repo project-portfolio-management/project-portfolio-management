@@ -288,11 +288,19 @@ table columns and labels the scan does not see (for example the costs page's buc
 `LocalePicker` (`lily-design-system-svelte-locale-picker`) sets `lang`
 and `dir` on `<html>` and switches the active translation catalogue, so
 selecting a locale changes the displayed language. Supported locales
-(13): `en`, `cy`, `es`, `fr`, `de`, `ar`, `ru`, `hi`, `zh`, `bn`, `pt`,
-`id`, `ur`. `ar` and `ur` are **RTL** (`dir="rtl"`); the rest are LTR.
-The choice persists to `localStorage` (key `portfolio:locale`). UI
-strings come from a per-locale catalogue under `$lib/i18n/`; missing
-keys fall back to `en`.
+(10, `src/lib/locales.ts`): `ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`,
+`es-001`, `fr-001`, `hi-001`, `zh-001`, `zh-cn`; `ar-001` is **RTL**. The
+locale is the first path segment (`/de-001/plans`). Strings come from
+`src/lib/i18n.svelte.ts` (navigation, forms) and one page catalogue per
+language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|de|es|fr|hi|zh>.ts`;
+`de-de` and `zh-cn` share their language's). **Every locale is complete
+(WW-1.1, NFR-19):** each page catalogue is typed as a complete record of the
+English keys, `tests/unit/catalogue-coverage.test.ts` checks keys,
+placeholders and copied English for each, and `tests/e2e/every-locale.spec.ts`
+opens every page route in every locale. A missing key would still fall back
+to English at run time. Every translation is a machine draft, recorded
+unreviewed per locale in `governance/translation-reviews/` (Welsh in
+`governance/welsh-translation-review.md`).
 
 ## 6. Functional requirements
 

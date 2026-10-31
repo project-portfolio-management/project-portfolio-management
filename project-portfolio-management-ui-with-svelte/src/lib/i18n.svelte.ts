@@ -40,6 +40,12 @@ import {
 } from "./locales.js";
 import { PAGES_EN, PAGE_KEYS } from "./i18n-pages";
 import { PAGES_CY } from "./i18n-pages.cy";
+import { PAGES_AR } from "./i18n-pages.ar";
+import { PAGES_DE } from "./i18n-pages.de";
+import { PAGES_ES } from "./i18n-pages.es";
+import { PAGES_FR } from "./i18n-pages.fr";
+import { PAGES_HI } from "./i18n-pages.hi";
+import { PAGES_ZH } from "./i18n-pages.zh";
 
 export { LOCALES, DEFAULT_LOCALE, LOCALE_LABELS, RTL_LOCALES, isRtl };
 export type { Locale };
@@ -56,6 +62,7 @@ export const LOCALE_KEY = "mxi.case.locale";
 // missing translation is a type error (the `StringKey` union below).
 const STRINGS = {
   "ar-001": {
+    ...PAGES_AR,
     // Merge page (/plans/merge)
     "nav.merge": "دمج",
     "merge.title": "دمج الخطط",
@@ -811,6 +818,7 @@ const STRINGS = {
       "Nid yw'r gwasanaeth mewngofnodi ar gael. Rhowch gynnig arall arni yn nes ymlaen.",
   },
   "de-001": {
+    ...PAGES_DE,
     // Merge page (/plans/merge)
     "nav.merge": "Zusammenführen",
     "merge.title": "Pläne zusammenführen",
@@ -1194,6 +1202,7 @@ const STRINGS = {
       "Fügen Sie „Meilensteine“ hinzu, schließen Sie sie ab und nutzen Sie „Zuweisen“, um Menschen Kapazität zu geben. Der Link „Zeitplan“ zeichnet Termine und Abhängigkeiten.",
   },
   "de-de": {
+    ...PAGES_DE,
     // Merge page (/plans/merge)
     "nav.merge": "Zusammenführen",
     "merge.title": "Pläne zusammenführen",
@@ -1963,6 +1972,7 @@ const STRINGS = {
       "The sign-in service cannot be reached. Please try again later.",
   },
   "es-001": {
+    ...PAGES_ES,
     // Merge page (/plans/merge)
     "nav.merge": "Combinar",
     "merge.title": "Combinar planes",
@@ -2347,6 +2357,7 @@ const STRINGS = {
       "No se puede acceder al servicio de inicio de sesión. Inténtelo más tarde.",
   },
   "fr-001": {
+    ...PAGES_FR,
     // Merge page (/plans/merge)
     "nav.merge": "Fusionner",
     "merge.title": "Fusionner des plans",
@@ -2729,6 +2740,7 @@ const STRINGS = {
       "Le service de connexion est injoignable. Veuillez réessayer plus tard.",
   },
   "hi-001": {
+    ...PAGES_HI,
     // Merge page (/plans/merge)
     "nav.merge": "विलय",
     "merge.title": "योजनाओं का विलय",
@@ -3108,6 +3120,7 @@ const STRINGS = {
       "साइन-इन सेवा उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें।",
   },
   "zh-001": {
+    ...PAGES_ZH,
     // Merge page (/plans/merge)
     "nav.merge": "合并",
     "merge.title": "合并计划",
@@ -3462,6 +3475,7 @@ const STRINGS = {
     "signin.oidcUnavailable": "无法访问登录服务，请稍后再试。",
   },
   "zh-cn": {
+    ...PAGES_ZH,
     // Merge page (/plans/merge)
     "nav.merge": "合并",
     "merge.title": "合并计划",

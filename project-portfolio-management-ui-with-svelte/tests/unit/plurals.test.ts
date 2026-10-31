@@ -62,13 +62,14 @@ describe("plural selection", () => {
     expect(pluralKey(KEY, 1, "cy-001")).toBe(`${KEY}_one`);
   });
 
-  it("a locale with no text for the group reads English by English's rules", () => {
-    // Arabic 1 is "one", 0 is "zero": with no Arabic page text, English's forms for 1 and 0.
+  it("every locale has text for the group, so its own rules choose the form (WW-1.1)", () => {
+    // Arabic 1 is "one"; 0 is "zero", which the catalogue lacks, so Arabic's other form.
     expect(pluralKey(KEY, 1, "ar-001")).toBe(`${KEY}_one`);
     expect(pluralKey(KEY, 0, "ar-001")).toBe(`${KEY}_other`);
-    // Chinese has only "other", so 1 would be "other" in Chinese; English's rule gives "one".
-    expect(pluralKey(KEY, 1, "zh-cn")).toBe(`${KEY}_one`);
-    expect(translatePlural(KEY, 1, "de-de", { n: 1 })).toBe("1 business day");
+    // Chinese has only "other", so 1 is "other" in Chinese (until WW-1.1 it fell back to English's "one").
+    expect(pluralKey(KEY, 1, "zh-cn")).toBe(`${KEY}_other`);
+    expect(translatePlural(KEY, 1, "de-de", { n: 1 })).toBe("1 Arbeitstag");
+    expect(translatePlural(KEY, 2, "de-de", { n: 2 })).toBe("2 Arbeitstage");
   });
 
   it("no English string fills a count with (s)", () => {
@@ -177,7 +178,7 @@ describe("no plural form chosen by hand in src/", () => {
   it("finds none", () => {
     const offenders: string[] = [];
     for (const file of walk(join(here, "src"))) {
-      if (/i18n\.svelte\.ts$|i18n-pages(?:\.cy)?\.ts$/.test(file)) continue;
+      if (/i18n\.svelte\.ts$|i18n-pages(?:\.[a-z]+)?\.ts$/.test(file)) continue;
       for (const f of handPicked(readFileSync(file, "utf8"), groups))
         offenders.push(`${relative(here, file)}: ${f}`);
     }

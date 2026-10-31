@@ -1974,6 +1974,7 @@ only as search snippets.
   terms in `spec/project-management-standards/`.
   **WW-1.23 done 2026-10-31:** the domain model's "£2m" is a currency-neutral amount; the six help texts were already
   neutral (WW-1.3); the review CSVs are current.
+  **WW-1.24 done 2026-10-31:** NFR-19a, the policy on number, date, name and address formats and right-to-left.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

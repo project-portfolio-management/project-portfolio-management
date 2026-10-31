@@ -175,6 +175,19 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   speaker or a professional translator and the review is recorded; until then
   they are marked machine draft. Text that the API itself generates (derived sentences
   in responses) is not part of the catalogue and is listed as a limitation.
+- **NFR-19a — Formats follow the reader's locale (WW-1.24).** Every number, percentage, amount and date a person
+  reads is formatted for the page's locale through one module (the UI's `locale-format.ts` and `money.ts`): grouping
+  and decimal marks, the locale's percent form, a currency's own number of decimals, the locale's date order and month
+  names, civil dates in UTC and timestamps in the reader's zone; numbers typed into a form are read in the same
+  locale. A count picks its plural form with `Intl.PluralRules`, never `n === 1`. Layout uses logical CSS, so a
+  right-to-left locale mirrors the page; an arrow meaning "becomes" points along the writing direction. **Names** are
+  free text, shown as entered: no field splits a given name from a family name, orders them, or checks their
+  characters, and people are opaque references, so no name format is assumed. **Addresses** and phone numbers are not
+  stored by this product (`spec/02-scope.md` §2.0; the workforce service holds them), so it imposes no address format.
+  Scan tests enforce the first three (`locale-format.test.ts`, `plurals.test.ts`, `logical-css.test.ts`). **Stated
+  limits:** Gregorian calendar only; the API's own text, exports' column names and the PDFs are English and ISO; Welsh
+  and other catalogues hold only the `one` and `other` plural forms; about 30 catalogue strings still put "%" after a
+  number placeholder; chart geometry runs left to right.
 
 - **NFR-20 — Public-repository files.** The repository root carries the
   standard files of a public project, listed in

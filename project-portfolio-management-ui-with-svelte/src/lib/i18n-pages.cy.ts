@@ -608,6 +608,14 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.display.sections_hidden_count_other": "{n} adran wedi'u cuddio",
   "p.display.sections_none_hidden": "Nid oes adran wedi'i chuddio.",
   "p.display.sections_show_all": "Dangos pob adran",
+  "p.display.week_start_title": "Diwrnod cyntaf yr wythnos",
+  "p.display.week_start_help":
+    "Lle mae calendrau'n dechrau pob wythnos. Yn ddiofyn mae'n dilyn yr iaith a ddewisoch; mae rhifau'r wythnosau'n aros yn wythnosau ISO, sy'n dechrau ddydd Llun.",
+  "p.display.week_start_label": "Mae wythnosau'n dechrau ar",
+  "p.display.week_start_locale": "Diwrnod arferol yr iaith",
+  "p.display.week_start_mon": "Dydd Llun",
+  "p.display.week_start_sun": "Dydd Sul",
+  "p.display.week_start_sat": "Dydd Sadwrn",
   "p.display.use_the_dyslexia_friendly_font":
     "Defnyddio'r ffont cyfeillgar i ddyslecsia",
   "p.display.uses_the_opendyslexic_typeface_with":

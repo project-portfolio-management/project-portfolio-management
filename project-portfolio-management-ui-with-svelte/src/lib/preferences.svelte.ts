@@ -82,7 +82,9 @@ export const display = {
    * on the account.
    */
   async set(
-    patch: Partial<Record<keyof Prefs, boolean | undefined>>,
+    patch: Partial<Record<"simple" | "dyslexia", boolean | undefined>> & {
+      weekStart?: Prefs["weekStart"];
+    },
     signedIn: boolean,
   ): Promise<void> {
     const next: Prefs = parsePrefs({ ...prefs, ...patch });

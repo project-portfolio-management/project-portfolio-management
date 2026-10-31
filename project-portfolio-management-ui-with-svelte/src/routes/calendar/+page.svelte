@@ -11,7 +11,9 @@
   import type { CalendarEvent, CalendarEventField, CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
   import { onMount } from "svelte";
   import { PpmClient, type MilestoneCalendar } from "#lib/api/ppm.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, i18n } from "#lib/i18n.svelte.js";
+  import { display } from "#lib/preferences.svelte.js";
+  import { calendarLocale } from "#lib/week-start.js";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   import { lazyArray } from "#lib/lazy.js";
   import { WEEKDAY_NAMES } from "#lib/cpm-view.js";
@@ -122,6 +124,7 @@
   <div class="calendar-wrap" data-testid="milestone-calendar">
     <CalendarView
       label={t("ppm.nav.calendar")}
+      locale={calendarLocale(i18n.locale, display.prefs.weekStart)}
       bind:view
       bind:anchorDate
       {today}

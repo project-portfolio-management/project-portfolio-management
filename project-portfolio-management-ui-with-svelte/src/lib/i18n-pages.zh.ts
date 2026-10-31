@@ -578,6 +578,14 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.display.sections_hidden_count_other": "已隐藏 {n} 个栏目",
   "p.display.sections_none_hidden": "未隐藏任何栏目。",
   "p.display.sections_show_all": "显示所有栏目",
+  "p.display.week_start_title": "每周的第一天",
+  "p.display.week_start_help":
+    "日历中每周从哪一天开始。默认跟随您选择的语言；周数仍为 ISO 周，从星期一开始。",
+  "p.display.week_start_label": "每周开始于",
+  "p.display.week_start_locale": "该语言的惯例",
+  "p.display.week_start_mon": "星期一",
+  "p.display.week_start_sun": "星期日",
+  "p.display.week_start_sat": "星期六",
   "p.display.use_the_dyslexia_friendly_font": "使用阅读障碍友好字体",
   "p.display.uses_the_opendyslexic_typeface_with":
     "使用 OpenDyslexic 字体，并加大字母、单词和行之间的间距。",

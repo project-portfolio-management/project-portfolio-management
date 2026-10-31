@@ -607,6 +607,14 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.display.sections_hidden_count_other": "{n} secciones ocultas",
   "p.display.sections_none_hidden": "No hay ninguna sección oculta.",
   "p.display.sections_show_all": "Mostrar todas las secciones",
+  "p.display.week_start_title": "Primer día de la semana",
+  "p.display.week_start_help":
+    "Dónde empiezan los calendarios cada semana. De forma predeterminada sigue el idioma elegido; los números de semana siguen siendo semanas ISO, que empiezan el lunes.",
+  "p.display.week_start_label": "Las semanas empiezan el",
+  "p.display.week_start_locale": "El día habitual del idioma",
+  "p.display.week_start_mon": "Lunes",
+  "p.display.week_start_sun": "Domingo",
+  "p.display.week_start_sat": "Sábado",
   "p.display.use_the_dyslexia_friendly_font":
     "Usar la fuente adaptada a la dislexia",
   "p.display.uses_the_opendyslexic_typeface_with":

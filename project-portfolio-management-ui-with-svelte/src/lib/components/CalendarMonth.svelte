@@ -9,7 +9,9 @@
   import CalendarView from "@lilydesignsystem/svelte-calendar";
   import type { CalendarView as Mode } from "@lilydesignsystem/svelte-calendar";
   import { onMount } from "svelte";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, i18n } from "#lib/i18n.svelte.js";
+  import { display } from "#lib/preferences.svelte.js";
+  import { calendarLocale } from "#lib/week-start.js";
   import { formatDateRange } from "#lib/locale-format.js";
   import { lazyArray } from "#lib/lazy.js";
   import { WEEKDAY_NAMES, dayState } from "#lib/cpm-view.js";
@@ -100,6 +102,7 @@
   <strong class="heading" aria-live="polite">{heading}</strong>
   <CalendarView
     label={t("c.CalendarMonth.working_calendar")}
+    locale={calendarLocale(i18n.locale, display.prefs.weekStart)}
     bind:view
     bind:anchorDate
     {today}

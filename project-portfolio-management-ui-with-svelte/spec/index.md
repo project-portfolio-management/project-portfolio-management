@@ -329,6 +329,15 @@ critical-chain, capacity and pipeline bars, and the SVG charts) runs left to rig
 system faces that cover Arabic, Devanagari and Simplified Chinese after the platform's UI font, and no font is bundled
 or downloaded, so a system without one shows the browser's fallback. Arabic is the only right-to-left locale.
 
+**First day of the week (WW-1.4).** The calendars (`/calendar`, the working calendars through `CalendarMonth`) start
+the week on the page's locale's day (Monday for the `-001` world locales and `de-de` and `zh-cn`, by CLDR), or on the day
+the person chooses on the Display page (`weekStart`: Monday, Sunday or Saturday, kept with the other display
+preferences on the device and the account). `src/lib/week-start.ts` holds the rule; the choice reaches Lily's
+CalendarView as the locale's `-u-fw-` extension. **Limits:** a browser without `Intl.Locale` week information (Firefox
+at the time of writing) uses Lily's region table and ignores the choice; week numbers, timesheet weeks, the critical-path
+Gantt's weekly ticks and the API's week buckets stay ISO 8601 weeks (Monday first), the stated default; the weekday
+editors of a working pattern list Monday first because that is the order of the stored seven-day mask.
+
 **How a reader's language is resolved (WW-1.14),** in `normalizeLocale` and tested case by case: an exact supported
 code; Traditional Chinese tags (`zh-Hant…`, `zh-TW`, `zh-HK`, `zh-MO`) read `zh-001`, Simplified, by a stated rule (there
 is no Traditional catalogue: a **limit**); any other region reads its language's world locale (`fr-CA` reads `fr-001`,

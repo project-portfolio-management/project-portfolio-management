@@ -591,6 +591,14 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.display.sections_hidden_count_other": "{n} أقسام مخفية",
   "p.display.sections_none_hidden": "لا قسم مخفي.",
   "p.display.sections_show_all": "إظهار كل الأقسام",
+  "p.display.week_start_title": "أول يوم في الأسبوع",
+  "p.display.week_start_help":
+    "اليوم الذي يبدأ به كل أسبوع في التقويمات. يتبع افتراضيًا اللغة التي اخترتها؛ وتبقى أرقام الأسابيع أسابيع ISO التي تبدأ يوم الاثنين.",
+  "p.display.week_start_label": "يبدأ الأسبوع يوم",
+  "p.display.week_start_locale": "اليوم المعتاد في اللغة",
+  "p.display.week_start_mon": "الاثنين",
+  "p.display.week_start_sun": "الأحد",
+  "p.display.week_start_sat": "السبت",
   "p.display.use_the_dyslexia_friendly_font":
     "استخدام الخط المناسب لعسر القراءة",
   "p.display.uses_the_opendyslexic_typeface_with":

@@ -604,6 +604,14 @@ export const PAGES_EN = {
   "p.display.sections_hidden_count_other": "{n} sections hidden",
   "p.display.sections_none_hidden": "No section is hidden.",
   "p.display.sections_show_all": "Show all sections",
+  "p.display.week_start_title": "First day of the week",
+  "p.display.week_start_help":
+    "Where calendars start each week. By default it follows the language you chose; week numbers stay ISO weeks, which start on Monday.",
+  "p.display.week_start_label": "Weeks start on",
+  "p.display.week_start_locale": "The language's usual day",
+  "p.display.week_start_mon": "Monday",
+  "p.display.week_start_sun": "Sunday",
+  "p.display.week_start_sat": "Saturday",
   "p.display.use_the_dyslexia_friendly_font": "Use the dyslexia-friendly font",
   "p.display.uses_the_opendyslexic_typeface_with":
     "Uses the OpenDyslexic typeface, with wider spacing between letters, words and lines.",

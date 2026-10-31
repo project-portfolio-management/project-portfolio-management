@@ -11,11 +11,12 @@
   Choices are kept on this device and, when you are signed in, on your account.
 -->
 <script lang="ts">
-  import { t, tn } from "#lib/i18n.svelte.js";
+  import { t, tn, i18n } from "#lib/i18n.svelte.js";
   import { page } from "$app/state";
   import { display } from "#lib/preferences.svelte.js";
   import { effectiveSimple } from "#lib/preferences.js";
   import { buildNavItems } from "#lib/nav-items.js";
+  import { WEEK_STARTS, firstDayOfWeek, type WeekStart } from "#lib/week-start.js";
 
   const data = $derived(page.data as { signedIn?: boolean; view?: string | null });
   const signedIn = $derived(data.signedIn === true);
@@ -24,6 +25,9 @@
   // BR-17: every section of the top bar except the way home, ticked unless this person hid it.
   const sections = $derived(buildNavItems().filter((i) => i.href !== "/"));
   const hidden = $derived(new Set(display.prefs.hidden ?? []));
+
+  const DAY_OF: Record<WeekStart, number> = { locale: 1, mon: 1, sun: 0, sat: 6 };
+  const dayName = (d: number) => (d === 0 ? t("p.display.week_start_sun") : d === 6 ? t("p.display.week_start_sat") : d === 1 ? t("p.display.week_start_mon") : new Intl.DateTimeFormat(i18n.locale, { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2026, 10, 1 + d))));
 
   const STATUS: Record<string, string> = {
     idle: "",
@@ -65,6 +69,25 @@
   <label class="check">
     <input type="checkbox" checked={display.dyslexia} onchange={(e) => void display.set({ dyslexia: e.currentTarget.checked }, signedIn)} />
     {t("p.display.use_the_dyslexia_friendly_font")}
+  </label>
+</section>
+
+<section class="surface stack" aria-labelledby="week-h">
+  <h2 id="week-h">{t("p.display.week_start_title")}</h2>
+  <p>{t("p.display.week_start_help")}</p>
+  <label class="field">
+    {t("p.display.week_start_label")}
+    <select
+      value={display.prefs.weekStart ?? "locale"}
+      onchange={(e) => {
+        const v = e.currentTarget.value as WeekStart;
+        void display.set({ weekStart: v === "locale" ? undefined : v }, signedIn);
+      }}
+    >
+      {#each WEEK_STARTS as w (w)}
+        <option value={w}>{w === "locale" ? `${t("p.display.week_start_locale")} (${dayName(firstDayOfWeek(i18n.locale))})` : dayName(DAY_OF[w])}</option>
+      {/each}
+    </select>
   </label>
 </section>
 
@@ -122,6 +145,12 @@
   }
   .sections .check {
     font-weight: 400;
+  }
+  .field {
+    display: grid;
+    gap: 0.3rem;
+    max-width: 22rem;
+    font-weight: 600;
   }
   .linklike {
     background: none;

@@ -145,3 +145,22 @@ test.describe("delivery calendar", () => {
     });
   }
 });
+
+// WW-1.4 (UI): the week starts on the locale's day, Monday in the world English locale, and on the day a person
+// chooses on the Display page.
+test.describe("first day of the week", () => {
+  test("is the locale's by default and the person's choice once made", async ({
+    page,
+  }) => {
+    await stub(page, { body: "" });
+    await page.goto("/en-001/me/calendar", { waitUntil: "networkidle" });
+    const cal = page.getByTestId("calendar-month");
+    await expect(cal.locator("thead th").first()).toContainText("Mon");
+    await page.goto("/en-001/display", { waitUntil: "networkidle" });
+    await page.getByLabel("Weeks start on").selectOption("sun");
+    await page.goto("/en-001/me/calendar", { waitUntil: "networkidle" });
+    await expect(
+      page.getByTestId("calendar-month").locator("thead th").first(),
+    ).toContainText("Sun");
+  });
+});

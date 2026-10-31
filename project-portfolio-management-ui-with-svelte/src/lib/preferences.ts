@@ -11,6 +11,8 @@
 // signed in, as one saved view of the user's own (`PREFERENCES_ROUTE`), so they
 // follow the person to another browser.
 
+import { parseWeekStart, type WeekStart } from "./week-start.js";
+
 /** The saved-view route that holds a user's display preferences. */
 export const PREFERENCES_ROUTE = "/__preferences";
 /** The saved-view name. */
@@ -30,6 +32,8 @@ export interface Prefs {
    * a section they themselves hid (BR-17).
    */
   hidden?: string[];
+  /** The first day of the week in calendars (WW-1.4); absent means the page's locale's. */
+  weekStart?: Exclude<WeekStart, "locale">;
 }
 
 /** The most sections one person can hide. */
@@ -117,6 +121,8 @@ export function parsePrefs(raw: unknown): Prefs {
   if (typeof v.dyslexia === "boolean") out.dyslexia = v.dyslexia;
   const hidden = parseHidden(v.hidden);
   if (hidden) out.hidden = hidden;
+  const weekStart = parseWeekStart(v.weekStart);
+  if (weekStart && weekStart !== "locale") out.weekStart = weekStart;
   return out;
 }
 

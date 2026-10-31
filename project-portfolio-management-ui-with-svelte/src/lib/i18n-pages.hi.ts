@@ -600,6 +600,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.display.sections_hidden_count_other": "{n} अनुभाग छिपे हैं",
   "p.display.sections_none_hidden": "कोई अनुभाग छिपा नहीं है।",
   "p.display.sections_show_all": "सभी अनुभाग दिखाएँ",
+  "p.display.week_start_title": "सप्ताह का पहला दिन",
+  "p.display.week_start_help":
+    "कैलेंडर में हर सप्ताह कहाँ से शुरू होता है। डिफ़ॉल्ट रूप से यह आपकी चुनी हुई भाषा का पालन करता है; सप्ताह संख्याएँ ISO सप्ताह ही रहती हैं, जो सोमवार से शुरू होते हैं।",
+  "p.display.week_start_label": "सप्ताह शुरू होता है",
+  "p.display.week_start_locale": "भाषा का सामान्य दिन",
+  "p.display.week_start_mon": "सोमवार",
+  "p.display.week_start_sun": "रविवार",
+  "p.display.week_start_sat": "शनिवार",
   "p.display.use_the_dyslexia_friendly_font":
     "डिस्लेक्सिया-अनुकूल फ़ॉन्ट उपयोग करें",
   "p.display.uses_the_opendyslexic_typeface_with":

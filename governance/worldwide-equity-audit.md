@@ -6,7 +6,8 @@ standard, protocol, convention or locale may gate one country or region. Done 20
 
 **How to read this.** Each finding has an id, the place, what it assumes, and a **decision**: *configure* (make it a
 setting with no country default), *extend* (add the missing coverage), or *limit* (kept on purpose, with the reason).
-A decision is a proposal until the owner accepts it; **nothing here has been changed in code yet**.
+**Accepted by the product owner, 2026-10-31:** all 25 decisions, as written below. Each row's status says what has
+been changed in code since; a row with no status is accepted and not yet done.
 
 **What the audit is not.** The passes read files with pattern searches and spot reads. Line numbers come from search
 output and were not each re-checked in context. Nothing was run. The lists of what each pass did not search are at the

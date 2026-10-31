@@ -1920,8 +1920,8 @@ only as search snippets.
   extended, or recorded as a deliberate limit with its reason), and a test where a finding is a default that can be
   made configurable.
   **Audit done 2026-10-29:** 25 findings, each with a proposed decision, in
-  [`governance/worldwide-equity-audit.md`](governance/worldwide-equity-audit.md). **Decisions not yet accepted and no
-  code changed.** The fixes are not started; the first four findings (locale parity, compliance mapping, money,
+  [`governance/worldwide-equity-audit.md`](governance/worldwide-equity-audit.md). (At the time, decisions not yet accepted and no
+  code changed.) The fixes are not started; the first four findings (locale parity, compliance mapping, money,
   working week) are the ones that most clearly break §2.0.
   **WW-1.3 (money) fixed 2026-10-29, in part:** one locale-aware formatter and parser in the interface
   (`src/lib/money.ts`, `Intl`, the currency's own exponent), no `/100`, no GBP starting value in the five forms,
@@ -1934,6 +1934,8 @@ only as search snippets.
   **2026-10-30, harmonization (no owner decision needed):** the interface formats numbers, percentages and dates and
   chooses plural forms the way the workforce UI does (`src/lib/locale-format.ts` and `tn`, ports of WPM's), with scan
   tests; WW-1.15, WW-1.16 and WW-1.24 are marked "harmonized in part" in the audit with what remains for the owner.
+  **Accepted by the product owner, 2026-10-31:** all 25 proposed decisions in the audit, as written. The fixes follow
+  in audit order; each row of the audit says what is done.
 - [ ] **NC-1 (L, in slices) — Screens for features built only at the API.**
   About 98 backlog notes say "no screen". Slice order: issues raise and edit,
   plus raise-from-risk (IR-2, IR-3); change-request drafting and deciding

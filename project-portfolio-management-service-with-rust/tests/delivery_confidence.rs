@@ -245,7 +245,12 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         with!(request.put(&format!("/api/plans/{beta}/primary-aim")), writer).json(&json!({ "objective_pid": safety })).await.assert_status_ok();
 
         // ── the pack carries it, with a trend against the previous issued pack ──
-        let draft = |period: &'static str| {
+        // The packs are for last month and this month, from the clock: the exception closed above is closed today, so a
+        // fixed period (this was "2026-10") stops containing it on the first day of the next month.
+        let today = chrono::Utc::now().date_naive();
+        let this_month = today.format("%Y-%m").to_string();
+        let last_month = (chrono::Datelike::with_day(&today, 1).unwrap() - chrono::Duration::days(1)).format("%Y-%m").to_string();
+        let draft = |period: String| {
             let (request, issuer) = (&request, issuer.clone());
             async move {
                 let d: Value = request.post("/api/director-packs").add_header(issuer.0.clone(), issuer.1.clone())
@@ -255,7 +260,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
                 pid
             }
         };
-        let p1 = draft("2026-09").await;
+        let p1 = draft(last_month).await;
         let first: Value = with!(request.get(&format!("/api/director-packs/{p1}")), issuer).await.json();
         assert_eq!(first["body"]["portfolio_map"]["programmes_total"], 3);
         // Alpha gets worse; the October pack says so, and an old assessment is stale.
@@ -263,7 +268,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         let delta = mk("Delta").await;
         let _epsilon = mk("Epsilon").await;
         with!(request.put(&conf(&delta)), writer).json(&json!({ "value": "amber_green", "kind": "self", "rationale": "Going well, one risk" })).await.assert_status_ok();
-        let p2 = draft("2026-10").await;
+        let p2 = draft(this_month).await;
         let second: Value = with!(request.get(&format!("/api/director-packs/{p2}")), issuer).await.json();
         let text = second.to_string();
         let row = |pack: &Value, name: &str| pack["body"]["portfolio_map"]["groups"].as_array().unwrap().iter()

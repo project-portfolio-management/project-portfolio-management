@@ -512,6 +512,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          BAD: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         run: |
-          echo '${{ toJSON(needs) }}'
-          test "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false"
+          echo "$NEEDS"
+          test "$BAD" = "false"

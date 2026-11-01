@@ -129,7 +129,10 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-      - run: echo "Pushed ghcr.io/${{ github.repository }}@${{ steps.push.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+      - env:
+          REPO: ${{ github.repository }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: echo "Pushed ghcr.io/${REPO}@${DIGEST}" >> "$GITHUB_STEP_SUMMARY"
 
   sbom:
     name: CycloneDX SBOMs
@@ -194,10 +197,13 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.verify.outputs.version }}
+          DIGEST: ${{ needs.image.outputs.digest }}
         run: |
           {
             echo
-            echo "Container image: \`ghcr.io/${{ github.repository }}:${{ needs.verify.outputs.version }}\` (digest \`${{ needs.image.outputs.digest }}\`)"
+            echo "Container image: \`ghcr.io/${REPO}:${VERSION}\` (digest \`${DIGEST}\`)"
           } >> release-notes.md
           gh release create "$GITHUB_REF_NAME" sbom/*.cdx.json \
             --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag

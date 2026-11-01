@@ -2,6 +2,9 @@ version: 2
 updates:
   - package-ecosystem: cargo
     directory: /project-portfolio-management-service-with-rust
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
     groups:
@@ -16,6 +19,9 @@ updates:
         update-types: ["version-update:semver-major"]
   - package-ecosystem: cargo
     directory: /project-portfolio-management-matcher-with-rust
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
     groups:
@@ -23,6 +29,9 @@ updates:
         patterns: ["*"]
   - package-ecosystem: npm
     directory: /project-portfolio-management-ui-with-svelte
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
     groups:
@@ -36,6 +45,9 @@ updates:
         update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /project-portfolio-management.github.io
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
     groups:
@@ -47,6 +59,9 @@ updates:
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
     groups:
@@ -58,5 +73,30 @@ updates:
       - dependency-name: dtolnay/rust-toolchain
   - package-ecosystem: docker
     directory: /project-portfolio-management-service-with-rust
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /project-portfolio-management-ui-with-svelte
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+  # Compose files hold digest-pinned images too (the demo, the Fluvio stack, the test stack).
+  - package-ecosystem: docker-compose
+    directory: /
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: /project-portfolio-management-service-with-rust
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly

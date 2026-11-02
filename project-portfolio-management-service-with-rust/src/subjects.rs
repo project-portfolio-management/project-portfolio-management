@@ -164,6 +164,7 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("break_glass_grants", "revoked_by"),
     ("issues", "owner_ref"),
     ("issues", "raised_by"),
+    ("framework_versions", "created_by"),
 ];
 
 /// The `(table, column)` pairs whose rows exist only for the person they name: under

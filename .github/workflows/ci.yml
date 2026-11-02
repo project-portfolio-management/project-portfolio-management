@@ -52,7 +52,7 @@ jobs:
       - run: cargo test --lib
       - run: >-
           cargo test --test matching --test otlp_export --test otlp_middleware
-          --test licence_files
+          --test licence_files --test personal_data_inventory
 
   api-db:
     name: API (Postgres 18 integration tests)
